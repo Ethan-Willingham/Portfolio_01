@@ -16,15 +16,44 @@ class Miner {
     ctx.fillRect(this.x, this.y, this.size, this.size);
   }
 }
+class Block {
+  constructor(x, y, type) {
+    this.x = x;
+    this.y = y;
+    this.size = 20;
+    this.type = type;
+  }
+
+  draw() {
+    ctx.fillStyle = this.type === "dirt" ? "saddlebrown" : "gray";
+    ctx.fillRect(this.x, this.y, this.size, this.size);
+  }
+}
+
+
+const world = [];
+
+function generateTerrain() {
+  for (let x = 0; x < canvas.width; x += 20) {
+    for (let y = 0; y < canvas.height; y += 20) {
+      const type = Math.random() < 0.8 ? "dirt" : "stone";
+      const block = new Block(x, y, type);
+      world.push(block);
+    }
+  }
+}
+
+generateTerrain();
 
 const miner = new Miner(canvas.width / 2, 0);
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  world.forEach((block) => block.draw());
   miner.draw();
 
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(gameLoop);;
 }
 
 gameLoop();
