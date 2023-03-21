@@ -1,8 +1,12 @@
+//---------------------------------------------CANVAS SETUP----------------------------------------
+
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 canvas.width = 800;
 canvas.height = 600;
 document.body.appendChild(canvas);
+
+//---------------------------------------------MINER CLASS----------------------------------------
 
 class Miner {
   constructor(x, y) {
@@ -16,6 +20,8 @@ class Miner {
     ctx.fillRect(this.x, this.y, this.size, this.size);
   }
 }
+
+//---------------------------------------------BLOCK CLASS----------------------------------------
 
 class Block {
   constructor(x, y, type) {
@@ -37,6 +43,8 @@ class Block {
   }
 }
 
+//---------------------------------------------CAMERA CLASS----------------------------------------
+
 class Camera {
   constructor() {
     this.x = 0;
@@ -50,6 +58,8 @@ class Camera {
     this.y = Math.max(0, Math.min(this.y, worldHeight - canvas.height));
   }
 }
+
+//---------------------------------------------WORLD CLASS----------------------------------------
 
 class World {
   constructor(width, height) {
@@ -118,6 +128,8 @@ class World {
   }
 }
 
+//---------------------------------------------INITIALIZATION----------------------------------------
+
 const worldWidth = 3200;
 const worldHeight = 2400;
 const world = new World(worldWidth, worldHeight);
@@ -126,6 +138,8 @@ world.generateTerrain();
 const camera = new Camera();
 const miner = new Miner(canvas.width / 2, 0);
 const inventory = {};
+
+//---------------------------------------------GAME LOOP----------------------------------------
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -142,6 +156,8 @@ function gameLoop() {
 }
 
 gameLoop();
+
+//---------------------------------------------EVENT HANDLING----------------------------------------
 
 document.addEventListener("keydown", (e) => {
   const blockSize = 20;
