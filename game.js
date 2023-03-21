@@ -39,8 +39,29 @@ class Block {
       case "stone":
         ctx.fillStyle = "gray";
         break;
-      default:
+      case "copper":
+        ctx.fillStyle = "chocolate";
+        break;
+      case "iron":
+        ctx.fillStyle = "darkorange";
+        break;
+      case "gold":
         ctx.fillStyle = "gold";
+        break;
+      case "adamantite":
+        ctx.fillStyle = "darkred";
+        break;
+      case "mithril":
+        ctx.fillStyle = "deepskyblue";
+        break;
+      case "hell_ore":
+        ctx.fillStyle = "firebrick";
+        break;
+      case "quantum_ore":
+        ctx.fillStyle = "purple";
+        break;
+      default:
+        ctx.fillStyle = "black";
     }
     ctx.fillRect(this.x, this.y, this.size, this.size);
   }
@@ -48,8 +69,8 @@ class Block {
 
 
 const world = [];
-const worldWidth = 3200;
-const worldHeight = 2400;
+const worldWidth = 6400;
+const worldHeight = 30000;
 
 function generateTerrain() {
   for (let x = 0; x < worldWidth; x += 20) {
@@ -67,18 +88,18 @@ function generateTerrain() {
         } else if (randomValue < 0.95) {
           type = "stone";
         } else {
-          const oreProbabilities = [
-            { type: "ore1", prob: 0.5 },
-            { type: "ore2", prob: 0.65 },
-            { type: "ore3", prob: 0.75 },
-            { type: "ore4", prob: 0.85 },
-            { type: "ore5", prob: 0.9 },
-            { type: "ore6", prob: 0.95 },
-            { type: "ore7", prob: 1 },
+          const depthFactor = y / worldHeight;
+          const oreTypes = [
+            { type: "copper", minDepth: 0, maxDepth: 0.2 },
+            { type: "iron", minDepth: 0, maxDepth: 0.2 },
+            { type: "gold", minDepth: 0.2, maxDepth: 0.4 },
+            { type: "adamantite", minDepth: 0.2, maxDepth: 0.4 },
+            { type: "mithril", minDepth: 0.4, maxDepth: 0.6 },
+            { type: "hell_ore", minDepth: 0.6, maxDepth: 0.8 },
+            { type: "quantum_ore", minDepth: 0.8, maxDepth: 1 },
           ];
 
-          const depthFactor = y / worldHeight;
-          const selectedOre = oreProbabilities.find(ore => depthFactor <= ore.prob);
+          const selectedOre = oreTypes.find(ore => depthFactor >= ore.minDepth && depthFactor <= ore.maxDepth);
           type = selectedOre.type;
         }
       }
@@ -131,16 +152,16 @@ document.addEventListener("keydown", (e) => {
   const blockSize = 20;
   switch (e.key) {
     case "ArrowUp":
-      miner.y -= blockSize;
+      if (miner.y > 0) miner.y -= blockSize;
       break;
     case "ArrowDown":
-      miner.y += blockSize;
+      if (miner.y < worldHeight - blockSize) miner.y += blockSize;
       break;
     case "ArrowLeft":
-      miner.x -= blockSize;
+      if (miner.x > 0) miner.x -= blockSize;
       break;
     case "ArrowRight":
-      miner.x += blockSize;
+      if (miner.x < worldWidth - blockSize) miner.x += blockSize;
       break;
   }
 });
