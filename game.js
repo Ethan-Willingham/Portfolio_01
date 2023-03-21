@@ -23,186 +23,150 @@ class Block {
     this.y = y;
     this.size = 20;
     this.type = type;
+    this.img = new Image();
+    this.img.src = `${this.type}_texture.png`;
   }
 
   draw() {
-    let img = document.createElement("img");
-    img.width = this.size;
-    img.height = this.size;
-
-    switch (this.type) {
-      case "sky":
-        ctx.fillStyle = "skyblue";
-        break;
-      case "grass":
-        img.src = "grass_texture.png";
-        break;
-      case "dirt":
-        img.src = "dirt_texture.png";
-        break;
-      case "stone":
-        img.src = "stone_texture.png";
-        break;
-      case "copper":
-        img.src = "copper_texture.png";
-        break;
-      case "iron":
-        img.src = "iron_texture.png";
-        break;
-      case "gold":
-        img.src = "gold_texture.png";
-        break;
-      case "adamantite":
-        img.src = "adamantite_texture.png";
-        break;
-      case "mithril":
-        img.src = "mithril_texture.png";
-        break;
-      case "hell_ore":
-        img.src = "hell_ore_texture.png";
-        break;
-      case "quantum_ore":
-        img.src = "quantum_ore_texture.png";
-        break;
-      case "mined":
-        ctx.fillStyle = "black";
-        break;
-      default:
-        ctx.fillStyle = "black";
-    }
     if (this.type !== "sky" && this.type !== "mined") {
-      ctx.drawImage(img, this.x, this.y, this.size, this.size);
+      ctx.drawImage(this.img, this.x, this.y, this.size, this.size);
     } else {
+      ctx.fillStyle = this.type === "sky" ? "skyblue" : "black";
       ctx.fillRect(this.x, this.y, this.size, this.size);
     }
   }
 }
 
-const world = [];
-const worldWidth = 3200;
-const worldHeight = 2400;
+class Camera {
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+  }
 
-function generateTerrain() {
-  for (let x = 0; x < worldWidth; x += 20) {
-    for (let y = 0; y < worldHeight; y += 20) {
-      let type;
+  update(miner) {
+    this.x = miner.x - canvas.width / 2 + miner.size / 2;
+    this.y = miner.y - canvas.height / 2 + miner.size / 2;
+    this.x = Math.max(0, Math.min(this.x, worldWidth - canvas.width));
+    this.y = Math.max(0, Math.min(this.y, worldHeight - canvas.height));
+  }
+}
 
-      if (y < 80) {
-        type = "sky";
-      } else if (y < 100) {
-        type = "grass";
-      } else {
-        const randomValue = Math.random();
-        if (randomValue < 0.7) {
-          type = "dirt";
-        } else if (randomValue < 0.95) {
-          type = "stone";
-        } else {
-          const depthFactor = y / worldHeight;
-          const oreTypes = [
-            { type: "copper", minDepth: 0, maxDepth: 0.2, chance: 0.1 },
-            { type: "iron", minDepth: 0, maxDepth: 0.2, chance: 0.1 },
-            { type: "gold", minDepth: 0.2, maxDepth: 0.4, chance: 0.05 },
-            { type: "adamantite", minDepth: 0.2, maxDepth: 0.4, chance: 0.05 },
-            { type: "mithril", minDepth: 0.4, maxDepth: 0.6, chance: 0.03 },
-            { type: "hell_ore", minDepth: 0.6, maxDepth: 0.8, chance: 0.02 },
-            { type: "quantum_ore", minDepth: 0.8, maxDepth: 1, chance: 0.01 },
-            ];
-            const selectedOre = oreTypes.find(
-              (ore) =>
-                depthFactor >= ore.minDepth &&
-                depthFactor <= ore.maxDepth &&
-                Math.random() < ore.chance
-            );
-            type = selectedOre ? selectedOre.type : "stone";
-          }
-        }
-      
+class World {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+    this.blocks = [];
+  }
+
+  generateTerrain() {
+    for (let x = 0; x < this.width; x += 20) {
+      for (let y = 0; y < this.height; y += 20) {
+        const type = this.getBlockType(x, y);
         const block = new Block(x, y, type);
-        world.push(block);
+        this.blocks.push(block);
       }
     }
   }
-  
-  class Camera {
-  constructor() {
-  this.x = 0;
-  this.y = 0;
+
+  getBlockType(x, y) {
+    if (y < 80) return "sky";
+    if (y < 100) return "grass";
+
+    const randomValue = Math.random();
+    if (randomValue < 0.7) return "dirt";
+    if (randomValue < 0.95) return "stone";
+
+    const depthFactor = y / this.height;
+    const oreTypes = [
+      { type: "copper", minDepth: 0, maxDepth: 0.2, chance: 0.1 },
+      { type: "iron", minDepth: 0, maxDepth: 0.2, chance: 0.1 },
+      { type: "gold", minDepth: 0.2, maxDepth: 0.4, chance: 0.05 },
+      { type: "adamantite", minDepth: 0.2, maxDepth: 0.4, chance: 0.05 },
+      { type: "mithril", minDepth: 0.4, maxDepth: 0.6, chance: 0.03 },
+      { type: "hell_ore", minDepth: 0.6, maxDepth: 0.8, chance: 0.02 },
+      { type: "quantum_ore", minDepth: 0.8, maxDepth: 1, chance: 0.01 },
+    ];
+    const selectedOre = oreTypes.find(
+      (ore) =>
+        depthFactor >= ore.minDepth &&
+        depthFactor <= ore.maxDepth &&
+        Math.random() < ore.chance
+    );
+    return selectedOre ? selectedOre.type : "stone";
   }
-  
-  update() {
-  this.x = miner.x - canvas.width / 2 + miner.size / 2;
-  this.y = miner.y - canvas.height / 2 + miner.size / 2;
-  // Clamp camera to the world bounds
-this.x = Math.max(0, Math.min(this.x, worldWidth - canvas.width));
-this.y = Math.max(0, Math.min(this.y, worldHeight - canvas.height));
+
+  draw() {
+    this.blocks.forEach((block) => block.draw());
+  }
+
+  getBlockAt(x, y) {
+    return this.blocks.find(
+      (block) =>
+        block.x === Math.floor(x / 20) * 20 &&
+        block.y === Math.floor(y / 20) * 20
+    );
+  }
+
+  mineBlock(block, inventory) {
+    if (block.type !== "sky" && block.type !== "mined") {
+      if (!inventory[block.type]) {
+        inventory[block.type] = 0;
+      }
+      inventory[block.type]++;
+      block.type = "mined";
+    }
+  }
 }
-}
+
+const worldWidth = 3200;
+const worldHeight = 2400;
+const world = new World(worldWidth, worldHeight);
+world.generateTerrain();
+
 const camera = new Camera();
+const miner = new Miner(canvas.width / 2, 0);
 const inventory = {};
 
-generateTerrain();
-
-const miner = new Miner(canvas.width / 2, 0);
-
 function gameLoop() {
-ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-camera.update();
-ctx.save();
-ctx.translate(-camera.x, -camera.y);
+  camera.update(miner);
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
 
-world.forEach((block) => block.draw());
-miner.draw();
+  world.draw();
+  miner.draw();
 
-ctx.restore();
-requestAnimationFrame(gameLoop);
+  ctx.restore();
+  requestAnimationFrame(gameLoop);
 }
 
 gameLoop();
 
-function getBlockAt(x, y) {
-return world.find(
-(block) =>
-block.x === Math.floor(x / 20) * 20 &&
-block.y === Math.floor(y / 20) * 20
-);
-}
-
-function mineBlock(block) {
-if (block.type !== "sky" && block.type !== "mined") {
-if (!inventory[block.type]) {
-inventory[block.type] = 0;
-}
-inventory[block.type]++;
-block.type = "mined";
-}
-}
-
 document.addEventListener("keydown", (e) => {
-const blockSize = 20;
-let block;
+  const blockSize = 20;
+  let block;
 
-switch (e.key) {
-case "ArrowUp":
-if (miner.y > 0) miner.y -= blockSize;
-block = getBlockAt(miner.x, miner.y);
-mineBlock(block);
-break;
-case "ArrowDown":
-if (miner.y < worldHeight - blockSize) miner.y += blockSize;
-block = getBlockAt(miner.x, miner.y);
-mineBlock(block);
-break;
-case "ArrowLeft":
-if (miner.x > 0) miner.x -= blockSize;
-block = getBlockAt(miner.x, miner.y);
-mineBlock(block);
-break;
-case "ArrowRight":
-if (miner.x < worldWidth - blockSize) miner.x += blockSize;
-block = getBlockAt(miner.x, miner.y);
-mineBlock(block);
-break;
-}
+  switch (e.key) {
+    case "ArrowUp":
+      if (miner.y > 0) miner.y -= blockSize;
+      block = world.getBlockAt(miner.x, miner.y);
+      world.mineBlock(block, inventory);
+      break;
+    case "ArrowDown":
+      if (miner.y < worldHeight - blockSize) miner.y += blockSize;
+      block = world.getBlockAt(miner.x, miner.y);
+      world.mineBlock(block, inventory);
+      break;
+    case "ArrowLeft":
+      if (miner.x > 0) miner.x -= blockSize;
+      block = world.getBlockAt(miner.x, miner.y);
+      world.mineBlock(block, inventory);
+      break;
+    case "ArrowRight":
+      if (miner.x < worldWidth - blockSize) miner.x += blockSize;
+      block = world.getBlockAt(miner.x, miner.y);
+      world.mineBlock(block, inventory);
+      break;
+  }
 });
