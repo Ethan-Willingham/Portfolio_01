@@ -79,14 +79,14 @@ class World {
   }
 
   getBlockType(x, y) {
-    if (y < 80) return "sky";
-    if (y < 100) return "grass";
-
+    if (y < 640) return "sky";
+    if (y < 660) return "grass";
+  
     const randomValue = Math.random();
     if (randomValue < 0.7) return "dirt";
     if (randomValue < 0.95) return "stone";
-
-    const depthFactor = y / this.height;
+  
+    const depthFactor = (y - 660) / (this.height - 660);
     const oreTypes = [
       { type: "copper", minDepth: 0, maxDepth: 0.2, chance: 0.1 },
       { type: "iron", minDepth: 0, maxDepth: 0.2, chance: 0.1 },
