@@ -112,8 +112,8 @@ class World {
   getBlockAt(x, y) {
     return this.blocks.find(
       (block) =>
-        block.x === Math.floor(x / 20) * 20 &&
-        block.y === Math.floor(y / 20) * 20
+        block.x === Math.floor((x + camera.x) / this.size) * this.size &&
+        block.y === Math.floor((y + camera.y) / this.size) * this.size
     );
   }
 
@@ -139,19 +139,36 @@ const camera = new Camera();
 const miner = new Miner(canvas.width / 2, 0);
 const inventory = {};
 
+// Add a new gameStarted variable
+let gameStarted = false;
+
+// New function to show the start screen
+function showStartScreen() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.font = "30px Arial";
+  ctx.fillText("Press Enter to Start", canvas.width / 2 - 100, canvas.height / 2);
+}
+
 //---------------------------------------------GAME LOOP----------------------------------------
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  camera.update(miner);
-  ctx.save();
-  ctx.translate(-camera.x, -camera.y);
+  if (gameStarted) {
+    camera.update(miner);
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
 
-  world.draw();
-  miner.draw();
+    world.draw();
+    miner.draw();
 
-  ctx.restore();
+    ctx.restore();
+  } else {
+    showStartScreen();
+  }
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -159,6 +176,13 @@ gameLoop();
 
 //---------------------------------------------EVENT HANDLING----------------------------------------
 
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !gameStarted) {
+    gameStarted = true;
+    return;
+  }
+  });
 document.addEventListener("keydown", (e) => {
   const blockSize = 20;
   let block;
