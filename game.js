@@ -32,16 +32,36 @@ class Block {
 
 
 const world = [];
+const worldWidth = 1600;
+const worldHeight = 1200;
 
 function generateTerrain() {
-  for (let x = 0; x < canvas.width; x += 20) {
-    for (let y = 0; y < canvas.height; y += 20) {
+  for (let x = 0; x < worldWidth; x += 20) {
+    for (let y = 0; y < worldHeight; y += 20) {
       const type = Math.random() < 0.8 ? "dirt" : "stone";
       const block = new Block(x, y, type);
       world.push(block);
     }
   }
 }
+
+class Camera {
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+  }
+
+  update() {
+    this.x = miner.x - canvas.width / 2 + miner.size / 2;
+    this.y = miner.y - canvas.height / 2 + miner.size / 2;
+
+    // Clamp camera to the world bounds
+    this.x = Math.max(0, Math.min(this.x, worldWidth - canvas.width));
+    this.y = Math.max(0, Math.min(this.y, worldHeight - canvas.height));
+  }
+}
+
+const camera = new Camera();
 
 generateTerrain();
 
