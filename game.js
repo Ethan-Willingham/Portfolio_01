@@ -13,13 +13,17 @@ class Miner {
     this.x = x;
     this.y = y;
     this.size = 20;
+    this.color = "blue";
   }
 
   draw() {
-    ctx.fillStyle = "blue";
+    ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.size, this.size);
   }
+
+  
 }
+
 
 //---------------------------------------------BLOCK CLASS----------------------------------------
 
@@ -156,6 +160,39 @@ function isCollidingWithSolidBlock(x, y) {
   const block = world.getBlockAt(x, y);
   return block && block.type !== "sky" && block.type !== "mined";
 }
+
+// Add mining times for block types
+const blockMiningTimes = {
+  sky: 0,
+  grass: 0.2,
+  dirt: 0.2,
+  stone: 1,
+  copper: 1.5,
+  iron: 2,
+  gold: 2.5,
+  adamantite: 2.8,
+  mithril: 3,
+  hell_ore: 3.2,
+  quantum_ore: 3.5
+};
+
+let mining = false;
+let miningTimeout = null;
+
+// Add mineBlockWithTimeout() function
+function mineBlockWithTimeout(block, inventory, time) {
+  if (!mining && block.type !== "sky" && block.type !== "mined") {
+    mining = true;
+    miner.color = "gray";
+
+    miningTimeout = setTimeout(() => {
+      world.mineBlock(block, inventory);
+      mining = false;
+      miner.color = "blue";
+    }, time * 1000);
+  }
+}
+
 //---------------------------------------------GAME LOOP----------------------------------------
 
 function gameLoop() {
@@ -183,39 +220,57 @@ gameLoop();
 //---------------------------------------------EVENT HANDLING----------------------------------------
 
 
+
 document.addEventListener("keydown", (e) => {
+  // Handle game start
   if (e.key === "Enter" && !gameStarted) {
     gameStarted = true;
     return;
   }
-  });
-  document.addEventListener("keydown", (e) => {
-    const blockSize = 20;
-    let block;
-  
-    switch (e.key) {
-      case "ArrowUp":
-        if (miner.y > 0 && !isCollidingWithSolidBlock(miner.x, miner.y - blockSize, miner.size)) {
-          miner.y -= blockSize;
-        }
-        break;
+
+  // Handle miner movement and mining
+  const blockSize = 20;
+  let block;
+
+  if (miningTimeout) {
+    clearTimeout(miningTimeout);
+    miningTimeout = null;
+    mining = false;
+    miner.color = "blue";
+  }
+
+  switch (e.key) {
+    case "ArrowUp":
+      if (miner.y > 0 && !isCollidingWithSolidBlock(miner.x, miner.y - blockSize)) {
+        miner.y -= blockSize;
+      }
+      break;
       case "ArrowDown":
-        if (miner.y < worldHeight - blockSize && !isCollidingWithSolidBlock(miner.x, miner.y + blockSize, miner.size)) {
+        if (miner.y < worldHeight - blockSize && !isCollidingWithSolidBlock(miner.x, miner.y + blockSize)) {
           miner.y += blockSize;
+        } else {
+          block = world.getBlockAt(miner.x, miner.y + blockSize);
+          mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
         }
         break;
       case "ArrowLeft":
-        if (miner.x > 0 && !isCollidingWithSolidBlock(miner.x - blockSize, miner.y, miner.size)) {
+        if (miner.x > 0 && !isCollidingWithSolidBlock(miner.x - blockSize, miner.y)) {
           miner.x -= blockSize;
+        } else {
+          block = world.getBlockAt(miner.x - blockSize, miner.y);
+          mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
         }
         break;
       case "ArrowRight":
-        if (miner.x < worldWidth - blockSize && !isCollidingWithSolidBlock(miner.x + blockSize, miner.y, miner.size)) {
+        if (miner.x < worldWidth - blockSize && !isCollidingWithSolidBlock(miner.x + blockSize, miner.y)) {
           miner.x += blockSize;
+        } else {
+          block = world.getBlockAt(miner.x + blockSize, miner.y);
+          mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
         }
         break;
     }
-  
-    block = world.getBlockAt(miner.x, miner.y);
-    world.mineBlock(block, inventory);
-  });
+
+  block = world.getBlockAt(miner.x, miner.y);
+  mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
+});
