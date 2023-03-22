@@ -110,10 +110,11 @@ class World {
   }
 
   getBlockAt(x, y) {
+    const blockSize = 20;
     return this.blocks.find(
       (block) =>
-        block.x === Math.floor((x + camera.x) / this.size) * this.size &&
-        block.y === Math.floor((y + camera.y) / this.size) * this.size
+        block.x === Math.floor(x / blockSize) * blockSize &&
+        block.y === Math.floor(y / blockSize) * blockSize
     );
   }
 
@@ -151,21 +152,26 @@ function showStartScreen() {
   ctx.fillText("Press Enter to Start", canvas.width / 2 - 100, canvas.height / 2);
 }
 
+function isCollidingWithSolidBlock(x, y) {
+  const block = world.getBlockAt(x, y);
+  return block && block.type !== "sky" && block.type !== "mined";
+}
 //---------------------------------------------GAME LOOP----------------------------------------
 
 function gameLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+  ctx.clearRect(camera.x, camera.y, canvas.width, canvas.height);
 
   if (gameStarted) {
     camera.update(miner);
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
 
     world.draw();
     miner.draw();
 
     ctx.restore();
   } else {
+    ctx.restore();
     showStartScreen();
   }
 
@@ -183,30 +189,33 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   });
-document.addEventListener("keydown", (e) => {
-  const blockSize = 20;
-  let block;
-
-  switch (e.key) {
-    case "ArrowUp":
-      if (miner.y > 0) miner.y -= blockSize;
-      block = world.getBlockAt(miner.x, miner.y);
-      world.mineBlock(block, inventory);
-      break;
-    case "ArrowDown":
-      if (miner.y < worldHeight - blockSize) miner.y += blockSize;
-      block = world.getBlockAt(miner.x, miner.y);
-      world.mineBlock(block, inventory);
-      break;
-    case "ArrowLeft":
-      if (miner.x > 0) miner.x -= blockSize;
-      block = world.getBlockAt(miner.x, miner.y);
-      world.mineBlock(block, inventory);
-      break;
-    case "ArrowRight":
-      if (miner.x < worldWidth - blockSize) miner.x += blockSize;
-      block = world.getBlockAt(miner.x, miner.y);
-      world.mineBlock(block, inventory);
-      break;
-  }
-});
+  document.addEventListener("keydown", (e) => {
+    const blockSize = 20;
+    let block;
+  
+    switch (e.key) {
+      case "ArrowUp":
+        if (miner.y > 0 && !isCollidingWithSolidBlock(miner.x, miner.y - blockSize, miner.size)) {
+          miner.y -= blockSize;
+        }
+        break;
+      case "ArrowDown":
+        if (miner.y < worldHeight - blockSize && !isCollidingWithSolidBlock(miner.x, miner.y + blockSize, miner.size)) {
+          miner.y += blockSize;
+        }
+        break;
+      case "ArrowLeft":
+        if (miner.x > 0 && !isCollidingWithSolidBlock(miner.x - blockSize, miner.y, miner.size)) {
+          miner.x -= blockSize;
+        }
+        break;
+      case "ArrowRight":
+        if (miner.x < worldWidth - blockSize && !isCollidingWithSolidBlock(miner.x + blockSize, miner.y, miner.size)) {
+          miner.x += blockSize;
+        }
+        break;
+    }
+  
+    block = world.getBlockAt(miner.x, miner.y);
+    world.mineBlock(block, inventory);
+  });
