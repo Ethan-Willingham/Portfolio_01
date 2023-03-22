@@ -192,6 +192,37 @@ function mineBlockWithTimeout(block, inventory, time) {
     }, time * 1000);
   }
 }
+function drawInventory() {
+  ctx.save();
+  ctx.translate(camera.x, camera.y);
+  ctx.fillStyle = "rgba(50, 50, 50, 0.7)";
+  ctx.fillRect(100, 100, canvas.width - 200, canvas.height - 200);
+
+  let x = 120;
+  let y = 120;
+  const blockMargin = 10;
+  const blockTextMargin = 4;
+
+  for (const type in inventory) {
+    const block = new Block(x, y, type);
+    block.draw();
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial";
+    ctx.fillText(inventory[type], x + blockTextMargin, y + block.size - blockTextMargin);
+    x += block.size + blockMargin;
+    if (x + block.size > canvas.width - 200) {
+      x = 120;
+      y += block.size + blockMargin;
+    }
+  }
+
+  ctx.restore();
+}
+
+// New variables for inventory management
+let inventoryOpen = false;
+
+
 
 //---------------------------------------------GAME LOOP----------------------------------------
 
@@ -205,6 +236,15 @@ function gameLoop() {
 
     world.draw();
     miner.draw();
+
+    // Draw watermark
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.fillText("Press 'i' to open inv", canvas.width - 180 + camera.x, canvas.height - 20 + camera.y);
+
+    if (inventoryOpen) {
+      drawInventory();
+    }
 
     ctx.restore();
   } else {
@@ -273,4 +313,8 @@ document.addEventListener("keydown", (e) => {
 
   block = world.getBlockAt(miner.x, miner.y);
   mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
+  // Handle inventory open and close
+  if (e.key === "i" || e.key === "Escape") {
+    inventoryOpen = !inventoryOpen;
+  }
 });
