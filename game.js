@@ -17,13 +17,14 @@ class Miner {
   }
 
   draw() {
+    const shakeIntensity = 1;
+    const shakeOffsetX = mining ? (Math.random() * shakeIntensity * 2) - shakeIntensity : 0;
+    const shakeOffsetY = mining ? (Math.random() * shakeIntensity * 2) - shakeIntensity : 0;
+
     ctx.fillStyle = this.color;
-    ctx.fillRect(this.x, this.y, this.size, this.size);
+    ctx.fillRect(this.x + shakeOffsetX, this.y + shakeOffsetY, this.size, this.size);
   }
-
-  
 }
-
 
 //---------------------------------------------BLOCK CLASS----------------------------------------
 
