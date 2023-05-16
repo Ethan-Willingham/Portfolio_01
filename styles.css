@@ -1,12 +1,28 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     line-height: 1.6;
     color: #333;
+    background-color: #f5f5f5;
 }
 
 header {
     text-align: center;
     padding: 20px;
+    background-color: #00334e;
+    color: #f4f4f4;
+}
+
+header h2 {
+    color: #f4f4f4;
+}
+
+header ul {
+    list-style: none;
+    padding: 0;
+}
+
+header ul li {
+    margin-bottom: 5px;
 }
 
 .image-section {
@@ -15,27 +31,37 @@ header {
 }
 
 .image-section img {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
+    max-width: 20%;
+    box-shadow: 0px 0px 10px #888;
 }
 
 .links-section {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px;
 }
 
-.links-section a {
+.link-box {
     display: inline-block;
-    padding: 10px 15px;
-    margin: 0 10px;
-    background-color: #f4f4f4;
+    padding: 10px;
+    margin: 0 10px 10px 10px;
+    background-color: #0074b7;
     text-decoration: none;
-    color: #333;
+    border: 1px solid #00334e;
     border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
 
-.links-section a:hover {
-    background-color: #333;
+.link-box a {
+    color: #f4f4f4;
+    text-decoration: none;
+}
+
+.link-box:hover {
+    background-color: #00334e;
+}
+
+.link-box:hover a {
     color: #f4f4f4;
 }
