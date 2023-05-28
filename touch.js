@@ -15,12 +15,11 @@ hammerInstance.add(pan);
 
 // Subscribe to pan events
 hammerInstance.on('pan', function (e) {
-    posX = e.deltaX;
-    posY = e.deltaY;
-    e.target.style.transform = `translate(${posX}px, ${posY}px)`;
+    e.target.style.transform = `translate(${posX + e.deltaX}px, ${posY + e.deltaY}px)`;
 });
 
-// reset position on end
+// update position on end
 hammerInstance.on('panend', function (e) {
-    e.target.style.transform = `translate(${posX}px, ${posY}px)`;
+    posX += e.deltaX;
+    posY += e.deltaY;
 });
