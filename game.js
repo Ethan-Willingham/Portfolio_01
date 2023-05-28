@@ -142,7 +142,7 @@ const world = new World(worldWidth, worldHeight);
 world.generateTerrain();
 
 const camera = new Camera();
-const miner = new Miner(canvas.width / 2, 0);
+const miner = new Miner(canvas.width / 0.8, canvas.height / 1);
 const inventory = {};
 
 // Add a new gameStarted variable
