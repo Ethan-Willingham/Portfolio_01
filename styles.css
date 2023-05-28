@@ -35,6 +35,11 @@ header ul li {
     box-shadow: 0px 0px 10px #888;
 }
 
+header h3 {
+    color: #0074b7;
+    align-items : center;
+}
+
 .links-section {
     display: flex;
     justify-content: center;
