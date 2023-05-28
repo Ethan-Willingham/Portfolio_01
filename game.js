@@ -289,25 +289,31 @@ document.addEventListener("keydown", (e) => {
       case "ArrowDown":
         if (miner.y < worldHeight - blockSize && !isCollidingWithSolidBlock(miner.x, miner.y + blockSize)) {
           miner.y += blockSize;
-        } else {
+        } 
+        else {
           block = world.getBlockAt(miner.x, miner.y + blockSize);
           mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
+          miner.y += blockSize;
         }
         break;
       case "ArrowLeft":
         if (miner.x > 0 && !isCollidingWithSolidBlock(miner.x - blockSize, miner.y)) {
           miner.x -= blockSize;
-        } else {
+        } 
+        else {
           block = world.getBlockAt(miner.x - blockSize, miner.y);
           mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
+          miner.x -= blockSize;
         }
         break;
       case "ArrowRight":
         if (miner.x < worldWidth - blockSize && !isCollidingWithSolidBlock(miner.x + blockSize, miner.y)) {
           miner.x += blockSize;
-        } else {
+        } 
+        else {
           block = world.getBlockAt(miner.x + blockSize, miner.y);
           mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
+          miner.x += blockSize;
         }
         break;
     }

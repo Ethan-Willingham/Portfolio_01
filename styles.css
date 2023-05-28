@@ -70,3 +70,56 @@ header h3 {
 .link-box:hover a {
     color: #f4f4f4;
 }
+
+body#gamePage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    background-color: #6d6875; 
+    margin: 0;
+    padding: 0;
+}
+
+#topBar {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#homeButton {
+    padding: 10px 20px;
+    background-color: #00334e; 
+    color: #f4f4f4;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#homeButton:hover {
+    background-color: #0074b7;
+    color: #f4f4f4;
+}
+
+#gameTitle {
+    font-size: 3em;
+    text-align: center;
+    color: #ffffff; 
+    text-shadow: 3px 3px #bcb8b1;
+    margin-bottom: 20px;
+}
+
+.aura {
+    border: 3px solid black;
+    margin: 0px;
+    padding: 0px;
+    box-shadow: 0px 0px 50px 15px rgba(84, 46, 255, 0.7); 
+    align-self: center;
+}
+
+
+
