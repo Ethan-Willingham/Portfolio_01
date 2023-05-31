@@ -129,6 +129,7 @@ class World {
         inventory[block.type] = 0;
       }
       inventory[block.type]++;
+      score += blockPoints[block.type] || 0;
       block.type = "mined";
     }
   }
@@ -223,9 +224,83 @@ function drawInventory() {
 // New variables for inventory management
 let inventoryOpen = false;
 
+//---------------------------------------------SCORE AND TIMER----------------------------------------
+let timeRemaining = 60;
 
+let score = 0;
+const blockPoints = {
+  grass: 1,
+  dirt: 2,
+  stone: 3,
+  copper: 5,
+  iron: 10,
+  gold: 20,
+  adamantite: 50,
+  mithril: 100,
+  hell_ore: 200,
+  quantum_ore: 500,
+};
+
+function drawScore() {
+  ctx.save();
+  ctx.translate(camera.x, camera.y);
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText(`Score: ${score}`, 20, 40);
+  ctx.restore();
+}
+
+
+
+function drawTime() {
+  ctx.save();
+  ctx.translate(camera.x, camera.y);
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText(`Time: ${timeRemaining}`, 20, 70);  // Use timeRemaining instead of countdownInterval
+  ctx.restore();
+}
+
+function countdown() {
+  countdownInterval = setInterval(() => {
+    if (timeRemaining > 0) {
+      timeRemaining--;
+    } else {
+      clearInterval(countdownInterval);
+      gameStarted = false;
+    }
+  }, 1000);
+}
+
+let countdownInterval;
+
+function startCountdown() {
+  countdownInterval = setInterval(() => {
+    if (timeRemaining > 0) {
+      timeRemaining--;
+    } else {
+      // If time runs out, stop the countdown and end the game
+      clearInterval(countdownInterval);
+      gameStarted = false;
+    }
+  }, 1000);  // Decrease timeRemaining every 1000 milliseconds (1 second)
+}
+
+function resetGame() {
+  // Reset game state
+  score = 0;
+  timeRemaining = 60;
+  gameStarted = false;
+  inventory = {};
+  miner = new Miner(canvas.width / 0.8, canvas.height / 1);
+  
+  // Regenerate terrain
+  world = new World(worldWidth, worldHeight);
+  world.generateTerrain();
+}
 
 //---------------------------------------------GAME LOOP----------------------------------------
+
 
 function gameLoop() {
   ctx.save();
@@ -237,6 +312,8 @@ function gameLoop() {
 
     world.draw();
     miner.draw();
+    drawScore();
+    drawTime();
 
     // Draw watermark
     ctx.font = "14px Arial";
@@ -247,8 +324,13 @@ function gameLoop() {
       drawInventory();
     }
 
+    // We remove countdown() call from here...
+    // countdown(); 
+
     ctx.restore();
   } else {
+    ctx.restore();
+    showStartScreen();
     ctx.restore();
     showStartScreen();
   }
@@ -266,8 +348,10 @@ document.addEventListener("keydown", (e) => {
   // Handle game start
   if (e.key === "Enter" && !gameStarted) {
     gameStarted = true;
+    startCountdown();
     return;
   }
+  
 
   // Handle miner movement and mining
   const blockSize = 20;
@@ -293,7 +377,7 @@ document.addEventListener("keydown", (e) => {
         else {
           block = world.getBlockAt(miner.x, miner.y + blockSize);
           mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
-          miner.y += blockSize;
+          
         }
         break;
       case "ArrowLeft":
@@ -303,7 +387,7 @@ document.addEventListener("keydown", (e) => {
         else {
           block = world.getBlockAt(miner.x - blockSize, miner.y);
           mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
-          miner.x -= blockSize;
+          
         }
         break;
       case "ArrowRight":
@@ -313,7 +397,7 @@ document.addEventListener("keydown", (e) => {
         else {
           block = world.getBlockAt(miner.x + blockSize, miner.y);
           mineBlockWithTimeout(block, inventory, blockMiningTimes[block.type]);
-          miner.x += blockSize;
+          
         }
         break;
     }

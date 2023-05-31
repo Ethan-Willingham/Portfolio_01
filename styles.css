@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Nabla&display=swap');
 body {
     font-family: 'Roboto', sans-serif;
     line-height: 1.6;
@@ -106,11 +107,9 @@ body#gamePage {
 }
 
 #gameTitle {
-    font-size: 3em;
-    text-align: center;
-    color: #ffffff; 
-    text-shadow: 3px 3px #bcb8b1;
-    margin-bottom: 20px;
+    font-family: "Nabla";
+    base-palette: 2;
+    font-size: 100px;
 }
 
 .aura {
