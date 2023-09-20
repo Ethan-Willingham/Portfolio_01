@@ -33,13 +33,14 @@ header {
 
 a {
   text-decoration: none;
-  color: #000000c0;
+  color: #303df8d3;
   outline: none;
+  font-weight: 600;
 }
 
 /* Hover state */
 a:hover {
-  color: rgba(0, 0, 0, 0.57);
+  color: rgb(0, 17, 255);
 }
 
 /* Active (clicked) state */
