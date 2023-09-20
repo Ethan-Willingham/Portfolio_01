@@ -3,97 +3,1073 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/toolbox.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martel+Sans:wght@400;700&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
     <title>Tool Box</title>
   </head>
   <body class="tool-box-body">
-    <section class="resources">
-      <h2>Coding Platforms</h2>
-      <ul>
-        <li><a href="https://leetcode.com/">Leet Code</a></li>
-        <li><a href="https://www.hackerrank.com/">HackerRank</a></li>
-        <li><a href="https://www.codewars.com/">Code Wars</a></li>
-        <li><a href="https://www.topcoder.com/">Top Coder</a></li>
-        <li><a href="https://www.codechef.com/">Code Chef</a></li>
-        <li><a href="https://www.pramp.com/">Pramp</a></li>
-      </ul>
-
-      <h2>Internet Tools</h2>
-      <ul>
-        <li><a href="https://osintframework.com/">OSINT Framework</a></li>
-        <li><a href="https://www.shodan.io/">Shodan</a></li>
-        <li><a href="https://censys.io/">Censys</a></li>
-        <li><a href="https://archive.org/web/">Wayback Machine</a></li>
-        <li><a href="https://dev.to/">Dev.to</a></li>
-      </ul>
-
-      <h2>Quantum Computing</h2>
-      <ul>
-        <li><a href="https://qiskit.org/">Qiskit</a></li>
-      </ul>
-
-      <h2>Public Domain Media</h2>
-      <ul>
-        <li><a href="https://www.openclipart.org/">Open Clipart</a></li>
-        <li><a href="https://svgsilh.com/">SVG Silh</a></li>
-        <li><a href="https://thenounproject.com/">The Noun Project</a></li>
-        <li><a href="https://pixabay.com/">Pixabay</a></li>
-        <li><a href="https://freesound.org/">Freesound</a></li>
-        <li><a href="https://freemusicarchive.org/">Free Music Archive</a></li>
-        <li><a href="https://www.sketchfab.com/">Sketchfab</a></li>
-        <li><a href="https://www.thingiverse.com/">Thingiverse</a></li>
-      </ul>
-
-      <h2>AI Tools</h2>
-      <ul>
-        <li><a href="https://www.boomy.com/">Boomy</a></li>
-        <li><a href="https://soundraw.ai/">Soundraw</a></li>
-      </ul>
-
-      <h2>Ascii Art</h2>
-      <ul>
-        <li><a href="http://text-image.com/">Text Image</a></li>
-        <li><a href="http://patorjk.com/software/taag/">Patorjk</a></li>
-        <li><a href="https://asciiart.eu/">Ascii Art Archive</a></li>
-      </ul>
-
-      <h2>Image Upscaler</h2>
-      <ul>
-        <li><a href="https://www.imgupscaler.com/">Img Upscaler</a></li>
-        <li><a href="https://upscale.media/">Upscale Media</a></li>
-        <li>
-          <a href="https://topazlabs.com/ai-gigapixel/"
-            >Topaz Labs AI Gigapixel</a
+    <header>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M5 7c0 .552-.447 1-1 1s-1-.448-1-1 .447-1 1-1 1 .448 1 1zm19-4v8h-13v13h-8v-13h-3v-8h3v-3h8v3h13zm-19 0h4v-1h-4v1zm4 8h-4v11h4v-2h-2v-1h2v-2h-2v-1h2v-2h-2v-1h2v-2zm13-6h-2v3h-1v-3h-2v2h-1v-2h-2v3h-1v-3h-2v2h-1v-2h-2v3h-1v-3h-5v4h20v-4z"
+        />
+      </svg>
+      ToolBox
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+      >
+        <path
+          d="M16.063 19.528l-6.416-5.37 1.08 1.961c.134.241.214.515.232.791l.38 5.793c.041.674-.466 1.297-1.253 1.297-.59 0-1.093-.4-1.225-.974l-1.157-4.961c-.385-.437-1.475-1.593-2.135-2.291-.719 1.711-2.536 6.043-3.114 7.459-.192.473-.645.767-1.179.767-.703 0-1.276-.569-1.276-1.27 0-.092 0-.112.761-3.863.518-2.555 1.167-5.755 1.473-7.382.084-.445.287-.86.587-1.198l.938-1.057-3.37-2.82c-.507-.425.137-1.192.642-.767l.949.795c.325-.626.855-1.651 1.165-2.278.199-.397.589-.658 1.045-.699 1.178.012 2.314.018 5.252.039.57.005 1.121.049 1.596.528.294.294 2.051 2.176 2.416 2.542.333.334.522.794.521 1.263l-.005 8.639 2.766 2.316 2.72-2.996c.235-.259.546-.381.854-.381.465 0 .919.277 1.088.779.937 2.817 2.602 7.81 2.602 7.81h-12l4.063-4.472zm-11.537-9.656l-.957 1.079c-.179.202-.302.451-.352.72-.306 1.63-.956 4.835-1.476 7.394-.371 1.829-.721 3.556-.744 3.72.01.211.431.32.533.071.726-1.782 3.414-8.175 3.414-8.175.186-.439.621-.362.823-.151 0 0 2.101 2.208 2.629 2.776.139.15.235.334.282.531l1.157 4.963c.064.287.524.261.506-.033l-.38-5.79c-.008-.131-.047-.261-.109-.375l-1.943-3.527c-.07-.125-.081-.271-.037-.402l-3.346-2.801zm18.087 13.128c-.559-1.676-1.793-5.397-2.164-6.494-.036-.106-.171-.129-.253-.042-1.031 1.082-4.259 4.691-5.936 6.536h8.353zm-9.642-7.364l.004-7.805c.001-.206-.083-.408-.229-.555-.709-.711-1.804-1.928-2.417-2.543-.177-.179-.37-.229-.895-.233-2.865-.021-4.154-.027-5.206-.041-.063.008-.143.058-.187.146-.338.684-.938 1.842-1.252 2.444l.07.049 1.694-1.887c.103-.114.259-.169.405-.165l2.617.175c.414.028.616.521.34.831l-2.725 3.072 3.308 2.768 2.434-2.826c.273-.316.796-.177.871.239l1.165 6.329.003.002zm-3.706-3.102l.94.787 1.527 1.278-.729-4.083-1.738 2.018zm-5.677-4.751l.835.699 2.068-2.331-1.356-.091-1.547 1.723zm10.845-2.096c-1.568 0-2.845-1.275-2.845-2.843s1.277-2.844 2.845-2.844c1.568 0 2.844 1.276 2.844 2.844 0 1.568-1.276 2.843-2.844 2.843zm0-4.687c-1.018 0-1.845.827-1.845 1.844 0 1.016.827 1.843 1.845 1.843 1.017 0 1.844-.827 1.844-1.843 0-1.017-.827-1.844-1.844-1.844z"
+        />
+      </svg>
+    </header>
+    <div class="parent-container">
+      <!-- Category 1: Coding Practice Tools -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            fill-rule="evenodd"
+            clip-rule="evenodd"
           >
-        </li>
-      </ul>
+            <path
+              d="M16 3.383l-.924-.383-7.297 17.617.924.383 7.297-17.617zm.287 3.617l6.153 4.825-6.173 5.175.678.737 7.055-5.912-7.048-5.578-.665.753zm-8.478 0l-6.249 4.825 6.003 5.175-.679.737-6.884-5.912 7.144-5.578.665.753z"
+            /></svg
+          >Coding Practice Tools
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.codingame.com/multiplayer/clashofcode"
+                class="category-link"
+                target="_blank"
+                >Clash of Code</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://leetcode.com/"
+                class="category-link"
+                target="_blank"
+                >LeetCode</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.hackerrank.com/"
+                class="category-link"
+                target="_blank"
+                >HackerRank</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.codechef.com/"
+                class="category-link"
+                target="_blank"
+                >CodeChef</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
 
-      <h2>Other Tools</h2>
-      <ul>
-        <li>
-          <a href="https://javascriptobfuscator.com/">Javascript Obfuscator</a>
-        </li>
-        <li><a href="https://obfuscator.io/">Obfuscator IO</a></li>
-        <li><a href="https://try.terser.org/">Terser</a></li>
-        <li><a href="https://github.com/mishoo/UglifyJS">UglifyJS</a></li>
-        <li><a href="https://gchq.github.io/CyberChef/">CyberChef</a></li>
-        <li><a href="https://www.openshot.org/">OpenShot Video Editor</a></li>
-        <li><a href="https://obsproject.com/">OBS Screen Recorder</a></li>
-        <li><a href="https://handbrake.fr/">HandBrake Video Converter</a></li>
-        <li><a href="https://www.gimp.org/">Gimp Photo Editor</a></li>
-        <li><a href="https://inkscape.org/">Inkscape Vector Editor</a></li>
-        <li><a href="https://app.corelvector.com/">CorelVector</a></li>
-        <li>
-          <a href="https://www.audacityteam.org/">Audacity Audio Editor</a>
-        </li>
-        <li>
-          <a href="https://stackshare.io/tools/trending"
-            >StackShare Trending Tools</a
+      <!-- Category 2: Online Development Learning Platforms -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
           >
-        </li>
-        <li><a href="https://giphy.com/">Giphy GIF Maker</a></li>
-        <li><a href="https://coolors.co">Color Palette Generator</a></li>
-      </ul>
-    </section>
+            <path
+              d="M0 0v19h24v-19h-24zm22 17h-20v-15h20v15zm-6.599 4l2.599 3h-12l2.599-3h6.802zm-6.401-16l6 4.674-2.538.427 1.538 3.095-1.571.804-1.546-3.157-1.883 1.759v-7.602z"
+            /></svg
+          >Online Development Learning Platforms
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.udemy.com/"
+                class="category-link"
+                target="_blank"
+                >Udemy</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.coursera.org/"
+                class="category-link"
+                target="_blank"
+                >Coursera</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://frontendmasters.com/"
+                class="category-link"
+                target="_blank"
+                >Frontend Masters</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 3: Interview Practice Tools -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M10.119 16.064c2.293-.53 4.427-.994 3.394-2.946-3.147-5.941-.835-9.118 2.488-9.118 3.388 0 5.643 3.299 2.488 9.119-1.065 1.964 1.149 2.427 3.393 2.946 1.985.458 2.118 1.428 2.118 3.107l-.003.828h-1.329c0-2.089.083-2.367-1.226-2.669-1.901-.438-3.695-.852-4.351-2.304-.239-.53-.395-1.402.226-2.543 1.372-2.532 1.719-4.726.949-6.017-.902-1.517-3.617-1.509-4.512-.022-.768 1.273-.426 3.479.936 6.05.607 1.146.447 2.016.206 2.543-.66 1.445-2.472 1.863-4.39 2.305-1.252.29-1.172.588-1.172 2.657h-1.331c0-2.196-.176-3.406 2.116-3.936zm-10.117 3.936h1.329c0-1.918-.186-1.385 1.824-1.973 1.014-.295 1.91-.723 2.316-1.612.212-.463.355-1.22-.162-2.197-.952-1.798-1.219-3.374-.712-4.215.547-.909 2.27-.908 2.819.015.935 1.567-.793 3.982-1.02 4.982h1.396c.44-1 1.206-2.208 1.206-3.9 0-2.01-1.312-3.1-2.998-3.1-2.493 0-4.227 2.383-1.866 6.839.774 1.464-.826 1.812-2.545 2.209-1.49.345-1.589 1.072-1.589 2.334l.002.618z"
+            /></svg
+          >Interview Practice Tools
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.pramp.com/#/"
+                class="category-link"
+                target="_blank"
+                >Pramp</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 4: Open-Source Intelligence Tools (OSINT) -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6.016 11c-.048-1.03-.168-2.035-.356-3h3.5c.41.935.685 1.942.79 3h-3.934zm3.933 2c-.105 1.058-.38 2.065-.79 3h-3.5c.188-.965.309-1.97.356-3h3.934zm-1.968-7h-2.83c-.375-1.197-.875-2.292-1.461-3.286 1.716.684 3.195 1.831 4.291 3.286zm-4.948 0h-2.033v-3.674c.841 1.01 1.526 2.256 2.033 3.674zm-2.033 12h2.033c-.507 1.418-1.192 2.664-2.033 3.674v-3.674zm-2-15.674v3.674h-2.033c.507-1.418 1.192-2.664 2.033-3.674zm0 5.674v3h-2.994c.052-1.04.181-2.044.389-3h2.605zm0 5v3h-2.605c-.208-.956-.336-1.96-.389-3h2.994zm0 5v3.674c-.841-1.01-1.526-2.256-2.033-3.674h2.033zm2-2v-3h2.994c-.052 1.04-.181 2.044-.389 3h-2.605zm0-5v-3h2.605c.208.956.336 1.96.389 3h-2.994zm-4.69-8.286c-.586.994-1.086 2.089-1.461 3.286h-2.83c1.096-1.455 2.575-2.602 4.291-3.286zm-2.326 8.286h-3.933c.105-1.058.38-2.065.79-3h3.5c-.189.965-.309 1.97-.357 3zm.357 5h-3.5c-.41-.935-.685-1.942-.79-3h3.934c.047 1.03.167 2.035.356 3zm-2.322 2h2.83c.375 1.197.875 2.292 1.461 3.286-1.716-.684-3.195-1.831-4.291-3.286zm11.671 3.286c.586-.994 1.086-2.089 1.461-3.286h2.83c-1.096 1.455-2.575 2.602-4.291 3.286z"
+            /></svg
+          >Open-Source Intelligence Tools (OSINT)
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://osintframework.com/"
+                class="category-link"
+                target="_blank"
+                >OSINT Framework</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.shodan.io/"
+                class="category-link"
+                target="_blank"
+                >Shodan</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/sherlock-project/sherlock"
+                class="category-link"
+                target="_blank"
+                >Sherlock</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/qeeqbox/social-analyzer"
+                class="category-link"
+                target="_blank"
+                >social-analyzer</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/smicallef/spiderfoot"
+                class="category-link"
+                target="_blank"
+                >SpiderFoot</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/laramies/theHarvester"
+                class="category-link"
+                target="_blank"
+                >TheHarvester</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 5: Tech News Resources -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M18 9h-12v1h12v-1zm-9 2h-3v1h3v-1zm0 2h-3v1h3v-1zm9-2h-3v1h3v-1zm0 2h-3v1h3v-1zm-4-2h-4v3h4v-3zm-1.832-3.028l-.46-1.941h.505l.24 1.345.27-1.345h.492l.238 1.32.249-1.32h.482l-.501 1.941h-.5l-.238-1.284-.271 1.284h-.506zm-.579-.396h-.78v-.406h.698v-.393h-.698v-.35h.74v-.396h-1.215v1.941h1.255v-.396zm3.257.028c-.149 0-.324-.043-.466-.116l-.024-.013-.098.398.015.008c.102.058.318.119.547.119.581 0 .788-.328.788-.61 0-.272-.161-.458-.507-.586-.254-.096-.338-.145-.338-.247 0-.098.1-.161.254-.161.136 0 .266.03.388.088l.023.011.107-.39-.015-.007c-.145-.065-.311-.098-.495-.098-.442 0-.739.239-.739.593 0 .262.181.458.535.581.227.081.304.144.304.247 0 .117-.102.183-.279.183zm-6.016-.959l.691 1.327h.485v-1.941h-.438v1.189l-.64-1.189h-.536v1.941h.438v-1.327zm13.212 8.993c.06.255-.277.414-.391.144-.136-.33-.356-1.734-.547-3.146-.103-.756-1.107-.663-1.104.118.003 1.215.002 2.228 0 4.027-.002 1.535.697 1.565 1.213 3.287.088.296.164.618.226.933l2.561-.895c-.893-1.747-.462-3.126-.373-4.255.122-1.543-.288-1.693-2.192-3.548.114.816.352 2.265.607 3.335zm-19.477-3.334c-1.904 1.854-2.314 2.005-2.192 3.548.089 1.128.52 2.507-.373 4.254l2.562.894c.062-.314.138-.637.226-.933.515-1.721 1.214-1.752 1.212-3.287-.002-1.8-.003-2.812 0-4.027.003-.781-1.002-.874-1.104-.118-.19 1.412-.411 2.816-.547 3.146-.113.271-.45.111-.391-.144.255-1.069.493-2.518.607-3.333zm2.435 4.696l.004-2h13.992l.004 2h-14zm-2-5.819v-6.681c0-.828.672-1.5 1.5-1.5h15c.828 0 1.5.672 1.5 1.5v6.681c-.138-.04-.282-.065-.436-.065-.41-.001-.812.166-1.102.457-.289.29-.449.686-.463 1.118v-7.691h-13.999v7.689c-.014-.432-.174-.827-.463-1.117-.29-.291-.691-.457-1.102-.457-.152 0-.296.026-.435.066z"
+            /></svg
+          >Tech News Resources
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.darkreading.com/"
+                class="category-link"
+                target="_blank"
+                >Dark Reading</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.infoworld.com/"
+                class="category-link"
+                target="_blank"
+                >InfoWorld</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://slashdot.org/"
+                class="category-link"
+                target="_blank"
+                >Slashdot</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://arstechnica.com/gadgets/"
+                class="category-link"
+                target="_blank"
+                >Ars Technica (Tech)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://techcrunch.com/"
+                class="category-link"
+                target="_blank"
+                >TechCrunch</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://news.ycombinator.com/"
+                class="category-link"
+                target="_blank"
+                >Hacker News</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 6: Social Platforms for Developers -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M8.602 3.7c-1.154 1.937-.635 5.227 1.424 9.025.93 1.712.697 3.02.338 3.815-.982 2.178-3.675 2.799-6.525 3.456-1.964.454-1.839.87-1.839 4.004h-1.995l-.005-1.241c0-2.52.199-3.975 3.178-4.663 3.365-.777 6.688-1.473 5.09-4.418-4.733-8.729-1.35-13.678 3.732-13.678 3.321 0 5.97 2.117 5.97 6.167 0 3.555-1.949 6.833-2.383 7.833h-2.115c.392-1.536 2.499-4.366 2.499-7.842 0-5.153-5.867-4.985-7.369-2.458zm15.398 15.8c0 2.485-2.017 4.5-4.5 4.5s-4.5-2.015-4.5-4.5 2.017-4.5 4.5-4.5 4.5 2.015 4.5 4.5zm-2-.5h-2v-2h-1v2h-2v1h2v2h1v-2h2v-1z"
+            /></svg
+          >Social Platforms for Developers
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a href="https://dev.to/" class="category-link" target="_blank"
+                >DEV Community</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://hashnode.com/"
+                class="category-link"
+                target="_blank"
+                >Hashnode</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://medium.com/"
+                class="category-link"
+                target="_blank"
+                >Medium</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 7: Various Super Fun Internet Tools! -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm0 2c3.691 0 6.915 2.016 8.647 5h-17.294c1.732-2.984 4.956-5 8.647-5zm0 20c-5.514 0-10-4.486-10-10 0-1.045.163-2.052.461-3h1.859c.606 1.518 1.929 3 3.986 3 2.477 0 2.153-2.31 3.694-2.31s1.218 2.31 3.695 2.31c2.055 0 3.379-1.482 3.984-3h1.86c.298.948.461 1.955.461 3 0 5.514-4.486 10-10 10zm5.508-8.059l.492.493c-1.127 1.72-3.199 3.566-5.999 3.566-2.801 0-4.874-1.846-6.001-3.566l.492-.493c1.513 1.195 3.174 1.931 5.509 1.931 2.333 0 3.994-.736 5.507-1.931z"
+            /></svg
+          >Various Super Fun Internet Tools!
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://archive.org/web/"
+                class="category-link"
+                target="_blank"
+                >Way Back Machine</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.qualtrics.com/blog/glossary-of-coding-and-programming-terms/"
+                class="category-link"
+                target="_blank"
+                >A Beginners Glossary of Coding and Programming Terms</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 8: Quantum Computing -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M21.754 12.013c-1.438 0-1.19-5.013-2.971-5.013-1.689 0-1.432 6.223-2.388 8.545-.039.095-.13.156-.232.156-.104 0-.197-.063-.234-.162-.886-2.323-.833-8.539-2.534-8.539-1.741 0-1.667 5.947-2.54 8.448-.036.102-.129.168-.238.168-.107 0-.2-.065-.237-.166-.867-2.407-.809-8.45-2.52-8.45-1.838 0-1.646 6.248-2.528 8.516-.038.097-.13.16-.234.16-.105 0-.198-.063-.235-.162-.568-1.485-.644-4.514-2.722-4.514h-1.627c-.284 0-.514.23-.514.514 0 .269.217.486.486.486h1.433c.579 0 .809.127 1.025.567.735 1.501.844 4.433 2.12 4.433 1.861 0 1.705-6.136 2.539-8.47.08-.223.395-.223.474 0 .875 2.476.798 8.47 2.55 8.47 1.703 0 1.66-5.985 2.511-8.417.079-.226.399-.224.477.003.85 2.534.804 8.414 2.512 8.414 1.852 0 1.752-5.955 2.503-8.45.068-.226.386-.242.474-.021.576 1.412.874 4.468 2.476 4.468h1.907c.283 0 .514-.23.514-.514 0-.259-.21-.47-.47-.47h-1.777z"
+            /></svg
+          >Quantum Computing
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://qiskit.org/"
+                class="category-link"
+                target="_blank"
+                >Qiskit</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 9: AI Tools -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+          >
+            <path
+              d="M24 11.374c0 4.55-3.783 6.96-7.146 6.796-.151 1.448.061 2.642.384 3.641l-3.72 1.189c-.338-1.129-.993-3.822-2.752-5.279-2.728.802-4.969-.646-5.784-2.627-2.833.046-4.982-1.836-4.982-4.553 0-4.199 4.604-9.541 11.99-9.541 7.532 0 12.01 5.377 12.01 10.374zm-21.992-1.069c-.145 2.352 2.179 3.07 4.44 2.826.336 2.429 2.806 3.279 4.652 2.396 1.551.74 2.747 2.37 3.729 4.967l.002.006.111-.036c-.219-1.579-.09-3.324.36-4.528 3.907.686 6.849-1.153 6.69-4.828-.166-3.829-3.657-8.011-9.843-8.109-6.302-.041-9.957 4.255-10.141 7.306zm8.165-2.484c-.692-.314-1.173-1.012-1.173-1.821 0-1.104.896-2 2-2s2 .896 2 2c0 .26-.05.509-.141.738 1.215.911 2.405 1.855 3.6 2.794.424-.333.96-.532 1.541-.532 1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5c-1.171 0-2.155-.807-2.426-1.895-1.201.098-2.404.173-3.606.254-.17.933-.987 1.641-1.968 1.641-1.104 0-2-.896-2-2 0-1.033.784-1.884 1.79-1.989.12-.731.252-1.46.383-2.19zm2.059-.246c-.296.232-.66.383-1.057.417l-.363 2.18c.504.224.898.651 1.079 1.177l3.648-.289c.047-.267.137-.519.262-.749l-3.569-2.736z"
+            /></svg
+          >AI Tools
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://chat.openai.com/"
+                class="category-link"
+                target="_blank"
+                >ChatGPT</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://bard.google.com/chat"
+                class="category-link"
+                target="_blank"
+                >Bard</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.phind.com/"
+                class="category-link"
+                target="_blank"
+                >Phind</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.krater.ai/"
+                class="category-link"
+                target="_blank"
+                >Krater Ai</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://myaskai.com/"
+                class="category-link"
+                target="_blank"
+                >My AskAI</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.taskade.com/"
+                class="category-link"
+                target="_blank"
+                >Taskade AI</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://hexowatch.com/"
+                class="category-link"
+                target="_blank"
+                >Hexowatch</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://songslikex.com/"
+                class="category-link"
+                target="_blank"
+                >Songs Like X</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 10: ASCII Art -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6 14h-12c.33 1.465 2.826 4 6.001 4 3.134 0 5.665-2.521 5.999-4zm-9.5-6c-.828 0-1.5.671-1.5 1.5s.672 1.5 1.5 1.5 1.5-.671 1.5-1.5-.672-1.5-1.5-1.5zm9.5 2.002l-.755.506s-.503-.948-1.746-.948c-1.207 0-1.745.948-1.745.948l-.754-.506c.281-.748 1.205-2.002 2.499-2.002 1.295 0 2.218 1.254 2.501 2.002z"
+            /></svg
+          >ASCII Art
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.asciiart.eu/"
+                class="category-link"
+                target="_blank"
+                >ASCII Art Archive</a
+              >
+            </li>
+            <li>
+              <a
+                href="http://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20"
+                class="category-link"
+                target="_blank"
+                >Text to ASCII Art Generator (TAAG)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.text-image.com/"
+                class="category-link"
+                target="_blank"
+                >TEXT-IMAGE.com</a
+              >
+            </li>
+            <li
+              class="note"
+              style="
+                color: rgb(112, 112, 112);
+                font-size: 12px;
+                margin-top: 100px;
+              "
+            >
+              *ChatGPT can create ASCII art too! Just ask!*
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 11: Image Upscalers -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M13 10h-3v3h-2v-3h-3v-2h3v-3h2v3h3v2zm8.172 14l-7.387-7.387c-1.388.874-3.024 1.387-4.785 1.387-4.971 0-9-4.029-9-9s4.029-9 9-9 9 4.029 9 9c0 1.761-.514 3.398-1.387 4.785l7.387 7.387-2.828 2.828zm-12.172-8c3.859 0 7-3.14 7-7s-3.141-7-7-7-7 3.14-7 7 3.141 7 7 7z"
+            /></svg
+          >Image Upscalers
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://imgupscaler.com/"
+                class="category-link"
+                target="_blank"
+                >ImgUpscaler</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.upscale.media/"
+                class="category-link"
+                target="_blank"
+                >Upscale.media: AI Image Upscaler</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.topazlabs.com/gigapixel-ai"
+                class="category-link"
+                target="_blank"
+                >Gigapixel AI</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 12: Javascript Mangling, Obfuscating, and Compressing -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M21.312 12.644c-.972-1.189-3.646-4.212-4.597-5.284l-1.784 1.018 4.657 5.35c.623.692.459 1.704-.376 2.239-.773.497-5.341 3.376-6.386 4.035-.074-.721-.358-1.391-.826-1.948-.469-.557-6.115-7.376-7.523-9.178-.469-.601-.575-1.246-.295-1.817.268-.549.842-.918 1.43-.918.919 0 1.408.655 1.549 1.215.16.641-.035 1.231-.623 1.685l1.329 1.624 7.796-4.446c1.422-1.051 1.822-2.991.93-4.513-.618-1.053-1.759-1.706-2.978-1.706-1.188 0-.793-.016-9.565 4.475-1.234.591-2.05 1.787-2.05 3.202 0 .87.308 1.756.889 2.487 1.427 1.794 7.561 9.185 7.616 9.257.371.493.427 1.119.15 1.673-.277.555-.812.886-1.429.886-.919 0-1.408-.655-1.549-1.216-.156-.629.012-1.208.604-1.654l-1.277-1.545c-.822.665-1.277 1.496-1.377 2.442-.232 2.205 1.525 3.993 3.613 3.993.596 0 1.311-.177 1.841-.51l9.427-5.946c.957-.664 1.492-1.781 1.492-2.897 0-.744-.24-1.454-.688-2.003zm-8.292-10.492c.188-.087.398-.134.609-.134.532 0 .997.281 1.243.752.312.596.226 1.469-.548 1.912l-5.097 2.888c-.051-1.089-.579-2.081-1.455-2.732l5.248-2.686zm-2.374 12.265l.991-2.691.813 1.017-.445 1.433 1.782.238.812 1.015-3.399-.321-.554-.691zm5.481-3.076l.552.691-.99 2.691-.812-1.015.44-1.438-1.778-.232-.812-1.016 3.4.319z"
+            /></svg
+          >Javascript Mangling, Obfuscating, and Compressing
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://try.terser.org/"
+                class="category-link"
+                target="_blank"
+                >Terser</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.javascriptobfuscator.com/Javascript-Obfuscator.aspx"
+                class="category-link"
+                target="_blank"
+                >Javascript Obfuscator</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://obfuscator.io/"
+                class="category-link"
+                target="_blank"
+                >Obfuscator.io</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/mishoo/UglifyJS"
+                class="category-link"
+                target="_blank"
+                >UglifyJS</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 13: Video/Photo/Audio Creation and Editing Software -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M10 20v-6l5 3-5 3zm14-15.625l-.008-.042-1.008-4.333-21.169 4.196c-1.054.209-1.815 1.134-1.815 2.207v14.597c0 1.657 1.343 3 3 3h18c1.656 0 3-1.343 3-3v-14h-12.734l12.734-2.625zm-3.89-2.618l2.396 1.604-2.994.595-2.398-1.605 2.996-.594zm-5.897 1.169l2.399 1.606-2.993.595-2.402-1.607 2.996-.594zm-5.905 1.171l2.403 1.608-2.993.595-2.406-1.61 2.996-.593zm2.538 3.903l-2.039 2h-3.054l2.039-2h3.054zm8.978 0h3.054l-2.038 2h-3.055l2.039-2zm-6.012 0h3.053l-2.039 2h-3.053l2.039-2zm8.188 4v8.75c0 .69-.56 1.25-1.25 1.25h-17.5c-.69 0-1.25-.56-1.25-1.25v-8.75h20z"
+            /></svg
+          >Video/Photo/Audio Creation and Editing Software
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://obsproject.com/"
+                class="category-link"
+                target="_blank"
+                >Open Broadcaster Software | OBS</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.openshot.org/"
+                class="category-link"
+                target="_blank"
+                >OpenShot Video Editor</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://handbrake.fr/"
+                class="category-link"
+                target="_blank"
+                >HandBrake: Open Source Video Transcoder</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.gimp.org/"
+                class="category-link"
+                target="_blank"
+                >GIMP - GNU Image Manipulation Program</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://inkscape.org/"
+                class="category-link"
+                target="_blank"
+                >Inkscape: Draw Freely</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.audacityteam.org/"
+                class="category-link"
+                target="_blank"
+                >Audacity | audio software</a
+              >
+            </li>
+            <li>
+              <a href="https://giphy.com/" class="category-link" target="_blank"
+                >GIPHY</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.blender.org/"
+                class="category-link"
+                target="_blank"
+                >Blender</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 14: Design Tools -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M18.363 8.464l1.433 1.431-12.67 12.669-7.125 1.436 1.439-7.127 12.665-12.668 1.431 1.431-12.255 12.224-.726 3.584 3.584-.723 12.224-12.257zm-.056-8.464l-2.815 2.817 5.691 5.692 2.817-2.821-5.693-5.688zm-12.318 18.718l11.313-11.316-.705-.707-11.313 11.314.705.709z"
+            /></svg
+          >Design Tools
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.figma.com/"
+                class="category-link"
+                target="_blank"
+                >Figma</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://coolors.co/"
+                class="category-link"
+                target="_blank"
+                >Coolors - The super fast color palettes generator!</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://colorhunt.co/"
+                class="category-link"
+                target="_blank"
+                >Color Hunt: Color Palettes for Designers and Artists</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://fontjoy.com/"
+                class="category-link"
+                target="_blank"
+                >Fontjoy</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://fonts.google.com/"
+                class="category-link"
+                target="_blank"
+                >Google Fonts</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://fontawesome.com/"
+                class="category-link"
+                target="_blank"
+                >Font Awesome</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://iconmonstr.com/"
+                class="category-link"
+                target="_blank"
+                >Icon Monster</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://dribbble.com/"
+                class="category-link"
+                target="_blank"
+                >Dribbble</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 15: Git Tools -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M21 3c0-1.657-1.343-3-3-3s-3 1.343-3 3c0 1.323.861 2.433 2.05 2.832.168 4.295-2.021 4.764-4.998 5.391-1.709.36-3.642.775-5.052 2.085v-7.492c1.163-.413 2-1.511 2-2.816 0-1.657-1.343-3-3-3s-3 1.343-3 3c0 1.305.837 2.403 2 2.816v12.367c-1.163.414-2 1.512-2 2.817 0 1.657 1.343 3 3 3s3-1.343 3-3c0-1.295-.824-2.388-1.973-2.808.27-3.922 2.57-4.408 5.437-5.012 3.038-.64 6.774-1.442 6.579-7.377 1.141-.425 1.957-1.514 1.957-2.803zm-16.8 0c0-.993.807-1.8 1.8-1.8s1.8.807 1.8 1.8-.807 1.8-1.8 1.8-1.8-.807-1.8-1.8zm3.6 18c0 .993-.807 1.8-1.8 1.8s-1.8-.807-1.8-1.8.807-1.8 1.8-1.8 1.8.807 1.8 1.8zm10.2-16.2c-.993 0-1.8-.807-1.8-1.8s.807-1.8 1.8-1.8 1.8.807 1.8 1.8-.807 1.8-1.8 1.8z"
+            /></svg
+          >Git Tools
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.conventionalcommits.org/en/v1.0.0/"
+                class="category-link"
+                target="_blank"
+                >Conventional Commits</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://gitmoji.dev/"
+                class="category-link"
+                target="_blank"
+                >Git Commit Emojis</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/search/advanced"
+                class="category-link"
+                target="_blank"
+                >Advanced GitHub search tool</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 16: Public Domain Images -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M24 14.378l-5.641 5.64c-.654.655-1.513.982-2.374.982-2.972 0-4.493-3.613-2.374-5.731l5.539-5.54c.488-.486 1.126-.729 1.766-.729 1.494 0 2.498 1.233 2.498 2.519 0 .61-.227 1.232-.734 1.74l-4.918 4.918c-.634.634-1.665.634-2.299 0-.633-.633-.633-1.664 0-2.298l3.971-3.97.828.828-3.971 3.97c-.178.177-.178.466 0 .643s.465.177.643 0l4.919-4.918c.517-.517.517-1.357 0-1.874-.517-.517-1.356-.517-1.874 0l-5.539 5.54c-.854.853-.854 2.241 0 3.093.852.853 2.24.853 3.093 0l5.64-5.64.827.827zm-17-5.878c0-.828-.672-1.5-1.5-1.5s-1.5.672-1.5 1.5c0 .829.672 1.5 1.5 1.5s1.5-.671 1.5-1.5zm7.57 3.013l-1.57-2.513-2.52 4-2.48-1.96-4 5.96h6.694c.144-1.139.63-2.242 1.503-3.114l2.373-2.373zm-3.754 7.487h-8.816v-14h18v2.126c.299-.062.604-.096.916-.096.371 0 .732.06 1.084.147v-4.177h-22v18h11.818c-.482-.605-.818-1.283-1.002-2z"
+            /></svg
+          >Public Domain Images
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://thenounproject.com/"
+                class="category-link"
+                target="_blank"
+                >Noun Project</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://pixabay.com/"
+                class="category-link"
+                target="_blank"
+                >Pixabay</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.pexels.com/"
+                class="category-link"
+                target="_blank"
+                >Pexels</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://wallhaven.cc"
+                class="category-link"
+                target="_blank"
+                >WallHaven</a
+              >
+            </li>
+            <li>
+              <a
+                href="http://www.sitebuilderreport.com/stock-up"
+                class="category-link"
+                target="_blank"
+                >Stock Up</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://stocksnap.io/"
+                class="category-link"
+                target="_blank"
+                >StockSnap.io</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://unsplash.com/"
+                class="category-link"
+                target="_blank"
+                >Unsplash</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://gratisography.com/tag/whimsical/"
+                class="category-link"
+                target="_blank"
+                >Free Whimsical Photos</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://littlevisuals.co/"
+                class="category-link"
+                target="_blank"
+                >Little Visuals</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.lifeofpix.com/"
+                class="category-link"
+                target="_blank"
+                >Life of Pix</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://nos.twnsnd.co/"
+                class="category-link"
+                target="_blank"
+                >New Old Stock</a
+              >
+            </li>
+            <li>
+              <a
+                href="http://labs.tineye.com/multicolr/"
+                class="category-link"
+                target="_blank"
+                >Multicolr Search Lab</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 17: Public Domain Videos -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M19.5 14c-2.483 0-4.5 2.015-4.5 4.5s2.017 4.5 4.5 4.5 4.5-2.015 4.5-4.5-2.017-4.5-4.5-4.5zm2.5 5h-2v2h-1v-2h-2v-1h2v-2h1v2h2v1zm-8.498 2h-7.502v-8h10v.032c1.872-1.203 4.113-1.319 6-.53v-11.502h-22v22h14.82c-.553-.576-1.006-1.251-1.318-2zm4.498-18h2v2h-2v-2zm0 4h2v2h-2v-2zm-12-4h10v8h-10v-8zm-2 18h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2z"
+            /></svg
+          >Public Domain Videos
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://www.storyblocks.com"
+                class="category-link"
+                target="_blank"
+                >Storyblocks</a
+              >
+            </li>
+            <li>
+              <a href="https://mazwai.com" class="category-link" target="_blank"
+                >Mazwai</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.videezy.com/"
+                class="category-link"
+                target="_blank"
+                >Videezy</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.videvo.net"
+                class="category-link"
+                target="_blank"
+                >Videvo</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Category 18: Public Domain Audio -->
+      <div class="category">
+        <div class="icon-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M6 23v-11c-4.036 0-6 2.715-6 5.5 0 2.807 1.995 5.5 6 5.5zm18-5.5c0-2.785-1.964-5.5-6-5.5v11c4.005 0 6-2.693 6-5.5zm-12-13.522c-3.879-.008-6.861 2.349-7.743 6.195-.751.145-1.479.385-2.161.716.629-5.501 4.319-9.889 9.904-9.889 5.589 0 9.29 4.389 9.916 9.896-.684-.334-1.415-.575-2.169-.721-.881-3.85-3.867-6.205-7.747-6.197zm-1.151 16.712l.786-4.788.803 3.446c.079.353.569.393.703.053l.727-1.858.678 1.582c.113.262.468.303.637.072l.618-.84h1.199v-.737h-1.391c-.117 0-.229.056-.298.151l-.342.469-.779-1.813c-.13-.303-.562-.296-.683.011l-.616 1.576-.95-4.208c-.09-.398-.659-.375-.724.022l-.788 4.86-.805-2.993c-.09-.357-.595-.377-.709-.023l-.598 1.948h-1.317v.737h1.607c.133 0 .278-.108.315-.235l.298-1.008.906 3.607c.099.389.659.363.723-.031z"
+            /></svg
+          >Public Domain Audio
+        </div>
+        <div class="links">
+          <ul class="link-list">
+            <li>
+              <a
+                href="https://freesound.org/"
+                class="category-link"
+                target="_blank"
+                >Freesound</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://gdc.sonniss.com/"
+                class="category-link"
+                target="_blank"
+                >GDC 2023 Game Audio Bundle – SONNISS</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://freemusicarchive.org/"
+                class="category-link"
+                target="_blank"
+                >Free Music Archive</a
+              >
+            </li>
+            <li
+              class="note"
+              style="
+                color: rgb(112, 112, 112);
+                font-size: 12px;
+                margin-top: 100px;
+              "
+            >
+              * All music made before 1923 is public domain!!!*
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer"></div>
   </body>
 </html>
