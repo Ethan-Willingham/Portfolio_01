@@ -5,7 +5,7 @@
 }
 
 html {
-  background-color: #00000094;
+  background-color: #003c86e2;
 }
 body {
   background-color: #fffffff7;
@@ -19,16 +19,20 @@ svg {
   color: rgba(252, 252, 252, 0.232);
 }
 
+header svg {
+  height: 40px;
+  width: 40px;
+}
+
 header {
-  background-color: #00000094;
+  background-color: #003c86e2;
   height: 80px;
   text-align: center;
-  text-justify: center;
   font-weight: 900;
-  font-size: 60px;
-  color: rgba(0, 0, 0, 0.355);
-  text-shadow: 0 0 0 rgb(1, 0, 0);
-  border-bottom: 10px solid rgba(0, 0, 0, 0.236);
+  font-size: 50px;
+  font-family: "Bungee Spice", cursive;
+  letter-spacing: -4px;
+  border-bottom: 1px rgb(34, 34, 34) solid;
 }
 
 a {
@@ -80,17 +84,19 @@ ul li:last-child {
 
 .category {
   border-radius: 20px;
-  width: 300px;
+  width: 320px;
   height: auto;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   background-color: #fff;
+  transition: all 0.15s ease-in-out;
 }
 
 .category:hover {
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
   transform: scale(1.05);
+  transition: all 0.15s ease-in-out;
 }
 
 .icon-title {
