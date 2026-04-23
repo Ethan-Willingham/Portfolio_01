@@ -1,0 +1,657 @@
+/* ============================================================
+   STYLE.CSS
+   A writing-first site. Mobile-first. Dark forest green.
+   ============================================================ */
+
+/* -------------------------------------------------------
+   FONT FACES
+   Century Supra is a commercial font from MB Type.
+   Purchase at https://mbtype.com/fonts/century-supra/
+   Place your .woff2 files in the /fonts/ directory.
+   The declarations below expect these filenames —
+   rename yours to match, or update the src paths.
+   ------------------------------------------------------- */
+
+@font-face {
+  font-family: century_supra_a;
+  font-style: normal;
+  font-weight: normal;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('../fonts/century_supra_a_regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: century_supra_a;
+  font-style: italic;
+  font-weight: normal;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('../fonts/century_supra_a_italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: century_supra_a;
+  font-style: normal;
+  font-weight: bold;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('../fonts/century_supra_a_bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: century_supra_a;
+  font-style: italic;
+  font-weight: bold;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('../fonts/century_supra_a_bold_italic.woff2') format('woff2');
+}
+
+/* -------------------------------------------------------
+   CUSTOM PROPERTIES
+   ------------------------------------------------------- */
+
+:root {
+  /* Palette */
+  --bg:              #303931;
+  --bg-raised:       #384139;
+  --text:            #D5CCBC;
+  --text-bright:     #EDE6DA;
+  --text-dim:        #8F8978;
+  --accent:          #B8A88A;
+  --accent-hover:    #D4C4A4;
+  --rule:            #4A544B;
+  --selection-bg:    #5A6B5A;
+  --selection-text:  #EDE6DA;
+
+  /* Typography */
+  --font-heading:    century_supra_a, 'Century Schoolbook', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body:       'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
+
+  /* Spacing & sizing — mobile base */
+  --content-width:   640px;
+  --gutter:          1.25rem;
+  --body-size:       1.05rem;
+  --body-leading:    1.72;
+}
+
+
+/* -------------------------------------------------------
+   RESET & BASE
+   ------------------------------------------------------- */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  hanging-punctuation: first last;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--body-size);
+  line-height: var(--body-leading);
+  padding: 0 var(--gutter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* -------------------------------------------------------
+   READING-PROGRESS BAR (post pages only)
+   ------------------------------------------------------- */
+
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: var(--accent);
+  z-index: 1000;
+  transition: width 60ms linear;
+  pointer-events: none;
+}
+
+
+/* -------------------------------------------------------
+   LAYOUT CONTAINER
+   ------------------------------------------------------- */
+
+.site-wrapper {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding-top: 3rem;
+  padding-bottom: 4rem;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* -------------------------------------------------------
+   SITE HEADER / NAV
+   ------------------------------------------------------- */
+
+.site-header {
+  margin-bottom: 3.5rem;
+}
+
+.site-nav {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.site-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.site-title a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.site-title a:hover {
+  color: var(--text-bright);
+}
+
+.site-nav-links {
+  display: flex;
+  gap: 1.25rem;
+  list-style: none;
+}
+
+.site-nav-links a {
+  font-size: 0.875rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.site-nav-links a:hover {
+  color: var(--text-bright);
+}
+
+
+/* -------------------------------------------------------
+   HOME: INTRO
+   ------------------------------------------------------- */
+
+.home-intro {
+  margin-bottom: 3.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.home-intro p {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 52ch;
+}
+
+.home-intro a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+
+.home-intro a:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+
+/* -------------------------------------------------------
+   HOME: ARTICLE LIST
+   ------------------------------------------------------- */
+
+.article-list-heading {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+  letter-spacing: 0.02em;
+}
+
+.article-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.article-list-item {
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.article-list-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.article-list-item a {
+  text-decoration: none;
+  display: block;
+}
+
+.article-item-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--text-bright);
+  line-height: 1.35;
+  margin-bottom: 0.35rem;
+  transition: color 0.25s ease;
+}
+
+.article-list-item a:hover .article-item-title {
+  color: var(--accent-hover);
+}
+
+.article-item-date {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.article-item-description {
+  font-size: 0.95rem;
+  color: var(--text);
+  font-style: italic;
+  line-height: 1.55;
+  opacity: 0.8;
+}
+
+
+/* -------------------------------------------------------
+   POST: HEADER
+   ------------------------------------------------------- */
+
+.post-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.post-title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.2;
+  margin-bottom: 0.65rem;
+  letter-spacing: -0.01em;
+}
+
+.post-date {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+
+/* -------------------------------------------------------
+   POST: BODY — long-form prose
+   ------------------------------------------------------- */
+
+.post-body {
+  flex: 1;
+}
+
+.post-body p {
+  margin-bottom: 1.4em;
+}
+
+.post-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Headings inside prose */
+.post-body h2 {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-top: 2.8em;
+  margin-bottom: 0.7em;
+  line-height: 1.3;
+}
+
+.post-body h3 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-top: 2.2em;
+  margin-bottom: 0.6em;
+  line-height: 1.35;
+}
+
+/* Links */
+.post-body a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+
+.post-body a:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+/* Emphasis */
+.post-body em {
+  font-style: italic;
+}
+
+.post-body strong {
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+/* Blockquotes */
+.post-body blockquote {
+  margin: 1.8em 0;
+  padding: 0 0 0 1.4em;
+  border-left: 2px solid var(--rule);
+  color: var(--text);
+  font-style: italic;
+  opacity: 0.88;
+}
+
+.post-body blockquote p {
+  margin-bottom: 0.8em;
+}
+
+.post-body blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Section dividers  —  • • •  */
+.post-body .divider {
+  text-align: center;
+  margin: 2.5em 0;
+  color: var(--text-dim);
+  font-size: 1rem;
+  letter-spacing: 0.6em;
+  user-select: none;
+}
+
+/* Horizontal rule alternative */
+.post-body hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 2.5em 0;
+}
+
+/* Inline code */
+.post-body code {
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88em;
+  background: var(--bg-raised);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  color: var(--accent);
+}
+
+/* Code blocks */
+.post-body pre {
+  background: var(--bg-raised);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 1.2em 1.4em;
+  margin: 1.8em 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.post-body pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* Lists inside prose (when needed) */
+.post-body ul,
+.post-body ol {
+  margin: 1.2em 0;
+  padding-left: 1.5em;
+}
+
+.post-body li {
+  margin-bottom: 0.4em;
+}
+
+/* Images */
+.post-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 2em auto;
+  border-radius: 3px;
+}
+
+.post-body figure {
+  margin: 2.2em 0;
+}
+
+.post-body figcaption {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 0.6em;
+  font-style: italic;
+}
+
+/* Footnote-style small text */
+.post-body .note {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 2em;
+}
+
+
+/* -------------------------------------------------------
+   POST: FOOTER (end of article)
+   ------------------------------------------------------- */
+
+.post-end {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.post-end-back {
+  font-size: 0.875rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.post-end-back:hover {
+  color: var(--text-bright);
+}
+
+.post-end-back::before {
+  content: '←';
+  margin-right: 0.4em;
+}
+
+
+/* -------------------------------------------------------
+   SITE FOOTER
+   ------------------------------------------------------- */
+
+.site-footer {
+  margin-top: auto;
+  padding-top: 3.5rem;
+}
+
+.site-footer-inner {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.site-footer a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.site-footer a:hover {
+  color: var(--text-bright);
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+}
+
+
+/* -------------------------------------------------------
+   FADE-IN ANIMATION
+   (articles on home page + post body on load)
+   ------------------------------------------------------- */
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeUp 0.5s ease forwards;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger the home article list */
+.article-list-item:nth-child(1)  { animation-delay: 0.04s; }
+.article-list-item:nth-child(2)  { animation-delay: 0.09s; }
+.article-list-item:nth-child(3)  { animation-delay: 0.14s; }
+.article-list-item:nth-child(4)  { animation-delay: 0.19s; }
+.article-list-item:nth-child(5)  { animation-delay: 0.24s; }
+.article-list-item:nth-child(6)  { animation-delay: 0.29s; }
+.article-list-item:nth-child(7)  { animation-delay: 0.34s; }
+.article-list-item:nth-child(8)  { animation-delay: 0.39s; }
+.article-list-item:nth-child(9)  { animation-delay: 0.44s; }
+.article-list-item:nth-child(10) { animation-delay: 0.49s; }
+
+
+/* -------------------------------------------------------
+   DESKTOP — ≥ 720px
+   ------------------------------------------------------- */
+
+@media (min-width: 720px) {
+  :root {
+    --gutter:     2rem;
+    --body-size:  1.08rem;
+  }
+
+  .site-wrapper {
+    padding-top: 4.5rem;
+    padding-bottom: 5rem;
+  }
+
+  .post-title {
+    font-size: 2.6rem;
+  }
+
+  .post-body h2 {
+    font-size: 1.55rem;
+  }
+
+  .post-body blockquote {
+    padding-left: 1.8em;
+  }
+}
+
+
+/* -------------------------------------------------------
+   LARGE SCREENS — ≥ 1024px
+   ------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter:     2.5rem;
+    --body-size:  1.1rem;
+  }
+
+  .site-wrapper {
+    padding-top: 5.5rem;
+  }
+}
+
+
+/* -------------------------------------------------------
+   PRINT
+   ------------------------------------------------------- */
+
+@media print {
+  body {
+    background: #fff;
+    color: #222;
+  }
+
+  .reading-progress,
+  .site-nav-links,
+  .site-footer {
+    display: none;
+  }
+
+  .post-body a {
+    color: #222;
+    border-bottom: none;
+    text-decoration: underline;
+  }
+
+  .post-body a::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    color: #666;
+  }
+}
