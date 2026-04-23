@@ -1,15 +1,11 @@
 /* ============================================================
    STYLE.CSS
-   A writing-first site. Mobile-first. Dark forest green.
+   Mobile-first. Dark forest green. Flat file structure.
+   Content width ~780px (tamerc.com style).
    ============================================================ */
 
 /* -------------------------------------------------------
-   FONT FACES
-   Century Supra is a commercial font from MB Type.
-   Purchase at https://mbtype.com/fonts/century-supra/
-   Place your .woff2 files in the /fonts/ directory.
-   The declarations below expect these filenames —
-   rename yours to match, or update the src paths.
+   FONT FACES — all files in same directory
    ------------------------------------------------------- */
 
 @font-face {
@@ -18,7 +14,7 @@
   font-weight: normal;
   font-stretch: normal;
   font-display: swap;
-  src: url('../fonts/century_supra_a_regular.woff2') format('woff2');
+  src: url('century_supra_a_regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -27,7 +23,7 @@
   font-weight: normal;
   font-stretch: normal;
   font-display: swap;
-  src: url('../fonts/century_supra_a_italic.woff2') format('woff2');
+  src: url('century_supra_a_italic.woff2') format('woff2');
 }
 
 @font-face {
@@ -36,7 +32,7 @@
   font-weight: bold;
   font-stretch: normal;
   font-display: swap;
-  src: url('../fonts/century_supra_a_bold.woff2') format('woff2');
+  src: url('century_supra_a_bold.woff2') format('woff2');
 }
 
 @font-face {
@@ -45,7 +41,7 @@
   font-weight: bold;
   font-stretch: normal;
   font-display: swap;
-  src: url('../fonts/century_supra_a_bold_italic.woff2') format('woff2');
+  src: url('century_supra_a_bold_italic.woff2') format('woff2');
 }
 
 /* -------------------------------------------------------
@@ -56,6 +52,7 @@
   /* Palette */
   --bg:              #303931;
   --bg-raised:       #384139;
+  --bg-demo:         #1a1f1b;
   --text:            #D5CCBC;
   --text-bright:     #EDE6DA;
   --text-dim:        #8F8978;
@@ -68,12 +65,13 @@
   /* Typography */
   --font-heading:    century_supra_a, 'Century Schoolbook', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-body:       'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
+  --font-mono:       'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', monospace;
 
   /* Spacing & sizing — mobile base */
-  --content-width:   640px;
+  --content-width:   780px;
   --gutter:          1.25rem;
   --body-size:       1.05rem;
-  --body-leading:    1.72;
+  --body-leading:    1.75;
 }
 
 
@@ -110,8 +108,9 @@ body {
   color: var(--selection-text);
 }
 
+
 /* -------------------------------------------------------
-   READING-PROGRESS BAR (post pages only)
+   READING-PROGRESS BAR
    ------------------------------------------------------- */
 
 .reading-progress {
@@ -207,7 +206,7 @@ body {
   color: var(--text);
   font-size: 1rem;
   line-height: 1.7;
-  max-width: 52ch;
+  max-width: 60ch;
 }
 
 .home-intro a {
@@ -393,7 +392,7 @@ body {
   margin-bottom: 0;
 }
 
-/* Section dividers  —  • • •  */
+/* Section dividers — • • • */
 .post-body .divider {
   text-align: center;
   margin: 2.5em 0;
@@ -403,7 +402,7 @@ body {
   user-select: none;
 }
 
-/* Horizontal rule alternative */
+/* Horizontal rule */
 .post-body hr {
   border: none;
   border-top: 1px solid var(--rule);
@@ -412,8 +411,8 @@ body {
 
 /* Inline code */
 .post-body code {
-  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  font-size: 0.88em;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
   background: var(--bg-raised);
   padding: 0.15em 0.4em;
   border-radius: 3px;
@@ -435,12 +434,12 @@ body {
   background: none;
   padding: 0;
   border-radius: 0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   line-height: 1.55;
   color: var(--text);
 }
 
-/* Lists inside prose (when needed) */
+/* Lists inside prose */
 .post-body ul,
 .post-body ol {
   margin: 1.2em 0;
@@ -482,6 +481,85 @@ body {
 
 
 /* -------------------------------------------------------
+   INTERACTIVE DEMO CONTAINER
+   ------------------------------------------------------- */
+
+.demo-wrapper {
+  margin: 2.5em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65em 1em;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.demo-header span {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+.demo-label {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.demo-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  background: #0d0f0d;
+  cursor: pointer;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.demo-canvas-wrapper .render-dot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+}
+
+.demo-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.25);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.demo-fps {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.2);
+  font-family: var(--font-mono);
+  pointer-events: none;
+}
+
+
+/* -------------------------------------------------------
    POST: FOOTER (end of article)
    ------------------------------------------------------- */
 
@@ -508,7 +586,7 @@ body {
 }
 
 .post-end-back::before {
-  content: '←';
+  content: '\2190';
   margin-right: 0.4em;
 }
 
@@ -553,7 +631,6 @@ body {
 
 /* -------------------------------------------------------
    FADE-IN ANIMATION
-   (articles on home page + post body on load)
    ------------------------------------------------------- */
 
 .fade-in {
@@ -569,7 +646,6 @@ body {
   }
 }
 
-/* Stagger the home article list */
 .article-list-item:nth-child(1)  { animation-delay: 0.04s; }
 .article-list-item:nth-child(2)  { animation-delay: 0.09s; }
 .article-list-item:nth-child(3)  { animation-delay: 0.14s; }
@@ -583,7 +659,7 @@ body {
 
 
 /* -------------------------------------------------------
-   DESKTOP — ≥ 720px
+   DESKTOP — >= 720px
    ------------------------------------------------------- */
 
 @media (min-width: 720px) {
@@ -608,11 +684,15 @@ body {
   .post-body blockquote {
     padding-left: 1.8em;
   }
+
+  .demo-canvas-wrapper {
+    height: 500px;
+  }
 }
 
 
 /* -------------------------------------------------------
-   LARGE SCREENS — ≥ 1024px
+   LARGE SCREENS — >= 1024px
    ------------------------------------------------------- */
 
 @media (min-width: 1024px) {
@@ -639,7 +719,8 @@ body {
 
   .reading-progress,
   .site-nav-links,
-  .site-footer {
+  .site-footer,
+  .demo-wrapper {
     display: none;
   }
 
