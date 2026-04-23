@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Box Shadow Sponge — Ethan Willingham</title>
-  <meta name="description" content="Recreating David Gerrells' sponge particle effect using nothing but CSS box-shadow on a single div.">
+  <meta name="description" content="120 particles, one div, zero canvas elements.">
   <meta property="og:title" content="The Box Shadow Sponge">
   <meta property="og:description" content="120 particles, one div, zero canvas elements.">
   <meta property="og:type" content="article">
@@ -41,32 +41,18 @@
         <div class="post-body fade-in" style="animation-delay: 0.12s;">
 
           <p>
-            Last year David Gerrells published
-            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">How Not
-            to Use Box Shadows</a>, a piece that escalated from playful CSS
-            experiments to a full ray tracer rendered entirely through the
-            <code>box-shadow</code> property of a single
-            <code>&lt;div&gt;</code>. It's one of the most unhinged and
-            delightful things I've read about CSS.
+            David Gerrells'
+            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">How Not to Use Box Shadows</a>
+            escalates from CSS experiments to a full ray tracer — all
+            rendered through <code>box-shadow</code> on a single
+            <code>&lt;div&gt;</code>. One demo stopped me cold: the
+            <em>sponge</em>. Colored circles that drift to home positions.
+            Pull them apart with your cursor. Release. They drift back.
+            I rebuilt it to understand how it works.
           </p>
 
           <p>
-            The whole article is worth your time, but one demo stopped me
-            cold: the <em>sponge</em>. A cluster of colored circles, each
-            drifting gently to a home position, that you can reach in and
-            tear apart with your cursor. Release, and they drift back. It
-            looks organic — like pulling bits off a sea sponge. I wanted
-            to understand exactly how it works, so I rebuilt it from scratch.
-          </p>
-
-          <div class="divider">• • •</div>
-
-          <h2>Try it first</h2>
-
-          <p>
-            Click and drag (or touch and drag on mobile) anywhere inside the
-            dark area below. Pull the particles around, then let go and watch
-            them find their way home.
+            Click and drag anywhere in the dark area below.
           </p>
 
           <!-- ======== LIVE DEMO ======== -->
@@ -83,323 +69,86 @@
           </div>
 
           <p>
-            There is no <code>&lt;canvas&gt;</code> in that demo. No WebGL.
-            No SVG. Every single one of those circles is a
-            <code>box-shadow</code> value on a 1&times;1 pixel
-            <code>&lt;div&gt;</code>. The browser's CSS rendering pipeline
-            is doing all the drawing.
+            No <code>&lt;canvas&gt;</code>. No WebGL. No SVG. Every circle
+            is a <code>box-shadow</code> value on a 1&times;1 pixel element.
           </p>
 
-          <h2>How a box-shadow becomes a particle</h2>
+          <div class="divider">• • •</div>
+
+          <h2>How it works</h2>
 
           <p>
-            The CSS <code>box-shadow</code> property lets you stack an
-            arbitrary number of shadows on a single element, separated by
-            commas. Each shadow takes an x offset, y offset, optional blur
-            radius, optional spread radius, and a color. When you set blur
-            to zero and give it a spread, you get a hard-edged circle (if
-            the element has <code>border-radius: 50%</code>) positioned
-            wherever you want.
+            <code>box-shadow</code> accepts a comma-separated list of shadows.
+            Each takes an x offset, y offset, blur, spread, and color. Set
+            blur to zero, give it a spread, put it on a 1px element with
+            <code>border-radius: 50%</code> — you get a hard circle at
+            arbitrary coordinates. Stack 120 and you have a particle system.
           </p>
 
           <p>
-            The trick is to make the element tiny — one pixel — and let
-            the spread radius control the visual size. A shadow with
-            <code>200px 150px 0 8px #A8B545</code> draws a green circle
-            of radius 8 at coordinates (200, 150). Stack 120 of those, each
-            with its own position and color, and you have a particle system.
+            The render function runs every frame. Sort by depth, compute spread,
+            join into a string, set it on the element:
           </p>
 
-          <pre><code>/* The entire "renderer" — build a box-shadow string each frame */
-function render() {
-  balls.sort(function (a, b) { return b.z - a.z; });
+<pre><code><span class="kw">function</span> <span class="fn">render</span>() {
+  <span class="var">balls</span>.<span class="fn">sort</span>(<span class="kw">function</span> (<span class="var">a</span>, <span class="var">b</span>) { <span class="kw">return</span> <span class="var">b</span>.<span class="prop">z</span> - <span class="var">a</span>.<span class="prop">z</span>; });
 
-  var parts = [];
-  for (var i = 0; i &lt; balls.length; i++) {
-    var b = balls[i];
-    var zScale = 1 + b.z / 40;
-    var radius = b.size * zScale;
-    var spread = (radius - RENDER_SIZE) / 2;
-    parts.push(
-      b.x + 'px ' +
-      b.y + 'px 0 ' +
-      spread + 'px ' +
-      b.color
+  <span class="tag">var</span> <span class="var">parts</span> = [];
+  <span class="kw">for</span> (<span class="tag">var</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> &lt; <span class="var">balls</span>.<span class="prop">length</span>; <span class="var">i</span>++) {
+    <span class="tag">var</span> <span class="var">b</span> = <span class="var">balls</span>[<span class="var">i</span>];
+    <span class="tag">var</span> <span class="var">zScale</span> = <span class="num">1</span> + <span class="var">b</span>.<span class="prop">z</span> / <span class="num">40</span>;
+    <span class="tag">var</span> <span class="var">spread</span> = (<span class="var">b</span>.<span class="prop">size</span> * <span class="var">zScale</span> - <span class="num">1</span>) / <span class="num">2</span>;
+    <span class="var">parts</span>.<span class="fn">push</span>(
+      <span class="var">b</span>.<span class="prop">x</span> + <span class="str">'px '</span> + <span class="var">b</span>.<span class="prop">y</span> + <span class="str">'px 0 '</span> + <span class="var">spread</span> + <span class="str">'px '</span> + <span class="var">b</span>.<span class="prop">color</span>
     );
   }
-  renderDot.style.boxShadow = parts.join(',');
+  <span class="var">renderDot</span>.<span class="prop">style</span>.<span class="prop">boxShadow</span> = <span class="var">parts</span>.<span class="fn">join</span>(<span class="str">','</span>);
 }</code></pre>
 
+          <h2>The sponge effect</h2>
+
           <p>
-            That is the entire render function. Every frame, sort by
-            depth, compute each particle's spread from its size and a
-            fake z-scale, join the array into a comma-separated string,
-            set it on the element. Done. The browser does the rest.
+            Each ball has a home position. A spring force pulls it back.
+            When the pointer is active, nearby balls get yanked toward it
+            instead. The pull overwhelms the spring — particles rip away.
+            Release, and the springs take over:
           </p>
 
-          <h2>The sponge behavior</h2>
+<pre><code><span class="cm">// Spring toward home</span>
+<span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">b</span>.<span class="prop">homeX</span> - <span class="var">b</span>.<span class="prop">x</span>) * <span class="var">springK</span> * <span class="var">dt</span>;
+<span class="var">b</span>.<span class="prop">vy</span> += (<span class="var">b</span>.<span class="prop">homeY</span> - <span class="var">b</span>.<span class="prop">y</span>) * <span class="var">springK</span> * <span class="var">dt</span>;
+
+<span class="cm">// Pointer pull (within radius)</span>
+<span class="tag">var</span> <span class="var">f</span> = (<span class="num">1</span> - <span class="var">dist</span> / <span class="num">250</span>) * <span class="num">1800</span>;
+<span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">px</span> / <span class="var">dist</span>) * <span class="var">f</span> * <span class="var">dt</span>;
+<span class="var">b</span>.<span class="prop">vy</span> += (<span class="var">py</span> / <span class="var">dist</span>) * <span class="var">f</span> * <span class="var">dt</span>;
+
+<span class="cm">// Damping bleeds off energy</span>
+<span class="var">b</span>.<span class="prop">vx</span> *= <span class="num">0.91</span>;
+<span class="var">b</span>.<span class="prop">vy</span> *= <span class="num">0.91</span>;</code></pre>
+
+          <h2>Fake 3D and performance</h2>
 
           <p>
-            Each ball has a <em>home position</em> — a random coordinate
-            assigned at initialization. Every frame, a spring force pulls
-            the ball back toward home. This is a basic spring equation:
-            the farther the ball is from home, the stronger the pull.
-          </p>
-
-          <pre><code>/* Spring toward home */
-var springK = 1.8;
-var dx = b.homeX - b.x;
-var dy = b.homeY - b.y;
-b.vx += dx * springK * dt;
-b.vy += dy * springK * dt;</code></pre>
-
-          <p>
-            When the pointer is active, balls within a 200px radius get
-            pulled toward it instead. The pull is strongest at the center
-            and falls off linearly. Because the pull force is much larger
-            than the spring force, nearby particles rip away from their
-            home positions — the sponge tears.
-          </p>
-
-          <pre><code>/* Pointer pull */
-if (pointerDown) {
-  var px = pointerX - b.x;
-  var py = pointerY - b.y;
-  var dist = Math.sqrt(px * px + py * py);
-  if (dist &lt; 200 &amp;&amp; dist &gt; 1) {
-    var pullStrength = (1 - dist / 200) * 900;
-    b.vx += (px / dist) * pullStrength * dt;
-    b.vy += (py / dist) * pullStrength * dt;
-  }
-}</code></pre>
-
-          <p>
-            When you release, the pull disappears and the springs take over.
-            Velocity damping (<code>b.vx *= 0.94</code>) bleeds off energy so
-            the balls don't oscillate forever. The result is that satisfying
-            drift back into formation.
-          </p>
-
-          <h2>The fake 3D</h2>
-
-          <p>
-            Each ball also has a <code>z</code> value. This doesn't affect
-            position on screen — it's purely cosmetic. The z value scales
-            the ball's visual size through a simple ratio:
-            <code>1 + z / 40</code>. Balls with a higher z look
-            "closer" (larger), lower z looks "further" (smaller). Sorting
-            by z before rendering means distant balls are drawn first,
-            naturally occluded by nearer ones.
+            Each ball's <code>z</code> value scales its visual size via
+            <code>1 + z / 40</code>. Sorting by z gives natural occlusion.
+            It's not real perspective but it's enough to feel organic.
           </p>
 
           <p>
-            It's not real perspective projection. There's no vanishing point,
-            no foreshortening. But it's enough to give the cluster a sense of
-            depth, especially when the balls are in motion and the z-perturbation
-            adds a bit of parallax-like wobble.
-          </p>
-
-          <div class="divider">• • •</div>
-
-          <h2>Performance notes</h2>
-
-          <p>
-            Gerrells noticed something interesting about box-shadow
-            performance on Apple Silicon: without blur or transparency,
-            the browser can push <em>thousands</em> of box-shadows at
-            interactive frame rates. Blur is expensive because it requires
-            a convolution pass. Transparency is surprisingly expensive too,
-            likely because the compositor has to blend layers rather than
-            just overwriting pixels.
+            It's fast because there's no blur and no transparency. Box-shadows
+            map to the same rounded-rectangle primitives GPUs already use for
+            UI compositing. Apple Silicon pushes thousands at 60fps. The real
+            bottleneck is string concatenation — building a ~5KB shadow string
+            every frame.
           </p>
 
           <p>
-            The demo above avoids both — every color is fully opaque, blur
-            is zero. On an M-series Mac you'll see a solid 60fps with 120
-            particles. On older hardware or low-end phones you might drop to
-            30-40, which still feels fine for this kind of organic motion.
-          </p>
-
-          <p>
-            The size of the source element matters too. A larger element means
-            the browser has to rasterize a larger initial box before applying
-            shadows. By keeping the element at 1&times;1 pixel, we minimize
-            that base cost and let spread do all the work.
-          </p>
-
-          <h2>Things that surprised me</h2>
-
-          <p>
-            <strong>String concatenation is the bottleneck.</strong>
-            Profiling the demo, the most expensive operation per frame is
-            not the physics update or the sort — it's building the
-            box-shadow string. Joining 120 entries with coordinate values
-            creates a string on the order of 5-6KB every single frame. The
-            browser then has to parse that string back into its internal
-            representation. For Gerrells' image demos (12,000+ particles),
-            the shadow string itself becomes enormous.
-          </p>
-
-          <p>
-            <strong>The browser doesn't cache shadow layouts.</strong>
-            Every time you set <code>element.style.boxShadow</code>, the
-            browser treats it as a completely new value and re-parses,
-            re-layouts, and re-paints. There's no diff. This is partly why
-            Gerrells found that <code>transition: all</code> was actually
-            slower than raw <code>requestAnimationFrame</code> updates —
-            the transition machinery adds overhead on top of something
-            that's already being fully recalculated.
-          </p>
-
-          <p>
-            <strong>It works because GPUs love rectangles.</strong>
-            Box shadows are fast specifically because they map to the same
-            rounded-rectangle primitives that GPUs are already optimized to
-            draw for UI compositing. A box-shadow is essentially "draw
-            another rounded rect at this offset with this color," which is
-            exactly the kind of operation that hardware acceleration handles
-            well. The moment you add blur, the GPU has to do texture sampling,
-            and the cost profile changes dramatically.
-          </p>
-
-          <div class="divider">• • •</div>
-
-          <h2>The full code</h2>
-
-          <p>
-            Below is the complete, self-contained simulation script. No
-            dependencies, no build step. It expects a container element
-            with <code>id="sponge-demo"</code> containing a child with
-            class <code>render-dot</code> — a 1px element with
-            <code>border-radius: 50%</code>. The CSS for the demo container
-            handles sizing and cursor styles.
-          </p>
-
-<pre><code>(function () {
-  'use strict';
-
-  var container = document.getElementById('sponge-demo');
-  if (!container) return;
-
-  var renderDot = container.querySelector('.render-dot');
-  var PALETTE = [
-    '#A8B545', '#7A9B3A', '#C2CC68', '#556B2F',
-    '#8B6E4E', '#6B4226', '#A0522D', '#D2B48C',
-    '#C4B38A', '#EDE6DA', '#8F8978', '#5E6B42'
-  ];
-
-  var W, H, balls = [], BALL_COUNT = 120;
-  var pointerDown = false, pointerX = 0, pointerY = 0;
-  var prevTime = 0;
-
-  function resize() {
-    var rect = container.getBoundingClientRect();
-    W = rect.width; H = rect.height;
-  }
-
-  function createBalls() {
-    balls = [];
-    for (var i = 0; i &lt; BALL_COUNT; i++) {
-      var hx = Math.random() * W, hy = Math.random() * H;
-      balls.push({
-        x: hx, y: hy, z: Math.random() * 60,
-        homeX: hx, homeY: hy,
-        vx: 0, vy: 0, vz: 0,
-        size: 4 + Math.random() * 14,
-        color: PALETTE[Math.floor(Math.random() * PALETTE.length)]
-      });
-    }
-  }
-
-  function update(dt) {
-    dt = Math.min(dt, 0.05);
-    for (var i = 0; i &lt; balls.length; i++) {
-      var b = balls[i];
-      b.vx += (b.homeX - b.x) * 1.8 * dt;
-      b.vy += (b.homeY - b.y) * 1.8 * dt;
-      if (pointerDown) {
-        var px = pointerX - b.x, py = pointerY - b.y;
-        var dist = Math.sqrt(px * px + py * py);
-        if (dist &lt; 200 &amp;&amp; dist &gt; 1) {
-          var f = (1 - dist / 200) * 900;
-          b.vx += (px / dist) * f * dt;
-          b.vy += (py / dist) * f * dt;
-        }
-      }
-      b.vx *= 0.94; b.vy *= 0.94;
-      b.x += b.vx * dt; b.y += b.vy * dt;
-    }
-  }
-
-  function render() {
-    balls.sort(function (a, b) { return b.z - a.z; });
-    var s = [];
-    for (var i = 0; i &lt; balls.length; i++) {
-      var b = balls[i];
-      var spread = (b.size * (1 + b.z / 40) - 1) / 2;
-      s.push(b.x+'px '+b.y+'px 0 '+spread+'px '+b.color);
-    }
-    renderDot.style.boxShadow = s.join(',');
-  }
-
-  function tick(t) {
-    update((t - prevTime) / 1000);
-    prevTime = t;
-    render();
-    requestAnimationFrame(tick);
-  }
-
-  // pointer events...
-  container.addEventListener('mousedown', function(e) {
-    pointerDown = true;
-    var r = container.getBoundingClientRect();
-    pointerX = e.clientX - r.left;
-    pointerY = e.clientY - r.top;
-  });
-  // ... (touch events similar)
-
-  resize(); createBalls();
-  prevTime = performance.now();
-  requestAnimationFrame(tick);
-})();</code></pre>
-
-          <p>
-            The palette in the demo uses earthy greens and browns — close to
-            the forest-green background of this site. The original article
-            uses a brighter, more saturated set. Swap the
-            <code>PALETTE</code> array for any colors you like; the physics
-            don't care.
-          </p>
-
-          <h2>Why this matters (a little)</h2>
-
-          <p>
-            Gerrells' project is delightful partly <em>because</em> it's
-            impractical. Nobody should ship a production particle system
-            powered by box-shadow strings. Canvas and WebGL exist for a
-            reason. But the exercise reveals something about how browsers
-            actually work under the hood: the rendering pipeline is more
-            capable and more flexible than most developers ever test.
-            Box-shadow wasn't designed for this. It works anyway. That gap
-            between intended use and actual capability is where all the
-            interesting creative work happens.
-          </p>
-
-          <p>
-            The article also ends up being a surprisingly good introduction
-            to real-time rendering concepts — game loops, delta time,
-            z-sorting, spring physics, progressive ray tracing — all
-            presented through the lens of an absurd constraint. Sometimes
-            the best way to learn the serious version of something is to
-            see the joke version first.
-          </p>
-
-          <p class="note">
-            The original article and all demos are at
+            Gerrells takes this all the way to a progressive ray tracer with
+            specular reflections and emissive lighting — entirely through
+            <code>box-shadow</code>. It's delightful precisely because it's
+            absurd. Full article and source at
             <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">dgerrells.com</a>.
-            The source code for the more advanced demos (including the
-            ray tracer) is on
-            <a href="https://codesandbox.io/u/dg">CodeSandbox</a>.
           </p>
 
         </div>

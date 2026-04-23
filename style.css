@@ -49,18 +49,31 @@
    ------------------------------------------------------- */
 
 :root {
-  /* Palette */
+  /* Palette — high contrast on dark forest green */
   --bg:              #303931;
-  --bg-raised:       #384139;
+  --bg-raised:       #1e2420;
   --bg-demo:         #1a1f1b;
-  --text:            #D5CCBC;
-  --text-bright:     #EDE6DA;
-  --text-dim:        #8F8978;
-  --accent:          #B8A88A;
-  --accent-hover:    #D4C4A4;
+  --text:            #E8E2D6;
+  --text-bright:     #F5F1EA;
+  --text-dim:        #A09A8A;
+  --accent:          #D4C4A0;
+  --accent-hover:    #EDE0C0;
   --rule:            #4A544B;
   --selection-bg:    #5A6B5A;
-  --selection-text:  #EDE6DA;
+  --selection-text:  #F5F1EA;
+
+  /* VS Code Dark+ syntax colors */
+  --syn-keyword:     #C586C0;
+  --syn-string:      #CE9178;
+  --syn-number:      #B5CEA8;
+  --syn-function:    #DCDCAA;
+  --syn-comment:     #6A9955;
+  --syn-variable:    #9CDCFE;
+  --syn-property:    #9CDCFE;
+  --syn-operator:    #D4D4D4;
+  --syn-type:        #4EC9B0;
+  --syn-tag:         #569CD6;
+  --syn-plain:       #D4D4D4;
 
   /* Typography */
   --font-heading:    century_supra_a, 'Century Schoolbook', 'Palatino Linotype', Palatino, Georgia, serif;
@@ -70,7 +83,7 @@
   /* Spacing & sizing — mobile base */
   --content-width:   780px;
   --gutter:          1.25rem;
-  --body-size:       1.05rem;
+  --body-size:       1.15rem;
   --body-leading:    1.75;
 }
 
@@ -181,7 +194,7 @@ body {
 }
 
 .site-nav-links a {
-  font-size: 0.875rem;
+  font-size: 0.925rem;
   color: var(--text-dim);
   text-decoration: none;
   transition: color 0.25s ease;
@@ -299,7 +312,7 @@ body {
 
 .post-title {
   font-family: var(--font-heading);
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: var(--text-bright);
   line-height: 1.2;
@@ -421,9 +434,9 @@ body {
 
 /* Code blocks */
 .post-body pre {
-  background: var(--bg-raised);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 5px;
   padding: 1.2em 1.4em;
   margin: 1.8em 0;
   overflow-x: auto;
@@ -434,10 +447,22 @@ body {
   background: none;
   padding: 0;
   border-radius: 0;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #D4D4D4;
 }
+
+/* VS Code Dark+ syntax classes */
+.post-body pre code .kw   { color: #C586C0; }  /* keywords: var, function, if, return, for */
+.post-body pre code .fn   { color: #DCDCAA; }  /* function names */
+.post-body pre code .str  { color: #CE9178; }  /* strings */
+.post-body pre code .num  { color: #B5CEA8; }  /* numbers */
+.post-body pre code .cm   { color: #6A9955; }  /* comments */
+.post-body pre code .var  { color: #9CDCFE; }  /* variables, parameters */
+.post-body pre code .prop { color: #9CDCFE; }  /* properties */
+.post-body pre code .type { color: #4EC9B0; }  /* types, classes */
+.post-body pre code .tag  { color: #569CD6; }  /* declarations: const, let */
+.post-body pre code .op   { color: #D4D4D4; }  /* operators, punctuation */
 
 /* Lists inside prose */
 .post-body ul,
@@ -530,8 +555,8 @@ body {
   width: 1px;
   height: 1px;
   border-radius: 50%;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
   pointer-events: none;
 }
 
@@ -665,7 +690,7 @@ body {
 @media (min-width: 720px) {
   :root {
     --gutter:     2rem;
-    --body-size:  1.08rem;
+    --body-size:  1.18rem;
   }
 
   .site-wrapper {
@@ -698,7 +723,7 @@ body {
 @media (min-width: 1024px) {
   :root {
     --gutter:     2.5rem;
-    --body-size:  1.1rem;
+    --body-size:  1.22rem;
   }
 
   .site-wrapper {

@@ -67,7 +67,7 @@
       var b = balls[i];
 
       /* Spring toward home */
-      var springK = 1.8;
+      var springK = 3.5;
       var dx = b.homeX - b.x;
       var dy = b.homeY - b.y;
       var dz = b.homeZ - b.z;
@@ -80,18 +80,18 @@
         var px = pointerX - b.x;
         var py = pointerY - b.y;
         var dist = Math.sqrt(px * px + py * py);
-        if (dist < 200 && dist > 1) {
-          var pullStrength = (1 - dist / 200) * 900;
+        if (dist < 250 && dist > 1) {
+          var pullStrength = (1 - dist / 250) * 1800;
           b.vx += (px / dist) * pullStrength * dt;
           b.vy += (py / dist) * pullStrength * dt;
-          b.vz += (Math.random() - 0.5) * 60 * dt;
+          b.vz += (Math.random() - 0.5) * 120 * dt;
         }
       }
 
       /* Damping */
-      b.vx *= 0.94;
-      b.vy *= 0.94;
-      b.vz *= 0.94;
+      b.vx *= 0.91;
+      b.vy *= 0.91;
+      b.vz *= 0.91;
 
       /* Integrate */
       b.x += b.vx * dt;
