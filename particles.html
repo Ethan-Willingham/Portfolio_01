@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Particle Playground</title>
+  <meta name="description" content="Three interactive particle simulations you can build with a game loop and some basic physics.">
+  <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back">Home</a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">A Particle Playground</h1>
+      <p class="post-subtitle">Three simulations, a few sliders, and 200 lines of code.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <p>
+            You do not need a game engine or a graphics degree to build
+            something that looks alive. A loop that runs 60 times a second,
+            a list of objects with positions and velocities, and a few
+            simple rules about how they move. That is all any of this is.
+          </p>
+
+          <p>
+            Every demo below is running in your browser right now. Drag
+            inside them. Move the sliders. The code that drives each one
+            is short enough to read in a few minutes. The point is not the
+            technique; it is that this stuff is more accessible than it
+            looks.
+          </p>
+
+          <p>
+            Inspired by David Gerrells'
+            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">brilliant, unhinged experiments</a>.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <!-- ============================================
+               DEMO 1: GRAVITY + BOUNCE
+               ============================================ -->
+
+          <h2>1. Gravity and walls</h2>
+
+          <p>
+            The simplest version. Balls fall under gravity, bounce off the
+            edges, and lose energy on each bounce. Click or touch to pull
+            them toward your cursor. The sliders control the physics in
+            real time.
+          </p>
+
+          <div class="demo-wrapper" data-mode="bounce">
+            <div class="demo-header">
+              <span class="demo-label">Gravity &amp; bounce</span>
+              <span class="p-fps"></span>
+            </div>
+            <div class="demo-canvas-wrapper p-canvas">
+              <div class="render-dot"></div>
+              <div class="p-hint">click &amp; drag to attract</div>
+            </div>
+            <div class="p-controls">
+              <div class="p-controls-header">
+                <span></span>
+                <button class="p-reset">Reset</button>
+              </div>
+              <div class="p-slider-row">
+                <label>Count</label>
+                <input type="range" data-param="count" min="10" max="400" value="150">
+                <span class="p-slider-val" data-value="count">150</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Gravity</label>
+                <input type="range" data-param="gravity" min="-4000" max="4000" value="0">
+                <span class="p-slider-val" data-value="gravity">0</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Damping</label>
+                <input type="range" data-param="damping" min="80" max="100" value="98" step="1">
+                <span class="p-slider-val" data-value="damping">98</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Pull</label>
+                <input type="range" data-param="pull" min="100" max="10000" value="4000">
+                <span class="p-slider-val" data-value="pull">4000</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            The entire update function for this mode is a for loop. Each ball
+            gets gravity added to its vertical velocity, pointer attraction
+            if you are pressing, damping to slow it down, and then position
+            integration. If it hits a wall, the velocity flips:
+          </p>
+
+<pre><code><span class="cm">// Each frame, for each ball:</span>
+<span class="var">b</span>.<span class="prop">vy</span> += <span class="var">gravity</span> * <span class="var">dt</span>;
+
+<span class="cm">// Pointer attraction</span>
+<span class="kw">if</span> (<span class="var">pointerDown</span> &amp;&amp; <span class="var">dist</span> &lt; <span class="num">300</span>) {
+  <span class="tag">var</span> <span class="var">f</span> = (<span class="num">1</span> - <span class="var">dist</span> / <span class="num">300</span>) * <span class="var">pull</span>;
+  <span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">dx</span> / <span class="var">dist</span>) * <span class="var">f</span> * <span class="var">dt</span>;
+}
+
+<span class="cm">// Damping bleeds energy</span>
+<span class="var">b</span>.<span class="prop">vx</span> *= <span class="var">damping</span>;
+<span class="var">b</span>.<span class="prop">vy</span> *= <span class="var">damping</span>;
+
+<span class="cm">// Move</span>
+<span class="var">b</span>.<span class="prop">x</span> += <span class="var">b</span>.<span class="prop">vx</span> * <span class="var">dt</span>;
+
+<span class="cm">// Bounce off walls</span>
+<span class="kw">if</span> (<span class="var">b</span>.<span class="prop">y</span> &gt; <span class="var">H</span>) { <span class="var">b</span>.<span class="prop">y</span> = <span class="var">H</span>; <span class="var">b</span>.<span class="prop">vy</span> *= -<span class="num">0.7</span>; }</code></pre>
+
+          <p>
+            Try cranking gravity negative and watch them fall upward. Set
+            damping to 100 and they drift forever. Pull at 10000 turns your
+            cursor into a black hole.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <!-- ============================================
+               DEMO 2: COLLISIONS
+               ============================================ -->
+
+          <h2>2. Ball-to-ball collisions</h2>
+
+          <p>
+            Same gravity setup, but now the balls know about each other.
+            When two overlap, they push apart and exchange velocity. The
+            collision check compares every ball to every other ball each
+            frame, which is simple but slow at high counts.
+          </p>
+
+          <div class="demo-wrapper" data-mode="collide">
+            <div class="demo-header">
+              <span class="demo-label">Collisions</span>
+              <span class="p-fps"></span>
+            </div>
+            <div class="demo-canvas-wrapper p-canvas">
+              <div class="render-dot"></div>
+              <div class="p-hint">click &amp; drag to attract</div>
+            </div>
+            <div class="p-controls">
+              <div class="p-controls-header">
+                <span></span>
+                <button class="p-reset">Reset</button>
+              </div>
+              <div class="p-slider-row">
+                <label>Count</label>
+                <input type="range" data-param="count" min="5" max="300" value="150">
+                <span class="p-slider-val" data-value="count">150</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Size</label>
+                <input type="range" data-param="size" min="4" max="12" value="9">
+                <span class="p-slider-val" data-value="size">9</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Gravity</label>
+                <input type="range" data-param="gravity" min="-4000" max="4000" value="0">
+                <span class="p-slider-val" data-value="gravity">0</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Bounce</label>
+                <input type="range" data-param="bounce" min="10" max="100" value="60">
+                <span class="p-slider-val" data-value="bounce">60</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Pull</label>
+                <input type="range" data-param="pull" min="100" max="5000" value="2400">
+                <span class="p-slider-val" data-value="pull">2400</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            The collision itself is a few lines. For each pair, measure the
+            distance. If it is less than the sum of their radii, push them
+            apart and swap their velocity along the collision normal:
+          </p>
+
+<pre><code><span class="tag">var</span> <span class="var">dx</span> = <span class="var">b</span>.<span class="prop">x</span> - <span class="var">a</span>.<span class="prop">x</span>, <span class="var">dy</span> = <span class="var">b</span>.<span class="prop">y</span> - <span class="var">a</span>.<span class="prop">y</span>;
+<span class="tag">var</span> <span class="var">dist</span> = <span class="fn">Math.sqrt</span>(<span class="var">dx</span>*<span class="var">dx</span> + <span class="var">dy</span>*<span class="var">dy</span>);
+<span class="tag">var</span> <span class="var">minD</span> = <span class="var">a</span>.<span class="prop">size</span> + <span class="var">b</span>.<span class="prop">size</span>;
+
+<span class="kw">if</span> (<span class="var">dist</span> &lt; <span class="var">minD</span>) {
+  <span class="cm">// Push apart</span>
+  <span class="tag">var</span> <span class="var">nx</span> = <span class="var">dx</span>/<span class="var">dist</span>, <span class="var">overlap</span> = <span class="var">minD</span> - <span class="var">dist</span>;
+  <span class="var">a</span>.<span class="prop">x</span> -= <span class="var">nx</span> * <span class="var">overlap</span> * <span class="num">0.5</span>;
+  <span class="var">b</span>.<span class="prop">x</span> += <span class="var">nx</span> * <span class="var">overlap</span> * <span class="num">0.5</span>;
+
+  <span class="cm">// Swap velocity along normal</span>
+  <span class="tag">var</span> <span class="var">dvn</span> = (<span class="var">a</span>.<span class="prop">vx</span>-<span class="var">b</span>.<span class="prop">vx</span>)*<span class="var">nx</span> + (<span class="var">a</span>.<span class="prop">vy</span>-<span class="var">b</span>.<span class="prop">vy</span>)*<span class="var">ny</span>;
+  <span class="var">a</span>.<span class="prop">vx</span> -= <span class="var">dvn</span> * <span class="var">nx</span> * <span class="var">bounce</span>;
+  <span class="var">b</span>.<span class="prop">vx</span> += <span class="var">dvn</span> * <span class="var">nx</span> * <span class="var">bounce</span>;
+}</code></pre>
+
+          <p>
+            Crank the size up and the count up and watch them pile. Set bounce
+            to 100 for elastic collisions. Set it to 10 and they absorb nearly
+            all impact energy.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <!-- ============================================
+               DEMO 3: SPONGE (SPRING RETURN)
+               ============================================ -->
+
+          <h2>3. The sponge</h2>
+
+          <p>
+            My favorite version. Each ball remembers where it was born and
+            constantly tries to get back. A spring force pulls it home;
+            the farther away, the harder the pull. Your cursor overpowers
+            the spring, ripping particles away. Let go and they drift back.
+            It feels like tearing into a sponge.
+          </p>
+
+          <div class="demo-wrapper" data-mode="sponge">
+            <div class="demo-header">
+              <span class="demo-label">Sponge</span>
+              <span class="p-fps"></span>
+            </div>
+            <div class="demo-canvas-wrapper p-canvas">
+              <div class="render-dot"></div>
+              <div class="p-hint">click &amp; drag to tear</div>
+            </div>
+            <div class="p-controls">
+              <div class="p-controls-header">
+                <span></span>
+                <button class="p-reset">Reset</button>
+              </div>
+              <div class="p-slider-row">
+                <label>Count</label>
+                <input type="range" data-param="count" min="20" max="300" value="160">
+                <span class="p-slider-val" data-value="count">160</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Spring</label>
+                <input type="range" data-param="spring" min="0.5" max="12" value="7.5" step="0.5">
+                <span class="p-slider-val" data-value="spring">7.5</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Pull</label>
+                <input type="range" data-param="pull" min="200" max="5000" value="2700">
+                <span class="p-slider-val" data-value="pull">2700</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Radius</label>
+                <input type="range" data-param="radius" min="50" max="400" value="260">
+                <span class="p-slider-val" data-value="radius">260</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Damping</label>
+                <input type="range" data-param="damping" min="80" max="99" value="97">
+                <span class="p-slider-val" data-value="damping">97</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            The spring is one line of physics. The displacement from home
+            times a constant. That is it:
+          </p>
+
+<pre><code><span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">b</span>.<span class="prop">homeX</span> - <span class="var">b</span>.<span class="prop">x</span>) * <span class="var">springK</span> * <span class="var">dt</span>;
+<span class="var">b</span>.<span class="prop">vy</span> += (<span class="var">b</span>.<span class="prop">homeY</span> - <span class="var">b</span>.<span class="prop">y</span>) * <span class="var">springK</span> * <span class="var">dt</span>;</code></pre>
+
+          <p>
+            Set the spring to 12 and the balls snap home instantly. Set it
+            to 0.5 and they drift back slowly, like they are underwater.
+            Crank the pull to 5000 and you can scatter them across the entire
+            area. Lower the radius and you have to get very close before
+            they react.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>The render trick</h2>
+
+          <p>
+            All three demos share the same renderer. It is five lines. Every
+            frame, sort the balls by depth, compute a spread value for each
+            one, and join them into a single string. Set that string as the
+            <code>box-shadow</code> property of a 1-pixel element. The
+            browser draws every circle for you. No canvas, no WebGL:
+          </p>
+
+<pre><code><span class="var">balls</span>.<span class="fn">sort</span>(<span class="kw">function</span>(<span class="var">a</span>,<span class="var">b</span>) { <span class="kw">return</span> <span class="var">b</span>.<span class="prop">z</span> - <span class="var">a</span>.<span class="prop">z</span>; });
+<span class="tag">var</span> <span class="var">s</span> = [];
+<span class="kw">for</span> (<span class="tag">var</span> <span class="var">i</span>=<span class="num">0</span>; <span class="var">i</span>&lt;<span class="var">balls</span>.<span class="prop">length</span>; <span class="var">i</span>++) {
+  <span class="tag">var</span> <span class="var">spread</span> = (<span class="var">b</span>.<span class="prop">size</span> * (<span class="num">1</span> + <span class="var">b</span>.<span class="prop">z</span>/<span class="num">40</span>) - <span class="num">1</span>) / <span class="num">2</span>;
+  <span class="var">s</span>.<span class="fn">push</span>(<span class="var">b</span>.<span class="prop">x</span>+<span class="str">'px '</span>+<span class="var">b</span>.<span class="prop">y</span>+<span class="str">'px 0 '</span>+<span class="var">spread</span>+<span class="str">'px '</span>+<span class="var">b</span>.<span class="prop">color</span>);
+}
+<span class="var">dot</span>.<span class="prop">style</span>.<span class="prop">boxShadow</span> = <span class="var">s</span>.<span class="fn">join</span>(<span class="str">','</span>);</code></pre>
+
+          <p>
+            The full source for all three demos is about 200 lines of
+            JavaScript. No dependencies, no build step, no framework. Just
+            a loop, some arithmetic, and a browser that is surprisingly good
+            at drawing circles when you ask it the right way.
+          </p>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <span>&copy; 2026 Ethan Willingham</span>
+      </div>
+    </footer>
+  </div>
+  <script src="main.js"></script>
+  <script src="particles.js"></script>
+</body>
+</html>
