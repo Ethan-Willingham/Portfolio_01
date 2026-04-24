@@ -4,9 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Every Hour of Daylight, Visualized</title>
-  <meta name="description" content="A spinnable 3D Earth with day/night shadow, from noon today to the death of the sun.">
+  <meta name="description" content="A spinnable 3D Earth with real satellite imagery, terrain shadows, and daylight breakdown.">
   <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #globe-container { position: relative; width: 100%; aspect-ratio: 4/3; background: #0e1114; cursor: grab; touch-action: none; overflow: hidden; }
+    #globe-container:active { cursor: grabbing; }
+    #globe-container canvas { display: block; width: 100%; height: 100%; border-radius: 0; }
+    .daylight-panel { margin: 0.8rem 1.2rem 0.4rem; }
+    .daylight-bar-wrap { position: relative; width: 100%; height: 14px; border-radius: 7px; overflow: hidden; margin-bottom: 0.35rem; }
+    .daylight-bar-wrap canvas { width: 100%; height: 100%; display: block; border-radius: 7px; }
+    .daylight-bar-ticks { display: flex; justify-content: space-between; font-size: 0.68rem; color: #666; font-family: var(--font-mono); padding: 0 2px; }
+    .daylight-label { font-size: 0.88rem; color: var(--text); font-family: var(--font-mono); margin-bottom: 0.15rem; }
+    .daylight-sub { font-size: 0.78rem; color: var(--text-dim); font-family: var(--font-mono); }
+    .fact-box { margin: 2em 0; padding: 1.2em 1.4em; background: rgba(255,255,255,0.03); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; }
+    .fact-box strong { color: var(--text-bright); }
+    .fact-box p { margin-bottom: 0.5em; font-size: 0.95rem; line-height: 1.55; }
+    .fact-box p:last-child { margin-bottom: 0; }
+  </style>
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -16,7 +31,7 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">Every Hour of Daylight, Visualized</h1>
-      <p class="post-subtitle">From noon today to the death of the sun.</p>
+      <p class="post-subtitle">One number, 23.4 degrees, controls everything.</p>
     </header>
 
     <main>
@@ -24,23 +39,26 @@
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
 
           <p>
-            The tilt of the Earth's axis is 23.4 degrees. That one number
+            The tilt of the Earth's axis is 23.4 degrees. That single number
             controls the seasons, the midnight sun, polar night, and why
             Reykjavik and Singapore feel like different planets in December.
           </p>
 
           <p>
-            Drag the globe to spin it. Use the sliders to change the time of
-            day, the day of the year, the axial tilt, and even the epoch.
-            Hover over any point to see whether it is in sunlight or shadow.
+            Drag the globe to spin it. Scroll (or pinch) to zoom. Change the
+            hour and day with the sliders. Hover over any point to see its
+            daylight breakdown in the bar below.
           </p>
 
           <div class="globe-wrapper">
-            <div class="globe-canvas-area">
-              <canvas id="globe-canvas"></canvas>
-              <div class="globe-info" id="hover-info">drag to spin &bull; hover for info</div>
+            <div id="globe-container">
+              <div class="globe-info" id="hover-info" style="position:absolute;top:12px;left:14px;z-index:1;pointer-events:none;">drag to spin &bull; scroll to zoom</div>
             </div>
             <div class="globe-controls">
+              <div class="p-controls-header">
+                <span></span>
+                <button class="p-reset" id="globe-reset">Reset</button>
+              </div>
               <div class="p-slider-row">
                 <label>Hour</label>
                 <input type="range" id="hour-slider" min="0" max="24" value="12" step="0.25">
@@ -51,145 +69,133 @@
                 <input type="range" id="day-slider" min="0" max="364" value="172">
                 <span class="p-slider-val" id="day-label">21 Jun</span>
               </div>
-              <div class="p-slider-row">
-                <label>Tilt</label>
-                <input type="range" id="tilt-slider" min="0" max="90" value="23.4" step="0.1">
-                <span class="p-slider-val" id="tilt-label">23.4&deg;</span>
+            </div>
+            <div class="daylight-panel">
+              <div class="daylight-label" id="daylight-hours-label">Equator: 12.0h daylight</div>
+              <div class="daylight-bar-wrap">
+                <canvas id="daylight-bar" width="600" height="14"></canvas>
               </div>
-              <div class="p-slider-row">
-                <label>Epoch</label>
-                <input type="range" id="epoch-slider" min="0" max="100" value="65" step="1">
-                <span class="p-slider-val" id="epoch-label">Today</span>
+              <div class="daylight-bar-ticks">
+                <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
               </div>
-              <div id="epoch-desc" style="font-size: 0.85rem; color: #A09A8A; font-style: italic; padding: 0.3rem 0 0; line-height: 1.4;">
-                Obliquity 23.44&deg;. Currently decreasing at 0.013&deg;/century.
-              </div>
+              <div class="daylight-sub" id="sunrise-label">Rise 06:00  Set 18:00</div>
             </div>
           </div>
 
           <div class="divider">• • •</div>
 
-          <h2>What to look for</h2>
+          <h2>Things to try</h2>
 
           <p>
-            Set the day to late June. The entire Arctic stays sunlit
-            as you move the hour slider through a full 24 hours. The
-            Antarctic stays dark no matter what. At the equator, the
-            terminator crosses at roughly the same two times regardless of
-            the season.
+            <strong>Slide the hour from 0 to 24.</strong> Watch the shadow
+            sweep across the globe. It rotates 15 degrees every hour. At
+            any given moment, roughly half the planet is in darkness.
           </p>
 
           <p>
-            Now change the day to late December. Everything inverts. The
-            Arctic goes dark. Antarctica gets its midnight sun. Drag the
-            slider slowly from June to December and watch the terminator
-            tilt back and forth.
-          </p>
-
-          <h2>The tilt slider</h2>
-
-          <p>
-            This is where it gets interesting. Set the tilt to 0. The
-            terminator runs straight north-south no matter what day it is.
-            No seasons. Every place on Earth gets exactly 12 hours of
-            daylight, every single day. Life would look very different.
+            <strong>Set the day to June 21 (summer solstice).</strong>
+            Hover over northern Norway (69&deg;N). The daylight bar fills
+            completely: 24 hours of continuous sun. Now hover over southern
+            Argentina (55&deg;S). Just 7 hours. Move the day to December 21
+            and the roles reverse.
           </p>
 
           <p>
-            Now crank it to 45. At the June solstice, everywhere north of
-            45&deg;N gets 24-hour sunlight. At 90&deg; tilt, the sun would
-            circle directly overhead at the pole while the entire opposite
-            hemisphere sits in darkness for months. Uranus actually does
-            this; it is tilted 98&deg;.
+            <strong>Zoom in.</strong> Scroll to zoom into the Himalayas,
+            the Sahara, or the Amazon. The NASA Blue Marble texture holds
+            up surprisingly well, and the bump mapping creates visible
+            terrain relief at closer distances.
           </p>
 
-          <h2>The epoch slider</h2>
+          <div class="fact-box">
+            <p><strong>Why 23.4&deg;?</strong></p>
+            <p>
+              The Moon. Without it, Earth's obliquity would wander
+              chaotically between 0&deg; and 85&deg; over millions of
+              years, driven by gravitational tugs from Jupiter and other
+              planets. Mars, which has no large moon, swings between
+              15&deg; and 35&deg; and may have reached 60&deg; in the
+              past. The Moon locks Earth's tilt into a slow, gentle
+              oscillation between 22.1&deg; and 24.5&deg; over a
+              41,000-year cycle.
+            </p>
+          </div>
+
+          <h2>The daylight bar</h2>
 
           <p>
-            Slide it left to rewind 4.5 billion years, back to when
-            Earth formed. Slide it right and you pass through ice ages,
-            mass extinctions, the rise of mammals, and eventually into a
-            future where the sun brightens, the oceans boil, and the star
-            itself swells into a red giant that consumes Mercury and Venus.
+            The gold bar below the sliders shows 24 hours for whatever
+            latitude you are hovering over. Dark is night. Gold is day.
+            The white line is the current hour. Hover over the equator
+            and it is always split roughly 50/50. Hover over the Arctic
+            in June and the bar fills entirely with gold.
           </p>
 
-          <p>
-            The epoch slider auto-adjusts the tilt to approximate what
-            obliquity was (or will be) at that point in history. You can
-            still override it by touching the tilt slider directly.
-          </p>
+          <div class="fact-box">
+            <p><strong>Fastest sunset on Earth:</strong> the equator.</p>
+            <p>
+              Because the sun's path crosses the horizon nearly
+              perpendicular at the equator, sunset takes only about
+              2 minutes. In Scandinavia, the sun sets at a shallow
+              angle and twilight can last over an hour. At the poles,
+              a single "sunset" takes roughly two weeks as the sun
+              slowly spirals below the horizon.
+            </p>
+          </div>
+
+          <h2>Numbers worth knowing</h2>
 
           <p>
-            Some things worth stopping on:
-          </p>
-
-          <p>
-            <strong>2.4 billion years ago.</strong> The Great Oxygenation
-            Event. Cyanobacteria pumped oxygen into the atmosphere and
-            triggered the most extreme ice ages in Earth's history:
-            Snowball Earth, where glaciers reached the equator.
-          </p>
-
-          <p>
-            <strong>540 million years ago.</strong> The Cambrian explosion.
-            Complex animal life appears in a geological instant.
-            The tilt was similar to today's.
-          </p>
-
-          <p>
-            <strong>250 million years ago.</strong> The Permian extinction.
-            95% of all species wiped out. Pangaea exists as a single
-            supercontinent.
-          </p>
-
-          <p>
-            <strong>+1.1 billion years.</strong> The sun is 10% brighter.
-            Enough to start boiling the oceans. Complex life ends.
-          </p>
-
-          <p>
-            <strong>+5.4 billion years.</strong> The sun, now a red giant,
-            reaches its maximum radius. Its outer atmosphere may extend
-            past Earth's orbit.
-          </p>
-
-          <div class="divider">• • •</div>
-
-          <h2>How it works</h2>
-
-          <p>
-            The globe is a standard HTML <code>&lt;canvas&gt;</code>. Each
-            frame, it projects a grid of 4&deg;&times;4&deg; patches onto
-            the sphere. Each patch is checked against simplified continent
-            polygons to determine land or ocean, then shaded based on
-            whether the sun is above the horizon at that point.
+            <strong>Equinox (March 20 / September 22):</strong>
+            Every point on Earth gets almost exactly 12 hours of daylight.
+            The terminator runs pole to pole. "Equinox" literally means
+            "equal night."
           </p>
 
           <p>
-            The day/night boundary (the terminator) is computed from the
-            subsolar point: the spot on Earth where the sun is directly
-            overhead. The subsolar latitude is the solar declination (a
-            function of day-of-year and axial tilt), and the subsolar
-            longitude depends on the time of day (15&deg; per hour from
-            noon). Every patch more than 90&deg; from the subsolar point
-            is in shadow.
+            <strong>Arctic Circle (66.6&deg;N):</strong>
+            Gets at least one 24-hour day of sun per year and one 24-hour
+            day of darkness. At the pole itself, roughly 6 months of each.
           </p>
-
-<pre><code><span class="kw">function</span> <span class="fn">sunlight</span>(<span class="var">lat</span>, <span class="var">lon</span>, <span class="var">subLat</span>, <span class="var">subLon</span>) {
-  <span class="cm">// Dot product on unit sphere</span>
-  <span class="tag">var</span> <span class="var">dot</span> = <span class="fn">Math.sin</span>(<span class="var">lat</span>) * <span class="fn">Math.sin</span>(<span class="var">subLat</span>) +
-            <span class="fn">Math.cos</span>(<span class="var">lat</span>) * <span class="fn">Math.cos</span>(<span class="var">subLat</span>) *
-            <span class="fn">Math.cos</span>(<span class="var">lon</span> - <span class="var">subLon</span>);
-  <span class="kw">if</span> (<span class="var">dot</span> &gt; <span class="num">0.05</span>) <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">// day</span>
-  <span class="kw">if</span> (<span class="var">dot</span> &lt; -<span class="num">0.05</span>) <span class="kw">return</span> <span class="num">0</span>; <span class="cm">// night</span>
-  <span class="kw">return</span> (<span class="var">dot</span> + <span class="num">0.05</span>) / <span class="num">0.1</span>;  <span class="cm">// twilight</span>
-}</code></pre>
 
           <p>
-            No WebGL, no Three.js. Just 2D canvas, some trigonometry, and
-            a point-in-polygon test running 4,000 times per frame. It holds
-            60fps on any modern device.
+            <strong>The equator:</strong>
+            Gets 12 hours and 7 minutes of daylight every single day. Not
+            exactly 12:00 because the sun is a disk, not a point, and
+            atmospheric refraction bends light below the geometric horizon.
           </p>
+
+          <div class="fact-box">
+            <p><strong>Days used to be shorter.</strong></p>
+            <p>
+              620 million years ago, a day was about 21 hours long.
+              The Moon's tidal braking is gradually slowing Earth's
+              rotation, adding roughly 2.3 milliseconds per century.
+              Coral fossils from the Devonian period show about 400
+              daily growth bands per year, confirming shorter days.
+            </p>
+          </div>
+
+          <p>
+            <strong>Solar noon is not 12:00.</strong>
+            Due to Earth's elliptical orbit and axial tilt, solar noon
+            drifts up to 16 minutes off clock noon depending on the
+            time of year. This is described by the equation of time,
+            which also explains why earliest sunset and latest sunrise
+            do not fall on the winter solstice.
+          </p>
+
+          <div class="fact-box">
+            <p><strong>The specular glint.</strong></p>
+            <p>
+              Spin the globe so you are looking across a sunlit ocean at
+              a low angle. You may see a bright spot: the sun reflecting
+              off flat water toward the camera. This "ocean glint" is a
+              real phenomenon that satellites use to measure wave height
+              and wind speed. DSCOVR, a satellite at the L1 Lagrange
+              point, photographs this glint daily from a million miles away.
+            </p>
+          </div>
 
         </div>
       </article>
@@ -202,6 +208,7 @@
     </footer>
   </div>
   <script src="main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="globe.js"></script>
 </body>
 </html>
