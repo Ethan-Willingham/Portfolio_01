@@ -1,4 +1,3 @@
-/* Reading progress bar — post pages only */
 (function () {
   'use strict';
   var bar = document.getElementById('reading-progress');

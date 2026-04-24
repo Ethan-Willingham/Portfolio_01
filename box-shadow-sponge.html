@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Box Shadow Sponge — Ethan Willingham</title>
+  <title>The Box Shadow Sponge</title>
   <meta name="description" content="120 particles, one div, zero canvas elements.">
   <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="century_supra_a_bold.woff2" as="font" type="font/woff2" crossorigin>
@@ -13,23 +13,35 @@
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
     <header class="site-header">
-      <nav class="site-nav">
-        <div class="site-title"><a href="/">ethanwillingham.com</a></div>
-        <ul class="site-nav-links">
-          <li><a href="/">Writing</a></li>
-          <li><a href="mailto:ethan@ethanwillingham.com">Contact</a></li>
-        </ul>
-      </nav>
+      <div class="site-name"><a href="/">Ethan Willingham</a></div>
+      <ul class="site-nav-links">
+        <li><a href="/">Writing</a></li>
+        <li><a href="mailto:ethan@ethanwillingham.com">Contact</a></li>
+      </ul>
     </header>
+
     <main>
       <article>
         <header class="post-header fade-in">
           <h1 class="post-title">The Box Shadow Sponge</h1>
           <div class="post-date">23rd of April, 2026</div>
         </header>
+
         <div class="post-body fade-in" style="animation-delay: 0.12s;">
-          <p>David Gerrells' <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">How Not to Use Box Shadows</a> escalates from CSS experiments to a full ray tracer — all rendered through <code>box-shadow</code> on a single <code>&lt;div&gt;</code>. One demo stopped me cold: the <em>sponge</em>. Colored circles that drift to home positions. Pull them apart with your cursor. Release. They drift back. I rebuilt it to understand how it works.</p>
+
+          <p>
+            David Gerrells'
+            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">How Not to Use Box Shadows</a>
+            escalates from CSS experiments to a full ray tracer, all
+            rendered through <code>box-shadow</code> on a single
+            <code>&lt;div&gt;</code>. One demo stopped me cold: the
+            <em>sponge</em>. Colored circles that drift to home positions.
+            Pull them apart with your cursor. Release. They drift back.
+            I rebuilt it to understand how it works.
+          </p>
+
           <p>Click and drag anywhere in the dark area below.</p>
+
           <div class="demo-wrapper">
             <div class="demo-header">
               <span class="demo-label">Live demo</span>
@@ -41,13 +53,27 @@
               <div class="demo-hint">click &amp; drag to interact</div>
             </div>
           </div>
-          <p>No <code>&lt;canvas&gt;</code>. No WebGL. No SVG. Every circle is a <code>box-shadow</code> value on a 1&times;1 pixel element.</p>
+
+          <p>
+            No <code>&lt;canvas&gt;</code>. No WebGL. No SVG. Every circle
+            is a <code>box-shadow</code> value on a 1&times;1 pixel element.
+          </p>
+
           <div class="divider">• • •</div>
+
           <h2>How it works</h2>
-          <p><code>box-shadow</code> accepts a comma-separated list of shadows. Each takes an x offset, y offset, blur, spread, and color. Set blur to zero, give it a spread, put it on a 1px element with <code>border-radius: 50%</code> — you get a hard circle at arbitrary coordinates. Stack 120 and you have a particle system.</p>
-          <p>The render function runs every frame. Sort by depth, compute spread, join into a string, set it on the element:</p>
+
+          <p>
+            <code>box-shadow</code> accepts a comma-separated list of shadows.
+            Each takes an x offset, y offset, blur, spread, and color. Set
+            blur to zero, give it a spread, put it on a 1px element with
+            <code>border-radius: 50%</code>, and you get a hard circle at
+            arbitrary coordinates. Stack 120 and you have a particle system.
+          </p>
+
 <pre><code><span class="kw">function</span> <span class="fn">render</span>() {
   <span class="var">balls</span>.<span class="fn">sort</span>(<span class="kw">function</span> (<span class="var">a</span>, <span class="var">b</span>) { <span class="kw">return</span> <span class="var">b</span>.<span class="prop">z</span> - <span class="var">a</span>.<span class="prop">z</span>; });
+
   <span class="tag">var</span> <span class="var">parts</span> = [];
   <span class="kw">for</span> (<span class="tag">var</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> &lt; <span class="var">balls</span>.<span class="prop">length</span>; <span class="var">i</span>++) {
     <span class="tag">var</span> <span class="var">b</span> = <span class="var">balls</span>[<span class="var">i</span>];
@@ -56,8 +82,17 @@
   }
   <span class="var">renderDot</span>.<span class="prop">style</span>.<span class="prop">boxShadow</span> = <span class="var">parts</span>.<span class="fn">join</span>(<span class="str">','</span>);
 }</code></pre>
+
           <h2>The sponge effect</h2>
-          <p>Each ball has a home position. A spring force pulls it back. When the pointer is active, nearby balls get yanked toward it instead. The pull overwhelms the spring — particles rip away. Release, and the springs take over:</p>
+
+          <p>
+            Each ball has a home position. A spring force pulls it back;
+            the farther away, the stronger the pull. When the pointer is
+            active, nearby balls get yanked toward it instead. The pull
+            overwhelms the spring, so particles rip away. Release,
+            and the springs take over:
+          </p>
+
 <pre><code><span class="cm">// Spring toward home</span>
 <span class="var">b</span>.<span class="prop">vx</span> += (<span class="var">b</span>.<span class="prop">homeX</span> - <span class="var">b</span>.<span class="prop">x</span>) * <span class="var">springK</span> * <span class="var">dt</span>;
 <span class="var">b</span>.<span class="prop">vy</span> += (<span class="var">b</span>.<span class="prop">homeY</span> - <span class="var">b</span>.<span class="prop">y</span>) * <span class="var">springK</span> * <span class="var">dt</span>;
@@ -68,16 +103,32 @@
 
 <span class="cm">// Damping bleeds off energy</span>
 <span class="var">b</span>.<span class="prop">vx</span> *= <span class="num">0.91</span>;</code></pre>
-          <h2>Fake 3D and performance</h2>
-          <p>Each ball's <code>z</code> value scales its visual size via <code>1 + z / 40</code>. Sorting by z gives natural occlusion. It's not real perspective but it's enough to feel organic.</p>
-          <p>It's fast because there's no blur and no transparency. Box-shadows map to the same rounded-rectangle primitives GPUs already use for UI compositing. Apple Silicon pushes thousands at 60fps. The real bottleneck is string concatenation — building a ~5KB shadow string every frame.</p>
-          <p>Gerrells takes this all the way to a progressive ray tracer with specular reflections and emissive lighting — entirely through <code>box-shadow</code>. Full article and source at <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">dgerrells.com</a>.</p>
+
+          <h2>Why it's fast</h2>
+
+          <p>
+            No blur, no transparency. Box shadows map directly to the
+            rounded-rectangle primitives that GPUs already use for UI
+            compositing. Apple Silicon pushes thousands at 60fps. The real
+            bottleneck is string concatenation: building a ~5KB shadow string
+            every frame.
+          </p>
+
+          <p>
+            Gerrells takes this all the way to a progressive ray tracer with
+            specular reflections and emissive lighting, entirely through
+            <code>box-shadow</code>. Full article and source at
+            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">dgerrells.com</a>.
+          </p>
+
         </div>
+
         <div class="post-end fade-in" style="animation-delay: 0.2s;">
           <a href="/" class="post-end-back">All writing</a>
         </div>
       </article>
     </main>
+
     <footer class="site-footer">
       <div class="site-footer-inner">
         <span>&copy; 2026 Ethan Willingham</span>

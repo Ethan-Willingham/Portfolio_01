@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Every Hour of Daylight, Visualized</title>
+  <meta name="description" content="A spinnable 3D globe showing how many hours of sunlight the world gets, for any day of the year.">
+  <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="century_supra_a_bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+    <header class="site-header">
+      <div class="site-name"><a href="/">Ethan Willingham</a></div>
+      <ul class="site-nav-links">
+        <li><a href="/">Writing</a></li>
+        <li><a href="mailto:ethan@ethanwillingham.com">Contact</a></li>
+      </ul>
+    </header>
+
+    <main>
+      <article>
+        <header class="post-header fade-in">
+          <h1 class="post-title">Every Hour of Daylight, Visualized</h1>
+          <div class="post-date">23rd of April, 2026</div>
+        </header>
+
+        <div class="post-body fade-in" style="animation-delay: 0.12s;">
+
+          <p>
+            The tilt of the Earth's axis is 23.4 degrees. That one number
+            controls the seasons, the midnight sun, polar night, and why
+            Reykjavik and Singapore feel like different planets in December.
+            I built a globe to make this visible.
+          </p>
+
+          <p>
+            Drag to spin it. Move the slider to change the day. Hover over
+            any point to see its latitude and hours of daylight.
+          </p>
+
+          <div class="globe-wrapper">
+            <div class="globe-canvas-area">
+              <canvas id="globe-canvas"></canvas>
+              <div class="globe-info" id="hover-info">hover the globe</div>
+            </div>
+            <div class="globe-controls">
+              <div class="globe-slider-row">
+                <label>Day</label>
+                <input type="range" id="day-slider" min="0" max="364" value="172">
+                <span class="globe-date-display" id="date-label">21 Jun</span>
+              </div>
+              <div class="globe-legend">
+                <span class="globe-legend-title">Hours</span>
+                <div class="globe-legend-bar" style="background: linear-gradient(to right, rgb(12,18,55), rgb(25,80,115), rgb(50,145,130), rgb(220,210,70), rgb(255,255,235));"></div>
+              </div>
+              <div class="globe-legend-labels" style="margin-left: 4.4em;">
+                <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider">• • •</div>
+
+          <h2>How the math works</h2>
+
+          <p>
+            The sun's declination changes throughout the year as Earth orbits.
+            On the summer solstice the sun sits 23.4&deg; north of the equator;
+            on the winter solstice, 23.4&deg; south. This tilt determines the
+            <em>hour angle</em> of sunrise at any latitude:
+          </p>
+
+<pre><code><span class="kw">function</span> <span class="fn">daylightHours</span>(<span class="var">lat</span>, <span class="var">day</span>) {
+  <span class="tag">var</span> <span class="var">decl</span> = <span class="var">TILT</span> * <span class="fn">Math.sin</span>(<span class="var">TWO_PI</span> * (<span class="var">day</span> - <span class="num">81</span>) / <span class="num">365</span>);
+  <span class="tag">var</span> <span class="var">cosHA</span> = -<span class="fn">Math.tan</span>(<span class="var">lat</span>) * <span class="fn">Math.tan</span>(<span class="var">decl</span>);
+  <span class="kw">if</span> (<span class="var">cosHA</span> &lt; -<span class="num">1</span>) <span class="kw">return</span> <span class="num">24</span>;  <span class="cm">// midnight sun</span>
+  <span class="kw">if</span> (<span class="var">cosHA</span> &gt;  <span class="num">1</span>) <span class="kw">return</span> <span class="num">0</span>;   <span class="cm">// polar night</span>
+  <span class="kw">return</span> (<span class="num">2</span> * <span class="fn">Math.acos</span>(<span class="var">cosHA</span>) / <span class="var">TWO_PI</span>) * <span class="num">24</span>;
+}</code></pre>
+
+          <p>
+            When the cosine of the hour angle drops below -1, the sun never
+            sets. When it exceeds 1, the sun never rises. Between those
+            extremes you get a smooth gradient from the equator's steady
+            12 hours to the poles' dramatic swings.
+          </p>
+
+          <h2>What to look for</h2>
+
+          <p>
+            Set the slider to late June. The Arctic Circle and everything
+            north of it glows bright: 24 hours of continuous daylight.
+            Antarctica is dark. Now drag the slider to December. The
+            pattern inverts completely. At the equator, nothing changes.
+            It stays locked at roughly 12 hours year-round.
+          </p>
+
+          <p>
+            The Tropics of Cancer and Capricorn (23.4&deg; N/S) mark the
+            latitudes where the sun is directly overhead at least once a
+            year. The Arctic and Antarctic Circles (66.6&deg; N/S) mark where
+            you get at least one full day of midnight sun or polar night.
+            Both lines appear as dashed circles on the globe.
+          </p>
+
+          <h2>Rendering</h2>
+
+          <p>
+            The globe draws on a standard HTML <code>&lt;canvas&gt;</code>.
+            Each frame it projects a grid of 4&deg;&times;4&deg; latitude-longitude
+            patches into screen space, colors them by daylight hours, and
+            shades them by depth to give a sense of curvature. Grid lines
+            and special latitude circles are drawn on top. The hover
+            crosshair uses inverse projection to convert screen coordinates
+            back to latitude and longitude.
+          </p>
+
+          <p>
+            No WebGL, no Three.js. Just 2D canvas and some trigonometry.
+            It runs at 60fps on any modern device.
+          </p>
+
+        </div>
+
+        <div class="post-end fade-in" style="animation-delay: 0.2s;">
+          <a href="/" class="post-end-back">All writing</a>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <span>&copy; 2026 Ethan Willingham</span>
+        <div class="footer-links"><a href="/rss.xml">RSS</a></div>
+      </div>
+    </footer>
+  </div>
+  <script src="main.js"></script>
+  <script src="globe.js"></script>
+</body>
+</html>
