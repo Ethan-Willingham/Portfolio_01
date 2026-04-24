@@ -120,11 +120,12 @@
         }
         b.vx *= damp; b.vy *= damp;
         b.x += b.vx * dt; b.y += b.vy * dt;
-        // Bounce off walls
-        if (b.x < 0) { b.x = 0; b.vx = Math.abs(b.vx) * 0.7; }
-        if (b.x > W) { b.x = W; b.vx = -Math.abs(b.vx) * 0.7; }
-        if (b.y < 0) { b.y = 0; b.vy = Math.abs(b.vy) * 0.7; }
-        if (b.y > H) { b.y = H; b.vy = -Math.abs(b.vy) * 0.7; }
+        // Bounce off walls (edge, not center)
+        var r = (b.size * (1 + b.z / 40)) / 2;
+        if (b.x < r) { b.x = r; b.vx = Math.abs(b.vx) * 0.7; }
+        if (b.x > W - r) { b.x = W - r; b.vx = -Math.abs(b.vx) * 0.7; }
+        if (b.y < r) { b.y = r; b.vy = Math.abs(b.vy) * 0.7; }
+        if (b.y > H - r) { b.y = H - r; b.vy = -Math.abs(b.vy) * 0.7; }
       }
     }
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Every Hour of Daylight, Visualized</title>
-  <meta name="description" content="A spinnable 3D globe showing how many hours of sunlight the world gets, for any day of the year.">
+  <meta name="description" content="A spinnable 3D Earth with day/night shadow, from noon today to the death of the sun.">
   <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,7 +16,7 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">Every Hour of Daylight, Visualized</h1>
-      <p class="post-subtitle">One number, 23.4 degrees, controls everything.</p>
+      <p class="post-subtitle">From noon today to the death of the sun.</p>
     </header>
 
     <main>
@@ -27,94 +27,168 @@
             The tilt of the Earth's axis is 23.4 degrees. That one number
             controls the seasons, the midnight sun, polar night, and why
             Reykjavik and Singapore feel like different planets in December.
-            I built a globe to make this visible.
           </p>
 
           <p>
-            Drag to spin it. Move the slider to change the day. Hover over
-            any point to see its latitude and hours of daylight.
+            Drag the globe to spin it. Use the sliders to change the time of
+            day, the day of the year, the axial tilt, and even the epoch.
+            Hover over any point to see whether it is in sunlight or shadow.
           </p>
 
           <div class="globe-wrapper">
             <div class="globe-canvas-area">
               <canvas id="globe-canvas"></canvas>
-              <div class="globe-info" id="hover-info">hover the globe</div>
+              <div class="globe-info" id="hover-info">drag to spin &bull; hover for info</div>
             </div>
             <div class="globe-controls">
-              <div class="globe-slider-row">
+              <div class="p-slider-row">
+                <label>Hour</label>
+                <input type="range" id="hour-slider" min="0" max="24" value="12" step="0.25">
+                <span class="p-slider-val" id="hour-label">12:00 UTC</span>
+              </div>
+              <div class="p-slider-row">
                 <label>Day</label>
                 <input type="range" id="day-slider" min="0" max="364" value="172">
-                <span class="globe-date-display" id="date-label">21 Jun</span>
+                <span class="p-slider-val" id="day-label">21 Jun</span>
               </div>
-              <div class="globe-legend">
-                <span class="globe-legend-title">Hours</span>
-                <div class="globe-legend-bar" style="background: linear-gradient(to right, rgb(12,18,55), rgb(25,80,115), rgb(50,145,130), rgb(220,210,70), rgb(255,255,235));"></div>
+              <div class="p-slider-row">
+                <label>Tilt</label>
+                <input type="range" id="tilt-slider" min="0" max="90" value="23.4" step="0.1">
+                <span class="p-slider-val" id="tilt-label">23.4&deg;</span>
               </div>
-              <div class="globe-legend-labels" style="margin-left: 4.4em;">
-                <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span>
+              <div class="p-slider-row">
+                <label>Epoch</label>
+                <input type="range" id="epoch-slider" min="0" max="100" value="65" step="1">
+                <span class="p-slider-val" id="epoch-label">Today</span>
+              </div>
+              <div id="epoch-desc" style="font-size: 0.85rem; color: #A09A8A; font-style: italic; padding: 0.3rem 0 0; line-height: 1.4;">
+                Obliquity 23.44&deg;. Currently decreasing at 0.013&deg;/century.
               </div>
             </div>
           </div>
 
           <div class="divider">• • •</div>
 
-          <h2>How the math works</h2>
-
-          <p>
-            The sun's declination changes throughout the year as Earth orbits.
-            On the summer solstice the sun sits 23.4&deg; north of the equator;
-            on the winter solstice, 23.4&deg; south. This tilt determines the
-            <em>hour angle</em> of sunrise at any latitude:
-          </p>
-
-<pre><code><span class="kw">function</span> <span class="fn">daylightHours</span>(<span class="var">lat</span>, <span class="var">day</span>) {
-  <span class="tag">var</span> <span class="var">decl</span> = <span class="var">TILT</span> * <span class="fn">Math.sin</span>(<span class="var">TWO_PI</span> * (<span class="var">day</span> - <span class="num">81</span>) / <span class="num">365</span>);
-  <span class="tag">var</span> <span class="var">cosHA</span> = -<span class="fn">Math.tan</span>(<span class="var">lat</span>) * <span class="fn">Math.tan</span>(<span class="var">decl</span>);
-  <span class="kw">if</span> (<span class="var">cosHA</span> &lt; -<span class="num">1</span>) <span class="kw">return</span> <span class="num">24</span>;  <span class="cm">// midnight sun</span>
-  <span class="kw">if</span> (<span class="var">cosHA</span> &gt;  <span class="num">1</span>) <span class="kw">return</span> <span class="num">0</span>;   <span class="cm">// polar night</span>
-  <span class="kw">return</span> (<span class="num">2</span> * <span class="fn">Math.acos</span>(<span class="var">cosHA</span>) / <span class="var">TWO_PI</span>) * <span class="num">24</span>;
-}</code></pre>
-
-          <p>
-            When the cosine of the hour angle drops below -1, the sun never
-            sets. When it exceeds 1, the sun never rises. Between those
-            extremes you get a smooth gradient from the equator's steady
-            12 hours to the poles' dramatic swings.
-          </p>
-
           <h2>What to look for</h2>
 
           <p>
-            Set the slider to late June. The Arctic Circle and everything
-            north of it glows bright: 24 hours of continuous daylight.
-            Antarctica is dark. Now drag the slider to December. The
-            pattern inverts completely. At the equator, nothing changes.
-            It stays locked at roughly 12 hours year-round.
+            Set the day to late June. The entire Arctic stays sunlit
+            as you move the hour slider through a full 24 hours. The
+            Antarctic stays dark no matter what. At the equator, the
+            terminator crosses at roughly the same two times regardless of
+            the season.
           </p>
 
           <p>
-            The Tropics of Cancer and Capricorn (23.4&deg; N/S) mark the
-            latitudes where the sun is directly overhead at least once a
-            year. The Arctic and Antarctic Circles (66.6&deg; N/S) mark where
-            you get at least one full day of midnight sun or polar night.
-            Both lines appear as dashed circles on the globe.
+            Now change the day to late December. Everything inverts. The
+            Arctic goes dark. Antarctica gets its midnight sun. Drag the
+            slider slowly from June to December and watch the terminator
+            tilt back and forth.
           </p>
 
-          <h2>Rendering</h2>
+          <h2>The tilt slider</h2>
 
           <p>
-            The globe draws on a standard HTML <code>&lt;canvas&gt;</code>.
-            Each frame it projects a grid of 4&deg;&times;4&deg; latitude-longitude
-            patches into screen space, colors them by daylight hours, and
-            shades them by depth to give a sense of curvature. Grid lines
-            and special latitude circles are drawn on top. The hover
-            crosshair uses inverse projection to convert screen coordinates
-            back to latitude and longitude.
+            This is where it gets interesting. Set the tilt to 0. The
+            terminator runs straight north-south no matter what day it is.
+            No seasons. Every place on Earth gets exactly 12 hours of
+            daylight, every single day. Life would look very different.
           </p>
 
           <p>
-            No WebGL, no Three.js. Just 2D canvas and some trigonometry.
-            It runs at 60fps on any modern device.
+            Now crank it to 45. At the June solstice, everywhere north of
+            45&deg;N gets 24-hour sunlight. At 90&deg; tilt, the sun would
+            circle directly overhead at the pole while the entire opposite
+            hemisphere sits in darkness for months. Uranus actually does
+            this; it is tilted 98&deg;.
+          </p>
+
+          <h2>The epoch slider</h2>
+
+          <p>
+            Slide it left to rewind 4.5 billion years, back to when
+            Earth formed. Slide it right and you pass through ice ages,
+            mass extinctions, the rise of mammals, and eventually into a
+            future where the sun brightens, the oceans boil, and the star
+            itself swells into a red giant that consumes Mercury and Venus.
+          </p>
+
+          <p>
+            The epoch slider auto-adjusts the tilt to approximate what
+            obliquity was (or will be) at that point in history. You can
+            still override it by touching the tilt slider directly.
+          </p>
+
+          <p>
+            Some things worth stopping on:
+          </p>
+
+          <p>
+            <strong>2.4 billion years ago.</strong> The Great Oxygenation
+            Event. Cyanobacteria pumped oxygen into the atmosphere and
+            triggered the most extreme ice ages in Earth's history:
+            Snowball Earth, where glaciers reached the equator.
+          </p>
+
+          <p>
+            <strong>540 million years ago.</strong> The Cambrian explosion.
+            Complex animal life appears in a geological instant.
+            The tilt was similar to today's.
+          </p>
+
+          <p>
+            <strong>250 million years ago.</strong> The Permian extinction.
+            95% of all species wiped out. Pangaea exists as a single
+            supercontinent.
+          </p>
+
+          <p>
+            <strong>+1.1 billion years.</strong> The sun is 10% brighter.
+            Enough to start boiling the oceans. Complex life ends.
+          </p>
+
+          <p>
+            <strong>+5.4 billion years.</strong> The sun, now a red giant,
+            reaches its maximum radius. Its outer atmosphere may extend
+            past Earth's orbit.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>How it works</h2>
+
+          <p>
+            The globe is a standard HTML <code>&lt;canvas&gt;</code>. Each
+            frame, it projects a grid of 4&deg;&times;4&deg; patches onto
+            the sphere. Each patch is checked against simplified continent
+            polygons to determine land or ocean, then shaded based on
+            whether the sun is above the horizon at that point.
+          </p>
+
+          <p>
+            The day/night boundary (the terminator) is computed from the
+            subsolar point: the spot on Earth where the sun is directly
+            overhead. The subsolar latitude is the solar declination (a
+            function of day-of-year and axial tilt), and the subsolar
+            longitude depends on the time of day (15&deg; per hour from
+            noon). Every patch more than 90&deg; from the subsolar point
+            is in shadow.
+          </p>
+
+<pre><code><span class="kw">function</span> <span class="fn">sunlight</span>(<span class="var">lat</span>, <span class="var">lon</span>, <span class="var">subLat</span>, <span class="var">subLon</span>) {
+  <span class="cm">// Dot product on unit sphere</span>
+  <span class="tag">var</span> <span class="var">dot</span> = <span class="fn">Math.sin</span>(<span class="var">lat</span>) * <span class="fn">Math.sin</span>(<span class="var">subLat</span>) +
+            <span class="fn">Math.cos</span>(<span class="var">lat</span>) * <span class="fn">Math.cos</span>(<span class="var">subLat</span>) *
+            <span class="fn">Math.cos</span>(<span class="var">lon</span> - <span class="var">subLon</span>);
+  <span class="kw">if</span> (<span class="var">dot</span> &gt; <span class="num">0.05</span>) <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">// day</span>
+  <span class="kw">if</span> (<span class="var">dot</span> &lt; -<span class="num">0.05</span>) <span class="kw">return</span> <span class="num">0</span>; <span class="cm">// night</span>
+  <span class="kw">return</span> (<span class="var">dot</span> + <span class="num">0.05</span>) / <span class="num">0.1</span>;  <span class="cm">// twilight</span>
+}</code></pre>
+
+          <p>
+            No WebGL, no Three.js. Just 2D canvas, some trigonometry, and
+            a point-in-polygon test running 4,000 times per frame. It holds
+            60fps on any modern device.
           </p>
 
         </div>
