@@ -123,7 +123,7 @@
     '  vec3 nightColor = texture2D(nightMap, vUv).rgb;',
     '',
     '  // Subtle bump from day texture luminance',
-    '  float ts = 1.0 / 2000.0;',
+    '  float ts = 1.0 / 5000.0;',
     '  float h0 = dot(texture2D(dayMap, vUv).rgb, vec3(0.3, 0.6, 0.1));',
     '  float hR = dot(texture2D(dayMap, vUv + vec2(ts, 0.0)).rgb, vec3(0.3, 0.6, 0.1));',
     '  float hU = dot(texture2D(dayMap, vUv + vec2(0.0, ts)).rgb, vec3(0.3, 0.6, 0.1));',
@@ -166,7 +166,7 @@
         dayMap: { value: dayTex },
         nightMap: { value: nightTex },
         sunDir: sunDirUniform,
-        bumpStr: { value: 1.4 }
+        bumpStr: { value: 0.3 }
       },
       vertexShader: earthVert,
       fragmentShader: earthFrag
