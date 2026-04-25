@@ -121,6 +121,7 @@
     cargoLevel: 1,
     heatLevel: 0,    // 0 = no heated drill, 1 = owns it (binary upgrade)
     shieldLevel: 0,  // 0 = no heat shield, 1+ = tiers reduce magma damage
+    vertLevel: 0,    // 0 = no upward drill, 1 = owns it (binary upgrade)
   };
   var shop = {
     drill:  [0, 200, 600, 1500, 4000, 10000, 25000],
@@ -129,6 +130,7 @@
     cargo:  [0, 300, 800, 2000, 5500, 14000, 35000],
     heat:   [1500],          // single purchase: heated drill
     shield: [4000, 9000],    // shield tier 1 (reduce magma dmg), tier 2 (immune)
+    vert:   [2500],          // single purchase: drill upward
   };
   var money = 0;
   var cargo = [];
@@ -214,7 +216,7 @@
     generateWorld();
     money = 0;
     cargo = [];
-    upgrades = { drillLevel: 1, fuelLevel: 1, hullLevel: 1, cargoLevel: 1, heatLevel: 0, shieldLevel: 0 };
+    upgrades = { drillLevel: 1, fuelLevel: 1, hullLevel: 1, cargoLevel: 1, heatLevel: 0, shieldLevel: 0, vertLevel: 0 };
     maxCargo = getMaxCargo();
     maxFuel = getMaxFuel();
     player = {
@@ -238,6 +240,8 @@
     layerBanner = null;
     drillBlockMsgCool = 0;
     magmaWarnTimer = 0;
+    floaters = [];
+    autoSellFlash = null;
     msgText = isMobile ? 'Drive off the deck to start mining!' : 'Drive off the deck — Space to jet back up to refuel';
     msgTimer = 4;
   }
@@ -246,6 +250,22 @@
   function getMaxHull() { return BASE_HULL + (upgrades.hullLevel - 1) * 60; }
   function getMaxCargo() { return 5 + (upgrades.cargoLevel - 1) * 4; }
   function getDrillPower() { return upgrades.drillLevel; }
+
+  // Estimate fuel needed to jetpack back up to the surface deck in a
+  // straight line from the player's current y. Combines the activity drain
+  // (FUEL_DRAIN/sec while moving) with the thrust drain (DRILL_FUEL*0.5/sec)
+  // assuming roughly terminal upward velocity. Adds a buffer for the dip
+  // into thrust ramp-up and so we don't strand the player on close calls.
+  function getFuelToSurface() {
+    var deckTopY = DECK_ROW * TILE;
+    var pixelsToClimb = player.y - deckTopY;
+    if (pixelsToClimb <= 0) return 0;
+    var TERMINAL_UP = 240;       // px/sec sustained climb (a hair under hard cap)
+    var seconds = pixelsToClimb / TERMINAL_UP;
+    var fuelPerSec = FUEL_DRAIN + (DRILL_FUEL * 0.5);  // ≈ 1.55 / sec
+    var raw = seconds * fuelPerSec;
+    return raw * 1.25;           // safety buffer
+  }
 
   /* ---- Resize ---- */
   // We render the canvas at native device pixels (sharp HUD + shop text).
@@ -267,17 +287,22 @@
     canvas.style.height = viewH + 'px';
 
     // World scale: how many CSS pixels a single TILE occupies on screen.
-    // We pick a scale so the world fills the viewport horizontally up to a cap.
-    var worldPixelW = COLS * TILE;
-    worldScale = Math.min(viewW / worldPixelW, 2.4);
-    if (worldScale < 1) worldScale = 1;
+    // We aim for about 12 tiles visible across the viewport — bigger blocks,
+    // bigger miner, bigger stations. The camera scrolls to follow the player
+    // so the wider world doesn't have to fit on-screen.
+    var TARGET_TILES_ACROSS = 12;
+    var idealScale = (viewW / (TARGET_TILES_ACROSS * TILE));
+    // Mobile gets slightly less zoom so the d-pads don't crowd the view
+    if (isMobile) idealScale *= 0.9;
+    // Hard floor / ceiling to keep things sane on extreme viewports
+    worldScale = Math.max(1.4, Math.min(idealScale, 4.5));
 
     // screenW/H are the dimensions of the *visible game world* in world pixels
     screenW = viewW / worldScale;
     screenH = viewH / worldScale;
 
     // D-pad layout uses CSS-pixel coordinates so it stays a comfortable size
-    DPAD_SIZE = Math.min(150, viewW * 0.22);
+    DPAD_SIZE = Math.min(170, viewW * 0.26);
     DPAD_BTN = DPAD_SIZE * 0.38;
     DPAD_CX = DPAD_SIZE * 0.9;
     DPAD_CY = viewH - DPAD_SIZE * 0.9;
@@ -350,15 +375,33 @@
       handleShopClick(x, y);
       return;
     }
-    // On mobile, tap-to-open-shop only fires if the tap is OUTSIDE both d-pads
-    // (otherwise we couldn't drive away from the shop). Also require the player
-    // to actually be next to the station.
+    // Desktop and mobile: clicking/tapping the shop building (when nearby)
+    // opens it. The shop is drawn in world space, so translate the click.
+    if (playerNearShop() && !isInDpadZone(x, y)) {
+      var wx = x / worldScale + cam.x;
+      var wy = y / worldScale + cam.y;
+      if (isPointOnShop(wx, wy)) {
+        shopOpen = true;
+        return;
+      }
+    }
+    // On mobile, retain the legacy "tap anywhere outside d-pads while near
+    // shop opens it" behavior so reaching the small building isn't fiddly.
     if (isMobile && playerNearShop() && !isInDpadZone(x, y)) {
       shopOpen = true;
       return;
     }
 
     updateDpad(x, y);
+  }
+
+  // Bounding box of the station building in world coords (matches drawStation)
+  function isPointOnShop(wx, wy) {
+    var cx = stationCenterCol() * TILE + TILE / 2;
+    var groundY = DECK_ROW * TILE;
+    var bx = cx - 36;
+    var by = groundY - 56;
+    return wx >= bx - 4 && wx <= bx + 76 && wy >= by - 6 && wy <= groundY;
   }
 
   function isInDpadZone(x, y) {
@@ -450,6 +493,7 @@
       { key: 'cargo',  title: 'Cargo Bay',     desc: 'Carry more ore per trip',           level: upgrades.cargoLevel,  costs: shop.cargo },
       { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (35m+)', level: upgrades.heatLevel, costs: shop.heat,   special: true },
       { key: 'shield', title: 'Heat Shield',   desc: 'Survive magma layers (110m+)',      level: upgrades.shieldLevel, costs: shop.shield, special: true },
+      { key: 'vert',   title: 'Vertical Drill',desc: 'Hold Up against a ceiling to drill upward', level: upgrades.vertLevel, costs: shop.vert, special: true },
     ];
   }
 
@@ -467,6 +511,7 @@
     var label = item.title;
     if (item.key === 'heat') label = 'Heated Drill installed!';
     else if (item.key === 'shield') label = 'Heat Shield Mk ' + upgrades.shieldLevel + ' installed!';
+    else if (item.key === 'vert') label = 'Vertical Drill installed!';
     else label = label + ' upgraded!';
     showMsg(label);
   }
@@ -482,16 +527,10 @@
       return;
     }
 
-    // Sell button (left action)
+    // Sell button
     if (y >= L.sellY && y < L.sellY + L._actionH) {
       if (x >= L._actionX1 && x < L._actionX1 + L._actionW) {
         if (cargo.length > 0) sellCargo();
-        return;
-      }
-      if (x >= L._actionX2 && x < L._actionX2 + L._actionW) {
-        player.fuel = getMaxFuel();
-        player.hull = getMaxHull();
-        showMsg('Refueled & repaired!');
         return;
       }
     }
@@ -523,6 +562,20 @@
     }
   }
   var autoSellFlash = null;
+
+  // Floating mining text effects ("+$X Item") that drift up and fade
+  var floaters = [];
+  function spawnFloater(wx, wy, text, color) {
+    floaters.push({
+      x: wx,
+      y: wy,
+      text: text,
+      color: color || '#FFD700',
+      vy: -22,             // initial upward speed in world px/sec
+      t: 1.4,              // total lifetime in seconds
+      maxT: 1.4,
+    });
+  }
 
   function showMsg(t) { msgText = t; msgTimer = 2.5; }
 
@@ -598,13 +651,12 @@
       player.refueling = false;
     }
 
-    // Fuel drain — only while actively doing something. Sitting still and
-    // catching your breath shouldn't burn fuel.
+    // Fuel drain — only while actively exerting. Sitting still or just
+    // falling (gravity does the work) shouldn't burn fuel.
+    var horizontallyMoving = moveL || moveR || Math.abs(player.vx) > 5;
     var doingSomething = drilling ||
                          player.thrusting ||
-                         moveL || moveR || moveU || moveD ||
-                         Math.abs(player.vx) > 5 ||
-                         (!player.onGround && Math.abs(player.vy) > 5);
+                         horizontallyMoving;
     if (doingSomething) {
       player.fuel -= FUEL_DRAIN * dt;
     }
@@ -636,10 +688,11 @@
 
     // Drilling
     if (drilling) {
-      // ----- Change 4: cancel mid-drill if the player releases the direction key.
+      // Cancel mid-drill if the player releases the direction key.
       // Partial damage to the tile persists so they can resume later.
       var stillHolding = false;
       if (drilling.dirVec === 'd') stillHolding = moveD;
+      else if (drilling.dirVec === 'u') stillHolding = moveU;
       else if (drilling.dirVec === 'l') stillHolding = moveL;
       else if (drilling.dirVec === 'r') stillHolding = moveR;
       if (!stillHolding) {
@@ -654,24 +707,32 @@
             if (tile.hp <= 0) {
               // Collect — but not dirt or stone (they're worthless rubble)
               var oreType = tile.type;
+              var oreDef = ORES[oreType];
               if (oreType !== 'dirt' && oreType !== 'stone') {
                 if (cargo.length < maxCargo) {
                   cargo.push(oreType);
+                  // ----- Change 5: floating "+$X Item" text at the tile
+                  var fwx = drilling.c * TILE + TILE / 2;
+                  var fwy = drilling.r * TILE + TILE / 2;
+                  spawnFloater(fwx, fwy,
+                    oreDef.label + ' +$' + oreDef.value,
+                    oreDef.color);
                 } else {
                   showMsg('Cargo full!');
                 }
               }
               world[drilling.r][drilling.c] = null;
 
-              // ----- Change 3: when finishing a downward drill, recenter the
-              // player onto the now-empty column so they always fall into the
-              // gap instead of getting hung up on the adjacent tile.
+              // ----- Changes 3 + 9: when finishing a downward drill, glide the
+              // player horizontally onto the empty column so they always fall
+              // into the gap instead of catching on the adjacent tile lip.
+              // Use a smooth slide instead of an instant snap.
               if (drilling.dirVec === 'd') {
                 var targetX = drilling.c * TILE + TILE / 2 - PLAYER_W / 2;
-                // Only snap if the destination is itself unobstructed
+                // Only initiate slide if the destination row (player's body)
+                // is itself clear of obstacles.
                 if (!solidAt(targetX, player.y, PLAYER_W, PLAYER_H)) {
-                  player.x = targetX;
-                  player.vx = 0;
+                  player.slideTargetX = targetX;
                 }
               }
             } else {
@@ -696,7 +757,26 @@
     var FRICTION_AIR = 350;
     var acc = player.onGround ? ACC_GROUND : ACC_AIR;
     var fric = player.onGround ? FRICTION_GROUND : FRICTION_AIR;
-    if (moveL) player.vx -= acc * dt;
+
+    // ----- Change 9: smooth post-drill slide -----
+    // After mining a tile out from under us, we set player.slideTargetX so we
+    // glide into the gap rather than teleporting. The slide overrides normal
+    // friction/input until we get there or the player actively grabs control.
+    if (player.slideTargetX != null) {
+      var dxTarget = player.slideTargetX - player.x;
+      // Player took control? (pressing opposite direction or large input) → cancel
+      if ((moveL && dxTarget > 0) || (moveR && dxTarget < 0) || Math.abs(dxTarget) < 0.6) {
+        player.slideTargetX = null;
+        if (Math.abs(dxTarget) < 0.6) player.x = player.x + dxTarget;
+      } else {
+        // Critically-damped pull: snappy but not jarring
+        var pullSpeed = 320;          // px/sec target speed
+        var dir = dxTarget > 0 ? 1 : -1;
+        // Set vx directly; magnitude proportional to remaining distance, capped
+        var desired = dir * Math.min(pullSpeed, Math.abs(dxTarget) * 8);
+        player.vx = desired;
+      }
+    } else if (moveL) player.vx -= acc * dt;
     else if (moveR) player.vx += acc * dt;
     else {
       // Friction toward zero
@@ -739,20 +819,48 @@
     var ny = player.y + player.vy * dt;
     var wasInAir = !player.onGround;
     player.onGround = false;
+    player.onCeiling = false;
     if (ny < 0) { ny = 0; player.vy = 0; }
     if (!solidAt(player.x, ny, PLAYER_W, PLAYER_H)) {
       player.y = ny;
     } else {
-      if (player.vy > 280) {
-        // Fall damage scales with velocity squared above threshold (more dramatic)
-        var excess = player.vy - 280;
-        player.hull -= excess * 0.18;
-        // Squash effect
-        player.squash = Math.min(1, excess / 200);
-        if (player.hull <= 0) { endGame(); return; }
+      // ----- Change 8: Ceiling-corner slip -----
+      // When jetpacking up and blocked by a ceiling, try a small horizontal
+      // nudge to slip into adjacent open space (e.g., the player is brushing
+      // the corner of a tile but a free column sits next to them).
+      var slipped = false;
+      if (player.vy < 0) {
+        for (var nudge = 1; nudge <= 8; nudge++) {
+          // Try right
+          if (!solidAt(player.x + nudge, ny, PLAYER_W, PLAYER_H) &&
+              !solidAt(player.x + nudge, player.y, PLAYER_W, PLAYER_H)) {
+            player.x += nudge;
+            player.y = ny;
+            slipped = true;
+            break;
+          }
+          // Try left
+          if (!solidAt(player.x - nudge, ny, PLAYER_W, PLAYER_H) &&
+              !solidAt(player.x - nudge, player.y, PLAYER_W, PLAYER_H)) {
+            player.x -= nudge;
+            player.y = ny;
+            slipped = true;
+            break;
+          }
+        }
       }
-      if (player.vy > 0) player.onGround = true;
-      player.vy = 0;
+      if (!slipped) {
+        if (player.vy > 280) {
+          // Fall damage scales with velocity squared above threshold
+          var excess = player.vy - 280;
+          player.hull -= excess * 0.18;
+          player.squash = Math.min(1, excess / 200);
+          if (player.hull <= 0) { endGame(); return; }
+        }
+        if (player.vy > 0) player.onGround = true;
+        else if (player.vy < 0) player.onCeiling = true;
+        player.vy = 0;
+      }
     }
 
     // Decay squash
@@ -797,6 +905,21 @@
         } else {
           drilling = { r: pr3, c: pc3, timer: DRILL_TIME, dirVec: 'r' };
           player.dir = 1;
+        }
+      }
+    }
+    // ----- Change 6: Vertical drill (drill upward) -----
+    // Requires the upgrade. Triggers when player holds Up while their head
+    // is touching a solid tile above (ceiling contact).
+    if (moveU && upgrades.vertLevel >= 1 && player.onCeiling && !drilling) {
+      var pr4 = Math.floor((player.y - 2) / TILE);
+      var pc4 = Math.floor((player.x + PLAYER_W / 2) / TILE);
+      if (pr4 >= 0 && world[pr4] && world[pr4][pc4]) {
+        var blockReason4 = drillBlockReason(world[pr4][pc4], pr4);
+        if (blockReason4) {
+          if (drillBlockMsgCool <= 0) { showMsg(blockReason4); drillBlockMsgCool = 1.5; }
+        } else {
+          drilling = { r: pr4, c: pc4, timer: DRILL_TIME, dirVec: 'u' };
         }
       }
     }
@@ -1175,12 +1298,44 @@
       ctx.fill();
     }
 
-    // ---- "Press E" prompt above player when near shop ----
+    // ---- Floating mining text ("+$X Item") ----
+    // World-space; drift up and fade out. Lifecycle managed here so we don't
+    // need a separate update step.
+    if (floaters.length) {
+      var dt60 = 1 / 60;             // approximate frame time
+      for (var fi = floaters.length - 1; fi >= 0; fi--) {
+        var f = floaters[fi];
+        f.t -= dt60;
+        if (f.t <= 0) { floaters.splice(fi, 1); continue; }
+        f.y += f.vy * dt60;
+        f.vy *= 0.985;               // slow down rise
+        // Fade in fast, hold, fade out
+        var lifeProg = 1 - (f.t / f.maxT);   // 0 → 1
+        var alpha;
+        if (lifeProg < 0.15) alpha = lifeProg / 0.15;
+        else if (lifeProg > 0.6) alpha = Math.max(0, (1 - lifeProg) / 0.4);
+        else alpha = 1;
+        // Outline + fill for legibility against busy backgrounds
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = 'bold 9px ' + UI_FONT;
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.strokeText(f.text, f.x, f.y);
+        ctx.fillStyle = f.color;
+        ctx.fillText(f.text, f.x, f.y);
+        ctx.restore();
+      }
+      ctx.textAlign = 'left';
+    }
+
+    // ---- "Press P / click" prompt above player when near shop ----
     if (!shopOpen && playerNearShop() && !isMobile) {
-      drawPrompt(player.x + PLAYER_W / 2, player.y - 8, 'Press [E] for Shop');
+      drawPrompt(player.x + PLAYER_W / 2, player.y - 8, 'Press [P] or click shop');
     }
     if (!shopOpen && playerNearShop() && isMobile) {
-      drawPrompt(player.x + PLAYER_W / 2, player.y - 8, 'Tap to enter shop');
+      drawPrompt(player.x + PLAYER_W / 2, player.y - 8, 'Tap shop to enter');
     }
 
     // ---- Auto-sell flash above player ----
@@ -1641,33 +1796,86 @@
   }
 
   function drawDpad(cx, cy) {
-    ctx.globalAlpha = 0.2;
-    ctx.fillStyle = '#fff';
-    // Up
+    var R = DPAD_SIZE * 0.85;        // visible ring matches actual touch radius
+
+    // Soft drop shadow under the ring
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
-    ctx.moveTo(cx, cy - DPAD_BTN * 1.2);
-    ctx.lineTo(cx - DPAD_BTN * 0.5, cy - DPAD_BTN * 0.4);
-    ctx.lineTo(cx + DPAD_BTN * 0.5, cy - DPAD_BTN * 0.4);
+    ctx.arc(cx, cy + 2, R + 2, 0, Math.PI * 2);
     ctx.fill();
-    // Down
+
+    // Translucent dark base disc
+    var baseGrad = ctx.createRadialGradient(cx, cy - R * 0.2, 0, cx, cy, R);
+    baseGrad.addColorStop(0, 'rgba(40,32,22,0.55)');
+    baseGrad.addColorStop(1, 'rgba(20,16,12,0.45)');
+    ctx.fillStyle = baseGrad;
     ctx.beginPath();
-    ctx.moveTo(cx, cy + DPAD_BTN * 1.2);
-    ctx.lineTo(cx - DPAD_BTN * 0.5, cy + DPAD_BTN * 0.4);
-    ctx.lineTo(cx + DPAD_BTN * 0.5, cy + DPAD_BTN * 0.4);
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fill();
-    // Left
+
+    // Outer ring (defines the touch area boundary)
+    ctx.strokeStyle = 'rgba(255,210,120,0.5)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(cx - DPAD_BTN * 1.2, cy);
-    ctx.lineTo(cx - DPAD_BTN * 0.4, cy - DPAD_BTN * 0.5);
-    ctx.lineTo(cx - DPAD_BTN * 0.4, cy + DPAD_BTN * 0.5);
-    ctx.fill();
-    // Right
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.stroke();
+    // Inner subtle ring (visual depth)
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(cx + DPAD_BTN * 1.2, cy);
-    ctx.lineTo(cx + DPAD_BTN * 0.4, cy - DPAD_BTN * 0.5);
-    ctx.lineTo(cx + DPAD_BTN * 0.4, cy + DPAD_BTN * 0.5);
+    ctx.arc(cx, cy, R * 0.45, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // ---- Four direction pads (rounded rect backgrounds + arrows) ----
+    var pad = R * 0.36;            // pad extent
+    var armOffset = R * 0.55;      // distance from center to pad center
+    var dirs = [
+      { name: 'up',    pressed: dpad.up,    x: cx,             y: cy - armOffset },
+      { name: 'down',  pressed: dpad.down,  x: cx,             y: cy + armOffset },
+      { name: 'left',  pressed: dpad.left,  x: cx - armOffset, y: cy             },
+      { name: 'right', pressed: dpad.right, x: cx + armOffset, y: cy             }
+    ];
+    for (var di = 0; di < dirs.length; di++) {
+      var d = dirs[di];
+      // Pad backing
+      var bgFill = d.pressed ? 'rgba(255,210,120,0.65)' : 'rgba(255,255,255,0.10)';
+      var bgStroke = d.pressed ? 'rgba(255,255,210,0.95)' : 'rgba(255,255,255,0.22)';
+      ctx.fillStyle = bgFill;
+      roundRect(ctx, d.x - pad, d.y - pad, pad * 2, pad * 2, 5, true);
+      ctx.strokeStyle = bgStroke;
+      ctx.lineWidth = 1;
+      roundRect(ctx, d.x - pad, d.y - pad, pad * 2, pad * 2, 5, false, true);
+
+      // Arrow (white, dark when pressed for contrast against highlight)
+      ctx.fillStyle = d.pressed ? '#1a1208' : 'rgba(255,255,255,0.9)';
+      var ah = pad * 0.55;        // arrow size
+      ctx.beginPath();
+      if (d.name === 'up') {
+        ctx.moveTo(d.x, d.y - ah);
+        ctx.lineTo(d.x - ah, d.y + ah * 0.55);
+        ctx.lineTo(d.x + ah, d.y + ah * 0.55);
+      } else if (d.name === 'down') {
+        ctx.moveTo(d.x, d.y + ah);
+        ctx.lineTo(d.x - ah, d.y - ah * 0.55);
+        ctx.lineTo(d.x + ah, d.y - ah * 0.55);
+      } else if (d.name === 'left') {
+        ctx.moveTo(d.x - ah, d.y);
+        ctx.lineTo(d.x + ah * 0.55, d.y - ah);
+        ctx.lineTo(d.x + ah * 0.55, d.y + ah);
+      } else {
+        ctx.moveTo(d.x + ah, d.y);
+        ctx.lineTo(d.x - ah * 0.55, d.y - ah);
+        ctx.lineTo(d.x - ah * 0.55, d.y + ah);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Center hub dot
+    ctx.fillStyle = 'rgba(255,210,120,0.4)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.globalAlpha = 1;
   }
 
   // Pretty layer name + dramatic subtitle
@@ -1685,43 +1893,83 @@
   function drawLayerBanner() {
     var info = LAYER_DISPLAY[layerBanner.name];
     if (!info) return;
-    // Fade in then fade out — peaks around t=1.8
+    // Lifecycle (total 2.5s): slide-in (2.5 → 2.0), hold (2.0 → 0.5),
+    // slide-out (0.5 → 0). Fade matches the slide.
     var t = layerBanner.t;
-    var fade;
-    if (t > 2.0) fade = (2.5 - t) / 0.5;       // fade in
-    else if (t < 0.6) fade = t / 0.6;          // fade out
-    else fade = 1;
-    fade = Math.max(0, Math.min(1, fade));
+    var fade, slideProg;
+    if (t > 2.0) {
+      // Slide in from above
+      var p = (2.5 - t) / 0.5;       // 0 → 1
+      fade = p;
+      slideProg = p;
+    } else if (t < 0.5) {
+      // Slide out upward
+      var p2 = t / 0.5;              // 1 → 0
+      fade = p2;
+      slideProg = 0.5 + (1 - p2) * 0.5;  // shifts back upward
+      // Actually keep it in place, just fade. Cleaner.
+      slideProg = 1;
+      fade = p2;
+    } else {
+      fade = 1;
+      slideProg = 1;
+    }
 
-    var bannerY = 80;  // below the HUD
-    var slideOffset = (1 - fade) * 12;
+    // Card dimensions — sized to content, centered horizontally,
+    // pinned just below the HUD top bar.
+    var hudH = 46;
+    var cardW = Math.min(360, viewW - 40);
+    var cardH = 64;
+    var cardX = (viewW - cardW) / 2;
+    var slideOffset = (1 - slideProg) * 22;
+    var cardY = hudH + 14 - slideOffset;
 
     ctx.save();
     ctx.globalAlpha = fade;
 
-    // Backing strip across the screen
-    var stripGrad = ctx.createLinearGradient(0, bannerY - 4, 0, bannerY + 60);
-    stripGrad.addColorStop(0, 'rgba(0,0,0,0)');
-    stripGrad.addColorStop(0.3, 'rgba(0,0,0,0.7)');
-    stripGrad.addColorStop(0.7, 'rgba(0,0,0,0.7)');
-    stripGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = stripGrad;
-    ctx.fillRect(0, bannerY - 4, viewW, 70);
+    // Drop shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    roundRect(ctx, cardX + 2, cardY + 4, cardW, cardH, 8, true);
 
-    // Accent line in the layer color
+    // Card background — dark with a subtle vertical gradient
+    var bgGrad = ctx.createLinearGradient(0, cardY, 0, cardY + cardH);
+    bgGrad.addColorStop(0, 'rgba(22,18,12,0.96)');
+    bgGrad.addColorStop(1, 'rgba(12,10,8,0.96)');
+    ctx.fillStyle = bgGrad;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 8, true);
+
+    // Layer-color side accent bar (left edge)
     ctx.fillStyle = info.color;
-    ctx.fillRect(0, bannerY + slideOffset, viewW, 2);
+    roundRect(ctx, cardX, cardY, 4, cardH, 2, true);
+    // Soft glow extending right from the accent
+    var glowGrad = ctx.createLinearGradient(cardX + 4, 0, cardX + 60, 0);
+    glowGrad.addColorStop(0, info.color);
+    glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = fade * 0.18;
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(cardX + 4, cardY, 60, cardH);
+    ctx.globalAlpha = fade;
+
+    // Outer border
+    ctx.strokeStyle = 'rgba(255,210,120,0.18)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 8, false, true);
+
+    // "ENTERING" eyebrow label
+    ctx.font = 'bold 9px ' + UI_FONT;
+    ctx.fillStyle = 'rgba(255,210,120,0.55)';
+    ctx.textAlign = 'left';
+    ctx.fillText('ENTERING', cardX + 18, cardY + 18);
 
     // Title
-    ctx.font = 'bold 28px ' + UI_FONT;
+    ctx.font = 'bold 20px ' + UI_FONT;
     ctx.fillStyle = info.color;
-    ctx.textAlign = 'center';
-    ctx.fillText(info.title, viewW / 2, bannerY + 32 + slideOffset);
+    ctx.fillText(info.title, cardX + 18, cardY + 38);
 
     // Subtitle
-    ctx.font = '12px ' + UI_FONT;
-    ctx.fillStyle = '#d0c8b4';
-    ctx.fillText(info.sub, viewW / 2, bannerY + 50 + slideOffset);
+    ctx.font = '11px ' + UI_FONT;
+    ctx.fillStyle = '#a89e88';
+    ctx.fillText(info.sub, cardX + 18, cardY + 53);
 
     ctx.textAlign = 'left';
     ctx.globalAlpha = 1;
@@ -1755,9 +2003,39 @@
     var fuelColor = fuelPct > 0.4 ? '#56c876' : fuelPct > 0.2 ? '#e8a735' : '#e44';
     ctx.fillStyle = fuelColor;
     roundRect(ctx, px, 16, Math.max(2, barW * fuelPct), 10, 3, true);
+
+    // "Fuel needed to climb back to surface" indicator — drawn as a marker
+    // on the fuel bar. If the marker sits to the right of the current fuel
+    // level, you don't have enough fuel to make it back.
+    var maxFuelNow = getMaxFuel();
+    var fuelToSurface = getFuelToSurface();
+    if (fuelToSurface > 0.5 && fuelToSurface <= maxFuelNow * 1.5) {
+      var markerPct = Math.min(1, fuelToSurface / maxFuelNow);
+      var markerX = px + barW * markerPct;
+      var safe = player.fuel >= fuelToSurface;
+      // Vertical line marker
+      ctx.fillStyle = safe ? 'rgba(255,255,255,0.85)' : 'rgba(255,90,90,0.95)';
+      ctx.fillRect(markerX - 1, 13, 2, 16);
+      // Tiny upward arrow above it
+      ctx.beginPath();
+      ctx.moveTo(markerX, 10);
+      ctx.lineTo(markerX - 3, 14);
+      ctx.lineTo(markerX + 3, 14);
+      ctx.closePath();
+      ctx.fill();
+    }
+
     ctx.font = valueFont;
     ctx.fillStyle = '#fff';
     ctx.fillText(Math.ceil(player.fuel) + '/' + Math.ceil(getMaxFuel()), px, 38);
+    // Tiny "↑X" callout next to the value showing fuel cost to surface
+    if (fuelToSurface > 0.5) {
+      var safeNow = player.fuel >= fuelToSurface;
+      ctx.font = 'bold 10px ' + UI_FONT;
+      ctx.fillStyle = safeNow ? 'rgba(180,200,180,0.85)' : '#ff7a7a';
+      var valueW = ctx.measureText(Math.ceil(player.fuel) + '/' + Math.ceil(getMaxFuel())).width;
+      ctx.fillText('↑' + Math.ceil(fuelToSurface), px + valueW + 6, 38);
+    }
 
     // Hull
     px += barW + 22;
@@ -1826,9 +2104,9 @@
     var L = SHOP_LAYOUT;
     L.boxW = Math.min(440, viewW - 32);
     L.boxX = (viewW - L.boxW) / 2;
-    var itemsCount = (typeof shopItems !== 'undefined' && shopItems.length) ? shopItems.length : 6;
+    var itemsCount = (typeof shopItems !== 'undefined' && shopItems.length) ? shopItems.length : 7;
     var headerH = 90;
-    var actionsH = 76;
+    var actionsH = 62;          // sell button (38) + pump-pad hint (24)
     var footerH = 30;
     var maxBoxH = viewH - 24;
     // Solve for itemH that fits everything in maxBoxH
@@ -1887,24 +2165,19 @@
     ctx.fillText(balText, viewW / 2, cy + 3);
     cy += 24;
 
-    // ---- Action row: SELL / REFUEL ----
-    var actionGap = 12;
-    var actionW = (L.boxW - 32 - actionGap) / 2;
+    // ---- Action row: SELL only (refuel/repair happens at the pump pad) ----
     var actionH = 38;
+    var actionW = L.boxW - 32;       // full-width sell button
     var actionX1 = L.boxX + 16;
-    var actionX2 = actionX1 + actionW + actionGap;
     L.sellY = cy;
-    L.refuelY = cy;
     L._actionW = actionW;
     L._actionX1 = actionX1;
-    L._actionX2 = actionX2;
     L._actionH = actionH;
 
     // Sell button
     var sellVal = 0;
     for (var ci = 0; ci < cargo.length; ci++) sellVal += ORES[cargo[ci]].value;
     var canSell = cargo.length > 0 && sellVal > 0;
-    var sellBg = canSell ? '#2f8a4d' : '#2a2620';
     var sellGrad = ctx.createLinearGradient(0, cy, 0, cy + actionH);
     sellGrad.addColorStop(0, canSell ? '#3aa05a' : '#2e2820');
     sellGrad.addColorStop(1, canSell ? '#226d3b' : '#1c1812');
@@ -1914,30 +2187,17 @@
     ctx.lineWidth = 1;
     roundRect(ctx, actionX1, cy, actionW, actionH, 6, false, true);
     ctx.fillStyle = canSell ? '#fff' : '#666';
-    ctx.font = 'bold 12px ' + UI_FONT;
+    ctx.font = 'bold 13px ' + UI_FONT;
     ctx.textAlign = 'center';
-    ctx.fillText('SELL CARGO', actionX1 + actionW / 2, cy + 16);
-    ctx.font = 'bold 11px ' + UI_FONT;
-    ctx.fillStyle = canSell ? '#FFD700' : '#555';
-    ctx.fillText(canSell ? '+ $' + sellVal.toLocaleString() : 'empty', actionX1 + actionW / 2, cy + 31);
+    ctx.fillText(canSell ? 'SELL CARGO  ·  +$' + sellVal.toLocaleString() : 'SELL CARGO', actionX1 + actionW / 2, cy + 24);
 
-    // Refuel button
-    var refuelGrad = ctx.createLinearGradient(0, cy, 0, cy + actionH);
-    refuelGrad.addColorStop(0, '#3a6db3');
-    refuelGrad.addColorStop(1, '#23477a');
-    ctx.fillStyle = refuelGrad;
-    roundRect(ctx, actionX2, cy, actionW, actionH, 6, true);
-    ctx.strokeStyle = 'rgba(150,200,255,0.3)';
-    ctx.lineWidth = 1;
-    roundRect(ctx, actionX2, cy, actionW, actionH, 6, false, true);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 12px ' + UI_FONT;
-    ctx.fillText('REFUEL & REPAIR', actionX2 + actionW / 2, cy + 16);
-    ctx.font = 'bold 11px ' + UI_FONT;
-    ctx.fillStyle = '#aae6ff';
-    ctx.fillText('free', actionX2 + actionW / 2, cy + 31);
+    cy += actionH + 6;
 
-    cy += actionH + 20;
+    // Pump-pad hint (replaces the old REFUEL & REPAIR shop button)
+    ctx.font = '10px ' + UI_FONT;
+    ctx.fillStyle = '#7e7460';
+    ctx.fillText('Refuel & repair: drive onto the pump pad outside', viewW / 2, cy + 8);
+    cy += 18;
 
     // ---- Upgrade items ----
     L.itemsStartY = cy;
@@ -1947,7 +2207,8 @@
       hull:   '#5aa3ff',
       cargo:  '#FFD27A',
       heat:   '#ff7a3a',
-      shield: '#a87bff'
+      shield: '#a87bff',
+      vert:   '#9bdcff'
     };
     var iconGlyphs = {
       drill:  '⛏',
@@ -1955,7 +2216,8 @@
       hull:   '◆',
       cargo:  '▤',
       heat:   '♨',
-      shield: '◈'
+      shield: '◈',
+      vert:   '↑'
     };
     var compactMode = L.itemH < 56;
     var iconSize = compactMode ? 26 : 34;
@@ -2002,6 +2264,8 @@
         titleSuffix = upgrades.heatLevel >= 1 ? ' · Owned' : '';
       } else if (item.key === 'shield') {
         titleSuffix = upgrades.shieldLevel > 0 ? ' · Mk ' + upgrades.shieldLevel : '';
+      } else if (item.key === 'vert') {
+        titleSuffix = upgrades.vertLevel >= 1 ? ' · Owned' : '';
       } else {
         titleSuffix = ' · Lv ' + lvl;
       }
@@ -2018,7 +2282,7 @@
       var pillY = iy + (cardInner - 22) / 2;
       var pillText, pillBg, pillFg;
       if (maxed) {
-        pillText = item.key === 'heat' ? 'INSTALLED' : 'MAX';
+        pillText = (item.key === 'heat' || item.key === 'vert') ? 'INSTALLED' : 'MAX';
         pillBg = 'rgba(120,200,140,0.18)';
         pillFg = '#9be6b1';
       } else if (canBuy) {
@@ -2045,7 +2309,7 @@
     ctx.textAlign = 'center';
     ctx.fillStyle = '#6a604c';
     ctx.font = '11px ' + UI_FONT;
-    ctx.fillText(isMobile ? 'Tap outside to close' : 'Click outside or press [E] / [Esc] to close',
+    ctx.fillText(isMobile ? 'Tap outside to close' : 'Click outside or press [P] / [Esc] to close',
                  viewW / 2, L.boxY + L.boxH - 14);
     ctx.textAlign = 'left';
   }
@@ -2080,9 +2344,9 @@
       }
     }
 
-    // Shop toggle via keyboard
-    if (keys['e'] || keys['E']) {
-      keys['e'] = keys['E'] = false;
+    // Shop toggle via keyboard ('P' for shoP)
+    if (keys['p'] || keys['P']) {
+      keys['p'] = keys['P'] = false;
       if (shopOpen) shopOpen = false;
       else if (playerNearShop()) shopOpen = true;
     }
