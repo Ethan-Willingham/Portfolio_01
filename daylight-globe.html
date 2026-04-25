@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Every Hour of Daylight, Visualized</title>
-  <meta name="description" content="A spinnable 3D Earth with real satellite imagery, terrain shadows, and daylight breakdown.">
+  <meta name="description" content="A spinnable 3D Earth with real satellite imagery, city lights, and daylight breakdown.">
   <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <style>
-    #globe-container { position: relative; width: 100%; aspect-ratio: 4/3; background: #0e1114; cursor: grab; touch-action: none; overflow: hidden; }
+    #globe-container { position: relative; width: 100%; aspect-ratio: 4/3; background: #0a0c0e; cursor: grab; touch-action: none; overflow: hidden; }
     #globe-container:active { cursor: grabbing; }
-    #globe-container canvas { display: block; width: 100%; height: 100%; border-radius: 0; }
+    #globe-container canvas { display: block; width: 100%; height: 100%; }
     .daylight-panel { margin: 0.8rem 1.2rem 0.4rem; }
     .daylight-bar-wrap { position: relative; width: 100%; height: 14px; border-radius: 7px; overflow: hidden; margin-bottom: 0.35rem; }
     .daylight-bar-wrap canvas { width: 100%; height: 100%; display: block; border-radius: 7px; }
@@ -21,6 +21,8 @@
     .fact-box strong { color: var(--text-bright); }
     .fact-box p { margin-bottom: 0.5em; font-size: 0.95rem; line-height: 1.55; }
     .fact-box p:last-child { margin-bottom: 0; }
+    .tilt-desc { font-size: 0.82rem; color: var(--text-dim); font-style: italic; padding: 0.3rem 0 0; line-height: 1.45; }
+    .tilt-stops { display: flex; justify-content: space-between; font-size: 0.65rem; color: #555; font-family: var(--font-mono); padding: 0 2px; margin-top: 0.15rem; }
   </style>
 </head>
 <body>
@@ -45,9 +47,10 @@
           </p>
 
           <p>
-            Drag the globe to spin it. Scroll (or pinch) to zoom. Change the
+            Drag the globe to spin it. Scroll or pinch to zoom. Change the
             hour and day with the sliders. Hover over any point to see its
-            daylight breakdown in the bar below.
+            daylight breakdown in the bar below. On the night side, you can
+            see the actual city lights from NASA's Black Marble imagery.
           </p>
 
           <div class="globe-wrapper">
@@ -69,6 +72,15 @@
                 <input type="range" id="day-slider" min="0" max="364" value="172">
                 <span class="p-slider-val" id="day-label">21 Jun</span>
               </div>
+              <div class="p-slider-row">
+                <label>Tilt</label>
+                <input type="range" id="tilt-slider" min="0" max="3" value="1" step="1">
+                <span class="p-slider-val" id="tilt-label">23.44&deg;</span>
+              </div>
+              <div class="tilt-stops">
+                <span>22.1&deg;</span><span>23.4&deg;</span><span>24.5&deg;</span><span>45&deg;</span>
+              </div>
+              <div class="tilt-desc" id="tilt-desc">Today. Currently decreasing at 0.013&deg; per century. The cycle takes ~41,000 years.</div>
             </div>
             <div class="daylight-panel">
               <div class="daylight-label" id="daylight-hours-label">Equator: 12.0h daylight</div>
@@ -88,36 +100,49 @@
 
           <p>
             <strong>Slide the hour from 0 to 24.</strong> Watch the shadow
-            sweep across the globe. It rotates 15 degrees every hour. At
-            any given moment, roughly half the planet is in darkness.
+            sweep across the globe. It rotates 15 degrees every hour. On
+            the night side, watch the city lights of Europe, India, and
+            East Asia come into view.
           </p>
 
           <p>
-            <strong>Set the day to June 21 (summer solstice).</strong>
-            Hover over northern Norway (69&deg;N). The daylight bar fills
-            completely: 24 hours of continuous sun. Now hover over southern
-            Argentina (55&deg;S). Just 7 hours. Move the day to December 21
-            and the roles reverse.
+            <strong>Set the day to June 21.</strong> Hover over northern
+            Norway (69&deg;N). The daylight bar fills completely: 24 hours
+            of continuous sun. Now hover over southern Argentina (55&deg;S).
+            Just 7 hours. Move the day to December 21 and the roles reverse.
           </p>
 
           <p>
-            <strong>Zoom in.</strong> Scroll to zoom into the Himalayas,
-            the Sahara, or the Amazon. The NASA Blue Marble texture holds
-            up surprisingly well, and the bump mapping creates visible
-            terrain relief at closer distances.
+            <strong>Try the tilt stops.</strong> At 22.1&deg; (minimum
+            obliquity), the seasons are slightly milder. At 24.5&deg;
+            (maximum), they are slightly more extreme. These are the real
+            bounds of Earth's 41,000-year Milankovitch obliquity cycle.
+            Then jump to 45&deg; and watch entire hemispheres plunge into
+            polar night.
           </p>
+
+          <div class="fact-box">
+            <p><strong>The Milankovitch cycles.</strong></p>
+            <p>
+              Earth's orbit and axis wobble in three overlapping cycles.
+              The obliquity (tilt) oscillates between 22.1&deg; and
+              24.5&deg; over 41,000 years. The eccentricity (orbit shape)
+              varies over 100,000 and 413,000 years. The precession (axis
+              direction) cycles every 26,000 years. Together, these drive
+              the ice ages. When all three align to reduce summer sunlight
+              in the northern hemisphere, ice sheets grow.
+            </p>
+          </div>
 
           <div class="fact-box">
             <p><strong>Why 23.4&deg;?</strong></p>
             <p>
               The Moon. Without it, Earth's obliquity would wander
               chaotically between 0&deg; and 85&deg; over millions of
-              years, driven by gravitational tugs from Jupiter and other
-              planets. Mars, which has no large moon, swings between
-              15&deg; and 35&deg; and may have reached 60&deg; in the
-              past. The Moon locks Earth's tilt into a slow, gentle
-              oscillation between 22.1&deg; and 24.5&deg; over a
-              41,000-year cycle.
+              years, driven by gravitational tugs from Jupiter. Mars,
+              which has no large moon, swings between 15&deg; and 35&deg;
+              and may have reached 60&deg;. The Moon locks Earth into a
+              narrow, stable band.
             </p>
           </div>
 
@@ -138,8 +163,30 @@
               perpendicular at the equator, sunset takes only about
               2 minutes. In Scandinavia, the sun sets at a shallow
               angle and twilight can last over an hour. At the poles,
-              a single "sunset" takes roughly two weeks as the sun
-              slowly spirals below the horizon.
+              a single "sunset" takes roughly two weeks.
+            </p>
+          </div>
+
+          <h2>The city lights</h2>
+
+          <p>
+            The night side uses NASA's Black Marble composite, built from
+            the Suomi NPP satellite's day/night band sensor. It captures
+            artificial light from cities, highways, fishing fleets, and
+            gas flares. Spin the globe at night and you can trace the
+            outlines of India, the Nile Delta, the US Interstate system,
+            and the dense coastal corridors of Japan and Korea.
+          </p>
+
+          <div class="fact-box">
+            <p><strong>The brightest spots are not the biggest cities.</strong></p>
+            <p>
+              Some of the most intense light comes from oil and gas
+              fields. The Bakken shale formation in North Dakota and
+              the Siberian gas fields show up brighter than many major
+              cities because of gas flaring. Fishing fleets off the
+              coasts of Southeast Asia light up the ocean with high-
+              intensity lamps used to attract squid.
             </p>
           </div>
 
@@ -148,14 +195,7 @@
           <p>
             <strong>Equinox (March 20 / September 22):</strong>
             Every point on Earth gets almost exactly 12 hours of daylight.
-            The terminator runs pole to pole. "Equinox" literally means
-            "equal night."
-          </p>
-
-          <p>
-            <strong>Arctic Circle (66.6&deg;N):</strong>
-            Gets at least one 24-hour day of sun per year and one 24-hour
-            day of darkness. At the pole itself, roughly 6 months of each.
+            "Equinox" literally means "equal night."
           </p>
 
           <p>
@@ -184,18 +224,6 @@
             which also explains why earliest sunset and latest sunrise
             do not fall on the winter solstice.
           </p>
-
-          <div class="fact-box">
-            <p><strong>The specular glint.</strong></p>
-            <p>
-              Spin the globe so you are looking across a sunlit ocean at
-              a low angle. You may see a bright spot: the sun reflecting
-              off flat water toward the camera. This "ocean glint" is a
-              real phenomenon that satellites use to measure wave height
-              and wind speed. DSCOVR, a satellite at the L1 Lagrange
-              point, photographs this glint daily from a million miles away.
-            </p>
-          </div>
 
         </div>
       </article>
