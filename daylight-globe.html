@@ -4,25 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Every Hour of Daylight, Visualized</title>
-  <meta name="description" content="A spinnable 3D Earth with real satellite imagery, city lights, and daylight breakdown.">
+  <meta name="description" content="A spinnable 3D Earth with satellite imagery, city lights, and daylight breakdown.">
   <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <style>
-    #globe-container { position: relative; width: 100%; aspect-ratio: 4/3; background: #0a0c0e; cursor: grab; touch-action: none; overflow: hidden; }
+    #globe-container { position: relative; width: 100%; aspect-ratio: 1/1; background: #08090b; cursor: grab; touch-action: none; overflow: hidden; }
     #globe-container:active { cursor: grabbing; }
     #globe-container canvas { display: block; width: 100%; height: 100%; }
-    .daylight-panel { margin: 0.8rem 1.2rem 0.4rem; }
-    .daylight-bar-wrap { position: relative; width: 100%; height: 14px; border-radius: 7px; overflow: hidden; margin-bottom: 0.35rem; }
-    .daylight-bar-wrap canvas { width: 100%; height: 100%; display: block; border-radius: 7px; }
-    .daylight-bar-ticks { display: flex; justify-content: space-between; font-size: 0.68rem; color: #666; font-family: var(--font-mono); padding: 0 2px; }
-    .daylight-label { font-size: 0.88rem; color: var(--text); font-family: var(--font-mono); margin-bottom: 0.15rem; }
-    .daylight-sub { font-size: 0.78rem; color: var(--text-dim); font-family: var(--font-mono); }
+
+    @media (min-width: 720px) {
+      #globe-container { aspect-ratio: 4/3; }
+    }
+
+    .globe-controls { padding: 0.7rem 1rem 0.5rem; }
+    .controls-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .tz-group { display: flex; gap: 0; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+    .tz-btn { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); background: none; border: none; border-right: 1px solid var(--rule); padding: 0.3em 0.6em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .tz-btn:last-child { border-right: none; }
+    .tz-btn:hover { color: var(--text-bright); }
+    .tz-btn.active { background: var(--rule); color: var(--text-bright); }
+
+    .tilt-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; }
+    .tilt-row-label { font-size: 0.88rem; color: var(--text-dim); min-width: 3em; font-family: var(--font-mono); }
+    .tilt-group { display: flex; gap: 0; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; flex: 1; }
+    .tilt-btn { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); background: none; border: none; border-right: 1px solid var(--rule); padding: 0.3em 0; cursor: pointer; transition: background 0.15s, color 0.15s; flex: 1; text-align: center; }
+    .tilt-btn:last-child { border-right: none; }
+    .tilt-btn:hover { color: var(--text-bright); }
+    .tilt-btn.active { background: var(--rule); color: var(--text-bright); }
+    .tilt-desc-text { font-size: 0.78rem; color: var(--text-dim); font-style: italic; padding: 0.25rem 0 0; line-height: 1.4; }
+
+    .daylight-panel { margin: 0 1rem 0.5rem; }
+    .daylight-bar-wrap { position: relative; width: 100%; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 0.3rem; }
+    .daylight-bar-wrap canvas { width: 100%; height: 100%; display: block; border-radius: 6px; }
+    .daylight-bar-ticks { display: flex; justify-content: space-between; font-size: 0.62rem; color: #555; font-family: var(--font-mono); padding: 0 2px; }
+    .daylight-label { font-size: 0.85rem; color: var(--text); font-family: var(--font-mono); margin-bottom: 0.1rem; }
+    .daylight-sub { font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono); }
     .fact-box { margin: 2em 0; padding: 1.2em 1.4em; background: rgba(255,255,255,0.03); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; }
     .fact-box strong { color: var(--text-bright); }
     .fact-box p { margin-bottom: 0.5em; font-size: 0.95rem; line-height: 1.55; }
     .fact-box p:last-child { margin-bottom: 0; }
-    .tilt-desc { font-size: 0.82rem; color: var(--text-dim); font-style: italic; padding: 0.3rem 0 0; line-height: 1.45; }
-    .tilt-stops { display: flex; justify-content: space-between; font-size: 0.65rem; color: #555; font-family: var(--font-mono); padding: 0 2px; margin-top: 0.15rem; }
   </style>
 </head>
 <body>
@@ -47,50 +67,55 @@
           </p>
 
           <p>
-            Drag the globe to spin it. Scroll or pinch to zoom. Change the
-            hour and day with the sliders. Hover over any point to see its
-            daylight breakdown in the bar below. On the night side, you can
-            see the actual city lights from NASA's Black Marble imagery.
+            Drag to spin. Scroll or pinch to zoom. Tap any point to pin it
+            and see its daylight breakdown below. On the night side, you
+            can see city lights from NASA's Black Marble imagery.
           </p>
 
           <div class="globe-wrapper">
             <div id="globe-container">
-              <div class="globe-info" id="hover-info" style="position:absolute;top:12px;left:14px;z-index:1;pointer-events:none;">drag to spin &bull; scroll to zoom</div>
+              <div class="globe-info" id="hover-info" style="position:absolute;top:10px;left:12px;z-index:1;pointer-events:none;">drag to spin &bull; scroll to zoom &bull; tap to pin</div>
             </div>
             <div class="globe-controls">
-              <div class="p-controls-header">
-                <span></span>
+              <div class="controls-top">
+                <div class="tz-group">
+                  <button class="tz-btn" data-tz="ET">ET</button>
+                  <button class="tz-btn active" data-tz="CT">CT</button>
+                  <button class="tz-btn" data-tz="MT">MT</button>
+                  <button class="tz-btn" data-tz="PT">PT</button>
+                </div>
                 <button class="p-reset" id="globe-reset">Reset</button>
               </div>
               <div class="p-slider-row">
                 <label>Hour</label>
                 <input type="range" id="hour-slider" min="0" max="24" value="12" step="0.25">
-                <span class="p-slider-val" id="hour-label">12:00 UTC</span>
+                <span class="p-slider-val" id="hour-label">12:00 PM CT</span>
               </div>
               <div class="p-slider-row">
                 <label>Day</label>
                 <input type="range" id="day-slider" min="0" max="364" value="172">
                 <span class="p-slider-val" id="day-label">21 Jun</span>
               </div>
-              <div class="p-slider-row">
-                <label>Tilt</label>
-                <input type="range" id="tilt-slider" min="0" max="3" value="1" step="1">
-                <span class="p-slider-val" id="tilt-label">23.44&deg;</span>
+              <div class="tilt-row">
+                <span class="tilt-row-label">Tilt</span>
+                <div class="tilt-group">
+                  <button class="tilt-btn" data-idx="0">22.1&deg;</button>
+                  <button class="tilt-btn active" data-idx="1">23.4&deg;</button>
+                  <button class="tilt-btn" data-idx="2">24.5&deg;</button>
+                  <button class="tilt-btn" data-idx="3">45&deg; <span style="font-size:0.65rem;opacity:0.5;">no moon</span></button>
+                </div>
               </div>
-              <div class="tilt-stops">
-                <span>22.1&deg;</span><span>23.4&deg;</span><span>24.5&deg;</span><span>45&deg;</span>
-              </div>
-              <div class="tilt-desc" id="tilt-desc">Today. Currently decreasing at 0.013&deg; per century. The cycle takes ~41,000 years.</div>
+              <div class="tilt-desc-text" id="tilt-desc">Today. Currently decreasing at 0.013&deg;/century. The cycle takes ~41,000 years.</div>
             </div>
             <div class="daylight-panel">
               <div class="daylight-label" id="daylight-hours-label">Equator: 12.0h daylight</div>
               <div class="daylight-bar-wrap">
-                <canvas id="daylight-bar" width="600" height="14"></canvas>
+                <canvas id="daylight-bar" width="600" height="12"></canvas>
               </div>
               <div class="daylight-bar-ticks">
-                <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
+                <span>12AM</span><span>6AM</span><span>12PM</span><span>6PM</span><span>12AM</span>
               </div>
-              <div class="daylight-sub" id="sunrise-label">Rise 06:00  Set 18:00</div>
+              <div class="daylight-sub" id="sunrise-label">Rise 6:00 AM  Set 6:00 PM</div>
             </div>
           </div>
 
@@ -99,26 +124,27 @@
           <h2>Things to try</h2>
 
           <p>
-            <strong>Slide the hour from 0 to 24.</strong> Watch the shadow
-            sweep across the globe. It rotates 15 degrees every hour. On
-            the night side, watch the city lights of Europe, India, and
+            <strong>Slide the hour through a full day.</strong> Watch the
+            shadow sweep across the globe. It rotates 15 degrees every hour.
+            On the night side, watch the city lights of Europe, India, and
             East Asia come into view.
           </p>
 
           <p>
-            <strong>Set the day to June 21.</strong> Hover over northern
+            <strong>Set the day to June 21.</strong> Tap on northern
             Norway (69&deg;N). The daylight bar fills completely: 24 hours
-            of continuous sun. Now hover over southern Argentina (55&deg;S).
+            of continuous sun. Now tap on southern Argentina (55&deg;S).
             Just 7 hours. Move the day to December 21 and the roles reverse.
           </p>
 
           <p>
-            <strong>Try the tilt stops.</strong> At 22.1&deg; (minimum
+            <strong>Try the tilt buttons.</strong> At 22.1&deg; (minimum
             obliquity), the seasons are slightly milder. At 24.5&deg;
             (maximum), they are slightly more extreme. These are the real
             bounds of Earth's 41,000-year Milankovitch obliquity cycle.
-            Then jump to 45&deg; and watch entire hemispheres plunge into
-            polar night.
+            Then tap 45&deg; and watch entire hemispheres plunge into
+            polar night. Notice the Moon disappears: at that tilt, Earth
+            never had a stabilizing moon.
           </p>
 
           <div class="fact-box">
@@ -129,8 +155,7 @@
               24.5&deg; over 41,000 years. The eccentricity (orbit shape)
               varies over 100,000 and 413,000 years. The precession (axis
               direction) cycles every 26,000 years. Together, these drive
-              the ice ages. When all three align to reduce summer sunlight
-              in the northern hemisphere, ice sheets grow.
+              the ice ages.
             </p>
           </div>
 
@@ -139,31 +164,9 @@
             <p>
               The Moon. Without it, Earth's obliquity would wander
               chaotically between 0&deg; and 85&deg; over millions of
-              years, driven by gravitational tugs from Jupiter. Mars,
-              which has no large moon, swings between 15&deg; and 35&deg;
-              and may have reached 60&deg;. The Moon locks Earth into a
+              years. Mars, which has no large moon, swings between
+              15&deg; and 35&deg;. The Moon locks Earth into a
               narrow, stable band.
-            </p>
-          </div>
-
-          <h2>The daylight bar</h2>
-
-          <p>
-            The gold bar below the sliders shows 24 hours for whatever
-            latitude you are hovering over. Dark is night. Gold is day.
-            The white line is the current hour. Hover over the equator
-            and it is always split roughly 50/50. Hover over the Arctic
-            in June and the bar fills entirely with gold.
-          </p>
-
-          <div class="fact-box">
-            <p><strong>Fastest sunset on Earth:</strong> the equator.</p>
-            <p>
-              Because the sun's path crosses the horizon nearly
-              perpendicular at the equator, sunset takes only about
-              2 minutes. In Scandinavia, the sun sets at a shallow
-              angle and twilight can last over an hour. At the poles,
-              a single "sunset" takes roughly two weeks.
             </p>
           </div>
 
@@ -171,11 +174,10 @@
 
           <p>
             The night side uses NASA's Black Marble composite, built from
-            the Suomi NPP satellite's day/night band sensor. It captures
-            artificial light from cities, highways, fishing fleets, and
-            gas flares. Spin the globe at night and you can trace the
-            outlines of India, the Nile Delta, the US Interstate system,
-            and the dense coastal corridors of Japan and Korea.
+            the Suomi NPP satellite's day/night band sensor. Spin the globe
+            at night and you can trace the outlines of India, the Nile Delta,
+            the US Interstate system, and the dense corridors of Japan and
+            Korea.
           </p>
 
           <div class="fact-box">
@@ -184,9 +186,7 @@
               Some of the most intense light comes from oil and gas
               fields. The Bakken shale formation in North Dakota and
               the Siberian gas fields show up brighter than many major
-              cities because of gas flaring. Fishing fleets off the
-              coasts of Southeast Asia light up the ocean with high-
-              intensity lamps used to attract squid.
+              cities because of gas flaring.
             </p>
           </div>
 
@@ -206,24 +206,23 @@
           </p>
 
           <div class="fact-box">
-            <p><strong>Days used to be shorter.</strong></p>
+            <p><strong>Fastest sunset on Earth:</strong> the equator.</p>
             <p>
-              620 million years ago, a day was about 21 hours long.
-              The Moon's tidal braking is gradually slowing Earth's
-              rotation, adding roughly 2.3 milliseconds per century.
-              Coral fossils from the Devonian period show about 400
-              daily growth bands per year, confirming shorter days.
+              Because the sun's path crosses the horizon nearly
+              perpendicular, sunset takes only about 2 minutes. At the
+              poles, a single "sunset" takes roughly two weeks.
             </p>
           </div>
 
-          <p>
-            <strong>Solar noon is not 12:00.</strong>
-            Due to Earth's elliptical orbit and axial tilt, solar noon
-            drifts up to 16 minutes off clock noon depending on the
-            time of year. This is described by the equation of time,
-            which also explains why earliest sunset and latest sunrise
-            do not fall on the winter solstice.
-          </p>
+          <div class="fact-box">
+            <p><strong>Days used to be shorter.</strong></p>
+            <p>
+              620 million years ago, a day was about 21 hours long.
+              The Moon's tidal braking adds roughly 2.3 milliseconds per
+              century. Coral fossils from the Devonian period show about
+              400 daily growth bands per year, confirming shorter days.
+            </p>
+          </div>
 
         </div>
       </article>
