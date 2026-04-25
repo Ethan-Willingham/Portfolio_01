@@ -14,7 +14,7 @@
   --bg-raised:       #1e2420;
   --text:            #E8E2D6;
   --text-bright:     #F5F1EA;
-  --text-dim:        #A09A8A;
+  --text-dim:        #B8B2A2;
   --accent:          #D4C4A0;
   --accent-hover:    #EDE0C0;
   --rule:            #4A544B;
@@ -89,7 +89,7 @@ body {
 .article-item-title { font-family: var(--font-heading); font-size: 1.55rem; font-weight: 400; color: var(--text-bright); line-height: 1.32; margin-bottom: 0.35rem; transition: color 0.25s; }
 .article-list-item a:hover .article-item-title { color: var(--accent-hover); }
 .article-item-date { font-size: 0.92rem; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 0.5rem; }
-.article-item-description { font-size: 1.05rem; color: var(--text); font-style: italic; line-height: 1.55; opacity: 0.8; }
+.article-item-description { font-size: 1.05rem; color: var(--text-bright); font-style: italic; line-height: 1.55; opacity: 0.95; }
 
 /* -------------------------------------------------------
    POST: Back link (top of article pages)
@@ -256,6 +256,7 @@ body {
 .article-list-item:nth-child(1) { animation-delay: 0.04s; }
 .article-list-item:nth-child(2) { animation-delay: 0.09s; }
 .article-list-item:nth-child(3) { animation-delay: 0.14s; }
+.article-list-item:nth-child(4) { animation-delay: 0.19s; }
 
 /* Desktop */
 @media (min-width: 720px) {

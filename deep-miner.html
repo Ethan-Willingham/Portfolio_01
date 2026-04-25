@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Deep Miner</title>
+  <meta name="description" content="A Motherload-style mining game that runs in your browser. Drill down, collect ore, upgrade your rig.">
+  <link rel="preload" href="century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .game-wrapper {
+      margin: 2.5em 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+      background: #0a0e0b;
+    }
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65em 1em;
+      background: var(--bg-raised);
+      border-bottom: 1px solid var(--rule);
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    .game-header span {
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+    .game-canvas-area {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      background: #1a1008;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .game-canvas-area canvas {
+      display: block;
+    }
+    .game-controls-info {
+      padding: 0.7em 1em;
+      background: var(--bg-raised);
+      border-top: 1px solid var(--rule);
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      line-height: 1.6;
+    }
+    .game-controls-info .key {
+      display: inline-block;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 3px;
+      padding: 0.1em 0.45em;
+      font-size: 0.85em;
+      margin: 0 0.15em;
+      color: var(--text);
+    }
+    .ore-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.8em 0;
+      font-size: 0.95rem;
+    }
+    .ore-table th {
+      text-align: left;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      font-weight: normal;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.5em 0.8em;
+      border-bottom: 1px solid var(--rule);
+    }
+    .ore-table td {
+      padding: 0.45em 0.8em;
+      border-bottom: 1px solid rgba(74,84,75,0.4);
+      color: var(--text);
+    }
+    .ore-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 0.5em;
+    }
+    @media (min-width: 720px) {
+      .game-canvas-area { height: 580px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back">Home</a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">Deep Miner</h1>
+      <p class="post-subtitle">A Motherload-style mining game in the browser. Drill, collect, upgrade, repeat.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <p>
+            Motherload came out in 2004 and I still think about it. You pilot
+            a little drill rig into the earth, fill your cargo hold with ore,
+            fly back to the surface, sell it, buy better equipment, and go
+            deeper. That is the whole game. It is perfect.
+          </p>
+
+          <p>
+            This is a version of that idea that runs right here, in your browser,
+            on your phone or on your desktop. No install, no app store. Just
+            a canvas element and about 500 lines of JavaScript.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>The game</h2>
+
+          <p>
+            Drill downward through layers of earth. Collect ore, return to the
+            surface station to sell it and refuel. Spend your earnings on
+            upgrades: a stronger drill, bigger fuel tank, tougher hull, and
+            more cargo space. See how deep you can go before your hull gives out.
+          </p>
+
+          <div class="game-wrapper">
+            <div class="game-header">
+              <span class="demo-label">Deep Miner</span>
+              <span style="font-size:0.8em; opacity:0.6;">v1.0</span>
+            </div>
+            <div class="game-canvas-area">
+              <canvas id="game-canvas"></canvas>
+            </div>
+            <div class="game-controls-info" id="controls-info-desktop">
+              <span class="key">←</span><span class="key">→</span> move
+              &nbsp;·&nbsp;
+              <span class="key">↑</span> / <span class="key">Space</span> jetpack
+              &nbsp;·&nbsp;
+              <span class="key">↓</span> drill down
+              &nbsp;·&nbsp;
+              <span class="key">E</span> shop (at station)
+              &nbsp;·&nbsp;
+              <span class="key">R</span> restart
+            </div>
+          </div>
+
+          <p>
+            On mobile, two transparent d-pads appear in the bottom corners.
+            Swipe the direction you want to go. Drive up to the station to
+            enter the shop, or roll over the pump pad to refuel and sell
+            your cargo on the move.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>The layers</h2>
+
+          <p>
+            The world is 40 tiles wide and 200 tiles deep, divided into
+            eight depth bands. Each layer has its own palette, its own
+            ore distribution, and a couple have nasty surprises waiting
+            for you.
+          </p>
+
+          <table class="ore-table">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Depth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Topsoil</td><td>0&ndash;15m</td><td>Loose dirt and roots. Coal and copper.</td></tr>
+              <tr><td>Bedrock</td><td>15&ndash;35m</td><td>Bauxite, iron, the first silver.</td></tr>
+              <tr><td><strong>Permafrost</strong></td><td>35&ndash;55m</td><td>Frozen solid. Requires the <em>Heated Drill</em> upgrade or you cannot break a single tile. Methane ice deposits hide here.</td></tr>
+              <tr><td>Fossil layer</td><td>55&ndash;80m</td><td>Ancient sediment. Amber with insects, trilobite fossils.</td></tr>
+              <tr><td>Deep crust</td><td>80&ndash;110m</td><td>Cinnabar, gold, and the first uranium veins.</td></tr>
+              <tr><td><strong>Magma veins</strong></td><td>110&ndash;145m</td><td>Glowing red rock. Without a Heat Shield, your hull drains continuously while you are inside.</td></tr>
+              <tr><td>Crystal caves</td><td>145&ndash;180m</td><td>Tanzanite, more diamonds. The walls glitter.</td></tr>
+              <tr><td><strong>Mantle edge</strong></td><td>180&ndash;200m</td><td>Painite and unobtanium. Even worse heat than the magma layer. Endgame only.</td></tr>
+            </tbody>
+          </table>
+
+          <h2>What is down there</h2>
+
+          <p>
+            Eighteen things to mine, give or take. Some are real, some
+            are deliberately not. Where the real ones are concerned I have
+            played a little fast and loose with relative values, but the
+            general ordering &mdash; copper before silver before gold before
+            tanzanite before painite &mdash; is roughly how the world works.
+          </p>
+
+          <table class="ore-table">
+            <thead>
+              <tr>
+                <th>Ore</th>
+                <th>Value</th>
+                <th>Found in</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="ore-swatch" style="background:#1c1c1c"></span>Coal</td><td>$5</td><td>Topsoil &rarr; bedrock</td><td>Cheap and common.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#D4883A"></span>Copper</td><td>$12</td><td>Topsoil &rarr; bedrock</td><td>Starter cash.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#B85a3a"></span>Bauxite</td><td>$25</td><td>Bedrock</td><td>Aluminum ore.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#A0A0B8"></span>Iron</td><td>$35</td><td>Bedrock &rarr; deep crust</td><td>Ubiquitous.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#D4B33A"></span>Pyrite</td><td>$60</td><td>Bedrock</td><td>Fool's gold &mdash; looks valuable, isn't.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#D8D8E8"></span>Silver</td><td>$90</td><td>Bedrock &rarr; deep crust</td><td></td></tr>
+              <tr><td><span class="ore-swatch" style="background:#bfe6ff"></span>Methane ice</td><td>$180</td><td>Permafrost</td><td>Heated drill required.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#c12838"></span>Cinnabar</td><td>$140</td><td>Deep crust</td><td>Mercury ore. Crystal clusters.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#FFD700"></span>Gold</td><td>$200</td><td>Deep crust</td><td>The real thing.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#e89a2a"></span>Amber</td><td>$350</td><td>Fossil layer</td><td>Insect trapped inside.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#7a5436"></span>Trilobite</td><td>$600</td><td>Fossil layer</td><td>Half-billion-year-old arthropod.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#5fff5a"></span>Uranium</td><td>$800</td><td>Deep crust</td><td>Glows. Requires drill Lv 3.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#1a0a18"></span>Obsidian</td><td>$280</td><td>Magma veins</td><td>Volcanic glass.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#50C878"></span>Emerald</td><td>$900</td><td>Fossil &rarr; crystal</td><td></td></tr>
+              <tr><td><span class="ore-swatch" style="background:#E0115F"></span>Ruby</td><td>$1,400</td><td>Deep crust &rarr; crystal</td><td></td></tr>
+              <tr><td><span class="ore-swatch" style="background:#7a5fff"></span>Tanzanite</td><td>$2,000</td><td>Crystal caves</td><td>Real, found only in Tanzania.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#B9F2FF"></span>Diamond</td><td>$3,000</td><td>Crystal caves</td><td>Requires drill Lv 4.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#d36b8c"></span>Painite</td><td>$6,000</td><td>Mantle edge</td><td>Real, briefly the world's rarest gem.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#FF00FF"></span>Unobtanium</td><td>$12,000</td><td>Mantle edge</td><td>Not real. Sue me.</td></tr>
+            </tbody>
+          </table>
+
+          <p>
+            Dirt and stone are not in this table because you do not
+            collect them &mdash; they are rubble. You drill them, they
+            disappear, you move on. The shop has six upgrades: drill,
+            fuel, hull, cargo, plus a one-time Heated Drill purchase
+            (gates the permafrost) and a two-tier Heat Shield (lets you
+            survive the magma and mantle layers).
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>The stack</h2>
+
+          <p>
+            There is no stack, really. That is the point. One HTML file, one
+            CSS file, one JavaScript file, and an <code>&lt;canvas&gt;</code>
+            element. No build step, no bundler, no framework, no
+            <code>node_modules</code>. The whole game is about 900 lines in
+            an IIFE, served as a static file. If you can open it in a
+            browser, you can run it.
+          </p>
+
+          <p>
+            Everything renders with the 2D canvas API — <code>fillRect</code>,
+            <code>createLinearGradient</code>, <code>arc</code>, the usual
+            suspects. State is plain objects. The game loop is
+            <code>requestAnimationFrame</code> with a delta-time
+            <code>update(dt)</code> followed by <code>render()</code>. Input
+            is keyboard listeners on desktop and a virtual d-pad I draw onto
+            the canvas itself for touch. That is the whole architecture.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>Three pieces of code I like</h2>
+
+          <h3>Depth-biased ore generation</h3>
+
+          <p>
+            The world is generated once at startup. Every tile rolls against
+            a list of candidate ores filtered by depth, with rarer ores
+            getting slightly better odds the deeper you go. The trick is
+            walking the candidate list from <em>rarest to most common</em> —
+            that way diamond gets first dibs on the random number, and
+            common dirt only gets picked when nothing rarer has claimed the
+            roll.
+          </p>
+
+<pre><code><span class="kw">function</span> <span class="fn">pickOre</span>(depth) {
+  <span class="kw">var</span> candidates = [];
+  <span class="kw">for</span> (<span class="kw">var</span> i = <span class="num">0</span>; i &lt; ORE_KEYS.length; i++) {
+    <span class="kw">var</span> o = ORES[ORE_KEYS[i]];
+    <span class="kw">if</span> (depth &gt;= o.minDepth) candidates.<span class="fn">push</span>(ORE_KEYS[i]);
+  }
+  <span class="kw">var</span> r = Math.<span class="fn">random</span>();
+  <span class="cm">// Deeper = rarer ores more likely. Walk from rarest to common.</span>
+  <span class="kw">var</span> cumul = <span class="num">0</span>;
+  <span class="kw">for</span> (<span class="kw">var</span> j = candidates.length - <span class="num">1</span>; j &gt;= <span class="num">0</span>; j--) {
+    <span class="kw">var</span> ore = ORES[candidates[j]];
+    <span class="kw">var</span> adjustedChance = ore.chance * (<span class="num">1</span> + depth * <span class="num">0.003</span>);
+    cumul += adjustedChance;
+    <span class="kw">if</span> (r &lt; cumul / (cumul + <span class="num">1</span>)) {
+      <span class="kw">return</span> { type: candidates[j], hp: ore.hp };
+    }
+  }
+  <span class="kw">if</span> (Math.<span class="fn">random</span>() &lt; <span class="num">0.12</span>) <span class="kw">return</span> <span class="kw">null</span>; <span class="cm">// air pocket</span>
+  <span class="kw">return</span> { type: <span class="str">'dirt'</span>, hp: ORES.dirt.hp };
+}</code></pre>
+
+          <p>
+            The <code>cumul / (cumul + 1)</code> bit is a soft normalization
+            trick: it keeps the running probability bounded between 0 and 1
+            without having to know the total ahead of time, while still
+            preserving the rare-first ordering. The depth multiplier
+            (<code>1 + depth * 0.003</code>) is small but compounds — by 150
+            metres down, rare ores are getting a 45% bonus.
+          </p>
+
+          <h3>Collision against a tile grid</h3>
+
+          <p>
+            There is no physics engine. The whole world is a 2D array of
+            tiles, and the player is an axis-aligned rectangle. To check if
+            the player overlaps anything solid, I floor-divide its four
+            corners by the tile size and look up every cell in the range:
+          </p>
+
+<pre><code><span class="kw">function</span> <span class="fn">solidAt</span>(px, py, w, h) {
+  <span class="kw">var</span> c1 = Math.<span class="fn">floor</span>(px / TILE);
+  <span class="kw">var</span> c2 = Math.<span class="fn">floor</span>((px + w - <span class="num">1</span>) / TILE);
+  <span class="kw">var</span> r1 = Math.<span class="fn">floor</span>(py / TILE);
+  <span class="kw">var</span> r2 = Math.<span class="fn">floor</span>((py + h - <span class="num">1</span>) / TILE);
+  <span class="kw">for</span> (<span class="kw">var</span> r = r1; r &lt;= r2; r++) {
+    <span class="kw">for</span> (<span class="kw">var</span> c = c1; c &lt;= c2; c++) {
+      <span class="kw">var</span> t = <span class="fn">tileAt</span>(r, c);
+      <span class="kw">if</span> (t === <span class="str">'wall'</span> || t !== <span class="kw">null</span>) <span class="kw">return</span> <span class="kw">true</span>;
+    }
+  }
+  <span class="kw">return</span> <span class="kw">false</span>;
+}</code></pre>
+
+          <p>
+            Movement then becomes: tentatively move on X, check; if blocked,
+            don't move and zero the X velocity; do the same for Y. Separating
+            the axes is what stops the player from slipping into corners
+            diagonally, and it is what lets you slide along walls smoothly.
+            The whole movement function is maybe 25 lines.
+          </p>
+
+          <h3>Touch d-pad as an angle sweep</h3>
+
+          <p>
+            On mobile, the d-pad is just two transparent circles drawn at
+            the bottom corners of the canvas. There are no actual buttons.
+            When a touch lands, I take the vector from the d-pad center to
+            the touch and use <code>atan2</code> to slice it into four
+            directions:
+          </p>
+
+<pre><code><span class="kw">function</span> <span class="fn">updateDpad</span>(x, y) {
+  dpad.left = dpad.right = dpad.up = dpad.down = <span class="kw">false</span>;
+  <span class="kw">var</span> dx = x - DPAD_CX;
+  <span class="kw">var</span> dy = y - DPAD_CY;
+  <span class="kw">var</span> dist = Math.<span class="fn">sqrt</span>(dx * dx + dy * dy);
+  <span class="kw">if</span> (dist &lt; DPAD_SIZE * <span class="num">0.85</span>) {
+    <span class="kw">var</span> a = Math.<span class="fn">atan2</span>(dy, dx);
+    <span class="kw">if</span> (a &gt; -<span class="num">0.7</span> &amp;&amp; a &lt; <span class="num">0.7</span>)              dpad.right = <span class="kw">true</span>;
+    <span class="kw">if</span> (a &gt;  <span class="num">2.4</span> || a &lt; -<span class="num">2.4</span>)             dpad.left  = <span class="kw">true</span>;
+    <span class="kw">if</span> (a &lt; -<span class="num">0.7</span> &amp;&amp; a &gt; -<span class="num">2.4</span>)            dpad.up    = <span class="kw">true</span>;
+    <span class="kw">if</span> (a &gt;  <span class="num">0.7</span> &amp;&amp; a &lt;  <span class="num">2.4</span>)            dpad.down  = <span class="kw">true</span>;
+  }
+}</code></pre>
+
+          <p>
+            <code>atan2</code> returns an angle from <code>-π</code> to
+            <code>π</code>. The 0.7 cutoffs (about 40°) carve the circle
+            into four wedges with no dead zones between them. Drag your
+            finger around inside the d-pad and the direction follows
+            smoothly — there is no concept of "lifting off one button and
+            pressing another." It feels much better than literal buttons,
+            and it is six lines of math.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>How it all fits together</h2>
+
+          <p>
+            The camera follows the player with a smooth lerp
+            (<code>cam.x += (target - cam.x) * 0.12</code>). Drilling sets a
+            timer on the target tile and subtracts hit points based on
+            drill level — when HP hits zero, the tile is replaced with
+            <code>null</code> and the ore goes into your cargo array. Every
+            valuable ore gets a small white square drawn in the corner so
+            you can spot it underground.
+          </p>
+
+          <div class="divider">• • •</div>
+
+          <h2>Strategy</h2>
+
+          <p>
+            Early game: drill straight down through topsoil, sell coal and
+            copper constantly, and rush the fuel upgrade. Your starting
+            tank barely gets you to 30 metres and back. Once you have fuel
+            level three or four, you can start going after silver and
+            gold. The pump pad outside the shop refuels and sells your
+            cargo automatically when you drive across it &mdash; you never
+            actually need to enter the shop just to refuel.
+          </p>
+
+          <p>
+            Mid game: hit the permafrost wall around 35 metres, head back
+            up, and save for the Heated Drill. Without it you cannot break
+            a single tile in that layer &mdash; not even dirt. Once you
+            punch through, the fossil layer pays well: amber and trilobite
+            fossils sell for hundreds. Uranium starts showing up around
+            80 metres but needs drill level 3 to chip at.
+          </p>
+
+          <p>
+            Late game: the magma layer at 110 metres is genuinely hostile.
+            Without a Heat Shield, your hull drains every second you spend
+            inside, regardless of whether you are drilling. Buy at least
+            the Mk 1 shield before you commit. Below that, the crystal
+            caves are mostly safe and full of tanzanite and diamond. The
+            mantle edge at 180 metres is worse than the magma layer and
+            holds painite and unobtanium &mdash; do not go down there
+            without Mk 2 shield, max drill, and a full tank.
+          </p>
+
+          <p>
+            And cargo, always cargo. A single painite is worth $6,000 but
+            if your hold only fits five items, you are making a lot of
+            round trips. Max it out and each run to the deep zone pays
+            for itself many times over.
+          </p>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <span>&copy; 2026 Ethan Willingham</span>
+      </div>
+    </footer>
+  </div>
+  <script src="main.js"></script>
+  <script src="motherload.js"></script>
+</body>
+</html>
