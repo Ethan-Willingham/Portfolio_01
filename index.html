@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ethan Willingham</title>
+  <meta name="description" content="Ethan Willingham makes interactive things about chaos, the body, math, and old paintings.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* ---- Homepage type system: "eyebrow" editorial ----
+       A small tracked-caps date kicker over a big serif headline, a quiet roman
+       dek, and a masthead label that hinges the name to the index below. The
+       warm tone lives only in the small caps elements (the kickers and label),
+       so the accent reads as structure, not decoration. */
+    /* Keep the page rigid: no sideways scroll, no horizontal rubber-banding. */
+    html { overflow-x: hidden; overscroll-behavior-x: none; }
+
+    .site-header { margin-bottom: 2rem; }
+    .site-name a { font-size: clamp(3rem, 6vw, 3.7rem); letter-spacing: -0.02em; }
+    /* ---- Masthead epigraph: a short italic serif line (the voice), between the
+       big name and the plain-spoken blurb. Three tiers, bold serif name / italic
+       serif epigraph / roman sans body, so the masthead reads as crafted. ---- */
+    .site-tagline {
+      margin-top: 0.5rem;
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 1.45rem;
+      line-height: 1.32;
+      color: var(--text-dim);
+      max-width: 48ch;
+    }
+
+    /* ---- Intro blurb: the plain-spoken statement under the epigraph. A touch
+       more size and brighter ink than a caption, so it reads as the site's
+       voice rather than fine print. ---- */
+    .site-intro {
+      margin-top: 0.85rem;
+      max-width: 48ch;
+      font-family: var(--font-body);
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: var(--text);
+      text-wrap: pretty;
+    }
+    .site-intro a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(212, 196, 160, 0.35);
+      transition: color 0.2s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+    .site-intro a .arr { font-size: 0.82em; }
+    .site-intro a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
+    .site-intro a:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
+
+    /* ---- Commit sparkline (the signature): a static snapshot of this site's
+       daily commits from Apr 23 to today. The shape is the spring-2026 eruption;
+       it links to the full git-history view.
+       Static inline SVG, no data load, no script. ---- */
+    .commit-spark {
+      --spark-zero: rgba(166, 176, 158, 0.15);
+      --spark-rest: rgba(166, 176, 158, 0.32);
+      --spark-mid: rgba(184, 178, 162, 0.42);
+      --spark-rise: rgba(202, 190, 158, 0.5);
+      --spark-peak: rgba(216, 204, 174, 0.58);
+      --spark-hover: rgba(226, 216, 188, 0.66);
+      display: inline-flex; align-items: center; gap: 0.7rem; margin-top: 1.7rem; text-decoration: none;
+    }
+    .commit-spark svg { width: 168px; height: auto; display: block; overflow: visible; }
+    .commit-spark rect { fill: var(--spark-rest); transform-box: fill-box; transform-origin: center; transform: scaleX(0.68); transition: fill 0.2s ease; }
+    .commit-spark .z { fill: var(--spark-zero); }
+    .commit-spark .m { fill: var(--spark-mid); }
+    .commit-spark .r { fill: var(--spark-rise); }
+    .commit-spark .hot { fill: var(--spark-peak); }
+    .cs-cap { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); white-space: nowrap; transition: color 0.2s ease; }
+    .cs-cap .arr { font-size: 0.9em; }
+    .commit-spark:hover .cs-cap { color: var(--accent); }
+    .commit-spark:hover rect { fill: rgba(184, 178, 162, 0.42); }
+    .commit-spark:hover .m { fill: rgba(202, 190, 158, 0.52); }
+    .commit-spark:hover .r { fill: rgba(216, 204, 174, 0.6); }
+    .commit-spark:hover .hot { fill: var(--spark-hover); }
+    .commit-spark:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 4px; }
+
+    /* ---- Article cards: thumbnail floats RIGHT so every title shares the name's
+       left spine (a title is the article's "name"). Mobile (<560px) stacks the
+       image above the text, unchanged. ---- */
+    @media (min-width: 560px) {
+      .article-item-thumb { float: right; width: 188px; margin: 0.4rem 0 0.55rem 1.6rem; }
+    }
+
+    /* masthead hinge: a small tracked-caps label with a trailing hairline */
+    .list-head { display: flex; align-items: center; gap: 1.15rem; margin-bottom: 1.9rem; }
+    .list-head span {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #c3b589;
+      white-space: nowrap;
+    }
+    .list-head::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--rule); }
+
+    .article-list { gap: 0; }
+    .article-item { padding: 1.65rem 1rem; }
+    .article-item-date {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #c3b589;
+      margin-bottom: 0.5rem;
+    }
+    .article-item-title {
+      font-family: var(--font-heading);
+      font-weight: 400;
+      font-size: 1.65rem;
+      line-height: 1.18;
+      letter-spacing: -0.015em;
+      color: var(--text-bright);
+      margin-bottom: 0.5rem;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease-out;
+    }
+    .article-item-description {
+      font-family: var(--font-body);
+      font-style: normal;
+      font-size: 1.0rem;
+      line-height: 1.5;
+      color: var(--text-dim);
+    }
+    @media (min-width: 720px) {
+      .site-header { margin-bottom: 2.6rem; }
+      .list-head { margin-bottom: 2.4rem; }
+      .article-item { padding: 1.7rem 1rem; }
+      .article-item-title { font-size: 1.85rem; }
+    }
+
+    /* ---- Subtle motion (fine pointer only): a barely-there lean + trailing glow ----
+       Touch and reduced-motion visitors get the clean static page; the on-load
+       fade-in lives in style.css, so nothing here can ever leave content hidden. */
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      .article-item-thumb { overflow: visible; }
+      .article-item-thumb img {
+        border-radius: 4px;
+        will-change: transform, box-shadow;
+        transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                    filter 0.4s ease-out;
+      }
+      .article-item:hover .article-item-title { transform: translateY(-1px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrapper">
+    <header class="site-header">
+      <h1 class="site-name"><a href="/">Ethan Willingham</a></h1>
+      <p class="site-tagline">The truth lasts forever; this is a website.</p>
+      <p class="site-intro">This is my woodshop, and my only tool is Claude. I burn a few billion tokens here on weekends because it's addictive. Nobody's meant to visit, but I love that I can reach it from any device on earth.</p>
+      <a class="commit-spark" href="git-history.html" aria-label="1,247 commits to this site from April 23 to May 27, 2026. See the full history.">
+        <svg viewBox="0 0 139 26" aria-hidden="true" focusable="false"><rect x="0" y="22.3" width="3" height="1.7"/><rect x="4" y="23.0" width="3" height="1.0"/><rect x="8" y="23.0" width="3" height="1.0"/><rect x="12" y="23.0" width="3" height="1.0"/><rect x="16" y="23.0" width="3" height="1.0"/><rect x="20" y="23.0" width="3" height="1.0"/><rect x="24" y="23.0" width="3" height="1.0"/><rect x="28" y="23.0" width="3" height="1.0"/><rect x="32" y="23.0" width="3" height="1.0"/><rect x="36" y="23" width="3" height="1" class="z"/><rect x="40" y="23.0" width="3" height="1.0"/><rect x="44" y="23" width="3" height="1" class="z"/><rect x="48" y="23" width="3" height="1" class="z"/><rect x="52" y="23" width="3" height="1" class="z"/><rect x="56" y="23.0" width="3" height="1.0"/><rect x="60" y="21.5" width="3" height="2.5"/><rect x="64" y="16.2" width="3" height="7.8" class="m"/><rect x="68" y="17.0" width="3" height="7.0" class="m"/><rect x="72" y="15.9" width="3" height="8.1" class="m"/><rect x="76" y="13.1" width="3" height="10.9" class="r"/><rect x="80" y="15.9" width="3" height="8.1" class="m"/><rect x="84" y="23" width="3" height="1" class="z"/><rect x="88" y="21.1" width="3" height="2.9"/><rect x="92" y="18.0" width="3" height="6.0" class="m"/><rect x="96" y="12.7" width="3" height="11.3" class="r"/><rect x="100" y="19.1" width="3" height="4.9"/><rect x="104" y="17.1" width="3" height="6.9" class="m"/><rect x="108" y="22.0" width="3" height="2.0"/><rect x="112" y="17.6" width="3" height="6.4" class="m"/><rect x="116" y="2.0" width="3" height="22.0" class="hot"/><rect x="120" y="7.4" width="3" height="16.6" class="hot"/><rect x="124" y="5.6" width="3" height="18.4" class="hot"/><rect x="128" y="10.0" width="3" height="14.0" class="hot"/><rect x="132" y="20.4" width="3" height="3.6"/><rect x="136" y="23.0" width="3" height="1.0"/></svg>
+        <span class="cs-cap">1,247 commits <span class="arr">&#8599;</span></span>
+      </a>
+    </header>
+
+    <main>
+      <ul class="article-list">
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="git-history.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/git-history.jpg" width="600" height="400" loading="eager" decoding="async" alt="Three side-by-side columns of the actual source code behind this site, in warm syntax highlighting on a dark background: the game engine, the galaxy visualizer, and the stylesheet.">
+            </span>
+            <time class="article-item-date" datetime="2026-05-24">24 May 2026</time>
+            <h2 class="article-item-title">Every Change This Website Ever Made</h2>
+            <p class="article-item-description">every commit to this site as a point of light on a three-year timeline. three near-silent years, then a 1,247-change spring eruption, fed by 8.78 billion May tokens and counting.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="random-galaxy.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/random-galaxy.jpg" width="600" height="389" loading="eager" decoding="async" alt="A glowing vortex of gold and teal points, a strange attractor rendered on the GPU.">
+            </span>
+            <time class="article-item-date" datetime="2026-05-21">21 May 2026</time>
+            <h2 class="article-item-title">Obi Juan Algorithm</h2>
+            <p class="article-item-description">a million points of math you fly through in 3D: strange attractors, fractals, the prime numbers, and the shadow of a four-dimensional shape.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="optional-body.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/optional-body.jpg" width="600" height="400" loading="eager" decoding="async" alt="A Gray's Anatomy engraving of the teeth set in the jaw.">
+            </span>
+            <time class="article-item-date" datetime="2026-05-21">21 May 2026</time>
+            <h2 class="article-item-title">The Optional Body</h2>
+            <p class="article-item-description">an interactive descent through the parts of the body you can live without, from a spare foot bone to a heart on a machine.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="gallery.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/gallery.jpg" width="600" height="400" loading="lazy" decoding="async" alt="Daubigny's painting The Hamlet of Optevoz: cottages by a stream at dusk.">
+            </span>
+            <time class="article-item-date" datetime="2026-05-01">1 May 2026</time>
+            <h2 class="article-item-title">The Old Masters</h2>
+            <p class="article-item-description">a small private gallery. Storms and saints, harvest fields and harbour scenes.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="particle-life.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/particle-life.jpg" width="600" height="376" loading="lazy" decoding="async" alt="The Ghost in the Swarm: teal and gold particles spiraling into concentric bands around a dark vortex eye.">
+            </span>
+            <time class="article-item-date" datetime="2026-04-26">26 Apr 2026</time>
+            <h2 class="article-item-title">The Ghost in the Swarm</h2>
+            <p class="article-item-description">100,000 particles obey three lines of math on the GPU, while an invisible field steers the swarm through sacred geometry.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="grand-motherload.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/sluice.jpg" width="600" height="393" loading="lazy" decoding="async" alt="Sluice: a jet-powered drill rig flying over the surface, with a freshly dug shaft below.">
+            </span>
+            <time class="article-item-date" datetime="2026-04-25">25 Apr 2026</time>
+            <h2 class="article-item-title">Sluice</h2>
+            <p class="article-item-description">my own 2D mining game. This is the free v15.2 browser demo; public development paused 18 May 2026. The full game is in private alpha, coming to Steam.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="daylight-globe.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/daylight-globe.jpg" width="600" height="400" loading="lazy" decoding="async" alt="Earth from space at the day/night terminator, city lights glowing across nighttime South America.">
+            </span>
+            <time class="article-item-date" datetime="2026-04-23">23 Apr 2026</time>
+            <h2 class="article-item-title">Daylight Globe</h2>
+            <p class="article-item-description">a small WebGL globe for the day/night line, daylight hours, and sunrise/set.</p>
+          </a>
+        </li>
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="particles.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/particles.jpg" width="600" height="330" loading="lazy" decoding="async" alt="A scatter of colorful dots, particles rendered with nothing but CSS box-shadow.">
+            </span>
+            <time class="article-item-date" datetime="2026-04-23">23 Apr 2026</time>
+            <h2 class="article-item-title">Rendering Particles Without a Canvas</h2>
+            <p class="article-item-description">three physics demos with no canvas, no WebGL, no SVG. The whole renderer is one CSS property on a 1px div.</p>
+          </a>
+        </li>
+      </ul>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+        <span class="ftr-links">
+          <a href="https://github.com/Ethan-Willingham/Portfolio_01">GitHub <span class="arr">&#8599;</span></a>
+          <a class="ftr-lucky" href="https://en.wikipedia.org/wiki/Special:Random">Feeling lucky? <span class="arr">&#8599;</span></a>
+        </span>
+      </div>
+    </footer>
+  </div>
+
+  <style>
+    .ftr-links { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+    .site-footer .arr { font-size: 0.82em; }
+    .re-veil { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.55rem; text-align: center; padding: 2rem; background: #1c2218; opacity: 0; transition: opacity .55s ease; }
+    .re-veil.on { opacity: 1; }
+    .re-veil .s { font-family: var(--font-heading); font-size: 2.4rem; line-height: 1; color: var(--accent); animation: reBreath 3.4s ease-in-out infinite; }
+    .re-veil .m { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.5rem, 4.6vw, 2.1rem); color: var(--text-bright); line-height: 1.34; max-width: 19ch; margin: 0; }
+    .re-veil .u { font-family: var(--font-body); font-size: 0.74rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-dim); }
+    .re-veil .m, .re-veil .u { transform: translateY(10px); opacity: 0; transition: transform .7s cubic-bezier(0.23, 1, 0.32, 1), opacity .7s ease; }
+    .re-veil.on .m { transform: none; opacity: 1; transition-delay: .1s; }
+    .re-veil.on .u { transform: none; opacity: 1; transition-delay: .2s; }
+    .re-veil .ln { position: absolute; left: 50%; bottom: 2.7rem; transform: translateX(-50%); width: min(42vw, 300px); height: 1px; background: linear-gradient(to right, transparent, rgba(212,196,160,0.4), transparent); opacity: 0; transition: opacity .9s ease .4s; }
+    .re-veil.on .ln { opacity: 1; }
+    @keyframes reBreath { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .re-veil, .re-veil .m, .re-veil .u, .re-veil .ln { transition: none; } .re-veil .m, .re-veil .u, .re-veil .ln { transform: none; opacity: 1; } .re-veil .s { animation: none; opacity: .9; } }
+  </style>
+  <script>
+  (function () {
+    var d = document.querySelector('.ftr-lucky');
+    if (!d) return;
+    d.addEventListener('click', function (e) {
+      e.preventDefault();
+      var v = document.createElement('div');
+      v.className = 're-veil';
+      v.setAttribute('role', 'status');
+      v.innerHTML = '<span class="s">&#10087;</span><p class="m">Off to a random page of Wikipedia</p><span class="u">see where you land</span><span class="ln"></span>';
+      document.body.appendChild(v);
+      requestAnimationFrame(function () { v.classList.add('on'); });
+      setTimeout(function () { window.location.href = d.href; }, 1500);
+    });
+  })();
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // Touch tap feedback (touch-only), like a physical button: the row presses
+    // in while the finger is down and springs back the instant it lifts. A
+    // scroll releases it the moment the finger moves past a few px. The press-in
+    // is delayed a beat in CSS, so a scroll adds then removes .is-tapping inside
+    // that window before anything animates (no flash on scroll). Runs before the
+    // hover gate; mouse clicks are unaffected because these are touch events.
+    var TAP_SLOP = 10;   // movement (px) that means scroll, not tap
+    Array.prototype.slice.call(document.querySelectorAll('.article-item')).forEach(function (link) {
+      var sx = 0, sy = 0, down = false;
+      function release() { if (down) { down = false; link.classList.remove('is-tapping'); } }
+      link.addEventListener('touchstart', function (e) {
+        var t = e.touches[0]; sx = t.clientX; sy = t.clientY;
+        down = true; link.classList.add('is-tapping');
+      }, { passive: true });
+      link.addEventListener('touchmove', function (e) {
+        if (!down) return;
+        var t = e.touches[0];
+        if (Math.abs(t.clientX - sx) > TAP_SLOP || Math.abs(t.clientY - sy) > TAP_SLOP) release();
+      }, { passive: true });
+      link.addEventListener('touchend', release, { passive: true });
+      link.addEventListener('touchcancel', release, { passive: true });
+    });
+
+    // The only motion is a barely-there 3D lean on the hovered thumbnail, and
+    // only for a pointer that can hover and is fine (mouse/trackpad) with motion
+    // allowed. Touch and reduced-motion visitors get the clean static page; the
+    // on-load fade-in lives in style.css, so nothing here can leave content hidden.
+    var canHover    = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var wantsMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    if (!canHover || !wantsMotion) return;
+
+    var items = Array.prototype.slice.call(document.querySelectorAll('.article-list-item'));
+    var TILT_LERP = 0.12;
+    var MAX_TILT_DEG = 2.5;      // a barely-there lean
+    var HOVER_SCALE = 1.012;     // a hair of lift
+
+    var rafPending = false;
+    var tiltItems = [];
+
+    function scheduleRaf() { if (!rafPending) { rafPending = true; requestAnimationFrame(rafLoop); } }
+
+    items.forEach(function (li) {
+      var link = li.querySelector('.article-item');
+      var thumbEl = li.querySelector('.article-item-thumb');
+      var imgEl = thumbEl ? thumbEl.querySelector('img') : null;
+      if (!link || !imgEl) return;
+
+      var state = { imgEl: imgEl, active: false, rx: 0, ry: 0, scale: 1, txRx: 0, txRy: 0, txScale: 1, settled: true };
+      tiltItems.push(state);
+
+      link.addEventListener('mouseenter', function () {
+        state.active = true; state.settled = false; state.txScale = HOVER_SCALE;
+        imgEl.style.boxShadow = '0 4px 16px rgba(0,0,0,0.20), 0 0 18px rgba(212,196,160,0.05)';
+        scheduleRaf();
+      }, { passive: true });
+
+      link.addEventListener('mousemove', function (e) {
+        if (!state.active) return;
+        var rect = imgEl.getBoundingClientRect();
+        var cx = Math.max(rect.left, Math.min(e.clientX, rect.right));
+        var cy = Math.max(rect.top,  Math.min(e.clientY, rect.bottom));
+        var nx = (cx - rect.left) / rect.width  - 0.5;
+        var ny = (cy - rect.top)  / rect.height - 0.5;
+        state.txRy =  nx * MAX_TILT_DEG * 2;
+        state.txRx = -ny * MAX_TILT_DEG;
+        scheduleRaf();
+      }, { passive: true });
+
+      link.addEventListener('mouseleave', function () {
+        state.active = false; state.txRx = 0; state.txRy = 0; state.txScale = 1; state.settled = false;
+        imgEl.style.boxShadow = '';
+        scheduleRaf();
+      }, { passive: true });
+    });
+
+    function rafLoop() {
+      if (document.hidden) { rafPending = false; return; }
+
+      var stillMoving = false;
+      tiltItems.forEach(function (s) {
+        if (s.settled) return;
+        s.rx    += (s.txRx    - s.rx)    * TILT_LERP;
+        s.ry    += (s.txRy    - s.ry)    * TILT_LERP;
+        s.scale += (s.txScale - s.scale) * TILT_LERP;
+        s.imgEl.style.transform =
+          'perspective(700px) rotateX(' + s.rx.toFixed(3) + 'deg) rotateY(' + s.ry.toFixed(3) + 'deg) scale(' + s.scale.toFixed(4) + ')';
+        if (Math.abs(s.txRx - s.rx) < 0.04 && Math.abs(s.txRy - s.ry) < 0.04 && Math.abs(s.txScale - s.scale) < 0.0004) {
+          s.rx = s.txRx; s.ry = s.txRy; s.scale = s.txScale;
+          if (!s.active) { s.imgEl.style.transform = ''; }
+          s.settled = true;
+        } else {
+          stillMoving = true;
+        }
+      });
+
+      if (stillMoving) requestAnimationFrame(rafLoop);
+      else rafPending = false;
+    }
+  })();
+  </script>
+</body>
+</html>

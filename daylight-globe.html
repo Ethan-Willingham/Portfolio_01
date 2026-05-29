@@ -1,0 +1,365 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daylight Globe</title>
+  <meta name="description" content="A small WebGL globe showing the day/night line, daylight hours, and sunrise/set by time and date.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific demo overrides for the globe.
+       The base panel system is in style.css. */
+
+    /* Globe canvas: square on mobile, 4:3 on desktop. */
+    #globe-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1/1;
+      /* Cap the globe so it never dwarfs a short screen; the article can
+         still be scrolled past it. dvh tracks the live viewport on iOS. */
+      max-height: 60vh;
+      max-height: 60dvh;
+      background: #08090b;
+      cursor: grab;
+      touch-action: none;            /* drag spins the 3D globe, not the page */
+      overscroll-behavior: contain;
+      overflow: hidden;
+    }
+    #globe-container:active { cursor: grabbing; }
+    #globe-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      opacity: 1;
+      transition: opacity 0.45s ease;
+    }
+    #globe-container.is-loading canvas {
+      opacity: 0;
+    }
+    .globe-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(42, 58, 66, 0.28), transparent 34%),
+        #08090b;
+      color: rgba(245, 241, 234, 0.64);
+      font-family: var(--font-heading);
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      z-index: 3;
+    }
+    #globe-container.is-loading .globe-loading {
+      opacity: 1;
+    }
+    #globe-container.is-ready .globe-loading {
+      opacity: 0;
+    }
+    .globe-loading::before {
+      content: '';
+      width: 0.72rem;
+      height: 0.72rem;
+      margin-right: 0.65rem;
+      border-radius: 50%;
+      border: 1px solid rgba(212,196,160,0.2);
+      border-top-color: rgba(212,196,160,0.85);
+      animation: globe-loading-spin 0.9s linear infinite;
+    }
+    @keyframes globe-loading-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* The demo leads the article, sitting directly beneath the title, so trim
+       its default 3em top margin (the post header already provides the gap). */
+    .globe-wrapper { margin-top: 0.5rem; }
+
+    /* The shared .fade-in entrance leaves a transform on .post-body, and a
+       transformed ancestor traps the fullscreen overlay's position:fixed inside
+       the column instead of the viewport. Drop it here (the globe still does its
+       own load fade, and the header above still animates in). */
+    .post-body.fade-in { animation: none; opacity: 1; transform: none; }
+
+    /* Laptops / desktops / landscape tablets: put the globe BESIDE a control
+       rail instead of stacking controls beneath it, and let the figure break
+       out wider than the article text so the globe stays large. The whole
+       interactive then fits on a laptop screen at once, no scrolling. */
+    @media (min-width: 880px) {
+      .globe-wrapper {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(300px, 33%, 348px);
+        grid-template-areas: "canvas side";
+        /* outset past the 780px text column, capped and viewport-safe */
+        width: min(960px, 90vw);
+        margin-left: 50%;
+        transform: translateX(-50%);
+      }
+      #globe-container {
+        grid-area: canvas;
+        aspect-ratio: auto;          /* height is set explicitly below */
+        max-height: none;
+        /* roughly tracks the control rail's natural height so the rail fills
+           without a big empty tail, while keeping the globe large */
+        min-height: clamp(440px, 56vh, 560px);
+        min-height: clamp(440px, 56dvh, 560px);
+      }
+      .globe-side {
+        grid-area: side;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--d-bg-raised);
+        border-left: 1px solid var(--d-rule);
+      }
+      /* controls sit at the very top of the rail (no header bar), so drop their
+         top rule; the daylight panel keeps its top border as the in-rail divider */
+      .globe-wrapper .globe-controls { border-top: none; }
+      /* narrow rail: trim the long label gutters so the slider tracks keep a
+         usable width */
+      .globe-wrapper .p-slider-row label,
+      .globe-wrapper .tilt-row-label { min-width: 3.4em; }
+      /* keep all four timezone buttons + Reset on one line in the narrow rail */
+      .globe-wrapper .tz-btn { padding-left: 0.62em; padding-right: 0.62em; }
+      /* let the daylight panel fill the rail down to the globe's lower edge */
+      .globe-wrapper .daylight-panel { flex: 1 1 auto; }
+    }
+
+    /* Touch devices: comfortable tap targets (>=44px) and a slider thumb big
+       enough to grab with a finger. Scoped to the globe so the other demos
+       are untouched. */
+    @media (pointer: coarse) {
+      .globe-wrapper .tz-btn,
+      .globe-wrapper .tilt-btn,
+      .globe-wrapper #globe-reset { min-height: 44px; }
+      .globe-wrapper .p-slider-row input[type="range"] { height: 30px; }
+      .globe-wrapper .p-slider-row input[type="range"]::-webkit-slider-thumb {
+        width: 24px; height: 24px; margin-top: -11px;
+      }
+      .globe-wrapper .p-slider-row input[type="range"]::-moz-range-thumb {
+        width: 24px; height: 24px;
+      }
+    }
+
+    /* === Fullscreen ===
+       The toggle button enters fullscreen: the native Fullscreen API where it
+       exists (desktop, Android, iPad), and a CSS-only "pseudo fullscreen" on
+       iPhone, which has no Fullscreen API for non-video elements. Both paths
+       are driven by the .is-fullscreen class, toggled in js/globe.js. */
+    .globe-fs-btn {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      color: rgba(245, 241, 234, 0.85);
+      background: rgba(8, 9, 11, 0.42);
+      border: 1px solid rgba(245, 241, 234, 0.16);
+      border-radius: 6px;
+      cursor: pointer;
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .globe-fs-btn:hover {
+      color: var(--d-bg);
+      background: var(--d-accent);
+      border-color: var(--d-accent);
+    }
+    .globe-fs-btn svg { display: block; width: 18px; height: 18px; }
+    .globe-fs-btn .fs-icon-close { display: none; }
+    .globe-wrapper.is-fullscreen .globe-fs-btn .fs-icon-open { display: none; }
+    .globe-wrapper.is-fullscreen .globe-fs-btn .fs-icon-close { display: block; }
+
+    .globe-wrapper.is-fullscreen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      max-width: none;
+      margin: 0;
+      transform: none;
+      border: none;
+      border-radius: 0;
+    }
+    /* In fullscreen, pin the exit button to the real screen corner. */
+    .globe-wrapper.is-fullscreen .globe-fs-btn { position: fixed; }
+    .globe-wrapper.is-fullscreen #globe-container {
+      max-height: none;
+      min-height: 0;
+      aspect-ratio: auto;
+    }
+    /* Narrow / portrait fullscreen: globe fills the top, controls dock below
+       and scroll if they overflow. */
+    @media (max-width: 879px) {
+      .globe-wrapper.is-fullscreen {
+        display: flex;
+        flex-direction: column;
+      }
+      .globe-wrapper.is-fullscreen #globe-container { flex: 1 1 auto; }
+      .globe-wrapper.is-fullscreen .globe-side {
+        flex: 0 0 auto;
+        max-height: 46dvh;
+        overflow-y: auto;
+      }
+    }
+    /* Wide / landscape fullscreen: the two-column grid fills the screen height;
+       center the rail content so it is not stranded atop a tall column. */
+    @media (min-width: 880px) {
+      .globe-wrapper.is-fullscreen { grid-template-rows: minmax(0, 1fr); }
+      .globe-wrapper.is-fullscreen .globe-side { justify-content: center; }
+      .globe-wrapper.is-fullscreen .daylight-panel { flex: 0 0 auto; }
+    }
+    /* Bigger enter/exit tap target on touch. */
+    @media (pointer: coarse) {
+      .globe-fs-btn { width: 44px; height: 44px; }
+    }
+
+    /* Tilt button with the small "no moon" caption rendered subtly. */
+    .tilt-btn .tilt-note {
+      display: inline-block;
+      margin-left: 0.35em;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      color: rgba(212,196,160,0.55);
+      text-transform: lowercase;
+    }
+    .tilt-btn.active .tilt-note { color: rgba(10,13,10,0.7); }
+
+    /* Article-level fact box. Content style, kept understated. */
+    .fact-box {
+      margin: 2em 0;
+      padding: 1.2em 1.4em;
+      background: rgba(255,255,255,0.03);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+    }
+    .fact-box strong { color: var(--text-bright); }
+    .fact-box p { margin-bottom: 0.5em; font-size: 0.95rem; line-height: 1.55; }
+    .fact-box p:last-child { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">Daylight Globe</h1>
+      <p class="post-subtitle">A small WebGL globe for the day/night line, daylight hours, and sunrise/set.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <div class="globe-wrapper">
+            <div id="globe-container" class="is-loading">
+              <div class="globe-loading" aria-live="polite">Loading Earth textures</div>
+              <div class="globe-info" id="hover-info">drag to spin &middot; scroll to zoom &middot; tap to pin</div>
+              <button id="globe-fullscreen" class="globe-fs-btn" type="button" aria-label="Enter fullscreen">
+                <svg class="fs-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
+                <svg class="fs-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h4V4M20 8h-4V4M4 16h4v4M20 16h-4v4"/></svg>
+              </button>
+            </div>
+            <div class="globe-side">
+            <div class="globe-controls">
+              <div class="controls-top">
+                <div class="tz-group">
+                  <button class="tz-btn" data-tz="ET">ET</button>
+                  <button class="tz-btn active" data-tz="CT">CT</button>
+                  <button class="tz-btn" data-tz="MT">MT</button>
+                  <button class="tz-btn" data-tz="PT">PT</button>
+                </div>
+                <button class="p-reset" id="globe-reset">Reset</button>
+              </div>
+              <div class="p-slider-row">
+                <label>Hour</label>
+                <input type="range" id="hour-slider" min="0" max="24" value="12" step="0.25">
+                <span class="p-slider-val" id="hour-label">12:00 PM CT</span>
+              </div>
+              <div class="p-slider-row">
+                <label>Day</label>
+                <input type="range" id="day-slider" min="0" max="364" value="172">
+                <span class="p-slider-val" id="day-label">21 Jun</span>
+              </div>
+              <div class="tilt-row">
+                <span class="tilt-row-label">Tilt</span>
+                <div class="tilt-group">
+                  <button class="tilt-btn" data-idx="0">22.1&deg;</button>
+                  <button class="tilt-btn active" data-idx="1">23.4&deg;</button>
+                  <button class="tilt-btn" data-idx="2">24.5&deg;</button>
+                  <button class="tilt-btn" data-idx="3">45&deg;<span class="tilt-note">no moon</span></button>
+                </div>
+              </div>
+              <div class="tilt-desc-text" id="tilt-desc">Today. Currently decreasing at 0.013&deg;/century. The cycle takes ~41,000 years.</div>
+            </div>
+            <div class="daylight-panel">
+              <div class="daylight-label" id="daylight-hours-label">Equator: 12.0h daylight</div>
+              <div class="daylight-bar-wrap">
+                <canvas id="daylight-bar" width="600" height="12"></canvas>
+              </div>
+              <div class="daylight-bar-ticks">
+                <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
+              </div>
+              <div class="daylight-sub" id="sunrise-label">Rise 6:00 AM &nbsp; Set 6:00 PM</div>
+            </div>
+            </div>
+          </div>
+
+          <div class="divider">&bull; &bull; &bull;</div>
+
+          <h2>Notes</h2>
+
+          <p>
+            Drag the Earth. Change the hour, date, or tilt. The shader
+            blends NASA day and night textures against a computed sun
+            vector; the side panel uses the same inputs for daylight
+            hours and sunrise/set.
+          </p>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+  <script src="js/main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/globe.js"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

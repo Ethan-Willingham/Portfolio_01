@@ -1,0 +1,1484 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Old Masters</title>
+  <meta name="description" content="A small private gallery of old master paintings, with notes on the artists and their work. Click any image to zoom.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ============================================================
+       PAGE-SPECIFIC STYLES FOR THE GALLERY POST
+       ============================================================ */
+
+    /* Zoom hint banner up top: framed and prominent so nobody skims past it.
+       The paintings are full-resolution scans (up to 22 MP), so the whole
+       point of the post is lost if a reader never opens the lightbox. */
+    .zoom-banner {
+      display: flex;
+      align-items: center;
+      gap: 1.1em;
+      margin: 2.2em 0 2.6em;
+      padding: 1.15em 1.35em;
+      background: rgba(212, 196, 160, 0.10);
+      border: 1px solid rgba(212, 196, 160, 0.45);
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+    .zoom-banner svg {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .zoom-banner .zoom-head {
+      margin: 0 0 0.2em !important;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.2rem !important;
+      line-height: 1.2;
+      color: var(--accent-hover);
+    }
+    .zoom-banner .zoom-sub {
+      margin: 0 !important;
+      font-size: 1rem !important;
+      line-height: 1.5;
+      color: var(--text-bright);
+    }
+    .zoom-banner .zoom-sub em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .touch-verb { display: none; }
+    @media (hover: none), (pointer: coarse) {
+      .desktop-verb { display: none; }
+      .touch-verb { display: inline; }
+    }
+
+    /* The artwork "plate" — each painting gets its own framed display. */
+    .plate {
+      margin: 3.5em 0 2.8em;
+      padding: 0;
+    }
+
+    .plate-number {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 0.5em;
+    }
+
+    .plate-title {
+      font-family: var(--font-heading);
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      line-height: 1.25;
+      margin: 0 0 0.25em !important;
+      letter-spacing: -0.01em;
+    }
+    .plate-title em {
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    .plate-attribution {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text-dim);
+      font-style: italic;
+      margin-bottom: 1.3em !important;
+    }
+    .plate-attribution .artist-name {
+      color: var(--accent);
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    /* The image itself — generous, clickable, with a subtle frame. */
+    .plate-image-wrap {
+      position: relative;
+      margin: 0 0 1.4em;
+      cursor: zoom-in;
+      background: #14181a;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+      box-shadow:
+        0 1px 2px rgba(8, 12, 9, 0.5),
+        0 8px 22px -8px rgba(8, 12, 9, 0.55);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .plate-image-wrap:hover {
+      border-color: var(--accent);
+      box-shadow:
+        0 1px 2px rgba(8, 12, 9, 0.55),
+        0 12px 32px -8px rgba(8, 12, 9, 0.65);
+    }
+    .plate-image-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 !important;
+      border-radius: 0 !important;
+    }
+    /* Floating zoom pill that appears on hover (desktop). */
+    .plate-zoom-hint {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 0.26em 0.55em 0.26em 0.5em;
+      display: flex;
+      align-items: center;
+      gap: 0.32em;
+      background: rgba(10, 12, 11, 0.52);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      color: rgba(244, 230, 190, 0.86);
+      font-family: var(--font-heading);
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      border-radius: 3px;
+      border: 1px solid rgba(212, 196, 160, 0.14);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
+      pointer-events: none;
+    }
+    .plate-image-wrap:hover .plate-zoom-hint {
+      opacity: 0.78;
+      transform: translateY(0);
+    }
+    .plate-zoom-hint svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    /* Always show the hint subtly on touch devices. */
+    @media (hover: none) {
+      .plate-zoom-hint {
+        top: 8px;
+        right: 8px;
+        opacity: 0.56;
+        transform: translateY(0);
+      }
+    }
+
+    /* The metadata strip under the image — museum wall-label style. */
+    .plate-meta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.35em 1.4em;
+      margin: 0 0 1.6em;
+      padding: 0.9em 1em 1em;
+      background: rgba(255, 255, 255, 0.025);
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+    @media (min-width: 600px) {
+      .plate-meta {
+        grid-template-columns: auto 1fr;
+      }
+    }
+    .plate-meta dt {
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      align-self: baseline;
+    }
+    .plate-meta dd {
+      margin: 0 0 0.25em;
+      color: var(--text);
+    }
+    .plate-meta dd:last-of-type { margin-bottom: 0; }
+    .plate-meta dd .em-museum {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Small helper subheading INSIDE a plate — used for "About the artist". */
+    .plate h3 {
+      font-family: var(--font-heading) !important;
+      font-size: 1.05rem !important;
+      font-weight: 700;
+      color: var(--accent-hover) !important;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 1.6em 0 0.6em !important;
+      padding-bottom: 0.35em;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* ============================================================
+       LIGHTBOX (the zoom-in viewer)
+       Uses a single transform on the image: translate + scale.
+       Stage is just a fixed viewport; the image moves inside it.
+       ============================================================ */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(8, 10, 9, 0.97);
+      display: none;
+      flex-direction: column;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      overscroll-behavior: contain;
+      touch-action: none;
+    }
+    .lightbox.is-open {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* Top bar with caption + controls. */
+    .lightbox-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.9rem;
+      padding: 0.7em 1em;
+      background: rgba(0, 0, 0, 0.6);
+      border-bottom: 1px solid rgba(212, 196, 160, 0.12);
+      color: var(--text-dim);
+      font-family: var(--font-heading);
+      font-size: 0.88rem;
+      z-index: 2;
+    }
+    .lightbox-caption {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-bright);
+    }
+    .lightbox-caption .lb-artist {
+      color: var(--accent);
+      margin-right: 0.5em;
+    }
+    .lightbox-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+    .lightbox-zoom-label {
+      font-variant-numeric: tabular-nums;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      min-width: 3.2em;
+      text-align: right;
+      user-select: none;
+    }
+    .lightbox-btn {
+      background: transparent;
+      border: 1px solid rgba(212, 196, 160, 0.22);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+      padding: 0;
+    }
+    .lightbox-btn:hover,
+    .lightbox-btn:focus-visible {
+      background: rgba(212, 196, 160, 0.14);
+      border-color: var(--accent);
+      color: var(--accent-hover);
+      outline: none;
+    }
+    .lightbox-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .lightbox-btn svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Stage = the dark area where the image lives.
+       It does NOT scroll. The image is positioned absolutely
+       inside it and moved via CSS transform. */
+    .lightbox-stage {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .lightbox-stage.is-grabbing { cursor: grabbing; }
+    .lightbox-stage img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      max-width: none;
+      max-height: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .lightbox-stage.is-animating img {
+      transition: transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    /* Brief hint that fades after the user does anything. */
+    .lightbox-hint {
+      position: absolute;
+      bottom: 1.4em;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.5em 1em;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(212, 196, 160, 0.18);
+      border-radius: 999px;
+      color: var(--text-bright);
+      font-family: var(--font-heading);
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    .lightbox-hint.is-hidden {
+      opacity: 0;
+    }
+    @media (max-width: 500px) {
+      .lightbox-zoom-label { display: none; }
+      .lightbox-caption { font-size: 0.82rem; }
+      .lightbox-bar { padding: 0.6em 0.7em; gap: 0.5rem; }
+      .lightbox-controls { gap: 0.25em; }
+      .lightbox-hint { font-size: 0.76rem; bottom: 1em; }
+    }
+
+    /* When body has lightbox open, lock scroll. */
+    body.lightbox-open { overflow: hidden; }
+
+    /* Subtle divider between artworks. */
+    .plate-ornament {
+      width: 140px;
+      height: 1px;
+      margin: 3em auto 0;
+      background: var(--text-dim);
+      opacity: 0.4;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">The Old Masters</h1>
+      <p class="post-subtitle">A small private gallery. Storms and saints, harvest fields and harbour scenes.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <p>
+            Fourteen paintings I keep returning to, each with one
+            thing about it, or its painter, that stuck with me. They
+            range from a Caravaggio
+            painted in Rome in 1597 to a Russian seascape from 1850
+            and an American Civil War landscape from the year of
+            Lincoln's assassination. No theme beyond "things that stop
+            me when I scroll past them."
+          </p>
+
+          <div class="zoom-banner">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <line x1="11" y1="8" x2="11" y2="14"></line>
+              <line x1="8" y1="11" x2="14" y2="11"></line>
+            </svg>
+            <div>
+              <p class="zoom-head">These paintings are enormous. Zoom in.</p>
+              <p class="zoom-sub">
+                Every plate is a full-resolution scan, up to 22 megapixels.
+                <span class="desktop-verb">Click</span><span class="touch-verb">Tap</span>
+                any one to open it full-screen, then wheel or pinch right into
+                the brushwork. <em>Esc</em> to close.
+              </p>
+            </div>
+          </div>
+
+          <!-- ============================================================
+               PLATE 1 — CARAVAGGIO, THE MUSICIANS
+               ============================================================ -->
+          <section class="plate" id="plate-1">
+            <span class="plate-number">Plate I &middot; 1597</span>
+            <h2 class="plate-title"><em>The Musicians</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Michelangelo Merisi da Caravaggio</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/The Musicians - Caravaggio.jpg" data-zoom-title="The Musicians" data-zoom-artist="Caravaggio, 1597">
+              <img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio: four young men in classical robes, three with instruments and one as Cupid, gathered closely in dim warm light." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>92.1 &times; 118.4 cm (about 36 &times; 47 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">The Metropolitan Museum of Art, New York</span>. Gallery 620, since 1952.</dd>
+              <dt>Provenance</dt>       <dd>Vanished from view for over three centuries; rediscovered in a private English collection in 1952, where it had recently sold for &pound;100 because nobody recognised it.</dd>
+            </dl>
+
+            <p>
+              The man who painted these tender young musicians turned
+              out to be the most dangerous artist in Rome. Caravaggio's
+              court record includes throwing a plate of artichokes at a
+              waiter and running a blade through his own foot, and in
+              1606 he killed a man in a street fight, then spent his
+              last four years painting masterpieces while on the run
+              from a papal death sentence.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 2 — GEORGES MICHEL, LANDSCAPE WITH A PLOWED FIELD
+               ============================================================ -->
+          <section class="plate" id="plate-2">
+            <span class="plate-number">Plate II &middot; c. 1830</span>
+            <h2 class="plate-title"><em>Landscape with a Plowed Field and a Village</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Georges Michel</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Landscape with a Plowed Field and a Village - Georges Michel.jpg" data-zoom-title="Landscape with a Plowed Field and a Village" data-zoom-artist="Georges Michel, c. 1830">
+              <img src="assets/images/Landscape with a Plowed Field and a Village - Georges Michel.jpg" alt="A wide French countryside under heavy clouds, with a freshly plowed field in the foreground and a small village in the middle distance." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on paper, mounted on canvas</dd>
+              <dt>Size</dt>             <dd>51.1 &times; 70.2 cm (about 20 &times; 27 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">The Metropolitan Museum of Art, New York</span></dd>
+              <dt>Note</dt>             <dd>Painted on paper as a cheap way to imitate the smooth wood-panel surface favoured by the Dutch old masters Michel was copying.</dd>
+            </dl>
+
+            <p>
+              Michel reportedly held that any painter who could not
+              spend an entire lifetime working within four leagues,
+              about eleven miles, of a single spot was a bungler
+              chasing a phantom. He spent his own life proving it,
+              painting the windmills and threatened plains around Paris
+              over and over without once leaving town for a subject.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 3 — BOUGUEREAU, BRETON BROTHER AND SISTER
+               ============================================================ -->
+          <section class="plate" id="plate-3">
+            <span class="plate-number">Plate III &middot; 1871</span>
+            <h2 class="plate-title"><em>Breton Brother and Sister</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">William-Adolphe Bouguereau</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Breton Brother and Sister - William-Adolphe Bouguereau.jpg" data-zoom-title="Breton Brother and Sister" data-zoom-artist="William-Adolphe Bouguereau, 1871">
+              <img src="assets/images/Breton Brother and Sister - William-Adolphe Bouguereau.jpg" alt="A young Breton girl in traditional white bonnet and apron sits with her toddler brother in her lap, holding an apple, in dappled woodland light." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>129.2 &times; 89.2 cm (about 51 &times; 35 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">The Metropolitan Museum of Art, New York</span>. Catharine Lorillard Wolfe Bequest, 1887.</dd>
+              <dt>Sold for</dt>         <dd>6,000 USD in 1871, straight from the artist's dealer to a New York collector. (Bouguereau auction record today: 3.6 million USD, set at Christie's in 2019.)</dd>
+            </dl>
+
+            <p>
+              The Met owes this painting to Catharine Lorillard Wolfe,
+              reputedly the richest unmarried woman in America and the
+              only woman among the museum's founders, who left it to
+              them in 1887. She had inherited it from her father, who
+              snapped it up in 1871 within weeks of its leaving the
+              easel, back when American collectors were paying record
+              sums faster than Bouguereau could paint.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 4 — BOUGUEREAU, GIRL HOLDING LEMONS
+               ============================================================ -->
+          <section class="plate" id="plate-4">
+            <span class="plate-number">Plate IV &middot; 1899</span>
+            <h2 class="plate-title"><em>Girl Holding Lemons</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">William-Adolphe Bouguereau</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Girl Holding Lemons - William-Adolphe Bouguereau.jpg" data-zoom-title="Girl Holding Lemons" data-zoom-artist="William-Adolphe Bouguereau, 1899">
+              <img src="assets/images/Girl Holding Lemons - William-Adolphe Bouguereau.jpg" alt="A dark-haired young woman in a simple white shirt and shawl, holding several bright yellow lemons with leaves still attached." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>65.9 &times; 49.8 cm (about 26 &times; 20 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">The Israel Museum, Jerusalem</span>. Gift in memory of Goldie Weisbord.</dd>
+              <dt>Painted</dt>          <dd>June 1899, when Bouguereau was 73 years old, while caring for his son Paul, who was dying of tuberculosis.</dd>
+            </dl>
+
+            <p>
+              Bouguereau painted this sunlit girl and her lemons in a
+              rented hotel room in Menton in 1899, where he had taken
+              his grown son Paul for the sea air and refused even to
+              step out for a walk, "to avoid giving a bad example to my
+              son, to whom such things are forbidden." Paul died the
+              next spring, the fourth of Bouguereau's five children to
+              die before he did.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 5 — BOUGUEREAU, BY THE STREAM
+               ============================================================ -->
+          <section class="plate" id="plate-5">
+            <span class="plate-number">Plate V &middot; 1888</span>
+            <h2 class="plate-title"><em>By the Stream</em> (<em>Au Bord du Ruisseau</em>)</h2>
+            <p class="plate-attribution">
+              <span class="artist-name">William-Adolphe Bouguereau</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/By the stream (1888), by William-Adolphe Bouguereau.jpg" data-zoom-title="By the Stream" data-zoom-artist="William-Adolphe Bouguereau, 1888">
+              <img src="assets/images/By the stream (1888), by William-Adolphe Bouguereau.jpg" alt="A young girl resting beside a forest stream with bare feet on stones, painted with extreme realism." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Painted</dt>          <dd>1888, the same year he sold his <em>Berg&egrave;re tricotant</em> to a New York buyer for 18,000 francs (a 2023 sale of that painting hammered at 325,000 USD).</dd>
+              <dt>Note</dt>             <dd>One of dozens of rural-genre paintings Bouguereau made in this decade for an American market that could not get enough of them. By 1900 his works were in the collections of every major Gilded Age industrialist.</dd>
+            </dl>
+
+            <p>
+              Dismissed as sugary kitsch for most of the twentieth
+              century, these rustic scenes cost Bouguereau his
+              reputation: Degas turned his name into a slur,
+              <em>Bouguereaut&eacute;</em>, for slick and artificial
+              work, and the most celebrated painter of his generation
+              was very nearly written out of art history before a
+              1980s revival pulled him back in.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 6 — WINSLOW HOMER, THE VETERAN IN A NEW FIELD
+               ============================================================ -->
+          <section class="plate" id="plate-6">
+            <span class="plate-number">Plate VI &middot; 1865</span>
+            <h2 class="plate-title"><em>The Veteran in a New Field</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Winslow Homer</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/The Veteran in a New Field - Winslow Homer.jpg" data-zoom-title="The Veteran in a New Field" data-zoom-artist="Winslow Homer, 1865">
+              <img src="assets/images/The Veteran in a New Field - Winslow Homer.jpg" alt="A lone farmer mowing a tall wheat field with a single-bladed scythe under a bright sky, his Union Army jacket and canteen discarded in the corner." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>61.3 &times; 96.8 cm (about 24 &times; 38 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">The Metropolitan Museum of Art, New York</span>. Adelaide Milton de Groot Bequest, 1967.</dd>
+              <dt>Painted</dt>          <dd>Summer 1865, in the weeks after Lee's surrender at Appomattox and the assassination of President Lincoln.</dd>
+            </dl>
+
+            <p>
+              Critics in 1865 scolded Homer for a beginner's blunder,
+              since no real farmer still cut wheat with a one-bladed
+              scythe. They had it exactly backward: the faded paint
+              now shows he first painted the correct modern cradle,
+              then deliberately swapped it for the single curved blade
+              of the Grim Reaper, in a wheat field finished weeks after
+              Lincoln was buried.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 7 — VERNET, THE SHIPWRECK
+               ============================================================ -->
+          <section class="plate" id="plate-7">
+            <span class="plate-number">Plate VII &middot; 1772</span>
+            <h2 class="plate-title"><em>The Shipwreck</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Claude-Joseph Vernet</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/The Shipwreck - Claude-Joseph Vernet 1772.jpg" data-zoom-title="The Shipwreck" data-zoom-artist="Claude-Joseph Vernet, 1772">
+              <img src="assets/images/The Shipwreck - Claude-Joseph Vernet 1772.jpg" alt="A merchant ship breaking up against a rocky cliff in a storm, lightning splitting the sky, survivors clinging to a rope as a woman lies half-drowned on the beach." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>113.5 &times; 162.9 cm (about 45 &times; 64 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">National Gallery of Art, Washington, D.C.</span> Acquired in 2000.</dd>
+              <dt>Commissioned</dt>     <dd>November 1771, by Henry, 8th Lord Arundell of Wardour, for his country house in Wiltshire. Stayed in the Arundell family for 180 years.</dd>
+            </dl>
+
+            <p>
+              Legend has it that Vernet once had himself lashed to a
+              ship's mast through a gale so he could study the sea from
+              inside its fury. The story is almost certainly
+              apocryphal, it first surfaced in his obituary and his
+              grandson later turned it into a painting, but it stuck to
+              Vernet for decades before the very same tale got attached
+              to Turner.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 8 — CONSTABLE, SALISBURY CATHEDRAL
+               ============================================================ -->
+          <section class="plate" id="plate-8">
+            <span class="plate-number">Plate VIII &middot; c. 1820</span>
+            <h2 class="plate-title"><em>Salisbury Cathedral from Lower Marsh Close</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">John Constable</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Salisbury Cathedral from Lower Marsh Close - John Constable - oil on canvas.jpg" data-zoom-title="Salisbury Cathedral from Lower Marsh Close" data-zoom-artist="John Constable, c. 1820">
+              <img src="assets/images/Salisbury Cathedral from Lower Marsh Close - John Constable - oil on canvas.jpg" alt="Salisbury Cathedral seen from a lush meadow, its medieval spire rising over green trees against a wide English sky." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">National Gallery of Art, Washington, D.C.</span> Andrew W. Mellon Trust gift, 1937.</dd>
+              <dt>Provenance</dt>       <dd>Unsold by Constable in his lifetime; auctioned with the contents of his studio after his death in 1838 for very little.</dd>
+              <dt>Spire</dt>            <dd>123 m (404 ft), the tallest medieval spire in the United Kingdom.</dd>
+            </dl>
+
+            <p>
+              Constable so distrusted invented skies that across the
+              summers of 1821 and 1822 he climbed Hampstead Heath and
+              made roughly a hundred oil studies of clouds, noting the
+              date, hour, and wind direction on the back of each like a
+              meteorologist with a brush. When he called the sky "the
+              chief organ of sentiment" in a landscape, he had the
+              field notes to prove it.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 9 — TURNER, RAPE OF PROSERPINE
+               ============================================================ -->
+          <section class="plate" id="plate-9">
+            <span class="plate-number">Plate IX &middot; 1839</span>
+            <h2 class="plate-title"><em>The Rape of Proserpine</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Joseph Mallord William Turner</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/The Rape of Proserpine - Joseph Mallord William Turner.jpg" data-zoom-title="The Rape of Proserpine" data-zoom-artist="J. M. W. Turner, 1839">
+              <img src="assets/images/The Rape of Proserpine - Joseph Mallord William Turner.jpg" alt="A glowing, hazy mythological landscape with Pluto carrying off Proserpine in a chariot, the figures almost dissolved into Turner's storm of light." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>92 &times; 122.2 cm (about 36 &times; 48 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">National Gallery of Art, Washington, D.C.</span> Gift of Mrs. Watson B. Dickerman, 1951.</dd>
+              <dt>First shown</dt>      <dd>Royal Academy of Arts, London, 1839, with a quotation from Ovid's <em>Metamorphoses</em> appended to the title.</dd>
+            </dl>
+
+            <p>
+              Turner unveiled this storm of golden light at the Royal
+              Academy in 1839 in the same room as four other large
+              canvases, one of them <em>The Fighting Temeraire</em>.
+              Posterity made the Temeraire a national treasure and left
+              this abduction to the 1839 critics, who greeted Turner's
+              whole display that year with open hostility.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 10 — TURNER, VENICE: THE DOGANA AND SAN GIORGIO
+               ============================================================ -->
+          <section class="plate" id="plate-10">
+            <span class="plate-number">Plate X &middot; 1834</span>
+            <h2 class="plate-title"><em>Venice: The Dogana and San Giorgio Maggiore</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Joseph Mallord William Turner</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Venice The Dogana and San Giorgio Maggiore - Joseph Mallord William Turner.jpg" data-zoom-title="Venice: The Dogana and San Giorgio Maggiore" data-zoom-artist="J. M. W. Turner, 1834">
+              <img src="assets/images/Venice The Dogana and San Giorgio Maggiore - Joseph Mallord William Turner.jpg" alt="A luminous view of Venice across the lagoon, with the Punta della Dogana customs house and San Giorgio Maggiore church bathed in golden morning light." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>91.5 &times; 122 cm (about 36 &times; 48 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">National Gallery of Art, Washington, D.C.</span> Widener Collection.</dd>
+              <dt>First shown</dt>      <dd>Royal Academy Summer Exhibition, 1834.</dd>
+              <dt>Commissioned by</dt>  <dd>Henry McConnel, a Manchester cotton manufacturer.</dd>
+            </dl>
+
+            <p>
+              McConnel, the Manchester cotton manufacturer who
+              commissioned this sunlit Venice, later ordered a
+              deliberate opposite to hang beside it: Turner's
+              soot-black <em>Keelmen Heaving in Coals by Moonlight</em>,
+              Tyneside coal-labour set against Venetian leisure. He
+              sold the pair in a bad business year, then tried to buy
+              one back in 1861 and was turned down.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 11 — TURNER, BOATS CARRYING ANCHORS
+               ============================================================ -->
+          <section class="plate" id="plate-11">
+            <span class="plate-number">Plate XI &middot; c. 1804</span>
+            <h2 class="plate-title"><em>Boats Carrying Out Anchors and Cables to the Dutch Men of War</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Joseph Mallord William Turner</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Boats Carrying Out Anchors to the Dutch Men of War - Joseph Mallord William Turner.jpg" data-zoom-title="Boats Carrying Out Anchors and Cables to the Dutch Men of War" data-zoom-artist="J. M. W. Turner, c. 1804">
+              <img src="assets/images/Boats Carrying Out Anchors to the Dutch Men of War - Joseph Mallord William Turner.jpg" alt="A small open rowboat with seven men battling green-grey waves under a heavy bronze sky, with Dutch warships anchored in the distance." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>101.6 &times; 130.8 cm (about 40 &times; 51 in.)</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">National Gallery of Art, Washington, D.C.</span> Corcoran Collection (William A. Clark).</dd>
+              <dt>First shown</dt>      <dd>Royal Academy Exhibition, 1804, at Somerset House. Turner was 29.</dd>
+              <dt>Subject</dt>          <dd>A scene from 1665, during the Anglo-Dutch Wars, very likely a coded warning about Napoleonic France, which in 1804 looked poised to threaten the British fleet.</dd>
+            </dl>
+
+            <p>
+              In 1804 Turner was so busy building his own private
+              gallery on Harley Street, where he could show his work
+              without the Royal Academy, that the builders took over
+              his studio and he ended up painting this seven-man
+              rowboat in a borrowed room inside the very Academy he
+              was breaking away from.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 12 — VERNET, INTERIOR OF THE PORT OF MARSEILLE
+               ============================================================ -->
+          <section class="plate" id="plate-12">
+            <span class="plate-number">Plate XII &middot; 1754</span>
+            <h2 class="plate-title"><em>Int&eacute;rieur du Port de Marseille</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Claude-Joseph Vernet</span>
+              &mdash; from the <em>Ports of France</em> series.
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Intérieur du Port de Marseille (Interior of the Port of Marseilles) - Claude-Joseph Vernet.jpg" data-zoom-title="Intérieur du Port de Marseille" data-zoom-artist="Claude-Joseph Vernet, 1754">
+              <img src="assets/images/Intérieur du Port de Marseille (Interior of the Port of Marseilles) - Claude-Joseph Vernet.jpg" alt="A bustling 18th-century view of the inner port of Marseille from the Pavilion of the Clock, with Levantine traders in turbans, French sailors, and a forest of ship masts." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>165 &times; 265 cm. <em>This canvas is huge</em>, over eight and a half feet wide.</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">Mus&eacute;e national de la Marine, Paris</span>, on deposit from the Louvre. Has hung in the Louvre, Versailles, and the H&ocirc;tel de la Marine over the centuries.</dd>
+              <dt>Commissioned by</dt>  <dd>King Louis XV of France in 1753.</dd>
+            </dl>
+
+            <p>
+              Look into the crowd on the quay and you find Vernet
+              himself, his wife steering him toward Annibal Camoux, a
+              local celebrity then reputed to be 117 years old, while
+              their son Livio sketches the very scene we are looking
+              at. Camoux's age was always more legend than ledger, but
+              Marseille believed it, and so, clearly, did the painter.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 13 — AIVAZOVSKY, THE NINTH WAVE
+               ============================================================ -->
+          <section class="plate" id="plate-13">
+            <span class="plate-number">Plate XIII &middot; 1850</span>
+            <h2 class="plate-title"><em>The Ninth Wave</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Ivan Aivazovsky</span>
+              (Hovhannes Aivazian).
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/Aivazovsky, Ivan - The Ninth Wave.jpg" data-zoom-title="The Ninth Wave" data-zoom-artist="Ivan Aivazovsky, 1850">
+              <img src="assets/images/Aivazovsky, Ivan - The Ninth Wave.jpg" alt="Survivors of a shipwreck cling to a cross-shaped piece of mast as a colossal aquamarine wave rises behind them, lit by warm dawn light breaking through storm clouds." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Size</dt>             <dd>221 &times; 332 cm (about 7&apos;3" &times; 10&apos;11"). <em>Massive.</em> The figures in the painting are roughly life-size.</dd>
+              <dt>Held at</dt>          <dd><span class="em-museum">The State Russian Museum, St. Petersburg</span>, one of the foundation paintings of the museum's collection in 1897.</dd>
+              <dt>Painted</dt>          <dd>1850, when Aivazovsky was 33 and at the height of his powers.</dd>
+            </dl>
+
+            <p>
+              In 1844 the young Aivazovsky was aboard a ship caught in
+              a Bay of Biscay storm so violent it was given up for
+              lost, and newspapers across Europe printed his obituary.
+              He walked ashore alive, and said the terror had only
+              helped him store the whole scene in memory "like a
+              marvelous living picture," which is exactly how he
+              worked: he painted the sea almost entirely from memory,
+              and by his own count 4,000 of his roughly 6,000 canvases
+              were storms.
+            </p>
+            <div class="plate-ornament"></div>
+          </section>
+
+          <!-- ============================================================
+               PLATE 14 — DAUBIGNY, THE HAMLET OF OPTEVOZ
+               ============================================================ -->
+          <section class="plate" id="plate-14">
+            <span class="plate-number">Plate XIV &middot; c. 1852</span>
+            <h2 class="plate-title"><em>The Hamlet of Optevoz</em></h2>
+            <p class="plate-attribution">
+              <span class="artist-name">Charles-Fran&ccedil;ois Daubigny</span>
+            </p>
+
+            <div class="plate-image-wrap" data-zoom-src="assets/images/The Hamlet of Optevoz - Charles-François Daubigny.jpg" data-zoom-title="The Hamlet of Optevoz" data-zoom-artist="Charles-François Daubigny, c. 1852">
+              <img src="assets/images/The Hamlet of Optevoz - Charles-François Daubigny.jpg" alt="A quiet French rural hamlet at the edge of a still pond, with low stone cottages, a few villagers and animals, painted with broad, atmospheric brushwork." loading="lazy">
+              <span class="plate-zoom-hint">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                Click to zoom
+              </span>
+            </div>
+
+            <dl class="plate-meta">
+              <dt>Medium</dt>           <dd>Oil on canvas</dd>
+              <dt>Setting</dt>          <dd>The hamlet of Optevoz, in the Is&egrave;re department of southeast France, where Daubigny first met Camille Corot in 1852, and where Gustave Courbet later joined them to paint together.</dd>
+            </dl>
+
+            <p>
+              Years after this quiet pond, Daubigny took a seat on the
+              Salon jury and used it to shove seven young Impressionists
+              past the gatekeepers in 1868. When the jury threw out a
+              Monet anyway in 1870, he resigned in protest, having spent
+              years being mocked himself for landscapes critics
+              dismissed as mere "impressions," a decade before the word
+              was pinned to a whole movement.
+            </p>
+          </section>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       LIGHTBOX MARKUP
+       ============================================================ -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Image viewer">
+    <div class="lightbox-bar">
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+      <div class="lightbox-controls">
+        <span class="lightbox-zoom-label" id="lightbox-zoom-label">100%</span>
+        <button class="lightbox-btn" id="lightbox-zoom-out" title="Zoom out" aria-label="Zoom out">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </button>
+        <button class="lightbox-btn" id="lightbox-zoom-in" title="Zoom in" aria-label="Zoom in">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </button>
+        <button class="lightbox-btn" id="lightbox-reset" title="Fit to screen" aria-label="Fit to screen">
+          <svg viewBox="0 0 24 24"><polyline points="4 14 4 20 10 20"></polyline><polyline points="20 10 20 4 14 4"></polyline><line x1="4" y1="20" x2="11" y2="13"></line><line x1="20" y1="4" x2="13" y2="11"></line></svg>
+        </button>
+        <button class="lightbox-btn" id="lightbox-close" title="Close (Esc)" aria-label="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    <div class="lightbox-stage" id="lightbox-stage">
+      <img id="lightbox-img" alt="">
+      <div class="lightbox-hint" id="lightbox-hint">Scroll or pinch to zoom, drag to pan</div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+  /* ============================================================
+     LIGHTBOX
+     Transform-based image viewer. Tracks (scale, tx, ty) as the
+     single source of truth and applies one CSS transform.
+
+     Interactions:
+       - Mouse wheel       : zoom toward cursor
+       - Trackpad pinch    : zoom (wheel + ctrlKey)
+       - Trackpad scroll   : pan (only when zoomed past fit)
+       - Click + drag      : pan
+       - Double-click/tap  : toggle 1x <-> 2.5x at point
+       - Pinch (touch)     : zoom around pinch midpoint
+       - Single-finger pan : drag
+       - Buttons / keys    : +, -, 0 to fit, Esc to close
+     ============================================================ */
+  (function () {
+    'use strict';
+
+    var lightbox    = document.getElementById('lightbox');
+    var stage       = document.getElementById('lightbox-stage');
+    var img         = document.getElementById('lightbox-img');
+    var caption     = document.getElementById('lightbox-caption');
+    var zoomLabel   = document.getElementById('lightbox-zoom-label');
+    var hint        = document.getElementById('lightbox-hint');
+    var btnIn       = document.getElementById('lightbox-zoom-in');
+    var btnOut      = document.getElementById('lightbox-zoom-out');
+    var btnReset    = document.getElementById('lightbox-reset');
+    var btnClose    = document.getElementById('lightbox-close');
+    var isTouchLike  = window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+    if (isTouchLike) {
+      var zoomHints = document.querySelectorAll('.plate-zoom-hint');
+      for (var h = 0; h < zoomHints.length; h++) {
+        for (var n = 0; n < zoomHints[h].childNodes.length; n++) {
+          if (zoomHints[h].childNodes[n].nodeType === 3 && zoomHints[h].childNodes[n].nodeValue.indexOf('Click') !== -1) {
+            zoomHints[h].childNodes[n].nodeValue = ' Tap to zoom';
+          }
+        }
+      }
+    }
+
+    // Single source of truth for image position/scale.
+    // tx/ty are the translation in CSS pixels of the image's top-left
+    // relative to the stage. scale is the absolute multiplier on the
+    // image's natural dimensions.
+    var scale = 1;
+    var tx = 0;
+    var ty = 0;
+
+    // The "fit" scale — the scale at which the whole image is visible
+    // inside the stage. This is also our minimum zoom.
+    var fitScale = 1;
+    var MAX_ABSOLUTE = 12;     // hard ceiling regardless of fit
+
+    // Natural dimensions of the loaded image.
+    var imgW = 0;
+    var imgH = 0;
+
+    // ---- Apply current state to the DOM ----
+    function apply() {
+      img.style.transform = 'translate3d(' + tx + 'px, ' + ty + 'px, 0) scale(' + scale + ')';
+      var pct = Math.round((scale / fitScale) * 100);
+      zoomLabel.textContent = pct + '%';
+      btnOut.disabled = scale <= fitScale + 0.001;
+      btnIn.disabled  = scale >= MAX_ABSOLUTE - 0.001;
+    }
+
+    function animateNext() {
+      stage.classList.add('is-animating');
+      // Clear after the transition runs.
+      window.clearTimeout(animateNext._t);
+      animateNext._t = window.setTimeout(function () {
+        stage.classList.remove('is-animating');
+      }, 240);
+    }
+
+    // ---- Compute the fit scale based on stage + image size ----
+    function computeFit() {
+      var sw = stage.clientWidth;
+      var sh = stage.clientHeight;
+      if (!imgW || !imgH || !sw || !sh) {
+        fitScale = 1;
+        return;
+      }
+      fitScale = Math.min(sw / imgW, sh / imgH);
+    }
+
+    // ---- Center image at fit scale ----
+    function fit() {
+      computeFit();
+      scale = fitScale;
+      tx = (stage.clientWidth  - imgW * scale) / 2;
+      ty = (stage.clientHeight - imgH * scale) / 2;
+      apply();
+    }
+
+    // ---- Clamp tx/ty so image stays sensibly within stage ----
+    function clamp() {
+      var sw = stage.clientWidth;
+      var sh = stage.clientHeight;
+      var w = imgW * scale;
+      var h = imgH * scale;
+
+      // If image is smaller than stage on an axis: center it.
+      // If larger: keep it covering the stage (no empty space allowed
+      // when zoomed past fit on that axis).
+      if (w <= sw) {
+        tx = (sw - w) / 2;
+      } else {
+        if (tx > 0) tx = 0;
+        if (tx < sw - w) tx = sw - w;
+      }
+      if (h <= sh) {
+        ty = (sh - h) / 2;
+      } else {
+        if (ty > 0) ty = 0;
+        if (ty < sh - h) ty = sh - h;
+      }
+    }
+
+    // ---- Zoom toward a screen point (clientX/Y) by a multiplier ----
+    function zoomAt(factor, clientX, clientY) {
+      var newScale = scale * factor;
+      if (newScale < fitScale) newScale = fitScale;
+      if (newScale > MAX_ABSOLUTE) newScale = MAX_ABSOLUTE;
+      if (Math.abs(newScale - scale) < 0.0001) return;
+
+      // Default anchor = stage center if no cursor given.
+      var rect = stage.getBoundingClientRect();
+      var ax = (clientX != null ? clientX : rect.left + rect.width  / 2) - rect.left;
+      var ay = (clientY != null ? clientY : rect.top  + rect.height / 2) - rect.top;
+
+      // Image-space coords of the anchor point before zoom.
+      var ix = (ax - tx) / scale;
+      var iy = (ay - ty) / scale;
+
+      scale = newScale;
+
+      // After zoom, keep that same image point under the anchor.
+      tx = ax - ix * scale;
+      ty = ay - iy * scale;
+
+      clamp();
+      apply();
+    }
+
+    // ---- Pan by a delta in screen pixels ----
+    function panBy(dx, dy) {
+      tx += dx;
+      ty += dy;
+      clamp();
+      apply();
+    }
+
+    // ---- Hint visibility ----
+    var hintTimer = 0;
+    function dismissHint() {
+      if (!hint) return;
+      hint.classList.add('is-hidden');
+      window.clearTimeout(hintTimer);
+    }
+    function showHint() {
+      if (!hint) return;
+      hint.classList.remove('is-hidden');
+      window.clearTimeout(hintTimer);
+      hintTimer = window.setTimeout(dismissHint, 3500);
+    }
+
+    // ---- Open / close ----
+    function open(src, title, artist) {
+      // Reset transform state to avoid flicker before image loads.
+      scale = 1; tx = 0; ty = 0; imgW = 0; imgH = 0;
+      img.style.transform = 'translate3d(0,0,0) scale(1)';
+
+      img.alt = title || '';
+      caption.innerHTML = '<span class="lb-artist">' + (artist || '') + '</span>' + (title || '');
+
+      lightbox.classList.add('is-open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('lightbox-open');
+
+      // Wait for the image to load (or use cached natural size).
+      function onReady() {
+        imgW = img.naturalWidth;
+        imgH = img.naturalHeight;
+        fit();
+        showHint();
+      }
+
+      // If src didn't change, naturalWidth is already populated.
+      if (img.src.indexOf(src) === img.src.length - src.length && img.complete && img.naturalWidth) {
+        onReady();
+      } else {
+        img.onload = onReady;
+        img.src = src;
+      }
+    }
+
+    function close() {
+      lightbox.classList.remove('is-open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('lightbox-open');
+      dismissHint();
+    }
+
+    // ---- Click handlers on every plate image ----
+    var plates = document.querySelectorAll('.plate-image-wrap');
+    for (var i = 0; i < plates.length; i++) {
+      (function (plate) {
+        plate.addEventListener('click', function () {
+          var src    = plate.getAttribute('data-zoom-src');
+          var title  = plate.getAttribute('data-zoom-title');
+          var artist = plate.getAttribute('data-zoom-artist');
+          if (src) {
+            if (typeof gtag === 'function') gtag('event', 'gallery_image_zoom', { painting: title, artist: artist });
+            open(src, title, artist);
+          }
+        });
+      })(plates[i]);
+    }
+
+    // ---- Buttons ----
+    btnClose.addEventListener('click', close);
+    btnIn.addEventListener('click', function () {
+      animateNext();
+      zoomAt(1.5, null, null);
+      dismissHint();
+    });
+    btnOut.addEventListener('click', function () {
+      animateNext();
+      zoomAt(1 / 1.5, null, null);
+      dismissHint();
+    });
+    btnReset.addEventListener('click', function () {
+      animateNext();
+      fit();
+      dismissHint();
+    });
+
+    // ---- Keyboard ----
+    document.addEventListener('keydown', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+      if (e.key === 'Escape')                       { close(); }
+      else if (e.key === '+' || e.key === '=')      { animateNext(); zoomAt(1.5, null, null); dismissHint(); }
+      else if (e.key === '-' || e.key === '_')      { animateNext(); zoomAt(1 / 1.5, null, null); dismissHint(); }
+      else if (e.key === '0')                       { animateNext(); fit(); dismissHint(); }
+    });
+
+    // ---- Resize: refit ----
+    window.addEventListener('resize', function () {
+      if (!lightbox.classList.contains('is-open')) return;
+      // Preserve the user's zoom ratio across resizes.
+      var oldFit = fitScale;
+      computeFit();
+      if (oldFit > 0) {
+        scale = scale * (fitScale / oldFit);
+      }
+      clamp();
+      apply();
+    });
+
+    // ============================================================
+    //  MOUSE & TRACKPAD
+    // ============================================================
+    // Wheel: zoom if pinch (ctrlKey on trackpad), or scrolling
+    // when zoomed-in (treat as pan). On a regular mouse wheel,
+    // we always zoom toward the cursor.
+
+    stage.addEventListener('wheel', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+      e.preventDefault();
+      dismissHint();
+
+      // Trackpad pinch (macOS/Windows) surfaces as wheel + ctrlKey.
+      // Use a finer factor for pinch since deltas come in rapidly.
+      if (e.ctrlKey) {
+        var f = Math.exp(-e.deltaY * 0.012);
+        zoomAt(f, e.clientX, e.clientY);
+        return;
+      }
+
+      // Plain wheel: zoom toward cursor. Pan is via click-drag.
+      var factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      zoomAt(factor, e.clientX, e.clientY);
+    }, { passive: false });
+
+    // ---- Mouse drag pan ----
+    var mDrag = false, mLastX = 0, mLastY = 0;
+    stage.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      mDrag = true;
+      mLastX = e.clientX;
+      mLastY = e.clientY;
+      stage.classList.add('is-grabbing');
+      e.preventDefault();
+      dismissHint();
+    });
+    window.addEventListener('mousemove', function (e) {
+      if (!mDrag) return;
+      var dx = e.clientX - mLastX;
+      var dy = e.clientY - mLastY;
+      mLastX = e.clientX;
+      mLastY = e.clientY;
+      panBy(dx, dy);
+    });
+    window.addEventListener('mouseup', function () {
+      if (!mDrag) return;
+      mDrag = false;
+      stage.classList.remove('is-grabbing');
+    });
+
+    // ---- Double-click: toggle zoom at point ----
+    stage.addEventListener('dblclick', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+      e.preventDefault();
+      animateNext();
+      if (scale > fitScale * 1.05) {
+        fit();
+      } else {
+        zoomAt(2.5 / scale * fitScale, e.clientX, e.clientY);
+      }
+      dismissHint();
+    });
+
+    // ---- Click on backdrop (when not zoomed) closes ----
+    // We only close on a clean click that didn't drag.
+    var clickStartX = 0, clickStartY = 0;
+    stage.addEventListener('mousedown', function (e) {
+      clickStartX = e.clientX;
+      clickStartY = e.clientY;
+    }, true);
+    stage.addEventListener('click', function (e) {
+      var moved = Math.abs(e.clientX - clickStartX) + Math.abs(e.clientY - clickStartY);
+      if (moved > 4) return; // it was a drag, not a click
+      if (scale <= fitScale + 0.01) close();
+    });
+
+    // ============================================================
+    //  TOUCH
+    //  Single touch = pan. Two touches = pinch zoom. Double-tap
+    //  toggles between fit and a 2.5x zoom at the tap point.
+    // ============================================================
+    var touches = {};
+    var pinchStartDist = 0;
+    var pinchStartScale = 1;
+    var pinchStartTx = 0, pinchStartTy = 0;
+    var pinchAnchorX = 0, pinchAnchorY = 0;
+    var lastTouchX = 0, lastTouchY = 0;
+    var lastTapTime = 0, lastTapX = 0, lastTapY = 0;
+
+    function touchDist(a, b) {
+      var dx = a.clientX - b.clientX;
+      var dy = a.clientY - b.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    stage.addEventListener('touchstart', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+      e.preventDefault();
+      dismissHint();
+
+      // Index the active touches.
+      for (var i = 0; i < e.touches.length; i++) {
+        var t = e.touches[i];
+        touches[t.identifier] = { clientX: t.clientX, clientY: t.clientY };
+      }
+
+      if (e.touches.length === 2) {
+        var t0 = e.touches[0], t1 = e.touches[1];
+        pinchStartDist = touchDist(t0, t1);
+        pinchStartScale = scale;
+        pinchStartTx = tx;
+        pinchStartTy = ty;
+
+        var rect = stage.getBoundingClientRect();
+        var cx = ((t0.clientX + t1.clientX) / 2) - rect.left;
+        var cy = ((t0.clientY + t1.clientY) / 2) - rect.top;
+        pinchAnchorX = (cx - pinchStartTx) / pinchStartScale;
+        pinchAnchorY = (cy - pinchStartTy) / pinchStartScale;
+      } else if (e.touches.length === 1) {
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+      }
+    }, { passive: false });
+
+    stage.addEventListener('touchmove', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+
+      if (e.touches.length === 2 && pinchStartDist > 0) {
+        e.preventDefault();
+        var t0 = e.touches[0], t1 = e.touches[1];
+        var d = touchDist(t0, t1);
+        var newScale = pinchStartScale * (d / pinchStartDist);
+        if (newScale < fitScale) newScale = fitScale;
+        if (newScale > MAX_ABSOLUTE) newScale = MAX_ABSOLUTE;
+
+        // New pinch center. The image-space anchor comes from the
+        // start of the gesture so zooming feels stable under the fingers.
+        var cx = (t0.clientX + t1.clientX) / 2;
+        var cy = (t0.clientY + t1.clientY) / 2;
+
+        var rect = stage.getBoundingClientRect();
+        scale = newScale;
+        tx = (cx - rect.left) - pinchAnchorX * scale;
+        ty = (cy - rect.top) - pinchAnchorY * scale;
+
+        clamp();
+        apply();
+      } else if (e.touches.length === 1) {
+        e.preventDefault();
+        var t = e.touches[0];
+        var dx = t.clientX - lastTouchX;
+        var dy = t.clientY - lastTouchY;
+        lastTouchX = t.clientX;
+        lastTouchY = t.clientY;
+        panBy(dx, dy);
+      }
+    }, { passive: false });
+
+    stage.addEventListener('touchend', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+
+      // Detect double-tap.
+      if (e.touches.length === 0 && e.changedTouches.length === 1) {
+        var ct = e.changedTouches[0];
+        var now = Date.now();
+        var dt = now - lastTapTime;
+        var dx = Math.abs(ct.clientX - lastTapX);
+        var dy = Math.abs(ct.clientY - lastTapY);
+        if (dt < 320 && dx < 30 && dy < 30) {
+          // Double-tap: toggle zoom at point.
+          e.preventDefault();
+          animateNext();
+          if (scale > fitScale * 1.05) {
+            fit();
+          } else {
+            zoomAt(2.5 / scale * fitScale, ct.clientX, ct.clientY);
+          }
+          lastTapTime = 0; // consume
+        } else {
+          lastTapTime = now;
+          lastTapX = ct.clientX;
+          lastTapY = ct.clientY;
+        }
+      }
+
+      // Clean up the pinch state when fewer than 2 fingers down.
+      if (e.touches.length < 2) {
+        pinchStartDist = 0;
+      }
+      // Reset the pan reference to whatever finger remains.
+      if (e.touches.length === 1) {
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+      }
+
+      // Forget any touches that ended.
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        delete touches[e.changedTouches[i].identifier];
+      }
+    }, { passive: false });
+
+    // ---- Prevent native touch behaviors that would fight us ----
+    stage.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+    stage.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+    stage.addEventListener('gestureend', function (e) { e.preventDefault(); });
+
+  })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

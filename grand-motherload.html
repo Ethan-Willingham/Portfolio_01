@@ -1,0 +1,600 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <title>Grand Motherload</title>
+  <meta name="description" content="Grand Motherload is a browser mining game. Drill down, collect ore, upgrade your rig.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific overrides for the Grand Motherload game.
+       The base panel system is in style.css. */
+
+    /* === Game canvas === */
+    .game-canvas-area {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      background: #1a1008;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .game-canvas-area canvas { display: block; }
+
+    /* === Loading overlay — plain dark fade === */
+    #game-intro {
+      position: absolute;
+      inset: 0;
+      background: #1a1008;
+      z-index: 10;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    @media (min-width: 720px) {
+      .game-canvas-area { height: 580px; }
+    }
+
+    /* On portrait devices the stacked 2-row console + d-pad take up the
+       lower part of the canvas. Give the game far more height there so
+       the world view — which scales off WIDTH, not height — shows many
+       more rows. Fullscreen (body.gm-fs) still overrides this. */
+    @media (orientation: portrait) {
+      .game-canvas-area { height: 85vh; height: 85dvh; }
+    }
+
+    /* === Controls strip with key hints === */
+    .game-controls-info {
+      padding: 0.75em 1.1em;
+      background: var(--d-bg-raised);
+      border-top: 1px solid var(--d-rule);
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--d-text-dim);
+      line-height: 1.95;
+    }
+    .game-controls-info .key {
+      display: inline-block;
+      font-family: var(--d-mono);
+      font-size: 0.78em;
+      font-weight: 500;
+      background: transparent;
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 0;
+      padding: 0.05em 0.45em;
+      margin: 0 0.12em;
+      color: var(--d-text-bright);
+      letter-spacing: 0;
+    }
+    /* Subtle separator before each action verb */
+    .game-controls-info .action {
+      color: var(--d-text);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.64rem;
+      margin-left: 0.25em;
+      margin-right: 0.65em;
+    }
+    .game-controls-info .sep {
+      color: var(--d-rule-strong);
+      margin: 0 0.25em;
+      user-select: none;
+    }
+
+    /* === Ore tables: spec-sheet aesthetic === */
+    .ore-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2.2em 0;
+      font-family: var(--d-mono);
+      font-size: 0.85rem;
+      color: var(--d-text);
+      background: rgba(212,196,160,0.015);
+      border-top: 1px solid var(--d-rule-strong);
+      border-bottom: 1px solid var(--d-rule-strong);
+    }
+    .ore-table th {
+      text-align: left;
+      font-family: var(--d-mono);
+      font-weight: 500;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--d-accent);
+      padding: 0.7em 0.9em 0.55em;
+      border-bottom: 1px solid var(--d-rule-strong);
+      background: rgba(212,196,160,0.04);
+    }
+    .ore-table td {
+      padding: 0.45em 0.9em;
+      border-bottom: 1px dashed rgba(77,90,79,0.45);
+      color: var(--d-text);
+      vertical-align: middle;
+    }
+    .ore-table tbody tr:last-child td { border-bottom: none; }
+    .ore-table tbody tr:hover { background: rgba(212,196,160,0.04); }
+    .ore-table strong {
+      color: var(--d-accent-strong);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    .ore-table em {
+      font-style: normal;
+      color: var(--d-accent);
+      letter-spacing: 0.02em;
+    }
+    /* Ore swatch as a square chip with a subtle inner ring */
+    .ore-swatch {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border-radius: 0;
+      vertical-align: middle;
+      margin-right: 0.55em;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.45);
+    }
+
+    /* === Fullscreen button === */
+    #gm-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    #gm-fullscreen-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      background: rgba(10,8,5,0.72);
+      border: 1px solid rgba(255,190,60,0.38);
+      border-radius: 0;
+      cursor: pointer;
+      color: rgba(255,190,60,0.85);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    #gm-fullscreen-btn:hover {
+      background: rgba(255,190,60,0.12);
+      border-color: rgba(255,190,60,0.7);
+      color: rgba(255,220,100,1);
+    }
+    #gm-fullscreen-btn svg {
+      display: block;
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* === Fullscreen state (body.gm-fs, applied via fullscreenchange) === */
+    /* Hide every piece of page chrome — not just .post-body children — so
+       things like the "← Home" link and post header can't show through
+       when iOS PWA standalone behaves oddly with fixed positioning. */
+    body.gm-fs .reading-progress,
+    body.gm-fs .post-back,
+    body.gm-fs .post-header,
+    body.gm-fs .site-footer,
+    body.gm-fs .post-body > *:not(.game-wrapper) { display: none !important; }
+    /* Paint body the game's dark color while in gm-fs so any visible bleed
+       (notch / home indicator safe area) reads as the game, not the cream
+       page background. Scoped to gm-fs so non-fullscreen pages keep their
+       normal sage page bg. */
+    body.gm-fs { background: #0d0a04 !important; }
+    html.gm-fs-html { background: #0d0a04; }
+    /* Kill transforms on every ancestor of .game-wrapper while in fullscreen.
+       Any non-`none` transform turns that ancestor into the containing block
+       for `position: fixed` descendants — which is why `inset: 0` was being
+       resolved relative to .post-body (it has `transform: translateY(0)`
+       baked in by the fade-in animation's forwards fill mode) instead of
+       the viewport, leaving the back link visible above the wrapper.
+       NOTE: only `transform` is reset — NOT `animation`. The fade-in keyframe
+       starts at opacity 0, so killing the animation would trap ancestors at
+       opacity 0 and visually black out the (position:fixed) wrapper, which
+       inherits opacity from its DOM ancestors regardless of positioning. */
+    body.gm-fs .site-wrapper,
+    body.gm-fs main,
+    body.gm-fs article,
+    body.gm-fs .post-body { transform: none !important; opacity: 1 !important; }
+    body.gm-fs .game-wrapper {
+      /* The JS lifts .game-wrapper to be a direct child of <body> when
+         entering fullscreen, so position:fixed + inset:0 reliably resolves
+         against the viewport (no chance of a transformed ancestor turning
+         into the containing block). No explicit width/height needed. */
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      z-index: 9999; display: flex; flex-direction: column;
+      padding: 0; border-radius: 0; box-shadow: none; border: none;
+      /* Match the canvas color so any sliver of wrapper background that
+         shows (e.g. between safe-area inset and the canvas) reads black,
+         not the sage --d-bg green that was leaking above the HUD. */
+      background: #0d0a04 !important;
+      /* Push the *contents* (header + canvas) inside the iOS safe area on
+         left/right/bottom (notch / home indicator). Top stays at 0 — in
+         landscape, the iPhone status bar is hidden and there is no notch
+         on the top edge, so we want the HUD flush at the top. */
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      box-sizing: border-box;
+    }
+    /* Overlay the header on the canvas — no background bar, fullscreen btn floats top-right */
+    .game-wrapper .game-header {
+      position: absolute;
+      top: 0; right: 0; left: 0;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0.35em 0.5em !important;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .game-wrapper .game-header .demo-label { display: none !important; }
+    .game-wrapper .game-header #gm-header-right { pointer-events: auto; margin-left: auto; }
+    body.gm-fs .game-wrapper .game-header { padding: 0.35em 0.5em !important; }
+    body.gm-fs .demo-label { display: none !important; }
+    body.gm-fs .game-canvas-area { flex: 1 1 auto; height: auto; }
+    body.gm-fs .game-controls-info { display: none !important; }
+
+  </style>
+</head>
+<body>
+  <div id="steamBanner" role="note" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(16,16,18,0.94);color:#ece9e1;font-family:var(--font-body,system-ui,-apple-system,sans-serif);font-size:13px;line-height:1.5;text-align:center;padding:8px 42px 8px 16px;border-bottom:1px solid rgba(255,255,255,0.14);box-shadow:0 1px 8px rgba(0,0,0,0.35);">
+    <strong>Sluice</strong> (formerly Grand Motherload). This is the free <strong>v15.2</strong> browser demo; public development paused 18 May 2026. The full game is in private alpha, coming to <strong>Steam</strong>.
+    <button type="button" onclick="this.parentNode.style.display='none'" aria-label="Dismiss notice" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;color:#cfccc4;font-size:20px;line-height:1;cursor:pointer;padding:0 6px;">&times;</button>
+  </div>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back">Home</a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">Grand Motherload</h1>
+      <p class="post-subtitle">A browser-native take on the 2004 mining game I never quite stopped playing.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <p>
+            Motherload came out in 2004 and I still think about it. You
+            pilot a little drill rig into the earth, fill your cargo
+            hold with ore, fly back to the surface, sell it, buy better
+            equipment, and go deeper. That is the whole game. It is
+            perfect.
+          </p>
+
+          <p>
+            This is my version, running right here. Same loop, my own
+            world, no install.
+          </p>
+
+          <div class="game-wrapper">
+            <div class="game-header">
+              <span class="demo-label">Grand Motherload</span>
+              <div id="gm-header-right">
+                <button id="gm-fullscreen-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+                  <!-- Expand icon (shown when not fullscreen) -->
+                  <svg class="gm-expand" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                    <polyline points="1,5 1,1 5,1"/>
+                    <polyline points="11,1 15,1 15,5"/>
+                    <polyline points="15,11 15,15 11,15"/>
+                    <polyline points="5,15 1,15 1,11"/>
+                  </svg>
+                  <!-- Compress icon (shown when fullscreen) -->
+                  <svg class="gm-compress" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="display:none">
+                    <polyline points="5,1 5,5 1,5"/>
+                    <polyline points="11,5 15,5 15,1"/>
+                    <polyline points="15,11 11,11 11,15"/>
+                    <polyline points="1,11 5,11 5,15"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="game-canvas-area">
+              <canvas id="game-canvas"></canvas>
+              <div id="game-intro"></div>
+            </div>
+          </div>
+
+          <div class="divider">&bull; &bull; &bull;</div>
+
+          <h2>The layers</h2>
+
+          <p>
+            The world is 40 tiles wide and 200 tiles deep, divided into
+            eight depth bands. Each layer has its own palette, its own
+            ore distribution, and a couple have nasty surprises waiting
+            for you.
+          </p>
+
+          <table class="ore-table">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Depth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Topsoil</td><td>0&ndash;15m</td><td>Loose dirt and roots. Coal and copper.</td></tr>
+              <tr><td>Bedrock</td><td>15&ndash;35m</td><td>Bauxite, iron, the first silver.</td></tr>
+              <tr><td><strong>Permafrost</strong></td><td>35&ndash;55m</td><td>Frozen solid. Requires the <em>Heated Drill</em> upgrade or you cannot break a single tile. Methane ice deposits hide here.</td></tr>
+              <tr><td>Fossil layer</td><td>55&ndash;80m</td><td>Ancient sediment. Amber with insects, trilobite fossils.</td></tr>
+              <tr><td>Deep crust</td><td>80&ndash;110m</td><td>Cinnabar, gold, and the first uranium veins.</td></tr>
+              <tr><td><strong>Magma veins</strong></td><td>110&ndash;145m</td><td>Glowing red rock. Without a Heat Shield, your hull drains continuously while you are inside.</td></tr>
+              <tr><td>Crystal caves</td><td>145&ndash;180m</td><td>Tanzanite, more diamonds. The walls glitter.</td></tr>
+              <tr><td><strong>Mantle edge</strong></td><td>180&ndash;200m</td><td>Painite and unobtanium. Even worse heat than the magma layer. Endgame only.</td></tr>
+            </tbody>
+          </table>
+
+          <h2>What is down there</h2>
+
+          <p>
+            Eighteen things to mine, give or take. Some are real, some
+            are deliberately not. Where the real ones are concerned I
+            played a little fast and loose with relative values, but
+            the general ordering (copper before silver before gold
+            before tanzanite before painite) is roughly how the world
+            works.
+          </p>
+
+          <table class="ore-table">
+            <thead>
+              <tr>
+                <th>Ore</th>
+                <th>Value</th>
+                <th>Found in</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="ore-swatch" style="background:#1c1c1c"></span>Coal</td><td>$5</td><td>Topsoil &rarr; bedrock</td><td>Cheap and common.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#D4883A"></span>Copper</td><td>$12</td><td>Topsoil &rarr; bedrock</td><td>Starter cash.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#B85a3a"></span>Bauxite</td><td>$25</td><td>Bedrock</td><td>Aluminum ore.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#A0A0B8"></span>Iron</td><td>$35</td><td>Bedrock &rarr; deep crust</td><td>Ubiquitous.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#D4B33A"></span>Pyrite</td><td>$60</td><td>Bedrock</td><td>Fool's gold. Looks valuable, isn't.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#D8D8E8"></span>Silver</td><td>$90</td><td>Bedrock &rarr; deep crust</td><td></td></tr>
+              <tr><td><span class="ore-swatch" style="background:#bfe6ff"></span>Methane ice</td><td>$180</td><td>Permafrost</td><td>Heated drill required.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#c12838"></span>Cinnabar</td><td>$140</td><td>Deep crust</td><td>Mercury ore. Crystal clusters.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#FFD700"></span>Gold</td><td>$200</td><td>Deep crust</td><td>The real thing.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#e89a2a"></span>Amber</td><td>$350</td><td>Fossil layer</td><td>Insect trapped inside.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#7a5436"></span>Trilobite</td><td>$600</td><td>Fossil layer</td><td>Half-billion-year-old arthropod.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#5fff5a"></span>Uranium</td><td>$800</td><td>Deep crust</td><td>Glows. Requires drill Lv 3.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#1a0a18"></span>Obsidian</td><td>$280</td><td>Magma veins</td><td>Volcanic glass.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#50C878"></span>Emerald</td><td>$900</td><td>Fossil &rarr; crystal</td><td></td></tr>
+              <tr><td><span class="ore-swatch" style="background:#E0115F"></span>Ruby</td><td>$1,400</td><td>Deep crust &rarr; crystal</td><td></td></tr>
+              <tr><td><span class="ore-swatch" style="background:#7a5fff"></span>Tanzanite</td><td>$2,000</td><td>Crystal caves</td><td>Real, found only in Tanzania.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#B9F2FF"></span>Diamond</td><td>$3,000</td><td>Crystal caves</td><td>Requires drill Lv 4.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#d36b8c"></span>Painite</td><td>$6,000</td><td>Mantle edge</td><td>Real, briefly the world's rarest gem.</td></tr>
+              <tr><td><span class="ore-swatch" style="background:#FF00FF"></span>Unobtanium</td><td>$12,000</td><td>Mantle edge</td><td>Not real. Sue me.</td></tr>
+            </tbody>
+          </table>
+
+          <p>
+            Dirt and stone are not in this table because you do not
+            collect them. You drill them, they disappear, you move on.
+            The shop has six upgrades: drill, fuel, hull, cargo, plus
+            a one-time Heated Drill purchase (gates the permafrost) and
+            a two-tier Heat Shield (lets you survive the magma and
+            mantle layers).
+          </p>
+
+          <div class="divider">&bull; &bull; &bull;</div>
+
+          <h2>One piece of code I like</h2>
+
+          <p>
+            The world generates once at startup. Every tile rolls
+            against a list of candidate ores filtered by depth, with
+            rarer ores getting a slowly-increasing edge the deeper you
+            go. The trick is walking the candidate list from
+            <em>rarest to most common</em>, so diamond gets first dibs
+            on the random number and common dirt only gets picked when
+            nothing rarer has claimed the roll.
+          </p>
+
+<pre><code><span class="kw">function</span> <span class="fn">pickOre</span>(depth) {
+  <span class="kw">var</span> candidates = [];
+  <span class="kw">for</span> (<span class="kw">var</span> i = <span class="num">0</span>; i &lt; ORE_KEYS.length; i++) {
+    <span class="kw">var</span> o = ORES[ORE_KEYS[i]];
+    <span class="kw">if</span> (depth &gt;= o.minDepth) candidates.<span class="fn">push</span>(ORE_KEYS[i]);
+  }
+  <span class="kw">var</span> r = Math.<span class="fn">random</span>();
+  <span class="cm">// Deeper = rarer ores more likely. Walk from rarest to common.</span>
+  <span class="kw">var</span> cumul = <span class="num">0</span>;
+  <span class="kw">for</span> (<span class="kw">var</span> j = candidates.length - <span class="num">1</span>; j &gt;= <span class="num">0</span>; j--) {
+    <span class="kw">var</span> ore = ORES[candidates[j]];
+    <span class="kw">var</span> adjustedChance = ore.chance * (<span class="num">1</span> + depth * <span class="num">0.003</span>);
+    cumul += adjustedChance;
+    <span class="kw">if</span> (r &lt; cumul / (cumul + <span class="num">1</span>)) {
+      <span class="kw">return</span> { type: candidates[j], hp: ore.hp };
+    }
+  }
+  <span class="kw">if</span> (Math.<span class="fn">random</span>() &lt; <span class="num">0.12</span>) <span class="kw">return</span> <span class="kw">null</span>; <span class="cm">// air pocket</span>
+  <span class="kw">return</span> { type: <span class="str">'dirt'</span>, hp: ORES.dirt.hp };
+}</code></pre>
+
+          <p>
+            Two things going on here. The
+            <code>cumul / (cumul + 1)</code> bit is a soft normalization:
+            it keeps the running probability bounded between 0 and 1
+            without needing to know the total ahead of time, which is
+            handy because the candidate list changes with depth. And
+            the depth multiplier <code>(1 + depth * 0.003)</code> is
+            small but compounds. By 150 metres down, rare ores are
+            getting a 45% bonus on every tile roll, which is why the
+            crystal caves feel like a payday after the long climb to
+            get there.
+          </p>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <span>&copy; 2026 Ethan Willingham</span>
+      </div>
+    </footer>
+  </div>
+  <script>
+    // TEMP verification helper — patch RAF so the game loop runs even when
+    // the preview tab is hidden. Activated only via ?_rafTimer=1 query.
+    if (location.search.indexOf('_rafTimer=1') !== -1) {
+      window.requestAnimationFrame = function (cb) {
+        return setTimeout(function () { cb(performance.now()); }, 16);
+      };
+    }
+  </script>
+  <script>
+    // Unified fullscreen system — uses the real Fullscreen API where it
+    // works, and falls back to a CSS-only "pseudo-fullscreen" on iPhone
+    // (iOS Safari's Fullscreen API only supports <video> elements; calling
+    // requestFullscreen on <html> is silently rejected).
+    (function () {
+      var gmBtn = document.getElementById('gm-fullscreen-btn');
+      if (!gmBtn) return;
+
+      // iPhone Safari (and iPhone Chrome/Firefox, which are WebKit too) has
+      // no working Fullscreen API on arbitrary elements. iPad on iPadOS 15+
+      // reports as MacIntel + touch, but does support the API.
+      var ua = navigator.userAgent;
+      var isIPhone = /iPhone|iPod/.test(ua);
+
+      var cssOnlyFs = false;
+      var expandIcon = gmBtn.querySelector('.gm-expand');
+      var compressIcon = gmBtn.querySelector('.gm-compress');
+
+      // Track the wrapper's original DOM location so we can restore it on
+      // fullscreen exit. We physically move the wrapper to be a direct child
+      // of <body> while fullscreen — this is the only bulletproof way to
+      // escape containing-block traps from transformed ancestors (the
+      // fade-in animation leaves transform:translateY on .post-body, which
+      // makes `position: fixed` anchor to .post-body instead of the viewport,
+      // shrinking the wrapper to the centered article column).
+      var gameWrap = document.querySelector('.game-wrapper');
+      var originalParent = gameWrap ? gameWrap.parentElement : null;
+      var originalNextSibling = gameWrap ? gameWrap.nextSibling : null;
+
+      function moveWrapperToBody() {
+        if (!gameWrap || gameWrap.parentElement === document.body) return;
+        document.body.appendChild(gameWrap);
+      }
+      function restoreWrapperLocation() {
+        if (!gameWrap || !originalParent || gameWrap.parentElement === originalParent) return;
+        if (originalNextSibling && originalNextSibling.parentElement === originalParent) {
+          originalParent.insertBefore(gameWrap, originalNextSibling);
+        } else {
+          originalParent.appendChild(gameWrap);
+        }
+      }
+
+      function fsElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
+      }
+      function isAnyFs() { return !!fsElement() || cssOnlyFs; }
+
+      function applyFsState(on) {
+        if (on) moveWrapperToBody(); else restoreWrapperLocation();
+        document.body.classList.toggle('gm-fs', on);
+        expandIcon.style.display  = on ? 'none' : '';
+        compressIcon.style.display = on ? '' : 'none';
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 150);
+      }
+
+      function enterCssFs() {
+        cssOnlyFs = true;
+        applyFsState(true);
+      }
+      function exitCssFs() {
+        cssOnlyFs = false;
+        applyFsState(false);
+      }
+
+      function toggleFullscreen() {
+        if (isAnyFs()) {
+          if (fsElement()) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+          } else {
+            exitCssFs();
+          }
+          return;
+        }
+        if (isIPhone) {
+          enterCssFs();
+          return;
+        }
+        var de = document.documentElement;
+        var req = de.requestFullscreen || de.webkitRequestFullscreen;
+        if (!req) { enterCssFs(); return; }
+        var p = req.call(de);
+        if (p && typeof p.then === 'function') {
+          p.then(function () {
+            if (screen.orientation && screen.orientation.lock) {
+              screen.orientation.lock('landscape').catch(function () {});
+            }
+          }).catch(function () { enterCssFs(); });
+        }
+      }
+
+      gmBtn.addEventListener('click', toggleFullscreen);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+      });
+
+      function onFsChange() {
+        // Real Fullscreen API state changed. If we're exiting it, clear the
+        // CSS fallback flag too so isAnyFs() reflects reality.
+        if (!fsElement()) cssOnlyFs = false;
+        applyFsState(!!fsElement());
+      }
+      document.addEventListener('fullscreenchange', onFsChange);
+      document.addEventListener('webkitfullscreenchange', onFsChange);
+
+      // Pressing Esc while in CSS-only fullscreen should also exit it,
+      // matching the browser's native Esc-to-exit behavior.
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && cssOnlyFs) exitCssFs();
+      });
+    })();
+  </script>
+  <script src="js/main.js"></script>
+  <script src="js/liquid-wgpu.js"></script>
+  <script src="js/smoke-wgpu.js"></script>
+  <script src="js/grand-motherload.js"></script>
+</body>
+</html>

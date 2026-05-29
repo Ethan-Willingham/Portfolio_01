@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="493" height="524">
+	<style type="text/css">
+		text {
+			font-family: "DejaVu Sans", sans-serif;
+		}
+	</style>
+	
+	<defs>
+		<path id="arrow" d="    M0 -11    h8    l10 11    l-10 11    h-8    l10 -11    z"/>
+		<rect id="bubble" x="-61.5" y="-31.5" width="123" height="63" rx="7" stroke-width="2.3"/>
+	</defs>
+	
+	<path fill="none" stroke="#969696" stroke-width="12.5" d="   M88 196   V468   L348 332   L88 196   L348 58"/>
+	
+	<g font-size="16" text-anchor="middle">
+		<g transform="translate(88,332) rotate(-90)">
+			<switch><text y="-14" id="trsvg14-lv" systemLanguage="lv"><tspan id="trsvg1-lv">Nos&#x113;&#x161;an&#x101;s</tspan></text><text y="-14" id="trsvg14"><tspan id="trsvg1">Deposition</tspan></text></switch>
+			<switch><text y="26" id="trsvg15-lv" systemLanguage="lv"><tspan id="trsvg2-lv">Sublim&#x101;cija</tspan></text><text y="26" id="trsvg15"><tspan id="trsvg2">Sublimation</tspan></text></switch>
+			<use xlink:href="#arrow" x="-50" y="-20" transform="rotate(180, -50, -20)"/>
+			<use xlink:href="#arrow" x="50" y="20"/>
+		</g>
+		
+		<g transform="translate(218,400) rotate(-28)">
+			<switch><text y="-14" id="trsvg16-lv" systemLanguage="lv"><tspan id="trsvg3-lv">Sasal&#x161;ana</tspan></text><text y="-14" id="trsvg16"><tspan id="trsvg3">Freezing</tspan></text></switch>
+			<switch><text y="26" id="trsvg17-lv" systemLanguage="lv"><tspan id="trsvg4-lv">Ku&#x161;ana</tspan></text><text y="26" id="trsvg17"><tspan id="trsvg4">Melting</tspan></text></switch>
+			<use xlink:href="#arrow" x="-40" y="-20" transform="rotate(180, -40, -20)"/>
+			<use xlink:href="#arrow" x="40" y="20"/>
+		</g>
+		
+		<g transform="translate(218,264) rotate(28)">
+			<switch><text y="-14" id="trsvg18-lv" systemLanguage="lv"><tspan id="trsvg5-lv">Iztvaiko&#x161;ana</tspan></text><text y="-14" id="trsvg18"><tspan id="trsvg5">Vaporization</tspan></text></switch>
+			<switch><text y="26" id="trsvg19-lv" systemLanguage="lv"><tspan id="trsvg6-lv">Kondens&#x101;cija</tspan></text><text y="26" id="trsvg19"><tspan id="trsvg6">Condensation</tspan></text></switch>
+			<use xlink:href="#arrow" x="-60" y="-20" transform="rotate(180, -60, -20)"/>
+			<use xlink:href="#arrow" x="60" y="20"/>
+		</g>
+		
+		<g transform="translate(218,127) rotate(-28)">
+			<switch><text y="-14" id="trsvg20-lv" systemLanguage="lv"><tspan id="trsvg7-lv">Rekombin&#x101;cija</tspan></text><text y="-14" id="trsvg20"><tspan id="trsvg7">Recombination</tspan></text></switch>
+			<switch><text y="26" id="trsvg21-lv" systemLanguage="lv"><tspan id="trsvg8-lv">Joniz&#x101;cija</tspan></text><text y="26" id="trsvg21"><tspan id="trsvg8">Ionization</tspan></text></switch>
+			<use xlink:href="#arrow" x="-65" y="-20" transform="rotate(180, -65, -20)"/>
+			<use xlink:href="#arrow" x="45" y="20"/>
+		</g>
+	</g>
+	
+	<g font-size="24" text-anchor="middle">
+		<use xlink:href="#bubble" x="88" y="196" fill="#ffffb6" stroke="#e8ed4f"/>
+		<switch><text x="88" y="204.5" id="trsvg22-lv" systemLanguage="lv"><tspan id="trsvg9-lv">G&#x101;ze</tspan></text><text x="88" y="204.5" id="trsvg22"><tspan id="trsvg9">Gas</tspan></text></switch>
+		
+		<use xlink:href="#bubble" x="88" y="468" fill="#d8fed7" stroke="#56c25c"/>
+		<switch><text x="88" y="476.5" id="trsvg23-lv" systemLanguage="lv"><tspan id="trsvg10-lv">Cietviela</tspan></text><text x="88" y="476.5" id="trsvg23"><tspan id="trsvg10">Solid</tspan></text></switch>
+		
+		<use xlink:href="#bubble" x="348" y="332" fill="#bbdcff" stroke="#89b2de"/>
+		<switch><text x="348" y="340.5" id="trsvg24-lv" systemLanguage="lv"><tspan id="trsvg11-lv">&#x160;&#x137;idrums</tspan></text><text x="348" y="340.5" id="trsvg24"><tspan id="trsvg11">Liquid</tspan></text></switch>
+		
+		<use xlink:href="#bubble" x="348" y="58" fill="#ffdedd" stroke="#dd8383"/>
+		<switch><text x="348" y="66.5" id="trsvg25-lv" systemLanguage="lv"><tspan id="trsvg12-lv">Plazma</tspan></text><text x="348" y="66.5" id="trsvg25"><tspan id="trsvg12">Plasma</tspan></text></switch>
+	</g>
+	
+	<path d="   M 434 58   c -2.3,12.9 -4,30.2 -10.8,45 4.7,-0.6 6.8,-4.6 8.6,-8.5   l 0,372.2 4.4,0 0,-372.2   c 1.8,3.9 3.9,7.9 8.6,8.4 -6.8,-14.8 -8.5,-32.1 -10.8,-45 z"/>
+	
+	<switch><text x="-377.5" y="463" transform="rotate(-90)" font-size="24px" id="trsvg26-lv" systemLanguage="lv"><tspan id="trsvg13-lv">Sist&#x113;mas entalpija</tspan></text><text x="-377.5" y="463" transform="rotate(-90)" font-size="24px" id="trsvg26"><tspan id="trsvg13">Enthalpy of system</tspan></text></switch>
+</svg>

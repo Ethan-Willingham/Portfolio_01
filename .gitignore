@@ -1,0 +1,23 @@
+# Claude Code / AI assistant config
+.claude/
+
+# One-off scripts
+decode_b64.ps1
+
+# Verification harness (dev-only)
+sluice-verify.html
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Debug screenshots (never commit these)
+*-verify.png
+*-smoke-*.png
+
+# Temp commit-message files used by the agent
+.git_commit_msg.tmp
+
+# Raw audio source (large WAV masters). The shipped game uses the converted
+# .m4a in assets/audio/; keep the WAV originals local, do not commit them.
+assets/Sluice Audio/

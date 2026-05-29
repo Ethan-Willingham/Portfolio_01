@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Optional Body</title>
+  <meta name="description" content="An interactive descent through the parts of the human body you can live without, from a spare tendon in your wrist down to the question of where 'you' actually live.">
+  <meta property="og:title" content="The Optional Body">
+  <meta property="og:description" content="An interactive descent through the parts of the body you can live without, told through real anatomical engravings.">
+  <meta property="og:type" content="article">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- fonts come only from style.css: Century Supra (the one loaded web font) plus the site's own system stacks. no foreign web fonts. -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE OPTIONAL BODY
+     v6: a from-scratch reimagining as a museum-grade descent.
+       - Body type set in Century Supra (the loaded serif). Monospace
+         is reserved for data only: the weight readout and plate number.
+         Labels are small-caps serif, so the page reads as a catalogue.
+       - Every plate is matted on cream with a hairline keyline and a
+         catalogue caption beneath it (No., creator, work, year, public
+         domain), in one fixed field order.
+       - The weight is the descent's spine: a left-margin plumb line
+         whose bob sinks as you descend and shrinks as mass is shed,
+         then releases and floats up at the final turn.
+       - Six acts open on full-screen thresholds; the tier accent cools
+         toward the machine and brain acts.
+       - Plates fade in (never pop) and zoom on tap.
+     v7: section one regrouped into two stat-matched trios (parts evolution is
+       editing in or out: tendon, wisdom teeth, fabella; and parts our ancestors
+       last used millions of years ago: ear, neck, third eyelid). Section-one source links and
+       the quote/caveat asides dropped; cover subtitle reworded.
+     v8: section two given one cohesive stat (estimated organ removals a year,
+       worldwide), ordered most common first, with its source links and
+       quote/caveat asides dropped. All weights switched from grams to ounces
+       and pounds, page-wide.
+     v9: part one, the idle trio relabeled ("evolved past it") and reordered
+       oldest to newest, tailbone dropped, appendix and tonsils moved onto the
+       worldwide-removals stat. Section three grouped by a shared stat (arms,
+       legs, sight by who lives without it; face and tongue by removals a year;
+       the hemicorporectomy alone), with links and asides cleaned out.
+     v10: sections four and five (machines, brain) cleaned to match, source links
+       and quote/caveat lines dropped. Face lead clarifies it is a partial cancer
+       resection of a piece (jaw, cheek, nose, palate), not a whole face; arms and
+       legs stats now name the part (missing an arm, a leg), since most loss is of
+       one limb, not both.
+     v11: section four retitled and trimmed to the artificial-organ cases (the
+       second pancreas and the "what cannot be replaced" card dropped), the heart
+       given a longest-lived stat with heart, kidneys, lungs ordered by it, the
+       ear and eye given how-many-have-one stats. Cover removal count dropped.
+     v12: section five reframed around one person who has had everything above
+       removed or replaced (tier title plus an intro line). Skull-of-water,
+       split-brain, and memory-seat cards dropped; half-brain and cerebellum given
+       count stats; the closing card now locates the line of death in the
+       brainstem. Ending rewritten.
+     v13: section five retitled simply "the brain"; the brainstem card un-dissolved
+       so its plate (a brainstem engraving, where the reticular activating system
+       sits) shows full. A coda after the descent describes the minimum person, and
+       the closing lines reworked around "nobody is home" and one shared mind.
+     v14: coda rewritten to paint what physically remains (a torso, ribs, the
+       machine-run organs, the blood, the brain in its cranium); ending tightened.
+     v15: the closing image before the coda is the brainstem plate itself,
+       un-dissolved and enlarged (a separate reticular-activating-system plate was
+       tried, then dropped in favor of it).
+     v16: the coda taken deeper and kept short, the minimum person spelled out
+       (no hips, no limbs, a cleared face, a head and half a trunk), its organs
+       named with the count of machines, landing on the only two no machine can
+       replace, the liver and the brain.
+     v17: the closing card refocused on the body part, retitled the reticular
+       activating system, its lead tying the plate (the brainstem) to it, and a
+       caption note naming the brainstem in the image.
+     v18: mobile only. The specimen left gutter was tightened (the weight spine
+       had been stranded at the screen edge across a wide empty channel) so the
+       plumb line now reads as a margin rule just left of a wider reading column,
+       and the gauge readout was trimmed to fit that slimmer gutter. The desktop
+       two-column spread is untouched.
+     v19: mobile only. The weight spine is now hidden entirely on phones, and the
+       specimen drops its reserved left gutter so the reading column is symmetric
+       and matches the site standard (content-width + the shared --gutter), the
+       same margins the other posts use. On desktop the spine stays, with its
+       readout now centered over the rail (it had sat left of the line). The
+       two-column spread is untouched.
+     v20: mobile only. Each specimen now reads as a centered museum placard. The
+       header block (eyebrow, number, name, weighs, the big stat) centers under the
+       centered plate, matching the post's centered cover/thresholds/captions,
+       instead of jumping to a hard-left wall under a centered image. The body
+       paragraphs stay left-aligned for reading. Desktop two-column spread untouched.
+     v21: mobile only, superseding v20. The centered placard was replaced: centering
+       five ragged-width header lines made a jagged, edgeless tower that fought the
+       left-aligned body. Now each specimen is one calm editorial column. The matted
+       plate spans the full column width and everything (caption, header, the big
+       stat, body) hangs off a single left edge, with hierarchy carried by type
+       scale rather than alignment. Desktop two-column spread untouched.
+     v22: mobile only. Decluttered the header. Too many similar small-caps label
+       lines (section eyebrow, the No.XX/vestigial kicker, the weighs line, and the
+       caption's own number) piled up. On phones we now drop the section eyebrow,
+       the 'vestigial' tag and the weighs line, and de-dupe the number (caption keeps
+       only its credit) so one clean "No. NN" sits tight above the title. The stack
+       is No. NN / title / big stat / body, two clear focal points. The caption and
+       kicker were split into spans (.cap-no, .kno/.ksep) purely as mobile hide
+       hooks; desktop renders identically and keeps the full hierarchy.
+     No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --paper:   #e7dcc2;
+    --ink:     150 32% 4%;                         /* shadow ink (hsl parts) */
+    --mono:    'Commit Mono', ui-monospace, Consolas, monospace;
+    --col:     62ch;                               /* reading measure */
+    --reel-w:  min(94vw, 720px);
+    --tier:    var(--accent);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in:  cubic-bezier(0.55, 0, 1, 0.45);
+  }
+
+  /* body type is now the serif; mono is data-only. override style.css gutter. */
+  html { overflow-x: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-heading); font-weight: 400; line-height: 1.62; padding: 0; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: #20251d; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  .grain { position: fixed; inset: 0; pointer-events: none; mix-blend-mode: overlay; opacity: 0.4; z-index: 8; }
+  /* home link: a plain word at the top of the post, in normal flow, scrolling
+     away with the page. The .top-nav just keeps it aligned to the reading column. */
+  .top-nav { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto 1.2rem; padding: 1rem var(--gutter) 0.85rem; }
+  .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
+
+  /* small-caps catalogue label, used for eyebrows / kickers / source links */
+  .sc { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.12em; }
+
+  /* ---- The matted plate (shared by cover + specimens) ---- */
+  .plate { position: relative; background: var(--paper); border-radius: 3px; padding: 6%; cursor: zoom-in;
+    transform-style: preserve-3d; will-change: transform;
+    box-shadow:
+      0 1px 1px hsl(var(--ink) / 0.5),
+      0 3px 5px -1px hsl(var(--ink) / 0.34),
+      0 9px 16px -5px hsl(var(--ink) / 0.3),
+      0 24px 44px -18px hsl(var(--ink) / 0.55); }
+  .plate::before { content: ''; position: absolute; inset: 9px; border: 1px solid rgba(48,36,22,0.4); pointer-events: none; z-index: 3; }
+  .plate::after { content: ''; position: absolute; inset: -30% -26%; z-index: -1; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(212,196,160,0.14), rgba(212,196,160,0.04) 55%, transparent 78%); }
+  .plate-img { position: absolute; top: 6%; left: 6%; width: 88%; height: 88%; object-fit: contain; mix-blend-mode: multiply;
+    filter: contrast(1.06) sepia(0.16); opacity: 0; transition: opacity 700ms var(--ease-out); -webkit-user-drag: none; }
+  .plate-img.loaded { opacity: 1; }
+  /* candlelight sheen that slides as the plate tips toward the cursor */
+  .sheen { position: absolute; inset: 6%; z-index: 2; pointer-events: none; mix-blend-mode: screen; opacity: var(--sheen-op, 0);
+    background: radial-gradient(58% 44% at var(--sx, 50%) var(--sy, 50%), rgba(252,246,228,0.95), rgba(220,202,164,0.32) 42%, transparent 70%); }
+
+  /* the catalogue caption beneath every plate, one fixed field order */
+  .caption { margin-top: 0.85rem; text-align: center; font-family: var(--font-heading); font-variant: small-caps;
+    letter-spacing: 0.07em; font-size: 0.86rem; line-height: 1.4; color: var(--text-dim); }
+  .caption .no { font-family: var(--mono); font-variant: normal; letter-spacing: 0.02em; color: var(--tier, var(--accent)); }
+
+  /* ---- Cover ---- */
+  .cover { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5svh 1.4rem 5.5rem; gap: 1.25rem; position: relative; }
+  .cover-rule { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.26em; font-size: 0.92rem; color: var(--accent); }
+  .cover .plate { width: min(54vw, 225px); aspect-ratio: 3 / 4; animation: rise 1.2s var(--ease-out) both; }
+  .cover .caption { animation: rise 1.2s var(--ease-out) 0.1s both; }
+  .cover h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8vw, 4.1rem); line-height: 1.04; letter-spacing: -0.02em; color: var(--text-bright); max-width: 15ch; text-wrap: balance; animation: rise 1.2s var(--ease-out) 0.16s both; }
+  .cover-sub { font-size: 1.22rem; line-height: 1.55; color: var(--text-dim); max-width: 34ch; text-wrap: pretty; animation: rise 1.2s var(--ease-out) 0.24s both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .scroll-cue { position: absolute; bottom: 2.1rem; font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.9rem; color: var(--text-dim); opacity: 0.72; }
+
+  /* ---- The descent ---- */
+  .descent { position: relative; padding: 0 0 8svh; }
+
+  /* the weight spine: a left-margin plumb line. the bob sinks with descent
+     progress (--paid) and shrinks with remaining mass (--bob); at the end it
+     releases and floats up. low-contrast until a part crosses the reading line. */
+  .spine { position: fixed; left: max(0.7rem, calc(50% - 560px)); top: 9svh; bottom: 9svh; width: 26px; z-index: 20; pointer-events: none; opacity: 0; transition: opacity 800ms var(--ease-out); }
+  .spine.on { opacity: 1; }
+  .spine-rail { position: absolute; left: 11px; top: 0; bottom: 0; width: 1.5px; background: rgba(212,196,160,0.14); }
+  .spine-fill { position: absolute; left: 11px; top: 0; width: 1.5px; height: calc(var(--paid, 0) * 100%); background: var(--accent); opacity: 0.5; transition: height 640ms var(--ease-out), opacity 900ms var(--ease-out); }
+  .spine-bob { position: absolute; left: 11.75px; top: calc(var(--paid, 0) * 100%); width: var(--bob, 19px); height: var(--bob, 19px);
+    margin-left: calc(var(--bob, 19px) / -2 + 0px); margin-top: calc(var(--bob, 19px) / -2); border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 9px rgba(212,196,160,0.45); transition: top 640ms var(--ease-out), width 640ms var(--ease-out), height 640ms var(--ease-out), opacity 1s, transform 1.5s var(--ease-out), box-shadow 500ms; }
+  .spine-bob.tick { animation: bobpulse 700ms var(--ease-out); }
+  @keyframes bobpulse { 0% { box-shadow: 0 0 9px rgba(212,196,160,0.45); } 30% { box-shadow: 0 0 16px rgba(212,196,160,0.85); } 100% { box-shadow: 0 0 9px rgba(212,196,160,0.45); } }
+  /* readout centered on the rail/bob axis (11.75px) so the line sits centered below the numbers */
+  .spine-read { position: absolute; left: 11.75px; top: 0; transform: translate(-50%, -130%); text-align: center; font-family: var(--mono); font-size: 0.6rem; line-height: 1.32; color: var(--text-dim); white-space: nowrap; transition: opacity 700ms var(--ease-out); }
+  .spine-read b { display: block; color: var(--accent); font-weight: 400; font-size: 0.82rem; letter-spacing: 0.01em; }
+  .spine.release { opacity: 0; }
+  .spine.release .spine-bob { transform: translateY(-15svh); opacity: 0; }
+  .spine.release .spine-fill { opacity: 0; }
+  .spine.release .spine-read { opacity: 0; }
+
+  /* the reel of specimens lives in normal document flow and physically scrolls */
+  .reel { position: relative; z-index: 1; }
+
+  /* ---- Act threshold ---- */
+  .threshold { min-height: 92svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.7rem; padding: 8svh 1.4rem; position: relative;
+    opacity: 0; transition: opacity 1100ms var(--ease-out); }
+  .threshold.in { opacity: 1; }
+  .threshold::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(58% 46% at 50% 44%, var(--glow, transparent), transparent 72%); }
+  .threshold .numeral { font-family: var(--font-heading); font-weight: 700; font-size: clamp(4.5rem, 19vw, 10rem); line-height: 0.86; color: var(--tier, var(--accent)); }
+  .threshold .t-title { font-family: var(--font-heading); font-variant: small-caps; font-weight: 400; letter-spacing: 0.16em; font-size: clamp(1.05rem, 3.4vw, 1.5rem); color: var(--text-bright); max-width: 22ch; }
+  .threshold .t-intro { font-family: var(--font-heading); font-size: 1.12rem; line-height: 1.6; color: var(--text-dim); max-width: 34ch; margin-top: 1.1rem; text-wrap: pretty; }
+
+  /* ---- Specimen ---- */
+  .specimen { position: relative; max-width: var(--reel-w); margin: 10svh auto; padding: 0 1.3rem 0 2.8rem; min-height: 64svh;
+    display: flex; flex-direction: column; gap: 1.4rem; align-items: stretch;
+    opacity: 0; transform: translateY(28px); transition: opacity 820ms var(--ease-out), transform 820ms var(--ease-out); }
+  .specimen.in { opacity: 1; transform: none; }
+  .specimen:first-child { margin-top: 3svh; }
+  .plate-col { margin: 0; }
+  .specimen .plate { width: 100%; max-width: 290px; aspect-ratio: 4 / 5; margin: 0 auto; }
+  .dossier { min-width: 0; }
+
+  .d-eyebrow { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.14em; font-size: 0.92rem; color: var(--tier, var(--accent)); }
+  .d-kicker { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.1em; font-size: 0.86rem; color: var(--text-dim); margin-top: 0.2rem; }
+  .d-kicker .tag { color: var(--tier, var(--accent)); }
+  .d-name { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.55rem, 4.6vw, 2.15rem); line-height: 1.08; letter-spacing: -0.012em; color: var(--text-bright); margin-top: 0.5rem; text-wrap: balance; }
+  .d-weighs { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.96rem; color: var(--text-dim); margin-top: 0.6rem; }
+  .d-weighs .val { color: var(--tier, var(--accent)); }
+  .d-stat { display: flex; align-items: baseline; gap: 0.55rem; margin-top: 0.9rem; }
+  .d-stat .fig { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3rem); line-height: 0.95; color: var(--tier, var(--accent)); font-variant-numeric: tabular-nums; }
+  .d-stat .fig-lbl { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.92rem; line-height: 1.25; color: var(--text-dim); }
+  .d-lead { font-size: 1.16rem; line-height: 1.58; color: var(--text); margin-top: 0.95rem; text-wrap: pretty; }
+  .d-hook { font-size: 1.16rem; line-height: 1.58; color: var(--text); margin-top: 0.7rem; text-wrap: pretty; }
+  .d-hook b { color: var(--text-bright); font-weight: 700; }
+  .d-quote { font-family: var(--font-heading); font-style: italic; font-weight: 400; font-size: 1.3rem; line-height: 1.3; color: var(--tier, var(--accent)); margin-top: 1rem; padding-left: 0.9rem; border-left: 2px solid var(--tier, var(--accent)); }
+  .d-sources { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; margin-top: 1rem; }
+  .d-sources a { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.88rem; color: var(--text-dim); text-decoration: none; border-bottom: 1px solid rgba(232,226,214,0.22); }
+  .d-sources a:hover { color: var(--accent); border-color: var(--accent); }
+  .d-caveat { font-style: italic; font-size: 0.96rem; line-height: 1.45; color: var(--text-dim); opacity: 0.86; margin-top: 0.75rem; text-wrap: pretty; }
+
+  /* desktop: open-atlas spread, plate the feature element */
+  @media (min-width: 760px) {
+    .specimen { flex-direction: row; align-items: center; gap: 3rem; max-width: 1000px; min-height: 88svh; padding-left: 5rem; }
+    .plate-col { flex: 0 0 42%; max-width: 440px; align-self: center; }
+    .specimen .plate { width: 100%; max-width: none; }
+    .dossier { flex: 1 1 auto; max-width: var(--col); }
+  }
+
+  /* mobile only: extra breathing room between entries + a catalogue divider in the
+     gap. desktop gets its separation from the tall two-column layout instead. */
+  @media (max-width: 759.98px) {
+    /* the weight spine is hidden on phones; the reading column drops its reserved
+       left gutter and becomes symmetric, matching the site standard (the same
+       content-width + --gutter the other posts use). desktop keeps the spine. */
+    .spine { display: none; }
+    .specimen { margin: 18svh auto; max-width: var(--content-width); padding-left: var(--gutter); padding-right: var(--gutter); }
+    /* stacked, each specimen is one calm editorial column: the matted plate spans
+       the full column width and everything (caption, header, the big stat, body)
+       hangs off a single left edge. hierarchy is carried by type scale, not by
+       alignment. an earlier centered placard read as a jagged, edgeless tower that
+       fought the left-aligned body; one shared left edge balances far better on a
+       phone (and the big stat anchored left reads strong, like the desktop column). */
+    .specimen .plate, .reel .specimen:last-child .plate { max-width: none; }
+    .specimen .caption { text-align: left; }
+    /* declutter the header to its essentials: too many similar small-caps label
+       lines (section eyebrow, the No.XX/vestigial kicker, the weighs line, the
+       caption number) read as a dense pile-up. on phones, drop the section eyebrow,
+       the 'vestigial' tag and the weighs line, and de-dupe the catalogue number
+       (the caption keeps only its credit) so a single clean "No. NN" sits tight
+       above the title. result: No. NN / title / big stat / body, two clear focal
+       elements. desktop keeps the full hierarchy. */
+    .d-eyebrow, .d-weighs { display: none; }
+    .caption .cap-no { display: none; }
+    .d-kicker { margin-top: 0; }
+    .d-kicker .ksep, .d-kicker .tag { display: none; }
+    .d-name { margin-top: 0.15rem; }
+    .d-lead { margin-top: 1.4rem; }
+    .specimen + .specimen::before { content: ''; position: absolute; top: -9svh; left: 50%; transform: translateX(-50%);
+      width: 130px; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,196,160,0.22) 24%, rgba(212,196,160,0.22) 76%, transparent); }
+    .specimen + .specimen::after { content: ''; position: absolute; top: calc(-9svh - 4px); left: 50%;
+      width: 7px; height: 7px; background: var(--bg); border: 1px solid rgba(212,196,160,0.5); transform: translateX(-50%) rotate(45deg); }
+  }
+
+  /* the final turn: the rule flips. centered, the plate de-emphasized. */
+  .specimen.turn { flex-direction: column; align-items: center; text-align: center; max-width: 40ch; }
+  .specimen.turn .plate { max-width: 150px; opacity: 0.5; aspect-ratio: 1 / 1; }
+  .specimen.turn .d-quote { border: none; padding: 0; font-size: 1.55rem; margin-top: 1rem; }
+  .specimen.turn .d-sources { justify-content: center; }
+
+  /* ---- Ending ---- */
+  .ending { min-height: 96svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10svh 1.4rem; }
+  .ending h2 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.16; letter-spacing: -0.015em; color: var(--text-bright); max-width: 18ch; text-wrap: balance; }
+  .ending h2 em { color: var(--accent); font-style: italic; }
+  .ending p { font-size: 1.22rem; color: var(--text-dim); max-width: 40ch; margin-top: 1.7rem; line-height: 1.65; text-wrap: pretty; }
+  .ending p em { color: var(--text); font-style: italic; }
+
+  /* ---- Coda: the minimum person, sits between the descent and the ending ---- */
+  .coda { min-height: 90svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 9svh 1.4rem; gap: 1.5rem; }
+  .coda p { font-size: 1.2rem; line-height: 1.72; color: var(--text-dim); max-width: 44ch; text-wrap: pretty; }
+  .coda .coda-turn { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.16; color: var(--text-bright); max-width: 18ch; text-wrap: balance; }
+  .coda .coda-turn em { color: var(--accent); font-style: italic; }
+
+  /* ---- The closing brainstem plate, enlarged (the last card before the coda) ---- */
+  .reel .specimen:last-child .plate { max-width: 360px; aspect-ratio: 4 / 3; }
+  @media (min-width: 760px) {
+    .reel .specimen:last-child .plate { max-width: none; }
+    .reel .specimen:last-child .plate-col { flex: 0 0 52%; max-width: 560px; }
+  }
+
+  /* ---- Colophon ---- */
+  .colophon { max-width: var(--col); margin: 0 auto; padding: 3rem 1.4rem 6rem; text-align: center; font-size: 0.98rem; color: var(--text-dim); line-height: 1.75; }
+  .colophon a { color: var(--text-dim); }
+  .colophon a:hover { color: var(--accent); }
+
+  /* ---- Lightbox (tap a plate to inspect the engraving) ---- */
+  .lightbox { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 4vmin;
+    background: rgba(20,24,20,0.95); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 92vh; object-fit: contain; background: var(--paper); padding: 1.4%; border-radius: 2px; box-shadow: 0 30px 90px rgba(0,0,0,0.6); }
+  .lightbox .lb-cap { position: absolute; left: 0; right: 0; bottom: 2vmin; text-align: center; font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.07em; font-size: 0.9rem; color: var(--text-dim); }
+
+  html:not(.js) .reel { display: none; }
+
+  /* ---- Reduced motion: keep fades, drop movement ---- */
+  @media (prefers-reduced-motion: reduce) {
+    .cover .plate, .cover h1, .cover-rule, .cover-sub, .cover .caption { animation: none; }
+    .plate { transform: none !important; }
+    .plate-img { transition: opacity 240ms linear; }
+    .sheen { display: none; }
+    .specimen, .threshold { transition: opacity 240ms linear; transform: none !important; }
+    .spine-bob, .spine-fill, .spine-read { transition: opacity 260ms linear !important; }
+    .spine.release .spine-bob { transform: none !important; }
+  }
+  </style>
+</head>
+<body>
+  <svg class="grain" aria-hidden="true" width="100%" height="100%">
+    <filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/></filter>
+    <rect width="100%" height="100%" filter="url(#grainf)"/>
+  </svg>
+
+  <div class="top-nav"><a href="/" class="post-back"><span class="pb-label">Home</span></a></div>
+
+  <section class="cover">
+    <div class="cover-rule">an anatomical descent, part by part</div>
+    <div class="plate" data-full="assets/atlas/Vesalius_Fabrica_p174.jpg" data-cap="Plate I · Andreas Vesalius, De Humani Corporis Fabrica, 1543 · public domain" tabindex="0" role="button" aria-label="Enlarge the plate">
+      <img class="plate-img" alt="Muscle figure standing in a ruined landscape, from Andreas Vesalius, De Humani Corporis Fabrica, 1543." src="assets/atlas/Vesalius_Fabrica_p174.jpg">
+      <div class="sheen"></div>
+    </div>
+    <p class="caption"><span class="no">Plate I</span> · Andreas Vesalius, De Humani Corporis Fabrica, 1543 · public domain</p>
+    <h1>The Optional Body</h1>
+    <p class="cover-sub">How much of yourself can you lose, and go on living? Scroll to find out, and watch the weight.</p>
+    <div class="scroll-cue">scroll to descend</div>
+  </section>
+
+  <section class="descent" aria-label="The descent">
+    <aside class="spine" id="spine" aria-hidden="true">
+      <div class="spine-read"><b id="spinePct">100.00%</b><span id="spineLb">154.0 lb</span></div>
+      <div class="spine-rail"></div>
+      <div class="spine-fill"></div>
+      <div class="spine-bob" id="spineBob"></div>
+    </aside>
+    <div class="reel" id="reel"></div>
+    <noscript><p style="max-width:42ch;margin:8svh auto;padding:0 1.4rem;text-align:center;color:var(--text-dim);line-height:1.7">This is an interactive descent through the parts of the body you can live without. Please enable JavaScript to read it.</p></noscript>
+  </section>
+
+  <section class="coda">
+    <p>Now, the least a person can be. No legs, no hips, the pelvis cut away and the skin drawn shut beneath. No shoulders, no arms. The face cleared off, no eyes, no ears, no nose, no tongue. A head and half a trunk. Inside it: a heart that is a pump, lungs worked by a machine, kidneys swapped for a filter, a pancreas down to a drip. Four of the organs are machines now. Only two are still the body's own, the only two no machine can replace, the liver and the brain.</p>
+    <p class="coda-turn">And yet, the person remains<br><em>as conscious and aware</em><br>as you or I.</p>
+  </section>
+
+  <section class="ending">
+    <h2>Then a line is drawn.<br>The saying goes:<br><em>nobody is home.</em><br>But if nobody is home,<br>where are we?</h2>
+    <p>Whatever we are has no weight. Schrödinger thought consciousness was single, that we are all <em>one mind</em>. If we have no body or remembered experience to set us apart, why not?</p>
+  </section>
+
+  <p class="colophon">
+    Every engraving is public domain, from
+    <a href="https://commons.wikimedia.org/wiki/Category:Gray%27s_Anatomy_plates" target="_blank" rel="noopener">Wikimedia Commons</a>:
+    the whole figure is Andreas Vesalius, <i>De Humani Corporis Fabrica</i> (1543); most organs are Henry Vandyke Carter's plates for <i>Gray's Anatomy</i> (1918), with a few from Johannes Sobotta's <i>Atlas of Human Anatomy</i> (1906). Part weights are approximate, from standard anatomical references; the running percentage is computed from them.
+  </p>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Plate, enlarged">
+    <img id="lbImg" alt="">
+    <p class="lb-cap" id="lbCap"></p>
+  </div>
+
+  <script>
+  /* ---- The descent engine: reel, act thresholds, weight spine, zoom ---- */
+  (function () {
+    'use strict';
+    var reel = document.getElementById('reel');
+    if (!reel) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var spine = document.getElementById('spine');
+    var spineBob = document.getElementById('spineBob');
+    var elPct = document.getElementById('spinePct');
+    var elLb = document.getElementById('spineLb');
+
+    /* ---- Plate library: one engraving per body part. All public domain, now
+       self-hosted under assets/atlas/ (originally from Wikimedia Commons). The
+       Vesalius muscle-man (1543) for the whole figure, Henry Vandyke Carter's
+       Gray's Anatomy (1918) for the organs. To re-point a part, change one
+       filename here and drop the matching file in assets/atlas/. ---- */
+    function fp(file)  { return "assets/atlas/" + file; }
+    function fpBig(file) { return "assets/atlas/" + file; }
+    var PLATE_FILES = {
+      whole:       "Vesalius_Fabrica_p174.jpg",
+      palmaris:    "Gray418.png",
+      wisdom:      "Gray1003.png",
+      face:        "Gray378.png",
+      ear:         "Gray906.png",
+      plica:       "Gray892.png",
+      coccyx:      "Gray97.png",
+      appendix:    "Gray1073.png",
+      tonsils:     "Gray950.png",
+      gallbladder: "Gray1095-gall_bladder.png",
+      kidney:      "Kidney_section_vertical.png",
+      spleen:      "Gray1188.png",
+      lung:        "Gray972.png",
+      liver:       "Gray1085.png",
+      colon:       "Sobo_1906_414.png",
+      uterus:      "Gray1161.png",
+      stomach:     "Gray1050.png",
+      thyroid:     "Gray1174.png",
+      arms:        "Gray411.png",
+      legs:        "Gray430.png",
+      eyes:        "Gray869.png",
+      heart:       "Gray490.png",
+      brain:       "Gray728.png",
+      hemisphere:  "Gray727.png",
+      ventricles:  "Gray734.png",
+      callosum:    "Gray720.png",
+      cerebellum:  "Gray704.png",
+      brainstem:   "Gray705.png",
+      pelvis:      "Gray241.png",
+      cochlea:     "Gray923.png",
+      hippocampus: "Gray739.png",
+      levator:        "Gray386.png",
+      fabella:        "Gray348.png",
+      smallintestine: "Sobo_1906_376.png",
+      bladder:        "Sobo_1906_476.png",
+      pancreas:       "Gray1098.png",
+      voicebox:       "Gray956.png",
+      tongue:         "Gray1014.png"
+    };
+    function provenance(plate) {
+      if (plate === 'whole') return { who: "Andreas Vesalius", work: "De Humani Corporis Fabrica", year: "1543" };
+      if (plate === 'smallintestine' || plate === 'colon' || plate === 'bladder') return { who: "Johannes Sobotta", work: "Atlas of Human Anatomy", year: "1906" };
+      return { who: "Henry Vandyke Carter", work: "Gray's Anatomy", year: "1918" };
+    }
+
+    /* ---- Tier framing: a roman numeral, a title, and an accent that cools
+       toward the machine and brain acts. ---- */
+    var TIERS = {
+      1: { numeral: "I",   title: "parts you never knew you had",    accent: "#d8c8a2" },
+      2: { numeral: "II",  title: "the ones you would miss",         accent: "#cfa07a" },
+      3: { numeral: "III", title: "where it stops being subtle",     accent: "#b7b58c" },
+      4: { numeral: "IV",  title: "the ones a machine can replace",  accent: "#8fc2d4" },
+      5: { numeral: "V",   title: "the brain",                  accent: "#bfa6e6" }
+    };
+    var TIER0_ACCENT = "#e8e2d4";
+
+    /* ---- The roster: the whole figure, then 40 removals. Every figure is real and
+       sourced; the links sit on each card. Pounds and percentages are computed from
+      the weight ledger just below this array. ---- */
+    var STATIONS = [
+      { t:0, plate:"whole", pct:100, lb:154, tag:"intact",
+        name:"Here you are, whole.",
+        lead:"About 154 pounds of person. Now let us see how much of it you can actually live without, one part at a time." },
+
+      { t:1, plate:"palmaris", pct:100, lb:154, tag:"vestigial", name:"A tendon in your wrist", weight:"a fraction of an ounce",
+        stat:["86%","are born with it"],
+        lead:"The palmaris longus is a thin tendon running up the inside of your forearm. Roughly one in seven people are simply born without it, and never notice.",
+        hook:"Surgeons consider it so disposable they <b>harvest it for tendon grafts</b>, borrowing it to rebuild a blown-out thumb or finger elsewhere in the body." },
+
+      { t:1, plate:"wisdom", pct:100, lb:154, tag:"vestigial", name:"Wisdom teeth", weight:"about a third of an ounce, all four",
+        stat:["80%","still grow all four"],
+        lead:"Your third molars are leftover capacity for a bigger, rawer-food jaw you no longer have. Millions have all four pulled with zero loss of function.",
+        hook:"You can watch evolution edit them out in real time: about <b>one in five people are now born missing at least one</b>, as our jaws keep shrinking. The trait is 60 to 80% heritable." },
+
+      { t:1, plate:"fabella", pct:100, lb:154, tag:"atavism", name:"A bone evolution is adding back", weight:"a sliver of an ounce",
+        stat:["39%","have one now"],
+        lead:"The fabella is a tiny sesamoid bone afloat in a tendon behind the knee. Plenty of people never grow one, and the knee bends fine without it.",
+        hook:"The strange part is that it is <b>coming back</b>. It sat in roughly 11% of knees around 1918 and about 39% by 2018, more than tripling in a century. Evolution is not only editing parts out, the way it keeps shrinking the wisdom teeth, here it is quietly putting one back in." },
+
+      { t:1, plate:"plica", pct:100, lb:154, tag:"vestigial", name:"Your third eyelid", weight:"a sliver of an ounce",
+        stat:["~40M yrs","since we evolved past it"],
+        lead:"Look in a mirror at the little pink wedge in the inner corner of your eye. That is the plica semilunaris.",
+        hook:"It is the shrivelled remnant of a <b>working third eyelid</b>, the milky membrane you can still watch flick sideways across a bird or a cat eye. Yours has not done that in a very long time." },
+
+      { t:1, plate:"ear", pct:100, lb:154, tag:"vestigial", name:"The muscles that aim your ears", weight:"a fraction of an ounce",
+        stat:["~25M yrs","since we evolved past it"],
+        lead:"You have muscles built to swivel your ears toward a sound, like a cat. We lost that ability around 25 million years ago.",
+        hook:"The twist: a 2025 study found these dead muscles <b>still fire electrically when you strain to listen</b>. Your brain is quietly trying to point ears that have not moved in eons." },
+
+      { t:1, plate:"levator", pct:100, lb:154, tag:"anomaly", name:"A neck muscle most people lack", weight:"a fraction of an ounce",
+        stat:["~7M yrs","since we evolved past it"],
+        lead:"The levator claviculae runs from the bones of the neck down to the collarbone. It is standard issue in other primates, and in humans almost everyone is simply built without it.",
+        hook:"Only about two to three in a hundred people grow one at all. It turns up so rarely that radiologists sometimes <b>mistake it for a tumor</b> on a neck scan, before realizing it is just a spare muscle wandered in from our ancestry." },
+
+      { t:1, plate:"appendix", pct:100, lb:154, tag:"vestigial", name:"The appendix", weight:"about an eighth of an ounce",
+        stat:["~5M","removed a year, worldwide"],
+        lead:"The poster child for the useless organ. One of the most common emergency surgeries on Earth removes it, and life goes on much as before.",
+        hook:"Except the cliche may be wrong. The leading theory is that it is a <b>safe house for good gut bacteria</b>, a reserve that re-seeds your gut after an illness flushes it. It has evolved independently more than 30 times, which is not how useless things behave." },
+
+      { t:1, plate:"tonsils", pct:99, lb:153, tag:"vestigial", name:"Tonsils and adenoids", weight:"about a tenth of an ounce, the pair",
+        stat:["~2M","removed a year, worldwide"],
+        lead:"For decades these were taken out almost on sight, over half a million times a year in US children alone.",
+        hook:"Then doctors noticed they are <b>functioning immune tissue</b>, standing guard at the back of the throat, and the surgery got far less casual. You do fine without them day to day, but they were never idle: a study following more than a million children tied early removal to a <b>higher long-term risk of respiratory illness</b>.",
+        caveat:"The added risk is real but modest in absolute terms; removal is still routine and often the right call, for sleep apnea or chronic infection." },
+
+      { t:2, plate:"gallbladder", pct:99, lb:153, tag:"organ · free", name:"The gallbladder", weight:"about 2 oz",
+        stat:["~2M","removed a year, worldwide"],
+        lead:"A little pouch that stores bile between meals. Hundreds of thousands of people have it taken out every year.",
+        hook:"Nothing replaces it. Your liver just switches from <b>batch-delivering bile to a slow, permanent drip</b> straight into your gut, and most people never notice the difference." },
+
+      { t:2, plate:"uterus", pct:92, lb:142, tag:"organ · free", name:"The uterus", weight:"about 2.5 oz",
+        stat:["~1.5M","removed a year, worldwide"],
+        lead:"Hysterectomy is one of the most common operations there is.",
+        hook:"It is so common that by their early 70s, <b>close to one in two American women have had one</b>. Periods and pregnancy end; if the ovaries stay, the hormones carry on exactly as before." },
+
+      { t:2, plate:"colon", pct:93, lb:143, tag:"organ · rerouted", name:"The large intestine", weight:"about 1 lb",
+        stat:["~1M","removed a year, worldwide"],
+        lead:"The whole five-foot colon can be removed, for colitis, cancer, or a genetic condition.",
+        hook:"Then surgeons do something wild: they <b>build you a new rectum out of your small intestine</b>, folding it into a J-shaped pouch so you can still go to the bathroom normally, no bag required." },
+
+      { t:2, plate:"thyroid", pct:91, lb:140, tag:"organ · the first hard line", name:"The thyroid", weight:"about an ounce",
+        stat:["~800k","removed a year, worldwide"],
+        lead:"A little butterfly gland in your neck that sets your entire metabolic rate.",
+        hook:"This is the first thing on the whole descent you <b>cannot live without, not for a single day</b> after you run out. And yet the replacement for an entire gland is one tiny pill, every morning, forever." },
+
+      { t:2, plate:"liver", pct:94, lb:145, tag:"organ · it grows back", name:"Most of your liver", weight:"about 3 lb, the whole organ",
+        stat:["~500k","removed a year, worldwide"],
+        lead:"Surgeons can cut away well over half of it, and a living donor gives away most of a lobe.",
+        hook:"Because it is the one internal organ that regenerates. <b>As little as a quarter of a liver can regrow to full size in about two months.</b> The donor and the recipient both end up with a whole liver. Nothing else in the body does this." },
+
+      { t:2, plate:"stomach", pct:92, lb:141, tag:"organ · a daily cost", name:"The stomach", weight:"about 5 oz",
+        stat:["~400k","removed a year, worldwide"],
+        lead:"The entire stomach can be removed and your esophagus joined straight to your small intestine.",
+        hook:"With no holding tank, food drops straight through, so you eat <b>many tiny meals all day</b> instead of three big ones, and take vitamin B12 for life, because the stomach made the thing that absorbed it." },
+
+      { t:2, plate:"kidney", pct:99, lb:152, tag:"organ · free", name:"One kidney", weight:"about 5 oz",
+        stat:["~350k","removed a year, worldwide"],
+        lead:"You came with two. Living donors give one away and go on to live a completely normal lifespan.",
+        hook:"In fact, <b>roughly one in 750 people are quietly running on a single kidney</b> their whole life, born that way, and usually only finding out by accident on a scan for something else." },
+
+      { t:2, plate:"bladder", pct:95, lb:146, tag:"organ · rerouted", name:"The bladder", weight:"about 1.5 oz, empty",
+        stat:["~200k","removed a year, worldwide"],
+        lead:"When cancer takes the bladder, surgeons remove the whole organ. Then they build you another one.",
+        hook:"They cut out about fifty centimeters of small intestine, fold it into a pouch, and plumb it in where the bladder was. You pass urine again, but <b>by the clock, not by feel</b>, because the one thing the rebuilt bladder cannot give back is the urge that tells you to go." },
+
+      { t:2, plate:"smallintestine", pct:95, lb:146, tag:"organ · rerouted", name:"Most of the small intestine", weight:"about 2 lb",
+        stat:["~150k","removed a year, worldwide"],
+        lead:"This is your main absorber, around twenty feet of it, and a blood-supply disaster or disease can force surgeons to take out almost the whole length.",
+        hook:"You can still live. People left with barely any bowel are <b>fed straight into a vein</b>, drip by drip, while the stub that remains slowly rewires itself, growing taller folds and working harder, until the gut that is left learns to do the job of the gut that is gone." },
+
+      { t:2, plate:"spleen", pct:98, lb:151, tag:"organ · a daily cost", name:"The spleen", weight:"about 5 oz",
+        stat:["~100k","removed a year, worldwide"],
+        lead:"A fist-sized blood filter under your left ribs. Take it out and the liver and lymph nodes cover most of its work.",
+        hook:"But here is the catch that makes you respect it: without a spleen, a routine fever can become <b>fatal sepsis in 12 to 24 hours</b>. People who lose it are taught to treat every fever as an emergency, for life." },
+
+      { t:2, plate:"pancreas", pct:95, lb:146, tag:"organ · rerouted", name:"The pancreas", weight:"about 3 oz",
+        stat:["~80k","removed a year, worldwide"],
+        lead:"Remove the whole pancreas and you ought to become an instant, permanent diabetic. The gland that meters your blood sugar would be gone.",
+        hook:"So surgeons play a trick on the way out. They <b>strain the insulin-making islet cells from the organ they just removed</b> and infuse them into your liver, where they lodge and keep working. Roughly one patient in three walks out needing no insulin at all." },
+
+      { t:2, plate:"lung", pct:96, lb:148, tag:"organ · free", name:"One lung", weight:"about 1.3 lb",
+        stat:["~50k","removed a year, worldwide"],
+        lead:"Remove a whole lung, a pneumonectomy, and the one that is left simply expands to fill the space.",
+        hook:"People do not just survive on a single lung, <b>they exercise on it</b>. Capacity drops by roughly half and hills get harder, but everyday life, once you have healed, is normal." },
+
+      { t:2, plate:"voicebox", pct:95, lb:145, tag:"organ · rerouted", name:"The voice box", weight:"about an ounce",
+        stat:["~40k","removed a year, worldwide"],
+        lead:"A laryngectomy takes the whole larynx, vocal cords and all, usually to stop a cancer. The windpipe gets rerouted to a hole in the neck, and the cords that carried your voice are gone for good.",
+        hook:"And still people talk. They learn to <b>swallow air and release it in a controlled belch</b>, vibrating the top of the esophagus into rough, understandable speech, or send the breath through a small one-way valve to do the same. A voice with no cords left behind it." },
+
+      { t:3, plate:"arms", pct:80, lb:123, tag:"limb", name:"Both arms", weight:"about 16 lb, the pair",
+        stat:["~3M","missing an arm, worldwide"],
+        lead:"Your torso, your organs, your brain: none of them need your arms to keep you alive. About three million people worldwide live without an arm, and get on with life.",
+        hook:"Most have lost just one, and most of those below the elbow; missing both is far rarer. And people do more than cope. <b>Matt Stutzman was born with no arms at all</b>, and draws a bow with his feet well enough to win Paralympic gold." },
+
+      { t:3, plate:"legs", pct:52, lb:80, tag:"limb", name:"Both legs", weight:"about 48 lb, the pair",
+        stat:["~50M","missing a leg, worldwide"],
+        lead:"Take the legs too. The counter barely flinches: the body life-support is all above the hips. Some fifty million people worldwide live without a leg, almost always just one.",
+        hook:"We have now removed everything you would <b>point to first if asked to describe a person</b>, and the answer to are you still alive has not changed once." },
+
+      { t:3, plate:"pelvis", pct:43, lb:66, tag:"limb", name:"Everything below the waist", weight:"the pelvis and all it holds",
+        stat:["~80","ever performed, worldwide"],
+        lead:"We took the legs at the hip. There is an operation that goes higher still, a hemicorporectomy, that removes everything from the waist down: pelvis, bladder, the rest. What is left is a head and a torso.",
+        hook:"It is among the most radical surgeries ever performed, done only when a cancer or infection below the waist would otherwise be fatal. The longest-documented survivor lived <b>more than 28 years</b> afterward. The counter drops hard again, and the answer to are you still alive does not change." },
+
+      { t:3, plate:"face", pct:50, lb:77, tag:"limb", name:"The face", weight:"the jaw alone, about 3 oz",
+        stat:["~100k","removed a year, worldwide"],
+        lead:"No one removes a whole face. Surgeons take the diseased piece, part of the jaw, the cheek, the nose, or the palate, cutting clean through skin, muscle, and bone to clear a cancer.",
+        hook:"Two surprises: your <b>outer ear is basically optional acoustically</b>, just a passive funnel, and a missing jaw can be <b>rebuilt from a bone in your leg</b>." },
+
+      { t:3, plate:"tongue", pct:41, lb:64, tag:"limb", name:"The tongue", weight:"about 2.5 oz",
+        stat:["~150k","removed a year, worldwide"],
+        lead:"The entire tongue can be removed, a total glossectomy, to clear a cancer of the mouth. It is the muscle behind nearly every word you say and every swallow you take.",
+        hook:"Take all of it and, astonishingly, <b>most people still make themselves understood</b>. Across the pooled studies about 91% of total-glossectomy patients produce intelligible speech, reshaping sound with the lips, the floor of the mouth, and a flap of transplanted tissue where the tongue used to be." },
+
+      { t:3, plate:"eyes", pct:50, lb:77, tag:"limb", name:"Your sight", weight:"about half an ounce, both eyes",
+        stat:["~43M","living without sight, worldwide"],
+        lead:"Both eyes can go, to disease or injury, and survival is high.",
+        hook:"You would lose the entire visual world, the thing that probably feels most like <b>how you experience being alive</b>. And still: alive, unchanged on the counter. Which raises a question we are walking straight toward." },
+
+      { t:4, plate:"heart", pct:49, lb:75, tag:"machine", name:"The heart", weight:"about 11 oz",
+        stat:["16 years","lived on a heart pump"],
+        lead:"A modern pump can take over circulation entirely. Some push blood in one smooth, continuous stream instead of beats.",
+        hook:"Which means a fully awake, talking person can have <b>no detectable pulse at all</b>. When doctors listened to the first continuous-flow recipient chest, they heard not a heartbeat but a <b>steady whir, like a propeller</b>." },
+
+      { t:4, plate:"kidney", pct:48, lb:74, tag:"machine", name:"The kidneys", weight:"the other kidney, about 5 oz",
+        stat:["40+ years","lived on dialysis"],
+        lead:"Both kidneys can fail completely and a dialysis machine will filter your blood instead, a few hours, three times a week, indefinitely.",
+        hook:"Indefinitely is not an exaggeration. The longest-surviving patients have lived <b>more than 40 years on dialysis</b>, decades past the expected lifespan of the therapy." },
+
+      { t:4, plate:"lung", pct:48, lb:74, tag:"machine", name:"The lungs", weight:"the other lung, about 1.3 lb",
+        stat:["70+ years","lived on a breathing machine"],
+        lead:"A machine called ECMO can pull your blood out, add oxygen, strip the carbon dioxide, and return it, breathing for you from outside your body.",
+        hook:"And it can do it for a very long time. <b>Paul Alexander spent over 70 years inside an iron lung</b> after polio, and in that time earned a law degree and practiced as an attorney." },
+
+      { t:4, plate:"cochlea", pct:40, lb:62, tag:"machine", name:"The inner ear", weight:"the cochlea, a sliver of an ounce",
+        stat:["~1M","fitted with a cochlear implant"],
+        lead:"Every machine so far has run the plumbing, the pump, the bellows, the filter. This one runs a sense. When the inner ear dies, a cochlear implant takes over: an electrode coiled into the cochlea that hears for you and speaks straight to the nerve.",
+        hook:"It has been routine since <b>1984</b>, and is now placed in babies as young as <b>seven months</b>. The machine does the hearing; the brain still does the understanding. Which is exactly the line we are walking toward: a machine can carry a sense to the brain, but it cannot be the brain." },
+
+      { t:4, plate:"eyes", pct:40, lb:62, tag:"machine", name:"The eye, by camera", weight:"the retinas, a sliver of an ounce",
+        stat:["~350","fitted with a bionic eye"],
+        lead:"The ear's machine works, and for a while the eye's did too. A camera on a pair of glasses fed a chip pinned to the retina, and more than 350 blind people saw rough shapes and movement again, light handed to the nerve through silicon.",
+        hook:"Then the company ran out of money and walked away. The implants were left in place, so hundreds of people now carry a <b>dead machine wired into the back of the eye</b>: no support, no repairs, the sight it gave them switched off again. A replaced sense, it turns out, is only as durable as the company behind it." },
+
+      { t:5, plate:"hemisphere", pct:25, lb:38, tag:"brain", name:"Half the brain", weight:"about 1.3 lb, one hemisphere",
+        stat:["~200 a year","have a hemisphere removed"],
+        lead:"In children with catastrophic epilepsy, surgeons sometimes remove or disconnect an entire hemisphere, half the cerebrum.",
+        hook:"And the children keep their language, their personality, much of their IQ. In one Johns Hopkins series of 71 kids, most moved by fewer than 15 points, and <b>eight of them got smarter</b> once the seizures stopped." },
+
+      { t:5, plate:"cerebellum", pct:23, lb:35, tag:"brain", name:"Born without a cerebellum", weight:"about 5 oz",
+        stat:["~10","cases ever recorded"],
+        lead:"The cerebellum holds about 80% of all the neurons in your brain. A tiny number of people are born without one at all.",
+        hook:"One woman reached <b>adulthood, walking, talking, married</b>, before a scan revealed the entire structure was simply missing. The rest of her brain had quietly absorbed the job." },
+
+      { t:5, plate:"brainstem", pct:2, lb:3, tag:"the line", name:"the reticular activating system", capNote:"the brainstem, where the reticular activating system runs",
+        lead:"Every part so far could be taken, and someone stayed. This is the one that cannot. Threaded through the brainstem shown here is the reticular activating system, the physical switch for being awake at all, and it has no spare.",
+        hook:"Damage it and the lights do not dim, they go out: no waking, no awareness, no one left to come back. And when the whole brainstem dies, breathing and every reflex die with it. That, not a stopped heart, is where the law now draws death. <b>Lose any other piece and you remain. Lose this one, and there is no longer anyone to lose anything.</b>" }
+    ];
+
+    /* ---- Weight ledger: the spine is an exact cumulative sum of each part's real
+       mass (grams removed at each station, in roster order), so the pounds and the
+       percentage are derived rather than hand-typed, and shown to two decimals. The
+       lb/pct written on the stations above are placeholders, overwritten here. ---- */
+    var BASE_LB = 154, G_PER_LB = 453.592, BRAIN_LB = 1400 / G_PER_LB;
+    var REMOVED_G = [
+      0,                                              /* 00  whole figure */
+      5, 8, 0.3, 0.2, 0.5, 5, 4, 3,               /* 01-08  I: tendon, wisdom teeth, fabella, third eyelid, ear muscles, levator claviculae, appendix, tonsils */
+      50, 70, 453, 25, 1000, 150, 150, 45, 1000, 150, 80, 600, 30,  /* 09-21  II: gallbladder, uterus, colon, thyroid, most of liver, stomach, kidney, bladder, small intestine, spleen, pancreas, lung, voice box */
+      7257, 21772, 8000, 80, 70, 15,                  /* 22-27  III: both arms, both legs, everything below the waist, the jaw, the tongue, both eyes */
+      300, 150, 600, 1, 0,                            /* 28-32  IV: heart, the remaining kidney, the remaining lung, the inner ear, the bionic eye */
+      600, 150,                                       /* 33-34  V: one hemisphere, cerebellum */
+      0                                               /* 35  the turn: only the brain remains */
+    ];
+    (function () {
+      var rem = BASE_LB, cum = 0;
+      STATIONS.forEach(function (st, i) {
+        if (i === STATIONS.length - 1) { rem = BRAIN_LB; }    /* the turn flips to the brain's own weight */
+        else { cum += (REMOVED_G[i] || 0) / G_PER_LB; rem = BASE_LB - cum; }
+        st.lb = rem;
+        st.pct = rem / BASE_LB * 100;
+      });
+    })();
+
+    /* ---- helpers ---- */
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function esc(s) { return ('' + (s == null ? '' : s)).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+    function hexToRgba(hex, a) { var h = hex.replace('#', ''); var n = parseInt(h, 16); return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; }
+
+    function dossierHTML(st, i, tier) {
+      var h = '';
+      h += '<div class="d-eyebrow">' + (tier.title || '') + '</div>';
+      h += '<div class="d-kicker">' + (i > 0 ? '<span class="kno">No. ' + pad(i) + '</span><span class="ksep"> · </span>' : '') + '<span class="tag">' + st.tag + '</span></div>';
+      h += '<h3 class="d-name">' + st.name + '</h3>';
+      if (st.weight) h += '<div class="d-weighs">weighs <span class="val">' + st.weight + '</span></div>';
+      if (st.stat) h += '<div class="d-stat"><span class="fig">' + st.stat[0] + '</span><span class="fig-lbl">' + st.stat[1] + '</span></div>';
+      if (st.lead) h += '<p class="d-lead">' + st.lead + '</p>';
+      if (st.hook) h += '<p class="d-hook">' + st.hook + '</p>';
+      if (st.quote) h += '<p class="d-quote">' + st.quote + '</p>';
+      if (st.src && st.src.length) {
+        h += '<div class="d-sources">';
+        st.src.forEach(function (a) { h += '<a href="' + a[1] + '" target="_blank" rel="noopener">' + a[0] + '</a>'; });
+        h += '</div>';
+      }
+      if (st.caveat) h += '<p class="d-caveat">' + st.caveat + '</p>';
+      return h;
+    }
+
+    function thresholdEl(t) {
+      var T = TIERS[t];
+      var sec = document.createElement('section');
+      sec.className = 'threshold';
+      sec.style.setProperty('--tier', T.accent);
+      sec.style.setProperty('--glow', hexToRgba(T.accent, 0.07));
+      sec.innerHTML = '<div class="numeral">' + T.numeral + '</div><h2 class="t-title">' + T.title + '</h2>' + (T.intro ? '<p class="t-intro">' + T.intro + '</p>' : '');
+      return sec;
+    }
+
+    function specimenEl(st, i) {
+      var T = (st.t >= 1 && TIERS[st.t]) ? TIERS[st.t] : { accent: TIER0_ACCENT, title: 'one body, intact' };
+      var sec = document.createElement('section');
+      sec.className = 'specimen' + (st.dissolve ? ' turn' : '');
+      sec.setAttribute('data-i', i);
+      sec.style.setProperty('--tier', T.accent);
+
+      var file = PLATE_FILES[st.plate];
+      var prov = provenance(st.plate);
+      var capNo = 'No. ' + pad(i);
+      var capText = capNo + ' · ' + prov.who + ', ' + prov.work + ', ' + prov.year + ' · public domain';
+      var alt = 'Anatomical engraving: ' + (st.name || 'the figure') + ', from ' + prov.work + ', ' + prov.year + '.';
+
+      var fig = '<figure class="plate-col">' +
+        '<div class="plate" data-full="' + fpBig(file) + '" data-cap="' + esc(capText) + '" tabindex="0" role="button" aria-label="Enlarge the plate">' +
+        '<img class="plate-img" loading="lazy" decoding="async" alt="' + esc(alt) + '" src="' + fp(file) + '"><div class="sheen"></div></div>' +
+        '<figcaption class="caption"><span class="cap-no"><span class="no">' + capNo + '</span> · </span>' + (st.capNote ? st.capNote + ' · ' : '') + prov.who + ', ' + prov.work + ', ' + prov.year + ' · public domain</figcaption>' +
+        '</figure>';
+
+      sec.innerHTML = fig + '<div class="dossier">' + dossierHTML(st, i, T) + '</div>';
+      return sec;
+    }
+
+    /* ---- build the reel: act thresholds + specimens ---- */
+    var lastN = STATIONS.length - 1;
+    var specimens = [];
+    var thresholds = [];
+    var frag = document.createDocumentFragment();
+    var shownTier = 0;
+    for (var i = 1; i <= lastN; i++) {
+      var st = STATIONS[i];
+      if (st.t !== shownTier && TIERS[st.t]) {
+        var th = thresholdEl(st.t);
+        frag.appendChild(th);
+        thresholds.push(th);
+        shownTier = st.t;
+      }
+      var sp = specimenEl(st, i);
+      frag.appendChild(sp);
+      specimens.push(sp);
+    }
+    reel.appendChild(frag);
+
+    /* fade every plate in on load (no pop); the frame already reserves the space */
+    [].forEach.call(document.querySelectorAll('.plate-img'), function (img) {
+      if (img.complete && img.naturalWidth > 0) { img.classList.add('loaded'); }
+      else { img.addEventListener('load', function () { img.classList.add('loaded'); }, { once: true }); }
+    });
+
+    /* ---- the weight spine ---- */
+    function setGauge(i) {
+      var st = STATIONS[i]; if (!st || !spine) return;
+      if (elPct) elPct.textContent = st.pct.toFixed(2) + '%';
+      if (elLb) elLb.textContent = st.lb.toFixed(1) + ' lb';
+      var frac = Math.max(0, st.lb / BASE_LB);
+      spine.style.setProperty('--paid', (lastN > 0 ? i / lastN : 0).toFixed(4));
+      spine.style.setProperty('--bob', (6 + 13 * frac).toFixed(1) + 'px');
+      if (spineBob) { spineBob.classList.remove('tick'); void spineBob.offsetWidth; spineBob.classList.add('tick'); }
+    }
+    setGauge(0);
+
+    /* ---- observers: reveal each specimen once, and let the part at the reading
+       line own the gauge. spine visibility + release are driven from the scroll
+       frame below (deterministic regardless of how you arrive). ---- */
+    var curIdx = 0;
+    var descentEl = document.querySelector('.descent');
+    var endingEl = document.querySelector('.ending');
+
+    if ('IntersectionObserver' in window) {
+      var revObs = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); } });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
+      specimens.forEach(function (s) { revObs.observe(s); });
+      thresholds.forEach(function (s) { revObs.observe(s); });
+
+      var sightObs = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var i = +e.target.getAttribute('data-i');
+          if (i === curIdx) return;
+          curIdx = i;
+          setGauge(i);
+        });
+      }, { rootMargin: '-48% 0px -48% 0px', threshold: 0 });
+      specimens.forEach(function (s) { sightObs.observe(s); });
+    } else {
+      specimens.forEach(function (s) { s.classList.add('in'); });
+      thresholds.forEach(function (s) { s.classList.add('in'); });
+    }
+
+    /* the spine fades in once you leave the cover, then releases (floats up and
+       dissolves) as the ending rises into view. */
+    function syncSpine() {
+      if (!spine) return;
+      var vh = window.innerHeight;
+      spine.classList.toggle('on', window.scrollY > vh * 0.6);
+      if (endingEl) {
+        var er = endingEl.getBoundingClientRect();
+        spine.classList.toggle('release', er.top < vh * 0.55);
+      }
+    }
+
+    /* gentle parallax: the figures drift against the scroll for depth. lives on
+       .plate-col so it composes with the cursor tilt on .plate. */
+    function parallax() {
+      if (window.innerWidth < 760) return;   /* parallax reads janky on touch; desktop only */
+      var vh = window.innerHeight, c = vh / 2;
+      for (var i = 0; i < specimens.length; i++) {
+        var r = specimens[i].getBoundingClientRect();
+        if (r.bottom < -80 || r.top > vh + 80) continue;
+        var col = specimens[i].querySelector('.plate-col');
+        if (col) col.style.transform = 'translateY(' + ((r.top + r.height / 2 - c) * -0.05).toFixed(1) + 'px)';
+      }
+    }
+
+    var sRaf = null;
+    function onScrollFrame() { sRaf = null; syncSpine(); if (!reduce) parallax(); }
+    function onScroll() { if (sRaf === null) sRaf = requestAnimationFrame(onScrollFrame); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    onScrollFrame();
+
+    /* ---- lightbox: tap a plate to inspect the engraving close up ---- */
+    var lightbox = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lbImg');
+    var lbCap = document.getElementById('lbCap');
+    function openLB(plate) {
+      if (!lightbox || !plate) return;
+      var full = plate.getAttribute('data-full'); if (!full) return;
+      var img = plate.querySelector('.plate-img');
+      lbImg.src = full; lbImg.alt = img ? img.alt : '';
+      lbCap.textContent = plate.getAttribute('data-cap') || '';
+      lightbox.classList.add('open');
+    }
+    function closeLB() { if (!lightbox) return; lightbox.classList.remove('open'); lbImg.removeAttribute('src'); }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      if (e.target.closest('.lightbox')) { closeLB(); return; }
+      var plate = e.target.closest('.plate');
+      if (plate) openLB(plate);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closeLB(); return; }
+      if ((e.key === 'Enter' || e.key === ' ')) {
+        var a = document.activeElement;
+        if (a && a.classList && a.classList.contains('plate')) { e.preventDefault(); openLB(a); }
+      }
+    });
+
+    /* ---- arrow keys glide between specimens while the descent owns the screen ---- */
+    window.addEventListener('keydown', function (e) {
+      if (e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      var dir = e.key === 'ArrowDown' ? 1 : (e.key === 'ArrowUp' ? -1 : 0);
+      if (!dir || !descentEl) return;
+      var r = descentEl.getBoundingClientRect(), cy = window.innerHeight / 2;
+      if (r.top > cy || r.bottom < cy) return;
+      var target = curIdx + dir;
+      if (target < 1 || target > lastN || !STATIONS[target]) return;
+      var el = null;
+      for (var k = 0; k < specimens.length; k++) { if (+specimens[k].getAttribute('data-i') === target) { el = specimens[k]; break; } }
+      if (!el) return;
+      e.preventDefault();
+      try { el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); }
+      catch (err) { el.scrollIntoView(); }
+    });
+  })();
+
+  /* ---- Tip-to-light: each plate leans toward the cursor (desktop) or device tilt
+     (mobile, where allowed), with a candlelight glint that slides to meet you. A
+     proximity falloff means only the plate you are near responds. The lean lives on
+     .plate (rotate); the parallax lives on .plate-col (translate). Off for reduced
+     motion. ---- */
+  (function () {
+    'use strict';
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    var plates = document.querySelectorAll('.specimen .plate, .cover .plate');
+    if (!plates.length) return;
+    var fine = !window.matchMedia || window.matchMedia('(pointer: fine)').matches;
+
+    var MAX = 6;
+    var px = -1e5, py = -1e5;
+    var gx = 0, gy = 0, gyro = false;
+    var raf = null, lastInput = 0;
+    function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+    function ensure() { if (!raf) raf = requestAnimationFrame(loop); }
+
+    function loop() {
+      var vh = window.innerHeight, any = false, t = now();
+      for (var i = 0; i < plates.length; i++) {
+        var fr = plates[i], r = fr.getBoundingClientRect();
+        var tx = 0, ty = 0;
+        if (r.width && r.bottom > -40 && r.top < vh + 40) {
+          if (fine) {
+            var mx = r.left + r.width / 2, my = r.top + r.height / 2;
+            var dx = Math.max(0, Math.abs(px - mx) - r.width / 2);
+            var dy = Math.max(0, Math.abs(py - my) - r.height / 2);
+            var prox = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / r.width);
+            prox = prox * prox * (3 - 2 * prox);
+            tx = Math.max(-1, Math.min(1, (px - mx) / (r.width / 2))) * MAX * prox;
+            ty = Math.max(-1, Math.min(1, (py - my) / (r.height / 2))) * MAX * prox;
+          } else if (gyro) {
+            var f = Math.max(0, 1 - Math.abs((r.top + r.height / 2) - vh / 2) / (vh * 0.62));
+            tx = gx * f; ty = gy * f;
+          }
+        }
+        var cx = fr._cx || 0, cy = fr._cy || 0, vx = fr._vx || 0, vy = fr._vy || 0;
+        vx += (tx - cx) * 0.13; vx *= 0.76; cx += vx;
+        vy += (ty - cy) * 0.13; vy *= 0.76; cy += vy;
+        fr._cx = cx; fr._cy = cy; fr._vx = vx; fr._vy = vy;
+        fr.style.transform = 'rotateY(' + cx.toFixed(2) + 'deg) rotateX(' + (-cy).toFixed(2) + 'deg)';
+        fr.style.setProperty('--sx', (50 - cx * 2.4).toFixed(1) + '%');
+        fr.style.setProperty('--sy', (50 + cy * 2.4).toFixed(1) + '%');
+        fr.style.setProperty('--sheen-op', Math.min(0.82, (Math.abs(cx) + Math.abs(cy)) / 13).toFixed(3));
+        if (Math.abs(vx) + Math.abs(vy) + Math.abs(tx - cx) + Math.abs(ty - cy) > 0.004) any = true;
+      }
+      if (any || t - lastInput < 250) { raf = requestAnimationFrame(loop); } else { raf = null; }
+    }
+
+    if (fine) {
+      window.addEventListener('pointermove', function (e) { px = e.clientX; py = e.clientY; lastInput = now(); ensure(); }, { passive: true });
+      window.addEventListener('mouseout', function (e) { if (!e.relatedTarget) { px = -1e5; py = -1e5; lastInput = now(); ensure(); } }, { passive: true });
+    } else if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+      window.addEventListener('deviceorientation', function (e) {
+        if (e.gamma == null && e.beta == null) return;
+        gyro = true;
+        gx = Math.max(-1, Math.min(1, (e.gamma || 0) / 18)) * MAX;
+        gy = Math.max(-1, Math.min(1, ((e.beta || 0) - 45) / 18)) * MAX;
+        lastInput = now(); ensure();
+      }, { passive: true });
+    }
+  })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

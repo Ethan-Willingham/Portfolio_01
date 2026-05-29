@@ -1,0 +1,1304 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Ghost in the Swarm: Particle Life on the GPU</title>
+  <meta name="description" content="The Ghost in the Swarm: a WebGPU Particle Life simulation of 100,000 particles, quietly steered through sacred geometry by an invisible, morphing field.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific overrides for the Particle Life demo.
+       The base panel system is in style.css. */
+
+    /* ============================================================
+       PARTICLE-LIFE LAYOUT  (height-aware + fullscreen-ready)
+       Three layouts, one DOM:
+         · stacked    — phones, narrow OR short windows (default)
+         · studio     — wide AND tall: square canvas flanked by two
+                        control panels, sized off available HEIGHT so
+                        the whole block fits the viewport without a scroll
+         · fullscreen — .pl-wrapper.is-fs: canvas fills the screen,
+                        controls live in a slide-in drawer
+       ============================================================ */
+
+    /* Default (stacked): centered in the article column. */
+    .pl-wrapper {
+      max-width: 780px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Canvas stage. Square on phones; on wider stacked layouts the
+       max-height clamps it to a landscape band so it never grows taller
+       than the screen (aspect-ratio yields to max-height when they
+       conflict, which is exactly what we want here). */
+    .pl-canvas-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: min(72vh, 540px);
+      background: #07070b;
+      cursor: crosshair;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .pl-canvas { display: block; width: 100%; height: 100%; }
+
+    /* ---- Studio layout: wide AND tall enough ----
+       Gated on min-height too, so short windows fall back to the safe
+       stacked layout instead of an over-tall three-column block. The
+       canvas is sized off --pl-stage: the smaller of leftover height,
+       the width left after two >=240px side panels, and a hard cap — so
+       the component always fits one viewport and the panels stay legible.
+       Disabled while fullscreen via :not(.is-fs). */
+    @media (min-width: 1120px) and (min-height: 620px) {
+      .pl-wrapper:not(.is-fs) {
+        --pl-stage: clamp(340px, min(calc(100dvh - 9rem), calc(94vw - 520px)), 640px);
+        max-width: min(1200px, 94vw);
+        width: min(1200px, 94vw);
+        margin-left: 50%;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        transform: translateX(-50%);
+        position: relative;
+
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) var(--pl-stage) minmax(240px, 1fr);
+        grid-template-rows: auto var(--pl-stage) auto;
+        column-gap: 0;
+        row-gap: 0;
+        align-items: stretch;
+      }
+      .pl-wrapper:not(.is-fs) > .pl-header { grid-column: 1 / -1; grid-row: 1; }
+      .pl-wrapper:not(.is-fs) > .pl-canvas-wrap {
+        grid-column: 2;
+        grid-row: 2;
+        width: var(--pl-stage);
+        height: var(--pl-stage);
+        aspect-ratio: auto;
+        max-height: none;
+      }
+      .pl-wrapper:not(.is-fs) > .pl-action-bar { grid-column: 1 / -1; grid-row: 3; }
+      /* The .pl-controls grid becomes display:contents so its two child
+         groups participate directly in the outer grid and land in the
+         side columns, matching the canvas height exactly. */
+      .pl-wrapper:not(.is-fs) > .pl-controls { display: contents; }
+      .pl-wrapper:not(.is-fs) > .pl-controls > .pl-control-group {
+        grid-row: 2;
+        background: var(--d-bg-raised);
+        padding: 0.9rem 1.05rem 1rem;
+        max-height: var(--pl-stage);
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-width: 0;
+      }
+      .pl-wrapper:not(.is-fs) > .pl-controls > .pl-group-matrix {
+        grid-column: 1;
+        border-right: 1px solid var(--d-rule);
+      }
+      .pl-wrapper:not(.is-fs) > .pl-controls > .pl-group-physics {
+        grid-column: 3;
+        border-left: 1px solid var(--d-rule);
+      }
+      /* Quiet, thin scrollbars on the side panels for the rare case where
+         a very large system font pushes a panel past the stage height. */
+      .pl-wrapper:not(.is-fs) > .pl-controls > .pl-control-group {
+        scrollbar-width: thin;
+        scrollbar-color: var(--d-rule-strong) transparent;
+      }
+      /* Tighten vertical rhythm inside the side panels so the seven
+         sliders + saves section sit comfortably within the stage height
+         without an internal scroll. Stacked/mobile keeps roomier spacing. */
+      .pl-wrapper:not(.is-fs) .pl-slider-row { margin-bottom: 0.3rem; }
+      .pl-wrapper:not(.is-fs) .pl-slot-section { margin-top: 0.7rem; padding-top: 0.75rem; }
+      .pl-wrapper:not(.is-fs) .pl-buttons { margin-top: 0.65rem; }
+    }
+
+    /* ============================================================
+       HEADER ZONES + ICON BUTTONS
+       ============================================================ */
+    .pl-header-mid {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .pl-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    /* Square line-icon button (fullscreen toggle, drawer toggle, close). */
+    .pl-iconbtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      color: var(--d-text-dim);
+      background: transparent;
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .pl-iconbtn:hover {
+      color: var(--d-text-bright);
+      border-color: var(--d-accent);
+      background: rgba(212, 196, 160, 0.08);
+    }
+    .pl-iconbtn:active { transform: translateY(1px); }
+    .pl-iconbtn svg {
+      width: 15px; height: 15px;
+      display: block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .pl-iconbtn .pl-ico-compress { display: none; }
+
+    /* In FULLSCREEN, the fullscreen toggle and the Controls hamburger float over
+       the bright live canvas (the top scrim, the action bar), so make them read
+       clearly there: brighter glyph + border, a dark backing chip so they don't
+       dissolve into the sim, a touch larger, bolder stroke. Scoped to .is-fs on
+       purpose, the inline (non-fullscreen) fullscreen button keeps its plain
+       look. (The action bar gives the hamburger its own larger size; this still
+       upgrades its colour + backing there.) */
+    .pl-wrapper.is-fs .pl-fullscreen,
+    .pl-wrapper.is-fs .pl-fs-drawer-toggle {
+      width: 34px;
+      height: 34px;
+      color: var(--d-text);
+      border-color: var(--d-text-dim);
+      background: rgba(8, 10, 8, 0.5);
+    }
+    .pl-wrapper.is-fs .pl-fullscreen:hover,
+    .pl-wrapper.is-fs .pl-fs-drawer-toggle:hover {
+      color: var(--d-text-bright);
+      border-color: var(--d-accent);
+      background: rgba(8, 10, 8, 0.7);
+    }
+    .pl-wrapper.is-fs .pl-fullscreen svg,
+    .pl-wrapper.is-fs .pl-fs-drawer-toggle svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 1.9;
+    }
+
+    /* Elements that only exist in fullscreen are hidden by default. */
+    .pl-fs-only { display: none; }
+
+    /* ============================================================
+       FULLSCREEN MODE  (.pl-wrapper.is-fs — applied by JS for both the
+       native Fullscreen API and the CSS fallback, so one class drives
+       the whole look)
+       ============================================================ */
+    .pl-wrapper.is-fs {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      margin: 0;
+      transform: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      background: #07070b;
+      /* Keep controls clear of the notch / home indicator on iOS. */
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+      box-sizing: border-box;
+    }
+
+    /* Header floats over the canvas as a translucent top scrim. */
+    .pl-wrapper.is-fs .pl-header {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 30;
+      padding: 0.55rem 0.8rem 1.5rem;
+      background: linear-gradient(to bottom, rgba(8, 10, 8, 0.66), rgba(8, 10, 8, 0));
+      border-bottom: 0;
+      pointer-events: none;
+      transition: opacity 0.55s ease;
+    }
+    .pl-wrapper.is-fs .pl-header > * { pointer-events: auto; }
+    /* Immersive auto-dim: the header fades back while the pointer is idle
+       and any movement restores it (driven by JS). Reduced-motion users
+       keep it steady. */
+    @media (prefers-reduced-motion: no-preference) {
+      .pl-wrapper.is-fs.pl-ui-dim .pl-header { opacity: 0.16; }
+    }
+
+    /* Canvas fills the whole screen in fullscreen. */
+    .pl-wrapper.is-fs .pl-canvas-wrap {
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+      max-height: none;
+    }
+    /* In fullscreen the action bar floats at the BOTTOM, centered over the
+       canvas (Randomize + New colors) — the same bar as inline, repositioned.
+       It auto-dims with the header while the pointer is idle, and sits below
+       the drawer/scrim z-index so an open drawer covers it. */
+    .pl-wrapper.is-fs .pl-action-bar {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      z-index: 25;
+      background: linear-gradient(to top, rgba(8, 10, 8, 0.66), rgba(8, 10, 8, 0));
+      border-top: 0;
+      padding: 1.5rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom));
+      pointer-events: none;
+      transition: opacity 0.55s ease;
+    }
+    .pl-wrapper.is-fs .pl-action-bar > * { pointer-events: auto; }
+    @media (prefers-reduced-motion: no-preference) {
+      .pl-wrapper.is-fs.pl-ui-dim .pl-action-bar { opacity: 0.16; }
+    }
+
+    /* Show the fullscreen-only action (the Controls drawer toggle). */
+    .pl-wrapper.is-fs .pl-fs-drawer-toggle { display: inline-flex; }
+    /* In fullscreen the drawer toggle rides in the floating action bar, anchored
+       bottom-right beside Randomize / New colors and sized up a notch so it
+       reads as a peer of those buttons rather than a tiny header icon. */
+    .pl-wrapper.is-fs .pl-action-bar .pl-fs-drawer-toggle {
+      position: absolute;
+      right: 0.8rem;
+      bottom: calc(0.7rem + env(safe-area-inset-bottom));
+      width: 46px;
+      height: 38px;
+    }
+    .pl-wrapper.is-fs .pl-action-bar .pl-fs-drawer-toggle svg {
+      width: 19px; height: 19px;
+    }
+
+    /* Swap the fullscreen button's glyph expand -> compress while active. */
+    .pl-wrapper.is-fs .pl-fullscreen .pl-ico-expand { display: none; }
+    .pl-wrapper.is-fs .pl-fullscreen .pl-ico-compress { display: block; }
+
+    /* ---- Control drawer (the .pl-controls panel reflowed) ---- */
+    .pl-wrapper.is-fs .pl-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1.3rem;
+      position: absolute;
+      top: 0; right: 0;
+      height: 100%;
+      width: min(380px, 86vw);
+      transform: translateX(101%);
+      transition: transform 0.24s ease;
+      z-index: 40;
+      /* Near-opaque panel, NO backdrop-filter: blurring the live full-screen
+         canvas every frame tanked the framerate in fullscreen (a transformed
+         backdrop-filter layer forces a full-frame backdrop snapshot each
+         frame). A solid panel reads just as cleanly over the sim. */
+      background: rgba(20, 25, 21, 0.975);
+      border-top: 0;
+      border-left: 1px solid var(--d-rule);
+      overflow-y: auto;
+      /* Do NOT add -webkit-overflow-scrolling: touch here. On WebKit (Safari +
+         iOS) it promotes this scroll container to a composited layer that does
+         NOT repaint content changed inside it until the user scrolls, which left
+         the unlock label blank after its text changed on every lock/unlock cycle
+         (Chrome ignores the property, so the bug only ever showed on Safari/iOS,
+         never in any preview). Momentum scrolling is the default on modern iOS
+         Safari, so dropping it costs nothing. */
+      overscroll-behavior: contain;
+      padding: 0 1.1rem 1.4rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--d-rule-strong) transparent;
+    }
+    .pl-wrapper.is-fs.pl-drawer-open .pl-controls { transform: none; }
+    .pl-wrapper.is-fs .pl-control-group { background: transparent; }
+
+    /* The fullscreen drawer has its OWN dedicated unlock button
+       (.pl-drawer-unlock, in the markup); the header keeps a separate copy for
+       the inline view. They are deliberately NOT one node moved between the two:
+       relocating the button into this position:fixed drawer made iOS Safari stop
+       repainting it after the first label change (it painted for a frame, then
+       the compositor dropped it). So hide the header copy in fullscreen and
+       reveal the dedicated drawer copy; setupUnlockUI drives both together. */
+    .pl-wrapper.is-fs .pl-header-mid { display: none; }
+    .pl-wrapper.is-fs .pl-drawer-unlock {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin: 0.9rem 0 0.2rem;
+    }
+    /* Drawer unlock button look. :not([hidden]) is load-bearing: display:block
+       would otherwise override the `hidden` attribute the JS sets when WebGPU is
+       absent, force-showing an unpopulated (blank) button. No will-change /
+       translateZ layer (a persistent GPU layer broke text repaints on iOS).
+       animation:none drops the header pulse, unneeded at the top of the drawer. */
+    .pl-wrapper.is-fs .pl-controls .pl-unlock:not([hidden]) {
+      display: block;
+      width: 100%;
+      text-align: center;
+      text-transform: none;        /* sentence case reads less like a label */
+      letter-spacing: 0.02em;
+      font-size: 0.82rem;
+      padding: 0.72em 1em;
+      border-radius: 3px;
+      animation: none;
+    }
+    /* Locked is the call to action: a faint accent fill so it reads as a
+       tappable button, not a thin outlined label. Unlocked stays a quiet
+       outline (it just steps the cap back down). */
+    .pl-wrapper.is-fs .pl-controls .pl-unlock:not(.pl-unlock-active) {
+      background: rgba(212, 196, 160, 0.14);
+    }
+    /* Locked HOVER fix (the bug that made the label vanish). The global
+       .pl-unlock:hover flips the text to var(--d-bg) (dark) expecting a gold
+       fill, but the locked-fill rule above is MORE specific and keeps the dark
+       background, so the dark text landed on the dark panel = invisible. On
+       desktop that is literal hover; on touch it is iOS "sticky hover" after a
+       tap, which is exactly why the label went blank after a lock/unlock cycle.
+       Keep the text LIGHT on hover (it can then never be invisible) and just
+       deepen the fill slightly. Specificity (incl. :hover + :not) beats both. */
+    .pl-wrapper.is-fs .pl-controls .pl-unlock:not(.pl-unlock-active):hover {
+      color: var(--d-accent);
+      background: rgba(212, 196, 160, 0.24);
+      border-color: var(--d-accent);
+    }
+    /* Label visibility is intentionally left to the default long/tiny swap (the
+       same one the inline header uses): terse on phones, long on wider screens.
+       Do NOT force the long label visible here. The long span starts
+       display:none on phones, and toggling it visible inside the relocated
+       drawer button hit an iOS Safari repaint bug that left the button BLANK.
+       The terse span is always display:inline on phones (never toggled), so it
+       renders reliably; "Unlock 40K" / "Back to 8K" reads fine full-width. */
+
+    /* Drawer bar actions (exit fullscreen + close) sit together at right. */
+    .pl-drawer-bar-actions { display: flex; align-items: center; gap: 0.4rem; }
+
+    /* Sticky drawer bar (title + close), visible only in fullscreen. */
+    .pl-wrapper.is-fs .pl-drawer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: 0 -1.1rem 0;
+      padding: 0.7rem 1.1rem 0.7rem;
+      background: rgba(20, 25, 21, 0.985);
+      border-bottom: 1px solid var(--d-rule);
+    }
+    .pl-drawer-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--d-text-bright);
+    }
+
+    /* Tap-to-close catcher behind the open drawer. Deliberately TRANSPARENT
+       (no dim): the demo stays fully clear while you tweak the controls. The
+       drawer's own glassy backdrop keeps its text readable over the canvas. */
+    .pl-wrapper.is-fs .pl-scrim {
+      display: block;
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      pointer-events: none;
+      z-index: 35;
+    }
+    .pl-wrapper.is-fs.pl-drawer-open .pl-scrim { pointer-events: auto; }
+
+    /* Portrait: the drawer becomes a bottom sheet, capped at half the screen and
+       draggable shut by its top bar (the gesture is wired in setupFullscreen).
+       Solid, not translucent: the sticky Controls header must be opaque to mask
+       content scrolling under it, and an opaque header over a translucent body
+       composites darker than the body (the "darker top" artifact), so the whole
+       sheet is one solid shade instead. Header and body share the exact same
+       solid colour so there is no seam. */
+    @media (orientation: portrait) {
+      .pl-wrapper.is-fs .pl-controls {
+        top: auto; bottom: 0; left: 0; right: 0;
+        width: 100%;
+        height: auto;
+        max-height: 50%;
+        transform: translateY(101%);
+        border-left: 0;
+        border-top: 1px solid var(--d-rule);
+        border-radius: 14px 14px 0 0;
+        padding-top: 0;
+        background: rgb(20, 25, 21);
+      }
+      .pl-wrapper.is-fs.pl-drawer-open .pl-controls { transform: none; }
+      /* The bottom sheet fully covers the floating action bar in portrait, so
+         hide the bar (and its now-unreachable buttons) while the sheet is open;
+         it fades back in as the sheet closes. */
+      .pl-wrapper.is-fs.pl-drawer-open .pl-action-bar {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .pl-wrapper.is-fs .pl-drawer-bar {
+        border-radius: 14px 14px 0 0;
+        background: rgb(20, 25, 21);
+        padding-top: 1.15rem;
+        touch-action: none;
+        cursor: grab;
+      }
+      .pl-wrapper.is-fs.pl-drawer-dragging .pl-drawer-bar { cursor: grabbing; }
+      /* Grab handle: a short pill centered in the bar's top padding. */
+      .pl-wrapper.is-fs .pl-drawer-bar::before {
+        content: '';
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 38px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--d-rule-strong);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pl-wrapper.is-fs .pl-controls,
+      .pl-wrapper.is-fs .pl-scrim { transition: none; }
+    }
+
+    /* Status overlay (shown while initialising or on error) */
+    .pl-status {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 80%;
+      font-family: var(--d-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--d-text-dim);
+      text-align: center;
+      line-height: 1.65;
+      padding: 1em;
+    }
+    .pl-status-error { color: var(--d-warn); }
+
+    /* Unlock toggle ("expert mode" button). Scoped to .pl-wrapper (not
+       .pl-header) so the styling travels with the button when it is relocated
+       into the controls drawer in fullscreen. */
+    .pl-wrapper .pl-unlock {
+      font-family: var(--d-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--d-accent);
+      background: transparent;
+      border: 1px solid var(--d-accent);
+      border-radius: 0;
+      padding: 0.32em 0.85em;
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+      animation: pl-unlock-pulse 3.2s ease-in-out infinite;
+    }
+    .pl-wrapper .pl-unlock:hover {
+      color: var(--d-bg);
+      background: var(--d-accent);
+      animation: none;
+    }
+    .pl-wrapper .pl-unlock.pl-unlock-active {
+      color: var(--d-text-dim);
+      background: transparent;
+      border-color: var(--d-rule-strong);
+      animation: none;
+    }
+    .pl-wrapper .pl-unlock.pl-unlock-active:hover {
+      color: var(--d-text-bright);
+      background: rgba(255,255,255,0.04);
+      border-color: var(--d-text-dim);
+    }
+    @keyframes pl-unlock-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(212,196,160, 0.0); }
+      50%      { box-shadow: 0 0 0 4px rgba(212,196,160, 0.18); }
+    }
+    .pl-wrapper .pl-unlock-msg {
+      font-family: var(--d-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--d-accent);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .pl-wrapper .pl-unlock-msg.pl-unlock-msg-visible { opacity: 1; }
+
+    /* Unlock button carries two labels; the terse one shows only on narrow
+       screens (the roomy "Got a beefy GPU?…" copy fits the wider layouts). */
+    .pl-unlock-tiny { display: none; }
+
+    /* Compact mobile header: keep the count, unlock, FPS and fullscreen on
+       one tidy row instead of wrapping to three lines. */
+    @media (max-width: 600px) {
+      .pl-unlock-long { display: none; }
+      .pl-unlock-tiny { display: inline; }
+      .pl-wrapper .pl-header {
+        padding: 0.5em 0.75em;
+        gap: 0.4rem 0.5rem;
+      }
+      .pl-wrapper .pl-header-mid { flex: 0 1 auto; min-width: 0; }
+      .pl-wrapper .pl-header .pl-unlock-msg { display: none; } /* relabeled button confirms; reclaim the space */
+      .pl-wrapper .pl-header-right { gap: 0.45rem; }
+      .pl-wrapper .pl-particle-count,
+      .pl-wrapper .pl-fps { font-size: 0.82rem; white-space: nowrap; }
+      .pl-wrapper .pl-header .pl-unlock { padding: 0.3em 0.7em !important; white-space: nowrap; }
+    }
+
+    /* Action bar with the prominent "randomize" button */
+    .pl-action-bar {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      background: var(--d-bg-raised);
+      border-top: 1px solid var(--d-rule);
+    }
+    /* Action-bar buttons (Randomize all + New colors) are identical: same
+       Century face, size, weight, shape, AND fill. Both are always lit (solid
+       accent) rather than one filled + one outline, so neither looks secondary
+       and neither flickers between outline and fill on touch (mobile sticky-hover
+       made the outline version look glitchy). Hover just deepens the fill; press
+       dips. Randomize's base styles live in style.css with !important, so these
+       win with a more specific selector plus !important. */
+    .pl-wrapper .pl-action-bar .pl-btn {
+      font-family: var(--font-heading) !important;
+      font-size: 0.95rem !important;
+      font-weight: 400 !important;
+      letter-spacing: 0.01em !important;
+      text-transform: none !important;
+      padding: 0.5em 1.4em !important;
+      border-radius: 3px !important;
+      color: var(--d-bg) !important;
+      background: var(--d-accent) !important;
+      border: 1px solid var(--d-accent) !important;
+      transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.05s !important;
+    }
+    .pl-wrapper .pl-action-bar .pl-btn:hover {
+      background: var(--d-accent-strong) !important;
+      border-color: var(--d-accent-strong) !important;
+    }
+    .pl-wrapper .pl-action-bar .pl-btn:active { transform: translateY(1px); }
+
+    /* Two-column controls grid */
+    .pl-controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.4rem;
+      padding: 1.05rem 1.1rem 1.1rem;
+      background: var(--d-bg-raised);
+      border-top: 1px solid var(--d-rule);
+    }
+    @media (min-width: 720px) {
+      .pl-controls { grid-template-columns: 1fr 1.1fr; }
+    }
+
+    /* Mobile / stacked: Physics sliders sit ABOVE the Force Matrix (the
+       sliders are the primary control). The order is harmless in the studio
+       3-column grid (groups are placed by explicit column) and is reset in
+       the fullscreen drawer so that keeps its matrix-first order. */
+    .pl-group-physics { order: -1; }
+    .pl-wrapper.is-fs .pl-group-physics { order: 0; }
+
+    /* Section heading inside controls */
+    .pl-control-group h4,
+    .pl-slot-section h4 {
+      font-family: var(--d-mono);
+      font-size: 0.64rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--d-text-dim);
+      margin: 0 0 0.75rem 0;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--d-rule);
+      position: relative;
+    }
+    .pl-control-group h4::before,
+    .pl-slot-section h4::before {
+      content: '/';
+      margin-right: 0.55em;
+      color: var(--d-accent);
+      font-weight: 400;
+    }
+
+    /* Slider rows inherit base styles; small spacing tweak */
+    .pl-slider-row { margin-bottom: 0.5rem; }
+
+    /* Keep the value readout (40k, 2.20, …) visible in the narrow studio
+       side panels: let the range input shrink instead of overflowing (the
+       default flex min-width:auto holds it at its intrinsic ~129px, which
+       pushed the value past the panel's overflow-x:hidden edge), and trim
+       the label/value gutters so the slider still has room. */
+    .pl-wrapper .pl-slider-row { gap: 0.7rem; }
+    .pl-wrapper .pl-slider-row label { min-width: 4.5em; }
+    .pl-wrapper .pl-slider-row input[type="range"] { min-width: 0; }
+    .pl-wrapper .pl-slider-val { min-width: 3em; }
+
+    /* Misc text inside controls */
+    .pl-matrix-explainer,
+    .pl-slot-hint {
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      line-height: 1.65;
+      color: var(--d-text-dim);
+      letter-spacing: 0.02em;
+      margin: 0.7rem 0 0;
+    }
+    .pl-matrix-explainer strong,
+    .pl-slot-hint strong { color: var(--d-text); font-weight: 500; }
+
+    /* Rogue field controls (live in the left/matrix panel, grouped under
+       their own heading + divider so the morphing-flow feature reads as one
+       coherent block). */
+    .pl-field-section {
+      margin-top: 1rem;
+      padding-top: 0.95rem;
+      border-top: 1px solid var(--d-rule);
+    }
+    .pl-field-explainer {
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      line-height: 1.6;
+      color: var(--d-text-dim);
+      letter-spacing: 0.02em;
+      margin: 0 0 0.7rem;
+    }
+    /* Pattern stepper: ‹ arrow | centered pattern name | arrow › */
+    .pl-field-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.7rem;
+    }
+    .pl-field-arrow {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-family: var(--d-mono);
+      font-size: 1.15rem;
+      line-height: 1;
+      color: var(--d-text-dim);
+      background: transparent;
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .pl-field-arrow:hover {
+      color: var(--d-text-bright);
+      border-color: var(--d-accent);
+      background: rgba(212, 196, 160, 0.08);
+    }
+    .pl-field-arrow:active { transform: translateY(1px); }
+    .pl-field-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: center;
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--d-accent-strong);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* Tighten the field section in the compact (non-fullscreen) side panel. */
+    .pl-wrapper:not(.is-fs) .pl-field-section { margin-top: 0.7rem; padding-top: 0.75rem; }
+
+    /* Force matrix grid (cells are coloured by JS; we just style the chrome) */
+    .pl-matrix-grid {
+      display: grid;
+      gap: 2px;
+      user-select: none;
+      --pl-cell-size: 26px;
+      --pl-head-size: 18px;
+    }
+    .pl-matrix-corner {
+      width: var(--pl-head-size);
+      height: var(--pl-head-size);
+    }
+    .pl-matrix-head {
+      width: var(--pl-head-size);
+      height: var(--pl-head-size);
+      border-radius: 0;
+    }
+    .pl-matrix-cell {
+      width: var(--pl-cell-size);
+      height: var(--pl-cell-size);
+      border-radius: 0;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .pl-matrix-cell:hover {
+      transform: scale(1.10);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.5);
+      z-index: 2;
+    }
+    @media (max-width: 720px) {
+      .pl-matrix-grid { --pl-cell-size: 22px; }
+    }
+
+    /* Toggle checkboxes */
+    .pl-toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 1.1rem;
+      margin-top: 0.85rem;
+    }
+    .pl-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--d-text-dim);
+      user-select: none;
+      transition: color 0.15s;
+    }
+    .pl-toggle:hover { color: var(--d-text-bright); }
+    .pl-toggle input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 13px; height: 13px;
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 0;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      margin: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pl-toggle input[type="checkbox"]:hover { border-color: var(--d-text-dim); }
+    .pl-toggle input[type="checkbox"]:checked {
+      background: var(--d-accent);
+      border-color: var(--d-accent);
+    }
+    .pl-toggle input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      /* Center off the box's own middle so it stays centered whether the box
+         is the inline 13px or the style.css-override 15px. The -58% on Y (vs
+         -50%) compensates for the tick's heavier lower-right mass. */
+      left: 50%; top: 50%;
+      width: 3px; height: 7px;
+      border: solid var(--d-bg);
+      border-width: 0 2px 2px 0;
+      transform: translate(-50%, -58%) rotate(45deg);
+    }
+
+    /* Preset buttons row */
+    .pl-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.8rem;
+    }
+
+    /* "New colors" rerolls the palette; it sits beside "Randomize all" in the
+       action bar (below the canvas when inline, the floating bottom bar in
+       fullscreen). Styled by .pl-btn. */
+
+    /* Save slots */
+    .pl-slot-section {
+      margin-top: 1rem;
+      padding-top: 0.95rem;
+      border-top: 1px solid var(--d-rule);
+    }
+    .pl-slot-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .pl-slots {
+      display: inline-flex;
+      gap: 0.3rem;
+    }
+    .pl-slot {
+      width: 26px; height: 26px;
+      border-radius: 0;
+      border: 1px solid var(--d-rule-strong);
+      background: transparent;
+      color: var(--d-text-dim);
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .pl-slot:hover {
+      color: var(--d-text-bright);
+      border-color: var(--d-accent);
+    }
+    .pl-slot.pl-slot-filled {
+      background: rgba(212,196,160,0.12);
+      border-color: var(--d-accent);
+      color: var(--d-accent-strong);
+    }
+    .pl-slot.pl-slot-filled:hover {
+      background: rgba(212,196,160,0.2);
+      border-color: var(--d-accent-strong);
+    }
+    /* Long-press feedback fades to red as the user holds (matches JS timer) */
+    .pl-slot.pl-slot-pressing {
+      background: rgba(215, 107, 107, 0.55) !important;
+      border-color: rgba(245, 130, 130, 0.95) !important;
+      color: #fff !important;
+      transition: background 0.55s ease-out, border-color 0.55s ease-out;
+    }
+
+    .pl-share-row {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+    .pl-slot-share {
+      flex: 1;
+      min-width: 0;
+      font-family: var(--d-mono);
+      font-size: 0.74rem;
+      color: var(--d-text);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 0;
+      padding: 0.4em 0.65em;
+      outline: none;
+      letter-spacing: 0.02em;
+    }
+    .pl-slot-share:focus { border-color: var(--d-accent); }
+    .pl-slot-msg {
+      font-family: var(--d-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--d-text-dim);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+    @media (max-width: 720px) {
+      .pl-share-row { flex-wrap: wrap; }
+      .pl-slot-share { flex-basis: 100%; }
+    }
+
+    /* ============================================================
+       EDITORIAL DEVICES (borrowed from the body-parts + weather posts)
+       A small typographic toolkit so the rogue-field headliner gets the
+       same display treatment those posts use: eyebrow label, display name,
+       lead paragraph, pull-quote, stat callout, caveat. Tuned to this page's
+       site palette (--accent / --text-* / --rule / --font-heading).
+       ============================================================ */
+    .pl-feature { margin: 2.6em 0 0.6em; }
+    .pl-feature .d-eyebrow {
+      display: block;
+      font-family: var(--font-heading);
+      font-variant: small-caps;
+      letter-spacing: 0.14em;
+      font-size: 0.92rem;
+      color: var(--accent);
+    }
+    .pl-feature .d-name {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: clamp(1.7rem, 4.6vw, 2.4rem);
+      line-height: 1.1;
+      letter-spacing: -0.012em;
+      color: var(--text-bright);
+      margin: 0.35rem 0 0;
+      text-wrap: balance;
+    }
+    .pl-feature .d-lead {
+      font-size: 1.16rem;
+      line-height: 1.62;
+      color: var(--text);
+      margin-top: 0.9rem;
+      text-wrap: pretty;
+    }
+    .d-quote {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(1.3rem, 3.2vw, 1.6rem);
+      line-height: 1.32;
+      color: var(--accent);
+      margin: 1.5em 0;
+      padding-left: 0.95rem;
+      border-left: 2px solid var(--accent);
+      text-wrap: pretty;
+    }
+    .d-stat {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin: 1.5em 0;
+      padding: 0.15rem 0 0.15rem 0.95rem;
+      border-left: 2px solid var(--rule);
+    }
+    .d-stat .fig {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: clamp(2rem, 6vw, 2.8rem);
+      line-height: 0.95;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .d-stat .fig-lbl {
+      font-family: var(--font-heading);
+      font-variant: small-caps;
+      letter-spacing: 0.05em;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      color: var(--text-dim);
+    }
+    .d-caveat {
+      font-style: italic;
+      font-size: 0.96rem;
+      line-height: 1.5;
+      color: var(--text-dim);
+      opacity: 0.9;
+      margin-top: 0.8rem;
+      text-wrap: pretty;
+    }
+
+    /* Borderless figure (clean, no mat/keyline), filling the prose column.
+       The murmuration is landscape, so it spans the full text width. */
+    .pl-figure {
+      margin: 2.4em 0 2em;
+      max-width: 100%;
+    }
+    .pl-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 3px;
+    }
+    .pl-figure figcaption {
+      margin-top: 0.75rem;
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 0.86rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+      text-wrap: pretty;
+    }
+
+    /* Home back-link: the site-wide .post-back is position:sticky, which pins it
+       to the top of the viewport and floats it over this studio's own toolbar
+       once the page is scrolled down to the demo. On this page let Home sit in
+       normal flow above the title instead, so it never overlaps the studio. */
+    .post-back { position: static; background: none; }
+
+    /* ============================================================
+       FONT LOCK
+       Every glyph in the demo stays on one of the two site fonts:
+       Century Supra (--font-heading) for all prose, labels, hints,
+       status and messages, and Mono (--d-mono) for technical readouts
+       and the bare form controls. These !important rules override
+       style.css's page-override block (matched specificity plus later
+       source order win). Only the inputs, the share textarea and the
+       icon buttons stay on Mono; everything readable is on Century.
+       The status overlay, field explainer and canvas hint used to be
+       Mono, which read as prose stuck in a readout font; moved here.
+       ============================================================ */
+    .pl-wrapper .pl-matrix-explainer,
+    .pl-wrapper .pl-field-explainer,
+    .pl-wrapper .pl-slot-hint,
+    .pl-wrapper .pl-slot-msg,
+    .pl-wrapper .pl-status,
+    .pl-wrapper .pl-canvas-hint { font-family: var(--font-heading) !important; }
+    .pl-wrapper .pl-unlock-msg { font-family: var(--font-heading) !important; }
+    .pl-wrapper input,
+    .pl-wrapper textarea,
+    .pl-wrapper .pl-iconbtn { font-family: var(--d-mono); }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">The Ghost in the Swarm</h1>
+      <p class="post-subtitle">Particle Life on your GPU, with an invisible field that quietly steers a hundred thousand particles through sacred geometry.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <div class="pl-wrapper" id="pl-container">
+            <div class="pl-header">
+              <span class="pl-particle-count">&mdash;</span>
+              <div class="pl-header-mid">
+                <button class="pl-unlock" hidden><span class="pl-unlock-long">&hellip;</span><span class="pl-unlock-tiny">&hellip;</span></button>
+                <span class="pl-unlock-msg" aria-live="polite"></span>
+              </div>
+              <div class="pl-header-right">
+                <span class="pl-fps"></span>
+                <button class="pl-iconbtn pl-fullscreen" type="button" title="Fullscreen (F)" aria-label="Enter fullscreen">
+                  <svg class="pl-ico-expand" viewBox="0 0 16 16" aria-hidden="true"><polyline points="1,5 1,1 5,1"/><polyline points="11,1 15,1 15,5"/><polyline points="15,11 15,15 11,15"/><polyline points="5,15 1,15 1,11"/></svg>
+                  <svg class="pl-ico-compress" viewBox="0 0 16 16" aria-hidden="true"><polyline points="5,1 5,5 1,5"/><polyline points="11,5 15,5 15,1"/><polyline points="15,11 11,11 11,15"/><polyline points="1,11 5,11 5,15"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="pl-canvas-wrap">
+              <canvas class="pl-canvas"></canvas>
+              <div class="pl-status">initializing&hellip;</div>
+              <div class="pl-canvas-hint">drag to stir &middot; shift+drag to push</div>
+            </div>
+            <div class="pl-action-bar">
+              <button class="pl-btn pl-btn-prominent pl-randomize">Randomize all</button>
+              <button class="pl-btn pl-recolor" type="button" title="Roll a fresh harmonious palette (keeps the matrix and physics)">New colors</button>
+              <button class="pl-iconbtn pl-fs-drawer-toggle pl-fs-only" type="button" title="Controls" aria-label="Open controls" aria-expanded="false">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></svg>
+              </button>
+            </div>
+            <div class="pl-scrim pl-fs-only" aria-hidden="true"></div>
+            <div class="pl-controls">
+              <div class="pl-drawer-bar pl-fs-only">
+                <span class="pl-drawer-title">Controls</span>
+                <div class="pl-drawer-bar-actions">
+                  <button class="pl-iconbtn pl-drawer-exit" type="button" title="Exit fullscreen" aria-label="Exit fullscreen">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><polyline points="5,1 5,5 1,5"/><polyline points="11,5 15,5 15,1"/><polyline points="15,11 11,11 11,15"/><polyline points="1,11 5,11 5,15"/></svg>
+                  </button>
+                  <button class="pl-iconbtn pl-drawer-close" type="button" title="Close" aria-label="Close controls">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="pl-drawer-unlock pl-fs-only">
+                <button class="pl-unlock" hidden><span class="pl-unlock-long">&hellip;</span><span class="pl-unlock-tiny">&hellip;</span></button>
+                <span class="pl-unlock-msg" aria-live="polite"></span>
+              </div>
+              <div class="pl-control-group pl-group-matrix">
+                <h4>Force Matrix</h4>
+                <div class="pl-matrix-grid"></div>
+                <p class="pl-matrix-explainer">
+                  Row attracts column. Green = attract, red = repel. Click a
+                  cell to cycle. Shift-click to randomize one cell.
+                </p>
+                <div class="pl-toggles">
+                  <label class="pl-toggle">
+                    <input type="checkbox" class="pl-toggle-loop" checked>
+                    <span>Looping borders</span>
+                  </label>
+                  <label class="pl-toggle">
+                    <input type="checkbox" class="pl-toggle-sym" checked>
+                    <span>Symmetric forces</span>
+                  </label>
+                </div>
+                <div class="pl-field-section">
+                  <h4>Rogue field</h4>
+                  <p class="pl-field-explainer">
+                    An invisible flow that slowly morphs through golden-ratio
+                    and sacred-geometry patterns, conducting the whole swarm.
+                  </p>
+                  <div class="pl-toggles">
+                    <label class="pl-toggle">
+                      <input type="checkbox" class="pl-toggle-field" checked>
+                      <span>Enable field</span>
+                    </label>
+                    <label class="pl-toggle">
+                      <input type="checkbox" class="pl-toggle-layers">
+                      <span>Density layers</span>
+                    </label>
+                    <label class="pl-toggle">
+                      <input type="checkbox" class="pl-toggle-auto" checked>
+                      <span>Auto-morph</span>
+                    </label>
+                  </div>
+                  <div class="pl-slider-row">
+                    <label>Field</label>
+                    <input type="range" data-param="fieldstr" min="0" max="6" value="2.0" step="0.1">
+                    <span class="pl-slider-val" data-value="fieldstr">2.0</span>
+                  </div>
+                  <div class="pl-slider-row">
+                    <label>Morph</label>
+                    <input type="range" data-param="fieldmorph" min="0.2" max="3" value="1.0" step="0.1">
+                    <span class="pl-slider-val" data-value="fieldmorph">1.0&times;</span>
+                  </div>
+                  <div class="pl-field-stepper">
+                    <button class="pl-field-arrow pl-field-prev" type="button" title="Morph back to the previous pattern" aria-label="Previous pattern">&lsaquo;</button>
+                    <span class="pl-field-name" aria-live="polite"></span>
+                    <button class="pl-field-arrow pl-field-next" type="button" title="Morph on to the next pattern" aria-label="Next pattern">&rsaquo;</button>
+                  </div>
+                </div>
+                <div class="pl-buttons">
+                  <button class="pl-btn pl-reset">Reset</button>
+                </div>
+              </div>
+              <div class="pl-control-group pl-group-physics">
+                <h4>Physics</h4>
+                <div class="pl-slider-row">
+                  <label>Count</label>
+                  <input type="range" data-param="count" min="5000" max="100000" value="30000" step="1000">
+                  <span class="pl-slider-val" data-value="count">30k</span>
+                </div>
+                <div class="pl-slider-row">
+                  <label>Radius</label>
+                  <input type="range" data-param="rmax" min="16" max="80" value="32" step="1">
+                  <span class="pl-slider-val" data-value="rmax">32</span>
+                </div>
+                <div class="pl-slider-row">
+                  <label>Force</label>
+                  <input type="range" data-param="force" min="0.10" max="3.0" value="1.0" step="0.05">
+                  <span class="pl-slider-val" data-value="force">1.00</span>
+                </div>
+                <div class="pl-slider-row">
+                  <label>Friction</label>
+                  <input type="range" data-param="friction" min="0.10" max="2.5" value="0.55" step="0.05">
+                  <span class="pl-slider-val" data-value="friction">0.55</span>
+                </div>
+                <div class="pl-slider-row">
+                  <label>Beta</label>
+                  <input type="range" data-param="beta" min="0.10" max="0.80" value="0.30" step="0.01">
+                  <span class="pl-slider-val" data-value="beta">0.30</span>
+                </div>
+                <div class="pl-slider-row">
+                  <label>Repel</label>
+                  <input type="range" data-param="repel" min="0.5" max="12.0" value="4.0" step="0.1">
+                  <span class="pl-slider-val" data-value="repel">4.0</span>
+                </div>
+                <div class="pl-slider-row">
+                  <label>Species</label>
+                  <input type="range" data-param="species" min="1" max="15" value="8" step="1">
+                  <span class="pl-slider-val" data-value="species">8</span>
+                </div>
+                <div class="pl-slot-section">
+                  <h4>Your saves</h4>
+                  <div class="pl-slot-row">
+                    <div class="pl-slots">
+                      <button class="pl-slot pl-slot-empty" data-slot="0">1</button>
+                      <button class="pl-slot pl-slot-empty" data-slot="1">2</button>
+                      <button class="pl-slot pl-slot-empty" data-slot="2">3</button>
+                      <button class="pl-slot pl-slot-empty" data-slot="3">4</button>
+                      <button class="pl-slot pl-slot-empty" data-slot="4">5</button>
+                    </div>
+                    <button class="pl-btn pl-slot-save">Save current</button>
+                  </div>
+                  <p class="pl-slot-hint">
+                    Save the current setup to a slot; click a filled slot to
+                    load it. <strong>Hold</strong> a slot (or right-click) to
+                    delete. Slots persist in your browser.
+                  </p>
+                  <div class="pl-share-row">
+                    <input type="text" class="pl-slot-share" placeholder="Paste a share string here, or click Export"/>
+                    <button class="pl-btn pl-slot-export">Export</button>
+                    <button class="pl-btn pl-slot-import">Import</button>
+                  </div>
+                  <div class="pl-slot-msg" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="d-lead">
+            Two systems share this canvas. The dots are <em>Particle Life</em>:
+            a hundred thousand specks on your GPU, each obeying one tiny rule
+            about whom to chase and whom to flee. Out of that alone come cells,
+            chains, and shapes that look unsettlingly alive. The second system
+            is the ghost.
+          </p>
+
+          <figure class="pl-figure">
+            <img src="assets/images/starling-murmuration.jpg" width="1024" height="683" loading="lazy" decoding="async"
+                 alt="A starling murmuration at dusk: thousands of birds massed into a single dense, flowing shape over a field.">
+            <figcaption>
+              A starling murmuration. Thousands of birds, no leader, each minding
+              only its nearest neighbors, and out of that comes one shape that
+              folds and pours across the sky. The same trick as the swarm above.
+              Photo by <a href="https://commons.wikimedia.org/wiki/File:A_starling_murmuration_near_Gretna_-_geograph.org.uk_-_5980881.jpg">Walter Baxter</a>,
+              <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>.
+            </figcaption>
+          </figure>
+
+          <div class="pl-feature">
+            <span class="d-eyebrow">The part that's mine</span>
+            <h2 class="d-name">An invisible hand</h2>
+            <p class="d-lead">
+              Watch a while and you'll catch the whole swarm leaning into a
+              slow, coherent shape, then dissolving and leaning into the next.
+              That is an unseen flow field laid over the simulation, morphing
+              forever through golden-ratio spirals, mandalas, quasicrystals and
+              the flower of life, the way an old Winamp visualizer drifted from
+              one scene into the next.
+            </p>
+            <p>
+              The trick that keeps it alive instead of dead: each pattern is a
+              <em>curl field</em>. The force runs <em>along</em> the geometry's
+              contours instead of <em>toward</em> it, so the particles stream
+              around the shape and keep their own behavior while they trace it,
+              never collapsing into a few bright points.
+            </p>
+            <p class="d-quote">
+              It is choreography, not a cage. The field suggests; the swarm
+              still argues.
+            </p>
+            <div class="d-stat">
+              <span class="fig">137.5&deg;</span>
+              <span class="fig-lbl">the golden angle, seed of the sunflower
+                spiral and one of ten shapes in the tour</span>
+            </div>
+            <p class="d-caveat">
+              The controls live under <em>Rogue field</em>: turn it off for bare
+              Particle Life, push the strength until it takes the wheel, step the
+              shapes by hand, or split dense clusters and loose dust onto two
+              patterns at once. The simulation itself descends from
+              <a href="https://www.ventrella.com/Clusters/">Ventrella's Clusters</a>,
+              <a href="https://particle-life.com/">Tom Mohr's Particle Life</a>, and
+              <a href="https://lisyarus.github.io/blog/posts/particle-life-simulation-in-browser-using-webgpu.html">lisyarus's WebGPU port</a>;
+              the ghost is the piece I added. Source:
+              <a href="js/particle-life.js">particle-life.js</a>.
+            </p>
+          </div>
+
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+  <script src="js/main.js"></script>
+  <script src="js/particle-life.js"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

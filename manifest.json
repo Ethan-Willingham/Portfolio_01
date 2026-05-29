@@ -1,0 +1,9 @@
+{
+  "name": "Grand Motherload",
+  "short_name": "Motherload",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0d0a04",
+  "theme_color": "#0d0a04",
+  "start_url": "/grand-motherload.html"
+}

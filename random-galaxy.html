@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obi Juan Algorithm</title>
+  <meta name="description" content="A WebGPU observatory of math and algorithms rendered as a million points in 3D that you fly straight through: strange attractors, fractals, the prime numbers, sacred geometry, the shadow of a four-dimensional shape, plus live pathfinding and sorting you watch run, with sound.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific bits for the galaxy explorer. The panel chrome,
+       fonts, and palette all come from the shared .demo-wrapper system
+       in style.css; this only styles the canvas, overlays, the scene
+       control panel, and the responsive behaviour. */
+
+    #galaxy-wrapper .demo-canvas-wrapper {
+      cursor: grab;
+      /* Deep space behind the (opaque) canvas. The nebula is now a world-anchored
+         skybox rendered INSIDE the canvas (see SKY_SHADER in js/random-galaxy.js), so
+         it rotates as you turn instead of staying glued to the screen; this colour is
+         just the pre-init / no-WebGPU fallback. */
+      background: #05060c;
+      height: 460px;
+      overflow: hidden;             /* keep the target callout + HUD from bleeding into the control strip */
+    }
+    #galaxy-wrapper .demo-canvas-wrapper:active { cursor: grabbing; }
+    #galaxy-canvas { display: block; width: 100%; height: 100%; outline: none; }
+    .demo-header-right { display: inline-flex; align-items: center; gap: 0.95rem; }
+    #galaxy-wrapper .p-slider-row label { min-width: 5em; }
+
+    /* Per-generator description, the "what am I looking at" line. Kept readable
+       (not dimmed) and right under the generator buttons, since it is the main
+       orientation for the whole demo. */
+    .gx-desc {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--d-text);
+    }
+    .gx-desc strong { color: var(--d-text-bright); font-weight: 600; }
+
+    /* Top-right corner cluster: tiny fps + version, and the Fullscreen button.
+       The only chrome up top now; no header bar, no title. The container lets
+       drags pass through; only the button itself is clickable. */
+    .gx-topright {
+      position: absolute;
+      top: 12px; right: 14px;
+      display: inline-flex; align-items: center; gap: 0.85rem;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .gx-topstat {
+      display: inline-flex; gap: 0.7rem; align-items: baseline;
+      font-family: var(--d-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      color: var(--d-text-dim);
+      opacity: 0.6;
+      font-variant-numeric: tabular-nums;
+    }
+    .gx-fs-btn {
+      pointer-events: auto;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; padding: 0;
+      color: var(--d-text-dim);
+      background: rgba(10, 13, 11, 0.55);
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 4px;
+      cursor: pointer;
+      -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .gx-fs-btn:hover { color: var(--d-bg); background: var(--d-accent); border-color: var(--d-accent); }
+    .gx-fs-btn { position: relative; }
+    /* Hover hint: the button's data-tip label, dropped just below it so the
+       canvas overflow:hidden never clips it. Desktop only (needs hover). */
+    .gx-fs-btn[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 7px); right: 0;
+      white-space: nowrap;
+      font-family: var(--d-mono); font-size: 0.6rem; letter-spacing: 0.05em;
+      color: var(--d-text-bright); background: rgba(10, 13, 11, 0.94);
+      border: 1px solid var(--d-rule-strong); border-radius: 4px;
+      padding: 0.4em 0.62em; pointer-events: none; z-index: 7;
+      -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    }
+    @media (hover: none) { .gx-fs-btn[data-tip]:hover::after { content: none; } }
+    .gx-ic { display: block; }
+    .gx-ic-compress { display: none; }
+    #galaxy-wrapper:fullscreen .gx-ic-expand,
+    #galaxy-wrapper:-webkit-full-screen .gx-ic-expand,
+    #galaxy-wrapper.gx-pseudo-fs .gx-ic-expand { display: none; }
+    #galaxy-wrapper:fullscreen .gx-ic-compress,
+    #galaxy-wrapper:-webkit-full-screen .gx-ic-compress,
+    #galaxy-wrapper.gx-pseudo-fs .gx-ic-compress { display: block; }
+
+    /* Bottom control bar: one compact dropdown per category, so the whole panel
+       stays tiny and the demo is always in view while you switch scenes. Native
+       <select> on purpose: on a phone you get the OS picker (it overlays the
+       demo and closes instantly) rather than a custom menu that would fight the
+       layout. The closed control is themed; the open list is the platform's. */
+    .gx-controls-row { display: flex; flex-wrap: wrap; gap: 0.5rem 0.55rem; align-items: center; }
+    .gx-cat-select {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      color: var(--d-text-dim);
+      background-color: rgba(212, 196, 160, 0.05);
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 4px;
+      padding: 0.44em 1.95em 0.44em 0.78em;
+      cursor: pointer;
+      max-width: 100%;
+      -webkit-appearance: none; -moz-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9384' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.72em center;
+      transition: color 0.18s, background-color 0.18s, border-color 0.18s, box-shadow 0.18s;
+    }
+    .gx-cat-select:hover { color: var(--d-text-bright); border-color: var(--d-accent); }
+    .gx-cat-select:focus { outline: none; }
+    .gx-cat-select:focus-visible { outline: 2px solid var(--d-accent-strong); outline-offset: 2px; }
+    .gx-cat-select--active {
+      color: var(--d-bg); background-color: var(--d-accent); border-color: var(--d-accent);
+      box-shadow: 0 0 14px rgba(212, 196, 160, 0.28);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a25' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    /* The open list is OS-drawn; theme it where the browser allows (Chrome/FF). */
+    .gx-cat-select option { color: var(--d-text); background-color: #161b17; }
+
+    /* Status / error message, centered over the canvas */
+    .gx-status {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 80%;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      color: var(--d-text-dim);
+      pointer-events: none;
+      z-index: 4;
+    }
+    .gx-status-error { color: var(--d-warn); line-height: 1.6; }
+
+    /* Reveal caption for the expectation-ghost morph: a cinematic line that
+       fades in when you toggle, then recedes (invisible-UI). */
+    .gx-reveal {
+      position: absolute;
+      left: 50%; top: 13%;
+      transform: translate(-50%, -8px);
+      max-width: 86%;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      line-height: 1.5;
+      color: var(--d-text-bright);
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      z-index: 4;
+    }
+    .gx-reveal.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* Generator buttons, Fly, Reseed, and the sliders reuse the shared
+       .tz-btn / .pl-btn / .p-reset / .p-slider-row styles from style.css.
+       Page-scoped polish below; nothing here leaks to the other demo pages. */
+
+    /* Even control-strip rhythm: the shared .controls-top adds a 0.3rem
+       bottom margin on top of the .p-controls gap, which made one gap bigger
+       than the others. Zero it so every row is evenly spaced. */
+    #galaxy-wrapper .controls-top { margin-bottom: 0; }
+
+    /* On-brand focus ring. Replaces the browser-default blue outline (off
+       palette) with a warm accent ring, and only shows it for keyboard focus
+       (:focus-visible), so a mouse click does not leave a ring behind. */
+    #galaxy-wrapper button:focus { outline: none; }
+    #galaxy-wrapper button:focus-visible {
+      outline: 2px solid var(--d-accent-strong);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+
+    /* The shared .fade-in entrance leaves a lingering identity transform (the
+       fadeUp animation fills forwards, and a forwards-filled transform computes to
+       an identity matrix, not none). A non-none transform makes .post-body the
+       containing block for the position:fixed pseudo-fullscreen cover below, pinning
+       the cover to the article column (offset right, top uncovered) instead of the
+       viewport. .post-body is the cover's only transformed ancestor, so settle it
+       with no transform: the cover then sizes against the viewport as intended. */
+    .post-body.fade-in { animation: none; opacity: 1; transform: none; }
+
+    /* Fullscreen flight: cosmos fills the screen; the control strip floats as a
+       thin bar at the bottom. .gx-pseudo-fs is the CSS fallback for browsers
+       without the Fullscreen API on elements (notably iOS Safari). */
+    #galaxy-wrapper:fullscreen,
+    #galaxy-wrapper:-webkit-full-screen,
+    #galaxy-wrapper.gx-pseudo-fs {
+      margin: 0; border: none; border-radius: 0;
+    }
+    /* Real Fullscreen API (Android Chrome, desktop): the element IS the viewport. */
+    #galaxy-wrapper:fullscreen,
+    #galaxy-wrapper:-webkit-full-screen { width: 100vw; height: 100vh; }
+    /* CSS pseudo-fullscreen (iOS Safari, and any FS-API failure): a fixed cover.
+       inset:0 sizes the WIDTH to the viewport exactly (avoids 100vw, which can run
+       wider than the visible area on iOS and clip the right-edge controls); 100dvh
+       pins the HEIGHT to the VISIBLE viewport so the bottom control strip + exit
+       button stay on-screen (plain 100vh runs taller, behind the browser toolbar). */
+    #galaxy-wrapper.gx-pseudo-fs {
+      position: fixed; inset: 0; z-index: 9999;
+      height: 100vh;      /* fallback for browsers without dvh */
+      height: 100dvh;
+    }
+    html.gx-fs-lock, body.gx-fs-lock { overflow: hidden; }
+    #galaxy-wrapper:fullscreen .demo-canvas-wrapper,
+    #galaxy-wrapper:-webkit-full-screen .demo-canvas-wrapper,
+    #galaxy-wrapper.gx-pseudo-fs .demo-canvas-wrapper {
+      height: 100%;
+    }
+    #galaxy-wrapper:fullscreen .p-controls,
+    #galaxy-wrapper:-webkit-full-screen .p-controls,
+    #galaxy-wrapper.gx-pseudo-fs .p-controls {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 6;
+      background: rgba(35, 42, 37, 0.88); border-top: none;
+      padding: 0.7rem 0.9rem; gap: 0.55rem;
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    }
+    /* Keep the floating bar minimal: the scene blurb is hidden in flight (it is
+       still shown in the embedded view), leaving just the dropdowns + speed. */
+    #galaxy-wrapper:fullscreen .gx-desc,
+    #galaxy-wrapper:-webkit-full-screen .gx-desc,
+    #galaxy-wrapper.gx-pseudo-fs .gx-desc { display: none; }
+    /* Clean / screenshot mode (H key or the hide button): hide every UI overlay,
+       leaving only the rendered scene. */
+    #galaxy-wrapper.gx-clean .p-controls,
+    #galaxy-wrapper.gx-clean .gx-topright,
+    #galaxy-wrapper.gx-clean .globe-info,
+    #galaxy-wrapper.gx-clean .gx-reveal,
+    #galaxy-wrapper.gx-clean .gx-dev { display: none !important; }
+
+    /* Immersive dim (fullscreen): click the scene to fade the UI translucent (but
+       still visible + clickable); click any control to bring it fully back. */
+    #galaxy-wrapper .p-controls, #galaxy-wrapper .gx-topright, #galaxy-wrapper .globe-info,
+    #galaxy-wrapper #gx-sort-hud, #galaxy-wrapper #gx-search-hud { transition: opacity 0.55s ease; }
+    #galaxy-wrapper.gx-dim .p-controls,
+    #galaxy-wrapper.gx-dim .gx-topright,
+    #galaxy-wrapper.gx-dim .globe-info,
+    #galaxy-wrapper.gx-dim .gx-reveal,
+    #galaxy-wrapper.gx-dim #gx-sort-hud,
+    #galaxy-wrapper.gx-dim #gx-search-hud { opacity: 0.14 !important; }
+
+    /* Clump callout: a leader line + ring pointing at the nearest standout
+       clump, with a small stats box. Positioned each frame by JS. */
+    .gx-hud {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 3; overflow: visible;
+    }
+    #gx-line { stroke: rgba(212, 196, 160, 0.5); stroke-width: 1; }
+    #gx-bracket {
+      fill: none; stroke: rgba(212, 196, 160, 0.9); stroke-width: 1.4;
+      animation: gx-target-pulse 2.2s ease-in-out infinite;
+    }
+    #gx-dot { fill: rgba(212, 196, 160, 0.95); }
+    @keyframes gx-target-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+    /* Honour reduced-motion: drop the decorative target pulse and the entrance
+       fade so the page settles instantly. The flight demo is opt-in (you choose
+       to enter fullscreen), so it is left untouched here. */
+    @media (prefers-reduced-motion: reduce) {
+      #gx-bracket { animation: none; }
+      .post-header.fade-in, .post-body.fade-in { animation: none; opacity: 1; transform: none; }
+    }
+
+    /* Cluster callout: a technical target readout (Flight Director Box style). */
+    .gx-callout {
+      position: absolute; display: none; pointer-events: none; z-index: 4;
+      font-family: var(--font-heading);
+      font-variant-numeric: tabular-nums;
+      background: rgba(10, 13, 11, 0.9);
+      border-left: 2px solid var(--d-accent);
+      border-radius: 0 4px 4px 0;
+      padding: 0.5em 0.85em 0.6em;
+      color: var(--d-text);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+      -webkit-backdrop-filter: blur(3px);
+      backdrop-filter: blur(3px);
+    }
+    .gx-callout-tag {
+      font-family: var(--d-mono);
+      font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--d-accent-strong); margin-bottom: 0.35em;
+    }
+    .gx-callout-big { font-size: 1.05rem; color: var(--d-text-bright); line-height: 1.15; }
+
+    /* The Speed slider uses the shared .p-slider-row style from style.css. */
+
+    /* === Responsive polish (mobile + touch) === */
+    /* The flight hint is mouse/keyboard guidance (drag, WASD, scroll, H). Cap its
+       width so it can never collide with the top-right buttons, and hide it
+       outright on touch screens where none of those inputs apply. */
+    #galaxy-wrapper .globe-info { max-width: calc(100% - 140px); }
+    @media (hover: none) and (pointer: coarse) {
+      #galaxy-wrapper .globe-info { display: none; }
+    }
+    /* Comfortable thumb targets on touch devices. */
+    @media (pointer: coarse) {
+      .gx-cat-select { padding: 0.58em 2em 0.58em 0.85em; font-size: 0.95rem; }
+      .gx-fs-btn { width: 38px; height: 38px; }
+    }
+    /* Phones / narrow windows: the hint has nowhere to go without crowding the
+       top-right buttons, and the prose above already explains the controls, so
+       drop it. Also shorten the canvas so the controls sit closer, and tighten
+       the strip. */
+    @media (max-width: 560px) {
+      #galaxy-wrapper .globe-info { display: none; }
+      #galaxy-wrapper .demo-canvas-wrapper { height: 380px; }
+      #galaxy-wrapper .p-controls { padding: 1rem 1rem 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">Obi Juan Algorithm</h1>
+      <p class="post-subtitle">A million glowing points you fly through. Reshape them into the deep structures of math, or set an algorithm running and watch it work, live and in 3D.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <div class="demo-wrapper" id="galaxy-wrapper">
+            <div class="demo-canvas-wrapper">
+              <canvas id="galaxy-canvas" tabindex="0"></canvas>
+              <div class="gx-topright">
+                <span class="gx-topstat"><span id="galaxy-fps"></span><span id="galaxy-ver"></span></span>
+                <button class="gx-fs-btn" id="galaxy-hide" data-tip="Hide UI (H)" aria-label="Hide UI for screenshots">
+                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M1.5 8 C3.5 4.5 5.5 3.5 8 3.5 C10.5 3.5 12.5 4.5 14.5 8 C12.5 11.5 10.5 12.5 8 12.5 C5.5 12.5 3.5 11.5 1.5 8 Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M2.5 13.5 L13.5 2.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                </button>
+                <button class="gx-fs-btn" id="galaxy-reset" data-tip="Reset view" aria-label="Reset view">
+                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>
+                </button>
+                <button class="gx-fs-btn" id="galaxy-fly" data-tip="Fullscreen" aria-label="Toggle fullscreen">
+                  <svg class="gx-ic gx-ic-expand" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 6 V2.5 H6 M10 2.5 H13.5 V6 M13.5 10 V13.5 H10 M6 13.5 H2.5 V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg class="gx-ic gx-ic-compress" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6 2.5 V6 H2.5 M13.5 6 H10 V2.5 M10 13.5 V10 H13.5 M2.5 10 H6 V13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="globe-info" id="galaxy-hint">drag or WASD to steer &middot; Q/E roll &middot; scroll for speed &middot; H to hide UI</div>
+              <div class="gx-reveal" id="galaxy-reveal"></div>
+              <div class="gx-status" id="galaxy-status">initializing&hellip;</div>
+            </div>
+            <div class="p-controls">
+              <div class="gx-controls-row">
+                <select class="gx-cat-select gx-cat-select--active" aria-label="Randomness scene">
+                  <option value="">Randomness</option>
+                  <option value="mulberry" selected>Mulberry</option>
+                  <option value="grid">Perfect grid</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Attractor scene">
+                  <option value="">Attractors</option>
+                  <option value="thomas">Thomas</option>
+                  <option value="lorenz">Lorenz</option>
+                  <option value="aizawa">Aizawa</option>
+                  <option value="dadras">Dadras</option>
+                  <option value="clifford">Clifford</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Fractal scene">
+                  <option value="">Fractals</option>
+                  <option value="sierpinski">Sierpinski</option>
+                  <option value="jerusalem">Jerusalem cube</option>
+                  <option value="vicsek">Vicsek</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Number scene">
+                  <option value="">Numbers</option>
+                  <option value="primes3d">Primes</option>
+                  <option value="gprimes">Gaussian primes</option>
+                  <option value="collatz">Collatz</option>
+                  <option value="pi">Pi</option>
+                  <option value="recaman">Recaman</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Sacred geometry scene">
+                  <option value="">Sacred geometry</option>
+                  <option value="metatron">Metatron</option>
+                  <option value="hopf">Hopf</option>
+                  <option value="lotus">Lotus</option>
+                  <option value="harmonics">Harmonics</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Pathfinding scene">
+                  <option value="">Pathfinding</option>
+                  <option value="bfs">BFS</option>
+                  <option value="bidir">Bidirectional</option>
+                  <option value="dijkstra">Stochastic Dijkstra</option>
+                  <option value="wavefront">Multi-Source</option>
+                  <option value="randomflood">Noisy Flood</option>
+                  <option value="dfs">DFS</option>
+                  <option value="randomwalk">Random walk</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Sorting scene">
+                  <option value="">Sorting</option>
+                  <option value="selection">Selection</option>
+                  <option value="bubble">Bubble</option>
+                  <option value="cocktail">Cocktail</option>
+                  <option value="insertion">Insertion</option>
+                  <option value="gnome">Gnome</option>
+                  <option value="shell">Shell</option>
+                  <option value="comb">Comb</option>
+                  <option value="quick">Quicksort</option>
+                  <option value="heap">Heapsort</option>
+                  <option value="bitonic">Bitonic</option>
+                  <option value="oddeven">Odd-even</option>
+                  <option value="pancake">Pancake</option>
+                  <option value="bogo">Bogo</option>
+                </select>
+                <select class="gx-cat-select" aria-label="Life scene">
+                  <option value="">Life</option>
+                  <option value="boids">Boids</option>
+                  <option value="ocean">Ocean</option>
+                  <option value="sacred">Sacred geometry</option>
+                  <option value="attractor">Strange attractor</option>
+                </select>
+              </div>
+              <div class="gx-desc" id="galaxy-blurb"></div>
+              <div class="p-slider-row">
+                <label>Speed</label>
+                <input type="range" id="gx-speed-range" min="0" max="0.3" step="0.005" value="0.05" aria-label="Flight speed" title="How fast you cruise the field in fullscreen flight.">
+                <span class="p-slider-val" id="gx-speed-val">17%</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            Most math lives on a page, flattened into symbols and graphs.
+            This is the opposite. Every piece here is rendered as a million
+            glowing points in three dimensions, and you fly straight through
+            it. No equations to read, no axes to squint at. You just move
+            through the thing and let its shape land on your eyes.
+          </p>
+
+          <p>
+            Pick something from the panel and the whole field reshapes into
+            it: real randomness, a chaotic attractor, a fractal, the prime
+            numbers, the temples of sacred geometry, or the shadow a
+            four-dimensional shape casts into our world. Or set one running,
+            and watch a search flood a maze toward its goal, or a sorting
+            algorithm untangle a tube of light into order, in real time and in
+            sound. Drag or use <strong>WASD</strong> to steer, <strong>Q</strong>
+            and <strong>E</strong> to roll, scroll to change speed,
+            <strong>H</strong> to hide the interface, and the icon at the top
+            right to go fullscreen.
+          </p>
+
+          <h2>What you are looking at</h2>
+
+          <p>
+            Nothing here is decoration. Every scene is computed live from its
+            own rule, then drawn as a million points: the attractors trace
+            genuine chaotic equations, the fractals are built by the chaos game
+            one point at a time, the primes really are prime, and the 600-cell
+            really is the shadow a four-dimensional solid casts into our three.
+          </p>
+
+          <p>
+            Some scenes do not sit still, they run. In the pathfinding rooms a
+            search spreads through a three-dimensional lattice and you watch it
+            grope toward the goal, a glowing route threading back to the start
+            the moment it arrives. In the sorting rooms a scrambled ring of
+            colored values sorts itself into a smooth rainbow horn while a panel
+            tallies every comparison and swap, and if you switch the sound on,
+            each step rings out as a note on a pentatonic scale, so you hear the
+            algorithm as much as you see it.
+          </p>
+
+          <p>
+            The scene it opens on is where this all began: real randomness.
+            That clumpy cloud of knots and voids is what healthy randomness
+            actually looks like. Flip it to <strong>Perfect grid</strong> and
+            the points slide into the tidy, even spread most people picture when
+            they hear the word, the one result pure chance almost never
+            produces. Randomness is clumpy, and that was the first thing here
+            worth flying through.
+          </p>
+
+          <div class="divider">&bull; &bull; &bull;</div>
+
+          <p>
+            It is an observatory, not an essay. The whole point is to let you
+            <em>see</em> math and algorithms instead of reading them: to fly
+            inside the structures and watch the processes run. New rooms keep
+            getting added, so wander as long as you like.
+          </p>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+  <script src="js/main.js"></script>
+  <script src="js/random-galaxy.js"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

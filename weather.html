@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why We Can Never Predict the Weather</title>
+  <meta name="description" content="Strip the sky down to nothing, then add the variables back one at a time, and watch each one make the forecast exponentially harder. An interactive descent through the variables of a forecast, and the two-week wall none of them get past.">
+  <meta property="og:title" content="Why We Can Never Predict the Weather">
+  <meta property="og:description" content="Add the variables back one at a time and watch the forecast die. The math of why perfect prediction is impossible, told as a scroll.">
+  <meta property="og:type" content="article">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- fonts come only from style.css: Century Supra (the one loaded web font) plus the site's own system stacks. no foreign web fonts. -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     WHY WE CAN NEVER PREDICT THE WEATHER
+     A descent in the spirit of the body-parts atlas: a JS-built
+     reel of numbered "variables," each compounding the difficulty and
+     each carrying one headline stat (a big figure + small-caps label).
+     The history, the planetary asides, and the live Lorenz demo are
+     collected in an appendix after the post.
+     Green background, Century Supra, capped reading width.
+     Mobile: the reading column uses the site standard (content-width + the shared
+     --gutter) for symmetric margins matching the other posts; desktop two-column
+     spread untouched.
+     No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --col:      62ch;                         /* reading measure */
+    --reel-w:   min(94vw, 760px);
+    --tier:     var(--accent);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in:  cubic-bezier(0.55, 0, 1, 0.45);
+  }
+
+  html { overflow-x: hidden; overscroll-behavior-x: none; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-heading); font-weight: 400; line-height: 1.62; padding: 0; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: #20251d; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* faint film grain, identical approach to the atlas */
+  .grain { position: fixed; inset: 0; pointer-events: none; mix-blend-mode: overlay; opacity: 0.35; z-index: 8; }
+
+  /* home link: a plain word at the top of the post, in normal flow, scrolling
+     away with the page. The .top-nav just keeps it aligned to the reading column. */
+  .top-nav { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto 1.2rem; padding: 1rem var(--gutter) 0.85rem; }
+  .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
+
+  .sc { font-variant: small-caps; letter-spacing: 0.12em; }
+
+  /* ---- The plate: a clean, borderless image with a soft shadow ---- */
+  .plate { position: relative; border-radius: 4px; overflow: hidden; cursor: zoom-in;
+    box-shadow:
+      0 2px 6px rgba(8,12,9,0.3),
+      0 16px 40px -20px rgba(8,12,9,0.5); }
+  .plate.contain { background: #e7dcc2; }
+  .plate.dark { background: #0e1216; }
+  .plate-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity 700ms var(--ease-out); -webkit-user-drag: none; }
+  .plate.contain .plate-img { object-fit: contain; }
+  .plate-img.loaded { opacity: 1; }
+
+  .caption { margin-top: 0.8rem; text-align: center; font-variant: small-caps;
+    letter-spacing: 0.06em; font-size: 0.84rem; line-height: 1.45; color: var(--text-dim); }
+  .caption .no { font-family: var(--font-mono); font-variant: normal; letter-spacing: 0.02em; color: var(--tier, var(--accent)); }
+
+  /* ---- Cover ---- */
+  .cover { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5svh 1.4rem 5.5rem; gap: 1.2rem; position: relative; }
+  .cover-rule { font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.92rem; color: var(--accent); }
+  .cover .plate { width: min(74vw, 380px); aspect-ratio: 1 / 1; animation: rise 1.2s var(--ease-out) both; border-radius: 50%; overflow: hidden;
+    box-shadow:
+      0 24px 60px -24px rgba(0,0,0,0.70),
+      0 0 64px -8px rgba(120,170,214,0.34); }
+  .cover .plate .plate-img { transform: scale(1.16); }
+  /* a whisper of rim shading so the disk reads as a lit sphere */
+  .cover .plate::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; z-index: 2;
+    background: radial-gradient(circle at 50% 42%, transparent 66%, rgba(0,0,0,0.10) 86%, rgba(0,0,0,0.34) 100%); }
+  .cover h1 { font-weight: 700; font-size: clamp(2.4rem, 7.4vw, 4rem); line-height: 1.03; letter-spacing: -0.02em; color: var(--text-bright); max-width: 16ch; text-wrap: balance; animation: rise 1.2s var(--ease-out) 0.16s both; }
+  .cover-sub { font-size: 1.18rem; line-height: 1.55; color: var(--text-dim); max-width: 40ch; text-wrap: pretty; animation: rise 1.2s var(--ease-out) 0.24s both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .scroll-cue { position: absolute; bottom: 2rem; font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.9rem; color: var(--text-dim); opacity: 0.72; }
+
+  /* ---- The descent ---- */
+  .descent { position: relative; padding: 0 0 6svh; }
+
+  /* the reel of figures lives in normal flow and physically scrolls */
+  .reel { position: relative; z-index: 1; }
+
+  /* ---- A figure (one variable, or an interlude) ---- */
+  .figure { position: relative; max-width: var(--reel-w); margin: 12svh auto; padding: 0 1.3rem; min-height: 56svh;
+    display: flex; flex-direction: column; gap: 1.3rem; align-items: stretch;
+    opacity: 0; transform: translateY(28px); transition: opacity 820ms var(--ease-out), transform 820ms var(--ease-out); }
+  .figure.in { opacity: 1; transform: none; }
+  .figure:first-child { margin-top: 4svh; }
+  .plate-col { margin: 0; }
+  .figure .plate { width: 100%; max-width: 300px; aspect-ratio: 4 / 3; margin: 0 auto; }
+  .dossier { min-width: 0; }
+
+  .d-eyebrow { font-variant: small-caps; letter-spacing: 0.13em; font-size: 0.9rem; color: var(--tier, var(--accent)); }
+  .d-kicker { font-variant: small-caps; letter-spacing: 0.09em; font-size: 0.84rem; color: var(--text-dim); margin-top: 0.2rem; }
+  .d-kicker .tag { color: var(--tier, var(--accent)); }
+  .d-name { font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.05rem); line-height: 1.08; letter-spacing: -0.012em; color: var(--text-bright); margin-top: 0.45rem; text-wrap: balance; }
+  /* the one big figure per card, in the spirit of the body-parts atlas */
+  .d-stat { display: flex; align-items: baseline; gap: 0.55rem; margin-top: 0.95rem; }
+  .d-stat .fig { font-weight: 700; font-size: clamp(2.1rem, 6vw, 3rem); line-height: 0.92; letter-spacing: -0.01em; color: var(--tier, var(--accent)); font-variant-numeric: tabular-nums; }
+  .d-stat .fig sup { font-size: 0.5em; }
+  .d-stat .fig-lbl { font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.92rem; line-height: 1.22; color: var(--text-dim); }
+  .d-lead { font-size: 1.14rem; line-height: 1.58; color: var(--text); margin-top: 0.85rem; text-wrap: pretty; }
+  .d-lead.first { margin-top: 0; }
+
+  /* per-stage explanatory diagram: a textbook figure on a light backing */
+  .d-diagram { margin: 1.5rem auto 0.4rem; max-width: 440px; }
+  .d-diagram .plate { aspect-ratio: auto; padding: 12px; cursor: zoom-in; }
+  .d-diagram .plate-img { position: static; width: 100%; height: auto; object-fit: contain; display: block; }
+  .d-diagram .caption { margin-top: 0.6rem; }
+  .d-diagram.pairfig { max-width: 520px; }
+  .dia-pair { display: flex; gap: 10px; }
+  .dia-pair .plate { flex: 1 1 0; min-width: 0; }
+
+  /* the two math lines: alone, then stacked */
+  .d-math { margin-top: 1rem; border-left: 2px solid var(--tier, var(--accent)); padding: 0.1rem 0 0.1rem 0.95rem; }
+  .d-math .row { display: block; font-size: 1.04rem; line-height: 1.5; color: var(--text); margin-bottom: 0.45rem; text-wrap: pretty; }
+  .d-math .row:last-child { margin-bottom: 0; }
+  .d-math .lab { font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.8rem; color: var(--text-dim); display: block; }
+  .d-math b { color: var(--tier, var(--accent)); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .d-hook { font-size: 1.14rem; line-height: 1.58; color: var(--text); margin-top: 0.95rem; text-wrap: pretty; }
+  .d-hook b { color: var(--text-bright); font-weight: 700; }
+  .d-quote { font-style: italic; font-weight: 400; font-size: 1.28rem; line-height: 1.32; color: var(--tier, var(--accent)); margin-top: 1rem; padding-left: 0.9rem; border-left: 2px solid var(--tier, var(--accent)); }
+  .d-sources { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; margin-top: 1rem; }
+  .d-sources a { font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.86rem; color: var(--text-dim); text-decoration: none; border-bottom: 1px solid rgba(232,226,214,0.22); }
+  .d-sources a:hover { color: var(--accent); border-color: var(--accent); }
+  .d-caveat { font-style: italic; font-size: 0.95rem; line-height: 1.45; color: var(--text-dim); opacity: 0.86; margin-top: 0.75rem; text-wrap: pretty; }
+
+  /* desktop: two-column spread, the plate becomes the feature */
+  @media (min-width: 760px) {
+    .figure { flex-direction: row; align-items: center; gap: 3rem; max-width: 1040px; min-height: 84svh; padding: 0 1.5rem; }
+    .figure.flip { flex-direction: row-reverse; }
+    .plate-col { flex: 0 0 42%; max-width: 440px; align-self: center; }
+    .figure .plate { width: 100%; max-width: none; }
+    .dossier { flex: 1 1 auto; max-width: var(--col); }
+  }
+
+  /* mobile dividers between figures + a symmetric reading column matching the
+     site standard (content-width + the shared --gutter), the same margins the
+     other posts use. desktop two-column spread is untouched. */
+  @media (max-width: 759.98px) {
+    .figure { margin: 16svh auto; max-width: var(--content-width); padding-left: var(--gutter); padding-right: var(--gutter); }
+    /* center the headline stat on phones: stack the figure over its label so the
+       big number never breaks mid-value, and center the block */
+    .d-stat { flex-direction: column; align-items: center; gap: 0.12rem; }
+    .d-stat .fig { white-space: nowrap; }
+    .d-stat .fig-lbl { text-align: center; }
+    .figure + .figure::before { content: ''; position: absolute; top: -8svh; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,196,160,0.22) 24%, rgba(212,196,160,0.22) 76%, transparent); }
+  }
+
+  /* ---- Interlude variant (history + planetary "meanwhile") ---- */
+  .figure.interlude .d-name { font-size: clamp(1.4rem, 4vw, 1.85rem); }
+  .figure.planet .d-eyebrow { color: #b9a6e0; }
+
+  /* ---- The turn (final figure flips centered) ---- */
+  .figure.turn { flex-direction: column; align-items: center; text-align: center; max-width: 46ch; }
+  .figure.turn .plate { max-width: 210px; opacity: 0.82; aspect-ratio: 1/1; border-radius: 50%; overflow: hidden;
+    box-shadow: 0 24px 50px -14px rgba(0,0,0,0.72), 0 60px 120px -40px rgba(0,0,0,0.55); }
+  .figure.turn .plate .plate-img { transform: scale(1.16); }
+  .figure.turn .d-quote { border: none; padding: 0; font-size: 1.5rem; margin-top: 1rem; }
+  .figure.turn .d-sources { justify-content: center; }
+
+  /* ---- Demo panel (reuses the site demo-wrapper look) ---- */
+  .wx-demo { max-width: var(--reel-w); margin: 12svh auto; padding: 0 1.3rem;
+    opacity: 0; transform: translateY(28px); transition: opacity 820ms var(--ease-out), transform 820ms var(--ease-out); }
+  .wx-demo.in { opacity: 1; transform: none; }
+  @media (min-width: 760px) { .wx-demo { max-width: 900px; } }
+  .wx-demo .demo-wrapper { margin: 0; }
+  .wx-demo-intro { font-size: 1.06rem; line-height: 1.55; color: var(--text-dim); margin-bottom: 1.1rem; text-wrap: pretty; }
+  .wx-demo-intro b { color: var(--text-bright); font-weight: 700; }
+  .wx-canvas-wrap { position: relative; width: 100%; aspect-ratio: 16 / 10; background: var(--d-canvas-bg); overflow: hidden; }
+  .wx-canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+  .wx-readout { position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; gap: 1rem;
+    font-family: var(--font-mono); font-size: 0.8rem; color: rgba(245,241,234,0.62); pointer-events: none; line-height: 1.5; }
+  .wx-readout .r-right { text-align: right; }
+  .wx-readout b { color: var(--d-accent-strong); font-weight: 400; }
+  .wx-split { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-variant: small-caps; letter-spacing: 0.08em;
+    font-size: 0.92rem; color: #e6b9b9; opacity: 0; transition: opacity 600ms var(--ease-out); pointer-events: none; }
+  .wx-split.show { opacity: 1; }
+  .wx-controls { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; padding: 0.95rem 1.2rem; background: var(--d-bg-raised); border-top: 1px solid var(--d-rule); }
+  .wx-controls label { font-size: 0.92rem; color: var(--d-text); min-width: 8.5em; }
+  .wx-controls input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--d-accent); }
+  .wx-controls .wx-val { font-family: var(--font-mono); font-size: 0.88rem; color: var(--d-accent-strong); min-width: 6.5em; text-align: right; }
+  .wx-btn { font-family: var(--font-heading); font-size: 0.9rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 3px; padding: 0.4em 1em; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+  .wx-btn:hover { color: var(--d-bg); border-color: var(--d-accent); background: var(--d-accent); }
+
+  /* ---- Ending ---- */
+  .ending { min-height: 92svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10svh 1.4rem; }
+  .ending h2 { font-weight: 700; font-size: clamp(1.9rem, 5.6vw, 3rem); line-height: 1.16; letter-spacing: -0.015em; color: var(--text-bright); max-width: 20ch; text-wrap: balance; }
+  .ending h2 em { color: var(--accent); font-style: italic; }
+  .ending p { font-size: 1.2rem; color: var(--text-dim); max-width: 42ch; margin-top: 1.5rem; line-height: 1.62; text-wrap: pretty; }
+  .ending p em { color: var(--text); font-style: italic; }
+
+  /* ---- Appendix: the live demo, history, and planetary asides, set after the descent ---- */
+  .appendix { position: relative; padding: 3svh 0 2svh; border-top: 1px solid rgba(212,196,160,0.14); }
+  .appendix-head { max-width: var(--col); margin: 0 auto; padding: 7svh 1.4rem 0; text-align: center; }
+  .appendix-head .ap-rule { font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.95rem; color: var(--accent); }
+  .appendix-head .ap-sub { font-size: 1.05rem; color: var(--text-dim); max-width: 46ch; margin: 0.85rem auto 0; line-height: 1.55; text-wrap: pretty; }
+
+  /* ---- Colophon ---- */
+  .colophon { max-width: var(--col); margin: 0 auto; padding: 3rem 1.4rem 6rem; font-size: 0.96rem; color: var(--text-dim); line-height: 1.7; }
+  .colophon h3 { font-variant: small-caps; letter-spacing: 0.08em; font-size: 1rem; color: var(--text); margin-bottom: 0.6rem; }
+  .colophon p { margin-bottom: 1rem; text-wrap: pretty; }
+  .colophon a { color: var(--text-dim); }
+  .colophon a:hover { color: var(--accent); }
+  .colophon .imgcredits { font-size: 0.82rem; opacity: 0.82; line-height: 1.55; }
+
+  /* ---- Lightbox ---- */
+  .lightbox { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 4vmin;
+    background: rgba(20,24,20,0.95); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 3px; box-shadow: 0 30px 90px rgba(0,0,0,0.6); }
+  .lightbox img.dark { background: #0e1216; padding: 2%; }
+  .lightbox img.litebg { background: #e7dcc2; padding: 2%; }
+  .lightbox .lb-cap { position: absolute; left: 0; right: 0; bottom: 2vmin; text-align: center; font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.88rem; color: var(--text-dim); padding: 0 1rem; }
+
+  html:not(.js) .reel { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cover .plate, .cover h1, .cover-rule, .cover-sub { animation: none; }
+    .plate { transform: none !important; }
+    .plate-img { transition: opacity 240ms linear; }
+    .figure, .wx-demo { transition: opacity 240ms linear; transform: none !important; }
+  }
+  </style>
+</head>
+<body>
+  <svg class="grain" aria-hidden="true" width="100%" height="100%">
+    <filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/></filter>
+    <rect width="100%" height="100%" filter="url(#grainf)"/>
+  </svg>
+
+  <div class="top-nav"><a href="/" class="post-back"><span class="pb-label">Home</span></a></div>
+
+  <section class="cover">
+    <div class="cover-rule">an impossible forecast, in twenty-one variables</div>
+    <div class="plate" data-full="assets/weather/earth-bluemarble.jpg" data-cap="The whole machine. The Blue Marble. NASA, public domain" tabindex="0" role="button" aria-label="Enlarge the image">
+      <img class="plate-img" alt="Earth as a full disk from space, the Blue Marble: deep blue ocean and white cloud over the Americas." src="assets/weather/earth-bluemarble.jpg">
+    </div>
+    <h1>Why We Can Never Predict the Weather</h1>
+    <p class="cover-sub">Strip the sky down to nothing. Now add the variables back, one at a time, and watch each one make the forecast exponentially harder.</p>
+    <div class="scroll-cue">scroll to begin</div>
+  </section>
+
+  <section class="descent" aria-label="The descent">
+    <div class="reel" id="reel"></div>
+    <noscript><p style="max-width:42ch;margin:8svh auto;padding:0 1.4rem;text-align:center;color:var(--text-dim);line-height:1.7">This is an interactive descent through the variables of a weather forecast. Please enable JavaScript to read it.</p></noscript>
+  </section>
+
+  <section class="ending">
+    <h2>So we will never have the <em>perfect</em> forecast.</h2>
+    <p>Not because we are not clever enough, but because the sky will not hold still long enough to be measured. Two weeks is the wall, and the wall is made of mathematics.</p>
+    <p>And yet, knowing all of that, we built a machine that sees ten days into a chaotic ocean of air. <em>That</em> is the miracle worth being amazed by.</p>
+  </section>
+
+  <section class="appendix" id="appendix" aria-label="Notes, history, and the live model">
+    <div class="appendix-head">
+      <div class="ap-rule">the long way round</div>
+      <p class="ap-sub">The history, the planetary asides, and the model you can break with your own hands, set apart from the descent for whenever you want them.</p>
+    </div>
+  </section>
+
+  <div class="colophon" id="colophon"></div>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image, enlarged">
+    <img id="lbImg" alt="">
+    <p class="lb-cap" id="lbCap"></p>
+  </div>
+
+  <script>
+  /* ===========================================================
+     The descent engine. One data array (FIGURES) drives the reel:
+     each entry is a variable, a history interlude, a planetary
+     "meanwhile," or the live demo. The four meters are read off the
+     current figure as it crosses the reading line.
+     =========================================================== */
+  (function () {
+    'use strict';
+    var reel = document.getElementById('reel');
+    if (!reel) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ---- Acts. Only the accent survives now (the Roman-numeral act
+       interstitials were removed): it cools from gold through the chaotic
+       middle, then warms back to parchment for the hopeful final stretch. ---- */
+    var TIERS = {
+      1: { accent: "#e8c98a" },
+      2: { accent: "#d4b483" },
+      3: { accent: "#9fc6cf" },
+      4: { accent: "#8fb8d4" },
+      5: { accent: "#a9b58c" },
+      6: { accent: "#c0a6e6" },
+      7: { accent: "#dccca6" }
+    };
+    var TIER0 = "#e8e2d4";
+
+    /* ---- Each variable carries one headline stat (a big figure + label, in
+       the spirit of the body-parts atlas). The figures are illustrative but
+       grounded in the sources on each card: the ~2-week wall, the ~9 km / ~10^9
+       cell global model, the ~10^20 true turbulent degrees of freedom, and the
+       ~10^44 air molecules that form the absolute ceiling. ---- */
+
+    function S(o){ return o; }   /* identity, keeps the data terse */
+
+    var FIGURES = [
+      /* ============ ACT I ============ */
+      S({ t:1, kind:"var", tag:"the engine", name:"The Sun",
+        img:"sun-sdo.jpg", dark:true, contain:false,
+        alt:"The Sun's full disc in extreme ultraviolet, a glowing amber sphere with a bright prominence arcing off one edge.",
+        cap:"The Sun in extreme UV. NASA / SDO",
+        stat:["1,361 W","on every sunlit square metre"],
+        lead:"Start with the simplest planet you can picture: a windless ball of air lit by the Sun. The equator bakes, the poles stay frozen, and that imbalance drives one slow, giant loop of wind. Every bit of weather that follows is just this heat trying to escape.",
+        src:[["Total solar irradiance","https://www.ngdc.noaa.gov/stp/solar/solarirrad.html"]] }),
+
+      S({ t:1, kind:"var", tag:"the twist", name:"The spin",
+        img:"circulation-cells.svg", contain:true,
+        alt:"Diagram of Earth's three-cell atmospheric circulation: Hadley, Ferrel and Polar cells.",
+        cap:"Three-cell circulation. T. Evans",
+        stat:["1,670 km/h","the speed the equator spins"],
+        lead:"Now spin the planet. That lazy loop cannot survive it: the spin keeps shoving moving air sideways (the Coriolis effect, the same curve a ball takes across a spinning merry-go-round) and shatters the single loop into stacked belts of wind, the trade winds and the westerlies, wrapping the whole globe.",
+        hook:"Those belts are why your weather almost always rolls in from the west, and why every big storm spins instead of blowing in a straight line.",
+        src:[["Coriolis effect","https://www.britannica.com/science/Coriolis-force"],["Atmospheric circulation","https://en.wikipedia.org/wiki/Atmospheric_circulation"]] }),
+
+      S({ t:1, kind:"interlude", tag:"history, 1643 to 1861", name:"The first forecast",
+        img:"barometer-1824.jpg", contain:true,
+        alt:"An ornate 19th-century mercury dial barometer in a museum case.",
+        cap:"Mercury barometer, 1824. Photo Daderot",
+        lead:"For most of history, reading the sky was omen-work. The Babylonians kept 7,000 weather omens on clay tablets; Aristotle's <i>Meteorologica</i> ran the field for nearly two thousand years.",
+        hook:"Then came instruments. Torricelli's 1643 barometer revealed that air has weight and that the weight changes. The telegraph let those readings outrun the storm, and in 1861 Robert FitzRoy, the captain who had carried Darwin around the world, published the first daily public <b>forecast</b>, a word he coined to keep his work clear of prophecy.",
+        quote:"Prophecies and predictions they are not. The term forecast is the result of scientific combination and calculation.",
+        cite:"Robert FitzRoy, 1863",
+        src:[["FitzRoy, Met Office","https://www.metoffice.gov.uk/research/library-and-archive/archive-hidden-treasures/robert-fitzroy"],["Torricelli","https://en.wikipedia.org/wiki/Evangelista_Torricelli"]] }),
+
+      /* ============ ACT II ============ */
+      S({ t:2, kind:"var", tag:"the flywheel", name:"The ocean",
+        img:"blue-marble.jpg", dark:true, contain:false,
+        alt:"Earth as a full disc from space, dominated by deep-blue ocean, with Africa under swirls of white cloud.",
+        cap:"Earth from Apollo 17. NASA",
+        stat:["4,000","floats watching the entire deep sea"],
+        lead:"Now flood seven-tenths of it with ocean. Water hoards heat and gives it back painfully slowly, a giant flywheel bolted to the engine that banks warmth for months. A hurricane is just some of that banked heat cashed out in a single weekend.",
+        hook:"And we barely watch it: about 4,000 drifting floats sample the top two kilometres, and below that more than half the sea is a blank to forecasters.",
+        src:[["Argo float array","https://argo.ucsd.edu/"]] }),
+
+      S({ t:2, kind:"var", tag:"the slow moods", name:"The planet's moods",
+        img:"saturn-hexagon.jpg", dark:true, contain:false,
+        alt:"Saturn seen from above its pole, with its rings, imaged by Cassini.",
+        cap:"Saturn from its pole. NASA / JPL",
+        stat:["6 months","the longest tip weather ever gives"],
+        lead:"Let ocean and air settle in together and the planet develops slow moods. The famous one is El Nino: every few years the tropical Pacific runs warm, and that single warm patch quietly tilts rain and storms around the entire globe. Because it is slow, a strong one can be spotted half a year out.",
+        hook:"Slow standing patterns are not just an Earth thing. Saturn has parked a six-sided jet stream over its north pole, each side longer than Earth is wide, holding steady for every year we have watched it.",
+        src:[["ENSO prediction","https://www.cpc.ncep.noaa.gov/products/precip/CWlink/MJO/enso.shtml"],["Saturn's hexagon","https://science.nasa.gov/mission/cassini/science/saturn/hexagon-in-motion/"]] }),
+
+      S({ t:2, kind:"interlude", tag:"a quick but important aside", name:"Weather is not climate",
+        img:"milankovitch.png", contain:true,
+        alt:"Diagram of Earth's orbital cycles: eccentricity, axial tilt, and precession.",
+        cap:"Milankovitch orbital cycles. Sciencia58",
+        lead:"If we cannot see past two weeks, how does anyone claim to know the climate in 2100? Because weather and climate are two completely different questions.",
+        hook:"Weather is 'will it rain here next Tuesday', which hangs on the exact swirl of the air right now, and that is hopeless past about two weeks. Climate is 'what is a normal July like', the long-run average, and that is set by slow, steady things: how much sun arrives, how much heat the air traps. Picture a campfire. You cannot predict the path of any single spark, but you can be dead certain the fire is hot. We cannot call the spark. We can absolutely call the heat.",
+        src:[["Weather vs climate","https://www.ncei.noaa.gov/news/weather-vs-climate"],["Predictability review","https://pmc.ncbi.nlm.nih.gov/articles/PMC6774281/"]] }),
+
+      /* ============ ACT III ============ */
+      S({ t:3, kind:"var", tag:"the workhorse", name:"Highs and lows",
+        img:"galton-map-1861.gif", contain:true,
+        alt:"Francis Galton's hand-drawn 1861 weather chart of the British Isles with isobars.",
+        cap:"Galton's isobar chart, 1861",
+        stat:["1875","the first weather map in print"],
+        lead:"Here is the first real 'weather' in the everyday sense. Let the air pile up thick in some places and thin in others, and those highs and lows start wandering across the map on their own, towing your day-to-day weather along with them. Nudge their start by a hair and you get a different map.",
+        hook:"Francis Galton drew the first weather map ever printed in a newspaper in 1875, and in the act of doing it he discovered and named the anticyclone.",
+        src:[["History of weather maps","https://en.wikipedia.org/wiki/Surface_weather_analysis"]] }),
+
+      S({ t:3, kind:"var", tag:"the steering", name:"The jet stream",
+        img:"neptune.jpg", dark:true, contain:false,
+        alt:"Neptune's blue disk with its Great Dark Spot, imaged by Voyager 2.",
+        cap:"Neptune, by Voyager 2. NASA / JPL",
+        stat:["2,100 km/h","the fastest winds we know, on Neptune"],
+        lead:"High overhead runs the jet stream, a river of wind at 100 to 400 km/h that shoves those highs and lows around like logs in a current. When it kinks into big lazy bends, it can park a heatwave or a deep freeze right on top of you for a week.",
+        hook:"Ours are gentle by cosmic standards. Neptune, which gets 900 times less sunlight than we do, somehow blows the fastest winds in the solar system, fuelled almost entirely by its own faint inner heat.",
+        src:[["Jet stream","https://www.weather.gov/jetstream/jet"],["Neptune","https://science.nasa.gov/neptune/neptune-facts/"]] }),
+
+      S({ t:3, kind:"var", tag:"the wall", name:"The two-week wall",
+        img:"lorenz-attractor.svg", dark:true, contain:true,
+        alt:"The Lorenz attractor, a butterfly-shaped strange attractor that is the emblem of chaos theory.",
+        cap:"The Lorenz attractor. Wikimedia",
+        stat:["2 weeks","the wall, no matter what we do"],
+        lead:"Why exactly two weeks? Storms grow straight out of the gap between warm air and cold air, feeding on the very contrast they erase. In 1963 Edward Lorenz boiled that self-feeding down to three tiny equations, and a whisker of error in them doubles, and doubles again, until within about two weeks it has swallowed the whole forecast.",
+        hook:"It is a hard limit, not a money problem. A 2019 study found that with a flawless model and measurements ten times sharper than today's, you would buy maybe a day or two more. The wall barely budges.",
+        quote:"Big whorls have little whorls, which feed on their velocity; and little whorls have lesser whorls, and so on to viscosity.",
+        cite:"Lewis Fry Richardson, 1922",
+        src:[["Zhang et al. 2019, predictability limit","https://journals.ametsoc.org/view/journals/atsc/76/4/jas-d-18-0269.1.xml"],["Lorenz, Deterministic Nonperiodic Flow","https://journals.ametsoc.org/view/journals/atsc/20/2/1520-0469_1963_020_0130_dnf_2_0_co_2.xml"]] }),
+
+      /* The live demo lands right on the wall. */
+      S({ kind:"demo", demo:"butterfly",
+        title:"The butterfly, live",
+        intro:"Here are <b>two</b> forecasts of the same toy atmosphere (Lorenz's three equations). They start almost identical, differing by the slider's amount, a rounding error, a single unmeasured puff. Watch the gold and the blue trace the same path, then suddenly, irreversibly, part. Drag the slider to make the initial difference smaller; it only delays the split. It never prevents it." }),
+
+      S({ t:3, kind:"interlude", tag:"history, 1961", name:"Lorenz goes for coffee",
+        img:"lorenz.jpg", contain:true,
+        alt:"Portrait of meteorologist Edward Lorenz.",
+        cap:"Edward Lorenz. AGU / AIP",
+        lead:"In 1961, Edward Lorenz restarted a simulation from a midpoint printout, typing 0.506 where the computer had stored 0.506127. A difference of one part in five thousand. He went for coffee.",
+        hook:"He came back to a forecast that had diverged into something completely different. The rounding error had grown until it owned the result. It was not a bug; it was a property of the equations. He had discovered <b>chaos</b>, and the reason the perfect forecast can never exist. His talk title, written by someone else because he forgot to submit one, gave us the phrase: <i>does the flap of a butterfly's wings in Brazil set off a tornado in Texas?</i>",
+        src:[["Lorenz and the butterfly effect","https://www.aps.org/publications/apsnews/200301/history.cfm"]] }),
+
+      S({ t:3, kind:"interlude", tag:"history, 1922", name:"The forecast factory",
+        img:"richardson.png", contain:true,
+        alt:"Portrait of Lewis Fry Richardson, pioneer of numerical weather prediction.",
+        cap:"Lewis Fry Richardson. NOAA",
+        lead:"Lewis Fry Richardson computed the first numerical forecast by hand, between shifts driving an ambulance in the First World War. His manuscript was lost during the Battle of Champagne and found, months later, under a heap of coal.",
+        hook:"His six-hour forecast was wrong by a factor of fifty. But he was right about the method, and he dreamed the future precisely: a theatre of <b>64,000 human computers</b>, each solving the equations for one patch of the globe, a conductor with a spotlight keeping them in time. That is, almost exactly, a modern supercomputer. He was off only in thinking the computers would be people.",
+        src:[["Richardson's forecast factory","https://www.emetsoc.org/resources/rff/"]] }),
+
+      /* ============ ACT IV ============ */
+      S({ t:4, kind:"var", tag:"the fuel", name:"Water in the air",
+        img:"mammatus.jpg", contain:false,
+        alt:"Dramatic mammatus clouds, rounded pouches hanging from the base of a storm cloud.",
+        cap:"Mammatus clouds. Theov999",
+        stat:["1 week","the wall, once water joins in"],
+        lead:"Now add water. It is invisible as vapour, but the instant it condenses into a cloud it dumps a huge slug of heat into the air, the same heat that powers every thunderstorm and hurricane. That fast, touchy feedback shoves the dependable range from two weeks to about one.",
+        hook:"It is why a forecast can nail the big picture and still blow whether it rains on your street: the heat lands exactly where a cloud forms, and clouds form smaller than any model can see.",
+        src:[["Latent heat","https://www.weather.gov/jetstream/latent"]] }),
+
+      S({ t:4, kind:"var", tag:"the wildcard", name:"Clouds",
+        img:"cloud-cells.jpg", contain:false,
+        alt:"A vast honeycomb of marine stratocumulus cloud cells seen from orbit over the ocean.",
+        cap:"Cloud cells over the Pacific. NASA",
+        stat:["10 million","times finer than any model sees"],
+        lead:"Clouds are the great wildcard. Low ones cool the planet by bouncing sunlight back to space; high ones warm it by trapping the heat trying to leave. Which job a given cloud does comes down to droplets a few thousandths of a millimetre across, and that guesswork is the single biggest source of error in the whole business.",
+        hook:"The best global model sees the world in 9 km squares. A real cloud's machinery works at millimetres, and everything in between is an educated guess.",
+        src:[["Cloud microphysics in models","https://www.gfdl.noaa.gov/cloud-microphysics/"]] }),
+
+      S({ t:4, kind:"var", tag:"the trigger", name:"Thunderstorms",
+        img:"supercell.jpg", contain:false,
+        alt:"A classic supercell thunderstorm with a rotating wall cloud over open plains.",
+        cap:"A supercell. Rollingskyphoto",
+        stat:["hours","all the warning a storm gives"],
+        lead:"Sometimes the air just lets go. A column of warm, wet air punches straight up with the energy of a small bomb, and a thunderstorm is born in a single afternoon, often hinging on one warm wisp the network never measured.",
+        hook:"And the storm punches back: its heat shoves the jet stream far above it, so the tiniest scale reaches up and rewrites the biggest.",
+        src:[["Convective predictability","https://www.mmm.ucar.edu/events/convective-scale-predictability"]] }),
+
+      /* ============ ACT V ============ */
+      S({ t:5, kind:"var", tag:"down to the millimetre", name:"Turbulence",
+        img:"vortices.jpg", contain:false,
+        alt:"Chains of spiral cloud eddies curling downwind of islands, large swirls shedding into ever-smaller ones, seen from satellite.",
+        cap:"Von Karman vortices. NASA",
+        stat:["10<sup>20</sup>","numbers to track the real air"],
+        lead:"Follow that chain all the way down. Big swirls hand their energy to smaller swirls, and those to smaller ones still, until at about a millimetre the motion finally turns into heat. To truly track the real fluid you would need about 10<sup>20</sup> numbers, ten billion times more than the best model carries.",
+        hook:"Just simulating the air down to the millimetre would take more arithmetic per step than every computer on Earth put together, and you would finish long after the weather you were predicting had already come and gone.",
+        src:[["Degrees of freedom in turbulence","https://en.wikipedia.org/wiki/Turbulence"],["Kolmogorov microscale","https://glossary.ametsoc.org/wiki/Kolmogorov_microscale"]] }),
+
+      S({ t:5, kind:"var", tag:"the seeds and the haze", name:"Dust and smoke",
+        img:"haboob.jpg", contain:false,
+        alt:"A massive haboob, a wall of dust, rolling over the Phoenix skyline.",
+        cap:"A haboob over Phoenix. Alan Stark",
+        stat:["trillions","seeds you cannot count or place"],
+        lead:"A cloud droplet cannot form on nothing. It needs a speck to grab onto: a mote of dust, a fleck of sea salt, a particle of smoke. How many specks are floating around decides how bright a cloud is and whether it rains at all.",
+        hook:"This is the layer where a wildfire in Canada cools an afternoon in New York, and a dust storm off Africa helps decide whether a hurricane spins up near Florida.",
+        src:[["Aerosols and clouds","https://earthobservatory.nasa.gov/features/Aerosols"]] }),
+
+      S({ t:5, kind:"var", tag:"the stochastic shock", name:"Volcanoes",
+        img:"raikoke.jpg", contain:false,
+        alt:"A volcanic plume rising from a small island and spreading into a flat, anvil-like umbrella cloud, seen from orbit.",
+        cap:"Raikoke erupts, from the ISS. NASA",
+        stat:["0","equations that predict an eruption"],
+        lead:"Some shocks do not even come from the sky. A big eruption fires sulphur high into the stratosphere, where it hangs as a haze and cools the entire planet for a year or more, and nothing predicts when one will go off.",
+        hook:"In 1815, Tambora erupted and stole the Northern Hemisphere's summer. It snowed in New England in June, and a few friends stuck indoors by the gloom held a ghost-story contest that gave the world <i>Frankenstein</i>.",
+        src:[["Year Without a Summer","https://www.britannica.com/event/Year-Without-a-Summer"],["Mars 2018 dust storm","https://science.nasa.gov/resource/2018-global-dust-storm-on-mars/"]] }),
+
+      S({ t:5, kind:"var", tag:"the lumpy floor", name:"The shape of the land",
+        img:"lenticular.jpg", contain:false,
+        alt:"Stacked lenticular clouds shaped like lenses over a mountain range.",
+        cap:"Lenticular clouds. Ludovic Peron",
+        stat:["100s of km","a mountain's wake, downwind"],
+        lead:"The ground is not smooth. Mountains shove air upward, dumping rain on one side and leaving a desert on the other, and they fling waves downwind for hundreds of kilometres. Every bump too small for the grid is one more permanent error fed into a system that lives by blowing small errors up.",
+        hook:"Those smooth, lens-shaped clouds that stack over mountains are a standing wave in the air made visible. Pilots learn to read them; old UFO reports loved them.",
+        src:[["Orographic effects","https://www.weather.gov/source/zhu/ZHU_Training_Page/Outflow_Boundary/Orographic/Orographic.html"]] }),
+
+      S({ t:5, kind:"var", tag:"the slow memory", name:"Soil, snow and ice",
+        img:"sea-ice.jpg", contain:false,
+        alt:"Bright white sea ice swirling against near-black ocean, seen from satellite.",
+        cap:"Sea ice off Greenland. NASA",
+        stat:["80% vs 6%","sunlight bounced: fresh snow, open sea"],
+        lead:"The surface keeps a memory. Wet soil cools an afternoon and feeds the next storm; dry soil turns a hot day into a heatwave. Fresh snow throws nearly all its sunlight straight back, while dark ocean drinks it in, so whether a field is white or brown tomorrow can quietly bend the whole local forecast.",
+        src:[["Land-atmosphere coupling","https://www.gewex.org/project/glass/"]] }),
+
+      S({ t:5, kind:"interlude", tag:"meanwhile, across the sky", name:"It rains iron on WASP-76b",
+        img:"wasp76b.jpg", dark:true, contain:false, planet:true,
+        alt:"Artist's impression of the exoplanet WASP-76b, where iron rains on the night side.",
+        cap:"WASP-76b. ESO / M. Kornmesser",
+        lead:"Everything you have just read is not a defect of Earth. It is what fluids plus energy plus rotation do, everywhere. Every substantial atmosphere we have ever found is turbulent and chaotic in exactly the same mathematical sense.",
+        hook:"On the exoplanet WASP-76b, the day side is hot enough to <b>vaporise iron</b>; winds of 18,000 km/h carry the metal vapour to the cooler night side, where it condenses and falls as rain. On Jupiter, the Great Red Spot, a storm wider than Earth, has raged for at least 190 years, because a gas giant has no surface to slow it down. Unpredictable-past-a-horizon is not our failing. It is the price of having an atmosphere at all.",
+        src:[["WASP-76b iron rain","https://www.eso.org/public/news/eso2005/"],["Great Red Spot","https://science.nasa.gov/jupiter/jupiter-great-red-spot/"]] }),
+
+      /* ============ ACT VI ============ */
+      S({ t:6, kind:"var", tag:"the blind spots", name:"You cannot measure it all",
+        img:"radiosonde-launch.jpg", contain:false,
+        alt:"A white weather balloon rising into a blue sky just after release.",
+        cap:"A radiosonde launch. Famartin",
+        stat:["~900","balloon sites for the whole planet"],
+        lead:"Step back out to the big picture, the great slow highs and lows. Surely those, at least, we can nail. But to forecast them you first have to know the present, exactly, everywhere, and weather balloons go up from only about 900 spots on the whole planet, twice a day, crowded over the rich North and nearly absent over the oceans and the poles.",
+        hook:"The best snapshot pins down maybe 10 million readings to fill in 10 billion grid numbers. Almost the entire atmosphere is never measured, only guessed, and in a chaotic world that starting error is the whole ballgame.",
+        src:[["The global observing system","https://community.wmo.int/en/activity-areas/global-observing-system-gos"]] }),
+
+      S({ t:6, kind:"var", tag:"the speck that wins", name:"The butterfly",
+        img:"noctilucent.jpg", contain:false,
+        alt:"Electric-blue noctilucent clouds glowing at the edge of space after sunset.",
+        cap:"Noctilucent clouds. M. Suessen",
+        stat:["10<sup>44</sup>","air molecules, the hard ceiling"],
+        lead:"This is the bottom. Grant yourself a perfect model and the finest measurements ever made, and there is still one speck you missed: a single warm puff, the literal flap of a wing. In a chaotic world it doubles, and doubles, and in about two weeks it has rewritten the entire forecast, top to bottom.",
+        hook:"To outrun it you would have to track every last molecule of air. There are about 10<sup>44</sup> of them, more than the stars in the visible universe by a factor of a trillion trillion. That is the ceiling. It is arithmetic, not money.",
+        quote:"One flap of a seagull's wings may forever change the future course of the weather.",
+        cite:"Edward Lorenz, 1963",
+        src:[["The butterfly effect","https://en.wikipedia.org/wiki/Butterfly_effect"],["Molecules in the atmosphere","https://www.theweatherprediction.com/habyhints3/976/"]] }),
+
+      /* ============ ACT VII ============ */
+      S({ t:7, kind:"var", tag:"so we built this", name:"The machines",
+        img:"von-neumann-ias.jpg", contain:false,
+        alt:"Oppenheimer and von Neumann standing in front of the early IAS computer, 1952.",
+        cap:"Von Neumann at the IAS, 1952",
+        stat:["+1 day","of forecast skill, every decade"],
+        lead:"So we gave up? Never. In 1950, von Neumann's team ran the first computer forecast on ENIAC: it took 24 hours of computing to predict 24 hours of weather. Today the best centre runs the whole planet on a 9 km grid and nudges it back toward reality with every fresh reading.",
+        hook:"We cannot beat the two-week wall, so instead we have sprinted almost all the way up to it: useful forecasts now reach about ten days, and gain roughly a day of skill every decade. Today's seven-day forecast is as good as the five-day was just a decade ago.",
+        src:[["Bauer et al., the quiet revolution of NWP","https://www.nature.com/articles/nature14956"],["ENIAC forecast","https://en.wikipedia.org/wiki/Numerical_weather_prediction"]] }),
+
+      S({ t:7, kind:"var", tag:"forecasting the odds", name:"Fifty-one futures at once",
+        img:"nexrad.jpg", contain:false,
+        alt:"A white geodesic NEXRAD Doppler radar dome at golden hour.",
+        cap:"A NEXRAD radar dome. Tony Webster",
+        stat:["51","futures run at once, to read the odds"],
+        lead:"Chaos even hands us the cure. If one forecast is fragile, run a whole crowd of them. The European centre runs 51 at a time, each started from a slightly different but equally believable snapshot of right now.",
+        hook:"When the 51 stay bunched, the future is solid and we can say so. When they fan apart, the air itself is telling us it is in an unpredictable mood. That hurricane 'cone of uncertainty' is exactly this, the spread of the crowd drawn on a map.",
+        src:[["Ensemble forecasting","https://www.ecmwf.int/en/about/media-centre/focus/2017/fact-sheet-ensemble-weather-forecasting"]] }),
+
+      S({ t:7, kind:"var", tag:"the second wall", name:"Money, and the will to spend it",
+        img:"station-floor.jpg", contain:false,
+        alt:"Forecasters at workstations facing banks of monitors in a weather operations centre.",
+        cap:"A NOAA operations floor. NOAA",
+        stat:["$4 a year","what good forecasts cost each American"],
+        lead:"There is a hard ceiling at two weeks, but for most of the world the real ceiling sits lower, and it is built of money. To halve the size of the grid squares costs roughly ten times the computing, so skill is literally bought, in supercomputers, satellites, balloons and the experts who run them.",
+        hook:"Europe's model called Hurricane Sandy's hard turn into New Jersey days before the American one did, a gap measured in lives. Yet in 2025, staffing cuts forced some US offices to stop launching weather balloons, blinding the very models that warn us.",
+        caveat:"The 2025 cuts and balloon suspensions are documented; Congress later rejected the deeper proposed cuts and approved rehiring. The economic figures are estimates.",
+        src:[["ECMWF and Sandy","https://www.ametsoc.org/index.cfm/ams/about-ams/ams-statements/"],["2025 balloon-launch cuts","https://insideclimatenews.org/news/25032025/noaa-cuts-weather-balloon-launches/"],["The quiet revolution of NWP","https://www.nature.com/articles/nature14956"]] }),
+
+      S({ t:7, kind:"var", tag:"where it goes next", name:"The machines that taught themselves the sky",
+        img:"goes-satellite.jpg", dark:true, contain:false,
+        alt:"A GOES weather satellite with its gold solar array in a clean room.",
+        cap:"A GOES satellite. NASA",
+        stat:["minutes","to forecast Earth, on a single chip"],
+        lead:"And here is where it is going. Since 2023, neural networks trained on decades of past weather, with names like GraphCast and Aurora, have started matching and even beating the great physics models, running in minutes on a single chip instead of hours on a supercomputer.",
+        hook:"They do not break the wall either, they learned from the same chaotic world and inherit its limits. The likely future is a hybrid: real physics for the bones, learned shortcuts for the parts we could never compute. We will never get the perfect forecast, but we are getting eerily close to the best one the universe allows.",
+        src:[["GraphCast","https://deepmind.google/discover/blog/graphcast-ai-model-for-faster-and-more-accurate-global-weather-forecasting/"],["ECMWF AI forecasts operational","https://www.ecmwf.int/en/about/media-centre/news/2025/ecmwf-launches-new-ai-forecasts"]] }),
+
+      /* ---- the final turn ---- */
+      S({ t:7, kind:"turn", tag:"the horizon, in the end", name:"And then the weather ends",
+        img:"earth-bluemarble.jpg", contain:false,
+        alt:"Earth as a full disk from space, the Blue Marble.",
+        cap:"The Blue Marble. NASA",
+        lead:"Zoom out far enough and even the wall stops mattering. The Sun brightens about ten percent every billion years.",
+        hook:"In perhaps <b>600 million years</b>, it will tip Earth into a runaway greenhouse, boil off the oceans, and shut down the water cycle for good. The clouds will clear, the storms will stop, and there will be no weather left to fail to predict. Until then, two weeks is the most the sky will ever promise us. It turns out that is enough to plan a harvest, route a ship, and call an evacuation in time.",
+        quote:"The flap of a butterfly's wings, and the brightening of a star, set the two edges of everything we can know.",
+        src:[["The far future of Earth","https://en.wikipedia.org/wiki/Future_of_Earth"]] }),
+
+      S({ kind:"end" })
+    ];
+
+    /* ---- helpers ---- */
+    function pad(n){ return n < 10 ? '0' + n : '' + n; }
+    function esc(s){ return ('' + (s == null ? '' : s)).replace(/&(?![a-z#0-9]+;)/g, '&amp;').replace(/"/g, '&quot;'); }
+
+    function plateHTML(f, no, tier) {
+      var cls = 'plate' + (f.dark ? ' dark' : '') + (f.contain ? ' contain' : '');
+      var full = 'assets/weather/' + f.img;
+      var capNo = no ? 'No. ' + pad(no) + ' · ' : '';
+      var cap = capNo + f.cap;
+      return '<figure class="plate-col">' +
+        '<div class="' + cls + '" data-full="' + full + '"' + (f.dark ? ' data-dark="1"' : (f.contain ? ' data-contain="1"' : '')) + ' data-cap="' + esc(cap) + '" tabindex="0" role="button" aria-label="Enlarge the image">' +
+        '<img class="plate-img" loading="lazy" decoding="async" alt="' + esc(f.alt) + '" src="' + full + '"></div>' +
+        '<figcaption class="caption">' + (no ? '<span class="no">No. ' + pad(no) + '</span> · ' : '') + esc(f.cap) + '</figcaption>' +
+        '</figure>';
+    }
+
+    function dossierVar(f) {
+      var h = '';
+      h += '<div class="d-eyebrow">' + f.tag + '</div>';
+      h += '<h3 class="d-name">' + f.name + '</h3>';
+      if (f.stat) h += '<div class="d-stat"><span class="fig">' + f.stat[0] + '</span><span class="fig-lbl">' + f.stat[1] + '</span></div>';
+      if (f.lead) h += '<p class="d-lead">' + f.lead + '</p>';
+      if (f.hook)  h += '<p class="d-hook">' + f.hook + '</p>';
+      if (f.quote) h += '<p class="d-quote">' + f.quote + (f.cite ? '<br><span class="sc" style="font-size:0.8rem;font-style:normal;color:var(--text-dim)">' + f.cite + '</span>' : '') + '</p>';
+      if (f.caveat) h += '<p class="d-caveat">' + f.caveat + '</p>';
+      return h;
+    }
+    function dossierInterlude(f) {
+      var h = '';
+      h += '<div class="d-eyebrow">' + f.tag + '</div>';
+      h += '<h3 class="d-name">' + f.name + '</h3>';
+      if (f.lead) h += '<p class="d-lead first">' + f.lead + '</p>';
+      if (f.hook) h += '<p class="d-hook">' + f.hook + '</p>';
+      if (f.quote) h += '<p class="d-quote">' + f.quote + (f.cite ? '<br><span class="sc" style="font-size:0.8rem;font-style:normal;color:var(--text-dim)">' + f.cite + '</span>' : '') + '</p>';
+      if (f.caveat) h += '<p class="d-caveat">' + f.caveat + '</p>';
+      return h;
+    }
+    function sourcesHTML(f) {
+      if (!f.src || !f.src.length) return '';
+      var h = '<div class="d-sources">';
+      f.src.forEach(function (a) { h += '<a href="' + a[1] + '" target="_blank" rel="noopener">' + a[0] + '</a>'; });
+      return h + '</div>';
+    }
+
+    /* ---- per-stage explanatory diagrams: real, openly-licensed textbook
+       schematics, keyed by figure name. Retired from the trimmed cards; kept
+       here (with diaHTML below) so they can be flipped back on from dossierVar
+       if the cards ever want them again. ---- */
+    var DIA = {
+      "The Sun":              { img:"s1-single-cell.svg", cap:"With no spin, one giant loop: warm air rises at the equator, sinks at the poles, and crawls back.", alt:"A single convection loop on a non-rotating planet: warm air rising at the equator, flowing poleward aloft, sinking at the pole, and returning along the ground." },
+      "The ocean":            { img:"s3-ocean.svg",       cap:"The ocean's global heat conveyor. Miraceti, after NASA, CC BY-SA 3.0", alt:"World map with a looping ribbon of warm surface currents and cold deep currents, the thermohaline conveyor." },
+      "The planet's moods":   { img:"s4-walker-elnino.jpg",cap:"El Nino: the Pacific's rising air shifts east. NOAA Climate.gov", alt:"Cross-section of the tropical Pacific showing the Walker circulation cell displaced east during El Nino." },
+      "Highs and lows":       { img:"s5-cyclone.svg",      cap:"A low and its fronts, spinning counter-clockwise. Ravedave, CC BY-SA 3.0", alt:"Schematic of a low-pressure system with curved isobars and warm, cold and occluded fronts." },
+      "The jet stream":       { img:"s6-jet.svg",          cap:"The jet stream as a meandering Rossby wave. Fred the Oyster, CC BY-SA 4.0", alt:"A wavy jet stream snaking west to east, separating cold polar air from warm tropical air." },
+      "Water in the air":     { img:"s8-phasechange.svg",  cap:"Water changing phase; condensing into cloud is where it dumps its heat. Public domain", alt:"Diagram of the six phase changes of water between solid, liquid and vapour." },
+      "Clouds":               { pair:["s9-cloud-albedo.jpg","s9-cloud-greenhouse.jpg"], cap:"Low clouds cool by bouncing sunlight back; high clouds warm by trapping heat. NASA Earth Observatory, public domain", alt:"Two schematics: a low cloud reflecting incoming sunlight to space, and a high cloud trapping outgoing heat." },
+      "Thunderstorms":        { img:"s10-supercell.svg",   cap:"Anatomy of a supercell thunderstorm. Kelvinsong, CC BY-SA 3.0", alt:"Cross-section of a supercell with updraft, anvil, downdrafts, wall cloud and precipitation." },
+      "Turbulence":           { img:"s11-cascade.png",     cap:"The energy cascade: big eddies feed ever-smaller ones. OverG, CC BY 3.0", alt:"A large eddy breaking into progressively smaller eddies, with the turbulent energy spectrum below." },
+      "Dust and smoke":       { img:"s12-kohler.png",      cap:"Kohler curves: how big a speck must be to grow a droplet. Grabowski & Pawlowska 2025, CC BY 4.0", alt:"Kohler curves of equilibrium supersaturation versus droplet radius for several dry particle sizes." },
+      "Volcanoes":            { img:"s13-volcano.svg",     cap:"A volcano's sulphur reaches the stratosphere and reflects sunlight. Public domain (USGS)", alt:"Schematic of a volcano injecting gases into the stratosphere, forming a reflective sulphate haze." },
+      "The shape of the land":{ img:"s14-rainshadow.svg",  cap:"Orographic rain, and the dry rain shadow behind. Public domain", alt:"Cross-section of moist air rising over a mountain, raining on the windward side, leaving a dry lee." },
+      "Soil, snow and ice":   { img:"s15-albedo.jpg",      cap:"Bright ice reflects sunlight; dark ocean drinks it in. Tovarg, CC BY-SA 4.0", alt:"Sun rays reflecting off bright ice versus being absorbed by dark open water." },
+      "You cannot measure it all": { img:"s16-obs.jpg",    cap:"The upper-air network: dense over the rich North, near-empty elsewhere. NOAA NCEI, public domain", alt:"World map of upper-air weather-balloon stations, clustered over land and sparse over oceans and poles." },
+      "The butterfly":        { img:"s17-ensemble.png",    cap:"One uncertain start fans into a spread of futures. A. Tantet, CC BY-SA 4.0", alt:"A tight cluster of initial states carried by a flow into a wide, spread-out cloud of outcomes." }
+    };
+    function diaHTML(f) {
+      var d = DIA[f.name]; if (!d) return '';
+      function plate(img) {
+        var full = 'assets/weather/diagrams/' + img;
+        return '<div class="plate contain" data-full="' + full + '" data-contain="1" data-cap="' + esc(d.cap) + '" tabindex="0" role="button" aria-label="Enlarge the diagram">' +
+          '<img class="plate-img" loading="lazy" decoding="async" alt="' + esc(d.alt) + '" src="' + full + '"></div>';
+      }
+      var inner = d.pair ? '<div class="dia-pair">' + plate(d.pair[0]) + plate(d.pair[1]) + '</div>' : plate(d.img);
+      return '<figure class="d-diagram' + (d.pair ? ' pairfig' : '') + '">' + inner +
+        '<figcaption class="caption">' + esc(d.cap) + '</figcaption></figure>';
+    }
+
+    /* ---- build the descent (numbered figures + the final turn) and the
+       appendix (the live demo plus the history and planetary asides, set after
+       the post). Routing by kind keeps the numbered cards in act order and
+       gathers everything that is not a numbered card into the appendix. ---- */
+    var revealEls = [];
+    var frag = document.createDocumentFragment();
+    var apFrag = document.createDocumentFragment();
+    var counter = 0;     /* numbered cards: drives No.NN and the reel's left/right flip */
+    var apCounter = 0;   /* appendix figures: their own left/right alternation */
+
+    FIGURES.forEach(function (f) {
+      if (f.kind === 'end') return;
+
+      var toAppendix = (f.kind === 'demo' || f.kind === 'interlude');
+      var dest = toAppendix ? apFrag : frag;
+
+      if (f.kind === 'demo') {
+        var d = document.createElement('section');
+        d.className = 'wx-demo';
+        d.innerHTML = demoHTML(f);
+        dest.appendChild(d);
+        revealEls.push(d);
+        return;
+      }
+
+      var tier = f.t ? TIERS[f.t] : { accent: TIER0 };
+      var flipIdx = toAppendix ? apCounter : counter;
+      var sec = document.createElement('section');
+      sec.className = 'figure ' + (f.kind === 'turn' ? 'turn' : (f.kind === 'interlude' ? 'interlude' : 'var')) + (f.planet ? ' planet' : '') + (flipIdx % 2 === 1 && f.kind !== 'turn' ? ' flip' : '');
+      sec.style.setProperty('--tier', tier.accent);
+
+      var no = (f.kind === 'var') ? (++counter) : 0;
+      if (f.kind === 'interlude') apCounter++;
+
+      var dossier = (f.kind === 'var') ? dossierVar(f) : dossierInterlude(f);
+      sec.innerHTML = plateHTML(f, no, tier) + '<div class="dossier">' + dossier + '</div>';
+
+      dest.appendChild(sec);
+      revealEls.push(sec);
+    });
+    reel.appendChild(frag);
+    var appendixEl = document.getElementById('appendix');
+    if (appendixEl) appendixEl.appendChild(apFrag);
+
+    /* fade plates in on load */
+    [].forEach.call(document.querySelectorAll('.plate-img'), function (img) {
+      if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
+      else img.addEventListener('load', function () { img.classList.add('loaded'); }, { once: true });
+    });
+
+
+    /* ---- observers ---- */
+    if ('IntersectionObserver' in window) {
+      var rev = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rev.unobserve(e.target); } });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
+      revealEls.forEach(function (s) { rev.observe(s); });
+    } else {
+      revealEls.forEach(function (s) { s.classList.add('in'); });
+    }
+
+    /* gentle parallax on the plate columns (desktop, motion allowed) */
+    function parallax() {
+      if (reduce || window.innerWidth < 760) return;
+      var vh = window.innerHeight, c = vh / 2, figs = document.querySelectorAll('.figure');
+      for (var i = 0; i < figs.length; i++) {
+        var r = figs[i].getBoundingClientRect();
+        if (r.bottom < -80 || r.top > vh + 80) continue;
+        var col = figs[i].querySelector('.plate-col');
+        if (col) col.style.transform = 'translateY(' + ((r.top + r.height/2 - c) * -0.045).toFixed(1) + 'px)';
+      }
+    }
+    var raf = null;
+    function onScroll() { if (raf === null) raf = requestAnimationFrame(function () { raf = null; parallax(); }); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+
+    /* ---- lightbox ---- */
+    var lb = document.getElementById('lightbox'), lbImg = document.getElementById('lbImg'), lbCap = document.getElementById('lbCap');
+    function openLB(plate) {
+      var full = plate.getAttribute('data-full'); if (!full) return;
+      var img = plate.querySelector('.plate-img');
+      lbImg.src = full; lbImg.alt = img ? img.alt : '';
+      lbImg.className = plate.getAttribute('data-dark') ? 'dark' : (plate.getAttribute('data-contain') ? 'litebg' : '');
+      lbCap.textContent = plate.getAttribute('data-cap') || '';
+      lb.classList.add('open');
+    }
+    function closeLB(){ lb.classList.remove('open'); lbImg.removeAttribute('src'); }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      if (e.target.closest('.lightbox')) { closeLB(); return; }
+      var plate = e.target.closest('.plate'); if (plate) openLB(plate);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') return closeLB();
+      if ((e.key === 'Enter' || e.key === ' ')) { var a = document.activeElement; if (a && a.classList && a.classList.contains('plate')) { e.preventDefault(); openLB(a); } }
+    });
+
+    /* ---- colophon ---- */
+    document.getElementById('colophon').innerHTML =
+      '<h3>About this piece</h3>' +
+      '<p>The headline figure on each card is the most striking number in its story, and the milestones behind them are real: the roughly two-week predictability wall, the nine-kilometre global model carrying about ten billion numbers, the ten-to-the-twentieth true degrees of freedom of a turbulent atmosphere, and the ten-to-the-forty-fourth air molecules that form the absolute ceiling. The history, the planetary facts, and the modern-forecasting figures are all drawn from published sources.</p>' +
+      '<p>The honest thesis: a <em>perfect</em>, open-ended forecast is mathematically impossible, and the practical limit for the large-scale weather is about two weeks. Within that wall, modern forecasting is one of the quiet triumphs of science.</p>' +
+      '<h3>Images</h3>' +
+      '<p class="imgcredits">Every image is public domain or Creative Commons, credited on its card and enlargeable on tap. Sources include NASA, NOAA, ESO, the U.S. Air Force, and Wikimedia Commons contributors. Earth from DSCOVR EPIC (NASA). Solar flare, NASA/SDO. Hurricane Irma, Saturn, Neptune, Mars, GOES, von Neumann at the IAS machine via NASA/JPL and archival collections. Storm, cloud, aurora, dust, instrument and portrait photography from Wikimedia Commons under CC0, CC BY and CC BY-SA. The Lorenz attractor by Wikimol and Dschwen (CC BY-SA 3.0); the circulation and orbital diagrams CC0. Full attribution strings are in the page source.</p>';
+
+    /* ===========================================================
+       THE BUTTERFLY DEMO. Two trajectories of the Lorenz 1963
+       system, integrated together; they start a hair apart and
+       are pulled onto the same attractor, tracing it in unison
+       until chaos splits them. A reduced-motion fallback draws the
+       attractor statically with the split already shown.
+       =========================================================== */
+    function demoHTML(f) {
+      return '<p class="wx-demo-intro">' + f.intro + '</p>' +
+        '<div class="demo-wrapper">' +
+          '<div class="demo-header"><span class="demo-label">' + f.title + '</span><span class="demo-fps" id="wxClock">day 0</span></div>' +
+          '<div class="wx-canvas-wrap"><canvas id="wxCanvas"></canvas>' +
+            '<div class="wx-readout"><span>forecast A <b id="wxA">&nbsp;</b></span><span class="r-right">forecast B <b id="wxB">&nbsp;</b></span></div>' +
+            '<div class="wx-split" id="wxSplit">the forecasts diverge</div>' +
+          '</div>' +
+          '<div class="wx-controls">' +
+            '<label for="wxSlider">starting difference</label>' +
+            '<input type="range" id="wxSlider" min="-9" max="-2" step="0.5" value="-5">' +
+            '<span class="wx-val" id="wxSliderVal">0.00001</span>' +
+            '<button class="wx-btn" id="wxReset">restart</button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function initButterfly() {
+      var canvas = document.getElementById('wxCanvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var clock = document.getElementById('wxClock');
+      var splitEl = document.getElementById('wxSplit');
+      var slider = document.getElementById('wxSlider');
+      var sliderVal = document.getElementById('wxSliderVal');
+      var resetBtn = document.getElementById('wxReset');
+      var rA = document.getElementById('wxA'), rB = document.getElementById('wxB');
+
+      var SIG = 10, RHO = 28, BET = 8/3;
+      var dt = 0.006;
+      var a, b, t, split, eps;
+      var W = 0, H = 0, dpr = 1;
+
+      function resize() {
+        var rect = canvas.getBoundingClientRect();
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = Math.max(2, Math.round(rect.width));
+        H = Math.max(2, Math.round(rect.height));
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        clearBG();
+      }
+      function clearBG() { ctx.fillStyle = '#1a201c'; ctx.fillRect(0, 0, W, H); }
+
+      function proj(s) {
+        // x-z projection, scaled to fit
+        var sx = W / 60, sy = H / 60;
+        return [ W/2 + s[0]*sx, H - 6 - (s[2]) * sy * 0.92 ];
+      }
+      function step(s) {
+        var dx = SIG*(s[1]-s[0]), dy = s[0]*(RHO-s[2])-s[1], dz = s[0]*s[1]-BET*s[2];
+        s[0]+=dx*dt; s[1]+=dy*dt; s[2]+=dz*dt;
+      }
+      function reset() {
+        eps = Math.pow(10, parseFloat(slider.value));
+        sliderVal.textContent = eps.toExponential(0).replace('e', ' x10^').replace('+','');
+        a = [1, 1, 1]; b = [1 + eps, 1, 1];
+        t = 0; split = false;
+        if (splitEl) splitEl.classList.remove('show');
+        clearBG();
+      }
+
+      function frame() {
+        if (document.hidden) { running = requestAnimationFrame(frame); return; }
+        // a few integration steps per frame, drawing short trails
+        for (var i = 0; i < 6; i++) {
+          var pa0 = proj(a), pb0 = proj(b);
+          step(a); step(b);
+          var pa1 = proj(a), pb1 = proj(b);
+          ctx.lineWidth = 1.6;
+          ctx.strokeStyle = 'rgba(226,200,140,0.9)';
+          ctx.beginPath(); ctx.moveTo(pa0[0], pa0[1]); ctx.lineTo(pa1[0], pa1[1]); ctx.stroke();
+          ctx.strokeStyle = 'rgba(143,184,212,0.85)';
+          ctx.beginPath(); ctx.moveTo(pb0[0], pb0[1]); ctx.lineTo(pb1[0], pb1[1]); ctx.stroke();
+          t += dt;
+        }
+        // gentle fade so trails breathe rather than fill solid
+        ctx.fillStyle = 'rgba(26,32,28,0.012)';
+        ctx.fillRect(0, 0, W, H);
+
+        var d = Math.sqrt((a[0]-b[0])*(a[0]-b[0]) + (a[1]-b[1])*(a[1]-b[1]) + (a[2]-b[2])*(a[2]-b[2]));
+        if (!split && d > 6) { split = true; if (splitEl) splitEl.classList.add('show'); }
+        if (clock) clock.textContent = 'day ' + (t * 1.5).toFixed(1);   // ~1 time unit ≈ 1.5 forecast days, illustrative
+        if (rA) rA.innerHTML = a[0].toFixed(2);
+        if (rB) rB.innerHTML = b[0].toFixed(2);
+        running = requestAnimationFrame(frame);
+      }
+
+      var running = null;
+      function start() { if (running) cancelAnimationFrame(running); reset(); resize(); running = requestAnimationFrame(frame); }
+
+      slider.addEventListener('input', function () { reset(); });
+      resetBtn.addEventListener('click', function () { reset(); });
+      window.addEventListener('resize', function () { resize(); });
+
+      if (reduce) {
+        // static: integrate quietly and draw the whole attractor with a split pair
+        resize();
+        var s = [1,1,1];
+        for (var k = 0; k < 9000; k++) {
+          var p0 = proj(s); step(s); var p1 = proj(s);
+          ctx.strokeStyle = 'rgba(226,200,140,0.5)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(p0[0],p0[1]); ctx.lineTo(p1[0],p1[1]); ctx.stroke();
+        }
+        if (splitEl) splitEl.classList.add('show');
+        if (clock) clock.textContent = 'two paths, one shape';
+        sliderVal.textContent = '0.00001';
+        return;
+      }
+
+      // start when the demo scrolls into view
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (es) {
+          es.forEach(function (e) {
+            if (e.isIntersecting) { if (!running) start(); }
+            else if (running) { cancelAnimationFrame(running); running = null; }
+          });
+        }, { threshold: 0.25 });
+        io.observe(canvas);
+      } else { start(); }
+    }
+    // demo init after layout
+    if (document.getElementById('wxCanvas')) setTimeout(initButterfly, 60);
+
+  })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

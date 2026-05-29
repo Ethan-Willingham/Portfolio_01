@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayfinding pills: today vs matched colour schemes</title>
+  <meta name="description" content="The three links as they are today, then a set of schemes where all three share one resting colour and one hover colour.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     WAYFINDING PILLS  .  today, then matched colour schemes
+     Top row: the three links as they are now (each its own
+     treatment). Below: schemes where all three share one resting
+     colour and one hover colour, on the fade reveal + always-on
+     label from combo 07. Rows are schemes, columns are the links.
+     Hover, or tap to freeze. No em dashes anywhere.
+     ============================================================ */
+  :root { --e-decel: cubic-bezier(0, 0, 0, 1); }
+  body { padding: 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter) 6rem; }
+
+  header.lab-head { padding: 4rem 0 1.6rem; max-width: 64ch; }
+  .lab-eyebrow { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+  h1.lab-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.1rem, 5.5vw, 3rem); line-height: 1.06; color: var(--text-bright); margin: 0.6rem 0 0.9rem; }
+  .lab-intro { font-size: 1.1rem; line-height: 1.6; color: var(--text-dim); }
+  .lab-intro b { color: var(--text-bright); font-weight: 600; }
+  .lab-back { display: inline-block; margin-bottom: 1.3rem; font-size: 0.95rem; color: var(--text-dim); text-decoration: none; }
+  .lab-back:hover { color: var(--accent); }
+
+  .controls { position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 1.4rem;
+    padding: 0.9rem var(--gutter); margin: 0 calc(-1 * var(--gutter)) 2.2rem;
+    background: rgba(30, 36, 32, 0.86); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .toggle { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.95rem; color: var(--text-dim); cursor: pointer; user-select: none; }
+  .toggle input { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: #46504a; position: relative; cursor: pointer; transition: background 0.2s ease; flex: none; }
+  .toggle input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #cdd0c9; transition: transform 0.2s var(--e-decel); }
+  .toggle input:checked { background: var(--accent); }
+  .toggle input:checked::after { transform: translateX(16px); }
+  .controls .hint { font-size: 0.9rem; color: var(--text-dim); opacity: 0.82; }
+  .controls .hint b { color: var(--accent); font-weight: 400; }
+
+  section.lab-sec { margin-top: 2.6rem; }
+  .sec-label { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 0.4rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+  .sec-label h2 { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; color: var(--text-bright); margin: 0; }
+  .sec-label .sec-sub { font-size: 0.92rem; color: var(--text-dim); }
+
+  /* ===================== composable pill ===================== */
+  .lp {
+    position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 0.4em;
+    border-radius: 999px; border: 1px solid transparent; padding: 0.4em 0.95em; white-space: nowrap;
+    font-family: var(--font-body); font-size: 0.95rem; line-height: 1; text-decoration: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; transition: color 0.2s var(--e-decel);
+  }
+  .lp .bg { position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: rgba(212,196,160,0.12); }
+  .lp .ico, .lp .lbl { display: inline-block; }
+  .lp:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(212,196,160,0.4); }
+  /* resting colour */
+  .r-dim { color: #B8B2A2; }
+  .r-tan { color: #D4C4A0; }
+  /* hover colour */
+  .h-tan:is(:hover, :focus-visible, .is-on) { color: #D4C4A0; }
+  .h-bright:is(:hover, :focus-visible, .is-on) { color: #EDE0C0; }
+  .h-cream:is(:hover, :focus-visible, .is-on) { color: #F5F1EA; }
+  /* reveal */
+  .v-grow .bg { opacity: 0; clip-path: inset(6% 5% round 999px); transition: clip-path 0.24s var(--e-decel), opacity 0.12s var(--e-decel); }
+  .v-grow:is(:hover, :focus-visible, .is-on) .bg { opacity: 1; clip-path: inset(0 0 0 0 round 999px); }
+  .v-fade .bg { opacity: 0; transition: opacity 0.25s ease; }
+  .v-fade:is(:hover, :focus-visible, .is-on) .bg { opacity: 1; }
+  /* label opens (back-to-top only, in the Today row) */
+  .l-open { gap: 0; overflow: hidden; }
+  .l-open .lbl { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+    transition: max-width 0.4s cubic-bezier(0.23,1,0.32,1), opacity 0.3s, margin 0.4s cubic-bezier(0.23,1,0.32,1); }
+  .l-open:is(:hover, :focus-visible, .is-on) .lbl { max-width: 16ch; opacity: 1; margin-left: 0.4em; }
+
+  body.slow .lp, body.slow .lp .bg, body.slow .lp .lbl { transition-duration: 1.6s !important; }
+
+  /* ===================== scheme grid ===================== */
+  .schemes { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin-top: 1.3rem; }
+  .srow { display: grid; grid-template-columns: 13em 1fr 1fr 1fr; align-items: center; gap: 1rem; padding: 1.4rem 1.3rem; }
+  .srow + .srow { border-top: 1px solid var(--rule); }
+  .srow.head { padding: 0.7rem 1.3rem; background: rgba(255,255,255,0.02); }
+  .srow.head span { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); text-align: center; }
+  .srow.head span:first-child { text-align: left; }
+  .srow.today { background: #333d35; }
+  .slabel { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text); line-height: 1.5; }
+  .slabel .sw { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 50%; vertical-align: -1px; margin: 0 0.1em; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+  .slabel .tag { display: inline-block; margin-top: 0.4rem; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--bg); background: var(--accent); padding: 0.16em 0.55em; border-radius: 999px; }
+  .scell { display: flex; justify-content: center; }
+
+  .lab-foot { margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--rule); font-size: 0.92rem; color: var(--text-dim); line-height: 1.7; }
+  .lab-foot b { color: var(--text-bright); font-weight: 600; }
+
+  @media (max-width: 680px) {
+    .srow { grid-template-columns: 1fr; gap: 0.9rem; }
+    .srow.head { display: none; }
+    .slabel { text-align: center; padding-bottom: 0.3rem; border-bottom: 1px dashed var(--rule); }
+    .scell { gap: 0; }
+  }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="lab-head">
+      <a href="/" class="lab-back">&larr; back to site</a>
+      <div class="lab-eyebrow">UI lab &middot; today vs matched colours</div>
+      <h1 class="lab-title">Today, then one colour scheme for all three</h1>
+      <p class="lab-intro">The top row is the three links <b>as they are now</b>, each with its own treatment. Below are <b>matched schemes</b>: in each, all three share <b>one resting colour and one hover colour</b>, on the fade reveal and always-on label from your combo 07. Read <b>down a column</b> to see one link in every scheme, or <b>across a row</b> to compare a scheme on all three. Hover any pill, or tap to freeze. Your pick (07) is the <b>dim &rarr; bright</b> row.</p>
+    </header>
+
+    <div class="controls">
+      <label class="toggle"><input type="checkbox" id="slowmo"> slow motion</label>
+      <span class="hint">tap any pill to <b>freeze</b> its hover</span>
+    </div>
+
+    <section class="lab-sec">
+      <div class="sec-label"><h2>Today, then matched schemes</h2><span class="sec-sub">resting colour &rarr; hover colour, applied to all three</span></div>
+      <div class="schemes">
+        <div class="srow head"><span>scheme</span><span>Home back-link</span><span>Back to top</span><span>Random Wikipedia</span></div>
+
+        <div class="srow today">
+          <div class="slabel">Today (mixed)<br>each its own</div>
+          <div class="scell"><a href="#" class="lp r-dim h-tan v-grow"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-tan v-fade l-open"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-bright v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+
+        <div class="srow">
+          <div class="slabel"><span class="sw" style="background:#B8B2A2"></span>dim &rarr; <span class="sw" style="background:#D4C4A0"></span>tan</div>
+          <div class="scell"><a href="#" class="lp r-dim h-tan v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-dim h-tan v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-dim h-tan v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+
+        <div class="srow">
+          <div class="slabel"><span class="sw" style="background:#B8B2A2"></span>dim &rarr; <span class="sw" style="background:#EDE0C0"></span>bright <span class="tag">your pick, 07</span></div>
+          <div class="scell"><a href="#" class="lp r-dim h-bright v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-dim h-bright v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-dim h-bright v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+
+        <div class="srow">
+          <div class="slabel"><span class="sw" style="background:#B8B2A2"></span>dim &rarr; <span class="sw" style="background:#F5F1EA"></span>cream</div>
+          <div class="scell"><a href="#" class="lp r-dim h-cream v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-dim h-cream v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-dim h-cream v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+
+        <div class="srow">
+          <div class="slabel"><span class="sw" style="background:#D4C4A0"></span>tan &rarr; <span class="sw" style="background:#EDE0C0"></span>bright</div>
+          <div class="scell"><a href="#" class="lp r-tan h-bright v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-bright v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-bright v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+
+        <div class="srow">
+          <div class="slabel"><span class="sw" style="background:#D4C4A0"></span>tan &rarr; <span class="sw" style="background:#F5F1EA"></span>cream</div>
+          <div class="scell"><a href="#" class="lp r-tan h-cream v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-cream v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-cream v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+
+        <div class="srow">
+          <div class="slabel"><span class="sw" style="background:#D4C4A0"></span>tan &rarr; <span class="sw" style="background:#D4C4A0"></span>tan<br>(no colour change)</div>
+          <div class="scell"><a href="#" class="lp r-tan h-tan v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&larr;</span><span class="lbl">Home</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-tan v-fade"><span class="bg"></span><span class="ico" aria-hidden="true">&uarr;</span><span class="lbl">top</span></a></div>
+          <div class="scell"><a href="#" class="lp r-tan h-tan v-fade"><span class="bg"></span><span class="lbl">Read at random</span><span class="ico" aria-hidden="true">&#8599;</span></a></div>
+        </div>
+      </div>
+    </section>
+
+    <p class="lab-foot">
+      Every scheme below the top row uses the same <b>fade</b> reveal and <b>always-on</b> label, so only the two colours change: where the text <b>rests</b> and where it <b>warms to</b> on hover. The <b>dim</b> rows stay quiet until you hover; the <b>tan</b> rows sit brighter at rest. Hover targets get warmer left to right (tan, bright, cream). Tell me which scheme you want for the family. Per link, I will keep the existing icon (the drawn up-arrow, the trailing arrow), font size, and the random veil unless you say to flatten those too.
+    </p>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+    document.querySelectorAll('.lp').forEach(function (el) {
+      el.addEventListener('click', function (e) { e.preventDefault(); el.classList.toggle('is-on'); });
+    });
+    var slow = document.getElementById('slowmo');
+    slow.addEventListener('change', function () { document.body.classList.toggle('slow', slow.checked); });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Way Back — Home Button Lab</title>
+  <meta name="description" content="A live chooser for ten ways to build the home link on a blog post. Pick one and it ports to every post.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     HOME BUTTON LAB
+     A throwaway chooser. Ten home-link treatments, all present in
+     the DOM at once; body[data-hb="..."] reveals the active one.
+     Use the panel in the corner (or keys 1 to 0) to try each one
+     against a real-feeling essay. Whichever you pick, the matching
+     CSS block below ports straight into style.css.
+     Green background, Century Supra, capped reading width.
+     No em dashes anywhere.
+     ============================================================ */
+
+  html { overflow-x: hidden; overscroll-behavior-x: none; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-heading);
+         font-weight: 400; line-height: 1.62; padding: 0; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: #20251d; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* faint film grain, same approach as the other posts */
+  .grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: 0.20; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  /* ---- The essay (a believable post to judge each exit against) ---- */
+  .post-wrap { min-height: 100vh; }
+  .flow-nav { max-width: 40rem; margin: 0 auto; padding: 2.4rem var(--gutter) 0; min-height: 1.4rem; }
+  .post { max-width: 40rem; margin: 0 auto; padding: 1.4rem var(--gutter) 0; }
+  .post h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.1rem, 5.4vw, 3rem);
+    line-height: 1.1; letter-spacing: -0.015em; color: var(--text-bright); margin: 0.4rem 0 0.5rem; text-wrap: balance; }
+  .post .dek { font-style: italic; color: var(--text-dim); font-size: 1.18rem; line-height: 1.52; margin: 0 0 2.6rem; max-width: 34rem; text-wrap: pretty; }
+  .post p { font-size: 1.16rem; line-height: 1.74; margin: 0 0 1.3em; text-wrap: pretty; }
+  .post h2 { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: var(--text-bright); margin: 2.6em 0 0.6em; line-height: 1.3; }
+  .post blockquote { margin: 2em 0; padding: 0.1em 0 0.1em 1.3em; border-left: 2px solid var(--rule);
+    font-style: italic; color: var(--text); font-size: 1.24rem; line-height: 1.5; }
+  .post .end-mark { text-align: center; color: var(--accent); opacity: 0.55; font-size: 1.3rem; margin: 3rem 0 0; }
+
+  /* =========================================================================
+     THE TEN TREATMENTS
+     Every affordance is hidden by default; the active body[data-hb] shows one.
+     ========================================================================= */
+  .hb { display: none; text-decoration: none; }
+
+  /* --- 1 · INLINE LINK (today's default) -------------------------------------
+     A dim word with an arrow, in the flow, scrolls away as you read. */
+  .hb-inline { color: var(--text-dim); font-size: 0.96rem; align-items: center; transition: color 0.25s; }
+  .hb-inline::before { content: '\2190'; margin-right: 0.42em; }
+  .hb-inline:hover { color: var(--text-bright); }
+  body[data-hb="inline"] .hb-inline,
+  body[data-hb="end"]    .hb-inline { display: inline-flex; }
+
+  /* --- 2 · BREADCRUMB --------------------------------------------------------
+     Says where you are: the masthead, then this title. Editorial, contextual. */
+  .hb-breadcrumb { font-variant: small-caps; letter-spacing: 0.07em; font-size: 0.95rem;
+    color: var(--text-dim); align-items: center; gap: 0.55em; transition: color 0.25s; }
+  .hb-breadcrumb .crumb-home { color: var(--text-dim); transition: color 0.25s; }
+  .hb-breadcrumb:hover .crumb-home { color: var(--text-bright); }
+  .hb-breadcrumb .crumb-sep { opacity: 0.42; }
+  .hb-breadcrumb .crumb-now { color: var(--text); }
+  body[data-hb="breadcrumb"] .hb-breadcrumb { display: inline-flex; }
+
+  /* --- 3 · STICKY LINK -------------------------------------------------------
+     The same quiet word, but pinned to the top so it is always one glance away. */
+  .hb-sticky { color: var(--text-dim); font-size: 0.96rem; align-items: center; transition: color 0.25s; }
+  .hb-sticky::before { content: '\2190'; margin-right: 0.42em; }
+  .hb-sticky:hover { color: var(--text-bright); }
+  body[data-hb="sticky"] .hb-sticky { display: inline-flex; }
+  body[data-hb="sticky"] .flow-nav { position: sticky; top: 0; z-index: 20; padding-block: 0.85rem;
+    background: linear-gradient(var(--bg) 62%, rgba(48,57,49,0)); }
+
+  /* --- 4 · FLOATING PILL -----------------------------------------------------
+     A small blurred capsule, fixed in the corner, present the whole way down. */
+  .hb-pill { position: fixed; top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left));
+    z-index: 40; align-items: center; gap: 0.4em; padding: 0.42em 0.86em 0.42em 0.74em;
+    font-size: 0.9rem; color: var(--text-dim); background: rgba(20, 24, 20, 0.5);
+    border: 1px solid var(--rule); border-radius: 999px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    transition: color 0.22s, border-color 0.22s, background 0.22s; }
+  .hb-pill::before { content: '\2190'; }
+  .hb-pill:hover { color: var(--text-bright); border-color: var(--accent); background: rgba(20, 24, 20, 0.66); }
+  body[data-hb="pill"] .hb-pill { display: inline-flex; }
+
+  /* --- 5 · ICON BUTTON -------------------------------------------------------
+     Just an arrow in a circle. The smallest footprint that still reads as a door. */
+  .hb-fab { position: fixed; top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left));
+    z-index: 40; align-items: center; justify-content: center; width: 40px; height: 40px; font-size: 1.05rem;
+    color: var(--text-dim); background: rgba(20, 24, 20, 0.5); border: 1px solid var(--rule); border-radius: 50%;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: color 0.22s, border-color 0.22s, background 0.22s; }
+  .hb-fab:hover { color: var(--text-bright); border-color: var(--accent); background: rgba(20, 24, 20, 0.66); }
+  body[data-hb="fab"] .hb-fab { display: inline-flex; }
+
+  /* --- 6 · REVEAL BAR --------------------------------------------------------
+     Hidden while you read down, slides in the instant you reach back up. */
+  .hb-revealbar { position: fixed; top: 0; left: 0; right: 0; z-index: 40; align-items: center; gap: 0.9em;
+    padding: 0.7rem max(16px, env(safe-area-inset-left)); background: rgba(28, 33, 29, 0.82);
+    border-bottom: 1px solid var(--rule); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    transform: translateY(-101%); transition: transform 0.34s var(--ease-out); }
+  .hb-revealbar .rb-home { color: var(--text-dim); font-size: 0.95rem; align-items: center; display: inline-flex; transition: color 0.22s; }
+  .hb-revealbar .rb-home::before { content: '\2190'; margin-right: 0.4em; }
+  .hb-revealbar .rb-home:hover { color: var(--text-bright); }
+  .hb-revealbar .rb-title { font-variant: small-caps; letter-spacing: 0.05em; color: var(--text-dim); opacity: 0.7;
+    font-size: 0.86rem; margin-left: auto; padding-right: 0.4em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-hb="revealbar"] .hb-revealbar { display: flex; }
+  body[data-hb="revealbar"] .hb-revealbar.show { transform: translateY(0); }
+
+  /* --- 7 · PROGRESS RING -----------------------------------------------------
+     A ring that fills as you read, and is itself the door home. Function + exit. */
+  .hb-ring { position: fixed; top: max(13px, env(safe-area-inset-top)); left: max(13px, env(safe-area-inset-left));
+    z-index: 40; width: 46px; height: 46px; align-items: center; justify-content: center;
+    background: rgba(20, 24, 20, 0.42); border-radius: 50%; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .hb-ring-svg { position: absolute; inset: 0; width: 46px; height: 46px; transform: rotate(-90deg); }
+  .hb-ring-track { fill: none; stroke: var(--rule); stroke-width: 2.4; opacity: 0.55; }
+  .hb-ring-prog { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 0.12s linear; }
+  .hb-ring-glyph { position: relative; color: var(--text-dim); font-size: 1rem; transition: color 0.22s; }
+  .hb-ring:hover .hb-ring-glyph { color: var(--text-bright); }
+  body[data-hb="ring"] .hb-ring { display: inline-flex; }
+
+  /* --- 8 · EDGE TAB ----------------------------------------------------------
+     Lives on the very edge of the glass, out of the text entirely. */
+  .hb-edgetab { position: fixed; left: 0; top: 42%; transform: translateY(-50%); z-index: 40;
+    writing-mode: vertical-rl; transform-origin: left center; align-items: center; gap: 0.5em;
+    padding: 0.9em 0.5em; font-variant: small-caps; letter-spacing: 0.18em; font-size: 0.74rem;
+    color: var(--text-dim); background: rgba(20, 24, 20, 0.6); border: 1px solid var(--rule); border-left: none;
+    border-radius: 0 6px 6px 0; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    transition: padding-right 0.24s var(--ease-out), color 0.22s, background 0.22s; }
+  .hb-edgetab:hover { color: var(--text-bright); background: rgba(20, 24, 20, 0.78); }
+  body[data-hb="edgetab"] .hb-edgetab { display: inline-flex; }
+
+  /* --- 9 · MONOGRAM ----------------------------------------------------------
+     Your initials as a mark. A logo that happens to be the way home. */
+  .hb-monogram { position: fixed; top: max(13px, env(safe-area-inset-top)); left: max(15px, env(safe-area-inset-left));
+    z-index: 40; align-items: center; justify-content: center; width: 42px; height: 42px;
+    font-family: var(--font-heading); font-weight: 700; font-size: 1.04rem; letter-spacing: 0.02em;
+    color: var(--accent); border: 1px solid var(--rule); border-radius: 50%; background: rgba(20, 24, 20, 0.32);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: color 0.22s, border-color 0.22s; }
+  .hb-monogram:hover { color: var(--accent-hover); border-color: var(--accent); }
+  body[data-hb="monogram"] .hb-monogram { display: inline-flex; }
+
+  /* --- 10 · END RETURN -------------------------------------------------------
+     Minimal word at the top (reuses #1), plus a generous exit when you finish. */
+  .hb-endblock { display: none; max-width: 40rem; margin: 1rem auto 3rem; padding: 2.4rem var(--gutter) 0;
+    border-top: 1px solid var(--rule); text-align: center; }
+  .hb-endblock .eb-kicker { font-variant: small-caps; letter-spacing: 0.18em; font-size: 0.74rem; color: var(--text-dim); opacity: 0.7; }
+  .hb-endblock .eb-link { display: inline-flex; align-items: center; gap: 0.5em; margin-top: 0.7rem;
+    font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-bright); transition: color 0.22s; }
+  .hb-endblock .eb-link::before { content: '\2190'; color: var(--accent); transition: transform 0.24s var(--ease-out); }
+  .hb-endblock .eb-link:hover { color: var(--accent-hover); }
+  body[data-hb="end"] .hb-endblock { display: block; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hb-edgetab:hover { padding-right: 0.85em; }
+    .hb-endblock .eb-link:hover::before { transform: translateX(-4px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hb-revealbar, .hb-ring-prog, .hb-edgetab, .hb-endblock .eb-link::before { transition: none; }
+  }
+
+  /* =========================================================================
+     THE CHOOSER PANEL (this is the tool, not part of any final design)
+     ========================================================================= */
+  .hb-lab { position: fixed; right: 14px; bottom: 14px; z-index: 60; width: 244px; max-height: 78vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    background: rgba(16, 19, 17, 0.92); border: 1px solid var(--rule); border-radius: 10px;
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 18px 50px -18px rgba(0,0,0,0.7);
+    font-family: var(--font-body); }
+  .hb-lab-head { padding: 0.85rem 0.95rem 0.7rem; border-bottom: 1px solid var(--rule); }
+  .hb-lab-head b { display: block; font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-bright); letter-spacing: 0.01em; }
+  .hb-lab-head span { display: block; margin-top: 0.15rem; font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-dim); }
+  .hb-lab-list { list-style: none; margin: 0; padding: 0.35rem; overflow-y: auto; }
+  .hb-lab-list button { width: 100%; text-align: left; display: block; padding: 0.5rem 0.6rem; margin: 0.12rem 0;
+    background: transparent; border: none; border-left: 2px solid transparent; border-radius: 5px; cursor: pointer;
+    color: var(--text-dim); transition: background 0.16s, color 0.16s, border-color 0.16s; }
+  .hb-lab-list button b { display: block; font-size: 0.82rem; color: var(--text); font-weight: 600; letter-spacing: 0.01em; }
+  .hb-lab-list button i { display: block; margin-top: 0.12rem; font-style: normal; font-size: 0.7rem; line-height: 1.35; color: var(--text-dim); opacity: 0.78; }
+  .hb-lab-list button:hover { background: rgba(212, 196, 160, 0.06); }
+  .hb-lab-list button.active { background: rgba(212, 196, 160, 0.1); border-left-color: var(--accent); }
+  .hb-lab-list button.active b { color: var(--accent-hover); }
+  .hb-lab-foot { padding: 0.6rem 0.95rem 0.75rem; border-top: 1px solid var(--rule); font-size: 0.66rem; line-height: 1.5; color: var(--text-dim); opacity: 0.75; }
+  @media (max-width: 640px) {
+    .hb-lab { right: 8px; bottom: 8px; width: 210px; max-height: 64vh; }
+  }
+  </style>
+</head>
+<body data-hb="inline">
+  <div class="reading-progress" id="reading-progress"></div>
+  <div class="grain"></div>
+
+  <!-- Fixed / edge affordances (only the active one is shown) -->
+  <a href="/" class="hb hb-pill">Home</a>
+  <a href="/" class="hb hb-fab" aria-label="Home">&#8592;</a>
+  <a href="/" class="hb hb-ring" aria-label="Home">
+    <svg class="hb-ring-svg" viewBox="0 0 46 46">
+      <circle class="hb-ring-track" cx="23" cy="23" r="20"></circle>
+      <circle class="hb-ring-prog" cx="23" cy="23" r="20" pathLength="1"></circle>
+    </svg>
+    <span class="hb-ring-glyph">&#8592;</span>
+  </a>
+  <a href="/" class="hb hb-edgetab">Index</a>
+  <a href="/" class="hb hb-monogram" aria-label="Home">EW</a>
+  <div class="hb hb-revealbar">
+    <a href="/" class="rb-home">Home</a>
+    <span class="rb-title">The Way Back</span>
+  </div>
+
+  <div class="post-wrap">
+    <div class="flow-nav">
+      <a href="/" class="hb hb-inline">Home</a>
+      <a href="/" class="hb hb-breadcrumb"><span class="crumb-home">Ethan Willingham</span><span class="crumb-sep">/</span><span class="crumb-now">The Way Back</span></a>
+      <a href="/" class="hb hb-sticky">Home</a>
+    </div>
+
+    <article class="post">
+      <h1>The Way Back</h1>
+      <p class="dek">A short field guide to the smallest link on the page, and why the exit deserves the same care as the entrance.</p>
+
+      <p>Every page you read is a room that someone built. There is a door you came in through, a view they want you to take in, and a path they hope you will follow to the far wall. Designers pour their attention into that entrance. The headline is set and reset, the first image is chosen like a handshake, the opening line is sanded until it is smooth. And then, almost always, the way back out is left as an afterthought: a pale word in a corner, half the size of everything around it, easy to miss and easier to ignore.</p>
+
+      <p>This is strange, when you think about it. The exit is the last thing a reader touches. It is the handshake on the way out, the held door, the quiet "come back soon." A room is judged as much by how gracefully it lets you leave as by how warmly it welcomed you in.</p>
+
+      <p>The browser already knows this. The back control is, by most measures, the second most used button in the entire history of the web, sitting just behind the link itself. People leave. People retrace. Movement online is mostly movement backward, and yet on the page we keep designing as though every reader arrives, descends once, and never needs to surface again.</p>
+
+      <h2>A door, not a sign</h2>
+      <p>The mistake is to treat the way back as a sign rather than a door. A sign points; a door opens. A good back link should not merely label the exit, it should invite you through it. That can be as small as a single word with an arrow, but the word should feel reachable, and the arrow should feel like it leads somewhere warm.</p>
+
+      <blockquote>The exit is the last thing a reader touches. It should feel like a held door, not a fire escape.</blockquote>
+
+      <p>There is a whole spectrum of ways to build that door. At one end is the bare word in the corner, content to scroll away the moment you start reading, trusting you to remember it is there. At the other end is a small, fixed companion that rides along with you, never in the way and always within reach. Between them sit a dozen quieter ideas: a bar that appears only when you reach for it, a ring that fills as you read and doubles as the door home, a tab that lives on the very edge of the glass.</p>
+
+      <h2>Quiet, but never hidden</h2>
+      <p>The hard part is the balance. Make the way back too loud and it competes with the writing, a blinking exit sign hung over a painting. Make it too quiet and the reader feels gently trapped, scrolling all the way back up through everything they just read to find the one word they need. The best answer is almost always the same: present, but whispering. It should be the kind of thing you do not notice until the moment you want it, and then find exactly where your hand expected it to be.</p>
+
+      <p>What follows on this page is that dozen, made real. Use the panel in the corner to try each one against this very essay. Some will feel invisible. Some will feel like furniture. One of them, with luck, will feel like a door you are glad to walk back through.</p>
+
+      <p class="end-mark">&#10022;</p>
+    </article>
+
+    <!-- Treatment 10's generous bottom exit -->
+    <div class="hb hb-endblock">
+      <div class="eb-kicker">You have reached the end</div>
+      <a href="/" class="eb-link">Back to all writing</a>
+    </div>
+  </div>
+
+  <aside class="hb-lab" aria-label="Home button chooser">
+    <div class="hb-lab-head">
+      <b>The Way Back</b>
+      <span>ten exits to choose from</span>
+    </div>
+    <ol class="hb-lab-list">
+      <li><button type="button" data-set="inline"><b>1 &middot; Inline link</b><i>today's default. a dim word that scrolls away.</i></button></li>
+      <li><button type="button" data-set="breadcrumb"><b>2 &middot; Breadcrumb</b><i>name, then title. shows where you are.</i></button></li>
+      <li><button type="button" data-set="sticky"><b>3 &middot; Sticky link</b><i>the same word, pinned to the top as you read.</i></button></li>
+      <li><button type="button" data-set="pill"><b>4 &middot; Floating pill</b><i>a small blurred capsule, always in the corner.</i></button></li>
+      <li><button type="button" data-set="fab"><b>5 &middot; Icon button</b><i>just an arrow in a circle. smallest footprint.</i></button></li>
+      <li><button type="button" data-set="revealbar"><b>6 &middot; Reveal bar</b><i>hidden going down, slides in when you reach up.</i></button></li>
+      <li><button type="button" data-set="ring"><b>7 &middot; Progress ring</b><i>fills as you read, and is the door home.</i></button></li>
+      <li><button type="button" data-set="edgetab"><b>8 &middot; Edge tab</b><i>lives on the very edge of the glass.</i></button></li>
+      <li><button type="button" data-set="monogram"><b>9 &middot; Monogram</b><i>your initials as a mark. branded and quiet.</i></button></li>
+      <li><button type="button" data-set="end"><b>0 &middot; End return</b><i>minimal up top, a generous exit at the finish.</i></button></li>
+    </ol>
+    <div class="hb-lab-foot">press 1 to 0 to cycle. your pick is saved on this page.</div>
+  </aside>
+
+  <script>
+  (function () {
+    'use strict';
+    var ORDER = ['inline', 'breadcrumb', 'sticky', 'pill', 'fab', 'revealbar', 'ring', 'edgetab', 'monogram', 'end'];
+    var body = document.body;
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('.hb-lab-list button'));
+    var ringProg = document.querySelector('.hb-ring-prog');
+    var bar = document.getElementById('reading-progress');
+    var revealbar = document.querySelector('.hb-revealbar');
+
+    function setActive(name) {
+      if (ORDER.indexOf(name) === -1) name = 'inline';
+      body.setAttribute('data-hb', name);
+      buttons.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-set') === name); });
+      try { localStorage.setItem('hb-lab-choice', name); } catch (e) {}
+    }
+
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () { setActive(b.getAttribute('data-set')); });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var n = parseInt(e.key, 10);
+      if (isNaN(n)) return;
+      var idx = (n === 0) ? 9 : n - 1;
+      if (idx >= 0 && idx < ORDER.length) setActive(ORDER[idx]);
+    });
+
+    // Scroll-driven bits: progress bar, the ring fill, and the reveal bar.
+    var lastY = window.scrollY || 0;
+    var ticking = false;
+    function onScroll() {
+      var y = window.scrollY || document.documentElement.scrollTop;
+      var scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      var frac = scrollable <= 0 ? 1 : Math.min(Math.max(y / scrollable, 0), 1);
+      if (bar) bar.style.width = (frac * 100) + '%';
+      if (ringProg) ringProg.style.strokeDashoffset = String(1 - frac);
+      if (revealbar) {
+        var goingUp = y < lastY - 2;
+        if (goingUp || y < 60) revealbar.classList.add('show');
+        else if (y > lastY + 2) revealbar.classList.remove('show');
+      }
+      lastY = y;
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { window.requestAnimationFrame(onScroll); ticking = true; }
+    }, { passive: true });
+
+    var saved;
+    try { saved = localStorage.getItem('hb-lab-choice'); } catch (e) {}
+    setActive(saved || 'inline');
+    onScroll();
+  })();
+  </script>
+</body>
+</html>

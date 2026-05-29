@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 17.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1042 253" style="enable-background:new 0 0 1042 253;" width="1042" height="253" xml:space="preserve">
+<style type="text/css">
+	.st0{clip-path:url(#XMLID_5_);fill:none;stroke:#808080;stroke-dasharray:1,1;}
+	.st1{clip-path:url(#XMLID_5_);fill:#FADCF3;}
+	.st2{clip-path:url(#XMLID_5_);fill:#BACCFD;}
+	.st3{clip-path:url(#XMLID_5_);fill:#fff;}
+	.st4{clip-path:url(#XMLID_5_);}
+	.st5{fill:none;stroke:#808080;stroke-dasharray:1,1;}
+	.st6{fill:#1D71B8;}
+	.st7{clip-path:url(#XMLID_6_);fill:none;stroke:#808080;stroke-dasharray:1,1;}
+	.st8{clip-path:url(#XMLID_6_);fill:#FADCF3;}
+	.st9{clip-path:url(#XMLID_6_);fill:#BACCFD;}
+	.st10{clip-path:url(#XMLID_6_);fill:#fff;}
+	.st11{clip-path:url(#XMLID_6_);}
+	.st12{clip-path:url(#XMLID_7_);}
+	.st13{clip-path:url(#XMLID_7_);fill:none;stroke:#808080;stroke-dasharray:1,1;}
+	.st14{clip-path:url(#XMLID_7_);fill:#FADCF3;}
+	.st15{clip-path:url(#XMLID_7_);fill:#BACCFD;}
+	.st16{clip-path:url(#XMLID_7_);fill:#fff;}
+	.st17{font-family:'Liberation Sans','Arial';}
+	.st18{font-size:34px;}
+</style>
+<g id="diagram">
+	<g id="right">
+		<g>
+			<defs>
+				<path id="XMLID_3_" d="M695.7,151.8C695.7,69,770.6,2.6,853.5,2.6S1005,71,1006.8,153.9c2.4,104.6-96.7,192.3-152.3,171.1
+					C726.6,276.2,695.7,241.7,695.7,151.8z"/>
+			</defs>
+			<use xlink:href="#XMLID_3_"  style="overflow:visible;fill:#FEDDA7;"/>
+			<clipPath id="XMLID_5_">
+				<use xlink:href="#XMLID_3_"  style="overflow:visible;"/>
+			</clipPath>
+			<path class="st0" d="M709.9,91.1c3.5,27.8,37.9,79.9,141.4,81c94.7,1,139.3-50.6,140.2-82.7"/>
+			<path class="st0" d="M695.7,161.4c-1.8,40.3,70.2,83.4,155.6,83.4c100.2,0,159-50.4,155.5-82"/>
+			<path class="st1" d="M741.8,35c-21.3,37.9-42.2,126,34.6,74.2c56.3-50.4,60.1,28.6,50.2,31.1c-15.8,4.1-68.4,64.9,6,66.9
+				c12.1,0.3,46.5-9.2,44.2-36.4c-1.6-18.3-14.3-57.4,0.6-70.1c34.5-29.2,65.1-7.2,76.8,23.3c36.3,2.5,33.1-59.9,15.7-70.4
+				c-11.6-7-8.1-16.4-10.6-20.8S937.3,1.4,891-1.9c-46.3-3.2-95.5-21.8-149.1,36"/>
+			<path class="st2" d="M742.4,39.1c-2.8,2.8-2.2,10.3-1.7,14.3c1,8-4.8,22.9-7,46.8c-1.9,20.7,13.5,9.6,38.1-2.5
+				c13-6.4,26.9-21.1,45.3-15.3c5.8,1.8,29.5,13.3,26.9,44.2c-0.8,10-4.6,19.8-10.7,23.6c-22.9,14.5-31.2,28.3-23.2,39.8
+				c2.6,3.8,34.1,9.2,51.6-5.7c11-9.4-8.8-57-2.9-73.9c9.2-26.1,59.2-67.5,93.9-2.5c2.4,4.4,13,10,17.8-14.3
+				c4.1-21-8.7-45-10.2-46.5c-1.5-1.5,5-12.8,7-12.8s-7.8-6.3-6.8-7.3c1-1-60.1-58.9-105.2-53.9S761.6-7.8,753,8.7
+				S742.4,39.1,742.4,39.1z"/>
+			<polygon class="st3" points="938.9,86.7 922.8,98.6 954.3,124 			"/>
+			<polygon class="st3" points="842.3,202.4 806.7,191.8 806.7,214.1 			"/>
+			<polygon class="st3" points="750.2,105.3 759.5,125.3 786.2,99.8 			"/>
+			<g class="st4">
+				<path class="st5" d="M950.2,37.8c0,44.9-58.4,57.8-98.9,57.8c-40.5,0-99.3-12.2-97.9-57.9c1.2-40.5,57.4-88.8,97.9-88.8
+					C891.8-51.1,950.2-2.7,950.2,37.8z"/>
+			</g>
+			<use xlink:href="#XMLID_3_"  style="overflow:visible;fill:none;stroke:#1D1D1B;stroke-width:0.5;"/>
+		</g>
+		<ellipse class="st6" cx="852" cy="22.9" rx="5.8" ry="4"/>
+	</g>
+	<g id="centre">
+		<g>
+			<defs>
+				<path id="XMLID_2_" d="M350.7,151.8C350.7,69,425.6,2.6,508.4,2.6S659.9,71,661.8,153.9c2.4,104.6-96.7,192.3-152.3,171.1
+					C381.5,276.2,350.7,241.7,350.7,151.8z"/>
+			</defs>
+			<use xlink:href="#XMLID_2_"  style="overflow:visible;fill:#FEDDA7;"/>
+			<clipPath id="XMLID_6_">
+				<use xlink:href="#XMLID_2_"  style="overflow:visible;"/>
+			</clipPath>
+			<path class="st7" d="M364.9,91.1c3.5,27.8,37.9,79.9,141.4,81c94.7,1,139.3-50.6,140.2-82.7"/>
+			<path class="st7" d="M350.7,161.4c-1.8,40.3,70.2,83.4,155.6,83.4c100.2,0,159-50.4,155.5-82"/>
+			<path class="st8" d="M396.8,35c-21.3,37.9-34.4,51.5,30.8,63.4c8.7,1.6,15,17.1,20.2,42.7c6,29.8,48.4,23.2,84.7-20.4
+				c9.4-11.3,18.6-30.2,34.7-35.2c10.4-3.2,9.7,13.9,56.4,23c38.3-30.5,10-39.9,1.4-50.2c-8.7-10.4-8.1-21-10.6-25.3
+				S592.3,1.4,546-1.9c-46.3-3.2-95.5-21.8-149.1,36"/>
+			<path class="st9" d="M397.4,39.1c-2.8,2.8,0.4,14.9-0.8,18.8c-1.2,3.8-23.6,20.3,29.7,25.3c23.3,2.2,25.8,33.2,33.4,58.2
+				c1.8,5.8,24.7,11.3,59.1-20.7c17.6-16.3,23.4-43.4,39.6-47.2c16.8-4,47.7,20,52.4,21.6c9.8,3.3,31.8-2.8,12.2-32.3
+				c-15-22.5-15.2-22.6-16.7-24.1c-1.5-1.5,8.2-10.7,9.2-11.7c1-1-60.1-58.9-105.2-53.9S416.6-7.8,408,8.7S397.4,39.1,397.4,39.1z"
+				/>
+			<polygon class="st10" points="587.6,82.9 579.1,102.3 616.6,105.7 			"/>
+			<polygon class="st10" points="527.9,126.5 493.2,139.5 506.3,156.9 			"/>
+			<polygon class="st10" points="393.6,77.4 387.2,98.4 425,99.8 			"/>
+			<g class="st11">
+				<path class="st5" d="M605.2,37.8c0,44.9-58.4,57.8-98.9,57.8c-40.5,0-99.3-12.2-97.9-57.9c1.2-40.5,57.4-88.8,97.9-88.8
+					C546.8-51.1,605.2-2.7,605.2,37.8z"/>
+			</g>
+			<use xlink:href="#XMLID_2_"  style="overflow:visible;fill:none;stroke:#1D1D1B;stroke-width:0.5;"/>
+		</g>
+		<ellipse class="st6" cx="507" cy="22.9" rx="5.8" ry="4"/>
+	</g>
+	<g id="left">
+		<g>
+			<defs>
+				<path id="XMLID_1_" d="M5.7,151.8C5.7,69,80.6,2.6,163.4,2.6S314.9,71,316.8,153.9c2.4,104.6-96.7,192.3-152.3,171.1
+					C36.5,276.2,5.7,241.7,5.7,151.8z"/>
+			</defs>
+			<use xlink:href="#XMLID_1_"  style="overflow:visible;fill:#FEDDA7;"/>
+			<clipPath id="XMLID_7_">
+				<use xlink:href="#XMLID_1_"  style="overflow:visible;"/>
+			</clipPath>
+
+			<path class="st13" d="M19.9,91.1c3.5,27.8,37.9,79.9,141.4,81c94.7,1,139.3-50.6,140.2-82.7"/>
+			<path class="st13" d="M5.7,161.4c-1.8,40.3,70.2,83.4,155.6,83.4c100.2,0,159-50.4,155.5-82"/>
+			<path class="st14" d="M51.8,35C30.5,72.8,24.5,84.1,80,100.9c29,31.7,64.9,46.1,102.1,16.9c18.1-14.2,22.1-17.7,76.9-14.1
+				c24.5-19.5,23.9-30.9,20.9-45.4c-2.7-13.3-8.1-21-10.6-25.3S247.2,1.4,201-1.9s-95.5-21.8-149.1,36"/>
+			<path class="st15" d="M52.4,39.1c-2.8,2.8,2.7,9.4,1.5,13.3c-1.2,3.8-15.4,26.5,15.8,33.2c31.1,6.6,30.8,25.8,46.1,31.4
+				c5.7,2.1,32.4,7.4,53.6-3.8s19-17.2,30.8-20.8c11.8-3.6,43.2-2.5,48.2-2.5c5,0,29.8-12.2,17.4-33.6s-6.3-11.9-7.8-13.4
+				c-1.5-1.5,2.4-5.4,4.5-5.4c2.1,0,7-9.4,8-10.4c1-1-60.1-58.9-105.2-53.9S71.6-7.8,63,8.7S52.4,39.1,52.4,39.1z"/>
+			<polygon class="st16" points="241,94.5 253.4,112.5 277.4,84.3 			"/>
+			<polygon class="st16" points="150.6,135.2 116.7,124.9 116.7,145.5 			"/>
+			<polygon class="st16" points="50.9,77.4 44.4,98.4 80,99.8 			"/>
+			<use xlink:href="#XMLID_1_"  style="overflow:visible;fill:none;stroke:#1D1D1B;stroke-width:0.5;"/>
+		</g>
+		<ellipse class="st6" cx="162" cy="22.9" rx="5.8" ry="4"/>
+	</g>			<g class="st12">
+				<path class="st5" d="M260.1,37.8c0,44.9-58.4,57.8-98.9,57.8S62,83.5,63.3,37.7c1.2-40.5,57.4-88.8,97.9-88.8
+					S260.1-2.7,260.1,37.8z"/>
+			</g>
+</g>
+<g id="text">
+	<text transform="matrix(1 0 0 1 279 34)" class="st17 st18">(a)</text>
+	<text transform="matrix(1 0 0 1 625 34)" class="st17 st18">(b)</text>
+	<text transform="matrix(1 0 0 1 972 34)" class="st17 st18">(c)</text>
+</g>
+</svg>
