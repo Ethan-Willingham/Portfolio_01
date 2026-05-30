@@ -26,137 +26,109 @@
   <meta property="og:description" content="A continuous zoom from the most complicated machine ever built down to a single silicon atom.">
   <meta property="og:type" content="article">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="assets/images/zoom/machine.jpg">
   <link rel="stylesheet" href="style.css">
   <style>
   /* ============================================================
-     FROM THE MACHINE TO THE ATOM
-     A continuous "powers of ten" dive. Scroll falls through a stack
-     of layers, each one scale of the semiconductor world: the EUV
-     machine, a wafer, a die, the wiring, a transistor, the lattice.
-     Real public-domain photos up top melt into computed scenes below,
-     where no camera can follow.
+     FROM THE MACHINE TO THE ATOM  (v2)
+     A continuous canvas zoom. Scroll drives one zoom value through 16
+     scales: the optical span (photos of the EUV machine, a wafer, a die,
+     deep-zoomed and match-cut) dissolves at the resolution of light into
+     the computed span (procedural cells, wiring, a transistor, the
+     silicon lattice) down to a single atom.
 
-     Two render modes from one DOM:
-       - Base CSS (no .js, or reduced-motion): a clean stacked article,
-         each layer's visual above its text. Fully readable, no pinning.
-       - .js + motion allowed: the .dive section pins and the engine in
-         js/machine-to-atom.js scales + cross-fades the visuals while the
-         fact cards and the scale readout are gated by depth.
+     Zoom mode (js + motion allowed): the .dive pins a viewport and the
+     engine in js/machine-to-atom.js paints the canvas; the HUD (scale
+     readout, gated fact cards, spine) sits over it.
+     Fallback (no-js or reduced-motion): the .fallback stacked article.
      No em dashes anywhere.
      ============================================================ */
-  :root {
-    --paper:    #e7dcc2;
-    --ink:      150 32% 4%;
-    --col:      56ch;
-    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-    --vis-bg:   #14180f;
-  }
-  /* overflow-x: clip (not hidden) prevents sideways scroll WITHOUT turning
-     html/body into a scroll container, which would break position: sticky on
-     the pinned .viewport (the whole dive depends on that sticky pin). */
+  :root { --paper:#e7dcc2; --col:54ch; --ease-out:cubic-bezier(0.23,1,0.32,1); --vis-bg:#14180f; }
+  /* clip (not hidden) so sideways scroll is contained WITHOUT breaking the sticky pin */
   html { overflow-x: clip; scroll-behavior: smooth; }
-  body { background: #0f130c; color: var(--text); overflow-x: clip; -webkit-font-smoothing: antialiased; }
-  ::selection { background: var(--accent); color: #20251d; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  body { background:#0b0e08; color:var(--text); overflow-x:clip; -webkit-font-smoothing:antialiased; }
+  ::selection { background:var(--accent); color:#20251d; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:3px; }
 
-  /* home link, plain word in normal flow at the very top */
-  .top-nav { position: relative; z-index: 40; max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .top-nav a { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); text-decoration: none; transition: color 0.2s ease; }
-  .top-nav a:hover { color: var(--accent); }
-  .sc { font-family: var(--font-heading); font-variant: small-caps; letter-spacing: 0.12em; }
-  .mono { font-family: var(--font-mono); }
+  .top-nav { position:relative; z-index:40; max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:1rem var(--gutter) 0; }
+  .top-nav a { font-family:var(--font-body); font-size:0.9rem; color:var(--text-dim); text-decoration:none; transition:color .2s ease; }
+  .top-nav a:hover { color:var(--accent); }
+  .mono { font-family:var(--font-mono); }
 
   /* ---- COVER ---- */
-  .cover { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem var(--gutter) 3rem; position: relative; }
-  .cover-eyebrow { font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.26em; text-transform: uppercase; color: #c3b589; margin-bottom: 1.5rem; }
-  .cover h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 8vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); max-width: 16ch; text-wrap: balance; }
-  .cover-dek { margin-top: 1.6rem; font-family: var(--font-heading); font-style: italic; font-size: clamp(1.15rem, 2.6vw, 1.5rem); line-height: 1.42; color: var(--text-dim); max-width: 40ch; text-wrap: pretty; }
-  .cover-cue { position: absolute; left: 50%; bottom: 2.2rem; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
-  .cover-cue .chev { font-size: 1rem; line-height: 1; animation: cueBob 2.4s ease-in-out infinite; }
-  @keyframes cueBob { 0%,100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(4px); opacity: 1; } }
+  .cover { min-height:100svh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:2rem var(--gutter) 3rem; position:relative; }
+  .cover-eyebrow { font-family:var(--font-body); font-size:0.74rem; font-weight:600; letter-spacing:0.26em; text-transform:uppercase; color:#c3b589; margin-bottom:1.5rem; }
+  .cover h1 { font-family:var(--font-heading); font-weight:700; font-size:clamp(2.7rem,8vw,5.2rem); line-height:1.02; letter-spacing:-0.025em; color:var(--text-bright); max-width:16ch; text-wrap:balance; }
+  .cover-dek { margin-top:1.6rem; font-family:var(--font-heading); font-style:italic; font-size:clamp(1.15rem,2.6vw,1.5rem); line-height:1.42; color:var(--text-dim); max-width:40ch; text-wrap:pretty; }
+  .cover-cue { position:absolute; left:50%; bottom:2.2rem; transform:translateX(-50%); font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
+  .cover-cue .chev { font-size:1rem; line-height:1; animation:cueBob 2.4s ease-in-out infinite; }
+  @keyframes cueBob { 0%,100%{transform:translateY(0);opacity:.5;} 50%{transform:translateY(4px);opacity:1;} }
 
   /* ============================================================
-     BASE (FALLBACK) LAYOUT: a stacked, readable article.
-     This is what no-JS and reduced-motion visitors see.
+     ZOOM MODE (default for js + motion). The canvas dive.
      ============================================================ */
-  .dive { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter); }
-  .layer { padding: 3.5rem 0; border-top: 1px solid var(--rule); }
-  .layer-vis { position: relative; width: 100%; aspect-ratio: 3 / 2; border-radius: 5px; overflow: hidden; background: var(--vis-bg); display: grid; place-items: center; }
-  .layer-vis img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .layer-vis canvas { width: 100%; height: 100%; display: block; }
-  .layer-text { margin-top: 1.6rem; max-width: var(--col); }
-  .layer-eyebrow { font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #c3b589; margin-bottom: 0.7rem; }
-  .layer-stat { font-family: var(--font-mono); font-size: clamp(1.7rem, 4.6vw, 2.5rem); line-height: 1; color: var(--accent-hover); letter-spacing: -0.01em; margin-bottom: 0.2rem; }
-  .layer-stat-label { font-family: var(--font-body); font-size: 0.86rem; color: var(--text-dim); margin-bottom: 1.1rem; }
-  .layer-title { font-family: var(--font-heading); font-weight: 400; font-size: clamp(1.55rem, 4vw, 2.1rem); line-height: 1.12; letter-spacing: -0.015em; color: var(--text-bright); margin-bottom: 0.9rem; text-wrap: balance; }
-  .layer-body { font-family: var(--font-body); font-size: 1.08rem; line-height: 1.62; color: var(--text); text-wrap: pretty; }
-  .layer-body b { color: var(--text-bright); font-weight: 600; }
+  .dive { display:none; }
+  .fallback { display:block; }
 
-  /* scale readout, hidden in fallback (the readout is a dive-only HUD) */
-  .scale-rail { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .js .dive { display:block; height:1400vh; position:relative; }
+    .js .fallback { display:none; }
+    .js .viewport { position:sticky; top:0; height:100svh; overflow:hidden; background:#07090c; }
+    .js #zoomCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+    /* scale readout, top */
+    .js .scale-rail { position:absolute; top:0; left:0; right:0; z-index:7; display:flex; align-items:baseline; gap:0.7rem;
+      padding:1.1rem var(--gutter) 0; max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto;
+      font-family:var(--font-mono); pointer-events:none; }
+    .js .scale-rail .sr-size { font-size:clamp(1.15rem,3vw,1.55rem); color:var(--accent-hover); font-variant-numeric:tabular-nums; text-shadow:0 1px 8px rgba(0,0,0,.6); }
+    .js .scale-rail .sr-pow { font-size:0.78rem; color:var(--text-dim); text-shadow:0 1px 6px rgba(0,0,0,.6); }
+    .js .scale-rail .sr-label { margin-left:auto; align-self:center; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); text-shadow:0 1px 6px rgba(0,0,0,.6); }
+
+    /* gated fact cards, bottom */
+    .js .fact { position:absolute; left:0; right:0; bottom:clamp(2rem,7vh,5rem); z-index:6;
+      margin:0 auto; padding:0 var(--gutter); max-width:calc(var(--content-width) + 2*var(--gutter));
+      pointer-events:none; opacity:0; visibility:hidden; will-change:opacity,transform;
+      text-shadow:0 1px 2px rgba(0,0,0,.6), 0 2px 24px rgba(0,0,0,.55); }
+    .js .fact .f-eyebrow { font-family:var(--font-body); font-size:0.7rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:0.7rem; }
+    .js .fact .f-stat { font-family:var(--font-mono); font-size:clamp(1.7rem,4.6vw,2.5rem); line-height:1; color:var(--accent-hover); letter-spacing:-0.01em; margin-bottom:0.2rem; }
+    .js .fact .f-statlabel { font-family:var(--font-body); font-size:0.86rem; color:var(--text-dim); margin-bottom:1.1rem; }
+    .js .fact .f-title { font-family:var(--font-heading); font-weight:400; font-size:clamp(1.55rem,4vw,2.1rem); line-height:1.12; letter-spacing:-0.015em; color:var(--text-bright); margin-bottom:0.9rem; text-wrap:balance; }
+    .js .fact .f-body { font-family:var(--font-body); font-size:1.02rem; line-height:1.5; color:var(--text-bright); max-width:var(--col); text-wrap:pretty; }
+    .js .fact .f-body b { color:#fff; font-weight:600; }
+    @media (max-width:600px){ .js .fact .f-body{font-size:0.96rem;} .js .fact .f-statlabel{font-size:0.8rem;} }
+
+    /* descent spine */
+    .js .spine { position:absolute; left:clamp(10px,3.2vw,34px); top:16vh; bottom:16vh; width:1px; z-index:7; background:var(--rule); pointer-events:none; }
+    .js .spine .bob { position:absolute; left:50%; top:0; width:7px; height:7px; margin-left:-3.5px; margin-top:-3.5px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px rgba(212,196,160,.6); }
+    @media (max-width:600px){ .js .spine{display:none;} }
+    .js .cover-cue { z-index:40; }
+  }
+
+  /* ============================================================
+     FALLBACK ARTICLE (no-js / reduced-motion): clean stacked read.
+     ============================================================ */
+  .fallback { max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:0 var(--gutter); }
+  .fb-sec { padding:3.2rem 0; border-top:1px solid var(--rule); }
+  .fb-vis { width:100%; aspect-ratio:3/2; border-radius:5px; overflow:hidden; background:var(--vis-bg); margin-bottom:1.4rem; }
+  .fb-vis img { width:100%; height:100%; object-fit:cover; display:block; }
+  .fb-eyebrow { font-family:var(--font-body); font-size:0.7rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:#c3b589; margin-bottom:0.6rem; }
+  .fb-stat { font-family:var(--font-mono); font-size:clamp(1.6rem,4.4vw,2.3rem); line-height:1; color:var(--accent-hover); margin-bottom:0.15rem; }
+  .fb-statlabel { font-family:var(--font-body); font-size:0.86rem; color:var(--text-dim); margin-bottom:1rem; }
+  .fb-title { font-family:var(--font-heading); font-weight:400; font-size:clamp(1.5rem,4vw,2rem); line-height:1.13; color:var(--text-bright); margin-bottom:0.8rem; text-wrap:balance; }
+  .fb-body { font-family:var(--font-body); font-size:1.08rem; line-height:1.62; color:var(--text); max-width:var(--col); text-wrap:pretty; }
+  .fb-body b { color:var(--text-bright); font-weight:600; }
 
   /* ---- CODA ---- */
-  .coda { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding: 5rem var(--gutter) 2rem; }
-  .coda-inner { max-width: var(--col); }
-  .coda p { font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.6; color: var(--text); margin-bottom: 1.1rem; text-wrap: pretty; }
-  .coda p.lead-cap::first-letter { initial-letter: 2; font-weight: 700; color: var(--accent); margin-right: 0.06em; }
-  .coda .credit { font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.7; color: var(--text-dim); margin-top: 2.5rem; }
-  .coda .credit a { color: var(--text-dim); }
-
-  .post-foot { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding: 2rem var(--gutter) 4rem; border-top: 1px solid var(--rule); }
-  .post-foot a { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); text-decoration: none; }
-  .post-foot a:hover { color: var(--accent); }
-
-  /* ============================================================
-     ZOOM MODE: only when JS is on AND motion is allowed.
-     The .dive becomes a tall scroll track; .viewport pins; all
-     layer visuals stack and overlap; the engine scales them.
-     ============================================================ */
-  @media (prefers-reduced-motion: no-preference) {
-    .js .dive { max-width: none; margin: 0; padding: 0; height: 640vh; position: relative; }
-    .js .viewport { position: sticky; top: 0; height: 100svh; overflow: hidden; background: #0b0e08; }
-    .js .layers { position: absolute; inset: 0; }
-    .js .layer { position: absolute; inset: 0; padding: 0; border: 0; display: block; pointer-events: none; }
-    .js .layer-vis { position: absolute; inset: -1px; width: auto; height: auto; aspect-ratio: auto; border-radius: 0; transform-origin: center center; will-change: transform, opacity; backface-visibility: hidden; }
-    .js .layer-vis img { width: 100%; height: 100%; object-fit: cover; }
-    /* a soft vignette so the fact text always has contrast over any layer */
-    .js .viewport::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
-      background: linear-gradient(to top, rgba(8,10,6,0.9) 0%, rgba(8,10,6,0.66) 26%, rgba(8,10,6,0.34) 48%, rgba(8,10,6,0.1) 67%, rgba(8,10,6,0) 85%),
-                  radial-gradient(140% 110% at 50% 36%, rgba(8,10,6,0) 52%, rgba(8,10,6,0.48) 100%); }
-
-    .js .layer-text { position: absolute; left: 0; right: 0; bottom: clamp(2rem, 7vh, 5rem); z-index: 6;
-      margin: 0 auto; padding: 0 var(--gutter); max-width: calc(var(--content-width) + 2 * var(--gutter));
-      pointer-events: none; will-change: opacity, transform;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.55), 0 2px 22px rgba(0,0,0,0.5); }
-    .js .layer-text > * { pointer-events: auto; }
-    .js .layer-text { display: block; }
-    .js .layer-text .layer-eyebrow { color: var(--accent); }
-    .js .layer-text .layer-body { max-width: var(--col); color: var(--text-bright); font-size: 1.02rem; line-height: 1.5; }
-    @media (max-width: 600px) { .js .layer-text .layer-body { font-size: 0.96rem; } .js .layer-text .layer-stat-label { font-size: 0.8rem; } }
-
-    /* the scale readout rail, a fixed HUD in the pinned viewport */
-    .js .scale-rail { display: flex; position: absolute; top: 0; left: 0; right: 0; z-index: 7;
-      align-items: baseline; gap: 0.7rem; padding: 1.1rem var(--gutter) 0;
-      max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto;
-      font-family: var(--font-mono); pointer-events: none; }
-    .js .scale-rail .sr-size { font-size: clamp(1.15rem, 3vw, 1.55rem); color: var(--accent-hover); letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
-    .js .scale-rail .sr-pow { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 0.04em; }
-    .js .scale-rail .sr-label { margin-left: auto; font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); align-self: center; }
-
-    /* a thin descent spine on the left with a sliding bob */
-    .js .spine { position: absolute; left: clamp(10px, 3.2vw, 34px); top: 16vh; bottom: 16vh; width: 1px; z-index: 7; background: var(--rule); pointer-events: none; }
-    .js .spine .bob { position: absolute; left: 50%; top: 0; width: 7px; height: 7px; margin-left: -3.5px; margin-top: -3.5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px rgba(212,196,160,0.6); }
-    @media (max-width: 600px) { .js .spine { display: none; } }
-
-    .js .cover-cue { z-index: 40; }
-  }
-
-  /* generative layer panels keep a sensible dark fill even before paint */
-  .layer-vis.gen { background: radial-gradient(120% 120% at 50% 40%, #1a2114 0%, #0c0f08 80%); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cover-cue .chev { animation: none; }
-  }
+  .coda { max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:5rem var(--gutter) 2rem; }
+  .coda-inner { max-width:var(--col); }
+  .coda p { font-family:var(--font-heading); font-size:1.3rem; line-height:1.6; color:var(--text); margin-bottom:1.1rem; text-wrap:pretty; }
+  .coda p.lead-cap::first-letter { initial-letter:2; font-weight:700; color:var(--accent); margin-right:0.06em; }
+  .coda .credit { font-family:var(--font-mono); font-size:0.74rem; line-height:1.7; color:var(--text-dim); margin-top:2.5rem; }
+  .coda .credit a { color:var(--text-dim); }
+  .post-foot { max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:2rem var(--gutter) 4rem; border-top:1px solid var(--rule); }
+  .post-foot a { font-family:var(--font-body); font-size:0.9rem; color:var(--text-dim); text-decoration:none; }
+  .post-foot a:hover { color:var(--accent); }
+  @media (prefers-reduced-motion: reduce){ .cover-cue .chev{animation:none;} }
   </style>
 </head>
 <body>
@@ -169,113 +141,128 @@
     <div class="cover-cue"><span>scroll to fall</span><span class="chev">&#8595;</span></div>
   </header>
 
-  <section class="dive" id="dive" aria-label="A zoom from the machine down to a single atom">
+  <!-- ZOOM MODE: one canvas, scroll-driven, with the HUD over it -->
+  <section class="dive" id="dive" aria-label="A continuous zoom from the machine down to a single atom">
     <div class="viewport">
-      <div class="layers">
-
-        <!-- L0  THE MACHINE -->
-        <article class="layer" data-layer="0" data-size="4">
-          <div class="layer-vis">
-            <!-- ASML High-NA EUV (TWINSCAN EXE) lithography scanner at the ASML/imec High-NA lab, Veldhoven. Courtesy ASML / imec (press image, used editorially with credit; this is the one asset here that is not CC/PD). https://www.imec-int.com/en/press/asml-and-imec-open-joint-high-na-euv-lithography-lab-offering-early-development-platform -->
-            <img src="assets/images/euv-machine.jpg" alt="The ASML High-NA EUV lithography machine: a room-sized wall of stainless-steel modules, pipes, and cabling in a cleanroom, a large module suspended above, ASML and imec on the back wall." loading="eager" decoding="async">
-          </div>
-          <div class="layer-text">
-            <p class="layer-eyebrow">The machine</p>
-            <p class="layer-stat">$380 million</p>
-            <p class="layer-stat-label">the price of one, from the only company on Earth that makes it</p>
-            <h2 class="layer-title">The most complicated machine ever built</h2>
-            <p class="layer-body">Every advanced chip on the planet is printed by one kind of machine, made by one company, ASML, in the Netherlands. A High-NA EUV system costs around <b>$380 million</b>, ships in dozens of freight containers, and is bolted together on site over months. Its light is made by firing a laser at <b>50,000 droplets of molten tin a second</b>; each hit flashes into plasma that glows at exactly the wavelength used to draw the chip.</p>
-          </div>
-        </article>
-
-        <!-- L1  THE WAFER -->
-        <article class="layer" data-layer="1" data-size="0.3">
-          <div class="layer-vis">
-            <!-- "Silicon Photonics 300mm wafer", Ehsanshahoseini, CC BY-SA 4.0, via Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Silicon_Photonics_300mm_wafer.JPG -->
-            <img src="assets/images/silicon-wafer.jpg" alt="A round silicon wafer, its surface a grid of identical chips that scatters light into rainbow colors." loading="lazy" decoding="async">
-          </div>
-          <div class="layer-text">
-            <p class="layer-eyebrow">The wafer</p>
-            <p class="layer-stat">300 mm</p>
-            <p class="layer-stat-label">one disc, sliced from a single crystal of silicon</p>
-            <h2 class="layer-title">A mirror grown from melted sand</h2>
-            <p class="layer-body">The machine prints onto this: a <b>300 mm</b> disc of silicon, sliced from one crystal grown out of melted, purified sand. The silicon is refined to about <b>99.9999999% pure</b>, nine nines. Hundreds of identical chips are patterned across it at once, then sawn apart. The rainbow is real: it is light bending off features finer than its own wavelength.</p>
-          </div>
-        </article>
-
-        <!-- L2  THE DIE -->
-        <article class="layer" data-layer="2" data-size="0.012">
-          <div class="layer-vis">
-            <!-- Apple M1 die shot (TSMC N5), Fritzchens Fritz, CC0 / public domain, via Flickr: https://www.flickr.com/photos/130561288@N04/55302205348/ -->
-            <img src="assets/images/chip-die.jpg" alt="A macro photograph of a processor die, a microscopic landscape of colored rectangular blocks and fine repeating structure." loading="lazy" decoding="async">
-          </div>
-          <div class="layer-text">
-            <p class="layer-eyebrow">The chip</p>
-            <p class="layer-stat">~100,000,000,000</p>
-            <p class="layer-stat-label">transistors, on a die the size of a fingernail</p>
-            <h2 class="layer-title">One chip, cut from the wafer</h2>
-            <p class="layer-body">A single die. The newest carry <b>tens of billions of transistors</b>, each a switch flicking on and off billions of times a second. Around the rim run the connections to the outside world, <b>thousands of contacts</b> on the underside, with tens of thousands of microscopic bumps inside. Everything between those contacts is logic, wired together out of the switches.</p>
-          </div>
-        </article>
-
-        <!-- L3  THE WIRING (generative) -->
-        <article class="layer" data-layer="3" data-size="0.00004">
-          <div class="layer-vis gen">
-            <canvas data-scene="interconnect" aria-hidden="true"></canvas>
-          </div>
-          <div class="layer-text">
-            <p class="layer-eyebrow">The wiring</p>
-            <p class="layer-stat">tens of km</p>
-            <p class="layer-stat-label">of copper, folded into one fingernail of silicon</p>
-            <h2 class="layer-title">A city of copper in stacked floors</h2>
-            <p class="layer-body">No photograph can follow past the surface, so from here we compute it. Between the contacts and the switches runs the wiring: copper threads in more than a dozen stacked layers, like the streets of a city seen from above. Unspooled, the wires in a single chip would run for <b>tens of kilometers</b>. The fat lines up top carry power; the finest, far below, are a few dozen atoms across.</p>
-          </div>
-        </article>
-
-        <!-- L4  THE TRANSISTOR (generative) -->
-        <article class="layer" data-layer="4" data-size="0.00000006">
-          <div class="layer-vis gen">
-            <canvas data-scene="transistor" aria-hidden="true"></canvas>
-          </div>
-          <div class="layer-text">
-            <p class="layer-eyebrow">The transistor</p>
-            <p class="layer-stat">86,000,000,000</p>
-            <p class="layer-stat-label">neurons in your brain, and a top chip now rivals the count</p>
-            <h2 class="layer-title">The switch, smaller than a virus</h2>
-            <p class="layer-body">This is one transistor, the thing all of it is made of. A modern one is a few dozen <b>nanometers</b> across, smaller than most viruses, and it switches billions of times a second. A high-end chip packs around <b>100 billion</b> of them. Your brain holds about <b>86 billion neurons</b>, so a single chip now rivals it in raw count, yet each neuron wires to thousands of others, and the brain's <b>~100 trillion</b> connections still dwarf anything we print.</p>
-          </div>
-        </article>
-
-        <!-- L5  THE LATTICE / ATOM (generative) -->
-        <article class="layer" data-layer="5" data-size="0.0000000005">
-          <div class="layer-vis gen">
-            <canvas data-scene="lattice" aria-hidden="true"></canvas>
-          </div>
-          <div class="layer-text">
-            <p class="layer-eyebrow">The atom</p>
-            <p class="layer-stat">0.5 nm</p>
-            <p class="layer-stat-label">across one cell of the silicon crystal</p>
-            <h2 class="layer-title">Where the picture ends and the atoms begin</h2>
-            <p class="layer-body">Keep falling and the material itself runs out of smallness. This is the silicon crystal, atoms fixed in a lattice that repeats about every <b>half a nanometer</b>. The thinnest working layers in a chip are only a <b>handful of atoms</b> thick. Build smaller and quantum mechanics stops cooperating. This is the floor. The whole machine, all $380 million of it, exists to place these dots, a few atoms at a time, a hundred billion times over.</p>
-          </div>
-        </article>
-
-      </div>
+      <canvas id="zoomCanvas"></canvas>
 
       <div class="scale-rail" aria-hidden="true">
-        <span class="sr-size" id="srSize">4 m</span>
+        <span class="sr-size" id="srSize">6 m</span>
         <span class="sr-pow" id="srPow"></span>
         <span class="sr-label">field of view</span>
       </div>
+
+      <!-- gated fact cards (data-zc = zoom center 0..1, data-zw = half window) -->
+      <div class="fact" data-zc="0.03" data-zw="0.05">
+        <p class="f-eyebrow">The machine</p>
+        <p class="f-stat">$380 million</p>
+        <p class="f-statlabel">the price of one, from the only company on Earth that makes it</p>
+        <h2 class="f-title">The most complicated machine ever built</h2>
+        <p class="f-body">Every advanced chip on the planet is printed by one kind of machine, made by one company, ASML, in the Netherlands. A High-NA EUV system costs around <b>$380 million</b>, ships in dozens of freight containers, and is bolted together on site over months. Its light is made by firing a laser at <b>50,000 droplets of molten tin a second</b>.</p>
+      </div>
+      <div class="fact" data-zc="0.126" data-zw="0.045">
+        <p class="f-eyebrow">The wafer</p>
+        <p class="f-stat">300 mm</p>
+        <p class="f-statlabel">one disc, sliced from a single crystal of silicon</p>
+        <h2 class="f-title">A mirror grown from melted sand</h2>
+        <p class="f-body">The machine prints onto this: a <b>300 mm</b> disc of silicon, sliced from one crystal grown out of melted, purified sand, refined to about <b>99.9999999% pure</b>. Hundreds of identical chips are patterned across it at once, then sawn apart.</p>
+      </div>
+      <div class="fact" data-zc="0.262" data-zw="0.05">
+        <p class="f-eyebrow">The chip</p>
+        <p class="f-stat">~100,000,000,000</p>
+        <p class="f-statlabel">transistors, on a die the size of a fingernail</p>
+        <h2 class="f-title">One chip, cut from the wafer</h2>
+        <p class="f-body">A single die. The newest carry <b>tens of billions of transistors</b>, each a switch flicking on and off billions of times a second. Around the rim run <b>thousands of contacts</b> to the outside world. Everything between them is logic, wired out of the switches.</p>
+      </div>
+      <div class="fact" data-zc="0.53" data-zw="0.06">
+        <p class="f-eyebrow">The wiring</p>
+        <p class="f-stat">tens of km</p>
+        <p class="f-statlabel">of copper, folded into one fingernail of silicon</p>
+        <h2 class="f-title">A city of copper in stacked floors</h2>
+        <p class="f-body">No photograph can follow past the surface, so from here we compute it. Between the contacts and the switches runs the wiring: copper threads in more than a dozen stacked layers. Unspooled, the wires in a single chip would run for <b>tens of kilometers</b>.</p>
+      </div>
+      <div class="fact" data-zc="0.687" data-zw="0.06">
+        <p class="f-eyebrow">The transistor</p>
+        <p class="f-stat">86,000,000,000</p>
+        <p class="f-statlabel">neurons in your brain, and a top chip now rivals the count</p>
+        <h2 class="f-title">The switch, smaller than a virus</h2>
+        <p class="f-body">This is one transistor, the thing all of it is made of. A modern one is a few dozen <b>nanometers</b> across and switches billions of times a second. A high-end chip packs around <b>100 billion</b> of them. Your brain holds about <b>86 billion neurons</b>, so a single chip now rivals it in raw count, yet the brain's <b>~100 trillion</b> connections still dwarf anything we print.</p>
+      </div>
+      <div class="fact" data-zc="0.95" data-zw="0.06">
+        <p class="f-eyebrow">The atom</p>
+        <p class="f-stat">0.5 nm</p>
+        <p class="f-statlabel">across one cell of the silicon crystal</p>
+        <h2 class="f-title">Where the picture ends and the atoms begin</h2>
+        <p class="f-body">Keep falling and the material itself runs out of smallness. This is the silicon crystal, atoms in a lattice that repeats about every <b>half a nanometer</b>. The thinnest working layers in a chip are only a <b>handful of atoms</b> thick. This is the floor: the whole $380 million machine exists to place these dots, a few atoms at a time, a hundred billion times over.</p>
+      </div>
+
       <div class="spine" aria-hidden="true"><span class="bob" id="spineBob"></span></div>
     </div>
   </section>
+
+  <!-- FALLBACK: stacked article for no-js / reduced-motion -->
+  <div class="fallback">
+    <section class="fb-sec">
+      <div class="fb-vis">
+        <!-- ASML High-NA EUV scanner. Courtesy ASML / imec (press image, used editorially with credit). -->
+        <img src="assets/images/zoom/machine.jpg" alt="The ASML High-NA EUV lithography machine: a wall of stainless-steel modules and vacuum chambers in a cleanroom, with technicians for scale." loading="eager" decoding="async">
+      </div>
+      <p class="fb-eyebrow">The machine</p>
+      <p class="fb-stat">$380 million</p>
+      <p class="fb-statlabel">the price of one, from the only company on Earth that makes it</p>
+      <h2 class="fb-title">The most complicated machine ever built</h2>
+      <p class="fb-body">Every advanced chip is printed by one kind of machine, made by one company, ASML. A High-NA EUV system costs around <b>$380 million</b> and makes its light by firing a laser at <b>50,000 droplets of molten tin a second</b>.</p>
+    </section>
+    <section class="fb-sec">
+      <div class="fb-vis">
+        <!-- "80C196KC wafer", Mister rf, CC BY-SA 4.0, via Wikimedia Commons -->
+        <img src="assets/images/zoom/wafer.jpg" alt="A silicon wafer, its surface a grid of identical chips." loading="lazy" decoding="async">
+      </div>
+      <p class="fb-eyebrow">The wafer</p>
+      <p class="fb-stat">300 mm</p>
+      <p class="fb-statlabel">one disc, sliced from a single crystal of silicon</p>
+      <h2 class="fb-title">A mirror grown from melted sand</h2>
+      <p class="fb-body">The machine prints onto a <b>300 mm</b> disc of silicon, refined to about <b>99.9999999% pure</b>, patterned with hundreds of identical chips at once.</p>
+    </section>
+    <section class="fb-sec">
+      <div class="fb-vis">
+        <!-- NVIDIA GP100 HBM-logic die. Fritzchens Fritz, CC0 / public domain, via Flickr. -->
+        <img src="assets/images/zoom/die.jpg" alt="A macro photograph of a processor die, a golden microscopic landscape of repeating structure." loading="lazy" decoding="async">
+      </div>
+      <p class="fb-eyebrow">The chip</p>
+      <p class="fb-stat">~100,000,000,000</p>
+      <p class="fb-statlabel">transistors, on a die the size of a fingernail</p>
+      <h2 class="fb-title">One chip, cut from the wafer</h2>
+      <p class="fb-body">A single die carries <b>tens of billions of transistors</b>, with <b>thousands of contacts</b> to the outside world around its rim.</p>
+    </section>
+    <section class="fb-sec">
+      <p class="fb-eyebrow">The wiring</p>
+      <p class="fb-stat">tens of km</p>
+      <p class="fb-statlabel">of copper, folded into one fingernail of silicon</p>
+      <h2 class="fb-title">A city of copper in stacked floors</h2>
+      <p class="fb-body">Below the resolution of light, no photograph can follow. Between the contacts and the switches runs the wiring: copper threads in more than a dozen stacked layers. Unspooled, the wires in one chip would run for <b>tens of kilometers</b>.</p>
+    </section>
+    <section class="fb-sec">
+      <p class="fb-eyebrow">The transistor</p>
+      <p class="fb-stat">86,000,000,000</p>
+      <p class="fb-statlabel">neurons in your brain, and a top chip now rivals the count</p>
+      <h2 class="fb-title">The switch, smaller than a virus</h2>
+      <p class="fb-body">One transistor is a few dozen <b>nanometers</b> across. A chip packs around <b>100 billion</b>; your brain holds about <b>86 billion neurons</b>, though its <b>~100 trillion</b> connections still dwarf anything we print.</p>
+    </section>
+    <section class="fb-sec">
+      <p class="fb-eyebrow">The atom</p>
+      <p class="fb-stat">0.5 nm</p>
+      <p class="fb-statlabel">across one cell of the silicon crystal</p>
+      <h2 class="fb-title">Where the picture ends and the atoms begin</h2>
+      <p class="fb-body">At the floor is the silicon crystal, atoms in a lattice that repeats about every <b>half a nanometer</b>. The whole $380 million machine exists to place these dots, a few atoms at a time, a hundred billion times over.</p>
+    </section>
+  </div>
 
   <section class="coda">
     <div class="coda-inner">
       <p class="lead-cap">Start at a machine the size of a bus and end at a dot half a nanometer wide, and you have crossed about ten powers of ten without ever leaving one object.</p>
       <p>That is the strange thing about a chip. It is the only place where the largest engineering effort humans have ever mounted and the smallest thing we can deliberately arrange meet in the same breath. A $380 million machine, a disc of nine-nines sand, a fingernail of a hundred billion switches, and underneath it all, atoms in a quiet lattice, waiting to be told what to do.</p>
-      <p class="credit" id="credit">Machine photo courtesy of <a href="https://www.imec-int.com/en/press/asml-and-imec-open-joint-high-na-euv-lithography-lab-offering-early-development-platform">ASML / imec</a> (High-NA EUV scanner). Wafer by <a href="https://commons.wikimedia.org/wiki/File:Silicon_Photonics_300mm_wafer.JPG">Ehsanshahoseini, CC BY-SA 4.0</a>. Die by <a href="https://www.flickr.com/photos/130561288@N04/55302205348/">Fritzchens Fritz, CC0</a>. The wiring, the transistor, and the silicon lattice are drawn in code; no camera can go there.</p>
+      <p class="credit" id="credit">Machine photo courtesy of <a href="https://newsroom.intel.com/press-kit/intel-high-na-euv">Intel</a> (High-NA EUV). Wafer by <a href="https://commons.wikimedia.org/wiki/File:80C196KC_wafer.jpg">Mister rf, CC BY-SA 4.0</a>. Die by <a href="https://www.flickr.com/photos/130561288@N04/52206974251/">Fritzchens Fritz, CC0</a>. The wiring, transistor, and silicon lattice are drawn in code; below the wavelength of light, no camera can go.</p>
     </div>
   </section>
 
