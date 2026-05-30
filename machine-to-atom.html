@@ -2,289 +2,228 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>document.documentElement.className += ' js';</script>
-  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-1NS9QT1HEM');
-  </script>
-  <!-- Microsoft Clarity -->
-  <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "wo3l78g9ld");
-  </script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1NS9QT1HEM');</script>
+  <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","wo3l78g9ld");</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>From the Machine to the Atom</title>
-  <meta name="description" content="A continuous zoom from the most complicated machine ever built, down through a silicon wafer and a single chip, to the atoms it is made of. Facts surface as you fall.">
+  <meta name="description" content="A scroll down the whole scale of a computer chip, from the most complicated machine humans build to the single silicon atoms it arranges, in the highest resolution I could find. Click any image to zoom.">
   <meta property="og:title" content="From the Machine to the Atom">
-  <meta property="og:description" content="A continuous zoom from the most complicated machine ever built down to a single silicon atom.">
+  <meta property="og:description" content="A scroll from the most complicated machine ever built down to a single silicon atom, told in photographs.">
   <meta property="og:type" content="article">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" as="image" href="assets/images/zoom/machine.jpg">
+  <link rel="preload" as="image" href="assets/chip/machine-euv.jpg">
   <link rel="stylesheet" href="style.css">
   <style>
-  /* ============================================================
-     FROM THE MACHINE TO THE ATOM  (v2)
-     A continuous canvas zoom. Scroll drives one zoom value through 16
-     scales: the optical span (photos of the EUV machine, a wafer, a die,
-     deep-zoomed and match-cut) dissolves at the resolution of light into
-     the computed span (procedural cells, wiring, a transistor, the
-     silicon lattice) down to a single atom.
+    :root { --stage: #0a0d0b; }
+    html { background: var(--stage); overflow-x: hidden; }
+    body { padding: 0; background: var(--stage); color: var(--text); }
+    .reading-progress { position: fixed; top: 0; left: 0; width: 0; height: 2px; background: var(--accent); z-index: 1000; transition: width 60ms linear; pointer-events: none; }
 
-     Zoom mode (js + motion allowed): the .dive pins a viewport and the
-     engine in js/machine-to-atom.js paints the canvas; the HUD (scale
-     readout, gated fact cards, spine) sits over it.
-     Fallback (no-js or reduced-motion): the .fallback stacked article.
-     No em dashes anywhere.
-     ============================================================ */
-  :root { --paper:#e7dcc2; --col:54ch; --ease-out:cubic-bezier(0.23,1,0.32,1); --vis-bg:#14180f; }
-  /* clip (not hidden) so sideways scroll is contained WITHOUT breaking the sticky pin */
-  html { overflow-x: clip; scroll-behavior: smooth; }
-  body { background:#0b0e08; color:var(--text); overflow-x:clip; -webkit-font-smoothing:antialiased; }
-  ::selection { background:var(--accent); color:#20251d; }
-  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:3px; }
+    .post-back { position: fixed; top: 1rem; left: 1rem; z-index: 40; display: inline-flex; align-items: center; gap: 0.4em; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); text-decoration: none; padding: 0.4em 0.7em; border: 1px solid rgba(212,196,160,0.22); border-radius: 5px; background: rgba(8,11,9,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: color 0.2s, border-color 0.2s; }
+    .post-back::before { content: "\2190"; }
+    .post-back:hover { color: var(--accent-hover); border-color: var(--accent); }
 
-  .top-nav { position:relative; z-index:40; max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:1rem var(--gutter) 0; }
-  .top-nav a { font-family:var(--font-body); font-size:0.9rem; color:var(--text-dim); text-decoration:none; transition:color .2s ease; }
-  .top-nav a:hover { color:var(--accent); }
-  .mono { font-family:var(--font-mono); }
+    .essay-intro { min-height: 92vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6vh 1.25rem 4vh; }
+    .essay-intro .eyebrow { font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.26em; text-transform: uppercase; color: #c3b589; margin-bottom: 1.5rem; }
+    .essay-intro h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 9vw, 5.5rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; max-width: 16ch; }
+    .essay-intro .dek { margin-top: 1.4rem; max-width: 44ch; font-family: var(--font-heading); font-style: italic; font-size: clamp(1.15rem, 2.5vw, 1.5rem); line-height: 1.5; color: var(--text-dim); text-wrap: pretty; }
+    .essay-intro .zoomhint { margin-top: 2.6rem; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--text-dim); max-width: 42ch; line-height: 1.7; }
+    .essay-intro .zoomhint span { display: block; margin-top: 1.4rem; font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); opacity: 0.85; }
 
-  /* ---- COVER ---- */
-  .cover { min-height:100svh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:2rem var(--gutter) 3rem; position:relative; }
-  .cover-eyebrow { font-family:var(--font-body); font-size:0.74rem; font-weight:600; letter-spacing:0.26em; text-transform:uppercase; color:#c3b589; margin-bottom:1.5rem; }
-  .cover h1 { font-family:var(--font-heading); font-weight:700; font-size:clamp(2.7rem,8vw,5.2rem); line-height:1.02; letter-spacing:-0.025em; color:var(--text-bright); max-width:16ch; text-wrap:balance; }
-  .cover-dek { margin-top:1.6rem; font-family:var(--font-heading); font-style:italic; font-size:clamp(1.15rem,2.6vw,1.5rem); line-height:1.42; color:var(--text-dim); max-width:40ch; text-wrap:pretty; }
-  .cover-cue { position:absolute; left:50%; bottom:2.2rem; transform:translateX(-50%); font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
-  .cover-cue .chev { font-size:1rem; line-height:1; animation:cueBob 2.4s ease-in-out infinite; }
-  @keyframes cueBob { 0%,100%{transform:translateY(0);opacity:.5;} 50%{transform:translateY(4px);opacity:1;} }
+    .essay { display: block; }
+    .shot { margin: 0 0 7vh; }
+    .shot img { display: block; width: 100vw; max-height: 92vh; object-fit: contain; margin: 0 auto; background: #000; cursor: zoom-in; }
+    .shot figcaption { max-width: 60ch; margin: 1.25rem auto 0; padding: 0 1.4rem; text-align: center; font-family: var(--font-body); font-size: 1.06rem; line-height: 1.55; color: var(--text-dim); text-wrap: pretty; }
+    .shot figcaption .sp { display: block; margin-bottom: 0.45rem; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+    .shot figcaption .sp em { font-style: italic; text-transform: none; letter-spacing: 0; }
 
-  /* ============================================================
-     ZOOM MODE (default for js + motion). The canvas dive.
-     ============================================================ */
-  .dive { display:none; }
-  .fallback { display:block; }
+    .divider { max-width: 760px; margin: 13vh auto 9vh; padding: 0 1.4rem; text-align: center; }
+    .divider .dk { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
+    .divider h2 { margin-top: 0.7rem; font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.015em; color: var(--text-bright); line-height: 1.08; }
 
-  @media (prefers-reduced-motion: no-preference) {
-    .js .dive { display:block; height:1400vh; position:relative; }
-    .js .fallback { display:none; }
-    .js .viewport { position:sticky; top:0; height:100svh; overflow:hidden; background:#07090c; }
-    .js #zoomCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+    .essay-credits { max-width: 760px; margin: 12vh auto 0; padding: 3rem 1.4rem 2rem; border-top: 1px solid var(--rule); }
+    .essay-credits h2 { font-family: var(--font-heading); font-size: 1.3rem; color: var(--text-bright); margin-bottom: 0.6rem; }
+    .essay-credits p { font-size: 0.95rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.4rem; max-width: 62ch; }
+    .essay-credits ul { list-style: none; columns: 2; column-gap: 2rem; font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.5; }
+    .essay-credits li { break-inside: avoid; margin-bottom: 0.5rem; color: var(--text-dim); }
+    .essay-credits a { color: var(--text); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.25); }
+    .essay-credits a:hover { color: var(--accent-hover); }
+    .essay-credits .ftr { display: block; margin-top: 2.5rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); text-decoration: none; }
+    @media (max-width: 620px) { .essay-credits ul { columns: 1; } }
 
-    /* legibility scrims: a persistent top wash for the readout, plus a
-       bottom wash (opacity driven by the engine) that fades in with each
-       fact card, so text stays readable over any moving frame. */
-    .js #zoomCanvas { z-index:1; }
-    .js .viewport::before { content:''; position:absolute; top:0; left:0; right:0; height:33%; z-index:5; pointer-events:none;
-      background:linear-gradient(to bottom, rgba(7,9,6,0.85), rgba(7,9,6,0.38) 45%, rgba(7,9,6,0)); }
-    .js .fact-scrim { position:absolute; bottom:0; left:0; right:0; height:52%; z-index:5; pointer-events:none; opacity:0;
-      background:linear-gradient(to top, rgba(7,9,6,0.93) 0%, rgba(7,9,6,0.66) 38%, rgba(7,9,6,0.2) 74%, rgba(7,9,6,0) 100%); }
+    html.reveal-on .shot, html.reveal-on .divider { opacity: 0; transform: translateY(18px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22,1,0.36,1); }
+    html.reveal-on .shot.is-in, html.reveal-on .divider.is-in { opacity: 1; transform: none; }
+    html.reveal-on .shot.hero { opacity: 1; transform: none; }
 
-    /* map-style scale bar (top): a ruler that resizes and snaps to round lengths as you zoom */
-    .js .scale-rail { position:absolute; top:0; left:0; right:0; z-index:7; display:flex; align-items:flex-start; gap:0.7rem;
-      padding:1.05rem var(--gutter) 0; max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto;
-      font-family:var(--font-mono); pointer-events:none; }
-    .js .scalebar { display:flex; flex-direction:column; gap:0.35rem; }
-    .js .scalebar .sb-label { font-size:clamp(1.05rem,2.8vw,1.45rem); color:var(--accent-hover); font-variant-numeric:tabular-nums; letter-spacing:0.01em; text-shadow:0 1px 9px rgba(0,0,0,.85); }
-    .js .scalebar .sb-bar { display:block; height:7px; min-width:6px; box-sizing:border-box; border:2px solid var(--accent-hover); border-top:0; box-shadow:0 1px 6px rgba(0,0,0,.75); transition:width 90ms linear; }
-    .js .scale-rail .sr-pow { align-self:flex-start; margin-top:0.2rem; font-size:0.78rem; color:var(--text); text-shadow:0 1px 6px rgba(0,0,0,.85); }
-    .js .scale-rail .sr-label { margin-left:auto; align-self:flex-start; margin-top:0.35rem; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); text-shadow:0 1px 6px rgba(0,0,0,.85); }
-
-    /* gated fact cards, bottom */
-    .js .fact { position:absolute; left:0; right:0; bottom:clamp(2rem,7vh,5rem); z-index:6;
-      margin:0 auto; padding:0 var(--gutter); max-width:calc(var(--content-width) + 2*var(--gutter));
-      pointer-events:none; opacity:0; visibility:hidden; will-change:opacity,transform;
-      text-shadow:0 1px 2px rgba(0,0,0,.6), 0 2px 24px rgba(0,0,0,.55); }
-    .js .fact .f-eyebrow { font-family:var(--font-body); font-size:0.7rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:0.7rem; }
-    .js .fact .f-stat { font-family:var(--font-mono); font-size:clamp(1.7rem,4.6vw,2.5rem); line-height:1; color:var(--accent-hover); letter-spacing:-0.01em; margin-bottom:0.2rem; }
-    .js .fact .f-statlabel { font-family:var(--font-body); font-size:0.86rem; color:var(--text-dim); margin-bottom:1.1rem; }
-    .js .fact .f-title { font-family:var(--font-heading); font-weight:400; font-size:clamp(1.55rem,4vw,2.1rem); line-height:1.12; letter-spacing:-0.015em; color:var(--text-bright); margin-bottom:0.9rem; text-wrap:balance; }
-    .js .fact .f-body { font-family:var(--font-body); font-size:1.02rem; line-height:1.5; color:var(--text-bright); max-width:var(--col); text-wrap:pretty; }
-    .js .fact .f-body b { color:#fff; font-weight:600; }
-    @media (max-width:600px){ .js .fact .f-body{font-size:0.96rem;} .js .fact .f-statlabel{font-size:0.8rem;} }
-
-    /* descent spine */
-    .js .spine { position:absolute; left:clamp(10px,3.2vw,34px); top:16vh; bottom:16vh; width:1px; z-index:7; background:var(--rule); pointer-events:none; }
-    .js .spine .bob { position:absolute; left:50%; top:0; width:7px; height:7px; margin-left:-3.5px; margin-top:-3.5px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px rgba(212,196,160,.6); }
-    @media (max-width:600px){ .js .spine{display:none;} }
-    .js .cover-cue { z-index:40; }
-  }
-
-  /* ============================================================
-     FALLBACK ARTICLE (no-js / reduced-motion): clean stacked read.
-     ============================================================ */
-  .fallback { max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:0 var(--gutter); }
-  .fb-sec { padding:3.2rem 0; border-top:1px solid var(--rule); }
-  .fb-vis { width:100%; aspect-ratio:3/2; border-radius:5px; overflow:hidden; background:var(--vis-bg); margin-bottom:1.4rem; }
-  .fb-vis img { width:100%; height:100%; object-fit:cover; display:block; }
-  .fb-eyebrow { font-family:var(--font-body); font-size:0.7rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:#c3b589; margin-bottom:0.6rem; }
-  .fb-stat { font-family:var(--font-mono); font-size:clamp(1.6rem,4.4vw,2.3rem); line-height:1; color:var(--accent-hover); margin-bottom:0.15rem; }
-  .fb-statlabel { font-family:var(--font-body); font-size:0.86rem; color:var(--text-dim); margin-bottom:1rem; }
-  .fb-title { font-family:var(--font-heading); font-weight:400; font-size:clamp(1.5rem,4vw,2rem); line-height:1.13; color:var(--text-bright); margin-bottom:0.8rem; text-wrap:balance; }
-  .fb-body { font-family:var(--font-body); font-size:1.08rem; line-height:1.62; color:var(--text); max-width:var(--col); text-wrap:pretty; }
-  .fb-body b { color:var(--text-bright); font-weight:600; }
-
-  /* ---- CODA ---- */
-  .coda { max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:5rem var(--gutter) 2rem; }
-  .coda-inner { max-width:var(--col); }
-  .coda p { font-family:var(--font-heading); font-size:1.3rem; line-height:1.6; color:var(--text); margin-bottom:1.1rem; text-wrap:pretty; }
-  .coda p.lead-cap::first-letter { initial-letter:2; font-weight:700; color:var(--accent); margin-right:0.06em; }
-  .coda .credit { font-family:var(--font-mono); font-size:0.74rem; line-height:1.7; color:var(--text-dim); margin-top:2.5rem; }
-  .coda .credit a { color:var(--text-dim); }
-  .post-foot { max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto; padding:2rem var(--gutter) 4rem; border-top:1px solid var(--rule); }
-  .post-foot a { font-family:var(--font-body); font-size:0.9rem; color:var(--text-dim); text-decoration:none; }
-  .post-foot a:hover { color:var(--accent); }
-  @media (prefers-reduced-motion: reduce){ .cover-cue .chev{animation:none;} }
+    /* Lightbox (from gallery.html) */
+    .lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(6,8,7,0.985); display: none; flex-direction: column; opacity: 0; transition: opacity 0.2s ease; overscroll-behavior: contain; touch-action: none; }
+    .lightbox.is-open { display: flex; opacity: 1; }
+    .lightbox-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 0.9rem; padding: 0.7em 1em; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(212,196,160,0.12); color: var(--text-dim); font-family: var(--font-heading); font-size: 0.88rem; z-index: 2; }
+    .lightbox-caption { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-bright); }
+    .lightbox-caption .lb-artist { color: var(--accent); margin-right: 0.5em; }
+    .lightbox-controls { display: flex; align-items: center; gap: 0.4em; }
+    .lightbox-zoom-label { font-variant-numeric: tabular-nums; color: var(--text-dim); font-size: 0.82rem; min-width: 3.2em; text-align: right; user-select: none; }
+    .lightbox-btn { background: transparent; border: 1px solid rgba(212,196,160,0.22); color: var(--text); width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.18s, border-color 0.18s, color 0.18s; padding: 0; }
+    .lightbox-btn:hover, .lightbox-btn:focus-visible { background: rgba(212,196,160,0.14); border-color: var(--accent); color: var(--accent-hover); outline: none; }
+    .lightbox-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .lightbox-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .lightbox-stage { flex: 1; position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
+    .lightbox-stage.is-grabbing { cursor: grabbing; }
+    .lightbox-stage img { position: absolute; top: 0; left: 0; transform-origin: 0 0; max-width: none; max-height: none; user-select: none; -webkit-user-drag: none; pointer-events: none; will-change: transform; }
+    .lightbox-stage.is-animating img { transition: transform 0.22s cubic-bezier(0.22,0.61,0.36,1); }
+    .lightbox-hint { position: absolute; bottom: 1.4em; left: 50%; transform: translateX(-50%); padding: 0.5em 1em; background: rgba(0,0,0,0.65); border: 1px solid rgba(212,196,160,0.18); border-radius: 999px; color: var(--text-bright); font-family: var(--font-heading); font-size: 0.82rem; white-space: nowrap; pointer-events: none; opacity: 1; transition: opacity 0.4s ease; }
+    .lightbox-hint.is-hidden { opacity: 0; }
+    body.lightbox-open { overflow: hidden; }
+    @media (max-width: 500px) { .lightbox-zoom-label { display: none; } .shot figcaption { font-size: 1rem; } }
   </style>
 </head>
 <body>
-  <nav class="top-nav"><a href="/">&#8592; Ethan Willingham</a></nav>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a href="/" class="post-back">Home</a>
 
-  <header class="cover">
-    <p class="cover-eyebrow">An interactive descent</p>
+  <header class="essay-intro">
+    <p class="eyebrow">A scroll down the scale</p>
     <h1>From the Machine to the Atom</h1>
-    <p class="cover-dek">The most complicated machine ever built exists to arrange atoms on a disc of sand. Fall the whole way down, from the machine to a single atom, and watch the scale collapse beneath you.</p>
-    <div class="cover-cue"><span>scroll to fall</span><span class="chev">&#8595;</span></div>
+    <p class="dek">The chips that run the world are printed by the most complicated machine humans build, and they end in patterns of single atoms. Here is the whole way down, in the highest resolution I could find.</p>
+    <p class="zoomhint">Every image is a real photograph or micrograph, shown as large as it comes. Click or tap any one to zoom all the way in. <span>scroll to begin</span></p>
   </header>
 
-  <!-- ZOOM MODE: one canvas, scroll-driven, with the HUD over it -->
-  <section class="dive" id="dive" aria-label="A continuous zoom from the machine down to a single atom">
-    <div class="viewport">
-      <canvas id="zoomCanvas"></canvas>
-      <div class="fact-scrim" id="factScrim" aria-hidden="true"></div>
+  <main class="essay">
+      <figure class="shot hero"><img class="zoom" src="assets/chip/machine-euv.jpg" width="2000" height="1333" loading="eager" decoding="async" fetchpriority="high" alt="A room-sized stainless-steel lithography machine in a bright cleanroom, two operators in white suits and red caps seated at its terminals." data-zoom-src="assets/chip/full/machine-euv.jpg" data-zoom-title="ASML High-NA EUV scanner" data-zoom-artist="Courtesy Intel"><figcaption><span class="sp">The machine &middot; <em>ASML High-NA EUV scanner</em></span>This one machine prints the patterns on nearly every advanced chip on Earth, and only one company, ASML, knows how to build it. A single system runs to about $380 million, and the whole world has only a handful.</figcaption></figure>
 
-      <div class="scale-rail" aria-hidden="true">
-        <div class="scalebar">
-          <span class="sb-label" id="sbLabel">6 m</span>
-          <span class="sb-bar" id="sbBar"></span>
-        </div>
-        <span class="sr-pow" id="srPow"></span>
-        <span class="sr-label">field of view</span>
-      </div>
+      <figure class="shot"><img class="zoom" src="assets/chip/machine-modules.jpg" width="2000" height="1333" loading="lazy" decoding="async" alt="A close view of the lithography machine, a dense wall of polished steel modules, pipes, and cabling." data-zoom-src="assets/chip/full/machine-modules.jpg" data-zoom-title="Inside the scanner" data-zoom-artist="Courtesy Intel"><figcaption><span class="sp">Inside the scanner &middot; <em>worth its weight many times over</em></span>It ships in dozens of freight containers and is bolted together on site over months. The mirrors that steer its light, ground by Zeiss, are the flattest objects ever made: blown up to the size of Germany, the biggest bump would be under a millimeter.</figcaption></figure>
 
-      <!-- gated fact cards (data-zc = zoom center 0..1, data-zw = half window) -->
-      <div class="fact" data-zc="0.03" data-zw="0.05">
-        <p class="f-eyebrow">The machine</p>
-        <p class="f-stat">$380 million</p>
-        <p class="f-statlabel">the price of one, from the only company on Earth that makes it</p>
-        <h2 class="f-title">The most complicated machine ever built</h2>
-        <p class="f-body">Made by one company, ASML, in the Netherlands. Its light is born when a laser strikes <b>50,000 droplets of molten tin a second</b>.</p>
-      </div>
-      <div class="fact" data-zc="0.126" data-zw="0.045">
-        <p class="f-eyebrow">The wafer</p>
-        <p class="f-stat">300 mm</p>
-        <p class="f-statlabel">one disc, sliced from a single crystal of silicon</p>
-        <h2 class="f-title">A mirror grown from melted sand</h2>
-        <p class="f-body">A <b>300 mm</b> disc sliced from one crystal grown out of melted, purified sand, refined to about <b>99.9999999% pure</b>. Hundreds of chips are printed across it at once.</p>
-      </div>
-      <div class="fact" data-zc="0.262" data-zw="0.05">
-        <p class="f-eyebrow">The chip</p>
-        <p class="f-stat">~100,000,000,000</p>
-        <p class="f-statlabel">transistors, on a die the size of a fingernail</p>
-        <h2 class="f-title">One chip, cut from the wafer</h2>
-        <p class="f-body">A single die. The newest carry <b>tens of billions of transistors</b>, each flicking on and off billions of times a second, ringed by <b>thousands of contacts</b> to the outside world.</p>
-      </div>
-      <div class="fact" data-zc="0.53" data-zw="0.06">
-        <p class="f-eyebrow">The wiring</p>
-        <p class="f-stat">tens of km</p>
-        <p class="f-statlabel">of copper, folded into one fingernail of silicon</p>
-        <h2 class="f-title">A city of copper in stacked floors</h2>
-        <p class="f-body">No camera can follow past the surface, so from here we compute it. Copper in more than a dozen stacked layers; unspooled, the wires in one chip run for <b>tens of kilometers</b>.</p>
-      </div>
-      <div class="fact" data-zc="0.687" data-zw="0.06">
-        <p class="f-eyebrow">The transistor</p>
-        <p class="f-stat">86,000,000,000</p>
-        <p class="f-statlabel">neurons in your brain, and a top chip now rivals the count</p>
-        <h2 class="f-title">The switch, smaller than a virus</h2>
-        <p class="f-body">One transistor, a few dozen <b>nanometers</b> across. A chip packs about <b>100 billion</b>; your brain holds <b>86 billion neurons</b>, though its <b>~100 trillion</b> connections still dwarf anything we print.</p>
-      </div>
-      <div class="fact" data-zc="0.95" data-zw="0.06">
-        <p class="f-eyebrow">The atom</p>
-        <p class="f-stat">0.5 nm</p>
-        <p class="f-statlabel">across one cell of the silicon crystal</p>
-        <h2 class="f-title">Where the picture ends and the atoms begin</h2>
-        <p class="f-body">The silicon crystal: atoms in a lattice that repeats about every <b>half a nanometer</b>. This is the floor. The whole $380 million machine exists to place these dots, a few atoms at a time.</p>
-      </div>
+      <figure class="shot"><img class="zoom" src="assets/chip/cleanroom.jpg" width="2000" height="1333" loading="lazy" decoding="async" alt="People in white cleanroom bunny suits being briefed in front of the lithography machine, one pointing." data-zoom-src="assets/chip/full/cleanroom.jpg" data-zoom-title="The cleanroom" data-zoom-artist="Courtesy Intel"><figcaption><span class="sp">The cleanroom &middot; <em>cleaner than an operating room</em></span>The air in here is thousands of times cleaner than a hospital's. The bunny suits are not to protect the people; they protect the chip from the people, because a single flake of skin or speck of dust lands like a boulder across the circuitry.</figcaption></figure>
 
-      <div class="spine" aria-hidden="true"><span class="bob" id="spineBob"></span></div>
-    </div>
-  </section>
+      <figure class="shot"><img class="zoom" src="assets/chip/euv-light.jpg" width="750" height="750" loading="lazy" decoding="async" alt="An illustration of the extreme-ultraviolet light source: a laser striking a tin droplet in a magenta burst of plasma, with a spectrum peaking at 13.5 nanometers." data-zoom-src="assets/chip/full/euv-light.jpg" data-zoom-title="The EUV light source" data-zoom-artist="Bouza et al., CC BY 4.0"><figcaption><span class="sp">The light &middot; <em>13.5 nanometers</em></span>To draw lines this small the machine needs light with a tiny wavelength, so it makes its own. It fires a laser at 50,000 droplets of molten tin a second; each hit flashes into plasma that glows at 13.5 nm. That light is so short it is swallowed by air and even by glass, so the whole path runs in a vacuum, bouncing off mirrors.</figcaption></figure>
 
-  <!-- FALLBACK: stacked article for no-js / reduced-motion -->
-  <div class="fallback">
-    <section class="fb-sec">
-      <div class="fb-vis">
-        <!-- ASML High-NA EUV scanner. Courtesy ASML / imec (press image, used editorially with credit). -->
-        <img src="assets/images/zoom/machine.jpg" alt="The ASML High-NA EUV lithography machine: a wall of stainless-steel modules and vacuum chambers in a cleanroom, with technicians for scale." loading="eager" decoding="async">
-      </div>
-      <p class="fb-eyebrow">The machine</p>
-      <p class="fb-stat">$380 million</p>
-      <p class="fb-statlabel">the price of one, from the only company on Earth that makes it</p>
-      <h2 class="fb-title">The most complicated machine ever built</h2>
-      <p class="fb-body">Every advanced chip is printed by one kind of machine, made by one company, ASML. A High-NA EUV system costs around <b>$380 million</b> and makes its light by firing a laser at <b>50,000 droplets of molten tin a second</b>.</p>
-    </section>
-    <section class="fb-sec">
-      <div class="fb-vis">
-        <!-- "80C196KC wafer", Mister rf, CC BY-SA 4.0, via Wikimedia Commons -->
-        <img src="assets/images/zoom/wafer.jpg" alt="A silicon wafer, its surface a grid of identical chips." loading="lazy" decoding="async">
-      </div>
-      <p class="fb-eyebrow">The wafer</p>
-      <p class="fb-stat">300 mm</p>
-      <p class="fb-statlabel">one disc, sliced from a single crystal of silicon</p>
-      <h2 class="fb-title">A mirror grown from melted sand</h2>
-      <p class="fb-body">The machine prints onto a <b>300 mm</b> disc of silicon, refined to about <b>99.9999999% pure</b>, patterned with hundreds of identical chips at once.</p>
-    </section>
-    <section class="fb-sec">
-      <div class="fb-vis">
-        <!-- NVIDIA GP100 HBM-logic die. Fritzchens Fritz, CC0 / public domain, via Flickr. -->
-        <img src="assets/images/zoom/die.jpg" alt="A macro photograph of a processor die, a golden microscopic landscape of repeating structure." loading="lazy" decoding="async">
-      </div>
-      <p class="fb-eyebrow">The chip</p>
-      <p class="fb-stat">~100,000,000,000</p>
-      <p class="fb-statlabel">transistors, on a die the size of a fingernail</p>
-      <h2 class="fb-title">One chip, cut from the wafer</h2>
-      <p class="fb-body">A single die carries <b>tens of billions of transistors</b>, with <b>thousands of contacts</b> to the outside world around its rim.</p>
-    </section>
-    <section class="fb-sec">
-      <p class="fb-eyebrow">The wiring</p>
-      <p class="fb-stat">tens of km</p>
-      <p class="fb-statlabel">of copper, folded into one fingernail of silicon</p>
-      <h2 class="fb-title">A city of copper in stacked floors</h2>
-      <p class="fb-body">Below the resolution of light, no photograph can follow. Between the contacts and the switches runs the wiring: copper threads in more than a dozen stacked layers. Unspooled, the wires in one chip would run for <b>tens of kilometers</b>.</p>
-    </section>
-    <section class="fb-sec">
-      <p class="fb-eyebrow">The transistor</p>
-      <p class="fb-stat">86,000,000,000</p>
-      <p class="fb-statlabel">neurons in your brain, and a top chip now rivals the count</p>
-      <h2 class="fb-title">The switch, smaller than a virus</h2>
-      <p class="fb-body">One transistor is a few dozen <b>nanometers</b> across. A chip packs around <b>100 billion</b>; your brain holds about <b>86 billion neurons</b>, though its <b>~100 trillion</b> connections still dwarf anything we print.</p>
-    </section>
-    <section class="fb-sec">
-      <p class="fb-eyebrow">The atom</p>
-      <p class="fb-stat">0.5 nm</p>
-      <p class="fb-statlabel">across one cell of the silicon crystal</p>
-      <h2 class="fb-title">Where the picture ends and the atoms begin</h2>
-      <p class="fb-body">At the floor is the silicon crystal, atoms in a lattice that repeats about every <b>half a nanometer</b>. The whole $380 million machine exists to place these dots, a few atoms at a time, a hundred billion times over.</p>
-    </section>
-  </div>
+      <div class="divider"><p class="dk">300 mm</p><h2>The wafer</h2></div>
 
-  <section class="coda">
-    <div class="coda-inner">
-      <p class="lead-cap">Start at a machine the size of a bus and end at a dot half a nanometer wide, and you have crossed about ten powers of ten without ever leaving one object.</p>
-      <p>That is the strange thing about a chip. It is the only place where the largest engineering effort humans have ever mounted and the smallest thing we can deliberately arrange meet in the same breath. A $380 million machine, a disc of nine-nines sand, a fingernail of a hundred billion switches, and underneath it all, atoms in a quiet lattice, waiting to be told what to do.</p>
-      <p class="credit" id="credit">Machine photo courtesy of <a href="https://newsroom.intel.com/press-kit/intel-high-na-euv">Intel</a> (High-NA EUV). Wafer by <a href="https://commons.wikimedia.org/wiki/File:80C196KC_wafer.jpg">Mister rf, CC BY-SA 4.0</a>. Die by <a href="https://www.flickr.com/photos/130561288@N04/52206974251/">Fritzchens Fritz, CC0</a>. The wiring, transistor, and silicon lattice are drawn in code; below the wavelength of light, no camera can go.</p>
-    </div>
-  </section>
+      <figure class="shot"><img class="zoom" src="assets/chip/wafer-disc.jpg" width="2000" height="1843" loading="lazy" decoding="async" alt="A round, iridescent 300mm silicon wafer covered in a fine grid of identical chips." data-zoom-src="assets/chip/full/wafer-disc.jpg" data-zoom-title="A 300 mm wafer" data-zoom-artist="Ehsanshahoseini, CC BY-SA 4.0"><figcaption><span class="sp">The wafer &middot; <em>300 mm of near-perfect silicon</em></span>The machine prints onto this: a dinner-plate disc sliced from a single crystal of silicon, grown from melted, purified sand and refined to about 99.9999999 percent pure, nine nines.</figcaption></figure>
 
-  <footer class="post-foot">
-    <a href="/">&#8592; back to everything</a>
+      <figure class="shot"><img class="zoom" src="assets/chip/wafer-rainbow.jpg" width="2000" height="1333" loading="lazy" decoding="async" alt="A close view of a wafer's surface, the grid of chips splitting light into bands of rainbow color." data-zoom-src="assets/chip/full/wafer-rainbow.jpg" data-zoom-title="One wafer, hundreds of chips" data-zoom-artist="Rob Bulmahn, CC BY 2.0"><figcaption><span class="sp">One wafer &middot; <em>hundreds of chips at once</em></span>Hundreds of identical chips are printed across a single wafer in the same pass, then sawn apart. The rainbow is a clue to the scale: it is ordinary light bending off circuit features finer than its own wavelength.</figcaption></figure>
+
+      <div class="divider"><p class="dk">~12 mm</p><h2>The chip</h2></div>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/die-m1.jpg" width="2000" height="1914" loading="lazy" decoding="async" alt="A top-down macro of the Apple M1 processor die, a green-and-gold landscape of rectangular functional blocks." data-zoom-src="assets/chip/full/die-m1.jpg" data-zoom-title="Apple M1 die" data-zoom-artist="Fritzchens Fritz, CC0"><figcaption><span class="sp">One chip &middot; <em>Apple M1</em> &middot; ~16,000,000,000 transistors</span>A single die, smaller than a fingernail. This one, Apple's M1, holds about 16 billion transistors; the largest chips now cross 100 billion, brushing past your brain's roughly 86 billion neurons. Your 100 trillion synapses still win.</figcaption></figure>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/die-gp100.jpg" width="2000" height="1329" loading="lazy" decoding="async" alt="A golden macro of a processor die surface, with banded memory arrays and rows of bond pads." data-zoom-src="assets/chip/full/die-gp100.jpg" data-zoom-title="The die surface" data-zoom-artist="Fritzchens Fritz, CC0"><figcaption><span class="sp">The surface &middot; <em>a city seen from orbit</em></span>Up close the chip is a planned city: memory in dense regular blocks, logic in finer texture, bond pads like loading docks around the rim. The gold is copper, the wiring that ties it all together.</figcaption></figure>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/die-tiles.jpg" width="2000" height="1233" loading="lazy" decoding="async" alt="A processor die tilted to the light, its surface shimmering in blue, green and yellow." data-zoom-src="assets/chip/full/die-tiles.jpg" data-zoom-title="Built from tiles" data-zoom-artist="Fritzchens Fritz, CC0"><figcaption><span class="sp">Built from tiles &middot; <em>the chiplet era</em></span>The newest processors are no longer one slab but several separate tiles, each made on the process that suits it, then wired together into one chip. Tilt one to the light and its stacked layers split it into color, like an oil slick.</figcaption></figure>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/cells-sem.jpg" width="2000" height="1310" loading="lazy" decoding="async" alt="A grayscale electron-microscope image of a dense grid of repeating memory cells on a chip." data-zoom-src="assets/chip/full/cells-sem.jpg" data-zoom-title="Memory cells, under an electron microscope" data-zoom-artist="ZeptoBars, CC BY 3.0"><figcaption><span class="sp">Smaller than light &middot; <em>scanning electron microscope</em></span>Now the features are smaller than a wavelength of visible light, so an ordinary camera goes blind. This is an electron microscope's view of the actual memory cells, each a cluster of a few transistors, repeated millions of times over.</figcaption></figure>
+
+      <div class="divider"><p class="dk">below a wavelength of light</p><h2>Smaller than the eye can ever see</h2></div>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/wiring.jpg" width="322" height="140" loading="lazy" decoding="async" alt="A scanning-electron cross-section showing several stacked layers of metal wiring and the vias connecting them." data-zoom-src="assets/chip/full/wiring.jpg" data-zoom-title="The wiring, in cross-section" data-zoom-artist="Adv. Sci., CC BY 4.0"><figcaption><span class="sp">The wiring &middot; <em>cross-section</em> &middot; tens of km per chip</span>Sliced open, a chip is a layer cake: more than a dozen floors of copper wiring stacked above the transistors. Unspooled, the wires in a single chip would run for tens of kilometers, all folded into a fingernail.</figcaption></figure>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/transistor.jpg" width="2000" height="1310" loading="lazy" decoding="async" alt="A scanning-electron view of an array of individual transistors, repeating ring-shaped gate structures." data-zoom-src="assets/chip/full/transistor.jpg" data-zoom-title="The transistor" data-zoom-artist="TiberiusRufus, CC BY-SA 4.0"><figcaption><span class="sp">The transistor &middot; <em>the switch it is all made of</em></span>Here is the thing itself, repeated billions of times: the transistor, a switch with no moving parts. A modern one is a few dozen nanometers across, smaller than most viruses, and it flips on and off billions of times every second.</figcaption></figure>
+
+      <div class="divider"><p class="dk">~0.5 nm</p><h2>The atom</h2></div>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/atoms.jpg" width="320" height="345" loading="lazy" decoding="async" alt="A false-color electron-microscope image resolving individual silicon atoms as a regular lattice of magenta dots." data-zoom-src="assets/chip/full/atoms.jpg" data-zoom-title="Silicon atoms" data-zoom-artist="Nat. Commun., CC BY 4.0"><figcaption><span class="sp">The atoms &middot; <em>silicon lattice</em> &middot; ~0.5 nm apart</span>Keep going and the material itself appears: the silicon atoms, each a bright point in a regular grid about half a nanometer apart. We have reached the bottom, the individual pieces the whole machine exists to arrange.</figcaption></figure>
+
+      <figure class="shot"><img class="zoom" src="assets/chip/atoms-si.jpg" width="600" height="599" loading="lazy" decoding="async" alt="A grayscale scanning-transmission micrograph of paired silicon atoms in a crystal lattice, with a scale bar reading 500 picometers." data-zoom-src="assets/chip/full/atoms-si.jpg" data-zoom-title="The silicon lattice" data-zoom-artist="Hsiao et al., CC BY 4.0"><figcaption><span class="sp">The floor &middot; <em>a handful of atoms</em></span>The thinnest working layers inside a chip are only a handful of atoms thick. Build any smaller and electrons tunnel straight through, and the switch stops switching. This is the floor. The whole $380 million machine, the disc of pure sand, the city of copper, all of it exists to place these dots, a few atoms at a time, a hundred billion times over.</figcaption></figure>
+  </main>
+
+  <footer class="essay-credits">
+    <h2>Credits</h2>
+    <p>Images are press, public-domain, or Creative Commons works, gathered from Intel's press kit, Wikimedia Commons, Flickr, and open-access journals. The die photographs are by Fritzchens Fritz, released into the public domain (CC0). Each entry links to its source.</p>
+    <ul>
+      <li><a href="https://newsroom.intel.com/press-kit/intel-high-na-euv">ASML High-NA EUV scanner, wide and module views</a> &middot; Courtesy Intel</li>
+      <li><a href="https://newsroom.intel.com/press-kit/intel-high-na-euv">Cleanroom briefing</a> &middot; Courtesy Intel</li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7214432/">EUV light source illustration</a> &middot; Bouza et al., Nature Communications, CC BY 4.0</li>
+      <li><a href="https://commons.wikimedia.org/wiki/File:Silicon_Photonics_300mm_wafer.JPG">300 mm silicon wafer</a> &middot; Ehsanshahoseini, CC BY-SA 4.0</li>
+      <li><a href="https://www.flickr.com/photos/robbie1/">Wafer surface, iridescent</a> &middot; Rob Bulmahn, CC BY 2.0</li>
+      <li><a href="https://www.flickr.com/photos/130561288@N04/">Apple M1 die, die surface, and tilted die</a> &middot; Fritzchens Fritz, CC0</li>
+      <li><a href="https://zeptobars.com/en/">Memory cells, SEM</a> &middot; ZeptoBars, CC BY 3.0</li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10427378/">Copper interconnect stack, SEM cross-section</a> &middot; Advanced Science, CC BY 4.0</li>
+      <li><a href="https://commons.wikimedia.org/wiki/File:Ring-gate_transistor_of_radiation_hardening_memory_(low_mag).tif">Transistor array, SEM</a> &middot; TiberiusRufus, CC BY-SA 4.0</li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12672990/">Silicon atoms, ptychographic reconstruction</a> &middot; Nature Communications, CC BY 4.0</li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4240948/">Silicon lattice, STEM</a> &middot; Hsiao et al., Nanoscale Research Letters, CC BY 4.0</li>
+    </ul>
+    <a class="ftr" href="/">&copy; 2026 Ethan Willingham</a>
   </footer>
 
-  <script src="js/machine-to-atom.js"></script>
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Image viewer">
+    <div class="lightbox-bar">
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+      <div class="lightbox-controls">
+        <span class="lightbox-zoom-label" id="lightbox-zoom-label">100%</span>
+        <button class="lightbox-btn" id="lightbox-zoom-out" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg></button>
+        <button class="lightbox-btn" id="lightbox-zoom-in" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg></button>
+        <button class="lightbox-btn" id="lightbox-reset" title="Fit to screen" aria-label="Fit to screen"><svg viewBox="0 0 24 24"><polyline points="4 14 4 20 10 20"></polyline><polyline points="20 10 20 4 14 4"></polyline><line x1="4" y1="20" x2="11" y2="13"></line><line x1="20" y1="4" x2="13" y2="11"></line></svg></button>
+        <button class="lightbox-btn" id="lightbox-close" title="Close (Esc)" aria-label="Close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+    <div class="lightbox-stage" id="lightbox-stage">
+      <img id="lightbox-img" alt="">
+      <div class="lightbox-hint" id="lightbox-hint">Scroll or pinch to zoom, drag to pan</div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var rp = document.getElementById('reading-progress');
+    if (rp) { window.addEventListener('scroll', function () { var h = document.documentElement.scrollHeight - window.innerHeight; rp.style.width = (h > 0 ? (window.pageYOffset / h) * 100 : 0) + '%'; }, { passive: true }); }
+    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var motion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    if (fine && motion && 'IntersectionObserver' in window) {
+      document.documentElement.classList.add('reveal-on');
+      var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } }); }, { rootMargin: '0px 0px -8% 0px' });
+      document.querySelectorAll('.shot, .divider').forEach(function (el) { io.observe(el); });
+    }
+  })();
+  </script>
+  <script>
+  /* Transform-based lightbox, lifted from gallery.html. */
+  (function () {
+    'use strict';
+    var lightbox = document.getElementById('lightbox'), stage = document.getElementById('lightbox-stage'), img = document.getElementById('lightbox-img');
+    var caption = document.getElementById('lightbox-caption'), zoomLabel = document.getElementById('lightbox-zoom-label'), hint = document.getElementById('lightbox-hint');
+    var btnIn = document.getElementById('lightbox-zoom-in'), btnOut = document.getElementById('lightbox-zoom-out'), btnReset = document.getElementById('lightbox-reset'), btnClose = document.getElementById('lightbox-close');
+    var scale = 1, tx = 0, ty = 0, fitScale = 1, MAX_ABSOLUTE = 12, imgW = 0, imgH = 0;
+    function apply(){ img.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')'; zoomLabel.textContent=Math.round((scale/fitScale)*100)+'%'; btnOut.disabled=scale<=fitScale+0.001; btnIn.disabled=scale>=MAX_ABSOLUTE-0.001; }
+    function animateNext(){ stage.classList.add('is-animating'); clearTimeout(animateNext._t); animateNext._t=setTimeout(function(){stage.classList.remove('is-animating');},240); }
+    function computeFit(){ var sw=stage.clientWidth,sh=stage.clientHeight; fitScale=(!imgW||!imgH||!sw||!sh)?1:Math.min(sw/imgW,sh/imgH); }
+    function fit(){ computeFit(); scale=fitScale; tx=(stage.clientWidth-imgW*scale)/2; ty=(stage.clientHeight-imgH*scale)/2; apply(); }
+    function clamp(){ var sw=stage.clientWidth,sh=stage.clientHeight,w=imgW*scale,h=imgH*scale; if(w<=sw)tx=(sw-w)/2; else{if(tx>0)tx=0; if(tx<sw-w)tx=sw-w;} if(h<=sh)ty=(sh-h)/2; else{if(ty>0)ty=0; if(ty<sh-h)ty=sh-h;} }
+    function zoomAt(f,cxv,cyv){ var ns=scale*f; if(ns<fitScale)ns=fitScale; if(ns>MAX_ABSOLUTE)ns=MAX_ABSOLUTE; if(Math.abs(ns-scale)<0.0001)return; var rect=stage.getBoundingClientRect(); var ax=(cxv!=null?cxv:rect.left+rect.width/2)-rect.left, ay=(cyv!=null?cyv:rect.top+rect.height/2)-rect.top; var ix=(ax-tx)/scale, iy=(ay-ty)/scale; scale=ns; tx=ax-ix*scale; ty=ay-iy*scale; clamp(); apply(); }
+    function panBy(dx,dy){ tx+=dx; ty+=dy; clamp(); apply(); }
+    var hintTimer=0;
+    function dismissHint(){ if(hint){hint.classList.add('is-hidden'); clearTimeout(hintTimer);} }
+    function showHint(){ if(hint){hint.classList.remove('is-hidden'); clearTimeout(hintTimer); hintTimer=setTimeout(dismissHint,3500);} }
+    function open(src,title,artist){ scale=1;tx=0;ty=0;imgW=0;imgH=0; img.style.transform='translate3d(0,0,0) scale(1)'; img.alt=title||''; caption.innerHTML='<span class="lb-artist">'+(artist||'')+'</span>'+(title||''); lightbox.classList.add('is-open'); lightbox.setAttribute('aria-hidden','false'); document.body.classList.add('lightbox-open');
+      function onReady(){ imgW=img.naturalWidth; imgH=img.naturalHeight; fit(); showHint(); }
+      if(img.src.indexOf(src)===img.src.length-src.length && img.complete && img.naturalWidth) onReady(); else { img.onload=onReady; img.src=src; } }
+    function close(){ lightbox.classList.remove('is-open'); lightbox.setAttribute('aria-hidden','true'); document.body.classList.remove('lightbox-open'); dismissHint(); }
+    var z=document.querySelectorAll('.zoom');
+    for(var i=0;i<z.length;i++){ (function(el){ el.addEventListener('click',function(){ var s=el.getAttribute('data-zoom-src')||el.getAttribute('src'); if(typeof gtag==='function')gtag('event','chip_zoom',{photo:el.getAttribute('data-zoom-title')}); open(s,el.getAttribute('data-zoom-title'),el.getAttribute('data-zoom-artist')); }); })(z[i]); }
+    btnClose.addEventListener('click',close);
+    btnIn.addEventListener('click',function(){animateNext();zoomAt(1.5,null,null);dismissHint();});
+    btnOut.addEventListener('click',function(){animateNext();zoomAt(1/1.5,null,null);dismissHint();});
+    btnReset.addEventListener('click',function(){animateNext();fit();dismissHint();});
+    document.addEventListener('keydown',function(e){ if(!lightbox.classList.contains('is-open'))return; if(e.key==='Escape')close(); else if(e.key==='+'||e.key==='='){animateNext();zoomAt(1.5,null,null);dismissHint();} else if(e.key==='-'||e.key==='_'){animateNext();zoomAt(1/1.5,null,null);dismissHint();} else if(e.key==='0'){animateNext();fit();dismissHint();} });
+    window.addEventListener('resize',function(){ if(!lightbox.classList.contains('is-open'))return; var o=fitScale; computeFit(); if(o>0)scale=scale*(fitScale/o); clamp(); apply(); });
+    stage.addEventListener('wheel',function(e){ if(!lightbox.classList.contains('is-open'))return; e.preventDefault(); dismissHint(); if(e.ctrlKey){zoomAt(Math.exp(-e.deltaY*0.012),e.clientX,e.clientY);return;} zoomAt(e.deltaY<0?1.12:1/1.12,e.clientX,e.clientY); },{passive:false});
+    var mDrag=false,mLastX=0,mLastY=0;
+    stage.addEventListener('mousedown',function(e){ if(e.button!==0)return; mDrag=true; mLastX=e.clientX; mLastY=e.clientY; stage.classList.add('is-grabbing'); e.preventDefault(); dismissHint(); });
+    window.addEventListener('mousemove',function(e){ if(!mDrag)return; panBy(e.clientX-mLastX,e.clientY-mLastY); mLastX=e.clientX; mLastY=e.clientY; });
+    window.addEventListener('mouseup',function(){ if(!mDrag)return; mDrag=false; stage.classList.remove('is-grabbing'); });
+    stage.addEventListener('dblclick',function(e){ if(!lightbox.classList.contains('is-open'))return; e.preventDefault(); animateNext(); if(scale>fitScale*1.05)fit(); else zoomAt(2.5/scale*fitScale,e.clientX,e.clientY); dismissHint(); });
+    var csx=0,csy=0;
+    stage.addEventListener('mousedown',function(e){ csx=e.clientX; csy=e.clientY; },true);
+    stage.addEventListener('click',function(e){ if(Math.abs(e.clientX-csx)+Math.abs(e.clientY-csy)>4)return; if(scale<=fitScale+0.01)close(); });
+    var pSD=0,pSS=1,pAX=0,pAY=0,ltX=0,ltY=0,ltT=0,ltPX=0,ltPY=0;
+    function td(a,b){ var dx=a.clientX-b.clientX,dy=a.clientY-b.clientY; return Math.sqrt(dx*dx+dy*dy); }
+    stage.addEventListener('touchstart',function(e){ if(!lightbox.classList.contains('is-open'))return; e.preventDefault(); dismissHint(); if(e.touches.length===2){ var t0=e.touches[0],t1=e.touches[1]; pSD=td(t0,t1); pSS=scale; var r=stage.getBoundingClientRect(); var cx=((t0.clientX+t1.clientX)/2)-r.left, cy=((t0.clientY+t1.clientY)/2)-r.top; pAX=(cx-tx)/scale; pAY=(cy-ty)/scale; } else if(e.touches.length===1){ ltX=e.touches[0].clientX; ltY=e.touches[0].clientY; } },{passive:false});
+    stage.addEventListener('touchmove',function(e){ if(!lightbox.classList.contains('is-open'))return; if(e.touches.length===2&&pSD>0){ e.preventDefault(); var t0=e.touches[0],t1=e.touches[1]; var d=td(t0,t1); var ns=pSS*(d/pSD); if(ns<fitScale)ns=fitScale; if(ns>MAX_ABSOLUTE)ns=MAX_ABSOLUTE; var r=stage.getBoundingClientRect(); var cx=(t0.clientX+t1.clientX)/2, cy=(t0.clientY+t1.clientY)/2; scale=ns; tx=(cx-r.left)-pAX*scale; ty=(cy-r.top)-pAY*scale; clamp(); apply(); } else if(e.touches.length===1){ e.preventDefault(); var t=e.touches[0]; panBy(t.clientX-ltX,t.clientY-ltY); ltX=t.clientX; ltY=t.clientY; } },{passive:false});
+    stage.addEventListener('touchend',function(e){ if(!lightbox.classList.contains('is-open'))return; if(e.touches.length===0&&e.changedTouches.length===1){ var ct=e.changedTouches[0],now=Date.now(); if(now-ltT<320&&Math.abs(ct.clientX-ltPX)<30&&Math.abs(ct.clientY-ltPY)<30){ e.preventDefault(); animateNext(); if(scale>fitScale*1.05)fit(); else zoomAt(2.5/scale*fitScale,ct.clientX,ct.clientY); ltT=0; } else { ltT=now; ltPX=ct.clientX; ltPY=ct.clientY; } } if(e.touches.length<2)pSD=0; if(e.touches.length===1){ ltX=e.touches[0].clientX; ltY=e.touches[0].clientY; } },{passive:false});
+    stage.addEventListener('gesturestart',function(e){e.preventDefault();});
+    stage.addEventListener('gesturechange',function(e){e.preventDefault();});
+    stage.addEventListener('gestureend',function(e){e.preventDefault();});
+  })();
+  </script>
 </body>
 </html>
