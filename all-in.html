@@ -210,6 +210,13 @@
   .cases .case .res { font-size: 0.96rem; color: var(--accent); line-height: 1.5; }
   .cases .case .res b { color: var(--accent-hover); font-weight: 700; font-variant-numeric: tabular-nums; }
 
+  /* three-question decision cards (the "no seat fillers" diagram) */
+  .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .choices .ch { background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; padding: 1rem 1.05rem; }
+  .choices .ch .q { font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.04em; color: var(--accent); }
+  .choices .ch .qt { font-weight: 700; color: var(--text-bright); font-size: 1.06rem; margin: 0.2rem 0 0.4rem; line-height: 1.1; }
+  .choices .ch .qd { font-size: 0.9rem; color: var(--text-dim); line-height: 1.45; }
+
   /* ============================================================
      THE INTERACTIVE: "Does a cash bonus help?" (Glucksberg 1962)
      ============================================================ */
@@ -317,6 +324,7 @@
     .stages { grid-template-columns: 1fr 1fr; }
     .map { grid-template-columns: 1fr 1fr; }
     .cases { grid-template-columns: 1fr; }
+    .choices { grid-template-columns: 1fr; }
     .lab-toggle { width: 100%; }
   }
   @media (max-width: 380px) {
@@ -610,12 +618,40 @@
       <div class="move"><span class="k">The manager's move</span><p>Compute what losing one of your best people actually costs to replace. That number is the budget you already have for treating them like the asset they are.</p></div>
     </section>
 
+    <!-- ============ ACT V: THE HARD PART (no seat fillers) ============ -->
+    <div class="act reveal"><div class="act-k">Act V</div><div class="act-t">The hard part</div></div>
+
+    <section class="sec reveal">
+      <span class="sec-num">15</span>
+      <h3>No seat fillers</h3>
+      <p class="sub">You can do every one of these things right and still get stuck with someone who won't rise. The failure isn't them. It's the seat you let them fill forever.</p>
+      <p>There's an old reading of the parable of the sower: the story is less about how well you scatter the seed than about how fertile the soil is. Even in a room full of professionals, some of the ground is rock. You will manage people who coast, who quietly settle, who fill a seat without ever filling the role. And the costliest one is rarely the obvious flop. It's the capable person who stopped growing years ago and now collects a check while the team carries them. Your best people notice that long before you do, and they draw the obvious conclusion: if the standard is optional for the coaster, it's optional. The message lands on exactly the people you most need to keep.</p>
+      <div class="stat reveal"><span class="fig">30-40<span class="u">%</span></span><span class="cap">How far one checked-out or disruptive member can drag down a whole team's performance in controlled studies, and the behavior spreads. A seat-filler never costs just one seat.</span><span class="src">Felps, Mitchell &amp; Byington</span></div>
+      <p>Start, though, with the humbling half. A manager's ceiling is partly set by the soil: who is in the seat, and whether it is the right one. People do not change all that much once grown; you draw out what is in them, you cannot pour in what is not. So before you decide someone is the wrong person, ask the cheaper question first, are they simply in the wrong seat? A struggling performer is very often a strong one aimed at the wrong work.</p>
+      <p>The sharpest proof is a car factory. In 1982 General Motors shut its Fremont plant and called its workers some of the worst in America: 20 percent absenteeism, sabotage on the line, open contempt. Two years later Toyota reopened the same building, rehired 85 percent of the very same people, and within a year it was one of the most productive auto plants on the continent. Nobody replaced the workers. They replaced the system around them. What looks like a bad person is often just a bad fit.</p>
+      <div class="fig-block wide reveal">
+        <div class="fig-title">Before you move someone on, three honest questions</div>
+        <div class="choices">
+          <div class="ch"><div class="q">the seat</div><div class="qt">Wrong role?</div><div class="qd">Would their real strengths land better somewhere else on the team? Try that before you give up on them.</div></div>
+          <div class="ch"><div class="q">the mirror</div><div class="qt">Did I cause this?</div><div class="qd">Low expectations are self-fulfilling. Have I given clear goals, real challenge, and honest credit for wins?</div></div>
+          <div class="ch"><div class="q">the call</div><div class="qt">Wrong person?</div><div class="qd">If it is a true mismatch after honest effort, the kind thing is to say so, not to wait.</div></div>
+        </div>
+        <p class="fig-note">Coaching can amplify what is there. It cannot pour in what is not. The whole art is telling the difference before you act.</p>
+      </div>
+      <p>That middle question is the conscience of the entire thing, because managers manufacture their own poor performers more often than they will admit. Doubt a person and you start watching them closer, handing them safer work, trusting them less, and they feel every bit of it and shrink to fit the box you built. The same force runs the other way too: when a manager genuinely expects more, people reliably rise to it. One insurance branch once lifted a group of strictly average agents to top performance for no reason other than a manager who refused to believe they couldn't. So the honest test before you write anyone off is not "did this person perform poorly?" It is "did I give them the conditions to perform at all?"</p>
+      <p>When you have asked all of that in good faith and the answer is still no, then comes the real discipline, and it is simpler than it sounds. There are only two acceptable jobs: make the person genuinely good, or help them leave well. The cleanest test in the business is Netflix's keeper test, <em>if this person told you they were leaving for a similar job elsewhere, would you fight to keep them?</em> If the honest answer is no, you already know, and every month you wait is a month you have chosen the comfortable lie over the kind truth. Letting someone go from a job they are failing is not the cruelty. Leaving them stranded in it is.</p>
+      <p>There is a brutal counterfeit of this idea, though, and it is worth naming so you never reach for it. The version where you rank everyone and cut the bottom tenth every year, on a schedule, is not rigor. It is sorting. It hollowed out Microsoft for a decade, turning teammates into rivals who hid information so a colleague would score below them, and the company that invented the practice eventually scrapped it. Take the candor, not the curve. This is one honest judgment about one real person, never a quota you fill.</p>
+      <p>And the hardest seat-filler of all to remove is the one posting the best numbers. A brilliant jerk is not dead weight in any obvious way; they are filling their seat with output. But the output is a trick of the eye. Men's Wearhouse once fired its single best salesman, a man who hit every target and poisoned everyone near him, hoarding customers and helping no one. Afterward, no remaining person matched his individual sales, and the store's total sales went up. His good numbers had been hiding the damage he did to everyone else's. The research is consistent: avoiding one toxic worker is worth more than twice what hiring a star is worth, because the star lifts their own work while the jerk drags down everybody's.</p>
+      <p>All of which loops back to where this began. Autonomy is the professional's half of a bargain: you hand over the judgment, and they bring it. Someone who refuses, who will not own a decision or risk an opinion and only wants to be told exactly what to do, has quietly chosen the laborer's deal. So give it to them, plainly, a clear bar and close direction and no mystery about what good looks like. Some people wake up the moment the deal gets honest. The ones who don't have answered the only question that matters, and the next move is yours.</p>
+      <div class="move"><span class="k">The manager's move</span><p>Picture your weakest performer and answer in one word: wrong seat, my fault, or wrong person. Then do what that answer demands, this quarter, instead of waiting for the problem to resolve itself. It will not.</p></div>
+    </section>
+
   </article>
 
   <!-- ============ ACT V: THE FYI MODULE (one self-contained piece) ============ -->
   <section class="fyi reveal" aria-label="For Your Improvement, the development playbook">
     <div class="fyi-in">
-      <div class="kicker">Act V &middot; The Playbook</div>
+      <div class="kicker">Act VI &middot; The Playbook</div>
       <h3>For Your Improvement</h3>
       <p class="stand">Everything so far says the manager is the lever. So the last question is the personal one: how does a manager actually get better, on purpose? There is a quiet workhorse of a book, used inside many companies for exactly this, that turns that vague wish into a plan.</p>
 
