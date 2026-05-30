@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All In</title>
+  <meta name="description" content="Knowledge workers own what they know, and you cannot order it out of them. A field guide to the century of research on managing professionals, and getting them to give you everything they have.">
+  <meta property="og:title" content="All In">
+  <meta property="og:description" content="The work that made people valuable changed. The way we manage them mostly did not. A field guide to managing professionals, and what it takes to make them all in.">
+  <meta property="og:type" content="article">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- fonts come only from style.css: the site's three self-hosted faces. no foreign web fonts. -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     ALL IN  —  on managing professionals
+     A reading essay, not a scrollytelling reel: one centered
+     reading column (~64ch) with full-width "breakout" figures,
+     big-stat anchors, and one interactive at the argument's
+     climax. Warm ink on the site's forest green. Serif body
+     (Century Supra), the site's single accent used in just a few
+     roles (section numbers, big stats, the drop cap, links).
+     The "For Your Improvement" playbook is one self-contained
+     visual module near the end.
+     Learning-science spine: one idea per section, concrete first,
+     a name and a number, a stat, then "the manager's move."
+     No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --measure: 64ch;          /* reading measure */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --tint: #2a322b;          /* panels sit just off the page green */
+    --tint-2: #252c26;
+    --hair: rgba(212,196,160,0.18);
+  }
+
+  html { overflow-x: hidden; overscroll-behavior-x: none; scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-heading); font-weight: 400;
+    line-height: 1.66; padding: 0; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--selection-bg); color: var(--selection-text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  .sc { font-variant: small-caps; letter-spacing: 0.1em; }
+
+  /* ---- top home link, in normal flow (scrolls away) ---- */
+  .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto; padding: 1.1rem var(--gutter) 0; }
+  .top-nav a { font-family: var(--font-body); font-size: 0.86rem; color: var(--text-dim); text-decoration: none; transition: color 0.25s; }
+  .top-nav a::before { content: '\2190'; margin-right: 0.45em; font-size: 0.85em; }
+  .top-nav a:hover { color: var(--text-bright); }
+
+  /* reading progress (slim, accent) */
+  .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
+
+  /* ============================================================
+     COVER
+     ============================================================ */
+  .cover { max-width: 54rem; margin: 0 auto; padding: 13svh var(--gutter) 7svh; text-align: center; }
+  .cover .eyebrow { font-variant: small-caps; letter-spacing: 0.26em; font-size: 0.92rem; color: var(--accent); }
+  .cover h1 {
+    font-weight: 700; font-size: clamp(4rem, 17vw, 9rem); line-height: 0.92;
+    letter-spacing: -0.03em; color: var(--text-bright); margin: 1.1rem 0 0;
+    text-wrap: balance;
+  }
+  .cover .dek {
+    font-size: 1.24rem; line-height: 1.58; color: var(--text-dim);
+    max-width: 44ch; margin: 1.5rem auto 0; text-wrap: pretty;
+  }
+  /* a small "rising bars" motif: a flat line you can demand, and a
+     rising line you can only earn. computed, not decorative. */
+  .cover-motif { display: block; width: min(80vw, 360px); height: auto; margin: 2.6rem auto 0; overflow: hidden; }
+  .cover-motif .req { stroke: rgba(184,178,162,0.5); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+  .cover-motif .giv { stroke: var(--accent); stroke-width: 2.5; fill: none; }
+  .cover-motif .lbl { font-family: var(--font-body); font-size: 7px; letter-spacing: 0.12em; fill: var(--text-dim); text-transform: uppercase; }
+  .scroll-cue { display:block; text-align:center; font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.82rem; color: var(--text-dim); opacity: 0.7; margin-top: 3.2rem; }
+
+  /* ============================================================
+     ESSAY GRID  (content / wide / full bleed)
+     ============================================================ */
+  .essay {
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(var(--gutter), 1fr)
+      [wide-start] minmax(0, 7rem)
+      [content-start] min(var(--measure), calc(100% - var(--gutter) * 2)) [content-end]
+      minmax(0, 7rem) [wide-end]
+      minmax(var(--gutter), 1fr) [full-end];
+  }
+  .essay > * { grid-column: content; }
+  .essay > .wide { grid-column: wide; }
+  .essay > .full { grid-column: full; }
+
+  /* the reading column */
+  .essay p { font-size: 1.22rem; line-height: 1.68; color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .essay p b, .essay p strong { color: var(--text-bright); font-weight: 700; }
+  .essay p em, .essay em { font-style: italic; }
+  .essay a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.32); transition: color 0.2s, border-color 0.2s; }
+  .essay a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
+
+  /* intro lede + drop cap on the very first paragraph */
+  .lede { margin-top: 2.6rem; }
+  .lede.first p:first-of-type::first-letter {
+    font-weight: 700; float: left; font-size: 3.4em; line-height: 0.74;
+    padding: 0.06em 0.12em 0 0; color: var(--accent);
+  }
+
+  /* pre-training glossary box */
+  .gloss { margin: 2.4rem 0; padding: 1.3rem 1.5rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 6px; }
+  .gloss h2 { font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.9rem; }
+  .gloss dl { margin: 0; }
+  .gloss dt { font-weight: 700; color: var(--text-bright); font-size: 1.04rem; }
+  .gloss dd { margin: 0 0 0.85rem; font-size: 1.04rem; line-height: 1.55; color: var(--text-dim); }
+  .gloss dd:last-child { margin-bottom: 0; }
+
+  /* act divider */
+  .act { text-align: center; margin: 7svh auto 1svh; }
+  .act .act-k { font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.84rem; color: var(--text-dim); }
+  .act .act-t { font-family: var(--font-heading); font-weight: 700; font-style: italic; font-size: clamp(1.5rem, 4vw, 2.1rem); color: var(--accent); line-height: 1.2; margin-top: 0.3rem; text-wrap: balance; }
+  .act::after { content: ''; display: block; width: 90px; height: 1px; margin: 1.3rem auto 0; background: linear-gradient(90deg, transparent, var(--hair) 30%, var(--hair) 70%, transparent); }
+
+  /* ---- a numbered section ---- */
+  .sec { margin: 6svh 0 0; }
+  .sec-num { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; color: var(--accent); display: block; margin-bottom: 0.5rem; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 4.6vw, 2.3rem); line-height: 1.1; letter-spacing: -0.015em; color: var(--text-bright); margin: 0 0 0.5rem; text-wrap: balance; }
+  .sec .sub { font-style: italic; font-size: 1.18rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.4rem; text-wrap: pretty; }
+
+  /* ---- big stat anchor (Bloomberg-style: one number, then the comparison) ---- */
+  .stat { margin: 2.4rem 0; text-align: center; }
+  .stat .fig { font-weight: 700; font-size: clamp(3.6rem, 11vw, 6rem); line-height: 0.9; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; display: block; }
+  .stat .fig .u { font-size: 0.42em; font-weight: 700; letter-spacing: 0.01em; }
+  .stat .cap { font-size: 1.06rem; line-height: 1.5; color: var(--text-dim); max-width: 34ch; margin: 0.7rem auto 0; text-wrap: pretty; }
+  .stat .src { display:block; font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.8rem; color: var(--text-dim); opacity: 0.7; margin-top: 0.5rem; }
+
+  /* ---- "the manager's move" callout (the section's retrieval cue) ---- */
+  .move { margin: 1.7rem 0 0; padding: 0.2rem 0 0.2rem 1.1rem; border-left: 2px solid var(--accent); }
+  .move .k { font-variant: small-caps; letter-spacing: 0.13em; font-size: 0.82rem; color: var(--accent); display: block; margin-bottom: 0.15rem; }
+  .move p { font-size: 1.1rem; line-height: 1.55; color: var(--text-bright); margin: 0; }
+
+  /* ---- pull quote ---- */
+  .pq { margin: 2.4rem 0; font-style: italic; font-size: 1.5rem; line-height: 1.32; color: var(--accent); text-align: center; text-wrap: balance; }
+  .pq cite { display: block; font-style: normal; font-size: 0.92rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 0.8rem; }
+
+  /* ============================================================
+     FIGURES / DIAGRAMS  (clean HTML, no images; on the dark canvas)
+     ============================================================ */
+  .fig-block { margin: 2.8rem 0; }
+  .fig-title { font-weight: 700; font-size: 1.06rem; color: var(--text-bright); margin: 0 0 0.2rem; }
+  .fig-note { font-size: 0.92rem; color: var(--text-dim); font-style: italic; margin: 0.6rem 0 0; line-height: 1.45; }
+
+  /* two-column compare (e.g. hygiene vs motivators) */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--hair); border-radius: 6px; overflow: hidden; }
+  .compare > div { padding: 1.1rem 1.2rem; }
+  .compare > div:first-child { border-right: 1px solid var(--hair); }
+  .compare h4 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 0.7rem; }
+  .compare .a h4 { color: var(--text-dim); }
+  .compare .b h4 { color: var(--accent); }
+  .compare ul { list-style: none; margin: 0; padding: 0; }
+  .compare li { font-size: 1.0rem; line-height: 1.4; color: var(--text); padding: 0.28rem 0; }
+  .compare.dim .a li { color: var(--text-dim); }
+
+  /* a 2x2 quadrant (Radical Candor) */
+  .quad { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .quad .cell { padding: 1rem 1.05rem; border-radius: 6px; background: var(--tint); border: 1px solid var(--hair); min-height: 96px; }
+  .quad .cell.good { background: rgba(212,196,160,0.12); border-color: var(--accent); }
+  .quad .cell .n { font-weight: 700; color: var(--text-bright); font-size: 1.02rem; display: block; }
+  .quad .cell .d { font-size: 0.92rem; color: var(--text-dim); line-height: 1.4; }
+  .quad-ax { display: flex; justify-content: space-between; font-variant: small-caps; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem; }
+
+  /* a row of stage cards (situational levels) */
+  .stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .stages .st { padding: 0.9rem 0.85rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 6px; }
+  .stages .st .lv { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); }
+  .stages .st .nm { font-weight: 700; color: var(--text-bright); font-size: 0.98rem; margin: 0.2rem 0 0.3rem; line-height: 1.1; }
+  .stages .st .dz { font-size: 0.86rem; color: var(--text-dim); line-height: 1.38; }
+
+  /* the discretionary-effort gap bar */
+  .gapfig { background: var(--tint); border: 1px solid var(--hair); border-radius: 6px; padding: 1.3rem 1.4rem; }
+  .gapfig .bar { position: relative; height: 30px; border-radius: 4px; background: rgba(255,255,255,0.05); margin: 0.5rem 0; overflow: hidden; }
+  .gapfig .bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+  .gapfig .bar .fill.req { width: 38%; background: rgba(184,178,162,0.4); }
+  .gapfig .bar .fill.pos { width: 100%; background: linear-gradient(90deg, rgba(212,196,160,0.5), rgba(212,196,160,0.16)); }
+  .gapfig .rowlab { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-dim); }
+  .gapfig .rowlab b { color: var(--text-bright); font-weight: 700; }
+  .gapfig .gaptag { text-align: center; font-variant: small-caps; letter-spacing: 0.1em; font-size: 0.86rem; color: var(--accent); margin-top: 0.6rem; }
+
+  /* ============================================================
+     THE INTERACTIVE  —  "Does a bigger bonus help?"
+     ============================================================ */
+  .lab { background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(12,16,13,0.45), 0 18px 40px -16px rgba(8,12,9,0.55), inset 0 1px 0 rgba(245,241,234,0.04); margin: 3rem 0; }
+  .lab-head { padding: 0.9em 1.3em; background: var(--d-bg-raised); border-bottom: 1px solid var(--d-rule); }
+  .lab-head .t { font-weight: 700; font-size: 1.12rem; color: var(--d-text-bright); }
+  .lab-head .s { font-style: italic; font-size: 0.96rem; color: var(--d-text-dim); margin-top: 0.15rem; }
+  .lab-body { padding: 1.4em 1.4em 1.6em; }
+  .lab-bars { display: grid; gap: 0.9rem; margin-bottom: 1.3rem; }
+  .lab-bar .bl { display: flex; justify-content: space-between; font-size: 0.94rem; color: var(--d-text-dim); margin-bottom: 0.3rem; }
+  .lab-bar .bl b { color: var(--d-accent-strong); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .lab-bar .track { height: 22px; background: rgba(0,0,0,0.22); border-radius: 5px; overflow: hidden; }
+  .lab-bar .meter { height: 100%; width: 60%; border-radius: 5px; background: var(--d-accent); transition: width 0.55s var(--ease-out), background 0.4s ease; }
+  .lab-bar.creative .meter { background: #b9a6e0; }
+  .lab-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.4rem; padding-top: 0.4rem; border-top: 1px solid var(--d-rule); }
+  .lab-slider { flex: 1 1 260px; }
+  .lab-slider .sl-top { display: flex; justify-content: space-between; font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.86rem; color: var(--d-text-dim); margin-bottom: 0.25rem; }
+  .lab-slider input[type=range] { width: 100%; -webkit-appearance: none; appearance: none; height: 20px; background: transparent; cursor: pointer; }
+  .lab-slider input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--d-rule-strong); border-radius: 2px; }
+  .lab-slider input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -7px; border-radius: 50%; background: var(--d-accent); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .lab-slider input[type=range]::-moz-range-track { height: 3px; background: var(--d-rule-strong); border-radius: 2px; }
+  .lab-slider input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: none; border-radius: 50%; background: var(--d-accent); }
+  .lab-toggle { font-family: var(--font-heading); font-size: 1rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; padding: 0.5em 1.1em; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .lab-toggle[aria-pressed=true] { background: var(--d-accent); border-color: var(--d-accent); color: var(--d-bg); font-weight: 700; }
+  .lab-read { margin-top: 1.2rem; padding: 0.9rem 1.05rem; background: rgba(0,0,0,0.18); border-radius: 6px; border-left: 2px solid var(--d-accent); }
+  .lab-read p { font-size: 1.0rem; line-height: 1.5; color: var(--d-text); margin: 0; }
+  .lab-read b { color: var(--d-text-bright); }
+
+  /* ============================================================
+     THE "FOR YOUR IMPROVEMENT" MODULE  (one self-contained piece)
+     A full-bleed band with its own backing, holding the whole
+     development playbook so it reads as a single object.
+     ============================================================ */
+  .fyi { background: linear-gradient(180deg, var(--tint) 0%, var(--tint-2) 100%); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 6svh 0 6.5svh; margin: 7svh 0 0; }
+  .fyi-in { max-width: calc(var(--measure) + 12rem); margin: 0 auto; padding: 0 var(--gutter); }
+  .fyi .kicker { font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.86rem; color: var(--accent); text-align: center; }
+  .fyi h3 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.08; color: var(--text-bright); text-align: center; margin: 0.5rem auto 0; max-width: 20ch; text-wrap: balance; }
+  .fyi .stand { font-style: italic; font-size: 1.16rem; line-height: 1.55; color: var(--text-dim); text-align: center; max-width: 52ch; margin: 1.1rem auto 0; text-wrap: pretty; }
+  .fyi .fyi-col { max-width: var(--measure); margin: 2.2rem auto 0; }
+  .fyi .fyi-col p { font-size: 1.16rem; line-height: 1.66; color: var(--text); margin: 0 0 1.1em; }
+  .fyi .fyi-col p b { color: var(--text-bright); font-weight: 700; }
+
+  /* the competency map: four factors, the People factor lit */
+  .map { margin: 2.4rem auto 0; max-width: calc(var(--measure) + 11rem); display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .map .factor { background: var(--bg); border: 1px solid var(--hair); border-radius: 7px; padding: 1rem 0.95rem 1.1rem; }
+  .map .factor.lit { border-color: var(--accent); background: rgba(212,196,160,0.10); }
+  .map .factor h4 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.2rem; }
+  .map .factor .fn { font-size: 0.84rem; color: var(--text-dim); font-style: italic; margin-bottom: 0.7rem; line-height: 1.3; }
+  .map .factor ul { list-style: none; margin: 0; padding: 0; }
+  .map .factor li { font-size: 0.9rem; line-height: 1.34; color: var(--text); padding: 0.16rem 0; }
+  .map .factor li.hi { color: var(--accent-hover); font-weight: 700; }
+  .map-note { max-width: var(--measure); margin: 1rem auto 0; font-size: 0.92rem; font-style: italic; color: var(--text-dim); text-align: center; line-height: 1.5; }
+
+  /* anatomy of one entry */
+  .anat { margin: 2.2rem auto 0; max-width: var(--measure); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .anat .step { background: var(--bg); border: 1px solid var(--hair); border-radius: 6px; padding: 0.8rem 0.9rem; }
+  .anat .step .sn { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); }
+  .anat .step .st { font-weight: 700; color: var(--text-bright); font-size: 0.96rem; margin: 0.1rem 0 0.25rem; }
+  .anat .step .sd { font-size: 0.84rem; color: var(--text-dim); line-height: 1.36; }
+
+  /* 70-20-10 bar */
+  .seventy { margin: 2.2rem auto 0; max-width: var(--measure); }
+  .seventy .row { display: flex; height: 44px; border-radius: 6px; overflow: hidden; border: 1px solid var(--hair); }
+  .seventy .seg { display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--bg); font-size: 0.92rem; }
+  .seventy .s70 { width: 70%; background: var(--accent); }
+  .seventy .s20 { width: 20%; background: rgba(212,196,160,0.55); }
+  .seventy .s10 { width: 10%; background: rgba(212,196,160,0.3); color: var(--text-bright); }
+  .seventy .key { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin-top: 0.7rem; font-size: 0.92rem; color: var(--text-dim); }
+
+  /* ============================================================
+     ENDING + APPENDIX
+     ============================================================ */
+  .ending { max-width: 40rem; margin: 0 auto; padding: 9svh var(--gutter) 4svh; text-align: center; }
+  .ending h2 { font-weight: 700; font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.12; letter-spacing: -0.015em; color: var(--text-bright); text-wrap: balance; }
+  .ending h2 em { color: var(--accent); font-style: italic; }
+  .ending p { font-size: 1.2rem; color: var(--text-dim); line-height: 1.64; margin-top: 1.4rem; text-wrap: pretty; }
+
+  .appendix { border-top: 1px solid var(--hair); max-width: calc(var(--measure) + 12rem); margin: 4svh auto 0; padding: 3svh var(--gutter) 0; }
+  .appendix h2 { font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); text-align: center; margin-bottom: 0.4rem; }
+  .appendix .ap-intro { text-align: center; font-style: italic; color: var(--text-dim); max-width: 52ch; margin: 0 auto 2.2rem; font-size: 1.04rem; line-height: 1.55; }
+  .shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.4rem 2rem; }
+  .shelf .grp h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 0 0 0.5rem; }
+  .shelf ul { list-style: none; margin: 0; padding: 0; }
+  .shelf li { font-size: 0.98rem; line-height: 1.4; color: var(--text-dim); padding: 0.22rem 0; }
+  .shelf li b { color: var(--text); font-weight: 700; font-style: normal; }
+  .ap-foot { font-size: 0.92rem; color: var(--text-dim); line-height: 1.55; text-align: center; max-width: 56ch; margin: 2.6rem auto 0; font-style: italic; }
+
+  /* ============================================================
+     REVEAL ON SCROLL  (gated: only fine pointer + motion allowed)
+     default = fully visible, so content can never be trapped hidden
+     ============================================================ */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    html.js .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+  }
+
+  /* ============================================================
+     MOBILE
+     ============================================================ */
+  @media (max-width: 640px) {
+    .essay p { font-size: 1.12rem; }
+    .compare { grid-template-columns: 1fr; }
+    .compare > div:first-child { border-right: none; border-bottom: 1px solid var(--hair); }
+    .quad { grid-template-columns: 1fr; }
+    .stages { grid-template-columns: 1fr 1fr; }
+    .map { grid-template-columns: 1fr 1fr; }
+    .lab-controls { flex-direction: column; align-items: stretch; }
+    .lab-slider { flex: 0 0 auto; }
+    .lab-toggle { width: 100%; }
+  }
+  @media (max-width: 380px) {
+    .stages, .map { grid-template-columns: 1fr; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="rp"></div>
+
+  <nav class="top-nav"><a href="/">Ethan Willingham</a></nav>
+
+  <!-- ============ COVER ============ -->
+  <header class="cover">
+    <div class="eyebrow">On Managing Professionals</div>
+    <h1>All In</h1>
+    <p class="dek">The work that makes people valuable changed. The way we manage them mostly did not. This is a field guide to the difference, and to the one thing you can never order out of a person: everything they have.</p>
+    <svg class="cover-motif" viewBox="0 0 200 86" aria-hidden="true">
+      <text class="lbl" x="2" y="9">effort</text>
+      <path class="giv" d="M4,74 C40,72 60,40 100,30 C140,20 168,16 196,8"/>
+      <path class="req" d="M4,60 L196,60"/>
+      <text class="lbl" x="197" y="71" text-anchor="end">what you can require</text>
+      <text class="lbl" x="197" y="22" text-anchor="end" style="fill:#D4C4A0;">what you can earn</text>
+    </svg>
+    <span class="scroll-cue">scroll</span>
+  </header>
+
+  <article class="essay">
+
+    <!-- ============ INTRO ============ -->
+    <div class="lede first reveal">
+      <p>You were probably promoted because you were good at the work. Then, on a Monday, the work quietly changed. Your job is no longer the thing you were good at. Your job is now the output of other people, and most of them know their own craft better than you know it. That is not a temporary discomfort you manage around. It is the whole new job.</p>
+      <p>And here is the trap nobody warns you about. Almost everything our culture knows about getting more out of people was figured out for a different kind of worker, on a factory floor, a century ago. Those instincts still feel like management. With professionals, they quietly backfire. This is a tour of what a hundred years of research says instead, ending with the playbook your own development depends on.</p>
+    </div>
+
+    <div class="gloss reveal">
+      <h2>Four words, before we start</h2>
+      <dl>
+        <dt>Professional (knowledge worker)</dt>
+        <dd>Someone hired for what they know and judge, not for hours of repeatable motion. Drucker's coinage. The engineer, the analyst, the designer, the customer success manager.</dd>
+        <dt>Engagement</dt>
+        <dd>Whether a person is psychologically present and invested, or just physically present. Gallup has measured it across millions of workers for decades.</dd>
+        <dt>Discretionary effort</dt>
+        <dd>The gap between the least a person can do without getting fired and the most they are capable of giving. You can command the floor. You can only earn the ceiling.</dd>
+        <dt>All in</dt>
+        <dd>What it looks like when that gap closes: a professional who gives you their full judgment, initiative, and care because they have chosen to.</dd>
+      </dl>
+    </div>
+
+    <!-- ============ ACT I ============ -->
+    <div class="act reveal"><div class="act-k">Act I</div><div class="act-t">Two kinds of worker</div></div>
+
+    <section class="sec reveal">
+      <span class="sec-num">01</span>
+      <h3>The man with the stopwatch</h3>
+      <p class="sub">Where our management instincts were born, and why they worked.</p>
+      <p>In 1899, Frederick Taylor stood over a man loading pig iron at Bethlehem Steel with a stopwatch and a clipboard. He timed every motion, removed the wasted ones, prescribed the exact rest intervals, and handed the worker a script. Output went from 12.5 tons a day to 47. He did the same with shoveling, finding that the one best load was 21 pounds, and tripled productivity.</p>
+      <p>This is the birth of modern management, and it genuinely worked. It worked for one reason: the task was simple, repeated, and <em>fully visible</em> to a stranger with a stopwatch. When all the value lives in observable motion, the boss really can know the one best way, and the worker's job is to follow it.</p>
+      <div class="stat reveal"><span class="fig">47<span class="u"> tons</span></span><span class="cap">A pig iron loader's daily output under Taylor's system, up from 12.5. Control, applied to visible labor, multiplies it.</span><span class="src">Taylor, scientific management, 1911</span></div>
+      <div class="move"><span class="k">The manager's move</span><p>Notice when you are reaching for the stopwatch: prescribing the how, not just the what. With visible labor that is the job. Hold that thought.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">02</span>
+      <h3>The worker who owns the factory</h3>
+      <p class="sub">Why the stopwatch breaks the moment the value moves inside someone's head.</p>
+      <p>Now picture your best person. The thing that makes them valuable is not a motion you can time. It is a judgment that happens somewhere behind their eyes, and when they go home at night, they take the entire factory with them. Peter Drucker, who coined the term <em>knowledge worker</em>, put the consequence bluntly: these people own the means of production, and it is portable.</p>
+      <p>Two things follow, and both invert Taylor. First, you usually cannot see the work, so you cannot prescribe the one best way. Second, past the apprentice stage, a good professional <em>knows their job better than you do</em>. Drucker's conclusion was that you stop managing them as subordinates and start managing them as partners, even as volunteers. Partners cannot be ordered. They have to be persuaded.</p>
+      <p class="pq">Knowledge workers own the means of production. It is the knowledge between their ears, and it is a totally portable and enormous capital asset.<cite>Peter Drucker</cite></p>
+      <div class="move"><span class="k">The manager's move</span><p>Hand the professional the question, not just the answer. "What should the task even be here?" is not insubordination. For a knowledge worker, it is the job.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">03</span>
+      <h3>The boss who gets what he expects</h3>
+      <p class="sub">Your private theory of people is not private. It comes true.</p>
+      <p>In 1960, Douglas McGregor noticed that every manager quietly runs on one of two assumptions. <b>Theory X</b> says people dislike work and need to be pushed, watched, and controlled. <b>Theory Y</b> says effort is as natural as rest, and people will direct themselves toward goals they actually believe in. McGregor's unsettling point was that both are self-fulfilling. Watch people like they cannot be trusted, and they stop showing you the judgment you are not looking for. You manufacture the very passivity you then cite as proof you were right.</p>
+      <p>With laborers on a line, a Theory X system can still produce tons. With professionals, it is corrosive, because the thing you are suppressing, their initiative, is the entire reason you hired them.</p>
+      <div class="move"><span class="k">The manager's move</span><p>Before fixing any process, audit the assumption underneath it. Are you designing for the person you fear, or the person you hired?</p></div>
+    </section>
+
+    <!-- ============ ACT II ============ -->
+    <div class="act reveal"><div class="act-k">Act II</div><div class="act-t">The thing you cannot command</div></div>
+
+    <section class="sec reveal">
+      <span class="sec-num">04</span>
+      <h3>The gap</h3>
+      <p class="sub">There is a ceiling on every professional that no authority can reach. Only you can.</p>
+      <p>For a person on Taylor's line, the distance between the least and the most they can give is small, bounded by physical pace. For a professional it is vast. A disengaged engineer ships code that works. An engaged one solves the problem you did not know you had. That distance is <em>discretionary effort</em>, and whether it gets spent is what we call engagement.</p>
+      <div class="fig-block wide reveal">
+        <div class="fig-title">What you can require, and what you cannot</div>
+        <div class="gapfig">
+          <div class="rowlab"><span>What authority can compel</span><b>the floor</b></div>
+          <div class="bar"><div class="fill req"></div></div>
+          <div class="rowlab"><span>What a professional could give</span><b>the ceiling</b></div>
+          <div class="bar"><div class="fill pos"></div></div>
+          <div class="gaptag">the gap is the whole game</div>
+        </div>
+        <p class="fig-note">You can mandate attendance, hours, and compliance. The shaded distance above them, the judgment and care, is volunteered or withheld. Management is the work of earning it.</p>
+      </div>
+      <p>And the single biggest factor deciding whether it gets volunteered is not pay, perks, or the company logo. It is the person they report to.</p>
+      <div class="stat reveal"><span class="fig">70<span class="u">%</span></span><span class="cap">of the variance in a team's engagement traces to the manager alone. Tell me who someone's boss is and I can largely predict their engagement.</span><span class="src">Gallup, across 2.5 million teams</span></div>
+      <div class="move"><span class="k">The manager's move</span><p>Stop treating engagement as a company-wide weather system you suffer. On your team, in your one-on-ones, you are roughly 70 percent of the climate.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">05</span>
+      <h3>Two ledgers</h3>
+      <p class="sub">Why a raise buys silence, not fire.</p>
+      <p>Frederick Herzberg asked thousands of people what made them love or hate their work, and found the two answers were not opposites. They were different ledgers entirely. <b>Hygiene factors</b>, like salary, policy, conditions, and a decent boss, only prevent dissatisfaction when they are right. Get them wrong and people revolt. Get them right and people feel, at best, nothing. <b>Motivators</b>, like achievement, the work itself, responsibility, recognition, and growth, are the only things that actually light people up.</p>
+      <div class="fig-block wide reveal">
+        <div class="fig-title">The two ledgers do different jobs</div>
+        <div class="compare dim">
+          <div class="a"><h4>Hygiene (stops the pain)</h4><ul><li>Salary and benefits</li><li>Company policy</li><li>Working conditions</li><li>Job security</li><li>A reasonable boss</li></ul></div>
+          <div class="b"><h4>Motivators (light the fire)</h4><ul><li>Achievement</li><li>The work itself</li><li>Responsibility</li><li>Recognition</li><li>Growth and advancement</li></ul></div>
+        </div>
+        <p class="fig-note">Fixing hygiene moves a professional from miserable to neutral. Only the right-hand column moves them from neutral to all in. Pay is the floor, never the fuel.</p>
+      </div>
+      <p class="pq">I can charge a man's battery, and recharge it, and recharge it again. But it is only when he has his own generator that we can talk about motivation.<cite>Frederick Herzberg</cite></p>
+      <div class="move"><span class="k">The manager's move</span><p>Pay people fairly so money leaves the room as a topic, then stop using it as your motivation tool. Enrich the work instead. Give whole problems, real ownership, and harder challenges.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">06</span>
+      <h3>Autonomy, mastery, purpose</h3>
+      <p class="sub">For thinking work, the carrot can make performance worse. This is not opinion. It is repeatable.</p>
+      <p>Here is the most counterintuitive finding in the field, and the one most worth feeling for yourself. In 1962, Sam Glucksberg gave people a tricky creative puzzle. He offered one group a cash prize for speed. That group was <em>slower</em>, by about three and a half minutes. The reward narrowed their focus exactly when the task needed it wide. A meta-analysis of 128 studies later confirmed the pattern: tangible if-then rewards reliably erode the intrinsic motivation that creative work runs on.</p>
+      <p>Daniel Pink gathered this into three drivers that actually move professionals: <b>autonomy</b> (control over their work), <b>mastery</b> (getting visibly better at something that matters), and <b>purpose</b> (a reason beyond the paycheck). The carrot-and-stick was built for routine work. On thinking work it backfires. Try it:</p>
+
+      <!-- ===== interactive ===== -->
+      <div class="lab full reveal" id="lab" aria-label="Interactive: does a bigger bonus help?">
+        <div class="lab-in" style="max-width: calc(var(--measure) + 11rem); margin: 0 auto;">
+          <div class="lab-head">
+            <div class="t">Does a bigger bonus help?</div>
+            <div class="s">Slide between a routine task and a creative one, then offer the bonus. Watch performance respond.</div>
+          </div>
+          <div class="lab-body">
+            <div class="lab-bars">
+              <div class="lab-bar" id="bar-routine">
+                <div class="bl"><span>Routine task (clear, mechanical)</span><b><span id="v-routine">100</span></b></div>
+                <div class="track"><div class="meter" id="m-routine"></div></div>
+              </div>
+              <div class="lab-bar creative" id="bar-creative">
+                <div class="bl"><span>Creative task (needs insight)</span><b><span id="v-creative">100</span></b></div>
+                <div class="track"><div class="meter" id="m-creative"></div></div>
+              </div>
+            </div>
+            <div class="lab-controls">
+              <div class="lab-slider">
+                <div class="sl-top"><span>routine</span><span>the work is&hellip;</span><span>creative</span></div>
+                <input type="range" id="lab-mix" min="0" max="100" value="50" aria-label="How creative is the work">
+              </div>
+              <button class="lab-toggle" id="lab-bonus" aria-pressed="false">Offer a big cash bonus</button>
+            </div>
+            <div class="lab-read"><p id="lab-msg">No bonus yet. Move the slider to set how much the work depends on raw insight, then offer the bonus and watch what happens.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="move"><span class="k">The manager's move</span><p>For routine work, by all means tie a reward to it. For the creative, judgment-heavy work professionals are hired for, stop dangling carrots and start handing over autonomy, mastery, and a reason that matters.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">07</span>
+      <h3>Small wins</h3>
+      <p class="sub">The most powerful daily motivator is also the easiest one to step on.</p>
+      <p>Teresa Amabile collected nearly 12,000 daily diary entries from professionals and asked a simple question: on the days people felt most motivated, what had actually happened? The answer was not a bonus or a pep talk. It was <em>progress in meaningful work</em>. The single most powerful thing inside a good workday is the feeling of moving something forward. The corollary is brutal: small setbacks and petty interference hurt more than small wins help.</p>
+      <p>Dan Ariely showed the dark edge of this. When people's finished work was ignored, not shredded, just ignored and set aside unread, they gave up almost as fast as people whose work was destroyed in front of them. To a professional, being unseen is nearly as demotivating as being torn down.</p>
+      <div class="stat reveal"><span class="fig">15&cent; <span class="u">vs 29&cent;</span></span><span class="cap">Pay at which people quit a task when their work was acknowledged (15&cent;) versus ignored (29&cent;, the same point as having it shredded). Attention is not a nicety.</span><span class="src">Ariely, on meaning at work</span></div>
+      <div class="move"><span class="k">The manager's move</span><p>Your highest-leverage daily act is clearing the obstacle in front of someone and noticing what they finished. Never let good work pass unread.</p></div>
+    </section>
+
+    <!-- ============ ACT III ============ -->
+    <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The craft</div></div>
+
+    <section class="sec reveal">
+      <span class="sec-num">08</span>
+      <h3>Match your grip to the person</h3>
+      <p class="sub">The same management that grows one person smothers another. The variable is the task, not the title.</p>
+      <p>Andy Grove, who built Intel, taught that there is no single correct management style, only a correct <em>fit</em> for a person's maturity <em>on a specific task</em>. He called it task-relevant maturity. New to a task, a person needs clear direction. As they grow on it, they need coaching and support. Once they own it, they need you to get out of the way. The catch that trips up every new manager: maturity does not transfer. Promote your best engineer into management and they are a beginner again, even though they were an expert an hour ago.</p>
+      <div class="fig-block wide reveal">
+        <div class="fig-title">Four stages, four grips (Grove; Hersey and Blanchard)</div>
+        <div class="stages">
+          <div class="st"><span class="lv">new</span><div class="nm">Direct</div><div class="dz">Eager, unskilled. Give clear, specific instruction.</div></div>
+          <div class="st"><span class="lv">learning</span><div class="nm">Coach</div><div class="dz">Skill rising, confidence dipping. Explain, support, encourage.</div></div>
+          <div class="st"><span class="lv">capable</span><div class="nm">Support</div><div class="dz">Able but cautious. Ask, listen, hand over the wheel.</div></div>
+          <div class="st"><span class="lv">owner</span><div class="nm">Delegate</div><div class="dz">Skilled and committed. Set the goal, then trust and clear the path.</div></div>
+        </div>
+        <p class="fig-note">Micromanaging an owner insults them. Delegating to a beginner abandons them. Both disengage. Read the stage first.</p>
+      </div>
+      <div class="move"><span class="k">The manager's move</span><p>For each person and each task, ask "how mature are they on <em>this</em>?" and set your grip accordingly. When you promote someone, increase support, do not withdraw it.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">09</span>
+      <h3>Ask, do not tell</h3>
+      <p class="sub">When Google went looking for what makes a great manager, the answer surprised even Google.</p>
+      <p>Google's engineers suspected managers were overhead. So Google studied it, hard, across thousands of data points, expecting to find that technical brilliance was what mattered. Technical skill came in <em>last</em>. The number one behavior of their best managers was the same one Bill Campbell used to coach the founders of Google, Apple, and Intuit: being a good coach. Not having the answers. Drawing them out.</p>
+      <p>Michael Bungay Stanier calls the instinct to jump in with answers the "advice monster," and it has a hidden cost: every time you solve it for them, they bring you the next one, and they never build the muscle. The repair is almost embarrassingly simple. Open the conversation with "What's on your mind?", then resist filling the silence. Ask "And what else?" The real issue is rarely the first one named.</p>
+      <p class="pq">Coaching is no longer a specialty. You cannot be a good manager without being a good coach.<cite>The leadership handbook of Bill Campbell</cite></p>
+      <div class="move"><span class="k">The manager's move</span><p>Stay curious one beat longer than is comfortable. Replace "here is what I would do" with "what do you think the real challenge is?" Their plan, owned by them, beats your plan every time.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">10</span>
+      <h3>Care personally, challenge directly</h3>
+      <p class="sub">The kindest thing you can do for a professional is also the hardest: tell them the truth.</p>
+      <p>Kim Scott maps feedback on two axes: how much you care about the person, and how directly you challenge them. Get both high and you have what she calls radical candor. The failure she sees most often is not cruelty. It is the opposite: <b>ruinous empathy</b>, where you care so much about the person's feelings in the moment that you soften the message until it carries no information, and they walk into a wall you saw coming. To a professional, that is not kindness. It is being denied the one thing they need to get better.</p>
+      <div class="fig-block wide reveal">
+        <div class="fig-title">Two dials, four outcomes</div>
+        <div class="quad">
+          <div class="cell"><span class="n">Ruinous empathy</span><span class="d">Care, but won't challenge. The most common trap. Feels kind, starves growth.</span></div>
+          <div class="cell good"><span class="n">Radical candor</span><span class="d">Care personally and challenge directly. The goal.</span></div>
+          <div class="cell"><span class="n">Manipulative insincerity</span><span class="d">Neither care nor challenge. The most corrosive.</span></div>
+          <div class="cell"><span class="n">Obnoxious aggression</span><span class="d">Challenge without care. Honest, but it stings and erodes trust.</span></div>
+        </div>
+        <div class="quad-ax"><span>&larr; doesn't challenge</span><span>challenges directly &rarr;</span></div>
+      </div>
+      <p>And when you do praise, be specific, because there is a deeper truth in the research: people grow far more from understanding what they did <em>well</em> than from a list of what they did poorly. Excellence is idiosyncratic. Your job is to catch its signature in each person and name it.</p>
+      <div class="move"><span class="k">The manager's move</span><p>Before softening a hard message, ask whether you are protecting them or protecting yourself from an awkward minute. Say the true thing, and make plain that you say it because you are on their side.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">11</span>
+      <h3>Multiply, do not diminish</h3>
+      <p class="sub">Two leaders, the same team, double the output. The difference is who has to be the genius.</p>
+      <p>Liz Wiseman studied leaders and found two types. <b>Diminishers</b> are the smartest person in the room, and they prove it, so the room goes quiet. <b>Multipliers</b> treat their people as smart and get more out of them by asking hard questions and handing over real ownership. The measured difference is about two times the usable capability from the very same people. The most humbling part of her work: most diminishing is accidental, done by well-meaning managers who jump in to rescue, set a blistering pace, or fire off ideas faster than anyone can act on them.</p>
+      <div class="stat reveal"><span class="fig">2&times;</span><span class="cap">The capability a Multiplier draws out of a team versus a Diminisher. The average manager leaves about a third of their people's brainpower sitting idle.</span><span class="src">Wiseman, across 150+ leaders</span></div>
+      <p class="pq">It isn't how much you know that matters. What matters is how much access you have to what other people know.<cite>Liz Wiseman</cite></p>
+      <div class="move"><span class="k">The manager's move</span><p>In your next meeting, count how much of it you talk. Aim to be the person who asks the question that puts someone else on stage, not the one with every answer.</p></div>
+    </section>
+
+    <!-- ============ ACT IV ============ -->
+    <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">The conditions you build</div></div>
+
+    <section class="sec reveal">
+      <span class="sec-num">12</span>
+      <h3>Make it safe to say the hard thing</h3>
+      <p class="sub">The best teams do not make fewer mistakes. They are simply not afraid to tell you about them.</p>
+      <p>Amy Edmondson went into hospitals expecting the best nursing teams to report the fewest medication errors. She found the reverse, and it confused her until she understood it. The best teams reported <em>more</em> errors, not because they made more, but because they felt safe enough to surface them. The weak teams were burying the signal. She named the difference <em>psychological safety</em>: the shared belief that you will not be punished or humiliated for speaking up. When Google later searched for the one thing that set its best teams apart, this was it, ahead of talent, ahead of resources.</p>
+      <div class="stat reveal"><span class="fig">85<span class="u">%</span></span><span class="cap">of employees admit to staying silent with their manager about something important, out of fear. Every buried concern is a problem you find out about too late.</span><span class="src">Edmondson and Detert</span></div>
+      <p>For professionals, this is not a soft nicety. Their work is judgment, and judgment requires dissent, half-formed ideas, and admitted uncertainty. A team that cannot say "I think this is wrong" cannot do its best thinking.</p>
+      <div class="move"><span class="k">The manager's move</span><p>Go first. Say "I don't know" and "I got that wrong" out loud. The fastest way to make a room safe is to take the first risk in it yourself.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">13</span>
+      <h3>Give context, not control</h3>
+      <p class="sub">The more you have to approve, the less they can think. Trade approvals for understanding.</p>
+      <p>The instinct of an anxious manager is to add a checkpoint: route the decision up, require a sign-off, keep control. Netflix built one of the most productive cultures on earth on the opposite reflex, which they call <em>context, not control</em>. Instead of approving a professional's decisions, you flood them with the context, the strategy, the constraints, the why, until they can make the call you would have made, without asking. Every approval you remove is a vote of confidence the professional can feel. Every one you add says, quietly, "I do not trust your judgment."</p>
+      <p>Control does not have to mean chaos. The trick is to make decision rights <em>explicit</em>: be clear about which calls a person owns outright, which they make after consulting you, and which are still yours. Ambiguity, not autonomy, is what produces the mess managers fear.</p>
+      <p class="pq">If you dummy-proof the system, only dummies will want to work there.<cite>Reed Hastings, Netflix</cite></p>
+      <div class="move"><span class="k">The manager's move</span><p>For each recurring decision, say plainly who owns it. Then spend your energy giving context rather than giving permission.</p></div>
+    </section>
+
+    <section class="sec reveal">
+      <span class="sec-num">14</span>
+      <h3>The proof, at scale</h3>
+      <p class="sub">This is not a theory that only survives in a lab. Whole companies are built on it.</p>
+      <p>If trusting professionals were naive, the companies that do it most would be the ones bleeding out. Instead: <b>SAS Institute</b> built the largest private software firm in the world on a 35-hour norm and deep trust, and holds voluntary turnover near 3 to 4 percent in an industry that runs 17 to 25. <b>W. L. Gore</b> runs with no traditional bosses, just self-made commitments and a rule that no plant grows past about 150 people. <b>Morning Star</b>, a tomato processor with hundreds of professionals and no managers at all, runs on peer-negotiated agreements. The common thread is not softness. It is autonomy paired with genuinely high standards.</p>
+      <div class="stat reveal"><span class="fig">3&ndash;4<span class="u">%</span></span><span class="cap">SAS Institute's voluntary turnover, against an industry average of 17 to 25 percent. Trust, it turns out, is also the cheapest retention plan in the building.</span><span class="src">SAS Institute</span></div>
+      <p>One caution from the same evidence. When other companies copied the structures, the squads and the titles, without the underlying trust, they got the vocabulary and none of the results. Autonomy has to be real authority, not theater. Professionals can tell the difference instantly.</p>
+      <div class="move"><span class="k">The manager's move</span><p>Compute what losing one of your best people actually costs to replace. That number is the budget you already have for treating them like the asset they are.</p></div>
+    </section>
+
+  </article>
+
+  <!-- ============ ACT V: THE FYI MODULE (one self-contained piece) ============ -->
+  <section class="fyi reveal" aria-label="For Your Improvement, the development playbook">
+    <div class="fyi-in">
+      <div class="kicker">Act V &middot; The Playbook</div>
+      <h3>For Your Improvement</h3>
+      <p class="stand">Everything so far says the manager is the lever. So the last question is the personal one: how does a manager actually get better, on purpose? There is a quiet workhorse of a book, used inside many companies for exactly this, that turns that vague wish into a plan.</p>
+
+      <div class="fyi-col">
+        <p>It is called <b>FYI: For Your Improvement</b>, by Michael Lombardo and Robert Eichinger, now published by Korn Ferry. It is not a book you read front to back. It is a reference. It rests on one liberating premise: the things that make a great manager are not fixed traits you are born with or without. They are <b>competencies, and competencies are learnable.</b></p>
+        <p>It begins with a map of leadership itself, sorted into four families. Most of what we have covered in this essay lives in one of them.</p>
+      </div>
+
+      <div class="map reveal">
+        <div class="factor"><h4>Thought</h4><div class="fn">seeing and deciding</div><ul><li>Business insight</li><li>Decision quality</li><li>Cultivates innovation</li><li>Strategic mindset</li><li>Manages complexity</li></ul></div>
+        <div class="factor"><h4>Results</h4><div class="fn">getting it done</div><ul><li>Action oriented</li><li>Directs work</li><li>Plans and aligns</li><li>Ensures accountability</li><li>Drives results</li></ul></div>
+        <div class="factor lit"><h4>People &#9733;</h4><div class="fn">where managing professionals lives</div><ul><li class="hi">Drives engagement</li><li class="hi">Develops talent</li><li class="hi">Builds effective teams</li><li>Communicates effectively</li><li>Collaborates &middot; persuades</li></ul></div>
+        <div class="factor"><h4>Self</h4><div class="fn">who you are under pressure</div><ul><li class="hi">Instills trust</li><li class="hi">Courage</li><li>Self-awareness</li><li>Situational adaptability</li><li>Being resilient</li></ul></div>
+      </div>
+      <p class="map-note">Korn Ferry's model sorts 38 leadership competencies into four factors. The work of getting professionals all in lives almost entirely in the lit columns: People and Self.</p>
+
+      <div class="fyi-col">
+        <p>What makes the book useful is what sits behind <em>each</em> competency. Pick one, say <b>Drives engagement</b>, and you get a whole anatomy: what it looks like when done well, when overdone, and when missing; the likely root causes of a gap; and then the part that matters, roughly ten concrete things to actually go <em>do</em>.</p>
+      </div>
+
+      <div class="anat reveal">
+        <div class="step"><span class="sn">a</span><div class="st">Skilled vs not</div><div class="sd">Plain behavioral pictures of doing it well, overdoing it, and missing it.</div></div>
+        <div class="step"><span class="sn">b</span><div class="st">Some causes</div><div class="sd">Why the gap exists, so you treat the cause, not the symptom.</div></div>
+        <div class="step"><span class="sn">c</span><div class="st">The map</div><div class="sd">Why the competency matters and how it really works.</div></div>
+        <div class="step"><span class="sn">d</span><div class="st">~10 tips</div><div class="sd">Specific actions to take on the job, starting now.</div></div>
+        <div class="step"><span class="sn">e</span><div class="st">Stretch assignments</div><div class="sd">Real work that builds the muscle, not a classroom.</div></div>
+      </div>
+
+      <div class="fyi-col">
+        <p>That emphasis on doing, not studying, is deliberate. The same authors are behind the well-known <b>70-20-10</b> finding: we develop mostly from hard experience, some from other people, and only a little from formal courses.</p>
+      </div>
+
+      <div class="seventy reveal">
+        <div class="row">
+          <div class="seg s70">70</div>
+          <div class="seg s20">20</div>
+          <div class="seg s10">10</div>
+        </div>
+        <div class="key"><span><b style="color:var(--accent)">70</b> challenging experience on the job</span><span><b style="color:var(--accent)">20</b> people: feedback, coaching, mentors</span><span><b style="color:var(--accent)">10</b> formal courses and reading</span></div>
+      </div>
+
+      <div class="fyi-col">
+        <p>So the way to use it is not to fix everything. It is to pick <b>one or two</b> competencies that matter most right now, choose a couple of the tips, find a real piece of work that forces the practice, and get feedback as you go. For a new manager of professionals, the highest-leverage choices are nearly always the same handful: <b>Drives engagement, Develops talent, Builds effective teams, Instills trust,</b> and the <b>Courage</b> to have the honest conversation. The authors argue the deepest skill underneath all of them is <em>learning agility</em>, the willingness to keep learning from new and uncomfortable situations. It predicts who grows better than raw intelligence does.</p>
+        <p>Which is the quiet point of the whole book, and this whole essay. The manager you need to become is not a fixed fact about you. It is a competency. And competencies are learnable.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ENDING ============ -->
+  <div class="ending reveal">
+    <h2>Management is not the reward for the work.<br><em>It is the work.</em></h2>
+    <p>You cannot order a professional to be all in. You cannot time their best judgment with a stopwatch or buy it with a bigger carrot. You can only build the conditions, trust, autonomy, mastery, purpose, honest feedback, visible progress, in which a capable person chooses to give you everything they have. That choice is the gap. Closing it, one person at a time, is the entire job.</p>
+  </div>
+
+  <!-- ============ APPENDIX ============ -->
+  <section class="appendix reveal">
+    <h2>Where this comes from</h2>
+    <p class="ap-intro">This essay is a synthesis of a century of management research. If a single idea here lands, the books below are where it lives in full.</p>
+    <div class="shelf">
+      <div class="grp">
+        <h3>The nature of the work</h3>
+        <ul>
+          <li><b>Peter Drucker</b>, on the knowledge worker</li>
+          <li><b>Douglas McGregor</b>, The Human Side of Enterprise</li>
+          <li><b>David Maister</b>, Managing the Professional Service Firm</li>
+        </ul>
+      </div>
+      <div class="grp">
+        <h3>What moves people</h3>
+        <ul>
+          <li><b>Frederick Herzberg</b>, One More Time: How Do You Motivate Employees?</li>
+          <li><b>Daniel Pink</b>, Drive</li>
+          <li><b>Teresa Amabile</b>, The Progress Principle</li>
+          <li><b>Gallup</b>, First, Break All the Rules</li>
+        </ul>
+      </div>
+      <div class="grp">
+        <h3>The craft</h3>
+        <ul>
+          <li><b>Andy Grove</b>, High Output Management</li>
+          <li><b>Kim Scott</b>, Radical Candor</li>
+          <li><b>Liz Wiseman</b>, Multipliers</li>
+          <li><b>Schmidt, Rosenberg, Eagle</b>, Trillion Dollar Coach</li>
+        </ul>
+      </div>
+      <div class="grp">
+        <h3>The conditions</h3>
+        <ul>
+          <li><b>Amy Edmondson</b>, The Fearless Organization</li>
+          <li><b>Patrick Lencioni</b>, The Five Dysfunctions of a Team</li>
+          <li><b>Hastings and Meyer</b>, No Rules Rules</li>
+          <li><b>Gostick and Elton</b>, All In</li>
+        </ul>
+      </div>
+      <div class="grp">
+        <h3>Getting better, on purpose</h3>
+        <ul>
+          <li><b>Lombardo and Eichinger</b>, FYI: For Your Improvement</li>
+          <li><b>Carol Dweck</b>, Mindset</li>
+        </ul>
+      </div>
+    </div>
+    <p class="ap-foot">Figures are drawn from the cited research. Where studies report a range or have been re-examined, the more conservative reading is used.</p>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width: calc(var(--measure) + 12rem); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter);">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+      <span class="ftr-links" style="display:flex; gap:1.4rem;">
+        <a href="https://github.com/Ethan-Willingham/Portfolio_01">GitHub &#8599;</a>
+        <a href="/">Home</a>
+      </span>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* reading progress bar */
+    var rp = document.getElementById('rp');
+    function onScroll() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      var pct = max > 0 ? (h.scrollTop || document.body.scrollTop) / max * 100 : 0;
+      rp.style.width = pct.toFixed(2) + '%';
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    /* reveal on scroll, only where motion is welcome and the pointer is fine.
+       default (no JS / reduced motion / touch) leaves everything visible. */
+    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var wantsMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    if (fine && wantsMotion && 'IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.06 });
+      Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function (el) { io.observe(el); });
+    }
+
+    /* ===== the interactive: "does a bigger bonus help?" =====
+       Illustrative, but the direction is grounded in real findings:
+       contingent rewards lift routine output and depress creative,
+       insight-dependent performance (Glucksberg 1962; Deci et al. 1999). */
+    var mix = document.getElementById('lab-mix');
+    var bonusBtn = document.getElementById('lab-bonus');
+    var mR = document.getElementById('m-routine'), vR = document.getElementById('v-routine');
+    var mC = document.getElementById('m-creative'), vC = document.getElementById('v-creative');
+    var msg = document.getElementById('lab-msg');
+    var bonus = false;
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function render() {
+      var c = mix.value / 100;           // 0 routine .. 1 creative
+      // baseline performance (no bonus) = 100 for both
+      var routine = 100, creative = 100;
+      if (bonus) {
+        // routine work: a contingent reward helps, more so the more routine it is
+        routine = 100 + lerp(34, 6, c);
+        // creative work: the same reward hurts, more so the more creative it is
+        creative = 100 - lerp(2, 32, c);
+      }
+      // scale bars so 100 = 60% width, headroom for the +34 case
+      mR.style.width = (routine * 0.6).toFixed(1) + '%';
+      mC.style.width = (creative * 0.6).toFixed(1) + '%';
+      vR.textContent = Math.round(routine);
+      vC.textContent = Math.round(creative);
+
+      var leans = c > 0.62 ? 'creative' : (c < 0.38 ? 'routine' : 'mixed');
+      if (!bonus) {
+        msg.innerHTML = 'No bonus yet. Both tasks sit at a baseline of <b>100</b>. Now offer the bonus.';
+      } else if (leans === 'creative') {
+        msg.innerHTML = 'The work is mostly <b>creative</b>, and the bonus made it <b>worse</b>. This is Glucksberg’s 1962 result: the rewarded group solved the insight puzzle about <b>three and a half minutes slower</b>. The carrot narrows focus exactly when the task needs it wide.';
+      } else if (leans === 'routine') {
+        msg.innerHTML = 'The work is mostly <b>routine</b>, and the bonus <b>helped</b>. For clear, mechanical tasks, if-then rewards work as advertised. This is the world the carrot was built for.';
+      } else {
+        msg.innerHTML = 'A mix. The reward gives a little and takes a little. Slide all the way to <b>creative</b> to see it backfire, and to <b>routine</b> to see it pay off.';
+      }
+    }
+
+    mix.addEventListener('input', render);
+    bonusBtn.addEventListener('click', function () {
+      bonus = !bonus;
+      bonusBtn.setAttribute('aria-pressed', bonus ? 'true' : 'false');
+      bonusBtn.textContent = bonus ? 'Bonus offered (remove it)' : 'Offer a big cash bonus';
+      render();
+    });
+    render();
+  })();
+  </script>
+</body>
+</html>
