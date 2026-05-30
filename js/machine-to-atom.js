@@ -332,7 +332,8 @@
   // ============================================================
   //  HUD: readout + gated fact cards + spine
   // ============================================================
-  var srSize = document.getElementById('srSize'), srPow = document.getElementById('srPow');
+  var sbBar = document.getElementById('sbBar'), sbLabel = document.getElementById('sbLabel'), srPow = document.getElementById('srPow');
+  var factScrim = document.getElementById('factScrim');
   var spineBob = document.getElementById('spineBob');
   var facts = [].slice.call(dive.querySelectorAll('.fact'));
   var SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
@@ -347,18 +348,27 @@
   }
   function fmtPow(m) { var e = Math.floor(log10(m)); if (e >= 0) return ''; return (m / Math.pow(10, e)).toFixed(1) + ' × 10' + supStr(e) + ' m'; }
 
+  function niceLen(meters) { var p = Math.floor(log10(meters)); var b = meters / Math.pow(10, p); var nb = b >= 5 ? 5 : b >= 2 ? 2 : 1; return nb * Math.pow(10, p); }
+
   function updateHud(Z) {
     var m = fovAt(Z);
-    if (srSize) srSize.textContent = fmtSize(m);
+    // map-style scale bar: draw a round length close to ~40% of the frame width
+    var mpp = m / VW;                       // meters per CSS pixel
+    var nice = niceLen(mpp * Math.min(VW * 0.4, 200));
+    if (sbBar) sbBar.style.width = clamp(nice / mpp, 6, VW * 0.7).toFixed(1) + 'px';
+    if (sbLabel) sbLabel.textContent = fmtSize(nice);
     if (srPow) srPow.textContent = fmtPow(m);
     if (spineBob) spineBob.style.top = (Z * 100).toFixed(2) + '%';
+    var maxOp = 0;
     facts.forEach(function (f) {
       var zc = parseFloat(f.getAttribute('data-zc')), zw = parseFloat(f.getAttribute('data-zw')) || 0.045;
       var op = smoothstep(zc - zw * 1.6, zc - zw * 0.6, Z) * (1 - smoothstep(zc + zw * 0.6, zc + zw * 1.6, Z));
       f.style.opacity = op.toFixed(3);
       f.style.visibility = op < 0.01 ? 'hidden' : 'visible';
       f.style.transform = 'translateY(' + (10 * (1 - op)).toFixed(1) + 'px)';
+      if (op > maxOp) maxOp = op;
     });
+    if (factScrim) factScrim.style.opacity = maxOp.toFixed(3);
   }
 
   // ============================================================

@@ -76,13 +76,24 @@
     .js .viewport { position:sticky; top:0; height:100svh; overflow:hidden; background:#07090c; }
     .js #zoomCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
 
-    /* scale readout, top */
-    .js .scale-rail { position:absolute; top:0; left:0; right:0; z-index:7; display:flex; align-items:baseline; gap:0.7rem;
-      padding:1.1rem var(--gutter) 0; max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto;
+    /* legibility scrims: a persistent top wash for the readout, plus a
+       bottom wash (opacity driven by the engine) that fades in with each
+       fact card, so text stays readable over any moving frame. */
+    .js #zoomCanvas { z-index:1; }
+    .js .viewport::before { content:''; position:absolute; top:0; left:0; right:0; height:33%; z-index:5; pointer-events:none;
+      background:linear-gradient(to bottom, rgba(7,9,6,0.85), rgba(7,9,6,0.38) 45%, rgba(7,9,6,0)); }
+    .js .fact-scrim { position:absolute; bottom:0; left:0; right:0; height:52%; z-index:5; pointer-events:none; opacity:0;
+      background:linear-gradient(to top, rgba(7,9,6,0.93) 0%, rgba(7,9,6,0.66) 38%, rgba(7,9,6,0.2) 74%, rgba(7,9,6,0) 100%); }
+
+    /* map-style scale bar (top): a ruler that resizes and snaps to round lengths as you zoom */
+    .js .scale-rail { position:absolute; top:0; left:0; right:0; z-index:7; display:flex; align-items:flex-start; gap:0.7rem;
+      padding:1.05rem var(--gutter) 0; max-width:calc(var(--content-width) + 2*var(--gutter)); margin:0 auto;
       font-family:var(--font-mono); pointer-events:none; }
-    .js .scale-rail .sr-size { font-size:clamp(1.15rem,3vw,1.55rem); color:var(--accent-hover); font-variant-numeric:tabular-nums; text-shadow:0 1px 8px rgba(0,0,0,.6); }
-    .js .scale-rail .sr-pow { font-size:0.78rem; color:var(--text-dim); text-shadow:0 1px 6px rgba(0,0,0,.6); }
-    .js .scale-rail .sr-label { margin-left:auto; align-self:center; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); text-shadow:0 1px 6px rgba(0,0,0,.6); }
+    .js .scalebar { display:flex; flex-direction:column; gap:0.35rem; }
+    .js .scalebar .sb-label { font-size:clamp(1.05rem,2.8vw,1.45rem); color:var(--accent-hover); font-variant-numeric:tabular-nums; letter-spacing:0.01em; text-shadow:0 1px 9px rgba(0,0,0,.85); }
+    .js .scalebar .sb-bar { display:block; height:7px; min-width:6px; box-sizing:border-box; border:2px solid var(--accent-hover); border-top:0; box-shadow:0 1px 6px rgba(0,0,0,.75); transition:width 90ms linear; }
+    .js .scale-rail .sr-pow { align-self:flex-start; margin-top:0.2rem; font-size:0.78rem; color:var(--text); text-shadow:0 1px 6px rgba(0,0,0,.85); }
+    .js .scale-rail .sr-label { margin-left:auto; align-self:flex-start; margin-top:0.35rem; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-dim); text-shadow:0 1px 6px rgba(0,0,0,.85); }
 
     /* gated fact cards, bottom */
     .js .fact { position:absolute; left:0; right:0; bottom:clamp(2rem,7vh,5rem); z-index:6;
@@ -145,9 +156,13 @@
   <section class="dive" id="dive" aria-label="A continuous zoom from the machine down to a single atom">
     <div class="viewport">
       <canvas id="zoomCanvas"></canvas>
+      <div class="fact-scrim" id="factScrim" aria-hidden="true"></div>
 
       <div class="scale-rail" aria-hidden="true">
-        <span class="sr-size" id="srSize">6 m</span>
+        <div class="scalebar">
+          <span class="sb-label" id="sbLabel">6 m</span>
+          <span class="sb-bar" id="sbBar"></span>
+        </div>
         <span class="sr-pow" id="srPow"></span>
         <span class="sr-label">field of view</span>
       </div>
@@ -158,42 +173,42 @@
         <p class="f-stat">$380 million</p>
         <p class="f-statlabel">the price of one, from the only company on Earth that makes it</p>
         <h2 class="f-title">The most complicated machine ever built</h2>
-        <p class="f-body">Every advanced chip on the planet is printed by one kind of machine, made by one company, ASML, in the Netherlands. A High-NA EUV system costs around <b>$380 million</b>, ships in dozens of freight containers, and is bolted together on site over months. Its light is made by firing a laser at <b>50,000 droplets of molten tin a second</b>.</p>
+        <p class="f-body">Made by one company, ASML, in the Netherlands. Its light is born when a laser strikes <b>50,000 droplets of molten tin a second</b>.</p>
       </div>
       <div class="fact" data-zc="0.126" data-zw="0.045">
         <p class="f-eyebrow">The wafer</p>
         <p class="f-stat">300 mm</p>
         <p class="f-statlabel">one disc, sliced from a single crystal of silicon</p>
         <h2 class="f-title">A mirror grown from melted sand</h2>
-        <p class="f-body">The machine prints onto this: a <b>300 mm</b> disc of silicon, sliced from one crystal grown out of melted, purified sand, refined to about <b>99.9999999% pure</b>. Hundreds of identical chips are patterned across it at once, then sawn apart.</p>
+        <p class="f-body">A <b>300 mm</b> disc sliced from one crystal grown out of melted, purified sand, refined to about <b>99.9999999% pure</b>. Hundreds of chips are printed across it at once.</p>
       </div>
       <div class="fact" data-zc="0.262" data-zw="0.05">
         <p class="f-eyebrow">The chip</p>
         <p class="f-stat">~100,000,000,000</p>
         <p class="f-statlabel">transistors, on a die the size of a fingernail</p>
         <h2 class="f-title">One chip, cut from the wafer</h2>
-        <p class="f-body">A single die. The newest carry <b>tens of billions of transistors</b>, each a switch flicking on and off billions of times a second. Around the rim run <b>thousands of contacts</b> to the outside world. Everything between them is logic, wired out of the switches.</p>
+        <p class="f-body">A single die. The newest carry <b>tens of billions of transistors</b>, each flicking on and off billions of times a second, ringed by <b>thousands of contacts</b> to the outside world.</p>
       </div>
       <div class="fact" data-zc="0.53" data-zw="0.06">
         <p class="f-eyebrow">The wiring</p>
         <p class="f-stat">tens of km</p>
         <p class="f-statlabel">of copper, folded into one fingernail of silicon</p>
         <h2 class="f-title">A city of copper in stacked floors</h2>
-        <p class="f-body">No photograph can follow past the surface, so from here we compute it. Between the contacts and the switches runs the wiring: copper threads in more than a dozen stacked layers. Unspooled, the wires in a single chip would run for <b>tens of kilometers</b>.</p>
+        <p class="f-body">No camera can follow past the surface, so from here we compute it. Copper in more than a dozen stacked layers; unspooled, the wires in one chip run for <b>tens of kilometers</b>.</p>
       </div>
       <div class="fact" data-zc="0.687" data-zw="0.06">
         <p class="f-eyebrow">The transistor</p>
         <p class="f-stat">86,000,000,000</p>
         <p class="f-statlabel">neurons in your brain, and a top chip now rivals the count</p>
         <h2 class="f-title">The switch, smaller than a virus</h2>
-        <p class="f-body">This is one transistor, the thing all of it is made of. A modern one is a few dozen <b>nanometers</b> across and switches billions of times a second. A high-end chip packs around <b>100 billion</b> of them. Your brain holds about <b>86 billion neurons</b>, so a single chip now rivals it in raw count, yet the brain's <b>~100 trillion</b> connections still dwarf anything we print.</p>
+        <p class="f-body">One transistor, a few dozen <b>nanometers</b> across. A chip packs about <b>100 billion</b>; your brain holds <b>86 billion neurons</b>, though its <b>~100 trillion</b> connections still dwarf anything we print.</p>
       </div>
       <div class="fact" data-zc="0.95" data-zw="0.06">
         <p class="f-eyebrow">The atom</p>
         <p class="f-stat">0.5 nm</p>
         <p class="f-statlabel">across one cell of the silicon crystal</p>
         <h2 class="f-title">Where the picture ends and the atoms begin</h2>
-        <p class="f-body">Keep falling and the material itself runs out of smallness. This is the silicon crystal, atoms in a lattice that repeats about every <b>half a nanometer</b>. The thinnest working layers in a chip are only a <b>handful of atoms</b> thick. This is the floor: the whole $380 million machine exists to place these dots, a few atoms at a time, a hundred billion times over.</p>
+        <p class="f-body">The silicon crystal: atoms in a lattice that repeats about every <b>half a nanometer</b>. This is the floor. The whole $380 million machine exists to place these dots, a few atoms at a time.</p>
       </div>
 
       <div class="spine" aria-hidden="true"><span class="bob" id="spineBob"></span></div>
