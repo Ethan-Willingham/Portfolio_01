@@ -51,8 +51,11 @@
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --vis-bg:   #14180f;
   }
-  html { overflow-x: hidden; scroll-behavior: smooth; }
-  body { background: #0f130c; color: var(--text); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  /* overflow-x: clip (not hidden) prevents sideways scroll WITHOUT turning
+     html/body into a scroll container, which would break position: sticky on
+     the pinned .viewport (the whole dive depends on that sticky pin). */
+  html { overflow-x: clip; scroll-behavior: smooth; }
+  body { background: #0f130c; color: var(--text); overflow-x: clip; -webkit-font-smoothing: antialiased; }
   ::selection { background: var(--accent); color: #20251d; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 
