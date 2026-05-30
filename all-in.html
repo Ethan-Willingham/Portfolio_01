@@ -259,23 +259,96 @@
   .fyi .fyi-col p { font-size: 1.16rem; line-height: 1.66; color: var(--text); margin: 0 0 1.1em; }
   .fyi .fyi-col p b { color: var(--text-bright); font-weight: 700; }
 
-  /* the competency map: four factors, the People factor lit */
-  .map { margin: 2.4rem auto 0; max-width: calc(var(--measure) + 11rem); display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .map .factor { background: var(--bg); border: 1px solid var(--hair); border-radius: 7px; padding: 1rem 0.95rem 1.1rem; }
-  .map .factor.lit { border-color: var(--accent); background: rgba(212,196,160,0.10); }
-  .map .factor h4 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.2rem; }
-  .map .factor .fn { font-size: 0.84rem; color: var(--text-dim); font-style: italic; margin-bottom: 0.7rem; line-height: 1.3; }
-  .map .factor ul { list-style: none; margin: 0; padding: 0; }
-  .map .factor li { font-size: 0.9rem; line-height: 1.34; color: var(--text); padding: 0.16rem 0; }
-  .map .factor li.hi { color: var(--accent-hover); font-weight: 700; }
-  .map-note { max-width: var(--measure); margin: 1rem auto 0; font-size: 0.92rem; font-style: italic; color: var(--text-dim); text-align: center; line-height: 1.5; }
+  /* a quiet section label for the pieces inside the band */
+  .fyi figure { margin: 0; }
+  .fyi-label { text-align: center; margin: 3svh auto 0; }
+  .fyi-label .fl-k { font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
+  .fyi-label .fl-t { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.35rem, 3.6vw, 1.85rem); color: var(--text-bright); margin: 0.3rem 0 0; line-height: 1.1; text-wrap: balance; }
+  .fyi-label .fl-s { font-size: 1rem; color: var(--text-dim); font-style: italic; max-width: 58ch; margin: 0.5rem auto 0; line-height: 1.55; text-wrap: pretty; }
 
-  /* anatomy of one entry */
-  .anat { margin: 2.2rem auto 0; max-width: var(--measure); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
-  .anat .step { background: var(--bg); border: 1px solid var(--hair); border-radius: 6px; padding: 0.8rem 0.9rem; }
-  .anat .step .sn { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); }
-  .anat .step .st { font-weight: 700; color: var(--text-bright); font-size: 0.96rem; margin: 0.1rem 0 0.25rem; }
-  .anat .step .sd { font-size: 0.84rem; color: var(--text-dim); line-height: 1.36; }
+  /* ============================================================
+     SHOWPIECE 1: the competency wheel
+     4 factors / 12 clusters / 38 competencies, one equal-angle sunburst
+     ============================================================ */
+  .wheel-fig { margin: 1.8rem auto 0; max-width: calc(var(--measure) + 13rem); }
+  .wheel-stage { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(250px, 0.94fr); gap: 1.4rem 2.2rem; align-items: center; }
+  .wheel-svg-wrap { position: relative; }
+  .wheel { width: 100%; height: auto; display: block; -webkit-tap-highlight-color: transparent; }
+  .wheel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
+  .wheel .arc { stroke: var(--tint-2); stroke-width: 1.25; cursor: pointer; transition: opacity 160ms var(--ease-out), fill 160ms var(--ease-out); }
+  .wheel .arc:focus { outline: none; }
+  .wheel.dim .arc { opacity: 0.13; }
+  .wheel.dim .arc.lin { opacity: 1; }
+  .wheel .arc.act { fill: var(--accent-hover) !important; }
+  .wheel.dim .arc.act { filter: url(#wheelGlow); }
+  .wheel .flabel { font-family: var(--font-body); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-size: 12.5px; pointer-events: none; }
+  .wheel .hub-n { fill: var(--accent); font-family: var(--font-heading); font-weight: 700; font-size: 40px; text-anchor: middle; dominant-baseline: central; }
+  .wheel .hub-l { fill: var(--text-dim); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; text-anchor: middle; }
+
+  .wheel-panel { background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.15rem 1.2rem 1.25rem; min-height: 258px; display: flex; flex-direction: column; }
+  .wheel-panel .crumb { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; color: var(--text-dim); min-height: 1.05em; text-transform: uppercase; }
+  .wheel-panel .crumb b { color: var(--accent); font-weight: 500; }
+  .wheel-panel .pname { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.3rem, 3vw, 1.55rem); color: var(--text-bright); line-height: 1.08; margin: 0.4rem 0 0; }
+  .wheel-panel .pmean { font-size: 0.98rem; color: var(--text-dim); font-style: italic; line-height: 1.5; margin: 0.5rem 0 0; }
+  .wheel-panel dl { margin: 0.4rem 0 0; }
+  .wheel-panel dt { font-family: var(--font-body); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-top: 0.75rem; }
+  .wheel-panel dd { margin: 0.16rem 0 0; font-size: 0.95rem; line-height: 1.46; color: var(--text); }
+  .wheel-panel dd.over { color: var(--text-dim); }
+  .wheel-panel .plist { list-style: none; margin: 0.55rem 0 0; padding: 0; columns: 2; column-gap: 1.1rem; }
+  .wheel-panel .plist li { font-size: 0.9rem; line-height: 1.4; color: var(--text); padding: 0.08rem 0; break-inside: avoid; }
+  .wheel-panel .phint { margin-top: auto; padding-top: 0.85rem; font-size: 0.86rem; color: var(--text-dim); font-style: italic; line-height: 1.45; }
+
+  /* mobile accordion fallback (built from the same data) */
+  .wheel-list { display: none; margin-top: 1.4rem; max-width: var(--measure); margin-left: auto; margin-right: auto; }
+  .wheel-list > details { border-top: 1px solid var(--hair); }
+  .wheel-list > details:last-of-type { border-bottom: 1px solid var(--hair); }
+  .wheel-list > details > summary { font-family: var(--font-heading); font-weight: 700; font-size: 1.16rem; color: var(--text-bright); padding: 0.72rem 0; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+  .wheel-list > details > summary::-webkit-details-marker { display: none; }
+  .wheel-list > details[open] > summary { color: var(--accent-hover); }
+  .wheel-list > details > summary .wl-m { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; font-style: italic; color: var(--text-dim); }
+  .wheel-list .wl-cluster { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0.85rem 0 0.1rem; }
+  .wheel-list .wl-comp { border-top: 1px solid rgba(212,196,160,0.08); }
+  .wheel-list .wl-comp > summary { font-size: 1rem; color: var(--text); padding: 0.5rem 0; cursor: pointer; list-style: none; }
+  .wheel-list .wl-comp > summary::-webkit-details-marker { display: none; }
+  .wheel-list .wl-comp[open] > summary { color: var(--accent-hover); font-weight: 700; }
+  .wheel-list .wl-body { padding: 0.1rem 0 0.7rem; }
+  .wheel-list .wl-body dt { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-top: 0.55rem; }
+  .wheel-list .wl-body dd { margin: 0.12rem 0 0; font-size: 0.94rem; line-height: 1.45; color: var(--text); }
+  .wheel-list .wl-body dd.over { color: var(--text-dim); }
+
+  /* ============================================================
+     SHOWPIECE 2: the overused-strength spectrum (FYI's signature idea)
+     ============================================================ */
+  .spectrum { margin: 1.6rem auto 0; max-width: var(--measure); background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.25rem 1.3rem 1.4rem; }
+  .sp-tabs { display: flex; flex-wrap: wrap; gap: 0.42rem; margin-bottom: 1.25rem; }
+  .sp-tabs button { font-family: var(--font-body); font-size: 0.84rem; padding: 0.32rem 0.74rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
+  .sp-tabs button:hover { color: var(--text); border-color: rgba(212,196,160,0.42); }
+  .sp-tabs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-hover); background: rgba(212,196,160,0.10); }
+  .sp-track { display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 8px; overflow: hidden; border: 1px solid var(--hair); }
+  .sp-stop { appearance: none; border: none; border-right: 1px solid var(--hair); background: transparent; cursor: pointer; padding: 0.62rem 0.5rem; text-align: center; font-family: var(--font-body); transition: background 160ms var(--ease-out); }
+  .sp-stop:last-child { border-right: none; }
+  .sp-stop .lbl { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); transition: color 160ms var(--ease-out); }
+  .sp-stop .sub { display: block; font-size: 0.74rem; font-style: italic; color: var(--text-dim); margin-top: 0.16rem; opacity: 0.72; }
+  .sp-stop[aria-pressed="true"] { background: rgba(212,196,160,0.07); }
+  .sp-stop[aria-pressed="true"] .lbl { color: var(--accent-hover); }
+  .sp-bar { height: 6px; border-radius: 999px; margin: 0.95rem 0 1.15rem; background: linear-gradient(90deg, rgba(122,140,134,0.55) 0%, var(--accent) 50%, rgba(182,116,92,0.78) 100%); position: relative; }
+  .sp-bar .dot { position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 50%; background: var(--accent-hover); border: 2px solid var(--bg); transform: translate(-50%, -50%); transition: left 280ms var(--ease-out); box-shadow: 0 0 0 1px var(--hair); }
+  .sp-read .sp-kick { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+  .sp-read.k-skill .sp-kick { color: var(--accent); }
+  .sp-read.k-over .sp-kick { color: #d39a7e; }
+  .sp-read .sp-desc { font-size: 1.06rem; line-height: 1.56; color: var(--text); margin: 0.35rem 0 0; text-wrap: pretty; }
+  .sp-foot { font-size: 0.9rem; color: var(--text-dim); font-style: italic; line-height: 1.5; margin: 1rem 0 0; }
+
+  /* responsive: stack the wheel, then swap to the accordion on phones */
+  @media (max-width: 880px) {
+    .wheel-stage { grid-template-columns: 1fr; gap: 1.2rem; }
+    .wheel-svg-wrap { max-width: 440px; margin: 0 auto; }
+    .wheel-panel { min-height: 0; }
+  }
+  @media (max-width: 600px) {
+    .wheel-stage { display: none; }
+    .wheel-list { display: block; }
+  }
 
   /* 70-20-10 bar */
   .seventy { margin: 2.2rem auto 0; max-width: var(--measure); }
@@ -322,13 +395,15 @@
     .compare > div:first-child { border-right: none; border-bottom: 1px solid var(--hair); }
     .quad { grid-template-columns: 1fr; }
     .stages { grid-template-columns: 1fr 1fr; }
-    .map { grid-template-columns: 1fr 1fr; }
     .cases { grid-template-columns: 1fr; }
     .choices { grid-template-columns: 1fr; }
     .lab-toggle { width: 100%; }
+    .sp-stop { padding: 0.55rem 0.35rem; }
+    .sp-stop .lbl { font-size: 0.66rem; letter-spacing: 0.06em; }
+    .sp-stop .sub { font-size: 0.68rem; }
   }
   @media (max-width: 380px) {
-    .stages, .map { grid-template-columns: 1fr; }
+    .stages { grid-template-columns: 1fr; }
   }
   </style>
 </head>
@@ -648,40 +723,72 @@
 
   </article>
 
-  <!-- ============ ACT V: THE FYI MODULE (one self-contained piece) ============ -->
-  <section class="fyi reveal" aria-label="For Your Improvement, the development playbook">
+  <!-- ============ ACT VI: THE FYI MODULE (one self-contained playbook) ============ -->
+  <section class="fyi reveal" id="fyi" aria-label="For Your Improvement, the development playbook">
     <div class="fyi-in">
       <div class="kicker">Act VI &middot; The Playbook</div>
       <h3>For Your Improvement</h3>
-      <p class="stand">Everything so far says the manager is the lever. So the last question is the personal one: how does a manager actually get better, on purpose? There is a quiet workhorse of a book, used inside many companies for exactly this, that turns that vague wish into a plan.</p>
+      <p class="stand">Everything so far says the manager is the lever. So the last question is the personal one: how does a manager get better, on purpose? There is one book, quietly used inside thousands of companies for exactly this. Here is the whole of it, in one section.</p>
 
       <div class="fyi-col">
-        <p>It is called <b>FYI: For Your Improvement</b>, by Michael Lombardo and Robert Eichinger, now published by Korn Ferry. It is not a book you read front to back. It is a reference. It rests on one liberating premise: the things that make a great manager are not fixed traits you are born with or without. They are <b>competencies, and competencies are learnable.</b></p>
-        <p>It begins with a map of leadership itself, sorted into four families. Most of what we have covered in this essay lives in one of them.</p>
+        <p>It is called <b>FYI: For Your Improvement</b>, by Michael Lombardo and Robert Eichinger, now published by Korn Ferry. It has been in print since 1996, is on its sixth edition, and is less a book than an instrument. People in the trade call it the <em>phone book for leadership development</em>, and they mean it kindly. You do not read it front to back. You get honest feedback, find the one skill you most need, turn to its chapter, and go to work.</p>
+        <p>It rests on a single, liberating premise. The things that make a great manager are not fixed traits you are born with or without. They are <b>competencies</b>: observable behaviors. And behaviors can be named, broken down, practiced, and built. <b>Competencies are learnable.</b> That premise is the only reason a book like this can exist, and the only reason this essay is worth reading.</p>
       </div>
 
-      <div class="map reveal">
-        <div class="factor"><h4>Thought</h4><div class="fn">seeing and deciding</div><ul><li>Business insight</li><li>Decision quality</li><li>Cultivates innovation</li><li>Strategic mindset</li><li>Manages complexity</li></ul></div>
-        <div class="factor"><h4>Results</h4><div class="fn">getting it done</div><ul><li>Action oriented</li><li>Directs work</li><li>Plans and aligns</li><li>Ensures accountability</li><li>Drives results</li></ul></div>
-        <div class="factor lit"><h4>People &#9733;</h4><div class="fn">where managing professionals lives</div><ul><li class="hi">Drives engagement</li><li class="hi">Develops talent</li><li class="hi">Builds effective teams</li><li>Communicates effectively</li><li>Collaborates &middot; persuades</li></ul></div>
-        <div class="factor"><h4>Self</h4><div class="fn">who you are under pressure</div><ul><li class="hi">Instills trust</li><li class="hi">Courage</li><li>Self-awareness</li><li>Situational adaptability</li><li>Being resilient</li></ul></div>
+      <div class="fyi-label">
+        <div class="fl-k">The Map</div>
+        <div class="fl-t">The whole of leadership, on one wheel</div>
+        <p class="fl-s">The book sits on top of the Korn Ferry Leadership Architect: a map of nearly everything a leader is ever asked to do, sorted into <b>4 factors</b>, <b>12 clusters</b>, and <b>38 competencies</b>. Hover or tap any segment to see what the skill looks like done well, what it looks like overdone, and one concrete way to build it.</p>
       </div>
-      <p class="map-note">Korn Ferry's model sorts 38 leadership competencies into four factors. The work of getting professionals all in lives almost entirely in the lit columns: People and Self.</p>
+
+      <figure class="wheel-fig reveal">
+        <div class="wheel-stage">
+          <div class="wheel-svg-wrap">
+            <svg class="wheel" id="wheel" viewBox="-360 -360 720 720" role="img" aria-label="The Korn Ferry Leadership Architect as a wheel: four factors (Thought, Results, People, Self), twelve clusters, and thirty-eight competencies. The full list with descriptions is repeated as text below.">
+              <defs>
+                <filter id="wheelGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#EDE0C0" flood-opacity="0.55"/>
+                </filter>
+              </defs>
+              <g id="wheelArcs"></g>
+              <g id="wheelLabels"></g>
+              <text class="hub-n" x="0" y="-2">38</text>
+              <text class="hub-l" x="0" y="22">competencies</text>
+            </svg>
+          </div>
+          <aside class="wheel-panel" id="wheelPanel" aria-live="polite"></aside>
+        </div>
+        <div class="wheel-list" id="wheelList"></div>
+      </figure>
 
       <div class="fyi-col">
-        <p>What makes the book useful is what sits behind <em>each</em> competency. Pick one, say <b>Drives engagement</b>, and you get a whole anatomy: what it looks like when done well, when overdone, and when missing; the likely root causes of a gap; and then the part that matters, roughly ten concrete things to actually go <em>do</em>.</p>
+        <p>Almost everything this essay has argued lives in two of those four factors: <b>People</b> and <b>Self</b>. That is why People is the widest wedge on the wheel. But the map is only the index. What earns the book its shelf space is what sits behind <em>each</em> of the thirty-eight entries, and one idea in particular that you will not find in an ordinary list of skills.</p>
       </div>
 
-      <div class="anat reveal">
-        <div class="step"><span class="sn">a</span><div class="st">Skilled vs not</div><div class="sd">Plain behavioral pictures of doing it well, overdoing it, and missing it.</div></div>
-        <div class="step"><span class="sn">b</span><div class="st">Some causes</div><div class="sd">Why the gap exists, so you treat the cause, not the symptom.</div></div>
-        <div class="step"><span class="sn">c</span><div class="st">The map</div><div class="sd">Why the competency matters and how it really works.</div></div>
-        <div class="step"><span class="sn">d</span><div class="st">~10 tips</div><div class="sd">Specific actions to take on the job, starting now.</div></div>
-        <div class="step"><span class="sn">e</span><div class="st">Stretch assignments</div><div class="sd">Real work that builds the muscle, not a classroom.</div></div>
+      <div class="fyi-label">
+        <div class="fl-k">The Signature Idea</div>
+        <div class="fl-t">Every strength has a back side</div>
+        <p class="fl-s">This is the move that sets FYI apart from every other competency list. Each skill is described not once but three ways: too little, just right, and <em>too much</em>. A strength you lean on too hard quietly becomes the very thing that derails you. Slide the marker and watch one skill turn.</p>
       </div>
+
+      <figure class="spectrum reveal" id="spectrum">
+        <div class="sp-tabs" id="spTabs" role="group" aria-label="Choose a competency"></div>
+        <div class="sp-track" role="group" aria-label="Move from too little to overused">
+          <button class="sp-stop" type="button" data-stop="0" aria-pressed="false"><span class="lbl">Too little</span><span class="sub">underdone</span></button>
+          <button class="sp-stop" type="button" data-stop="1" aria-pressed="true"><span class="lbl">Skilled</span><span class="sub">the sweet spot</span></button>
+          <button class="sp-stop" type="button" data-stop="2" aria-pressed="false"><span class="lbl">Overused</span><span class="sub">a strength, overdone</span></button>
+        </div>
+        <div class="sp-bar"><span class="dot" id="spDot"></span></div>
+        <div class="sp-read k-skill" id="spRead" aria-live="polite">
+          <div class="sp-kick" id="spKick">Skilled</div>
+          <p class="sp-desc" id="spDesc"></p>
+        </div>
+        <p class="sp-foot">When one of a person's top strengths shows up on the list of their flaws, this is almost always why. FYI calls overused strengths "stallers and stoppers," and it teaches you to soften one by leaning on a different skill, not by trying less hard.</p>
+      </figure>
 
       <div class="fyi-col">
-        <p>That emphasis on doing, not studying, is deliberate. The same authors are behind the well-known <b>70-20-10</b> finding: we develop mostly from hard experience, some from other people, and only a little from formal courses.</p>
+        <p>Behind every one of the thirty-eight entries is the same anatomy: a plain picture of the skill done well, done poorly, and overdone; the likely <em>causes</em> of a gap, so you can treat the cause and not the symptom; a short essay on why the skill matters; and then the part that earns its keep, <b>ten or so concrete things to actually go do,</b> each written as a question and an action. Less reading, more assignment.</p>
+        <p>That bias toward doing is not a quirk. The same authors are behind the well-known <b>70-20-10</b> rule, drawn from a long study of how real executives said they had actually learned to lead.</p>
       </div>
 
       <div class="seventy reveal">
@@ -690,12 +797,23 @@
           <div class="seg s20">20</div>
           <div class="seg s10">10</div>
         </div>
-        <div class="key"><span><b style="color:var(--accent)">70</b> challenging experience on the job</span><span><b style="color:var(--accent)">20</b> people: feedback, coaching, mentors</span><span><b style="color:var(--accent)">10</b> formal courses and reading</span></div>
+        <div class="key"><span><b style="color:var(--accent)">70</b> hard, first-time experience on the job</span><span><b style="color:var(--accent)">20</b> other people: feedback, coaching, a good boss</span><span><b style="color:var(--accent)">10</b> formal courses and reading</span></div>
       </div>
 
       <div class="fyi-col">
-        <p>So the way to use it is not to fix everything. It is to pick <b>one or two</b> competencies that matter most right now, choose a couple of the tips, find a real piece of work that forces the practice, and get feedback as you go. For a new manager of professionals, the highest-leverage choices are nearly always the same handful: <b>Drives engagement, Develops talent, Builds effective teams, Instills trust,</b> and the <b>Courage</b> to have the honest conversation. The authors argue the deepest skill underneath all of them is <em>learning agility</em>, the willingness to keep learning from new and uncomfortable situations. It predicts who grows better than raw intelligence does.</p>
-        <p>Which is the quiet point of the whole book, and this whole essay. The manager you need to become is not a fixed fact about you. It is a competency. And competencies are learnable.</p>
+        <p>The honest version: those numbers are a memorable shorthand, not a law of nature. They come from successful managers looking back and naming what changed them, so the figures are round and a little flattering to experience. But the direction is hard to argue with, and it carries a quiet joke at the book's own expense. <b>The book is the 10 percent.</b> It only works if it points you at the 70: a real piece of work, just past your reach, where failing is not an option.</p>
+        <p>So the way to use it is not to fix everything at once. Get honest feedback, ideally a structured 360 every couple of years. Then pick <b>one or two</b> competencies that matter most right now, not ten. (The best leaders, the research found, tend to have four to six genuine strengths and no fatal weakness, so depth beats breadth.) Choose a couple of the tips. Find a stretch inside your current job that forces the practice, what the book calls <em>developing in place</em>. Then get feedback as you go, and come back to it in a few months.</p>
+      </div>
+
+      <div class="fyi-label">
+        <div class="fl-k">The Trait Underneath</div>
+        <div class="fl-t">The one quality that predicts who grows</div>
+      </div>
+
+      <div class="fyi-col">
+        <p>Read enough of these chapters and the same root quality keeps surfacing. The authors named it <b>learning agility</b>: the willingness, and the ability, to learn from experience and then apply it to a problem you have never seen before. Notice the first word. It is not raw intelligence (it does not track IQ scores); it is the appetite to become a beginner again, on purpose. Their striking claim, from studying high-potential leaders, is that it predicts who will grow into a bigger job better than today's performance does. <b>Seventy-one percent of high performers are not high potentials,</b> because being excellent at the job you have is not the same as being able to learn the job you do not.</p>
+        <p>It is worth staying clear-eyed about all of this. The model is a commercial product, the assessments around it are proprietary and not cheap, and the academic evidence for any tidy list of competencies is thinner than its vendors like to imply. Hold the exact numbers loosely. What survives the skepticism is the spine of the thing, and it is the same as the spine of this essay.</p>
+        <p>The manager you need to become is not a fixed fact about you. It is a competency. And competencies are learnable.</p>
       </div>
     </div>
   </section>
@@ -826,6 +944,304 @@
 
     bonusBtn.addEventListener('click', function () { bonus = !bonus; render(); });
     render();
+  })();
+  </script>
+
+  <!-- ===== Act VI showpieces: the competency wheel + the overused-strength spectrum ===== -->
+  <script>
+  (function () {
+    'use strict';
+
+    /* The Korn Ferry Leadership Architect: 4 factors, 12 clusters, 38 competencies.
+       skilled / overused / one tip per entry. The featured manager skills
+       (Develops Talent, Drives Engagement, Builds Effective Teams, Instills Trust,
+       Courage, Manages Conflict, Self-Awareness, Being Resilient, Situational
+       Adaptability) carry language taken straight from the book. */
+    var COMPETENCY_DATA = { factors: [
+      { name: 'Thought', meaning: 'How you see the business and make the call.', hue: 200, sat: 28, clusters: [
+        { name: 'Understanding the Business', competencies: [
+          { n: 'Business Insight', s: 'Knows how the business makes money and where the market is heading.', o: 'Buries the call in analysis; theory crowds out action.', t: 'Spend a day with the team furthest from yours and trace how it earns or spends a dollar.' },
+          { n: 'Customer Focus', s: 'Builds the work around what the customer actually needs.', o: 'Says yes to every request and loses the thread of the business.', t: 'Sit in on three customer calls this month; write down their words, not yours.' },
+          { n: 'Financial Acumen', s: 'Reads the numbers and makes decisions that hold up on the books.', o: 'Optimizes the spreadsheet at the expense of people and product.', t: 'Have finance walk you through your own budget, line by line, until you could rebuild it.' },
+          { n: 'Tech Savvy', s: 'Anticipates how technology will reshape the work and adopts it early.', o: 'Chases every new tool; mistakes novelty for progress.', t: 'Pick one emerging tool in your field and use it on a real task for a week.' } ] },
+        { name: 'Making Complex Decisions', competencies: [
+          { n: 'Manages Complexity', s: 'Untangles large, ambiguous problems down to the few variables that matter.', o: 'Over-complicates the simple; struggles to land a clear answer.', t: 'Force the next messy problem onto one page: what we know, what we do not, the decision.' },
+          { n: 'Decision Quality', s: 'Makes good calls, on time, even without complete information.', o: 'Waits for a certainty that never comes, and decides too late.', t: 'Write the decision and your reasoning before you act, then check it against what happened.' },
+          { n: 'Balances Stakeholders', s: 'Weighs competing interests and finds a path most can live with.', o: 'Tries to please everyone, and the decision dissolves.', t: 'List who your next decision touches and what each one would call a fair outcome.' } ] },
+        { name: 'Creating the New and Different', competencies: [
+          { n: 'Global Perspective', s: 'Sees the work in a wide context, across markets and cultures.', o: 'Stays abstract; loses the local and the concrete.', t: 'Before deciding, ask how this lands for a team two time zones and one culture away.' },
+          { n: 'Cultivates Innovation', s: 'Makes room for new ideas and turns them into something real.', o: 'Chases novelty; never finishes or scales anything.', t: 'Run one small, cheap experiment this month with a clear way to tell if it worked.' },
+          { n: 'Strategic Mindset', s: 'Sees what is coming and sets a clear direction to meet it.', o: 'Lives in the future and neglects today’s execution.', t: 'Write where the team must be in two years, then name the one move that matters now.' } ] } ] },
+      { name: 'Results', meaning: 'Turning intent into delivered work.', hue: 12, sat: 46, clusters: [
+        { name: 'Taking Initiative', competencies: [
+          { n: 'Action Oriented', s: 'Steps into new things readily, with a bias to start.', o: 'Acts before thinking; mistakes motion for progress.', t: 'Take the smallest possible first step today on the thing you have been avoiding.' },
+          { n: 'Resourcefulness', s: 'Gets a lot done with the people, budget, and time on hand.', o: 'Over-engineers; spends what the goal never required.', t: 'Name the constraint you keep blaming, then solve the next task as if it were fixed.' } ] },
+        { name: 'Managing Execution', competencies: [
+          { n: 'Directs Work', s: 'Gives clear assignments, clears blockers, keeps work moving.', o: 'Micromanages; nothing moves without you.', t: 'On one project, set the outcome and the edges, then deliberately stay out of the how.' },
+          { n: 'Plans and Aligns', s: 'Lays out the work so the right things happen in the right order.', o: 'Plans endlessly; the plan quietly replaces the doing.', t: 'Map the next project backward from its deadline and find where two tracks must meet.' },
+          { n: 'Optimizes Work Processes', s: 'Finds the friction in how work flows and takes it out.', o: 'Tinkers with process for its own sake and adds steps.', t: 'Watch one routine task end to end and delete a step no one would miss.' } ] },
+        { name: 'Focusing on Performance', competencies: [
+          { n: 'Ensures Accountability', s: 'Holds self and others to their commitments, and follows through.', o: 'Polices everything; trust curdles into blame.', t: 'End your next meeting by saying out loud who owns what, by when.' },
+          { n: 'Drives Results', s: 'Pushes through obstacles to hit the goal, and brings people along.', o: 'Wins the number, scorches the people and the relationships.', t: 'Pick the one result that matters most this quarter and cut a lesser one to protect it.' } ] } ] },
+      { name: 'People', meaning: 'Leading, and getting work done through others. Most of this essay lives here.', hue: 42, sat: 50, clusters: [
+        { name: 'Building Collaborative Relationships', competencies: [
+          { n: 'Collaborates', s: 'Works across lines, shares credit, builds toward a shared win.', o: 'Over-includes, until everything needs a meeting.', t: 'On your next cross-team task, hand one piece of real ownership to someone outside your group.' },
+          { n: 'Manages Conflict', s: 'Steps up to conflict early and works it to a fair resolution.', o: 'Forces confrontation, or smooths over what should be aired.', t: 'Give reasons first and solutions last; let the other side fully vent before you respond.' },
+          { n: 'Interpersonal Savvy', s: 'Reads people and adjusts; builds rapport with many kinds of person.', o: 'Reads as political, or over-managed.', t: 'In your next one-on-one, talk a quarter of the time and listen the rest.' },
+          { n: 'Builds Networks', s: 'Builds useful relationships before needing them.', o: 'Networks so instrumentally that people feel used.', t: 'Have one conversation this month with someone you would otherwise only call in a crisis.' } ] },
+        { name: 'Optimizing Diverse Talent', competencies: [
+          { n: 'Attracts Top Talent', s: 'Finds, hires, and keeps people better than the average.', o: 'Hoards stars, or hires only in their own image.', t: 'Keep a standing shortlist of three people you would hire tomorrow if you could.' },
+          { n: 'Develops Talent', s: 'Grows people through coaching, feedback, exposure, and stretch.', o: 'Pushes growth no one asked for, and reads as never satisfied.', t: 'Spend about eight hours a year per report on their growth: an honest appraisal, a career talk, a plan.' },
+          { n: 'Values Differences', s: 'Draws real strength from different backgrounds and ways of thinking.', o: 'Treats difference as a quota and performs inclusion.', t: 'On the next decision, deliberately seek out the view of the person least like you.' },
+          { n: 'Builds Effective Teams', s: 'Forms a diverse group with a shared mindset that out-performs the sum.', o: 'Leaves everything open for debate and avoids the hard call.', t: 'Get each member to help set the common goal, then celebrate the wins together.' } ] },
+        { name: 'Influencing People', competencies: [
+          { n: 'Communicates Effectively', s: 'Is clear and honest, and tailors the message to the audience.', o: 'Over-communicates, until the signal is lost in the volume.', t: 'Before your next update, write the one sentence the audience must remember.' },
+          { n: 'Drives Engagement', s: 'Builds the conditions where capable people give their full, willing effort.', o: 'Manufactures enthusiasm and mistakes activity for commitment.', t: 'Learn three non-work things about each person, and give real autonomy in how the work gets done.' },
+          { n: 'Organizational Savvy', s: 'Reads how the place really works and gets things through it.', o: 'Plays politics until people stop trusting the motive.', t: 'Map who actually decides on your next ask, not who holds the title.' },
+          { n: 'Persuades', s: 'Wins genuine agreement, not mere compliance.', o: 'Over-sells, and pushes past the point people had already agreed.', t: 'Open your next pitch with what the other person gains, then stop talking.' },
+          { n: 'Drives Vision and Purpose', s: 'Paints a compelling picture of the future and makes people want it.', o: 'Sells the vision so hard that today’s work feels small.', t: 'Connect one routine task this week to the larger why, in plain words, for one person.' } ] } ] },
+      { name: 'Self', meaning: 'Who you are under pressure, and how you keep learning.', hue: 280, sat: 22, clusters: [
+        { name: 'Being Authentic', competencies: [
+          { n: 'Courage', s: 'Says the hard thing and takes the unpopular stand when it is right.', o: 'Turns too critical and heavy-handed, and fights too many battles.', t: 'Get to the point: have the conversation you have been avoiding, kindly, and bring a solution.' },
+          { n: 'Instills Trust', s: 'Keeps commitments and is the same person in every room.', o: 'Pushes honesty to the point of being disruptive or judgmental.', t: 'Talk about what “we” did, not “I”; be on time, return the call, send what you promised.' } ] },
+        { name: 'Being Open', competencies: [
+          { n: 'Demonstrates Self-Awareness', s: 'Knows their effect on others and owns their blind spots.', o: 'Turns self-reflection into a performance.', t: 'Ask a trusted peer what gets in your own way; offer a self-appraisal first, then just listen.' },
+          { n: 'Self-Development', s: 'Actively works on their own growth and seeks out hard feedback.', o: 'Collects courses, but never consolidates a real strength.', t: 'Pick one skill this quarter and find a piece of work that forces you to use it.' } ] },
+        { name: 'Being Flexible and Adaptable', competencies: [
+          { n: 'Manages Ambiguity', s: 'Acts effectively even when the path is unclear.', o: 'Tolerates a fog that others around them need lifted.', t: 'When you do not know, say what you do know and the date you will know more.' },
+          { n: 'Nimble Learning', s: 'Learns fast by trying things, especially from what fails.', o: 'Experiments forever and never settles what works.', t: 'After the next setback, write the one thing you would do differently, and use it within a week.' },
+          { n: 'Being Resilient', s: 'Stays steady under pressure and bounces back from setbacks.', o: 'Goes so flat and composed they can seem cold and uncaring.', t: 'When rattled, hold your first response; the second or third thing you would say is usually better.' },
+          { n: 'Situational Adaptability', s: 'Reads the moment and adjusts style to fit it.', o: 'Adapts so much they seem to have no center.', t: 'Work from the outside in: watch how people react while you act, and change tactics on the fly.' } ] } ] }
+    ] };
+
+    /* The signature idea, made tangible: five manager strengths described three
+       ways, in the book's own language. */
+    var SPECTRUM_DATA = [
+      { n: 'Courage',
+        less: 'Shies away from difficult issues and challenging assignments. Expresses a point of view indirectly. Avoids giving corrective feedback, and rarely takes a stand.',
+        skilled: 'Readily tackles tough assignments. Faces difficult issues and supports others who do. Gives direct, actionable feedback. Champions a position despite dissent or political risk.',
+        over: 'Turns overly critical. Too direct and heavy-handed with feedback, too much negative and too little positive, and fights too many battles.' },
+      { n: 'Instills Trust',
+        less: 'Lacks consistent follow-through on commitments. Betrays confidences or covers up mistakes. Makes promises but does not always keep them.',
+        skilled: 'Follows through on commitments. Is seen as direct and truthful. Keeps confidences. Practices what they preach, with consistency between words and actions.',
+        over: 'Pushes openness and honesty to the point of being disruptive, and can come across as judgmental of those who are less overtly authentic.' },
+      { n: 'Develops Talent',
+        less: 'Not a developer of people. So results-driven there is no time for the long term, and treats development as just sending someone to a course.',
+        skilled: 'Places a high priority on growing others, through coaching, feedback, exposure, and stretch assignments, and aligns their growth with the organization’s goals.',
+        over: 'Pushes growth no one asked for. Over-coaches and over-stretches, and can read as never quite satisfied with where people are.' },
+      { n: 'Drives Engagement',
+        less: 'Has little insight into what motivates people. Gives too little autonomy, does little to create enthusiasm, and is unwilling to share ownership.',
+        skilled: 'Structures the work to fit people’s own motivators. Empowers them, makes each person feel their contribution matters, and invites input and shared ownership.',
+        over: 'Manufactures enthusiasm and mistakes activity and cheer for real commitment. People begin to feel handled rather than led.' },
+      { n: 'Being Resilient',
+        less: 'Gets easily rattled under pressure. Runs low on energy during stress, acts defensively when criticized, and takes too long to recover from setbacks.',
+        skilled: 'Stays confident under pressure and handles crises well. Keeps a positive attitude through adversity, bounces back from setbacks, and grows from the hard ones.',
+        over: 'Stays so composed they may not show appropriate emotion, can seem cold and uncaring, and look flat in moments where others show real feeling.' }
+    ];
+
+    /* ============ SHOWPIECE 1: the wheel ============ */
+    var svg = document.getElementById('wheel');
+    if (svg) {
+      var NS = 'http://www.w3.org/2000/svg';
+      var TAU = Math.PI * 2;
+      var FR0 = 64, FR1 = 120, CR0 = 123, CR1 = 200, PR0 = 203, PR1 = 284;
+      var arcsG = document.getElementById('wheelArcs');
+      var labelsG = document.getElementById('wheelLabels');
+      var panel = document.getElementById('wheelPanel');
+      var canHover = window.matchMedia('(hover: hover)').matches;
+      var allArcs = [];
+
+      var totalComp = 0;
+      COMPETENCY_DATA.factors.forEach(function (f) {
+        f.clusters.forEach(function (c) { totalComp += c.competencies.length; });
+      });
+
+      function polar(a, r) { return { x: r * Math.sin(a), y: -r * Math.cos(a) }; }
+      function arcPath(a0, a1, rIn, rOut) {
+        var p1 = polar(a0, rOut), p2 = polar(a1, rOut), p3 = polar(a1, rIn), p4 = polar(a0, rIn);
+        var large = (a1 - a0) > Math.PI ? 1 : 0;
+        return 'M' + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) +
+          'A' + rOut + ' ' + rOut + ' 0 ' + large + ' 1 ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2) +
+          'L' + p3.x.toFixed(2) + ' ' + p3.y.toFixed(2) +
+          'A' + rIn + ' ' + rIn + ' 0 ' + large + ' 0 ' + p4.x.toFixed(2) + ' ' + p4.y.toFixed(2) + 'Z';
+      }
+      function hsl(h, s, l) { return 'hsl(' + h + ',' + Math.round(s) + '%,' + l + '%)'; }
+
+      function addArc(a0, a1, rIn, rOut, fill, meta) {
+        var path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', arcPath(a0, a1, rIn, rOut));
+        path.setAttribute('fill', fill);
+        path.setAttribute('class', 'arc');
+        path.setAttribute('tabindex', '0');
+        path.setAttribute('role', 'button');
+        path.setAttribute('aria-label', meta.name);
+        meta.el = path;
+        arcsG.appendChild(path);
+        allArcs.push(meta);
+        bind(meta);
+      }
+
+      var ang = 0;
+      COMPETENCY_DATA.factors.forEach(function (f, fi) {
+        var fComp = 0; f.clusters.forEach(function (c) { fComp += c.competencies.length; });
+        var fSpan = fComp / totalComp * TAU;
+        var fa0 = ang, fa1 = ang + fSpan;
+        addArc(fa0, fa1, FR0, FR1, hsl(f.hue, f.sat, 54), { level: 1, fi: fi, ci: -1, kind: 'factor', name: f.name, data: f });
+        var ca = fa0;
+        f.clusters.forEach(function (c, ci) {
+          var cSpan = c.competencies.length / fComp * fSpan;
+          var ca0 = ca, ca1 = ca + cSpan;
+          addArc(ca0, ca1, CR0, CR1, hsl(f.hue, f.sat * 0.8, 45), { level: 2, fi: fi, ci: ci, kind: 'cluster', name: c.name, data: c, factor: f });
+          var pa = ca0, pSpan = cSpan / c.competencies.length;
+          c.competencies.forEach(function (p) {
+            addArc(pa, pa + pSpan, PR0, PR1, hsl(f.hue, f.sat * 0.62, 37), { level: 3, fi: fi, ci: ci, kind: 'comp', name: p.n, data: p, factor: f, cluster: c });
+            pa += pSpan;
+          });
+          ca = ca1;
+        });
+        var mid = (fa0 + fa1) / 2, lp = polar(mid, PR1 + 30), sinMid = Math.sin(mid);
+        var t = document.createElementNS(NS, 'text');
+        t.setAttribute('class', 'flabel');
+        t.setAttribute('x', lp.x.toFixed(1));
+        t.setAttribute('y', lp.y.toFixed(1));
+        t.setAttribute('fill', hsl(f.hue, Math.min(62, f.sat + 14), 72));
+        t.setAttribute('text-anchor', sinMid > 0.2 ? 'start' : (sinMid < -0.2 ? 'end' : 'middle'));
+        t.setAttribute('dominant-baseline', 'middle');
+        t.textContent = f.name;
+        labelsG.appendChild(t);
+        ang = fa1;
+      });
+
+      var active = null;
+      function isLin(a, b) {
+        if (b.fi !== a.fi) return false;
+        if (a.level === 1) return true;
+        if (a.level === 2) return b.level === 1 || b.ci === a.ci;
+        return b.level === 1 || (b.level === 2 && b.ci === a.ci) || b === a;
+      }
+      function activate(meta) {
+        active = meta;
+        svg.classList.add('dim');
+        allArcs.forEach(function (m) {
+          m.el.classList.toggle('lin', isLin(meta, m));
+          m.el.classList.toggle('act', m === meta);
+        });
+        renderPanel(meta);
+      }
+      function reset() {
+        active = null;
+        svg.classList.remove('dim');
+        allArcs.forEach(function (m) { m.el.classList.remove('lin', 'act'); });
+        renderDefault();
+      }
+      function bind(m) {
+        m.el.addEventListener('mouseenter', function () { if (canHover) activate(m); });
+        m.el.addEventListener('focus', function () { activate(m); });
+        m.el.addEventListener('click', function () { if (active === m) reset(); else activate(m); });
+        m.el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (active === m) reset(); else activate(m); }
+        });
+      }
+      svg.addEventListener('mouseleave', function () { if (canHover) reset(); });
+      svg.addEventListener('focusout', function (e) { if (!svg.contains(e.relatedTarget)) reset(); });
+
+      function renderPanel(m) {
+        var h = '';
+        if (m.kind === 'factor') {
+          h += '<div class="crumb"><b>' + m.data.name + '</b></div>';
+          h += '<div class="pname">' + m.data.name + '</div>';
+          h += '<div class="pmean">' + m.data.meaning + '</div>';
+          h += '<dt style="margin-top:0.9rem">' + m.data.clusters.length + ' clusters</dt>';
+          h += '<ul class="plist">';
+          m.data.clusters.forEach(function (c) { h += '<li>' + c.name + '</li>'; });
+          h += '</ul>';
+        } else if (m.kind === 'cluster') {
+          h += '<div class="crumb"><b>' + m.factor.name + '</b> &rsaquo; ' + m.data.name + '</div>';
+          h += '<div class="pname">' + m.data.name + '</div>';
+          h += '<dt style="margin-top:0.9rem">' + m.data.competencies.length + ' competencies</dt>';
+          h += '<ul class="plist">';
+          m.data.competencies.forEach(function (p) { h += '<li>' + p.n + '</li>'; });
+          h += '</ul>';
+        } else {
+          var p = m.data;
+          h += '<div class="crumb"><b>' + m.factor.name + '</b> &rsaquo; ' + m.cluster.name + '</div>';
+          h += '<div class="pname">' + p.n + '</div>';
+          h += '<dl><dt>Done well</dt><dd>' + p.s + '</dd>';
+          h += '<dt>Overused</dt><dd class="over">' + p.o + '</dd>';
+          h += '<dt>One way to build it</dt><dd>' + p.t + '</dd></dl>';
+        }
+        panel.innerHTML = h;
+      }
+      function renderDefault() {
+        var h = '<div class="crumb">Korn Ferry Leadership Architect</div>';
+        h += '<div class="pname">Four factors, 38 skills</div>';
+        h += '<div class="pmean">Together they describe almost everything a leader is ever asked to do. The work of this essay lives mostly in People and Self.</div><dl>';
+        COMPETENCY_DATA.factors.forEach(function (f) {
+          h += '<dt style="color:' + hsl(f.hue, Math.min(62, f.sat + 14), 72) + '">' + f.name + '</dt><dd>' + f.meaning + '</dd>';
+        });
+        h += '</dl><p class="phint">Hover or tap any segment to explore it.</p>';
+        panel.innerHTML = h;
+      }
+      renderDefault();
+
+      /* text alternative / small-screen accordion, from the same data */
+      var list = document.getElementById('wheelList');
+      if (list) {
+        var lh = '';
+        COMPETENCY_DATA.factors.forEach(function (f) {
+          lh += '<details><summary>' + f.name + '<span class="wl-m">' + f.meaning + '</span></summary>';
+          f.clusters.forEach(function (c) {
+            lh += '<div class="wl-cluster">' + c.name + '</div>';
+            c.competencies.forEach(function (p) {
+              lh += '<details class="wl-comp"><summary>' + p.n + '</summary><div class="wl-body"><dl>' +
+                '<dt>Done well</dt><dd>' + p.s + '</dd>' +
+                '<dt>Overused</dt><dd class="over">' + p.o + '</dd>' +
+                '<dt>One way to build it</dt><dd>' + p.t + '</dd></dl></div></details>';
+            });
+          });
+          lh += '</details>';
+        });
+        list.innerHTML = lh;
+      }
+    }
+
+    /* ============ SHOWPIECE 2: the overused-strength spectrum ============ */
+    var spTabs = document.getElementById('spTabs');
+    if (spTabs) {
+      var spDesc = document.getElementById('spDesc');
+      var spKick = document.getElementById('spKick');
+      var spRead = document.getElementById('spRead');
+      var spDot = document.getElementById('spDot');
+      var stops = Array.prototype.slice.call(document.querySelectorAll('.sp-stop'));
+      var STOPS = [
+        { key: 'less', kick: 'Too little', cls: '' },
+        { key: 'skilled', kick: 'Skilled', cls: 'k-skill' },
+        { key: 'over', kick: 'Overused', cls: 'k-over' }
+      ];
+      var curC = 0, curS = 1;
+      SPECTRUM_DATA.forEach(function (d, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = d.n;
+        b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+        b.addEventListener('click', function () { curC = i; renderSp(); });
+        spTabs.appendChild(b);
+      });
+      var tabBtns = Array.prototype.slice.call(spTabs.children);
+      stops.forEach(function (s) {
+        s.addEventListener('click', function () { curS = +s.getAttribute('data-stop'); renderSp(); });
+      });
+      function renderSp() {
+        var d = SPECTRUM_DATA[curC], st = STOPS[curS];
+        spDesc.textContent = d[st.key];
+        spKick.textContent = st.kick;
+        spRead.className = 'sp-read ' + st.cls;
+        spDot.style.left = curS === 0 ? '8px' : (curS === 1 ? '50%' : 'calc(100% - 8px)');
+        tabBtns.forEach(function (b, i) { b.setAttribute('aria-pressed', i === curC ? 'true' : 'false'); });
+        stops.forEach(function (s) { s.setAttribute('aria-pressed', (+s.getAttribute('data-stop')) === curS ? 'true' : 'false'); });
+      }
+      renderSp();
+    }
   })();
   </script>
   <script src="js/backtotop.js"></script>

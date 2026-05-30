@@ -1057,6 +1057,308 @@ patience.
 
 *Hard-edge research complete: 8 streams (17-24) captured. This feeds the new "No seat fillers" section.*
 
+---
+
+# Part X, For Your Improvement deep-dive (for the rebuilt FYI section + data viz)
+
+## 25. The complete Korn Ferry Leadership Architect model (the viz data)
+
+The current Korn Ferry Leadership Architect (KFLA, c. 2014-15, post-Lominger acquisition):
+**4 Factors, 12 Clusters, 38 Competencies**, plus **10 Career Stallers & Stoppers**. FYI
+devotes one chapter to each competency and each derailer. This is the exact tree for the
+visualization (Korn Ferry competency IDs in parentheses).
+
+**Factor meanings:** Thought = how leaders think (knowledge, decisions, strategy). Results =
+what leaders achieve (initiative, execution, performance). People = how leaders engage others
+(relationships, talent, influence). Self = how leaders manage themselves (authenticity,
+awareness, adaptability).
+
+**THOUGHT (10)**
+- A. Understanding the Business: Business Insight (5), Customer Focus (11), Financial Acumen (17), Tech Savvy (35)
+- B. Making Complex Decisions: Manages Complexity (8), Decision Quality (12), Balances Stakeholders (32)
+- C. Creating the New and Different: Global Perspective (18), Cultivates Innovation (19), Strategic Mindset (33)
+
+**RESULTS (7)**
+- D. Taking Initiative: Action Oriented (2), Resourcefulness (27)
+- E. Managing Execution: Directs Work (15), Plans and Aligns (25), Optimizes Work Processes (38)
+- F. Focusing on Performance: Ensures Accountability (1), Drives Results (28)
+
+**PEOPLE (13)**
+- G. Building Collaborative Relationships: Collaborates (6), Manages Conflict (9), Interpersonal Savvy (20), Builds Networks (21)
+- H. Optimizing Diverse Talent: Attracts Top Talent (4), Develops Talent (13), Values Differences (14), Builds Effective Teams (34)
+- I. Influencing People: Communicates Effectively (7), Drives Engagement (16), Organizational Savvy (23), Persuades (24), Drives Vision and Purpose (37)
+
+**SELF (8)**
+- J. Being Authentic: Courage (10), Instills Trust (36)
+- K. Being Open: Demonstrates Self-Awareness (29), Self-Development (30)
+- L. Being Flexible and Adaptable: Manages Ambiguity (3), Nimble Learning (22), Being Resilient (26), Situational Adaptability (31)
+
+**Career Stallers & Stoppers (10 derailers, clusters M/N/O):**
+- M. Trouble with People: Blocked Personal Learner (102), Lack of Ethics and Values (103), Political Missteps (110)
+- N. Doesn't Inspire or Build Talent: Poor Administrator (101), Failure to Build a Team (104), Failure to Staff Effectively (105)
+- O. Too Narrow: Key Skill Deficiencies (106), Non-Strategic (107), Overdependence on an Advocate (108), Overdependence on a Single Skill (109)
+
+**Lineage:** the classic Lominger model had 67 competencies / 8 factors / 19 derailers; KFLA
+consolidated to 38 / 4 / 10. Notable: granular "direct reports" items folded into Develops
+Talent / Values Differences; dropped Humor, Work/Life Balance, Boss Relationships, Career
+Ambition, Patience; added Tech Savvy, Financial Acumen, Global Perspective. Drives Engagement
+(16) = old Motivating Others (36); Courage (10) = old Managerial Courage (34); Instills Trust
+(36) = old Integrity and Trust (29).
+
+**Flags:** Balances Stakeholders (32) sits in Cluster B (Making Complex Decisions), per the
+official Korn Ferry page (one PDF copy misfiled it under H). Factor II has 7 competencies (not
+8). Total verified at 38.
+
+**Sources:** Korn Ferry FYI factor pages (https://www.kornferry.com/fyi-resources), the KFLA
+Legacy Competency Models Mapping PDF (https://www.kornferry.com/content/dam/kornferry/docs/article-migration/KFLA_LegacyCompetencyModelsMapping.pdf).
+
+## 26. The data-viz build spec (the showpiece: a radial sunburst)
+
+**Decision:** an interactive **3-ring radial sunburst** of the competency model. Ring 1 = 4
+Factors, ring 2 = 12 Clusters, ring 3 = 38 Competencies. Equal-weight leaves (each competency =
+360/38 = 9.47 deg). **Detail-on-demand**: 38 leaf labels can't fit, so hovering/clicking/focusing
+an arc populates a side panel (competency name, Factor > Cluster breadcrumb, a skilled line, a
+less-skilled line, one development tip). Static labels only on the Factor ring (horizontal,
+centroid) and Cluster ring (rotated radial, ~10px). Gold `#D4C4A0` arcs/highlights on the green.
+Vanilla SVG/JS, no library. Second-choice fallback form = a clustered grid (all labels visible).
+
+**SVG setup:** `<svg viewBox="-300 -300 600 600">` so origin = center (no translate math).
+Radii: inner hole 80, factor ring 80-130, cluster ring 130-200, competency ring 200-270.
+
+**Core math (D3 convention: angle 0 = 12 o'clock, clockwise):**
+```
+polarToCartesian(a, r) -> { x: r*sin(a), y: -r*cos(a) }
+arcPath(a0, a1, rIn, rOut):
+  p1=polar(a0,rOut); p2=polar(a1,rOut); p3=polar(a1,rIn); p4=polar(a0,rIn)
+  large = (a1-a0) > PI ? 1 : 0
+  "M p1 A rOut rOut 0 large 1 p2  L p3  A rIn rIn 0 large 0 p4  Z"   // outer cw, inner ccw
+```
+Partition: walk factors>clusters>competencies in order; each competency gets
+`start = i*LEAF_ANGLE, end = (i+1)*LEAF_ANGLE` (i = its index 0..37); a cluster's arc spans its
+first comp's start to its last comp's end; a factor's arc spans its first to last comp.
+
+**Label flip (so radial text never reads upside down):** `angleDeg = midAngle*180/PI - 90; if
+(midAngle > PI) angleDeg += 180;` then `transform="translate(x,y) rotate(angleDeg)"`,
+text-anchor middle, dominant-baseline central.
+
+**Interaction:** one handler for mouseenter + focus + click + Enter/Space -> `showDetail(d)`.
+Arc highlight via CSS on `:hover/:focus/[data-active]`: fill gold + `drop-shadow(0 0 6px rgba(212,196,160,.55))`, transition fill/filter 150ms.
+
+**Animation (gated `@media (prefers-reduced-motion: no-preference)`):** sunburst fade+scale-in
+400ms; panel opacity+translateY 200ms. Never animate path `d`; only opacity/transform/fill.
+
+**Mobile (<=640px):** hide the SVG, render a `<details>/<summary>` accordion (Factor > Cluster >
+competency `<li>`) from the same data object; tapping a competency calls the same `showDetail`.
+
+**A11y:** each arc `tabindex=0 role=button aria-label=name`; svg `role=img` + aria-label; detail
+panel `aria-live=polite`; `:focus-visible` outline 2px gold. Gold on green ~7.5:1 (AAA).
+
+**Data object:** `COMPETENCY_DATA = { factors:[ { name, meaning, clusters:[ { name,
+competencies:[ { name, skilled, lessSkilled, tip } ] } ] } ] }`. (Detail content per competency
+to be written faithfully in the FYI style, sharpened by the dev-tips research.)
+
+Refs: MDN SVG arc / `A` command; nan.fyi/svg-paths/arcs; data-to-viz sunburst (labels need
+interactivity); denjn5 D3 sunburst label-rotation gist.
+
+## Stream 27, FYI reception, signature idea, and critique (the honest footnote)
+
+**What FYI actually is.** A development *reference guide*, not a cover-to-cover read. Widely
+described as "a phone book for leadership development." In print since 1996, six editions
+(1996, 1998, 2000, 2006, 2009, 2014). Goodreads 4.27/5 across ~690 readers. The 6th edition
+(2014, Korn Ferry, Lombardo with editor Heather Barnfield) is aligned to the 38-competency
+Korn Ferry Leadership Architect; earlier editions used the 67-competency Lominger library.
+
+**The signature idea (the thing that makes FYI different from every other competency
+dictionary):** every competency is described three ways, not one. *Less skilled* (underdone),
+*skilled* (the target), and *overused* (a strength pushed so hard it becomes a liability). The
+overused column is FYI's distinguishing feature. A strength overused becomes a career
+"staller / stopper" (a dedicated section of the book). Example structure: Drives Results
+overused damages relationships; Courage overused becomes recklessness. FYI gives
+"compensators" (dial it back) and "substitutes" (use a different strength to the same end).
+This is the single most teachable, most distinctive idea to feature.
+
+**Real-world workflow (Ian Rowe / practitioner accounts):** start from feedback (a 360 or
+appraisal), pick the competency, turn to its chapter, work the tips on the job. Apple and
+others used the framework operationally (e.g., an "Approachability" development workflow).
+
+**Critique (use for credibility through restraint):** (a) it is a dry reference, not a
+narrative read; (b) the Korn Ferry ecosystem around it is proprietary and expensive (viaEdge
+~$200-400/person; the card decks, VOICES 360, technical manuals are all paid); (c) academic
+competency-model validity is thin: Schippmann et al. (2000, Personnel Psychology) found
+competency modeling far less rigorous than job analysis; Stevens (2013, HRDR) found
+conceptual ambiguity, unreliable ratings, "scant evidence" of incremental validity over
+existing cognitive/personality measures; (d) no independent peer-reviewed confirmatory factor
+analysis of the 38- or 67-competency structure is publicly available outside Korn Ferry's own
+manual; (e) notably almost no Reddit/forum discussion exists, consistent with it being an
+enterprise/HR tool rather than a popular trade book.
+
+## Stream 28, the development philosophy (competencies are learnable; 70-20-10; learning agility)
+
+**Core premise: competencies are learnable behaviors, not fixed traits.** Korn Ferry's KF4D
+model splits a person into Traits (stable personality), Drivers (values/motivation),
+Competencies (observable skills/behaviors, the developable part), and Experiences. FYI lives
+entirely in the Competencies column: behaviors you can break down, practice, and coach. Some
+are harder than others (Strategic Mindset and Courage are called "difficult to develop";
+Nimble Learning "moderately difficult") but all are placed in the learnable column. This is
+the liberating premise to lead with.
+
+**70-20-10.** Origin: the Center for Creative Leadership "Lessons of Experience" study
+(McCall, Lombardo, Morrison, 1988): 191 successful executives at six large firms were asked to
+name the career events that changed how they manage; 616 events, distilled to a few
+categories. The *ratio* itself was published later, by Lombardo and Eichinger in The Career
+Architect Development Planner (1996). The phrase does not appear in the 1988 book. Meaning:
+~70% of development comes from challenging on-the-job experience (turnarounds, scope jumps,
+new initiatives, hardships, NOT passive tenure), ~20% from other people (mostly the boss:
+feedback, coaching, mentors), ~10% from formal courses and reading. HONEST CAVEAT (lead with
+this, do not hide it): the numbers are a heuristic, not a law. Suspiciously round; from
+retrospective self-report by already-successful (survivorship-biased) executives; replications
+land at 70-22-8, 65-33-2, etc.; Eichinger himself called it a "meme." Useful framing: the
+book itself is the 10%; it only works if it points you at the 70.
+
+**Learning agility.** Defined by Lombardo and Eichinger (2000, "High Potentials as High
+Learners," Personnel Psychology): "the willingness and ability to learn from experience, and
+subsequently apply that learning to perform successfully under new or first-time conditions."
+"Willingness" matters: it is motivation plus skill, not raw IQ (uncorrelated with IQ scores).
+Five dimensions: Mental, People, Change, Results, Self-Awareness (self-awareness added to the
+original four). Claim: a better predictor of who will grow than past performance ("71% of high
+performers are not high potentials, but 93% of high potentials are high performers"); high
+learning-agile managers got ~2x the promotions over 10 years (Dai et al., 2013). Vendor stats
+(25% higher profit margins, 45% more likely to be high performers) are Korn Ferry / CEB
+numbers, not peer-reviewed; attribute and hold loosely. Assessments: Choices Architect / eCHOICES
+(360, 81 items), viaEdge (self-report). Critique: thin longitudinal literature; common-method
+variance; may largely re-measure personality.
+
+**How the book is meant to be used (the anti-overwhelm workflow, very citable):** (1) start
+with external feedback (360 about every two years, or an appraisal); (2) pick ONE or TWO
+priority competencies, never ten ("most successful leaders have 4-6 strengths and no glaring
+weaknesses," so depth beats breadth); (3) develop in place (use your current job as the 70%
+via "develop-in-place assignments," no role change needed); (4) build an IDP anchored to
+70-20-10; (5) revisit in a few months. The book's 38/67 standalone, no-prescribed-order
+chapters are themselves an anti-overwhelm design.
+
+## Stream 29, lineage and ecosystem (for the dates / credibility facts)
+
+CCL Lessons of Experience study ~1979-1988. Lominger founded 1991 in Minneapolis by Lombardo
++ Eichinger (portmanteau of their surnames); launched the Leadership Architect Suite (67
+competencies + 19 stallers/stoppers + 7 global focus areas) and the iconic Leadership
+Architect Sort Card deck (one card per competency with skilled/unskilled/overused). Korn/Ferry
+acquired Lominger in 2006 for $24M. In 2014 Korn Ferry released the redesigned Leadership
+Architect (KFLA): 38 competencies / 4 factors / 12 clusters / 10 stallers, "statistically
+validated against psychometric assessments and job performance," reducing the 67 by merging
+overlaps. In 2018 Korn Ferry sunset the Lominger (and Hay Group) sub-brands under one master
+brand, taking a $106M non-cash impairment charge. Companion volumes: The Career Architect
+Development Planner, FYI for Learning Agility, VOICES 360, viaEdge, KF4D.
+
+## Stream 30, world-best data visualization (the showpiece research) + the DECISION
+
+**Practitioners to emulate (dark-field / luminous-data / restraint):** Nadieh Bremer (Royal
+Constellations, Olympic Feathers; SVG glow filters), Shirley Wu (Film Flowers: warm-gold
+categorical petals on dark), Federica Fragapane (warm muted organic forms), Moritz Stefaner
+(Rhythm of Food radial roses), Giorgia Lupi (data humanism), Kerry Rodden (sequences sunburst
++ breadcrumb), Every Noise at Once (typography as a data channel). Bartosz Ciechanowski for
+"every slider teaches."
+
+**Key technical decision for OUR 4/12/38 data.** The data-viz agent flags that a sunburst's
+arc-AREA encodes quantity, but our 38 leaves are equal-weight, so a sunburst's area is
+"meaningless" and a radial tidy tree is the textbook-correct form. DECISION: keep the
+**equal-angle sunburst** anyway as the primary showpiece, because (1) equal angles remove the
+misleading-area problem (every competency is one equal slice, stated plainly), (2) the three
+solid concentric rings map one-to-one onto the 3-level taxonomy (4 Factors / 12 Clusters / 38
+Competencies) and read instantly as "the whole book on one wheel," (3) a filled mandala is far
+more arresting and complete-looking than a sparse node-link tree, which matters for "feel like
+you've read the book," and (4) detail-on-demand on an arc is natural. We adopt the tidy-tree
+research as POLISH, not as the form.
+
+**The 8 highest-leverage moves (apply all):** (1) deep-green field + warm-gold/ivory luminous
+data (already our palette); (2) HSL family encoding: 4 factor hues, desaturate/lighten outward
+to clusters then competencies, NOT 54 random colors; (3) hover/focus lineage highlight: dim
+everything not in the hovered arc's lineage to ~12% at 150ms ease-out; (4) a breadcrumb trail
+above the wheel that narrates "Factor / Cluster / Competency" in plain text as you move; (5)
+radial tidy-tree spacing discipline; (6) an SVG glow filter on the active arc (lit-from-within,
+beats box-shadow); (7) curved (not straight) connectors where links appear; (8) typography as
+the depth signal: 3 sizes only, family labels largest/tracked, leaf labels suppressed until
+hover. A11y: WCAG AA (gold-on-green ~7.5:1), every node a title/aria-label, reduced-motion
+gating, 44px touch targets, `<details>` collapse on mobile.
+
+**SECOND viz decision.** Build the **overused-strength spectrum** as viz 2: a slider/track that
+moves a single competency from "too little" through "skilled (the sweet spot)" to "overused
+(becomes a staller)," with the behavioral picture changing at each stop. This teaches FYI's
+SIGNATURE idea (the three-way description) in one interaction. 70-20-10 stays as a clean
+compact bar inside the prose, not as a third showpiece.
+
+## Stream 31, the REAL book content (verbatim, for an authentic detail panel + spectrum)
+
+**Anatomy of one chapter (this is the skeleton to teach so the reader "feels like they read the
+book"):** 5th ed order = name/number/Factor/Cluster -> opening quote -> Unskilled -> Substitutes
+-> Skilled -> Overused Skill -> Compensators -> Some Causes -> Factors/Clusters placement -> The
+Map (prose on why it matters) -> Some Remedies (10-12 tips, each a diagnostic question + an
+action) -> Develop-in-Place Assignments -> Suggested Readings -> closing quote. 6th ed renames:
+Unskilled -> "Less Skilled"; adds a "Talented" tier (the exceptional end, above Skilled, distinct
+from Overused), a "Brain Booster" neuroscience sidebar, "Take time to reflect" prompts, and
+"Recommended search terms." THREE development paths the book offers: (1) work the weak competency
+directly via the remedies, (2) build a SUBSTITUTE competency to sidestep the gap, (3) build a
+COMPENSATOR competency to moderate an OVERUSED strength. The "overused + compensator" machinery
+is FYI's signature.
+
+**Real verbatim Skilled / Less-Skilled / Overused (6th ed unless noted) for the featured set:**
+- Instills Trust: SKILLED follows through on commitments; seen as direct and truthful; keeps
+  confidences; practices what he preaches; consistency between words and actions. LESS lacks
+  follow-through; betrays confidences; covers up mistakes; makes promises but doesn't keep them.
+  OVERUSED may push openness/honesty to the point of being disruptive; overly judgmental of those
+  less overtly authentic.
+- Courage: SKILLED readily tackles tough assignments; faces difficult issues and supports others
+  who do; gives direct, actionable feedback; champions a position despite dissent or political
+  risk. LESS shies away from difficult issues; indirect; avoids corrective feedback; won't take a
+  stand. OVERUSED overly critical; too direct/heavy-handed; too much negative/too little positive;
+  fights too many battles.
+- Develops Talent: SKILLED high priority on developing others; coaching, feedback, exposure,
+  stretch; aligns their growth with org goals. LESS (5th) not a developer; results-driven, no time;
+  thinks development = a course. OVERUSED (paraphrase) pushes growth no one asked for; over-coaches.
+- Drives Engagement: SKILLED structures work to align with people's own motivators; empowers;
+  makes each person feel their contribution matters; invites input, shares ownership. LESS little
+  insight into motivators; too little autonomy; little enthusiasm; won't share ownership. OVERUSED
+  (paraphrase) manufactures enthusiasm; mistakes activity for commitment; team feels handled.
+- Being Resilient: SKILLED confident under pressure; handles crises; positive despite adversity;
+  bounces back; grows from hardship. LESS easily rattled; low energy under stress; defensive;
+  slow to recover. OVERUSED (Composure verbatim) may not show appropriate emotion; seen as cold;
+  seems flat where others show feeling.
+- Builds Effective Teams: SKILLED diverse mix of styles; common objectives + shared mindset;
+  belonging/morale; shares wins. OVERUSED may not treat people as unique; slows process with
+  everything open for debate; goes too far avoiding hurt feelings.
+
+**Real verbatim tips worth quoting/adapting (the "go do this," authentic FYI voice):**
+- Develops Talent: allocate ~8 hours/yr per direct report (2 in-depth appraisal, 2 career
+  discussion, 2 a 3-5 yr development plan). Concrete and memorable.
+- Being Resilient: "between the second and third thing you think of to say or do is the best
+  option, practice holding back your first response"; "write down the last 25 times you lost your
+  composure, most people have three to five repeating triggers."
+- Demonstrates Self-Awareness: make a self-appraisal STATEMENT, not a question ("I think I focus
+  too much on operations and miss the larger strategic connections, what do you think?"); "a
+  person who wants to know the bad must be pretty good."
+- Courage: "get to the point, don't waste time with a long preamble"; "nobody likes a critic,
+  everybody appreciates a problem solver, bring a solution."
+- Manages Conflict: "give reasons first, solutions last"; practice verbal Aikido (let them vent,
+  don't react, ask clarifying questions, restate their position).
+- Instills Trust: talk about what "we" accomplished, not "I"; be on time, return calls, send what
+  you promised; build trust through self-sacrifice.
+- Drives Engagement: know three non-work things about everybody; provide autonomy in HOW people
+  do the work; surprise people with enriching, challenging assignments.
+- Builds Effective Teams: get each member involved in setting the common vision; celebrate wins.
+- Situational Adaptability: work from the OUTSIDE in (the customer, the audience, the person), not
+  the inside out; watch reactions while you act and change tactics.
+- Listening: "when your mouth is open, your ears automatically close"; "listen first, solve
+  second"; "ask one more question than you do now."
+
+USAGE in build: use these verbatim/condensed lines for the ~11 covered competencies in the wheel
+detail panel and the 5-competency spectrum (Courage, Instills Trust, Develops Talent, Drives
+Engagement, Being Resilient, all with real less/skilled/over). Author faithful FYI-style one-liners
+for the remaining ~27. Sources: official FYI Usage Guide; hoaqtkd.com 5th-ed full PDF; 6th-ed
+Instills Trust chapter; rc-hr.com KFLA library (all-38 skilled/less/over); King County 38-list.
+
+
+
+
+
 
 
 
