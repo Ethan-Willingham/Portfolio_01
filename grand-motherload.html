@@ -243,6 +243,7 @@
        when iOS PWA standalone behaves oddly with fixed positioning. */
     body.gm-fs .reading-progress,
     body.gm-fs .post-back,
+    body.gm-fs .btt-fab,
     body.gm-fs .post-header,
     body.gm-fs .site-footer,
     body.gm-fs .post-body > *:not(.game-wrapper) { display: none !important; }
@@ -313,7 +314,7 @@
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
-    <a href="/" class="post-back">Home</a>
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
     <header class="post-header fade-in">
       <h1 class="post-title">Sluice</h1>
@@ -505,5 +506,6 @@
   <script src="js/liquid-wgpu.js"></script>
   <script src="js/smoke-wgpu.js"></script>
   <script src="js/grand-motherload.js"></script>
+  <script src="js/backtotop.js"></script>
 </body>
 </html>

@@ -64,10 +64,8 @@
   .sc { font-variant: small-caps; letter-spacing: 0.1em; }
 
   /* ---- top home link, in normal flow (scrolls away) ---- */
-  .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto; padding: 1.1rem var(--gutter) 0; }
-  .top-nav a { font-family: var(--font-body); font-size: 0.86rem; color: var(--text-dim); text-decoration: none; transition: color 0.25s; }
-  .top-nav a::before { content: '\2190'; margin-right: 0.45em; font-size: 0.85em; }
-  .top-nav a:hover { color: var(--text-bright); }
+  .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto 1.2rem; padding: 1.1rem var(--gutter) 0; }
+  .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
 
   /* reading progress (slim, accent) */
   .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
@@ -328,7 +326,7 @@
 <body>
   <div class="reading-progress" id="rp"></div>
 
-  <nav class="top-nav"><a href="/">Ethan Willingham</a></nav>
+  <div class="top-nav"><a href="/" class="post-back"><span class="pb-label">Home</span></a></div>
 
   <!-- ============ COVER ============ -->
   <header class="cover">
@@ -782,5 +780,6 @@
     render();
   })();
   </script>
+  <script src="js/backtotop.js"></script>
 </body>
 </html>
