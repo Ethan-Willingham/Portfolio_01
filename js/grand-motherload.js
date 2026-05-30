@@ -65,7 +65,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v15.2';
+  var GAME_VERSION = 'v15.89';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -837,18 +837,9 @@
     // v10.79 — only override the default when there's an explicit
     // stored value; bare-unset means "use the new default" so a fresh
     // mobile install doesn't silently flip to off.
-    if (window.localStorage) {
-      var _dm = window.localStorage.getItem('deepminer_devmode');
-      if (_dm === '0') devMode = false;
-      else if (_dm === '1') devMode = true;
-    }
-    // v11.76 — ?dev=1 in the URL force-enables dev mode so the perf overlay
-    // is reachable on touch devices that have no backtick key. v14.22 — also
-    // accepts ?dev=true; setDevMode() is re-fired at boot (below) so the
-    // localStorage persist + panel sync run through the normal path.
-    if (window.location && /[?&]dev=(1(?!\d)|true)/i.test(window.location.search)) {
-      devMode = true;
-    }
+    // Public build: dev mode is permanently OFF. A stored flag or a ?dev= URL
+    // can no longer enable it (and setDevMode below is forced off), so the perf
+    // overlay and tuning panels are unreachable on the public site.
     // v11.80 — ?stress=N renders the frame N times/tick (perf measurement).
     if (window.location) {
       var _sm = window.location.search.match(/[?&]stress=(\d+)/);
@@ -856,19 +847,13 @@
     }
   } catch (e) { /* localStorage may be unavailable in strict-privacy modes */ }
   function setDevMode(on) {
-    devMode = !!on;
+    // Public build: dev mode cannot be turned on. Ignore the argument, force it
+    // off, and clear any stale stored flag so a returning visitor is reset.
+    devMode = false;
     try {
-      if (window.localStorage) {
-        // Persist both states (was: removeItem on off → reverted to default
-        // next reload). Now an explicit off stays off.
-        window.localStorage.setItem('deepminer_devmode', devMode ? '1' : '0');
-      }
+      if (window.localStorage) window.localStorage.setItem('deepminer_devmode', '0');
     } catch (e) {}
-    // Show / hide the chimney-smoke preset panel along with dev mode.
-    // The function is defined later in the file; guard for hoist order.
     if (typeof syncFireplacePresetPanel === 'function') syncFireplacePresetPanel();
-    // v14.22 — show/hide the on-screen TUNE button (mobile dev access) with
-    // dev mode. Defined later in the file; guard for hoist order.
     if (typeof gmTuningButtonSync === 'function') gmTuningButtonSync();
   }
 
@@ -1957,31 +1942,20 @@
       for (var i = 0; i < depths.length; i++) cells += depths[i];
       return Math.round(cells * LIQUID_SURFACE_WATER_PARTICLES_PER_TILE);
     }
-    // Pool anchor columns — pushed well clear of the spawn deck so the
-    // player doesn't start right next to water.
-    var candidates = [
-      DECK_LEFT_COL - 44,
-      DECK_RIGHT_COL + 34,
-      DECK_RIGHT_COL + 54
-    ];
-    var made = 0;
-    for (var i = 0; i < candidates.length && made < 2; i++) {
-      if (made === 0 && i === candidates.length - 1) {
-        // Always keep at least one surface pond.
-      } else if (tileHash01(i, candidates[i], 0x7A77) < 0.30) {
-        continue;
-      }
-      var left = candidates[i] + Math.floor(tileHash01(i, candidates[i], 0x7A78) * 5) - 2;
-      // v15.0 — surface ponds back to a fixed 5-wide x 1-deep (the v14.29
-      // 14x5 big-pond stress test is reverted; this is the original size).
-      var width = 5;
+    // One pool on each side of the town, both well clear of the spawn deck so
+    // the player never starts in water. Deterministic (a fixed left and right),
+    // so the town is always framed by water on both sides. 1-deep keeps the sim
+    // calm (deeper basins were reverted in v15.0); width is just the look.
+    function carveTownPond(centerCol, width) {
+      var left = centerCol - (width >> 1);
+      if (left < 2 || left + width - 1 >= COLS - 2) return;
       var depths = [];
-      for (var d = 0; d < width; d++) {
-        depths.push(1);
-      }
+      for (var d = 0; d < width; d++) depths.push(1);
       carveSurfacePool(left, left + width - 1, 'water', pondParticles(depths), depths);
-      made++;
     }
+    var POND_WIDTH = 9;                                // 1-deep, wider than the old 5 so each reads as a pool
+    carveTownPond(DECK_CENTER_COL - 25, POND_WIDTH);   // left of the town, clear of the station
+    carveTownPond(DECK_CENTER_COL + 25, POND_WIDTH);   // right of the town, clear of the gas depot
     // v10.103 — settle the pools at world init so they're calm by
     // the time the player approaches. v10.107 — back to 80 steps
     // (small ponds settle faster).

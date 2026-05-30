@@ -22,8 +22,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
-  <title>Grand Motherload</title>
-  <meta name="description" content="Grand Motherload is a browser mining game. Drill down, collect ore, upgrade your rig.">
+  <title>Sluice</title>
+  <meta name="description" content="Sluice is my 2D mining game. This free v15.89 browser build is the last public version; development is now private, coming to Steam Summer 2027.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,6 +67,45 @@
        more rows. Fullscreen (body.gm-fs) still overrides this. */
     @media (orientation: portrait) {
       .game-canvas-area { height: 85vh; height: 85dvh; }
+    }
+
+    /* === In-game notice ticker: a dismissible yellow marquee at the top of
+       the game frame (replaces the old fixed page banner). Sits over the
+       canvas, scrolls, and travels into fullscreen with the wrapper. === */
+    #gmTicker {
+      position: absolute; top: 0; left: 0; right: 0;
+      z-index: 11;                       /* above the #game-intro fade (z-index 10) */
+      height: 26px;
+      display: flex; align-items: center;
+      overflow: hidden;
+      background: rgba(16, 16, 18, 0.82);
+      border-bottom: 1px solid rgba(255, 210, 63, 0.40);
+      pointer-events: none;              /* clicks fall through to the game; the X opts back in */
+    }
+    #gmTicker .gm-ticker-track {
+      display: inline-flex; flex: none; white-space: nowrap;
+      will-change: transform;
+      animation: gmTickerScroll 26s linear infinite;
+    }
+    #gmTicker .gm-ticker-track span {
+      font-family: var(--font-mono, ui-monospace, "JetBrains Mono", monospace);
+      font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #ffd23f;                    /* yellow */
+    }
+    @keyframes gmTickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    #gmTicker .gm-ticker-x {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 34px;
+      border: 0; cursor: pointer;
+      background: linear-gradient(to right, rgba(16,16,18,0), rgba(16,16,18,0.96) 45%);
+      color: #ffd23f; font-size: 18px; line-height: 1;
+      pointer-events: auto;              /* the dismiss button stays clickable */
+    }
+    #gmTicker .gm-ticker-x:hover { color: #fff; }
+    @media (prefers-reduced-motion: reduce) {
+      #gmTicker .gm-ticker-track { animation: none; }
     }
 
     /* === Controls strip with key hints === */
@@ -271,18 +310,14 @@
   </style>
 </head>
 <body>
-  <div id="steamBanner" role="note" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(16,16,18,0.94);color:#ece9e1;font-family:var(--font-body,system-ui,-apple-system,sans-serif);font-size:13px;line-height:1.5;text-align:center;padding:8px 42px 8px 16px;border-bottom:1px solid rgba(255,255,255,0.14);box-shadow:0 1px 8px rgba(0,0,0,0.35);">
-    <strong>Sluice</strong> (formerly Grand Motherload). This is a free <strong>infdev</strong> build (v15.2); development went private on 18 May 2026. Coming to <strong>Steam</strong>, Summer 2027.
-    <button type="button" onclick="this.parentNode.style.display='none'" aria-label="Dismiss notice" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;color:#cfccc4;font-size:20px;line-height:1;cursor:pointer;padding:0 6px;">&times;</button>
-  </div>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
     <a href="/" class="post-back">Home</a>
 
     <header class="post-header fade-in">
-      <h1 class="post-title">Grand Motherload</h1>
-      <p class="post-subtitle">A browser-native take on the 2004 mining game I never quite stopped playing.</p>
+      <h1 class="post-title">Sluice</h1>
+      <p class="post-subtitle">My 2D mining game.</p>
     </header>
 
     <main>
@@ -290,16 +325,14 @@
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
 
           <p>
-            Motherload came out in 2004 and I still think about it. You
-            pilot a little drill rig into the earth, fill your cargo
-            hold with ore, fly back to the surface, sell it, buy better
-            equipment, and go deeper. That is the whole game. It is
-            perfect.
+            Drill into the earth, fill your hold with ore, fly up and sell
+            it, buy better gear, go deeper. That is the whole loop.
           </p>
 
           <p>
-            This is my version, running right here. Same loop, my own
-            world, no install.
+            Public development is over. Sluice is now in private development,
+            coming to Steam in Summer 2027. This free v15.89 browser build is
+            the last public version, playable below.
           </p>
 
           <div class="game-wrapper">
@@ -327,139 +360,15 @@
             <div class="game-canvas-area">
               <canvas id="game-canvas"></canvas>
               <div id="game-intro"></div>
+              <div id="gmTicker" role="note" aria-label="Sluice status">
+                <div class="gm-ticker-track">
+                  <span>Sluice v15.89 &nbsp;&middot;&nbsp; the last free public build &nbsp;&middot;&nbsp; now in private development &nbsp;&middot;&nbsp; coming to Steam, Summer 2027 &nbsp;&middot;&nbsp;</span>
+                  <span aria-hidden="true">Sluice v15.89 &nbsp;&middot;&nbsp; the last free public build &nbsp;&middot;&nbsp; now in private development &nbsp;&middot;&nbsp; coming to Steam, Summer 2027 &nbsp;&middot;&nbsp;</span>
+                </div>
+                <button type="button" class="gm-ticker-x" aria-label="Dismiss notice" onclick="this.closest('#gmTicker').remove()">&times;</button>
+              </div>
             </div>
           </div>
-
-          <div class="divider">&bull; &bull; &bull;</div>
-
-          <h2>The layers</h2>
-
-          <p>
-            The world is 40 tiles wide and 200 tiles deep, divided into
-            eight depth bands. Each layer has its own palette, its own
-            ore distribution, and a couple have nasty surprises waiting
-            for you.
-          </p>
-
-          <table class="ore-table">
-            <thead>
-              <tr>
-                <th>Layer</th>
-                <th>Depth</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Topsoil</td><td>0&ndash;15m</td><td>Loose dirt and roots. Coal and copper.</td></tr>
-              <tr><td>Bedrock</td><td>15&ndash;35m</td><td>Bauxite, iron, the first silver.</td></tr>
-              <tr><td><strong>Permafrost</strong></td><td>35&ndash;55m</td><td>Frozen solid. Requires the <em>Heated Drill</em> upgrade or you cannot break a single tile. Methane ice deposits hide here.</td></tr>
-              <tr><td>Fossil layer</td><td>55&ndash;80m</td><td>Ancient sediment. Amber with insects, trilobite fossils.</td></tr>
-              <tr><td>Deep crust</td><td>80&ndash;110m</td><td>Cinnabar, gold, and the first uranium veins.</td></tr>
-              <tr><td><strong>Magma veins</strong></td><td>110&ndash;145m</td><td>Glowing red rock. Without a Heat Shield, your hull drains continuously while you are inside.</td></tr>
-              <tr><td>Crystal caves</td><td>145&ndash;180m</td><td>Tanzanite, more diamonds. The walls glitter.</td></tr>
-              <tr><td><strong>Mantle edge</strong></td><td>180&ndash;200m</td><td>Painite and unobtanium. Even worse heat than the magma layer. Endgame only.</td></tr>
-            </tbody>
-          </table>
-
-          <h2>What is down there</h2>
-
-          <p>
-            Eighteen things to mine, give or take. Some are real, some
-            are deliberately not. Where the real ones are concerned I
-            played a little fast and loose with relative values, but
-            the general ordering (copper before silver before gold
-            before tanzanite before painite) is roughly how the world
-            works.
-          </p>
-
-          <table class="ore-table">
-            <thead>
-              <tr>
-                <th>Ore</th>
-                <th>Value</th>
-                <th>Found in</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td><span class="ore-swatch" style="background:#1c1c1c"></span>Coal</td><td>$5</td><td>Topsoil &rarr; bedrock</td><td>Cheap and common.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#D4883A"></span>Copper</td><td>$12</td><td>Topsoil &rarr; bedrock</td><td>Starter cash.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#B85a3a"></span>Bauxite</td><td>$25</td><td>Bedrock</td><td>Aluminum ore.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#A0A0B8"></span>Iron</td><td>$35</td><td>Bedrock &rarr; deep crust</td><td>Ubiquitous.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#D4B33A"></span>Pyrite</td><td>$60</td><td>Bedrock</td><td>Fool's gold. Looks valuable, isn't.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#D8D8E8"></span>Silver</td><td>$90</td><td>Bedrock &rarr; deep crust</td><td></td></tr>
-              <tr><td><span class="ore-swatch" style="background:#bfe6ff"></span>Methane ice</td><td>$180</td><td>Permafrost</td><td>Heated drill required.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#c12838"></span>Cinnabar</td><td>$140</td><td>Deep crust</td><td>Mercury ore. Crystal clusters.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#FFD700"></span>Gold</td><td>$200</td><td>Deep crust</td><td>The real thing.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#e89a2a"></span>Amber</td><td>$350</td><td>Fossil layer</td><td>Insect trapped inside.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#7a5436"></span>Trilobite</td><td>$600</td><td>Fossil layer</td><td>Half-billion-year-old arthropod.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#5fff5a"></span>Uranium</td><td>$800</td><td>Deep crust</td><td>Glows. Requires drill Lv 3.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#1a0a18"></span>Obsidian</td><td>$280</td><td>Magma veins</td><td>Volcanic glass.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#50C878"></span>Emerald</td><td>$900</td><td>Fossil &rarr; crystal</td><td></td></tr>
-              <tr><td><span class="ore-swatch" style="background:#E0115F"></span>Ruby</td><td>$1,400</td><td>Deep crust &rarr; crystal</td><td></td></tr>
-              <tr><td><span class="ore-swatch" style="background:#7a5fff"></span>Tanzanite</td><td>$2,000</td><td>Crystal caves</td><td>Real, found only in Tanzania.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#B9F2FF"></span>Diamond</td><td>$3,000</td><td>Crystal caves</td><td>Requires drill Lv 4.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#d36b8c"></span>Painite</td><td>$6,000</td><td>Mantle edge</td><td>Real, briefly the world's rarest gem.</td></tr>
-              <tr><td><span class="ore-swatch" style="background:#FF00FF"></span>Unobtanium</td><td>$12,000</td><td>Mantle edge</td><td>Not real. Sue me.</td></tr>
-            </tbody>
-          </table>
-
-          <p>
-            Dirt and stone are not in this table because you do not
-            collect them. You drill them, they disappear, you move on.
-            The shop has six upgrades: drill, fuel, hull, cargo, plus
-            a one-time Heated Drill purchase (gates the permafrost) and
-            a two-tier Heat Shield (lets you survive the magma and
-            mantle layers).
-          </p>
-
-          <div class="divider">&bull; &bull; &bull;</div>
-
-          <h2>One piece of code I like</h2>
-
-          <p>
-            The world generates once at startup. Every tile rolls
-            against a list of candidate ores filtered by depth, with
-            rarer ores getting a slowly-increasing edge the deeper you
-            go. The trick is walking the candidate list from
-            <em>rarest to most common</em>, so diamond gets first dibs
-            on the random number and common dirt only gets picked when
-            nothing rarer has claimed the roll.
-          </p>
-
-<pre><code><span class="kw">function</span> <span class="fn">pickOre</span>(depth) {
-  <span class="kw">var</span> candidates = [];
-  <span class="kw">for</span> (<span class="kw">var</span> i = <span class="num">0</span>; i &lt; ORE_KEYS.length; i++) {
-    <span class="kw">var</span> o = ORES[ORE_KEYS[i]];
-    <span class="kw">if</span> (depth &gt;= o.minDepth) candidates.<span class="fn">push</span>(ORE_KEYS[i]);
-  }
-  <span class="kw">var</span> r = Math.<span class="fn">random</span>();
-  <span class="cm">// Deeper = rarer ores more likely. Walk from rarest to common.</span>
-  <span class="kw">var</span> cumul = <span class="num">0</span>;
-  <span class="kw">for</span> (<span class="kw">var</span> j = candidates.length - <span class="num">1</span>; j &gt;= <span class="num">0</span>; j--) {
-    <span class="kw">var</span> ore = ORES[candidates[j]];
-    <span class="kw">var</span> adjustedChance = ore.chance * (<span class="num">1</span> + depth * <span class="num">0.003</span>);
-    cumul += adjustedChance;
-    <span class="kw">if</span> (r &lt; cumul / (cumul + <span class="num">1</span>)) {
-      <span class="kw">return</span> { type: candidates[j], hp: ore.hp };
-    }
-  }
-  <span class="kw">if</span> (Math.<span class="fn">random</span>() &lt; <span class="num">0.12</span>) <span class="kw">return</span> <span class="kw">null</span>; <span class="cm">// air pocket</span>
-  <span class="kw">return</span> { type: <span class="str">'dirt'</span>, hp: ORES.dirt.hp };
-}</code></pre>
-
-          <p>
-            Two things going on here. The
-            <code>cumul / (cumul + 1)</code> bit is a soft normalization:
-            it keeps the running probability bounded between 0 and 1
-            without needing to know the total ahead of time, which is
-            handy because the candidate list changes with depth. And
-            the depth multiplier <code>(1 + depth * 0.003)</code> is
-            small but compounds. By 150 metres down, rare ores are
-            getting a 45% bonus on every tile roll, which is why the
-            crystal caves feel like a payday after the long climb to
-            get there.
-          </p>
 
         </div>
       </article>
