@@ -21,3 +21,8 @@ Thumbs.db
 # Raw audio source (large WAV masters). The shipped game uses the converted
 # .m4a in assets/audio/; keep the WAV originals local, do not commit them.
 assets/Sluice Audio/
+
+# Raw ultra-high-res zoom sources (the 50 to 145MB die/wafer/machine masters).
+# The shipped post uses the web-optimized derivatives in assets/images/zoom/;
+# keep the masters local, do not commit them.
+assets/images/zoom-src/
