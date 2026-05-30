@@ -203,6 +203,14 @@
   .gapfig .rowlab b { color: var(--text-bright); font-weight: 700; }
   .gapfig .gaptag { text-align: center; font-variant: small-caps; letter-spacing: 0.1em; font-size: 0.86rem; color: var(--accent); margin-top: 0.6rem; }
 
+  /* company example grid: the real-world exhibit (Fortune 500 and beyond) */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(218px, 1fr)); gap: 8px; }
+  .cases .case { background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; padding: 0.95rem 1.05rem; }
+  .cases .case .co { font-weight: 700; color: var(--text-bright); font-size: 1.05rem; }
+  .cases .case .did { font-size: 0.9rem; color: var(--text-dim); line-height: 1.42; margin: 0.25rem 0 0.55rem; }
+  .cases .case .res { font-size: 0.9rem; color: var(--accent); line-height: 1.4; }
+  .cases .case .res b { color: var(--accent-hover); font-weight: 700; font-variant-numeric: tabular-nums; }
+
   /* ============================================================
      THE INTERACTIVE: "Does a bigger bonus help?"
      ============================================================ */
@@ -430,6 +438,7 @@
         </div>
         <p class="fig-note">Fixing hygiene moves a professional from miserable to neutral. Only the right-hand column moves them from neutral to all in. Pay is the floor, never the fuel.</p>
       </div>
+      <p>Herzberg watched this run as an experiment at <b>AT&amp;T</b>. A group of clerks who answered letters from shareholders were handed real ownership of the work: the authority to sign their own names, and personal accountability for getting the answer right. Their pay did not change. A service-quality score climbed from the mid-20s into the 90s within months. The work itself, made whole, did the motivating.</p>
       <p class="pq">I can charge a man's battery, and recharge it, and recharge it again. But it is only when he has his own generator that we can talk about motivation.<cite>Frederick Herzberg</cite></p>
       <div class="move"><span class="k">The manager's move</span><p>Pay people fairly so money leaves the room as a topic, then stop using it as your motivation tool. Enrich the work instead. Give whole problems, real ownership, and harder challenges.</p></div>
     </section>
@@ -471,6 +480,7 @@
         </div>
       </div>
 
+      <p>The upside of the opposite approach is easy to find in the wild. <b>3M</b> has long let engineers spend around 15 percent of their time on projects of their own choosing; that policy produced the Post-it Note. <b>Google</b> copied the idea as "20 percent time," and it gave the company Gmail and the bones of Google Maps. Nobody ordered those things built. People were trusted with their own attention, and they over-delivered.</p>
       <div class="move"><span class="k">The manager's move</span><p>For routine work, by all means tie a reward to it. For the creative, judgment-heavy work professionals are hired for, stop dangling carrots and start handing over autonomy, mastery, and a reason that matters.</p></div>
     </section>
 
@@ -509,7 +519,7 @@
       <span class="sec-num">09</span>
       <h3>Ask, do not tell</h3>
       <p class="sub">When Google went looking for what makes a great manager, the answer surprised even Google.</p>
-      <p>Google's engineers suspected managers were overhead. So Google studied it, hard, across thousands of data points, expecting to find that technical brilliance was what mattered. Technical skill came in <em>last</em>. The number one behavior of their best managers was the same one Bill Campbell used to coach the founders of Google, Apple, and Intuit: being a good coach. Not having the answers. Drawing them out.</p>
+      <p>Google's engineers suspected managers were overhead. So Google studied it, hard, across thousands of data points, expecting to find that technical brilliance was what mattered. Technical skill came in <em>last</em>. The number one behavior of their best managers was the same one Bill Campbell used to coach the founders of Google, Apple, and Intuit: being a good coach. Not having the answers. Drawing them out. And when Google trained its managers on these behaviors, the share of employees who rated their manager favorably climbed from 83 percent to 88 percent, with the lowest-scoring managers improving the most.</p>
       <p>Michael Bungay Stanier calls the instinct to jump in with answers the "advice monster," and it has a hidden cost: every time you solve it for them, they bring you the next one, and they never build the muscle. The repair is almost embarrassingly simple. Open the conversation with "What's on your mind?", then resist filling the silence. Ask "And what else?" The real issue is rarely the first one named.</p>
       <p class="pq">Coaching is no longer a specialty. You cannot be a good manager without being a good coach.<cite>The leadership handbook of Bill Campbell</cite></p>
       <div class="move"><span class="k">The manager's move</span><p>Stay curious one beat longer than is comfortable. Replace "here is what I would do" with "what do you think the real challenge is?" Their plan, owned by them, beats your plan every time.</p></div>
@@ -538,7 +548,7 @@
       <span class="sec-num">11</span>
       <h3>Multiply, do not diminish</h3>
       <p class="sub">Two leaders, the same team, double the output. The difference is who has to be the genius.</p>
-      <p>Liz Wiseman studied leaders and found two types. <b>Diminishers</b> are the smartest person in the room, and they prove it, so the room goes quiet. <b>Multipliers</b> treat their people as smart and get more out of them by asking hard questions and handing over real ownership. The measured difference is about two times the usable capability from the very same people. The most humbling part of her work: most diminishing is accidental, done by well-meaning managers who jump in to rescue, set a blistering pace, or fire off ideas faster than anyone can act on them.</p>
+      <p>Liz Wiseman studied leaders and found two types. <b>Diminishers</b> are the smartest person in the room, and they prove it, so the room goes quiet. <b>Multipliers</b> treat their people as smart and get more out of them by asking hard questions and handing over real ownership. The measured difference is about two times the usable capability from the very same people. The most humbling part of her work: most diminishing is accidental, done by well-meaning managers who jump in to rescue, set a blistering pace, or fire off ideas faster than anyone can act on them. The encouraging part is that it is trainable: one Fortune 500 company that taught 200 of its managers to lead as Multipliers reported a 28 percent rise in team output, without adding a single person.</p>
       <div class="stat reveal"><span class="fig">2&times;</span><span class="cap">The capability a Multiplier draws out of a team versus a Diminisher. The average manager leaves about a third of their people's brainpower sitting idle.</span><span class="src">Wiseman, across 150+ leaders</span></div>
       <p class="pq">It isn't how much you know that matters. What matters is how much access you have to what other people know.<cite>Liz Wiseman</cite></p>
       <div class="move"><span class="k">The manager's move</span><p>In your next meeting, count how much of it you talk. Aim to be the person who asks the question that puts someone else on stage, not the one with every answer.</p></div>
@@ -571,8 +581,22 @@
       <span class="sec-num">14</span>
       <h3>The proof, at scale</h3>
       <p class="sub">This is not a theory that only survives in a lab. Whole companies are built on it.</p>
-      <p>If trusting professionals were naive, the companies that do it most would be the ones bleeding out. Instead: <b>SAS Institute</b> built the largest private software firm in the world on a 35-hour norm and deep trust, and holds voluntary turnover near 3 to 4 percent in an industry that runs 17 to 25. <b>W. L. Gore</b> runs with no traditional bosses, just self-made commitments and a rule that no plant grows past about 150 people. <b>Morning Star</b>, a tomato processor with hundreds of professionals and no managers at all, runs on peer-negotiated agreements. The common thread is not softness. It is autonomy paired with genuinely high standards.</p>
-      <div class="stat reveal"><span class="fig">3&ndash;4<span class="u">%</span></span><span class="cap">SAS Institute's voluntary turnover, against an industry average of 17 to 25 percent. Trust, it turns out, is also the cheapest retention plan in the building.</span><span class="src">SAS Institute</span></div>
+      <p>If trusting professionals were naive, the companies that lean hardest into it would be the ones bleeding out. Instead, they include some of the most valuable companies on earth and the quiet giants of their industries. A few exhibits, large and small:</p>
+      <div class="fig-block wide reveal">
+        <div class="fig-title">What it looks like when a company means it</div>
+        <div class="cases">
+          <div class="case"><div class="co">Microsoft</div><div class="did">Satya Nadella reset the culture from "know-it-all" to "learn-it-all."</div><div class="res">Market value up <b>more than tenfold</b>, past $3 trillion.</div></div>
+          <div class="case"><div class="co">Google</div><div class="did">"20 percent time" for self-chosen work, and Project Oxygen to study its own managers.</div><div class="res">Gmail and Maps were born there; manager favorability <b>83% to 88%</b>.</div></div>
+          <div class="case"><div class="co">Netflix</div><div class="did">Talent density, "context not control," and the keeper test.</div><div class="res">Cut to its "keepers" in 2001, a <b>third smaller</b> team produced more.</div></div>
+          <div class="case"><div class="co">Pixar</div><div class="did">The Braintrust: brutally candid feedback that carries zero authority.</div><div class="res">Rebuilt <em>Toy Story 2</em> in months, then grossed <b>~$0.5B</b>.</div></div>
+          <div class="case"><div class="co">Intel</div><div class="did">Andy Grove's task-relevant maturity and the weekly one-on-one.</div><div class="res">The operating manual behind a chipmaking <b>giant</b>.</div></div>
+          <div class="case"><div class="co">W. L. Gore</div><div class="did">No bosses, a "lattice" of self-made commitments, plants capped near 150.</div><div class="res">Gore-Tex now sits in <b>100,000+</b> products.</div></div>
+          <div class="case"><div class="co">3M</div><div class="did">A long-running "15 percent time" for engineers to chase their own ideas.</div><div class="res">It gave the world the <b>Post-it Note</b>.</div></div>
+          <div class="case"><div class="co">Morning Star</div><div class="did">A tomato processor with no managers; peers sign "Letters of Understanding."</div><div class="res">Runs <b>~25%</b> of US tomato processing.</div></div>
+        </div>
+        <p class="fig-note">Different industries, different decades, one pattern: autonomy paired with genuinely high standards. Not softness, structure.</p>
+      </div>
+      <div class="stat reveal"><span class="fig">3&ndash;4<span class="u">%</span></span><span class="cap">SAS Institute's voluntary turnover, against an industry average of 17 to 25 percent. It has stayed profitable 44 years running. Trust is also the cheapest retention plan in the building.</span><span class="src">SAS Institute</span></div>
       <p>One caution from the same evidence. When other companies copied the structures, the squads and the titles, without the underlying trust, they got the vocabulary and none of the results. Autonomy has to be real authority, not theater. Professionals can tell the difference instantly.</p>
       <div class="move"><span class="k">The manager's move</span><p>Compute what losing one of your best people actually costs to replace. That number is the budget you already have for treating them like the asset they are.</p></div>
     </section>
