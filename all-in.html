@@ -284,18 +284,22 @@
   .wheel .hub-n { fill: var(--accent); font-family: var(--font-heading); font-weight: 700; font-size: 40px; text-anchor: middle; dominant-baseline: central; }
   .wheel .hub-l { fill: var(--text-dim); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; text-anchor: middle; }
 
-  .wheel-panel { background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.15rem 1.2rem 1.25rem; min-height: 258px; display: flex; flex-direction: column; }
-  .wheel-panel .crumb { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; color: var(--text-dim); min-height: 1.05em; text-transform: uppercase; }
-  .wheel-panel .crumb b { color: var(--accent); font-weight: 500; }
-  .wheel-panel .pname { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.3rem, 3vw, 1.55rem); color: var(--text-bright); line-height: 1.08; margin: 0.4rem 0 0; }
-  .wheel-panel .pmean { font-size: 0.98rem; color: var(--text-dim); font-style: italic; line-height: 1.5; margin: 0.5rem 0 0; }
-  .wheel-panel dl { margin: 0.4rem 0 0; }
-  .wheel-panel dt { font-family: var(--font-body); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-top: 0.75rem; }
-  .wheel-panel dd { margin: 0.16rem 0 0; font-size: 0.95rem; line-height: 1.46; color: var(--text); }
+  .wheel-panel { background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.2rem 1.25rem 1.3rem; min-height: 272px; display: flex; flex-direction: column; }
+  .wheel-panel .p-kind { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+  .wheel-panel .crumb { font-size: 0.84rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.3rem; }
+  .wheel-panel .crumb .sep { color: var(--accent); opacity: 0.55; padding: 0 0.3em; }
+  .wheel-panel .pname { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.4rem, 3.2vw, 1.7rem); color: var(--text-bright); line-height: 1.06; margin: 0.32rem 0 0; text-wrap: balance; }
+  .wheel-panel .pdef { font-size: 1.04rem; line-height: 1.5; color: var(--text-bright); margin: 0.6rem 0 0; }
+  .wheel-panel .pdef b { color: var(--accent-hover); font-weight: 700; }
+  .wheel-panel .p-div { height: 1px; background: var(--hair); margin: 1.05rem 0 0.1rem; }
+  .wheel-panel dl { margin: 0; }
+  .wheel-panel dt { font-family: var(--font-body); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-top: 0.8rem; }
+  .wheel-panel dd { margin: 0.16rem 0 0; font-size: 0.95rem; line-height: 1.5; color: var(--text); }
   .wheel-panel dd.over { color: var(--text-dim); }
-  .wheel-panel .plist { list-style: none; margin: 0.55rem 0 0; padding: 0; columns: 2; column-gap: 1.1rem; }
-  .wheel-panel .plist li { font-size: 0.9rem; line-height: 1.4; color: var(--text); padding: 0.08rem 0; break-inside: avoid; }
-  .wheel-panel .phint { margin-top: auto; padding-top: 0.85rem; font-size: 0.86rem; color: var(--text-dim); font-style: italic; line-height: 1.45; }
+  .wheel-panel .plist { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+  .wheel-panel .plist li { font-size: 0.97rem; line-height: 1.45; color: var(--text); padding: 0.13rem 0; display: flex; gap: 0.65rem; align-items: baseline; }
+  .wheel-panel .plist .pn { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); min-width: 1.5em; text-align: right; flex: none; }
+  .wheel-panel .phint { margin-top: auto; padding-top: 0.9rem; font-size: 0.84rem; color: var(--text-dim); font-style: italic; line-height: 1.45; }
 
   /* mobile accordion fallback (built from the same data) */
   .wheel-list { display: none; margin-top: 1.4rem; max-width: var(--measure); margin-left: auto; margin-right: auto; }
@@ -305,12 +309,16 @@
   .wheel-list > details > summary::-webkit-details-marker { display: none; }
   .wheel-list > details[open] > summary { color: var(--accent-hover); }
   .wheel-list > details > summary .wl-m { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; font-style: italic; color: var(--text-dim); }
-  .wheel-list .wl-cluster { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0.85rem 0 0.1rem; }
+  .wheel-list .wl-cluster { margin: 0.95rem 0 0.25rem; }
+  .wheel-list .wl-cl { display: block; font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .wheel-list .wl-cd { display: block; font-size: 0.88rem; font-style: italic; color: var(--text-dim); line-height: 1.4; margin-top: 0.12rem; }
   .wheel-list .wl-comp { border-top: 1px solid rgba(212,196,160,0.08); }
-  .wheel-list .wl-comp > summary { font-size: 1rem; color: var(--text); padding: 0.5rem 0; cursor: pointer; list-style: none; }
+  .wheel-list .wl-comp > summary { font-size: 1rem; color: var(--text); padding: 0.5rem 0; cursor: pointer; list-style: none; display: flex; gap: 0.6rem; align-items: baseline; }
   .wheel-list .wl-comp > summary::-webkit-details-marker { display: none; }
   .wheel-list .wl-comp[open] > summary { color: var(--accent-hover); font-weight: 700; }
+  .wheel-list .wl-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); min-width: 1.5em; flex: none; }
   .wheel-list .wl-body { padding: 0.1rem 0 0.7rem; }
+  .wheel-list .wl-def { font-size: 0.97rem; line-height: 1.5; color: var(--text-bright); margin: 0.1rem 0 0.25rem; }
   .wheel-list .wl-body dt { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-top: 0.55rem; }
   .wheel-list .wl-body dd { margin: 0.12rem 0 0; font-size: 0.94rem; line-height: 1.45; color: var(--text); }
   .wheel-list .wl-body dd.over { color: var(--text-dim); }
@@ -957,60 +965,60 @@
        Courage, Manages Conflict, Self-Awareness, Being Resilient, Situational
        Adaptability) carry language taken straight from the book. */
     var COMPETENCY_DATA = { factors: [
-      { name: 'Thought', meaning: 'How you see the business and make the call.', hue: 200, sat: 28, clusters: [
-        { name: 'Understanding the Business', competencies: [
-          { n: 'Business Insight', s: 'Knows how the business makes money and where the market is heading.', o: 'Buries the call in analysis; theory crowds out action.', t: 'Spend a day with the team furthest from yours and trace how it earns or spends a dollar.' },
-          { n: 'Customer Focus', s: 'Builds the work around what the customer actually needs.', o: 'Says yes to every request and loses the thread of the business.', t: 'Sit in on three customer calls this month; write down their words, not yours.' },
-          { n: 'Financial Acumen', s: 'Reads the numbers and makes decisions that hold up on the books.', o: 'Optimizes the spreadsheet at the expense of people and product.', t: 'Have finance walk you through your own budget, line by line, until you could rebuild it.' },
-          { n: 'Tech Savvy', s: 'Anticipates how technology will reshape the work and adopts it early.', o: 'Chases every new tool; mistakes novelty for progress.', t: 'Pick one emerging tool in your field and use it on a real task for a week.' } ] },
-        { name: 'Making Complex Decisions', competencies: [
-          { n: 'Manages Complexity', s: 'Untangles large, ambiguous problems down to the few variables that matter.', o: 'Over-complicates the simple; struggles to land a clear answer.', t: 'Force the next messy problem onto one page: what we know, what we do not, the decision.' },
-          { n: 'Decision Quality', s: 'Makes good calls, on time, even without complete information.', o: 'Waits for a certainty that never comes, and decides too late.', t: 'Write the decision and your reasoning before you act, then check it against what happened.' },
-          { n: 'Balances Stakeholders', s: 'Weighs competing interests and finds a path most can live with.', o: 'Tries to please everyone, and the decision dissolves.', t: 'List who your next decision touches and what each one would call a fair outcome.' } ] },
-        { name: 'Creating the New and Different', competencies: [
-          { n: 'Global Perspective', s: 'Sees the work in a wide context, across markets and cultures.', o: 'Stays abstract; loses the local and the concrete.', t: 'Before deciding, ask how this lands for a team two time zones and one culture away.' },
-          { n: 'Cultivates Innovation', s: 'Makes room for new ideas and turns them into something real.', o: 'Chases novelty; never finishes or scales anything.', t: 'Run one small, cheap experiment this month with a clear way to tell if it worked.' },
-          { n: 'Strategic Mindset', s: 'Sees what is coming and sets a clear direction to meet it.', o: 'Lives in the future and neglects today’s execution.', t: 'Write where the team must be in two years, then name the one move that matters now.' } ] } ] },
-      { name: 'Results', meaning: 'Turning intent into delivered work.', hue: 12, sat: 46, clusters: [
-        { name: 'Taking Initiative', competencies: [
-          { n: 'Action Oriented', s: 'Steps into new things readily, with a bias to start.', o: 'Acts before thinking; mistakes motion for progress.', t: 'Take the smallest possible first step today on the thing you have been avoiding.' },
-          { n: 'Resourcefulness', s: 'Gets a lot done with the people, budget, and time on hand.', o: 'Over-engineers; spends what the goal never required.', t: 'Name the constraint you keep blaming, then solve the next task as if it were fixed.' } ] },
-        { name: 'Managing Execution', competencies: [
-          { n: 'Directs Work', s: 'Gives clear assignments, clears blockers, keeps work moving.', o: 'Micromanages; nothing moves without you.', t: 'On one project, set the outcome and the edges, then deliberately stay out of the how.' },
-          { n: 'Plans and Aligns', s: 'Lays out the work so the right things happen in the right order.', o: 'Plans endlessly; the plan quietly replaces the doing.', t: 'Map the next project backward from its deadline and find where two tracks must meet.' },
-          { n: 'Optimizes Work Processes', s: 'Finds the friction in how work flows and takes it out.', o: 'Tinkers with process for its own sake and adds steps.', t: 'Watch one routine task end to end and delete a step no one would miss.' } ] },
-        { name: 'Focusing on Performance', competencies: [
-          { n: 'Ensures Accountability', s: 'Holds self and others to their commitments, and follows through.', o: 'Polices everything; trust curdles into blame.', t: 'End your next meeting by saying out loud who owns what, by when.' },
-          { n: 'Drives Results', s: 'Pushes through obstacles to hit the goal, and brings people along.', o: 'Wins the number, scorches the people and the relationships.', t: 'Pick the one result that matters most this quarter and cut a lesser one to protect it.' } ] } ] },
-      { name: 'People', meaning: 'Leading, and getting work done through others. Most of this essay lives here.', hue: 42, sat: 50, clusters: [
-        { name: 'Building Collaborative Relationships', competencies: [
-          { n: 'Collaborates', s: 'Works across lines, shares credit, builds toward a shared win.', o: 'Over-includes, until everything needs a meeting.', t: 'On your next cross-team task, hand one piece of real ownership to someone outside your group.' },
-          { n: 'Manages Conflict', s: 'Steps up to conflict early and works it to a fair resolution.', o: 'Forces confrontation, or smooths over what should be aired.', t: 'Give reasons first and solutions last; let the other side fully vent before you respond.' },
-          { n: 'Interpersonal Savvy', s: 'Reads people and adjusts; builds rapport with many kinds of person.', o: 'Reads as political, or over-managed.', t: 'In your next one-on-one, talk a quarter of the time and listen the rest.' },
-          { n: 'Builds Networks', s: 'Builds useful relationships before needing them.', o: 'Networks so instrumentally that people feel used.', t: 'Have one conversation this month with someone you would otherwise only call in a crisis.' } ] },
-        { name: 'Optimizing Diverse Talent', competencies: [
-          { n: 'Attracts Top Talent', s: 'Finds, hires, and keeps people better than the average.', o: 'Hoards stars, or hires only in their own image.', t: 'Keep a standing shortlist of three people you would hire tomorrow if you could.' },
-          { n: 'Develops Talent', s: 'Grows people through coaching, feedback, exposure, and stretch.', o: 'Pushes growth no one asked for, and reads as never satisfied.', t: 'Spend about eight hours a year per report on their growth: an honest appraisal, a career talk, a plan.' },
-          { n: 'Values Differences', s: 'Draws real strength from different backgrounds and ways of thinking.', o: 'Treats difference as a quota and performs inclusion.', t: 'On the next decision, deliberately seek out the view of the person least like you.' },
-          { n: 'Builds Effective Teams', s: 'Forms a diverse group with a shared mindset that out-performs the sum.', o: 'Leaves everything open for debate and avoids the hard call.', t: 'Get each member to help set the common goal, then celebrate the wins together.' } ] },
-        { name: 'Influencing People', competencies: [
-          { n: 'Communicates Effectively', s: 'Is clear and honest, and tailors the message to the audience.', o: 'Over-communicates, until the signal is lost in the volume.', t: 'Before your next update, write the one sentence the audience must remember.' },
-          { n: 'Drives Engagement', s: 'Builds the conditions where capable people give their full, willing effort.', o: 'Manufactures enthusiasm and mistakes activity for commitment.', t: 'Learn three non-work things about each person, and give real autonomy in how the work gets done.' },
-          { n: 'Organizational Savvy', s: 'Reads how the place really works and gets things through it.', o: 'Plays politics until people stop trusting the motive.', t: 'Map who actually decides on your next ask, not who holds the title.' },
-          { n: 'Persuades', s: 'Wins genuine agreement, not mere compliance.', o: 'Over-sells, and pushes past the point people had already agreed.', t: 'Open your next pitch with what the other person gains, then stop talking.' },
-          { n: 'Drives Vision and Purpose', s: 'Paints a compelling picture of the future and makes people want it.', o: 'Sells the vision so hard that today’s work feels small.', t: 'Connect one routine task this week to the larger why, in plain words, for one person.' } ] } ] },
-      { name: 'Self', meaning: 'Who you are under pressure, and how you keep learning.', hue: 280, sat: 22, clusters: [
-        { name: 'Being Authentic', competencies: [
-          { n: 'Courage', s: 'Says the hard thing and takes the unpopular stand when it is right.', o: 'Turns too critical and heavy-handed, and fights too many battles.', t: 'Get to the point: have the conversation you have been avoiding, kindly, and bring a solution.' },
-          { n: 'Instills Trust', s: 'Keeps commitments and is the same person in every room.', o: 'Pushes honesty to the point of being disruptive or judgmental.', t: 'Talk about what “we” did, not “I”; be on time, return the call, send what you promised.' } ] },
-        { name: 'Being Open', competencies: [
-          { n: 'Demonstrates Self-Awareness', s: 'Knows their effect on others and owns their blind spots.', o: 'Turns self-reflection into a performance.', t: 'Ask a trusted peer what gets in your own way; offer a self-appraisal first, then just listen.' },
-          { n: 'Self-Development', s: 'Actively works on their own growth and seeks out hard feedback.', o: 'Collects courses, but never consolidates a real strength.', t: 'Pick one skill this quarter and find a piece of work that forces you to use it.' } ] },
-        { name: 'Being Flexible and Adaptable', competencies: [
-          { n: 'Manages Ambiguity', s: 'Acts effectively even when the path is unclear.', o: 'Tolerates a fog that others around them need lifted.', t: 'When you do not know, say what you do know and the date you will know more.' },
-          { n: 'Nimble Learning', s: 'Learns fast by trying things, especially from what fails.', o: 'Experiments forever and never settles what works.', t: 'After the next setback, write the one thing you would do differently, and use it within a week.' },
-          { n: 'Being Resilient', s: 'Stays steady under pressure and bounces back from setbacks.', o: 'Goes so flat and composed they can seem cold and uncaring.', t: 'When rattled, hold your first response; the second or third thing you would say is usually better.' },
-          { n: 'Situational Adaptability', s: 'Reads the moment and adjusts style to fit it.', o: 'Adapts so much they seem to have no center.', t: 'Work from the outside in: watch how people react while you act, and change tactics on the fly.' } ] } ] }
+      { name: 'Thought', roman: 'I', meaning: 'How you see the business and make the call.', hue: 200, sat: 28, clusters: [
+        { name: 'Understanding the Business', letter: 'A', def: 'Knowing how the business and its market actually work.', competencies: [
+          { id: 5, n: 'Business Insight', def: 'Applying knowledge of the business and the marketplace to advance the organization.', s: 'Knows how the business makes money and where the market is heading.', o: 'Buries the call in analysis; theory crowds out action.', t: 'Spend a day with the team furthest from yours and trace how it earns or spends a dollar.' },
+          { id: 11, n: 'Customer Focus', def: 'Building strong customer relationships and delivering customer-centered solutions.', s: 'Builds the work around what the customer actually needs.', o: 'Says yes to every request and loses the thread of the business.', t: 'Sit in on three customer calls this month; write down their words, not yours.' },
+          { id: 17, n: 'Financial Acumen', def: 'Reading key financial indicators and using them to make better decisions.', s: 'Reads the numbers and makes decisions that hold up on the books.', o: 'Optimizes the spreadsheet at the expense of people and product.', t: 'Have finance walk you through your own budget, line by line, until you could rebuild it.' },
+          { id: 35, n: 'Tech Savvy', def: 'Anticipating and adopting new digital and technology tools.', s: 'Anticipates how technology will reshape the work and adopts it early.', o: 'Chases every new tool; mistakes novelty for progress.', t: 'Pick one emerging tool in your field and use it on a real task for a week.' } ] },
+        { name: 'Making Complex Decisions', letter: 'B', def: 'Cutting through messy information to make the right call.', competencies: [
+          { id: 8, n: 'Manages Complexity', def: 'Making sense of large amounts of sometimes contradictory information to solve problems.', s: 'Untangles large, ambiguous problems down to the few variables that matter.', o: 'Over-complicates the simple; struggles to land a clear answer.', t: 'Force the next messy problem onto one page: what we know, what we do not, the decision.' },
+          { id: 12, n: 'Decision Quality', def: 'Making good and timely decisions that keep the organization moving forward.', s: 'Makes good calls, on time, even without complete information.', o: 'Waits for a certainty that never comes, and decides too late.', t: 'Write the decision and your reasoning before you act, then check it against what happened.' },
+          { id: 32, n: 'Balances Stakeholders', def: 'Anticipating and balancing the needs of multiple stakeholders.', s: 'Weighs competing interests and finds a path most can live with.', o: 'Tries to please everyone, and the decision dissolves.', t: 'List who your next decision touches and what each one would call a fair outcome.' } ] },
+        { name: 'Creating the New and Different', letter: 'C', def: 'Imagining what could be, and charting a course toward it.', competencies: [
+          { id: 18, n: 'Global Perspective', def: 'Taking a broad, worldwide view when approaching issues.', s: 'Sees the work in a wide context, across markets and cultures.', o: 'Stays abstract; loses the local and the concrete.', t: 'Before deciding, ask how this lands for a team two time zones and one culture away.' },
+          { id: 19, n: 'Cultivates Innovation', def: 'Creating new and better ways for the organization to succeed.', s: 'Makes room for new ideas and turns them into something real.', o: 'Chases novelty; never finishes or scales anything.', t: 'Run one small, cheap experiment this month with a clear way to tell if it worked.' },
+          { id: 33, n: 'Strategic Mindset', def: 'Seeing ahead to future possibilities and turning them into a clear strategy.', s: 'Sees what is coming and sets a clear direction to meet it.', o: 'Lives in the future and neglects today’s execution.', t: 'Write where the team must be in two years, then name the one move that matters now.' } ] } ] },
+      { name: 'Results', roman: 'II', meaning: 'Turning intent into delivered work.', hue: 12, sat: 46, clusters: [
+        { name: 'Taking Initiative', letter: 'D', def: 'Getting moving, and finding a way through.', competencies: [
+          { id: 2, n: 'Action Oriented', def: 'Taking on new opportunities and tough challenges with urgency and energy.', s: 'Steps into new things readily, with a bias to start.', o: 'Acts before thinking; mistakes motion for progress.', t: 'Take the smallest possible first step today on the thing you have been avoiding.' },
+          { id: 27, n: 'Resourcefulness', def: 'Securing and deploying resources effectively and efficiently.', s: 'Gets a lot done with the people, budget, and time on hand.', o: 'Over-engineers; spends what the goal never required.', t: 'Name the constraint you keep blaming, then solve the next task as if it were fixed.' } ] },
+        { name: 'Managing Execution', letter: 'E', def: 'Organizing work so the right things happen in the right order.', competencies: [
+          { id: 15, n: 'Directs Work', def: 'Providing direction, delegating, and removing obstacles to get work done.', s: 'Gives clear assignments, clears blockers, keeps work moving.', o: 'Micromanages; nothing moves without you.', t: 'On one project, set the outcome and the edges, then deliberately stay out of the how.' },
+          { id: 25, n: 'Plans and Aligns', def: 'Planning and prioritizing work to meet commitments tied to the organization’s goals.', s: 'Lays out the work so the right things happen in the right order.', o: 'Plans endlessly; the plan quietly replaces the doing.', t: 'Map the next project backward from its deadline and find where two tracks must meet.' },
+          { id: 38, n: 'Optimizes Work Processes', def: 'Knowing the most effective, efficient way to get work done, and always improving it.', s: 'Finds the friction in how work flows and takes it out.', o: 'Tinkers with process for its own sake and adds steps.', t: 'Watch one routine task end to end and delete a step no one would miss.' } ] },
+        { name: 'Focusing on Performance', letter: 'F', def: 'Owning the outcome and driving it home.', competencies: [
+          { id: 1, n: 'Ensures Accountability', def: 'Holding yourself and others accountable to meet commitments.', s: 'Holds self and others to their commitments, and follows through.', o: 'Polices everything; trust curdles into blame.', t: 'End your next meeting by saying out loud who owns what, by when.' },
+          { id: 28, n: 'Drives Results', def: 'Consistently achieving results, even under tough circumstances.', s: 'Pushes through obstacles to hit the goal, and brings people along.', o: 'Wins the number, scorches the people and the relationships.', t: 'Pick the one result that matters most this quarter and cut a lesser one to protect it.' } ] } ] },
+      { name: 'People', roman: 'III', meaning: 'Leading, and getting work done through others. Most of this essay lives here.', hue: 42, sat: 50, clusters: [
+        { name: 'Building Collaborative Relationships', letter: 'G', def: 'Working well with others, across lines, to get things done together.', competencies: [
+          { id: 6, n: 'Collaborates', def: 'Building partnerships and working with others to meet shared objectives.', s: 'Works across lines, shares credit, builds toward a shared win.', o: 'Over-includes, until everything needs a meeting.', t: 'On your next cross-team task, hand one piece of real ownership to someone outside your group.' },
+          { id: 9, n: 'Manages Conflict', def: 'Handling conflict effectively, with a minimum of noise.', s: 'Steps up to conflict early and works it to a fair resolution.', o: 'Forces confrontation, or smooths over what should be aired.', t: 'Give reasons first and solutions last; let the other side fully vent before you respond.' },
+          { id: 20, n: 'Interpersonal Savvy', def: 'Relating openly and comfortably with diverse groups of people.', s: 'Reads people and adjusts; builds rapport with many kinds of person.', o: 'Reads as political, or over-managed.', t: 'In your next one-on-one, talk a quarter of the time and listen the rest.' },
+          { id: 21, n: 'Builds Networks', def: 'Building strong formal and informal relationships inside and outside the organization.', s: 'Builds useful relationships before needing them.', o: 'Networks so instrumentally that people feel used.', t: 'Have one conversation this month with someone you would otherwise only call in a crisis.' } ] },
+        { name: 'Optimizing Diverse Talent', letter: 'H', def: 'Finding, growing, and getting the best from a range of people.', competencies: [
+          { id: 4, n: 'Attracts Top Talent', def: 'Attracting and selecting the best talent to meet current and future needs.', s: 'Finds, hires, and keeps people better than the average.', o: 'Hoards stars, or hires only in their own image.', t: 'Keep a standing shortlist of three people you would hire tomorrow if you could.' },
+          { id: 13, n: 'Develops Talent', def: 'Developing people to meet both their career goals and the organization’s goals.', s: 'Grows people through coaching, feedback, exposure, and stretch.', o: 'Pushes growth no one asked for, and reads as never satisfied.', t: 'Spend about eight hours a year per report on their growth: an honest appraisal, a career talk, a plan.' },
+          { id: 14, n: 'Values Differences', def: 'Recognizing the value that different perspectives and cultures bring.', s: 'Draws real strength from different backgrounds and ways of thinking.', o: 'Treats difference as a quota and performs inclusion.', t: 'On the next decision, deliberately seek out the view of the person least like you.' },
+          { id: 34, n: 'Builds Effective Teams', def: 'Building strong teams that use their diverse skills to reach common goals.', s: 'Forms a diverse group with a shared mindset that out-performs the sum.', o: 'Leaves everything open for debate and avoids the hard call.', t: 'Get each member to help set the common goal, then celebrate the wins together.' } ] },
+        { name: 'Influencing People', letter: 'I', def: 'Moving people by informing, persuading, and inspiring them.', competencies: [
+          { id: 7, n: 'Communicates Effectively', def: 'Delivering messages that fit the audience, and listening as well as telling.', s: 'Is clear and honest, and tailors the message to the audience.', o: 'Over-communicates, until the signal is lost in the volume.', t: 'Before your next update, write the one sentence the audience must remember.' },
+          { id: 16, n: 'Drives Engagement', def: 'Creating a climate where people are motivated to do their best.', s: 'Builds the conditions where capable people give their full, willing effort.', o: 'Manufactures enthusiasm and mistakes activity for commitment.', t: 'Learn three non-work things about each person, and give real autonomy in how the work gets done.' },
+          { id: 23, n: 'Organizational Savvy', def: 'Maneuvering comfortably through the politics and informal workings of an organization.', s: 'Reads how the place really works and gets things through it.', o: 'Plays politics until people stop trusting the motive.', t: 'Map who actually decides on your next ask, not who holds the title.' },
+          { id: 24, n: 'Persuades', def: 'Using compelling arguments to win the support and commitment of others.', s: 'Wins genuine agreement, not mere compliance.', o: 'Over-sells, and pushes past the point people had already agreed.', t: 'Open your next pitch with what the other person gains, then stop talking.' },
+          { id: 37, n: 'Drives Vision and Purpose', def: 'Painting a compelling picture of the future that moves people to act.', s: 'Paints a compelling picture of the future and makes people want it.', o: 'Sells the vision so hard that today’s work feels small.', t: 'Connect one routine task this week to the larger why, in plain words, for one person.' } ] } ] },
+      { name: 'Self', roman: 'IV', meaning: 'Who you are under pressure, and how you keep learning.', hue: 280, sat: 22, clusters: [
+        { name: 'Being Authentic', letter: 'J', def: 'Showing up honest, consistent, and willing to take a stand.', competencies: [
+          { id: 10, n: 'Courage', def: 'Stepping up to address difficult issues, and saying what needs to be said.', s: 'Says the hard thing and takes the unpopular stand when it is right.', o: 'Turns too critical and heavy-handed, and fights too many battles.', t: 'Get to the point: have the conversation you have been avoiding, kindly, and bring a solution.' },
+          { id: 36, n: 'Instills Trust', def: 'Gaining others’ confidence through honesty, integrity, and authenticity.', s: 'Keeps commitments and is the same person in every room.', o: 'Pushes honesty to the point of being disruptive or judgmental.', t: 'Talk about what “we” did, not “I”; be on time, return the call, send what you promised.' } ] },
+        { name: 'Being Open', letter: 'K', def: 'Knowing yourself, and staying hungry to grow.', competencies: [
+          { id: 29, n: 'Demonstrates Self-Awareness', def: 'Using feedback and reflection to understand your own strengths and blind spots.', s: 'Knows their effect on others and owns their blind spots.', o: 'Turns self-reflection into a performance.', t: 'Ask a trusted peer what gets in your own way; offer a self-appraisal first, then just listen.' },
+          { id: 30, n: 'Self-Development', def: 'Actively seeking new ways to grow and stretch yourself.', s: 'Actively works on their own growth and seeks out hard feedback.', o: 'Collects courses, but never consolidates a real strength.', t: 'Pick one skill this quarter and find a piece of work that forces you to use it.' } ] },
+        { name: 'Being Flexible and Adaptable', letter: 'L', def: 'Staying steady and learning fast when things change.', competencies: [
+          { id: 3, n: 'Manages Ambiguity', def: 'Operating effectively even when things are uncertain or the way forward is unclear.', s: 'Acts effectively even when the path is unclear.', o: 'Tolerates a fog that others around them need lifted.', t: 'When you do not know, say what you do know and the date you will know more.' },
+          { id: 22, n: 'Nimble Learning', def: 'Learning through experimentation, using both wins and failures as fuel.', s: 'Learns fast by trying things, especially from what fails.', o: 'Experiments forever and never settles what works.', t: 'After the next setback, write the one thing you would do differently, and use it within a week.' },
+          { id: 26, n: 'Being Resilient', def: 'Rebounding from setbacks and adversity when facing difficulty.', s: 'Stays steady under pressure and bounces back from setbacks.', o: 'Goes so flat and composed they can seem cold and uncaring.', t: 'When rattled, hold your first response; the second or third thing you would say is usually better.' },
+          { id: 31, n: 'Situational Adaptability', def: 'Adapting your approach in real time to fit the needs of the moment.', s: 'Reads the moment and adjusts style to fit it.', o: 'Adapts so much they seem to have no center.', t: 'Work from the outside in: watch how people react while you act, and change tactics on the fly.' } ] } ] }
     ] };
 
     /* The signature idea, made tangible: five manager strengths described three
@@ -1073,7 +1081,10 @@
         path.setAttribute('class', 'arc');
         path.setAttribute('tabindex', '0');
         path.setAttribute('role', 'button');
-        path.setAttribute('aria-label', meta.name);
+        var aria = meta.kind === 'factor' ? ('Factor ' + meta.data.roman + ', ' + meta.data.name)
+          : meta.kind === 'cluster' ? ('Cluster ' + meta.data.letter + ', ' + meta.data.name)
+          : ('Competency ' + meta.data.id + ', ' + meta.data.n);
+        path.setAttribute('aria-label', aria);
         meta.el = path;
         arcsG.appendChild(path);
         allArcs.push(meta);
@@ -1147,38 +1158,47 @@
       function renderPanel(m) {
         var h = '';
         if (m.kind === 'factor') {
-          h += '<div class="crumb"><b>' + m.data.name + '</b></div>';
+          var nc = 0; m.data.clusters.forEach(function (c) { nc += c.competencies.length; });
+          h += '<div class="p-kind">Factor ' + m.data.roman + '</div>';
           h += '<div class="pname">' + m.data.name + '</div>';
-          h += '<div class="pmean">' + m.data.meaning + '</div>';
-          h += '<dt style="margin-top:0.9rem">' + m.data.clusters.length + ' clusters</dt>';
+          h += '<p class="pdef">' + m.data.meaning + '</p>';
+          h += '<div class="p-div"></div>';
+          h += '<dt>' + m.data.clusters.length + ' clusters &middot; ' + nc + ' competencies</dt>';
           h += '<ul class="plist">';
-          m.data.clusters.forEach(function (c) { h += '<li>' + c.name + '</li>'; });
+          m.data.clusters.forEach(function (c) { h += '<li><span class="pn">' + c.letter + '</span><span>' + c.name + '</span></li>'; });
           h += '</ul>';
         } else if (m.kind === 'cluster') {
-          h += '<div class="crumb"><b>' + m.factor.name + '</b> &rsaquo; ' + m.data.name + '</div>';
+          h += '<div class="p-kind">Cluster ' + m.data.letter + '</div>';
+          h += '<div class="crumb">Factor ' + m.factor.roman + ' <span class="sep">&rsaquo;</span> ' + m.factor.name + '</div>';
           h += '<div class="pname">' + m.data.name + '</div>';
-          h += '<dt style="margin-top:0.9rem">' + m.data.competencies.length + ' competencies</dt>';
+          h += '<p class="pdef">' + m.data.def + '</p>';
+          h += '<div class="p-div"></div>';
+          h += '<dt>' + m.data.competencies.length + ' competencies in this cluster</dt>';
           h += '<ul class="plist">';
-          m.data.competencies.forEach(function (p) { h += '<li>' + p.n + '</li>'; });
+          m.data.competencies.forEach(function (p) { h += '<li><span class="pn">' + p.id + '</span><span>' + p.n + '</span></li>'; });
           h += '</ul>';
         } else {
           var p = m.data;
-          h += '<div class="crumb"><b>' + m.factor.name + '</b> &rsaquo; ' + m.cluster.name + '</div>';
+          h += '<div class="p-kind">Competency ' + p.id + '</div>';
+          h += '<div class="crumb">' + m.factor.name + ' <span class="sep">&rsaquo;</span> ' + m.cluster.name + '</div>';
           h += '<div class="pname">' + p.n + '</div>';
-          h += '<dl><dt>Done well</dt><dd>' + p.s + '</dd>';
-          h += '<dt>Overused</dt><dd class="over">' + p.o + '</dd>';
+          h += '<p class="pdef">' + p.def + '</p>';
+          h += '<div class="p-div"></div>';
+          h += '<dl><dt>Skilled, it looks like</dt><dd>' + p.s + '</dd>';
+          h += '<dt>Overused, it tips into</dt><dd class="over">' + p.o + '</dd>';
           h += '<dt>One way to build it</dt><dd>' + p.t + '</dd></dl>';
         }
         panel.innerHTML = h;
       }
       function renderDefault() {
-        var h = '<div class="crumb">Korn Ferry Leadership Architect</div>';
-        h += '<div class="pname">Four factors, 38 skills</div>';
-        h += '<div class="pmean">Together they describe almost everything a leader is ever asked to do. The work of this essay lives mostly in People and Self.</div><dl>';
+        var h = '<div class="p-kind">The Library</div>';
+        h += '<div class="pname">A map of the whole job</div>';
+        h += '<p class="pdef">Four <b>factors</b> hold twelve <b>clusters</b>, which hold thirty-eight <b>competencies</b>. Together they name almost everything a leader is ever asked to do.</p>';
+        h += '<div class="p-div"></div><dl>';
         COMPETENCY_DATA.factors.forEach(function (f) {
-          h += '<dt style="color:' + hsl(f.hue, Math.min(62, f.sat + 14), 72) + '">' + f.name + '</dt><dd>' + f.meaning + '</dd>';
+          h += '<dt style="color:' + hsl(f.hue, Math.min(62, f.sat + 14), 72) + '">Factor ' + f.roman + ' &middot; ' + f.name + '</dt><dd>' + f.meaning + '</dd>';
         });
-        h += '</dl><p class="phint">Hover or tap any segment to explore it.</p>';
+        h += '</dl><p class="phint">The inner ring is the factor, the middle ring its clusters, the outer ring the competencies. Hover or tap any segment to explore it.</p>';
         panel.innerHTML = h;
       }
       renderDefault();
@@ -1188,13 +1208,14 @@
       if (list) {
         var lh = '';
         COMPETENCY_DATA.factors.forEach(function (f) {
-          lh += '<details><summary>' + f.name + '<span class="wl-m">' + f.meaning + '</span></summary>';
+          lh += '<details><summary><span>Factor ' + f.roman + ' &middot; ' + f.name + '</span><span class="wl-m">' + f.meaning + '</span></summary>';
           f.clusters.forEach(function (c) {
-            lh += '<div class="wl-cluster">' + c.name + '</div>';
+            lh += '<div class="wl-cluster"><span class="wl-cl">Cluster ' + c.letter + ' &middot; ' + c.name + '</span><span class="wl-cd">' + c.def + '</span></div>';
             c.competencies.forEach(function (p) {
-              lh += '<details class="wl-comp"><summary>' + p.n + '</summary><div class="wl-body"><dl>' +
-                '<dt>Done well</dt><dd>' + p.s + '</dd>' +
-                '<dt>Overused</dt><dd class="over">' + p.o + '</dd>' +
+              lh += '<details class="wl-comp"><summary><span class="wl-n">' + p.id + '</span><span>' + p.n + '</span></summary><div class="wl-body">' +
+                '<p class="wl-def">' + p.def + '</p><dl>' +
+                '<dt>Skilled, it looks like</dt><dd>' + p.s + '</dd>' +
+                '<dt>Overused, it tips into</dt><dd class="over">' + p.o + '</dd>' +
                 '<dt>One way to build it</dt><dd>' + p.t + '</dd></dl></div></details>';
             });
           });
