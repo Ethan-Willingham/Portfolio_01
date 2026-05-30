@@ -212,7 +212,7 @@
   .cases .case .res b { color: var(--accent-hover); font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* ============================================================
-     THE INTERACTIVE: "Does paying for speed help?" (Glucksberg 1962)
+     THE INTERACTIVE: "Does a cash bonus help?" (Glucksberg 1962)
      ============================================================ */
   .lab { background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; overflow: hidden;
     box-shadow: 0 1px 2px rgba(12,16,13,0.45), 0 18px 40px -16px rgba(8,12,9,0.55), inset 0 1px 0 rgba(245,241,234,0.04); margin: 3rem 0; }
@@ -448,31 +448,31 @@
       <p>Daniel Pink gathered this into three drivers that actually move professionals: <b>autonomy</b> (control over their work), <b>mastery</b> (getting visibly better at something that matters), and <b>purpose</b> (a reason beyond the paycheck). The carrot-and-stick was built for routine work. On thinking work it backfires. Try it:</p>
 
       <!-- ===== interactive ===== -->
-      <div class="lab full reveal" id="lab" aria-label="Interactive: does paying for speed help?">
+      <div class="lab full reveal" id="lab" aria-label="Interactive: does a cash bonus help?">
         <div class="lab-in" style="max-width: calc(var(--measure) + 11rem); margin: 0 auto;">
           <div class="lab-head">
-            <div class="t">Does paying for speed help?</div>
-            <div class="s">A real 1962 experiment: two versions of the same puzzle. Offer the cash prize and watch the reward split them apart.</div>
+            <div class="t">Does a cash bonus help?</div>
+            <div class="s">Put the same cash reward on two different kinds of work, then watch it do two opposite things.</div>
           </div>
           <div class="lab-body">
-            <div class="lab-metric">how fast each puzzle gets solved, longer is faster</div>
+            <div class="lab-metric">how well the work turns out</div>
             <div class="lab-tasks">
               <div class="lab-task" id="task-simple">
-                <div class="lt-h"><b>Tacks out of the box</b><span>the answer is in plain sight</span></div>
+                <div class="lt-h"><b>Routine work</b><span>a clear job with a known method</span></div>
                 <div class="lt-track"><div class="lt-fill" id="fill-simple"></div></div>
-                <div class="lt-chip" id="chip-simple">waiting for the prize</div>
+                <div class="lt-chip" id="chip-simple">no bonus yet</div>
               </div>
               <div class="lab-task" id="task-insight">
-                <div class="lt-h"><b>Tacks inside the box</b><span>you must see the box itself as the shelf</span></div>
+                <div class="lt-h"><b>Creative work</b><span>an open problem that needs a new idea</span></div>
                 <div class="lt-track"><div class="lt-fill insight" id="fill-insight"></div></div>
-                <div class="lt-chip" id="chip-insight">waiting for the prize</div>
+                <div class="lt-chip" id="chip-insight">no bonus yet</div>
               </div>
             </div>
             <div class="lab-controls2">
-              <button class="lab-toggle" id="lab-bonus" aria-pressed="false">Offer a cash prize for the fastest</button>
+              <button class="lab-toggle" id="lab-bonus" aria-pressed="false">Offer a cash bonus on both</button>
             </div>
-            <div class="lab-read"><p id="lab-msg">This is Sam Glucksberg's 1962 version of the candle problem. Offer the prize, and watch the same reward do opposite things to the two puzzles.</p></div>
-            <div class="lab-cite">Sam Glucksberg, Princeton, 1962. The candle problem.</div>
+            <div class="lab-read"><p id="lab-msg">Press the button to put the same cash reward on both kinds of work, and watch what it does to each.</p></div>
+            <div class="lab-cite">Based on Sam Glucksberg's 1962 reward experiment.</div>
           </div>
         </div>
       </div>
@@ -747,10 +747,10 @@
       Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function (el) { io.observe(el); });
     }
 
-    /* ===== the interactive: "does paying for speed help?" =====
-       Sam Glucksberg's 1962 candle-problem experiment. A cash prize for
-       speed made the in-plain-sight version FASTER and the insight version
-       about 3.5 minutes SLOWER. One toggle, the two real conditions. */
+    /* ===== the interactive: "does a cash bonus help?" =====
+       The same cash reward on two kinds of work. Grounded in Sam
+       Glucksberg's 1962 experiment: a reward sped up a simple puzzle and
+       made a creative one about 3.5 minutes slower. Fuller bar = better. */
     var bonusBtn = document.getElementById('lab-bonus');
     var fillS = document.getElementById('fill-simple'), chipS = document.getElementById('chip-simple'), taskS = document.getElementById('task-simple');
     var fillI = document.getElementById('fill-insight'), chipI = document.getElementById('chip-insight'), taskI = document.getElementById('task-insight');
@@ -759,20 +759,20 @@
 
     function render() {
       if (!bonus) {
-        fillS.style.width = '56%'; fillI.style.width = '56%';
-        chipS.textContent = 'waiting for the prize'; chipI.textContent = 'waiting for the prize';
+        fillS.style.width = '50%'; fillI.style.width = '50%';
+        chipS.textContent = 'no bonus yet'; chipI.textContent = 'no bonus yet';
         taskS.classList.remove('up', 'down'); taskI.classList.remove('up', 'down');
-        bonusBtn.textContent = 'Offer a cash prize for the fastest';
+        bonusBtn.textContent = 'Offer a cash bonus on both';
         bonusBtn.setAttribute('aria-pressed', 'false');
-        msg.innerHTML = "This is Sam Glucksberg's 1962 version of the <b>candle problem</b>. Offer the prize, and watch the same reward do opposite things to the two puzzles.";
+        msg.innerHTML = 'Press the button to put the same cash reward on both kinds of work, and watch what it does to each.';
       } else {
-        fillS.style.width = '82%'; fillI.style.width = '31%';
-        chipS.innerHTML = '<b>faster</b>'; chipI.innerHTML = '<b>about 3.5 minutes slower</b>';
+        fillS.style.width = '72%'; fillI.style.width = '26%';
+        chipS.innerHTML = '<b>a little better</b>'; chipI.innerHTML = '<b>clearly worse</b>';
         taskS.classList.add('up'); taskS.classList.remove('down');
         taskI.classList.add('down'); taskI.classList.remove('up');
-        bonusBtn.textContent = 'Prize on the line (take it back)';
+        bonusBtn.textContent = 'Remove the bonus';
         bonusBtn.setAttribute('aria-pressed', 'true');
-        msg.innerHTML = "With cash on the line, people solved the in-plain-sight puzzle <b>faster</b>, but the one that needs a flash of insight about <b>three and a half minutes slower</b>. The reward narrows attention, which helps an obvious task and strangles one that needs a wide, wandering search. Daniel Pink built <i>Drive</i> on this result.";
+        msg.innerHTML = "Same reward, opposite results. This is what Sam Glucksberg found in 1962: people promised a cash prize finished a simple, mechanical puzzle <b>faster</b>, but a puzzle that needed a creative leap about <b>three and a half minutes slower</b>. A reward narrows your focus, which speeds up obvious work and chokes work that needs a wide, wandering search. Daniel Pink built <i>Drive</i> on this result.";
       }
     }
 
