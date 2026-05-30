@@ -212,7 +212,7 @@
   .cases .case .res b { color: var(--accent-hover); font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* ============================================================
-     THE INTERACTIVE: "Does a bigger bonus help?"
+     THE INTERACTIVE: "Does paying for speed help?" (Glucksberg 1962)
      ============================================================ */
   .lab { background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; overflow: hidden;
     box-shadow: 0 1px 2px rgba(12,16,13,0.45), 0 18px 40px -16px rgba(8,12,9,0.55), inset 0 1px 0 rgba(245,241,234,0.04); margin: 3rem 0; }
@@ -220,21 +220,20 @@
   .lab-head .t { font-weight: 700; font-size: 1.12rem; color: var(--d-text-bright); }
   .lab-head .s { font-style: italic; font-size: 0.96rem; color: var(--d-text-dim); margin-top: 0.15rem; }
   .lab-body { padding: 1.4em 1.4em 1.6em; }
-  .lab-bars { display: grid; gap: 0.9rem; margin-bottom: 1.3rem; }
-  .lab-bar .bl { display: flex; justify-content: space-between; font-size: 0.94rem; color: var(--d-text-dim); margin-bottom: 0.3rem; }
-  .lab-bar .bl b { color: var(--d-accent-strong); font-variant-numeric: tabular-nums; font-weight: 700; }
-  .lab-bar .track { height: 22px; background: rgba(0,0,0,0.22); border-radius: 5px; overflow: hidden; }
-  .lab-bar .meter { height: 100%; width: 60%; border-radius: 5px; background: var(--d-accent); transition: width 0.55s var(--ease-out), background 0.4s ease; }
-  .lab-bar.creative .meter { background: #b9a6e0; }
-  .lab-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.4rem; padding-top: 0.4rem; border-top: 1px solid var(--d-rule); }
-  .lab-slider { flex: 1 1 260px; }
-  .lab-slider .sl-top { display: flex; justify-content: space-between; font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.86rem; color: var(--d-text-dim); margin-bottom: 0.25rem; }
-  .lab-slider input[type=range] { width: 100%; -webkit-appearance: none; appearance: none; height: 20px; background: transparent; cursor: pointer; }
-  .lab-slider input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--d-rule-strong); border-radius: 2px; }
-  .lab-slider input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -7px; border-radius: 50%; background: var(--d-accent); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
-  .lab-slider input[type=range]::-moz-range-track { height: 3px; background: var(--d-rule-strong); border-radius: 2px; }
-  .lab-slider input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: none; border-radius: 50%; background: var(--d-accent); }
-  .lab-toggle { font-family: var(--font-heading); font-size: 1rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; padding: 0.5em 1.1em; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .lab-metric { font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.82rem; color: var(--d-text-dim); margin-bottom: 0.85rem; }
+  .lab-tasks { display: grid; gap: 1.25rem; margin-bottom: 1.35rem; }
+  .lab-task .lt-h { display: flex; align-items: baseline; justify-content: space-between; gap: 0.3rem 1rem; flex-wrap: wrap; margin-bottom: 0.45rem; }
+  .lab-task .lt-h b { color: var(--d-text-bright); font-size: 1.06rem; font-weight: 700; }
+  .lab-task .lt-h span { color: var(--d-text-dim); font-style: italic; font-size: 0.92rem; }
+  .lab-task .lt-track { height: 20px; background: rgba(0,0,0,0.24); border-radius: 5px; overflow: hidden; }
+  .lab-task .lt-fill { height: 100%; width: 56%; border-radius: 5px; background: var(--d-accent); transition: width 0.6s var(--ease-out); }
+  .lab-task .lt-fill.insight { background: #b9a6e0; }
+  .lab-task .lt-chip { margin-top: 0.42rem; font-size: 0.96rem; color: var(--d-text-dim); }
+  .lab-task.up .lt-chip { color: var(--d-accent-strong); }
+  .lab-task.down .lt-chip { color: #c8b6e8; }
+  .lab-controls2 { display: flex; justify-content: center; padding-top: 0.2rem; }
+  .lab-cite { text-align: center; font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.82rem; color: var(--d-text-dim); opacity: 0.72; margin-top: 0.95rem; }
+  .lab-toggle { font-family: var(--font-heading); font-size: 1rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; padding: 0.55em 1.3em; cursor: pointer; transition: all 0.2s; text-align: center; }
   .lab-toggle[aria-pressed=true] { background: var(--d-accent); border-color: var(--d-accent); color: var(--d-bg); font-weight: 700; }
   .lab-read { margin-top: 1.2rem; padding: 0.9rem 1.05rem; background: rgba(0,0,0,0.18); border-radius: 6px; border-left: 2px solid var(--d-accent); }
   .lab-read p { font-size: 1.0rem; line-height: 1.5; color: var(--d-text); margin: 0; }
@@ -318,8 +317,6 @@
     .quad { grid-template-columns: 1fr; }
     .stages { grid-template-columns: 1fr 1fr; }
     .map { grid-template-columns: 1fr 1fr; }
-    .lab-controls { flex-direction: column; align-items: stretch; }
-    .lab-slider { flex: 0 0 auto; }
     .lab-toggle { width: 100%; }
   }
   @media (max-width: 380px) {
@@ -447,35 +444,35 @@
       <span class="sec-num">06</span>
       <h3>Autonomy, mastery, purpose</h3>
       <p class="sub">For thinking work, the carrot can make performance worse. This is not opinion. It is repeatable.</p>
-      <p>Here is the most counterintuitive finding in the field, and the one most worth feeling for yourself. In 1962, Sam Glucksberg gave people a tricky creative puzzle. He offered one group a cash prize for speed. That group was <em>slower</em>, by about three and a half minutes. The reward narrowed their focus exactly when the task needed it wide. A meta-analysis of 128 studies later confirmed the pattern: tangible if-then rewards reliably erode the intrinsic motivation that creative work runs on.</p>
+      <p>Here is the most counterintuitive finding in the field, and the one most worth feeling for yourself. In 1962, Sam Glucksberg gave people a tricky puzzle and offered one group a cash prize for speed. The reward <em>backfired</em>: the paid group did worse, not better. A meta-analysis of 128 studies later confirmed the pattern: tangible if-then rewards reliably erode the intrinsic motivation that creative work runs on.</p>
       <p>Daniel Pink gathered this into three drivers that actually move professionals: <b>autonomy</b> (control over their work), <b>mastery</b> (getting visibly better at something that matters), and <b>purpose</b> (a reason beyond the paycheck). The carrot-and-stick was built for routine work. On thinking work it backfires. Try it:</p>
 
       <!-- ===== interactive ===== -->
-      <div class="lab full reveal" id="lab" aria-label="Interactive: does a bigger bonus help?">
+      <div class="lab full reveal" id="lab" aria-label="Interactive: does paying for speed help?">
         <div class="lab-in" style="max-width: calc(var(--measure) + 11rem); margin: 0 auto;">
           <div class="lab-head">
-            <div class="t">Does a bigger bonus help?</div>
-            <div class="s">Slide between a routine task and a creative one, then offer the bonus. Watch performance respond.</div>
+            <div class="t">Does paying for speed help?</div>
+            <div class="s">A real 1962 experiment: two versions of the same puzzle. Offer the cash prize and watch the reward split them apart.</div>
           </div>
           <div class="lab-body">
-            <div class="lab-bars">
-              <div class="lab-bar" id="bar-routine">
-                <div class="bl"><span>Routine task (clear, mechanical)</span><b><span id="v-routine">100</span></b></div>
-                <div class="track"><div class="meter" id="m-routine"></div></div>
+            <div class="lab-metric">how fast each puzzle gets solved, longer is faster</div>
+            <div class="lab-tasks">
+              <div class="lab-task" id="task-simple">
+                <div class="lt-h"><b>Tacks out of the box</b><span>the answer is in plain sight</span></div>
+                <div class="lt-track"><div class="lt-fill" id="fill-simple"></div></div>
+                <div class="lt-chip" id="chip-simple">waiting for the prize</div>
               </div>
-              <div class="lab-bar creative" id="bar-creative">
-                <div class="bl"><span>Creative task (needs insight)</span><b><span id="v-creative">100</span></b></div>
-                <div class="track"><div class="meter" id="m-creative"></div></div>
+              <div class="lab-task" id="task-insight">
+                <div class="lt-h"><b>Tacks inside the box</b><span>you must see the box itself as the shelf</span></div>
+                <div class="lt-track"><div class="lt-fill insight" id="fill-insight"></div></div>
+                <div class="lt-chip" id="chip-insight">waiting for the prize</div>
               </div>
             </div>
-            <div class="lab-controls">
-              <div class="lab-slider">
-                <div class="sl-top"><span>routine</span><span>the work is&hellip;</span><span>creative</span></div>
-                <input type="range" id="lab-mix" min="0" max="100" value="50" aria-label="How creative is the work">
-              </div>
-              <button class="lab-toggle" id="lab-bonus" aria-pressed="false">Offer a big cash bonus</button>
+            <div class="lab-controls2">
+              <button class="lab-toggle" id="lab-bonus" aria-pressed="false">Offer a cash prize for the fastest</button>
             </div>
-            <div class="lab-read"><p id="lab-msg">No bonus yet. Move the slider to set how much the work depends on raw insight, then offer the bonus and watch what happens.</p></div>
+            <div class="lab-read"><p id="lab-msg">This is Sam Glucksberg's 1962 version of the candle problem. Offer the prize, and watch the same reward do opposite things to the two puzzles.</p></div>
+            <div class="lab-cite">Sam Glucksberg, Princeton, 1962. The candle problem.</div>
           </div>
         </div>
       </div>
@@ -750,54 +747,36 @@
       Array.prototype.forEach.call(document.querySelectorAll('.reveal'), function (el) { io.observe(el); });
     }
 
-    /* ===== the interactive: "does a bigger bonus help?" =====
-       Illustrative, but the direction is grounded in real findings:
-       contingent rewards lift routine output and depress creative,
-       insight-dependent performance (Glucksberg 1962; Deci et al. 1999). */
-    var mix = document.getElementById('lab-mix');
+    /* ===== the interactive: "does paying for speed help?" =====
+       Sam Glucksberg's 1962 candle-problem experiment. A cash prize for
+       speed made the in-plain-sight version FASTER and the insight version
+       about 3.5 minutes SLOWER. One toggle, the two real conditions. */
     var bonusBtn = document.getElementById('lab-bonus');
-    var mR = document.getElementById('m-routine'), vR = document.getElementById('v-routine');
-    var mC = document.getElementById('m-creative'), vC = document.getElementById('v-creative');
+    var fillS = document.getElementById('fill-simple'), chipS = document.getElementById('chip-simple'), taskS = document.getElementById('task-simple');
+    var fillI = document.getElementById('fill-insight'), chipI = document.getElementById('chip-insight'), taskI = document.getElementById('task-insight');
     var msg = document.getElementById('lab-msg');
     var bonus = false;
 
-    function lerp(a, b, t) { return a + (b - a) * t; }
-
     function render() {
-      var c = mix.value / 100;           // 0 routine .. 1 creative
-      // baseline performance (no bonus) = 100 for both
-      var routine = 100, creative = 100;
-      if (bonus) {
-        // routine work: a contingent reward helps, more so the more routine it is
-        routine = 100 + lerp(34, 6, c);
-        // creative work: the same reward hurts, more so the more creative it is
-        creative = 100 - lerp(2, 32, c);
-      }
-      // scale bars so 100 = 60% width, headroom for the +34 case
-      mR.style.width = (routine * 0.6).toFixed(1) + '%';
-      mC.style.width = (creative * 0.6).toFixed(1) + '%';
-      vR.textContent = Math.round(routine);
-      vC.textContent = Math.round(creative);
-
-      var leans = c > 0.62 ? 'creative' : (c < 0.38 ? 'routine' : 'mixed');
       if (!bonus) {
-        msg.innerHTML = 'No bonus yet. Both tasks sit at a baseline of <b>100</b>. Now offer the bonus.';
-      } else if (leans === 'creative') {
-        msg.innerHTML = 'The work is mostly <b>creative</b>, and the bonus made it <b>worse</b>. This is Glucksberg’s 1962 result: the rewarded group solved the insight puzzle about <b>three and a half minutes slower</b>. The carrot narrows focus exactly when the task needs it wide.';
-      } else if (leans === 'routine') {
-        msg.innerHTML = 'The work is mostly <b>routine</b>, and the bonus <b>helped</b>. For clear, mechanical tasks, if-then rewards work as advertised. This is the world the carrot was built for.';
+        fillS.style.width = '56%'; fillI.style.width = '56%';
+        chipS.textContent = 'waiting for the prize'; chipI.textContent = 'waiting for the prize';
+        taskS.classList.remove('up', 'down'); taskI.classList.remove('up', 'down');
+        bonusBtn.textContent = 'Offer a cash prize for the fastest';
+        bonusBtn.setAttribute('aria-pressed', 'false');
+        msg.innerHTML = "This is Sam Glucksberg's 1962 version of the <b>candle problem</b>. Offer the prize, and watch the same reward do opposite things to the two puzzles.";
       } else {
-        msg.innerHTML = 'A mix. The reward gives a little and takes a little. Slide all the way to <b>creative</b> to see it backfire, and to <b>routine</b> to see it pay off.';
+        fillS.style.width = '82%'; fillI.style.width = '31%';
+        chipS.innerHTML = '<b>faster</b>'; chipI.innerHTML = '<b>about 3.5 minutes slower</b>';
+        taskS.classList.add('up'); taskS.classList.remove('down');
+        taskI.classList.add('down'); taskI.classList.remove('up');
+        bonusBtn.textContent = 'Prize on the line (take it back)';
+        bonusBtn.setAttribute('aria-pressed', 'true');
+        msg.innerHTML = "With cash on the line, people solved the in-plain-sight puzzle <b>faster</b>, but the one that needs a flash of insight about <b>three and a half minutes slower</b>. The reward narrows attention, which helps an obvious task and strangles one that needs a wide, wandering search. Daniel Pink built <i>Drive</i> on this result.";
       }
     }
 
-    mix.addEventListener('input', render);
-    bonusBtn.addEventListener('click', function () {
-      bonus = !bonus;
-      bonusBtn.setAttribute('aria-pressed', bonus ? 'true' : 'false');
-      bonusBtn.textContent = bonus ? 'Bonus offered (remove it)' : 'Offer a big cash bonus';
-      render();
-    });
+    bonusBtn.addEventListener('click', function () { bonus = !bonus; render(); });
     render();
   })();
   </script>
