@@ -203,11 +203,11 @@
   .gapfig .gaptag { text-align: center; font-variant: small-caps; letter-spacing: 0.1em; font-size: 0.86rem; color: var(--accent); margin-top: 0.6rem; }
 
   /* company example grid: the real-world exhibit (Fortune 500 and beyond) */
-  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(218px, 1fr)); gap: 8px; }
-  .cases .case { background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; padding: 0.95rem 1.05rem; }
-  .cases .case .co { font-weight: 700; color: var(--text-bright); font-size: 1.05rem; }
-  .cases .case .did { font-size: 0.9rem; color: var(--text-dim); line-height: 1.42; margin: 0.25rem 0 0.55rem; }
-  .cases .case .res { font-size: 0.9rem; color: var(--accent); line-height: 1.4; }
+  .cases { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cases .case { background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; padding: 1.15rem 1.25rem; }
+  .cases .case .co { font-weight: 700; color: var(--text-bright); font-size: 1.14rem; }
+  .cases .case .did { font-size: 0.96rem; color: var(--text-dim); line-height: 1.52; margin: 0.32rem 0 0.7rem; }
+  .cases .case .res { font-size: 0.96rem; color: var(--accent); line-height: 1.5; }
   .cases .case .res b { color: var(--accent-hover); font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* ============================================================
@@ -316,6 +316,7 @@
     .quad { grid-template-columns: 1fr; }
     .stages { grid-template-columns: 1fr 1fr; }
     .map { grid-template-columns: 1fr 1fr; }
+    .cases { grid-template-columns: 1fr; }
     .lab-toggle { width: 100%; }
   }
   @media (max-width: 380px) {
@@ -578,23 +579,34 @@
       <span class="sec-num">14</span>
       <h3>The proof, at scale</h3>
       <p class="sub">This is not a theory that only survives in a lab. Whole companies are built on it.</p>
-      <p>If trusting professionals were naive, the companies that lean hardest into it would be the ones bleeding out. Instead, they include some of the most valuable companies on earth and the quiet giants of their industries. A few exhibits, large and small:</p>
+      <p>If trusting professionals were naive, the companies that lean hardest into it would be the ones bleeding out. Instead, they include some of the most valuable companies on earth and the quiet giants of their industries. Four of them:</p>
       <div class="fig-block wide reveal">
         <div class="fig-title">What it looks like when a company means it</div>
         <div class="cases">
-          <div class="case"><div class="co">Microsoft</div><div class="did">Satya Nadella reset the culture from "know-it-all" to "learn-it-all."</div><div class="res">Market value up <b>more than tenfold</b>, past $3 trillion.</div></div>
-          <div class="case"><div class="co">Google</div><div class="did">"20 percent time" for self-chosen work, and Project Oxygen to study its own managers.</div><div class="res">Gmail and Maps were born there; manager favorability <b>83% to 88%</b>.</div></div>
-          <div class="case"><div class="co">Netflix</div><div class="did">Talent density, "context not control," and the keeper test.</div><div class="res">Cut to its "keepers" in 2001, a <b>third smaller</b> team produced more.</div></div>
-          <div class="case"><div class="co">Pixar</div><div class="did">The Braintrust: brutally candid feedback that carries zero authority.</div><div class="res">Rebuilt <em>Toy Story 2</em> in months, then grossed <b>~$0.5B</b>.</div></div>
-          <div class="case"><div class="co">Intel</div><div class="did">Andy Grove's task-relevant maturity and the weekly one-on-one.</div><div class="res">The operating manual behind a chipmaking <b>giant</b>.</div></div>
-          <div class="case"><div class="co">W. L. Gore</div><div class="did">No bosses, a "lattice" of self-made commitments, plants capped near 150.</div><div class="res">Gore-Tex now sits in <b>100,000+</b> products.</div></div>
-          <div class="case"><div class="co">3M</div><div class="did">A long-running "15 percent time" for engineers to chase their own ideas.</div><div class="res">It gave the world the <b>Post-it Note</b>.</div></div>
-          <div class="case"><div class="co">Morning Star</div><div class="did">A tomato processor with no managers; peers sign "Letters of Understanding."</div><div class="res">Runs <b>~25%</b> of US tomato processing.</div></div>
+          <div class="case">
+            <div class="co">SAS Institute</div>
+            <div class="did">The largest private software company in the world runs on a simple bet: treat people like capable adults and they do their best work. So it offers a 35-hour week, sick days nobody counts, and a campus with its own doctor and childcare.</div>
+            <div class="res">People stay. Turnover runs about <b>4%</b> in an industry that loses <b>20%</b>, and it has been profitable every year for over four decades.</div>
+          </div>
+          <div class="case">
+            <div class="co">Semco</div>
+            <div class="did">A Brazilian manufacturer handed real control to its workers: they set their own hours, and many even set their own salaries, with the company's books open for everyone to read. The fear was that people would game it. They did not.</div>
+            <div class="res">Revenue climbed from <b>$4M to $212M</b> in two decades, and turnover settled near <b>2%</b>.</div>
+          </div>
+          <div class="case">
+            <div class="co">3M</div>
+            <div class="did">Since 1948, 3M has told its engineers to spend 15% of their paid time on ideas of their own, no permission needed. One of them rescued a "failed" glue that barely stuck and put it on the back of a note.</div>
+            <div class="res">That became the <b>Post-it Note</b>, now worth roughly <b>a billion dollars a year</b>, and just one of many bestsellers born from the free time.</div>
+          </div>
+          <div class="case">
+            <div class="co">Microsoft</div>
+            <div class="did">Taking over a Microsoft that had been flat for a decade, Satya Nadella set out to replace a culture of know-it-alls with one of "learn-it-alls," where admitting what you do not know is safe rather than career-ending.</div>
+            <div class="res">Freed to learn instead of posture, the company's value has grown <b>more than tenfold</b>, past <b>$3 trillion</b>.</div>
+          </div>
         </div>
-        <p class="fig-note">Different industries, different decades, one pattern: autonomy paired with genuinely high standards. Not softness, structure.</p>
+        <p class="fig-note">Four industries, four decades, one pattern: real autonomy paired with genuinely high standards. Not softness, structure.</p>
       </div>
-      <div class="stat reveal"><span class="fig">3&ndash;4<span class="u">%</span></span><span class="cap">SAS Institute's voluntary turnover, against an industry average of 17 to 25 percent. It has stayed profitable 44 years running. Trust is also the cheapest retention plan in the building.</span><span class="src">SAS Institute</span></div>
-      <p>One caution from the same evidence. When other companies copied the structures, the squads and the titles, without the underlying trust, they got the vocabulary and none of the results. Autonomy has to be real authority, not theater. Professionals can tell the difference instantly.</p>
+      <p>One honest caveat. Copying the trappings does not work. Plenty of companies have borrowed the open offices and the flat titles without the underlying trust, and ended up with the vocabulary and none of the results. Autonomy has to be real authority, not theater, and professionals can tell the difference in a week.</p>
       <div class="move"><span class="k">The manager's move</span><p>Compute what losing one of your best people actually costs to replace. That number is the budget you already have for treating them like the asset they are.</p></div>
     </section>
 
