@@ -40,6 +40,12 @@
     .shot figcaption { max-width: 60ch; margin: 1.25rem auto 0; padding: 0 1.4rem; text-align: center; font-family: var(--font-body); font-size: 1.06rem; line-height: 1.55; color: var(--text-dim); text-wrap: pretty; }
     .shot figcaption .sp { display: block; margin-bottom: 0.45rem; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
     .shot figcaption .sp em { font-style: italic; text-transform: none; letter-spacing: 0; }
+    .duo { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: clamp(0.7rem, 2.2vw, 1.5rem); max-width: 820px; margin: 0 auto; }
+    .duo-item { display: flex; flex-direction: column; align-items: center; margin: 0; }
+    .duo-item img { height: clamp(160px, 23vw, 216px); width: auto; max-width: 100%; margin: 0; }
+    .duo-lab { display: block; margin-top: 0.6rem; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); text-align: center; }
+    .duo-lab em { font-style: normal; color: var(--text-dim); }
+    @media (max-width: 620px) { .duo-item { width: 100%; max-width: 340px; } .duo-item img { height: auto; width: 100%; } }
 
     .divider { max-width: 760px; margin: 13vh auto 9vh; padding: 0 1.4rem; text-align: center; }
     .divider .dk { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
@@ -117,7 +123,13 @@
 
       <div class="divider"><p class="dk">below a wavelength of light</p><h2>Smaller than the eye can ever see</h2></div>
 
-      <figure class="shot"><img class="zoom" src="assets/chip/wiring.jpg" width="322" height="140" loading="lazy" decoding="async" alt="A scanning-electron cross-section showing several stacked layers of metal wiring and the vias connecting them." data-zoom-src="assets/chip/full/wiring.jpg" data-zoom-title="The wiring, in cross-section" data-zoom-artist="Adv. Sci., CC BY 4.0"><figcaption><span class="sp">The wiring &middot; <em>Intel 14 nm, 2014, cross-section</em></span>This is a cross-section of Intel's 14 nm wiring stack, a process Intel began making chips on in 2014 (from an open-access paper): more than a dozen floors of copper stacked above the transistors. Unspooled, the wires in a single chip would run for tens of kilometers, all folded into a fingernail.</figcaption></figure>
+      <figure class="shot duo-fig">
+        <div class="duo">
+          <div class="duo-item"><img class="zoom" src="assets/chip/virus.jpg" width="1000" height="855" loading="lazy" decoding="async" alt="A grayscale transmission-electron micrograph of a single influenza virus particle, its surface bristling with protein spikes, on a clean gray background." data-zoom-src="assets/chip/full/virus.jpg" data-zoom-title="Influenza virus" data-zoom-artist="CDC / Cynthia Goldsmith, public domain"><span class="duo-lab">Influenza virus &middot; <em>~100 nm</em></span></div>
+          <div class="duo-item"><img class="zoom" src="assets/chip/wiring.jpg" width="322" height="140" loading="lazy" decoding="async" alt="A scanning-electron cross-section showing several stacked layers of metal wiring and the vias connecting them." data-zoom-src="assets/chip/full/wiring.jpg" data-zoom-title="The wiring, in cross-section" data-zoom-artist="Adv. Sci., CC BY 4.0"><span class="duo-lab">Intel 14 nm wiring &middot; <em>lines ~52 nm apart</em></span></div>
+        </div>
+        <figcaption><span class="sp">The wiring &middot; <em>Intel 14 nm, 2014, and a flu virus for scale</em></span>This is Intel's 14 nm wiring stack in cross-section (2014, from an open-access paper): a dozen-plus floors of copper, the finest lines about 52 nanometers apart. Set a flu virus beside it, about 100 nanometers across, and the whole virus spans just two of those lines. Chip features are now finer than most viruses, and even the smallest living cells, ocean bacteria a couple hundred nanometers wide, would straddle only a handful of these wires. Unspooled, the wiring in one chip would run tens of kilometers, all folded into a fingernail.</figcaption>
+      </figure>
 
       <figure class="shot"><img class="zoom" src="assets/chip/transistor.jpg" width="2000" height="1310" loading="lazy" decoding="async" alt="A scanning-electron view of an array of individual transistors, repeating ring-shaped gate structures." data-zoom-src="assets/chip/full/transistor.jpg" data-zoom-title="The transistor" data-zoom-artist="TiberiusRufus, CC BY-SA 4.0"><figcaption><span class="sp">The transistor &middot; <em>ring-gate, radiation-hardened</em></span>This is the thing itself, repeated billions of times: the transistor, a switch with no moving parts. These particular ones have round ring gates, a design that shrugs off radiation so the chip can work in orbit. The transistors in your phone are far smaller, a few dozen nanometers, flipping on and off billions of times a second.</figcaption></figure>
 
@@ -140,6 +152,7 @@
       <li><a href="https://www.flickr.com/photos/130561288@N04/">Apple M1 die, die surface, and tilted die</a> &middot; Fritzchens Fritz, CC0</li>
       <li><a href="https://zeptobars.com/en/">Memory cells, SEM</a> &middot; ZeptoBars, CC BY 3.0</li>
       <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10427378/">Copper interconnect stack, SEM cross-section</a> &middot; Advanced Science, CC BY 4.0</li>
+      <li><a href="https://commons.wikimedia.org/wiki/File:Influenza_virus_particle_8430_lores.jpg">Influenza virus, TEM</a> &middot; CDC / Cynthia Goldsmith, public domain</li>
       <li><a href="https://commons.wikimedia.org/wiki/File:Ring-gate_transistor_of_radiation_hardening_memory_(low_mag).tif">Transistor array, SEM</a> &middot; TiberiusRufus, CC BY-SA 4.0</li>
       <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12672990/">Silicon atoms, ptychographic reconstruction</a> &middot; Nature Communications, CC BY 4.0</li>
       <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4240948/">Silicon lattice, STEM</a> &middot; Hsiao et al., Nanoscale Research Letters, CC BY 4.0</li>
