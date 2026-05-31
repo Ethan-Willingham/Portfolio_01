@@ -270,7 +270,7 @@
      4 factors / 12 clusters / 38 competencies, one equal-angle sunburst
      ============================================================ */
   .wheel-fig { margin: 1.8rem auto 0; max-width: calc(var(--measure) + 13rem); }
-  .wheel-stage { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(250px, 0.94fr); gap: 1.4rem 2.2rem; align-items: center; }
+  .wheel-stage { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(250px, 0.94fr); gap: 1.4rem 2.2rem; align-items: start; }
   .wheel-svg-wrap { position: relative; }
   .wheel { width: 100%; height: auto; display: block; -webkit-tap-highlight-color: transparent; }
   .wheel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
@@ -299,6 +299,8 @@
   .wheel-panel .plist { list-style: none; margin: 0.5rem 0 0; padding: 0; }
   .wheel-panel .plist li { font-size: 0.97rem; line-height: 1.45; color: var(--text); padding: 0.13rem 0; display: flex; gap: 0.65rem; align-items: baseline; }
   .wheel-panel .plist .pn { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); min-width: 1.5em; text-align: right; flex: none; }
+  .wheel-panel .legend .pn { min-width: 1.9em; }
+  .wheel-panel .legend li { padding: 0.2rem 0; }
   .wheel-panel .phint { margin-top: auto; padding-top: 0.9rem; font-size: 0.84rem; color: var(--text-dim); font-style: italic; line-height: 1.45; }
 
   /* mobile accordion fallback (built from the same data) */
@@ -1191,14 +1193,16 @@
         panel.innerHTML = h;
       }
       function renderDefault() {
+        var tag = ['seeing and deciding', 'getting it done', 'leading others', 'who you are'];
         var h = '<div class="p-kind">The Library</div>';
         h += '<div class="pname">A map of the whole job</div>';
         h += '<p class="pdef">Four <b>factors</b> hold twelve <b>clusters</b>, which hold thirty-eight <b>competencies</b>. Together they name almost everything a leader is ever asked to do.</p>';
-        h += '<div class="p-div"></div><dl>';
-        COMPETENCY_DATA.factors.forEach(function (f) {
-          h += '<dt style="color:' + hsl(f.hue, Math.min(62, f.sat + 14), 72) + '">Factor ' + f.roman + ' &middot; ' + f.name + '</dt><dd>' + f.meaning + '</dd>';
+        h += '<div class="p-div"></div><ul class="plist legend">';
+        COMPETENCY_DATA.factors.forEach(function (f, i) {
+          var col = hsl(f.hue, Math.min(62, f.sat + 14), 72);
+          h += '<li><span class="pn" style="color:' + col + '">' + f.roman + '</span><span><b style="color:' + col + '">' + f.name + '</b> &middot; ' + tag[i] + '</span></li>';
         });
-        h += '</dl><p class="phint">The inner ring is the factor, the middle ring its clusters, the outer ring the competencies. Hover or tap any segment to explore it.</p>';
+        h += '</ul><p class="phint">The inner ring is the factor, the middle ring its clusters, the outer ring the competencies. Hover or tap any segment to explore it.</p>';
         panel.innerHTML = h;
       }
       renderDefault();
