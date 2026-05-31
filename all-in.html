@@ -362,6 +362,10 @@
   .ch-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
   .ch-chip { font-family: var(--font-body); font-size: 0.9rem; padding: 0.4rem 0.85rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
   .ch-chip:hover { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.08); }
+  .ch-preview { margin-top: 1.35rem; padding-top: 1.25rem; border-top: 1px solid var(--hair); }
+  .ch-preview-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 1.6rem; }
+  .ch-preview-list li { font-size: 0.92rem; color: var(--text-dim); line-height: 1.4; }
+  .ch-preview-list li b { display: block; color: var(--accent); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.1rem; }
   /* three-way description labels (panel + accordion) and mobile chapter spacing */
   .wheel-panel dt.t-less, .wheel-list .wl-body dt.t-less { color: var(--text-dim); }
   .wheel-panel dt.t-over, .wheel-list .wl-body dt.t-over { color: #d39a7e; }
@@ -1232,12 +1236,14 @@
         if (m.kind === 'comp') { renderChapter(m); return; }
         var h = '';
         if (m.kind === 'hub') {
-          var hc = '';
-          [16, 13, 34, 36, 10].forEach(function (id) { var a = findComp(id); if (a) hc += chip(a.data); });
           h += '<div class="ch-kind">The Library</div>';
           h += '<h4 class="ch-name">Open any of the thirty-eight chapters</h4>';
-          h += '<p class="ch-map">Every competency has a chapter: a short take on why it matters, the usual reasons people fall short, a few concrete things to go do, and one assignment to build it on the job. Click any segment on the wheel, a competency, a cluster, or a whole factor, to dig in.</p>';
-          h += '<div class="ch-chips"><div class="ch-label">Start with a manager essential</div><div class="ch-chip-row">' + hc + '</div></div>';
+          h += '<p class="ch-map">The book sorts the whole of leadership into three levels: four <b>factors</b>, twelve <b>clusters</b> within them, and thirty-eight <b>competencies</b> within those. Each competency is a chapter. Click any segment on the wheel, a whole factor, a cluster, or a single competency, and it opens here.</p>';
+          h += '<div class="ch-preview"><div class="ch-label">What each chapter holds</div><ul class="ch-preview-list">' +
+            '<li><b>The Map</b>why the skill matters</li>' +
+            '<li><b>Some Causes</b>why people fall short</li>' +
+            '<li><b>Tips to Develop It</b>concrete things to go do</li>' +
+            '<li><b>Develop-in-Place Assignment</b>a real stretch on the job</li></ul></div>';
         } else if (m.kind === 'factor') {
           var nc = 0, fc = '';
           m.data.clusters.forEach(function (c) { nc += c.competencies.length; c.competencies.forEach(function (p) { fc += chip(p); }); });
