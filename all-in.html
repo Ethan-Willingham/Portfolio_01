@@ -64,8 +64,9 @@
   .sc { font-variant: small-caps; letter-spacing: 0.1em; }
 
   /* ---- top home link, in normal flow (scrolls away) ---- */
-  .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto 1.2rem; padding: 1.1rem var(--gutter) 0; }
-  .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
+  .top-nav { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding: 2.5rem var(--gutter) 0; }
+  @media (min-width: 720px) { .top-nav { padding-top: 4rem; } }
+  @media (min-width: 1024px) { .top-nav { padding-top: 5rem; } }
 
   /* reading progress (slim, accent) */
   .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
@@ -900,12 +901,8 @@
   </section>
 
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width: calc(var(--measure) + 12rem); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter);">
+    <div class="site-footer-inner" style="max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); font-family: var(--font-body);">
       <a href="/">&copy; 2026 Ethan Willingham</a>
-      <span class="ftr-links" style="display:flex; gap:1.4rem;">
-        <a href="https://github.com/Ethan-Willingham/Portfolio_01">GitHub &#8599;</a>
-        <a href="/">Home</a>
-      </span>
     </div>
   </footer>
 
