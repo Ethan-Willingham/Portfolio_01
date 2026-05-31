@@ -312,27 +312,7 @@
   .wheel-panel .legend li { padding: 0.2rem 0; }
   .wheel-panel .phint { margin-top: auto; padding-top: 0.9rem; font-size: 0.84rem; color: var(--text-dim); font-style: italic; line-height: 1.45; }
 
-  /* mobile accordion fallback (built from the same data) */
-  .wheel-list { display: none; margin-top: 1.4rem; max-width: var(--measure); margin-left: auto; margin-right: auto; }
-  .wheel-list > details { border-top: 1px solid var(--hair); }
-  .wheel-list > details:last-of-type { border-bottom: 1px solid var(--hair); }
-  .wheel-list > details > summary { font-family: var(--font-heading); font-weight: 700; font-size: 1.16rem; color: var(--text-bright); padding: 0.72rem 0; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
-  .wheel-list > details > summary::-webkit-details-marker { display: none; }
-  .wheel-list > details[open] > summary { color: var(--accent-hover); }
-  .wheel-list > details > summary .wl-m { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; font-style: italic; color: var(--text-dim); }
-  .wheel-list .wl-cluster { margin: 0.95rem 0 0.25rem; }
-  .wheel-list .wl-cl { display: block; font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
-  .wheel-list .wl-cd { display: block; font-size: 0.88rem; font-style: italic; color: var(--text-dim); line-height: 1.4; margin-top: 0.12rem; }
-  .wheel-list .wl-comp { border-top: 1px solid rgba(212,196,160,0.08); }
-  .wheel-list .wl-comp > summary { font-size: 1rem; color: var(--text); padding: 0.5rem 0; cursor: pointer; list-style: none; display: flex; gap: 0.6rem; align-items: baseline; }
-  .wheel-list .wl-comp > summary::-webkit-details-marker { display: none; }
-  .wheel-list .wl-comp[open] > summary { color: var(--accent-hover); font-weight: 700; }
-  .wheel-list .wl-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); min-width: 1.5em; flex: none; }
-  .wheel-list .wl-body { padding: 0.1rem 0 0.7rem; }
-  .wheel-list .wl-def { font-size: 0.97rem; line-height: 1.5; color: var(--text-bright); margin: 0.1rem 0 0.25rem; }
-  .wheel-list .wl-body dt { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-top: 0.55rem; }
-  .wheel-list .wl-body dd { margin: 0.12rem 0 0; font-size: 0.94rem; line-height: 1.45; color: var(--text); }
-  .wheel-list .wl-body dd.over { color: var(--text-dim); }
+  /* the wheel's side panel becomes the description reader on desktop */
 
   /* the "open" competency, marked on the wheel while its chapter is showing */
   .wheel .open-mark { fill: none; pointer-events: none; stroke-linejoin: round; transition: opacity 150ms var(--ease-out); }
@@ -370,26 +350,33 @@
   .ch-preview-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 1.6rem; }
   .ch-preview-list li { font-size: 0.92rem; color: var(--text-dim); line-height: 1.4; }
   .ch-preview-list li b { display: block; color: var(--accent); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.1rem; }
-  /* the chapter's own navigation: factor > cluster > competency */
-  .ch-nav { border-bottom: 1px solid var(--hair); padding-bottom: 1.2rem; margin-bottom: 1.4rem; display: flex; flex-direction: column; gap: 0.55rem; }
-  .ch-nav-row { display: flex; align-items: flex-start; gap: 0.7rem; }
-  .ch-nav-label { flex: none; width: 5.5rem; font-family: var(--font-body); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); padding-top: 0.5rem; }
-  .ch-nav-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .ch-navchip { font-family: var(--font-body); font-size: 0.86rem; padding: 0.3rem 0.72rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
+  /* the chapter's own navigation: a prev/next stepper over all 38, plus factor > cluster > competency rails */
+  .ch-nav { border-bottom: 1px solid var(--hair); padding-bottom: 1.15rem; margin-bottom: 1.4rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .ch-step-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .ch-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .ch-count b { color: var(--accent); font-weight: 700; }
+  .ch-step { font-family: var(--font-body); font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.34rem 0.72rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
+  .ch-step:hover:not([disabled]) { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.08); }
+  .ch-step[disabled] { opacity: 0.3; cursor: default; }
+  .ch-step .ch-arr { font-size: 1.15em; line-height: 1; }
+  .ch-rail { display: flex; align-items: center; gap: 0.7rem; }
+  .ch-rail-label { flex: none; width: 5.5rem; font-family: var(--font-body); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+  .ch-rail-scroll { display: flex; flex-wrap: wrap; gap: 0.4rem; min-width: 0; }
+  .ch-navchip { font-family: var(--font-body); font-size: 0.86rem; padding: 0.3rem 0.72rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
   .ch-navchip:hover { color: var(--text); border-color: rgba(212,196,160,0.45); }
   .ch-navchip.on { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.12); font-weight: 700; }
-  @media (max-width: 620px) {
-    .ch-nav-row { flex-direction: column; gap: 0.3rem; }
-    .ch-nav-label { width: auto; padding-top: 0; }
-  }
-  /* three-way description labels (panel + accordion) and mobile chapter spacing */
-  .wheel-panel dt.t-less, .wheel-list .wl-body dt.t-less { color: var(--text-dim); }
-  .wheel-panel dt.t-over, .wheel-list .wl-body dt.t-over { color: #d39a7e; }
-  .wheel-panel dt.t-tal, .wheel-list .wl-body dt.t-tal { color: var(--accent-hover); }
-  .wheel-panel dd.less, .wheel-list .wl-body dd.less { color: var(--text-dim); }
-  .wheel-list .wl-map { font-size: 0.97rem; line-height: 1.5; color: var(--text-bright); margin: 0.55rem 0 0.1rem; }
-  .wheel-list .wl-sec { margin-top: 0.7rem; }
-  .wheel-list .wl-xref { font-size: 0.95rem; line-height: 1.45; color: var(--text); }
+  /* four-way description labels: in the wheel's side panel, and the chapter's folded-in description */
+  .wheel-panel dt.t-less, .ch-desc dt.t-less { color: var(--text-dim); }
+  .wheel-panel dt.t-over, .ch-desc dt.t-over { color: #d39a7e; }
+  .wheel-panel dt.t-tal, .ch-desc dt.t-tal { color: var(--accent-hover); }
+  .wheel-panel dd.less, .ch-desc dd.less { color: var(--text-dim); }
+  /* the chapter folds the description in on small screens only (the wheel panel carries it on desktop) */
+  .ch-desc { display: none; margin: 0.5rem 0 0; }
+  .ch-desc .ch-def { font-size: 1.04rem; line-height: 1.5; color: var(--text-bright); margin: 0; }
+  .ch-desc dl { margin: 0.2rem 0 0; }
+  .ch-desc dt { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-top: 0.7rem; }
+  .ch-desc dd { margin: 0.14rem 0 0; font-size: 0.96rem; line-height: 1.48; color: var(--text); }
+  .ch-desc dd.over { color: var(--text-dim); }
   /* chapter cross-links: substitutes and compensators */
   .ch-xrefs { margin-top: 1.35rem; padding-top: 1.2rem; border-top: 1px solid var(--hair); display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 2.6rem; }
   .ch-xref-note { font-family: var(--font-body); font-weight: 400; font-style: italic; letter-spacing: 0; text-transform: none; color: var(--text-dim); }
@@ -398,7 +385,7 @@
   .ch-xref:hover { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.08); }
   @media (max-width: 880px) { .ch-xrefs { grid-template-columns: 1fr; gap: 1rem; } }
 
-  /* responsive: stack the wheel, then swap to the accordion on phones */
+  /* responsive: stack the wheel above its panel, then make the phone layout */
   @media (max-width: 880px) {
     .wheel-stage { grid-template-columns: 1fr; gap: 1.2rem; }
     .wheel-svg-wrap { max-width: 440px; margin: 0 auto; }
@@ -406,9 +393,22 @@
     .chapter .ch-body { grid-template-columns: 1fr; gap: 1.1rem; }
   }
   @media (max-width: 600px) {
-    .wheel-stage { display: none; }
-    .wheel-list { display: block; }
-    .desk-only { display: none; }
+    /* the wheel becomes a compact follow-along map; its side panel folds away and the chapter carries the full reader */
+    .wheel-svg-wrap { max-width: 290px; }
+    .wheel-panel { display: none; }
+    .ch-desc { display: block; }
+    .ch-rail { align-items: flex-start; }
+    .ch-rail-label { width: 4.6rem; padding-top: 0.5rem; }
+    .ch-rail-scroll { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; padding-bottom: 3px; scrollbar-width: none; -ms-overflow-style: none; }
+    .ch-rail-scroll::-webkit-scrollbar { display: none; }
+    .ch-navchip { flex: none; scroll-snap-align: start; }
+    .chapter { padding: 1.2rem 1.15rem 1.3rem; }
+  }
+  /* bigger touch targets where the pointer is coarse */
+  @media (pointer: coarse) {
+    .ch-navchip { padding: 0.46rem 0.85rem; }
+    .ch-step { padding: 0.46rem 0.9rem; }
+    .ch-xref { padding: 0.42rem 0.8rem; }
   }
 
   /* 70-20-10 bar */
@@ -796,13 +796,13 @@
       <div class="fyi-label">
         <div class="fl-k">The Map</div>
         <div class="fl-t">The whole of leadership, on one wheel</div>
-        <p class="fl-s">The book sits on top of the Korn Ferry Leadership Architect: a map of nearly everything a leader is ever asked to do, sorted into <b>4 factors</b>, <b>12 clusters</b>, and <b>38 competencies</b>. Hover any segment to read what it is, then how it shows up at four levels: <em>too little</em>, skilled, talented, and <em>overused</em>.</p>
+        <p class="fl-s">The book sits on top of the Korn Ferry Leadership Architect: a map of nearly everything a leader is ever asked to do, sorted into <b>4 factors</b>, <b>12 clusters</b>, and <b>38 competencies</b>. Hover or tap any segment to read what it is, then how it shows up at four levels: <em>too little</em>, skilled, talented, and <em>overused</em>.</p>
       </div>
 
       <figure class="wheel-fig reveal">
         <div class="wheel-stage">
           <div class="wheel-svg-wrap">
-            <svg class="wheel" id="wheel" viewBox="-360 -360 720 720" role="img" aria-label="The Korn Ferry Leadership Architect as a wheel: four factors (Thought, Results, People, Self), twelve clusters, and thirty-eight competencies. The full list with descriptions is repeated as text below.">
+            <svg class="wheel" id="wheel" viewBox="-360 -360 720 720" role="img" aria-label="The Korn Ferry Leadership Architect as a wheel: four factors (Thought, Results, People, Self), twelve clusters, and thirty-eight competencies. Browse every competency, with its full description and chapter, in the reader below.">
               <defs>
                 <filter id="wheelGlow" x="-60%" y="-60%" width="220%" height="220%">
                   <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#EDE0C0" flood-opacity="0.55"/>
@@ -820,7 +820,6 @@
           </div>
           <aside class="wheel-panel" id="wheelPanel" aria-live="polite"></aside>
         </div>
-        <div class="wheel-list" id="wheelList"></div>
       </figure>
 
       <div class="fyi-col">
@@ -828,13 +827,13 @@
         <p>But a description is only the first half of a chapter. The half that earns the book its keep is the second one: if you are short on a competency, <em>why,</em> and exactly what to do about it. So open one.</p>
       </div>
 
-      <div class="fyi-label desk-only">
+      <div class="fyi-label">
         <div class="fl-k">The Chapter</div>
         <div class="fl-t">Open any competency and go to work</div>
-        <p class="fl-s">Browse the chapters with the picker below: choose a factor, then a cluster, then a competency. Each competency gets a full chapter, why the skill matters, why people fall short, a few things to go do, one real assignment, and the related skills that can substitute for it or offset it when overused.</p>
+        <p class="fl-s">Step through all thirty-eight with the arrows, or jump straight to one: pick a factor, then a cluster, then a competency. Each gets a full chapter, why the skill matters, why people fall short, a few things to go do, one real assignment, and the related skills that can substitute for it or offset it when overused.</p>
       </div>
 
-      <figure class="chapter reveal desk-only" id="chapterFig" aria-live="polite"></figure>
+      <figure class="chapter reveal" id="chapterFig" aria-live="polite"></figure>
 
       <div class="fyi-col">
         <p>That second half is one chapter of a book that runs the same play thirty-eight times. And the bias it shows, toward doing rather than studying, is deliberate. The same authors are behind the well-known <b>70-20-10</b> rule, drawn from a long study of how real executives said they had actually learned to lead.</p>
@@ -1071,6 +1070,8 @@
       var labelsG = document.getElementById('wheelLabels');
       var panel = document.getElementById('wheelPanel');
       var canHover = window.matchMedia('(hover: hover)').matches;
+      var mqMobile = window.matchMedia('(max-width: 600px)');
+      var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
       var allArcs = [];
 
       var totalComp = 0;
@@ -1195,14 +1196,21 @@
       }
       function reset() { clearHover(); renderPanel(sel); }
       function select(meta) {
-        sel = meta;
         clearHover();
+        if (mqMobile.matches) {
+          /* phones: the wheel is a follow-along map that drives the one chapter reader below */
+          var cm = resolveToComp(meta);
+          if (cm) { chComp = cm; sel = cm; markOpen(); renderChapterBlock(); scrollToChapter(); }
+          else { sel = meta; markOpen(); }
+          return;
+        }
+        sel = meta;
         markOpen();
         renderPanel(meta);
       }
       function bind(m) {
         m.el.addEventListener('mouseenter', function () { if (canHover) activate(m); });
-        m.el.addEventListener('focus', function () { activate(m); });
+        m.el.addEventListener('focus', function () { if (!mqMobile.matches) activate(m); });
         m.el.addEventListener('click', function () { select(m); });
         m.el.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m); }
@@ -1212,24 +1220,56 @@
       svg.addEventListener('focusout', function (e) { if (!svg.contains(e.relatedTarget)) reset(); });
       if (hubBtn) {
         hubBtn.addEventListener('mouseenter', function () { if (canHover) { clearHover(); renderPanel(hubMeta); } });
-        hubBtn.addEventListener('click', function () { select(hubMeta); });
-        hubBtn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(hubMeta); } });
+        hubBtn.addEventListener('click', function () { if (!mqMobile.matches) select(hubMeta); });
+        hubBtn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!mqMobile.matches) select(hubMeta); } });
       }
-      /* ===== the chapter has its OWN navigation: factor > cluster > competency ===== */
-      var chComp = findComp(13) || allArcs.filter(function (a) { return a.kind === 'comp'; })[0];
+      /* ===== the chapter has its OWN navigation: a stepper over all 38 + factor/cluster/competency rails ===== */
+      var compOrder = allArcs.filter(function (a) { return a.kind === 'comp'; }).sort(function (a, b) { return a.data.id - b.data.id; });
+      var chComp = findComp(13) || compOrder[0];
+      function resolveToComp(m) {
+        if (!m || m.kind === 'hub') return null;
+        if (m.kind === 'comp') return m;
+        if (m.kind === 'cluster') return findComp(m.data.competencies[0].id);
+        if (m.kind === 'factor') return findComp(m.data.clusters[0].competencies[0].id);
+        return null;
+      }
+      function scrollToChapter() {
+        if (chapterFig && chapterFig.scrollIntoView) chapterFig.scrollIntoView({ behavior: mqReduce.matches ? 'auto' : 'smooth', block: 'start' });
+      }
+      function centerActiveChip() {
+        if (!chapterFig) return;
+        var rail = chapterFig.querySelector('[data-rail="comp"]');
+        if (!rail) return;
+        var on = rail.querySelector('.ch-navchip.on');
+        if (!on) return;
+        var rr = rail.getBoundingClientRect(), cr = on.getBoundingClientRect();
+        rail.scrollLeft += (cr.left + cr.width / 2) - (rr.left + rr.width / 2);
+      }
+      function navTo(c) {
+        if (!c) return;
+        chComp = c;
+        renderChapterBlock();
+        if (mqMobile.matches) { sel = c; markOpen(); }
+      }
       function navChip(label, navAttr, on) {
         return '<button type="button" class="ch-navchip' + (on ? ' on' : '') + '"' + (on ? ' aria-current="true"' : '') + ' data-nav="' + navAttr + '">' + label + '</button>';
       }
       function renderChapterBlock() {
         if (!chapterFig || !chComp) return;
         var p = chComp.data, fi = chComp.fi, ci = chComp.ci;
+        var idx = compOrder.indexOf(chComp), total = compOrder.length;
         var factorRow = COMPETENCY_DATA.factors.map(function (f, i) { return navChip(f.name, 'factor:' + i, i === fi); }).join('');
         var clusterRow = chComp.factor.clusters.map(function (c, i) { return navChip(c.name, 'cluster:' + fi + ':' + i, i === ci); }).join('');
         var compRow = chComp.cluster.competencies.map(function (cp) { return navChip(cp.n, 'comp:' + cp.id, cp.id === p.id); }).join('');
-        var nav = '<div class="ch-nav" role="group" aria-label="Browse competencies">' +
-          '<div class="ch-nav-row"><span class="ch-nav-label">Factor</span><div class="ch-nav-chips">' + factorRow + '</div></div>' +
-          '<div class="ch-nav-row"><span class="ch-nav-label">Cluster</span><div class="ch-nav-chips">' + clusterRow + '</div></div>' +
-          '<div class="ch-nav-row"><span class="ch-nav-label">Competency</span><div class="ch-nav-chips">' + compRow + '</div></div></div>';
+        var nav = '<div class="ch-nav" role="group" aria-label="Browse the competencies">' +
+          '<div class="ch-step-bar">' +
+            '<button type="button" class="ch-step"' + (idx <= 0 ? ' disabled' : '') + ' data-step="-1" aria-label="Previous competency"><span class="ch-arr">&lsaquo;</span> Prev</button>' +
+            '<span class="ch-count">Competency <b>' + p.id + '</b> of ' + total + '</span>' +
+            '<button type="button" class="ch-step"' + (idx >= total - 1 ? ' disabled' : '') + ' data-step="1" aria-label="Next competency">Next <span class="ch-arr">&rsaquo;</span></button>' +
+          '</div>' +
+          '<div class="ch-rail"><span class="ch-rail-label">Factor</span><div class="ch-rail-scroll">' + factorRow + '</div></div>' +
+          '<div class="ch-rail"><span class="ch-rail-label">Cluster</span><div class="ch-rail-scroll">' + clusterRow + '</div></div>' +
+          '<div class="ch-rail"><span class="ch-rail-label">Competency</span><div class="ch-rail-scroll" data-rail="comp">' + compRow + '</div></div></div>';
         var causes = (p.causes || []).map(function (c) { return '<li>' + c + '</li>'; }).join('');
         var tips = (p.tips || []).map(function (t) { return '<li>' + t + '</li>'; }).join('');
         var xref = function (ids) {
@@ -1237,9 +1277,16 @@
         };
         var subs = (p.subs && p.subs.length) ? '<div class="ch-xref-sec"><div class="ch-label">Substitutes <span class="ch-xref-note">build these instead to cover the gap</span></div><div class="ch-xref-row">' + xref(p.subs) + '</div></div>' : '';
         var comps = (p.comps && p.comps.length) ? '<div class="ch-xref-sec"><div class="ch-label">Compensators <span class="ch-xref-note">when overused, build these to soften it</span></div><div class="ch-xref-row">' + xref(p.comps) + '</div></div>' : '';
+        var desc = '<div class="ch-desc">' +
+          '<p class="ch-def">' + (p.def || '') + '</p>' +
+          '<dl><dt class="t-less">Too little</dt><dd class="less">' + p.less + '</dd>' +
+          '<dt class="t-skill">Skilled</dt><dd>' + p.s + '</dd>' +
+          '<dt class="t-tal">Talented</dt><dd>' + p.tal + '</dd>' +
+          '<dt class="t-over">Overused</dt><dd class="over">' + p.o + '</dd></dl></div>';
         var content = '<div class="ch-content">' +
           '<div class="ch-kind">Chapter &middot; Competency ' + p.id + '</div>' +
           '<h4 class="ch-name">' + p.n + '</h4>' +
+          desc +
           '<p class="ch-map">' + (p.map || '') + '</p>' +
           '<div class="ch-body">' +
           '<div class="ch-col"><div class="ch-label">Some Causes</div><ul class="ch-causes">' + causes + '</ul></div>' +
@@ -1249,16 +1296,22 @@
           (subs || comps ? '<div class="ch-xrefs">' + subs + comps + '</div>' : '') +
           '</div>';
         chapterFig.innerHTML = nav + content;
+        centerActiveChip();
       }
       if (chapterFig) {
         chapterFig.addEventListener('click', function (e) {
+          var step = e.target.closest ? e.target.closest('[data-step]') : null;
+          if (step) {
+            if (!step.disabled) { var ni = compOrder.indexOf(chComp) + (+step.getAttribute('data-step')); if (compOrder[ni]) navTo(compOrder[ni]); }
+            return;
+          }
           var b = e.target.closest ? e.target.closest('[data-nav]') : null;
           if (!b) return;
           var parts = b.getAttribute('data-nav').split(':'), c;
           if (parts[0] === 'comp') { c = findComp(+parts[1]); }
           else if (parts[0] === 'factor') { c = findComp(COMPETENCY_DATA.factors[+parts[1]].clusters[0].competencies[0].id); }
           else if (parts[0] === 'cluster') { c = findComp(COMPETENCY_DATA.factors[+parts[1]].clusters[+parts[2]].competencies[0].id); }
-          if (c) { chComp = c; renderChapterBlock(); }
+          if (c) navTo(c);
         });
       }
 
@@ -1312,41 +1365,19 @@
         h += '</ul><p class="phint">The inner ring is the factor, the middle ring its clusters, the outer ring the competencies. Hover or tap any segment to explore it.</p>';
         panel.innerHTML = h;
       }
-      select(hubMeta);
+      /* initial state: desktop opens the Library overview in the side panel; phones highlight the
+         chapter's competency on the map and let the chapter below carry the full reader */
       renderChapterBlock();
-
-      /* text alternative / small-screen accordion, from the same data */
-      var list = document.getElementById('wheelList');
-      if (list) {
-        var lh = '';
-        COMPETENCY_DATA.factors.forEach(function (f) {
-          lh += '<details><summary><span>Factor ' + f.roman + ' &middot; ' + f.name + '</span><span class="wl-m">' + f.meaning + '</span></summary>';
-          f.clusters.forEach(function (c) {
-            lh += '<div class="wl-cluster"><span class="wl-cl">Cluster ' + c.letter + ' &middot; ' + c.name + '</span><span class="wl-cd">' + c.def + '</span></div>';
-            c.competencies.forEach(function (p) {
-              var causes = (p.causes || []).map(function (x) { return '<li>' + x + '</li>'; }).join('');
-              var tips = (p.tips || []).map(function (x) { return '<li>' + x + '</li>'; }).join('');
-              var names = function (ids) { return (ids || []).map(function (id) { var c2 = findComp(id); return c2 ? c2.data.n : ''; }).filter(Boolean).join(', '); };
-              var subN = names(p.subs), compN = names(p.comps);
-              lh += '<details class="wl-comp"><summary><span class="wl-n">' + p.id + '</span><span>' + p.n + '</span></summary><div class="wl-body">' +
-                '<p class="wl-def">' + p.def + '</p><dl>' +
-                '<dt class="t-less">Too little</dt><dd class="less">' + p.less + '</dd>' +
-                '<dt class="t-skill">Skilled</dt><dd>' + p.s + '</dd>' +
-                '<dt class="t-tal">Talented</dt><dd>' + p.tal + '</dd>' +
-                '<dt class="t-over">Overused</dt><dd class="over">' + p.o + '</dd></dl>' +
-                '<p class="wl-map">' + p.map + '</p>' +
-                '<div class="wl-sec"><div class="ch-label">Some Causes</div><ul class="ch-causes">' + causes + '</ul></div>' +
-                '<div class="wl-sec"><div class="ch-label">Tips to Develop It</div><ol class="ch-tips">' + tips + '</ol></div>' +
-                '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + p.assign + '</p></div>' +
-                (subN ? '<div class="wl-sec"><div class="ch-label">Substitutes</div><div class="wl-xref">' + subN + '</div></div>' : '') +
-                (compN ? '<div class="wl-sec"><div class="ch-label">Compensators</div><div class="wl-xref">' + compN + '</div></div>' : '') +
-                '</div></details>';
-            });
-          });
-          lh += '</details>';
-        });
-        list.innerHTML = lh;
-      }
+      if (mqMobile.matches) { sel = chComp; markOpen(); }
+      else { select(hubMeta); }
+      /* crossing the phone breakpoint: re-sync which surface carries the description */
+      var onBreak = function (e) {
+        clearHover();
+        if (e.matches) { sel = chComp; markOpen(); }
+        else { sel = hubMeta; markOpen(); renderPanel(hubMeta); }
+      };
+      if (mqMobile.addEventListener) mqMobile.addEventListener('change', onBreak);
+      else if (mqMobile.addListener) mqMobile.addListener(onBreak);
     }
 
   })();
