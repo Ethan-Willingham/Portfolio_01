@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-  <!-- Desktop tab mark: a green equilateral triangle inside a white disc.
-       The triangle is concentric with the disc: its centroid (which, for an
-       equilateral triangle, is also its circumcenter) sits at the circle center,
-       so all three vertices are the same distance from the edge.
-       Disc r 49, centered. Triangle circumradius 36 about (50,50):
-         apex (50,14), base (18.82,68) and (81.18,68). -->
-  <circle cx="50" cy="50" r="49" fill="#FFFFFF"/>
-  <polygon points="50,14 18.82,68 81.18,68" fill="#303931"/>
+  <!-- Desktop tab mark: a green equilateral triangle on a rounded square in an
+       off-white that sits between cream (#E8E2D6) and white (#FFFFFF). Corners
+       outside the rounded square are transparent, so it reads as a rounded-square
+       badge on the tab. Rounded square: 96x96 inset 2, corner radius 20.
+       Triangle: equilateral, base 70 (x 15..85), centered (apex y 19.7,
+       base y 80.3). Same mark as the mobile tile. -->
+  <rect x="2" y="2" width="96" height="96" rx="20" ry="20" fill="#F5F1EA"/>
+  <polygon points="50,19.7 15,80.3 85,80.3" fill="#303931"/>
 </svg>
