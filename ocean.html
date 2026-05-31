@@ -11,48 +11,35 @@
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <style>
-    :root { --stage: #0a0d0b; }
-    html { background: var(--stage); overflow-x: hidden; }
-    body { padding: 0; background: var(--stage); color: var(--text); }
-    .reading-progress { position: fixed; top: 0; left: 0; width: 0; height: 2px; background: var(--accent); z-index: 1000; transition: width 60ms linear; pointer-events: none; }
+    /* The Living Ocean wears the shared site shell from style.css: the
+       forest-green background, the 780px reading column (.site-wrapper), the
+       standard Home link (.post-back), the reading-progress bar, the site
+       footer, and the shared back-to-top button. Only the photo, caption,
+       section-break, credits and lightbox styles below are specific to it. */
 
-    .post-back { position: fixed; top: 1rem; left: 1rem; z-index: 40; display: inline-flex; align-items: center; gap: 0.4em; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); text-decoration: none; padding: 0.4em 0.7em; border: 1px solid rgba(212,196,160,0.22); border-radius: 5px; background: rgba(8,11,9,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: color 0.2s, border-color 0.2s; }
-    .post-back::before { content: "\2190"; }
-    .post-back:hover { color: var(--accent-hover); border-color: var(--accent); }
-
-    .ocean-intro { min-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6vh 1.25rem 4vh; }
-    .ocean-intro h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 9vw, 5.5rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; }
-    .ocean-intro .dek { margin-top: 1.4rem; max-width: 46ch; font-family: var(--font-heading); font-style: italic; font-size: clamp(1.15rem, 2.5vw, 1.5rem); line-height: 1.5; color: var(--text-dim); text-wrap: pretty; }
-    .ocean-intro .zoomhint { margin-top: 2.6rem; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--text-dim); max-width: 40ch; line-height: 1.7; }
-    .ocean-intro .zoomhint span { display: block; margin-top: 1.4rem; font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); opacity: 0.8; }
-
-    .ocean { display: block; }
-    .shot { margin: 0 0 7vh; position: relative; }
-    .shot-num { position: absolute; top: 10px; right: 10px; z-index: 6; font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; line-height: 1; color: #0a0d0b; background: rgba(212,196,160,0.92); padding: 0.32em 0.55em; border-radius: 4px; letter-spacing: 0.02em; }
-    .shot img { display: block; width: 100vw; max-height: 92vh; object-fit: contain; margin: 0 auto; background: #000; cursor: zoom-in; }
-    .shot figcaption { max-width: 58ch; margin: 1.25rem auto 0; padding: 0 1.4rem; text-align: center; font-family: var(--font-body); font-size: 1.06rem; line-height: 1.55; color: var(--text-dim); text-wrap: pretty; }
-    .shot figcaption .sp { display: block; margin-bottom: 0.45rem; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+    /* Photos fill the reading column at natural height; click to zoom. */
+    .shot { margin: 0 0 4rem; }
+    .shot:first-child { margin-top: 0.5rem; }
+    .shot img { display: block; width: 100%; height: auto; margin: 0; border-radius: 3px; cursor: zoom-in; }
+    .shot figcaption { margin: 0.95rem auto 0; text-align: center; font-family: var(--font-body); font-size: 1.02rem; line-height: 1.55; color: var(--text-dim); text-wrap: pretty; }
+    .shot figcaption .sp { display: block; margin-bottom: 0.4rem; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
     .shot figcaption .sp em { font-style: italic; text-transform: none; letter-spacing: 0; }
-    .shot figcaption .found-date { display: block; font-family: var(--font-mono); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-hover); margin-bottom: 0.5rem; }
+    .shot figcaption .found-date { display: block; font-family: var(--font-mono); font-weight: 700; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-hover); margin-bottom: 0.45rem; }
 
-    .divider { max-width: 760px; margin: 13vh auto 9vh; padding: 0 1.4rem; text-align: center; }
-    .divider .dk { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
-    .divider h2 { margin-top: 0.7rem; font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.015em; color: var(--text-bright); line-height: 1.08; }
+    /* Chapter breaks within the essay (kept from the post's own design). */
+    .ocean-section-break { margin: 5.5rem 0 4rem; text-align: center; }
+    .ocean-section-break .dk { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
+    .ocean-section-break h2 { margin-top: 0.6rem; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.6rem); letter-spacing: -0.015em; color: var(--text-bright); line-height: 1.1; }
 
-    .ocean-credits { max-width: 760px; margin: 12vh auto 0; padding: 3rem 1.4rem 2rem; border-top: 1px solid var(--rule); }
+    /* Image credits (CC attribution), sitting just above the standard footer. */
+    .ocean-credits { margin-top: 5rem; padding-top: 2.2rem; border-top: 1px solid var(--rule); }
     .ocean-credits h2 { font-family: var(--font-heading); font-size: 1.3rem; color: var(--text-bright); margin-bottom: 0.6rem; }
-    .ocean-credits p { font-size: 0.95rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.4rem; max-width: 62ch; }
-    .ocean-credits ul { list-style: none; columns: 2; column-gap: 2rem; font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.5; }
+    .ocean-credits p { font-size: 0.95rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.4rem; }
+    .ocean-credits ul { list-style: none; columns: 2; column-gap: 2rem; font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.5; padding: 0; margin: 0; }
     .ocean-credits li { break-inside: avoid; margin-bottom: 0.5rem; color: var(--text-dim); }
     .ocean-credits a { color: var(--text); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.25); }
     .ocean-credits a:hover { color: var(--accent-hover); }
-    .ocean-credits .ftr { display: block; margin-top: 2.5rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); text-decoration: none; }
     @media (max-width: 620px) { .ocean-credits ul { columns: 1; } }
-
-    /* Reveal on scroll, gated on fine-pointer + reduced-motion (house rule). */
-    html.reveal-on .shot, html.reveal-on .divider { opacity: 0; transform: translateY(18px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22,1,0.36,1); }
-    html.reveal-on .shot.is-in, html.reveal-on .divider.is-in { opacity: 1; transform: none; }
-    html.reveal-on .shot.hero { opacity: 1; transform: none; }
 
     /* ===== Lightbox (from gallery.html) ===== */
     .lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(6,8,7,0.985); display: none; flex-direction: column; opacity: 0; transition: opacity 0.2s ease; overscroll-behavior: contain; touch-action: none; }
@@ -78,15 +65,15 @@
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-  <a href="/" class="post-back">Home</a>
+  <div class="site-wrapper">
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
-  <header class="ocean-intro">
-    <h1>The Living Ocean</h1>
-    <p class="dek">Most of the planet is water, and most of that is dark, cold, and barely seen. Here is some of what lives down there, in the highest resolution I could find.</p>
-    <p class="zoomhint">Every photo here is the full-resolution original. Click or tap any one to zoom all the way in. <span>scroll to dive</span></p>
-  </header>
+    <header class="post-header fade-in">
+      <h1 class="post-title">The Living Ocean</h1>
+      <p class="post-subtitle">Most of the planet is water, and most of that is dark, cold, and barely seen. Here is some of what lives down there, in the highest resolution I could find. Click any photo to open the full-resolution original.</p>
+    </header>
 
-  <main class="ocean">
+    <main class="ocean fade-in">
       <figure class="shot"><img class="zoom" src="assets/ocean/posidonia-school.jpg" width="2200" height="1235" loading="eager" decoding="async" fetchpriority="high" alt="A silvery school of fish hovering over a green seagrass meadow in clear blue water." data-zoom-src="assets/ocean/full/posidonia-school.jpg" data-zoom-title="Neptune grass" data-zoom-artist="Karim Saari, CC BY 4.0"><figcaption><span class="sp">Neptune grass &middot; <em>Posidonia oceanica</em> &middot; one clone ~100,000 yrs old</span>A single seagrass meadow off Ibiza is one continuous clone roughly 100,000 years old, older than our species' cave paintings.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/coralline-magenta.jpg" width="2200" height="1650" loading="lazy" decoding="async" alt="A hot-pink branching coralline alga standing out against deep green seaweed." data-zoom-src="assets/ocean/full/coralline-magenta.jpg" data-zoom-title="Coralline seaweed" data-zoom-artist="Peter Southwood, CC BY-SA 4.0"><figcaption><span class="sp">Coralline seaweed &middot; <em>Corallinales</em></span>These seaweeds turn themselves to stone, and their pink crusts tell coral and abalone larvae where to settle.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/ochre-stars.jpg" width="2200" height="1650" loading="lazy" decoding="async" alt="A dense heap of purple and orange sea stars piled on intertidal rock." data-zoom-src="assets/ocean/full/ochre-stars.jpg" data-zoom-title="Ochre sea stars" data-zoom-artist="Collin Smith, USGS, Public domain"><figcaption><span class="sp">Ochre sea stars &middot; <em>Pisaster ochraceus</em></span>This is the animal that gave science the term keystone species: pull it off the rock and the whole community collapses.</figcaption></figure>
@@ -105,7 +92,7 @@
       <figure class="shot"><img class="zoom" src="assets/ocean/radiolarian-dumbbell.jpg" width="1466" height="2200" loading="lazy" decoding="async" alt="A glowing, perfectly symmetrical glass dumbbell-shaped radiolarian skeleton under the microscope." data-zoom-src="assets/ocean/full/radiolarian-dumbbell.jpg" data-zoom-title="Radiolarian" data-zoom-artist="Picturepest, CC BY 2.0"><figcaption><span class="sp">Radiolarian &middot; <em>Stylosphaera coronata laevis</em> &middot; single cell</span>Radiolarians build skeletons of pure glass, and when they die their shells rain down and pile into seabed ooze hundreds of metres thick.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/diatom-star.jpg" width="2200" height="1659" loading="lazy" decoding="async" alt="Star-shaped colonial diatoms radiating outward like a firework under the microscope." data-zoom-src="assets/ocean/full/diatom-star.jpg" data-zoom-title="Diatoms" data-zoom-artist="John R. Dolan, NOAA, Public domain"><figcaption><span class="sp">Diatoms &middot; <em>light micrograph</em> &middot; ~20% of our oxygen</span>Diatoms make about a fifth of the oxygen you breathe, roughly one breath in five, while drifting unseen in sunlit seawater.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/diatom-mandala.jpg" width="2000" height="2000" loading="lazy" decoding="async" alt="A circular diatom shell forming a mandala of evenly spaced honeycomb pores." data-zoom-src="assets/ocean/full/diatom-mandala.jpg" data-zoom-title="Diatom shell" data-zoom-artist="Anatoly Mikhaltsov, CC BY-SA 4.0"><figcaption><span class="sp">Diatom shell &middot; <em>Stephanopyxis grunowii</em></span>Its pores are spaced so precisely that engineers study diatoms as natural blueprints for photonic crystals and nanoscale filters.</figcaption></figure>
-      <div class="divider"><span class="dk">where the sunlight gives out</span><h2>Into the Dark</h2></div>
+      <div class="ocean-section-break"><span class="dk">where the sunlight gives out</span><h2>Into the Dark</h2></div>
       <figure class="shot"><img class="zoom" src="assets/ocean/barreleye.jpg" width="2200" height="1650" loading="lazy" decoding="async" alt="A deep-sea barreleye fish with two glowing green tubular eyes visible through its clear head." data-zoom-src="assets/ocean/full/barreleye.jpg" data-zoom-title="Barreleye" data-zoom-artist="NOAA Ocean Exploration, Public domain"><figcaption><span class="sp">Barreleye &middot; <em>Macropinna microstoma</em></span>Those glowing green orbs are its eyes, aimed straight up through a transparent forehead so fragile it is destroyed the moment the fish is hauled to the surface.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/siphonophore.jpg" width="1551" height="2200" loading="lazy" decoding="async" alt="An orange-and-glass rocket-shaped siphonophore colony hanging in black water." data-zoom-src="assets/ocean/full/siphonophore.jpg" data-zoom-title="Siphonophore" data-zoom-artist="Kevin Raskoff / NOAA, Public domain"><figcaption><span class="sp">Siphonophore &middot; <em>Marrus orthocanna</em></span>It is not one animal but a swimming colony of identical clones, each built for one job; some of its relatives grow longer than a blue whale.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/sea-cucumber-swimming.jpg" width="1920" height="1080" loading="lazy" decoding="async" alt="A translucent pink, balloon-like swimming sea cucumber above the deep seabed." data-zoom-src="assets/ocean/full/sea-cucumber-swimming.jpg" data-zoom-title="Swimming sea cucumber" data-zoom-artist="NOAA Ocean Exploration, Public domain"><figcaption><span class="sp">Swimming sea cucumber &middot; <em>Enypniastes eximia</em></span>This one gave up crawling to swim, and is so transparent you can watch its dinner move through its gut; attacked, it sheds glowing skin onto the predator.</figcaption></figure>
@@ -116,19 +103,19 @@
       <figure class="shot"><img class="zoom" src="assets/ocean/great-white.jpg" width="2200" height="1461" loading="lazy" decoding="async" alt="A great white shark at the surface with its jaws agape, ragged teeth fully exposed." data-zoom-src="assets/ocean/full/great-white.jpg" data-zoom-title="Great white shark" data-zoom-artist="Andrew Shiva, CC BY-SA 4.0"><figcaption><span class="sp">Great white shark &middot; <em>Carcharodon carcharias</em></span>Great whites are partly warm-blooded, keeping their muscles up to 14 degrees above the surrounding sea so they can sprint after fast prey in cold water.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/green-turtle.jpg" width="2200" height="1467" loading="lazy" decoding="async" alt="A green sea turtle hanging in glassy blue water in a clean light gradient." data-zoom-src="assets/ocean/full/green-turtle.jpg" data-zoom-title="Green sea turtle" data-zoom-artist="Charles J. Sharp, CC BY-SA 4.0"><figcaption><span class="sp">Green sea turtle &middot; <em>Chelonia mydas</em></span>Sea turtles navigate by Earth's magnetic field like a built-in compass, and females cross whole oceans to nest on the very beach where they hatched decades before.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/orca.jpg" width="2200" height="1489" loading="lazy" decoding="async" alt="A black-and-white killer whale surfacing, its tall dorsal fin clear of the water." data-zoom-src="assets/ocean/full/orca.jpg" data-zoom-title="Orca" data-zoom-artist="Allen Shimada, NOAA, Public domain"><figcaption><span class="sp">Orca &middot; <em>Orcinus orca</em></span>The ocean's apex predator hunts in cultural tribes: some pods specialize on salmon, some on seals, some on hunting other whales, and pass the recipes down for generations.</figcaption></figure>
-      <div class="divider"><span class="dk">the ocean is still mostly unmet</span><h2>Discovered Just Now</h2></div>
+      <div class="ocean-section-break"><span class="dk">the ocean is still mostly unmet</span><h2>Discovered Just Now</h2></div>
       <figure class="shot"><img class="zoom" src="assets/ocean/mystery-mollusc.jpg" width="1150" height="647" loading="lazy" decoding="async" alt="A translucent, faintly glowing deep-sea slug with a billowing hood and a fringed tail in black water." data-zoom-src="assets/ocean/full/mystery-mollusc.jpg" data-zoom-title="Mystery mollusc" data-zoom-artist="MBARI, CC BY-NC-SA 4.0"><figcaption><span class="found-date">Described October 2024</span><span class="sp">Mystery mollusc &middot; <em>Bathydevius caudactylus</em></span>Robots filmed this glowing sea slug 157 times over 20 years before anyone could name it: a slug that left the seafloor to swim the midnight zone, catching food in a hood.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/tailspot-wrasse.jpg" width="688" height="463" loading="lazy" decoding="async" alt="A pale gold wrasse with a bold inky spot near its tail." data-zoom-src="assets/ocean/full/tailspot-wrasse.jpg" data-zoom-title="Tailspot wrasse" data-zoom-artist="Victor, Frable &amp; Ludt 2024 (PeerJ), CC BY 4.0"><figcaption><span class="found-date">Described 28 February 2024</span><span class="sp">Tailspot wrasse &middot; <em>Halichoeres sanchezi</em></span>It slipped past science until 2024 because it changes outfit as it grows: the young, the females and the males look like three completely different fish.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/fairy-wrasse.jpg" width="756" height="567" loading="lazy" decoding="async" alt="An electric pink, magenta and orange wrasse against deep blue twilight-reef water." data-zoom-src="assets/ocean/full/fairy-wrasse.jpg" data-zoom-title="Rose-veiled fairy wrasse" data-zoom-artist="Tea et al. 2022 (ZooKeys), CC0"><figcaption><span class="found-date">Described 8 March 2022</span><span class="sp">Rose-veiled fairy wrasse &middot; <em>Cirrhilabrus finifenmaa</em></span>Its name means rose in Dhivehi, and it is the first new species ever formally named by a Maldivian scientist, in their own language.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/duobrachium.jpg" width="800" height="450" loading="lazy" decoding="async" alt="A ghostly gem-like comb jelly with two long trailing tentacles, lit by an ROV in the dark." data-zoom-src="assets/ocean/full/duobrachium.jpg" data-zoom-title="Duobrachium comb jelly" data-zoom-artist="NOAA Ocean Exploration, Public domain"><figcaption><span class="found-date">Described 18 November 2020</span><span class="sp">Duobrachium comb jelly &middot; <em>Duobrachium sparksae</em></span>It is the first animal ever named as a new species entirely from high-definition video, with no specimen caught; it drifts almost 4 km down like a tethered balloon.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/et-sponge.jpg" width="1920" height="1080" loading="lazy" decoding="async" alt="A pale glass sponge on a thin stalk with a bulbous head and eye-like holes on bare deep seabed." data-zoom-src="assets/ocean/full/et-sponge.jpg" data-zoom-title="E.T. sponge" data-zoom-artist="NOAA Ocean Exploration, Public domain"><figcaption><span class="found-date">Described 9 July 2020</span><span class="sp">E.T. sponge &middot; <em>Advhena magnifica</em></span>Its name literally means magnificent alien; it looked so much like E.T. phoning home that scientists coined a whole new genus, Advhena, just for it.</figcaption></figure>
       <figure class="shot"><img class="zoom" src="assets/ocean/aphrodite-anthias.jpg" width="756" height="554" loading="lazy" decoding="async" alt="A neon pink-and-yellow striped fish in a dark crevice of a deep twilight reef." data-zoom-src="assets/ocean/full/aphrodite-anthias.jpg" data-zoom-title="Aphrodite anthias" data-zoom-artist="Pinheiro, Rocha &amp; Rocha 2018 (ZooKeys), CC BY 4.0"><figcaption><span class="found-date">Described 25 September 2018</span><span class="sp">Aphrodite anthias &middot; <em>Tosanoides aphrodite</em></span>The divers who found it were so dazzled they failed to notice a shark circling above them, and named it for Aphrodite, the goddess of beauty.</figcaption></figure>
-  </main>
+    </main>
 
-  <footer class="ocean-credits">
-    <h2>Credits</h2>
-    <p>Every photograph here is public domain or Creative Commons (CC BY / CC BY-SA), gathered from Wikimedia Commons, NOAA, and other open archives. Each links to its source and license.</p>
-    <ul>
+    <section class="ocean-credits">
+      <h2>Sources</h2>
+      <p>Every photograph here is public domain or Creative Commons, gathered from Wikimedia Commons, NOAA, MBARI, and other open archives. Each links to its source and license.</p>
+      <ul>
         <li><a href="https://commons.wikimedia.org/wiki/File:Posidonia_oceanica_meadow_and_school_of_Salema_porgy_-_Exploration_and_observation_-_Calanque_de_Sormiou_-_June_2022.jpg">Neptune grass (Posidonia oceanica)</a> &middot; Karim Saari, CC BY 4.0</li>
         <li><a href="https://commons.wikimedia.org/wiki/File:Coralline_seaweed_at_12_Mile_Bank_P4090181.jpg">Coralline seaweed (Corallinales)</a> &middot; Peter Southwood, CC BY-SA 4.0</li>
         <li><a href="https://commons.wikimedia.org/wiki/File:Mass_of_Pisaster_ochraceus.jpg">Ochre sea stars (Pisaster ochraceus)</a> &middot; Collin Smith, USGS, Public domain</li>
@@ -163,9 +150,15 @@
         <li><a href="https://commons.wikimedia.org/wiki/File:Duobrachium_sparksae_on_10_April_2015.png">Duobrachium comb jelly (Duobrachium sparksae)</a> &middot; NOAA Ocean Exploration, Public domain</li>
         <li><a href="https://commons.wikimedia.org/wiki/File:Advhena_magnifica_prior_to_being_collected_2016.png">E.T. sponge (Advhena magnifica)</a> &middot; NOAA Ocean Exploration, Public domain</li>
         <li><a href="https://commons.wikimedia.org/wiki/File:Tosanoides_aphrodite_sp._n._in_its_natural_environment.jpg">Aphrodite anthias (Tosanoides aphrodite)</a> &middot; Pinheiro, Rocha &amp; Rocha 2018 (ZooKeys), CC BY 4.0</li>
-    </ul>
-    <a class="ftr" href="/">&copy; 2026 Ethan Willingham</a>
-  </footer>
+      </ul>
+    </section>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
 
   <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Image viewer">
     <div class="lightbox-bar">
@@ -184,19 +177,7 @@
     </div>
   </div>
 
-  <script>
-  (function () {
-    var rp = document.getElementById('reading-progress');
-    if (rp) { window.addEventListener('scroll', function () { var h = document.documentElement.scrollHeight - window.innerHeight; rp.style.width = (h > 0 ? (window.pageYOffset / h) * 100 : 0) + '%'; }, { passive: true }); }
-    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    var motion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
-    if (fine && motion && 'IntersectionObserver' in window) {
-      document.documentElement.classList.add('reveal-on');
-      var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } }); }, { rootMargin: '0px 0px -8% 0px' });
-      document.querySelectorAll('.shot, .divider').forEach(function (el) { io.observe(el); });
-    }
-  })();
-  </script>
+  <script src="js/main.js"></script>
   <script>
   /* Transform-based lightbox, lifted from gallery.html. */
   (function () {
@@ -246,5 +227,6 @@
     stage.addEventListener('gestureend',function(e){e.preventDefault();});
   })();
   </script>
+  <script src="js/backtotop.js"></script>
 </body>
 </html>
