@@ -281,8 +281,13 @@
   .wheel .arc.act { fill: var(--accent-hover) !important; }
   .wheel.dim .arc.act { filter: url(#wheelGlow); }
   .wheel .flabel { font-family: var(--font-body); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-size: 12.5px; pointer-events: none; }
-  .wheel .hub-n { fill: var(--accent); font-family: var(--font-heading); font-weight: 700; font-size: 40px; text-anchor: middle; dominant-baseline: central; }
-  .wheel .hub-l { fill: var(--text-dim); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; text-anchor: middle; }
+  .wheel #hubBtn { cursor: pointer; outline: none; }
+  .wheel .hub-bg { fill: var(--bg); stroke: var(--hair); stroke-width: 1; transition: stroke 150ms var(--ease-out), stroke-width 150ms var(--ease-out); }
+  .wheel #hubBtn:hover .hub-bg { stroke: rgba(212,196,160,0.5); }
+  .wheel .hub-bg.hub-sel { stroke: var(--accent-hover); stroke-width: 2.5; }
+  .wheel #hubBtn:focus-visible .hub-bg { stroke: var(--accent); stroke-width: 2.5; }
+  .wheel .hub-n { fill: var(--accent); font-family: var(--font-heading); font-weight: 700; font-size: 40px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .wheel .hub-l { fill: var(--text-dim); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; text-anchor: middle; pointer-events: none; }
 
   .wheel-panel { background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.2rem 1.25rem 1.3rem; min-height: 272px; display: flex; flex-direction: column; }
   .wheel-panel .p-kind { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
@@ -348,6 +353,11 @@
   .ch-assign { margin-top: 1.35rem; padding: 0.9rem 1.1rem; border: 1px solid var(--hair); border-left: 3px solid var(--accent); border-radius: 7px; background: rgba(212,196,160,0.05); }
   .ch-assign .ch-label { margin-bottom: 0.3rem; }
   .ch-assign p { font-size: 1rem; line-height: 1.5; color: var(--text-bright); margin: 0; font-style: italic; text-wrap: pretty; }
+  .ch-crumb { font-size: 0.84rem; color: var(--text-dim); margin: 0.12rem 0 0; }
+  .ch-chips { margin-top: 1.35rem; padding-top: 1.25rem; border-top: 1px solid var(--hair); }
+  .ch-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+  .ch-chip { font-family: var(--font-body); font-size: 0.9rem; padding: 0.4rem 0.85rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
+  .ch-chip:hover { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.08); }
   /* three-way description labels (panel + accordion) and mobile chapter spacing */
   .wheel-panel dt.t-less, .wheel-list .wl-body dt.t-less { color: var(--text-dim); }
   .wheel-panel dt.t-over, .wheel-list .wl-body dt.t-over { color: #d39a7e; }
@@ -768,8 +778,11 @@
               <g id="wheelArcs"></g>
               <g id="openMark"></g>
               <g id="wheelLabels"></g>
-              <text class="hub-n" x="0" y="-2">38</text>
-              <text class="hub-l" x="0" y="22">competencies</text>
+              <g id="hubBtn" tabindex="0" role="button" aria-label="The Library: the whole map, four factors and thirty-eight competencies">
+                <circle class="hub-bg" cx="0" cy="0" r="60"></circle>
+                <text class="hub-n" x="0" y="-2">38</text>
+                <text class="hub-l" x="0" y="22">competencies</text>
+              </g>
             </svg>
           </div>
           <aside class="wheel-panel" id="wheelPanel" aria-live="polite"></aside>
@@ -1102,9 +1115,16 @@
         if (a.level === 2) return b.level === 1 || b.ci === a.ci;
         return b.level === 1 || (b.level === 2 && b.ci === a.ci) || b === a;
       }
-      var openComp = null;
+      var hubMeta = { kind: 'hub' };
+      var sel = null;
       var chapterFig = document.getElementById('chapterFig');
+      var openMarkG = document.getElementById('openMark');
+      var hubBg = document.querySelector('.hub-bg');
+      var hubBtn = document.getElementById('hubBtn');
 
+      function findComp(id) {
+        return allArcs.filter(function (a) { return a.kind === 'comp' && a.data.id === id; })[0];
+      }
       function activate(meta) {
         active = meta;
         svg.classList.add('dim');
@@ -1114,15 +1134,20 @@
         });
         renderPanel(meta);
       }
-      var openMarkG = document.getElementById('openMark');
+      function clearHover() {
+        active = null;
+        svg.classList.remove('dim');
+        allArcs.forEach(function (m) { m.el.classList.remove('lin', 'act'); });
+      }
       function markOpen() {
+        if (hubBg) hubBg.classList.toggle('hub-sel', !!sel && sel.kind === 'hub');
         if (!openMarkG) return;
         while (openMarkG.firstChild) openMarkG.removeChild(openMarkG.firstChild);
-        if (!openComp) return;
+        if (!sel || sel.kind === 'hub') return;
         var lineage = allArcs.filter(function (m) {
-          return (m === openComp) ||
-            (m.level === 2 && m.fi === openComp.fi && m.ci === openComp.ci) ||
-            (m.level === 1 && m.fi === openComp.fi);
+          if (sel.kind === 'factor') return m.level === 1 && m.fi === sel.fi;
+          if (sel.kind === 'cluster') return (m.level === 1 && m.fi === sel.fi) || (m.level === 2 && m.fi === sel.fi && m.ci === sel.ci);
+          return (m === sel) || (m.level === 2 && m.fi === sel.fi && m.ci === sel.ci) || (m.level === 1 && m.fi === sel.fi);
         });
         ['open-casing', 'open-line'].forEach(function (cls) {
           lineage.forEach(function (m) {
@@ -1133,31 +1158,39 @@
           });
         });
       }
-      function reset() {
-        active = null;
-        svg.classList.remove('dim');
-        allArcs.forEach(function (m) { m.el.classList.remove('lin', 'act'); });
+      function reset() { clearHover(); renderPanel(sel); }
+      function select(meta) {
+        sel = meta;
+        clearHover();
         markOpen();
-        renderDefault();
-      }
-      function openChapter(meta) {
-        openComp = meta;
-        markOpen();
-        renderChapter(meta);
+        renderPanel(meta);
+        renderDetail(meta);
       }
       function bind(m) {
         m.el.addEventListener('mouseenter', function () { if (canHover) activate(m); });
         m.el.addEventListener('focus', function () { activate(m); });
-        m.el.addEventListener('click', function () { activate(m); if (m.kind === 'comp') openChapter(m); });
+        m.el.addEventListener('click', function () { select(m); });
         m.el.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(m); if (m.kind === 'comp') openChapter(m); }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m); }
         });
       }
       svg.addEventListener('mouseleave', function () { if (canHover) reset(); });
       svg.addEventListener('focusout', function (e) { if (!svg.contains(e.relatedTarget)) reset(); });
+      if (hubBtn) {
+        hubBtn.addEventListener('mouseenter', function () { if (canHover) { clearHover(); renderPanel(hubMeta); } });
+        hubBtn.addEventListener('click', function () { select(hubMeta); });
+        hubBtn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(hubMeta); } });
+      }
+      if (chapterFig) {
+        chapterFig.addEventListener('click', function (e) {
+          var c = e.target.closest ? e.target.closest('.ch-chip') : null;
+          if (!c) return;
+          var m = findComp(+c.getAttribute('data-id'));
+          if (m) select(m);
+        });
+      }
 
       function renderChapter(m) {
-        if (!chapterFig) return;
         var p = m.data;
         var causes = (p.causes || []).map(function (c) { return '<li>' + c + '</li>'; }).join('');
         var tips = (p.tips || []).map(function (t) { return '<li>' + t + '</li>'; }).join('');
@@ -1171,8 +1204,39 @@
         h += '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + (p.assign || '') + '</p></div>';
         chapterFig.innerHTML = h;
       }
+      function chip(p) { return '<button type="button" class="ch-chip" data-id="' + p.id + '">' + p.n + '</button>'; }
+      function renderDetail(m) {
+        if (!chapterFig) return;
+        if (m.kind === 'comp') { renderChapter(m); return; }
+        var h = '';
+        if (m.kind === 'hub') {
+          var hc = '';
+          [16, 13, 34, 36, 10].forEach(function (id) { var a = findComp(id); if (a) hc += chip(a.data); });
+          h += '<div class="ch-kind">The Library</div>';
+          h += '<h4 class="ch-name">Open any of the thirty-eight chapters</h4>';
+          h += '<p class="ch-map">Every competency has a chapter: a short take on why it matters, the usual reasons people fall short, a few concrete things to go do, and one assignment to build it on the job. Click any segment on the wheel, a competency, a cluster, or a whole factor, to dig in.</p>';
+          h += '<div class="ch-chips"><div class="ch-label">Start with a manager essential</div><div class="ch-chip-row">' + hc + '</div></div>';
+        } else if (m.kind === 'factor') {
+          var nc = 0, fc = '';
+          m.data.clusters.forEach(function (c) { nc += c.competencies.length; c.competencies.forEach(function (p) { fc += chip(p); }); });
+          h += '<div class="ch-kind">Factor ' + m.data.roman + '</div>';
+          h += '<h4 class="ch-name">' + m.data.name + '</h4>';
+          h += '<p class="ch-map">' + m.data.meaning + ' It holds ' + m.data.clusters.length + ' clusters and ' + nc + ' competencies.</p>';
+          h += '<div class="ch-chips"><div class="ch-label">Open a chapter in this factor</div><div class="ch-chip-row">' + fc + '</div></div>';
+        } else {
+          var cc = '';
+          m.data.competencies.forEach(function (p) { cc += chip(p); });
+          h += '<div class="ch-kind">Cluster ' + m.data.letter + '</div>';
+          h += '<div class="ch-crumb">Factor ' + m.factor.roman + ' &middot; ' + m.factor.name + '</div>';
+          h += '<h4 class="ch-name">' + m.data.name + '</h4>';
+          h += '<p class="ch-map">' + m.data.def + '</p>';
+          h += '<div class="ch-chips"><div class="ch-label">Open a chapter in this cluster</div><div class="ch-chip-row">' + cc + '</div></div>';
+        }
+        chapterFig.innerHTML = h;
+      }
 
       function renderPanel(m) {
+        if (m.kind === 'hub') { renderDefault(); return; }
         var h = '';
         if (m.kind === 'factor') {
           var nc = 0; m.data.clusters.forEach(function (c) { nc += c.competencies.length; });
@@ -1220,10 +1284,7 @@
         h += '</ul><p class="phint">The inner ring is the factor, the middle ring its clusters, the outer ring the competencies. Hover or tap any segment to explore it.</p>';
         panel.innerHTML = h;
       }
-      renderDefault();
-      var defOpen = null;
-      allArcs.forEach(function (m) { if (m.kind === 'comp' && m.data.id === 13) defOpen = m; });
-      if (defOpen) openChapter(defOpen);
+      select(hubMeta);
 
       /* text alternative / small-screen accordion, from the same data */
       var list = document.getElementById('wheelList');
