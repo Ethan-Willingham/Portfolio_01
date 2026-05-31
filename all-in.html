@@ -325,38 +325,45 @@
   .wheel-list .wl-body dd { margin: 0.12rem 0 0; font-size: 0.94rem; line-height: 1.45; color: var(--text); }
   .wheel-list .wl-body dd.over { color: var(--text-dim); }
 
+  /* the "open" competency, marked on the wheel while its chapter is showing */
+  .wheel .arc.open { stroke: var(--accent-hover); stroke-width: 2; }
+
   /* ============================================================
-     SHOWPIECE 2: the overused-strength spectrum (FYI's signature idea)
+     SHOWPIECE 2: the chapter (opens below the wheel on click)
      ============================================================ */
-  .spectrum { margin: 1.6rem auto 0; max-width: var(--measure); background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.25rem 1.3rem 1.4rem; }
-  .sp-tabs { display: flex; flex-wrap: wrap; gap: 0.42rem; margin-bottom: 1.25rem; }
-  .sp-tabs button { font-family: var(--font-body); font-size: 0.84rem; padding: 0.32rem 0.74rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
-  .sp-tabs button:hover { color: var(--text); border-color: rgba(212,196,160,0.42); }
-  .sp-tabs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-hover); background: rgba(212,196,160,0.10); }
-  .sp-track { display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 8px; overflow: hidden; border: 1px solid var(--hair); }
-  .sp-stop { appearance: none; border: none; border-right: 1px solid var(--hair); background: transparent; cursor: pointer; padding: 0.62rem 0.5rem; text-align: center; font-family: var(--font-body); transition: background 160ms var(--ease-out); }
-  .sp-stop:last-child { border-right: none; }
-  .sp-stop .lbl { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); transition: color 160ms var(--ease-out); }
-  .sp-stop .sub { display: block; font-size: 0.74rem; font-style: italic; color: var(--text-dim); margin-top: 0.16rem; opacity: 0.72; }
-  .sp-stop[aria-pressed="true"] { background: rgba(212,196,160,0.07); }
-  .sp-stop[aria-pressed="true"] .lbl { color: var(--accent-hover); }
-  .sp-bar { height: 6px; border-radius: 999px; margin: 0.95rem 0 1.15rem; background: linear-gradient(90deg, rgba(122,140,134,0.55) 0%, var(--accent) 50%, rgba(182,116,92,0.78) 100%); position: relative; }
-  .sp-bar .dot { position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 50%; background: var(--accent-hover); border: 2px solid var(--bg); transform: translate(-50%, -50%); transition: left 280ms var(--ease-out); box-shadow: 0 0 0 1px var(--hair); }
-  .sp-read .sp-kick { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
-  .sp-read.k-skill .sp-kick { color: var(--accent); }
-  .sp-read.k-over .sp-kick { color: #d39a7e; }
-  .sp-read .sp-desc { font-size: 1.06rem; line-height: 1.56; color: var(--text); margin: 0.35rem 0 0; text-wrap: pretty; }
-  .sp-foot { font-size: 0.9rem; color: var(--text-dim); font-style: italic; line-height: 1.5; margin: 1rem 0 0; }
+  .chapter { margin: 1.7rem auto 0; max-width: calc(var(--measure) + 9rem); background: var(--bg); border: 1px solid var(--hair); border-radius: 11px; padding: 1.4rem 1.5rem 1.5rem; min-height: 300px; }
+  .chapter .ch-kind { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+  .chapter .ch-name { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 3.4vw, 1.95rem); color: var(--text-bright); line-height: 1.04; margin: 0.3rem 0 0; text-wrap: balance; }
+  .chapter .ch-map { font-size: 1.08rem; line-height: 1.55; color: var(--text-bright); margin: 0.6rem 0 0; max-width: 72ch; text-wrap: pretty; }
+  .chapter .ch-body { display: grid; grid-template-columns: 0.82fr 1.18fr; gap: 1.3rem 2.6rem; margin-top: 1.45rem; padding-top: 1.3rem; border-top: 1px solid var(--hair); }
+  .ch-label { font-family: var(--font-body); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.55rem; }
+  .chapter ul, .chapter ol, .ch-causes, .ch-tips { list-style: none; margin: 0; padding: 0; }
+  .ch-causes li { font-size: 0.97rem; line-height: 1.45; color: var(--text-dim); padding: 0.24rem 0 0.24rem 1rem; position: relative; }
+  .ch-causes li::before { content: ""; position: absolute; left: 0; top: 0.78em; width: 5px; height: 5px; border-radius: 50%; background: rgba(211,154,126,0.75); }
+  .ch-tips { counter-reset: tip; }
+  .ch-tips li { counter-increment: tip; font-size: 1rem; line-height: 1.5; color: var(--text); padding: 0.32rem 0 0.4rem 1.85rem; position: relative; }
+  .ch-tips li::before { content: counter(tip); position: absolute; left: 0; top: 0.34rem; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: var(--accent); }
+  .ch-assign { margin-top: 1.35rem; padding: 0.9rem 1.1rem; border: 1px solid var(--hair); border-left: 3px solid var(--accent); border-radius: 7px; background: rgba(212,196,160,0.05); }
+  .ch-assign .ch-label { margin-bottom: 0.3rem; }
+  .ch-assign p { font-size: 1rem; line-height: 1.5; color: var(--text-bright); margin: 0; font-style: italic; text-wrap: pretty; }
+  /* three-way description labels (panel + accordion) and mobile chapter spacing */
+  .wheel-panel dt.t-less, .wheel-list .wl-body dt.t-less { color: var(--text-dim); }
+  .wheel-panel dt.t-over, .wheel-list .wl-body dt.t-over { color: #d39a7e; }
+  .wheel-panel dd.less, .wheel-list .wl-body dd.less { color: var(--text-dim); }
+  .wheel-list .wl-map { font-size: 0.97rem; line-height: 1.5; color: var(--text-bright); margin: 0.55rem 0 0.1rem; }
+  .wheel-list .wl-sec { margin-top: 0.7rem; }
 
   /* responsive: stack the wheel, then swap to the accordion on phones */
   @media (max-width: 880px) {
     .wheel-stage { grid-template-columns: 1fr; gap: 1.2rem; }
     .wheel-svg-wrap { max-width: 440px; margin: 0 auto; }
     .wheel-panel { min-height: 0; }
+    .chapter .ch-body { grid-template-columns: 1fr; gap: 1.1rem; }
   }
   @media (max-width: 600px) {
     .wheel-stage { display: none; }
     .wheel-list { display: block; }
+    .desk-only { display: none; }
   }
 
   /* 70-20-10 bar */
@@ -407,9 +414,6 @@
     .cases { grid-template-columns: 1fr; }
     .choices { grid-template-columns: 1fr; }
     .lab-toggle { width: 100%; }
-    .sp-stop { padding: 0.55rem 0.35rem; }
-    .sp-stop .lbl { font-size: 0.66rem; letter-spacing: 0.06em; }
-    .sp-stop .sub { font-size: 0.68rem; }
   }
   @media (max-width: 380px) {
     .stages { grid-template-columns: 1fr; }
@@ -747,7 +751,7 @@
       <div class="fyi-label">
         <div class="fl-k">The Map</div>
         <div class="fl-t">The whole of leadership, on one wheel</div>
-        <p class="fl-s">The book sits on top of the Korn Ferry Leadership Architect: a map of nearly everything a leader is ever asked to do, sorted into <b>4 factors</b>, <b>12 clusters</b>, and <b>38 competencies</b>. Hover or tap any segment to see what the skill looks like done well, what it looks like overdone, and one concrete way to build it.</p>
+        <p class="fl-s">The book sits on top of the Korn Ferry Leadership Architect: a map of nearly everything a leader is ever asked to do, sorted into <b>4 factors</b>, <b>12 clusters</b>, and <b>38 competencies</b>. Hover any segment to read what it is, then how it shows up <em>too little</em>, just right, and <em>overdone</em>.</p>
       </div>
 
       <figure class="wheel-fig reveal">
@@ -771,33 +775,20 @@
       </figure>
 
       <div class="fyi-col">
-        <p>Almost everything this essay has argued lives in two of those four factors: <b>People</b> and <b>Self</b>. That is why People is the widest wedge on the wheel. But the map is only the index. What earns the book its shelf space is what sits behind <em>each</em> of the thirty-eight entries, and one idea in particular that you will not find in an ordinary list of skills.</p>
+        <p>Almost everything this essay has argued lives in two of those four factors: <b>People</b> and <b>Self</b>, which is why People is the widest wedge on the wheel. And reading a few entries reveals the book's one real trick. Every competency is described not once but three ways: <b>too little</b>, <b>skilled</b>, and <b>overused</b>. A strength you lean on too hard quietly turns into the thing that derails you, which is why a person's worst flaw is so often just their best strength with the volume stuck on high. FYI calls those overused strengths <em>stallers and stoppers,</em> and it softens them not by trying less hard but by leaning on a different skill.</p>
+        <p>But a description is only the first half of a chapter. The half that earns the book its keep is the second one: if you are short on a competency, <em>why,</em> and exactly what to do about it. So open one.</p>
       </div>
 
-      <div class="fyi-label">
-        <div class="fl-k">The Signature Idea</div>
-        <div class="fl-t">Every strength has a back side</div>
-        <p class="fl-s">This is the move that sets FYI apart from every other competency list. Each skill is described not once but three ways: too little, just right, and <em>too much</em>. A strength you lean on too hard quietly becomes the very thing that derails you. Slide the marker and watch one skill turn.</p>
+      <div class="fyi-label desk-only">
+        <div class="fl-k">The Chapter</div>
+        <div class="fl-t">Open any competency and go to work</div>
+        <p class="fl-s">Click any competency on the wheel above and its chapter opens here: why the skill matters, the usual reasons people fall short, a few concrete things to go do, and one real assignment that builds it on the job, not in a classroom.</p>
       </div>
 
-      <figure class="spectrum reveal" id="spectrum">
-        <div class="sp-tabs" id="spTabs" role="group" aria-label="Choose a competency"></div>
-        <div class="sp-track" role="group" aria-label="Move from too little to overused">
-          <button class="sp-stop" type="button" data-stop="0" aria-pressed="false"><span class="lbl">Too little</span><span class="sub">underdone</span></button>
-          <button class="sp-stop" type="button" data-stop="1" aria-pressed="true"><span class="lbl">Skilled</span><span class="sub">the sweet spot</span></button>
-          <button class="sp-stop" type="button" data-stop="2" aria-pressed="false"><span class="lbl">Overused</span><span class="sub">a strength, overdone</span></button>
-        </div>
-        <div class="sp-bar"><span class="dot" id="spDot"></span></div>
-        <div class="sp-read k-skill" id="spRead" aria-live="polite">
-          <div class="sp-kick" id="spKick">Skilled</div>
-          <p class="sp-desc" id="spDesc"></p>
-        </div>
-        <p class="sp-foot">When one of a person's top strengths shows up on the list of their flaws, this is almost always why. FYI calls overused strengths "stallers and stoppers," and it teaches you to soften one by leaning on a different skill, not by trying less hard.</p>
-      </figure>
+      <figure class="chapter reveal desk-only" id="chapterFig" aria-live="polite"></figure>
 
       <div class="fyi-col">
-        <p>Behind every one of the thirty-eight entries is the same anatomy: a plain picture of the skill done well, done poorly, and overdone; the likely <em>causes</em> of a gap, so you can treat the cause and not the symptom; a short essay on why the skill matters; and then the part that earns its keep, <b>ten or so concrete things to actually go do,</b> each written as a question and an action. Less reading, more assignment.</p>
-        <p>That bias toward doing is not a quirk. The same authors are behind the well-known <b>70-20-10</b> rule, drawn from a long study of how real executives said they had actually learned to lead.</p>
+        <p>That second half is one chapter of a book that runs the same play thirty-eight times. And the bias it shows, toward doing rather than studying, is deliberate. The same authors are behind the well-known <b>70-20-10</b> rule, drawn from a long study of how real executives said they had actually learned to lead.</p>
       </div>
 
       <div class="seventy reveal">
@@ -969,85 +960,62 @@
     var COMPETENCY_DATA = { factors: [
       { name: 'Thought', roman: 'I', meaning: 'How you see the business and make the call.', hue: 200, sat: 28, clusters: [
         { name: 'Understanding the Business', letter: 'A', def: 'Knowing how the business and its market actually work.', competencies: [
-          { id: 5, n: 'Business Insight', def: 'Applying knowledge of the business and the marketplace to advance the organization.', s: 'Knows how the business makes money and where the market is heading.', o: 'Buries the call in analysis; theory crowds out action.', t: 'Spend a day with the team furthest from yours and trace how it earns or spends a dollar.' },
-          { id: 11, n: 'Customer Focus', def: 'Building strong customer relationships and delivering customer-centered solutions.', s: 'Builds the work around what the customer actually needs.', o: 'Says yes to every request and loses the thread of the business.', t: 'Sit in on three customer calls this month; write down their words, not yours.' },
-          { id: 17, n: 'Financial Acumen', def: 'Reading key financial indicators and using them to make better decisions.', s: 'Reads the numbers and makes decisions that hold up on the books.', o: 'Optimizes the spreadsheet at the expense of people and product.', t: 'Have finance walk you through your own budget, line by line, until you could rebuild it.' },
-          { id: 35, n: 'Tech Savvy', def: 'Anticipating and adopting new digital and technology tools.', s: 'Anticipates how technology will reshape the work and adopts it early.', o: 'Chases every new tool; mistakes novelty for progress.', t: 'Pick one emerging tool in your field and use it on a real task for a week.' } ] },
+          { id: 5, n: 'Business Insight', def: 'Applying knowledge of the business and the marketplace to advance the organization.', less: "Doesn't understand how businesses work, is unaware of marketplace trends, and fails to factor business drivers into day-to-day decisions.", s: 'Knows how the business makes money and where the market is heading.', o: 'Buries the call in analysis; theory crowds out action.', map: "Knowing how the business makes money, who the competition is, and what forces shape the market is the foundation for every smart decision you make.", causes: ["You stay inside your function and rarely look up","You assume strategy is someone else's job","You haven't studied how your industry works"], tips: ["Read your company's annual report, a competitor's, and one industry publication each quarter, then brief your team on what you learned","Shadow a colleague in sales, finance, or operations for a day to see how your decisions ripple across the business"], assign: "Volunteer to prepare a competitive-landscape briefing for your manager, researching two rivals and three market trends." },
+          { id: 11, n: 'Customer Focus', def: 'Building strong customer relationships and delivering customer-centered solutions.', less: "Acts on an incomplete or internal view of customer needs and fails to build the relationships that surface what customers actually want.", s: 'Builds the work around what the customer actually needs.', o: 'Says yes to every request and loses the thread of the business.', map: "Everything an organization does ultimately passes through the customer, so staying close to their real expectations separates useful work from wasted effort.", causes: ["You rarely interact directly with customers","You default to an inside-out point of view","You assume you already know what customers need"], tips: ["Sit in on at least two customer calls or visits a quarter, document one unmet need you hear, and share it with your team","Pick one recurring customer pain point and own driving a solution to closure, measured in the customer's terms"], assign: "Spend a half-day with a frontline customer-facing colleague, then write a one-page summary of what you saw for your team." },
+          { id: 17, n: 'Financial Acumen', def: 'Reading key financial indicators and using them to make better decisions.', less: "Is unfamiliar with financial terms, ignores the links between decisions and financial outcomes, and pays little attention to the financial impact of choices.", s: 'Reads the numbers and makes decisions that hold up on the books.', o: 'Optimizes the spreadsheet at the expense of people and product.', map: "Leaders who can read a profit and loss statement and connect daily decisions to financial results make better calls and earn more credibility with senior stakeholders.", causes: ["You were never formally taught basic finance","You see numbers as someone else's domain","You avoid financial conversations because they feel risky"], tips: ["Work through your company's three core financial statements with a finance partner until you could explain each line","Before any significant decision, write down its estimated financial impact, then check the accuracy later to sharpen your instincts"], assign: "Ask to sit in on one budget review or business-case presentation outside your function, then debrief the presenter on how they built the numbers." },
+          { id: 35, n: 'Tech Savvy', def: 'Anticipating and adopting new digital and technology tools.', less: "Sticks with familiar tools, is slow to adopt new technology, and misses chances where it could add real business value.", s: 'Anticipates how technology will reshape the work and adopts it early.', o: 'Chases every new tool; mistakes novelty for progress.', map: "Technology changes the rules faster than most strategies can absorb, so leaders who scan for what is coming and adopt it selectively keep their teams competitive.", causes: ["You are comfortable with the tools you have","You haven't built a habit of tracking emerging tech","You doubt new tools justify the learning cost"], tips: ["Each month, read about one emerging technology relevant to your field and talk through its potential impact with a colleague","Find one slow or manual process on your team and pilot a tool to improve it, measuring the before and after"], assign: "Research two technologies changing your industry, then brief your team on which one warrants a closer look and why." } ] },
         { name: 'Making Complex Decisions', letter: 'B', def: 'Cutting through messy information to make the right call.', competencies: [
-          { id: 8, n: 'Manages Complexity', def: 'Making sense of large amounts of sometimes contradictory information to solve problems.', s: 'Untangles large, ambiguous problems down to the few variables that matter.', o: 'Over-complicates the simple; struggles to land a clear answer.', t: 'Force the next messy problem onto one page: what we know, what we do not, the decision.' },
-          { id: 12, n: 'Decision Quality', def: 'Making good and timely decisions that keep the organization moving forward.', s: 'Makes good calls, on time, even without complete information.', o: 'Waits for a certainty that never comes, and decides too late.', t: 'Write the decision and your reasoning before you act, then check it against what happened.' },
-          { id: 32, n: 'Balances Stakeholders', def: 'Anticipating and balancing the needs of multiple stakeholders.', s: 'Weighs competing interests and finds a path most can live with.', o: 'Tries to please everyone, and the decision dissolves.', t: 'List who your next decision touches and what each one would call a fair outcome.' } ] },
+          { id: 8, n: 'Manages Complexity', def: 'Making sense of large amounts of sometimes contradictory information to solve problems.', less: "Oversimplifies problems, force-fits familiar solutions, leans on intuition over data, and gets caught off guard by issues with no obvious answer.", s: 'Untangles large, ambiguous problems down to the few variables that matter.', o: 'Over-complicates the simple; struggles to land a clear answer.', map: "Most real problems arrive with too much information, too little, or both, so the skill is sorting what matters, finding the root cause, and moving forward anyway.", causes: ["You reach for the first plausible answer","You don't gather data from enough sources","You are uncomfortable sitting with uncertainty"], tips: ["When a problem surfaces, force yourself to write down at least three distinct explanations before picking one, then test each","Pull data from two sources outside your own team before you conclude, looking specifically for facts that contradict your first read"], assign: "Take on a thorny cross-functional problem with no clear owner, map its root causes in writing, and present your analysis." },
+          { id: 12, n: 'Decision Quality', def: 'Making good and timely decisions that keep the organization moving forward.', less: "Decides haphazardly or too slowly, leans on incomplete data or flawed assumptions, and trades the long term for short-term comfort.", s: 'Makes good calls, on time, even without complete information.', o: 'Waits for a certainty that never comes, and decides too late.', map: "Good decisions rarely need perfect information; they need the right mix of data, sound judgment, and the will to decide at the right moment rather than the safe one.", causes: ["You wait for a certainty that never arrives","You rely too heavily on one perspective","You let short-term pressure crowd out the long view"], tips: ["Before deciding, write your criteria in order of importance and score each option against them, which surfaces the hidden trade-offs","Learn to spot when a quick, good-enough answer will do, and save your rigor for the decisions that truly need it"], assign: "Find a recurring decision your team makes slowly, define a clear framework for it, and run one full cycle through it this quarter." },
+          { id: 32, n: 'Balances Stakeholders', def: 'Anticipating and balancing the needs of multiple stakeholders.', less: "Focuses on a narrow set of stakeholders, weights some interests too heavily, and lets the loudest voice steer the decision.", s: 'Weighs competing interests and finds a path most can live with.', o: 'Tries to please everyone, and the decision dissolves.', map: "Every significant action touches multiple groups with different and sometimes opposing needs, so the leader who maps those interests early acts fairly and avoids surprises.", causes: ["You manage up and down but neglect peers and partners","You haven't mapped who your stakeholders are","You react to the loudest voice, not the most important interest"], tips: ["For your top priority, list each stakeholder group, their key interest, and what a fair outcome looks like for them, and revisit it monthly","Before finalizing a decision, find the stakeholder most likely to feel left out and address their concern first"], assign: "On your next significant project, map the stakeholders at the outset and check in with three groups outside your immediate team." } ] },
         { name: 'Creating the New and Different', letter: 'C', def: 'Imagining what could be, and charting a course toward it.', competencies: [
-          { id: 18, n: 'Global Perspective', def: 'Taking a broad, worldwide view when approaching issues.', s: 'Sees the work in a wide context, across markets and cultures.', o: 'Stays abstract; loses the local and the concrete.', t: 'Before deciding, ask how this lands for a team two time zones and one culture away.' },
-          { id: 19, n: 'Cultivates Innovation', def: 'Creating new and better ways for the organization to succeed.', s: 'Makes room for new ideas and turns them into something real.', o: 'Chases novelty; never finishes or scales anything.', t: 'Run one small, cheap experiment this month with a clear way to tell if it worked.' },
-          { id: 33, n: 'Strategic Mindset', def: 'Seeing ahead to future possibilities and turning them into a clear strategy.', s: 'Sees what is coming and sets a clear direction to meet it.', o: 'Lives in the future and neglects today’s execution.', t: 'Write where the team must be in two years, then name the one move that matters now.' } ] } ] },
+          { id: 18, n: 'Global Perspective', def: 'Taking a broad, worldwide view when approaching issues.', less: "Thinks narrowly, defaults to a local viewpoint, and shows little interest in global trends or how decisions play out across geographies.", s: 'Sees the work in a wide context, across markets and cultures.', o: 'Stays abstract; loses the local and the concrete.', map: "Trends, talent, and competition cross borders constantly, so a leader without a wide lens keeps missing the context that shapes outcomes.", causes: ["Your work has been mostly local","You underrate how global dynamics affect your business","You are not curious about other markets or cultures"], tips: ["Follow one international market or business publication weekly, and brief your team monthly on a global trend relevant to your work","Find a colleague in another country, share a current challenge, and ask how they would approach it from their context"], assign: "Research how a competitor in another market handles your team's core challenge, and present what you learned to your manager." },
+          { id: 19, n: 'Cultivates Innovation', def: 'Creating new and better ways for the organization to succeed.', less: "Stays with conventional ideas, is quick to criticize original thinking, and quietly builds a climate that discourages experiments.", s: 'Makes room for new ideas and turns them into something real.', o: 'Chases novelty; never finishes or scales anything.', map: "Organizations that outperform are not smarter on average; they build cultures where new ideas get generated, tested quickly, and moved into practice.", causes: ["You value reliability over novelty and it shows","You rarely look outside your industry for ideas","You are risk-averse and your team can feel it"], tips: ["Once a month, open a meeting with a 'what if' brainstorm: pose one provocative question and capture every idea without judging it","When someone brings an unconventional idea, lead with two curious questions before you raise a single concern"], assign: "Pick one long-held team assumption, challenge it openly, and prototype at least one alternative within the quarter." },
+          { id: 33, n: 'Strategic Mindset', def: 'Seeing ahead to future possibilities and turning them into a clear strategy.', less: "Is most comfortable in the tactical here and now, spends little time on the future, and cannot pull scattered information into a coherent direction.", s: 'Sees what is coming and sets a clear direction to meet it.', o: 'Lives in the future and neglects today’s execution.', map: "Strategy is not a planning event; it is the ongoing habit of seeing where the market is going and making moves today that create an advantage tomorrow.", causes: ["You are rewarded for execution and rarely look up","You find strategic ambiguity uncomfortable","You haven't practiced turning observations into patterns"], tips: ["Block an hour a week to think three years out: write down one trend, one threat, and one opportunity, then test them on a peer","Take one current challenge and write two plausible futures it could lead to, and use them to stress-test your plan"], assign: "Draft a one-page strategic view of your function's biggest opportunity over the next two years and present it to your manager." } ] } ] },
       { name: 'Results', roman: 'II', meaning: 'Turning intent into delivered work.', hue: 12, sat: 46, clusters: [
         { name: 'Taking Initiative', letter: 'D', def: 'Getting moving, and finding a way through.', competencies: [
-          { id: 2, n: 'Action Oriented', def: 'Taking on new opportunities and tough challenges with urgency and energy.', s: 'Steps into new things readily, with a bias to start.', o: 'Acts before thinking; mistakes motion for progress.', t: 'Take the smallest possible first step today on the thing you have been avoiding.' },
-          { id: 27, n: 'Resourcefulness', def: 'Securing and deploying resources effectively and efficiently.', s: 'Gets a lot done with the people, budget, and time on hand.', o: 'Over-engineers; spends what the goal never required.', t: 'Name the constraint you keep blaming, then solve the next task as if it were fixed.' } ] },
+          { id: 2, n: 'Action Oriented', def: 'Taking on new opportunities and tough challenges with urgency and energy.', less: "Slow to act on opportunities, spends too long planning or gathering data, and waits for someone else to step up first.", s: 'Steps into new things readily, with a bias to start.', o: 'Acts before thinking; mistakes motion for progress.', map: "Speed wins; hesitation from perfectionism, procrastination, or risk aversion just hands the opportunity to whoever moves first.", causes: ["You procrastinate and perform only under deadline","You want near-certainty before acting","You have quietly lost passion for the work"], tips: ["Start 10 percent of every task right after it lands, so you can feel what finishing it will actually take","Pick two or three mission-critical priorities and protect half your time for them, and do not let trivia pull you off"], assign: "Volunteer for a tough project others have avoided, and commit to a first deliverable within one week." },
+          { id: 27, n: 'Resourcefulness', def: 'Securing and deploying resources effectively and efficiently.', less: "Struggles to pull together the people, budget, and support a job needs, and gets flustered or inefficient when the plan hits a wall.", s: 'Gets a lot done with the people, budget, and time on hand.', o: 'Over-engineers; spends what the goal never required.', map: "Getting things done almost always means working through resources you do not control, which takes negotiation, creativity, and a trading mindset.", causes: ["You reuse familiar resources instead of building new ones","You get flustered with several things in flight","You are a poor delegator and do too much yourself"], tips: ["Before a big effort, map every resource you need, who controls it, and what you can offer them in exchange for support","Delegate whole tasks along with real authority, then watch the weak links instead of redoing the strong ones"], assign: "Run a project whose key resources sit in another team, and secure them by negotiation rather than authority." } ] },
         { name: 'Managing Execution', letter: 'E', def: 'Organizing work so the right things happen in the right order.', competencies: [
-          { id: 15, n: 'Directs Work', def: 'Providing direction, delegating, and removing obstacles to get work done.', s: 'Gives clear assignments, clears blockers, keeps work moving.', o: 'Micromanages; nothing moves without you.', t: 'On one project, set the outcome and the edges, then deliberately stay out of the how.' },
-          { id: 25, n: 'Plans and Aligns', def: 'Planning and prioritizing work to meet commitments tied to the organization’s goals.', s: 'Lays out the work so the right things happen in the right order.', o: 'Plans endlessly; the plan quietly replaces the doing.', t: 'Map the next project backward from its deadline and find where two tracks must meet.' },
-          { id: 38, n: 'Optimizes Work Processes', def: 'Knowing the most effective, efficient way to get work done, and always improving it.', s: 'Finds the friction in how work flows and takes it out.', o: 'Tinkers with process for its own sake and adds steps.', t: 'Watch one routine task end to end and delete a step no one would miss.' } ] },
+          { id: 15, n: 'Directs Work', def: 'Providing direction, delegating, and removing obstacles to get work done.', less: "Gives vague or incomplete direction, hands out tasks without context or goals, and does not follow up to keep work on track.", s: 'Gives clear assignments, clears blockers, keeps work moving.', o: 'Micromanages; nothing moves without you.', map: "Managing others is a known craft: clear goals, matched assignments, steady feedback, and timely help when something blocks the path.", causes: ["You are too impatient to set goals clearly","You do not trust others enough to delegate","You throw tasks at people without a plan"], tips: ["Lay out each assignment with the outcome, the deadline, the budget, and the decisions the person can make alone, then check in at milestones","Ask your team which tasks you are doing that they could handle, and hand off at least one a month"], assign: "Lead a group through a project with a hard deadline, setting written goals upfront and holding a brief weekly check." },
+          { id: 25, n: 'Plans and Aligns', def: 'Planning and prioritizing work to meet commitments tied to the organization’s goals.', less: "Works in a reactive, seat-of-the-pants mode, gets swept up in immediate demands, and is blindsided by problems a simple plan would have caught.", s: 'Lays out the work so the right things happen in the right order.', o: 'Plans endlessly; the plan quietly replaces the doing.', map: "A good plan focuses people's time, surfaces resource gaps early, and lets everyone correct course before the deadline is lost.", causes: ["You are impatient with structure and just start","You don't separate the critical few from the rest","You have no way to anticipate problems"], tips: ["Lay the work out A to Z in writing, ask others to find the gaps in your sequence, and publish a shared milestone calendar","Rank the likely problems, build a contingency for the top ones, and stay doubly in touch with the weakest links"], assign: "Plan a complex cross-functional effort end to end, with milestones, owners, a budget, and a written backup for the two likeliest failure points." },
+          { id: 38, n: 'Optimizes Work Processes', def: 'Knowing the most effective, efficient way to get work done, and always improving it.', less: "Works in a disorganized way, accepts slow or wasteful processes as given, and misses obvious chances to combine or cut steps.", s: 'Finds the friction in how work flows and takes it out.', o: 'Tinkers with process for its own sake and adds steps.', map: "Almost every outcome has a best path to it, and finding that path, then improving it again, is what separates efficient performers from merely busy ones.", causes: ["You don't think in systems","You are impatient with detail and skip the design step","You accept processes as they are"], tips: ["Before a project, map the workflow end to end, find the single highest-friction step, and redesign just that one first","After each major effort, run a 30-minute postmortem, find one thing to change, and bake it into your default for next time"], assign: "Take a workflow your team finds frustrating, map it, cut or combine at least two steps, and measure the result." } ] },
         { name: 'Focusing on Performance', letter: 'F', def: 'Owning the outcome and driving it home.', competencies: [
-          { id: 1, n: 'Ensures Accountability', def: 'Holding yourself and others accountable to meet commitments.', s: 'Holds self and others to their commitments, and follows through.', o: 'Polices everything; trust curdles into blame.', t: 'End your next meeting by saying out loud who owns what, by when.' },
-          { id: 28, n: 'Drives Results', def: 'Consistently achieving results, even under tough circumstances.', s: 'Pushes through obstacles to hit the goal, and brings people along.', o: 'Wins the number, scorches the people and the relationships.', t: 'Pick the one result that matters most this quarter and cut a lesser one to protect it.' } ] } ] },
+          { id: 1, n: 'Ensures Accountability', def: 'Holding yourself and others accountable to meet commitments.', less: "Lets problems fester, avoids setting explicit standards, and gives in to excuses rather than holding people to their commitments.", s: 'Holds self and others to their commitments, and follows through.', o: 'Polices everything; trust curdles into blame.', map: "People perform better when they know exactly what is expected, get honest feedback along the way, and see consistent follow-through on hits and misses.", causes: ["You avoid the conflict of setting tough goals","You don't follow up after assigning work","You give too many chances before addressing a gap"], tips: ["Set each person's few key results in writing, agree what success looks like before the work starts, and check progress at set intervals","When someone misses a commitment, address it that week: state the gap plainly, ask what happened, and agree on one corrective step"], assign: "Pick one person falling short of a clear standard, document the gap, and build a written improvement plan with checkpoints over 60 days." },
+          { id: 28, n: 'Drives Results', def: 'Consistently achieving results, even under tough circumstances.', less: "Inconsistent on delivery, does the minimum to get by, gives up when obstacles pile up, and lets disorganization eat the outcome.", s: 'Pushes through obstacles to hit the goal, and brings people along.', o: 'Wins the number, scorches the people and the relationships.', map: "Consistent results come from focusing on the vital few, pushing through setbacks with a second and third approach, and refusing to quit the effort too early.", causes: ["You let non-essentials crowd out what matters","You procrastinate and run short of time","You won't push through resistance or take a smart risk"], tips: ["Name the three to five priorities that actually matter and protect half your time for them; treat the rest as optional until those move","When you hit an obstacle, immediately prepare two alternative approaches so you can switch without losing momentum"], assign: "Take on a stalled goal with a public deadline, track it weekly, and push it across the line even if the path changes." } ] } ] },
       { name: 'People', roman: 'III', meaning: 'Leading, and getting work done through others. Most of this essay lives here.', hue: 42, sat: 50, clusters: [
         { name: 'Building Collaborative Relationships', letter: 'G', def: 'Working well with others, across lines, to get things done together.', competencies: [
-          { id: 6, n: 'Collaborates', def: 'Building partnerships and working with others to meet shared objectives.', s: 'Works across lines, shares credit, builds toward a shared win.', o: 'Over-includes, until everything needs a meeting.', t: 'On your next cross-team task, hand one piece of real ownership to someone outside your group.' },
-          { id: 9, n: 'Manages Conflict', def: 'Handling conflict effectively, with a minimum of noise.', s: 'Steps up to conflict early and works it to a fair resolution.', o: 'Forces confrontation, or smooths over what should be aired.', t: 'Give reasons first and solutions last; let the other side fully vent before you respond.' },
-          { id: 20, n: 'Interpersonal Savvy', def: 'Relating openly and comfortably with diverse groups of people.', s: 'Reads people and adjusts; builds rapport with many kinds of person.', o: 'Reads as political, or over-managed.', t: 'In your next one-on-one, talk a quarter of the time and listen the rest.' },
-          { id: 21, n: 'Builds Networks', def: 'Building strong formal and informal relationships inside and outside the organization.', s: 'Builds useful relationships before needing them.', o: 'Networks so instrumentally that people feel used.', t: 'Have one conversation this month with someone you would otherwise only call in a crisis.' } ] },
+          { id: 6, n: 'Collaborates', def: 'Building partnerships and working with others to meet shared objectives.', less: "Prefers to work alone, puts own interests first, and shuts down the cross-group communication shared work needs.", s: 'Works across lines, shares credit, builds toward a shared win.', o: 'Over-includes, until everything needs a meeting.', map: "Shared objectives outrun what any one person can deliver alone, so partnerships across groups are where the real leverage lives.", causes: ["You default to individual accountability","You hoard information or resources","You see collaboration as slowing you down"], tips: ["Find common ground with a peer in another group, and bring something of value first, not just a request","Credit others publicly for shared wins, even when you did more of the work"], assign: "Lead a cross-functional project where you hold no direct authority over at least two of the contributors." },
+          { id: 9, n: 'Manages Conflict', def: 'Handling conflict effectively, with a minimum of noise.', less: "Avoids disagreement, lets things fester, and either caves too soon or takes it personally and gets emotional.", s: 'Steps up to conflict early and works it to a fair resolution.', o: 'Forces confrontation, or smooths over what should be aired.', map: "Managers spend roughly a fifth of their time on conflict; the ones who handle it well read the situation fast, stay calm, and find common ground without the wreckage.", causes: ["You take conflict personally","You get too emotional under pressure","You would rather wait it out than act"], tips: ["State the problem in facts, not accusations, and ask the other side to explain their interests before you respond","Practice verbal Aikido: let them vent, nod and ask clarifying questions, and only then restate it as a shared problem to solve"], assign: "Facilitate a resolution between two colleagues or units with a standing dispute, then write down what finally closed it." },
+          { id: 20, n: 'Interpersonal Savvy', def: 'Relating openly and comfortably with diverse groups of people.', less: "Doesn't build rapport easily, comes off too blunt or intense, and freezes when a moment gets tense or awkward.", s: 'Reads people and adjusts; builds rapport with many kinds of person.', o: 'Reads as political, or over-managed.', map: "Getting along with all kinds of people is an outside-in skill: read the other person first, then pick your approach from what you see, not from habit.", causes: ["You are too intense to manage the first few minutes","You are not confident in new interactions","You judge people fast rather than listening first"], tips: ["Manage the first three minutes: before the agenda, slow down, listen, and make the other person feel heard","Learn three non-work things about everyone you work with closely, and use them to find real common ground"], assign: "Take on a dissatisfied internal customer or a feud between two groups, and focus entirely on the relationship before any fix." },
+          { id: 21, n: 'Builds Networks', def: 'Building strong formal and informal relationships inside and outside the organization.', less: "Builds relationships only inside the immediate work area, and has no idea who to call when help is needed beyond it.", s: 'Builds useful relationships before needing them.', o: 'Networks so instrumentally that people feel used.', map: "Lateral, cross-boundary relationships are the hardest and most valuable to build: they cut friction, speed exchange, and reach what formal channels never do.", causes: ["You are competitive with peers, not cooperative","You have no time set aside for relationships","You don't see networking as part of the job"], tips: ["Go into every peer exchange with a trading mindset: bring something of value and ask what they need before asking for anything","Map the movers, helpers, and gatekeepers, and spend ten minutes a week on one relationship outside your own area"], assign: "Build and keep three new working relationships outside your function this quarter, each producing a real exchange of ideas or resources." } ] },
         { name: 'Optimizing Diverse Talent', letter: 'H', def: 'Finding, growing, and getting the best from a range of people.', competencies: [
-          { id: 4, n: 'Attracts Top Talent', def: 'Attracting and selecting the best talent to meet current and future needs.', s: 'Finds, hires, and keeps people better than the average.', o: 'Hoards stars, or hires only in their own image.', t: 'Keep a standing shortlist of three people you would hire tomorrow if you could.' },
-          { id: 13, n: 'Develops Talent', def: 'Developing people to meet both their career goals and the organization’s goals.', s: 'Grows people through coaching, feedback, exposure, and stretch.', o: 'Pushes growth no one asked for, and reads as never satisfied.', t: 'Spend about eight hours a year per report on their growth: an honest appraisal, a career talk, a plan.' },
-          { id: 14, n: 'Values Differences', def: 'Recognizing the value that different perspectives and cultures bring.', s: 'Draws real strength from different backgrounds and ways of thinking.', o: 'Treats difference as a quota and performs inclusion.', t: 'On the next decision, deliberately seek out the view of the person least like you.' },
-          { id: 34, n: 'Builds Effective Teams', def: 'Building strong teams that use their diverse skills to reach common goals.', s: 'Forms a diverse group with a shared mindset that out-performs the sum.', o: 'Leaves everything open for debate and avoids the hard call.', t: 'Get each member to help set the common goal, then celebrate the wins together.' } ] },
+          { id: 4, n: 'Attracts Top Talent', def: 'Attracting and selecting the best talent to meet current and future needs.', less: "Hires people too much like themselves, works without clear criteria, and plays it safe instead of seeking stronger candidates.", s: 'Finds, hires, and keeps people better than the average.', o: 'Hoards stars, or hires only in their own image.', map: "Talented people make big things happen, and the best managers are never afraid to surround themselves with people better than they are.", causes: ["Fear of being shown up by a stronger hire","A narrow view of what talent looks like","Impatience to fill the seat fast rather than well"], tips: ["Before a hire, list the most talented and the most mediocre people you have worked with, name what separates them, and use that as your interview lens","Interview for evidence of fast learning and first-time problem-solving, not surface charm"], assign: "Staff a project team from outside your usual group, targeting people who stretch your definition of strong." },
+          { id: 13, n: 'Develops Talent', def: 'Developing people to meet both their career goals and the organization’s goals.', less: "Treats development as a course to send people to, and is too results-driven to make the time.", s: 'Grows people through coaching, feedback, exposure, and stretch.', o: 'Pushes growth no one asked for, and reads as never satisfied.', map: "People grow mostly from stretch and honest feedback, and that only happens if the boss invests the time.", causes: ["You are buried in your own deliverables","You assume good people develop themselves","You dislike giving corrective feedback"], tips: ["Spend about eight hours a year per report on their growth: an honest appraisal, a career talk, a written plan","Hand someone a task just past their reach, then protect their room to struggle"], assign: "Take on a struggling employee and build them a real development plan over two quarters." },
+          { id: 14, n: 'Values Differences', def: 'Recognizing the value that different perspectives and cultures bring.', less: "Treats everyone the same regardless of background, shows little curiosity about other cultures, and expects others to adapt.", s: 'Draws real strength from different backgrounds and ways of thinking.', o: 'Treats difference as a quota and performs inclusion.', map: "Managing difference means deciding which differences enrich the work and building a place where every perspective gets used, not just tolerated.", causes: ["You are uncomfortable with groups unlike you","You believe in diversity but don't know what to do about it","You lean on stereotypes when sizing people up"], tips: ["Attach diverse viewpoints to real work: form a task force with the widest range of backgrounds and watch how differently the problem gets framed","Audit your own habits, from who gets stretch work to who gets candid feedback, and close any unintended gaps"], assign: "Assemble a team of people genuinely different from you and give them a problem you care about solving." },
+          { id: 34, n: 'Builds Effective Teams', def: 'Building strong teams that use their diverse skills to reach common goals.', less: "Manages people one to one, rewards individuals over the group, and never builds a shared identity or common cause.", s: 'Forms a diverse group with a shared mindset that out-performs the sum.', o: 'Leaves everything open for debate and avoids the hard call.', map: "A team beats a collection of individuals because alignment adds focus, and the trick is anchoring goals, roles, and rewards to the team, not to each person alone.", causes: ["You are an individual contributor at heart","You can't set a common cause or shared challenge","Your incentives reward individual achievement"], tips: ["Involve the whole team in setting the goals and measures rather than handing them down, then make those measures visible to all","Shift your language and recognition from what each person did to what the team accomplished"], assign: "Build and lead a team through one full project, writing a shared charter at the start and a retrospective at the end." } ] },
         { name: 'Influencing People', letter: 'I', def: 'Moving people by informing, persuading, and inspiring them.', competencies: [
-          { id: 7, n: 'Communicates Effectively', def: 'Delivering messages that fit the audience, and listening as well as telling.', s: 'Is clear and honest, and tailors the message to the audience.', o: 'Over-communicates, until the signal is lost in the volume.', t: 'Before your next update, write the one sentence the audience must remember.' },
-          { id: 16, n: 'Drives Engagement', def: 'Creating a climate where people are motivated to do their best.', s: 'Builds the conditions where capable people give their full, willing effort.', o: 'Manufactures enthusiasm and mistakes activity for commitment.', t: 'Learn three non-work things about each person, and give real autonomy in how the work gets done.' },
-          { id: 23, n: 'Organizational Savvy', def: 'Maneuvering comfortably through the politics and informal workings of an organization.', s: 'Reads how the place really works and gets things through it.', o: 'Plays politics until people stop trusting the motive.', t: 'Map who actually decides on your next ask, not who holds the title.' },
-          { id: 24, n: 'Persuades', def: 'Using compelling arguments to win the support and commitment of others.', s: 'Wins genuine agreement, not mere compliance.', o: 'Over-sells, and pushes past the point people had already agreed.', t: 'Open your next pitch with what the other person gains, then stop talking.' },
-          { id: 37, n: 'Drives Vision and Purpose', def: 'Painting a compelling picture of the future that moves people to act.', s: 'Paints a compelling picture of the future and makes people want it.', o: 'Sells the vision so hard that today’s work feels small.', t: 'Connect one routine task this week to the larger why, in plain words, for one person.' } ] } ] },
+          { id: 7, n: 'Communicates Effectively', def: 'Delivering messages that fit the audience, and listening as well as telling.', less: "Sends unclear messages, talks the same way to every audience, and fails to pass on what people need to do their work.", s: 'Is clear and honest, and tailors the message to the audience.', o: 'Over-communicates, until the signal is lost in the volume.', map: "Real communication means fitting the message and the mode to what the audience actually needs, and it includes listening as much as telling.", causes: ["You inform some people well and others not at all","You don't adjust tone or style to the audience","You tell too little, too late, or both"], tips: ["Lead with your point in one sentence, then build the case, and keep it short enough that the core survives the five minutes after the meeting","Before sending the same message to different groups, ask how they differ and what each one actually needs to hear"], assign: "Take a topic your team currently misunderstands and redesign how you communicate it across three different audiences." },
+          { id: 16, n: 'Drives Engagement', def: 'Creating a climate where people are motivated to do their best.', less: "Has little insight into what motivates people, gives them little autonomy, and does nothing to connect the work to what they care about.", s: 'Builds the conditions where capable people give their full, willing effort.', o: 'Manufactures enthusiasm and mistakes activity for commitment.', map: "Greater things happen when people are motivated, and the research is consistent: challenge, autonomy, and a sense of worthwhile work outrank pay or praise.", causes: ["You use one motivational style for everyone","You think people should just be motivated on their own","You like to keep tight control of assignments"], tips: ["Learn each person's top motivators (challenge, autonomy, recognition, learning) by asking, then design one task each that hits their main driver","Delegate real ownership, not just tasks, and make each person's contribution visible to the wider group"], assign: "Design a meaningful stretch assignment for each direct report this quarter, framing each one to what drives that person." },
+          { id: 23, n: 'Organizational Savvy', def: 'Maneuvering comfortably through the politics and informal workings of an organization.', less: "Ignores the informal organization, steps on landmines anyone could have seen, and gets frustrated when the straight path doesn't work.", s: 'Reads how the place really works and gets things through it.', o: 'Plays politics until people stop trusting the motive.', map: "Organizations are mazes of egos, rivalries, and unwritten rules; the people who navigate them accept that complexity instead of fighting it, and learn who controls the gates.", causes: ["You are impatient with process","You reject the need for any politics","You don't know who the real influencers are"], tips: ["Before a significant proposal, seek out your toughest critic first and sharpen your case against their objections before going public","Map who controls information, who expedites, and who stops things, and route your next initiative accordingly"], assign: "Prepare and present a proposal of real consequence to a senior audience, briefing two stakeholders individually first." },
+          { id: 24, n: 'Persuades', def: 'Using compelling arguments to win the support and commitment of others.', less: "Pushes their own position too hard, fails to win buy-in, and handles pushback poorly when others resist.", s: 'Wins genuine agreement, not mere compliance.', o: 'Over-sells, and pushes past the point people had already agreed.', map: "Persuasion is getting others to act by making the case from their side first: understanding their interests, tuning the argument per audience, and agreeing without bruising the relationship.", causes: ["You state your position before learning theirs","You get defensive at pushback instead of curious","You can't make a case beyond your own conviction"], tips: ["Give reasons before positions: state the why and let them respond before you anchor on a specific solution","Build the case with questions, not statements, and meet objections with data and a shared framing rather than repetition"], assign: "Lead a negotiation where you must win over at least one skeptic, noting what you changed when you felt resistance." },
+          { id: 37, n: 'Drives Vision and Purpose', def: 'Painting a compelling picture of the future that moves people to act.', less: "Can't sell a vision, stays stuck in the here and now, and isn't convincing or passionate enough to energize anyone.", s: 'Paints a compelling picture of the future and makes people want it.', o: 'Sells the vision so hard that today’s work feels small.', map: "Organizations with an inspiring mission do better, and the vision matters less than the ability to communicate it so each person sees how their work connects to something larger.", causes: ["You can't make a simple, compelling message","You don't visibly walk the talk","You are uncomfortable speculating about the future"], tips: ["Craft a mission you can deliver clearly in three minutes, anchored in one symbol, slogan, or story that makes the destination concrete","Tailor the pitch to each audience: what do they fear, and what would make this future feel real and relevant to them?"], assign: "Champion a real change initiative, create a visible rally point for it, and present it convincingly to two different audiences." } ] } ] },
       { name: 'Self', roman: 'IV', meaning: 'Who you are under pressure, and how you keep learning.', hue: 280, sat: 22, clusters: [
         { name: 'Being Authentic', letter: 'J', def: 'Showing up honest, consistent, and willing to take a stand.', competencies: [
-          { id: 10, n: 'Courage', def: 'Stepping up to address difficult issues, and saying what needs to be said.', s: 'Says the hard thing and takes the unpopular stand when it is right.', o: 'Turns too critical and heavy-handed, and fights too many battles.', t: 'Get to the point: have the conversation you have been avoiding, kindly, and bring a solution.' },
-          { id: 36, n: 'Instills Trust', def: 'Gaining others’ confidence through honesty, integrity, and authenticity.', s: 'Keeps commitments and is the same person in every room.', o: 'Pushes honesty to the point of being disruptive or judgmental.', t: 'Talk about what “we” did, not “I”; be on time, return the call, send what you promised.' } ] },
+          { id: 10, n: 'Courage', def: 'Stepping up to address difficult issues, and saying what needs to be said.', less: "Shies away from hard issues, hints instead of saying it, and rarely takes an unpopular stand.", s: 'Says the hard thing and takes the unpopular stand when it is right.', o: 'Turns too critical and heavy-handed, and fights too many battles.', map: "Almost everyone sees things others need to hear; courage is saying it, at the right time, in the right way.", causes: ["You fear the relationship cost","You wait for certainty before speaking","You dislike conflict"], tips: ["Get to the point: state your view in a sentence or two, then stop","Bring a solution, not just the criticism, and have it in private"], assign: "Volunteer to deliver an unpopular decision or give tough feedback to a peer this month." },
+          { id: 36, n: 'Instills Trust', def: 'Gaining others’ confidence through honesty, integrity, and authenticity.', less: "Doesn't follow through on commitments, hedges instead of saying it straight, and is seen as inconsistent.", s: 'Keeps commitments and is the same person in every room.', o: 'Pushes honesty to the point of being disruptive or judgmental.', map: "Trust is the baseline for being part of any team; lose it and almost nothing else you do will land.", causes: ["You over-promise to win the moment","You avoid conflict by saying what people want to hear","You have trouble keeping confidences"], tips: ["Reduce your promises to what you can actually deliver, and when you are unsure, say so plainly rather than hedging","Admit mistakes early, tell everyone affected, and say what you are doing differently going forward"], assign: "Repair a relationship you have let slip by owning your part honestly and following through on one concrete commitment." } ] },
         { name: 'Being Open', letter: 'K', def: 'Knowing yourself, and staying hungry to grow.', competencies: [
-          { id: 29, n: 'Demonstrates Self-Awareness', def: 'Using feedback and reflection to understand your own strengths and blind spots.', s: 'Knows their effect on others and owns their blind spots.', o: 'Turns self-reflection into a performance.', t: 'Ask a trusted peer what gets in your own way; offer a self-appraisal first, then just listen.' },
-          { id: 30, n: 'Self-Development', def: 'Actively seeking new ways to grow and stretch yourself.', s: 'Actively works on their own growth and seeks out hard feedback.', o: 'Collects courses, but never consolidates a real strength.', t: 'Pick one skill this quarter and find a piece of work that forces you to use it.' } ] },
+          { id: 29, n: 'Demonstrates Self-Awareness', def: 'Using feedback and reflection to understand your own strengths and blind spots.', less: "Overrates their own skills, avoids feedback, and is routinely surprised when their effect on others is pointed out.", s: 'Knows their effect on others and owns their blind spots.', o: 'Turns self-reflection into a performance.', map: "Seeing yourself as others see you is the best single predictor of a strong appraisal; blind spots are where careers quietly derail.", causes: ["You get defensive when criticism arrives","You assume past success means you know yourself","You rarely ask for feedback"], tips: ["Ask for feedback by offering a self-appraisal first: name the gap you suspect, then ask whether they agree","Seek private, confidential feedback rather than the polished version you get in a public review"], assign: "Run a simple 360 or poll five people you trust to name one thing you should stop doing, then build a plan around it." },
+          { id: 30, n: 'Self-Development', def: 'Actively seeking new ways to grow and stretch yourself.', less: "Believes today's skills will last, is too busy to act on feedback, and has no real development plan.", s: 'Actively works on their own growth and seeks out hard feedback.', o: 'Collects courses, but never consolidates a real strength.', map: "The people who keep adding skills across a career win the long game; whatever you are good at now is unlikely to be enough later.", causes: ["You don't know what to work on or how","You fear admitting a shortcoming","You believe you can coast on what you have"], tips: ["Get a real skills audit: poll ten people or run a 360, then sort the results into strengths, blind spots, and untested areas","Find what the next two roles actually require and close one gap with a stretch task before you need the skill"], assign: "Name one untested skill the next level requires, and find a small real assignment to test yourself in it this quarter." } ] },
         { name: 'Being Flexible and Adaptable', letter: 'L', def: 'Staying steady and learning fast when things change.', competencies: [
-          { id: 3, n: 'Manages Ambiguity', def: 'Operating effectively even when things are uncertain or the way forward is unclear.', s: 'Acts effectively even when the path is unclear.', o: 'Tolerates a fog that others around them need lifted.', t: 'When you do not know, say what you do know and the date you will know more.' },
-          { id: 22, n: 'Nimble Learning', def: 'Learning through experimentation, using both wins and failures as fuel.', s: 'Learns fast by trying things, especially from what fails.', o: 'Experiments forever and never settles what works.', t: 'After the next setback, write the one thing you would do differently, and use it within a week.' },
-          { id: 26, n: 'Being Resilient', def: 'Rebounding from setbacks and adversity when facing difficulty.', s: 'Stays steady under pressure and bounces back from setbacks.', o: 'Goes so flat and composed they can seem cold and uncaring.', t: 'When rattled, hold your first response; the second or third thing you would say is usually better.' },
-          { id: 31, n: 'Situational Adaptability', def: 'Adapting your approach in real time to fit the needs of the moment.', s: 'Reads the moment and adjusts style to fit it.', o: 'Adapts so much they seem to have no center.', t: 'Work from the outside in: watch how people react while you act, and change tactics on the fly.' } ] } ] }
+          { id: 3, n: 'Manages Ambiguity', def: 'Operating effectively even when things are uncertain or the way forward is unclear.', less: "Prefers structure and certainty, stalls waiting for more data, and gets less productive when the path forward is unclear.", s: 'Acts effectively even when the path is unclear.', o: 'Tolerates a fog that others around them need lifted.', map: "Most problems at the manager level are ambiguous, so the rewards go to those who can move with less than all the information.", causes: ["You need to finish things before moving on","You are a perfectionist who gathers data to avoid risk","You shut down under uncertainty"], tips: ["Take small steps: act on what you know, get feedback fast, correct course, and move again rather than waiting for certainty","Lower your data threshold a little each week until you find a sane balance between thinking and acting"], assign: "Take on a project with no clear precedent or defined outcome, and commit to moving it forward before you feel ready." },
+          { id: 22, n: 'Nimble Learning', def: 'Learning through experimentation, using both wins and failures as fuel.', less: "Sticks to familiar methods, gives up on new ideas too soon, and reaches for the simplest explanation rather than the root cause.", s: 'Learns fast by trying things, especially from what fails.', o: 'Experiments forever and never settles what works.', map: "Solving problems you have never seen before, at an increasing pace of change, is fast becoming the most critical skill in leadership.", causes: ["You look for parallels only in familiar territory","You want to be right the first time","You study failures but rarely your own wins"], tips: ["Ask what the deep underlying principle is before jumping to a solution, then hunt for analogies outside your own field","Shorten your loops: run several small trials fast, learn from each, and treat mistakes as data, not failure"], assign: "Teach a short session on a topic you don't fully know yet, forcing yourself to learn under the pressure of explaining it." },
+          { id: 26, n: 'Being Resilient', def: 'Rebounding from setbacks and adversity when facing difficulty.', less: "Gets rattled under pressure, turns defensive or emotional when criticized, and takes too long to recover from setbacks.", s: 'Stays steady under pressure and bounces back from setbacks.', o: 'Goes so flat and composed they can seem cold and uncaring.', map: "Emotional reactions are wired in as fight or flight; the skill is letting the response pass before you speak or act.", causes: ["You have triggers that fire predictably","You lose perspective and make it personal","You have low tolerance for delay or being caught off guard"], tips: ["Write down the last 25 times you lost composure, find your three to five repeating triggers, and rehearse a better response to each","When the reaction fires, buy yourself sixty seconds before you respond: ask a question, take a note, go get a coffee"], assign: "Manage a tense negotiation or difficult stakeholder, then debrief yourself on what triggered you and what you did differently." },
+          { id: 31, n: 'Situational Adaptability', def: 'Adapting your approach in real time to fit the needs of the moment.', less: "Uses the same style no matter who is in the room or what the moment calls for, and expects others to adjust to them.", s: 'Reads the moment and adjusts style to fit it.', o: 'Adapts so much they seem to have no center.', map: "People who get results across very different situations are close observers of how others react, and they pick the behavior that fits the moment.", causes: ["You think being true to yourself is all that matters","You aren't watching reactions while you act","You default to your one comfortable style"], tips: ["Watch for the room shifting (crossed arms, silence, a change in posture) and treat it as a signal to change tactics now","After interactions, ask a trusted person what they noticed about your delivery, then try one different approach next time"], assign: "Pick a recurring meeting where your default style is not landing, and try a deliberately different approach for a full month." } ] } ] }
     ] };
 
     /* The signature idea, made tangible: five manager strengths described three
        ways, in the book's own language. */
-    var SPECTRUM_DATA = [
-      { n: 'Courage',
-        less: 'Shies away from difficult issues and challenging assignments. Expresses a point of view indirectly. Avoids giving corrective feedback, and rarely takes a stand.',
-        skilled: 'Readily tackles tough assignments. Faces difficult issues and supports others who do. Gives direct, actionable feedback. Champions a position despite dissent or political risk.',
-        over: 'Turns overly critical. Too direct and heavy-handed with feedback, too much negative and too little positive, and fights too many battles.' },
-      { n: 'Instills Trust',
-        less: 'Lacks consistent follow-through on commitments. Betrays confidences or covers up mistakes. Makes promises but does not always keep them.',
-        skilled: 'Follows through on commitments. Is seen as direct and truthful. Keeps confidences. Practices what they preach, with consistency between words and actions.',
-        over: 'Pushes openness and honesty to the point of being disruptive, and can come across as judgmental of those who are less overtly authentic.' },
-      { n: 'Develops Talent',
-        less: 'Not a developer of people. So results-driven there is no time for the long term, and treats development as just sending someone to a course.',
-        skilled: 'Places a high priority on growing others, through coaching, feedback, exposure, and stretch assignments, and aligns their growth with the organization’s goals.',
-        over: 'Pushes growth no one asked for. Over-coaches and over-stretches, and can read as never quite satisfied with where people are.' },
-      { n: 'Drives Engagement',
-        less: 'Has little insight into what motivates people. Gives too little autonomy, does little to create enthusiasm, and is unwilling to share ownership.',
-        skilled: 'Structures the work to fit people’s own motivators. Empowers them, makes each person feel their contribution matters, and invites input and shared ownership.',
-        over: 'Manufactures enthusiasm and mistakes activity and cheer for real commitment. People begin to feel handled rather than led.' },
-      { n: 'Being Resilient',
-        less: 'Gets easily rattled under pressure. Runs low on energy during stress, acts defensively when criticized, and takes too long to recover from setbacks.',
-        skilled: 'Stays confident under pressure and handles crises well. Keeps a positive attitude through adversity, bounces back from setbacks, and grows from the hard ones.',
-        over: 'Stays so composed they may not show appropriate emotion, can seem cold and uncaring, and look flat in moments where others show real feeling.' }
-    ];
-
     /* ============ SHOWPIECE 1: the wheel ============ */
     var svg = document.getElementById('wheel');
     if (svg) {
@@ -1131,6 +1099,9 @@
         if (a.level === 2) return b.level === 1 || b.ci === a.ci;
         return b.level === 1 || (b.level === 2 && b.ci === a.ci) || b === a;
       }
+      var openComp = null;
+      var chapterFig = document.getElementById('chapterFig');
+
       function activate(meta) {
         active = meta;
         svg.classList.add('dim');
@@ -1140,22 +1111,47 @@
         });
         renderPanel(meta);
       }
+      function markOpen() {
+        allArcs.forEach(function (m) { m.el.classList.toggle('open', m === openComp); });
+      }
       function reset() {
         active = null;
         svg.classList.remove('dim');
         allArcs.forEach(function (m) { m.el.classList.remove('lin', 'act'); });
+        markOpen();
         renderDefault();
+      }
+      function openChapter(meta) {
+        openComp = meta;
+        markOpen();
+        renderChapter(meta);
       }
       function bind(m) {
         m.el.addEventListener('mouseenter', function () { if (canHover) activate(m); });
         m.el.addEventListener('focus', function () { activate(m); });
-        m.el.addEventListener('click', function () { if (active === m) reset(); else activate(m); });
+        m.el.addEventListener('click', function () { activate(m); if (m.kind === 'comp') openChapter(m); });
         m.el.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (active === m) reset(); else activate(m); }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(m); if (m.kind === 'comp') openChapter(m); }
         });
       }
       svg.addEventListener('mouseleave', function () { if (canHover) reset(); });
       svg.addEventListener('focusout', function (e) { if (!svg.contains(e.relatedTarget)) reset(); });
+
+      function renderChapter(m) {
+        if (!chapterFig) return;
+        var p = m.data;
+        var causes = (p.causes || []).map(function (c) { return '<li>' + c + '</li>'; }).join('');
+        var tips = (p.tips || []).map(function (t) { return '<li>' + t + '</li>'; }).join('');
+        var h = '<div class="ch-kind">Chapter &middot; Competency ' + p.id + '</div>';
+        h += '<h4 class="ch-name">' + p.n + '</h4>';
+        h += '<p class="ch-map">' + (p.map || '') + '</p>';
+        h += '<div class="ch-body">';
+        h += '<div class="ch-col"><div class="ch-label">Some Causes</div><ul class="ch-causes">' + causes + '</ul></div>';
+        h += '<div class="ch-col"><div class="ch-label">Tips to Develop It</div><ol class="ch-tips">' + tips + '</ol></div>';
+        h += '</div>';
+        h += '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + (p.assign || '') + '</p></div>';
+        chapterFig.innerHTML = h;
+      }
 
       function renderPanel(m) {
         var h = '';
@@ -1186,9 +1182,9 @@
           h += '<div class="pname">' + p.n + '</div>';
           h += '<p class="pdef">' + p.def + '</p>';
           h += '<div class="p-div"></div>';
-          h += '<dl><dt>Skilled, it looks like</dt><dd>' + p.s + '</dd>';
-          h += '<dt>Overused, it tips into</dt><dd class="over">' + p.o + '</dd>';
-          h += '<dt>One way to build it</dt><dd>' + p.t + '</dd></dl>';
+          h += '<dl><dt class="t-less">Too little</dt><dd class="less">' + p.less + '</dd>';
+          h += '<dt class="t-skill">Skilled</dt><dd>' + p.s + '</dd>';
+          h += '<dt class="t-over">Overused</dt><dd class="over">' + p.o + '</dd></dl>';
         }
         panel.innerHTML = h;
       }
@@ -1206,6 +1202,9 @@
         panel.innerHTML = h;
       }
       renderDefault();
+      var defOpen = null;
+      allArcs.forEach(function (m) { if (m.kind === 'comp' && m.data.id === 13) defOpen = m; });
+      if (defOpen) openChapter(defOpen);
 
       /* text alternative / small-screen accordion, from the same data */
       var list = document.getElementById('wheelList');
@@ -1216,11 +1215,18 @@
           f.clusters.forEach(function (c) {
             lh += '<div class="wl-cluster"><span class="wl-cl">Cluster ' + c.letter + ' &middot; ' + c.name + '</span><span class="wl-cd">' + c.def + '</span></div>';
             c.competencies.forEach(function (p) {
+              var causes = (p.causes || []).map(function (x) { return '<li>' + x + '</li>'; }).join('');
+              var tips = (p.tips || []).map(function (x) { return '<li>' + x + '</li>'; }).join('');
               lh += '<details class="wl-comp"><summary><span class="wl-n">' + p.id + '</span><span>' + p.n + '</span></summary><div class="wl-body">' +
                 '<p class="wl-def">' + p.def + '</p><dl>' +
-                '<dt>Skilled, it looks like</dt><dd>' + p.s + '</dd>' +
-                '<dt>Overused, it tips into</dt><dd class="over">' + p.o + '</dd>' +
-                '<dt>One way to build it</dt><dd>' + p.t + '</dd></dl></div></details>';
+                '<dt class="t-less">Too little</dt><dd class="less">' + p.less + '</dd>' +
+                '<dt class="t-skill">Skilled</dt><dd>' + p.s + '</dd>' +
+                '<dt class="t-over">Overused</dt><dd class="over">' + p.o + '</dd></dl>' +
+                '<p class="wl-map">' + p.map + '</p>' +
+                '<div class="wl-sec"><div class="ch-label">Some Causes</div><ul class="ch-causes">' + causes + '</ul></div>' +
+                '<div class="wl-sec"><div class="ch-label">Tips to Develop It</div><ol class="ch-tips">' + tips + '</ol></div>' +
+                '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + p.assign + '</p></div>' +
+                '</div></details>';
             });
           });
           lh += '</details>';
@@ -1229,43 +1235,6 @@
       }
     }
 
-    /* ============ SHOWPIECE 2: the overused-strength spectrum ============ */
-    var spTabs = document.getElementById('spTabs');
-    if (spTabs) {
-      var spDesc = document.getElementById('spDesc');
-      var spKick = document.getElementById('spKick');
-      var spRead = document.getElementById('spRead');
-      var spDot = document.getElementById('spDot');
-      var stops = Array.prototype.slice.call(document.querySelectorAll('.sp-stop'));
-      var STOPS = [
-        { key: 'less', kick: 'Too little', cls: '' },
-        { key: 'skilled', kick: 'Skilled', cls: 'k-skill' },
-        { key: 'over', kick: 'Overused', cls: 'k-over' }
-      ];
-      var curC = 0, curS = 1;
-      SPECTRUM_DATA.forEach(function (d, i) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.textContent = d.n;
-        b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
-        b.addEventListener('click', function () { curC = i; renderSp(); });
-        spTabs.appendChild(b);
-      });
-      var tabBtns = Array.prototype.slice.call(spTabs.children);
-      stops.forEach(function (s) {
-        s.addEventListener('click', function () { curS = +s.getAttribute('data-stop'); renderSp(); });
-      });
-      function renderSp() {
-        var d = SPECTRUM_DATA[curC], st = STOPS[curS];
-        spDesc.textContent = d[st.key];
-        spKick.textContent = st.kick;
-        spRead.className = 'sp-read ' + st.cls;
-        spDot.style.left = curS === 0 ? '8px' : (curS === 1 ? '50%' : 'calc(100% - 8px)');
-        tabBtns.forEach(function (b, i) { b.setAttribute('aria-pressed', i === curC ? 'true' : 'false'); });
-        stops.forEach(function (s) { s.setAttribute('aria-pressed', (+s.getAttribute('data-stop')) === curS ? 'true' : 'false'); });
-      }
-      renderSp();
-    }
   })();
   </script>
   <script src="js/backtotop.js"></script>
