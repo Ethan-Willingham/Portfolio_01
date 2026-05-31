@@ -295,6 +295,7 @@
 
   .wheel-panel { background: var(--bg); border: 1px solid var(--hair); border-radius: 10px; padding: 1.2rem 1.25rem 1.3rem; min-height: 272px; display: flex; flex-direction: column; }
   .wheel-panel .p-kind { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+  .wheel-panel .p-kind .q-swatch { display: inline-block; width: 0.62em; height: 0.62em; border-radius: 2px; margin-right: 0.5em; vertical-align: -0.02em; }
   .wheel-panel .crumb { font-size: 0.84rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.3rem; }
   .wheel-panel .crumb .sep { color: var(--accent); opacity: 0.55; padding: 0 0.3em; }
   .wheel-panel .pname { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.4rem, 3.2vw, 1.7rem); color: var(--text-bright); line-height: 1.06; margin: 0.32rem 0 0; text-wrap: balance; }
@@ -393,9 +394,10 @@
     .chapter .ch-body { grid-template-columns: 1fr; gap: 1.1rem; }
   }
   @media (max-width: 600px) {
-    /* the wheel becomes a compact follow-along map; its side panel folds away and the chapter carries the full reader */
-    .wheel-svg-wrap { max-width: 290px; }
-    .wheel-panel { display: none; }
+    /* the wheel grows to fill the column; tapping a segment reveals a compact card right below it */
+    .wheel-svg-wrap { max-width: 100%; }
+    .wheel-panel { display: flex; min-height: 5.5rem; max-width: 100%; margin: 0.7rem auto 0; padding: 0.95rem 1.1rem 1.05rem; }
+    .wheel-panel .pname { font-size: 1.32rem; }
     .ch-desc { display: block; }
     .ch-rail { align-items: flex-start; }
     .ch-rail-label { width: 4.6rem; padding-top: 0.5rem; }
@@ -1194,19 +1196,14 @@
           });
         });
       }
-      function reset() { clearHover(); renderPanel(sel); }
+      /* phones get a compact "what is this" card; desktop gets the full description panel */
+      function paintPanel(m) { if (mqMobile.matches) renderQuick(m); else renderPanel(m); }
+      function reset() { clearHover(); paintPanel(sel); }
       function select(meta) {
-        clearHover();
-        if (mqMobile.matches) {
-          /* phones: the wheel is a follow-along map that drives the one chapter reader below */
-          var cm = resolveToComp(meta);
-          if (cm) { chComp = cm; sel = cm; markOpen(); renderChapterBlock(); scrollToChapter(); }
-          else { sel = meta; markOpen(); }
-          return;
-        }
         sel = meta;
+        clearHover();
         markOpen();
-        renderPanel(meta);
+        paintPanel(meta);
       }
       function bind(m) {
         m.el.addEventListener('mouseenter', function () { if (canHover) activate(m); });
@@ -1220,22 +1217,12 @@
       svg.addEventListener('focusout', function (e) { if (!svg.contains(e.relatedTarget)) reset(); });
       if (hubBtn) {
         hubBtn.addEventListener('mouseenter', function () { if (canHover) { clearHover(); renderPanel(hubMeta); } });
-        hubBtn.addEventListener('click', function () { if (!mqMobile.matches) select(hubMeta); });
-        hubBtn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!mqMobile.matches) select(hubMeta); } });
+        hubBtn.addEventListener('click', function () { select(hubMeta); });
+        hubBtn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(hubMeta); } });
       }
       /* ===== the chapter has its OWN navigation: a stepper over all 38 + factor/cluster/competency rails ===== */
       var compOrder = allArcs.filter(function (a) { return a.kind === 'comp'; }).sort(function (a, b) { return a.data.id - b.data.id; });
       var chComp = findComp(13) || compOrder[0];
-      function resolveToComp(m) {
-        if (!m || m.kind === 'hub') return null;
-        if (m.kind === 'comp') return m;
-        if (m.kind === 'cluster') return findComp(m.data.competencies[0].id);
-        if (m.kind === 'factor') return findComp(m.data.clusters[0].competencies[0].id);
-        return null;
-      }
-      function scrollToChapter() {
-        if (chapterFig && chapterFig.scrollIntoView) chapterFig.scrollIntoView({ behavior: mqReduce.matches ? 'auto' : 'smooth', block: 'start' });
-      }
       function centerActiveChip() {
         if (!chapterFig) return;
         var rail = chapterFig.querySelector('[data-rail="comp"]');
@@ -1249,7 +1236,6 @@
         if (!c) return;
         chComp = c;
         renderChapterBlock();
-        if (mqMobile.matches) { sel = c; markOpen(); }
       }
       function navChip(label, navAttr, on) {
         return '<button type="button" class="ch-navchip' + (on ? ' on' : '') + '"' + (on ? ' aria-current="true"' : '') + ' data-nav="' + navAttr + '">' + label + '</button>';
@@ -1365,17 +1351,42 @@
         h += '</ul><p class="phint">The inner ring is the factor, the middle ring its clusters, the outer ring the competencies. Hover or tap any segment to explore it.</p>';
         panel.innerHTML = h;
       }
-      /* initial state: desktop opens the Library overview in the side panel; phones highlight the
-         chapter's competency on the map and let the chapter below carry the full reader */
+      /* the compact card the wheel shows on phones: the level (with its colour), where it sits, the name, and a quick description */
+      function renderQuick(m) {
+        var h = '', f, col, sw;
+        if (m.kind === 'hub') {
+          h += '<div class="p-kind">The Library</div>';
+          h += '<div class="pname">A map of the whole job</div>';
+          h += '<p class="pdef">Four factors, twelve clusters, thirty-eight competencies. Tap any segment to see what it is.</p>';
+        } else {
+          f = (m.kind === 'factor') ? m.data : m.factor;
+          col = hsl(f.hue, Math.min(62, f.sat + 14), 70);
+          sw = '<span class="q-swatch" style="background:' + col + '"></span>';
+          if (m.kind === 'factor') {
+            h += '<div class="p-kind">' + sw + 'Factor ' + m.data.roman + '</div>';
+            h += '<div class="pname">' + m.data.name + '</div>';
+            h += '<p class="pdef">' + m.data.meaning + '</p>';
+          } else if (m.kind === 'cluster') {
+            h += '<div class="p-kind">' + sw + 'Cluster ' + m.data.letter + '</div>';
+            h += '<div class="crumb">' + m.factor.name + '</div>';
+            h += '<div class="pname">' + m.data.name + '</div>';
+            h += '<p class="pdef">' + m.data.def + '</p>';
+          } else {
+            var p = m.data;
+            h += '<div class="p-kind">' + sw + 'Competency ' + p.id + '</div>';
+            h += '<div class="crumb">' + m.factor.name + ' <span class="sep">&rsaquo;</span> ' + m.cluster.name + '</div>';
+            h += '<div class="pname">' + p.n + '</div>';
+            h += '<p class="pdef">' + p.def + '</p>';
+          }
+        }
+        panel.innerHTML = h;
+      }
+      /* initial state: the wheel opens on the Library overview (quick card on phones, full panel on desktop);
+         the chapter below is independent and opens on its default competency */
       renderChapterBlock();
-      if (mqMobile.matches) { sel = chComp; markOpen(); }
-      else { select(hubMeta); }
-      /* crossing the phone breakpoint: re-sync which surface carries the description */
-      var onBreak = function (e) {
-        clearHover();
-        if (e.matches) { sel = chComp; markOpen(); }
-        else { sel = hubMeta; markOpen(); renderPanel(hubMeta); }
-      };
+      select(hubMeta);
+      /* re-paint the wheel's panel in the right mode when the viewport crosses the phone breakpoint */
+      var onBreak = function () { clearHover(); select(sel || hubMeta); };
       if (mqMobile.addEventListener) mqMobile.addEventListener('change', onBreak);
       else if (mqMobile.addListener) mqMobile.addListener(onBreak);
     }
