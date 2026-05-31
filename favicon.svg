@@ -1,14 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-  <!-- Site mark: an equilateral triangle, point up. Transparent background so it
-       reads "clear" in browser tabs. The triangle is the site green by default
-       (great on light tab strips) and flips to the site tan in dark mode so it
-       stays visible on dark strips. Opaque home-screen tile lives in
-       apple-touch-icon.png (iOS ignores transparency there).
-       Equilateral: base 70 (x 15..85), height 70*sqrt(3)/2 = 60.6, centered with
-       equal ~19.7 margins top and bottom. -->
-  <style>
-    .tri { fill: #303931; }
-    @media (prefers-color-scheme: dark) { .tri { fill: #D4C4A0; } }
-  </style>
-  <polygon class="tri" points="50,19.7 15,80.3 85,80.3"/>
+  <!-- Desktop tab mark: a green equilateral triangle inside a sand-colored disc.
+       The filled circle gives the green triangle contrast on both light and dark
+       tab strips, so no dark-mode color flip is needed (and a flip would turn the
+       triangle tan, hiding it against the sand). Corners outside the circle are
+       transparent, so it reads as a sand badge floating on the tab.
+       Triangle: equilateral, base 60 (x 20..80), bounding box centered in the
+       disc (apex y 24.04, base y 76). Disc: r 49, centered. -->
+  <circle cx="50" cy="50" r="49" fill="#D4C4A0"/>
+  <polygon points="50,24.04 20,76 80,76" fill="#303931"/>
 </svg>
