@@ -380,18 +380,42 @@
   .ch-navchip { font-family: var(--font-body); font-size: 0.86rem; padding: 0.3rem 0.72rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
   .ch-navchip:hover { color: var(--text); border-color: rgba(212,196,160,0.45); }
   .ch-navchip.on { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.12); font-weight: 700; }
-  /* four-way description labels: in the wheel's side panel, and the chapter's folded-in description */
-  .wheel-panel dt.t-less, .ch-desc dt.t-less { color: var(--text-dim); }
-  .wheel-panel dt.t-over, .ch-desc dt.t-over { color: #d39a7e; }
-  .wheel-panel dt.t-tal, .ch-desc dt.t-tal { color: var(--accent-hover); }
-  .wheel-panel dd.less, .ch-desc dd.less { color: var(--text-dim); }
-  /* the competency's four-level description now lives in the chapter on every screen (the wheel stays high-level) */
-  .ch-desc { display: block; margin: 0.5rem 0 0; }
-  .ch-desc .ch-def { font-size: 1.04rem; line-height: 1.5; color: var(--text-bright); margin: 0; }
-  .ch-desc dl { margin: 0.2rem 0 0; }
-  .ch-desc dt { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-top: 0.7rem; }
-  .ch-desc dd { margin: 0.14rem 0 0; font-size: 0.96rem; line-height: 1.48; color: var(--text); }
-  .ch-desc dd.over { color: var(--text-dim); }
+  /* the lead definition */
+  .ch-def { font-size: 1.1rem; line-height: 1.5; color: var(--text-bright); margin: 0.45rem 0 0; max-width: 64ch; text-wrap: pretty; }
+  /* the four-level range as a spectrum: a button per level, the good middle highlighted, click to read one at a time */
+  .ch-scale { margin: 1.35rem 0 0; }
+  .ch-scale-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 0.55rem; }
+  .ch-lv { font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; line-height: 1.2; text-align: center; padding: 0.62rem 0.4rem; border-radius: 7px; border: 1px solid var(--hair); background: transparent; color: var(--text-dim); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
+  .ch-lv.lv-good { background: rgba(212,196,160,0.06); border-color: rgba(212,196,160,0.22); color: var(--text); }
+  .ch-lv:hover { border-color: rgba(212,196,160,0.5); }
+  .ch-lv.on { background: rgba(212,196,160,0.14); border-color: currentColor; font-weight: 700; }
+  .ch-lv.on.lvc-less { color: var(--text-dim); }
+  .ch-lv.on.lvc-s { color: var(--accent); }
+  .ch-lv.on.lvc-tal { color: var(--accent-hover); }
+  .ch-lv.on.lvc-o { color: #d39a7e; }
+  .ch-lv-desc { margin: 0.8rem 0 0; font-size: 0.99rem; line-height: 1.5; color: var(--text); padding-left: 0.9rem; border-left: 2px solid var(--hair); min-height: 2.8em; text-wrap: pretty; }
+  .ch-lv-desc.lvc-less { border-color: var(--text-dim); color: var(--text-dim); }
+  .ch-lv-desc.lvc-s { border-color: var(--accent); }
+  .ch-lv-desc.lvc-tal { border-color: var(--accent-hover); }
+  .ch-lv-desc.lvc-o { border-color: #d39a7e; color: var(--text-dim); }
+  .ch-mapsec { margin-top: 1.35rem; }
+  /* "how to build it": the development half, tucked behind one disclosure until wanted */
+  .ch-more { margin-top: 1.55rem; border-top: 1px solid var(--hair); }
+  .ch-more-sum { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 0.7rem; padding: 0.95rem 0 0.1rem; }
+  .ch-more-sum::-webkit-details-marker { display: none; }
+  .ch-more-sum:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .ch-more-label { font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
+  .ch-more-hint { font-size: 0.86rem; font-style: italic; color: var(--text-dim); }
+  .ch-more-icon { margin-left: auto; width: 0.62rem; height: 0.62rem; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(45deg); transition: transform 200ms var(--ease-out); flex: none; }
+  .ch-more[open] .ch-more-icon { transform: rotate(-135deg); }
+  .ch-more-sum:hover .ch-more-label { color: var(--accent-hover); }
+  .ch-more-sum:hover .ch-more-icon { border-color: var(--accent-hover); }
+  .ch-more-body { padding-top: 0.5rem; }
+  .ch-more-body > .ch-body { margin-top: 0.85rem; padding-top: 0; border-top: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .ch-more[open] .ch-more-body { animation: chMoreIn 240ms var(--ease-out); }
+  }
+  @keyframes chMoreIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
   /* chapter cross-links: substitutes and compensators */
   .ch-xrefs { margin-top: 1.35rem; padding-top: 1.2rem; border-top: 1px solid var(--hair); display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 2.6rem; }
   .ch-xref-note { font-family: var(--font-body); font-weight: 400; font-style: italic; letter-spacing: 0; text-transform: none; color: var(--text-dim); }
@@ -417,6 +441,8 @@
     .ch-rail-label { width: auto; padding-top: 0; }
     .ch-rail-scroll { flex-wrap: wrap; gap: 0.45rem; }
     .chapter { padding: 1.2rem 1.15rem 1.3rem; }
+    .ch-lv { font-size: 0.74rem; padding: 0.6rem 0.2rem; }
+    .ch-more-hint { display: none; }
   }
   /* bigger touch targets where the pointer is coarse */
   @media (pointer: coarse) {
@@ -1314,23 +1340,35 @@
         };
         var subs = (p.subs && p.subs.length) ? '<div class="ch-xref-sec"><div class="ch-label">Substitutes <span class="ch-xref-note">build these instead to cover the gap</span></div><div class="ch-xref-row">' + xref(p.subs) + '</div></div>' : '';
         var comps = (p.comps && p.comps.length) ? '<div class="ch-xref-sec"><div class="ch-label">Compensators <span class="ch-xref-note">when overused, build these to soften it</span></div><div class="ch-xref-row">' + xref(p.comps) + '</div></div>' : '';
-        var desc = '<div class="ch-desc">' +
-          '<p class="ch-def">' + (p.def || '') + '</p>' +
-          '<dl><dt class="t-less">Too little</dt><dd class="less">' + p.less + '</dd>' +
-          '<dt class="t-skill">Skilled</dt><dd>' + p.s + '</dd>' +
-          '<dt class="t-tal">Talented</dt><dd>' + p.tal + '</dd>' +
-          '<dt class="t-over">Overused</dt><dd class="over">' + p.o + '</dd></dl></div>';
+        // the four-level range as a spectrum: too little and overused are the bad ends, skilled and talented the good middle
+        var LV = [['less', 'Too little', 'bad'], ['s', 'Skilled', 'good'], ['tal', 'Talented', 'good'], ['o', 'Overused', 'bad']];
+        var defK = 's';
+        var cells = LV.map(function (L) {
+          return '<button type="button" class="ch-lv lv-' + L[2] + ' lvc-' + L[0] + (L[0] === defK ? ' on' : '') + '" data-lv="' + L[0] + '" aria-pressed="' + (L[0] === defK) + '">' + L[1] + '</button>';
+        }).join('');
+        var scale = '<div class="ch-scale">' +
+          '<div class="ch-label">How it shows up <span class="ch-xref-note">both ends are a problem, the middle is the target</span></div>' +
+          '<div class="ch-scale-bar" role="group" aria-label="The four levels, from too little to overused">' + cells + '</div>' +
+          '<p class="ch-lv-desc lvc-' + defK + '" data-lvdesc>' + p[defK] + '</p>' +
+          '</div>';
+        var build = '<details class="ch-more">' +
+          '<summary class="ch-more-sum"><span class="ch-more-label">How to build it</span><span class="ch-more-hint">causes, tips, an assignment, and related skills</span><span class="ch-more-icon" aria-hidden="true"></span></summary>' +
+          '<div class="ch-more-body">' +
+            '<div class="ch-body">' +
+            '<div class="ch-col"><div class="ch-label">Some Causes</div><ul class="ch-causes">' + causes + '</ul></div>' +
+            '<div class="ch-col"><div class="ch-label">Tips to Develop It</div><ol class="ch-tips">' + tips + '</ol></div>' +
+            '</div>' +
+            '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + (p.assign || '') + '</p></div>' +
+            (subs || comps ? '<div class="ch-xrefs">' + subs + comps + '</div>' : '') +
+          '</div>' +
+          '</details>';
         return '<div class="ch-content">' +
           '<div class="ch-kind">Chapter &middot; Competency ' + p.id + '</div>' +
           '<h4 class="ch-name">' + p.n + '</h4>' +
-          desc +
-          '<p class="ch-map">' + (p.map || '') + '</p>' +
-          '<div class="ch-body">' +
-          '<div class="ch-col"><div class="ch-label">Some Causes</div><ul class="ch-causes">' + causes + '</ul></div>' +
-          '<div class="ch-col"><div class="ch-label">Tips to Develop It</div><ol class="ch-tips">' + tips + '</ol></div>' +
-          '</div>' +
-          '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + (p.assign || '') + '</p></div>' +
-          (subs || comps ? '<div class="ch-xrefs">' + subs + comps + '</div>' : '') +
+          '<p class="ch-def">' + (p.def || '') + '</p>' +
+          scale +
+          '<div class="ch-mapsec"><div class="ch-label">The Map</div><p class="ch-map">' + (p.map || '') + '</p></div>' +
+          build +
           '</div>';
       }
       function renderChapterBlock() {
@@ -1340,6 +1378,16 @@
       }
       if (chapterFig) {
         chapterFig.addEventListener('click', function (e) {
+          var lv = e.target.closest ? e.target.closest('[data-lv]') : null;
+          if (lv) {
+            if (chSel.kind === 'comp') {
+              var key = lv.getAttribute('data-lv'), bar = lv.parentNode;
+              [].forEach.call(bar.querySelectorAll('.ch-lv'), function (b) { var on = b === lv; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+              var d = chapterFig.querySelector('[data-lvdesc]');
+              if (d) { d.textContent = chSel.data[key]; d.className = 'ch-lv-desc lvc-' + key; }
+            }
+            return;
+          }
           var step = e.target.closest ? e.target.closest('[data-step]') : null;
           if (step) {
             if (!step.disabled && chSel.kind === 'comp') { var ni = compOrder.indexOf(chSel) + (+step.getAttribute('data-step')); if (compOrder[ni]) navTo(compOrder[ni]); }
