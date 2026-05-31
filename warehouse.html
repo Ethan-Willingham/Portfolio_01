@@ -173,6 +173,11 @@
   .flowfig .vbtn:disabled { color: rgba(245,241,234,0.16); cursor: default; pointer-events: none; }
   .flowfig .vbtn svg { width: 15px; height: 15px; display: block; }
   .flowfig .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  /* figure title + caption sit in the reading column; only the plate breaks wide */
+  .flowfig .fig-title { max-width: var(--measure); margin: 0 auto 1rem; }
+  .flowfig .fig-note { max-width: var(--measure); margin: 1.1rem auto 0; }
+  /* the lifecycle plate is a wide, short blueprint, balanced top to bottom */
+  #flow1 .plate { aspect-ratio: 1000 / 300; }
   .fig-src { font-size: 0.88rem; color: var(--text-dim); line-height: 1.55; margin: 0.9rem 0 0; }
 
   /* two-column compare */
@@ -811,7 +816,7 @@
 
     /* geometry: one lane, eight stage markers in order */
     var xIn = 96, xOut = 902;
-    var LT = 158, LB = 298, FT = LT, FB = LB;          // lane top/bottom
+    var LT = 78, LB = 222, FT = LT, FB = LB;          // lane top/bottom
     var xRecv = 162, xPut = 262, xStore = 360, xXfer = 456, xPick = 556, xPack = 652, xStage = 752, xShip = 850;
     var stations = [
       { id: 'recv',  x: xRecv,  t: LT, b: LB, label: 'RECEIVE' },
