@@ -326,7 +326,9 @@
   .wheel-list .wl-body dd.over { color: var(--text-dim); }
 
   /* the "open" competency, marked on the wheel while its chapter is showing */
-  .wheel .arc.open { stroke: var(--accent-hover); stroke-width: 2; }
+  .wheel .open-mark { fill: none; pointer-events: none; stroke-linejoin: round; transition: opacity 150ms var(--ease-out); }
+  .wheel .open-casing { stroke: var(--bg); stroke-width: 5; }
+  .wheel .open-line { stroke: var(--text-bright); stroke-width: 2.5; }
 
   /* ============================================================
      SHOWPIECE 2: the chapter (opens below the wheel on click)
@@ -764,6 +766,7 @@
                 </filter>
               </defs>
               <g id="wheelArcs"></g>
+              <g id="openMark"></g>
               <g id="wheelLabels"></g>
               <text class="hub-n" x="0" y="-2">38</text>
               <text class="hub-l" x="0" y="22">competencies</text>
@@ -1111,8 +1114,24 @@
         });
         renderPanel(meta);
       }
+      var openMarkG = document.getElementById('openMark');
       function markOpen() {
-        allArcs.forEach(function (m) { m.el.classList.toggle('open', m === openComp); });
+        if (!openMarkG) return;
+        while (openMarkG.firstChild) openMarkG.removeChild(openMarkG.firstChild);
+        if (!openComp) return;
+        var lineage = allArcs.filter(function (m) {
+          return (m === openComp) ||
+            (m.level === 2 && m.fi === openComp.fi && m.ci === openComp.ci) ||
+            (m.level === 1 && m.fi === openComp.fi);
+        });
+        ['open-casing', 'open-line'].forEach(function (cls) {
+          lineage.forEach(function (m) {
+            var pth = document.createElementNS(NS, 'path');
+            pth.setAttribute('d', m.el.getAttribute('d'));
+            pth.setAttribute('class', 'open-mark ' + cls);
+            openMarkG.appendChild(pth);
+          });
+        });
       }
       function reset() {
         active = null;
