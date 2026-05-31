@@ -224,6 +224,14 @@
   .cases .case .did { font-size: 0.9rem; color: var(--text-dim); line-height: 1.42; margin: 0.25rem 0 0.55rem; }
   .cases .case .res { font-size: 0.9rem; color: var(--accent); line-height: 1.4; }
   .cases .case .res b { color: var(--accent-hover); font-weight: 700; }
+  /* the paperwork grid (section 8): what leaves with every shipment, two for people and two for machines */
+  .docs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 1.5rem 0 0.4rem; }
+  .docs .doc { background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; padding: 0.95rem 1.05rem 1.05rem; }
+  .docs .doc .dk { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.4rem; }
+  .docs .doc .dn { font-weight: 700; color: var(--text-bright); font-size: 1.05rem; }
+  .docs .doc .dd { font-size: 0.9rem; color: var(--text-dim); line-height: 1.44; margin-top: 0.3rem; }
+  .docs .doc .dd b { color: var(--accent-hover); font-weight: 700; }
+  @media (max-width: 560px) { .docs { grid-template-columns: 1fr; } }
 
   /* ============ THE INTERACTIVE: the multiplied nines ============ */
   .lab { background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; overflow: hidden;
@@ -466,7 +474,30 @@
       <h3>Pack, label, and out the door</h3>
       <p class="sub">The last hundred feet, where the warehouse hands off to the carrier and closes the loop.</p>
       <p>At the pack station the picked items get verified one more time by scan, then the system does something clever called <b>cartonization</b>: it picks the smallest box that fits, because shipping air is expensive. How expensive? Carriers bill on <b>dimensional weight</b>, charging by the box's size or its actual weight, whichever costs more, so a big light box of pillows is billed as if it were heavy. The WMS weighs and measures, then <b>rate shops</b> across carriers, choosing parcel for a small box, <b>LTL</b> (less than truckload) for a pallet, <b>FTL</b> for a full trailer, and prints the label.</p>
-      <p>Then it closes the loop. The system generates the paperwork, the packing slip, the bill of lading for freight, the outbound ASN to the customer, and fires a <b>ship confirmation</b> back up to the ERP. That message is what relieves the inventory, closes the order, and lets the company finally bill for it. In the trade it is often an EDI 945, and when it fails to send, the order hangs forever in "processing," the customer is never charged, and the warehouse gets the angry call. The WMS is the last system in the chain, so it gets blamed first.</p>
+      <p>Then it closes the loop, and a quiet stack of paperwork leaves with the order. Four documents do the real work, and they split cleanly in two: two are printed for a person to read, and two are messages fired between machines.</p>
+      <div class="docs">
+        <div class="doc">
+          <span class="dk">Paper &middot; rides in the box</span>
+          <div class="dn">Packing slip</div>
+          <div class="dd">The plain list of what is in the carton: items, quantities, and the order number, with no prices. It is the page a person checks the shipment against, tucked inside the box or in a pouch stuck to the outside.</div>
+        </div>
+        <div class="doc">
+          <span class="dk">Paper &middot; rides with the driver</span>
+          <div class="dn">Bill of lading</div>
+          <div class="dd">Only for <b>freight</b>, the pallets that move by truck. It is at once the receipt for the goods and the contract with the carrier, so the driver signs it at pickup. One page: pallets, weight, class, addresses, and who pays.</div>
+        </div>
+        <div class="doc">
+          <span class="dk">Electronic &middot; sent ahead to the buyer</span>
+          <div class="dn">Outbound ASN</div>
+          <div class="dd">The advance ship notice, an <b>EDI 856</b> fired to the customer before the truck arrives, describing every pallet and carton down to the barcode. The packing slip's machine twin: they scan one label and their system already knows what is inside.</div>
+        </div>
+        <div class="doc">
+          <span class="dk">Electronic &middot; sent up to your ERP</span>
+          <div class="dn">Ship confirmation</div>
+          <div class="dd">The message that tells your own business the order is gone, often an <b>EDI 945</b>. Invisible, and the one that matters most: it relieves the inventory, closes the order, and finally lets finance send the invoice.</div>
+        </div>
+      </div>
+      <p>That last one, the ship confirmation, is the one to watch. Until it fires, the order hangs in <b>processing</b>: the stock is never relieved, the customer is never billed, and the warehouse gets the angry call, because the WMS is the last system in the chain, so it is blamed first.</p>
       <div class="move"><span class="k">The WMS pro's read</span><p>This is the seam between the warehouse system and the transportation system (the TMS). Knowing exactly where one ends and the other begins, and that the ship confirm is what closes the money loop, makes you the rare WMS pro who can actually triage a stuck shipment.</p></div>
     </section>
 
