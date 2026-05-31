@@ -156,6 +156,20 @@
   .fig-block { margin: 2.8rem 0; }
   .fig-title { font-weight: 700; font-size: 1.06rem; color: var(--text-bright); margin: 0 0 0.2rem; }
   .fig-note { font-size: 0.92rem; color: var(--text-dim); font-style: italic; margin: 0.6rem 0 0; line-height: 1.45; }
+
+  /* ============ V1: the life of one item (interactive blueprint flow) ============ */
+  #flow1 { --ease-out: cubic-bezier(0.22, 1, 0.36, 1); }
+  #flow1 .plate { position: relative; aspect-ratio: 1000 / 432; border-radius: 7px; overflow: hidden; background: #20271f; border: 1px solid rgba(245,241,234,0.10); box-shadow: 0 24px 54px -30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(245,241,234,0.04); }
+  #flow1 .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  #flow1 .plate .grain { mix-blend-mode: overlay; opacity: 0.55; }
+  #flow1 .vnav { position: absolute; left: 0; right: 0; bottom: 0.6rem; display: flex; justify-content: center; gap: 1.6rem; z-index: 2; pointer-events: none; }
+  #flow1 .vbtn { pointer-events: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid transparent; background: transparent; color: rgba(245,241,234,0.5); cursor: pointer; transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out), background 150ms var(--ease-out), transform 90ms var(--ease-out); }
+  #flow1 .vbtn:hover { color: rgba(245,241,234,0.9); border-color: rgba(245,241,234,0.18); background: rgba(245,241,234,0.05); }
+  #flow1 .vbtn:active { transform: scale(0.92); color: rgba(212,196,160,0.95); border-color: rgba(212,196,160,0.3); transition-duration: 60ms; }
+  #flow1 .vbtn:focus-visible { outline: 2px solid rgba(212,196,160,0.65); outline-offset: 2px; }
+  #flow1 .vbtn:disabled { color: rgba(245,241,234,0.16); cursor: default; pointer-events: none; }
+  #flow1 .vbtn svg { width: 15px; height: 15px; display: block; }
+  #flow1 .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .fig-src { font-size: 0.88rem; color: var(--text-dim); line-height: 1.55; margin: 0.9rem 0 0; }
 
   /* two-column compare */
@@ -381,17 +395,22 @@
     <!-- ============ ACT II ============ -->
     <div class="act reveal"><div class="act-k">Act II</div><div class="act-t">Follow the box</div></div>
 
-    <div class="fig-block wide reveal">
-      <div class="fig-title">One box, six touches, dock to door</div>
-      <div class="stages">
-        <div class="st"><span class="lv">in</span><div class="nm">Receive</div><div class="dz">Off the truck, counted, checked in.</div></div>
-        <div class="st"><span class="lv">store</span><div class="nm">Putaway</div><div class="dz">Carried to a shelf the system chose.</div></div>
-        <div class="st"><span class="lv">hold</span><div class="nm">Store</div><div class="dz">Waits, counted, never lost.</div></div>
-        <div class="st"><span class="lv">pull</span><div class="nm">Pick</div><div class="dz">Grabbed for a specific order.</div></div>
-        <div class="st"><span class="lv">box</span><div class="nm">Pack</div><div class="dz">Boxed, weighed, labeled.</div></div>
-        <div class="st"><span class="lv">out</span><div class="nm">Ship</div><div class="dz">Onto a truck, out the door.</div></div>
+    <div class="fig-block wide reveal" id="flow1">
+      <div class="fig-title">The life of one item, dock to door</div>
+      <div class="plate">
+        <canvas data-bg></canvas>
+        <canvas data-flow></canvas>
+        <canvas data-ink role="img"
+          aria-label="A blueprint diagram of the life of one item in a warehouse, flowing left to right through the stages it passes: received, put away, stored where it waits, transferred between shelves, picked for an order, packed, staged for the truck, and shipped. The warehouse management system directs and records every move."></canvas>
+        <canvas data-grain class="grain"></canvas>
+        <div class="vnav">
+          <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
       </div>
-      <p class="fig-note">Every warehouse on earth, from a closet to Amazon, runs some version of these six steps. The WMS choreographs all of them. We will walk them in order.</p>
+      <p class="fig-note">Click any stage to walk it, or step through with the arrows. Every item in the building is somewhere on this path right now, and the system knows which. Next we follow that same path in detail, one stage at a time.</p>
+      <p class="sr" data-t aria-live="polite"></p>
+      <p class="sr">The life of one item: received and checked in, put away on a shelf where it waits, sometimes moved to another shelf, picked when an order comes in, packed, staged to wait for the truck, then shipped. One software system directs and records every move.</p>
     </div>
 
     <section class="sec reveal">
@@ -723,5 +742,320 @@
   })();
   </script>
   <script src="js/backtotop.js"></script>
+  <script>
+  /* ============================================================
+     Visual 1: the life of one item.
+     One item's journey through a warehouse, left to right, through
+     the real lifecycle stages: RECEIVE, PUTAWAY, STORE, TRANSFER,
+     PICK, PACK, STAGE, SHIP. Goods are drawn as slow wind-map
+     particles with fading trails; they flow between stages and sit
+     still (dwell) where real goods wait, mostly in storage, and in
+     staging before the truck. Blueprint look, cream ink on dark,
+     gold spent only on the stage being explained, with a soft
+     spotlight and an in-place leader note. Reduced-motion: frozen
+     streamlines, stepping still works. No em dashes.
+     ============================================================ */
+  (function () {
+    'use strict';
+    var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var GOLD = '212,196,160', CREAM = '245,241,234', GROUND = '#20271f';
+    var VW = 1000, VH = 432;
+
+    /* geometry: one lane, eight stage markers in order */
+    var xIn = 96, xOut = 902;
+    var LT = 158, LB = 298, FT = LT, FB = LB;          // lane top/bottom
+    var xRecv = 162, xPut = 262, xStore = 360, xXfer = 456, xPick = 556, xPack = 652, xStage = 752, xShip = 850;
+    var stations = [
+      { id: 'recv',  x: xRecv,  t: LT, b: LB, label: 'RECEIVE' },
+      { id: 'put',   x: xPut,   t: LT, b: LB, label: 'PUTAWAY' },
+      { id: 'store', x: xStore, t: LT, b: LB, label: 'STORE' },
+      { id: 'xfer',  x: xXfer,  t: LT, b: LB, label: 'TRANSFER' },
+      { id: 'pick',  x: xPick,  t: LT, b: LB, label: 'PICK' },
+      { id: 'pack',  x: xPack,  t: LT, b: LB, label: 'PACK' },
+      { id: 'stage', x: xStage, t: LT, b: LB, label: 'STAGE' },
+      { id: 'ship',  x: xShip,  t: LT, b: LB, label: 'SHIP' }
+    ];
+    var STKEYS = ['recv', 'put', 'store', 'xfer', 'pick', 'pack', 'stage', 'ship'];
+
+    function smooth(t) { return t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+    function expDur(mean, max) { return Math.min(max, -Math.log(1 - Math.random() * 0.999) * mean); }
+    function rndSeed(k) { var s = Math.sin(k * 12.9898) * 43758.5453; return s - Math.floor(s); }
+
+    var fig = document.getElementById('flow1');
+    var bg = fig.querySelector('[data-bg]'), flow = fig.querySelector('[data-flow]'),
+        ink = fig.querySelector('[data-ink]'), grain = fig.querySelector('[data-grain]');
+    var bx = bg.getContext('2d'), fx = flow.getContext('2d'), ix = ink.getContext('2d'), gx = grain.getContext('2d');
+    var dpr = 1, scale = 1;
+
+    /* ---- particles: items moving through the lifecycle ---- */
+    var N = 240, parts = [], TRAIL = 130;
+    function spawn(p, stagger) {
+      p.x = stagger ? rnd(xIn, xOut) : xIn;
+      p.spawnY = rnd(LT, LB);
+      p.homeY = rnd(LT + 12, LB - 12);
+      p.exitY = rnd(LT, LB);
+      p.speed = rnd(120, 162);
+      p.wob = Math.random() * 6.28;
+      p.has = false; p.state = 'move'; p.dwellT = 0; p.hist = []; p.dwells = [];
+      // where an item stops and waits, with variable (long-tailed) durations
+      if (Math.random() < 0.45) p.dwells.push({ x: xRecv + rnd(10, 44), dur: expDur(0.9, 3.5) });   // received, awaiting putaway
+      p.dwells.push({ x: rnd(xStore - 6, xXfer - 30), dur: expDur(5.2, 16) });                        // the long wait in storage
+      if (Math.random() < 0.4) p.dwells.push({ x: xXfer + rnd(-8, 30), dur: expDur(1.2, 4) });        // moved to another shelf
+      p.dwells.push({ x: xStage + rnd(0, 42), dur: expDur(2.4, 8) });                                  // staged, waiting for the truck (every item)
+      for (var k = p.dwells.length - 1; k >= 0; k--) if (p.dwells[k].x <= p.x) p.dwells.splice(k, 1);
+    }
+    (function build() { for (var i = 0; i < N; i++) { var s = {}; spawn(s, true); parts.push(s); } })();
+    function partY(p) {
+      var x = p.x;
+      if (x < xRecv) return lerp(p.spawnY, p.homeY, smooth((x - xIn) / (xRecv - xIn)));
+      if (x < xShip) return p.homeY + Math.sin(p.wob + x * 0.02) * 1.5;
+      return lerp(p.homeY, p.exitY, smooth((x - xShip) / (xOut - xShip)));
+    }
+    function advance(dt) {
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        if (p.state === 'dwell') {
+          p.dwellT -= dt;
+          if (p.hist.length > 2) p.hist.splice(0, 2);   // the tail keeps moving until it reaches the stopped dot
+          if (p.dwellT <= 0) p.state = 'move';
+          continue;
+        }
+        p.x += p.speed * dt;
+        if (p.dwells.length && p.x >= p.dwells[0].x) { p.x = p.dwells[0].x; p.state = 'dwell'; p.dwellT = p.dwells[0].dur; p.dwells.shift(); }
+        else if (p.x > xOut + 6) { spawn(p, false); continue; }
+        p.hist.push(p.x, partY(p));
+        if (p.hist.length > TRAIL * 2) p.hist.splice(0, p.hist.length - TRAIL * 2);
+      }
+    }
+
+    /* ---- focus state (eased): a spotlight window + stage highlights ---- */
+    var scrimA = 0, tScrim = 0;
+    var W = { x0: 0, y0: 0, x1: VW, y1: VH }, TW = null;
+    var stG = {}, tStG = {}; STKEYS.forEach(function (k) { stG[k] = 0; tStG[k] = 0; });
+    var wmsA = 0, tWms = 0, annoA = 0, noteTxt = '', hovered = null;
+
+    var steps = [
+      { title: 'The life of one item', note: 'every item is somewhere on this path',
+        d: 'Follow a single item from the moment it arrives to the moment it ships. Every item in the building is somewhere on this path right now.' },
+      { title: 'It arrives and gets checked in', win: [xIn, LT - 7, xPut - 24, LB + 7], st: ['recv'], note: 'now the system knows it’s here',
+        d: 'A truck backs in. The item is unloaded, counted, and scanned. The moment it’s scanned, the system knows it’s in the building.' },
+      { title: 'It’s put away, then it waits', win: [xPut - 28, LT - 7, xXfer - 26, LB + 7], st: ['put', 'store'], note: 'the system knows exactly where it is',
+        d: 'The system picks a shelf and a worker puts it there. Then it just waits, sometimes hours, sometimes weeks, until someone orders it. Most of the building is items sitting still, waiting.' },
+      { title: 'Sometimes it gets moved', win: [xXfer - 54, LT - 7, xXfer + 60, LB + 7], st: ['xfer'], note: 'the back keeps the front stocked',
+        d: 'A warehouse keeps the bulk of each item in the back, and a little out front where picking is fast. As the front runs low, more is brought up to refill it. Busy items also get moved to better spots as demand changes.' },
+      { title: 'An order pulls it off the shelf', win: [xPick - 52, LT - 7, xPick + 52, LB + 7], st: ['pick'], note: 'a picker walks miles every shift',
+        d: 'When a customer orders it, the system sends a worker straight to its shelf to grab it. This is the most expensive part of the day, and most of that is just the walking.' },
+      { title: 'It gets boxed up', win: [xPack - 52, LT - 7, xPack + 52, LB + 7], st: ['pack'], note: 'boxed, weighed, labeled',
+        d: 'The item is boxed, weighed, and labeled, ready to go to the right customer.' },
+      { title: 'It’s staged, then shipped', win: [xStage - 48, LT - 7, xOut, LB + 7], st: ['stage', 'ship'], note: 'nothing counts until it ships',
+        d: 'It’s lined up by truck and waits its turn to be loaded. Once the truck pulls out, the company can finally charge the customer.' },
+      { title: 'One system runs all of it', wms: true,
+        d: 'None of this happens on its own. One piece of software decides every move and records it the instant it happens. That software is the brain of the warehouse.' }
+    ];
+
+    /* ---- sizing ---- */
+    function fit(c, ctx) {
+      dpr = window.devicePixelRatio || 1;
+      var r = c.getBoundingClientRect();
+      c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+      scale = r.width / VW; ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    }
+    function resize() {
+      [[bg, bx], [flow, fx], [ink, ix], [grain, gx]].forEach(function (p) { fit(p[0], p[1]); });
+      drawBg(); drawGrain(); fx.clearRect(0, 0, VW, VH);
+      if (REDUCE) drawStreamlinesStatic();
+      drawInk();
+    }
+    new ResizeObserver(resize).observe(ink);
+
+    function drawBg() {
+      bx.clearRect(0, 0, VW, VH); bx.fillStyle = GROUND; bx.fillRect(0, 0, VW, VH);
+      var g = bx.createRadialGradient(VW * 0.45, VH * 0.46, VH * 0.2, VW * 0.5, VH * 0.5, VW * 0.62);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.34)');
+      bx.fillStyle = g; bx.fillRect(0, 0, VW, VH);
+    }
+    function drawGrain() {
+      var w = grain.width, h = grain.height, img = gx.createImageData(w, h), d = img.data;
+      for (var i = 0; i < d.length; i += 4) { var v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 26; }
+      gx.setTransform(1, 0, 0, 1, 0, 0); gx.putImageData(img, 0, 0); gx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    }
+
+    /* ---- type + line helpers ---- */
+    function font(px, w) { ix.font = (w || 400) + ' ' + px + 'px "Commit Mono", ui-monospace, monospace'; }
+    function track(v) { try { ix.letterSpacing = v; } catch (e) {} }
+    function inkc(a) { return 'rgba(' + CREAM + ',' + a + ')'; }
+    function goldc(a) { return 'rgba(' + GOLD + ',' + a + ')'; }
+    function hline(x0, y, x1, color, w) { ix.beginPath(); ix.moveTo(x0, y); ix.lineTo(x1, y); ix.lineWidth = w; ix.strokeStyle = color; ix.stroke(); }
+    function vline(x, y0, y1, color, w) { ix.beginPath(); ix.moveTo(x, y0); ix.lineTo(x, y1); ix.lineWidth = w; ix.strokeStyle = color; ix.stroke(); }
+
+    /* ---- ink: blueprint lane + stage markers + spotlight + note ---- */
+    function drawInk() {
+      ix.clearRect(0, 0, VW, VH); ix.lineCap = 'butt';
+      var struct = inkc(0.20), structHi = inkc(0.28);
+      // lane frame
+      hline(xIn, LT, xOut, structHi, 1);
+      hline(xIn, LB, xOut, structHi, 1);
+      vline(xIn, LT, LB, struct, 1);
+      vline(xOut, LT, LB, struct, 1);
+      // stage markers (neutral base; brighten the hovered one to signal it is clickable)
+      stations.forEach(function (s) { station(s, false, s.id === hovered); });
+      // spotlight: dim the lane, then warm-light the focused stage
+      if (scrimA > 0.015) {
+        var top = FT - 46, bot = FB + 16;
+        ix.fillStyle = 'rgba(18,22,17,' + (0.5 * scrimA) + ')'; ix.fillRect(0, top, VW, bot - top);
+        var cx = (W.x0 + W.x1) / 2, cy = (W.y0 + W.y1) / 2, rad = Math.max(70, Math.hypot(W.x1 - W.x0, W.y1 - W.y0) * 0.6);
+        var rg = ix.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        rg.addColorStop(0, 'rgba(' + GOLD + ',' + (0.16 * scrimA) + ')');
+        rg.addColorStop(0.55, 'rgba(' + GOLD + ',' + (0.05 * scrimA) + ')');
+        rg.addColorStop(1, 'rgba(' + GOLD + ',0)');
+        ix.fillStyle = rg; ix.fillRect(0, top, VW, bot - top);
+      }
+      // focused stages (gold + soft bloom), over the scrim
+      stations.forEach(function (s) { if (stG[s.id] > 0.02) station(s, true); });
+      drawAnno();
+      // WMS finale baseline
+      if (wmsA > 0.02) {
+        var by = FB + 14;
+        hline(xIn, by, xOut, goldc(0.5 * wmsA), 1);
+        [xIn].concat(stations.map(function (s) { return s.x; })).concat([xOut]).forEach(function (x) { vline(x, by - 3, by + 3, goldc(0.55 * wmsA), 1); });
+        track('1.7px'); font(10, 600); ix.textAlign = 'center'; ix.textBaseline = 'top';
+        ix.fillStyle = goldc(0.92 * wmsA); ix.fillText('ONE SYSTEM RUNS EVERY MOVE', VW / 2, by + 8);
+        track('0px');
+      }
+    }
+    function station(s, gold, hov) {
+      if (gold) {
+        var g = stG[s.id];
+        ix.save(); ix.shadowColor = goldc(0.5 * g); ix.shadowBlur = 10;
+        vline(s.x, s.t - 8, s.b + 8, goldc(0.6 + 0.35 * g), 1.2); ix.restore();
+        ix.beginPath(); ix.arc(s.x, s.t - 8, 2.2, 0, 6.3); ix.fillStyle = goldc(0.98); ix.fill();
+        track('1.2px'); font(10.5, 700); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = goldc(1); ix.fillText(s.label, s.x, s.t - 16); track('0px');
+      } else {
+        vline(s.x, s.t - 8, s.b + 8, inkc(hov ? 0.32 : 0.15), 0.8);
+        ix.beginPath(); ix.arc(s.x, s.t - 8, 2, 0, 6.3); ix.fillStyle = inkc(hov ? 0.6 : 0.34); ix.fill();
+        track('1.2px'); font(10.5, 700); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = inkc(hov ? 0.82 : 0.44); ix.fillText(s.label, s.x, s.t - 16); track('0px');
+      }
+    }
+    function drawAnno() {
+      if (annoA < 0.02 || !noteTxt) return;
+      var ly = FB + 34;
+      if (scrimA > 0.25) {
+        var cx = (W.x0 + W.x1) / 2, lx = Math.max(352, Math.min(cx, xOut - 60)), wy = Math.min(W.y1, FB) - 1;
+        ix.strokeStyle = goldc(0.4 * annoA); ix.lineWidth = 0.8;
+        ix.beginPath(); ix.moveTo(lx, ly - 9); ix.lineTo(cx, wy); ix.stroke();
+        ix.beginPath(); ix.arc(cx, wy, 1.6, 0, 6.3); ix.fillStyle = goldc(0.7 * annoA); ix.fill();
+        track('0.3px'); font(11, 400); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = goldc(0.92 * annoA); ix.fillText(noteTxt, lx, ly); track('0px');
+      } else {
+        track('0.3px'); font(11, 400); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = goldc(0.78 * annoA); ix.fillText(noteTxt, VW / 2, ly); track('0px');
+      }
+    }
+
+    /* ---- flow particles (wind-map fading trail), region-focused ---- */
+    function inWin(p, y) { return scrimA > 0.02 && p.x >= W.x0 && p.x <= W.x1 && y >= W.y0 && y <= W.y1; }
+    /* comet tails: the canvas is cleared every frame (no permanent residue),
+       and each moving item carries its own long trail that fades to nothing
+       at the tail. Resting items are still dots. */
+    function drawFlow(dt) {
+      fx.clearRect(0, 0, VW, VH);
+      var aLit = 0.62 + 0.34 * scrimA, aDim = 0.62 - 0.5 * scrimA;
+      fx.lineCap = 'round'; fx.lineWidth = 1.15;
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i], y = partY(p), a = inWin(p, y) ? aLit : aDim, h = p.hist, np = h.length >> 1;
+        if (np > 1) {
+          // one smooth gradient along the trail: transparent at the tail, full at the head
+          var tx = h[0], hx = h[(np - 1) * 2]; if (Math.abs(hx - tx) < 1) hx = tx + 1;
+          var g = fx.createLinearGradient(tx, 0, hx, 0);
+          g.addColorStop(0, 'rgba(' + CREAM + ',0)');
+          g.addColorStop(0.65, 'rgba(' + CREAM + ',' + (a * 0.26) + ')');
+          g.addColorStop(1, 'rgba(' + CREAM + ',' + a + ')');
+          fx.strokeStyle = g;
+          fx.beginPath(); fx.moveTo(h[0], h[1]);
+          for (var k = 1; k < np; k++) fx.lineTo(h[k * 2], h[k * 2 + 1]);
+          fx.stroke();
+        }
+        fx.fillStyle = 'rgba(' + CREAM + ',' + a + ')';
+        fx.beginPath(); fx.arc(p.x, y, p.state === 'dwell' ? 1.3 : 1.15, 0, 6.283); fx.fill();
+      }
+    }
+    function drawStreamlinesStatic() {
+      fx.clearRect(0, 0, VW, VH);
+      fx.strokeStyle = inkc(0.28); fx.lineWidth = 0.7;
+      var t0 = LT + 12, t1 = LB - 12, n = 20;
+      for (var k = 0; k < n; k++) {
+        var hy = t0 + (k + 0.5) * (t1 - t0) / n; fx.beginPath();
+        for (var x = xIn; x <= xOut; x += 6) {
+          var fy = x < xRecv ? lerp(rndSeed(k) * (LB - LT) + LT, hy, smooth((x - xIn) / (xRecv - xIn)))
+                 : x < xShip ? hy + Math.sin(k + x * 0.02) * 1.3
+                 : lerp(hy, rndSeed(k + 7) * (LB - LT) + LT, smooth((x - xShip) / (xOut - xShip)));
+          if (x === xIn) fx.moveTo(x, fy); else fx.lineTo(x, fy);
+        }
+        fx.stroke();
+      }
+    }
+
+    /* ---- steps / controller ---- */
+    var step = 0;
+    var tEl = fig.querySelector('[data-t]'), prevEl = fig.querySelector('[data-prev]'), nextEl = fig.querySelector('[data-next]');
+    function apply(i) {
+      step = i < 0 ? 0 : i >= steps.length ? steps.length - 1 : i; var s = steps[step], sts = s.st || [];
+      if (s.win) { TW = s.win; if (scrimA < 0.05) { W.x0 = TW[0]; W.y0 = TW[1]; W.x1 = TW[2]; W.y1 = TW[3]; } tScrim = 1; }
+      else { TW = null; tScrim = 0; }
+      // snap the old highlight off immediately, so two stages are never lit at once; the new one still eases in
+      STKEYS.forEach(function (k) { var on = sts.indexOf(k) >= 0; tStG[k] = on ? 1 : 0; if (!on) stG[k] = 0; });
+      tWms = s.wms ? 1 : 0; noteTxt = s.note || '';
+      tEl.textContent = s.title;
+      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1;
+      if (REDUCE) { snap(); drawStreamlinesStatic(); drawInk(); }
+    }
+    function snap() {
+      scrimA = tScrim; if (TW) { W.x0 = TW[0]; W.y0 = TW[1]; W.x1 = TW[2]; W.y1 = TW[3]; }
+      STKEYS.forEach(function (k) { stG[k] = tStG[k]; });
+      wmsA = tWms; annoA = noteTxt ? 1 : 0;
+    }
+    prevEl.addEventListener('click', function () { apply(step - 1); });
+    nextEl.addEventListener('click', function () { apply(step + 1); });
+    fig.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') { apply(step - 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { apply(step + 1); e.preventDefault(); } });
+
+    // the stage labels along the top are the primary navigation: hover to highlight, click to jump
+    var plate = fig.querySelector('.plate'), labelStep = { recv: 1, put: 2, store: 2, xfer: 3, pick: 4, pack: 5, stage: 6, ship: 6 };
+    function hitLabel(e) {
+      var r = plate.getBoundingClientRect();
+      var vx = (e.clientX - r.left) / r.width * VW, vy = (e.clientY - r.top) / r.height * VH;
+      if (vy < LT - 36 || vy > LT + 12) return null;
+      for (var i = 0; i < stations.length; i++) if (Math.abs(vx - stations[i].x) < 46) return stations[i].id;
+      return null;
+    }
+    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('click', function (e) { var h = hitLabel(e); if (h) apply(labelStep[h]); });
+
+    /* ---- loop ---- */
+    var raf = null, last = 0;
+    function ease(cur, tgt, e) { return cur + (tgt - cur) * e; }
+    function sim(dt) {
+      var e = Math.min(1, dt * 5.5), ea = Math.min(1, dt * 3.0);
+      scrimA = ease(scrimA, tScrim, e);
+      if (TW) { W.x0 = ease(W.x0, TW[0], e); W.y0 = ease(W.y0, TW[1], e); W.x1 = ease(W.x1, TW[2], e); W.y1 = ease(W.y1, TW[3], e); }
+      STKEYS.forEach(function (k) { stG[k] = ease(stG[k], tStG[k], e); });
+      wmsA = ease(wmsA, tWms, e); annoA = ease(annoA, noteTxt ? 1 : 0, ea);
+      advance(dt);
+    }
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
+    function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
+    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+    new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+
+    fig.__viz = { apply: apply, frames: function (n, dt) { dt = dt || 0.033; for (var i = 0; i < n; i++) { sim(dt); drawFlow(dt); } drawInk(); } };
+    resize(); apply(0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawInk(); });
+  })();
+  </script>
 </body>
 </html>
