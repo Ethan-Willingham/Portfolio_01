@@ -157,19 +157,19 @@
   .fig-title { font-weight: 700; font-size: 1.06rem; color: var(--text-bright); margin: 0 0 0.2rem; }
   .fig-note { font-size: 0.92rem; color: var(--text-dim); font-style: italic; margin: 0.6rem 0 0; line-height: 1.45; }
 
-  /* ============ V1: the life of one item (interactive blueprint flow) ============ */
-  #flow1 { --ease-out: cubic-bezier(0.22, 1, 0.36, 1); }
-  #flow1 .plate { position: relative; aspect-ratio: 1000 / 432; border-radius: 7px; overflow: hidden; background: #20271f; border: 1px solid rgba(245,241,234,0.10); box-shadow: 0 24px 54px -30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(245,241,234,0.04); }
-  #flow1 .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-  #flow1 .plate .grain { mix-blend-mode: overlay; opacity: 0.55; }
-  #flow1 .vnav { position: absolute; left: 0; right: 0; bottom: 0.6rem; display: flex; justify-content: center; gap: 1.6rem; z-index: 2; pointer-events: none; }
-  #flow1 .vbtn { pointer-events: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid transparent; background: transparent; color: rgba(245,241,234,0.5); cursor: pointer; transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out), background 150ms var(--ease-out), transform 90ms var(--ease-out); }
-  #flow1 .vbtn:hover { color: rgba(245,241,234,0.9); border-color: rgba(245,241,234,0.18); background: rgba(245,241,234,0.05); }
-  #flow1 .vbtn:active { transform: scale(0.92); color: rgba(212,196,160,0.95); border-color: rgba(212,196,160,0.3); transition-duration: 60ms; }
-  #flow1 .vbtn:focus-visible { outline: 2px solid rgba(212,196,160,0.65); outline-offset: 2px; }
-  #flow1 .vbtn:disabled { color: rgba(245,241,234,0.16); cursor: default; pointer-events: none; }
-  #flow1 .vbtn svg { width: 15px; height: 15px; display: block; }
-  #flow1 .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  /* ============ The interactive blueprint flow figures (V1 line, V2 funnel, V3 loop) ============ */
+  .flowfig { --ease-out: cubic-bezier(0.22, 1, 0.36, 1); }
+  .flowfig .plate { position: relative; aspect-ratio: 1000 / 432; border-radius: 7px; overflow: hidden; background: #20271f; border: 1px solid rgba(245,241,234,0.10); box-shadow: 0 24px 54px -30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(245,241,234,0.04); }
+  .flowfig .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  .flowfig .plate .grain { mix-blend-mode: overlay; opacity: 0.55; }
+  .flowfig .vnav { position: absolute; left: 0; right: 0; bottom: 0.6rem; display: flex; justify-content: center; gap: 1.6rem; z-index: 2; pointer-events: none; }
+  .flowfig .vbtn { pointer-events: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid transparent; background: transparent; color: rgba(245,241,234,0.5); cursor: pointer; transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out), background 150ms var(--ease-out), transform 90ms var(--ease-out); }
+  .flowfig .vbtn:hover { color: rgba(245,241,234,0.9); border-color: rgba(245,241,234,0.18); background: rgba(245,241,234,0.05); }
+  .flowfig .vbtn:active { transform: scale(0.92); color: rgba(212,196,160,0.95); border-color: rgba(212,196,160,0.3); transition-duration: 60ms; }
+  .flowfig .vbtn:focus-visible { outline: 2px solid rgba(212,196,160,0.65); outline-offset: 2px; }
+  .flowfig .vbtn:disabled { color: rgba(245,241,234,0.16); cursor: default; pointer-events: none; }
+  .flowfig .vbtn svg { width: 15px; height: 15px; display: block; }
+  .flowfig .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .fig-src { font-size: 0.88rem; color: var(--text-dim); line-height: 1.55; margin: 0.9rem 0 0; }
 
   /* two-column compare */
@@ -395,7 +395,7 @@
     <!-- ============ ACT II ============ -->
     <div class="act reveal"><div class="act-k">Act II</div><div class="act-t">Follow the box</div></div>
 
-    <div class="fig-block wide reveal" id="flow1">
+    <div class="fig-block wide reveal flowfig" id="flow1">
       <div class="fig-title">The life of one item, dock to door</div>
       <div class="plate">
         <canvas data-bg></canvas>
@@ -465,6 +465,24 @@
     <!-- ============ ACT III ============ -->
     <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The factory next door</div></div>
 
+    <div class="fig-block wide reveal flowfig" id="flow2">
+      <div class="fig-title">How raw materials become a product</div>
+      <div class="plate">
+        <canvas data-bg></canvas>
+        <canvas data-flow></canvas>
+        <canvas data-ink role="img"
+          aria-label="A blueprint diagram of how a factory turns raw materials into a finished product. Four streams of components flow in from the left, wait in raw storage, are gathered into a kit, and converge at a single assembly node where many parts become one. A finished good then flows out to the right, where it ships or feeds the warehouse."></canvas>
+        <canvas data-grain class="grain"></canvas>
+        <div class="vnav">
+          <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+      <p class="fig-note">Click any stage, or step through with the arrows. Four kinds of parts arrive, wait for a work order, and meet at the line, where many become one. The finished good then feeds the warehouse from the visual above. Here is how that transformation works.</p>
+      <p class="sr" data-t aria-live="polite"></p>
+      <p class="sr">How raw materials become a product: components arrive from suppliers and wait in storage, one build's parts are gathered into a kit, and at the assembly line many parts become one finished good. The finished good then ships, or feeds the warehouse from the first visual.</p>
+    </div>
+
     <section class="sec reveal">
       <span class="sec-num">09</span>
       <h3>From raw to finished</h3>
@@ -497,10 +515,41 @@
     </section>
 
     <!-- ============ ACT IV ============ -->
-    <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">What the customer measures</div></div>
+    <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">The work that never stops</div></div>
+
+    <div class="fig-block wide reveal flowfig" id="flow3">
+      <div class="fig-title">The work that keeps inventory true</div>
+      <div class="plate">
+        <canvas data-bg></canvas>
+        <canvas data-flow></canvas>
+        <canvas data-ink role="img"
+          aria-label="A blueprint diagram of the upkeep loop that keeps a warehouse accurate, drawn as a continuous ring. Goods circle clockwise through four stations that run all day at once: replenishment refills the pick shelves, cycle counting verifies the records, holds pull unsafe stock out, and returns bring goods back to be re-entered or retired. The loop never stops."></canvas>
+        <canvas data-grain class="grain"></canvas>
+        <div class="vnav">
+          <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+      <p class="fig-note">Click any station, or step through with the arrows. Replenish, count, hold, returns: four jobs that never finish, running at once, all day. This is the quiet loop behind a shelf you can trust.</p>
+      <p class="sr" data-t aria-live="polite"></p>
+      <p class="sr">The work that keeps inventory true runs in a loop, all day, all at once: replenishment refills the pick shelves from reserve, cycle counting verifies the records a slice at a time, holds pull damaged or expired stock out before it can ship, and returns bring goods back to be inspected and re-entered or retired. Then it begins again.</p>
+    </div>
 
     <section class="sec reveal">
       <span class="sec-num">11</span>
+      <h3>The upkeep that never sleeps</h3>
+      <p class="sub">The two journeys you just saw both assume the shelves are stocked and the counts are honest. Keeping them that way is not a step. It is a loop that runs all day, forever.</p>
+      <p>Four jobs circle the building without end. <b>Replenishment</b> keeps refilling the small pick face from the big reserve in back, before a picker ever reaches an empty slot. <b>Cycle counting</b> checks a smart slice of the inventory every day, so the record and the shelf are reconciled in days instead of once a year. Those two you have already met. The loop adds two more that quietly decide whether a customer ever gets burned.</p>
+      <p>The first is the <b>hold</b>. When stock is damaged, expired, recalled, or simply awaiting inspection, the system pulls it out of the <b>available</b> pool and parks it in <b>quarantine</b>, where it physically cannot be picked, so it can never ship by mistake. The second is <b>returns</b>, the whole reverse journey: goods come back from customers, get inspected one at a time, and are restocked, sent back to the vendor, or written off. It is slow and expensive precisely because almost none of it can be done in bulk. And every job in this loop feeds the next: a return that passes inspection becomes replenishment stock, a count that finds a gap can trigger a hold, and around it goes.</p>
+      <div class="stat reveal"><span class="fig">2&ndash;3<span class="u">&times; cost</span></span><span class="cap">What it takes to process one returned item versus shipping it in the first place, because each one must be inspected by hand instead of handled in bulk. Returns run a fifth or more of everything sold online, and nearly half of all apparel.</span><span class="src">NRF and industry estimates, directional</span></div>
+      <div class="move"><span class="k">The CSM's read</span><p>Half of "the system is broken, it shows stock I cannot ship" tickets are a hold or an allocation doing its job, not a bug. And a customer drowning in returns is not just complaining, they are asking for a reverse-logistics module. Both are this loop, and reading it on the call is the whole game.</p></div>
+    </section>
+
+    <!-- ============ ACT V ============ -->
+    <div class="act reveal"><div class="act-k">Act V</div><div class="act-t">What the customer measures</div></div>
+
+    <section class="sec reveal">
+      <span class="sec-num">12</span>
       <h3>The tyranny of the multiplied nines</h3>
       <p class="sub">Every warehouse lives and dies by a handful of numbers. The cruelest one is the product of the others.</p>
       <p>Ask an operator how good they are and they will quote you a metric: inventory accuracy, on-time shipping, pick accuracy, dock-to-stock time. The one the executives actually watch is the <b>perfect order rate</b>, the share of orders that were right on every dimension at once: on time, complete, undamaged, and billed correctly. It sounds soft until you do the arithmetic. Because the dimensions multiply, four steps that each score a respectable 97 percent do not give you 97. They give you something that will ruin your afternoon. Try it.</p>
@@ -547,7 +596,7 @@
     </section>
 
     <section class="sec reveal">
-      <span class="sec-num">12</span>
+      <span class="sec-num">13</span>
       <h3>Every warehouse is a different planet</h3>
       <p class="sub">The six steps are universal. What makes a deal succeed or fail is the one rule the customer's industry cannot bend.</p>
       <p>The fastest way to sound like you belong is to know a customer's world from their industry alone. Each vertical bends the same software around one non-negotiable, and naming that rule before they do is what earns trust in the first meeting.</p>
@@ -567,7 +616,7 @@
     </section>
 
     <section class="sec reveal">
-      <span class="sec-num">13</span>
+      <span class="sec-num">14</span>
       <h3>The labor math underneath it all</h3>
       <p class="sub">Strip away the software and the warehouse is a people problem. That is also where the money to buy the software comes from.</p>
       <p>Labor is half to two-thirds of what it costs to run a warehouse, and the workforce churns ferociously: the work is hard, repetitive, and physically punishing, and roughly half the floor turns over in a year. So the business case for nearly every WMS and every robot is, at bottom, a labor case. A <b>labor management system</b> sets a fair time standard for each task and measures everyone against it, which raises productivity and, used badly, tips into the surveillance that makes headlines. This is the real tension in the industry: the same data that coaches a struggling worker can also grind one down.</p>
@@ -578,10 +627,10 @@
 
   </article>
 
-  <!-- ============ ACT V: THE CSM MODULE (one self-contained piece) ============ -->
+  <!-- ============ ACT VI: THE CSM MODULE (one self-contained piece) ============ -->
   <section class="fyi reveal" aria-label="The customer success playbook">
     <div class="fyi-in">
-      <div class="kicker">Act V &middot; The Playbook</div>
+      <div class="kicker">Act VI &middot; The Playbook</div>
       <h3>The customer's success is the job</h3>
       <p class="stand">Everything so far was the floor. Here is the part that is actually your work: keeping the human beings who run that floor glad they chose you, year after year, in a product that is brutally hard to rip out once it is in.</p>
 
@@ -1044,6 +1093,634 @@
       if (TW) { W.x0 = ease(W.x0, TW[0], e); W.y0 = ease(W.y0, TW[1], e); W.x1 = ease(W.x1, TW[2], e); W.y1 = ease(W.y1, TW[3], e); }
       STKEYS.forEach(function (k) { stG[k] = ease(stG[k], tStG[k], e); });
       wmsA = ease(wmsA, tWms, e); annoA = ease(annoA, noteTxt ? 1 : 0, ea);
+      advance(dt);
+    }
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
+    function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
+    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+    new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+
+    fig.__viz = { apply: apply, frames: function (n, dt) { dt = dt || 0.033; for (var i = 0; i < n; i++) { sim(dt); drawFlow(dt); } drawInk(); } };
+    resize(); apply(0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawInk(); });
+  })();
+  </script>
+  <script>
+  /* ============================================================
+     Visual 2: how raw materials become a product.
+     Four component streams (frame, motor, board, trim) flow in from
+     the left, wait in raw storage, are gathered (kitting), then
+     CONVERGE at one assembly node. The load-bearing idea is "many
+     parts become one": the four lanes funnel into a single node, parts
+     dwell there (assembly takes time), and a finished good emerges as a
+     single brighter stream carrying a warm gold core. It flows out to
+     ship, or to feed the warehouse from Visual 1. Same blueprint engine
+     as Visual 1: cream ink on dark, comet-trail particles, gold spent
+     only on the stage being explained, soft spotlight, clickable stage
+     labels. Reduced-motion: frozen streamlines. No em dashes.
+     ============================================================ */
+  (function () {
+    'use strict';
+    var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var GOLD = '212,196,160', CREAM = '245,241,234', GROUND = '#20271f';
+    var VW = 1000, VH = 432;
+
+    /* geometry: four input lanes on the left, converging to one node, one output lane on the right */
+    var xIn = 96, xOut = 904;
+    var LT = 132, LB = 322;                                   // vertical band for the input lanes
+    var laneY = [160, 206, 252, 298];                          // four component lanes
+    var laneLabel = ['FRAME', 'MOTOR', 'BOARD', 'TRIM'];
+    var xRawIn = 150, xStore = 288, xKit = 426, xAsm = 600, xFin = 762, xShip = 880;
+    var nodeY = 225;                                           // assembly node + the single output lane
+    var markers = [
+      { id: 'rawin', x: xRawIn, label: 'RAW IN' },
+      { id: 'store', x: xStore, label: 'RAW STORE' },
+      { id: 'kit',   x: xKit,   label: 'KITTING' },
+      { id: 'asm',   x: xAsm,   label: 'ASSEMBLY' },
+      { id: 'fin',   x: xFin,   label: 'FINISHED' },
+      { id: 'ship',  x: xShip,  label: 'SHIP' }
+    ];
+    var MKEYS = ['rawin', 'store', 'kit', 'asm', 'fin', 'ship'];
+
+    function smooth(t) { return t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+    function rint(n) { return Math.floor(Math.random() * n); }
+    function expDur(mean, max) { return Math.min(max, -Math.log(1 - Math.random() * 0.999) * mean); }
+    function rndSeed(k) { var s = Math.sin(k * 12.9898) * 43758.5453; return s - Math.floor(s); }
+
+    var fig = document.getElementById('flow2');
+    var bg = fig.querySelector('[data-bg]'), flow = fig.querySelector('[data-flow]'),
+        ink = fig.querySelector('[data-ink]'), grain = fig.querySelector('[data-grain]');
+    var bx = bg.getContext('2d'), fx = flow.getContext('2d'), ix = ink.getContext('2d'), gx = grain.getContext('2d');
+    var dpr = 1, scale = 1;
+
+    /* ---- particles: components in, finished goods out ---- */
+    var N = 168, parts = [], TRAIL = 120;
+    function spawn(p, stagger) {
+      p.kind = 'in';
+      p.lane = rint(4);
+      p.x = stagger ? rnd(xIn, xAsm - 30) : xIn;
+      p.wob = Math.random() * 6.28;
+      p.speed = rnd(132, 168);
+      p.state = 'move'; p.dwellT = 0; p.atAsm = false; p.hist = []; p.dwells = [];
+      // most components wait in raw storage for a work order
+      if (Math.random() < 0.72) p.dwells.push({ x: rnd(xStore - 8, xKit - 36), dur: expDur(4.0, 13) });
+      // every component dwells at the line: assembly takes time
+      p.dwells.push({ x: xAsm, dur: expDur(1.5, 5), asm: true });
+      for (var k = p.dwells.length - 1; k >= 0; k--) if (p.dwells[k].x <= p.x) p.dwells.splice(k, 1);
+    }
+    (function build() { for (var i = 0; i < N; i++) { var s = {}; spawn(s, true); parts.push(s); } })();
+    function partY(p) {
+      var x = p.x;
+      if (p.kind === 'out') return nodeY + Math.sin(p.wob + x * 0.03) * 1.6;
+      if (x <= xKit) return laneY[p.lane] + Math.sin(p.wob + x * 0.02) * 1.2;        // on its own lane
+      if (x < xAsm) return lerp(laneY[p.lane], nodeY, smooth((x - xKit) / (xAsm - xKit)));  // converge
+      return nodeY;
+    }
+    function advance(dt) {
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        if (p.state === 'dwell') {
+          p.dwellT -= dt;
+          if (p.hist.length > 2) p.hist.splice(0, 2);    // tail keeps moving until it reaches the stopped dot
+          if (p.dwellT <= 0) { p.state = 'move'; if (p.atAsm) { p.kind = 'out'; p.atAsm = false; } }
+          continue;
+        }
+        p.x += p.speed * dt;
+        if (p.dwells.length && p.x >= p.dwells[0].x) {
+          p.x = p.dwells[0].x; p.state = 'dwell'; p.dwellT = p.dwells[0].dur;
+          if (p.dwells[0].asm) p.atAsm = true;
+          p.dwells.shift();
+        } else if (p.x > xOut + 6) { spawn(p, false); continue; }
+        p.hist.push(p.x, partY(p));
+        if (p.hist.length > TRAIL * 2) p.hist.splice(0, p.hist.length - TRAIL * 2);
+      }
+    }
+
+    /* ---- focus state (eased): spotlight window + stage highlights ---- */
+    var scrimA = 0, tScrim = 0;
+    var W = { x0: 0, y0: 0, x1: VW, y1: VH }, TW = null;
+    var stG = {}, tStG = {}; MKEYS.forEach(function (k) { stG[k] = 0; tStG[k] = 0; });
+    var annoA = 0, noteTxt = '', hovered = null;
+
+    var steps = [
+      { title: 'How raw materials become a product', note: 'many parts, one product',
+        d: 'A factory does not store one thing, it builds one thing out of many. Follow the parts as they arrive, wait, and come together into a single finished good.' },
+      { title: 'Parts arrive from suppliers', win: [xIn, LT - 7, xStore + 6, LB + 7], st: ['rawin'], note: 'counted in, like any other inventory',
+        d: 'Raw materials and components arrive on inbound trucks and are counted in, exactly like the receiving step in the last visual. A single product can be built from dozens or even thousands of distinct part numbers.' },
+      { title: 'They wait for a work order', win: [xStore - 30, LT - 7, xKit - 30, LB + 7], st: ['store'], note: 'a work order is the signal to build',
+        d: 'Components sit in storage until a work order calls for them. A work order is simply the instruction to build, say, fifty of a product today. Until then, the parts just wait.' },
+      { title: "One build's parts are gathered", win: [xKit - 42, LT - 7, xAsm - 44, LB + 7], st: ['kit'], note: 'every part on the list, in one kit',
+        d: 'When the work order is released, a worker gathers every part on the list into a single kit and brings it to the line. The list of parts that make one product is the bill of materials.' },
+      { title: 'Many parts become one', win: [xAsm - 66, LT - 7, xAsm + 74, LB + 7], st: ['asm'], note: 'this is the moment of assembly',
+        d: 'At the line the parts are joined into one product. This is the heart of manufacturing: several components arrive, and a single finished good leaves. Work that is half built and still on the line is called work in process.' },
+      { title: 'A finished product comes off the line', win: [xFin - 62, LT - 7, xFin + 62, LB + 7], st: ['fin'], note: 'one finished good, ready to sell',
+        d: 'The assembled product is confirmed complete and checked for quality. The system then deducts every component it used from inventory in one move, trusting the bill of materials, so no one has to scan each part out by hand.' },
+      { title: 'It ships, or feeds the warehouse', win: [xShip - 52, LT - 7, xOut, LB + 7], st: ['ship'], note: 'now it is where the last visual began',
+        d: 'The finished good either goes straight onto an outbound truck or into finished goods storage, where it becomes a new item to receive, store, pick, and ship. That is exactly where the first visual began.' }
+    ];
+
+    /* ---- sizing ---- */
+    function fit(c, ctx) {
+      dpr = window.devicePixelRatio || 1;
+      var r = c.getBoundingClientRect();
+      c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+      scale = r.width / VW; ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    }
+    function resize() {
+      [[bg, bx], [flow, fx], [ink, ix], [grain, gx]].forEach(function (p) { fit(p[0], p[1]); });
+      drawBg(); drawGrain(); fx.clearRect(0, 0, VW, VH);
+      if (REDUCE) drawStreamlinesStatic();
+      drawInk();
+    }
+    new ResizeObserver(resize).observe(ink);
+
+    function drawBg() {
+      bx.clearRect(0, 0, VW, VH); bx.fillStyle = GROUND; bx.fillRect(0, 0, VW, VH);
+      var g = bx.createRadialGradient(VW * 0.47, VH * 0.46, VH * 0.2, VW * 0.5, VH * 0.5, VW * 0.62);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.34)');
+      bx.fillStyle = g; bx.fillRect(0, 0, VW, VH);
+    }
+    function drawGrain() {
+      var w = grain.width, h = grain.height, img = gx.createImageData(w, h), d = img.data;
+      for (var i = 0; i < d.length; i += 4) { var v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 26; }
+      gx.setTransform(1, 0, 0, 1, 0, 0); gx.putImageData(img, 0, 0); gx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    }
+
+    /* ---- type + line helpers ---- */
+    function font(px, w) { ix.font = (w || 400) + ' ' + px + 'px "Commit Mono", ui-monospace, monospace'; }
+    function track(v) { try { ix.letterSpacing = v; } catch (e) {} }
+    function inkc(a) { return 'rgba(' + CREAM + ',' + a + ')'; }
+    function goldc(a) { return 'rgba(' + GOLD + ',' + a + ')'; }
+    function seg(x0, y0, x1, y1, color, w) { ix.beginPath(); ix.moveTo(x0, y0); ix.lineTo(x1, y1); ix.lineWidth = w; ix.strokeStyle = color; ix.stroke(); }
+
+    /* ---- ink: guide lines (the funnel), stage markers, assembly node, spotlight, note ---- */
+    function drawInk() {
+      ix.clearRect(0, 0, VW, VH); ix.lineCap = 'butt';
+      var guide = inkc(0.10);
+      // four input lane guides, then the converging funnel, then the single output lane
+      for (var i = 0; i < 4; i++) {
+        seg(xIn, laneY[i], xKit, laneY[i], guide, 1);
+        seg(xKit, laneY[i], xAsm, nodeY, guide, 1);
+      }
+      seg(xAsm, nodeY, xOut, nodeY, inkc(0.13), 1);
+      // component-family labels at the far left
+      track('1px'); font(8.5, 600); ix.textAlign = 'right'; ix.textBaseline = 'middle';
+      for (i = 0; i < 4; i++) { ix.fillStyle = inkc(0.34); ix.fillText(laneLabel[i], xIn - 8, laneY[i]); }
+      track('0px');
+      // stage markers (neutral base; brighten the hovered one to signal it is clickable)
+      markers.forEach(function (m) { marker(m, false, m.id === hovered); });
+      assemblyNode(false);
+      // spotlight: dim everything, then warm-light the focused stage
+      if (scrimA > 0.015) {
+        var top = LT - 44, bot = LB + 16;
+        ix.fillStyle = 'rgba(18,22,17,' + (0.5 * scrimA) + ')'; ix.fillRect(0, top, VW, bot - top);
+        var cx = (W.x0 + W.x1) / 2, cy = (W.y0 + W.y1) / 2, rad = Math.max(72, Math.hypot(W.x1 - W.x0, W.y1 - W.y0) * 0.6);
+        var rg = ix.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        rg.addColorStop(0, 'rgba(' + GOLD + ',' + (0.16 * scrimA) + ')');
+        rg.addColorStop(0.55, 'rgba(' + GOLD + ',' + (0.05 * scrimA) + ')');
+        rg.addColorStop(1, 'rgba(' + GOLD + ',0)');
+        ix.fillStyle = rg; ix.fillRect(0, top, VW, bot - top);
+      }
+      // focused stages (gold + soft bloom), over the scrim
+      markers.forEach(function (m) { if (stG[m.id] > 0.02) marker(m, true); });
+      if (stG.asm > 0.02) assemblyNode(true);
+      drawAnno();
+    }
+    function marker(m, gold, hov) {
+      var yTop = LT - 12, yBot = LT + 10;
+      if (gold) {
+        var g = stG[m.id];
+        ix.save(); ix.shadowColor = goldc(0.5 * g); ix.shadowBlur = 9;
+        seg(m.x, yTop, m.x, yBot, goldc(0.6 + 0.35 * g), 1.2); ix.restore();
+        ix.beginPath(); ix.arc(m.x, yTop, 2.1, 0, 6.3); ix.fillStyle = goldc(0.98); ix.fill();
+        track('1.1px'); font(10, 700); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = goldc(1); ix.fillText(m.label, m.x, yTop - 7); track('0px');
+      } else {
+        seg(m.x, yTop, m.x, yBot, inkc(hov ? 0.32 : 0.15), 0.8);
+        ix.beginPath(); ix.arc(m.x, yTop, 1.9, 0, 6.3); ix.fillStyle = inkc(hov ? 0.6 : 0.34); ix.fill();
+        track('1.1px'); font(10, 700); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = inkc(hov ? 0.82 : 0.44); ix.fillText(m.label, m.x, yTop - 7); track('0px');
+      }
+    }
+    // a small diamond where the four lanes meet: the assembly point
+    function assemblyNode(gold) {
+      var r = 7, a = gold ? stG.asm : 0;
+      ix.save();
+      if (gold) { ix.shadowColor = goldc(0.55 * a); ix.shadowBlur = 12; }
+      ix.beginPath();
+      ix.moveTo(xAsm, nodeY - r); ix.lineTo(xAsm + r, nodeY); ix.lineTo(xAsm, nodeY + r); ix.lineTo(xAsm - r, nodeY); ix.closePath();
+      ix.lineWidth = 1.2; ix.strokeStyle = gold ? goldc(0.7 + 0.3 * a) : inkc(0.26); ix.stroke();
+      ix.restore();
+    }
+    function drawAnno() {
+      if (annoA < 0.02 || !noteTxt) return;
+      var ly = LB + 32;
+      if (scrimA > 0.25) {
+        var cx = (W.x0 + W.x1) / 2, lx = Math.max(330, Math.min(cx, xOut - 60));
+        ix.strokeStyle = goldc(0.4 * annoA); ix.lineWidth = 0.8;
+        ix.beginPath(); ix.moveTo(lx, ly - 9); ix.lineTo(cx, LB - 1); ix.stroke();
+        ix.beginPath(); ix.arc(cx, LB - 1, 1.6, 0, 6.3); ix.fillStyle = goldc(0.7 * annoA); ix.fill();
+        track('0.3px'); font(11, 400); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = goldc(0.92 * annoA); ix.fillText(noteTxt, lx, ly); track('0px');
+      } else {
+        track('0.3px'); font(11, 400); ix.textAlign = 'center'; ix.textBaseline = 'alphabetic';
+        ix.fillStyle = goldc(0.78 * annoA); ix.fillText(noteTxt, VW / 2, ly); track('0px');
+      }
+    }
+
+    /* ---- flow particles (wind-map fading trail) ---- */
+    function inWin(p, y) { return scrimA > 0.02 && p.x >= W.x0 && p.x <= W.x1 && y >= W.y0 && y <= W.y1; }
+    function drawFlow(dt) {
+      fx.clearRect(0, 0, VW, VH);
+      var aLit = 0.62 + 0.34 * scrimA, aDim = 0.62 - 0.5 * scrimA;
+      fx.lineCap = 'round'; fx.lineWidth = 1.15;
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i], y = partY(p), a = inWin(p, y) ? aLit : aDim, h = p.hist, np = h.length >> 1;
+        if (np > 1) {
+          var tx = h[0], hx = h[(np - 1) * 2]; if (Math.abs(hx - tx) < 1) hx = tx + 1;
+          var g = fx.createLinearGradient(tx, 0, hx, 0);
+          g.addColorStop(0, 'rgba(' + CREAM + ',0)');
+          g.addColorStop(0.65, 'rgba(' + CREAM + ',' + (a * 0.26) + ')');
+          g.addColorStop(1, 'rgba(' + CREAM + ',' + a + ')');
+          fx.strokeStyle = g;
+          fx.beginPath(); fx.moveTo(h[0], h[1]);
+          for (var k = 1; k < np; k++) fx.lineTo(h[k * 2], h[k * 2 + 1]);
+          fx.stroke();
+        }
+        if (p.kind === 'out') {
+          // a finished good: cream dot with a warm gold core
+          fx.fillStyle = 'rgba(' + CREAM + ',' + a + ')';
+          fx.beginPath(); fx.arc(p.x, y, 1.7, 0, 6.283); fx.fill();
+          fx.fillStyle = 'rgba(' + GOLD + ',' + Math.min(1, a + 0.15) + ')';
+          fx.beginPath(); fx.arc(p.x, y, 0.85, 0, 6.283); fx.fill();
+        } else {
+          fx.fillStyle = 'rgba(' + CREAM + ',' + a + ')';
+          fx.beginPath(); fx.arc(p.x, y, p.state === 'dwell' ? 1.25 : 1.1, 0, 6.283); fx.fill();
+        }
+      }
+    }
+    function drawStreamlinesStatic() {
+      fx.clearRect(0, 0, VW, VH);
+      fx.strokeStyle = inkc(0.26); fx.lineWidth = 0.7;
+      for (var lane = 0; lane < 4; lane++) {
+        for (var s = 0; s < 4; s++) {
+          var jitter = (rndSeed(lane * 4 + s) - 0.5) * 16;
+          fx.beginPath();
+          for (var x = xIn; x <= xOut; x += 6) {
+            var yy = x <= xKit ? laneY[lane] + jitter * 0.3
+                   : x < xAsm ? lerp(laneY[lane] + jitter * 0.3, nodeY, smooth((x - xKit) / (xAsm - xKit)))
+                   : nodeY + jitter * 0.12;
+            if (x === xIn) fx.moveTo(x, yy); else fx.lineTo(x, yy);
+          }
+          fx.stroke();
+        }
+      }
+    }
+
+    /* ---- steps / controller ---- */
+    var step = 0;
+    var tEl = fig.querySelector('[data-t]'), prevEl = fig.querySelector('[data-prev]'), nextEl = fig.querySelector('[data-next]');
+    function apply(i) {
+      step = i < 0 ? 0 : i >= steps.length ? steps.length - 1 : i; var s = steps[step], sts = s.st || [];
+      if (s.win) { TW = s.win; if (scrimA < 0.05) { W.x0 = TW[0]; W.y0 = TW[1]; W.x1 = TW[2]; W.y1 = TW[3]; } tScrim = 1; }
+      else { TW = null; tScrim = 0; }
+      MKEYS.forEach(function (k) { var on = sts.indexOf(k) >= 0; tStG[k] = on ? 1 : 0; if (!on) stG[k] = 0; });
+      noteTxt = s.note || '';
+      tEl.textContent = s.title;
+      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1;
+      if (REDUCE) { snap(); drawStreamlinesStatic(); drawInk(); }
+    }
+    function snap() {
+      scrimA = tScrim; if (TW) { W.x0 = TW[0]; W.y0 = TW[1]; W.x1 = TW[2]; W.y1 = TW[3]; }
+      MKEYS.forEach(function (k) { stG[k] = tStG[k]; });
+      annoA = noteTxt ? 1 : 0;
+    }
+    prevEl.addEventListener('click', function () { apply(step - 1); });
+    nextEl.addEventListener('click', function () { apply(step + 1); });
+    fig.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') { apply(step - 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { apply(step + 1); e.preventDefault(); } });
+
+    // the stage labels along the top are the primary navigation
+    var plate = fig.querySelector('.plate'), labelStep = { rawin: 1, store: 2, kit: 3, asm: 4, fin: 5, ship: 6 };
+    function hitLabel(e) {
+      var r = plate.getBoundingClientRect();
+      var vx = (e.clientX - r.left) / r.width * VW, vy = (e.clientY - r.top) / r.height * VH;
+      if (vy < LT - 30 || vy > LT + 16) return null;
+      for (var i = 0; i < markers.length; i++) if (Math.abs(vx - markers[i].x) < 48) return markers[i].id;
+      return null;
+    }
+    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('click', function (e) { var h = hitLabel(e); if (h) apply(labelStep[h]); });
+
+    /* ---- loop ---- */
+    var raf = null, last = 0;
+    function ease(cur, tgt, e) { return cur + (tgt - cur) * e; }
+    function sim(dt) {
+      var e = Math.min(1, dt * 5.5), ea = Math.min(1, dt * 3.0);
+      scrimA = ease(scrimA, tScrim, e);
+      if (TW) { W.x0 = ease(W.x0, TW[0], e); W.y0 = ease(W.y0, TW[1], e); W.x1 = ease(W.x1, TW[2], e); W.y1 = ease(W.y1, TW[3], e); }
+      MKEYS.forEach(function (k) { stG[k] = ease(stG[k], tStG[k], e); });
+      annoA = ease(annoA, noteTxt ? 1 : 0, ea);
+      advance(dt);
+    }
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
+    function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
+    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+    new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+
+    fig.__viz = { apply: apply, frames: function (n, dt) { dt = dt || 0.033; for (var i = 0; i < n; i++) { sim(dt); drawFlow(dt); } drawInk(); } };
+    resize(); apply(0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawInk(); });
+  })();
+  </script>
+  <script>
+  /* ============================================================
+     Visual 3: the work that keeps inventory true.
+     The first two visuals are journeys with a start and an end. This
+     one is a LOOP, because the upkeep work never finishes. Goods circle
+     a ring clockwise through four stations that all run at once:
+     REPLENISH (refill the pick shelves), CYCLE COUNT (verify the
+     records), HOLD (pull unsafe stock), RETURNS (bring goods back). The
+     particles dwell at each station (the work takes time) and then move
+     on; the ring is never empty. Same blueprint engine as Visuals 1 and
+     2: cream ink on dark, comet-trail particles, gold spent only on the
+     station being explained, soft spotlight, clickable station labels.
+     The note sits in the calm center of the ring. Reduced-motion:
+     frozen streamlines. No em dashes.
+     ============================================================ */
+  (function () {
+    'use strict';
+    var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var GOLD = '212,196,160', CREAM = '245,241,234', GROUND = '#20271f';
+    var VW = 1000, VH = 432;
+
+    /* geometry: a rounded-rectangle ring with four stations at the side midpoints */
+    var cx = 500, cy = 224, hw = 250, hh = 104, cr = 64;
+    var L = cx - hw, R = cx + hw, T = cy - hh, B = cy + hh;
+    var nodes = [
+      { id: 'replenish', x: cx, y: T,  label: 'REPLENISH',   lp: 'top' },
+      { id: 'count',     x: R,  y: cy, label: 'CYCLE COUNT', lp: 'right' },
+      { id: 'hold',      x: cx, y: B,  label: 'HOLD',        lp: 'bottom' },
+      { id: 'returns',   x: L,  y: cy, label: 'RETURNS',     lp: 'left' }
+    ];
+    var NKEYS = ['replenish', 'count', 'hold', 'returns'];
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+    function rint(n) { return Math.floor(Math.random() * n); }
+    function expDur(mean, max) { return Math.min(max, -Math.log(1 - Math.random() * 0.999) * mean); }
+
+    var fig = document.getElementById('flow3');
+    var bg = fig.querySelector('[data-bg]'), flow = fig.querySelector('[data-flow]'),
+        ink = fig.querySelector('[data-ink]'), grain = fig.querySelector('[data-grain]');
+    var bx = bg.getContext('2d'), fx = flow.getContext('2d'), ix = ink.getContext('2d'), gx = grain.getContext('2d');
+    var dpr = 1, scale = 1;
+
+    /* ---- build the ring as an evenly sampled closed polyline (clockwise from top edge) ---- */
+    var pts = [];
+    (function buildLoop() {
+      var step = 3.2;
+      function line(x0, y0, x1, y1) { var len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.round(len / step)); for (var i = 0; i < n; i++) { var t = i / n; pts.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]); } }
+      function arc(ax, ay, a0, a1) { var len = Math.abs(a1 - a0) * cr, n = Math.max(1, Math.round(len / step)); for (var i = 0; i < n; i++) { var a = a0 + (a1 - a0) * (i / n); pts.push([ax + Math.cos(a) * cr, ay + Math.sin(a) * cr]); } }
+      line(L + cr, T, R - cr, T);                          // top edge, left to right
+      arc(R - cr, T + cr, -Math.PI / 2, 0);                // top-right corner
+      line(R, T + cr, R, B - cr);                          // right edge, down
+      arc(R - cr, B - cr, 0, Math.PI / 2);                 // bottom-right corner
+      line(R - cr, B, L + cr, B);                          // bottom edge, right to left
+      arc(L + cr, B - cr, Math.PI / 2, Math.PI);           // bottom-left corner
+      line(L, B - cr, L, T + cr);                          // left edge, up
+      arc(L + cr, T + cr, Math.PI, Math.PI * 1.5);         // top-left corner
+    })();
+    var K = pts.length;
+    function ptAt(phi) { phi -= Math.floor(phi); var i = Math.floor(phi * K) % K; if (i < 0) i += K; return pts[i]; }
+    function tanAt(phi) { var a = ptAt(phi), b = ptAt(phi + 3 / K); return Math.atan2(b[1] - a[1], b[0] - a[0]); }
+    // station phase positions: nearest sample on the ring to each node
+    var nodePhi = nodes.map(function (nd) { var best = 0, bd = 1e9; for (var i = 0; i < K; i++) { var d = (pts[i][0] - nd.x) * (pts[i][0] - nd.x) + (pts[i][1] - nd.y) * (pts[i][1] - nd.y); if (d < bd) { bd = d; best = i; } } return best / K; });
+    var ZONE = 0.03;
+    function zoneAt(phi) { for (var n = 0; n < 4; n++) { var d = Math.abs(phi - nodePhi[n]); d = Math.min(d, 1 - d); if (d < ZONE) return n; } return -1; }
+
+    /* ---- particles: goods circling the upkeep loop ---- */
+    var N = 46, parts = [], TRAIL = 86;
+    function spawn(p) {
+      p.phi = Math.random();
+      p.speed = rnd(0.040, 0.060);          // laps per second
+      p.state = 'move'; p.dwellT = 0; p.inNode = -1; p.hist = [];
+    }
+    (function build() { for (var i = 0; i < N; i++) { var s = {}; spawn(s); parts.push(s); } })();
+    function advance(dt) {
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        if (p.state === 'dwell') {
+          p.dwellT -= dt;
+          if (p.hist.length > 2) p.hist.splice(0, 2);
+          if (p.dwellT <= 0) p.state = 'move';
+          continue;
+        }
+        p.phi += p.speed * dt; if (p.phi >= 1) p.phi -= 1;
+        var z = zoneAt(p.phi);
+        if (z >= 0 && z !== p.inNode) { p.inNode = z; if (Math.random() < 0.62) { p.state = 'dwell'; p.dwellT = expDur(1.2, 4); } }
+        else if (z < 0) p.inNode = -1;
+        var pt = ptAt(p.phi); p.hist.push(pt[0], pt[1]);
+        if (p.hist.length > TRAIL * 2) p.hist.splice(0, p.hist.length - TRAIL * 2);
+      }
+    }
+
+    /* ---- focus state (eased): spotlight window + station highlights ---- */
+    var scrimA = 0, tScrim = 0;
+    var W = { x0: 0, y0: 0, x1: VW, y1: VH }, TW = null;
+    var stG = {}, tStG = {}; NKEYS.forEach(function (k) { stG[k] = 0; tStG[k] = 0; });
+    var annoA = 0, noteTxt = '', hovered = null;
+
+    function nwin(n) { var nd = nodes[n]; return [nd.x - 76, nd.y - 58, nd.x + 76, nd.y + 58]; }
+    var steps = [
+      { title: 'The work that keeps inventory true', note: 'every hour, all of this runs at once',
+        d: 'The first two visuals had a beginning and an end. This one is a loop, because the work that keeps a warehouse accurate never finishes. Four jobs run all day, all at once.' },
+      { title: 'Refill the shelves', win: nwin(0), st: ['replenish'], note: 'keep the pick shelves full',
+        d: 'Replenishment moves stock from the big reserve racking in back down to the small pick shelves out front, before they run dry, so a picker never reaches an empty slot.' },
+      { title: 'Count a little, every day', win: nwin(1), st: ['count'], note: 'catch errors in days, not at year end',
+        d: 'Cycle counting checks a small slice of inventory every day instead of shutting the whole building for one big annual count. Errors get caught in days, and the warehouse never stops.' },
+      { title: "Quarantine what isn't safe", win: nwin(2), st: ['hold'], note: 'pull bad stock before it can ship',
+        d: 'A hold pulls damaged, expired, or recalled stock out of the available pool and parks it in quarantine, so it physically cannot be picked and shipped to a customer by mistake.' },
+      { title: 'Take back what comes home', win: nwin(3), st: ['returns'], note: 'inspected, then re-entered or retired',
+        d: 'Returns come back from customers, get inspected one by one, and are either restocked, sent back to the supplier, or written off. Handling a return costs far more than shipping it did.' },
+      { title: 'It never stops', st: ['replenish', 'count', 'hold', 'returns'], note: 'this is why your order is right',
+        d: 'None of these jobs ever truly finishes. They run together, all day, every day. You never see them. You feel them only when an order is wrong, or, far more often, when it quietly is not.' }
+    ];
+
+    /* ---- sizing ---- */
+    function fit(c, ctx) {
+      dpr = window.devicePixelRatio || 1;
+      var r = c.getBoundingClientRect();
+      c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+      scale = r.width / VW; ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    }
+    function resize() {
+      [[bg, bx], [flow, fx], [ink, ix], [grain, gx]].forEach(function (p) { fit(p[0], p[1]); });
+      drawBg(); drawGrain(); fx.clearRect(0, 0, VW, VH);
+      if (REDUCE) drawStreamlinesStatic();
+      drawInk();
+    }
+    new ResizeObserver(resize).observe(ink);
+
+    function drawBg() {
+      bx.clearRect(0, 0, VW, VH); bx.fillStyle = GROUND; bx.fillRect(0, 0, VW, VH);
+      var g = bx.createRadialGradient(cx, cy, hh * 0.4, cx, cy, VW * 0.55);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.34)');
+      bx.fillStyle = g; bx.fillRect(0, 0, VW, VH);
+    }
+    function drawGrain() {
+      var w = grain.width, h = grain.height, img = gx.createImageData(w, h), d = img.data;
+      for (var i = 0; i < d.length; i += 4) { var v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 26; }
+      gx.setTransform(1, 0, 0, 1, 0, 0); gx.putImageData(img, 0, 0); gx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+    }
+
+    /* ---- type helpers ---- */
+    function font(px, w) { ix.font = (w || 400) + ' ' + px + 'px "Commit Mono", ui-monospace, monospace'; }
+    function track(v) { try { ix.letterSpacing = v; } catch (e) {} }
+    function inkc(a) { return 'rgba(' + CREAM + ',' + a + ')'; }
+    function goldc(a) { return 'rgba(' + GOLD + ',' + a + ')'; }
+    function ringPath() { ix.beginPath(); ix.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < K; i++) ix.lineTo(pts[i][0], pts[i][1]); ix.closePath(); }
+
+    function chevron(x, y, ang, color, a) {
+      ix.save(); ix.translate(x, y); ix.rotate(ang);
+      ix.strokeStyle = color; ix.lineWidth = 1.1; ix.lineCap = 'round';
+      ix.beginPath(); ix.moveTo(-2.6, -3); ix.lineTo(2.6, 0); ix.lineTo(-2.6, 3); ix.stroke();
+      ix.restore();
+    }
+
+    /* ---- ink: the ring, direction chevrons, stations, spotlight, center note ---- */
+    function drawInk() {
+      ix.clearRect(0, 0, VW, VH); ix.lineCap = 'butt';
+      // the loop track
+      ringPath(); ix.lineWidth = 1; ix.strokeStyle = inkc(0.13); ix.stroke();
+      // four clockwise direction chevrons, at the corners between stations
+      for (var c = 0; c < 4; c++) { var phi = (nodePhi[c] + nodePhi[(c + 1) % 4] + (c === 3 ? 1 : 0)) / 2; var pp = ptAt(phi); chevron(pp[0], pp[1], tanAt(phi), inkc(0.22), 1); }
+      // stations (neutral base; brighten the hovered one)
+      nodes.forEach(function (nd, i) { station(nd, false, nd.id === hovered); });
+      // spotlight
+      if (scrimA > 0.015) {
+        ix.fillStyle = 'rgba(18,22,17,' + (0.52 * scrimA) + ')'; ix.fillRect(0, 78, VW, 296);
+        var wx = (W.x0 + W.x1) / 2, wy = (W.y0 + W.y1) / 2, rad = Math.max(78, Math.hypot(W.x1 - W.x0, W.y1 - W.y0) * 0.62);
+        var rg = ix.createRadialGradient(wx, wy, 0, wx, wy, rad);
+        rg.addColorStop(0, 'rgba(' + GOLD + ',' + (0.17 * scrimA) + ')');
+        rg.addColorStop(0.55, 'rgba(' + GOLD + ',' + (0.05 * scrimA) + ')');
+        rg.addColorStop(1, 'rgba(' + GOLD + ',0)');
+        ix.fillStyle = rg; ix.fillRect(0, 78, VW, 296);
+      }
+      // focused stations (gold), over the scrim
+      nodes.forEach(function (nd) { if (stG[nd.id] > 0.02) station(nd, true); });
+      drawAnno();
+    }
+    function station(nd, gold, hov) {
+      var r = 5.5;
+      if (gold) {
+        var g = stG[nd.id];
+        ix.save(); ix.shadowColor = goldc(0.55 * g); ix.shadowBlur = 11;
+        ix.beginPath(); ix.arc(nd.x, nd.y, r, 0, 6.3); ix.lineWidth = 1.4; ix.strokeStyle = goldc(0.7 + 0.3 * g); ix.stroke(); ix.restore();
+        ix.beginPath(); ix.arc(nd.x, nd.y, 1.7, 0, 6.3); ix.fillStyle = goldc(0.98); ix.fill();
+        stationLabel(nd, goldc(1), 700);
+      } else {
+        ix.beginPath(); ix.arc(nd.x, nd.y, r, 0, 6.3); ix.lineWidth = 1; ix.strokeStyle = inkc(hov ? 0.5 : 0.26); ix.stroke();
+        ix.beginPath(); ix.arc(nd.x, nd.y, 1.5, 0, 6.3); ix.fillStyle = inkc(hov ? 0.66 : 0.4); ix.fill();
+        stationLabel(nd, inkc(hov ? 0.82 : 0.46), 700);
+      }
+    }
+    function stationLabel(nd, color, weight) {
+      track('1.1px'); font(10, weight); ix.fillStyle = color;
+      if (nd.lp === 'top') { ix.textAlign = 'center'; ix.textBaseline = 'alphabetic'; ix.fillText(nd.label, nd.x, nd.y - 13); }
+      else if (nd.lp === 'bottom') { ix.textAlign = 'center'; ix.textBaseline = 'top'; ix.fillText(nd.label, nd.x, nd.y + 13); }
+      else if (nd.lp === 'right') { ix.textAlign = 'left'; ix.textBaseline = 'middle'; ix.fillText(nd.label, nd.x + 13, nd.y); }
+      else { ix.textAlign = 'right'; ix.textBaseline = 'middle'; ix.fillText(nd.label, nd.x - 13, nd.y); }
+      track('0px');
+    }
+    function drawAnno() {
+      if (annoA < 0.02 || !noteTxt) return;
+      track('0.3px'); font(11, 400); ix.textAlign = 'center'; ix.textBaseline = 'middle';
+      ix.fillStyle = goldc((scrimA > 0.25 ? 0.92 : 0.8) * annoA); ix.fillText(noteTxt, cx, cy); track('0px');
+    }
+
+    /* ---- flow particles (wind-map fading trail, any direction) ---- */
+    function inWin(x, y) { return scrimA > 0.02 && x >= W.x0 && x <= W.x1 && y >= W.y0 && y <= W.y1; }
+    function drawFlow(dt) {
+      fx.clearRect(0, 0, VW, VH);
+      var aLit = 0.64 + 0.32 * scrimA, aDim = 0.64 - 0.5 * scrimA;
+      fx.lineCap = 'round'; fx.lineWidth = 1.15;
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i], pt = ptAt(p.phi), x = pt[0], y = pt[1], a = inWin(x, y) ? aLit : aDim, h = p.hist, np = h.length >> 1;
+        if (np > 1) {
+          var tx = h[0], ty = h[1], hx = h[(np - 1) * 2], hy = h[(np - 1) * 2 + 1];
+          if (Math.hypot(hx - tx, hy - ty) < 1) { hx = tx + 1; }
+          var g = fx.createLinearGradient(tx, ty, hx, hy);
+          g.addColorStop(0, 'rgba(' + CREAM + ',0)');
+          g.addColorStop(0.65, 'rgba(' + CREAM + ',' + (a * 0.26) + ')');
+          g.addColorStop(1, 'rgba(' + CREAM + ',' + a + ')');
+          fx.strokeStyle = g;
+          fx.beginPath(); fx.moveTo(h[0], h[1]);
+          for (var k = 1; k < np; k++) fx.lineTo(h[k * 2], h[k * 2 + 1]);
+          fx.stroke();
+        }
+        fx.fillStyle = 'rgba(' + CREAM + ',' + a + ')';
+        fx.beginPath(); fx.arc(x, y, p.state === 'dwell' ? 1.3 : 1.1, 0, 6.283); fx.fill();
+      }
+    }
+    function drawStreamlinesStatic() {
+      fx.clearRect(0, 0, VW, VH);
+      // a few concentric ghost rings to suggest continuous flow when motion is off
+      for (var s = 0; s < 3; s++) {
+        var k = 0.86 + s * 0.07;
+        fx.strokeStyle = inkc(0.2 - s * 0.05); fx.lineWidth = 0.7; fx.beginPath();
+        for (var i = 0; i <= K; i++) { var pp = pts[i % K]; var X = cx + (pp[0] - cx) * k, Y = cy + (pp[1] - cy) * k; if (i === 0) fx.moveTo(X, Y); else fx.lineTo(X, Y); }
+        fx.stroke();
+      }
+    }
+
+    /* ---- steps / controller ---- */
+    var step = 0;
+    var tEl = fig.querySelector('[data-t]'), prevEl = fig.querySelector('[data-prev]'), nextEl = fig.querySelector('[data-next]');
+    function apply(i) {
+      step = i < 0 ? 0 : i >= steps.length ? steps.length - 1 : i; var s = steps[step], sts = s.st || [];
+      if (s.win) { TW = s.win; if (scrimA < 0.05) { W.x0 = TW[0]; W.y0 = TW[1]; W.x1 = TW[2]; W.y1 = TW[3]; } tScrim = 1; }
+      else { TW = null; tScrim = 0; }
+      NKEYS.forEach(function (k) { var on = sts.indexOf(k) >= 0; tStG[k] = on ? 1 : 0; if (!on) stG[k] = 0; });
+      noteTxt = s.note || '';
+      tEl.textContent = s.title;
+      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1;
+      if (REDUCE) { snap(); drawStreamlinesStatic(); drawInk(); }
+    }
+    function snap() {
+      scrimA = tScrim; if (TW) { W.x0 = TW[0]; W.y0 = TW[1]; W.x1 = TW[2]; W.y1 = TW[3]; }
+      NKEYS.forEach(function (k) { stG[k] = tStG[k]; });
+      annoA = noteTxt ? 1 : 0;
+    }
+    prevEl.addEventListener('click', function () { apply(step - 1); });
+    nextEl.addEventListener('click', function () { apply(step + 1); });
+    fig.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') { apply(step - 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { apply(step + 1); e.preventDefault(); } });
+
+    // the station labels are the primary navigation: hit-test near each node
+    var plate = fig.querySelector('.plate'), labelStep = { replenish: 1, count: 2, hold: 3, returns: 4 };
+    function hitLabel(e) {
+      var r = plate.getBoundingClientRect();
+      var vx = (e.clientX - r.left) / r.width * VW, vy = (e.clientY - r.top) / r.height * VH;
+      for (var i = 0; i < nodes.length; i++) { var nd = nodes[i]; if (Math.hypot(vx - nd.x, vy - nd.y) < 54) return nd.id; }
+      return null;
+    }
+    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('click', function (e) { var h = hitLabel(e); if (h) apply(labelStep[h]); });
+
+    /* ---- loop ---- */
+    var raf = null, last = 0;
+    function ease(cur, tgt, e) { return cur + (tgt - cur) * e; }
+    function sim(dt) {
+      var e = Math.min(1, dt * 5.5), ea = Math.min(1, dt * 3.0);
+      scrimA = ease(scrimA, tScrim, e);
+      if (TW) { W.x0 = ease(W.x0, TW[0], e); W.y0 = ease(W.y0, TW[1], e); W.x1 = ease(W.x1, TW[2], e); W.y1 = ease(W.y1, TW[3], e); }
+      NKEYS.forEach(function (k) { stG[k] = ease(stG[k], tStG[k], e); });
+      annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
     function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
