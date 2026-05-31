@@ -354,6 +354,10 @@
   .ch-assign .ch-label { margin-bottom: 0.3rem; }
   .ch-assign p { font-size: 1rem; line-height: 1.5; color: var(--text-bright); margin: 0; font-style: italic; text-wrap: pretty; }
   .ch-crumb { font-size: 0.84rem; color: var(--text-dim); margin: 0.12rem 0 0; }
+  .ch-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.05rem 0.2rem; margin: 0.32rem 0 0; }
+  .ch-crumb-btn { font-family: var(--font-body); font-size: 0.84rem; color: var(--text-dim); background: none; border: none; padding: 0.1rem 0.1rem; cursor: pointer; transition: color 140ms var(--ease-out); }
+  .ch-crumb-btn:hover, .ch-crumb-btn:focus-visible { color: var(--accent-hover); text-decoration: underline; outline: none; }
+  .ch-crumbs .ch-sep { color: var(--accent); opacity: 0.5; font-size: 0.8rem; }
   .ch-chips { margin-top: 1.35rem; padding-top: 1.25rem; border-top: 1px solid var(--hair); }
   .ch-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
   .ch-chip { font-family: var(--font-body); font-size: 0.9rem; padding: 0.4rem 0.85rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
@@ -798,7 +802,7 @@
       <div class="fyi-label desk-only">
         <div class="fl-k">The Chapter</div>
         <div class="fl-t">Open any competency and go to work</div>
-        <p class="fl-s">Click any competency on the wheel above and its chapter opens here: why the skill matters, the usual reasons people fall short, a few concrete things to go do, and one real assignment that builds it on the job, not in a classroom.</p>
+        <p class="fl-s">This is the reading room. Click anything on the wheel, a competency, a cluster, a whole factor, even the center, and it opens here. Each competency gets a full chapter: why the skill matters, why people fall short, a few things to go do, and one real assignment. Use the trail at the top and the chips to move around without leaving.</p>
       </div>
 
       <figure class="chapter reveal desk-only" id="chapterFig" aria-live="polite"></figure>
@@ -1125,6 +1129,12 @@
       function findComp(id) {
         return allArcs.filter(function (a) { return a.kind === 'comp' && a.data.id === id; })[0];
       }
+      function findFactor(fi) {
+        return allArcs.filter(function (a) { return a.kind === 'factor' && a.fi === fi; })[0];
+      }
+      function findCluster(fi, ci) {
+        return allArcs.filter(function (a) { return a.kind === 'cluster' && a.fi === fi && a.ci === ci; })[0];
+      }
       function activate(meta) {
         active = meta;
         svg.classList.add('dim');
@@ -1183,9 +1193,13 @@
       }
       if (chapterFig) {
         chapterFig.addEventListener('click', function (e) {
-          var c = e.target.closest ? e.target.closest('.ch-chip') : null;
-          if (!c) return;
-          var m = findComp(+c.getAttribute('data-id'));
+          var t = e.target.closest ? e.target.closest('[data-sel]') : null;
+          if (!t) return;
+          var v = t.getAttribute('data-sel'), parts = v.split(':'), m;
+          if (v === 'hub') { select(hubMeta); return; }
+          if (parts[0] === 'comp') { m = findComp(+parts[1]); }
+          else if (parts[0] === 'factor') { m = findFactor(+parts[1]); }
+          else if (parts[0] === 'cluster') { m = findCluster(+parts[1], +parts[2]); }
           if (m) select(m);
         });
       }
@@ -1194,7 +1208,14 @@
         var p = m.data;
         var causes = (p.causes || []).map(function (c) { return '<li>' + c + '</li>'; }).join('');
         var tips = (p.tips || []).map(function (t) { return '<li>' + t + '</li>'; }).join('');
+        var sibs = m.cluster.competencies.filter(function (x) { return x.id !== p.id; }).map(chip).join('');
         var h = '<div class="ch-kind">Chapter &middot; Competency ' + p.id + '</div>';
+        h += '<nav class="ch-crumbs" aria-label="Go up">' +
+          '<button type="button" class="ch-crumb-btn" data-sel="hub">The Library</button>' +
+          '<span class="ch-sep">&rsaquo;</span>' +
+          '<button type="button" class="ch-crumb-btn" data-sel="factor:' + m.fi + '">' + m.factor.name + '</button>' +
+          '<span class="ch-sep">&rsaquo;</span>' +
+          '<button type="button" class="ch-crumb-btn" data-sel="cluster:' + m.fi + ':' + m.ci + '">' + m.cluster.name + '</button></nav>';
         h += '<h4 class="ch-name">' + p.n + '</h4>';
         h += '<p class="ch-map">' + (p.map || '') + '</p>';
         h += '<div class="ch-body">';
@@ -1202,9 +1223,10 @@
         h += '<div class="ch-col"><div class="ch-label">Tips to Develop It</div><ol class="ch-tips">' + tips + '</ol></div>';
         h += '</div>';
         h += '<div class="ch-assign"><div class="ch-label">Develop-in-Place Assignment</div><p>' + (p.assign || '') + '</p></div>';
+        if (sibs) h += '<div class="ch-chips"><div class="ch-label">Other competencies in ' + m.cluster.name + '</div><div class="ch-chip-row">' + sibs + '</div></div>';
         chapterFig.innerHTML = h;
       }
-      function chip(p) { return '<button type="button" class="ch-chip" data-id="' + p.id + '">' + p.n + '</button>'; }
+      function chip(p) { return '<button type="button" class="ch-chip" data-sel="comp:' + p.id + '">' + p.n + '</button>'; }
       function renderDetail(m) {
         if (!chapterFig) return;
         if (m.kind === 'comp') { renderChapter(m); return; }
