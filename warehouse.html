@@ -1236,6 +1236,7 @@
       p.x = stagger ? rnd(xIn, xAsm - 30) : xIn;
       p.wob = Math.random() * 6.28;
       p.speed = rnd(132, 168);
+      p.voff = rnd(-6, 6);                 // a little vertical spread so each lane reads as a band, not one wire
       p.state = 'move'; p.dwellT = 0; p.atAsm = false; p.hist = []; p.dwells = [];
       // most components wait in the stockroom until a work order releases them
       if (Math.random() < 0.78) p.dwells.push({ x: rnd(xStock - 6, xWork - 22), dur: expDur(4.2, 13) });
@@ -1245,11 +1246,11 @@
     }
     (function build() { for (var i = 0; i < N; i++) { var s = {}; spawn(s, true); parts.push(s); } })();
     function partY(p) {
-      var x = p.x;
-      if (p.kind === 'out') return nodeY + Math.sin(p.wob + x * 0.03) * 1.6;
-      if (x <= xKit) return laneY[p.lane] + Math.sin(p.wob + x * 0.02) * 1.2;        // on its own lane
-      if (x < xAsm) return lerp(laneY[p.lane], nodeY, smooth((x - xKit) / (xAsm - xKit)));  // converge
-      return nodeY;
+      var x = p.x, vo = p.voff;
+      if (p.kind === 'out') return nodeY + vo * 0.5 + Math.sin(p.wob + x * 0.03) * 1.6;
+      if (x <= xKit) return laneY[p.lane] + vo + Math.sin(p.wob + x * 0.02) * 1.2;        // on its own lane, opened into a band
+      if (x < xAsm) return lerp(laneY[p.lane] + vo, nodeY + vo * 0.5, smooth((x - xKit) / (xAsm - xKit)));  // converge, tightening
+      return nodeY + vo * 0.5;
     }
     function advance(dt) {
       for (var i = 0; i < parts.length; i++) {
