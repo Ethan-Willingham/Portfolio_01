@@ -1,0 +1,229 @@
+{
+  "volumes": [
+    {
+      "name": "brain_scout",
+      "file": "volumes/brain_scout.nii.gz",
+      "shape": [
+        160,
+        160,
+        128
+      ],
+      "spacing_mm": [
+        1.625,
+        1.625,
+        1.6
+      ]
+    },
+    {
+      "name": "brain_swi",
+      "file": "volumes/brain_swi.nii.gz",
+      "shape": [
+        240,
+        256,
+        80
+      ],
+      "spacing_mm": [
+        0.898,
+        0.898,
+        2.0
+      ]
+    },
+    {
+      "name": "spine_scout",
+      "file": "volumes/spine_scout.nii.gz",
+      "shape": [
+        240,
+        478,
+        109
+      ],
+      "spacing_mm": [
+        1.667,
+        1.667,
+        1.7
+      ]
+    }
+  ],
+  "slice_series": [
+    {
+      "id": "brain_00",
+      "region": "brain",
+      "label": "Axial T2 FLAIR",
+      "file": "slices/brain_00.jpg",
+      "count": 28,
+      "cols": 6,
+      "rows": 5,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "brain_01",
+      "region": "brain",
+      "label": "Sagittal T1",
+      "file": "slices/brain_01.jpg",
+      "count": 27,
+      "cols": 6,
+      "rows": 5,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "brain_02",
+      "region": "brain",
+      "label": "Axial T2 FS",
+      "file": "slices/brain_02.jpg",
+      "count": 28,
+      "cols": 6,
+      "rows": 5,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "brain_03",
+      "region": "brain",
+      "label": "Axial SWI",
+      "file": "slices/brain_03.jpg",
+      "count": 80,
+      "cols": 9,
+      "rows": 9,
+      "tile_w": 240,
+      "tile_h": 256
+    },
+    {
+      "id": "brain_04",
+      "region": "brain",
+      "label": "Axial Diffusion (DWI)",
+      "file": "slices/brain_04.jpg",
+      "count": 30,
+      "cols": 6,
+      "rows": 5,
+      "tile_w": 384,
+      "tile_h": 384
+    },
+    {
+      "id": "brain_05",
+      "region": "brain",
+      "label": "Coronal T1 FS post-contrast",
+      "file": "slices/brain_05.jpg",
+      "count": 33,
+      "cols": 6,
+      "rows": 6,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "cervical_06",
+      "region": "cervical",
+      "label": "Cervical Sagittal T2",
+      "file": "slices/cervical_06.jpg",
+      "count": 17,
+      "cols": 5,
+      "rows": 4,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "cervical_07",
+      "region": "cervical",
+      "label": "Cervical Sagittal STIR",
+      "file": "slices/cervical_07.jpg",
+      "count": 17,
+      "cols": 5,
+      "rows": 4,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "cervical_08",
+      "region": "cervical",
+      "label": "Cervical Sagittal T1",
+      "file": "slices/cervical_08.jpg",
+      "count": 17,
+      "cols": 5,
+      "rows": 4,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "cervical_09",
+      "region": "cervical",
+      "label": "Cervical Axial T2",
+      "file": "slices/cervical_09.jpg",
+      "count": 42,
+      "cols": 7,
+      "rows": 6,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "cervical_10",
+      "region": "cervical",
+      "label": "Cervical Axial MEDIC",
+      "file": "slices/cervical_10.jpg",
+      "count": 42,
+      "cols": 7,
+      "rows": 6,
+      "tile_w": 448,
+      "tile_h": 336
+    },
+    {
+      "id": "lumbar_11",
+      "region": "lumbar",
+      "label": "Lumbar Sagittal T2",
+      "file": "slices/lumbar_11.jpg",
+      "count": 18,
+      "cols": 5,
+      "rows": 4,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "lumbar_12",
+      "region": "lumbar",
+      "label": "Lumbar Sagittal STIR",
+      "file": "slices/lumbar_12.jpg",
+      "count": 18,
+      "cols": 5,
+      "rows": 4,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "lumbar_13",
+      "region": "lumbar",
+      "label": "Lumbar Sagittal T1",
+      "file": "slices/lumbar_13.jpg",
+      "count": 18,
+      "cols": 5,
+      "rows": 4,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "lumbar_14",
+      "region": "lumbar",
+      "label": "Lumbar Axial T2",
+      "file": "slices/lumbar_14.jpg",
+      "count": 50,
+      "cols": 8,
+      "rows": 7,
+      "tile_w": 448,
+      "tile_h": 448
+    },
+    {
+      "id": "lumbar_15",
+      "region": "lumbar",
+      "label": "Lumbar Axial T1",
+      "file": "slices/lumbar_15.jpg",
+      "count": 50,
+      "cols": 8,
+      "rows": 7,
+      "tile_w": 448,
+      "tile_h": 448
+    }
+  ],
+  "regions": [
+    "brain",
+    "cervical",
+    "lumbar"
+  ]
+}
