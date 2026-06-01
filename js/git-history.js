@@ -421,21 +421,64 @@
   });
   document.addEventListener('fullscreenchange', function () { setTimeout(resize, 60); });
 
-  // ----- legend -----
-  var order = topics.map(function (_, i) { return i; }).filter(function (i) { return topicCount[i] > 0; });
-  order.sort(function (a, b) { return topicCount[b] - topicCount[a]; });
-  order.forEach(function (i) {
-    var tp = topics[i];
-    var chip = document.createElement('button');
-    chip.className = 'gh-chip'; chip.type = 'button';
-    chip.innerHTML = '<span class="gh-chip-dot" style="color:' + tp.color + ';background:' + tp.color + '"></span>' + esc(tp.label) + ' <span class="gh-chip-n">' + fmtN(topicCount[i]) + '</span>';
-    chip.addEventListener('click', function () {
-      enabled[i] = !enabled[i];
-      chip.classList.toggle('is-off', !enabled[i]);
-      if (pinnedIdx >= 0 && !enabled[commits[pinnedIdx][IX_TI]]) { pinnedIdx = -1; hideCard(); }
-      requestRender();
+  // ----- legend: chips grouped by kind. Each chip pairs two sibling controls:
+  //   a filter toggle (aria-pressed) and, for real pages, a link to the article. -----
+  var GO_SVG = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 L11 5 M6 5 H11 V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var KINDS = [
+    { key: 'post', label: 'Blog posts' },
+    { key: 'archived', label: 'Archived' },
+    { key: 'other', label: 'Other' }
+  ];
+  KINDS.forEach(function (kd) {
+    var ids = topics.map(function (_, i) { return i; }).filter(function (i) {
+      return topicCount[i] > 0 && (topics[i].kind || 'other') === kd.key;
     });
-    legendEl.appendChild(chip);
+    if (!ids.length) return;
+    ids.sort(function (a, b) { return topicCount[b] - topicCount[a]; });
+
+    var group = document.createElement('div');
+    group.className = 'gh-legend-group';
+    group.setAttribute('role', 'group');
+    var headId = 'gh-legend-' + kd.key;
+    group.setAttribute('aria-labelledby', headId);
+    var head = document.createElement('div');
+    head.className = 'gh-legend-head'; head.id = headId; head.textContent = kd.label;
+    group.appendChild(head);
+
+    var chipWrap = document.createElement('div');
+    chipWrap.className = 'gh-legend-chips';
+    ids.forEach(function (i) {
+      var tp = topics[i];
+      var chip = document.createElement('div');
+      chip.className = 'gh-chip'; chip.setAttribute('data-kind', tp.kind || 'other');
+
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'gh-chip-toggle';
+      btn.setAttribute('aria-pressed', enabled[i] ? 'true' : 'false');
+      btn.setAttribute('aria-label', tp.label + ', ' + fmtN(topicCount[i]) + ' commits; toggle on the timeline');
+      btn.innerHTML = '<span class="gh-chip-dot" style="--c:' + tp.color + '"></span>' +
+        '<span class="gh-chip-label">' + esc(tp.label) + '</span>' +
+        '<span class="gh-chip-n">' + fmtN(topicCount[i]) + '</span>';
+      btn.addEventListener('click', function () {
+        enabled[i] = !enabled[i];
+        btn.setAttribute('aria-pressed', enabled[i] ? 'true' : 'false');
+        if (pinnedIdx >= 0 && !enabled[commits[pinnedIdx][IX_TI]]) { pinnedIdx = -1; hideCard(); }
+        requestRender();
+      });
+      chip.appendChild(btn);
+
+      if (tp.href) {
+        var go = document.createElement('a');
+        go.className = 'gh-chip-go'; go.href = tp.href;
+        go.target = '_blank'; go.rel = 'noopener';
+        go.setAttribute('aria-label', 'Open ' + tp.label + (tp.kind === 'archived' ? ' (archived)' : '') + ' article');
+        go.innerHTML = GO_SVG;
+        chip.appendChild(go);
+      }
+      chipWrap.appendChild(chip);
+    });
+    group.appendChild(chipWrap);
+    legendEl.appendChild(group);
   });
 
   // ----- readout -----
