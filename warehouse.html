@@ -1572,16 +1572,18 @@
     var K = pts.length;
     function ptAt(phi) { phi -= Math.floor(phi); var i = Math.floor(phi * K) % K; if (i < 0) i += K; return pts[i]; }
     function tanAt(phi) { var a = ptAt(phi), b = ptAt(phi + 3 / K); return Math.atan2(b[1] - a[1], b[0] - a[0]); }
+    function ptOff(phi, off) { var a = ptAt(phi), g = tanAt(phi); return [a[0] + Math.sin(g) * off, a[1] - Math.cos(g) * off]; }  // offset perpendicular to the ring, so the dots flow as a band, not one wire
     // station phase positions: nearest sample on the ring to each node
     var nodePhi = nodes.map(function (nd) { var best = 0, bd = 1e9; for (var i = 0; i < K; i++) { var d = (pts[i][0] - nd.x) * (pts[i][0] - nd.x) + (pts[i][1] - nd.y) * (pts[i][1] - nd.y); if (d < bd) { bd = d; best = i; } } return best / K; });
     var ZONE = 0.03;
     function zoneAt(phi) { for (var n = 0; n < 4; n++) { var d = Math.abs(phi - nodePhi[n]); d = Math.min(d, 1 - d); if (d < ZONE) return n; } return -1; }
 
     /* ---- particles: goods circling the upkeep loop ---- */
-    var N = 46, parts = [], TRAIL = 86;
+    var N = 64, parts = [], TRAIL = 86;
     function spawn(p) {
       p.phi = Math.random();
-      p.speed = rnd(0.040, 0.060);          // laps per second
+      p.speed = rnd(0.036, 0.062);          // laps per second
+      p.off = rnd(-8, 18);                  // radial offset from the ring centerline (a wide lane of dots, biased inward off the labels)
       p.state = 'move'; p.dwellT = 0; p.inNode = -1; p.hist = [];
     }
     (function build() { for (var i = 0; i < N; i++) { var s = {}; spawn(s); parts.push(s); } })();
@@ -1598,7 +1600,7 @@
         var z = zoneAt(p.phi);
         if (z >= 0 && z !== p.inNode) { p.inNode = z; if (Math.random() < 0.62) { p.state = 'dwell'; p.dwellT = expDur(1.2, 4); } }
         else if (z < 0) p.inNode = -1;
-        var pt = ptAt(p.phi); p.hist.push(pt[0], pt[1]);
+        var pt = ptOff(p.phi, p.off); p.hist.push(pt[0], pt[1]);
         if (p.hist.length > TRAIL * 2) p.hist.splice(0, p.hist.length - TRAIL * 2);
       }
     }
@@ -1611,18 +1613,18 @@
 
     function nwin(n) { var nd = nodes[n]; return [nd.x - 76, nd.y - 58, nd.x + 76, nd.y + 58]; }
     var steps = [
-      { title: 'The work that keeps inventory true', note: 'every hour, all of this runs at once',
-        d: 'The last visual followed one item from the dock to the door. This one is a loop, because the work that keeps a warehouse accurate never finishes. Four jobs run all day, all at once.' },
-      { title: 'Refill the shelves', win: nwin(0), st: ['replenish'], note: 'keep the pick shelves full',
-        d: 'Replenishment moves stock from the big reserve racking in back down to the small pick shelves out front, before they run dry, so a picker never reaches an empty slot.' },
-      { title: 'Count a little, every day', win: nwin(1), st: ['count'], note: 'catch errors in days, not at year end',
-        d: 'Cycle counting checks a small slice of inventory every day instead of shutting the whole building for one big annual count. Errors get caught in days, and the warehouse never stops.' },
-      { title: "Quarantine what isn't safe", win: nwin(2), st: ['hold'], note: 'pull bad stock before it can ship',
-        d: 'A hold pulls damaged, expired, or recalled stock out of the available pool and parks it in quarantine, so it physically cannot be picked and shipped to a customer by mistake.' },
-      { title: 'Take back what comes home', win: nwin(3), st: ['returns'], note: 'inspected, then re-entered or retired',
-        d: 'Returns come back from customers, get inspected one by one, and are either restocked, sent back to the supplier, or written off. Handling a return costs far more than shipping it did.' },
+      { title: 'The work that keeps it true', note: 'all four run at once, all day',
+        d: 'The last visual followed one item from the dock to the door. But that journey only works if the shelves stay full and the count stays honest, and keeping them that way never ends. Four jobs circle the building at once, every hour, forever.' },
+      { title: 'Refill the pick shelves', win: nwin(0), st: ['replenish'], note: 'so a picker never finds an empty slot',
+        d: 'The bulk of each item sits in tall reserve racking in the back; a little waits in easy-to-reach pick shelves out front. Replenishment quietly tops up the front from the back before it runs dry, so a picker never walks up to an empty slot.' },
+      { title: 'Count a little, every day', win: nwin(1), st: ['count'], note: 'find errors in days, not at the year-end count',
+        d: 'Rather than shut the whole building once a year to count everything, cycle counting checks a small, smart slice every day. Errors surface in days, the records stay glued to the shelves, and the floor never stops to do it.' },
+      { title: 'Pull anything unsafe to ship', win: nwin(2), st: ['hold'], note: 'damaged or expired stock, walled off',
+        d: 'When a unit is damaged, expired, recalled, or simply awaiting inspection, a hold pulls it out of the available pool and parks it in quarantine, where it cannot be picked. It is how bad stock never reaches a customer by accident.' },
+      { title: 'Take back what comes home', win: nwin(3), st: ['returns'], note: 'inspect, then restock, return, or scrap',
+        d: 'Returned items flow back in, are inspected one at a time, and are either restocked, sent back to the supplier, or written off. It is slow and expensive precisely because each one is handled by hand, never in bulk.' },
       { title: 'It never stops', st: ['replenish', 'count', 'hold', 'returns'], note: 'this is why your order is right',
-        d: 'None of these jobs ever truly finishes. They run together, all day, every day. You never see them. You feel them only when an order is wrong, or, far more often, when it quietly is not.' }
+        d: 'None of these four ever truly finishes; they run together, all day, every day, each one feeding the next. You never notice them. You feel them only when an order comes out wrong, and, far more often, when it quietly does not.' }
     ];
 
     /* ---- sizing ---- */
@@ -1724,7 +1726,7 @@
       var aLit = 0.64 + 0.32 * scrimA, aDim = 0.64 - 0.5 * scrimA;
       fx.lineCap = 'round'; fx.lineWidth = 1.15;
       for (var i = 0; i < parts.length; i++) {
-        var p = parts[i], pt = ptAt(p.phi), x = pt[0], y = pt[1], a = inWin(x, y) ? aLit : aDim, h = p.hist, np = h.length >> 1;
+        var p = parts[i], pt = ptOff(p.phi, p.off), x = pt[0], y = pt[1], a = inWin(x, y) ? aLit : aDim, h = p.hist, np = h.length >> 1;
         if (np > 1) {
           var tx = h[0], ty = h[1], hx = h[(np - 1) * 2], hy = h[(np - 1) * 2 + 1];
           if (Math.hypot(hx - tx, hy - ty) < 1) { hx = tx + 1; }
