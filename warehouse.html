@@ -174,8 +174,8 @@
   .flowfig .vbtn svg { width: 15px; height: 15px; display: block; }
   .flowfig .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   /* figure title + caption sit in the reading column; only the plate breaks wide */
-  .flowfig .fig-title { max-width: var(--measure); margin: 0 auto 1rem; }
-  .flowfig .fig-note { max-width: var(--measure); margin: 1.1rem auto 0; }
+  .flowfig .fig-title { margin: 0 0 1rem; }
+  .flowfig .fig-note { margin: 1.1rem 0 0; }
   /* the lifecycle plate is a wide, short blueprint, balanced top to bottom */
   #flow1 .plate { aspect-ratio: 1000 / 300; }
   #flow2 .plate { aspect-ratio: 1000 / 300; }
@@ -429,7 +429,7 @@
     <!-- ============ ACT II ============ -->
     <div class="act reveal"><div class="act-k">Act II</div><div class="act-t">Follow the box</div></div>
 
-    <div class="fig-block wide reveal flowfig" id="flow1">
+    <div class="fig-block reveal flowfig" id="flow1">
       <div class="fig-title">The life of one item, dock to door</div>
       <div class="plate">
         <canvas data-bg></canvas>
@@ -522,7 +522,7 @@
     <!-- ============ ACT III ============ -->
     <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The work that never stops</div></div>
 
-    <div class="fig-block wide reveal flowfig" id="flow3">
+    <div class="fig-block reveal flowfig" id="flow3">
       <div class="fig-title">The work that keeps inventory true</div>
       <div class="plate">
         <canvas data-bg></canvas>
@@ -553,7 +553,7 @@
     <!-- ============ ACT IV ============ -->
     <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">The factory next door</div></div>
 
-    <div class="fig-block wide reveal flowfig" id="flow2">
+    <div class="fig-block reveal flowfig" id="flow2">
       <div class="fig-title">How raw materials become a product</div>
       <div class="plate">
         <canvas data-bg></canvas>
@@ -1130,7 +1130,7 @@
       STKEYS.forEach(function (k) { var on = sts.indexOf(k) >= 0; tStG[k] = on ? 1 : 0; if (!on) stG[k] = 0; });
       tWms = s.wms ? 1 : 0; noteTxt = s.note || '';
       tEl.textContent = s.title;
-      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1;
+      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1; inkFrames = 60;
       if (REDUCE) { snap(); drawStreamlinesStatic(); drawInk(); }
     }
     function snap() {
@@ -1151,12 +1151,12 @@
       for (var i = 0; i < stations.length; i++) if (Math.abs(vx - stations[i].x) < 46) return stations[i].id;
       return null;
     }
-    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); } });
-    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); else inkFrames = Math.max(inkFrames, 4); } });
+    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); else inkFrames = Math.max(inkFrames, 4); } });
     plate.addEventListener('click', function (e) { var h = hitLabel(e); if (h) apply(labelStep[h]); });
 
     /* ---- loop ---- */
-    var raf = null, last = 0;
+    var raf = null, last = 0, inkFrames = 60;
     function ease(cur, tgt, e) { return cur + (tgt - cur) * e; }
     function sim(dt) {
       var e = Math.min(1, dt * 5.5), ea = Math.min(1, dt * 3.0);
@@ -1166,7 +1166,7 @@
       wmsA = ease(wmsA, tWms, e); annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
-    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = requestAnimationFrame(frame); }
     function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
     function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
     new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
@@ -1464,7 +1464,7 @@
       MKEYS.forEach(function (k) { var on = sts.indexOf(k) >= 0; tStG[k] = on ? 1 : 0; if (!on) stG[k] = 0; });
       noteTxt = s.note || '';
       tEl.textContent = s.title;
-      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1;
+      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1; inkFrames = 60;
       if (REDUCE) { snap(); drawStreamlinesStatic(); drawInk(); }
     }
     function snap() {
@@ -1485,12 +1485,12 @@
       for (var i = 0; i < markers.length; i++) if (Math.abs(vx - markers[i].x) < 48) return markers[i].id;
       return null;
     }
-    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); } });
-    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); else inkFrames = Math.max(inkFrames, 4); } });
+    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); else inkFrames = Math.max(inkFrames, 4); } });
     plate.addEventListener('click', function (e) { var h = hitLabel(e); if (h) apply(labelStep[h]); });
 
     /* ---- loop ---- */
-    var raf = null, last = 0;
+    var raf = null, last = 0, inkFrames = 60;
     function ease(cur, tgt, e) { return cur + (tgt - cur) * e; }
     function sim(dt) {
       var e = Math.min(1, dt * 5.5), ea = Math.min(1, dt * 3.0);
@@ -1500,7 +1500,7 @@
       annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
-    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = requestAnimationFrame(frame); }
     function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
     function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
     new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
@@ -1764,7 +1764,7 @@
       NKEYS.forEach(function (k) { var on = sts.indexOf(k) >= 0; tStG[k] = on ? 1 : 0; if (!on) stG[k] = 0; });
       noteTxt = s.note || '';
       tEl.textContent = s.title;
-      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1;
+      prevEl.disabled = step === 0; nextEl.disabled = step === steps.length - 1; inkFrames = 60;
       if (REDUCE) { snap(); drawStreamlinesStatic(); drawInk(); }
     }
     function snap() {
@@ -1784,12 +1784,12 @@
       for (var i = 0; i < nodes.length; i++) { var nd = nodes[i]; if (Math.hypot(vx - nd.x, vy - nd.y) < 54) return nd.id; }
       return null;
     }
-    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); } });
-    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); } });
+    plate.addEventListener('mousemove', function (e) { var h = hitLabel(e); if (h !== hovered) { hovered = h; plate.style.cursor = h ? 'pointer' : ''; if (REDUCE) drawInk(); else inkFrames = Math.max(inkFrames, 4); } });
+    plate.addEventListener('mouseleave', function () { if (hovered !== null) { hovered = null; plate.style.cursor = ''; if (REDUCE) drawInk(); else inkFrames = Math.max(inkFrames, 4); } });
     plate.addEventListener('click', function (e) { var h = hitLabel(e); if (h) apply(labelStep[h]); });
 
     /* ---- loop ---- */
-    var raf = null, last = 0;
+    var raf = null, last = 0, inkFrames = 60;
     function ease(cur, tgt, e) { return cur + (tgt - cur) * e; }
     function sim(dt) {
       var e = Math.min(1, dt * 5.5), ea = Math.min(1, dt * 3.0);
@@ -1799,7 +1799,7 @@
       annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
-    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); drawInk(); raf = requestAnimationFrame(frame); }
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = requestAnimationFrame(frame); }
     function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
     function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
     new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
