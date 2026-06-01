@@ -1,7 +1,7 @@
 /* Usage charts for the git-history post. Static SVG, baked from ccusage
    snapshots on two machines (laptop + desktop), May 2026. May 1-26 are carried
    from the prior two-machine snapshot; May 27-31 were refreshed from this
-   machine's ccusage on May 31. No animation, no rAF, renders once. */
+   machine's ccusage on May 31. Renders once (no rAF), then wires a hover readout. */
 (function () {
   'use strict';
   var el = document.getElementById('gh-chart-daily');
@@ -41,6 +41,9 @@
   // baseline
   s += '<line x1="' + padL + '" y1="' + ground + '" x2="' + (padL + plotW) + '" y2="' + ground + '" stroke="rgba(212,196,160,0.18)" stroke-width="1"/>';
 
+  // hover highlight band (behind the bars), moved to the active column by JS
+  s += '<rect id="gh-hover-band" x="0" y="' + padT + '" width="' + slot.toFixed(1) + '" height="' + plotH + '" fill="rgba(232,149,78,0.13)" pointer-events="none" style="display:none"/>';
+
   // bars (with bloom)
   s += '<g filter="url(#ghglow)">';
   for (i = 0; i < n; i++) {
@@ -61,6 +64,39 @@
     s += '<text x="' + lx.toFixed(1) + '" y="' + (ground + 16) + '" text-anchor="middle" font-family="Commit Mono,ui-monospace,monospace" font-size="11" fill="rgba(184,178,162,0.5)">' + t[1] + '</text>';
   });
 
+  // transparent overlay captures the cursor across the whole plot, so a column
+  // reads even between bars (and the slow native bar tooltips stay quiet)
+  s += '<rect x="' + padL + '" y="' + padT + '" width="' + plotW + '" height="' + plotH + '" fill="transparent" pointer-events="all" style="cursor:crosshair"/>';
+
   s += '</svg>';
   el.innerHTML = s;
+
+  // ----- hover readout -----
+  var svg = el.querySelector('svg');
+  var band = el.querySelector('#gh-hover-band');
+  var tip = document.createElement('div');
+  tip.className = 'gh-bar-tip';
+  el.appendChild(tip);
+
+  function dayAt(clientX) {
+    var r = svg.getBoundingClientRect();
+    var vbX = (clientX - r.left) / r.width * W;
+    if (vbX < padL || vbX > padL + plotW) return -1;
+    var idx = Math.floor((vbX - padL) / slot);
+    return (idx < 0 || idx >= n) ? -1 : idx;
+  }
+  function hide() { tip.classList.remove('is-on'); band.style.display = 'none'; }
+  function move(e) {
+    var idx = dayAt(e.clientX);
+    if (idx < 0) { hide(); return; }
+    band.setAttribute('x', (padL + idx * slot).toFixed(1));
+    band.style.display = '';
+    tip.innerHTML = '<span class="d">May ' + (idx + 1) + '</span><span class="v">' + fmtInt(vals[idx]) + ' tokens</span>';
+    tip.classList.add('is-on');
+    var r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.max(tw / 2 + 2, Math.min(r.width - tw / 2 - 2, e.clientX - r.left)) + 'px';
+    tip.style.top = Math.max(th + 2, e.clientY - r.top - 12) + 'px';
+  }
+  svg.addEventListener('mousemove', move);
+  svg.addEventListener('mouseleave', hide);
 })();

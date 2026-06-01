@@ -212,7 +212,22 @@
       letter-spacing: 0.16em; text-transform: uppercase; color: #c3b589;
       margin: 2em 0 0.85em;
     }
+    .gh-chart-daily { position: relative; }
     .gh-chart-daily svg { overflow: visible; }
+    /* hover readout for the daily token bars */
+    .gh-bar-tip {
+      position: absolute; z-index: 5; pointer-events: none;
+      transform: translate(-50%, -100%);
+      opacity: 0; transition: opacity 0.12s ease;
+      padding: 0.38rem 0.6rem; border-radius: 7px; white-space: nowrap;
+      background: rgba(14, 17, 13, 0.95); border: 1px solid var(--rule);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+      font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.3;
+    }
+    .gh-bar-tip.is-on { opacity: 1; }
+    .gh-bar-tip .d { display: block; color: var(--accent); font-weight: 600; letter-spacing: 0.02em; }
+    .gh-bar-tip .v { color: var(--text-bright); }
     .gh-abar {
       display: flex; gap: 1px; width: 100%; height: 30px;
       border-radius: 6px; overflow: hidden; background: #0c0e0b;
