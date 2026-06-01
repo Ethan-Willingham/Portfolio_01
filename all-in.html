@@ -423,6 +423,19 @@
   .ch-xref { font-family: var(--font-body); font-size: 0.86rem; padding: 0.28rem 0.7rem; border-radius: 999px; border: 1px solid var(--hair); background: transparent; color: var(--text); cursor: pointer; transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
   .ch-xref:hover { color: var(--accent-hover); border-color: var(--accent); background: rgba(212,196,160,0.08); }
   @media (max-width: 880px) { .ch-xrefs { grid-template-columns: 1fr; gap: 1rem; } }
+  /* hover a substitute or compensator to preview its develop-it tips, without leaving the chapter */
+  .ch-tip { position: absolute; z-index: 200; left: 0; top: 0; width: max-content; max-width: 300px; background: #39433b; border: 1px solid rgba(212,196,160,0.28); border-radius: 10px; padding: 0.78rem 0.85rem 0.85rem; box-shadow: 0 12px 34px rgba(0,0,0,0.5); opacity: 0; transform: translateY(3px); pointer-events: none; transition: opacity 0.14s var(--ease-out), transform 0.14s var(--ease-out); }
+  .ch-tip.on { opacity: 1; transform: none; }
+  .ch-tip-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.02rem; color: var(--text-bright); line-height: 1.15; }
+  .ch-tip-def { font-size: 0.84rem; color: var(--text-dim); line-height: 1.4; margin-top: 0.14rem; text-wrap: pretty; }
+  .ch-tip-lbl { font-family: var(--font-body); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-top: 0.7rem; }
+  .ch-tip-list { list-style: none; margin: 0.35rem 0 0; padding: 0; counter-reset: tt; }
+  .ch-tip-list li { counter-increment: tt; position: relative; padding: 0.22rem 0 0.22rem 1.45rem; font-size: 0.9rem; line-height: 1.42; color: var(--text); text-wrap: pretty; }
+  .ch-tip-list li::before { content: counter(tt); position: absolute; left: 0; top: 0.24rem; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--accent); }
+  .ch-tip::after { content: ''; position: absolute; left: var(--ax, 50%); margin-left: -4.5px; width: 9px; height: 9px; background: #39433b; transform: rotate(45deg); }
+  .ch-tip:not(.below)::after { bottom: -5px; border-right: 1px solid rgba(212,196,160,0.28); border-bottom: 1px solid rgba(212,196,160,0.28); }
+  .ch-tip.below::after { top: -5px; border-left: 1px solid rgba(212,196,160,0.28); border-top: 1px solid rgba(212,196,160,0.28); }
+  @media (prefers-reduced-motion: reduce) { .ch-tip { transition: opacity 0.12s; transform: none; } }
 
   /* responsive: stack the wheel above its panel, then make the phone layout */
   @media (max-width: 880px) {
@@ -1275,7 +1288,7 @@
         if (parts[0] === 'cluster') return findCluster(+parts[1], +parts[2]);
         return null;
       }
-      function navTo(m) { if (!m) return; chSel = m; renderChapterBlock(); }
+      function navTo(m) { if (!m) return; hideXtip(); chSel = m; renderChapterBlock(); }
       function navChip(label, navAttr, on) {
         return '<button type="button" class="ch-navchip' + (on ? ' on' : '') + '"' + (on ? ' aria-current="true"' : '') + ' data-nav="' + navAttr + '">' + label + '</button>';
       }
@@ -1397,6 +1410,70 @@
           if (!b) return;
           navTo(chMeta(b.getAttribute('data-nav')));
         });
+      }
+
+      /* hover (or keyboard-focus) a substitute/compensator chip to preview that competency's
+         develop-it tips in a small popover, so you can read the fixes without leaving the chapter */
+      var xtip = null, xtipChip = null, xtipTimer = null;
+      function hideXtip() {
+        if (xtip) xtip.classList.remove('on');
+        if (xtipChip) { xtipChip.removeAttribute('aria-describedby'); xtipChip = null; }
+      }
+      function showXtip(chip) {
+        var nav = chip.getAttribute('data-nav') || '';
+        if (nav.indexOf('comp:') !== 0) return;
+        var c = findComp(+nav.split(':')[1]);
+        if (!c) return;
+        var p = c.data;
+        if (!xtip) {
+          xtip = document.createElement('div');
+          xtip.className = 'ch-tip'; xtip.id = 'chTip'; xtip.setAttribute('role', 'tooltip');
+          document.body.appendChild(xtip);
+        }
+        var tips = (p.tips || []).map(function (x) { return '<li>' + x + '</li>'; }).join('');
+        xtip.innerHTML = '<div class="ch-tip-name">' + p.n + '</div>' +
+          '<div class="ch-tip-def">' + (p.def || '') + '</div>' +
+          '<div class="ch-tip-lbl">Tips to develop it</div>' +
+          '<ol class="ch-tip-list">' + tips + '</ol>';
+        positionXtip(chip);
+        xtip.classList.add('on');
+        xtipChip = chip; chip.setAttribute('aria-describedby', 'chTip');
+      }
+      function positionXtip(chip) {
+        var tw = xtip.offsetWidth, th = xtip.offsetHeight;
+        var r = chip.getBoundingClientRect();
+        var gap = 10, pad = 10, vw = document.documentElement.clientWidth;
+        var left = r.left + r.width / 2 - tw / 2;
+        var top = r.top - th - gap, below = false;
+        if (top < pad) { top = r.bottom + gap; below = true; }
+        if (left < pad) left = pad;
+        if (left + tw > vw - pad) left = vw - pad - tw;
+        var ax = r.left + r.width / 2 - left;
+        ax = Math.max(13, Math.min(tw - 13, ax));
+        xtip.style.setProperty('--ax', ax + 'px');
+        xtip.classList.toggle('below', below);
+        xtip.style.left = (left + window.scrollX) + 'px';
+        xtip.style.top = (top + window.scrollY) + 'px';
+      }
+      if (chapterFig) {
+        chapterFig.addEventListener('mouseover', function (e) {
+          if (!canHover) return;
+          var chip = e.target.closest ? e.target.closest('.ch-xref') : null;
+          if (chip) { clearTimeout(xtipTimer); showXtip(chip); }
+        });
+        chapterFig.addEventListener('mouseout', function (e) {
+          var chip = e.target.closest ? e.target.closest('.ch-xref') : null;
+          if (chip) { xtipTimer = setTimeout(hideXtip, 110); }
+        });
+        chapterFig.addEventListener('focusin', function (e) {
+          var chip = e.target.closest ? e.target.closest('.ch-xref') : null;
+          if (chip) { clearTimeout(xtipTimer); showXtip(chip); }
+        });
+        chapterFig.addEventListener('focusout', function (e) {
+          var chip = e.target.closest ? e.target.closest('.ch-xref') : null;
+          if (chip) { xtipTimer = setTimeout(hideXtip, 110); }
+        });
+        window.addEventListener('scroll', hideXtip, { passive: true });
       }
 
       function renderDefault() {
