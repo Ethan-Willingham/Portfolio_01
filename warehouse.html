@@ -179,6 +179,7 @@
   /* the lifecycle plate is a wide, short blueprint, balanced top to bottom */
   #flow1 .plate { aspect-ratio: 1000 / 300; }
   #flow2 .plate { aspect-ratio: 1000 / 300; }
+  #flow3 .plate { aspect-ratio: 1000 / 300; }
   .fig-src { font-size: 0.88rem; color: var(--text-dim); line-height: 1.55; margin: 0.9rem 0 0; }
 
   /* two-column compare */
@@ -1532,7 +1533,7 @@
     var VW = 1000, VH = 432;
 
     /* geometry: a rounded-rectangle ring with four stations at the side midpoints */
-    var cx = 500, cy = 224, hw = 250, hh = 104, cr = 64;
+    var cx = 500, cy = 150, hw = 250, hh = 104, cr = 64;       // ring centered in the 300-tall plate
     var L = cx - hw, R = cx + hw, T = cy - hh, B = cy + hh;
     var nodes = [
       { id: 'replenish', x: cx, y: T,  label: 'REPLENISH',   lp: 'top' },
@@ -1676,13 +1677,13 @@
       nodes.forEach(function (nd, i) { station(nd, false, nd.id === hovered); });
       // spotlight
       if (scrimA > 0.015) {
-        ix.fillStyle = 'rgba(18,22,17,' + (0.52 * scrimA) + ')'; ix.fillRect(0, 78, VW, 296);
+        ix.fillStyle = 'rgba(18,22,17,' + (0.52 * scrimA) + ')'; ix.fillRect(0, 22, VW, 262);
         var wx = (W.x0 + W.x1) / 2, wy = (W.y0 + W.y1) / 2, rad = Math.max(78, Math.hypot(W.x1 - W.x0, W.y1 - W.y0) * 0.62);
         var rg = ix.createRadialGradient(wx, wy, 0, wx, wy, rad);
         rg.addColorStop(0, 'rgba(' + GOLD + ',' + (0.17 * scrimA) + ')');
         rg.addColorStop(0.55, 'rgba(' + GOLD + ',' + (0.05 * scrimA) + ')');
         rg.addColorStop(1, 'rgba(' + GOLD + ',0)');
-        ix.fillStyle = rg; ix.fillRect(0, 78, VW, 296);
+        ix.fillStyle = rg; ix.fillRect(0, 22, VW, 262);
       }
       // focused stations (gold), over the scrim
       nodes.forEach(function (nd) { if (stG[nd.id] > 0.02) station(nd, true); });
