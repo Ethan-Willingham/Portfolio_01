@@ -233,6 +233,22 @@
   .docs .doc .dd { font-size: 0.9rem; color: var(--text-dim); line-height: 1.44; margin-top: 0.3rem; }
   .docs .doc .dd b { color: var(--accent-hover); font-weight: 700; }
   @media (max-width: 560px) { .docs { grid-template-columns: 1fr; } }
+  /* manufacturing teach-down (section 9): the BOM recipe panel + the verbs you do to it */
+  .bom { max-width: 30rem; margin: 1.6rem auto 0.2rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 8px; padding: 1.05rem 1.3rem 1.15rem; }
+  .bom .bh { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; border-bottom: 1px solid var(--hair); padding-bottom: 0.65rem; margin-bottom: 0.65rem; }
+  .bom .bk { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  .bom .bt { font-style: italic; color: var(--text-dim); font-size: 0.92rem; }
+  .bom ul { list-style: none; margin: 0; padding: 0; }
+  .bom li { display: flex; align-items: baseline; gap: 0.8rem; font-size: 0.98rem; color: var(--text); padding: 0.2rem 0; }
+  .bom li .q { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent-hover); min-width: 1.9rem; text-align: right; }
+  .bom .bsum { display: flex; align-items: baseline; gap: 0.8rem; border-top: 1px solid var(--hair); margin-top: 0.6rem; padding-top: 0.7rem; font-weight: 700; color: var(--text-bright); font-size: 1.0rem; }
+  .bom .bsum .q { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); min-width: 1.9rem; text-align: right; }
+  .concepts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 1.2rem 0 0.4rem; }
+  .concept { background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; padding: 0.9rem 1.05rem 1rem; }
+  .concept .ct { font-weight: 700; color: var(--text-bright); font-size: 1.02rem; }
+  .concept .cd { font-size: 0.9rem; color: var(--text-dim); line-height: 1.44; margin-top: 0.28rem; }
+  .concept .cd b { color: var(--accent-hover); font-weight: 700; }
+  @media (max-width: 560px) { .concepts { grid-template-columns: 1fr; } }
 
   /* ============ THE INTERACTIVE: the multiplied nines ============ */
   .lab { background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; overflow: hidden;
@@ -527,8 +543,26 @@
       <span class="sec-num">09</span>
       <h3>From raw to finished</h3>
       <p class="sub">A factory is a warehouse with a transformation in the middle. The WMS feeds the line and catches what comes off it.</p>
-      <p>In manufacturing the same building logic runs, but now the goods change shape on the way through. It starts with a <b>bill of materials</b>, the recipe: to build one of these, you need four of those and two of these. When a work order drops, the WMS does <b>kitting</b>, picking every component for that build into one tote and staging it at the line, so the assembler never hunts for parts. As the line runs, it pulls more parts through <b>line-side replenishment</b>, often on a <b>Kanban</b> signal, an empty bin that means "send another." And to avoid scanning every screw, the system uses <b>backflushing</b>: when a finished unit is reported, it automatically subtracts all the components the recipe says it ate.</p>
-      <p>Between raw materials and finished goods sits <b>work in process</b>, the half-built stuff on the floor, and at the end the finished product is received back into the warehouse like any other inbound. The stakes are different here, though. In distribution a slow pick means a late package. On a car line, a part that arrives late or out of sequence stops the line, and a stopped automotive line is measured in many thousands of dollars per minute. That is why high-end plants run <b>just in sequence</b>, parts arriving in the exact order the line will use them.</p>
+      <p>In manufacturing the same building logic runs, but the goods change shape on the way through, and the jargon multiplies fast. Here is the key that unlocks it: nearly everything orbits one idea, the <b>bill of materials</b>, or BOM. It is simply the recipe for one unit, the exact parts it takes to build a single product, anywhere from a dozen for a toy to tens of thousands for a car.</p>
+      <div class="bom">
+        <div class="bh"><span class="bk">Bill of materials &middot; BOM</span><span class="bt">the recipe for one unit</span></div>
+        <ul>
+          <li><span class="q">1&times;</span> Steel frame</li>
+          <li><span class="q">1&times;</span> Motor</li>
+          <li><span class="q">1&times;</span> Control board</li>
+          <li><span class="q">6&times;</span> Fasteners</li>
+          <li><span class="q">1&times;</span> Trim kit</li>
+        </ul>
+        <div class="bsum"><span class="q">= 1</span> finished product</div>
+      </div>
+      <p>A <b>work order</b> says to build, say, two hundred of them. After that, almost every other manufacturing term is just a verb you apply to that recipe.</p>
+      <div class="concepts">
+        <div class="concept"><div class="ct">Kitting</div><div class="cd">Gather one recipe's worth of parts into a single bin and stage it at the line, so the assembler never leaves the station to hunt for a screw.</div></div>
+        <div class="concept"><div class="ct">Line replenishment</div><div class="cd">Keep the recipe's parts stocked right at the line as it eats them. The classic signal is <b>Kanban</b>: an empty bin means send another.</div></div>
+        <div class="concept"><div class="ct">Backflushing</div><div class="cd">When a finished unit is reported, deduct the whole recipe from inventory in one stroke, rather than scanning each part out. A wrong BOM quietly miscounts your stock.</div></div>
+        <div class="concept"><div class="ct">Work in process</div><div class="cd">The recipe half-assembled: units on the line that are no longer loose parts and not yet finished goods. Let <b>WIP</b> pile up and it hides problems.</div></div>
+      </div>
+      <p>When the unit is finished, it is received back into the warehouse as a new item, exactly the handoff in the diagram above. The stakes on the line, though, are different. In distribution a slow pick means a late package. On a car line, a part that arrives late or out of sequence stops the line, and a stopped automotive line is measured in many thousands of dollars per minute. That is why high-end plants run <b>just in sequence</b>, parts arriving in the exact order the line will use them.</p>
       <div class="stat reveal"><span class="fig">$10&ndash;22<span class="u"> k / min</span></span><span class="cap">What a stopped assembly line can cost at a major automaker. In a plant, the warehouse system is not shipping packages. It is keeping a very expensive machine from going quiet.</span><span class="src">Widely cited industry figure</span></div>
       <div class="move"><span class="k">The WMS pro's read</span><p>A manufacturing customer does not care about "orders shipped." They care about the line never starving. Reframe every conversation around feeding production on time, and you are speaking to their actual fear.</p></div>
     </section>
