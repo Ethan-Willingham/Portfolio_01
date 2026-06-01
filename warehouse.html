@@ -262,6 +262,7 @@
   .lab-links { display: grid; gap: 0.85rem; margin-bottom: 1.3rem; }
   .lab-link { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 1rem; align-items: center; }
   .lab-link .ll-name { color: var(--d-text-bright); font-size: 1.04rem; font-weight: 700; }
+  .lab-link .ll-desc { grid-column: 1 / -1; font-size: 0.85rem; color: var(--d-text-dim); line-height: 1.35; margin-top: -0.05rem; }
   .lab-link .ll-track { grid-column: 1 / -1; height: 16px; background: rgba(0,0,0,0.24); border-radius: 5px; overflow: hidden; }
   .lab-link .ll-fill { height: 100%; width: 97%; border-radius: 5px; background: var(--d-accent); transition: width 0.5s var(--ease-out); }
   .lab-toggle { font-family: var(--font-heading); font-size: 0.96rem; color: var(--d-text); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; padding: 0.4em 0.9em; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
@@ -642,26 +643,30 @@
               <div class="lab-link">
                 <span class="ll-name" id="name-ontime">On time</span>
                 <button class="lab-toggle" data-link="ontime" aria-pressed="false">97% &rarr; upgrade</button>
-                <div class="ll-track"><div class="ll-fill" id="fill-ontime"></div></div>
+                <span class="ll-desc">delivered by the date you promised</span>
+            <div class="ll-track"><div class="ll-fill" id="fill-ontime"></div></div>
               </div>
               <div class="lab-link">
                 <span class="ll-name" id="name-infull">In full</span>
                 <button class="lab-toggle" data-link="infull" aria-pressed="false">97% &rarr; upgrade</button>
-                <div class="ll-track"><div class="ll-fill" id="fill-infull"></div></div>
+                <span class="ll-desc">the complete order, no missing items or short counts</span>
+            <div class="ll-track"><div class="ll-fill" id="fill-infull"></div></div>
               </div>
               <div class="lab-link">
                 <span class="ll-name" id="name-intact">Undamaged</span>
                 <button class="lab-toggle" data-link="intact" aria-pressed="false">97% &rarr; upgrade</button>
-                <div class="ll-track"><div class="ll-fill" id="fill-intact"></div></div>
+                <span class="ll-desc">arrives in sellable condition, nothing broken</span>
+            <div class="ll-track"><div class="ll-fill" id="fill-intact"></div></div>
               </div>
               <div class="lab-link">
                 <span class="ll-name" id="name-invoice">Billed right</span>
                 <button class="lab-toggle" data-link="invoice" aria-pressed="false">97% &rarr; upgrade</button>
-                <div class="ll-track"><div class="ll-fill" id="fill-invoice"></div></div>
+                <span class="ll-desc">the invoice and paperwork match the order</span>
+            <div class="ll-track"><div class="ll-fill" id="fill-invoice"></div></div>
               </div>
             </div>
             <div class="lab-read"><p id="lab-msg">Four steps at 97 percent each. Feels like an A. But 0.97 times itself four times is only <b>88.5 percent</b>, so more than one order in nine is imperfect somewhere. Tap the links to fix them.</p></div>
-            <div class="lab-cite">The perfect order rate, the supply chain's hardest KPI.</div>
+            <div class="lab-cite">The perfect order rate, the standard order-reliability metric from the SCOR supply-chain model, benchmarked by APQC.</div>
           </div>
         </div>
       </div>
