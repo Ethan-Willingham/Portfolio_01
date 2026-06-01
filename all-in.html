@@ -847,7 +847,7 @@
         <p>It rests on a single, liberating premise. The things that make a great manager are not fixed traits you are born with or without. They are <b>competencies</b>: observable behaviors. And behaviors can be named, broken down, practiced, and built. <b>Competencies are learnable.</b> That premise is the only reason a book like this can exist, and the only reason this essay is worth reading.</p>
       </div>
 
-      <div class="fyi-label">
+      <div class="fyi-label" id="the-map">
         <div class="fl-k">The Map</div>
         <div class="fl-t">The whole of leadership, on one wheel</div>
         <p class="fl-s">The book sits on top of the Korn Ferry Leadership Architect: a map of nearly everything a leader is ever asked to do, sorted into <b>4 factors</b>, <b>12 clusters</b>, and <b>38 competencies</b>. Hover or tap any segment for a quick read on what it is. This first visual is just the lay of the land, the next one opens every piece all the way up.</p>
@@ -986,6 +986,31 @@
   <script>
   (function () {
     'use strict';
+
+    /* deep links: keep #hash links landing on the right section. on a first
+       visit the web fonts swap in after the browser's initial jump, reflowing
+       the long essay above the anchor, so re-assert the target once layout
+       settles, unless the reader has already taken over the scroll. */
+    var hashId = decodeURIComponent((location.hash || '').slice(1));
+    if (hashId) {
+      var tookOver = false;
+      var noteScroll = function () { tookOver = true; };
+      window.addEventListener('wheel', noteScroll, { passive: true, once: true });
+      window.addEventListener('touchmove', noteScroll, { passive: true, once: true });
+      window.addEventListener('keydown', noteScroll, { once: true });
+      var reassert = function () {
+        if (tookOver) return;
+        var el = document.getElementById(hashId);
+        if (!el) return;
+        /* sum offsetTop up the chain: it is the layout position, unaffected by
+           the reveal transform (and its 0.7s transition), so we land true. */
+        var y = 0;
+        for (var n = el; n; n = n.offsetParent) { y += n.offsetTop; }
+        window.scrollTo({ top: y, behavior: 'instant' });
+      };
+      window.addEventListener('load', reassert);
+      if (document.fonts && document.fonts.ready) { document.fonts.ready.then(reassert); }
+    }
 
     /* reading progress bar */
     var rp = document.getElementById('rp');
