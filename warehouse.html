@@ -471,7 +471,7 @@
       <h3>The count that never stops</h3>
       <p class="sub">Everything downstream is built on one number being true: do the books match the bins?</p>
       <p>Inventory accuracy is the foundation, and it decays on its own. A box gets moved without a scan, one gets crushed and tossed, a count gets fudged under time pressure, and slowly the record drifts from the shelf. The old fix was to shut the building once a year and count everything, a miserable snapshot that is stale the next morning. The modern fix is <b>cycle counting</b>: count a small, smart slice every day, count the fast movers most often, and chase the root cause of every miss, so accuracy is maintained continuously instead of rescued annually.</p>
-      <p>Two ideas earn their keep here. The first is the order in which you sell: <b>FIFO</b> ships the oldest stock first, and <b>FEFO</b>, first expired first out, ships whatever dies soonest, which is the law of the land in food and pharma. The second is the word <b>status</b>. A unit can be available, or allocated to an order, or on hold, or in quarantine awaiting inspection. This is behind a complaint you will hear a hundred times: "the system says I have 500, but I can't ship any." All 500 are real. They are also all allocated, or held. On hand is not the same as available to promise.</p>
+      <p>Two ideas earn their keep here. The first is the order in which you sell: <b>FIFO</b> ships the oldest stock first, and <b>FEFO</b>, first expired first out, ships whatever dies soonest, which is the law of the land in food and pharma. The second is the word <b>status</b>. A unit on hand is not the same as a unit you can sell. It might be <b>available</b>, or it might be spoken for in one of two very different ways. <b>Allocated</b> means it is reserved for a specific order and about to ship. <b>On hold</b> means it is blocked from shipping because something is wrong with it, like damage or an expired date. That gap is behind a complaint you will hear a hundred times: "the system says I have 500, but I can't ship any." All 500 are real; they are just all allocated, or all held. On hand is never the same as available to promise.</p>
       <div class="stat reveal"><span class="fig">99<span class="u">%+</span></span><span class="cap">Where a WMS holds inventory accuracy. On paper it is often 80 to 90, which means one pick in ten goes wrong. The leap from "ten" to "ninety-nine" is the system's plainest payoff.</span><span class="src">Warehouse benchmark surveys</span></div>
       <div class="move"><span class="k">The WMS pro's read</span><p>Half the "your software is broken" tickets you ever get will be a status confusion or a process that skipped a scan, not a bug. Learn to read the inventory record out loud, item, location, quantity, status, and you can solve most of them on the call.</p></div>
     </section>
@@ -519,7 +519,38 @@
     </section>
 
     <!-- ============ ACT III ============ -->
-    <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The factory next door</div></div>
+    <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The work that never stops</div></div>
+
+    <div class="fig-block wide reveal flowfig" id="flow3">
+      <div class="fig-title">The work that keeps inventory true</div>
+      <div class="plate">
+        <canvas data-bg></canvas>
+        <canvas data-flow></canvas>
+        <canvas data-ink role="img"
+          aria-label="A blueprint diagram of the upkeep loop that keeps a warehouse accurate, drawn as a continuous ring. Goods circle clockwise through four stations that run all day at once: replenishment refills the pick shelves, cycle counting verifies the records, holds pull unsafe stock out, and returns bring goods back to be re-entered or retired. The loop never stops."></canvas>
+        <canvas data-grain class="grain"></canvas>
+        <div class="vnav">
+          <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+      <p class="fig-note">Click any station, or step through with the arrows. Replenish, count, hold, returns: four jobs that never finish, running at once, all day. This is the quiet loop behind a shelf you can trust.</p>
+      <p class="sr" data-t aria-live="polite"></p>
+      <p class="sr">The work that keeps inventory true runs in a loop, all day, all at once: replenishment refills the pick shelves from reserve, cycle counting verifies the records a slice at a time, holds pull damaged or expired stock out before it can ship, and returns bring goods back to be inspected and re-entered or retired. Then it begins again.</p>
+    </div>
+
+    <section class="sec reveal">
+      <span class="sec-num">09</span>
+      <h3>The upkeep that never sleeps</h3>
+      <p class="sub">The journey you just followed assumes the shelves are stocked and the counts are honest. Keeping them that way is not a step. It is a loop that runs all day, forever.</p>
+      <p>Four jobs circle the building without end. <b>Replenishment</b> keeps refilling the small pick face from the big reserve in back, before a picker ever reaches an empty slot. <b>Cycle counting</b> checks a smart slice of the inventory every day, so the record and the shelf are reconciled in days instead of once a year. Those two you have already met. The loop adds two more that quietly decide whether a customer ever gets burned.</p>
+      <p>The first is the <b>hold</b>. When stock is damaged, expired, recalled, or simply awaiting inspection, the system pulls it out of the <b>available</b> pool and parks it in <b>quarantine</b>, where it physically cannot be picked, so it can never ship by mistake. The second is <b>returns</b>, the whole reverse journey: goods come back from customers, get inspected one at a time, and are restocked, sent back to the vendor, or written off. It is slow and expensive precisely because almost none of it can be done in bulk. And every job in this loop feeds the next: a return that passes inspection becomes replenishment stock, a count that finds a gap can trigger a hold, and around it goes.</p>
+      <div class="stat reveal"><span class="fig">2&ndash;3<span class="u">&times; cost</span></span><span class="cap">What it takes to process one returned item versus shipping it in the first place, because each one must be inspected by hand instead of handled in bulk. Returns run a fifth or more of everything sold online, and nearly half of all apparel.</span><span class="src">NRF and industry estimates, directional</span></div>
+      <div class="move"><span class="k">The WMS pro's read</span><p>Half of "the system is broken, it shows stock I cannot ship" tickets are a hold or an allocation doing its job, not a bug. And a customer drowning in returns is not just complaining, they are asking for a reverse-logistics module. Both are this loop, and reading it on the call is the whole game.</p></div>
+    </section>
+
+    <!-- ============ ACT IV ============ -->
+    <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">The factory next door</div></div>
 
     <div class="fig-block wide reveal flowfig" id="flow2">
       <div class="fig-title">How raw materials become a product</div>
@@ -534,13 +565,13 @@
           <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
       </div>
-      <p class="fig-note">Click any stage, or step through with the arrows. Four kinds of parts arrive, wait for a work order, and meet at the line, where many become one. The finished good then feeds the warehouse from the visual above. Here is how that transformation works.</p>
+      <p class="fig-note">Click any stage, or step through with the arrows. Four kinds of parts arrive, wait for a work order, and meet at the line, where many become one. The finished good then feeds the warehouse from the first visual. Here is how that transformation works.</p>
       <p class="sr" data-t aria-live="polite"></p>
       <p class="sr">How raw materials become a product: components arrive and are checked in, wait in the stockroom until a work order calls for them, are gathered into one kit per build by the bill of materials, and at the assembly line many parts become one finished good. That finished good then becomes a new item in the warehouse to be stored, picked, packed, and shipped, or sent straight onto a truck.</p>
     </div>
 
     <section class="sec reveal">
-      <span class="sec-num">09</span>
+      <span class="sec-num">10</span>
       <h3>From raw to finished</h3>
       <p class="sub">A factory is a warehouse with a transformation in the middle. The WMS feeds the line and catches what comes off it.</p>
       <p>In manufacturing the same building logic runs, but the goods change shape on the way through, and the jargon multiplies fast. Here is the key that unlocks it: nearly everything orbits one idea, the <b>bill of materials</b>, or BOM. It is simply the recipe for one unit, the exact parts it takes to build a single product, anywhere from a dozen for a toy to tens of thousands for a car.</p>
@@ -568,7 +599,7 @@
     </section>
 
     <section class="sec reveal">
-      <span class="sec-num">10</span>
+      <span class="sec-num">11</span>
       <h3>The system zoo</h3>
       <p class="sub">Five three-letter systems claim a piece of the floor. The day you can draw the stack is the day you stop sounding like an outsider.</p>
       <p>The most confusing thing for a newcomer is that the WMS is not alone. It lives in a stack of systems, each minding its own altitude, and they are forever blamed for each other's failures. At the top is the <b>ERP</b>, the financial brain that decides what to make and buy and what it is worth. Below it the <b>WMS</b> runs the physical floor. On the factory side the <b>MES</b> tracks what is happening on the machines right now. And where there is automation, a <b>WCS</b> drives the conveyors and sorters in millisecond real time, with a newer layer, the <b>WES</b>, orchestrating robots and humans together. This layered map is old enough to have a name, the ISA-95 pyramid.</p>
@@ -584,39 +615,8 @@
         <p class="fig-note">They talk constantly, mostly through a decades-old language called EDI. The two messages that matter most: a 940 tells the WMS to ship something, and a 945 tells the ERP it shipped. That handshake is the heartbeat of the whole stack.</p>
       </div>
       <p>And this is exactly where projects die. The software vendor does its part, the data flows between systems get underestimated, and the connection between WMS and ERP becomes the thing nobody owns. When the 945 silently fails to send, three different teams point at each other while the customer's orders pile up unbilled.</p>
-      <div class="stat reveal"><span class="fig">~45<span class="u">%</span></span><span class="cap">Of warehouse software projects that name integration as the main cause of delays and overruns. Not the software itself. The wiring between the software and everything around it.</span><span class="src">Implementation surveys, directional</span></div>
+      <div class="stat reveal"><span class="fig">~45<span class="u">%</span></span><span class="cap">Of warehouse software projects that name integration as the main cause of going live late and over budget. Not the software itself. The wiring between the software and everything around it.</span><span class="src">Implementation surveys, directional</span></div>
       <div class="move"><span class="k">The WMS pro's read</span><p>Most "WMS bugs" are integration bugs. The WMS pro who can tell whether the WMS sent the message, the middleware dropped it, or the ERP rejected it is worth their salary three times over. Learn the 940 and the 945 cold.</p></div>
-    </section>
-
-    <!-- ============ ACT IV ============ -->
-    <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">The work that never stops</div></div>
-
-    <div class="fig-block wide reveal flowfig" id="flow3">
-      <div class="fig-title">The work that keeps inventory true</div>
-      <div class="plate">
-        <canvas data-bg></canvas>
-        <canvas data-flow></canvas>
-        <canvas data-ink role="img"
-          aria-label="A blueprint diagram of the upkeep loop that keeps a warehouse accurate, drawn as a continuous ring. Goods circle clockwise through four stations that run all day at once: replenishment refills the pick shelves, cycle counting verifies the records, holds pull unsafe stock out, and returns bring goods back to be re-entered or retired. The loop never stops."></canvas>
-        <canvas data-grain class="grain"></canvas>
-        <div class="vnav">
-          <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button class="vbtn" data-next aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="5.5,2.5 10.5,8 5.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        </div>
-      </div>
-      <p class="fig-note">Click any station, or step through with the arrows. Replenish, count, hold, returns: four jobs that never finish, running at once, all day. This is the quiet loop behind a shelf you can trust.</p>
-      <p class="sr" data-t aria-live="polite"></p>
-      <p class="sr">The work that keeps inventory true runs in a loop, all day, all at once: replenishment refills the pick shelves from reserve, cycle counting verifies the records a slice at a time, holds pull damaged or expired stock out before it can ship, and returns bring goods back to be inspected and re-entered or retired. Then it begins again.</p>
-    </div>
-
-    <section class="sec reveal">
-      <span class="sec-num">11</span>
-      <h3>The upkeep that never sleeps</h3>
-      <p class="sub">The two journeys you just saw both assume the shelves are stocked and the counts are honest. Keeping them that way is not a step. It is a loop that runs all day, forever.</p>
-      <p>Four jobs circle the building without end. <b>Replenishment</b> keeps refilling the small pick face from the big reserve in back, before a picker ever reaches an empty slot. <b>Cycle counting</b> checks a smart slice of the inventory every day, so the record and the shelf are reconciled in days instead of once a year. Those two you have already met. The loop adds two more that quietly decide whether a customer ever gets burned.</p>
-      <p>The first is the <b>hold</b>. When stock is damaged, expired, recalled, or simply awaiting inspection, the system pulls it out of the <b>available</b> pool and parks it in <b>quarantine</b>, where it physically cannot be picked, so it can never ship by mistake. The second is <b>returns</b>, the whole reverse journey: goods come back from customers, get inspected one at a time, and are restocked, sent back to the vendor, or written off. It is slow and expensive precisely because almost none of it can be done in bulk. And every job in this loop feeds the next: a return that passes inspection becomes replenishment stock, a count that finds a gap can trigger a hold, and around it goes.</p>
-      <div class="stat reveal"><span class="fig">2&ndash;3<span class="u">&times; cost</span></span><span class="cap">What it takes to process one returned item versus shipping it in the first place, because each one must be inspected by hand instead of handled in bulk. Returns run a fifth or more of everything sold online, and nearly half of all apparel.</span><span class="src">NRF and industry estimates, directional</span></div>
-      <div class="move"><span class="k">The WMS pro's read</span><p>Half of "the system is broken, it shows stock I cannot ship" tickets are a hold or an allocation doing its job, not a bug. And a customer drowning in returns is not just complaining, they are asking for a reverse-logistics module. Both are this loop, and reading it on the call is the whole game.</p></div>
     </section>
 
     <!-- ============ ACT V ============ -->
@@ -1513,7 +1513,7 @@
   <script>
   /* ============================================================
      Visual 3: the work that keeps inventory true.
-     The first two visuals are journeys with a start and an end. This
+     The earlier visual is a journey with a start and an end. This
      one is a LOOP, because the upkeep work never finishes. Goods circle
      a ring clockwise through four stations that all run at once:
      REPLENISH (refill the pick shelves), CYCLE COUNT (verify the
@@ -1611,7 +1611,7 @@
     function nwin(n) { var nd = nodes[n]; return [nd.x - 76, nd.y - 58, nd.x + 76, nd.y + 58]; }
     var steps = [
       { title: 'The work that keeps inventory true', note: 'every hour, all of this runs at once',
-        d: 'The first two visuals had a beginning and an end. This one is a loop, because the work that keeps a warehouse accurate never finishes. Four jobs run all day, all at once.' },
+        d: 'The last visual followed one item from the dock to the door. This one is a loop, because the work that keeps a warehouse accurate never finishes. Four jobs run all day, all at once.' },
       { title: 'Refill the shelves', win: nwin(0), st: ['replenish'], note: 'keep the pick shelves full',
         d: 'Replenishment moves stock from the big reserve racking in back down to the small pick shelves out front, before they run dry, so a picker never reaches an empty slot.' },
       { title: 'Count a little, every day', win: nwin(1), st: ['count'], note: 'catch errors in days, not at year end',
