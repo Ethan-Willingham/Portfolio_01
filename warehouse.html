@@ -178,6 +178,7 @@
   .flowfig .fig-note { max-width: var(--measure); margin: 1.1rem auto 0; }
   /* the lifecycle plate is a wide, short blueprint, balanced top to bottom */
   #flow1 .plate { aspect-ratio: 1000 / 300; }
+  #flow2 .plate { aspect-ratio: 1000 / 300; }
   .fig-src { font-size: 0.88rem; color: var(--text-dim); line-height: 1.55; margin: 0.9rem 0 0; }
 
   /* two-column compare */
@@ -510,7 +511,7 @@
         <canvas data-bg></canvas>
         <canvas data-flow></canvas>
         <canvas data-ink role="img"
-          aria-label="A blueprint diagram of how a factory turns raw materials into a finished product. Four streams of components flow in from the left, wait in raw storage, are gathered into a kit, and converge at a single assembly node where many parts become one. A finished good then flows out to the right, where it ships or feeds the warehouse."></canvas>
+          aria-label="A blueprint diagram of how a factory turns parts into a finished product. Four streams of components flow in from the left, wait in the stockroom until a work order releases them, are gathered into a kit by the bill of materials, and converge at a single assembly node where many parts become one. The finished good then flows out to the right, into warehouse storage or onto a truck."></canvas>
         <canvas data-grain class="grain"></canvas>
         <div class="vnav">
           <button class="vbtn" data-prev aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><polyline points="10.5,2.5 5.5,8 10.5,13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -519,7 +520,7 @@
       </div>
       <p class="fig-note">Click any stage, or step through with the arrows. Four kinds of parts arrive, wait for a work order, and meet at the line, where many become one. The finished good then feeds the warehouse from the visual above. Here is how that transformation works.</p>
       <p class="sr" data-t aria-live="polite"></p>
-      <p class="sr">How raw materials become a product: components arrive from suppliers and wait in storage, one build's parts are gathered into a kit, and at the assembly line many parts become one finished good. The finished good then ships, or feeds the warehouse from the first visual.</p>
+      <p class="sr">How raw materials become a product: components arrive and are checked in, wait in the stockroom until a work order calls for them, are gathered into one kit per build by the bill of materials, and at the assembly line many parts become one finished good. That finished good then becomes a new item in the warehouse to be stored, picked, packed, and shipped, or sent straight onto a truck.</p>
     </div>
 
     <section class="sec reveal">
@@ -1163,20 +1164,21 @@
 
     /* geometry: four input lanes on the left, converging to one node, one output lane on the right */
     var xIn = 96, xOut = 904;
-    var LT = 132, LB = 322;                                   // vertical band for the input lanes
-    var laneY = [160, 206, 252, 298];                          // four component lanes
+    var LT = 78, LB = 200;                                    // vertical band for the input lanes (centered in the 300-tall plate)
+    var laneY = [88, 122, 156, 190];                           // four component lanes
     var laneLabel = ['FRAME', 'MOTOR', 'BOARD', 'TRIM'];
-    var xRawIn = 150, xStore = 288, xKit = 426, xAsm = 600, xFin = 762, xShip = 880;
-    var nodeY = 225;                                           // assembly node + the single output lane
+    var xPartsin = 148, xStock = 258, xWork = 358, xKit = 458, xAsm = 600, xFin = 726, xShipOut = 856;
+    var nodeY = 139;                                           // assembly node + the single output lane
     var markers = [
-      { id: 'rawin', x: xRawIn, label: 'RAW IN' },
-      { id: 'store', x: xStore, label: 'RAW STORE' },
-      { id: 'kit',   x: xKit,   label: 'KITTING' },
-      { id: 'asm',   x: xAsm,   label: 'ASSEMBLY' },
-      { id: 'fin',   x: xFin,   label: 'FINISHED' },
-      { id: 'ship',  x: xShip,  label: 'SHIP' }
+      { id: 'partsin', x: xPartsin, label: 'PARTS IN' },
+      { id: 'stock',   x: xStock,   label: 'STOCKROOM' },
+      { id: 'work',    x: xWork,    label: 'WORK ORDER' },
+      { id: 'kit',     x: xKit,     label: 'KITTING' },
+      { id: 'asm',     x: xAsm,     label: 'ASSEMBLY' },
+      { id: 'fin',     x: xFin,     label: 'FINISHED' },
+      { id: 'out',     x: xShipOut, label: 'STORE / SHIP' }
     ];
-    var MKEYS = ['rawin', 'store', 'kit', 'asm', 'fin', 'ship'];
+    var MKEYS = ['partsin', 'stock', 'work', 'kit', 'asm', 'fin', 'out'];
 
     function smooth(t) { return t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t); }
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -1200,8 +1202,8 @@
       p.wob = Math.random() * 6.28;
       p.speed = rnd(132, 168);
       p.state = 'move'; p.dwellT = 0; p.atAsm = false; p.hist = []; p.dwells = [];
-      // most components wait in raw storage for a work order
-      if (Math.random() < 0.72) p.dwells.push({ x: rnd(xStore - 8, xKit - 36), dur: expDur(4.0, 13) });
+      // most components wait in the stockroom until a work order releases them
+      if (Math.random() < 0.78) p.dwells.push({ x: rnd(xStock - 6, xWork - 22), dur: expDur(4.2, 13) });
       // every component dwells at the line: assembly takes time
       p.dwells.push({ x: xAsm, dur: expDur(1.5, 5), asm: true });
       for (var k = p.dwells.length - 1; k >= 0; k--) if (p.dwells[k].x <= p.x) p.dwells.splice(k, 1);
@@ -1242,19 +1244,21 @@
 
     var steps = [
       { title: 'How raw materials become a product', note: 'many parts, one product',
-        d: 'A factory does not store one thing, it builds one thing out of many. Follow the parts as they arrive, wait, and come together into a single finished good.' },
-      { title: 'Parts arrive from suppliers', win: [xIn, LT - 7, xStore + 6, LB + 7], st: ['rawin'], note: 'counted in, like any other inventory',
-        d: 'Raw materials and components arrive on inbound trucks and are counted in, exactly like the receiving step in the last visual. A single product can be built from dozens or even thousands of distinct part numbers.' },
-      { title: 'They wait for a work order', win: [xStore - 30, LT - 7, xKit - 30, LB + 7], st: ['store'], note: 'a work order is the signal to build',
-        d: 'Components sit in storage until a work order calls for them. A work order is simply the instruction to build, say, fifty of a product today. Until then, the parts just wait.' },
-      { title: "One build's parts are gathered", win: [xKit - 42, LT - 7, xAsm - 44, LB + 7], st: ['kit'], note: 'every part on the list, in one kit',
-        d: 'When the work order is released, a worker gathers every part on the list into a single kit and brings it to the line. The list of parts that make one product is the bill of materials.' },
-      { title: 'Many parts become one', win: [xAsm - 66, LT - 7, xAsm + 74, LB + 7], st: ['asm'], note: 'this is the moment of assembly',
-        d: 'At the line the parts are joined into one product. This is the heart of manufacturing: several components arrive, and a single finished good leaves. Work that is half built and still on the line is called work in process.' },
-      { title: 'A finished product comes off the line', win: [xFin - 62, LT - 7, xFin + 62, LB + 7], st: ['fin'], note: 'one finished good, ready to sell',
-        d: 'The assembled product is confirmed complete and checked for quality. The system then deducts every component it used from inventory in one move, trusting the bill of materials, so no one has to scan each part out by hand.' },
-      { title: 'It ships, or feeds the warehouse', win: [xShip - 52, LT - 7, xOut, LB + 7], st: ['ship'], note: 'now it is where the last visual began',
-        d: 'The finished good either goes straight onto an outbound truck or into finished goods storage, where it becomes a new item to receive, store, pick, and ship. That is exactly where the first visual began.' }
+        d: 'A warehouse stores things; a factory builds them. Watch a product come together out of many separate parts, then hand that finished product back to the warehouse you just walked.' },
+      { title: 'The parts arrive', win: [xIn, LT - 7, xStock + 8, LB + 7], st: ['partsin'], note: 'received and checked in, like any inbound',
+        d: 'Every component and raw material is delivered, counted against the purchase order, and booked into inventory. It is the same receiving step as the warehouse, just at the start of a build. One product might take a handful of parts, or tens of thousands.' },
+      { title: 'They wait in the stockroom', win: [xStock - 28, LT - 7, xWork - 16, LB + 7], st: ['stock'], note: 'components sit until a build is ordered',
+        d: 'The parts rest in storage, the stockroom, as ordinary inventory: a location, a quantity, a count. Most of a factory, like most of a warehouse, is things sitting still and waiting to be needed.' },
+      { title: 'A work order says build', win: [xWork - 40, LT - 7, xKit - 28, LB + 7], st: ['work'], note: 'the instruction to build, say, 200 units',
+        d: 'A work order is the order to build a set number of one product. It is what wakes the parts up: the moment it drops, the system reserves the exact components that build needs and releases them from the stockroom.' },
+      { title: 'One kit, one build', win: [xKit - 38, LT - 7, xAsm - 50, LB + 7], st: ['kit'], note: 'every part on the bill of materials, gathered',
+        d: 'A worker gathers every part the product needs into a single kit and stages it at the line. That list of parts is the bill of materials, or BOM, the recipe for one unit, so the assembler never leaves the station to hunt for a screw.' },
+      { title: 'Many parts become one', win: [xAsm - 64, LT - 7, xAsm + 70, LB + 7], st: ['asm'], note: 'the components are joined into a product',
+        d: 'At the line the kit is assembled into a single product. This is the one move a warehouse never makes: several distinct parts go in, and one new thing comes out. Half-built and still on the line, it is called work in process.' },
+      { title: 'A finished good comes off the line', win: [xFin - 58, LT - 7, xFin + 58, nodeY + 48], st: ['fin'], note: 'one new item, ready to sell',
+        d: 'The product is confirmed complete and quality-checked. The system then backflushes: it deducts every component the BOM says was used in one stroke, so nobody scans each part out by hand. Many part numbers are now one sellable item.' },
+      { title: 'Into the warehouse, or onto a truck', win: [xFin + 8, LT - 7, xOut, nodeY + 48], st: ['out'], note: 'now just another item to store, pick, and ship',
+        d: 'The finished good is not picked or packed here. It is received into finished-goods storage as a brand-new item and runs the exact warehouse path from the first visual: stored, picked, packed, shipped. Build-to-order can skip the shelf and roll straight onto an outbound truck.' }
     ];
 
     /* ---- sizing ---- */
@@ -1438,7 +1442,7 @@
     fig.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') { apply(step - 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { apply(step + 1); e.preventDefault(); } });
 
     // the stage labels along the top are the primary navigation
-    var plate = fig.querySelector('.plate'), labelStep = { rawin: 1, store: 2, kit: 3, asm: 4, fin: 5, ship: 6 };
+    var plate = fig.querySelector('.plate'), labelStep = { partsin: 1, stock: 2, work: 3, kit: 4, asm: 5, fin: 6, out: 7 };
     function hitLabel(e) {
       var r = plate.getBoundingClientRect();
       var vx = (e.clientX - r.left) / r.width * VW, vy = (e.clientY - r.top) / r.height * VH;
