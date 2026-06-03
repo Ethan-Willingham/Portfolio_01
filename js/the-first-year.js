@@ -2822,20 +2822,13 @@
 
     /* ---- reassuring note + source ---- */
     note(fig,
-      'The dip has a bottom, and it turns around. A vaginal baby loses a median of about <b>4.2% at 24 hours</b> and ' +
-      '<b>7.1% at 48 hours</b>, then starts climbing back; a cesarean baby loses a little more and bottoms out later ' +
-      '(median <b>8.6% at 72 hours</b>). The dashed <b>10% line</b> is the classic "look harder" mark: loss counts as ' +
-      'excessive once a vaginal baby crosses the <b>90th</b> percentile or a cesarean baby crosses the <b>75th</b>. ' +
-      'Crossing it is common after a cesarean (almost 10% of cesarean babies are past 10% by 48 hours, more than a ' +
-      'quarter by 72 hours) and is not automatically alarming; for a vaginal baby it is rarer (top ~5% at 48 hours) ' +
-      'and earns a closer feeding look. A baby who is feeding, peeing, and pooping is almost always fine mid-dip, and ' +
-      'most babies are back to birth weight by 10 to 14 days. ' +
-      '<span class="src">Source: Flaherman et al., "Early Weight Loss Nomograms for Exclusively Breastfed Newborns," ' +
-      'Pediatrics 2015;135(1):e16 to e23 (NEWT, newbornweight.org); 161,471 newborns, 108,907 exclusively breastfed ' +
-      '(83,433 vaginal, 25,474 cesarean), 14 Kaiser Northern California hospitals. Median values are the published ' +
-      'digits; the 75th, 90th, and 95th percentiles are read from the paper Figure 2, and the curves here are smooth ' +
-      'illustrations of the published nomogram, not the exact lines. These breastfed curves do not apply to ' +
-      'formula-fed babies, who lose less.</span>');
+      'The dip has a bottom. Most babies lose the most weight around day 2 to 3, then climb back, and are usually ' +
+      'back to birth weight by 10 to 14 days. The dashed <b>10% line</b> is the classic "look harder" mark; a baby ' +
+      'crossing it, or steadily climbing <em>up</em> through the percentiles, is the one who earns a closer feeding ' +
+      'look. The exact figures are in the table below. ' +
+      '<span class="src">Source: Flaherman et al., Pediatrics 2015 (NEWT, newbornweight.org); 161,471 newborns. ' +
+      'Published medians are exact; the 75th, 90th, and 95th curves are smooth illustrations read from Figure 2 of ' +
+      'the paper, not the exact lines, and do not apply to formula-fed babies, who lose less.</span>');
 
     /* ---- accessible data table (the underlying anchors) ---- */
     dataTable(fig,
