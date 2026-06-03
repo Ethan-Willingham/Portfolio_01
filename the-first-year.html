@@ -82,14 +82,24 @@
   .fy-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 9vw, 4.4rem); line-height: 1.02; letter-spacing: -0.02em; color: var(--text-bright); text-wrap: balance; }
   .fy-sub { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.4vw, 1.5rem); line-height: 1.5; color: var(--text-dim); margin-top: 1rem; max-width: 40ch; text-wrap: pretty; }
 
-  /* ---------- CONTENTS: desktop side-rail + mobile top-bar/overlay ---------- */
-  .fy-topbar { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-    padding: 0.5rem var(--gutter); background: rgba(30, 36, 32, 0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .fy-topbar .fy-topbar-title { font-family: var(--font-heading); font-size: 1rem; color: var(--text-bright); }
+  /* ---------- CONTENTS NAV: one panel toggle, desktop rail + mobile drawer ---------- */
   .fy-btn { font-family: var(--font-body); font-size: 0.9rem; color: var(--text); background: transparent; border: 1px solid var(--rule); border-radius: 4px; padding: 0.4em 0.8em; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; }
   .fy-btn:hover { border-color: var(--accent); color: var(--text-bright); }
   .fy-btn-emerg { color: var(--emerg); border-color: var(--emerg-rule); }
   .fy-btn-emerg:hover { background: var(--emerg-bg); border-color: var(--emerg); color: var(--emerg); }
+
+  /* the single persistent toggle: same panel icon and screen position in every state */
+  .fy-nav-toggle { position: fixed; top: 0.7rem; left: 0.7rem; z-index: 95; display: inline-flex; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; color: var(--text); background: rgba(30,36,32,0.9); backdrop-filter: blur(8px); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+  .fy-nav-toggle:hover { color: var(--text-bright); border-color: var(--accent); }
+  .fy-nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fy-nav-toggle svg { width: 1.25rem; height: 1.25rem; display: block; }
+
+  /* always-reachable emergency pill */
+  .fy-help-fab { position: fixed; top: 0.8rem; right: 0.9rem; z-index: 95; display: inline-flex; align-items: center; font-family: var(--font-body); font-size: 0.85rem; line-height: 1; text-decoration: none; background: rgba(30,36,32,0.9); backdrop-filter: blur(8px); border-radius: 999px; padding: 0.62em 0.95em; }
+
+  /* mobile drawer backdrop */
+  .fy-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(10,12,11,0.55); opacity: 0; visibility: hidden; transition: opacity 0.24s var(--ease-out), visibility 0.24s; }
+  .nav-open .fy-scrim { opacity: 1; visibility: visible; }
 
   .fy-toc { font-family: var(--font-body); }
   .fy-toc-search { width: 100%; box-sizing: border-box; font-family: var(--font-body); font-size: 0.9rem; color: var(--text); background: rgba(0,0,0,0.18);
@@ -104,35 +114,30 @@
   .fy-toc-list li.is-emerg a:hover { background: var(--emerg-bg); }
   .fy-toc-list li.hidden { display: none; }
   .fy-toc-count { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem; }
-  /* desktop rail collapse controls (shown/wired only on wide screens) */
-  .fy-rail-hide { display: none; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); background: none; border: 0; padding: 0; margin-bottom: 0.8rem; cursor: pointer; align-items: center; gap: 0.4em; }
-  .fy-rail-hide:hover { color: var(--text-bright); }
-  @media (min-width: 1240px) { .fy-rail-hide { display: inline-flex; } }
-  .fy-rail-show { display: none; position: fixed; top: 1.3rem; left: 1.5rem; z-index: 50; font-family: var(--font-body); font-size: 0.85rem; color: var(--text); background: rgba(30,36,32,0.92); backdrop-filter: blur(8px); border: 1px solid var(--rule); border-radius: 6px; padding: 0.45em 0.85em; cursor: pointer; align-items: center; gap: 0.45em; }
-  .fy-rail-show:hover { border-color: var(--accent); color: var(--text-bright); }
+  .fy-toc-heading { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 0.7rem; }
 
-  /* desktop: a fixed contents rail in the left gutter, the measure stays centered */
+  /* DESKTOP: fixed rail; the toggle collapses it and the article reflows wider */
   @media (min-width: 1240px) {
-    .fy-topbar { display: none; }
-    /* Rail pinned near the left edge; the reading column is centered in the space beside it. */
     :root { --rail-x: clamp(1.5rem, 3.2vw, 3.5rem); }
     body { padding-left: calc(var(--rail-x) + var(--rail-w) + var(--rail-gap)); padding-right: var(--rail-x); }
-    .fy-toc { position: fixed; top: 2.2rem; left: var(--rail-x); width: var(--rail-w); max-height: calc(100vh - 4rem); overflow-y: auto; z-index: 40; padding-right: 0.5rem; }
-    .fy-toc-heading { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.7rem; }
-    /* Collapsed: hide the rail and center the reading column on the viewport. */
-    body.toc-hidden { padding-left: max(1.5rem, calc((100vw - var(--measure)) / 2)); padding-right: max(1.5rem, calc((100vw - var(--measure)) / 2)); }
-    body.toc-hidden .fy-toc { display: none; }
-    body.toc-hidden .fy-rail-show { display: inline-flex; }
+    .fy-nav-toggle { top: 0.9rem; left: var(--rail-x); }
+    .fy-help-fab { display: none; }
+    .nav-collapsed .fy-help-fab { display: inline-flex; }
+    .fy-toc { position: fixed; top: 4rem; left: var(--rail-x); width: var(--rail-w); max-height: calc(100vh - 5rem); overflow-y: auto; z-index: 40; padding-right: 0.5rem; transition: transform 0.24s var(--ease-out), opacity 0.24s var(--ease-out); }
+    .nav-collapsed body { padding-left: max(1.5rem, calc((100vw - var(--measure)) / 2)); padding-right: max(1.5rem, calc((100vw - var(--measure)) / 2)); }
+    .nav-collapsed .fy-toc { transform: translateX(calc(-1 * (var(--rail-x) + var(--rail-w) + 1.5rem))); opacity: 0; visibility: hidden; }
+    .fy-scrim { display: none; }
   }
-  /* mobile / narrow: contents live behind the top-bar button, in a full overlay */
+  /* MOBILE: the rail is a left drawer over the content, with a scrim */
   @media (max-width: 1239.98px) {
+    body { padding-top: 3.4rem; }
     .fy-toc-heading { display: none; }
-    .fy-toc { position: fixed; inset: 0; z-index: 80; background: rgba(20, 24, 21, 0.98); padding: 1.2rem var(--gutter) 2rem; overflow-y: auto; transform: translateY(-100%); visibility: hidden; transition: transform 0.32s var(--ease-out), visibility 0.32s; }
-    .fy-toc.open { transform: none; visibility: visible; }
-    .fy-toc-close { position: absolute; top: 0.8rem; right: var(--gutter); }
+    .fy-toc { position: fixed; top: 0; left: 0; bottom: 0; width: min(20rem, 84vw); z-index: 85; background: rgba(20, 24, 21, 0.99); border-right: 1px solid var(--rule); padding: 4rem 1.2rem 2rem; overflow-y: auto; transform: translateX(-100%); transition: transform 0.26s var(--ease-out); }
+    .nav-open .fy-toc { transform: none; }
+    .nav-open, .nav-open body { overflow: hidden; }
     .fy-toc-list a { padding: 0.55em 0.5em; font-size: 1rem; }
   }
-  @media (prefers-reduced-motion: reduce) { .fy-toc { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .fy-toc, .fy-scrim, .fy-nav-toggle { transition: none; } }
 
   /* ---------- SECTIONS + HEADINGS ---------- */
   .gsec { max-width: var(--measure); margin: 0 auto; padding: 3.2rem var(--gutter) 0; scroll-margin-top: 4rem; }
@@ -330,23 +335,21 @@
     html { scroll-behavior: smooth; }
   }
   </style>
+  <script>try{if(localStorage.getItem('fy-nav')==='collapsed')document.documentElement.classList.add('nav-collapsed');}catch(e){}</script>
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
-  <!-- mobile/narrow contents bar -->
-  <div class="fy-topbar">
-    <span class="fy-topbar-title">The First Year</span>
-    <span style="display:flex; gap:0.5rem">
-      <a class="fy-btn fy-btn-emerg" href="#emergency">Get help now</a>
-      <button class="fy-btn" id="fy-toc-toggle" aria-expanded="false" aria-controls="fy-toc">Contents</button>
-    </span>
-  </div>
+  <!-- one persistent contents toggle (panel icon), an always-reachable help pill, and the drawer scrim -->
+  <button class="fy-nav-toggle" id="fy-nav-toggle" type="button" aria-label="Show contents" aria-expanded="false" aria-controls="fy-toc">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+  </button>
+  <a class="fy-help-fab fy-btn-emerg" href="#emergency">Get help now</a>
+  <div class="fy-scrim" id="fy-scrim"></div>
 
-  <!-- contents (side-rail on desktop, overlay on mobile) -->
+  <!-- contents: side rail on desktop, left drawer on mobile -->
   <nav class="fy-toc" id="fy-toc" aria-label="Guide contents">
-    <button class="fy-btn fy-toc-close" id="fy-toc-close" hidden>Close</button>
-    <p class="fy-toc-heading">The First Year</p>
+    <p class="fy-toc-heading">Contents</p>
     <div role="search"><input type="text" class="fy-toc-search" id="fy-toc-search" placeholder="Filter contents" aria-label="Filter the contents list"></div>
     <ul class="fy-toc-list" id="fy-toc-list" aria-live="off"></ul>
     <p class="fy-toc-count" id="fy-toc-count" aria-live="polite"></p>

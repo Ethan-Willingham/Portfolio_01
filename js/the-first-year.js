@@ -75,17 +75,54 @@
     });
   }
 
-  /* ---------- Mobile contents overlay ---------- */
-  function mobileTOC() {
-    var toggle = $('#fy-toc-toggle'), toc = $('#fy-toc'), close = $('#fy-toc-close');
+  /* ---------- Contents nav: one panel toggle (desktop rail collapse + mobile drawer) ---------- */
+  function navSidebar() {
+    var toggle = $('#fy-nav-toggle'), toc = $('#fy-toc'), scrim = $('#fy-scrim'), root = document.documentElement;
     if (!toggle || !toc) return;
-    var narrow = function () { return window.matchMedia('(max-width: 1239.98px)').matches; };
-    function open() { toc.classList.add('open'); toggle.setAttribute('aria-expanded', 'true'); if (close) { close.hidden = false; close.focus(); } }
-    function shut() { toc.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); if (close) close.hidden = true; toggle.focus(); }
-    toggle.addEventListener('click', function () { toc.classList.contains('open') ? shut() : open(); });
-    if (close) close.addEventListener('click', shut);
-    toc.addEventListener('click', function (e) { if (e.target.tagName === 'A' && narrow()) shut(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && toc.classList.contains('open')) shut(); });
+    var mq = window.matchMedia('(min-width: 1240px)');
+    var desktop = function () { return mq.matches; };
+    var FOCUS = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    var lastFocus = null;
+    function sync() {
+      var open = desktop() ? !root.classList.contains('nav-collapsed') : root.classList.contains('nav-open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Hide contents' : 'Show contents');
+    }
+    function openDrawer() {
+      lastFocus = document.activeElement;
+      root.classList.add('nav-open'); sync();
+      var f = toc.querySelector(FOCUS); if (f) { try { f.focus(); } catch (e) {} }
+    }
+    function closeDrawer() {
+      root.classList.remove('nav-open'); sync();
+      try { toggle.focus(); } catch (e) {}
+    }
+    function toggleRail() {
+      var collapsed = root.classList.toggle('nav-collapsed');
+      try { localStorage.setItem('fy-nav', collapsed ? 'collapsed' : 'open'); } catch (e) {}
+      sync();
+    }
+    toggle.addEventListener('click', function () {
+      if (desktop()) toggleRail();
+      else (root.classList.contains('nav-open') ? closeDrawer() : openDrawer());
+    });
+    if (scrim) scrim.addEventListener('click', closeDrawer);
+    toc.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (a && !desktop()) closeDrawer(); });
+    document.addEventListener('keydown', function (e) {
+      if (desktop() || !root.classList.contains('nav-open')) return;
+      if (e.key === 'Escape') { closeDrawer(); return; }
+      if (e.key === 'Tab') {
+        var items = Array.prototype.filter.call(toc.querySelectorAll(FOCUS), function (el) { return el.offsetParent !== null; });
+        if (!items.length) return;
+        var first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+    (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(function () {
+      root.classList.remove('nav-open'); sync();
+    });
+    sync();
   }
 
   /* ---------- Progressive disclosure: deep-link opens the target ---------- */
@@ -141,26 +178,6 @@
     });
   }
 
-  /* ---------- Desktop: let the reader collapse the contents rail ---------- */
-  function railCollapse() {
-    var toc = $('#fy-toc'); if (!toc) return;
-    var hide = document.createElement('button');
-    hide.type = 'button'; hide.className = 'fy-rail-hide'; hide.setAttribute('aria-expanded', 'true');
-    hide.innerHTML = '<span aria-hidden="true">‹</span> Hide contents';
-    var show = document.createElement('button');
-    show.type = 'button'; show.className = 'fy-rail-show';
-    show.innerHTML = 'Contents <span aria-hidden="true">›</span>';
-    toc.insertBefore(hide, toc.firstChild);
-    document.body.appendChild(show);
-    function set(h) {
-      document.body.classList.toggle('toc-hidden', h);
-      hide.setAttribute('aria-expanded', h ? 'false' : 'true');
-      try { (h ? show : hide).focus(); } catch (e) {}
-    }
-    hide.addEventListener('click', function () { set(true); });
-    show.addEventListener('click', function () { set(false); });
-  }
-
   /* ---------- A small SVG charting helper for the modules ---------- */
   var NS = 'http://www.w3.org/2000/svg';
   FY.svg = {
@@ -185,7 +202,7 @@
     });
   }
 
-  function init() { buildTOC(); scrollSpy(); tocFilter(); mobileTOC(); disclosureLinks(); collapsibleCallouts(); railCollapse(); mountAll(); }
+  function init() { buildTOC(); scrollSpy(); tocFilter(); navSidebar(); disclosureLinks(); collapsibleCallouts(); mountAll(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 
