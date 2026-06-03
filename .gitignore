@@ -1,6 +1,10 @@
 # Claude Code / AI assistant config
 .claude/
 
+# Research corpora (large, local working dirs; not part of the site)
+.baby-research/
+.ocean-research/
+
 # One-off scripts
 decode_b64.ps1
 
