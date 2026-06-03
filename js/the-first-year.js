@@ -107,6 +107,40 @@
     if (location.hash) setTimeout(function () { openToHash(location.hash); }, 60);
   }
 
+  /* ---------- Make the left "Usually normal" panel collapsible ---------- */
+  /* The reassurance side can be tucked away; the "Call your doctor about"
+     side is deliberately left always-visible. Pure progressive enhancement:
+     with no JS the panel just stays open. */
+  function collapsibleCallouts() {
+    var n = 0;
+    $all('.nvw .nvw-ok').forEach(function (ok) {
+      var h4 = $('h4', ok), ul = $('ul', ok);
+      if (!h4 || !ul || h4.dataset.enh) return;
+      // SAFETY: the .nvw component is also reused for emergency first-aid
+      // (choking, button battery) and for informational pairs, which use the
+      // same left-panel class. Only the reassurance boxes may be collapsed,
+      // so scope strictly to panels whose heading begins with "Usually normal".
+      if (h4.textContent.trim().indexOf('Usually normal') !== 0) return;
+      h4.dataset.enh = '1';
+      ul.id = ul.id || ('nvw-ok-' + (++n));
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nvw-toggle';
+      btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-controls', ul.id);
+      while (h4.firstChild) btn.appendChild(h4.firstChild);
+      var chev = document.createElement('span');
+      chev.className = 'nvw-chev';
+      chev.setAttribute('aria-hidden', 'true');
+      btn.appendChild(chev);
+      h4.appendChild(btn);
+      btn.addEventListener('click', function () {
+        var collapsed = ok.classList.toggle('is-collapsed');
+        btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      });
+    });
+  }
+
   /* ---------- A small SVG charting helper for the modules ---------- */
   var NS = 'http://www.w3.org/2000/svg';
   FY.svg = {
@@ -131,7 +165,7 @@
     });
   }
 
-  function init() { buildTOC(); scrollSpy(); tocFilter(); mobileTOC(); disclosureLinks(); mountAll(); }
+  function init() { buildTOC(); scrollSpy(); tocFilter(); mobileTOC(); disclosureLinks(); collapsibleCallouts(); mountAll(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 

@@ -169,21 +169,31 @@
   .reassure p { margin: 0; color: var(--text); }
   .reassure p + p { margin-top: 0.6em; }
 
-  .nvw { display: grid; gap: 1px; margin: 1.5em 0; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--rule); }
+  /* Normal-vs-worry: two calm panels (the reassurance on the left can be collapsed) + a takeaway line */
+  .nvw { display: grid; gap: 0.6rem; margin: 1.6em 0; }
   @media (min-width: 640px) { .nvw { grid-template-columns: 1fr 1fr; } }
-  .nvw-ok, .nvw-call { padding: 1em 1.15em; background: var(--bg-raised); }
-  .nvw-ok { background: linear-gradient(0deg, var(--ok-bg), var(--ok-bg)), var(--bg-raised); }
-  .nvw-call { background: linear-gradient(0deg, var(--call-bg), var(--call-bg)), var(--bg-raised); }
-  .nvw h4 { margin: 0 0 0.5em; font-family: var(--font-heading); font-size: 1rem; display: flex; align-items: center; gap: 0.45em; }
+  .nvw-ok, .nvw-call { margin: 0; padding: 0.9em 1.1em; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); }
+  .nvw-ok { border-left: 3px solid var(--ok-rule); background: linear-gradient(0deg, var(--ok-bg), var(--ok-bg)), var(--bg-raised); }
+  .nvw-call { border-left: 3px solid var(--call-rule); background: linear-gradient(0deg, var(--call-bg), var(--call-bg)), var(--bg-raised); }
+  .nvw-ok.is-collapsed { align-self: start; }
+  .nvw-ok.is-collapsed ul { display: none; }
+  .nvw h4 { margin: 0; font-family: var(--font-heading); font-size: 1rem; display: flex; align-items: center; gap: 0.45em; }
   .nvw-ok h4 { color: var(--ok); }
   .nvw-call h4 { color: var(--call); }
-  .nvw h4::before { font-family: var(--font-mono); font-size: 0.9em; }
+  .nvw h4::before { font-family: var(--font-mono); font-size: 0.9em; flex: none; }
   .nvw-ok h4::before { content: '\2713'; }       /* check */
   .nvw-call h4::before { content: '\26A0'; }      /* warning sign */
-  .nvw ul { margin: 0; padding-left: 1.2em; }
+  .nvw ul { margin: 0.6em 0 0; padding-left: 1.2em; }
   .nvw li { font-size: 1rem; line-height: 1.5; color: var(--text); }
-  .nvw-flip { grid-column: 1 / -1; margin: 0; padding: 0.7em 1.15em; background: var(--bg-raised); font-size: 0.96rem; color: var(--text-dim); border-top: 1px solid var(--rule); }
+  .nvw li + li { margin-top: 0.3em; }
+  .nvw-flip { grid-column: 1 / -1; margin: 0.15em 0 0; padding: 0; font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); }
   .nvw-flip b { color: var(--call); }
+  /* the left panel's header becomes a real toggle button when JS runs; without JS it simply stays open */
+  .nvw-toggle { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.45em; margin: 0; padding: 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .nvw-toggle:focus-visible { outline: 2px solid var(--ok); outline-offset: 3px; border-radius: 4px; }
+  .nvw-chev { flex: none; margin-left: auto; width: 0.5em; height: 0.5em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transform-origin: center; transition: transform 0.18s var(--ease-out); opacity: 0.75; }
+  .nvw-ok.is-collapsed .nvw-chev { transform: rotate(-45deg); }
+  @media (prefers-reduced-motion: reduce) { .nvw-chev { transition: none; } }
 
   /* inline emergency off-ramp */
   .offramp { margin: 1.2em 0; padding: 0.7em 1em; border: 1px dashed var(--emerg-rule); border-radius: 8px; background: var(--emerg-bg); font-size: 0.98rem; color: var(--text); }
