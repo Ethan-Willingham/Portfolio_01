@@ -50,7 +50,9 @@
      ============================================================ */
   :root {
     --measure: var(--content-width);              /* 780px reading column */
-    --rail-w: 16rem;                              /* desktop contents rail */
+    --rail-w: 15rem;                              /* desktop contents rail */
+    --rail-gap: 3rem;                             /* gap between the rail and the reading column */
+    --content-width: 880px;                       /* wider reading column than the 780 site default */
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     /* the three-tier semantic color economy, sitting inside the parchment-on-forest palette */
     --ok:        #9ec79a;                         /* reassurance / usually normal (calm green) */
@@ -75,7 +77,7 @@
   .fy-wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
 
   /* ---------- COVER / HEADER ---------- */
-  .fy-cover { max-width: var(--measure); margin: 0 auto; padding: 1.5rem var(--gutter) 0.5rem; }
+  .fy-cover { max-width: var(--measure); margin: 0 auto 0.6rem; padding: 2.4rem var(--gutter) 2.2rem; border-bottom: 1px solid var(--rule); }
   .fy-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
   .fy-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 9vw, 4.4rem); line-height: 1.02; letter-spacing: -0.02em; color: var(--text-bright); text-wrap: balance; }
   .fy-sub { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.4vw, 1.5rem); line-height: 1.5; color: var(--text-dim); margin-top: 1rem; max-width: 40ch; text-wrap: pretty; }
@@ -102,12 +104,25 @@
   .fy-toc-list li.is-emerg a:hover { background: var(--emerg-bg); }
   .fy-toc-list li.hidden { display: none; }
   .fy-toc-count { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem; }
+  /* desktop rail collapse controls (shown/wired only on wide screens) */
+  .fy-rail-hide { display: none; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); background: none; border: 0; padding: 0; margin-bottom: 0.8rem; cursor: pointer; align-items: center; gap: 0.4em; }
+  .fy-rail-hide:hover { color: var(--text-bright); }
+  @media (min-width: 1240px) { .fy-rail-hide { display: inline-flex; } }
+  .fy-rail-show { display: none; position: fixed; top: 1.3rem; left: 1.5rem; z-index: 50; font-family: var(--font-body); font-size: 0.85rem; color: var(--text); background: rgba(30,36,32,0.92); backdrop-filter: blur(8px); border: 1px solid var(--rule); border-radius: 6px; padding: 0.45em 0.85em; cursor: pointer; align-items: center; gap: 0.45em; }
+  .fy-rail-show:hover { border-color: var(--accent); color: var(--text-bright); }
 
   /* desktop: a fixed contents rail in the left gutter, the measure stays centered */
   @media (min-width: 1240px) {
     .fy-topbar { display: none; }
-    .fy-toc { position: fixed; top: 2.2rem; left: max(1.2rem, calc(50% - 390px - var(--rail-w) - 2rem)); width: var(--rail-w); max-height: calc(100vh - 4rem); overflow-y: auto; z-index: 40; padding-right: 0.5rem; }
+    /* Rail pinned near the left edge; the reading column is centered in the space beside it. */
+    :root { --rail-x: clamp(1.5rem, 3.2vw, 3.5rem); }
+    body { padding-left: calc(var(--rail-x) + var(--rail-w) + var(--rail-gap)); padding-right: var(--rail-x); }
+    .fy-toc { position: fixed; top: 2.2rem; left: var(--rail-x); width: var(--rail-w); max-height: calc(100vh - 4rem); overflow-y: auto; z-index: 40; padding-right: 0.5rem; }
     .fy-toc-heading { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.7rem; }
+    /* Collapsed: hide the rail and center the reading column on the viewport. */
+    body.toc-hidden { padding-left: max(1.5rem, calc((100vw - var(--measure)) / 2)); padding-right: max(1.5rem, calc((100vw - var(--measure)) / 2)); }
+    body.toc-hidden .fy-toc { display: none; }
+    body.toc-hidden .fy-rail-show { display: inline-flex; }
   }
   /* mobile / narrow: contents live behind the top-bar button, in a full overlay */
   @media (max-width: 1239.98px) {

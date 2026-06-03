@@ -141,6 +141,26 @@
     });
   }
 
+  /* ---------- Desktop: let the reader collapse the contents rail ---------- */
+  function railCollapse() {
+    var toc = $('#fy-toc'); if (!toc) return;
+    var hide = document.createElement('button');
+    hide.type = 'button'; hide.className = 'fy-rail-hide'; hide.setAttribute('aria-expanded', 'true');
+    hide.innerHTML = '<span aria-hidden="true">‹</span> Hide contents';
+    var show = document.createElement('button');
+    show.type = 'button'; show.className = 'fy-rail-show';
+    show.innerHTML = 'Contents <span aria-hidden="true">›</span>';
+    toc.insertBefore(hide, toc.firstChild);
+    document.body.appendChild(show);
+    function set(h) {
+      document.body.classList.toggle('toc-hidden', h);
+      hide.setAttribute('aria-expanded', h ? 'false' : 'true');
+      try { (h ? show : hide).focus(); } catch (e) {}
+    }
+    hide.addEventListener('click', function () { set(true); });
+    show.addEventListener('click', function () { set(false); });
+  }
+
   /* ---------- A small SVG charting helper for the modules ---------- */
   var NS = 'http://www.w3.org/2000/svg';
   FY.svg = {
@@ -165,7 +185,7 @@
     });
   }
 
-  function init() { buildTOC(); scrollSpy(); tocFilter(); mobileTOC(); disclosureLinks(); collapsibleCallouts(); mountAll(); }
+  function init() { buildTOC(); scrollSpy(); tocFilter(); mobileTOC(); disclosureLinks(); collapsibleCallouts(); railCollapse(); mountAll(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 
