@@ -5302,6 +5302,63 @@
   <p class="gsec-divider">&middot; &middot; &middot;</p>
 </section>
 
+<section id="colophon" class="gsec" aria-labelledby="colophon-h">
+  <style>
+  #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
+  #colophon .colo-stat { border: 1px solid var(--rule); border-left: 4px solid var(--cc); border-radius: 10px; padding: 0.85em 1em; background: rgba(0,0,0,0.13); }
+  #colophon .colo-stat .n { font-family: var(--font-mono); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.1rem); line-height: 1; color: var(--cc); font-variant-numeric: tabular-nums; }
+  #colophon .colo-stat .l { font-family: var(--font-body); font-size: 0.84rem; line-height: 1.35; color: var(--text-dim); margin-top: 0.35em; }
+  #colophon .c-gold { --cc: #D4C4A0; } #colophon .c-sky { --cc: #8fb3c7; } #colophon .c-plum { --cc: #b79bc4; }
+  #colophon .c-green { --cc: #9ec79a; } #colophon .c-amber { --cc: #e6c074; } #colophon .c-rose { --cc: #e98e7f; }
+  #colophon .colo-in { margin: 1.5em 0; padding: 1em 1.2em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.10); }
+  #colophon .colo-in ul { margin: 0.5em 0 0; padding-left: 1.3em; }
+  #colophon .colo-in li { margin: 0.3em 0; }
+  #colophon .colo-in .q { font-family: var(--font-mono); font-weight: 700; }
+  #colophon .colo-steps { list-style: none; padding: 0; margin: 1.3em 0; display: grid; gap: 0.45rem; }
+  #colophon .colo-steps li { position: relative; padding-left: 2.4em; font-size: 1rem; line-height: 1.45; color: var(--text); }
+  #colophon .colo-steps .s { position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-weight: 700; color: var(--cc); }
+  </style>
+
+  <span class="gsec-kicker">Colophon</span>
+  <h2 id="colophon-h" class="gsec-h">How this was made</h2>
+
+  <p class="lede">This guide was researched, written, fact-checked, and built almost entirely by AI agents (Anthropic's Claude), running in parallel and supervised by one human who is not a doctor. In the spirit of showing the work, here is what went into it.</p>
+
+  <div class="colo-grid">
+    <div class="colo-stat c-gold"><div class="n">~50M</div><div class="l">tokens of AI reasoning</div></div>
+    <div class="colo-stat c-sky"><div class="n">~470</div><div class="l">specialized agents, run in parallel</div></div>
+    <div class="colo-stat c-plum"><div class="n">~80 hrs</div><div class="l">of model compute</div></div>
+    <div class="colo-stat c-green"><div class="n">~2,500</div><div class="l">sources consulted</div></div>
+    <div class="colo-stat c-amber"><div class="n">732</div><div class="l">cited on this page (1,026 links)</div></div>
+    <div class="colo-stat c-rose"><div class="n">7,300+</div><div class="l">independent fact-checks</div></div>
+  </div>
+
+  <div class="colo-in">
+    <p style="margin:0">It is an accumulation of roughly <b class="q">2,500</b> distinct sources:</p>
+    <ul>
+      <li><span class="q" style="color:#8fb3c7">~580</span> peer-reviewed studies, clinical trials, and meta-analyses</li>
+      <li><span class="q" style="color:#9ec79a">~620</span> guidelines and position statements from national health bodies (AAP, CDC, WHO, NHS, NICE, the Canadian Paediatric Society, Australia's RCH, ACOG, the AAFP, the FDA, and Cochrane)</li>
+      <li><span class="q" style="color:#e6c074">dozens</span> of public datasets (CDC WONDER, the WHO Child Growth Standards, OECD, UN IGME, US WISQARS)</li>
+      <li><span class="q" style="color:#b79bc4">~2 dozen</span> of the field's canonical parenting books, mined through summaries, reviews, interviews, and the primary studies they cite</li>
+      <li><span class="q" style="color:#D4C4A0">6+</span> countries' official guidance, so the places they disagree could be shown honestly rather than flattened</li>
+    </ul>
+  </div>
+
+  <h3 id="colo-method">The method, in six moves</h3>
+  <ol class="colo-steps">
+    <li><span class="s c-gold">1</span><b>Map</b> the whole field into 22 domains and every question a new parent could have.</li>
+    <li><span class="s c-sky">2</span><b>Deep-dive</b> each corner: 74 research dossiers, about 1,200 individual claims, every number pinned to a primary source.</li>
+    <li><span class="s c-rose">3</span><b>Verify adversarially</b>: every safety and numeric claim was sent to several independent agents trying to refute it from different angles (the primary source, whether it is current, whether other countries agree), more than 7,000 checks in all.</li>
+    <li><span class="s c-amber">4</span><b>Hunt the gaps</b>: critic agents looked for what was missing or thin, and whatever they found became the next round, repeated until the passes turned up nothing new.</li>
+    <li><span class="s c-green">5</span><b>Synthesize and build</b>: the corpus became this one page, 21 sections, 23 charts on real cited data, and 6 interactive tools.</li>
+    <li><span class="s c-plum">6</span><b>Fact-check the finished page</b>, fix every issue found, and only then publish.</li>
+  </ol>
+
+  <p>Two things are worth saying plainly. First, the page you just read is the visible tip of a much larger private research corpus; most of the reading never made it onto the screen, by design. Second, AI can still be confidently wrong. Every health claim here is cited and was checked against the primary literature, but this is educational, not medical advice, and your pediatrician knows your baby and this guide does not. If you find an error, that is worth more to me than a compliment.</p>
+
+  <p class="note">Built with Claude (Anthropic). Last reviewed June 2026.</p>
+</section>
+
   </main>
 
   <footer class="site-footer">
