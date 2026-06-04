@@ -190,11 +190,16 @@
   .fy-map-list .is-emerg-map a:hover { background: var(--emerg-bg); }
   @media (min-width: 620px) { .fy-map-groups { grid-template-columns: 1fr 1fr; } }
 
-  /* section mini-index */
-  .sec-index { list-style: none; padding: 0.8rem 1rem; margin: 0 0 1.6rem; border: 1px solid var(--rule); border-radius: 8px; background: rgba(0,0,0,0.12);
-    column-gap: 1.4rem; }
-  .sec-index li { margin: 0.15em 0; font-size: 0.95rem; }
-  @media (min-width: 620px) { .sec-index { columns: 2; } }
+  /* section mini-index: a numbered, clearly-clickable "in this section" jump menu */
+  .sec-index { list-style: none; counter-reset: si; display: grid; grid-template-columns: 1fr; gap: 0.12rem 1.4rem; margin: 0 0 1.9rem; padding: 1rem 1.05rem 1.1rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.13); }
+  .sec-index::before { content: 'In this section'; grid-column: 1 / -1; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.55rem; }
+  .sec-index li { counter-increment: si; margin: 0; }
+  .sec-index a { display: flex; align-items: baseline; gap: 0.7em; padding: 0.5em 0.55em; border-radius: 7px; color: var(--text-bright); text-decoration: none; border-bottom: 0; line-height: 1.32; font-size: 0.95rem; transition: background 0.15s, color 0.15s; }
+  .sec-index a::before { content: counter(si, decimal-leading-zero); flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.78em; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .sec-index a:hover, .sec-index a:focus-visible { background: var(--row-hover); color: var(--accent-hover); }
+  .sec-index a:hover::before, .sec-index a:focus-visible::before { color: var(--accent-hover); }
+  .sec-index a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  @media (min-width: 620px) { .sec-index { grid-template-columns: 1fr 1fr; } }
 
   /* ---------- PROGRESSIVE DISCLOSURE ---------- */
   details.deeper { margin: 1.2em 0; border: 1px solid var(--rule); border-radius: 8px; background: rgba(0,0,0,0.10); overflow: hidden; }
