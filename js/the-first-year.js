@@ -17,10 +17,16 @@
   function buildTOC() {
     var list = $('#fy-toc-list'); if (!list) return;
     var secs = $all('main#guide > section.gsec');
-    var n = 0;
+    var n = 0, lastPhase = null;
     secs.forEach(function (sec) {
       var h = $('.gsec-h', sec); if (!h || !sec.id) return;
       var isEmerg = sec.id === 'emergency';
+      var phase = sec.getAttribute('data-phase');
+      if (phase && phase !== lastPhase && !isEmerg) {
+        var gl = document.createElement('li');
+        gl.className = 'fy-toc-group'; gl.setAttribute('aria-hidden', 'true');
+        gl.textContent = phase; list.appendChild(gl); lastPhase = phase;
+      }
       var li = document.createElement('li');
       if (isEmerg) li.className = 'is-emerg';
       var a = document.createElement('a');
@@ -65,12 +71,14 @@
     input.addEventListener('input', function () {
       clearTimeout(t);
       t = setTimeout(function () {
-        var q = input.value.trim().toLowerCase(), shown = 0, items = $all('li', list);
+        var q = input.value.trim().toLowerCase(), shown = 0, total = 0, items = $all('li', list);
         items.forEach(function (li) {
+          if (li.classList.contains('fy-toc-group')) { li.classList.toggle('hidden', !!q); return; }
+          total++;
           var a = $('a', li); var match = !q || (a && a.dataset.keywords.indexOf(q) !== -1);
           li.classList.toggle('hidden', !match); if (match) shown++;
         });
-        if (count) count.textContent = q ? (shown + ' of ' + items.length + ' sections') : '';
+        if (count) count.textContent = q ? (shown + ' of ' + total + ' sections') : '';
       }, 120);
     });
   }
@@ -79,7 +87,7 @@
   function navSidebar() {
     var toggle = $('#fy-nav-toggle'), toc = $('#fy-toc'), scrim = $('#fy-scrim'), root = document.documentElement;
     if (!toggle || !toc) return;
-    var mq = window.matchMedia('(min-width: 1240px)');
+    var mq = window.matchMedia('(min-width: 1024px)');
     var desktop = function () { return mq.matches; };
     var FOCUS = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
     var lastFocus = null;
@@ -90,11 +98,13 @@
     }
     function openDrawer() {
       lastFocus = document.activeElement;
+      toc.setAttribute('role', 'dialog'); toc.setAttribute('aria-modal', 'true');
       root.classList.add('nav-open'); sync();
       var f = toc.querySelector(FOCUS); if (f) { try { f.focus(); } catch (e) {} }
     }
     function closeDrawer() {
       root.classList.remove('nav-open'); sync();
+      toc.removeAttribute('role'); toc.removeAttribute('aria-modal');
       try { toggle.focus(); } catch (e) {}
     }
     function toggleRail() {
@@ -120,7 +130,7 @@
       }
     });
     (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(function () {
-      root.classList.remove('nav-open'); sync();
+      root.classList.remove('nav-open'); toc.removeAttribute('role'); toc.removeAttribute('aria-modal'); sync();
     });
     sync();
   }
