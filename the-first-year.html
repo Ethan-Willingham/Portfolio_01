@@ -106,10 +106,11 @@
     border: 1px solid var(--rule); border-radius: 4px; padding: 0.45em 0.7em; margin-bottom: 0.7rem; }
   .fy-toc-search:focus { outline: none; border-color: var(--accent); }
   .fy-toc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.05rem; }
-  .fy-toc-list a { display: block; font-size: 0.92rem; line-height: 1.3; color: var(--text-dim); text-decoration: none; padding: 0.32em 0.5em; border-radius: 5px; border-left: 2px solid transparent; transition: color 0.18s, background 0.18s, border-color 0.18s; }
+  .fy-toc-list a { display: flex; align-items: baseline; gap: 0.5em; font-size: 0.92rem; line-height: 1.3; color: var(--text-dim); text-decoration: none; padding: 0.4em 0.5em; border-radius: 5px; border-left: 2px solid transparent; transition: color 0.18s, background 0.18s, border-color 0.18s; }
   .fy-toc-list a:hover { color: var(--text-bright); background: var(--row-hover); }
   .fy-toc-list a.active { color: var(--accent-hover); border-left-color: var(--accent); }
-  .fy-toc-list a .n { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); margin-right: 0.5em; }
+  .fy-toc-list a .n { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
+  .fy-toc-list a .t { flex: 1 1 auto; min-width: 0; }
   .fy-toc-list li.is-emerg a { color: var(--emerg); }
   .fy-toc-list li.is-emerg a:hover { background: var(--emerg-bg); }
   .fy-toc-list li.hidden { display: none; }
@@ -159,6 +160,26 @@
   /* the lede: the always-visible short answer */
   .lede { font-size: 1.16rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.22rem; } }
+
+  /* ---------- DOCUMENT LANDSCAPE: what is inside + per-section reading times ---------- */
+  .fy-map { margin: 1.7rem 0 0.4rem; padding: 1.4rem 1.5rem 1.5rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.10); }
+  .fy-map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.55rem; }
+  .fy-map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.15rem; max-width: 60ch; }
+  .fy-map-stats { display: flex; flex-wrap: wrap; gap: 0.45rem 1.7rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
+  .fy-map-stat { font-family: var(--font-body); font-size: 0.88rem; color: var(--text-dim); white-space: nowrap; }
+  .fy-map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.2rem; color: var(--accent); margin-right: 0.35rem; font-variant-numeric: tabular-nums; }
+  .fy-map-groups { display: grid; grid-template-columns: 1fr; gap: 1.2rem 2.2rem; }
+  .fy-map-phase { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 0.4rem; }
+  .fy-map-list { list-style: none; margin: 0; padding: 0; }
+  .fy-map-list li { margin: 0; }
+  .fy-map-list a { display: flex; align-items: baseline; gap: 0.6em; text-decoration: none; color: var(--text); padding: 0.42em 0.45em; border-radius: 6px; line-height: 1.3; transition: background 0.15s, color 0.15s; }
+  .fy-map-list a:hover { background: var(--row-hover); color: var(--text-bright); }
+  .fy-map-list a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .fy-map-t { flex: 1 1 auto; min-width: 0; }
+  .fy-map-m { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .fy-map-list .is-emerg-map a { color: var(--emerg); }
+  .fy-map-list .is-emerg-map a:hover { background: var(--emerg-bg); }
+  @media (min-width: 620px) { .fy-map-groups { grid-template-columns: 1fr 1fr; } }
 
   /* section mini-index */
   .sec-index { list-style: none; padding: 0.8rem 1rem; margin: 0 0 1.6rem; border: 1px solid var(--rule); border-radius: 8px; background: rgba(0,0,0,0.12);
@@ -394,11 +415,53 @@
   </header>
 
   <main id="guide">
-<section id="start-here" class="gsec" aria-labelledby="start-here-h">
+<section id="start-here" class="gsec" aria-labelledby="start-here-h" data-min="3">
   <span class="gsec-kicker">Start here</span>
   <h2 id="start-here-h" class="gsec-h">How to use this guide</h2>
 
   <p class="lede">This is long on purpose. You are not meant to read it cover to cover. Skim the map, jump to the one thing you need tonight, and come back when you need the next thing. Most of what follows is reassurance.</p>
+
+  <aside class="fy-map" aria-label="What is inside this guide">
+    <p class="fy-map-kicker">What is inside</p>
+    <p class="fy-map-note">22 sections, about 3.5 hours of reading, and you are not meant to read it all. This is a reference: find the one thing you need tonight and start there.</p>
+    <div class="fy-map-stats"><span class="fy-map-stat"><b>22</b> sections</span><span class="fy-map-stat"><b>~3.5 hr</b> core read</span><span class="fy-map-stat"><b>~8 hr</b> with every deep dive</span></div>
+    <div class="fy-map-groups">
+      <div class="fy-map-group"><p class="fy-map-phase">Start here</p><ul class="fy-map-list">
+        <li><a href="#start-here"><span class="fy-map-t">How to use this guide</span><span class="fy-map-m">3 min</span></a></li>
+        <li class="is-emerg-map"><a href="#emergency"><span class="fy-map-t">Emergency: when to get help now</span><span class="fy-map-m">4 min</span></a></li>
+      </ul></div>
+      <div class="fy-map-group"><p class="fy-map-phase">The newborn</p><ul class="fy-map-list">
+        <li><a href="#before-baby"><span class="fy-map-t">Before the baby</span><span class="fy-map-m">4 min</span></a></li>
+        <li><a href="#first-days"><span class="fy-map-t">The first hours and days</span><span class="fy-map-m">18 min</span></a></li>
+        <li><a href="#first-weeks"><span class="fy-map-t">The first weeks and the six-week turn</span><span class="fy-map-m">11 min</span></a></li>
+      </ul></div>
+      <div class="fy-map-group"><p class="fy-map-phase">Everyday care</p><ul class="fy-map-list">
+        <li><a href="#feeding"><span class="fy-map-t">Feeding</span><span class="fy-map-m">15 min</span></a></li>
+        <li><a href="#sleep"><span class="fy-map-t">Sleep</span><span class="fy-map-m">10 min</span></a></li>
+        <li><a href="#soothing"><span class="fy-map-t">Soothing, crying and temperament</span><span class="fy-map-m">7 min</span></a></li>
+        <li><a href="#daily-care"><span class="fy-map-t">Daily care and hygiene</span><span class="fy-map-m">7 min</span></a></li>
+      </ul></div>
+      <div class="fy-map-group"><p class="fy-map-phase">Health, growth and safety</p><ul class="fy-map-list">
+        <li><a href="#health"><span class="fy-map-t">Health, illness and fever</span><span class="fy-map-m">16 min</span></a></li>
+        <li><a href="#growth-dev"><span class="fy-map-t">Growth and development</span><span class="fy-map-m">12 min</span></a></li>
+        <li><a href="#safety"><span class="fy-map-t">Keeping the baby safe</span><span class="fy-map-m">10 min</span></a></li>
+        <li><a href="#immunization"><span class="fy-map-t">Immunization</span><span class="fy-map-m">11 min</span></a></li>
+        <li><a href="#wellbaby"><span class="fy-map-t">Well-baby care</span><span class="fy-map-m">14 min</span></a></li>
+      </ul></div>
+      <div class="fy-map-group"><p class="fy-map-phase">You and the wider world</p><ul class="fy-map-list">
+        <li><a href="#caregiver"><span class="fy-map-t">The caregiver</span><span class="fy-map-m">12 min</span></a></li>
+        <li><a href="#edges"><span class="fy-map-t">If your situation is different</span><span class="fy-map-m">17 min</span></a></li>
+        <li><a href="#money"><span class="fy-map-t">Money, gear and logistics</span><span class="fy-map-m">5 min</span></a></li>
+        <li><a href="#myths"><span class="fy-map-t">Myths, old advice and marketing</span><span class="fy-map-m">6 min</span></a></li>
+        <li><a href="#world"><span class="fy-map-t">How the world does it</span><span class="fy-map-m">14 min</span></a></li>
+        <li><a href="#turning-one"><span class="fy-map-t">Turning one</span><span class="fy-map-m">3 min</span></a></li>
+      </ul></div>
+      <div class="fy-map-group"><p class="fy-map-phase">The fine print</p><ul class="fy-map-list">
+        <li><a href="#sources"><span class="fy-map-t">Sources, evidence, and a note on trust</span><span class="fy-map-m">2 min</span></a></li>
+        <li><a href="#colophon"><span class="fy-map-t">How this was made</span><span class="fy-map-m">2 min</span></a></li>
+      </ul></div>
+    </div>
+  </aside>
 
   <figure class="img portrait">
     <div class="img-frame" style="--img-bg:#cdb89a">
@@ -436,7 +499,7 @@
   <p class="gsec-divider">&middot; &middot; &middot;</p>
 </section>
 
-<section id="emergency" class="gsec" aria-labelledby="emergency-h">
+<section id="emergency" class="gsec" aria-labelledby="emergency-h" data-min="4">
   <span class="gsec-kicker">When to get help now</span>
   <h2 id="emergency-h" class="gsec-h">Emergency: when to get help now</h2>
 
@@ -540,7 +603,7 @@
   <p class="gsec-divider">&middot; &middot; &middot;</p>
 </section>
 
-<section id="before-baby" class="gsec" aria-labelledby="before-baby-h">
+<section id="before-baby" class="gsec" aria-labelledby="before-baby-h" data-min="4">
   <span class="gsec-kicker">The on-ramp</span>
   <h2 id="before-baby-h" class="gsec-h">Before the baby</h2>
   <p class="gsec-age">the third trimester</p>
@@ -715,7 +778,7 @@
   </details>
 </section>
 
-<section id="first-days" class="gsec" aria-labelledby="first-days-h" data-keywords="vitamin k hepatitis b eye ointment cord clamping newborn screen heel prick hearing pulse ox jaundice bilirubin weight loss newt diaper count meconium skin acrocyanosis circumcision first night">
+<section id="first-days" class="gsec" aria-labelledby="first-days-h" data-keywords="vitamin k hepatitis b eye ointment cord clamping newborn screen heel prick hearing pulse ox jaundice bilirubin weight loss newt diaper count meconium skin acrocyanosis circumcision first night" data-min="18">
   <span class="gsec-kicker">The first hours and days</span>
   <h2 id="first-days-h" class="gsec-h">The first hours and days</h2>
   <p class="gsec-age">birth to day 3</p>
@@ -1074,7 +1137,7 @@
   <p>That is the first 72 hours: a short, sensible checklist done to the baby, a lot of normal weirdness to get used to, a weight dip that turns around, a yellow tint that almost always fades, diapers that tell you more than the fussing does, and a couple of hard nights. What comes next, the first weeks and the way everything seems to settle around six weeks, is in <a href="#first-weeks">The first weeks</a>.</p>
 </section>
 
-<section id="first-weeks" class="gsec" aria-labelledby="first-weeks-h">
+<section id="first-weeks" class="gsec" aria-labelledby="first-weeks-h" data-min="11">
 <span class="gsec-kicker">The fourth trimester</span>
 <h2 id="first-weeks-h" class="gsec-h">The first weeks and the six-week turn</h2>
 <p class="gsec-age">week 0 to 6</p>
@@ -1300,7 +1363,7 @@
 
 </section>
 
-<section id="feeding" class="gsec" aria-labelledby="feeding-h" data-keywords="breastfeeding nursing latch supply mastitis formula bottle cronobacter solids weaning allergens peanut led weaning vitamin d iron milk storage pumping cow milk honey choking">
+<section id="feeding" class="gsec" aria-labelledby="feeding-h" data-keywords="breastfeeding nursing latch supply mastitis formula bottle cronobacter solids weaning allergens peanut led weaning vitamin d iron milk storage pumping cow milk honey choking" data-min="15">
   <span class="gsec-kicker">Feeding</span>
   <h2 id="feeding-h" class="gsec-h">Feeding</h2>
   <p class="gsec-age">the whole year</p>
@@ -1679,7 +1742,7 @@
 
 </section>
 
-<section id="sleep" class="gsec" aria-labelledby="sleep-h" data-keywords="sleep safe sleep sids suid bed-sharing co-sleeping room-sharing swaddle pacifier night waking sleep training cry it out ferber wake windows naps regression snoo overheating tog">
+<section id="sleep" class="gsec" aria-labelledby="sleep-h" data-keywords="sleep safe sleep sids suid bed-sharing co-sleeping room-sharing swaddle pacifier night waking sleep training cry it out ferber wake windows naps regression snoo overheating tog" data-min="10">
   <span class="gsec-kicker">Sleep</span>
   <h2 id="sleep-h" class="gsec-h">Sleep</h2>
   <p class="gsec-age">the whole year</p>
@@ -1948,7 +2011,7 @@
 
 </section>
 
-<section id="soothing" class="gsec" aria-labelledby="soothing-h" data-keywords="crying colic soothing swaddle pacifier white noise carrying temperament attachment shaken baby purple witching hour spoil">
+<section id="soothing" class="gsec" aria-labelledby="soothing-h" data-keywords="crying colic soothing swaddle pacifier white noise carrying temperament attachment shaken baby purple witching hour spoil" data-min="7">
   <span class="gsec-kicker">Soothing and crying</span>
   <h2 id="soothing-h" class="gsec-h">Soothing, crying and temperament</h2>
   <p class="gsec-age">peaks at 6 weeks</p>
@@ -2219,7 +2282,7 @@
   </details>
 </section>
 
-<section id="health" class="gsec" aria-labelledby="health-h">
+<section id="health" class="gsec" aria-labelledby="health-h" data-min="16">
 <span class="gsec-kicker">Health, illness and red flags</span>
 <h2 id="health-h" class="gsec-h">Health, illness and fever</h2>
 <p class="gsec-age">the whole year</p>
@@ -2594,7 +2657,7 @@
 
 </section>
 
-<section id="growth-dev" class="gsec" aria-labelledby="growth-dev-h" data-keywords="growth chart percentile weight length head circumference WHO CDC LMS z-score faltering growth failure to thrive catch-up rapid weight gain preterm corrected age milestones crawling walking talking late talker fine motor gross motor vision brain development tummy time walkers exersaucers jumpers flat feet bow legs in-toeing pigeon toes shoes serve and return word gap reading screen time video chat autism screening M-CHAT early intervention Wonder Weeks plagiocephaly helmet">
+<section id="growth-dev" class="gsec" aria-labelledby="growth-dev-h" data-keywords="growth chart percentile weight length head circumference WHO CDC LMS z-score faltering growth failure to thrive catch-up rapid weight gain preterm corrected age milestones crawling walking talking late talker fine motor gross motor vision brain development tummy time walkers exersaucers jumpers flat feet bow legs in-toeing pigeon toes shoes serve and return word gap reading screen time video chat autism screening M-CHAT early intervention Wonder Weeks plagiocephaly helmet" data-min="12">
   <span class="gsec-kicker">Growth and development</span>
   <h2 id="growth-dev-h" class="gsec-h">Growth and development</h2>
   <p class="gsec-age">the whole year</p>
@@ -3019,7 +3082,7 @@
   </details>
 </section>
 
-<section id="daily-care" class="gsec" aria-labelledby="daily-care-h" data-keywords="diaper nappy diaper rash diaper dermatitis wipes water cloth disposable bathing bath skin eczema atopic dermatitis emollient moisturizer cradle cap teething benzocaine belladonna amber necklace fluoride toothpaste first tooth oral care dentist sponge bath scald drowning">
+<section id="daily-care" class="gsec" aria-labelledby="daily-care-h" data-keywords="diaper nappy diaper rash diaper dermatitis wipes water cloth disposable bathing bath skin eczema atopic dermatitis emollient moisturizer cradle cap teething benzocaine belladonna amber necklace fluoride toothpaste first tooth oral care dentist sponge bath scald drowning" data-min="7">
   <span class="gsec-kicker">Daily care</span>
   <h2 id="daily-care-h" class="gsec-h">Daily care and hygiene</h2>
   <p class="gsec-age">the whole year</p>
@@ -3269,7 +3332,7 @@
 
 </section>
 
-<section id="safety" class="gsec" aria-labelledby="safety-h" data-keywords="safety car seat rear-facing latch hot car heatstroke choking infant cpr back blows drowning bathtub pool fence button battery coin cell honey magnets furniture anchoring tip-over sturdy firearm gun storage babywearing ticks sling safety theater owlet monitor wedge crib bumper window fall stair gate scald water heater lead carbon monoxide sunscreen recall">
+<section id="safety" class="gsec" aria-labelledby="safety-h" data-keywords="safety car seat rear-facing latch hot car heatstroke choking infant cpr back blows drowning bathtub pool fence button battery coin cell honey magnets furniture anchoring tip-over sturdy firearm gun storage babywearing ticks sling safety theater owlet monitor wedge crib bumper window fall stair gate scald water heater lead carbon monoxide sunscreen recall" data-min="10">
   <span class="gsec-kicker">Safety</span>
   <h2 id="safety-h" class="gsec-h">Keeping the baby safe</h2>
   <p class="gsec-age">the whole year</p>
@@ -3564,7 +3627,7 @@
 
 </section>
 
-<section id="immunization" class="gsec" aria-labelledby="immunization-h" data-keywords="vaccines immunization schedule shots mmr autism wakefield measles rotavirus intussusception febrile seizure anaphylaxis hepatitis b rsv nirsevimab clesrovimab acip cdc aap herd immunity vfc combination vaccine too many too soon pain sucrose breastfeeding preterm">
+<section id="immunization" class="gsec" aria-labelledby="immunization-h" data-keywords="vaccines immunization schedule shots mmr autism wakefield measles rotavirus intussusception febrile seizure anaphylaxis hepatitis b rsv nirsevimab clesrovimab acip cdc aap herd immunity vfc combination vaccine too many too soon pain sucrose breastfeeding preterm" data-min="11">
   <span class="gsec-kicker">Immunization</span>
   <h2 id="immunization-h" class="gsec-h">Immunization</h2>
   <p class="gsec-age">the whole year</p>
@@ -3878,7 +3941,7 @@
 
 </section>
 
-<section id="wellbaby" class="gsec" aria-labelledby="wellbaby-h" data-keywords="well baby well child checkup visit schedule bright futures aap periodicity developmental screening surveillance autism mchat asq lead screening blrv hemoglobin anemia iron fluoride varnish vision photoscreening hearing ehdi 1-3-6 maternal depression epds pediatrician family physician faap nurse line telehealth schmitt cross country uspstf medical home">
+<section id="wellbaby" class="gsec" aria-labelledby="wellbaby-h" data-keywords="well baby well child checkup visit schedule bright futures aap periodicity developmental screening surveillance autism mchat asq lead screening blrv hemoglobin anemia iron fluoride varnish vision photoscreening hearing ehdi 1-3-6 maternal depression epds pediatrician family physician faap nurse line telehealth schmitt cross country uspstf medical home" data-min="14">
   <span class="gsec-kicker">Well-baby care</span>
   <h2 id="wellbaby-h" class="gsec-h">Well-baby care</h2>
   <p class="gsec-age">the whole year</p>
@@ -4167,7 +4230,7 @@
 
 </section>
 
-<section id="caregiver" class="gsec" aria-labelledby="caregiver-h">
+<section id="caregiver" class="gsec" aria-labelledby="caregiver-h" data-min="12">
 <span class="gsec-kicker">The fourth trimester, for you</span>
 <h2 id="caregiver-h" class="gsec-h">The caregiver</h2>
 <p class="gsec-age">the whole year</p>
@@ -4457,7 +4520,7 @@
 
 </section>
 
-<section id="edges" class="gsec" aria-labelledby="edges-h">
+<section id="edges" class="gsec" aria-labelledby="edges-h" data-min="17">
 <span class="gsec-kicker">Every family is different</span>
 <h2 id="edges-h" class="gsec-h">If your situation is different</h2>
 <p class="gsec-age">as needed</p>
@@ -4785,7 +4848,7 @@
 
 </section>
 
-<section id="money" class="gsec" aria-labelledby="money-h">
+<section id="money" class="gsec" aria-labelledby="money-h" data-min="5">
   <span class="gsec-kicker">The practical year</span>
   <h2 id="money-h" class="gsec-h">Money, gear and logistics</h2>
   <p class="gsec-age">the whole year</p>
@@ -4955,7 +5018,7 @@
   </details>
 </section>
 
-<section id="myths" class="gsec" aria-labelledby="myths-h" data-keywords="myths old advice marketing teething fever spoiling cereal in bottle baby walker walkers closer to breastmilk amber necklace teething necklace mozart effect gripe water immune drops elderberry echinacea zinc vitamin c airborne detox five second rule burping cold draft wet hair feed a cold starve a fever pacifier saliva supplement scam">
+<section id="myths" class="gsec" aria-labelledby="myths-h" data-keywords="myths old advice marketing teething fever spoiling cereal in bottle baby walker walkers closer to breastmilk amber necklace teething necklace mozart effect gripe water immune drops elderberry echinacea zinc vitamin c airborne detox five second rule burping cold draft wet hair feed a cold starve a fever pacifier saliva supplement scam" data-min="6">
   <span class="gsec-kicker">What you can stop worrying about</span>
   <h2 id="myths-h" class="gsec-h">Myths, old advice and marketing</h2>
   <p class="gsec-age">the whole year</p>
@@ -5169,7 +5232,7 @@
   </details>
 </section>
 
-<section id="world" class="gsec" aria-labelledby="world-h" data-keywords="culture history cross-cultural cosleeping bed-sharing allomother grandmother village dutch three r's zuo yuezi la cuarentena postpartum confinement weird truby king watson spock infant mortality breastfeeding history advice pendulum neuvola kraamzorg baby box back to sleep">
+<section id="world" class="gsec" aria-labelledby="world-h" data-keywords="culture history cross-cultural cosleeping bed-sharing allomother grandmother village dutch three r's zuo yuezi la cuarentena postpartum confinement weird truby king watson spock infant mortality breastfeeding history advice pendulum neuvola kraamzorg baby box back to sleep" data-min="14">
   <span class="gsec-kicker">Culture and history</span>
   <h2 id="world-h" class="gsec-h">How the world does it</h2>
   <p class="gsec-age">all of it</p>
@@ -5381,7 +5444,7 @@
   <p class="gsec-divider">&middot; &middot; &middot;</p>
 </section>
 
-<section id="turning-one" class="gsec" aria-labelledby="turning-one-h">
+<section id="turning-one" class="gsec" aria-labelledby="turning-one-h" data-min="3">
   <span class="gsec-kicker">The handoff to toddlerhood</span>
   <h2 id="turning-one-h" class="gsec-h">Turning one</h2>
   <p class="gsec-age">month 12</p>
@@ -5517,7 +5580,7 @@
 
 </section>
 
-<section id="sources" class="gsec" aria-labelledby="sources-h">
+<section id="sources" class="gsec" aria-labelledby="sources-h" data-min="2">
   <span class="gsec-kicker">The fine print</span>
   <h2 id="sources-h" class="gsec-h">Sources, evidence, and a note on trust</h2>
 
@@ -5553,7 +5616,7 @@
   <p class="gsec-divider">&middot; &middot; &middot;</p>
 </section>
 
-<section id="colophon" class="gsec" aria-labelledby="colophon-h">
+<section id="colophon" class="gsec" aria-labelledby="colophon-h" data-min="2">
   <style>
   #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
   #colophon .colo-stat { border: 1px solid var(--rule); border-left: 4px solid var(--cc); border-radius: 10px; padding: 0.85em 1em; background: rgba(0,0,0,0.13); }

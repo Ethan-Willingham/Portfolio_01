@@ -26,8 +26,8 @@
       var a = document.createElement('a');
       a.href = '#' + sec.id;
       var label = h.textContent.trim();
-      if (isEmerg) { a.innerHTML = '<span class="n">!</span>' + label; }
-      else { n++; a.innerHTML = '<span class="n">' + (n < 10 ? '0' + n : n) + '</span>' + label; }
+      if (isEmerg) { a.innerHTML = '<span class="n">!</span><span class="t">' + label + '</span>'; }
+      else { n++; a.innerHTML = '<span class="n">' + (n < 10 ? '0' + n : n) + '</span><span class="t">' + label + '</span>'; }
       a.dataset.keywords = (label + ' ' + (sec.dataset.keywords || '')).toLowerCase();
       li.appendChild(a);
       list.appendChild(li);
