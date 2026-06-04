@@ -394,12 +394,32 @@
   @media (prefers-reduced-motion: no-preference) {
     html { scroll-behavior: smooth; }
   }
+
+  /* ---------- P2 POLISH ---------- */
+  /* keyboard fix: focusing the drawer container on open shows no focus ring */
+  .fy-toc:focus { outline: none; }
+  /* emergency first-aid cards reuse the .nvw-ok shell; they must NOT read as a green "all good" check */
+  #emergency .nvw-ok { border-left-color: var(--emerg-rule); background: var(--bg-raised); }
+  #emergency .nvw-ok h4 { color: var(--text-bright); }
+  #emergency .nvw-ok h4::before { content: '\25B8'; color: var(--emerg); }
+  /* keep data-viz legible on phones: let the chart scroll at full size, pin the captions */
+  @media (max-width: 700px) {
+    figure.viz { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    figure.viz > svg { min-width: 600px; }
+    figure.viz > figcaption, figure.viz > .viz-note, figure.viz > .src, figure.viz > .viz-data { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
+  }
+  /* a quiet unified top bar on mobile so the contents toggle + help control read as one header */
+  .fy-topbar-bar { display: none; }
+  @media (max-width: 1023.98px) {
+    .fy-topbar-bar { display: block; position: fixed; top: 0; left: 0; right: 0; height: 3.6rem; z-index: 70; background: rgba(48,57,49,0.82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); pointer-events: none; }
+  }
   </style>
   <script>try{if(localStorage.getItem('fy-nav')==='collapsed')document.documentElement.classList.add('nav-collapsed');}catch(e){}</script>
 </head>
 <body>
   <a class="fy-skip" href="#guide">Skip to contents</a>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="fy-topbar-bar" aria-hidden="true"></div>
 
   <!-- one persistent contents toggle (panel icon), an always-reachable help pill, and the drawer scrim -->
   <button class="fy-nav-toggle" id="fy-nav-toggle" type="button" aria-label="Show contents" aria-expanded="false" aria-controls="fy-toc">
@@ -5641,12 +5661,20 @@
   #colophon .colo-steps { list-style: none; padding: 0; margin: 1.3em 0; display: grid; gap: 0.45rem; }
   #colophon .colo-steps li { position: relative; padding-left: 2.4em; font-size: 1rem; line-height: 1.45; color: var(--text); }
   #colophon .colo-steps .s { position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-weight: 700; color: var(--cc); }
+  #colophon .colo-motif-fig { margin: 1.7em 0 1.5em; text-align: center; }
+  #colophon .colo-motif-fig canvas { display: block; width: 100%; height: clamp(220px, 46vw, 300px); }
+  #colophon .colo-motif-fig figcaption { font-family: var(--font-body); font-style: italic; font-size: 0.86rem; color: var(--text-dim); margin: 0.7em auto 0; max-width: 48ch; }
   </style>
 
   <span class="gsec-kicker">Colophon</span>
   <h2 id="colophon-h" class="gsec-h">How this was made</h2>
 
   <p class="lede">This guide was researched, written, fact-checked, and built almost entirely by AI agents (Anthropic's Claude), running in parallel and supervised by one human who is not a doctor. In the spirit of showing the work, here is what went into it.</p>
+
+  <figure class="colo-motif-fig">
+    <canvas id="colo-motif" aria-hidden="true"></canvas>
+    <figcaption>365 points, one for each day of a first year, placed by the golden angle. Drawn in your browser from a few lines of math, not loaded as an image.</figcaption>
+  </figure>
 
   <div class="colo-grid">
     <div class="colo-stat c-gold"><div class="n">~50M</div><div class="l">tokens of AI reasoning</div></div>

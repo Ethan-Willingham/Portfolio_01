@@ -99,12 +99,15 @@
     function openDrawer() {
       lastFocus = document.activeElement;
       toc.setAttribute('role', 'dialog'); toc.setAttribute('aria-modal', 'true');
+      // Focus the drawer itself, NOT the search input, so the mobile keyboard
+      // does not pop open until the user taps into the field. Focus trap still holds.
+      toc.setAttribute('tabindex', '-1');
       root.classList.add('nav-open'); sync();
-      var f = toc.querySelector(FOCUS); if (f) { try { f.focus(); } catch (e) {} }
+      try { toc.focus(); } catch (e) {}
     }
     function closeDrawer() {
       root.classList.remove('nav-open'); sync();
-      toc.removeAttribute('role'); toc.removeAttribute('aria-modal');
+      toc.removeAttribute('role'); toc.removeAttribute('aria-modal'); toc.removeAttribute('tabindex');
       try { toggle.focus(); } catch (e) {}
     }
     function toggleRail() {
@@ -130,7 +133,7 @@
       }
     });
     (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(function () {
-      root.classList.remove('nav-open'); toc.removeAttribute('role'); toc.removeAttribute('aria-modal'); sync();
+      root.classList.remove('nav-open'); toc.removeAttribute('role'); toc.removeAttribute('aria-modal'); toc.removeAttribute('tabindex'); sync();
     });
     sync();
   }
@@ -214,6 +217,53 @@
 
   function init() { buildTOC(); scrollSpy(); tocFilter(); navSidebar(); disclosureLinks(); collapsibleCallouts(); mountAll(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+
+/* module: colophon-motif.js */
+/* ============================================================
+   Colophon generative motif: a static phyllotaxis (golden-angle
+   spiral) of 365 points, one per day of a first year. Computed in
+   the browser from a few lines of math and drawn once, no animation,
+   so it is reduced-motion friendly by construction. No deps. No em dashes.
+   ============================================================ */
+(function () {
+  'use strict';
+  function draw(canvas) {
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var N = 365, GOLD = Math.PI * (3 - Math.sqrt(5)); // golden angle, ~2.39996 rad
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function render() {
+      var cw = canvas.clientWidth, ch = canvas.clientHeight;
+      if (!cw || !ch) return;
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
+      var W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2;
+      ctx.clearRect(0, 0, W, H);
+      var R = Math.min(W, H) * 0.47, c = R / Math.sqrt(N);
+      for (var i = 0; i < N; i++) {
+        var a = i * GOLD, r = c * Math.sqrt(i);
+        var x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+        var f = i / N; // 0 at the dense center, 1 at the rim
+        var rad = (0.7 + f * 1.9) * dpr;
+        var rr = Math.round(212 - f * 30), gg = Math.round(196 - f * 18), bb = Math.round(160 + f * 4);
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, 6.28319);
+        ctx.fillStyle = 'rgba(' + rr + ',' + gg + ',' + bb + ',' + (0.9 - f * 0.52).toFixed(3) + ')';
+        ctx.fill();
+      }
+    }
+    render();
+    var rt;
+    window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+  }
+  function init() {
+    var c = document.getElementById('colo-motif');
+    if (c && c.getContext) { try { draw(c); } catch (e) {} }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 
 
