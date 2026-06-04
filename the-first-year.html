@@ -246,6 +246,20 @@
   .stat-row { display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; margin: 1.6em 0; }
   .stat-row .stat { margin: 0; }
 
+  /* ---------- EDITORIAL TEXTURE (variety to break the block monotony) ---------- */
+  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.45rem, 3.2vw, 1.95rem); line-height: 1.32; color: var(--text-bright); margin: clamp(2.2rem, 5vw, 3.2rem) 0; padding-left: 1.1rem; border-left: 3px solid var(--accent); text-wrap: balance; }
+  .pullquote cite { display: block; margin-top: 0.55rem; font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); }
+  .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
+  .choices { display: grid; gap: 0.7rem; margin: 1.7em 0; }
+  .choice { display: flex; gap: 0.75em; align-items: baseline; padding: 0.8em 1em; border: 1px solid var(--rule); border-radius: 9px; background: rgba(0,0,0,0.12); font-size: 1rem; line-height: 1.5; color: var(--text); }
+  .choice::before { font-family: var(--font-mono); font-weight: 700; flex: none; line-height: 1.4; }
+  .choice.skip { border-left: 3px solid var(--emerg-rule); }
+  .choice.skip::before { content: '\2717'; color: var(--emerg); }
+  .choice.use { border-left: 3px solid var(--ok-rule); }
+  .choice.use::before { content: '\2713'; color: var(--ok); }
+  .choice b { color: var(--text-bright); }
+  .choice .thumb { flex: none; width: 3.2rem; height: 3.2rem; border-radius: 6px; object-fit: cover; filter: saturate(0.9) brightness(0.94); align-self: center; }
+
   /* ---------- CITATIONS + EVIDENCE GRADES + FRESHNESS ---------- */
   .src { font-family: var(--font-body); font-size: 0.82em; color: var(--text-dim); white-space: nowrap; }
   .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); }
@@ -2163,6 +2177,11 @@
 
 <p class="lede">Babies get sick a lot, and almost all of it is mild, viral, and self-resolving. The job of this section is not to make you a diagnostician. It is to give you two things: the handful of signs that mean "be seen now," and the much longer list of frightening-looking things that are actually normal, so you can tell them apart at 3 a.m. The single rule that overrides everything else is at the top, because it is the one time a thermometer number alone forces action.</p>
 
+<div class="img-duo">
+  <figure class="img"><div class="img-frame" style="--img-bg:#cbc4b2"><img src="assets/images/first-year/thermometer-forehead-obj.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="A non-contact infrared forehead thermometer."></div><figcaption>Forehead (infrared): quick and easy, fine for a first screen. <span class="cred">Syced / Wikimedia, CC0</span></figcaption></figure>
+  <figure class="img"><div class="img-frame" style="--img-bg:#bdbcbe"><img src="assets/images/first-year/thermometer-digital.jpg" width="1600" height="1067" loading="lazy" decoding="async" alt="A simple digital stick thermometer."></div><figcaption>Digital stick: a rectal reading is the accurate reference under 3 months. <span class="cred">Edgar Soto / Unsplash</span></figcaption></figure>
+</div>
+
 <ul class="sec-index">
   <li><a href="#hl-under3">The one non-negotiable: fever under 3 months</a></li>
   <li><a href="#hl-triage">The red-flag triage card</a></li>
@@ -3086,6 +3105,13 @@
 
   <p class="lede">Cradle cap is the greasy, yellow-white, flaky scale on a baby's scalp (and sometimes eyebrows, behind the ears, or in skin folds). It is very common, peaking around 70 percent of babies at about 3 months, and it is harmless: not itchy, not an infection, and not caused by poor hygiene. <span class="src"><a href="https://dermnetnz.org/topics/cradle-cap">DermNet</a></span> <span class="grade g-a">strong evidence</span> It usually clears on its own by 6 to 12 months, and gentle regular washing is all most cases need.</p>
 
+  <figure class="img portrait">
+    <div class="img-frame" style="--img-bg:#caa98a">
+      <img src="assets/images/first-year/cradle-cap.jpg" width="1600" height="1539" loading="lazy" decoding="async" alt="A patch of yellow-white, greasy, flaky scale on a baby's scalp, the typical look of cradle cap.">
+    </div>
+    <figcaption>What cradle cap actually looks like: harmless greasy, yellow-white scale on the scalp. <span class="cred">Starfoxy / Wikimedia Commons, CC BY-SA 3.0</span></figcaption>
+  </figure>
+
   <aside class="reassure">
     <p>Cradle cap looks worse than it is. It does not bother the baby, it is not a sign anything is wrong with how you are caring for them, and it almost always resolves by itself within the first year. You do not have to do anything beyond ordinary gentle washing.</p>
   </aside>
@@ -3135,9 +3161,18 @@
     <p><b>What actually helps (and is safe).</b> A clean, cool (refrigerated, not frozen-solid) teething ring; a cold, clean, damp washcloth to chew; or gentle gum massage with a clean finger. <span class="grade g-c">expert consensus</span> If a baby is genuinely uncomfortable, weight-based infant acetaminophen (or ibuprofen over 6 months) is reasonable; dosing lives in <a href="#health">Health</a>. Avoid frozen-solid objects (they can damage gums) and never rub whiskey, brandy, or any alcohol on the gums, which is toxic to a baby.</p>
   </details>
 
+  <p class="pullquote">Teething is real, but it is modest, and it is not a fever.</p>
+
   <h3 id="dc-teething-avoid">Three teething products to skip</h3>
 
   <p class="lede">Three categories of teething remedy carry real, documented harm and have all drawn FDA safety actions: benzocaine numbing gels, homeopathic teething tablets with belladonna, and amber (or other) teething necklaces. Skip all three. The safe tools (a chilled teething ring, a cold washcloth, a clean finger) work without the risk. <span class="src"><a href="https://www.fda.gov/consumers/consumer-updates/safely-soothing-teething-pain-and-sensory-needs-infants-and-children">FDA</a></span> <span class="grade g-a">strong evidence</span></p>
+
+  <div class="choices">
+    <div class="choice skip"><img class="thumb" src="assets/images/first-year/amber-necklace.jpg" alt="" width="1600" height="1600" loading="lazy" decoding="async"><span><b>Skip amber (or any) teething necklace.</b> A cord around a sleeping baby's neck is a real strangulation and choking risk, and the "succinic acid" pain claim has no support.</span></div>
+    <div class="choice skip"><span><b>Skip benzocaine numbing gels.</b> The FDA warns they can trigger methemoglobinemia, a rare but dangerous drop in the blood's ability to carry oxygen, in infants.</span></div>
+    <div class="choice skip"><span><b>Skip homeopathic teething tablets with belladonna.</b> The FDA found inconsistent and unsafe amounts of a toxic plant compound.</span></div>
+    <div class="choice use"><img class="thumb" src="assets/images/first-year/teether.jpg" alt="" width="1600" height="1200" loading="lazy" decoding="async"><span><b>Use instead a chilled (not frozen) teething ring,</b> a cold wet washcloth, or a clean finger on the gums. Simple, and they actually work.</span></div>
+  </div>
 
   <aside class="offramp">If you have used any of these, do not panic, but stop, and call your pediatrician or Poison Control (in the US, 1-800-222-1222) if your baby seems unwell. Warning signs after benzocaine or belladonna products include pale, grey, or blue-tinged skin or lips, trouble breathing, unusual sleepiness or lethargy, seizures, muscle weakness, a racing heart, or agitation; those are reasons to seek care now.</aside>
 
