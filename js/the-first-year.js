@@ -2511,7 +2511,7 @@
     var eras = [
       { from: 1890, to: 1945, label: 'Schedule and detachment', color: P.sky },
       { from: 1946, to: 1979, label: 'Warmth and "trust yourself"', color: P.ok },
-      { from: 1980, to: 2025, label: 'Evidence, policy, and safe sleep', color: P.plum }
+      { from: 1980, to: 2025, label: 'Evidence and safe sleep', color: P.plum }
     ];
 
     /* The dated markers the spec names, each with the reversal it represents.
@@ -2523,13 +2523,17 @@
       { y: 1953, name: 'Bowlby', rule: 'attachment: contact and a secure base', side: -1, c: P.ok },
       { y: 1981, name: 'WHO Code', rule: 'restrict formula marketing (adopted 118 to 1)', side: 1, c: P.plum },
       { y: 1991, name: 'BFHI', rule: 'Ten Steps to support breastfeeding (revised 2018)', side: -1, c: P.plum },
-      { y: 1994, name: 'Back to Sleep', rule: 'put babies on their backs (renamed Safe to Sleep, 2012)', side: 1, c: P.call }
+      { y: 1994, name: 'Back to Sleep', rule: 'put babies on their backs (renamed Safe to Sleep, 2012)', side: 1, c: P.call, stem: 86 }
     ];
 
     var W = 720, H = 380;
     var m = { t: 30, r: 24, b: 46, l: 24 };
     var iw = W - m.l - m.r;
     var svg = S.make(W, H);
+    /* S.text() builds a <text> node but does NOT append it (S.el does the
+       appending). This chart must append each label itself, or every era,
+       year, and marker label is silently dropped. */
+    function T(tx, ty, str, cls, attrs) { var t = S.text(tx, ty, str, cls, attrs); svg.appendChild(t); return t; }
 
     var x = S.scale(1905, 2000, m.l + 8, m.l + iw - 8);
     var spineY = m.t + (H - m.t - m.b) / 2;
@@ -2538,7 +2542,7 @@
     eras.forEach(function (e) {
       var x0 = x(Math.max(1905, e.from)), x1 = x(Math.min(2000, e.to));
       S.el('rect', { x: x0, y: m.t + 6, width: Math.max(0, x1 - x0), height: (H - m.t - m.b - 12), fill: e.color, opacity: 0.09, rx: 6 }, svg);
-      S.text((x0 + x1) / 2, m.t + 18, e.label, 'viz-axis', { 'text-anchor': 'middle', fill: e.color, opacity: 0.95 });
+      T((x0 + x1) / 2, m.t + 18, e.label, 'viz-axis', { 'text-anchor': 'middle', fill: e.color, opacity: 0.95 });
     });
 
     /* the century spine ---------------------------------------------------- */
@@ -2549,7 +2553,7 @@
     dTicks.forEach(function (t) {
       var xp = x(t);
       S.el('line', { x1: xp, y1: spineY - 4, x2: xp, y2: spineY + 4, stroke: P.rule, 'stroke-width': 1 }, svg);
-      S.text(xp, H - m.b + 16, String(t), 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-variant-numeric', 'tabular-nums');
+      T(xp, H - m.b + 16, String(t), 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-variant-numeric', 'tabular-nums');
     });
 
     /* markers: a stem from the spine to a stacked, wrapped label ----------- */
@@ -2567,7 +2571,7 @@
     marks.forEach(function (mk) {
       var xp = x(mk.y);
       var dir = mk.side;
-      var stem = 30; /* spine to first text row */
+      var stem = mk.stem || 30; /* spine to first text row; crowded markers drop to a longer lane */
       var yTip = spineY + dir * stem;
 
       /* stem + node */
@@ -2580,7 +2584,7 @@
       else if (xp > m.l + iw - 64) anchor = 'end';
 
       /* title row (name + year), then wrapped rule rows reading away from the spine */
-      var tName = S.text(xp, yTip + (dir > 0 ? 0 : -2), mk.name + ' ' + mk.y, 'viz-label', { 'text-anchor': anchor, fill: P.parch });
+      var tName = T(xp, yTip + (dir > 0 ? 0 : -2), mk.name + ' ' + mk.y, 'viz-label', { 'text-anchor': anchor, fill: P.parch });
       tName.setAttribute('font-variant-numeric', 'tabular-nums');
 
       var ruleLines = wrap(mk.rule, 22);
@@ -2588,12 +2592,12 @@
         var ry;
         if (dir > 0) ry = yTip + 14 + i * lineH;
         else ry = yTip - 16 - (ruleLines.length - 1 - i) * lineH;
-        S.text(xp, ry, ln, 'viz-axis', { 'text-anchor': anchor, fill: P.dim });
+        T(xp, ry, ln, 'viz-axis', { 'text-anchor': anchor, fill: P.dim });
       });
     });
 
     /* a quiet "the pendulum swings" caption inside the frame -------------- */
-    S.text(x(1952), H - m.b + 32, 'schedule to warmth to evidence: the dominant advice reversed direction more than once in a century',
+    T(x(1952), H - m.b + 32, 'schedule to warmth to evidence: the dominant advice reversed direction more than once in a century',
       'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-style', 'italic');
 
     svg.setAttribute('aria-label',
