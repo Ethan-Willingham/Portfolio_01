@@ -104,7 +104,20 @@
   .fy-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(10,12,11,0.55); opacity: 0; visibility: hidden; transition: opacity 0.24s var(--ease-out), visibility 0.24s; }
   .nav-open .fy-scrim { opacity: 1; visibility: visible; }
 
-  .fy-toc { font-family: var(--font-body); }
+  /* Quiet, thin scrollbar tinted to the page's own hairline-rule color, so the
+     contents rail reads as part of the parchment-on-forest palette instead of the
+     bright default OS bar (worst on Windows: a square white track + grey thumb).
+     Firefox uses the standard properties; Chromium/WebKit get a rounded thin pill
+     via the pseudo-elements, where we reset the standard props back to auto because
+     modern Chromium ignores ::-webkit-scrollbar once scrollbar-color/width is set. */
+  .fy-toc { font-family: var(--font-body); scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+  @supports selector(::-webkit-scrollbar) {
+    .fy-toc { scrollbar-width: auto; scrollbar-color: auto; }
+    .fy-toc::-webkit-scrollbar { width: 10px; height: 10px; }
+    .fy-toc::-webkit-scrollbar-track { background: transparent; }
+    .fy-toc::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+    .fy-toc::-webkit-scrollbar-thumb:hover { background: #5a675c; }
+  }
   .fy-toc-search { width: 100%; box-sizing: border-box; font-family: var(--font-body); font-size: 0.9rem; color: var(--text); background: rgba(0,0,0,0.18);
     border: 1px solid var(--rule); border-radius: 4px; padding: 0.45em 0.7em; margin-bottom: 0.7rem; }
   .fy-toc-search:focus { outline: none; border-color: var(--accent); }
