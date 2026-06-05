@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1NS9QT1HEM');</script>
+  <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","wo3l78g9ld");</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predatory Advertising</title>
+  <meta name="description" content="A field guide to internet chum: the mesmerizing little images in the 'Around the Web' grid, the brain machinery they are built to hook, and the money that pays for it.">
+  <meta property="og:title" content="Predatory Advertising">
+  <meta property="og:description" content="A field guide to internet chum: the mesmerizing little images at the bottom of the page, the brain machinery they are built to hook, and the money that pays for it.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/archive/predatory-advertising/predatory-advertising.html">
+  <meta property="og:image" content="https://ethanwillingham.com/archive/predatory-advertising/assets/thumbs/predatory-advertising.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/archive/predatory-advertising/assets/thumbs/predatory-advertising.jpg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* ============================================================
+       PREDATORY ADVERTISING  (archived, off the live index)
+       Wears the shared site shell from /style.css. Only the cover,
+       prose, photo, callout, category-card and sources styles below
+       are this post's own. Every image here is freely licensed
+       (Creative Commons or public domain). No em dashes.
+       ============================================================ */
+
+    :root { --measure: var(--content-width); --ease-out: cubic-bezier(0.23, 1, 0.32, 1); }
+    html { overflow-x: hidden; }
+
+    /* ---------- COVER ---------- */
+    .pa-cover { margin: 0.5rem 0 2.4rem; }
+    .pa-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .pa-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 9.5vw, 4.8rem); line-height: 1.0; letter-spacing: -0.02em; color: var(--text-bright); margin: 0; text-wrap: balance; }
+    .pa-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.25rem, 3.6vw, 1.6rem); line-height: 1.45; color: var(--text-dim); margin: 1.1rem 0 0; max-width: 46ch; text-wrap: pretty; }
+
+    /* ---------- PROSE ---------- */
+    .pa { font-family: var(--font-body); }
+    .pa p { font-size: 1.18rem; line-height: 1.72; color: var(--text); margin: 0 0 1.15rem; text-wrap: pretty; }
+    .pa p a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.32); transition: color 0.2s, border-color 0.2s; }
+    .pa p a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
+    .pa .lede { font-size: 1.32rem; line-height: 1.62; color: var(--text-bright); }
+    .pa .lede.first::first-letter { font-family: var(--font-heading); font-weight: 700; float: left; font-size: 3.3em; line-height: 0.78; padding: 0.06em 0.12em 0 0; color: var(--accent); }
+    .pa em.term { font-style: italic; color: var(--text-bright); }
+
+    /* ---------- SECTION BREAK ---------- */
+    .pa-break { margin: 5rem 0 2.6rem; }
+    .pa-break .dk { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
+    .pa-break h2 { margin: 0.55rem 0 0; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.9rem, 5.2vw, 2.7rem); letter-spacing: -0.015em; color: var(--text-bright); line-height: 1.08; }
+    .pa h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: var(--text-bright); margin: 2.4rem 0 0.6rem; letter-spacing: -0.01em; }
+
+    /* ---------- PHOTOS ---------- */
+    .shot { margin: 2.2rem 0 2.6rem; }
+    .shot img { display: block; width: 100%; height: auto; margin: 0; border-radius: 3px; background: #11140f; }
+    .shot.tile img { max-width: 540px; margin-inline: auto; }
+    .shot figcaption { margin: 0.9rem auto 0; max-width: 60ch; text-align: center; font-family: var(--font-body); font-size: 1.0rem; line-height: 1.55; color: var(--text-dim); text-wrap: pretty; }
+    .shot figcaption .sp { display: block; margin-bottom: 0.4rem; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+    .shot figcaption .src { display: block; margin-top: 0.5rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); opacity: 0.72; }
+
+    /* ---------- STAT CALLOUT ---------- */
+    .pa-stat { margin: 2.6rem auto; text-align: center; }
+    .pa-stat .fig { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 9vw, 4.6rem); line-height: 1; color: var(--accent); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .pa-stat .cap { display: block; margin: 0.5rem auto 0; max-width: 36ch; font-size: 1.06rem; line-height: 1.45; color: var(--text-dim); }
+    .pa-stat .src { display: block; margin-top: 0.55rem; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); opacity: 0.7; }
+
+    /* ---------- PULL QUOTE ---------- */
+    .pa-pq { margin: 2.6rem 0; padding-left: 1.2rem; border-left: 2px solid var(--accent); font-family: var(--font-heading); font-style: italic; font-size: 1.5rem; line-height: 1.4; color: var(--text-bright); }
+    .pa-pq cite { display: block; margin-top: 0.7rem; font-family: var(--font-body); font-style: normal; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
+
+    /* ---------- FIELD-GUIDE CATEGORY CARDS ---------- */
+    .pa-cat { margin: 1.5rem 0; padding: 1.3rem 1.4rem 1.4rem; background: rgba(255,255,255,0.022); border: 1px solid var(--rule); border-radius: 6px; }
+    .pa-cat .n { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; color: var(--text-dim); }
+    .pa-cat .name { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; color: var(--text-bright); margin: 0.15rem 0 0.5rem; line-height: 1.1; }
+    .pa-cat .lever { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--accent); margin-bottom: 0.7rem; }
+    .pa-cat .lever b { color: var(--accent-hover); font-weight: 700; }
+    .pa-cat p { font-size: 1.06rem; line-height: 1.6; margin: 0 0 0.7rem; }
+    .pa-cat p:last-child { margin-bottom: 0; }
+    .pa-cat .eg { font-size: 0.96rem; color: var(--text-dim); }
+    .pa-cat .eg b { color: var(--text); font-weight: 600; }
+
+    /* ---------- NOTE / ASIDE BOXES ---------- */
+    .pa-note { margin: 2.2rem 0; padding: 1.2rem 1.4rem; background: rgba(212,196,160,0.06); border-left: 2px solid var(--accent); border-radius: 0 6px 6px 0; }
+    .pa-note h4 { font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+    .pa-note p { font-size: 1.04rem; line-height: 1.62; margin: 0 0 0.7rem; }
+    .pa-note p:last-child { margin-bottom: 0; }
+    .pa-note.warn { background: rgba(207,106,89,0.08); border-left-color: #cf6a59; }
+    .pa-note.warn h4 { color: #e98e7f; }
+    .pa-defense { list-style: none; margin: 0; padding: 0; }
+    .pa-defense li { position: relative; padding-left: 1.5rem; margin-bottom: 0.85rem; font-size: 1.06rem; line-height: 1.55; color: var(--text); }
+    .pa-defense li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.5rem; height: 0.5rem; border: 1px solid var(--accent); border-radius: 50%; }
+    .pa-defense li b { color: var(--text-bright); }
+
+    /* ---------- NETWORK LOGOS ---------- */
+    .pa-logos { display: flex; align-items: center; justify-content: center; gap: 2.4rem; flex-wrap: wrap; margin: 2.2rem 0 1rem; padding: 1.4rem; background: rgba(255,255,255,0.05); border-radius: 6px; }
+    .pa-logos img { height: 26px; width: auto; }
+    .pa-logos .lg-cap { width: 100%; text-align: center; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+
+    /* ---------- SOURCES + CREDITS ---------- */
+    .pa-sources { margin-top: 5rem; padding-top: 2.2rem; border-top: 1px solid var(--rule); }
+    .pa-sources h2 { font-family: var(--font-heading); font-size: 1.5rem; color: var(--text-bright); margin: 0 0 0.5rem; }
+    .pa-sources > p { font-family: var(--font-body); font-size: 0.98rem; color: var(--text-dim); line-height: 1.6; margin: 0 0 1.6rem; }
+    .shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.2rem 2rem; margin: 0 0 2rem; }
+    .shelf .grp h3 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+    .shelf .grp ul { list-style: none; margin: 0; padding: 0; }
+    .shelf .grp li { font-size: 0.92rem; line-height: 1.45; color: var(--text-dim); margin-bottom: 0.55rem; }
+    .shelf .grp a { color: var(--text); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.25); }
+    .shelf .grp a:hover { color: var(--accent-hover); }
+    .pa-credits h3 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 1.4rem 0 0.7rem; }
+    .pa-credits ul { list-style: none; columns: 2; column-gap: 2rem; font-family: var(--font-mono); font-size: 0.68rem; line-height: 1.5; padding: 0; margin: 0; }
+    .pa-credits li { break-inside: avoid; margin-bottom: 0.5rem; color: var(--text-dim); }
+    .pa-credits a { color: var(--text); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.25); }
+    .pa-credits a:hover { color: var(--accent-hover); }
+
+    @media (max-width: 620px) { .pa-credits ul { columns: 1; } }
+    @media (max-width: 500px) { .pa p { font-size: 1.12rem; } .shot figcaption { font-size: 0.96rem; } }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="pa-cover fade-in">
+      <p class="pa-kicker">The bait at the bottom of the page</p>
+      <h1 class="pa-title">Predatory Advertising</h1>
+      <p class="pa-dek">Those mesmerizing little images in the "Around the Web" grid are not junk. They are folk-engineered to reverse-engineer your brain. A field guide to internet chum.</p>
+    </header>
+
+    <main class="pa fade-in">
+
+      <figure class="shot">
+        <img src="assets/chum/cm-clickbait-row.jpg" width="558" height="217" loading="eager" decoding="async" fetchpriority="high" alt="An illustrative row of three clickbait ads: 'Leading Doctor Reveals the No. 1 Worst Carb You Are Eating', 'The $$$ Moneymaking Secret that Banks Don't Want You To Know', and 'These 12 Impossible Pet Rescue Stories Will Melt Your Heart!'">
+        <figcaption><span class="sp">A chumbox, illustrated</span>You have scrolled past a thousand of these. The real ones belong to their advertisers (and most are unprintable), so every example in this piece is a clean, freely licensed re-creation of the exact same grammar.<span class="src">Illustrative example &middot; Lord Belbury, Wikimedia Commons, CC BY-SA 4.0</span></figcaption>
+      </figure>
+
+      <p class="lede first">You know this grid. It lives at the bottom of news articles and recipe pages and the far end of the internet, under a faint gray label that says "Around the Web" or "You May Also Like" or "Sponsored Stories." And you know the strange tug it produces: a half-second where your eyes snag on a photo you cannot quite identify, a flicker of <em class="term">what is that</em>, and the smallest impulse to find out. Most of the time you scroll on. Sometimes you do not.</p>
+
+      <p>The advertising industry has a name for that grid. They call it a <em class="term">chumbox</em>, after chum: the bucket of ground-up, rancid fish guts a fisherman dumps overboard to draw sharks up from the deep. The metaphor is not an insult someone threw at the format. It is the format's own theory of itself. The images are bait, tuned to bypass the thinking part of you and hit something older and quicker. You are not the customer. You are the fish.</p>
+
+      <p>This is a field guide to that bait: what the images are, sorted into kinds; why each one works, in terms of the actual machinery in your head it is built to trip; and who gets paid when you bite. None of the psychology below is folk wisdom. It is a real and well-documented account of human attention, which is exactly what makes it a little unsettling that it has been so thoroughly weaponized to sell you a slideshow about toenail fungus.</p>
+
+      <div class="pa-break"><span class="dk">why you cannot look away</span><h2>The hook is in your head</h2></div>
+
+      <p>Start with the feeling itself, because the feeling is the whole product. In 1994 the economist George Loewenstein wrote the paper the entire clickbait industry rests on, though he did not know it yet. Curiosity, he argued, is not a pleasant appetite for knowledge. It is <em class="term">a form of cognitively induced deprivation that arises from the perception of a gap in your knowledge or understanding.</em> Read that twice. Curiosity is a kind of discomfort. It opens the instant you become aware that there is a specific thing you do not know, and it itches until you close it.</p>
+
+      <p>An image you cannot identify opens that gap faster than any headline can, because recognition happens before reading. Your visual system is built to name what it sees automatically, and when it meets a shape it can <em>almost</em> place but cannot, it does not shrug. It strains. The chum is engineered to sit in that almost-place: a lump that might be food or might be a tumor, a close-up with the scale cues filed off. The discomfort is manufactured, and the click is sold to you as the cure.</p>
+
+      <figure class="shot">
+        <img src="assets/chum/cm-clickbait-tactics.png" width="817" height="675" loading="lazy" decoding="async" alt="An illustrative clickbait ad: a dog peering at a laptop, captioned '7 Clickbait Advertisements You Won't Believe! And we won't tell you more unless you click here right now.'">
+        <figcaption><span class="sp">The gap, with the mask off</span>An ad whose entire pitch is that it will not tell you the thing unless you click. That is the curiosity gap stated out loud.<span class="src">Illustrative example &middot; GreenMeansGo, Wikimedia Commons, CC BY-SA 4.0</span></figcaption>
+      </figure>
+
+      <p>Loewenstein also noticed something the format would later live or die by. Curiosity, he wrote, is intense, transient, tied to impulsivity, and tends to disappoint once satisfied. That single sentence is the entire life cycle of a chum click: it is <em>intense</em> (you must know), <em>transient</em> (it passes the moment you keep scrolling), <em>impulsive</em> (you click before deciding to), and <em>disappointing when satisfied</em> (the payoff is always garbage). The bait does not have to be good. It only has to open the gap.</p>
+
+      <p>And the gap is not a metaphor for a reward. It is a reward, chemically. When researchers put curious people in an fMRI scanner, high curiosity lights up the brain's dopamine circuitry, the caudate, the nucleus accumbens, the same midbrain machinery that anticipates money or food. The crucial finding, from work by Kang and colleagues in 2009 and Gruber and colleagues in 2014, is <em>when</em> it fires: during the wait for the answer, before you get it. The reward is in the anticipation. A withheld answer parks you in that pre-payoff state and holds you there. The pull you feel toward the unreadable photo is that circuit, lit up and unresolved.</p>
+
+      <div class="pa-stat"><span class="fig">+3.7 sec</span><span class="cap">how much longer people will sit and wait for an answer, per one notch of measured curiosity. Curiosity has a price, and we pay it.</span><span class="src">Kang et al. (2009), Psychological Science</span></div>
+
+      <p>There is one more lever underneath the picture, and it explains why the <em>image</em> does the work rather than the words. Psychologists call it the <a href="https://en.wikipedia.org/wiki/MAIN_model">realism heuristic</a>: we treat a photograph as evidence and a sentence as a mere claim. A picture feels like proof that the thing is real. So the chumbox loads its promise into an image, where your guard is lowest. As the Michigan State researcher Maria Molina put it, studying exactly these ads: in fewer words, imagery drives clicks.</p>
+
+      <p>That is the engine. Everything below is a body built around it.</p>
+
+      <div class="pa-break"><span class="dk">a field guide to the bait</span><h2>The bestiary</h2></div>
+
+      <p>There is no neat specimen jar for this. The bait mutates constantly, and a single grid (like the one at the top of this page) usually mixes half a dozen kinds at once. But almost every chum image is a variation on one of ten species. Once you can name them, the grid stops being noise and turns into a catalogue of the ways a picture can pick a lock in your head.</p>
+
+      <div class="pa-cat">
+        <span class="n">No. 01</span>
+        <div class="name">The Unidentifiable Close-Up</div>
+        <span class="lever">the lever &middot; <b>the curiosity gap, fired by a picture you cannot parse</b></span>
+        <p>An extreme macro of something organic and ambiguous, shot so close the scale cues vanish. A wrinkle of skin that reads, for half a second, as a body part it is not. The image withholds the one fact you need: what am I looking at.</p>
+        <p class="eg"><b>In the wild:</b> the tight close-up captioned "Odd Trick Destroys Erectile Dysfunction," cropped so near that your brain cannot decide what it is looking at. This is the purest form of the species, and every other kind below is a flavor of it.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 02</span>
+        <div class="name">The Grotesque and the Medical</div>
+        <span class="lever">the lever &middot; <b>disgust, which seizes your eyes before you choose to look</b></span>
+        <p>Toenails, skin tags, swollen feet, dark spots, a thing under the skin, "what this does to your gut." Disgust evolved as a disease-avoidance reflex, which means it is fast, involuntary, and very hard to override. You flinch and you look at the same time, and the looking is the sale.</p>
+        <p class="eg"><b>In the wild:</b> "New Diabetes Discovery Leaves Doctors Speechless." The grossness is not a failure of taste. It is the attention mechanism, working exactly as designed.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 03</span>
+        <div class="name">The Miracle Cure and the Antagonist</div>
+        <span class="lever">the lever &middot; <b>hope, plus an enemy, plus deliberately terrible art</b></span>
+        <p>A single pill, a clove of garlic, a cheap household trick, headlined with a villain: "Doctors Hate Him," "Dermatologists Are Furious," "Big Pharma Doesn't Want You To Know." The curiosity gap (which trick?) is wrapped in an underdog story that casts you as the plucky insider about to beat the system.</p>
+        <p class="eg"><b>The crudeness is engineered.</b> The Harvard researcher Michael Norton has pointed out that the MS-Paint ugliness is deliberate: polished art reads as a corporation, but bad art reads as one frustrated person who figured something out, which is more believable and more clickable. Slick would break the spell.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 04</span>
+        <div class="name">The Before and After</div>
+        <span class="lever">the lever &middot; <b>change-detection, plus the quiet sting of comparison</b></span>
+        <p>A split frame: sad and heavy on the left, triumphant and thin on the right. Or "you won't believe what she looks like now." Your eye is built to detect difference, and a side-by-side hands it a difference with a hole in the middle: how did they get from A to B? That hole is the gap, and the click promises the method.</p>
+        <p class="eg"><b>In the wild:</b> "Yoga Pants Fails Of The Rich And Infamous," weight-loss splits, "10 Selfies Gone Totally Wrong." The implicit promise is that the transformation is available to you, too.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 05</span>
+        <div class="name">The Celebrity Hook</div>
+        <span class="lever">the lever &middot; <b>a one-sided relationship you already have</b></span>
+        <p>A famous face under an ominous or secret frame: a final photo, a spotted-leaving, a what-really-happened, a fake endorsement. Because you already carry a parasocial bond with the celebrity, the gap feels personal, like news about someone you know. Add scandal or death (high arousal, faint taboo) and the itch turns urgent.</p>
+        <p class="eg"><b>In the wild:</b> "The Cameraman Wasn't Expecting To Capture That On Live TV." This is also the category that drifts most easily into outright fakery, which is where regulators eventually got involved.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 06</span>
+        <div class="name">The Forbidden and the Censored</div>
+        <span class="lever">the lever &middot; <b>concealment, which is the maximum possible gap</b></span>
+        <p>A blur, a pixelation, a black bar, a "they don't want you to see this." The censor strip is not hiding the bait. The censor strip <em>is</em> the bait. It advertises, with total precision, that there is a secret exactly where your eye has landed, and adds the small rebellious pleasure of clicking past a forbidden line.</p>
+        <p class="eg"><b>Why it works:</b> a blur tells you two things at once, that something specific is here, and that you in particular are not allowed to see it. That doubles the deprivation Loewenstein described.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 07</span>
+        <div class="name">The Local Hook</div>
+        <span class="lever">the lever &middot; <b>your own town, your own age, your own name</b></span>
+        <p>"Drivers in [your city] are furious." "[Your state] moms are getting paid." "People born before 1970, read this." Your own location and demographic are permanent attention priorities, the cocktail-party reflex that snaps your head around when someone says your name across a room. The "city" is injected from your IP address, so it is always, eerily, yours.</p>
+        <p class="eg"><b>In the wild:</b> "New Rule in Brooklyn, NY." Specificity also borrows the realism heuristic: a precise detail feels true, even when it was filled in by a script a millisecond ago.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 08</span>
+        <div class="name">The Money Flex</div>
+        <span class="lever">the lever &middot; <b>greed and loss-aversion, pulling in opposite directions</b></span>
+        <p>Fans of cash, gold bars, a luxury watch, "if you have $1,000 in savings," "banks hate this." Money is a universal high-arousal cue, and the framing works both throttles at once: the hope of a gain and the fear of a loss. Loss-aversion means the fear of missing out is worth roughly twice the equivalent hope, so the dread does most of the lifting.</p>
+        <p class="eg"><b>In the wild:</b> "The $$$ Moneymaking Secret that Banks Don't Want You To Know," "My Journey from Rags to Riches. Watch now."</p>
+      </div>
+
+      <figure class="shot">
+        <img src="assets/chum/cm-money-es.png" width="1400" height="999" loading="lazy" decoding="async" alt="An illustrative money clickbait ad: an open briefcase stuffed with hundred-dollar bills, captioned in Spanish, 'This course will teach you to be a millionaire in 3 steps.'">
+        <figcaption><span class="sp">The money flex</span>Greed in the gain, dread in the loss. The picture does not have to make sense. It has to raise your pulse.<span class="src">Illustrative example &middot; Wikimedia Commons, CC0</span></figcaption>
+      </figure>
+
+      <div class="pa-cat">
+        <span class="n">No. 09</span>
+        <div class="name">The Uncanny and the AI</div>
+        <span class="lever">the lever &middot; <b>an image that is almost right, and therefore impossible to drop</b></span>
+        <p>Impossible scale, a melted-smooth face, a six-fingered hand, a composite that does not quite obey physics. Anything that violates what your brain predicted is, by definition, worth a second look, and the uncanny valley adds a low hum of unease that, like disgust, is hard to walk away from. Generative tools made this the fastest-growing species: impossible bait, now infinite and nearly free.</p>
+        <p class="eg"><b>In the wild:</b> the melted, too-smooth faces and impossible composites that image generators now spit out by the thousand. An almost-coherent image keeps your recognition system grinding, which holds the gap open by other means.</p>
+      </div>
+
+      <div class="pa-cat">
+        <span class="n">No. 10</span>
+        <div class="name">The Face That Stares Back</div>
+        <span class="lever">the lever &middot; <b>dedicated face-detection hardware, and a gaze aimed at you</b></span>
+        <p>A human face, shot tight, eyes wide, mouth open in shock, looking straight down the barrel of the camera. You find faces before you find anything else on a screen, and a direct, camera-facing gaze measurably holds the eye longer than an averted one. The expression then triggers a flicker of emotional contagion and poses its own little question: what are they reacting to?</p>
+        <p class="eg"><b>In the wild:</b> this is the same instinct YouTube thumbnails were built on. The wide-eyed shocked face is not a style. It is the cheapest reliable way to win the first glance.</p>
+      </div>
+
+      <div class="pa-break"><span class="dk">follow the money</span><h2>The machine behind the grid</h2></div>
+
+      <p>None of this would exist if it did not pay, and it pays at a scale that is hard to hold in your head. The grids are filled by a handful of content-recommendation networks, the two biggest being Taboola and Outbrain, which sit between publishers (who rent out the space at the bottom of their articles) and advertisers (who buy your click). Taboola alone claims something on the order of 400 billion recommendations served every month.</p>
+
+      <div class="pa-logos">
+        <img src="assets/chum/taboola-logo.svg" width="180" height="44" alt="Taboola logo" loading="lazy">
+        <img src="assets/chum/outbrain-logo.png" width="180" height="60" alt="Outbrain logo" loading="lazy">
+        <span class="lg-cap">the two firms that fill most of the grids on the open web</span>
+      </div>
+
+      <p>The economics are an arbitrage, and once you see it the ugliness of the images finally makes sense. The play is to buy your attention cheaply and resell it for slightly more. As one industry analyst put it, if you can pay a network one cent for a click to your page and then earn two cents showing real advertising on that page, that is a juicy margin. Multiply a fraction of a cent by billions of clicks and you have a real industry.</p>
+
+      <div class="pa-stat"><span class="fig">$2.4 billion</span><span class="cap">spent on clicks through Taboola and Outbrain in a single year, 2022. The networks paid out around $1.6 billion of it to the publishers who hung the grids.</span><span class="src">Ebiquity / AdExchanger (2023)</span></div>
+
+      <p>Where does the click actually land? Usually on a page built for no reason except to show you ads: a fifty-slide listicle where each slide carries five ad units, a thin "article" wedged between banners, a search-results page dressed up as content. This is the layer the industry quietly calls "made for advertising," and an estimated ten billion dollars a year flows into it. The crucial structural fact, the one that explains every design choice in this entire piece, is this: <strong>the money is made after the click, downstream, on the junk page.</strong> So the image at the front door never has to deliver on anything. It is optimized one hundred percent to win the click and zero percent to satisfy you once you have clicked.</p>
+
+      <p class="pa-pq">The image only has to win the click. It never has to be worth it.<cite>the one idea that explains the whole grid</cite></p>
+
+      <p>And it is not an American problem. The grammar is identical in every language: the same shocked faces, the same withheld secrets, the same crude urgency, translated and re-skinned for every market on earth.</p>
+
+      <figure class="shot">
+        <img src="assets/chum/cm-korean.png" width="1674" height="255" loading="lazy" decoding="async" alt="A row of Korean-language clickbait news thumbnails, showing the same shocked-face and dramatic styling as English-language chum.">
+        <figcaption><span class="sp">The same grammar, in Korean</span>Different alphabet, identical machine. The chumbox is global infrastructure.<span class="src">Xnou, Wikimedia Commons, CC BY-SA 4.0</span></figcaption>
+      </figure>
+
+      <div class="pa-break"><span class="dk">the same rails carry poison</span><h2>The dark turn, and the law</h2></div>
+
+      <p>A delivery system this good at bypassing judgment does not only sell diet pills. The same boxes, on the same rails, carry health scams, fabricated celebrity stories, and outright disinformation, because the network is paid by the click and is, as one digital executive bluntly told <a href="https://www.vice.com/en/article/taboolas-content-chum-boxes-also-spread-disinformation/">Vice</a>, actively disincentivized from policing its own supply: controversy gets people to click on their ads. A fraud auditor in the same piece put the role plainly: these platforms both help people discover false information and help the false-information sites make money.</p>
+
+      <p>The catalogue of what rides the grid is its own small horror: tips to "empty your bowels," a "miracle enzyme," a fake claim that a nasal spray cuts infection risk by 78 percent, slideshows of celebrities who used to be ugly, and, depending on the site, political disinformation and conspiracy theories sitting one tile over from the coconut-oil ad.</p>
+
+      <div class="pa-stat"><span class="fig">~26%</span><span class="cap">of chumbox images, in a 2016 survey, were sexually suggestive or otherwise "interruptive." The bait skews toward the reflexes you cannot switch off.</span><span class="src">The New York Times (2016)</span></div>
+
+      <p>Regulators have crept in at the edges. In 2015 the U.S. Federal Trade Commission ruled that an ad's format is deceptive if it misleads you about the fact that it is an ad, which is why the chumbox now wears that whisper-quiet "Sponsored" label in the corner. In 2024 the FTC went after the format's ugliest corner directly, banning fake reviews and, pointedly, fake celebrity endorsements and AI-generated testimonials, with penalties that can run past fifty thousand dollars a violation. The law is real, but it is slow, and the grid is fast.</p>
+
+      <div class="pa-note">
+        <h4>How to break the spell</h4>
+        <p>You cannot un-wire the reflexes. You can, however, make them visible, which is most of the battle. A few habits that genuinely help:</p>
+        <ul class="pa-defense">
+          <li><b>Name the itch.</b> The pull is manufactured deprivation, not real interest. Saying "that's a curiosity gap" out loud collapses a surprising amount of it.</li>
+          <li><b>Find the label.</b> There is almost always a faint "Sponsored," "Ad," or "by Taboola" tucked in a corner. It is legally required to be there. Train your eye to it.</li>
+          <li><b>Ask where the click goes.</b> If the destination is a fifty-slide gallery or a search page, you were never the reader. You were the inventory.</li>
+          <li><b>Treat images as claims, not proof.</b> The realism heuristic is the exact bias being farmed. A photo, and especially an AI image, is not evidence of anything.</li>
+          <li><b>Let the machine help.</b> A content blocker or reader mode removes most chumboxes outright, and the ones you never see cannot fish you.</li>
+        </ul>
+      </div>
+
+      <div class="pa-break"><span class="dk">a short history of bait</span><h2>This is very old</h2></div>
+
+      <p>The chumbox feels native to the internet, but the instinct it farms is ancient, and the commercial form has a clear lineage. The lurid woodcut on a penny-dreadful, the screaming headline of yellow journalism, the carnival banner promising the thing inside the tent, the supermarket tabloid: every one of them is a picture-plus-promise built to pull a passing stranger across a threshold. The chumbox is that same trade, made programmatic and infinite.</p>
+
+      <p>The modern visual form crystallized in the late 2000s with "One Weird Trick" and "Doctors Hate Him," went everywhere in the early 2010s, and got its name and its first real taxonomy in 2015, when the writer John Mahoney annotated a chumbox for The Awl and defined chum, beautifully, as decomposing matter that triggers a purely neurological brain-stem response in its target. He was describing fish bait. He was also describing us.</p>
+
+      <p>The form got so recognizable, so fast, that the internet did the only thing it does with anything that recognizable: it turned the format into a meme, the top-hatted crab who got rich with "one simple trick" (he forces children to work in his factories), the embalmed Lenin who "has been 53 since 1924." The joke is affectionate, but it is also the clearest proof of how mechanical the thing is. You can recite the formula. You can parody it in your sleep. And it still works on you, because knowing the magician's method does not stop the trick from tugging at a reflex that never consults your knowledge before it fires. The newest chapter is the AI one: the bait is drifting toward the abstract and the uncanny, cheap and endless, and it is only going to get stranger.</p>
+
+      <p>So the next time the grid catches you, and it will, take the half-second it is counting on and spend it differently. Notice the snag. Notice the small discomfort that is asking to be relieved. Notice that the whole apparatus, the billion-dollar machine and the century of lineage behind it, is aimed at one tiny involuntary muscle in your attention. And then, having seen the hook clearly, do the one thing the entire system is built to prevent. Scroll on.</p>
+
+      <section class="pa-sources">
+        <h2>Sources and notes</h2>
+        <p>The psychology and the law below rest on primary sources (peer-reviewed journals, FTC releases). The numbers on the industry are mostly company self-reports and trade-press analysis, and are labeled as claims where that matters. Where the science is genuinely unsettled, I have said so rather than rounded it off.</p>
+
+        <div class="shelf">
+          <div class="grp">
+            <h3>The mind</h3>
+            <ul>
+              <li><a href="https://www.cmu.edu/dietrich/sds/docs/loewenstein/PsychofCuriosity.pdf">Loewenstein (1994)</a>, the information-gap theory of curiosity</li>
+              <li><a href="https://journals.sagepub.com/doi/abs/10.1111/j.1467-9280.2009.02402.x">Kang et al. (2009)</a>, curiosity and the brain's reward circuit</li>
+              <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4252494/">Gruber, Gelman &amp; Ranganath (2014)</a>, dopamine and anticipation</li>
+              <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4072644/">Palanica &amp; Itier (2012)</a>, direct gaze holds the eye longer</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <h3>The machine</h3>
+            <ul>
+              <li><a href="https://www.fastcompany.com/90843502/the-chumbox-is-still-the-dirty-design-secret-of-the-internet">Fast Company (2023)</a>, the chumbox design secret</li>
+              <li><a href="https://www.adexchanger.com/the-sell-sider/is-chumbox-economics-feeding-the-industrys-mfa-problem/">AdExchanger / Ebiquity (2023)</a>, the arbitrage economics</li>
+              <li><a href="https://www.readmargins.com/p/taboola-outbrain-and-the-chum-supply">Margins (2019)</a>, Taboola, Outbrain and the chum supply</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <h3>The dark side and the law</h3>
+            <ul>
+              <li><a href="https://www.vice.com/en/article/taboolas-content-chum-boxes-also-spread-disinformation/">Vice (2021)</a>, chum boxes and disinformation</li>
+              <li><a href="https://www.ftc.gov/news-events/news/press-releases/2015/12/ftc-issues-enforcement-policy-statement-addressing-native-advertising-deceptively-formatted">FTC (2015)</a>, native-advertising enforcement policy</li>
+              <li><a href="https://www.ftc.gov/news-events/news/press-releases/2024/08/federal-trade-commission-announces-final-rule-banning-fake-reviews-testimonials">FTC (2024)</a>, the fake-reviews and fake-endorsement rule</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <h3>The name and the history</h3>
+            <ul>
+              <li><a href="https://www.theawl.com/2015/06/a-complete-taxonomy-of-internet-chum/">Mahoney, The Awl (2015)</a>, "A Complete Taxonomy of Internet Chum"</li>
+              <li><a href="https://en.wikipedia.org/wiki/Chumbox">Chumbox</a>, the overview and the surveys it cites</li>
+              <li><a href="https://knowyourmeme.com/memes/one-weird-trick-doctors-hate-him">Know Your Meme</a>, "One Weird Trick / Doctors Hate Him"</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="pa-note warn">
+          <h4>Where to be careful</h4>
+          <p>A few honest hedges, since the temptation in a piece like this is to overclaim. fMRI does not measure dopamine directly; it measures blood flow, and the reward-circuit reading is an inference the original authors hedge. The direct-gaze effect is real but modest (a matter of milliseconds), not a tractor beam. And there is a live academic debate about whether curiosity is best understood as aversive deprivation or as positive anticipation, so treat the curiosity-gap account as the strong, well-supported story it is, not as a closed case.</p>
+          <p>The scale figures (Taboola's billions, the dollar totals) are company and trade-press numbers, carried here with that caveat. And a myth worth killing: the recommendation networks <em>distribute</em> the "One Weird Trick" creative, they did not invent it, which came from the affiliate and arbitrage marketers downstream.</p>
+        </div>
+
+        <div class="pa-credits">
+          <h3>On the images</h3>
+          <ul>
+            <li>Every image here is freely licensed (Creative Commons or public domain), from Wikimedia Commons, and is a clean illustration of the genre. The real chumbox ads they stand in for remain the property of their advertisers and are not reproduced.</li>
+            <li><a href="https://commons.wikimedia.org/wiki/File:Example_clickbait_adverts.jpg">Illustrative chumbox row</a> &middot; Lord Belbury, CC BY-SA 4.0</li>
+            <li><a href="https://commons.wikimedia.org/wiki/File:Clickbait_ad_example.png">The "won't tell you unless you click" ad</a> &middot; GreenMeansGo, CC BY-SA 4.0</li>
+            <li><a href="https://commons.wikimedia.org/wiki/File:Example_clickbait_advert_in_Spanish.png">The money-flex example</a> &middot; El Rolo Ueeqee, CC0</li>
+            <li><a href="https://commons.wikimedia.org/wiki/File:Korean_clickbait_news.png">Korean clickbait row</a> &middot; Xnou, CC BY-SA 4.0</li>
+            <li><a href="https://commons.wikimedia.org/wiki/File:Taboola_logo.svg">Taboola logo</a> &middot; Wikimedia Commons; <a href="https://commons.wikimedia.org/wiki/File:Outbrain_Logo.png">Outbrain logo</a> &middot; Giladdv, CC BY 4.0</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/backtotop.js"></script>
+</body>
+</html>
