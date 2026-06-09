@@ -299,22 +299,23 @@
     }
     .sa-hint.err { color: #e0a08f; }
 
-    /* your next space birthday, settling in under the input once known */
+    /* your next space birthday: the payoff line, big enough to be the
+       second thing you read after the headline */
     .sa-soon {
       margin: 0;
-      max-width: 24ch;
+      max-width: 20ch;
       text-align: center;
       text-wrap: balance;
       font-family: var(--font-heading);
       font-style: italic;
-      font-size: 1.02rem;
-      line-height: 1.5;
-      color: var(--dim);
+      font-size: clamp(1.35rem, 6vw, 1.7rem);
+      line-height: 1.4;
+      color: var(--ink);
       opacity: 0;
       transition: opacity 0.7s ease 0.1s;
     }
     .sa-soon.on { opacity: 1; }
-    .sa-soon b { font-style: normal; font-weight: 400; color: var(--gold-2); }
+    .sa-soon b { font-style: normal; font-weight: 700; color: var(--gold-2); }
 
     /* ---------------- RESULTS ----------------
        scroll-margin keeps the Share button off the screen edge when the
@@ -329,7 +330,6 @@
       padding: 0.95rem 0.25rem;
       border-top: 1px solid var(--line);
     }
-    .pl:last-child { border-bottom: 1px solid var(--line); }
     .pl-img {
       width: 2.75rem;
       height: 2.75rem;
