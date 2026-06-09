@@ -20,10 +20,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How Old Are You in Space?</title>
-  <meta name="description" content="Enter your birthday and see your age on every planet, counted in that world's own years, with next-birthday countdowns. Runs entirely in your browser; your date is never sent anywhere.">
+  <meta name="description" content="Enter your birthday and see your age on every planet. A year on Mercury is 88 days; on Neptune it is 165 of ours, so you are a different age on each. Runs in your browser.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="How Old Are You in Space?">
-  <meta property="og:description" content="Enter your birthday and see your age on every planet, counted in that world's own years. One trip around the Sun is 88 days on Mercury and 248 of our years on Pluto.">
+  <meta property="og:description" content="Enter your birthday and see your age on every planet. A year is 88 days on Mercury and 248 of ours on Pluto, so you are a different age on each one.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/space-age.html">
@@ -37,395 +37,479 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Page-specific styles for the space-age calculator.
-       The warm panel system (.demo-wrapper, sliders, buttons) lives in
-       style.css; this only adds the input row, the per-world rows, and the
-       little CSS planet disks. Numbers use Commit Mono per the house rule
-       (monospace is for numerical readouts only). */
+    /* ============================================================
+       SPACE-AGE  ·  a cinematic, mobile-first single-purpose page.
+       One question, one input, then the answer reveals. Deep-space
+       canvas; the site's three faces and gold accent carry the brand.
+       ============================================================ */
+    .sa-page {
+      --ink:    #f4f0e7;
+      --dim:    #aeb4a9;
+      --faint:  #8e958b;
+      --gold:   #e0cd9c;
+      --gold-2: #f1e3bd;
+      --line:   rgba(244, 240, 231, 0.12);
+      --panel:  rgba(244, 240, 231, 0.035);
+      background:
+        radial-gradient(120% 80% at 50% -10%, #18241f 0%, rgba(12, 17, 14, 0) 55%),
+        radial-gradient(90% 60% at 85% 8%, rgba(70, 92, 120, 0.16) 0%, rgba(12, 17, 14, 0) 50%),
+        #0a0e0c;
+      background-attachment: fixed;
+      color: var(--ink);
+    }
+    /* A faint, fixed starfield behind everything. Pure CSS, no request. */
+    .sa-page::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(1.4px 1.4px at 12% 18%, rgba(255,255,255,0.7), transparent 100%),
+        radial-gradient(1.2px 1.2px at 27% 62%, rgba(255,255,255,0.5), transparent 100%),
+        radial-gradient(1.6px 1.6px at 41% 12%, rgba(255,255,255,0.65), transparent 100%),
+        radial-gradient(1px 1px at 54% 78%, rgba(255,255,255,0.45), transparent 100%),
+        radial-gradient(1.5px 1.5px at 66% 33%, rgba(255,255,255,0.6), transparent 100%),
+        radial-gradient(1.1px 1.1px at 78% 70%, rgba(255,255,255,0.5), transparent 100%),
+        radial-gradient(1.7px 1.7px at 88% 22%, rgba(255,255,255,0.7), transparent 100%),
+        radial-gradient(1px 1px at 8% 84%, rgba(255,255,255,0.4), transparent 100%),
+        radial-gradient(1.2px 1.2px at 33% 90%, rgba(255,255,255,0.5), transparent 100%),
+        radial-gradient(1.3px 1.3px at 95% 55%, rgba(255,255,255,0.55), transparent 100%),
+        radial-gradient(1px 1px at 19% 40%, rgba(255,255,255,0.4), transparent 100%),
+        radial-gradient(1.4px 1.4px at 72% 92%, rgba(255,255,255,0.5), transparent 100%);
+      opacity: 0.8;
+    }
+    .sa-page .site-wrapper { position: relative; z-index: 1; }
 
-    /* The interactive sits right under the title, so trim the panel's default
-       3em top margin (the post header already provides the gap). */
-    .sa-wrapper { margin-top: 0.5rem; }
+    /* keep the back link legible on the dark canvas */
+    .sa-page .post-back { color: var(--faint); }
+    .sa-page .post-back:hover { color: var(--ink); }
 
-    /* --- Input row --- */
-    .sa-input {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.75rem 1rem;
-      padding: 1.1rem 1.25rem 1.2rem;
-    }
-    .sa-input label {
-      font-family: var(--font-heading);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--d-text-bright);
-    }
-    #sa-date {
-      font-family: var(--d-mono);
-      font-size: 1rem;
-      color: var(--d-text-bright);
-      background: rgba(0, 0, 0, 0.22);
-      border: 1px solid var(--d-rule-strong);
-      border-radius: 4px;
-      padding: 0.55em 0.75em;
-      cursor: pointer;
-      color-scheme: dark; /* a dark native date picker, to match the panel */
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    #sa-date:focus {
-      outline: none;
-      border-color: var(--d-accent);
-      box-shadow: 0 0 0 3px rgba(212, 196, 160, 0.16);
-    }
-
-    /* --- Results area --- */
-    .sa-results { border-top: 1px solid var(--d-rule); }
-    .sa-empty {
-      padding: 2.4rem 1.25rem;
-      text-align: center;
-      font-family: var(--font-body);
-      font-style: italic;
-      color: var(--d-text-dim);
-      font-size: 1rem;
-    }
-    .sa-summary {
-      padding: 0.95rem 1.25rem;
-      background: var(--d-bg-raised);
-      border-bottom: 1px solid var(--d-rule);
-      font-family: var(--font-body);
-      font-style: italic;
-      font-size: 0.95rem;
-      color: var(--d-text-dim);
-      line-height: 1.5;
-    }
-    .sa-summary strong {
-      font-style: normal;
-      font-weight: 600;
-      color: var(--d-text-bright);
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* One row per world. The disk spans both text lines on the left; the name
-       and the big age share the top line; the next-birthday note sits beneath,
-       spanning the same width. */
-    .sa-row {
-      display: grid;
-      grid-template-columns: 2.6rem 1fr auto;
-      grid-template-areas:
-        "disk name age"
-        "disk next next";
-      align-items: center;
-      column-gap: 0.85rem;
-      row-gap: 0.15rem;
-      padding: 0.95rem 1.25rem;
-      border-bottom: 1px solid rgba(74, 84, 75, 0.5);
-    }
-    .sa-row:last-child { border-bottom: none; }
-    .sa-row.is-earth { background: rgba(212, 196, 160, 0.05); }
-
-    .sa-disk {
-      grid-area: disk;
-      width: 1.7rem;
-      height: 1.7rem;
-      border-radius: 50%;
-      background: var(--disk, #888);
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.35);
-      justify-self: center;
+    /* ---------------- HERO ---------------- */
+    .sa-hero {
       position: relative;
+      min-height: 82svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 1.4rem;
+      padding: 1rem 0 2rem;
     }
-    .sa-disk.is-small { width: 1.05rem; height: 1.05rem; }
-    /* Saturn's ring: a thin tilted ellipse drawn behind the disk edge. */
-    .sa-disk.has-ring::after {
+    /* a soft warm glow sitting behind the headline */
+    .sa-hero::after {
       content: "";
       position: absolute;
+      z-index: -1;
       left: 50%;
-      top: 50%;
-      width: 2.7rem;
-      height: 0.95rem;
-      transform: translate(-50%, -50%) rotate(-22deg);
-      border: 1px solid rgba(236, 220, 174, 0.6);
-      border-radius: 50%;
+      top: 44%;
+      transform: translate(-50%, -50%);
+      width: min(125%, 560px);
+      height: 440px;
+      background: radial-gradient(closest-side, rgba(224, 205, 156, 0.12), rgba(224, 205, 156, 0) 78%);
+      pointer-events: none;
     }
-    /* The ISS marker reads as "not a planet": a small rounded craft, not a globe. */
-    .sa-disk.is-craft {
-      width: 1.35rem;
-      height: 1.35rem;
-      border-radius: 4px;
-      background: linear-gradient(135deg, #cfd4d8, #7d8893);
-    }
-
-    .sa-name {
-      grid-area: name;
-      font-family: var(--font-heading);
-      font-size: 1.25rem;
-      font-weight: 400;
-      color: var(--d-text-bright);
-      line-height: 1.2;
-    }
-    .sa-tag {
+    .sa-eyebrow {
       font-family: var(--font-body);
-      font-style: italic;
       font-size: 0.72rem;
-      letter-spacing: 0.02em;
-      color: var(--d-text-dim);
-      margin-left: 0.5em;
-    }
-
-    .sa-age {
-      grid-area: age;
-      justify-self: end;
-      text-align: right;
-      font-family: var(--d-mono);
-      font-variant-numeric: tabular-nums;
-      font-size: 1.45rem;
-      line-height: 1.1;
-      color: var(--d-accent-strong);
-      white-space: nowrap;
-    }
-    .sa-age .sa-unit {
-      font-size: 0.72rem;
-      color: var(--d-text-dim);
-      margin-left: 0.35em;
-      letter-spacing: 0.02em;
-    }
-
-    .sa-next {
-      grid-area: next;
-      font-family: var(--font-body);
-      font-size: 0.86rem;
-      color: var(--d-text-dim);
-      line-height: 1.45;
-    }
-    .sa-next b {
       font-weight: 600;
-      color: var(--d-text);
-      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.85;
+    }
+    .sa-h1 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: clamp(2.7rem, 12vw, 4.6rem);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      text-wrap: balance;
+      margin: 0;
+    }
+    .sa-hook {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: clamp(1.05rem, 4.4vw, 1.3rem);
+      line-height: 1.4;
+      color: var(--dim);
+      max-width: 22ch;
+      margin: 0;
     }
 
-    /* --- Derived stats block --- */
-    .sa-stats {
-      padding: 1.05rem 1.25rem 1.15rem;
-      border-top: 1px solid var(--d-rule);
-      background: var(--d-bg-raised);
+    /* ---- The birthday input: three typed fields, fast on mobile ---- */
+    .sa-bday { margin-top: 0.6rem; }
+    .sa-fields {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 0.35rem;
+      padding: 0.2rem 0.2rem 0;
     }
-    .sa-stats-title {
-      font-family: var(--font-heading);
-      font-size: 0.78rem;
+    .sa-field { display: flex; flex-direction: column; align-items: center; }
+    .sa-field input {
+      width: 2.4ch;
+      box-sizing: content-box;
+      font-family: var(--font-mono);
+      font-size: clamp(2rem, 9vw, 2.9rem);
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--line);
+      padding: 0.1em 0.05em 0.12em;
+      caret-color: var(--gold);
+      transition: border-color 0.2s, color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      border-radius: 0;
+    }
+    .sa-field.yr input { width: 4.6ch; }
+    .sa-field input::placeholder { color: var(--faint); opacity: 0.55; }
+    .sa-field input:focus {
+      outline: none;
+      border-bottom-color: var(--gold);
+    }
+    .sa-field input.filled { color: var(--gold-2); }
+    .sa-sep {
+      font-family: var(--font-mono);
+      font-size: clamp(1.6rem, 7vw, 2.3rem);
+      color: var(--faint);
+      /* lift the slash off the label row so it sits against the numerals */
+      margin-bottom: 1.55rem;
+      user-select: none;
+    }
+    .sa-field-label {
+      font-family: var(--font-body);
+      font-size: 0.66rem;
+      font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--d-text-dim);
-      margin-bottom: 0.55rem;
+      color: var(--faint);
+      margin-top: 0.5rem;
     }
-    .sa-stat {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 0.15rem 1rem;
-      padding: 0.45rem 0;
-      border-bottom: 1px solid rgba(74, 84, 75, 0.4);
-    }
-    .sa-stat:last-child { border-bottom: none; }
-    .sa-stat-label {
+    .sa-hint {
       font-family: var(--font-body);
-      font-size: 0.9rem;
-      color: var(--d-text-dim);
+      font-size: 0.85rem;
+      color: var(--faint);
+      min-height: 1.2em;
+      margin: 0.2rem 0 0;
+      transition: opacity 0.3s, color 0.2s;
     }
-    .sa-stat-val {
+    .sa-hint.err { color: #e0a08f; }
+
+    /* a soft scroll cue once results exist, below the hero */
+    .sa-cue {
+      margin-top: 0.4rem;
       font-family: var(--font-body);
-      font-size: 0.9rem;
-      color: var(--d-text);
-      text-align: right;
-      margin-left: auto;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.4s, transform 0.4s;
+      pointer-events: none;
+    }
+    .sa-cue.show { opacity: 0.9; transform: none; pointer-events: auto; }
+    .sa-cue:hover { color: var(--gold-2); }
+    .sa-cue .ar { display: block; font-size: 1.1em; line-height: 1; margin-top: 0.15rem; animation: sa-bob 1.8s ease-in-out infinite; }
+    @keyframes sa-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+
+    /* ---------------- RESULTS ---------------- */
+    .sa-results { padding-top: 0.5rem; }
+    .sa-lead {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--dim);
+      margin: 0 auto 2rem;
+      max-width: 28ch;
+      line-height: 1.5;
+    }
+    .sa-lead b {
+      font-style: normal;
+      font-weight: 700;
+      color: var(--ink);
       font-variant-numeric: tabular-nums;
     }
-    .sa-stat-val b { font-weight: 600; color: var(--d-accent-strong); }
 
-    /* --- Share row --- */
+    .sa-list { list-style: none; margin: 0; padding: 0; }
+    .pl {
+      display: grid;
+      grid-template-columns: 3rem 1fr auto;
+      align-items: center;
+      gap: 0 1rem;
+      padding: 0.95rem 0.25rem;
+      border-top: 1px solid var(--line);
+    }
+    .pl:last-child { border-bottom: 1px solid var(--line); }
+    .pl-img {
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.45);
+      background: #0d1210;
+    }
+    .pl-name {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+    .pl-name .pl-tag {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 0.7rem;
+      color: var(--faint);
+      margin-left: 0.4em;
+      vertical-align: 0.15em;
+    }
+    .pl-sub {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--dim);
+      line-height: 1.35;
+      margin-top: 0.15rem;
+    }
+    .pl-age { text-align: right; white-space: nowrap; }
+    .pl-num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 1.85rem;
+      line-height: 1;
+      color: var(--gold-2);
+    }
+    .pl-unit {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-top: 0.25rem;
+    }
+
+    /* reveal animation (respecting reduced motion, set in JS-friendly class) */
+    .sa-rise { opacity: 0; transform: translateY(10px); }
+    .sa-results.in .sa-rise { animation: sa-riseup 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
+    @keyframes sa-riseup { to { opacity: 1; transform: none; } }
+
+    /* ---- Secondary: the quieter facts, below the fold of the result ---- */
+    .sa-facts {
+      margin-top: 2.2rem;
+      padding: 1.2rem 1.25rem;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .sa-facts h2 {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 0.9rem;
+    }
+    .sa-fact {
+      font-family: var(--font-body);
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: var(--dim);
+      padding: 0.4rem 0;
+    }
+    .sa-fact + .sa-fact { border-top: 1px solid var(--line); }
+    .sa-fact b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    /* ---- Share ---- */
     .sa-share {
       display: flex;
       align-items: center;
+      justify-content: center;
       flex-wrap: wrap;
-      gap: 0.7rem 0.9rem;
-      padding: 1.05rem 1.25rem 1.15rem;
-      background: var(--d-bg-raised);
-      border-top: 1px solid var(--d-rule);
-    }
-    .sa-share-label {
-      font-family: var(--font-body);
-      font-style: italic;
-      font-size: 0.9rem;
-      color: var(--d-text-dim);
+      gap: 0.7rem;
+      margin-top: 2rem;
+      text-align: center;
     }
     .sa-btn {
       font-family: var(--font-heading);
-      font-size: 0.92rem;
-      font-weight: 400;
-      letter-spacing: 0.01em;
-      color: var(--d-text);
-      background: transparent;
-      border: 1px solid var(--d-rule-strong);
-      border-radius: 3px;
-      padding: 0.42em 1.05em;
+      font-size: 1.02rem;
+      color: #0a0e0c;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 999px;
+      padding: 0.7em 1.6em;
+      min-height: 48px;
       cursor: pointer;
-      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      transition: background 0.2s, transform 0.08s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(224, 205, 156, 0.18);
     }
-    .sa-btn:hover {
-      color: var(--d-bg);
-      border-color: var(--d-accent);
-      background: var(--d-accent);
-    }
+    .sa-btn:hover { background: var(--gold-2); box-shadow: 0 4px 26px rgba(224, 205, 156, 0.28); }
     .sa-btn:active { transform: translateY(1px); }
-    .sa-btn.is-done {
-      color: var(--d-bg);
-      border-color: var(--d-accent);
-      background: var(--d-accent);
+    .sa-btn.ghost {
+      color: var(--ink);
+      background: transparent;
+      border-color: var(--line);
+      box-shadow: none;
     }
+    .sa-btn.ghost:hover { border-color: var(--gold); color: var(--gold-2); }
+    .sa-btn.done { background: var(--gold-2); }
 
-    /* Smaller screens: let the age drop under the name so nothing crowds. */
-    @media (max-width: 460px) {
-      .sa-row {
-        grid-template-columns: 2.2rem 1fr;
-        grid-template-areas:
-          "disk name"
-          "disk age"
-          "next next";
-        row-gap: 0.2rem;
-      }
-      .sa-age { justify-self: start; text-align: left; }
-      .sa-next { margin-top: 0.25rem; }
+    /* ---------------- LEARN (collapsed by default) ---------------- */
+    .sa-learn { margin-top: 3.5rem; }
+    .sa-learn p {
+      font-family: var(--font-body);
+      font-size: 1.02rem;
+      line-height: 1.7;
+      color: var(--dim);
+      max-width: 60ch;
+      margin: 0 auto 1.1em;
+      text-align: center;
     }
-
-    /* A small definition list for the orbital periods in the notes. */
+    .sa-learn details {
+      max-width: 60ch;
+      margin: 1.6rem auto 0;
+      border-top: 1px solid var(--line);
+    }
+    .sa-learn summary {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--gold);
+      padding: 0.9rem 0;
+      cursor: pointer;
+      list-style: none;
+      text-align: center;
+    }
+    .sa-learn summary::-webkit-details-marker { display: none; }
+    .sa-learn summary:hover { color: var(--gold-2); }
+    .sa-learn details[open] summary { color: var(--dim); }
+    .sa-learn .sa-deep {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      text-align: left;
+      color: var(--dim);
+    }
     .sa-periods {
       list-style: none;
-      margin: 1.4em 0;
-      padding: 1.1em 1.3em;
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 3px solid var(--accent);
-      border-radius: 0 6px 6px 0;
-      font-size: 0.95rem;
+      margin: 1.1rem 0;
+      padding: 0;
+      font-size: 0.9rem;
     }
     .sa-periods li {
       display: flex;
       justify-content: space-between;
       gap: 1rem;
-      padding: 0.28em 0;
-      margin: 0;
-      border-bottom: 1px solid rgba(74, 84, 75, 0.4);
+      padding: 0.32em 0;
+      border-bottom: 1px solid var(--line);
     }
-    .sa-periods li:last-child { border-bottom: none; }
-    .sa-periods .sa-pname { color: var(--text-bright); }
-    .sa-periods .sa-pval {
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      color: var(--text-dim);
-      text-align: right;
+    .sa-periods .pn { color: var(--ink); }
+    .sa-periods .pv { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--faint); }
+
+    .sa-page .site-footer-inner { border-top-color: var(--line); }
+    .sa-page .site-footer a { color: var(--faint); }
+    .sa-page .site-footer a:hover { color: var(--ink); }
+
+    /* ---------------- larger screens ---------------- */
+    @media (min-width: 680px) {
+      .sa-hero { min-height: 76vh; gap: 1.7rem; }
+      .pl { grid-template-columns: 3.5rem 1fr auto; padding: 1.15rem 0.5rem; }
+      .pl-img { width: 3.2rem; height: 3.2rem; }
+      .pl-name { font-size: 1.55rem; }
+      .pl-sub { font-size: 0.9rem; }
+      .pl-num { font-size: 2.3rem; }
+      .sa-lead { font-size: 1.2rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sa-results.in .sa-rise { animation: none; opacity: 1; transform: none; }
+      .sa-cue .ar { animation: none; }
+      .sa-rise { opacity: 1; transform: none; }
     }
   </style>
 </head>
-<body>
+<body class="sa-page">
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
-    <header class="post-header fade-in">
-      <h1 class="post-title">How Old Are You in Space?</h1>
-      <p class="post-subtitle">Enter your birthday once. A year is a different length on every planet, so you are a different age on each one.</p>
-    </header>
-
     <main>
-      <article>
-        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+      <!-- HERO: the whole 5-second pitch, nothing else competing. -->
+      <section class="sa-hero">
+        <p class="sa-eyebrow fade-in">A birthday calculator</p>
+        <h1 class="sa-h1 fade-in" style="animation-delay:.05s">How old are you in space?</h1>
+        <p class="sa-hook fade-in" style="animation-delay:.1s">A year isn't a year out there. Drop in your birthday.</p>
 
-          <div class="demo-wrapper sa-wrapper">
-            <div class="demo-header">
-              <span class="demo-label">Your age across the solar system</span>
-            </div>
-
-            <div class="sa-input">
-              <label for="sa-date">Your birthday</label>
-              <input type="date" id="sa-date" min="1900-01-01" aria-describedby="sa-date-help">
-              <span id="sa-date-help" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Pick the day you were born to compute your age on each planet.</span>
-            </div>
-
-            <div class="sa-results" id="sa-results" aria-live="polite">
-              <p class="sa-empty" id="sa-empty">Pick your birthday to see your age on every world.</p>
-            </div>
-
-            <div class="sa-share" id="sa-share" hidden>
-              <span class="sa-share-label">Send this to someone:</span>
-              <button class="sa-btn" id="sa-copy" type="button">Copy link</button>
-              <button class="sa-btn" id="sa-native" type="button" hidden>Share</button>
-            </div>
+        <form class="sa-bday fade-in" id="sa-form" style="animation-delay:.15s" autocomplete="off" novalidate>
+          <div class="sa-fields" role="group" aria-label="Your birthday">
+            <span class="sa-field mo">
+              <input id="sa-mo" type="text" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Birth month (1 to 12)">
+              <span class="sa-field-label">Month</span>
+            </span>
+            <span class="sa-sep" aria-hidden="true">/</span>
+            <span class="sa-field da">
+              <input id="sa-da" type="text" inputmode="numeric" maxlength="2" placeholder="DD" aria-label="Birth day">
+              <span class="sa-field-label">Day</span>
+            </span>
+            <span class="sa-sep" aria-hidden="true">/</span>
+            <span class="sa-field yr">
+              <input id="sa-yr" type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" aria-label="Birth year">
+              <span class="sa-field-label">Year</span>
+            </span>
           </div>
+        </form>
+        <p class="sa-hint" id="sa-hint" aria-live="polite">Type the day you were born.</p>
+        <button class="sa-cue" id="sa-cue" type="button">See your ages<span class="ar" aria-hidden="true">&#8595;</span></button>
+      </section>
 
-          <div class="divider">&bull; &bull; &bull;</div>
+      <!-- RESULTS: revealed only once a birthday is in. -->
+      <section class="sa-results" id="sa-results" hidden aria-live="polite">
+        <p class="sa-lead" id="sa-lead"></p>
+        <ol class="sa-list" id="sa-list"></ol>
 
-          <h2>Why you have a different age on each planet</h2>
-
-          <p>
-            A "year" is just one trip around the Sun, and every planet takes a
-            different amount of time to make the trip. Mercury, hugging the Sun on
-            the inside lane, finishes a lap in only 88 days. Neptune, far out on the
-            edge, needs almost 165 of our years for a single orbit.
-          </p>
-
-          <p>
-            So your age depends on whose calendar you use. The number of birthdays
-            you have had is really the number of times <em>Earth</em> has carried you
-            around the Sun. Stand on Mercury and you have gone around many more times;
-            stand on Neptune and you may not have finished a single lap. Someone who is
-            80 on Earth has never once had a birthday on Neptune.
-          </p>
-
-          <p>
-            This is also why the outer planets feel almost frozen in human terms. A
-            person born when Pluto was discovered, in 1930, still has not lived a
-            single Plutonian year, which runs about 248 of ours.
-          </p>
-
-          <h2>How this is calculated</h2>
-
-          <p>
-            It takes the exact time between your birthday and right now, then divides
-            it by each world's orbital period, the time for one trip around the Sun.
-            For Earth it uses the calendar year you already count by; for the other
-            planets it uses the orbital periods from NASA's
-            <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" rel="noopener">planetary fact sheet</a>.
-          </p>
-
-          <p>
-            The Space Station is not a planet, so it has no year in the usual sense.
-            Instead it laps the whole Earth roughly every 93 minutes, about 16 times a
-            day, so its "age" is simply how many of those laps have happened since you
-            were born. The number gets large quickly.
-          </p>
-
-          <ul class="sa-periods">
-            <li><span class="sa-pname">Mercury</span><span class="sa-pval">88.0 days</span></li>
-            <li><span class="sa-pname">Venus</span><span class="sa-pval">224.7 days</span></li>
-            <li><span class="sa-pname">Earth</span><span class="sa-pval">365.25 days</span></li>
-            <li><span class="sa-pname">Mars</span><span class="sa-pval">687.0 days</span></li>
-            <li><span class="sa-pname">Jupiter</span><span class="sa-pval">11.86 years</span></li>
-            <li><span class="sa-pname">Saturn</span><span class="sa-pval">29.45 years</span></li>
-            <li><span class="sa-pname">Uranus</span><span class="sa-pval">84.01 years</span></li>
-            <li><span class="sa-pname">Neptune</span><span class="sa-pval">164.8 years</span></li>
-            <li><span class="sa-pname">Pluto</span><span class="sa-pval">247.9 years</span></li>
-            <li><span class="sa-pname">ISS (one orbit)</span><span class="sa-pval">92.7 min</span></li>
-          </ul>
-
-          <p class="note">
-            Everything runs in your browser. Your birthday is never sent anywhere, and
-            the link you share opens an empty calculator, never your date. Orbital
-            periods are sidereal (measured against the stars); the Space Station's orbit
-            decays and is periodically reboosted, so its period is an approximation.
-          </p>
-
+        <div class="sa-facts sa-rise" id="sa-facts" style="animation-delay:.45s">
+          <h2>A few more things</h2>
+          <div class="sa-fact" id="sa-fact-next"></div>
+          <div class="sa-fact" id="sa-fact-year"></div>
+          <div class="sa-fact" id="sa-fact-span"></div>
+          <div class="sa-fact" id="sa-fact-iss"></div>
         </div>
-      </article>
+
+        <div class="sa-share sa-rise" style="animation-delay:.5s">
+          <button class="sa-btn" id="sa-copy" type="button">Copy link</button>
+          <button class="sa-btn ghost" id="sa-native" type="button" hidden>Share</button>
+        </div>
+      </section>
+
+      <!-- LEARN: the content, kept out of the way until you want it. -->
+      <section class="sa-learn">
+        <p>A "year" is one trip around the Sun, and every planet takes a different amount of time to make it. Mercury rounds the Sun in 88 days; Neptune needs almost 165 of our years. So your age depends on whose calendar you keep, and someone who is 80 on Earth has never once had a birthday on Neptune.</p>
+        <details>
+          <summary>The orbital periods, and the math &#8595;</summary>
+          <div class="sa-deep">
+            <p>Your age on a world is the exact time since your birthday divided by that world's orbital period, the time for one lap of the Sun. Earth uses the calendar year you already count by; the rest use the sidereal periods from NASA's <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" rel="noopener">planetary fact sheet</a>. The Space Station is not a planet, so its "lap" is one orbit of Earth, about 93 minutes.</p>
+            <ul class="sa-periods">
+              <li><span class="pn">Mercury</span><span class="pv">88.0 days</span></li>
+              <li><span class="pn">Venus</span><span class="pv">224.7 days</span></li>
+              <li><span class="pn">Earth</span><span class="pv">365.25 days</span></li>
+              <li><span class="pn">Mars</span><span class="pv">687.0 days</span></li>
+              <li><span class="pn">Jupiter</span><span class="pv">11.86 years</span></li>
+              <li><span class="pn">Saturn</span><span class="pv">29.45 years</span></li>
+              <li><span class="pn">Uranus</span><span class="pv">84.01 years</span></li>
+              <li><span class="pn">Neptune</span><span class="pv">164.8 years</span></li>
+              <li><span class="pn">Pluto</span><span class="pv">247.9 years</span></li>
+            </ul>
+            <p>Everything runs in your browser; your birthday is never sent anywhere, and the link you share opens an empty calculator, never your date.</p>
+          </div>
+        </details>
+      </section>
     </main>
 
     <footer class="site-footer">
@@ -440,207 +524,118 @@
     'use strict';
 
     var DAY_MS = 86400000;
-    var YEAR_DAYS = 365.2425;            // the Gregorian calendar year (Earth's basis)
+    var YEAR_DAYS = 365.2425;
     var MONTH_DAYS = YEAR_DAYS / 12;
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    // Orbital periods in Earth days. Earth uses the calendar year so its row
-    // matches the age you already know; the rest are sidereal periods from
-    // NASA's planetary fact sheet. The ISS is handled separately (it orbits
-    // Earth, not the Sun).
+    // Earth uses the calendar year so its row matches the age you know; the rest
+    // are sidereal orbital periods (Earth days) from NASA's planetary fact sheet.
     var BODIES = [
-      { name: 'Mercury', days: 87.969,   disk: 'radial-gradient(circle at 34% 30%, #c9bdaf, #877c70 72%)' },
-      { name: 'Venus',   days: 224.701,  disk: 'radial-gradient(circle at 34% 30%, #f1dda4, #c6a458 72%)' },
-      { name: 'Earth',   days: 365.2425, earth: true, disk: 'radial-gradient(circle at 34% 30%, #8fbfe0, #356f5c 74%)' },
-      { name: 'Mars',    days: 686.980,  disk: 'radial-gradient(circle at 34% 30%, #e08a5a, #a5380f 72%)' },
-      { name: 'Jupiter', days: 4332.589, disk: 'radial-gradient(circle at 34% 30%, #e7cfa4, #b48a57 74%)' },
-      { name: 'Saturn',  days: 10759.22, ring: true, disk: 'radial-gradient(circle at 34% 30%, #eddcae, #c0a165 74%)' },
-      { name: 'Uranus',  days: 30685.4,  disk: 'radial-gradient(circle at 34% 30%, #cfeaea, #8ec4c4 74%)' },
-      { name: 'Neptune', days: 60189.0,  disk: 'radial-gradient(circle at 34% 30%, #6f8ee2, #2c47ad 74%)' },
-      { name: 'Pluto',   days: 90560,    small: true, tag: 'dwarf planet', disk: 'radial-gradient(circle at 34% 30%, #cdbeac, #8b7a6a 74%)' }
+      { key:'mercury', name:'Mercury', days:87.969 },
+      { key:'venus',   name:'Venus',   days:224.701 },
+      { key:'earth',   name:'Earth',   days:365.2425, earth:true },
+      { key:'mars',    name:'Mars',    days:686.980 },
+      { key:'jupiter', name:'Jupiter', days:4332.589 },
+      { key:'saturn',  name:'Saturn',  days:10759.22 },
+      { key:'uranus',  name:'Uranus',  days:30685.4 },
+      { key:'neptune', name:'Neptune', days:60189.0 },
+      { key:'pluto',   name:'Pluto',   days:90560, tag:'dwarf planet' }
     ];
-    var ISS_MIN = 92.68;                 // one orbit, in minutes (approx, altitude dependent)
+    var ISS_MIN = 92.68;
 
-    var dateEl   = document.getElementById('sa-date');
+    var moEl = document.getElementById('sa-mo');
+    var daEl = document.getElementById('sa-da');
+    var yrEl = document.getElementById('sa-yr');
+    var hintEl = document.getElementById('sa-hint');
+    var cueEl = document.getElementById('sa-cue');
     var resultsEl = document.getElementById('sa-results');
-    var emptyEl  = document.getElementById('sa-empty');
-    var shareEl  = document.getElementById('sa-share');
+    var listEl = document.getElementById('sa-list');
+    var leadEl = document.getElementById('sa-lead');
 
-    // Cap the picker at today, computed from the local clock so it stays correct
-    // forever without a hardcoded date.
-    var now = new Date();
-    dateEl.max = toISO(now);
+    var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var revealed = false;
 
-    function toISO(d) {
-      var m = String(d.getMonth() + 1).padStart(2, '0');
-      var day = String(d.getDate()).padStart(2, '0');
-      return d.getFullYear() + '-' + m + '-' + day;
-    }
-
-    // Parse the input's yyyy-mm-dd as a LOCAL calendar day (not UTC), so the age
-    // does not jump by a day across time zones.
-    function parseLocal(str) {
-      var p = str.split('-');
-      if (p.length !== 3) return null;
-      var y = +p[0], mo = +p[1], d = +p[2];
-      var dt = new Date(y, mo - 1, d);
-      // Reject things like 2021-02-31 that roll over into March.
-      if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
-      return dt;
-    }
-
+    // Big ages read as whole "years old"; small ones keep the decimal that is
+    // the whole point (you are 0.15 of a year old on Pluto).
     function fmtAge(v) {
-      if (v >= 1000) return Math.round(v).toLocaleString();
-      if (v >= 1) return v.toFixed(1);
+      if (v >= 10) return Math.floor(v).toLocaleString();
+      if (v >= 1) { var s = v.toFixed(1); return s.slice(-2) === '.0' ? s.slice(0, -2) : s; }
       return v.toFixed(2);
     }
-
-    // Fixed three-letter months, so dates read "5 Sep 2026" like the rest of the
-    // site (and never the locale-dependent "Sept").
-    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    function fmtDate(d) {
-      return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
-    }
-
-    // A friendly "in N units" for the time until the next planetary birthday.
+    function fmtDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
     function fmtUntil(ms) {
       var days = ms / DAY_MS;
       if (days < 1) return 'today';
-      if (days < 45) {
-        var d = Math.round(days);
-        return 'in ' + d + (d === 1 ? ' day' : ' days');
-      }
-      var months = days / MONTH_DAYS;
-      if (months < 22) {
-        var mo = Math.round(months);
-        return 'in ' + mo + (mo === 1 ? ' month' : ' months');
-      }
-      var years = days / YEAR_DAYS;
-      if (years < 10) return 'in ' + years.toFixed(1) + ' years';
-      return 'in ' + Math.round(years).toLocaleString() + ' years';
+      if (days < 45) { var d = Math.round(days); return 'in ' + d + (d === 1 ? ' day' : ' days'); }
+      var mo = days / MONTH_DAYS;
+      if (mo < 22) { var m = Math.round(mo); return 'in ' + m + (m === 1 ? ' month' : ' months'); }
+      var yrs = days / YEAR_DAYS;
+      if (yrs < 10) return 'in ' + yrs.toFixed(1) + ' years';
+      return 'in ' + Math.round(yrs).toLocaleString() + ' years';
     }
-
-    // Next Earth birthday by the real calendar (same month/day), so Feb 29 and
-    // leap years behave the way a person expects.
     function nextEarthBirthday(birth, ref) {
-      var month = birth.getMonth(), day = birth.getDate();
-      var y = ref.getFullYear();
-      var cand = new Date(y, month, day);
-      if (cand <= ref) cand = new Date(y + 1, month, day);
-      // Feb 29 in a common year rolls to Mar 1; nudge it back to Feb 28.
-      if (cand.getMonth() !== month) cand = new Date(cand.getFullYear(), month + 1, 0);
-      return cand;
+      var mo = birth.getMonth(), day = birth.getDate(), y = ref.getFullYear();
+      var c = new Date(y, mo, day);
+      if (c <= ref) c = new Date(y + 1, mo, day);
+      if (c.getMonth() !== mo) c = new Date(c.getFullYear(), mo + 1, 0);
+      return c;
     }
-
-    function diskSpan(b) {
-      var cls = 'sa-disk';
-      if (b.small) cls += ' is-small';
-      if (b.ring) cls += ' has-ring';
-      return '<span class="' + cls + '" style="--disk:' + b.disk + '" aria-hidden="true"></span>';
-    }
-
-    // How many whole orbits (birthdays) a world has completed strictly before
-    // time t. Used to count birthdays inside any window by subtraction.
     function birthdaysBefore(periodMs, t, birthMs) {
       if (t <= birthMs) return 0;
       return Math.floor((t - birthMs) / periodMs);
     }
 
-    function statRow(label, val) {
-      return '<div class="sa-stat"><span class="sa-stat-label">' + label +
-             '</span><span class="sa-stat-val">' + val + '</span></div>';
+    // A short, contextual line that makes each number land.
+    function subFor(b, age) {
+      if (b.earth) return 'home, the year you count by';
+      if (age < 1) return 'you have not finished one lap yet';
+      if (b.days < YEAR_DAYS) return 'a year here is just ' + Math.round(b.days) + ' days';
+      var inEarth = b.days / YEAR_DAYS;
+      return 'a year here lasts ' + inEarth.toFixed(inEarth < 100 ? 1 : 0) + ' of ours';
     }
 
-    function render(birth) {
+    function render(birth, user) {
       var nowT = Date.now();
-      var elapsedMs = nowT - birth.getTime();
-
-      if (elapsedMs < 0) {
-        emptyEl.hidden = false;
-        emptyEl.textContent = 'That date is in the future. Time travel is not supported (yet).';
-        clearRows();
-        shareEl.hidden = true;
-        return;
-      }
-      emptyEl.hidden = true;
-
-      var elapsedDays = elapsedMs / DAY_MS;
-      var html = '';
-
-      // Summary line: a human anchor before the table.
-      var aliveDays = Math.floor(elapsedDays);
-      html += '<div class="sa-summary">You have been alive for <strong>' +
-              aliveDays.toLocaleString() + '</strong> days. Here is what that is worth ' +
-              'around the rest of the solar system.</div>';
-
-      // Planets and Pluto.
-      BODIES.forEach(function (b) {
-        var age = elapsedDays / b.days;
-        var oneYearInEarth = b.days / YEAR_DAYS;
-
-        var fact;
-        if (b.earth) {
-          fact = 'home base, the year you count by';
-        } else if (b.days < YEAR_DAYS) {
-          fact = '1 ' + b.name + ' year is about ' + Math.round(b.days) + ' Earth days';
-        } else {
-          fact = '1 ' + b.name + ' year is about ' + oneYearInEarth.toFixed(oneYearInEarth < 100 ? 2 : 1) + ' Earth years';
-        }
-
-        // Next birthday on this world.
-        var nextStr;
-        if (b.earth) {
-          var bd = nextEarthBirthday(birth, new Date(nowT));
-          nextStr = 'next birthday ' + fmtUntil(bd.getTime() - nowT) + ' (' + fmtDate(bd) + ')';
-        } else {
-          var nextN = Math.floor(age) + 1;
-          var nextMs = birth.getTime() + nextN * b.days * DAY_MS;
-          nextStr = 'next ' + b.name + ' birthday (#' + nextN.toLocaleString() + ') ' +
-                    fmtUntil(nextMs - nowT) + ' (' + fmtDate(new Date(nextMs)) + ')';
-        }
-
-        html += '<div class="sa-row' + (b.earth ? ' is-earth' : '') + '">' +
-                  diskSpan(b) +
-                  '<div class="sa-name">' + b.name +
-                    (b.tag ? '<span class="sa-tag">' + b.tag + '</span>' : '') +
-                  '</div>' +
-                  '<div class="sa-age">' + fmtAge(age) + '<span class="sa-unit">yrs</span></div>' +
-                  '<div class="sa-next"><b>' + fact + '.</b> ' + nextStr + '.</div>' +
-                '</div>';
-      });
-
-      // The ISS, counted in laps of Earth rather than years.
-      var orbits = elapsedMs / (ISS_MIN * 60000);
-      html += '<div class="sa-row">' +
-                '<span class="sa-disk is-craft" aria-hidden="true"></span>' +
-                '<div class="sa-name">Space Station<span class="sa-tag">in orbits</span></div>' +
-                '<div class="sa-age">' + Math.round(orbits).toLocaleString() + '<span class="sa-unit">laps</span></div>' +
-                '<div class="sa-next"><b>One lap of Earth every ~93 minutes.</b> ' +
-                  'You finish another roughly every hour and a half.</div>' +
-              '</div>';
-
-      // --- Derived stats. Birthdays are counted across the nine worlds (the
-      // eight planets and Pluto); the Space Station laps Earth ~16 times a day,
-      // so it is left out of birthday tallies. ---
-      var birthMs = birth.getTime();
       var nowDate = new Date(nowT);
-      var yr = nowDate.getFullYear();
-      var yStart = new Date(yr, 0, 1).getTime();
-      var yEnd = new Date(yr + 1, 0, 1).getTime();
+      var birthMs = birth.getTime();
+      var elapsedMs = nowT - birthMs;
+      var elapsedDays = elapsedMs / DAY_MS;
 
+      // Lead line: a human anchor.
+      var aliveDays = Math.floor(elapsedDays);
+      leadEl.innerHTML = "You have been alive for <b>" + aliveDays.toLocaleString() +
+                         "</b> days. Here is what that is worth around the solar system.";
+
+      // Planet rows.
+      var rows = '';
+      BODIES.forEach(function (b, i) {
+        var age = elapsedDays / b.days;
+        rows += '<li class="pl sa-rise" style="animation-delay:' + (0.06 * i).toFixed(2) + 's">' +
+                  '<img class="pl-img" src="assets/planets/' + b.key + '.jpg" width="160" height="160" loading="lazy" decoding="async" alt="">' +
+                  '<div class="pl-main">' +
+                    '<div class="pl-name">' + b.name +
+                      (b.tag ? '<span class="pl-tag">' + b.tag + '</span>' : '') + '</div>' +
+                    '<div class="pl-sub">' + subFor(b, age) + '</div>' +
+                  '</div>' +
+                  '<div class="pl-age"><span class="pl-num">' + fmtAge(age) + '</span>' +
+                    '<span class="pl-unit">years old</span></div>' +
+                '</li>';
+      });
+      listEl.innerHTML = rows;
+
+      // Secondary facts.
+      var yr = nowDate.getFullYear();
+      var yStart = new Date(yr, 0, 1).getTime(), yEnd = new Date(yr + 1, 0, 1).getTime();
       var totalYr = 0, soFar = 0, soonest = null;
       BODIES.forEach(function (b) {
         var p = b.days * DAY_MS;
         totalYr += birthdaysBefore(p, yEnd, birthMs) - birthdaysBefore(p, yStart, birthMs);
-        soFar += birthdaysBefore(p, nowT, birthMs) - birthdaysBefore(p, yStart, birthMs);
-        // soonest upcoming birthday across all worlds
-        var date = b.earth
-          ? nextEarthBirthday(birth, nowDate).getTime()
-          : birthMs + (Math.floor(elapsedDays / b.days) + 1) * b.days * DAY_MS;
+        soFar  += birthdaysBefore(p, nowT, birthMs) - birthdaysBefore(p, yStart, birthMs);
+        var date = b.earth ? nextEarthBirthday(birth, nowDate).getTime()
+                           : birthMs + (Math.floor(elapsedDays / b.days) + 1) * b.days * DAY_MS;
         if (date > nowT && (!soonest || date < soonest.date)) soonest = { date: date, name: b.name };
       });
       var toCome = totalYr - soFar;
-
-      // Busiest and quietest birthday years over the next century.
       var bestY = yr, bestC = -1, worstY = yr, worstC = Infinity;
       for (var y = yr; y < yr + 100; y++) {
         var a = new Date(y, 0, 1).getTime(), z = new Date(y + 1, 0, 1).getTime(), c = 0;
@@ -651,112 +646,154 @@
         if (c > bestC) { bestC = c; bestY = y; }
         if (c < worstC) { worstC = c; worstY = y; }
       }
+      var orbits = Math.round(elapsedMs / (ISS_MIN * 60000));
 
-      var nextVal = soonest
-        ? 'a <b>' + soonest.name + '</b> birthday, ' + fmtUntil(soonest.date - nowT) +
-          ' (' + fmtDate(new Date(soonest.date)) + ')'
-        : 'none coming up';
-      var sfWord = soFar === 1 ? '' : 's';
+      set('sa-fact-next', soonest
+        ? 'Your <b>very next</b> birthday is a <b>' + soonest.name + '</b> one, ' +
+          fmtUntil(soonest.date - nowT) + ' (' + fmtDate(new Date(soonest.date)) + ').'
+        : '');
+      set('sa-fact-year', 'So far in <b>' + yr + '</b> you have had <b>' + soFar +
+          '</b> space birthday' + (soFar === 1 ? '' : 's') + ', with <b>' + toCome + '</b> still to come.');
+      set('sa-fact-span', 'Over the next century your busiest year is <b>' + bestY + '</b> (' + bestC +
+          ' birthdays) and your quietest is <b>' + worstY + '</b> (' + worstC + ').');
+      set('sa-fact-iss', 'And up on the Space Station? You would have lapped the Earth about <b>' +
+          orbits.toLocaleString() + '</b> times.');
 
-      html += '<div class="sa-stats">' +
-                '<div class="sa-stats-title">By the numbers</div>' +
-                statRow('Birthdays in ' + yr,
-                        '<b>' + soFar + '</b> birthday' + sfWord + ' so far, <b>' + toCome +
-                        '</b> still to come (<b>' + totalYr + '</b> this year)') +
-                statRow('Your very next one', nextVal) +
-                statRow('Busiest year (next 100)', '<b>' + bestY + '</b>, with <b>' + bestC + '</b> birthdays') +
-                statRow('Quietest year (next 100)', '<b>' + worstY + '</b>, with <b>' + worstC + '</b> birthdays') +
-              '</div>';
-
-      resultsEl.innerHTML = '<p class="sa-empty" id="sa-empty" hidden></p>' + html;
-      // re-grab the empty node we just replaced, so future future-date errors work
-      emptyEl = document.getElementById('sa-empty');
-      shareEl.hidden = false;
+      reveal(user);
     }
 
-    function clearRows() {
-      var rows = resultsEl.querySelectorAll('.sa-row, .sa-summary, .sa-stats');
-      rows.forEach(function (r) { r.parentNode.removeChild(r); });
+    function set(id, html) { var e = document.getElementById(id); if (e) e.innerHTML = html; }
+
+    function reveal(user) {
+      var firstTime = resultsEl.hidden;
+      if (firstTime) {
+        resultsEl.hidden = false;
+        requestAnimationFrame(function () { resultsEl.classList.add('in'); });
+      }
+      if (!revealed) {
+        revealed = true;
+        cueEl.classList.add('show');
+      }
+      // On the first valid birthday a person types, take them straight to the
+      // payoff (dismiss the keyboard first so the scroll lands cleanly).
+      if (firstTime && user) {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        setTimeout(function () {
+          resultsEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+        }, reduceMotion ? 0 : 140);
+      }
     }
 
-    dateEl.addEventListener('input', function () {
-      var birth = dateEl.value ? parseLocal(dateEl.value) : null;
-      if (!birth) {
-        emptyEl.hidden = false;
-        emptyEl.textContent = 'Pick your birthday to see your age on every world.';
-        clearRows();
-        shareEl.hidden = true;
-        try { localStorage.removeItem('sa-birth'); } catch (e) {}
+    // ---- input handling: digits only, auto-advance, compute when complete ----
+    function clean(el, max) {
+      var v = el.value.replace(/[^0-9]/g, '').slice(0, max);
+      el.value = v;
+      el.classList.toggle('filled', v.length === max);
+      return v;
+    }
+
+    function tryCompute(silent, user) {
+      var mo = moEl.value, da = daEl.value, yr = yrEl.value;
+      if (!mo || !da || yr.length < 4) {
+        if (!silent) hintEl.textContent = 'Type the day you were born.';
+        hintEl.classList.remove('err');
         return;
       }
-      try { localStorage.setItem('sa-birth', dateEl.value); } catch (e) {}
-      render(birth);
+      var m = +mo, d = +da, y = +yr;
+      var now = new Date();
+      var dt = new Date(y, m - 1, d);
+      var valid = m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 &&
+                  dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+      if (!valid) {
+        hintEl.textContent = 'Hmm, that is not a real date.';
+        hintEl.classList.add('err');
+        return;
+      }
+      if (dt > now) {
+        hintEl.textContent = 'That is in the future. Time travel is not supported (yet).';
+        hintEl.classList.add('err');
+        return;
+      }
+      hintEl.classList.remove('err');
+      hintEl.textContent = '';
+      try { localStorage.setItem('sa-birth', y + '-' + m + '-' + d); } catch (e) {}
+      render(dt, user);
+    }
+
+    function wire(el, max, next) {
+      el.addEventListener('input', function () {
+        var v = clean(el, max);
+        if (v.length === max && next) next.focus();
+        tryCompute(true, true);
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' && el.value === '' && el.previousField) {
+          el.previousField.focus();
+        }
+      });
+      el.addEventListener('blur', function () { tryCompute(true, false); });
+    }
+    daEl.previousField = moEl;
+    yrEl.previousField = daEl;
+    wire(moEl, 2, daEl);
+    wire(daEl, 2, yrEl);
+    wire(yrEl, 4, null);
+
+    cueEl.addEventListener('click', function () {
+      resultsEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     });
 
-    // Restore a birthday from a previous visit (device only; never shared).
+    // Restore a previous birthday (device only, never shared).
     try {
       var saved = localStorage.getItem('sa-birth');
-      if (saved && parseLocal(saved)) {
-        dateEl.value = saved;
-        render(parseLocal(saved));
+      if (saved) {
+        var p = saved.split('-');
+        if (p.length === 3) {
+          moEl.value = ('0' + p[1]).slice(-2); moEl.classList.add('filled');
+          daEl.value = ('0' + p[2]).slice(-2); daEl.classList.add('filled');
+          yrEl.value = p[0]; yrEl.classList.add('filled');
+          tryCompute(true, false);
+        }
       }
     } catch (e) {}
 
-    // --- Sharing: the link is always the plain tool URL (no birthday in it). ---
+    // ---- sharing: always the bare tool URL, never the birthday ----
     var SHARE_URL = 'https://ethanwillingham.com/space-age.html';
     var copyBtn = document.getElementById('sa-copy');
     var nativeBtn = document.getElementById('sa-native');
-
     copyBtn.addEventListener('click', function () {
       copyText(SHARE_URL, function (ok) {
-        copyBtn.textContent = ok ? 'Copied' : 'Copy failed';
-        copyBtn.classList.toggle('is-done', ok);
-        setTimeout(function () {
-          copyBtn.textContent = 'Copy link';
-          copyBtn.classList.remove('is-done');
-        }, 1600);
+        copyBtn.textContent = ok ? 'Link copied' : 'Copy failed';
+        copyBtn.classList.toggle('done', ok);
+        setTimeout(function () { copyBtn.textContent = 'Copy link'; copyBtn.classList.remove('done'); }, 1600);
       });
     });
-
     function copyText(text, cb) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function () { cb(true); }, function () { cb(legacyCopy(text)); });
-      } else {
-        cb(legacyCopy(text));
-      }
+        navigator.clipboard.writeText(text).then(function () { cb(true); }, function () { cb(legacy(text)); });
+      } else { cb(legacy(text)); }
     }
-    function legacyCopy(text) {
+    function legacy(text) {
       try {
         var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.setAttribute('readonly', '');
-        ta.style.position = 'absolute';
-        ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.select();
-        var ok = document.execCommand('copy');
-        document.body.removeChild(ta);
+        ta.value = text; ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
+        var ok = document.execCommand('copy'); document.body.removeChild(ta);
         return ok;
       } catch (e) { return false; }
     }
-
-    // Native share sheet on phones (and anywhere the browser supports it).
     if (navigator.share) {
       nativeBtn.hidden = false;
       nativeBtn.addEventListener('click', function () {
-        navigator.share({
-          title: 'How Old Are You in Space?',
-          text: 'Find your age on every planet.',
-          url: SHARE_URL
-        }).catch(function () {});
+        navigator.share({ title: 'How Old Are You in Space?', text: 'Find your age on every planet.', url: SHARE_URL }).catch(function () {});
       });
     }
 
-    // A small nicety: focus the date field on devices with a real keyboard, so a
-    // visitor can start typing at once. Skipped on touch, where it would pop the
-    // keyboard or picker unbidden.
+    // Desktop only: focus the first field so you can type at once. On touch we
+    // leave it alone so the keyboard does not jump up unbidden.
     if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
-      dateEl.focus();
+      moEl.focus();
     }
   })();
   </script>
