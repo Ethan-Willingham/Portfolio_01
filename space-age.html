@@ -56,7 +56,6 @@
       --gold:   #e0cd9c;
       --gold-2: #f1e3bd;
       --line:   rgba(244, 240, 231, 0.12);
-      --panel:  rgba(244, 240, 231, 0.035);
       background:
         radial-gradient(120% 80% at 50% -10%, #18241f 0%, rgba(12, 17, 14, 0) 55%),
         radial-gradient(90% 60% at 85% 8%, rgba(70, 92, 120, 0.16) 0%, rgba(12, 17, 14, 0) 50%),
@@ -295,16 +294,17 @@
       font-family: var(--font-body);
       font-size: 0.85rem;
       color: var(--faint);
-      min-height: 1.2em;
       margin: 0.2rem 0 0;
-      transition: opacity 0.3s, color 0.2s;
+      transition: color 0.2s;
     }
     .sa-hint.err { color: #e0a08f; }
 
     /* your next space birthday, settling in under the input once known */
     .sa-soon {
-      margin-top: 0.4rem;
+      margin: 0;
+      max-width: 24ch;
       text-align: center;
+      text-wrap: balance;
       font-family: var(--font-heading);
       font-style: italic;
       font-size: 1.02rem;
@@ -316,8 +316,10 @@
     .sa-soon.on { opacity: 1; }
     .sa-soon b { font-style: normal; font-weight: 400; color: var(--gold-2); }
 
-    /* ---------------- RESULTS ---------------- */
-    .sa-results { padding-top: 0.5rem; }
+    /* ---------------- RESULTS ----------------
+       scroll-margin keeps the Share button off the screen edge when the
+       page auto-advances here after a birthday is typed. */
+    .sa-results { padding-top: 0.5rem; scroll-margin-top: 1.25rem; }
     .sa-list { list-style: none; margin: 0; padding: 0; }
     .pl {
       display: grid;
@@ -536,7 +538,7 @@
     // A short, contextual line that makes each number land.
     function subFor(b, age) {
       if (b.earth) return 'home, the year you count by';
-      if (age < 1) return 'you have not finished one lap yet';
+      if (age < 1) return 'your first lap is ' + Math.floor(age * 100) + '% done';
       if (b.days < YEAR_DAYS) return 'a year here is just ' + Math.round(b.days) + ' days';
       var inEarth = b.days / YEAR_DAYS;
       return 'a year here lasts ' + inEarth.toFixed(inEarth < 100 ? 1 : 0) + ' of ours';
@@ -618,8 +620,9 @@
     function tryCompute(silent, user) {
       var mo = moEl.value, da = daEl.value, yr = yrEl.value;
       if (!mo || !da || yr.length < 4) {
-        if (!silent) hintEl.textContent = 'Type the day you were born.';
+        hintEl.textContent = 'Type the day you were born.';
         hintEl.classList.remove('err');
+        hintEl.hidden = false;
         return;
       }
       var m = +mo, d = +da, y = +yr;
@@ -630,15 +633,17 @@
       if (!valid) {
         hintEl.textContent = 'Hmm, that is not a real date.';
         hintEl.classList.add('err');
+        hintEl.hidden = false;
         return;
       }
       if (dt > now) {
         hintEl.textContent = 'That is in the future. Time travel is not supported (yet).';
         hintEl.classList.add('err');
+        hintEl.hidden = false;
         return;
       }
       hintEl.classList.remove('err');
-      hintEl.textContent = '';
+      hintEl.hidden = true;
       try { localStorage.setItem('sa-birth', y + '-' + m + '-' + d); } catch (e) {}
       render(dt, user);
     }
