@@ -67,7 +67,7 @@
     .sa-page::after {
       content: "";
       position: fixed;
-      inset: -24px 0 0;   /* headroom so the drifting layer never bares an edge */
+      inset: -28px 0;   /* headroom top and bottom so the drifting layers never bare an edge */
       z-index: 0;
       pointer-events: none;
     }
@@ -83,7 +83,9 @@
         radial-gradient(1.2px 1.2px at 33% 90%, rgba(255,255,255,0.5), transparent 100%),
         radial-gradient(2.2px 2.2px at 88% 22%, rgba(255,250,235,0.9), transparent 100%),
         radial-gradient(7px 7px at 88% 22%, rgba(255,245,220,0.18), transparent 100%);
-      animation: sa-twinkle-a 7.5s ease-in-out infinite;
+      animation:
+        sa-twinkle-a 6s ease-in-out infinite,
+        sa-drift-up 170s ease-in-out infinite alternate;
     }
     .sa-page::after {
       background-image:
@@ -99,26 +101,77 @@
         radial-gradient(2px 2px at 14% 72%, rgba(235,245,255,0.85), transparent 100%),
         radial-gradient(6px 6px at 14% 72%, rgba(220,235,255,0.16), transparent 100%);
       animation:
-        sa-twinkle-b 11s ease-in-out -4s infinite,
+        sa-twinkle-b 9.5s ease-in-out -4s infinite,
         sa-drift 140s ease-in-out infinite alternate;
     }
     /* asymmetric stops so the breathing never feels metronomic */
     @keyframes sa-twinkle-a {
-      0%, 100% { opacity: 0.45; }
-      45%      { opacity: 0.9; }
-      70%      { opacity: 0.6; }
+      0%, 100% { opacity: 0.3; }
+      45%      { opacity: 1; }
+      70%      { opacity: 0.55; }
     }
     @keyframes sa-twinkle-b {
-      0%, 100% { opacity: 0.85; }
-      40%      { opacity: 0.4; }
-      75%      { opacity: 0.68; }
+      0%, 100% { opacity: 0.95; }
+      40%      { opacity: 0.3; }
+      75%      { opacity: 0.7; }
     }
+    /* the two layers slide gently apart and back, a parallax you feel more than see */
     @keyframes sa-drift {
       from { transform: translate3d(0, 0, 0); }
       to   { transform: translate3d(0, 16px, 0); }
     }
+    @keyframes sa-drift-up {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(0, -12px, 0); }
+    }
+
+    /* Shooting stars: two thin streaks that cross the sky every so often,
+       offset on coprime cycles so the moment never repeats. Pure transform
+       and opacity, visible well under a second per pass. */
+    .sa-sky {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .sa-sky::before,
+    .sa-sky::after {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 1.5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,250,235,0.85) 60%, rgba(255,255,255,0));
+      box-shadow: 0 0 6px rgba(255,250,235,0.3);
+      opacity: 0;
+    }
+    .sa-sky::before {
+      top: 14%;
+      left: 72%;
+      animation: sa-streak-a 13s linear 4s infinite;
+    }
+    .sa-sky::after {
+      top: 56%;
+      left: 88%;
+      width: 90px;
+      animation: sa-streak-b 21s linear 11s infinite;
+    }
+    @keyframes sa-streak-a {
+      0%   { opacity: 0; transform: rotate(-28deg) translateX(0); }
+      2.5% { opacity: 0.65; }
+      6%   { opacity: 0; transform: rotate(-28deg) translateX(-320px); }
+      100% { opacity: 0; transform: rotate(-28deg) translateX(-320px); }
+    }
+    @keyframes sa-streak-b {
+      0%   { opacity: 0; transform: rotate(-38deg) translateX(0); }
+      1.6% { opacity: 0.5; }
+      4%   { opacity: 0; transform: rotate(-38deg) translateX(-380px); }
+      100% { opacity: 0; transform: rotate(-38deg) translateX(-380px); }
+    }
     @media (prefers-reduced-motion: reduce) {
       .sa-page::before, .sa-page::after { animation: none; opacity: 0.7; }
+      .sa-sky { display: none; }
     }
     .sa-page .site-wrapper { position: relative; z-index: 1; }
 
@@ -263,23 +316,6 @@
 
     /* ---------------- RESULTS ---------------- */
     .sa-results { padding-top: 0.5rem; }
-    .sa-lead {
-      text-align: center;
-      font-family: var(--font-heading);
-      font-style: italic;
-      font-size: 1.05rem;
-      color: var(--dim);
-      margin: 0 auto 2rem;
-      max-width: 28ch;
-      line-height: 1.5;
-    }
-    .sa-lead b {
-      font-style: normal;
-      font-weight: 700;
-      color: var(--ink);
-      font-variant-numeric: tabular-nums;
-    }
-
     .sa-list { list-style: none; margin: 0; padding: 0; }
     .pl {
       display: grid;
@@ -483,7 +519,6 @@
       .pl-name { font-size: 1.55rem; }
       .pl-sub { font-size: 0.9rem; }
       .pl-num { font-size: 2.3rem; }
-      .sa-lead { font-size: 1.2rem; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -495,6 +530,7 @@
 </head>
 <body class="sa-page">
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="sa-sky" aria-hidden="true"></div>
   <div class="site-wrapper">
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
@@ -530,7 +566,6 @@
 
       <!-- RESULTS: revealed only once a birthday is in. -->
       <section class="sa-results" id="sa-results" hidden aria-live="polite">
-        <p class="sa-lead" id="sa-lead"></p>
         <ol class="sa-list" id="sa-list"></ol>
 
         <div class="sa-facts sa-rise" id="sa-facts" style="animation-delay:.45s">
@@ -538,7 +573,6 @@
           <div class="sa-fact" id="sa-fact-next"></div>
           <div class="sa-fact" id="sa-fact-year"></div>
           <div class="sa-fact" id="sa-fact-span"></div>
-          <div class="sa-fact" id="sa-fact-iss"></div>
         </div>
 
         <div class="sa-share sa-rise" style="animation-delay:.5s">
@@ -550,13 +584,12 @@
         </div>
       </section>
 
-      <!-- LEARN: the content, kept out of the way until you want it. -->
+      <!-- LEARN: just the collapsed math, for whoever wants it. -->
       <section class="sa-learn">
-        <p>A "year" is one trip around the Sun, and every planet takes a different amount of time to make it. Mercury rounds the Sun in 88 days; Neptune needs almost 165 of our years. So your age depends on whose calendar you keep, and someone who is 80 on Earth has never once had a birthday on Neptune.</p>
         <details>
           <summary>The orbital periods, and the math &#8595;</summary>
           <div class="sa-deep">
-            <p>Your age on a world is the exact time since your birthday divided by that world's orbital period, the time for one lap of the Sun. Earth uses the calendar year you already count by; the rest use the sidereal periods from NASA's <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" rel="noopener">planetary fact sheet</a>. The Space Station is not a planet, so its "lap" is one orbit of Earth, about 93 minutes.</p>
+            <p>Your age on a world is the exact time since your birthday divided by that world's orbital period, the time for one lap of the Sun. Earth uses the calendar year you already count by; the rest use the sidereal periods from NASA's <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" rel="noopener">planetary fact sheet</a>.</p>
             <ul class="sa-periods">
               <li><span class="pn">Mercury</span><span class="pv">88.0 days</span></li>
               <li><span class="pn">Venus</span><span class="pv">224.7 days</span></li>
@@ -568,7 +601,6 @@
               <li><span class="pn">Neptune</span><span class="pv">164.8 years</span></li>
               <li><span class="pn">Pluto</span><span class="pv">247.9 years</span></li>
             </ul>
-            <p>Time itself runs a touch differently up on the Station. Its speed makes its clocks tick about 25 microseconds a day slower than ours, while its altitude (weaker gravity) speeds them up a little; the speed wins. Astronaut <a href="https://www.space.com/33411-astronaut-scott-kelly-relativity-twin-brother-ages.html" rel="noopener">Scott Kelly</a> came home from a year in orbit a few milliseconds younger than his identical twin.</p>
             <p>Everything runs in your browser; your birthday is never sent anywhere, and the link you share opens an empty calculator, never your date.</p>
           </div>
         </details>
@@ -604,14 +636,6 @@
       { key:'neptune', name:'Neptune', days:60189.0 },
       { key:'pluto',   name:'Pluto',   days:90560, tag:'dwarf planet' }
     ];
-    var ISS_MIN = 92.68;
-    // Net relativistic time dilation aboard the ISS, as a fraction: its clocks
-    // run about 2.8e-10 slower than a ground clock (orbital speed slows them by
-    // ~28 us/day, altitude speeds them up by ~4, so the speed wins by ~25 us/day,
-    // matching Krikalev's ~20 ms over 803 days). A whole life aboard nets a
-    // fraction of a second.
-    var ISS_DILATION = 2.8e-10;
-
     var moEl = document.getElementById('sa-mo');
     var daEl = document.getElementById('sa-da');
     var yrEl = document.getElementById('sa-yr');
@@ -619,7 +643,6 @@
     var cueEl = document.getElementById('sa-cue');
     var resultsEl = document.getElementById('sa-results');
     var listEl = document.getElementById('sa-list');
-    var leadEl = document.getElementById('sa-lead');
 
     var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var revealed = false;
@@ -672,11 +695,6 @@
       var elapsedMs = nowT - birthMs;
       var elapsedDays = elapsedMs / DAY_MS;
 
-      // Lead line: a human anchor.
-      var aliveDays = Math.floor(elapsedDays);
-      leadEl.innerHTML = "You have been alive for <b>" + aliveDays.toLocaleString() +
-                         "</b> days. Here is what that is worth around the solar system.";
-
       // Planet rows.
       var rows = '';
       BODIES.forEach(function (b, i) {
@@ -718,12 +736,6 @@
         if (c > bestC) { bestC = c; bestY = y; }
         if (c < worstC) { worstC = c; worstY = y; }
       }
-      var orbits = Math.round(elapsedMs / (ISS_MIN * 60000));
-      var youngerSec = (elapsedMs / 1000) * ISS_DILATION;
-      var youngerStr = youngerSec >= 0.1
-        ? youngerSec.toFixed(2) + ' seconds'
-        : Math.round(youngerSec * 1000) + ' milliseconds';
-
       // The line you would actually text someone, built from the soonest
       // upcoming birthday across all the worlds.
       if (soonest) {
@@ -745,9 +757,6 @@
           '</b> space birthday' + (soFar === 1 ? '' : 's') + ', with <b>' + toCome + '</b> still to come.');
       set('sa-fact-span', 'Over the next century your busiest year is <b>' + bestY + '</b> (' + bestC +
           ' birthdays) and your quietest is <b>' + worstY + '</b> (' + worstC + ').');
-      set('sa-fact-iss', 'And up on the Space Station? You would have lapped the Earth about <b>' +
-          orbits.toLocaleString() + '</b> times, where time runs a hair slower: a whole life aboard ' +
-          'would leave you about <b>' + youngerStr + '</b> younger than you are down here.');
 
       reveal(user);
     }
