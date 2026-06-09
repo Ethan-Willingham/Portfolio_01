@@ -52,6 +52,11 @@
     /* Centered reading column for prose passages (intro, coda). */
     .st-readable { max-width: 700px; margin-left: auto; margin-right: auto; }
 
+    /* Center the post header. The page is widened to 1180px, so the site's
+       default left-aligned header would otherwise float far to the left of the
+       centered reading column and act dividers below it. */
+    .post-header { text-align: center; max-width: 720px; margin-left: auto; margin-right: auto; }
+
     /* ---- Intro ---- */
     .st-lead { margin-top: 0.5rem; }
     .st-lead p { font-family: var(--font-body); font-size: 1.28rem; line-height: 1.62; color: var(--text); margin-bottom: 1.05em; text-wrap: pretty; }
@@ -121,7 +126,14 @@
       .scene:nth-of-type(even) .scene-media { order: 0; }
       .scene:nth-of-type(even) .scene-copy { order: 0; }
       .st-lead p { font-size: 1.15rem; }
-      .act { margin: 5rem auto 2rem; }
+      .act { margin: 5rem auto 2rem; gap: 0.9rem; }
+      /* On desktop .act-inner is flex:none, sized to its widest line (the long
+         act subtitle). On a phone that forces it wider than the screen and
+         clips the title. Let it shrink and wrap, cap it so the flanking rules
+         keep some length, and trim the title so it stays on one line. */
+      .act-inner { flex-shrink: 1; min-width: 0; max-width: 16rem; }
+      .act-title { font-size: 1.45rem; }
+      .act-sub { font-size: 0.9rem; }
       .st-credits ul { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: no-preference) {
