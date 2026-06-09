@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sure Things</title>
+  <meta name="description" content="A field guide to forty-two things science can measure to absurd precision, or rely on every day, and still cannot explain or prove. From gravity and time to the placebo effect and the machines we built but do not understand.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:title" content="Sure Things">
+  <meta property="og:description" content="Forty-two things we measure to absurd precision, or lean on every day, and still cannot explain. Gravity, quantum mechanics, the placebo effect, the bicycle, and the AI that helped draw this page.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/sure-things.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/sure-things.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/sure-things.jpg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ============================================================
+       SURE THINGS, a field guide. Self-contained page styles.
+       The site shell (header, footer, reading bar, fonts, colors)
+       comes from style.css; everything below builds the hero, the
+       jump nav, the shelves, and the illustrated specimen cards.
+       Line art in the cards is hand-drawn inline SVG in the house
+       palette: warm gold (--accent) on the dark forest ground.
+       ============================================================ */
+
+    .sg-lead { max-width: 60ch; margin-top: 0.5rem; }
+    .sg-lead p { font-family: var(--font-body); font-size: 1.22rem; line-height: 1.6; color: var(--text); margin-bottom: 1.05em; text-wrap: pretty; }
+    .sg-lead p:last-child { margin-bottom: 0; }
+    .sg-lead .sg-drop { color: var(--text-bright); }
+    .sg-lead em { color: var(--text-bright); font-style: italic; }
+
+    /* Hero banner */
+    .sg-hero { margin: 0 0 1.4rem; border-radius: 8px; overflow: hidden; background: var(--bg-raised); border: 1px solid var(--rule); }
+    .sg-hero svg { display: block; width: 100%; height: auto; }
+
+    /* Count kicker */
+    .sg-count { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 1.8rem 0 0.2rem; }
+
+    /* Jump nav */
+    .sg-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.4rem 0 0.5rem; padding: 0; list-style: none; }
+    .sg-nav a {
+      font-family: var(--font-body); font-size: 0.82rem; font-weight: 600;
+      letter-spacing: 0.02em; color: var(--text-dim); text-decoration: none;
+      padding: 0.4em 0.85em; border: 1px solid var(--rule); border-radius: 999px;
+      transition: color 0.2s, border-color 0.2s, background 0.2s; white-space: nowrap;
+    }
+    .sg-nav a:hover { color: var(--text-bright); border-color: var(--accent); background: rgba(212,196,160,0.06); }
+
+    /* Shelf */
+    .sg-shelf { margin-top: 3.6rem; scroll-margin-top: 1.2rem; }
+    .sg-shelf-head { display: flex; align-items: baseline; gap: 0.8rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.55rem; margin-bottom: 1.5rem; }
+    .sg-shelf-num { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); flex: none; }
+    .sg-shelf-title { font-family: var(--font-heading); font-size: 1.85rem; font-weight: 700; color: var(--text-bright); line-height: 1.1; letter-spacing: -0.01em; }
+    .sg-shelf-sub { font-family: var(--font-body); font-style: italic; font-size: 0.96rem; color: var(--text-dim); margin-left: auto; text-align: right; max-width: 32ch; line-height: 1.4; }
+
+    /* Grid of specimen cards */
+    .sg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.05rem; }
+
+    .sg-card {
+      background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 10px;
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: transform 0.25s cubic-bezier(0.2,0.8,0.2,1), border-color 0.25s;
+    }
+    .sg-fig {
+      position: relative; aspect-ratio: 16 / 9; border-bottom: 1px solid var(--rule);
+      background: radial-gradient(120% 120% at 50% 24%, rgba(212,196,160,0.07), rgba(0,0,0,0.18) 72%);
+    }
+    .sg-fig svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .sg-bd { padding: 0.85rem 1.05rem 1.05rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
+    .sg-card h3 { font-family: var(--font-heading); font-size: 1.28rem; font-weight: 700; color: var(--text-bright); line-height: 1.18; letter-spacing: -0.01em; }
+    .sg-sure { font-family: var(--font-body); font-size: 0.97rem; color: var(--text); line-height: 1.46; }
+    .sg-myst { font-family: var(--font-body); font-size: 0.97rem; color: var(--text-dim); line-height: 1.46; }
+    .sg-myst b { color: var(--text-bright); font-weight: 600; }
+    .sg-num { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .sg-quote { font-size: 0.85rem; font-style: italic; color: var(--text-dim); line-height: 1.42; border-left: 2px solid var(--rule); padding-left: 0.75em; margin-top: 0.25rem; }
+    .sg-quote cite { font-style: normal; display: block; font-size: 0.77rem; color: #98927f; margin-top: 0.25em; letter-spacing: 0.01em; }
+    .sg-bd a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+    .sg-bd a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+    @media (hover: hover) {
+      .sg-card:hover { transform: translateY(-3px); border-color: #6b7a69; }
+    }
+
+    /* Coda */
+    .sg-coda { margin-top: 3.6rem; padding-top: 1.6rem; border-top: 1px solid var(--rule); max-width: 62ch; }
+    .sg-coda p { font-family: var(--font-body); font-size: 1.1rem; line-height: 1.62; color: var(--text); margin-bottom: 1em; text-wrap: pretty; }
+    .sg-coda em { color: var(--text-bright); font-style: italic; }
+    .sg-coda .note { font-size: 0.92rem; color: var(--text-dim); line-height: 1.55; margin-top: 0.4em; }
+    .sg-coda a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .sg-coda a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+    @media (max-width: 620px) {
+      .sg-grid { grid-template-columns: 1fr; gap: 0.9rem; }
+      .sg-shelf-sub { display: none; }
+      .sg-shelf-title { font-size: 1.6rem; }
+      .sg-lead p { font-size: 1.12rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sg-card { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">Sure Things</h1>
+      <p class="post-subtitle">A field guide to the things we measure to absurd precision, or lean on every single day, and still cannot explain.</p>
+    </header>
+
+    <main>
+
+      <!-- Shared SVG defs: a reusable warm glow and a faint mesh, referenced by id from every glyph below. -->
+      <svg aria-hidden="true" width="0" height="0" style="position:absolute" focusable="false">
+        <defs>
+          <radialGradient id="sgGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#FCF5DE" stop-opacity="1"/>
+            <stop offset="34%" stop-color="#E9D9AE" stop-opacity="0.72"/>
+            <stop offset="100%" stop-color="#E9D9AE" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="sgGlowSoft" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#E9D9AE" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#E9D9AE" stop-opacity="0"/>
+          </radialGradient>
+          <pattern id="sgMesh" width="32" height="32" patternUnits="userSpaceOnUse">
+            <path d="M32 0H0V32" fill="none" stroke="#D4C4A0" stroke-width="0.6" opacity="0.12"/>
+          </pattern>
+        </defs>
+      </svg>
+
+      <!-- HERO -->
+      <figure class="sg-hero fade-in" style="margin-bottom:1.4rem;">
+        <svg viewBox="0 0 1200 360" role="img" aria-label="A field of glowing points above a grid that dips into a bright gravity well.">
+          <rect width="1200" height="360" fill="url(#sgMesh)"/>
+          <!-- gravity well: warped horizontal lines dipping to a central mass -->
+          <g fill="none" stroke="#D4C4A0" stroke-width="1.1" opacity="0.5">
+            <path d="M120 250 Q600 250 1080 250"/>
+            <path d="M120 280 Q600 332 1080 280"/>
+            <path d="M120 222 Q600 250 1080 222"/>
+            <path d="M120 196 Q600 210 1080 196"/>
+          </g>
+          <g fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.34">
+            <path d="M460 180 Q560 264 460 330"/>
+            <path d="M600 174 Q600 264 600 336"/>
+            <path d="M740 180 Q640 264 740 330"/>
+            <path d="M340 188 Q500 262 340 322"/>
+            <path d="M860 188 Q700 262 860 322"/>
+          </g>
+          <circle cx="600" cy="262" r="46" fill="url(#sgGlow)"/>
+          <circle cx="600" cy="262" r="6" fill="#FCF5DE"/>
+          <!-- the collection: scattered specimen points, a few faintly linked -->
+          <g stroke="#D4C4A0" stroke-width="0.8" opacity="0.3">
+            <line x1="190" y1="70" x2="300" y2="120"/>
+            <line x1="300" y1="120" x2="250" y2="40"/>
+            <line x1="900" y1="60" x2="1010" y2="104"/>
+            <line x1="980" y1="150" x2="1010" y2="104"/>
+            <line x1="430" y1="60" x2="540" y2="92"/>
+          </g>
+          <g fill="#FCF5DE">
+            <circle cx="190" cy="70" r="2.6"/><circle cx="300" cy="120" r="2"/><circle cx="250" cy="40" r="1.8"/>
+            <circle cx="430" cy="60" r="2.4"/><circle cx="540" cy="92" r="1.8"/><circle cx="700" cy="48" r="2"/>
+            <circle cx="900" cy="60" r="2.6"/><circle cx="1010" cy="104" r="2"/><circle cx="980" cy="150" r="1.8"/>
+            <circle cx="150" cy="150" r="1.6"/><circle cx="1060" cy="56" r="1.6"/><circle cx="360" cy="150" r="1.6"/>
+            <circle cx="820" cy="120" r="1.6"/><circle cx="500" cy="150" r="1.4"/><circle cx="760" cy="150" r="1.4"/>
+          </g>
+        </svg>
+      </figure>
+
+      <div class="sg-lead fade-in" style="animation-delay: 0.05s;">
+        <p><span class="sg-drop">Drop your phone and it falls.</span> It has always fallen, for everyone, everywhere, every single time. You would call that proof. In the strict sense there is none, and stranger still, no one can tell you what gravity actually is.</p>
+        <p>Once you notice that gap, you find it everywhere. The list below is a collection of sure things: facts we have measured to eye-watering precision, or built our whole world on top of, and <em>still</em> cannot explain or prove. Two kinds of gap recur. Sometimes the <em>proof</em> is missing, because science never truly proves a universal law, it only fails to disprove it. More often the <em>explanation</em> is missing: we can write the thing down exactly and have no idea why it is true.</p>
+        <p>Every entry here is real and rock solid as a phenomenon. It is the understanding that runs out. Each is sourced; follow the links to go deeper.</p>
+      </div>
+
+      <p class="sg-count">Forty-two of them, in six shelves</p>
+      <nav class="sg-nav fade-in" aria-label="Jump to a shelf">
+        <a href="#cosmos">The Cosmos</a>
+        <a href="#matter">Matter &amp; Motion</a>
+        <a href="#life">The Living World</a>
+        <a href="#body">The Body</a>
+        <a href="#mind">The Mind</a>
+        <a href="#machine">Logic &amp; the Machine</a>
+      </nav>
+
+      <!-- ============================== SHELF 1: THE COSMOS ============================== -->
+      <section class="sg-shelf" id="cosmos">
+        <div class="sg-shelf-head">
+          <span class="sg-shelf-num">01</span>
+          <h2 class="sg-shelf-title">The Cosmos</h2>
+          <p class="sg-shelf-sub">The biggest, best-measured things, owed to causes we cannot see.</p>
+        </div>
+        <div class="sg-grid">
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A grid dipping toward a bright point of mass.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.5">
+                  <path d="M12 26 Q80 26 148 26"/>
+                  <path d="M12 40 Q80 60 148 40"/>
+                  <path d="M12 54 Q80 82 148 54"/>
+                  <path d="M12 68 Q80 92 148 68"/>
+                </g>
+                <g fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.32">
+                  <path d="M52 20 Q76 52 52 80"/>
+                  <path d="M80 18 Q80 52 80 82"/>
+                  <path d="M108 20 Q84 52 108 80"/>
+                </g>
+                <circle cx="80" cy="56" r="17" fill="url(#sgGlow)"/>
+                <circle cx="80" cy="56" r="3.2" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Gravity</h3>
+              <p class="sg-sure">Pinned down to a change <a href="https://www.ligo.caltech.edu/news/ligo20160211" rel="noopener">smaller than a ten-thousandth of a proton's width</a>. The best-tested idea we own.</p>
+              <p class="sg-myst">And still nobody can say <b>why</b> mass pulls on mass.</p>
+              <p class="sg-quote">"No one has since given any machinery."<cite>Richard Feynman, <a href="https://www.feynmanlectures.caltech.edu/I_07.html" rel="noopener">Lectures on Physics</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A bright core surrounded by a faint halo of scattered points.">
+                <circle cx="80" cy="45" r="15" fill="url(#sgGlow)"/>
+                <circle cx="80" cy="45" r="3" fill="#FCF5DE"/>
+                <g fill="#D4C4A0">
+                  <circle cx="40" cy="28" r="1.5" opacity="0.55"/><circle cx="118" cy="30" r="1.5" opacity="0.5"/>
+                  <circle cx="30" cy="54" r="1.5" opacity="0.45"/><circle cx="128" cy="58" r="1.5" opacity="0.5"/>
+                  <circle cx="52" cy="68" r="1.5" opacity="0.5"/><circle cx="108" cy="70" r="1.5" opacity="0.45"/>
+                  <circle cx="80" cy="16" r="1.5" opacity="0.5"/><circle cx="80" cy="76" r="1.5" opacity="0.45"/>
+                  <circle cx="22" cy="40" r="1.3" opacity="0.4"/><circle cx="138" cy="44" r="1.3" opacity="0.4"/>
+                  <circle cx="62" cy="22" r="1.2" opacity="0.4"/><circle cx="100" cy="24" r="1.2" opacity="0.4"/>
+                </g>
+                <circle cx="80" cy="45" r="40" fill="none" stroke="#D4C4A0" stroke-width="0.7" stroke-dasharray="2 5" opacity="0.35"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Dark Matter</h3>
+              <p class="sg-sure">Galaxies spin too fast for their visible mass. The missing pull is <span class="sg-num">27%</span> of the universe, by <a href="https://sci.esa.int/web/planck/-/51557-planck-new-cosmic-recipe" rel="noopener">Planck's accounting</a>.</p>
+              <p class="sg-myst">Not one particle of it has <b>ever been detected</b>. We know it only by its gravity.</p>
+              <p class="sg-quote">"It is a strange and mysterious universe. But that's fun."<cite>Vera Rubin</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Arrows radiating outward from a bright center, lengthening as they go.">
+                <circle cx="80" cy="45" r="11" fill="url(#sgGlowSoft)"/>
+                <circle cx="80" cy="45" r="2.4" fill="#FCF5DE"/>
+                <g stroke="#D4C4A0" stroke-width="1.3" fill="none" opacity="0.7" stroke-linecap="round">
+                  <path d="M92 45 H120 M114 40 L121 45 L114 50"/>
+                  <path d="M68 45 H40 M46 40 L39 45 L46 50"/>
+                  <path d="M88 33 L110 16 M101 17 L111 15 L110 25"/>
+                  <path d="M72 57 L50 74 M59 73 L49 75 L50 65"/>
+                  <path d="M88 57 L110 74 M110 65 L111 75 L101 73"/>
+                  <path d="M72 33 L50 16 M50 25 L49 15 L59 17"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Dark Energy</h3>
+              <p class="sg-sure">The universe's expansion is <em>accelerating</em>, pushed by a dark energy that is <span class="sg-num">68%</span> of everything (<a href="https://www.nobelprize.org/prizes/physics/2011/press-release/" rel="noopener">2011 Nobel</a>).</p>
+              <p class="sg-myst">Our best theory of its value <b>misses by 120 orders of magnitude</b>.</p>
+              <p class="sg-quote">"...a glaring embarrassment."<cite>Sean Carroll, <a href="https://ned.ipac.caltech.edu/level5/March01/Carroll/Carroll1.html" rel="noopener">on the cosmological constant</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Lines bursting radially from a single bright point.">
+                <g stroke="#D4C4A0" stroke-width="1.1" stroke-linecap="round" opacity="0.62">
+                  <line x1="80" y1="45" x2="80" y2="14"/><line x1="80" y1="45" x2="80" y2="76"/>
+                  <line x1="80" y1="45" x2="120" y2="45"/><line x1="80" y1="45" x2="40" y2="45"/>
+                  <line x1="80" y1="45" x2="112" y2="20"/><line x1="80" y1="45" x2="48" y2="20"/>
+                  <line x1="80" y1="45" x2="112" y2="70"/><line x1="80" y1="45" x2="48" y2="70"/>
+                  <line x1="80" y1="45" x2="128" y2="34"/><line x1="80" y1="45" x2="32" y2="34"/>
+                  <line x1="80" y1="45" x2="128" y2="56"/><line x1="80" y1="45" x2="32" y2="56"/>
+                </g>
+                <circle cx="80" cy="45" r="14" fill="url(#sgGlow)"/>
+                <circle cx="80" cy="45" r="3.4" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>The Big Bang</h3>
+              <p class="sg-sure">The afterglow, the expansion, and the light elements fix the universe's age at <span class="sg-num">13.8 billion years</span> (<a href="https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_and_the_cosmic_microwave_background" rel="noopener">Planck</a>).</p>
+              <p class="sg-myst">The theory says <b>nothing about what banged</b>, or what came before.</p>
+              <p class="sg-quote">"In its original form, the Big Bang theory never was a theory of the bang."<cite>Alan Guth, <a href="https://news.mit.edu/3-q-alan-guth-on-new-insights-into-the-big-bang" rel="noopener">MIT</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two streams of points meeting and annihilating, with a single point surviving.">
+                <g fill="#D4C4A0" opacity="0.6">
+                  <circle cx="16" cy="30" r="1.7"/><circle cx="30" cy="34" r="1.7"/><circle cx="44" cy="38" r="1.7"/>
+                  <circle cx="16" cy="60" r="1.7"/><circle cx="30" cy="56" r="1.7"/><circle cx="44" cy="52" r="1.7"/>
+                </g>
+                <g stroke="#D4C4A0" stroke-width="0.8" opacity="0.4">
+                  <line x1="44" y1="38" x2="72" y2="45"/><line x1="44" y1="52" x2="72" y2="45"/>
+                </g>
+                <circle cx="76" cy="45" r="14" fill="url(#sgGlowSoft)"/>
+                <g stroke="#D4C4A0" stroke-width="1" stroke-linecap="round" opacity="0.55">
+                  <line x1="76" y1="45" x2="98" y2="28"/><line x1="76" y1="45" x2="104" y2="42"/>
+                  <line x1="76" y1="45" x2="100" y2="62"/><line x1="76" y1="45" x2="92" y2="72"/>
+                </g>
+                <circle cx="120" cy="45" r="11" fill="url(#sgGlow)"/>
+                <circle cx="120" cy="45" r="2.8" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Why Anything Exists</h3>
+              <p class="sg-sure">Matter and antimatter should have wiped each other out into pure light. A surplus of <span class="sg-num">one part in a billion</span> survived (<a href="https://home.cern/science/physics/antimatter" rel="noopener">CERN</a>).</p>
+              <p class="sg-myst">That leftover is every star and planet, and <b>where the imbalance came from is unexplained</b>.</p>
+              <p class="sg-quote">"...this kind of quantity is only 10⁻¹⁸ in the Standard Model prediction."<cite>LHCb, <a href="https://physicsworld.com/a/cp-violation-in-baryons-is-seen-for-the-first-time-at-cern/" rel="noopener">Physics World</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A vast dark field with a single small point of light.">
+                <circle cx="92" cy="50" r="13" fill="url(#sgGlowSoft)"/>
+                <circle cx="92" cy="50" r="2.6" fill="#FCF5DE"/>
+                <circle cx="44" cy="32" r="1.1" fill="#D4C4A0" opacity="0.3"/>
+                <circle cx="120" cy="66" r="1" fill="#D4C4A0" opacity="0.22"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Something, Not Nothing</h3>
+              <p class="sg-sure">Even empty space is measurably <em>not</em> empty: the <a href="https://plato.stanford.edu/entries/nothingness/" rel="noopener">Casimir effect</a> pushes bare metal plates together, confirmed to within a percent.</p>
+              <p class="sg-myst">Why there is <b>anything at all</b> defeats every explanation, since each one starts by assuming something already exists.</p>
+              <p class="sg-quote">"Why is there something rather than nothing? For nothing is simpler and easier than something."<cite>G. W. Leibniz, 1714</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A bright streak striking a layer and scattering into a shower of lines.">
+                <line x1="40" y1="8" x2="86" y2="52" stroke="#FCF5DE" stroke-width="1.7" stroke-linecap="round"/>
+                <circle cx="40" cy="8" r="2.2" fill="#FCF5DE"/>
+                <line x1="20" y1="52" x2="140" y2="52" stroke="#D4C4A0" stroke-width="0.9" stroke-dasharray="3 4" opacity="0.45"/>
+                <g stroke="#D4C4A0" stroke-width="1" stroke-linecap="round" opacity="0.6">
+                  <line x1="86" y1="52" x2="70" y2="82"/><line x1="86" y1="52" x2="82" y2="84"/>
+                  <line x1="86" y1="52" x2="96" y2="84"/><line x1="86" y1="52" x2="108" y2="80"/>
+                  <line x1="86" y1="52" x2="60" y2="76"/>
+                </g>
+                <circle cx="86" cy="52" r="9" fill="url(#sgGlowSoft)"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Cosmic Rays</h3>
+              <p class="sg-sure">In 1991 a single subatomic particle hit Utah carrying <span class="sg-num">48 joules</span>, the punch of a thrown baseball packed into one proton (the <a href="https://en.wikipedia.org/wiki/Oh-My-God_particle" rel="noopener">Oh-My-God particle</a>).</p>
+              <p class="sg-myst">Decades on, <b>nothing in the sky</b> in its direction is powerful enough to have made it.</p>
+              <p class="sg-quote">"That's the mystery of this, what the heck is going on?"<cite>John Matthews, <a href="https://www.sciencedaily.com/releases/2023/11/231123164708.htm" rel="noopener">Telescope Array</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two measuring rulers of different lengths that fail to meet.">
+                <g stroke="#D4C4A0" stroke-width="1.3" opacity="0.8">
+                  <line x1="20" y1="34" x2="92" y2="34"/>
+                  <line x1="20" y1="29" x2="20" y2="39"/><line x1="38" y1="30" x2="38" y2="38"/><line x1="56" y1="30" x2="56" y2="38"/><line x1="74" y1="30" x2="74" y2="38"/><line x1="92" y1="29" x2="92" y2="39"/>
+                </g>
+                <g stroke="#D4C4A0" stroke-width="1.3" opacity="0.8">
+                  <line x1="20" y1="58" x2="116" y2="58"/>
+                  <line x1="20" y1="53" x2="20" y2="63"/><line x1="44" y1="54" x2="44" y2="62"/><line x1="68" y1="54" x2="68" y2="62"/><line x1="92" y1="54" x2="92" y2="62"/><line x1="116" y1="53" x2="116" y2="63"/>
+                </g>
+                <line x1="92" y1="34" x2="92" y2="58" stroke="#FCF5DE" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.6"/>
+                <circle cx="92" cy="34" r="2.4" fill="#FCF5DE"/><circle cx="116" cy="58" r="2.4" fill="#FCF5DE"/>
+                <text x="124" y="48" fill="#D4C4A0" font-size="11" font-family="monospace" opacity="0.8">?</text>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>The Hubble Tension</h3>
+              <p class="sg-sure">Our two best ways to clock the universe's expansion give <a href="https://cerncourier.com/a/the-hubble-tension/" rel="noopener">73.0 and 67.4</a> km/s per megaparsec, each measured to about a percent.</p>
+              <p class="sg-myst">They disagree at <b>more than five sigma</b>, and nobody knows whether it is an error or new physics.</p>
+              <p class="sg-quote">"This is in more than 5σ tension with Planck's prediction."<cite><a href="https://cerncourier.com/a/the-hubble-tension/" rel="noopener">CERN Courier</a>, 2024</cite></p>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============================== SHELF 2: MATTER & MOTION ============================== -->
+      <section class="sg-shelf" id="matter">
+        <div class="sg-shelf-head">
+          <span class="sg-shelf-num">02</span>
+          <h2 class="sg-shelf-title">Matter &amp; Motion</h2>
+          <p class="sg-shelf-sub">Everyday physics, written to many decimals, working for reasons unknown.</p>
+        </div>
+        <div class="sg-grid">
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two cones meeting at a single bright point, a light cone.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.1" opacity="0.6">
+                  <path d="M48 14 L80 45 L112 14"/><path d="M48 76 L80 45 L112 76"/>
+                  <ellipse cx="80" cy="14" rx="32" ry="6"/><ellipse cx="80" cy="76" rx="32" ry="6"/>
+                </g>
+                <line x1="80" y1="6" x2="80" y2="84" stroke="#D4C4A0" stroke-width="0.7" stroke-dasharray="2 4" opacity="0.4"/>
+                <circle cx="80" cy="45" r="10" fill="url(#sgGlowSoft)"/>
+                <circle cx="80" cy="45" r="2.8" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Time</h3>
+              <p class="sg-sure">An <a href="https://www.nist.gov/news-events/news/2024/07/worlds-most-accurate-and-precise-atomic-clock-pushes-new-frontiers-physics" rel="noopener">optical lattice clock</a> keeps time so steadily it would drift by <span class="sg-num">one second in 30 billion years</span>.</p>
+              <p class="sg-myst">Yet physics cannot say what time <b>is</b>, why it runs one way, or whether the future is even real.</p>
+              <p class="sg-quote">"The past is set in stone while the future can still be altered... all because of entropy."<cite>Sean Carroll, <a href="https://www.scientificamerican.com/article/sean-carroll-entangles-time-and-entropy/" rel="noopener">Scientific American</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Overlapping ripples from two sources, a wave interference pattern.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="0.9" opacity="0.45">
+                  <circle cx="62" cy="45" r="12"/><circle cx="62" cy="45" r="24"/><circle cx="62" cy="45" r="36"/>
+                  <circle cx="98" cy="45" r="12"/><circle cx="98" cy="45" r="24"/><circle cx="98" cy="45" r="36"/>
+                </g>
+                <circle cx="62" cy="45" r="2.6" fill="#FCF5DE"/><circle cx="98" cy="45" r="2.6" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Quantum Mechanics</h3>
+              <p class="sg-sure">It predicts the electron's magnetism to <a href="https://arxiv.org/abs/1301.1069" rel="noopener">more than ten digits</a>, and runs every microchip on Earth.</p>
+              <p class="sg-myst">Nobody agrees what the wavefunction <b>is</b>, or what <a href="https://plato.stanford.edu/entries/qt-issues/" rel="noopener">"measurement"</a> even does.</p>
+              <p class="sg-quote">"I think I can safely say that nobody understands quantum mechanics."<cite>Richard Feynman, 1965</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two glowing points joined by a faint thread.">
+                <path d="M44 45 C 70 28, 90 62, 116 45" fill="none" stroke="#D4C4A0" stroke-width="1" stroke-dasharray="2 4" opacity="0.6"/>
+                <circle cx="44" cy="45" r="12" fill="url(#sgGlow)"/><circle cx="44" cy="45" r="2.8" fill="#FCF5DE"/>
+                <circle cx="116" cy="45" r="12" fill="url(#sgGlow)"/><circle cx="116" cy="45" r="2.8" fill="#FCF5DE"/>
+                <g fill="none" stroke="#D4C4A0" stroke-width="0.9" opacity="0.4">
+                  <path d="M30 36 L38 45 L30 54"/><path d="M130 36 L122 45 L130 54"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Entanglement</h3>
+              <p class="sg-sure">The <a href="https://www.nobelprize.org/prizes/physics/2022/press-release/" rel="noopener">2022 Nobel</a> confirmed entangled particles really do break local realism, and we already build cryptography on them.</p>
+              <p class="sg-myst">How two particles act as <b>one thing</b> across any distance is unexplained.</p>
+              <p class="sg-quote">"I'm totally confused. I have no idea what all of this means."<cite>John Clauser, Nobel laureate, <a href="https://www.space.com/john-f-clauser-nobel-prize" rel="noopener">Space.com</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A spiral of points winding out from a bright center.">
+                <path d="M84 45 a4 4 0 0 1 -4 4 a8 8 0 0 1 -8 -8 a15 15 0 0 1 15 -15 a24 24 0 0 1 24 24" fill="none" stroke="#D4C4A0" stroke-width="1.2" opacity="0.7"/>
+                <circle cx="80" cy="45" r="9" fill="url(#sgGlowSoft)"/>
+                <circle cx="80" cy="45" r="2.4" fill="#FCF5DE"/>
+                <circle cx="104" cy="69" r="2" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>A Magic Number</h3>
+              <p class="sg-sure">The fine-structure constant, near <span class="sg-num">1/137</span>, sets the size of atoms and the color of light; we know it to <a href="https://www.quantamagazine.org/physicists-measure-the-magic-fine-structure-constant-20201202/" rel="noopener">a part per billion</a>.</p>
+              <p class="sg-myst">No theory explains <b>why it has that value</b>.</p>
+              <p class="sg-quote">"A magic number that comes to us with no understanding by man."<cite>Richard Feynman, <em>QED</em>, 1985</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A heavy block resisting a push, with motion lines.">
+                <rect x="73" y="30" width="32" height="32" rx="3" fill="url(#sgGlowSoft)" opacity="0.6"/>
+                <rect x="73" y="30" width="32" height="32" rx="3" fill="none" stroke="#D4C4A0" stroke-width="1.4" opacity="0.85"/>
+                <g stroke="#D4C4A0" stroke-width="1.3" stroke-linecap="round" opacity="0.75" fill="none">
+                  <path d="M38 46 H68 M62 41 L69 46 L62 51"/>
+                </g>
+                <g stroke="#D4C4A0" stroke-width="1" opacity="0.4" stroke-linecap="round">
+                  <line x1="112" y1="38" x2="124" y2="38"/><line x1="112" y1="46" x2="130" y2="46"/><line x1="112" y1="54" x2="124" y2="54"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Inertia</h3>
+              <p class="sg-sure">Every kilogram resists a push exactly as F = ma says; inertial and gravitational mass match to <a href="https://arxiv.org/abs/2209.15487" rel="noopener"><span class="sg-num">two parts in 10¹⁵</span></a>.</p>
+              <p class="sg-myst">Why matter resists being pushed <b>at all</b> has no accepted explanation.</p>
+              <p class="sg-quote">"Inertia originates in a kind of interaction between bodies."<cite>Albert Einstein, letter to Ernst Mach, 1913</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Curling vortices and eddies in a flow.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.2" opacity="0.68" stroke-linecap="round">
+                  <path d="M40 52 C 40 34, 66 34, 66 52 C 66 64, 48 64, 51 51"/>
+                  <path d="M98 40 C 98 24, 124 24, 124 42 C 124 56, 106 56, 109 44"/>
+                  <path d="M70 66 C 70 54, 92 54, 92 66 C 92 76, 76 76, 79 65"/>
+                </g>
+                <g fill="none" stroke="#D4C4A0" stroke-width="0.8" opacity="0.32">
+                  <path d="M18 28 C 60 18, 100 40, 142 26"/>
+                  <path d="M18 70 C 60 80, 100 58, 142 72"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Turbulence</h3>
+              <p class="sg-sure">We model it well enough to build jets and predict their drag to a few percent.</p>
+              <p class="sg-myst">There is still no theory of it from first principles; proving the <a href="https://www.claymath.org/millennium/navier-stokes-equation/" rel="noopener">equations behave</a> is a <span class="sg-num">$1,000,000</span> unclaimed prize.</p>
+              <p class="sg-quote">"Nobody in physics has really been able to analyze it mathematically satisfactorily."<cite>Richard Feynman, <a href="https://www.feynmanlectures.caltech.edu/I_03.html" rel="noopener">Lectures on Physics</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A disordered scatter of points, a frozen liquid.">
+                <g fill="#D4C4A0">
+                  <circle cx="38" cy="28" r="2.4" opacity="0.7"/><circle cx="64" cy="22" r="2.4" opacity="0.6"/><circle cx="92" cy="30" r="2.4" opacity="0.7"/><circle cx="120" cy="24" r="2.4" opacity="0.6"/>
+                  <circle cx="30" cy="50" r="2.4" opacity="0.6"/><circle cx="54" cy="46" r="2.4" opacity="0.7"/><circle cx="80" cy="53" r="2.4" opacity="0.6"/><circle cx="106" cy="48" r="2.4" opacity="0.7"/><circle cx="130" cy="52" r="2.4" opacity="0.6"/>
+                  <circle cx="44" cy="68" r="2.4" opacity="0.6"/><circle cx="72" cy="72" r="2.4" opacity="0.7"/><circle cx="100" cy="68" r="2.4" opacity="0.6"/><circle cx="124" cy="72" r="2.4" opacity="0.6"/>
+                </g>
+                <g stroke="#D4C4A0" stroke-width="0.6" opacity="0.22">
+                  <line x1="38" y1="28" x2="54" y2="46"/><line x1="64" y1="22" x2="80" y2="53"/><line x1="92" y1="30" x2="106" y2="48"/><line x1="54" y1="46" x2="72" y2="72"/><line x1="106" y1="48" x2="100" y2="68"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Glass</h3>
+              <p class="sg-sure">Glass carries the whole internet, drawn to within <span class="sg-num">a micron</span> of target.</p>
+              <p class="sg-myst">How a cooling liquid turns rigid <b>without crystallizing</b> is a famous unsolved problem.</p>
+              <p class="sg-quote">"The deepest and most interesting unsolved problem in solid state theory."<cite>Philip W. Anderson, <a href="https://www.science.org/doi/10.1126/science.267.5204.1615-e" rel="noopener"><em>Science</em></a>, 1995</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Magnetic field lines bending around a disc that expels them.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.1" opacity="0.6">
+                  <path d="M14 22 C 54 22, 66 26, 80 22 C 94 18, 106 22, 146 22"/>
+                  <path d="M14 68 C 54 68, 66 64, 80 68 C 94 72, 106 68, 146 68"/>
+                  <path d="M14 45 H60"/><path d="M100 45 H146"/>
+                </g>
+                <circle cx="80" cy="45" r="15" fill="url(#sgGlowSoft)"/>
+                <circle cx="80" cy="45" r="15" fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.85"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Superconductivity</h3>
+              <p class="sg-sure">Every MRI and the <a href="https://home.cern/science/accelerators/large-hadron-collider" rel="noopener">LHC</a> run on wire that carries current with <span class="sg-num">zero resistance</span>.</p>
+              <p class="sg-myst">For the high-temperature kind, found in 1986, there is <b>still no agreed theory</b> after forty years.</p>
+              <p class="sg-quote">"In 30 years people will still say that the theory is not understood."<cite>A.-M. Tremblay, <a href="https://physicstoday.aip.org/news/cuprate-superconductivity-mechanism-may-be-coming-into-focus" rel="noopener">Physics Today</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two charged plates with a small spark arcing between them.">
+                <rect x="28" y="24" width="24" height="42" rx="2" fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.7"/>
+                <rect x="108" y="24" width="24" height="42" rx="2" fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.7"/>
+                <g stroke="#D4C4A0" stroke-width="1.3" opacity="0.85" stroke-linecap="round">
+                  <line x1="36" y1="45" x2="44" y2="45"/><line x1="40" y1="41" x2="40" y2="49"/>
+                  <line x1="116" y1="45" x2="124" y2="45"/>
+                </g>
+                <circle cx="80" cy="45" r="12" fill="url(#sgGlowSoft)"/>
+                <path d="M58 45 L70 39 L65 47 L78 41 L73 50 L86 44 L102 45" fill="none" stroke="#FCF5DE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Static Electricity</h3>
+              <p class="sg-sure">Rub two materials together and charge reliably builds; it is the <a href="https://en.wikipedia.org/wiki/Triboelectric_effect" rel="noopener">oldest known electrical effect</a>, written up by the Greeks around <span class="sg-num">585 BC</span>.</p>
+              <p class="sg-myst">After all that time there is still <b>no agreed account</b> of how the charge moves, or even which way it should go.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A lightning bolt striking down from a cloud.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.2" opacity="0.58">
+                  <circle cx="62" cy="34" r="12"/><circle cx="82" cy="30" r="14"/><circle cx="100" cy="35" r="11"/>
+                  <line x1="52" y1="44" x2="108" y2="44"/>
+                </g>
+                <path d="M84 44 L73 62 L83 62 L72 84" fill="none" stroke="#FCF5DE" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="73" cy="84" r="7" fill="url(#sgGlowSoft)"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Lightning</h3>
+              <p class="sg-sure">Lightning strikes the Earth about <a href="https://en.wikipedia.org/wiki/Lightning" rel="noopener"><span class="sg-num">three million times a day</span></a>.</p>
+              <p class="sg-myst">And the fields inside storm clouds measure <b>ten times too weak</b> to start the spark. How it begins is unsolved.</p>
+              <p class="sg-quote">"The most energetic process on the planet... and we have no idea how it works."<cite>Brian Hare, <a href="https://nautil.us/detailed-footage-finally-reveals-what-triggers-lightning-238398" rel="noopener">Nautilus</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A bright bubble emitting a flash of light, ringed by sound waves.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="0.9" opacity="0.38">
+                  <circle cx="80" cy="45" r="27"/><circle cx="80" cy="45" r="35"/>
+                </g>
+                <circle cx="80" cy="45" r="17" fill="url(#sgGlow)"/>
+                <g stroke="#FCF5DE" stroke-width="1.2" stroke-linecap="round" opacity="0.85">
+                  <line x1="80" y1="22" x2="80" y2="11"/><line x1="80" y1="68" x2="80" y2="79"/>
+                  <line x1="57" y1="45" x2="46" y2="45"/><line x1="103" y1="45" x2="114" y2="45"/>
+                  <line x1="64" y1="29" x2="56" y2="21"/><line x1="96" y1="29" x2="104" y2="21"/>
+                  <line x1="64" y1="61" x2="56" y2="69"/><line x1="96" y1="61" x2="104" y2="69"/>
+                </g>
+                <circle cx="80" cy="45" r="3.2" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Sonoluminescence</h3>
+              <p class="sg-sure">Aim sound into water and it collapses tiny bubbles that flash with light, from gas heated to <span class="sg-num">thousands of degrees</span>, in under a billionth of a second.</p>
+              <p class="sg-myst">Exactly how a bubble turns sound into light <a href="https://en.wikipedia.org/wiki/Mechanism_of_sonoluminescence" rel="noopener">remains debated</a>.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A bicycle, balancing on its own.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.4" opacity="0.82">
+                  <circle cx="48" cy="56" r="18"/><circle cx="112" cy="56" r="18"/>
+                  <path d="M48 56 L70 56 L64 34 Z"/>
+                  <path d="M64 34 L92 36"/><path d="M70 56 L92 36"/><path d="M92 36 L112 56"/>
+                  <path d="M92 36 L93 27"/><path d="M86 27 L100 27"/>
+                  <path d="M64 34 L63 27"/><path d="M59 27 L67 27"/>
+                </g>
+                <circle cx="48" cy="56" r="1.9" fill="#D4C4A0"/><circle cx="112" cy="56" r="1.9" fill="#D4C4A0"/>
+                <path d="M26 80 q 54 -7 108 0" fill="none" stroke="#D4C4A0" stroke-width="0.7" opacity="0.28"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>The Bicycle</h3>
+              <p class="sg-sure">A moving riderless bicycle steers itself upright and recovers from a shove, shown in a <a href="https://www.science.org/doi/10.1126/science.1201959" rel="noopener">2011 <em>Science</em> paper</a>.</p>
+              <p class="sg-myst">The two textbook explanations, the gyroscope and the trail, are <b>both unnecessary</b>; the authors built a stable bike with neither.</p>
+              <p class="sg-quote">"We show that neither effect is necessary for self-stability."<cite>Kooijman et al., <em>Science</em>, 2011</cite></p>
+            </div>
+          </article>
+
+        </div>
+      </section>
+      <!-- ============================== SHELF 3: THE LIVING WORLD ============================== -->
+      <section class="sg-shelf" id="life">
+        <div class="sg-shelf-head">
+          <span class="sg-shelf-num">03</span>
+          <h2 class="sg-shelf-title">The Living World</h2>
+          <p class="sg-shelf-sub">Life is easy to start, hard to define, and no one knows why it must end.</p>
+        </div>
+        <div class="sg-grid">
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Scattered points gathering into a ring, the first cell.">
+                <g fill="#D4C4A0" opacity="0.55">
+                  <circle cx="22" cy="30" r="1.8"/><circle cx="34" cy="54" r="1.8"/><circle cx="44" cy="38" r="1.8"/><circle cx="28" cy="66" r="1.6"/><circle cx="50" cy="60" r="1.6"/>
+                </g>
+                <g stroke="#D4C4A0" stroke-width="0.7" opacity="0.3"><line x1="44" y1="38" x2="72" y2="45"/><line x1="50" y1="60" x2="74" y2="52"/></g>
+                <circle cx="104" cy="45" r="22" fill="none" stroke="#D4C4A0" stroke-width="1.1" opacity="0.6" stroke-dasharray="3 3"/>
+                <circle cx="104" cy="45" r="10" fill="url(#sgGlowSoft)"/><circle cx="104" cy="45" r="2.4" fill="#FCF5DE"/>
+                <g fill="#D4C4A0" opacity="0.6"><circle cx="104" cy="23" r="1.6"/><circle cx="126" cy="45" r="1.6"/><circle cx="104" cy="67" r="1.6"/><circle cx="82" cy="45" r="1.6"/><circle cx="120" cy="29" r="1.4"/><circle cx="120" cy="61" r="1.4"/><circle cx="88" cy="29" r="1.4"/><circle cx="88" cy="61" r="1.4"/></g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>The Origin of Life</h3>
+              <p class="sg-sure">A <a href="https://en.wikipedia.org/wiki/Miller%E2%80%93Urey_experiment" rel="noopener">1953 spark</a> made the building blocks of life from nothing but raw gas. The chemistry is easy to start.</p>
+              <p class="sg-myst">How ordinary matter first crossed into something that could <b>copy and evolve itself</b> is unknown.</p>
+              <p class="sg-quote">"We're just feeling our way around in the dark, trying to see where there might be a path."<cite>Jack Szostak, Nobel laureate, <a href="https://www.harvardmagazine.com/2019/06/origin-life-earth" rel="noopener">Harvard Magazine</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A single cell-like ring of points around a glowing center.">
+                <circle cx="80" cy="45" r="26" fill="none" stroke="#D4C4A0" stroke-width="1.1" opacity="0.5"/>
+                <circle cx="80" cy="45" r="11" fill="url(#sgGlow)"/><circle cx="80" cy="45" r="2.6" fill="#FCF5DE"/>
+                <g fill="#D4C4A0" opacity="0.6">
+                  <circle cx="106" cy="45" r="1.7"/><circle cx="101" cy="30" r="1.7"/><circle cx="88" cy="20" r="1.7"/><circle cx="72" cy="20" r="1.7"/><circle cx="59" cy="30" r="1.7"/><circle cx="54" cy="45" r="1.7"/><circle cx="59" cy="60" r="1.7"/><circle cx="72" cy="70" r="1.7"/><circle cx="88" cy="70" r="1.7"/><circle cx="101" cy="60" r="1.7"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>What Life Even Is</h3>
+              <p class="sg-sure">We sequence a genome in hours and tell a cat from a rock instantly.</p>
+              <p class="sg-myst">Yet no definition of life survives the edge cases; one survey gathered <a href="https://www.tandfonline.com/doi/abs/10.1080/073911011010524992" rel="noopener"><span class="sg-num">123</span> of them</a>, agreeing on <b>nothing</b>.</p>
+              <p class="sg-quote">"You can't rigorously define life because it's not a scientific term to begin with."<cite>Gerald Joyce, <a href="https://astrobiology.nasa.gov/news/forming-a-definition-for-life/" rel="noopener">NASA Astrobiology</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A spiral winding inward toward a soft center.">
+                <path d="M120 45 a40 40 0 1 1 -40 -40 a28 28 0 0 1 28 28 a17 17 0 0 1 -17 17 a8 8 0 0 1 -8 -8" fill="none" stroke="#D4C4A0" stroke-width="1.2" opacity="0.62"/>
+                <circle cx="80" cy="45" r="7" fill="url(#sgGlowSoft)"/>
+                <circle cx="80" cy="45" r="2" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Aging</h3>
+              <p class="sg-sure">Aging is not a law of nature. A <a href="https://pubmed.ncbi.nlm.nih.gov/9615920/" rel="noopener">hydra</a> shows almost no decline for years, and a Greenland shark can live <a href="https://www.science.org/doi/10.1126/science.aaf1703" rel="noopener"><span class="sg-num">400 years</span></a>.</p>
+              <p class="sg-myst">Why most of us age, then, has <b>no agreed cause</b>, only competing theories.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Slow, calm waves of decreasing height.">
+                <g fill="none" stroke="#D4C4A0" stroke-linecap="round">
+                  <path d="M16 34 q 18 -15 36 0 t 36 0 t 36 0 t 20 0" stroke-width="1.3" opacity="0.7"/>
+                  <path d="M16 50 q 18 -11 36 0 t 36 0 t 36 0 t 20 0" stroke-width="1.1" opacity="0.5"/>
+                  <path d="M16 64 q 18 -8 36 0 t 36 0 t 36 0 t 20 0" stroke-width="1" opacity="0.35"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Sleep</h3>
+              <p class="sg-sure">Every animal with a nervous system sleeps, and rats kept fully awake <a href="https://pubmed.ncbi.nlm.nih.gov/2928622/" rel="noopener">died within 11 to 32 days</a>.</p>
+              <p class="sg-myst">Science still cannot agree <b>what sleep is for</b>.</p>
+              <p class="sg-quote">"If sleep does not serve an absolutely vital function, then it is the biggest mistake the evolutionary process has ever made."<cite>Allan Rechtschaffen, <a href="https://news.uchicago.edu/story/allan-rechtschaffen-sleep-research-pioneer-1927-2021" rel="noopener">University of Chicago</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two strands braiding together, a double helix.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.72" stroke-linecap="round">
+                  <path d="M38 45 q 21 -23 42 0 t 42 0"/>
+                  <path d="M38 45 q 21 23 42 0 t 42 0"/>
+                </g>
+                <g stroke="#D4C4A0" stroke-width="0.8" opacity="0.4">
+                  <line x1="59" y1="33" x2="59" y2="57"/><line x1="101" y1="33" x2="101" y2="57"/>
+                </g>
+                <circle cx="80" cy="45" r="8" fill="url(#sgGlowSoft)"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Why Sex Exists</h3>
+              <p class="sg-sure">Sex carries a brutal <a href="https://www.blackwellpublishing.com/ridley/a-z/Cost_of_sex.asp" rel="noopener"><span class="sg-num">twofold cost</span></a>: an asexual lineage should outbreed it two to one. Yet nearly all complex life reproduces sexually.</p>
+              <p class="sg-myst">Why sex <b>wins anyway</b> is unsettled.</p>
+              <p class="sg-quote">"The queen of problems in evolutionary biology."<cite>Graham Bell, <a href="https://en.wikipedia.org/wiki/Graham_Bell_(biologist)" rel="noopener"><em>The Masterpiece of Nature</em></a>, 1982</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A compass needle aligned to curving field lines.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.4">
+                  <path d="M18 28 Q80 13 142 28"/><path d="M18 62 Q80 77 142 62"/>
+                </g>
+                <circle cx="80" cy="45" r="20" fill="none" stroke="#D4C4A0" stroke-width="1.2" opacity="0.7"/>
+                <path d="M80 29 L86 47 L80 45 L74 47 Z" fill="#FCF5DE" opacity="0.92"/>
+                <path d="M80 61 L74 43 L80 45 L86 43 Z" fill="#D4C4A0" opacity="0.55"/>
+                <circle cx="80" cy="45" r="2.2" fill="#303931" stroke="#D4C4A0" stroke-width="0.8"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>How Birds Find South</h3>
+              <p class="sg-sure">Robins and many other birds navigate by <a href="https://www.annualreviews.org/content/journals/10.1146/annurev-biophys-032116-094545" rel="noopener">Earth's magnetic field</a>, proven in cage experiments since the 1960s.</p>
+              <p class="sg-myst">The actual sensor has <b>never been found</b>; the lead idea is a quantum reaction inside the eye.</p>
+              <p class="sg-quote">"The primary sensory mechanism behind this remarkable feat is still unclear."<cite>Hore &amp; Mouritsen, <em>Annual Review of Biophysics</em>, 2016</cite></p>
+            </div>
+          </article>
+
+        </div>
+      </section>
+      <!-- ============================== SHELF 4: THE BODY ============================== -->
+      <section class="sg-shelf" id="body">
+        <div class="sg-shelf-head">
+          <span class="sg-shelf-num">04</span>
+          <h2 class="sg-shelf-title">The Body</h2>
+          <p class="sg-shelf-sub">Medicine that works without knowing why, on hardware we never designed.</p>
+        </div>
+        <div class="sg-grid">
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="An active brainwave trace that flattens to a line.">
+                <path d="M14 45 L22 30 L30 57 L38 30 L46 55 L54 32 L62 50 L70 45 L146 45" fill="none" stroke="#D4C4A0" stroke-width="1.4" opacity="0.82" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="146" cy="45" r="2" fill="#D4C4A0" opacity="0.6"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Anesthesia</h3>
+              <p class="sg-sure">We switch consciousness off for surgery <span class="sg-num">hundreds of millions</span> of times a year, safely, and have since <a href="https://www.sciencealert.com/for-over-150-years-how-general-anaesthesia-works-has-eluded-scientists-we-re-finally-getting-close" rel="noopener">1846</a>.</p>
+              <p class="sg-myst">After 175 years, no one can fully say <b>how</b> it erases awareness.</p>
+              <p class="sg-quote">"That's been a great mystery for about 170 years. The straightforward answer is no one really knows."<cite>Paul Myles, anesthesiologist, ScienceAlert</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A hexagonal molecular ring among scattered atoms.">
+                <polygon points="80,22 98,33 98,55 80,66 62,55 62,33" fill="none" stroke="#D4C4A0" stroke-width="1.4" opacity="0.82"/>
+                <circle cx="80" cy="44" r="7" fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.5"/>
+                <g fill="#D4C4A0" opacity="0.5"><circle cx="36" cy="30" r="1.6"/><circle cx="124" cy="34" r="1.6"/><circle cx="40" cy="62" r="1.6"/><circle cx="120" cy="62" r="1.6"/></g>
+                <g stroke="#D4C4A0" stroke-width="0.9" opacity="0.45"><line x1="80" y1="22" x2="80" y2="12"/><line x1="98" y1="33" x2="110" y2="27"/><line x1="62" y1="55" x2="50" y2="61"/></g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Drugs That Just Work</h3>
+              <p class="sg-sure"><a href="https://pubmed.ncbi.nlm.nih.gov/23371914/" rel="noopener">Lithium</a> has steadied bipolar disorder since 1949, and we swallow acetaminophen by the billion.</p>
+              <p class="sg-myst">Regulators demand proof a drug <em>works</em>, not proof of <b>how</b>, and for these the mechanism is still unknown.</p>
+              <p class="sg-quote">"The specific mechanisms by which lithium exerts its mood-stabilizing effects are not well understood."<cite>Malhi et al., <em>CNS Drugs</em>, 2013</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A capsule pill with a soft halo.">
+                <circle cx="80" cy="45" r="27" fill="url(#sgGlowSoft)" opacity="0.5"/>
+                <g transform="rotate(-28 80 45)">
+                  <rect x="55" y="36" width="50" height="18" rx="9" fill="none" stroke="#D4C4A0" stroke-width="1.4" opacity="0.85"/>
+                  <path d="M64 36 a9 9 0 0 0 0 18 H80 V36 Z" fill="#D4C4A0" opacity="0.16"/>
+                  <line x1="80" y1="36" x2="80" y2="54" stroke="#D4C4A0" stroke-width="1.1" opacity="0.7"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>The Placebo Effect</h3>
+              <p class="sg-sure">It is so strong every drug must beat it. In one trial, sugar pills taken <em>knowingly</em> still gave <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6889847/" rel="noopener"><span class="sg-num">59% vs 35%</span></a> relief.</p>
+              <p class="sg-myst">Why a pill you <b>know</b> is fake still works has no settled explanation.</p>
+              <p class="sg-quote">"The psychological mechanisms underlying the observed effectiveness of open label placebo are unclear."<cite>Kaptchuk &amp; Miller, <em>BMJ</em>, 2018</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A small network of neurons with one node lit.">
+                <g stroke="#D4C4A0" stroke-width="0.9" opacity="0.45">
+                  <line x1="40" y1="28" x2="72" y2="45"/><line x1="72" y1="45" x2="108" y2="30"/><line x1="72" y1="45" x2="100" y2="62"/><line x1="40" y1="64" x2="72" y2="45"/><line x1="108" y1="30" x2="124" y2="55"/><line x1="100" y1="62" x2="124" y2="55"/>
+                </g>
+                <g fill="#D4C4A0" opacity="0.7"><circle cx="40" cy="28" r="2.4"/><circle cx="108" cy="30" r="2.4"/><circle cx="40" cy="64" r="2.4"/><circle cx="100" cy="62" r="2.4"/><circle cx="124" cy="55" r="2.4"/></g>
+                <circle cx="72" cy="45" r="11" fill="url(#sgGlow)"/><circle cx="72" cy="45" r="3" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Memory</h3>
+              <p class="sg-sure">We can now tag the exact brain cells of a single memory in a mouse and switch it back on with light (<a href="https://www.nature.com/articles/nature11028" rel="noopener">2012</a>).</p>
+              <p class="sg-myst">And still no one can say what a memory physically <b>is</b>, or how the brain writes it down.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A small molecule giving off rising scent waves.">
+                <g stroke="#D4C4A0" stroke-width="1.3" opacity="0.8" fill="none"><circle cx="42" cy="38" r="6.5"/><circle cx="57" cy="55" r="6.5"/><line x1="47" y1="43" x2="52" y2="50"/></g>
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.1" opacity="0.5" stroke-linecap="round">
+                  <path d="M76 30 q 10 -8 20 0 t 20 0"/>
+                  <path d="M80 44 q 10 -8 20 0 t 20 0"/>
+                  <path d="M84 58 q 10 -8 20 0 t 20 0"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Smell</h3>
+              <p class="sg-sure">Your nose runs on about <span class="sg-num">400</span> kinds of receptor and sorts an enormous range of odors.</p>
+              <p class="sg-myst">Yet no one can predict what a molecule will <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6627536/" rel="noopener">smell like</a> from its shape; <b>near-identical molecules can smell completely different</b>.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A face yawning, with a tear and a flushed cheek.">
+                <circle cx="80" cy="45" r="28" fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.8"/>
+                <circle cx="70" cy="37" r="2" fill="#D4C4A0"/><circle cx="90" cy="37" r="2" fill="#D4C4A0"/>
+                <ellipse cx="80" cy="57" rx="6" ry="8" fill="none" stroke="#D4C4A0" stroke-width="1.2" opacity="0.8"/>
+                <circle cx="62" cy="50" r="6" fill="url(#sgGlowSoft)"/>
+                <path d="M90 41 q 4 8 0 13" fill="none" stroke="#FCF5DE" stroke-width="1.1" opacity="0.7"/>
+                <circle cx="90" cy="57" r="1.6" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>A Bundle of Quirks</h3>
+              <p class="sg-sure">Universal human traits we all share: yawning, blushing, hiccups, tears, laughter, and being <a href="https://en.wikipedia.org/wiki/Handedness" rel="noopener"><span class="sg-num">~90%</span> right-handed</a>.</p>
+              <p class="sg-myst">None of them has a settled <b>purpose</b>. Darwin could not explain the blush, and neither can we.</p>
+              <p class="sg-quote">"Blushing is the most peculiar and the most human of all expressions."<cite>Charles Darwin, <a href="https://brocku.ca/MeadProject/Darwin/Darwin_1872_13.html" rel="noopener">1872</a></cite></p>
+            </div>
+          </article>
+
+        </div>
+      </section>
+      <!-- ============================== SHELF 5: THE MIND ============================== -->
+      <section class="sg-shelf" id="mind">
+        <div class="sg-shelf-head">
+          <span class="sg-shelf-num">05</span>
+          <h2 class="sg-shelf-title">The Mind</h2>
+          <p class="sg-shelf-sub">The one thing you know first-hand, and can prove to no one.</p>
+        </div>
+        <div class="sg-grid">
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A luminous knot of linked points, brightest at the center.">
+                <circle cx="80" cy="45" r="23" fill="url(#sgGlow)"/>
+                <g stroke="#FCF5DE" stroke-width="0.7" opacity="0.5">
+                  <line x1="80" y1="45" x2="68" y2="37"/><line x1="80" y1="45" x2="92" y2="39"/><line x1="80" y1="45" x2="73" y2="55"/><line x1="80" y1="45" x2="91" y2="54"/><line x1="80" y1="45" x2="80" y2="31"/>
+                </g>
+                <g fill="#FCF5DE">
+                  <circle cx="80" cy="45" r="3.4"/><circle cx="68" cy="37" r="1.8"/><circle cx="92" cy="39" r="1.8"/><circle cx="73" cy="55" r="1.8"/><circle cx="91" cy="54" r="1.8"/><circle cx="80" cy="31" r="1.6"/><circle cx="61" cy="48" r="1.5"/><circle cx="99" cy="47" r="1.5"/><circle cx="80" cy="61" r="1.5"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Consciousness</h3>
+              <p class="sg-sure">A 2023 system can <a href="https://www.nature.com/articles/d41586-023-02120-8" rel="noopener">reconstruct the image you are looking at</a> from a brain scan with striking accuracy.</p>
+              <p class="sg-myst">And nothing in neuroscience explains why all that processing <b>feels like anything</b> from the inside.</p>
+              <p class="sg-quote">"There is a whir of information-processing, but there is also a subjective aspect."<cite>David Chalmers, <a href="https://consc.net/papers/facing.html" rel="noopener">on the hard problem</a>, 1995</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A single path forking into several branches.">
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.75" stroke-linecap="round">
+                  <path d="M20 45 H62"/>
+                  <path d="M62 45 C 84 45, 92 24, 124 22"/>
+                  <path d="M62 45 C 84 45, 92 45, 124 45"/>
+                  <path d="M62 45 C 84 45, 92 66, 124 68"/>
+                </g>
+                <path d="M62 45 C 96 33, 102 30, 128 32" fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.38"/>
+                <circle cx="62" cy="45" r="3" fill="#FCF5DE"/>
+                <g fill="#D4C4A0" opacity="0.6"><circle cx="124" cy="22" r="1.8"/><circle cx="124" cy="45" r="1.8"/><circle cx="124" cy="68" r="1.8"/></g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Free Will</h3>
+              <p class="sg-sure">Law, morality, and your whole sense of self rest on the feeling that you choose freely.</p>
+              <p class="sg-myst">Yet brain signals can predict a "free" choice <a href="https://www.pnas.org/doi/10.1073/pnas.1210467109" rel="noopener">up to half a second</a> before you feel you decide, and <b>no one can settle what that means</b>.</p>
+              <p class="sg-quote">"Put all the scientific results together... and there's no room for free will."<cite>Robert Sapolsky, <a href="https://ndpr.nd.edu/reviews/determined-a-science-of-life-without-free-will/" rel="noopener"><em>Determined</em></a>, 2023</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="Two mirrored figures, one filled with light, one a hollow dashed outline.">
+                <path d="M36 74 a20 20 0 0 1 40 0 Z" fill="url(#sgGlowSoft)" opacity="0.5" stroke="#D4C4A0" stroke-width="1.2"/>
+                <circle cx="56" cy="34" r="13" fill="url(#sgGlow)"/>
+                <circle cx="56" cy="34" r="13" fill="none" stroke="#D4C4A0" stroke-width="1.2"/>
+                <circle cx="56" cy="34" r="3" fill="#FCF5DE"/>
+                <path d="M86 74 a20 20 0 0 1 40 0 Z" fill="none" stroke="#D4C4A0" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
+                <circle cx="106" cy="34" r="13" fill="none" stroke="#D4C4A0" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
+                <text x="102" y="39" fill="#D4C4A0" font-size="13" font-family="serif" opacity="0.55">?</text>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Other Minds</h3>
+              <p class="sg-sure">You have direct access to exactly <span class="sg-num">one</span> mind: your own.</p>
+              <p class="sg-myst">That anyone else is <b>awake inside</b>, rather than a perfect look-alike, is a <a href="https://plato.stanford.edu/entries/other-minds/" rel="noopener">reasonable bet</a>, never a proof.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A clean grid breaking into displaced squares at one corner.">
+                <g stroke="#D4C4A0" stroke-width="0.9" opacity="0.5" fill="none">
+                  <path d="M20 18 H140 M20 36 H140 M20 54 H94 M20 72 H94"/>
+                  <path d="M20 18 V72 M44 18 V72 M68 18 V72 M92 18 V72 M116 18 V52 M140 18 V36"/>
+                </g>
+                <g stroke="#FCF5DE" stroke-width="1" opacity="0.8" fill="none">
+                  <rect x="100" y="56" width="16" height="14" transform="rotate(9 108 63)"/>
+                  <rect x="120" y="50" width="14" height="16" transform="rotate(-11 127 58)"/>
+                  <rect x="119" y="69" width="16" height="13" transform="rotate(15 127 75)"/>
+                </g>
+                <g fill="#FCF5DE" opacity="0.7"><circle cx="134" cy="61" r="1.4"/><circle cx="112" cy="78" r="1.4"/></g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Whether This Is Real</h3>
+              <p class="sg-sure">Everything you have ever known arrives through your senses.</p>
+              <p class="sg-myst">And from Descartes' demon to the <a href="https://www.simulation-argument.com/" rel="noopener">simulation argument</a>, <b>no sensory evidence</b> can rule out that all of it is a flawless illusion.</p>
+              <p class="sg-quote">"I shall suppose that some malicious, powerful, cunning demon has done all he can to deceive me."<cite>Rene Descartes, <a href="https://www.earlymoderntexts.com/assets/pdfs/descartes1641.pdf" rel="noopener"><em>Meditations</em></a>, 1641</cite></p>
+            </div>
+          </article>
+
+        </div>
+      </section>
+      <!-- ============================== SHELF 6: LOGIC & THE MACHINE ============================== -->
+      <section class="sg-shelf" id="machine">
+        <div class="sg-shelf-head">
+          <span class="sg-shelf-num">06</span>
+          <h2 class="sg-shelf-title">Logic &amp; the Machine</h2>
+          <p class="sg-shelf-sub">The limits of proof, the nature of chance, and the tools we built but cannot read.</p>
+        </div>
+        <div class="sg-grid">
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A solid line of the past forking into dashed possible futures.">
+                <path d="M16 45 H70" fill="none" stroke="#D4C4A0" stroke-width="1.4" opacity="0.8"/>
+                <g fill="none" stroke="#D4C4A0" stroke-width="1.1" stroke-dasharray="3 4" opacity="0.5" stroke-linecap="round">
+                  <path d="M70 45 L140 22"/><path d="M70 45 L140 36"/><path d="M70 45 L140 50"/><path d="M70 45 L140 64"/>
+                </g>
+                <circle cx="70" cy="45" r="9" fill="url(#sgGlowSoft)"/><circle cx="70" cy="45" r="3" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>That the Sun Will Rise</h3>
+              <p class="sg-sure">NASA can place the Moon a <a href="https://www.quantamagazine.org/how-the-ancient-art-of-eclipse-prediction-became-an-exact-science-20240405/" rel="noopener"><span class="sg-num">thousand years</span></a> from now to within a few meters.</p>
+              <p class="sg-myst">But that the future will resemble the past at all <b>cannot be justified</b> by logic or experience. It is why nothing is ever truly proven.</p>
+              <p class="sg-quote">"That the sun will not rise tomorrow is no less intelligible than the affirmation that it will rise."<cite>David Hume, <a href="https://www.gutenberg.org/files/5827/5827-h/5827-h.htm" rel="noopener">1748</a></cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A circular arrow looping back into itself.">
+                <path d="M80 24 A21 21 0 1 1 61 33" fill="none" stroke="#D4C4A0" stroke-width="1.5" opacity="0.82" stroke-linecap="round"/>
+                <path d="M61 33 l-1.5 -8 m1.5 8 l8 -2" fill="none" stroke="#D4C4A0" stroke-width="1.5" opacity="0.82" stroke-linecap="round"/>
+                <circle cx="80" cy="45" r="9" fill="url(#sgGlowSoft)"/>
+                <circle cx="80" cy="45" r="2.4" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Truths That Can't Be Proven</h3>
+              <p class="sg-sure">Mathematics is the home of certainty; in 1931, at just <span class="sg-num">25</span>, Kurt Godel proved his incompleteness theorems.</p>
+              <p class="sg-myst">Any consistent system big enough for arithmetic holds <a href="https://plato.stanford.edu/entries/goedel-incompleteness/" rel="noopener">true statements it can never prove</a>, <b>including its own consistency</b>.</p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A smooth wave over a faint coordinate grid.">
+                <g stroke="#D4C4A0" stroke-width="0.7" opacity="0.25">
+                  <line x1="24" y1="14" x2="24" y2="78"/><line x1="20" y1="45" x2="142" y2="45"/>
+                  <line x1="56" y1="42" x2="56" y2="48"/><line x1="88" y1="42" x2="88" y2="48"/><line x1="120" y1="42" x2="120" y2="48"/>
+                </g>
+                <path d="M24 45 C 44 14, 64 14, 80 45 C 96 76, 116 76, 136 45" fill="none" stroke="#D4C4A0" stroke-width="1.5" opacity="0.85"/>
+                <circle cx="80" cy="45" r="2.4" fill="#FCF5DE"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Why Math Fits the World</h3>
+              <p class="sg-sure">Pure math, dreamed up with no use in mind, keeps describing the universe exactly. Dirac's 1928 equation predicted antimatter four years before anyone saw it.</p>
+              <p class="sg-myst">No one can say <b>why</b> abstract math should fit reality so well.</p>
+              <p class="sg-quote">"A wonderful gift which we neither understand nor deserve."<cite>Eugene Wigner, <a href="https://ned.ipac.caltech.edu/level5/March02/Wigner/Wigner.html" rel="noopener">on the unreasonable effectiveness of mathematics</a>, 1960</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A clumpy, uneven scatter of points.">
+                <g fill="#D4C4A0">
+                  <circle cx="34" cy="26" r="1.8"/><circle cx="40" cy="32" r="1.8"/><circle cx="30" cy="34" r="1.6"/><circle cx="44" cy="24" r="1.5"/><circle cx="38" cy="20" r="1.4"/>
+                  <circle cx="104" cy="50" r="1.8"/><circle cx="110" cy="44" r="1.8"/><circle cx="98" cy="46" r="1.6"/><circle cx="112" cy="54" r="1.6"/><circle cx="106" cy="58" r="1.5"/><circle cx="118" cy="49" r="1.4"/>
+                  <circle cx="46" cy="66" r="1.7"/><circle cx="52" cy="70" r="1.6"/><circle cx="40" cy="70" r="1.5"/>
+                  <circle cx="76" cy="22" r="1.4" opacity="0.8"/><circle cx="128" cy="26" r="1.4" opacity="0.8"/><circle cx="70" cy="66" r="1.4" opacity="0.8"/><circle cx="86" cy="60" r="1.3" opacity="0.7"/><circle cx="132" cy="72" r="1.3" opacity="0.7"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>True Randomness</h3>
+              <p class="sg-sure">We stake modern cryptography on it; a <a href="https://www.nist.gov/news-events/news/2025/06/nist-and-partners-use-quantum-mechanics-make-factory-random-numbers" rel="noopener">NIST beacon</a> pours out certified random bits from quantum measurements.</p>
+              <p class="sg-myst">Yet no test can ever certify a sequence as <b>truly random</b>, and quantum outcomes are, as far as we can tell, uncaused.</p>
+              <p class="sg-quote">"True randomness is something that nothing in the universe can predict in advance."<cite>Krister Shalm, NIST, 2025</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A tangled path beside a clean check mark.">
+                <path d="M24 60 C 30 30, 50 30, 48 48 C 46 64, 64 64, 60 44 C 56 28, 74 30, 72 52" fill="none" stroke="#D4C4A0" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>
+                <line x1="82" y1="45" x2="94" y2="45" stroke="#D4C4A0" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"/>
+                <path d="M104 46 L116 60 L140 26" fill="none" stroke="#FCF5DE" stroke-width="2" opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>P versus NP</h3>
+              <p class="sg-sure">Modern cryptography, and much of the internet, assumes some problems are easy to <em>check</em> but hard to <em>solve</em>.</p>
+              <p class="sg-myst">Whether that is even true, whether <span class="sg-num">P = NP</span>, is <b>unproven</b>, and carries a <a href="https://www.claymath.org/millennium/p-vs-np/" rel="noopener">$1,000,000</a> prize.</p>
+              <p class="sg-quote">"If it is easy to check that a solution to a problem is correct, is it also easy to solve the problem?"<cite>Clay Mathematics Institute</cite></p>
+            </div>
+          </article>
+
+          <article class="sg-card">
+            <div class="sg-fig">
+              <svg viewBox="0 0 160 90" role="img" aria-label="A layered neural network with one path lit through it.">
+                <g stroke="#D4C4A0" stroke-width="0.6" opacity="0.28">
+                  <line x1="30" y1="28" x2="68" y2="26"/><line x1="30" y1="28" x2="68" y2="45"/><line x1="30" y1="28" x2="68" y2="64"/>
+                  <line x1="30" y1="45" x2="68" y2="26"/><line x1="30" y1="45" x2="68" y2="45"/><line x1="30" y1="45" x2="68" y2="64"/>
+                  <line x1="30" y1="62" x2="68" y2="26"/><line x1="30" y1="62" x2="68" y2="45"/><line x1="30" y1="62" x2="68" y2="64"/>
+                  <line x1="68" y1="26" x2="106" y2="26"/><line x1="68" y1="26" x2="106" y2="45"/><line x1="68" y1="26" x2="106" y2="64"/>
+                  <line x1="68" y1="45" x2="106" y2="26"/><line x1="68" y1="45" x2="106" y2="45"/><line x1="68" y1="45" x2="106" y2="64"/>
+                  <line x1="68" y1="64" x2="106" y2="26"/><line x1="68" y1="64" x2="106" y2="45"/><line x1="68" y1="64" x2="106" y2="64"/>
+                  <line x1="106" y1="26" x2="140" y2="36"/><line x1="106" y1="26" x2="140" y2="54"/>
+                  <line x1="106" y1="45" x2="140" y2="36"/><line x1="106" y1="45" x2="140" y2="54"/>
+                  <line x1="106" y1="64" x2="140" y2="36"/><line x1="106" y1="64" x2="140" y2="54"/>
+                </g>
+                <g stroke="#FCF5DE" stroke-width="1.1" opacity="0.85">
+                  <line x1="30" y1="45" x2="68" y2="26"/><line x1="68" y1="26" x2="106" y2="45"/><line x1="106" y1="45" x2="140" y2="36"/>
+                </g>
+                <g fill="#D4C4A0" opacity="0.7">
+                  <circle cx="30" cy="28" r="2.4"/><circle cx="30" cy="62" r="2.4"/>
+                  <circle cx="68" cy="45" r="2.4"/><circle cx="68" cy="64" r="2.4"/>
+                  <circle cx="106" cy="26" r="2.4"/><circle cx="106" cy="64" r="2.4"/>
+                  <circle cx="140" cy="54" r="2.4"/>
+                </g>
+                <g fill="#FCF5DE">
+                  <circle cx="30" cy="45" r="3"/><circle cx="68" cy="26" r="3"/><circle cx="106" cy="45" r="3"/><circle cx="140" cy="36" r="3.2"/>
+                </g>
+              </svg>
+            </div>
+            <div class="sg-bd">
+              <h3>Why Deep Learning Works</h3>
+              <p class="sg-sure">The neural networks behind today's AI ace benchmark after benchmark; <a href="https://www.nobelprize.org/prizes/chemistry/2024/press-release/" rel="noopener">AlphaFold</a> predicts protein shapes well enough to share a 2024 Nobel.</p>
+              <p class="sg-myst">And no one, including the people who build them, can fully explain <b>why training them works</b>.</p>
+              <p class="sg-quote">"No existing theory can guarantee that... gradient descent... can converge to the global minimum."<cite>Simon Du, <a href="https://www.quantamagazine.org/a-new-link-to-an-old-model-could-crack-the-mystery-of-deep-learning-20211011/" rel="noopener">Quanta</a>, 2021</cite></p>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- CODA -->
+      <section class="sg-coda fade-in">
+        <p>Notice what the last shelf ends on. The machine that drew every picture on this page, and helped write it, is the newest sure thing of all: it works, spectacularly, and <em>no one can fully say why.</em> We are back where we started, holding something that plainly works and cannot be explained.</p>
+        <p>That is not a defect in the list. It is the view from the edge of what we know, and the edge is closer, and friendlier, than it looks. None of these things is fake or in doubt. The phenomenon is always real. It is the <em>why</em>, or the final proof, that runs out, and that running-out is where every interesting question still lives.</p>
+        <p class="note">A note on honesty: "unexplained" here means there is no scientific consensus, not that there are no ideas. Many of these have several competing theories and active research; a few, like the limits of proof or other minds, are matters of logic that no experiment can close. Every claim links to its source. Quotes are verbatim and attributed; where a phenomenon is contested, the wording leans toward "no agreed explanation" rather than "no idea at all."</p>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
