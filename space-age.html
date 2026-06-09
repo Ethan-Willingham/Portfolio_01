@@ -506,6 +506,7 @@
               <li><span class="pn">Neptune</span><span class="pv">164.8 years</span></li>
               <li><span class="pn">Pluto</span><span class="pv">247.9 years</span></li>
             </ul>
+            <p>Time itself runs a touch differently up on the Station. Its speed makes its clocks tick about 25 microseconds a day slower than ours, while its altitude (weaker gravity) speeds them up a little; the speed wins. Astronaut <a href="https://www.space.com/33411-astronaut-scott-kelly-relativity-twin-brother-ages.html" rel="noopener">Scott Kelly</a> came home from a year in orbit a few milliseconds younger than his identical twin.</p>
             <p>Everything runs in your browser; your birthday is never sent anywhere, and the link you share opens an empty calculator, never your date.</p>
           </div>
         </details>
@@ -542,6 +543,12 @@
       { key:'pluto',   name:'Pluto',   days:90560, tag:'dwarf planet' }
     ];
     var ISS_MIN = 92.68;
+    // Net relativistic time dilation aboard the ISS, as a fraction: its clocks
+    // run about 2.8e-10 slower than a ground clock (orbital speed slows them by
+    // ~28 us/day, altitude speeds them up by ~4, so the speed wins by ~25 us/day,
+    // matching Krikalev's ~20 ms over 803 days). A whole life aboard nets a
+    // fraction of a second.
+    var ISS_DILATION = 2.8e-10;
 
     var moEl = document.getElementById('sa-mo');
     var daEl = document.getElementById('sa-da');
@@ -647,6 +654,10 @@
         if (c < worstC) { worstC = c; worstY = y; }
       }
       var orbits = Math.round(elapsedMs / (ISS_MIN * 60000));
+      var youngerSec = (elapsedMs / 1000) * ISS_DILATION;
+      var youngerStr = youngerSec >= 0.1
+        ? youngerSec.toFixed(2) + ' seconds'
+        : Math.round(youngerSec * 1000) + ' milliseconds';
 
       set('sa-fact-next', soonest
         ? 'Your <b>very next</b> birthday is a <b>' + soonest.name + '</b> one, ' +
@@ -657,7 +668,8 @@
       set('sa-fact-span', 'Over the next century your busiest year is <b>' + bestY + '</b> (' + bestC +
           ' birthdays) and your quietest is <b>' + worstY + '</b> (' + worstC + ').');
       set('sa-fact-iss', 'And up on the Space Station? You would have lapped the Earth about <b>' +
-          orbits.toLocaleString() + '</b> times.');
+          orbits.toLocaleString() + '</b> times, where time runs a hair slower: a whole life aboard ' +
+          'would leave you about <b>' + youngerStr + '</b> younger than you are down here.');
 
       reveal(user);
     }
