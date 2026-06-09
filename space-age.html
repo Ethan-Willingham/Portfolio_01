@@ -457,56 +457,6 @@
     .sa-btn.ghost:hover { border-color: var(--gold); color: var(--gold-2); }
     .sa-btn.done { background: var(--gold-2); }
 
-    /* ---------------- LEARN (collapsed by default) ---------------- */
-    .sa-learn { margin-top: 3.5rem; }
-    .sa-learn p {
-      font-family: var(--font-body);
-      font-size: 1.02rem;
-      line-height: 1.7;
-      color: var(--dim);
-      max-width: 60ch;
-      margin: 0 auto 1.1em;
-      text-align: center;
-    }
-    .sa-learn details {
-      max-width: 60ch;
-      margin: 1.6rem auto 0;
-      border-top: 1px solid var(--line);
-    }
-    .sa-learn summary {
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      color: var(--gold);
-      padding: 0.9rem 0;
-      cursor: pointer;
-      list-style: none;
-      text-align: center;
-    }
-    .sa-learn summary::-webkit-details-marker { display: none; }
-    .sa-learn summary:hover { color: var(--gold-2); }
-    .sa-learn details[open] summary { color: var(--dim); }
-    .sa-learn .sa-deep {
-      font-size: 0.92rem;
-      line-height: 1.65;
-      text-align: left;
-      color: var(--dim);
-    }
-    .sa-periods {
-      list-style: none;
-      margin: 1.1rem 0;
-      padding: 0;
-      font-size: 0.9rem;
-    }
-    .sa-periods li {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.32em 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .sa-periods .pn { color: var(--ink); }
-    .sa-periods .pv { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--faint); }
-
     .sa-page .site-footer-inner { border-top-color: var(--line); }
     .sa-page .site-footer a { color: var(--faint); }
     .sa-page .site-footer a:hover { color: var(--ink); }
@@ -584,27 +534,6 @@
         </div>
       </section>
 
-      <!-- LEARN: just the collapsed math, for whoever wants it. -->
-      <section class="sa-learn">
-        <details>
-          <summary>The orbital periods, and the math &#8595;</summary>
-          <div class="sa-deep">
-            <p>Your age on a world is the exact time since your birthday divided by that world's orbital period, the time for one lap of the Sun. Earth uses the calendar year you already count by; the rest use the sidereal periods from NASA's <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" rel="noopener">planetary fact sheet</a>.</p>
-            <ul class="sa-periods">
-              <li><span class="pn">Mercury</span><span class="pv">88.0 days</span></li>
-              <li><span class="pn">Venus</span><span class="pv">224.7 days</span></li>
-              <li><span class="pn">Earth</span><span class="pv">365.25 days</span></li>
-              <li><span class="pn">Mars</span><span class="pv">687.0 days</span></li>
-              <li><span class="pn">Jupiter</span><span class="pv">11.86 years</span></li>
-              <li><span class="pn">Saturn</span><span class="pv">29.45 years</span></li>
-              <li><span class="pn">Uranus</span><span class="pv">84.01 years</span></li>
-              <li><span class="pn">Neptune</span><span class="pv">164.8 years</span></li>
-              <li><span class="pn">Pluto</span><span class="pv">247.9 years</span></li>
-            </ul>
-            <p>Everything runs in your browser; your birthday is never sent anywhere, and the link you share opens an empty calculator, never your date.</p>
-          </div>
-        </details>
-      </section>
     </main>
 
     <footer class="site-footer">
