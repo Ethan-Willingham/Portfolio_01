@@ -380,60 +380,11 @@
     .sa-results.in .sa-rise { animation: sa-riseup 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
     @keyframes sa-riseup { to { opacity: 1; transform: none; } }
 
-    /* ---- Secondary: the quieter facts, below the fold of the result ---- */
-    .sa-facts {
-      margin-top: 2.2rem;
-      padding: 1.2rem 1.25rem;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-    }
-    .sa-facts h2 {
-      font-family: var(--font-body);
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin: 0 0 0.9rem;
-    }
-    .sa-fact {
-      font-family: var(--font-body);
-      font-size: 0.98rem;
-      line-height: 1.5;
-      color: var(--dim);
-      padding: 0.4rem 0;
-    }
-    .sa-fact + .sa-fact { border-top: 1px solid var(--line); }
-    .sa-fact b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-
-    /* ---- Share ---- */
+    /* ---- Share, sitting right above the planets ---- */
     .sa-share {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.9rem;
-      margin-top: 2rem;
-      text-align: center;
-    }
-    /* the message you are about to send, previewed in quotes */
-    .sa-share-msg {
-      font-family: var(--font-heading);
-      font-style: italic;
-      font-size: 1.05rem;
-      line-height: 1.5;
-      color: var(--dim);
-      max-width: 30ch;
-      margin: 0;
-    }
-    .sa-share-msg::before { content: '\201C'; color: var(--gold); }
-    .sa-share-msg::after  { content: '\201D'; color: var(--gold); }
-    .sa-share-btns {
-      display: flex;
-      align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 0.7rem;
+      margin: 0 0 1.7rem;
     }
     .sa-btn {
       font-family: var(--font-heading);
@@ -450,13 +401,6 @@
     }
     .sa-btn:hover { background: var(--gold-2); box-shadow: 0 4px 26px rgba(224, 205, 156, 0.28); }
     .sa-btn:active { transform: translateY(1px); }
-    .sa-btn.ghost {
-      color: var(--ink);
-      background: transparent;
-      border-color: var(--line);
-      box-shadow: none;
-    }
-    .sa-btn.ghost:hover { border-color: var(--gold); color: var(--gold-2); }
     .sa-btn.done { background: var(--gold-2); }
 
     .sa-page .site-footer-inner { border-top-color: var(--line); }
@@ -518,22 +462,10 @@
 
       <!-- RESULTS: revealed only once a birthday is in. -->
       <section class="sa-results" id="sa-results" hidden aria-live="polite">
+        <div class="sa-share sa-rise">
+          <button class="sa-btn" id="sa-share" type="button">Share</button>
+        </div>
         <ol class="sa-list" id="sa-list"></ol>
-
-        <div class="sa-facts sa-rise" id="sa-facts" style="animation-delay:.45s">
-          <h2>A few more things</h2>
-          <div class="sa-fact" id="sa-fact-next"></div>
-          <div class="sa-fact" id="sa-fact-year"></div>
-          <div class="sa-fact" id="sa-fact-span"></div>
-        </div>
-
-        <div class="sa-share sa-rise" style="animation-delay:.5s">
-          <p class="sa-share-msg" id="sa-share-msg"></p>
-          <div class="sa-share-btns">
-            <button class="sa-btn" id="sa-copy" type="button">Copy message</button>
-            <button class="sa-btn ghost" id="sa-native" type="button" hidden>Share</button>
-          </div>
-        </div>
       </section>
 
     </main>
@@ -552,7 +484,6 @@
     var DAY_MS = 86400000;
     var YEAR_DAYS = 365.2425;
     var MONTH_DAYS = YEAR_DAYS / 12;
-    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
     // Earth uses the calendar year so its row matches the age you know; the rest
     // are sidereal orbital periods (Earth days) from NASA's planetary fact sheet.
@@ -576,7 +507,6 @@
 
     var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var shareMsg = '';
-    var msgEl = document.getElementById('sa-share-msg');
     var soonEl = document.getElementById('sa-soon');
 
     // Big ages read as whole "years old"; small ones keep the decimal that is
@@ -586,7 +516,6 @@
       if (v >= 1) { var s = v.toFixed(1); return s.slice(-2) === '.0' ? s.slice(0, -2) : s; }
       return v.toFixed(2);
     }
-    function fmtDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
     function fmtUntil(ms) {
       var days = ms / DAY_MS;
       if (days < 1) return 'today';
@@ -604,11 +533,6 @@
       if (c.getMonth() !== mo) c = new Date(c.getFullYear(), mo + 1, 0);
       return c;
     }
-    function birthdaysBefore(periodMs, t, birthMs) {
-      if (t <= birthMs) return 0;
-      return Math.floor((t - birthMs) / periodMs);
-    }
-
     // A short, contextual line that makes each number land.
     function subFor(b, age) {
       if (b.earth) return 'home, the year you count by';
@@ -642,32 +566,15 @@
       });
       listEl.innerHTML = rows;
 
-      // Secondary facts.
-      var yr = nowDate.getFullYear();
-      var yStart = new Date(yr, 0, 1).getTime(), yEnd = new Date(yr + 1, 0, 1).getTime();
-      var totalYr = 0, soFar = 0, soonest = null;
+      // Your soonest upcoming birthday across the worlds: the line under the
+      // input, and the message behind the Share button.
+      var soonest = null;
       BODIES.forEach(function (b) {
-        var p = b.days * DAY_MS;
-        totalYr += birthdaysBefore(p, yEnd, birthMs) - birthdaysBefore(p, yStart, birthMs);
-        soFar  += birthdaysBefore(p, nowT, birthMs) - birthdaysBefore(p, yStart, birthMs);
         var nextN = Math.floor(elapsedDays / b.days) + 1;
         var date = b.earth ? nextEarthBirthday(birth, nowDate).getTime()
                            : birthMs + nextN * b.days * DAY_MS;
         if (date > nowT && (!soonest || date < soonest.date)) soonest = { date: date, name: b.name, n: nextN };
       });
-      var toCome = totalYr - soFar;
-      var bestY = yr, bestC = -1, worstY = yr, worstC = Infinity;
-      for (var y = yr; y < yr + 100; y++) {
-        var a = new Date(y, 0, 1).getTime(), z = new Date(y + 1, 0, 1).getTime(), c = 0;
-        for (var k = 0; k < BODIES.length; k++) {
-          var pp = BODIES[k].days * DAY_MS;
-          c += birthdaysBefore(pp, z, birthMs) - birthdaysBefore(pp, a, birthMs);
-        }
-        if (c > bestC) { bestC = c; bestY = y; }
-        if (c < worstC) { worstC = c; worstY = y; }
-      }
-      // The line you would actually text someone, built from the soonest
-      // upcoming birthday across all the worlds.
       if (soonest) {
         var when = fmtUntil(soonest.date - nowT);
         if (when === 'in 1 month') when = 'next month';
@@ -681,22 +588,8 @@
         soonEl.hidden = true;
         soonEl.classList.remove('on');
       }
-      msgEl.textContent = shareMsg;
-      msgEl.hidden = !shareMsg;
-
-      set('sa-fact-next', soonest
-        ? 'Your <b>very next</b> birthday is a <b>' + soonest.name + '</b> one, ' +
-          fmtUntil(soonest.date - nowT) + ' (' + fmtDate(new Date(soonest.date)) + ').'
-        : '');
-      set('sa-fact-year', 'So far in <b>' + yr + '</b> you have had <b>' + soFar +
-          '</b> space birthday' + (soFar === 1 ? '' : 's') + ', with <b>' + toCome + '</b> still to come.');
-      set('sa-fact-span', 'Over the next century your busiest year is <b>' + bestY + '</b> (' + bestC +
-          ' birthdays) and your quietest is <b>' + worstY + '</b> (' + worstC + ').');
-
       reveal(user);
     }
-
-    function set(id, html) { var e = document.getElementById(id); if (e) e.innerHTML = html; }
 
     function reveal(user) {
       var firstTime = resultsEl.hidden;
@@ -783,19 +676,24 @@
       }
     } catch (e) {}
 
-    // ---- sharing: always the bare tool URL, never the birthday ----
+    // ---- sharing: the line plus the bare URL, which carries nothing ----
+    // Native share sheet where the browser has one; otherwise the button
+    // copies the message instead.
     var SHARE_URL = 'https://ethanwillingham.com/space-age.html';
-    var copyBtn = document.getElementById('sa-copy');
-    var nativeBtn = document.getElementById('sa-native');
-    // The copied message is just the line and the bare URL, which carries nothing.
-    function composeMessage() {
-      return (shareMsg ? shareMsg + ' ' : '') + SHARE_URL;
-    }
-    copyBtn.addEventListener('click', function () {
-      copyText(composeMessage(), function (ok) {
-        copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
-        copyBtn.classList.toggle('done', ok);
-        setTimeout(function () { copyBtn.textContent = 'Copy message'; copyBtn.classList.remove('done'); }, 1600);
+    var shareBtn = document.getElementById('sa-share');
+    shareBtn.addEventListener('click', function () {
+      if (navigator.share) {
+        navigator.share({
+          title: 'How Old Are You in Space?',
+          text: shareMsg || undefined,
+          url: SHARE_URL
+        }).catch(function () {});
+        return;
+      }
+      copyText((shareMsg ? shareMsg + ' ' : '') + SHARE_URL, function (ok) {
+        shareBtn.textContent = ok ? 'Copied!' : 'Copy failed';
+        shareBtn.classList.toggle('done', ok);
+        setTimeout(function () { shareBtn.textContent = 'Share'; shareBtn.classList.remove('done'); }, 1600);
       });
     });
     function copyText(text, cb) {
@@ -812,16 +710,6 @@
         var ok = document.execCommand('copy'); document.body.removeChild(ta);
         return ok;
       } catch (e) { return false; }
-    }
-    if (navigator.share) {
-      nativeBtn.hidden = false;
-      nativeBtn.addEventListener('click', function () {
-        navigator.share({
-          title: 'How Old Are You in Space?',
-          text: shareMsg || undefined,
-          url: SHARE_URL
-        }).catch(function () {});
-      });
     }
 
     // Desktop only: focus the first field so you can type at once. On touch we
