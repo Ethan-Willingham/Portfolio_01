@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Old Are You in Space?</title>
+  <meta name="description" content="Enter your birthday and see your age on every planet, counted in that world's own years, with next-birthday countdowns. Runs entirely in your browser; your date is never sent anywhere.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:title" content="How Old Are You in Space?">
+  <meta property="og:description" content="Enter your birthday and see your age on every planet, counted in that world's own years. One trip around the Sun is 88 days on Mercury and 248 of our years on Pluto.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/space-age.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/space-age.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/space-age.jpg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific styles for the space-age calculator.
+       The warm panel system (.demo-wrapper, sliders, buttons) lives in
+       style.css; this only adds the input row, the per-world rows, and the
+       little CSS planet disks. Numbers use Commit Mono per the house rule
+       (monospace is for numerical readouts only). */
+
+    /* The interactive sits right under the title, so trim the panel's default
+       3em top margin (the post header already provides the gap). */
+    .sa-wrapper { margin-top: 0.5rem; }
+
+    /* --- Input row --- */
+    .sa-input {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      padding: 1.1rem 1.25rem 1.2rem;
+    }
+    .sa-input label {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--d-text-bright);
+    }
+    #sa-date {
+      font-family: var(--d-mono);
+      font-size: 1rem;
+      color: var(--d-text-bright);
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 4px;
+      padding: 0.55em 0.75em;
+      cursor: pointer;
+      color-scheme: dark; /* a dark native date picker, to match the panel */
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #sa-date:focus {
+      outline: none;
+      border-color: var(--d-accent);
+      box-shadow: 0 0 0 3px rgba(212, 196, 160, 0.16);
+    }
+
+    /* --- Results area --- */
+    .sa-results { border-top: 1px solid var(--d-rule); }
+    .sa-empty {
+      padding: 2.4rem 1.25rem;
+      text-align: center;
+      font-family: var(--font-body);
+      font-style: italic;
+      color: var(--d-text-dim);
+      font-size: 1rem;
+    }
+    .sa-summary {
+      padding: 0.95rem 1.25rem;
+      background: var(--d-bg-raised);
+      border-bottom: 1px solid var(--d-rule);
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--d-text-dim);
+      line-height: 1.5;
+    }
+    .sa-summary strong {
+      font-style: normal;
+      font-weight: 600;
+      color: var(--d-text-bright);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* One row per world. The disk spans both text lines on the left; the name
+       and the big age share the top line; the next-birthday note sits beneath,
+       spanning the same width. */
+    .sa-row {
+      display: grid;
+      grid-template-columns: 2.6rem 1fr auto;
+      grid-template-areas:
+        "disk name age"
+        "disk next next";
+      align-items: center;
+      column-gap: 0.85rem;
+      row-gap: 0.15rem;
+      padding: 0.95rem 1.25rem;
+      border-bottom: 1px solid rgba(74, 84, 75, 0.5);
+    }
+    .sa-row:last-child { border-bottom: none; }
+    .sa-row.is-earth { background: rgba(212, 196, 160, 0.05); }
+
+    .sa-disk {
+      grid-area: disk;
+      width: 1.7rem;
+      height: 1.7rem;
+      border-radius: 50%;
+      background: var(--disk, #888);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.35);
+      justify-self: center;
+      position: relative;
+    }
+    .sa-disk.is-small { width: 1.05rem; height: 1.05rem; }
+    /* Saturn's ring: a thin tilted ellipse drawn behind the disk edge. */
+    .sa-disk.has-ring::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 2.7rem;
+      height: 0.95rem;
+      transform: translate(-50%, -50%) rotate(-22deg);
+      border: 1px solid rgba(236, 220, 174, 0.6);
+      border-radius: 50%;
+    }
+    /* The ISS marker reads as "not a planet": a small rounded craft, not a globe. */
+    .sa-disk.is-craft {
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #cfd4d8, #7d8893);
+    }
+
+    .sa-name {
+      grid-area: name;
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: var(--d-text-bright);
+      line-height: 1.2;
+    }
+    .sa-tag {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: var(--d-text-dim);
+      margin-left: 0.5em;
+    }
+
+    .sa-age {
+      grid-area: age;
+      justify-self: end;
+      text-align: right;
+      font-family: var(--d-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 1.45rem;
+      line-height: 1.1;
+      color: var(--d-accent-strong);
+      white-space: nowrap;
+    }
+    .sa-age .sa-unit {
+      font-size: 0.72rem;
+      color: var(--d-text-dim);
+      margin-left: 0.35em;
+      letter-spacing: 0.02em;
+    }
+
+    .sa-next {
+      grid-area: next;
+      font-family: var(--font-body);
+      font-size: 0.86rem;
+      color: var(--d-text-dim);
+      line-height: 1.45;
+    }
+    .sa-next b {
+      font-weight: 600;
+      color: var(--d-text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- Share row --- */
+    .sa-share {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.7rem 0.9rem;
+      padding: 1.05rem 1.25rem 1.15rem;
+      background: var(--d-bg-raised);
+      border-top: 1px solid var(--d-rule);
+    }
+    .sa-share-label {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--d-text-dim);
+    }
+    .sa-btn {
+      font-family: var(--font-heading);
+      font-size: 0.92rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      color: var(--d-text);
+      background: transparent;
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 3px;
+      padding: 0.42em 1.05em;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .sa-btn:hover {
+      color: var(--d-bg);
+      border-color: var(--d-accent);
+      background: var(--d-accent);
+    }
+    .sa-btn:active { transform: translateY(1px); }
+    .sa-btn.is-done {
+      color: var(--d-bg);
+      border-color: var(--d-accent);
+      background: var(--d-accent);
+    }
+
+    /* Smaller screens: let the age drop under the name so nothing crowds. */
+    @media (max-width: 460px) {
+      .sa-row {
+        grid-template-columns: 2.2rem 1fr;
+        grid-template-areas:
+          "disk name"
+          "disk age"
+          "next next";
+        row-gap: 0.2rem;
+      }
+      .sa-age { justify-self: start; text-align: left; }
+      .sa-next { margin-top: 0.25rem; }
+    }
+
+    /* A small definition list for the orbital periods in the notes. */
+    .sa-periods {
+      list-style: none;
+      margin: 1.4em 0;
+      padding: 1.1em 1.3em;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.95rem;
+    }
+    .sa-periods li {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.28em 0;
+      margin: 0;
+      border-bottom: 1px solid rgba(74, 84, 75, 0.4);
+    }
+    .sa-periods li:last-child { border-bottom: none; }
+    .sa-periods .sa-pname { color: var(--text-bright); }
+    .sa-periods .sa-pval {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-dim);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">How Old Are You in Space?</h1>
+      <p class="post-subtitle">Enter your birthday once. A year is a different length on every planet, so you are a different age on each one.</p>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <div class="demo-wrapper sa-wrapper">
+            <div class="demo-header">
+              <span class="demo-label">Your age across the solar system</span>
+            </div>
+
+            <div class="sa-input">
+              <label for="sa-date">Your birthday</label>
+              <input type="date" id="sa-date" min="1900-01-01" aria-describedby="sa-date-help">
+              <span id="sa-date-help" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Pick the day you were born to compute your age on each planet.</span>
+            </div>
+
+            <div class="sa-results" id="sa-results" aria-live="polite">
+              <p class="sa-empty" id="sa-empty">Pick your birthday to see your age on every world.</p>
+            </div>
+
+            <div class="sa-share" id="sa-share" hidden>
+              <span class="sa-share-label">Send this to someone:</span>
+              <button class="sa-btn" id="sa-copy" type="button">Copy link</button>
+              <button class="sa-btn" id="sa-native" type="button" hidden>Share</button>
+            </div>
+          </div>
+
+          <div class="divider">&bull; &bull; &bull;</div>
+
+          <h2>Why you have a different age on each planet</h2>
+
+          <p>
+            A "year" is just one trip around the Sun, and every planet takes a
+            different amount of time to make the trip. Mercury, hugging the Sun on
+            the inside lane, finishes a lap in only 88 days. Neptune, far out on the
+            edge, needs almost 165 of our years for a single orbit.
+          </p>
+
+          <p>
+            So your age depends on whose calendar you use. The number of birthdays
+            you have had is really the number of times <em>Earth</em> has carried you
+            around the Sun. Stand on Mercury and you have gone around many more times;
+            stand on Neptune and you may not have finished a single lap. Someone who is
+            80 on Earth has never once had a birthday on Neptune.
+          </p>
+
+          <p>
+            This is also why the outer planets feel almost frozen in human terms. A
+            person born when Pluto was discovered, in 1930, still has not lived a
+            single Plutonian year, which runs about 248 of ours.
+          </p>
+
+          <h2>How this is calculated</h2>
+
+          <p>
+            It takes the exact time between your birthday and right now, then divides
+            it by each world's orbital period, the time for one trip around the Sun.
+            For Earth it uses the calendar year you already count by; for the other
+            planets it uses the orbital periods from NASA's
+            <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" rel="noopener">planetary fact sheet</a>.
+          </p>
+
+          <p>
+            The Space Station is not a planet, so it has no year in the usual sense.
+            Instead it laps the whole Earth roughly every 93 minutes, about 16 times a
+            day, so its "age" is simply how many of those laps have happened since you
+            were born. The number gets large quickly.
+          </p>
+
+          <ul class="sa-periods">
+            <li><span class="sa-pname">Mercury</span><span class="sa-pval">88.0 days</span></li>
+            <li><span class="sa-pname">Venus</span><span class="sa-pval">224.7 days</span></li>
+            <li><span class="sa-pname">Earth</span><span class="sa-pval">365.25 days</span></li>
+            <li><span class="sa-pname">Mars</span><span class="sa-pval">687.0 days</span></li>
+            <li><span class="sa-pname">Jupiter</span><span class="sa-pval">11.86 years</span></li>
+            <li><span class="sa-pname">Saturn</span><span class="sa-pval">29.45 years</span></li>
+            <li><span class="sa-pname">Uranus</span><span class="sa-pval">84.01 years</span></li>
+            <li><span class="sa-pname">Neptune</span><span class="sa-pval">164.8 years</span></li>
+            <li><span class="sa-pname">Pluto</span><span class="sa-pval">247.9 years</span></li>
+            <li><span class="sa-pname">ISS (one orbit)</span><span class="sa-pval">92.7 min</span></li>
+          </ul>
+
+          <p class="note">
+            Everything runs in your browser. Your birthday is never sent anywhere, and
+            the link you share opens an empty calculator, never your date. Orbital
+            periods are sidereal (measured against the stars); the Space Station's orbit
+            decays and is periodically reboosted, so its period is an approximation.
+          </p>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var DAY_MS = 86400000;
+    var YEAR_DAYS = 365.2425;            // the Gregorian calendar year (Earth's basis)
+    var MONTH_DAYS = YEAR_DAYS / 12;
+
+    // Orbital periods in Earth days. Earth uses the calendar year so its row
+    // matches the age you already know; the rest are sidereal periods from
+    // NASA's planetary fact sheet. The ISS is handled separately (it orbits
+    // Earth, not the Sun).
+    var BODIES = [
+      { name: 'Mercury', days: 87.969,   disk: 'radial-gradient(circle at 34% 30%, #c9bdaf, #877c70 72%)' },
+      { name: 'Venus',   days: 224.701,  disk: 'radial-gradient(circle at 34% 30%, #f1dda4, #c6a458 72%)' },
+      { name: 'Earth',   days: 365.2425, earth: true, disk: 'radial-gradient(circle at 34% 30%, #8fbfe0, #356f5c 74%)' },
+      { name: 'Mars',    days: 686.980,  disk: 'radial-gradient(circle at 34% 30%, #e08a5a, #a5380f 72%)' },
+      { name: 'Jupiter', days: 4332.589, disk: 'radial-gradient(circle at 34% 30%, #e7cfa4, #b48a57 74%)' },
+      { name: 'Saturn',  days: 10759.22, ring: true, disk: 'radial-gradient(circle at 34% 30%, #eddcae, #c0a165 74%)' },
+      { name: 'Uranus',  days: 30685.4,  disk: 'radial-gradient(circle at 34% 30%, #cfeaea, #8ec4c4 74%)' },
+      { name: 'Neptune', days: 60189.0,  disk: 'radial-gradient(circle at 34% 30%, #6f8ee2, #2c47ad 74%)' },
+      { name: 'Pluto',   days: 90560,    small: true, tag: 'dwarf planet', disk: 'radial-gradient(circle at 34% 30%, #cdbeac, #8b7a6a 74%)' }
+    ];
+    var ISS_MIN = 92.68;                 // one orbit, in minutes (approx, altitude dependent)
+
+    var dateEl   = document.getElementById('sa-date');
+    var resultsEl = document.getElementById('sa-results');
+    var emptyEl  = document.getElementById('sa-empty');
+    var shareEl  = document.getElementById('sa-share');
+
+    // Cap the picker at today, computed from the local clock so it stays correct
+    // forever without a hardcoded date.
+    var now = new Date();
+    dateEl.max = toISO(now);
+
+    function toISO(d) {
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return d.getFullYear() + '-' + m + '-' + day;
+    }
+
+    // Parse the input's yyyy-mm-dd as a LOCAL calendar day (not UTC), so the age
+    // does not jump by a day across time zones.
+    function parseLocal(str) {
+      var p = str.split('-');
+      if (p.length !== 3) return null;
+      var y = +p[0], mo = +p[1], d = +p[2];
+      var dt = new Date(y, mo - 1, d);
+      // Reject things like 2021-02-31 that roll over into March.
+      if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+      return dt;
+    }
+
+    function fmtAge(v) {
+      if (v >= 1000) return Math.round(v).toLocaleString();
+      if (v >= 1) return v.toFixed(1);
+      return v.toFixed(2);
+    }
+
+    // Fixed three-letter months, so dates read "5 Sep 2026" like the rest of the
+    // site (and never the locale-dependent "Sept").
+    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function fmtDate(d) {
+      return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    // A friendly "in N units" for the time until the next planetary birthday.
+    function fmtUntil(ms) {
+      var days = ms / DAY_MS;
+      if (days < 1) return 'today';
+      if (days < 45) {
+        var d = Math.round(days);
+        return 'in ' + d + (d === 1 ? ' day' : ' days');
+      }
+      var months = days / MONTH_DAYS;
+      if (months < 22) {
+        var mo = Math.round(months);
+        return 'in ' + mo + (mo === 1 ? ' month' : ' months');
+      }
+      var years = days / YEAR_DAYS;
+      if (years < 10) return 'in ' + years.toFixed(1) + ' years';
+      return 'in ' + Math.round(years).toLocaleString() + ' years';
+    }
+
+    // Next Earth birthday by the real calendar (same month/day), so Feb 29 and
+    // leap years behave the way a person expects.
+    function nextEarthBirthday(birth, ref) {
+      var month = birth.getMonth(), day = birth.getDate();
+      var y = ref.getFullYear();
+      var cand = new Date(y, month, day);
+      if (cand <= ref) cand = new Date(y + 1, month, day);
+      // Feb 29 in a common year rolls to Mar 1; nudge it back to Feb 28.
+      if (cand.getMonth() !== month) cand = new Date(cand.getFullYear(), month + 1, 0);
+      return cand;
+    }
+
+    function diskSpan(b) {
+      var cls = 'sa-disk';
+      if (b.small) cls += ' is-small';
+      if (b.ring) cls += ' has-ring';
+      return '<span class="' + cls + '" style="--disk:' + b.disk + '" aria-hidden="true"></span>';
+    }
+
+    function render(birth) {
+      var nowT = Date.now();
+      var elapsedMs = nowT - birth.getTime();
+
+      if (elapsedMs < 0) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = 'That date is in the future. Time travel is not supported (yet).';
+        clearRows();
+        shareEl.hidden = true;
+        return;
+      }
+      emptyEl.hidden = true;
+
+      var elapsedDays = elapsedMs / DAY_MS;
+      var html = '';
+
+      // Summary line: a human anchor before the table.
+      var aliveDays = Math.floor(elapsedDays);
+      html += '<div class="sa-summary">You have been alive for <strong>' +
+              aliveDays.toLocaleString() + '</strong> days. Here is what that is worth ' +
+              'around the rest of the solar system.</div>';
+
+      // Planets and Pluto.
+      BODIES.forEach(function (b) {
+        var age = elapsedDays / b.days;
+        var oneYearInEarth = b.days / YEAR_DAYS;
+
+        var fact;
+        if (b.earth) {
+          fact = 'home base, the year you count by';
+        } else if (b.days < YEAR_DAYS) {
+          fact = '1 ' + b.name + ' year is about ' + Math.round(b.days) + ' Earth days';
+        } else {
+          fact = '1 ' + b.name + ' year is about ' + oneYearInEarth.toFixed(oneYearInEarth < 100 ? 2 : 1) + ' Earth years';
+        }
+
+        // Next birthday on this world.
+        var nextStr;
+        if (b.earth) {
+          var bd = nextEarthBirthday(birth, new Date(nowT));
+          nextStr = 'next birthday ' + fmtUntil(bd.getTime() - nowT) + ' (' + fmtDate(bd) + ')';
+        } else {
+          var nextN = Math.floor(age) + 1;
+          var nextMs = birth.getTime() + nextN * b.days * DAY_MS;
+          nextStr = 'next ' + b.name + ' birthday (#' + nextN.toLocaleString() + ') ' +
+                    fmtUntil(nextMs - nowT) + ' (' + fmtDate(new Date(nextMs)) + ')';
+        }
+
+        html += '<div class="sa-row' + (b.earth ? ' is-earth' : '') + '">' +
+                  diskSpan(b) +
+                  '<div class="sa-name">' + b.name +
+                    (b.tag ? '<span class="sa-tag">' + b.tag + '</span>' : '') +
+                  '</div>' +
+                  '<div class="sa-age">' + fmtAge(age) + '<span class="sa-unit">yrs</span></div>' +
+                  '<div class="sa-next"><b>' + fact + '.</b> ' + nextStr + '.</div>' +
+                '</div>';
+      });
+
+      // The ISS, counted in laps of Earth rather than years.
+      var orbits = elapsedMs / (ISS_MIN * 60000);
+      html += '<div class="sa-row">' +
+                '<span class="sa-disk is-craft" aria-hidden="true"></span>' +
+                '<div class="sa-name">Space Station<span class="sa-tag">in orbits</span></div>' +
+                '<div class="sa-age">' + Math.round(orbits).toLocaleString() + '<span class="sa-unit">laps</span></div>' +
+                '<div class="sa-next"><b>One lap of Earth every ~93 minutes.</b> ' +
+                  'You finish another roughly every hour and a half.</div>' +
+              '</div>';
+
+      resultsEl.innerHTML = '<p class="sa-empty" id="sa-empty" hidden></p>' + html;
+      // re-grab the empty node we just replaced, so future future-date errors work
+      emptyEl = document.getElementById('sa-empty');
+      shareEl.hidden = false;
+    }
+
+    function clearRows() {
+      var rows = resultsEl.querySelectorAll('.sa-row, .sa-summary');
+      rows.forEach(function (r) { r.parentNode.removeChild(r); });
+    }
+
+    dateEl.addEventListener('input', function () {
+      var birth = dateEl.value ? parseLocal(dateEl.value) : null;
+      if (!birth) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = 'Pick your birthday to see your age on every world.';
+        clearRows();
+        shareEl.hidden = true;
+        try { localStorage.removeItem('sa-birth'); } catch (e) {}
+        return;
+      }
+      try { localStorage.setItem('sa-birth', dateEl.value); } catch (e) {}
+      render(birth);
+    });
+
+    // Restore a birthday from a previous visit (device only; never shared).
+    try {
+      var saved = localStorage.getItem('sa-birth');
+      if (saved && parseLocal(saved)) {
+        dateEl.value = saved;
+        render(parseLocal(saved));
+      }
+    } catch (e) {}
+
+    // --- Sharing: the link is always the plain tool URL (no birthday in it). ---
+    var SHARE_URL = 'https://ethanwillingham.com/space-age.html';
+    var copyBtn = document.getElementById('sa-copy');
+    var nativeBtn = document.getElementById('sa-native');
+
+    copyBtn.addEventListener('click', function () {
+      copyText(SHARE_URL, function (ok) {
+        copyBtn.textContent = ok ? 'Copied' : 'Copy failed';
+        copyBtn.classList.toggle('is-done', ok);
+        setTimeout(function () {
+          copyBtn.textContent = 'Copy link';
+          copyBtn.classList.remove('is-done');
+        }, 1600);
+      });
+    });
+
+    function copyText(text, cb) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { cb(true); }, function () { cb(legacyCopy(text)); });
+      } else {
+        cb(legacyCopy(text));
+      }
+    }
+    function legacyCopy(text) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e) { return false; }
+    }
+
+    // Native share sheet on phones (and anywhere the browser supports it).
+    if (navigator.share) {
+      nativeBtn.hidden = false;
+      nativeBtn.addEventListener('click', function () {
+        navigator.share({
+          title: 'How Old Are You in Space?',
+          text: 'Find your age on every planet.',
+          url: SHARE_URL
+        }).catch(function () {});
+      });
+    }
+
+    // A small nicety: focus the date field on devices with a real keyboard, so a
+    // visitor can start typing at once. Skipped on touch, where it would pop the
+    // keyboard or picker unbidden.
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+      dateEl.focus();
+    }
+  })();
+  </script>
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
