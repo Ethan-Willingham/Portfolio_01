@@ -186,6 +186,9 @@
     .sa-page .post-back:hover { color: var(--ink); }
 
     /* ---------------- HERO ---------------- */
+    /* The hero reads as three acts: the title block (kicker hugging the
+       headline, dek close beneath), the input, and the answer. Tight
+       spacing inside each group, a full breath between them. */
     .sa-hero {
       position: relative;
       min-height: 82svh;
@@ -194,7 +197,6 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      gap: 1.4rem;
       padding: 1rem 0 2rem;
     }
     /* a soft warm glow sitting behind the headline */
@@ -227,7 +229,7 @@
       letter-spacing: -0.02em;
       color: var(--ink);
       text-wrap: balance;
-      margin: 0;
+      margin: 0.85rem 0 0;
     }
     .sa-hook {
       font-family: var(--font-heading);
@@ -236,11 +238,11 @@
       line-height: 1.4;
       color: var(--dim);
       max-width: 22ch;
-      margin: 0;
+      margin: 1.1rem 0 0;
     }
 
     /* ---- The birthday input: three typed fields, fast on mobile ---- */
-    .sa-bday { margin-top: 0.6rem; }
+    .sa-bday { margin-top: 2.4rem; }
     .sa-fields {
       display: inline-flex;
       align-items: flex-end;
@@ -294,7 +296,7 @@
       font-family: var(--font-body);
       font-size: 0.85rem;
       color: var(--faint);
-      margin: 0.2rem 0 0;
+      margin: 1.1rem 0 0;
       transition: color 0.2s;
     }
     .sa-hint.err { color: #e0a08f; }
@@ -302,7 +304,7 @@
     /* your next space birthday: the payoff line, big enough to be the
        second thing you read after the headline */
     .sa-soon {
-      margin: 0;
+      margin: 2.1rem 0 0;
       max-width: 20ch;
       text-align: center;
       text-wrap: balance;
@@ -411,7 +413,12 @@
 
     /* ---------------- larger screens ---------------- */
     @media (min-width: 680px) {
-      .sa-hero { min-height: 76vh; gap: 1.7rem; }
+      .sa-hero { min-height: 76vh; }
+      .sa-h1 { margin-top: 1rem; }
+      .sa-hook { margin-top: 1.25rem; }
+      .sa-bday { margin-top: 2.9rem; }
+      .sa-hint { margin-top: 1.25rem; }
+      .sa-soon { margin-top: 2.5rem; }
       .pl { grid-template-columns: 3.5rem 1fr auto; padding: 1.15rem 0.5rem; }
       .pl-img { width: 3.2rem; height: 3.2rem; }
       .pl-name { font-size: 1.55rem; }
@@ -587,8 +594,7 @@
         requestAnimationFrame(function () { soonEl.classList.add('on'); });
       } else {
         shareMsg = '';
-        soonEl.hidden = true;
-        soonEl.classList.remove('on');
+        hideSoon();
       }
       reveal(user);
     }
@@ -617,12 +623,20 @@
       return v;
     }
 
+    // The answer line never outlives its date: it hides the moment the
+    // input stops being a valid birthday.
+    function hideSoon() {
+      soonEl.hidden = true;
+      soonEl.classList.remove('on');
+    }
+
     function tryCompute(silent, user) {
       var mo = moEl.value, da = daEl.value, yr = yrEl.value;
       if (!mo || !da || yr.length < 4) {
         hintEl.textContent = 'Type the day you were born.';
         hintEl.classList.remove('err');
         hintEl.hidden = false;
+        hideSoon();
         return;
       }
       var m = +mo, d = +da, y = +yr;
@@ -634,12 +648,14 @@
         hintEl.textContent = 'Hmm, that is not a real date.';
         hintEl.classList.add('err');
         hintEl.hidden = false;
+        hideSoon();
         return;
       }
       if (dt > now) {
         hintEl.textContent = 'That is in the future. Time travel is not supported (yet).';
         hintEl.classList.add('err');
         hintEl.hidden = false;
+        hideSoon();
         return;
       }
       hintEl.classList.remove('err');
