@@ -57,27 +57,68 @@
       background-attachment: fixed;
       color: var(--ink);
     }
-    /* A faint, fixed starfield behind everything. Pure CSS, no request. */
-    .sa-page::before {
+    /* A faint, fixed starfield behind everything. Pure CSS, no requests.
+       Two interleaved layers breathe on different slow cycles (7.5s and 11s,
+       never in sync), and each carries one slightly larger star with a soft
+       halo that glints as its layer brightens. One layer also drifts a few
+       pixels over two minutes, felt more than seen. Opacity and transform
+       only, so it all stays on the compositor and costs nothing on mobile. */
+    .sa-page::before,
+    .sa-page::after {
       content: "";
       position: fixed;
-      inset: 0;
+      inset: -24px 0 0;   /* headroom so the drifting layer never bares an edge */
       z-index: 0;
       pointer-events: none;
+    }
+    .sa-page::before {
       background-image:
-        radial-gradient(1.4px 1.4px at 12% 18%, rgba(255,255,255,0.7), transparent 100%),
-        radial-gradient(1.2px 1.2px at 27% 62%, rgba(255,255,255,0.5), transparent 100%),
+        radial-gradient(1.4px 1.4px at 12% 18%, rgba(255,255,255,0.75), transparent 100%),
+        radial-gradient(1.1px 1.1px at 27% 62%, rgba(255,255,255,0.5), transparent 100%),
         radial-gradient(1.6px 1.6px at 41% 12%, rgba(255,255,255,0.65), transparent 100%),
         radial-gradient(1px 1px at 54% 78%, rgba(255,255,255,0.45), transparent 100%),
         radial-gradient(1.5px 1.5px at 66% 33%, rgba(255,255,255,0.6), transparent 100%),
-        radial-gradient(1.1px 1.1px at 78% 70%, rgba(255,255,255,0.5), transparent 100%),
-        radial-gradient(1.7px 1.7px at 88% 22%, rgba(255,255,255,0.7), transparent 100%),
         radial-gradient(1px 1px at 8% 84%, rgba(255,255,255,0.4), transparent 100%),
-        radial-gradient(1.2px 1.2px at 33% 90%, rgba(255,255,255,0.5), transparent 100%),
         radial-gradient(1.3px 1.3px at 95% 55%, rgba(255,255,255,0.55), transparent 100%),
+        radial-gradient(1.2px 1.2px at 33% 90%, rgba(255,255,255,0.5), transparent 100%),
+        radial-gradient(2.2px 2.2px at 88% 22%, rgba(255,250,235,0.9), transparent 100%),
+        radial-gradient(7px 7px at 88% 22%, rgba(255,245,220,0.18), transparent 100%);
+      animation: sa-twinkle-a 7.5s ease-in-out infinite;
+    }
+    .sa-page::after {
+      background-image:
+        radial-gradient(1.2px 1.2px at 20% 38%, rgba(255,255,255,0.55), transparent 100%),
+        radial-gradient(1.6px 1.6px at 36% 74%, rgba(255,255,255,0.6), transparent 100%),
+        radial-gradient(1px 1px at 47% 47%, rgba(255,255,255,0.4), transparent 100%),
+        radial-gradient(1.4px 1.4px at 61% 64%, rgba(255,255,255,0.6), transparent 100%),
+        radial-gradient(1.1px 1.1px at 73% 9%, rgba(255,255,255,0.5), transparent 100%),
+        radial-gradient(1.5px 1.5px at 81% 82%, rgba(255,255,255,0.6), transparent 100%),
+        radial-gradient(1px 1px at 5% 47%, rgba(255,255,255,0.45), transparent 100%),
+        radial-gradient(1.2px 1.2px at 92% 38%, rgba(255,255,255,0.5), transparent 100%),
         radial-gradient(1px 1px at 19% 40%, rgba(255,255,255,0.4), transparent 100%),
-        radial-gradient(1.4px 1.4px at 72% 92%, rgba(255,255,255,0.5), transparent 100%);
-      opacity: 0.8;
+        radial-gradient(2px 2px at 14% 72%, rgba(235,245,255,0.85), transparent 100%),
+        radial-gradient(6px 6px at 14% 72%, rgba(220,235,255,0.16), transparent 100%);
+      animation:
+        sa-twinkle-b 11s ease-in-out -4s infinite,
+        sa-drift 140s ease-in-out infinite alternate;
+    }
+    /* asymmetric stops so the breathing never feels metronomic */
+    @keyframes sa-twinkle-a {
+      0%, 100% { opacity: 0.45; }
+      45%      { opacity: 0.9; }
+      70%      { opacity: 0.6; }
+    }
+    @keyframes sa-twinkle-b {
+      0%, 100% { opacity: 0.85; }
+      40%      { opacity: 0.4; }
+      75%      { opacity: 0.68; }
+    }
+    @keyframes sa-drift {
+      from { transform: translate3d(0, 0, 0); }
+      to   { transform: translate3d(0, 16px, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sa-page::before, .sa-page::after { animation: none; opacity: 0.7; }
     }
     .sa-page .site-wrapper { position: relative; z-index: 1; }
 
