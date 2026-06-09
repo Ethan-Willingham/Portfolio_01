@@ -372,12 +372,30 @@
     /* ---- Share ---- */
     .sa-share {
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.9rem;
+      margin-top: 2rem;
+      text-align: center;
+    }
+    /* the message you are about to send, previewed in quotes */
+    .sa-share-msg {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      color: var(--dim);
+      max-width: 30ch;
+      margin: 0;
+    }
+    .sa-share-msg::before { content: '\201C'; color: var(--gold); }
+    .sa-share-msg::after  { content: '\201D'; color: var(--gold); }
+    .sa-share-btns {
+      display: flex;
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
       gap: 0.7rem;
-      margin-top: 2rem;
-      text-align: center;
     }
     .sa-btn {
       font-family: var(--font-heading);
@@ -524,8 +542,11 @@
         </div>
 
         <div class="sa-share sa-rise" style="animation-delay:.5s">
-          <button class="sa-btn" id="sa-copy" type="button">Copy link</button>
-          <button class="sa-btn ghost" id="sa-native" type="button" hidden>Share</button>
+          <p class="sa-share-msg" id="sa-share-msg"></p>
+          <div class="sa-share-btns">
+            <button class="sa-btn" id="sa-copy" type="button">Copy message</button>
+            <button class="sa-btn ghost" id="sa-native" type="button" hidden>Share</button>
+          </div>
         </div>
       </section>
 
@@ -602,6 +623,8 @@
 
     var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var revealed = false;
+    var shareMsg = '';
+    var msgEl = document.getElementById('sa-share-msg');
 
     // Big ages read as whole "years old"; small ones keep the decimal that is
     // the whole point (you are 0.15 of a year old on Pluto).
@@ -679,9 +702,10 @@
         var p = b.days * DAY_MS;
         totalYr += birthdaysBefore(p, yEnd, birthMs) - birthdaysBefore(p, yStart, birthMs);
         soFar  += birthdaysBefore(p, nowT, birthMs) - birthdaysBefore(p, yStart, birthMs);
+        var nextN = Math.floor(elapsedDays / b.days) + 1;
         var date = b.earth ? nextEarthBirthday(birth, nowDate).getTime()
-                           : birthMs + (Math.floor(elapsedDays / b.days) + 1) * b.days * DAY_MS;
-        if (date > nowT && (!soonest || date < soonest.date)) soonest = { date: date, name: b.name };
+                           : birthMs + nextN * b.days * DAY_MS;
+        if (date > nowT && (!soonest || date < soonest.date)) soonest = { date: date, name: b.name, n: nextN };
       });
       var toCome = totalYr - soFar;
       var bestY = yr, bestC = -1, worstY = yr, worstC = Infinity;
@@ -699,6 +723,19 @@
       var youngerStr = youngerSec >= 0.1
         ? youngerSec.toFixed(2) + ' seconds'
         : Math.round(youngerSec * 1000) + ' milliseconds';
+
+      // The line you would actually text someone, built from the soonest
+      // upcoming birthday across all the worlds.
+      if (soonest) {
+        var when = fmtUntil(soonest.date - nowT);
+        if (when === 'in 1 month') when = 'next month';
+        else if (when === 'in 1 day') when = 'tomorrow';
+        shareMsg = "I'm turning " + soonest.n.toLocaleString() + ' on ' + soonest.name + ' ' + when + '!';
+      } else {
+        shareMsg = '';
+      }
+      msgEl.textContent = shareMsg;
+      msgEl.hidden = !shareMsg;
 
       set('sa-fact-next', soonest
         ? 'Your <b>very next</b> birthday is a <b>' + soonest.name + '</b> one, ' +
@@ -814,11 +851,16 @@
     var SHARE_URL = 'https://ethanwillingham.com/space-age.html';
     var copyBtn = document.getElementById('sa-copy');
     var nativeBtn = document.getElementById('sa-native');
+    // The copied message is the fun line plus the invitation and the bare URL;
+    // the URL itself still carries nothing.
+    function composeMessage() {
+      return (shareMsg ? shareMsg + ' ' : '') + 'How old are you in space? ' + SHARE_URL;
+    }
     copyBtn.addEventListener('click', function () {
-      copyText(SHARE_URL, function (ok) {
-        copyBtn.textContent = ok ? 'Link copied' : 'Copy failed';
+      copyText(composeMessage(), function (ok) {
+        copyBtn.textContent = ok ? 'Copied!' : 'Copy failed';
         copyBtn.classList.toggle('done', ok);
-        setTimeout(function () { copyBtn.textContent = 'Copy link'; copyBtn.classList.remove('done'); }, 1600);
+        setTimeout(function () { copyBtn.textContent = 'Copy message'; copyBtn.classList.remove('done'); }, 1600);
       });
     });
     function copyText(text, cb) {
@@ -839,7 +881,11 @@
     if (navigator.share) {
       nativeBtn.hidden = false;
       nativeBtn.addEventListener('click', function () {
-        navigator.share({ title: 'How Old Are You in Space?', text: 'Find your age on every planet.', url: SHARE_URL }).catch(function () {});
+        navigator.share({
+          title: 'How Old Are You in Space?',
+          text: (shareMsg ? shareMsg + ' ' : '') + 'How old are you in space?',
+          url: SHARE_URL
+        }).catch(function () {});
       });
     }
 
