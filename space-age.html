@@ -42,6 +42,13 @@
        One question, one input, then the answer reveals. Deep-space
        canvas; the site's three faces and gold accent carry the brand.
        ============================================================ */
+    /* The page is rigid side to side: no horizontal pan, no rubber-banding.
+       clip (where supported) avoids creating a scroll container at all. */
+    html, body {
+      overflow-x: hidden;
+      overflow-x: clip;
+      overscroll-behavior-x: none;
+    }
     .sa-page {
       --ink:    #f4f0e7;
       --dim:    #aeb4a9;
@@ -199,7 +206,7 @@
       left: 50%;
       top: 44%;
       transform: translate(-50%, -50%);
-      width: min(125%, 560px);
+      width: min(100%, 560px);
       height: 440px;
       background: radial-gradient(closest-side, rgba(224, 205, 156, 0.12), rgba(224, 205, 156, 0) 78%);
       pointer-events: none;
