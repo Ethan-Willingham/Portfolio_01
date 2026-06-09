@@ -186,21 +186,6 @@
     .sa-page .post-back { color: var(--faint); }
     .sa-page .post-back:hover { color: var(--ink); }
 
-    /* The promise at the very top, once a birthday is known. */
-    .sa-soon {
-      text-align: center;
-      font-family: var(--font-heading);
-      font-style: italic;
-      font-size: 0.95rem;
-      line-height: 1.45;
-      color: var(--dim);
-      margin: 0.2rem 0 0;
-      opacity: 0;
-      transition: opacity 0.7s ease 0.1s;
-    }
-    .sa-soon.on { opacity: 1; }
-    .sa-soon b { font-style: normal; font-weight: 400; color: var(--gold-2); }
-
     /* ---------------- HERO ---------------- */
     .sa-hero {
       position: relative;
@@ -316,25 +301,20 @@
     }
     .sa-hint.err { color: #e0a08f; }
 
-    /* a soft scroll cue once results exist, below the hero */
-    .sa-cue {
+    /* your next space birthday, settling in under the input once known */
+    .sa-soon {
       margin-top: 0.4rem;
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      color: var(--gold);
-      background: none;
-      border: none;
-      cursor: pointer;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 1.02rem;
+      line-height: 1.5;
+      color: var(--dim);
       opacity: 0;
-      transform: translateY(-4px);
-      transition: opacity 0.4s, transform 0.4s;
-      pointer-events: none;
+      transition: opacity 0.7s ease 0.1s;
     }
-    .sa-cue.show { opacity: 0.9; transform: none; pointer-events: auto; }
-    .sa-cue:hover { color: var(--gold-2); }
-    .sa-cue .ar { display: block; font-size: 1.1em; line-height: 1; margin-top: 0.15rem; animation: sa-bob 1.8s ease-in-out infinite; }
-    @keyframes sa-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+    .sa-soon.on { opacity: 1; }
+    .sa-soon b { font-style: normal; font-weight: 400; color: var(--gold-2); }
 
     /* ---------------- RESULTS ---------------- */
     .sa-results { padding-top: 0.5rem; }
@@ -495,7 +475,6 @@
 
     @media (prefers-reduced-motion: reduce) {
       .sa-results.in .sa-rise { animation: none; opacity: 1; transform: none; }
-      .sa-cue .ar { animation: none; }
       .sa-rise { opacity: 1; transform: none; }
       .sa-soon { transition: none; }
     }
@@ -507,8 +486,6 @@
   <div class="site-wrapper">
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
-
-    <p class="sa-soon" id="sa-soon" hidden></p>
 
     <main>
       <!-- HERO: the whole 5-second pitch, nothing else competing. -->
@@ -536,7 +513,7 @@
           </div>
         </form>
         <p class="sa-hint" id="sa-hint" aria-live="polite">Type the day you were born.</p>
-        <button class="sa-cue" id="sa-cue" type="button">See your ages<span class="ar" aria-hidden="true">&#8595;</span></button>
+        <p class="sa-soon" id="sa-soon" hidden></p>
       </section>
 
       <!-- RESULTS: revealed only once a birthday is in. -->
@@ -594,12 +571,10 @@
     var daEl = document.getElementById('sa-da');
     var yrEl = document.getElementById('sa-yr');
     var hintEl = document.getElementById('sa-hint');
-    var cueEl = document.getElementById('sa-cue');
     var resultsEl = document.getElementById('sa-results');
     var listEl = document.getElementById('sa-list');
 
     var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var revealed = false;
     var shareMsg = '';
     var msgEl = document.getElementById('sa-share-msg');
     var soonEl = document.getElementById('sa-soon');
@@ -729,10 +704,6 @@
         resultsEl.hidden = false;
         requestAnimationFrame(function () { resultsEl.classList.add('in'); });
       }
-      if (!revealed) {
-        revealed = true;
-        cueEl.classList.add('show');
-      }
       // On the first valid birthday a person types, take them straight to the
       // payoff (dismiss the keyboard first so the scroll lands cleanly).
       if (firstTime && user) {
@@ -797,10 +768,6 @@
     wire(moEl, 2, daEl);
     wire(daEl, 2, yrEl);
     wire(yrEl, 4, null);
-
-    cueEl.addEventListener('click', function () {
-      resultsEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    });
 
     // Restore a previous birthday (device only, never shared).
     try {
