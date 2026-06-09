@@ -203,6 +203,45 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* --- Derived stats block --- */
+    .sa-stats {
+      padding: 1.05rem 1.25rem 1.15rem;
+      border-top: 1px solid var(--d-rule);
+      background: var(--d-bg-raised);
+    }
+    .sa-stats-title {
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--d-text-dim);
+      margin-bottom: 0.55rem;
+    }
+    .sa-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.15rem 1rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid rgba(74, 84, 75, 0.4);
+    }
+    .sa-stat:last-child { border-bottom: none; }
+    .sa-stat-label {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--d-text-dim);
+    }
+    .sa-stat-val {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--d-text);
+      text-align: right;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .sa-stat-val b { font-weight: 600; color: var(--d-accent-strong); }
+
     /* --- Share row --- */
     .sa-share {
       display: flex;
@@ -499,6 +538,18 @@
       return '<span class="' + cls + '" style="--disk:' + b.disk + '" aria-hidden="true"></span>';
     }
 
+    // How many whole orbits (birthdays) a world has completed strictly before
+    // time t. Used to count birthdays inside any window by subtraction.
+    function birthdaysBefore(periodMs, t, birthMs) {
+      if (t <= birthMs) return 0;
+      return Math.floor((t - birthMs) / periodMs);
+    }
+
+    function statRow(label, val) {
+      return '<div class="sa-stat"><span class="sa-stat-label">' + label +
+             '</span><span class="sa-stat-val">' + val + '</span></div>';
+    }
+
     function render(birth) {
       var nowT = Date.now();
       var elapsedMs = nowT - birth.getTime();
@@ -567,6 +618,56 @@
                   'You finish another roughly every hour and a half.</div>' +
               '</div>';
 
+      // --- Derived stats. Birthdays are counted across the nine worlds (the
+      // eight planets and Pluto); the Space Station laps Earth ~16 times a day,
+      // so it is left out of birthday tallies. ---
+      var birthMs = birth.getTime();
+      var nowDate = new Date(nowT);
+      var yr = nowDate.getFullYear();
+      var yStart = new Date(yr, 0, 1).getTime();
+      var yEnd = new Date(yr + 1, 0, 1).getTime();
+
+      var totalYr = 0, soFar = 0, soonest = null;
+      BODIES.forEach(function (b) {
+        var p = b.days * DAY_MS;
+        totalYr += birthdaysBefore(p, yEnd, birthMs) - birthdaysBefore(p, yStart, birthMs);
+        soFar += birthdaysBefore(p, nowT, birthMs) - birthdaysBefore(p, yStart, birthMs);
+        // soonest upcoming birthday across all worlds
+        var date = b.earth
+          ? nextEarthBirthday(birth, nowDate).getTime()
+          : birthMs + (Math.floor(elapsedDays / b.days) + 1) * b.days * DAY_MS;
+        if (date > nowT && (!soonest || date < soonest.date)) soonest = { date: date, name: b.name };
+      });
+      var toCome = totalYr - soFar;
+
+      // Busiest and quietest birthday years over the next century.
+      var bestY = yr, bestC = -1, worstY = yr, worstC = Infinity;
+      for (var y = yr; y < yr + 100; y++) {
+        var a = new Date(y, 0, 1).getTime(), z = new Date(y + 1, 0, 1).getTime(), c = 0;
+        for (var k = 0; k < BODIES.length; k++) {
+          var pp = BODIES[k].days * DAY_MS;
+          c += birthdaysBefore(pp, z, birthMs) - birthdaysBefore(pp, a, birthMs);
+        }
+        if (c > bestC) { bestC = c; bestY = y; }
+        if (c < worstC) { worstC = c; worstY = y; }
+      }
+
+      var nextVal = soonest
+        ? 'a <b>' + soonest.name + '</b> birthday, ' + fmtUntil(soonest.date - nowT) +
+          ' (' + fmtDate(new Date(soonest.date)) + ')'
+        : 'none coming up';
+      var sfWord = soFar === 1 ? '' : 's';
+
+      html += '<div class="sa-stats">' +
+                '<div class="sa-stats-title">By the numbers</div>' +
+                statRow('Birthdays in ' + yr,
+                        '<b>' + soFar + '</b> birthday' + sfWord + ' so far, <b>' + toCome +
+                        '</b> still to come (<b>' + totalYr + '</b> this year)') +
+                statRow('Your very next one', nextVal) +
+                statRow('Busiest year (next 100)', '<b>' + bestY + '</b>, with <b>' + bestC + '</b> birthdays') +
+                statRow('Quietest year (next 100)', '<b>' + worstY + '</b>, with <b>' + worstC + '</b> birthdays') +
+              '</div>';
+
       resultsEl.innerHTML = '<p class="sa-empty" id="sa-empty" hidden></p>' + html;
       // re-grab the empty node we just replaced, so future future-date errors work
       emptyEl = document.getElementById('sa-empty');
@@ -574,7 +675,7 @@
     }
 
     function clearRows() {
-      var rows = resultsEl.querySelectorAll('.sa-row, .sa-summary');
+      var rows = resultsEl.querySelectorAll('.sa-row, .sa-summary, .sa-stats');
       rows.forEach(function (r) { r.parentNode.removeChild(r); });
     }
 
