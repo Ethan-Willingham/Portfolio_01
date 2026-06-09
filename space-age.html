@@ -730,7 +730,7 @@
         var when = fmtUntil(soonest.date - nowT);
         if (when === 'in 1 month') when = 'next month';
         else if (when === 'in 1 day') when = 'tomorrow';
-        shareMsg = "I'm turning " + soonest.n.toLocaleString() + ' on ' + soonest.name + ' ' + when + '!';
+        shareMsg = "I'm turning " + soonest.n.toLocaleString() + ' on ' + soonest.name + ' ' + when + '.';
       } else {
         shareMsg = '';
       }
@@ -851,10 +851,9 @@
     var SHARE_URL = 'https://ethanwillingham.com/space-age.html';
     var copyBtn = document.getElementById('sa-copy');
     var nativeBtn = document.getElementById('sa-native');
-    // The copied message is the fun line plus the invitation and the bare URL;
-    // the URL itself still carries nothing.
+    // The copied message is just the line and the bare URL, which carries nothing.
     function composeMessage() {
-      return (shareMsg ? shareMsg + ' ' : '') + 'How old are you in space? ' + SHARE_URL;
+      return (shareMsg ? shareMsg + ' ' : '') + SHARE_URL;
     }
     copyBtn.addEventListener('click', function () {
       copyText(composeMessage(), function (ok) {
@@ -883,7 +882,7 @@
       nativeBtn.addEventListener('click', function () {
         navigator.share({
           title: 'How Old Are You in Space?',
-          text: (shareMsg ? shareMsg + ' ' : '') + 'How old are you in space?',
+          text: shareMsg || undefined,
           url: SHARE_URL
         }).catch(function () {});
       });
