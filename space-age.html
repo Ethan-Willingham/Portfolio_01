@@ -186,6 +186,21 @@
     .sa-page .post-back { color: var(--faint); }
     .sa-page .post-back:hover { color: var(--ink); }
 
+    /* The promise at the very top, once a birthday is known. */
+    .sa-soon {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: var(--dim);
+      margin: 0.2rem 0 0;
+      opacity: 0;
+      transition: opacity 0.7s ease 0.1s;
+    }
+    .sa-soon.on { opacity: 1; }
+    .sa-soon b { font-style: normal; font-weight: 400; color: var(--gold-2); }
+
     /* ---------------- HERO ---------------- */
     .sa-hero {
       position: relative;
@@ -482,6 +497,7 @@
       .sa-results.in .sa-rise { animation: none; opacity: 1; transform: none; }
       .sa-cue .ar { animation: none; }
       .sa-rise { opacity: 1; transform: none; }
+      .sa-soon { transition: none; }
     }
   </style>
 </head>
@@ -491,6 +507,8 @@
   <div class="site-wrapper">
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <p class="sa-soon" id="sa-soon" hidden></p>
 
     <main>
       <!-- HERO: the whole 5-second pitch, nothing else competing. -->
@@ -584,6 +602,7 @@
     var revealed = false;
     var shareMsg = '';
     var msgEl = document.getElementById('sa-share-msg');
+    var soonEl = document.getElementById('sa-soon');
 
     // Big ages read as whole "years old"; small ones keep the decimal that is
     // the whole point (you are 0.15 of a year old on Pluto).
@@ -679,8 +698,13 @@
         if (when === 'in 1 month') when = 'next month';
         else if (when === 'in 1 day') when = 'tomorrow';
         shareMsg = "I'm turning " + soonest.n.toLocaleString() + ' on ' + soonest.name + ' ' + when + '.';
+        soonEl.innerHTML = 'Your next space birthday is <b>' + when + '</b>, on <b>' + soonest.name + '</b>.';
+        soonEl.hidden = false;
+        requestAnimationFrame(function () { soonEl.classList.add('on'); });
       } else {
         shareMsg = '';
+        soonEl.hidden = true;
+        soonEl.classList.remove('on');
       }
       msgEl.textContent = shareMsg;
       msgEl.hidden = !shareMsg;
