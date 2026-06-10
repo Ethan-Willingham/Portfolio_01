@@ -167,9 +167,9 @@
   /* ---------- FIGURES ---------- */
   .viz { margin: 2em auto; }
   .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; color: var(--text-bright); margin: 0 0 0.15em; }
-  .viz-sub { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); margin: 0 0 1em; }
-  .viz-cap { font-family: var(--font-body); font-style: italic; font-size: 0.9rem; color: var(--text-dim); margin-top: 0.9rem; line-height: 1.5; max-width: 64ch; }
+  .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; line-height: 1.18; letter-spacing: -0.01em; color: var(--text-bright); margin: 0 0 0.25em; }
+  .viz-sub { font-family: var(--font-body); font-size: 0.88rem; line-height: 1.45; color: var(--text-dim); margin: 0 0 1.3em; max-width: 52ch; }
+  .viz-cap { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); margin-top: 0.8rem; line-height: 1.5; max-width: 56ch; }
   .viz-duo { display: grid; gap: 1.6rem; align-items: end; }
   @media (min-width: 680px) { .viz-duo { grid-template-columns: 0.78fr 1.22fr; } }
   text { font-family: var(--font-mono); }
@@ -191,16 +191,30 @@
   .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0 0 1.6rem; font-size: 0.86rem; color: var(--text-dim); }
   .legend span span { margin-right: 0.4em; }
 
+  .img-credit { font-family: var(--font-body); font-size: 0.74rem; line-height: 1.5; color: var(--text-dim); max-width: var(--measure); margin: 1.6rem auto 0; padding: 0 var(--gutter); }
+  .img-credit a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); text-decoration: none; }
+  .img-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
   /* ---------- REFERENCES ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
-  #sources li { margin-bottom: 0.38em; }
+  #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
+  #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
+  .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 0.4em; }
+  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
+  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
+  .src-details > summary::-webkit-details-marker { display: none; }
+  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
+  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
+  .src-details > summary:hover { color: var(--accent-hover); }
+  #sources .legend { font-size: 0.78rem; margin: 0.2rem 0 1.1rem; }
+  #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
+  #sources li { margin-bottom: 0.3em; }
   #sources li::marker { color: var(--accent); }
   #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
   #sources li a:hover { border-bottom-color: var(--accent); }
   #sources b { color: var(--text); font-weight: 600; }
   #sources i { color: var(--text-dim); }
-  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 3px solid var(--accent); padding-left: 0.7em; margin: 2.3rem 0 0.8rem; }
-  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.4rem; } #sources li { break-inside: avoid; } }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 1.4rem 0 0.5rem; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
 
   /* ---------- ANIMATION + REDUCED MOTION (no-JS safe: only hide under html.js) ---------- */
   @media (prefers-reduced-motion: no-preference) {
@@ -310,7 +324,7 @@
 
       <figure class="viz breakout reveal" aria-labelledby="wall-fig-t">
         <p class="viz-title" id="wall-fig-t">The verified oldest humans, ever and now</p>
-        <p class="viz-sub">age at death, in years &middot; blue is the oldest person alive today</p>
+        <p class="viz-sub">Age at death, in years. The oldest person alive today is shown in blue.</p>
         <svg viewBox="0 0 960 470" role="img" aria-label="Bar chart of the oldest verified humans. Only Jeanne Calment at 122.4 crosses the dashed 120 line. Everyone else, including the oldest living person at about 116, falls short.">
           <!-- 120 reference line -->
           <line x1="762" y1="40" x2="762" y2="416" stroke="#D4C4A0" stroke-width="1.5" stroke-dasharray="3 6" opacity="0.8"/>
@@ -375,7 +389,7 @@
             <text class="lbl-val" x="601" y="400" fill="#a9cad9">116.3</text>
           </g>
         </svg>
-        <figcaption class="viz-cap">Every verified record-holder of the modern era, and the oldest person alive today in blue. The dashed line is 120. One bar crosses it, set almost thirty years ago. Sources: the verified-oldest-people register and the Gerontology Research Group. <span class="src"><a href="https://www.grg-supercentenarians.org/world-supercentenarian-rankings-list/">GRG</a></span></figcaption>
+        <figcaption class="viz-cap">Only Jeanne Calment has ever crossed 120, almost thirty years ago. Everyone else falls short. <span class="src"><a href="https://www.grg-supercentenarians.org/world-supercentenarian-rankings-list/">GRG</a></span></figcaption>
       </figure>
 
       <p>So where did the hard "115 to 125" cap come from? In 2016, three geneticists published a short paper in <em>Nature</em> arguing that human lifespan is "fixed," with a natural limit near 115 and almost no chance of beating 125. <span class="src"><a href="https://www.nature.com/articles/nature19793">Dong 2016</a></span> <span class="grade g-c">contested</span> It made headlines worldwide. It also, within eight months, drew <strong>five separate rebuttals in the same journal</strong>. <span class="src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="src"><a href="https://www.nature.com/articles/nature22790">Hughes 2017</a></span></p>
@@ -400,75 +414,30 @@
 
       <p>The cleanest single piece of evidence is what happens when real birth certificates arrive. In the United States, when a state started issuing them, the number of people claiming to be 110 or older <strong>fell by 69 to 82 percent</strong>. The "supercentenarians" were mostly an artifact of nobody being able to check. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="grade g-b">good</span></p>
 
-      <figure class="viz breakout reveal" aria-labelledby="rot-fig-t">
+      <figure class="viz reveal" aria-labelledby="rot-fig-t">
         <p class="viz-title" id="rot-fig-t">What happens when you can finally check</p>
-        <p class="viz-sub">two ways the records give themselves away</p>
-        <div class="viz-duo">
-          <!-- LEFT: before/after bars -->
-          <svg viewBox="0 0 360 320" role="img" aria-label="Two bars. Before birth certificates, supercentenarian records are at 100 percent. After, they fall to about a quarter.">
-            <line class="axisln" x1="60" y1="280" x2="340" y2="280"/>
-            <text class="axs" x="40" y="60" text-anchor="end">100%</text>
-            <text class="axs" x="40" y="170" text-anchor="end">50%</text>
-            <text class="axs" x="40" y="284" text-anchor="end">0</text>
-            <line class="gridln" x1="60" y1="55" x2="340" y2="55"/>
-            <line class="gridln" x1="60" y1="167.5" x2="340" y2="167.5"/>
-            <!-- before = 100% (height 225 from y=55 to 280) -->
-            <rect class="grow-v" x="95" y="55" width="84" height="225" rx="3" fill="#7f8d80"/>
-            <text class="ax" x="137" y="305" text-anchor="middle">before</text>
-            <text class="axs" x="137" y="46" text-anchor="middle">100%</text>
-            <!-- after = ~24% (height 54 from y=226 to 280) -->
-            <rect class="grow-v" x="221" y="226" width="84" height="54" rx="3" fill="#e98e7f"/>
-            <text class="ax" x="263" y="305" text-anchor="middle">after</text>
-            <text class="axs" x="263" y="217" text-anchor="middle" fill="#e98e7f">~24%</text>
-          </svg>
-          <!-- RIGHT: birthday heaping -->
-          <svg viewBox="0 0 580 320" role="img" aria-label="A schematic histogram of birth days of the month. Genuine records are roughly even; suspect ones pile onto round numbers like 1, 5, 10, 15, 20, 25 and 30.">
-            <line class="axisln" x1="40" y1="270" x2="565" y2="270"/>
-            <line x1="40" y1="222" x2="565" y2="222" stroke="#9ec79a" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.6"/>
-            <text class="axs" x="565" y="216" text-anchor="end" fill="#9ec79a">if birthdays fell evenly</text>
-            <!-- 31 day bars; base ~ small, spikes on multiples of 5 and day 1 -->
-            <!-- baseline y=270, max top y=70 (height 200 for tallest) -->
-            <!-- helper spacing: x = 46 + (d-1)*16.6, width 12 -->
-            <g fill="#e98e7f">
-              <rect class="grow-v" x="46"  y="120" width="12" height="150"/><!--1 spike-->
-              <rect class="grow-v" x="62.6" y="232" width="12" height="38"/>
-              <rect class="grow-v" x="79.2" y="240" width="12" height="30"/>
-              <rect class="grow-v" x="95.8" y="226" width="12" height="44"/>
-              <rect class="grow-v" x="112.4" y="150" width="12" height="120"/><!--5-->
-              <rect class="grow-v" x="129" y="236" width="12" height="34"/>
-              <rect class="grow-v" x="145.6" y="244" width="12" height="26"/>
-              <rect class="grow-v" x="162.2" y="230" width="12" height="40"/>
-              <rect class="grow-v" x="178.8" y="238" width="12" height="32"/>
-              <rect class="grow-v" x="195.4" y="135" width="12" height="135"/><!--10-->
-              <rect class="grow-v" x="212" y="240" width="12" height="30"/>
-              <rect class="grow-v" x="228.6" y="232" width="12" height="38"/>
-              <rect class="grow-v" x="245.2" y="245" width="12" height="25"/>
-              <rect class="grow-v" x="261.8" y="236" width="12" height="34"/>
-              <rect class="grow-v" x="278.4" y="142" width="12" height="128"/><!--15-->
-              <rect class="grow-v" x="295" y="242" width="12" height="28"/>
-              <rect class="grow-v" x="311.6" y="234" width="12" height="36"/>
-              <rect class="grow-v" x="328.2" y="246" width="12" height="24"/>
-              <rect class="grow-v" x="344.8" y="238" width="12" height="32"/>
-              <rect class="grow-v" x="361.4" y="150" width="12" height="120"/><!--20-->
-              <rect class="grow-v" x="378" y="244" width="12" height="26"/>
-              <rect class="grow-v" x="394.6" y="236" width="12" height="34"/>
-              <rect class="grow-v" x="411.2" y="247" width="12" height="23"/>
-              <rect class="grow-v" x="427.8" y="240" width="12" height="30"/>
-              <rect class="grow-v" x="444.4" y="158" width="12" height="112"/><!--25-->
-              <rect class="grow-v" x="461" y="246" width="12" height="24"/>
-              <rect class="grow-v" x="477.6" y="238" width="12" height="32"/>
-              <rect class="grow-v" x="494.2" y="244" width="12" height="26"/>
-              <rect class="grow-v" x="510.8" y="168" width="12" height="102"/><!--30-->
-              <rect class="grow-v" x="527.4" y="250" width="12" height="20"/>
-            </g>
-            <text class="axs" x="52"  y="286" text-anchor="middle">1</text>
-            <text class="axs" x="201" y="286" text-anchor="middle">10</text>
-            <text class="axs" x="350" y="286" text-anchor="middle">20</text>
-            <text class="axs" x="499" y="286" text-anchor="middle">30</text>
-            <text class="anno-i" x="40" y="56">day of the month claimed as a birthday</text>
-          </svg>
-        </div>
-        <figcaption class="viz-cap">Left, a real and citable number: once a US state required birth certificates, its count of people aged 110-plus dropped by 69 to 82 percent. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> Right, a schematic of the second tell. Genuine birthdays fall evenly across the month, but suspect age records pile onto round numbers, the 1st, the 5th, the 10th. Newman found exactly this round-number "heaping" in the oldest-age data, a fingerprint of guessed and invented ages.</figcaption>
+        <p class="viz-sub">People on record as 110 or older, before and after a US state began requiring birth certificates.</p>
+        <svg viewBox="0 0 680 380" role="img" aria-label="Two bars. Before birth certificates, supercentenarian records are at 100 percent. After, they fall to about a quarter, a drop of 69 to 82 percent.">
+          <!-- y grid 0/50/100 -> y 330/195/60 -->
+          <line class="axisln" x1="150" y1="330" x2="560" y2="330"/>
+          <line class="gridln" x1="150" y1="195" x2="560" y2="195"/>
+          <line class="gridln" x1="150" y1="60" x2="560" y2="60"/>
+          <text class="axs" x="138" y="334" text-anchor="end">0</text>
+          <text class="axs" x="138" y="199" text-anchor="end">50%</text>
+          <text class="axs" x="138" y="64" text-anchor="end">100%</text>
+          <!-- before: 100% -> y 60..330 -->
+          <rect class="grow-v" x="200" y="60" width="150" height="270" rx="4" fill="#8a978a"/>
+          <text class="lbl-val" x="275" y="48" text-anchor="middle">100%</text>
+          <text class="ax" x="275" y="356" text-anchor="middle">before</text>
+          <!-- after: ~24% -> height 65, y 265..330 -->
+          <rect class="grow-v" x="430" y="265" width="150" height="65" rx="4" fill="#e98e7f"/>
+          <text class="lbl-val" x="505" y="253" text-anchor="middle" fill="#e98e7f">~24%</text>
+          <text class="ax" x="505" y="356" text-anchor="middle">after</text>
+          <!-- drop annotation in the open zone above the short "after" bar -->
+          <text x="505" y="150" text-anchor="middle" font-weight="700" font-size="31" fill="#e98e7f">69 to 82%</text>
+          <text class="anno-i" x="505" y="173" text-anchor="middle">of the records vanish</text>
+        </svg>
+        <figcaption class="viz-cap">Once the paperwork could be checked, most of the "supercentenarians" disappeared. They were missing records, not people. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span></figcaption>
       </figure>
 
       <p>It is not subtle once you look. Of the 500-plus Americans on record as 110 or older, <strong>seven</strong> have a birth certificate. Worldwide, only about 18 percent of the most carefully validated supercentenarians have one, and in the United States that figure is zero. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> A 2010 audit in Japan found that <strong>82 percent</strong> of its 230,000 registered centenarians were dead or untraceable. <span class="src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> In Greece, an audit found at least 72 percent of centenarians were dead, missing, or collecting a pension they should not have been. One Japanese man feted as the country's oldest was found mummified in his bedroom, having died 32 years earlier while his family quietly cashed his pension checks. <span class="src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span></p>
@@ -498,7 +467,7 @@
 
       <figure class="viz breakout reveal" aria-labelledby="plat-fig-t">
         <p class="viz-title" id="plat-fig-t">After 105, the best data forks</p>
-        <p class="viz-sub">annual chance of dying, by age</p>
+        <p class="viz-sub">Annual chance of dying, by age.</p>
         <svg viewBox="0 0 960 420" role="img" aria-label="A curve of annual death risk rising steeply with age to about 105. After 105 it splits: the Italian data flattens into a plateau near 47 percent, while the French data keeps rising.">
           <!-- axes -->
           <line class="axisln" x1="100" y1="360" x2="920" y2="360"/>
@@ -533,7 +502,7 @@
           <text class="anno" x="846" y="64" text-anchor="end" fill="#e98e7f">France: keeps climbing</text>
           <text class="anno-i" x="846" y="49" text-anchor="end">Dang 2023</text>
         </svg>
-        <figcaption class="viz-cap">Death risk climbs steeply with age, then the two best validated datasets part ways after 105. Italy's data flattens into a plateau, which would mean aging itself stalls at the extreme. France's, cleaned to the same standard, keeps rising, which would mean a real limit. Same question, opposite answers, and nobody has settled it.</figcaption>
+        <figcaption class="viz-cap">After 105 the two best datasets disagree: Italy flattens into a plateau, France keeps climbing. Same question, opposite answers, still unsettled.</figcaption>
       </figure>
 
       <p>If that plateau is real, it is the strongest argument against any fixed wall. But the case is genuinely shaky, and good scientists are on both sides.</p>
@@ -590,7 +559,7 @@
 
       <figure class="viz breakout reveal" aria-labelledby="works-fig-t">
         <p class="viz-title" id="works-fig-t">Being unfit outranked smoking</p>
-        <p class="viz-sub">risk of death versus the fittest group &middot; higher is worse</p>
+        <p class="viz-sub">Risk of death compared with the fittest group. Higher is worse.</p>
         <svg viewBox="0 0 960 360" role="img" aria-label="Horizontal bars of mortality risk. Being unfit has a risk ratio of about 5, far higher than smoking, diabetes, or heart disease at around 1.3 to 1.4.">
           <!-- HR axis 0..5.5 -> x 230..900 ; HR=1 line at x=352 -->
           <line class="axisln" x1="230" y1="40" x2="230" y2="300"/>
@@ -625,14 +594,14 @@
             <text class="lbl-val" x="397" y="262">1.3x</text>
           </g>
         </svg>
-        <figcaption class="viz-cap">Risk of death relative to the fittest group, from 122,000 patients followed for years (Mandsager 2018). The least-fit faced about five times the risk, dwarfing the classic villains. The catch is honest too: this is observational, so some of the unfit were sick to begin with. But the size and the no-upper-limit shape line up with everything else we know about exercise.</figcaption>
+        <figcaption class="viz-cap">Across 122,000 patients, the least-fit faced about five times the risk of death. Observational, so some were already sick, but the size is hard to ignore. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span></figcaption>
       </figure>
 
       <p>So here is the whole field, ranked by how strong the human evidence actually is, with the hype stripped out.</p>
 
       <ul>
-        <li><strong>Do not smoke.</strong> The largest, least controversial lever there is. Quitting by 40 buys back almost a decade. <span class="grade g-a">strong</span></li>
-        <li><strong>Be fit, and keep moving.</strong> Cardio and strength both, for as long as you can. Being unfit rivals smoking, and there is no point of diminishing returns. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="grade g-a">strong</span></li>
+        <li><strong>Be fit, and keep moving.</strong> Cardio and strength both, for as long as you can. Being unfit carried an even higher risk than smoking in the study above, and fitness has no point of diminishing returns. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="grade g-a">strong</span></li>
+        <li><strong>Do not smoke.</strong> Just as essential and far better understood; quitting by 40 buys back almost a decade. <span class="grade g-a">strong</span></li>
         <li><strong>Keep blood pressure and LDL cholesterol in check.</strong> Unglamorous, deadly when ignored, and well proven in trials. <span class="grade g-a">strong</span></li>
         <li><strong>Do not carry excess fat.</strong> This is what most "diet hacks," fasting, and the obesity drugs are really doing. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="grade g-a">strong</span></li>
         <li><strong>Sleep, and stay connected to people.</strong> Loneliness carries a mortality risk on the order of smoking; both are easy to underrate. <span class="grade g-b">good</span></li>
@@ -654,7 +623,9 @@
     <section id="sources" class="sec" aria-labelledby="sources-h">
       <span class="sec-kicker">The fine print</span>
       <h2 id="sources-h" class="sec-h">Sources, and how I checked them</h2>
-      <p class="lede">I started this with two beliefs: a hard wall at 120, and eating less as the only hack. Both took damage. Before writing, every major claim was run through an adversarial fact-check whose job was to refute it, and the corrections were left visible in the text. Here is the full list, strongest evidence first.</p>
+      <p class="src-note">I started with two beliefs, a hard wall at 120 and eating less as the only hack. Both took damage. Before writing, every major claim was run through an adversarial fact-check whose job was to refute it, and the corrections were left visible above.</p>
+      <details class="src-details">
+        <summary>The full list, 28 sources, strongest evidence first</summary>
       <div class="legend">
         <span><span class="grade g-a">strong</span> many trials or large cohorts agreeing</span>
         <span><span class="grade g-b">good</span> one strong study</span>
@@ -709,7 +680,10 @@
         <li><b>Holt-Lunstad J, et al.</b> Loneliness and social isolation as mortality risk factors. <i>PMC</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4734880/">ncbi.nlm.nih.gov</a></li>
         <li><b>Wachter KW (2018).</b> Hypothetical errors and plateaus: a response to Newman. <i>PLOS Biology</i>. <a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3000076">journals.plos.org</a></li>
       </ol>
+      </details>
     </section>
+
+    <p class="img-credit">Cover photograph: <a href="https://commons.wikimedia.org/wiki/File:Gnarly_Bristlecone_Pine.jpg">Gnarly Bristlecone Pine</a> by Rick Goldwaser, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. The bristlecone pines of California's White Mountains are the oldest individual living things on Earth, some more than 4,700 years old.</p>
 
     <p class="sec-divider" style="--sec-accent:#D4C4A0">&middot; &middot; &middot;</p>
   </main>
