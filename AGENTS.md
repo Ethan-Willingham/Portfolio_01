@@ -28,7 +28,8 @@ The portfolio pages and their assets:
 
 - Pages: `index.html`, `gallery.html`, `particle-life.html`, `particles.html`,
   `daylight-globe.html`, `weather.html`, `optional-body.html`, `random-galaxy.html`,
-  `git-history.html`, and the frozen `grand-motherload.html` game demo.
+  `git-history.html`, `best-photographs.html`, and the frozen `grand-motherload.html`
+  game demo.
 - Shared: `style.css`, the site scripts in `js/` (`main.js`, `globe.js`, `particle-life.js`,
   `particles.js`, `git-history*.js`, `optional-body.js`, `random-galaxy.js`, `backtotop.js`),
   and `assets/` (fonts, images, thumbs, etc.).
