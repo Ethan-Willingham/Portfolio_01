@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big Enough</title>
+  <meta name="description" content="A sourced, illustrated field guide to building muscle the natural way, on one supplement (creatine), real food, and sunlight, and to knowing where the smart effort stops. Every claim cited.">
+  <meta property="og:title" content="Big Enough">
+  <meta property="og:description" content="How to build muscle the natural way, on one supplement, real food, and sunlight, and how to know where the smart effort stops. The last 10 percent can cost twice the work. Sourced and illustrated.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/big-enough.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/big-enough.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/big-enough.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     BIG ENOUGH
+     A long, illustrated, sourced field guide to natural muscle.
+     Sits inside the site shell (forest green, parchment, Century
+     Supra / Segoe UI / Commit Mono). This block adds only the
+     guide's own components: the hero, the section system, headline
+     stats, the controversy "fork" boxes, evidence-grade citation
+     chips, the data-viz figures and their animations, the
+     interactive tools, the progressive-disclosure form guides, and
+     the right-rail contents. No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --wide: 1080px;                   /* breakout width for big visuals */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    /* data-viz palette, drawn from the site's parchment-on-forest economy */
+    --c-gold:  #D4C4A0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #e6c074;
+    --c-rose:  #e98e7f;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+    --panel:   #2a322b;
+    --panel-2: #232a25;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  /* the reading column */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+
+  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--wide); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 34ch; text-wrap: pretty; }
+  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; }
+  .hero-byline b { color: var(--accent); font-weight: 400; }
+
+  .hero-figure { margin: 2.2rem 0 0.5rem; }
+  .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .hero-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.9rem; max-width: 60ch; line-height: 1.5; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.7rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
+  .sec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 1.5rem 0 0.4rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--accent); }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
+  .sec-divider { text-align: center; color: var(--text-dim); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.7; }
+
+  /* a wide visual that breaks out of the reading column on big screens */
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- CONTENTS MAP ("what's inside") ---------- */
+  .map { margin: 2rem auto 0; max-width: var(--wide); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
+  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
+  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
+  .map-stat { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); white-space: nowrap; }
+  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem; color: var(--accent); margin-right: 0.35rem; font-variant-numeric: tabular-nums; }
+  .map-groups { columns: 1; column-gap: 2.4rem; }
+  @media (min-width: 640px) { .map-groups { columns: 2; } }
+  @media (min-width: 980px) { .map-groups { columns: 3; } }
+  .map-group { break-inside: avoid; margin: 0 0 1.3rem; }
+  .map-phase { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; color: var(--accent); margin: 0 0 0.35rem; }
+  .map-list { list-style: none; margin: 0; padding: 0; }
+  .map-list li { margin: 0; }
+  .map-list a { display: flex; justify-content: space-between; gap: 0.6em; font-size: 0.98rem; text-decoration: none; color: var(--text); padding: 0.32em 0.4em; border-radius: 6px; line-height: 1.32; transition: background 0.15s, color 0.15s; border: none; }
+  .map-list a:hover { background: var(--row-hover); color: var(--text-bright); }
+  .map-m { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); white-space: nowrap; opacity: 0.8; align-self: center; }
+
+  /* in-section jump menu */
+  .sec-index { list-style: none; counter-reset: si; display: grid; grid-template-columns: 1fr; gap: 0.1rem 1.4rem; margin: 0 0 1.8rem; padding: 1rem 1.05rem 1.1rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.13); }
+  .sec-index::before { content: 'In this section'; grid-column: 1 / -1; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem; }
+  .sec-index li { counter-increment: si; margin: 0; }
+  .sec-index a { display: flex; align-items: baseline; gap: 0.7em; padding: 0.45em 0.55em; border-radius: 7px; color: var(--text-bright); text-decoration: none; border-bottom: 0; line-height: 1.3; font-size: 0.95rem; transition: background 0.15s, color 0.15s; }
+  .sec-index a::before { content: counter(si, decimal-leading-zero); flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.78em; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .sec-index a:hover { background: var(--row-hover); color: var(--accent-hover); }
+  @media (min-width: 620px) { .sec-index { grid-template-columns: 1fr 1fr; } }
+
+  /* ---------- HEADLINE STATS ---------- */
+  .stat-row { display: flex; flex-wrap: wrap; gap: 1.4rem 2.6rem; margin: 1.7em 0; }
+  .stat { display: flex; align-items: baseline; gap: 0.7rem; margin: 1.4em 0; }
+  .stat-row .stat { margin: 0; }
+  .stat .fig { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.4rem, 7vw, 3.4rem); line-height: 0.92; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .stat .fig-lbl { font-family: var(--font-heading); font-size: 1rem; line-height: 1.28; color: var(--text-dim); max-width: 22ch; }
+  .stat.sky .fig { color: var(--c-sky); } .stat.green .fig { color: var(--c-green); }
+  .stat.plum .fig { color: var(--c-plum); } .stat.amber .fig { color: var(--c-amber); }
+  .stat.rose .fig { color: var(--c-rose); }
+
+  /* ---------- CONTROVERSY / NUANCE BOX ---------- */
+  .fork { margin: 1.7em 0; padding: 1.1em 1.2em; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.12); }
+  .fork-q { margin: 0 0 0.7em; font-family: var(--font-heading); font-size: 1.14rem; color: var(--text-bright); }
+  .fork-q::before { content: attr(data-label); display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4em; font-weight: 400; }
+  .fork-a { margin: 0 0 0.55em; font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .fork-a b { color: var(--text-bright); }
+  .fork-take { margin: 0.7em 0 0; padding: 0.7em 0.9em; background: rgba(120, 160, 116, 0.10); border-radius: 8px; font-size: 1rem; color: var(--text); }
+  .fork-take b { color: var(--c-green); }
+
+  /* ---------- CALLOUTS ---------- */
+  .edge { margin: 1.4em 0; padding: 0.85em 1.1em; border-left: 3px solid var(--accent); background: rgba(212,196,160,0.07); border-radius: 0 10px 10px 0; font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .edge b { color: var(--accent-hover); }
+  .edge .edge-lbl { display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35em; }
+  .balance-note { margin: 1.4em 0; padding: 0.95em 1.15em 0.95em 3em; position: relative; border: 1px solid rgba(212,196,160,0.32); background: rgba(212,196,160,0.05); border-radius: 10px; font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .balance-note::before { content: '\2696'; position: absolute; left: 0.95em; top: 0.8em; font-size: 1.2rem; color: var(--accent); }
+  .balance-note b { color: var(--accent-hover); }
+  .myth { margin: 1.3em 0; padding: 0.85em 1.05em; border: 1px solid var(--rule); border-left: 3px solid var(--c-rose); border-radius: 0 10px 10px 0; background: rgba(207,106,89,0.06); font-size: 1rem; line-height: 1.55; }
+  .myth b { color: var(--c-rose); }
+
+  /* USE / SKIP rows */
+  .choices { display: grid; gap: 0.7rem; margin: 1.7em 0; }
+  .choice { display: flex; gap: 0.8em; align-items: baseline; padding: 0.85em 1em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.12); font-size: 1rem; line-height: 1.5; color: var(--text); }
+  .choice::before { font-family: var(--font-mono); font-weight: 700; flex: none; line-height: 1.4; }
+  .choice.use { border-left: 3px solid var(--ok-rule, #6f9a6c); }
+  .choice.use::before { content: '\2713'; color: var(--c-green); }
+  .choice.skip { border-left: 3px solid #cf6a59; }
+  .choice.skip::before { content: '\2717'; color: var(--c-rose); }
+  .choice.meh { border-left: 3px solid #c79a3f; }
+  .choice.meh::before { content: '\2013'; color: var(--c-amber); }
+  .choice b { color: var(--text-bright); }
+
+  /* ---------- CITATIONS + EVIDENCE GRADES ---------- */
+  .src { font-family: var(--font-body); font-size: 0.8em; color: var(--text-dim); white-space: nowrap; }
+  .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); text-decoration: none; }
+  .src a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .src::before { content: '\2009'; }
+  .grade { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; vertical-align: 0.12em; }
+  .g-a { color: var(--c-green); } .g-b { color: var(--accent); } .g-c { color: var(--c-amber); } .g-d { color: var(--c-rose); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
+
+  /* ---------- PULL QUOTE ---------- */
+  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.45rem, 3.4vw, 2rem); line-height: 1.3; color: var(--text-bright); margin: clamp(2.2rem, 5vw, 3.2rem) 0; padding-left: 1.1rem; border-left: 3px solid var(--accent); text-wrap: balance; }
+  .pullquote cite { display: block; margin-top: 0.55rem; font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); }
+
+  /* ---------- DATA-VIZ FIGURES ---------- */
+  figure.viz { margin: clamp(2.2rem, 5vw, 3rem) 0; padding: 1.1em 1.2em 1.3em; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; }
+  figure.viz.breakout { padding: 1.3em 1.5em 1.5em; }
+  figure.viz > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  figure.viz figcaption { font-family: var(--font-heading); font-size: 1.06rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.3em; line-height: 1.3; }
+  figure.viz .viz-sub { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); margin-bottom: 0.9em; line-height: 1.45; }
+  figure.viz .viz-note { font-family: var(--font-body); font-size: 0.88rem; font-style: italic; color: var(--text-dim); margin-top: 0.85em; line-height: 1.5; }
+  figure.viz .viz-note b { font-style: normal; color: var(--text); }
+  figure.viz .src { white-space: normal; overflow-wrap: break-word; }
+  .v-axis { fill: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
+  .v-axis-t { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; }
+  .v-grid { stroke: var(--c-grid); stroke-width: 1; }
+  .v-grid-s { stroke: var(--c-grid-strong); stroke-width: 1; }
+  .v-label { fill: var(--text); font-family: var(--font-body); font-size: 12px; }
+  .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-mono { font-family: var(--font-mono); }
+  /* phone: let wide charts scroll at full size, pin the captions */
+  @media (max-width: 720px) {
+    figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    figure.viz.scrollx > svg { min-width: 560px; }
+    figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note, figure.viz.scrollx > .src { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
+  }
+
+  /* ---------- INTERACTIVE TOOL PANELS ---------- */
+  .tool { margin: 2.2em 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(12,16,13,0.4), 0 14px 34px -18px rgba(8,12,9,0.5); }
+  .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 0.7rem; padding: 0.75em 1.15em; background: var(--panel-2); border-bottom: 1px solid var(--rule); }
+  .tool-head h4 { margin: 0; font-family: var(--font-heading); font-size: 1.08rem; color: var(--text-bright); }
+  .tool-head .tool-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .tool-body { padding: 1.15em 1.2em 1.3em; }
+  .tool-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-bottom: 0.9rem; }
+  .tool label { font-family: var(--font-body); font-size: 0.92rem; color: var(--text); }
+  .tool input[type=number], .tool input[type=text], .tool select { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); background: rgba(0,0,0,0.24); border: 1px solid var(--rule); border-radius: 6px; padding: 0.4em 0.6em; max-width: 7em; }
+  .tool input:focus, .tool select:focus { outline: none; border-color: var(--accent); }
+  .tool .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .tool .seg button { font-family: var(--font-body); font-size: 0.86rem; color: var(--text-dim); background: transparent; border: none; padding: 0.42em 0.85em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .tool .seg button.on { background: var(--accent); color: var(--bg); }
+  .tool input[type=range] { -webkit-appearance: none; appearance: none; flex: 1 1 180px; height: 20px; background: transparent; cursor: pointer; }
+  .tool input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--c-grid-strong); border-radius: 2px; }
+  .tool input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.3); transition: background 0.15s, transform 0.1s; }
+  .tool input[type=range]:hover::-webkit-slider-thumb, .tool input[type=range]:focus::-webkit-slider-thumb { background: var(--accent-hover); transform: scale(1.08); }
+  .tool input[type=range]::-moz-range-track { height: 3px; background: var(--c-grid-strong); border-radius: 2px; }
+  .tool input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var(--accent); border: none; border-radius: 50%; }
+  .tool-out { margin-top: 1em; padding: 0.9em 1.05em; border-radius: 10px; background: rgba(0,0,0,0.22); border: 1px solid var(--rule); }
+  .tool-out .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.4rem); color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+  .tool-out .lbl { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); }
+  .tool-rail { margin-top: 0.9em; font-family: var(--font-body); font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; }
+  .tool-rail b { color: var(--text-bright); }
+  .tool svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tool .val { font-family: var(--font-mono); color: var(--accent-hover); font-variant-numeric: tabular-nums; }
+
+  /* ---------- PROGRESSIVE DISCLOSURE (the form guides) ---------- */
+  details.deeper { margin: 1.1em 0; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.10); overflow: hidden; }
+  details.deeper > summary { list-style: none; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 1.02rem; color: var(--text-bright); padding: 0.75em 1em; display: flex; align-items: center; gap: 0.6em; user-select: none; }
+  details.deeper > summary::-webkit-details-marker { display: none; }
+  details.deeper > summary::before { content: ''; width: 0.5em; height: 0.5em; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); transition: transform 0.2s var(--ease); flex: none; margin-top: -2px; }
+  details.deeper[open] > summary::before { transform: rotate(45deg); }
+  details.deeper > summary:hover { color: var(--accent-hover); }
+  details.deeper > summary .form-tag { margin-left: auto; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); font-weight: 400; }
+  details.deeper > *:not(summary) { padding: 0 1.1em; }
+  details.deeper > summary + * { padding-top: 0.1em; }
+  details.deeper > *:last-child { padding-bottom: 1em; }
+  details.deeper p { font-size: 1rem; line-height: 1.55; margin: 0 0 0.8em; }
+  details.deeper .form-fig { margin: 0.4em 0 0.9em; }
+  details.deeper .form-fig svg { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 auto; }
+  details.deeper ul { margin: 0.3em 0 0.9em; }
+  details.deeper li { font-size: 0.98rem; }
+  details.deeper .cue { color: var(--c-green); font-weight: 600; }
+  details.deeper .miss { color: var(--c-rose); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { details.deeper > summary::before { transition: none; } }
+
+  /* ---------- KEY-LIFT QUICK CARDS ---------- */
+  .lift-grid { display: grid; grid-template-columns: 1fr; gap: 0.7rem; margin: 1.5em 0; }
+  @media (min-width: 560px) { .lift-grid { grid-template-columns: 1fr 1fr; } }
+  .lift-card { border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.12); padding: 0.85em 1em; }
+  .lift-card .lc-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.05rem; color: var(--text-bright); margin-bottom: 0.2em; }
+  .lift-card .lc-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .lift-card p { font-size: 0.94rem; line-height: 1.5; color: var(--text-dim); margin: 0.4em 0 0; }
+
+  /* ---------- WEEKLY PROGRAM TABLE ---------- */
+  .prog-wrap { overflow-x: auto; margin: 1.4em 0; -webkit-overflow-scrolling: touch; }
+  table.prog { border-collapse: collapse; width: 100%; font-family: var(--font-body); font-size: 0.92rem; min-width: 460px; }
+  table.prog th, table.prog td { border: 1px solid var(--rule); padding: 0.5em 0.7em; text-align: left; vertical-align: top; }
+  table.prog thead th { background: var(--panel-2); color: var(--text-bright); font-family: var(--font-heading); }
+  table.prog td.n, table.prog th.n { font-family: var(--font-mono); text-align: right; white-space: nowrap; color: var(--accent-hover); }
+  table.prog tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+
+  /* ---------- REFERENCES ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.6em; }
+  #sources li { margin-bottom: 0.55em; }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+
+  /* ---------- COLOPHON ---------- */
+  #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
+  #colophon .colo-stat { border: 1px solid var(--rule); border-left: 4px solid var(--cc); border-radius: 10px; padding: 0.85em 1em; background: rgba(0,0,0,0.13); }
+  #colophon .colo-stat .n { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.05rem); line-height: 1; color: var(--cc); font-variant-numeric: tabular-nums; }
+  #colophon .colo-stat .l { font-family: var(--font-body); font-size: 0.84rem; line-height: 1.35; color: var(--text-dim); margin-top: 0.35em; }
+  #colophon .c-gold { --cc: #D4C4A0; } #colophon .c-sky { --cc: #8fb3c7; } #colophon .c-plum { --cc: #b79bc4; }
+  #colophon .c-green { --cc: #9ec79a; } #colophon .c-amber { --cc: #e6c074; } #colophon .c-rose { --cc: #e98e7f; }
+
+  .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
+  .disclaimer strong { color: var(--accent-hover); }
+
+  /* ---------- RIGHT-RAIL CONTENTS (wide desktop only) ---------- */
+  .railnav { display: none; }
+  @media (min-width: 1280px) and (prefers-reduced-motion: no-preference) { .railnav { scroll-behavior: smooth; } }
+  @media (min-width: 1280px) {
+    .railnav { display: block; position: fixed; top: 50%; right: clamp(1rem, 2.5vw, 2.2rem); transform: translateY(-50%); z-index: 60; max-height: 86vh; overflow: hidden; }
+    .railnav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.05rem; }
+    .railnav a { display: flex; align-items: center; gap: 0.6em; justify-content: flex-end; padding: 0.18em 0; text-decoration: none; color: var(--text-dim); font-family: var(--font-body); font-size: 0.78rem; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
+    .railnav .rn-label { max-width: 0; overflow: hidden; white-space: nowrap; text-align: right; opacity: 0; transition: max-width 0.3s var(--ease), opacity 0.2s; }
+    .railnav .rn-dot { flex: none; width: 22px; height: 2px; border-radius: 2px; background: currentColor; transition: width 0.2s, background 0.2s; }
+    .railnav a:hover { opacity: 1; color: var(--text-bright); }
+    .railnav a:hover .rn-label { max-width: 16rem; opacity: 1; }
+    .railnav a.active { opacity: 1; color: var(--accent); }
+    .railnav a.active .rn-dot { width: 30px; background: var(--accent); }
+    .railnav a.active .rn-label { max-width: 16rem; opacity: 1; color: var(--accent); }
+  }
+
+  /* ---------- ANIMATION + REDUCED MOTION ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+    .draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); }
+    .draw.go { animation: draw 1.6s var(--ease) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    .fade-el { opacity: 0; }
+    .fade-el.go { animation: fadeEl 0.9s ease forwards; }
+    @keyframes fadeEl { to { opacity: 1; } }
+    .grow-b { transform: scaleX(0.001); transform-origin: left; }
+    .grow-b.go { animation: growL 1s var(--ease) forwards; }
+    @keyframes growL { to { transform: scaleX(1); } }
+    .grow-v { transform: scaleY(0.001); transform-origin: bottom; }
+    .grow-v.go { animation: growV 1s var(--ease) forwards; }
+    @keyframes growV { to { transform: scaleY(1); } }
+    .pulse-dot { animation: pulseDot 2.6s ease-in-out infinite; }
+    @keyframes pulseDot { 0%,100% { opacity: 0.55; r: 5; } 50% { opacity: 1; r: 6.5; } }
+    .drift { animation: drift 7s ease-in-out infinite; }
+    @keyframes drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .railnav a, .railnav .rn-label, .railnav .rn-dot { transition: none; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .railnav, .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero, .map { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    details.deeper > *:not(summary) { display: block !important; }
+    figure.viz, .tool, .fork, .stat, .pullquote { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back be-back"><span class="pb-label">Home</span></a>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <p class="hero-eyebrow">A field guide to natural muscle</p>
+    <h1 class="hero-title">Big Enough</h1>
+    <p class="hero-dek">How to build muscle the natural way, on one supplement, real food, and sunlight, and how to know where the smart effort stops.</p>
+    <p class="hero-byline">Sourced and illustrated. <b>76 sources cited.</b> Last reviewed June 2026.</p>
+
+    <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
+      <!-- The signature curve: effort/time on x, muscle on y. Steep, then a long
+           crawl toward a ceiling. The whole post lives in the shape of this line. -->
+      <svg viewBox="0 0 1000 380" role="img" aria-label="A curve of muscle gained against effort over time. It rises steeply at first, then flattens into a long crawl toward a dashed genetic ceiling. A marker sits at the 90 percent point, where the curve has nearly leveled off; the final stretch above it is shaded as the zone that costs twice the work.">
+        <defs>
+          <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#D4C4A0" stop-opacity="0.30"/>
+            <stop offset="1" stop-color="#D4C4A0" stop-opacity="0.02"/>
+          </linearGradient>
+          <linearGradient id="heroLine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#9ec79a"/>
+            <stop offset="0.6" stop-color="#D4C4A0"/>
+            <stop offset="1" stop-color="#e6c074"/>
+          </linearGradient>
+        </defs>
+        <!-- ceiling -->
+        <line x1="70" y1="70" x2="950" y2="70" class="v-grid-s" stroke-dasharray="3 7"/>
+        <text x="945" y="58" text-anchor="end" class="v-axis-t" fill="#b79bc4">genetic ceiling (the absolute maximum)</text>
+        <!-- the "last 10%" cost zone -->
+        <rect class="fade-el" id="hero-zone" x="640" y="70" width="310" height="58" fill="#e98e7f" opacity="0.10"/>
+        <text x="795" y="104" text-anchor="middle" class="v-axis-t" fill="#e98e7f">the last 10%: twice the work</text>
+        <!-- axes -->
+        <line x1="70" y1="330" x2="950" y2="330" class="v-grid-s"/>
+        <line x1="70" y1="50" x2="70" y2="330" class="v-grid-s"/>
+        <!-- area under curve -->
+        <path class="fade-el" id="hero-area" d="M70 330 C 250 330 330 150 470 118 C 620 84 760 76 950 72 L 950 330 Z" fill="url(#heroFill)"/>
+        <!-- the curve -->
+        <path class="draw" id="hero-curve" style="--len:1080" d="M70 330 C 250 330 330 150 470 118 C 620 84 760 76 950 72" fill="none" stroke="url(#heroLine)" stroke-width="4" stroke-linecap="round"/>
+        <!-- 90% marker -->
+        <line class="fade-el" id="hero-mark" x1="640" y1="128" x2="640" y2="330" stroke="#D4C4A0" stroke-width="1" stroke-dasharray="2 6" opacity="0.5"/>
+        <circle class="pulse-dot fade-el" id="hero-dot" cx="640" cy="128" r="5.5" fill="#D4C4A0"/>
+        <text x="640" y="352" text-anchor="middle" class="v-axis-t" fill="#D4C4A0">about 90% of your potential</text>
+        <!-- axis labels -->
+        <text x="74" y="60" class="v-axis-t">muscle</text>
+        <text x="500" y="372" text-anchor="middle" class="v-axis-t">effort and years in the gym &#8594;</text>
+      </svg>
+      <figcaption class="hero-cap" id="hero-fig-cap">The whole argument in one line. Muscle comes fast at first, then slows to a crawl as you near the ceiling your genes set. Getting most of the way there is the cheap part. The last sliver is where people trade their twenties, their joints, and sometimes their health, for inches almost no one will ever notice.</figcaption>
+    </figure>
+  </header>
+
+  <main id="guide">
+
+  <!-- ===================== CONTENTS MAP ===================== -->
+  <aside class="map reveal" aria-label="What is inside this guide">
+    <p class="map-kicker">What is inside</p>
+    <p class="map-note">Eighteen short chapters, about ninety minutes end to end, and you are not meant to read it in one sitting. It is a reference. Skim the map, jump to the one thing you came for, and the rest will be here later. The through-line, if you read nothing else, is <a href="#returns">balance</a>.</p>
+    <div class="map-stats">
+      <span class="map-stat"><b>1</b> supplement worth taking</span>
+      <span class="map-stat"><b>3</b> free inputs: food, sun, sleep</span>
+      <span class="map-stat"><b>76</b> sources cited</span>
+      <span class="map-stat"><b>~90 min</b> full read</span>
+    </div>
+    <div class="map-groups">
+      <div class="map-group"><p class="map-phase">Start here</p><ul class="map-list">
+        <li><a href="#start"><span>The one-page version</span><span class="map-m">3 min</span></a></li>
+      </ul></div>
+      <div class="map-group"><p class="map-phase">The one supplement</p><ul class="map-list">
+        <li><a href="#creatine"><span>Creatine: the one hack</span><span class="map-m">7 min</span></a></li>
+      </ul></div>
+      <div class="map-group"><p class="map-phase">Building it</p><ul class="map-list">
+        <li><a href="#grows"><span>How muscle actually grows</span><span class="map-m">8 min</span></a></li>
+        <li><a href="#training"><span>The exact training</span><span class="map-m">10 min</span></a></li>
+        <li><a href="#tendons"><span>Tendons: the slow tissue</span><span class="map-m">4 min</span></a></li>
+        <li><a href="#stretching"><span>Stretching and mobility</span><span class="map-m">4 min</span></a></li>
+        <li><a href="#cardio"><span>Cardio and the heart</span><span class="map-m">4 min</span></a></li>
+      </ul></div>
+      <div class="map-group"><p class="map-phase">Feeding it</p><ul class="map-list">
+        <li><a href="#diet"><span>Food is the other 90%</span><span class="map-m">6 min</span></a></li>
+        <li><a href="#sun"><span>Sunlight and vitamin D</span><span class="map-m">4 min</span></a></li>
+        <li><a href="#timing"><span>When to train</span><span class="map-m">3 min</span></a></li>
+        <li><a href="#caffeine"><span>Caffeine: the one you can skip</span><span class="map-m">3 min</span></a></li>
+      </ul></div>
+      <div class="map-group"><p class="map-phase">The mind</p><ul class="map-list">
+        <li><a href="#brain"><span>Lifting and the brain</span><span class="map-m">6 min</span></a></li>
+      </ul></div>
+      <div class="map-group"><p class="map-phase">The limits and the balance</p><ul class="map-list">
+        <li><a href="#genetics"><span>Born different: genes and fibers</span><span class="map-m">7 min</span></a></li>
+        <li><a href="#gainloss"><span>Easy come, easy go</span><span class="map-m">5 min</span></a></li>
+        <li><a href="#returns"><span>Diminishing returns</span><span class="map-m">8 min</span></a></li>
+        <li><a href="#toomuch"><span>When big goes wrong</span><span class="map-m">6 min</span></a></li>
+        <li><a href="#frontier"><span>Nobody has run this yet</span><span class="map-m">4 min</span></a></li>
+        <li><a href="#balance"><span>The balance sheet</span><span class="map-m">4 min</span></a></li>
+      </ul></div>
+    </div>
+  </aside>
+
+  <!-- ===================== 1. THE ONE-PAGE VERSION ===================== -->
+  <section id="start" class="sec first" aria-labelledby="start-h">
+    <span class="sec-kicker">Start here</span>
+    <h2 id="start-h" class="sec-h">The one-page version</h2>
+
+    <p class="lede">Building muscle is one of the best-understood things in all of health science, and almost none of the real answer is for sale. You need a barbell or a set of weights, enough food, enough sleep, a little sunlight, and one cheap white powder that has been studied for thirty years. That is the entire shopping list. Everything past it is detail, marketing, or the slow, expensive crawl toward a maximum that almost no one actually needs to reach.</p>
+
+    <p>This guide makes two arguments at once, and they only sound like they disagree. The first: you can get <em>genuinely muscular</em>, near the top of what your genes allow, on a setup so simple it fits on a sticky note. The second: the very last stretch of that climb, the difference between "strong and built" and "competition lean and maxed out," can cost twice the time, twice the effort, and a surprising amount of your health. So the smart target is not the absolute maximum. It is the point where the line goes nearly flat, and you walk away with almost all of the prize and almost none of the cost. That point has a name in this guide. It is called <strong>big enough</strong>.</p>
+
+    <figure class="viz reveal" aria-label="The entire effective protocol on a single card.">
+      <figcaption>The whole plan, on one card</figcaption>
+      <p class="viz-sub">If you did only these six things, consistently, for two years, you would build most of the muscle you are ever going to build.</p>
+      <svg viewBox="0 0 700 250" role="img" aria-label="Six labeled tiles: lift 3 to 5 times a week near failure; eat about 1.6 grams of protein per kilogram; sleep 7 to 9 hours; get a little sun; take 3 to 5 grams of creatine a day; and be patient for years not weeks.">
+        <g font-family="var(--font-body)">
+          <g transform="translate(10,10)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#D4C4A0">1 &#183; Lift</text>
+            <text x="18" y="60" class="v-label" font-size="13">3 to 5 times a week,</text>
+            <text x="18" y="80" class="v-label" font-size="13">hard sets near failure,</text>
+            <text x="18" y="100" class="v-label" font-size="13">10 to 20 sets per muscle.</text>
+          </g>
+          <g transform="translate(240,10)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#9ec79a">2 &#183; Eat</text>
+            <text x="18" y="60" class="v-label" font-size="13">~1.6 g protein / kg / day,</text>
+            <text x="18" y="80" class="v-label" font-size="13">from real food,</text>
+            <text x="18" y="100" class="v-label" font-size="13">a small calorie surplus.</text>
+          </g>
+          <g transform="translate(470,10)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#8fb3c7">3 &#183; Sleep</text>
+            <text x="18" y="60" class="v-label" font-size="13">7 to 9 hours.</text>
+            <text x="18" y="80" class="v-label" font-size="13">One bad night cuts</text>
+            <text x="18" y="100" class="v-label" font-size="13">muscle-building ~18%.</text>
+          </g>
+          <g transform="translate(10,130)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#e6c074">4 &#183; Sun</text>
+            <text x="18" y="60" class="v-label" font-size="13">10 to 30 min on skin,</text>
+            <text x="18" y="80" class="v-label" font-size="13">most days, no burning.</text>
+            <text x="18" y="100" class="v-label" font-size="13">Free vitamin D.</text>
+          </g>
+          <g transform="translate(240,130)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#D4C4A0"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#D4C4A0">5 &#183; Creatine</text>
+            <text x="18" y="60" class="v-label" font-size="13">3 to 5 g a day, forever.</text>
+            <text x="18" y="80" class="v-label" font-size="13">The only supplement</text>
+            <text x="18" y="100" class="v-label" font-size="13">that earns its place.</text>
+          </g>
+          <g transform="translate(470,130)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#b79bc4">6 &#183; Wait</text>
+            <text x="18" y="60" class="v-label" font-size="13">Years, not weeks.</text>
+            <text x="18" y="80" class="v-label" font-size="13">The body keeps no</text>
+            <text x="18" y="100" class="v-label" font-size="13">shortcuts in stock.</text>
+          </g>
+        </g>
+      </svg>
+      <p class="viz-note">That is the whole engine. The chapters that follow are just the manual: why each lever works, how hard to pull it, and the exact point where pulling harder stops paying you back.</p>
+    </figure>
+
+    <h3>The supplement aisle, in one glance</h3>
+    <p>A supermarket of powders exists to convince you that muscle is a purchasing problem. It mostly is not. Here is the honest sort: one thing worth taking, one thing that is optional and oversold, and a long shelf of things you can walk past.</p>
+
+    <div class="choices">
+      <div class="choice use"><div><b>Creatine monohydrate.</b> The most-studied, most reliably effective legal supplement in sport, and one of the cheapest. Real benefits for muscle and, more surprisingly, for the brain. The plain monohydrate, 3 to 5 grams a day. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></div></div>
+      <div class="choice use"><div><b>Protein powder (only if your food falls short).</b> Not magic, just convenient groceries. It helps exactly to the degree it fills a gap in your daily protein, and not one bit more. Whole food does the same job and brings vitamins along. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></div></div>
+      <div class="choice use"><div><b>Vitamin D (if you cannot get sun).</b> A real deficiency is worth fixing for muscle, bone, and mood. Sunlight is the free version; a cheap pill is the backup for winter and indoor lives. <span class="src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> <span class="grade g-b">good</span></div></div>
+      <div class="choice meh"><div><b>Caffeine.</b> A genuine performance aid, but a small one (a few percent), and it buys nothing for muscle growth directly. Useful on a tired day, easy to live without, and a sleep wrecker if taken late. I never touch it. More in <a href="#caffeine">its own chapter</a>. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-b">good</span></div></div>
+      <div class="choice skip"><div><b>Almost everything else.</b> Testosterone "boosters," BCAAs on top of enough protein, fat burners, pre-workout pixie dust, exotic creatine blends that cost more than the monohydrate they are diluting. The evidence is thin to nonexistent, and your money is better spent on food. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></div></div>
+    </div>
+
+    <div class="balance-note"><b>The thread that ties this together.</b> Almost every chapter ends at the same place: a lever that works beautifully up to a point, and then quietly stops paying you back. More sets, more protein, more cardio, more training to failure, more sheer size. The skill this guide is really teaching is not how to push every lever to the wall. It is how to find the point where each one goes flat, park it there, and spend the rest of your life on the things that still move.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 2. CREATINE ===================== -->
+  <section id="creatine" class="sec" aria-labelledby="creatine-h">
+    <style>
+      @media (prefers-reduced-motion: no-preference) {
+        .cr-p1 { animation: crShuttleA 3.6s var(--ease) infinite; }
+        .cr-p2 { animation: crShuttleB 3.6s var(--ease) infinite; }
+        @keyframes crShuttleA { 0%,12% { transform: translate(0,0); opacity:1; } 44%,100% { transform: translate(214px, 0); opacity:1; } }
+        @keyframes crShuttleB { 0%,12% { transform: translate(0,0); opacity:1; } 44%,100% { transform: translate(-214px, 0); opacity:1; } }
+        .cr-glow { animation: crGlow 3.6s ease-in-out infinite; }
+        @keyframes crGlow { 0%,30% { opacity:0.25; } 48% { opacity:1; } 70%,100% { opacity:0.25; } }
+      }
+    </style>
+    <span class="sec-kicker">The one supplement</span>
+    <h2 id="creatine-h" class="sec-h">Creatine: the one hack</h2>
+
+    <p class="lede">If there were a pill that made you a little stronger, helped you build a little more muscle, sharpened your thinking when you were exhausted, cost about a dime a day, and had thirty years of safety data behind it, you would expect it to be illegal, or at least a secret. It is neither. It is creatine, it sits on the bottom shelf in a plain tub, and it is the closest thing the natural lifter has to a cheat code. Not because the effect is enormous. Because the effect is real, the price is nothing, and the risk is close to zero.</p>
+
+    <p>Creatine is not exotic. It is a small molecule your liver already makes and your muscles already store, and you eat about a gram of it a day if you eat meat or fish. Supplementing simply tops the tank up past what food can manage, and a fuller tank does measurable work.</p>
+
+    <h3>What it actually does, in one diagram</h3>
+    <p>Your muscles run their hardest, fastest efforts on a tiny, instant battery called the <strong>phosphocreatine system</strong>. When a muscle fires, it spends ATP (the cell's energy coin) and is left holding spent change, ADP. Phosphocreatine immediately hands over a phosphate to turn that ADP back into fresh ATP, in a fraction of a second, faster than any other energy pathway in the body. The more phosphocreatine you have banked, the longer you can keep that instant battery topped up. Supplementing raises the muscle's creatine and phosphocreatine stores by <strong>20 to 40 percent</strong>. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
+
+    <figure class="viz reveal" aria-label="A diagram of the phosphocreatine energy shuttle.">
+      <figcaption>The instant battery</figcaption>
+      <p class="viz-sub">Phosphocreatine donates a phosphate to regenerate ATP almost instantly. A bigger phosphocreatine bank means a couple more good reps before the battery runs flat.</p>
+      <svg viewBox="0 0 700 230" role="img" aria-label="Phosphocreatine plus ADP becomes creatine plus ATP, with a phosphate group shuttling between them and an energy burst released to the muscle.">
+        <!-- left node: phosphocreatine -->
+        <g transform="translate(40,55)">
+          <rect width="170" height="120" rx="12" fill="#232a25" stroke="#8fb3c7"/>
+          <text x="85" y="34" text-anchor="middle" class="v-cap" font-size="14" fill="#8fb3c7">phospho-</text>
+          <text x="85" y="52" text-anchor="middle" class="v-cap" font-size="14" fill="#8fb3c7">creatine</text>
+          <text x="85" y="92" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">the charged store</text>
+          <text x="85" y="108" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">(supplementing fills it)</text>
+        </g>
+        <!-- right node: ATP -->
+        <g transform="translate(490,55)">
+          <rect width="170" height="120" rx="12" fill="#232a25" stroke="#9ec79a"/>
+          <text x="85" y="40" text-anchor="middle" class="v-cap" font-size="15" fill="#9ec79a">ATP</text>
+          <text x="85" y="92" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">fresh energy coin,</text>
+          <text x="85" y="108" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">ready to spend again</text>
+        </g>
+        <!-- arrows -->
+        <path d="M218 95 L482 95" stroke="#4A544B" stroke-width="2" marker-end="url(#crArr)"/>
+        <path d="M482 140 L218 140" stroke="#4A544B" stroke-width="2" marker-end="url(#crArr)"/>
+        <defs><marker id="crArr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#4A544B"/></marker></defs>
+        <text x="350" y="86" text-anchor="middle" class="v-label-b" font-size="11" fill="#D4C4A0">donates a phosphate</text>
+        <text x="350" y="158" text-anchor="middle" class="v-label" font-size="11" fill="#8b8675">spent ADP returns</text>
+        <!-- shuttling phosphate -->
+        <g class="cr-p1" transform="translate(232,95)"><circle r="9" fill="#D4C4A0"/><text y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#232a25" font-family="var(--font-mono)">P</text></g>
+        <g class="cr-p2" transform="translate(458,140)"><circle r="7" fill="#4A544B"/></g>
+        <!-- energy burst -->
+        <g class="cr-glow" transform="translate(575,30)">
+          <path d="M0 0 L-10 16 L-1 16 L-8 32 L12 12 L2 12 L9 0 Z" fill="#e6c074"/>
+        </g>
+        <text x="350" y="214" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">creatine kinase runs this swap in well under a second, the fastest energy system you have</text>
+      </svg>
+      <p class="viz-note">This is also why creatine helps short, powerful efforts (a heavy set, a sprint, a jump) and does almost nothing for a long, steady jog. It is a battery for bursts.</p>
+    </figure>
+
+    <h3>The muscle effect: real, but be honest about the size</h3>
+    <p>Here is where supplement marketing and the actual science part ways. Creatine works, but most of its muscle-building power is <em>indirect</em>: by topping up that instant battery, it lets you grind out an extra rep or two, recover a little faster between sets, and so pile up more good training over months. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> It also pulls a little water into your muscle cells (a mild swelling that itself nudges growth signals) and, over a 16-week study, raised the number of satellite cells and myonuclei in trained muscle, the machinery that lets a fiber keep growing. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1779717/">Olsen 2006</a></span> <span class="grade g-b">good</span></p>
+
+    <p>Pooled across dozens of trials, adding creatine to a training program buys you a few extra kilograms on your big lifts and a little more lean mass than training alone. The honest fine print: when you isolate creatine's <em>direct</em> contribution to muscle thickness, it is small, on the order of a millimeter or two. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-a">strong</span> The training builds the muscle. Creatine just lets you train a bit harder and hold a bit more.</p>
+
+    <figure class="viz reveal scrollx" aria-label="Bar chart of extra strength and lean mass from adding creatine to training.">
+      <figcaption>What creatine adds, on top of training</figcaption>
+      <p class="viz-sub">The bars are the extra gain from creatine versus an identical program with a placebo, pooled across meta-analyses. Useful, not transformative.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="Bench press plus 1.4 kilograms, squat plus 5.6 kilograms, and lean mass in older adults plus 1.4 kilograms, all extra compared with placebo.">
+        <line x1="150" y1="40" x2="150" y2="250" class="v-grid-s"/>
+        <line x1="150" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <!-- scale ticks -->
+        <g class="v-axis">
+          <line x1="150" y1="250" x2="660" y2="250" stroke="none"/>
+          <text x="150" y="270" text-anchor="middle">0</text>
+          <text x="320" y="270" text-anchor="middle">+2</text>
+          <text x="490" y="270" text-anchor="middle">+4</text>
+          <text x="660" y="270" text-anchor="middle">+6 kg</text>
+        </g>
+        <line x1="320" y1="40" x2="320" y2="250" class="v-grid"/>
+        <line x1="490" y1="40" x2="490" y2="250" class="v-grid"/>
+        <line x1="660" y1="40" x2="660" y2="250" class="v-grid"/>
+        <!-- bars: scale 85px per kg -->
+        <g>
+          <text x="142" y="74" text-anchor="end" class="v-label" font-size="13">Bench press 1RM</text>
+          <rect class="grow-b" x="150" y="60" width="122" height="26" rx="4" fill="#8fb3c7" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="284" y="78" class="v-mono" font-size="12" fill="#8fb3c7">+1.4 kg</text>
+        </g>
+        <g>
+          <text x="142" y="139" text-anchor="end" class="v-label" font-size="13">Squat 1RM</text>
+          <rect class="grow-b" x="150" y="125" width="479" height="26" rx="4" fill="#D4C4A0" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="546" y="143" class="v-mono" font-size="12" fill="#232a25" font-weight="700">+5.6 kg</text>
+        </g>
+        <g>
+          <text x="142" y="204" text-anchor="end" class="v-label" font-size="13">Lean mass (older adults)</text>
+          <rect class="grow-b" x="150" y="190" width="116" height="26" rx="4" fill="#9ec79a" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="278" y="208" class="v-mono" font-size="12" fill="#9ec79a">+1.4 kg</text>
+        </g>
+      </svg>
+      <table class="viz-data" style="font-size:0.74rem;color:#B8B2A2;border-collapse:collapse;margin-top:0.6em;">
+        <tr><td style="padding-right:1em">Bench +1.43 kg, squat +5.64 kg vs placebo</td><td><span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span></td></tr>
+        <tr><td style="padding-right:1em">Older adults +1.37 kg lean mass</td><td><span class="src"><a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">Chilibeck 2017</a></span></td></tr>
+      </table>
+    </figure>
+
+    <h3>The part nobody expects: the brain</h3>
+    <p>Your brain runs on the same energy economy your muscles do, and it turns out creatine helps there too, most visibly when the brain is under stress. The headline result is genuinely startling. In 2024, researchers gave sleep-deprived adults a <em>single</em> high dose of creatine and watched their cognition partly recover: processing speed and short-term memory improved, and the brain's own phosphocreatine stopped crashing the way it normally does after a night without sleep. The effect kicked in about three and a half hours after the dose and lasted up to nine hours. <span class="src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="grade g-b">good</span> One dose, measurable thinking, in tired humans. That had never been shown before.</p>
+
+    <div class="stat-row">
+      <div class="stat sky"><span class="fig">+24%</span><span class="fig-lbl">faster processing under sleep deprivation, one dose</span></div>
+      <div class="stat plum"><span class="fig">9 hrs</span><span class="fig-lbl">how long that single dose kept working</span></div>
+      <div class="stat green"><span class="fig">5 yrs</span><span class="fig-lbl">used safely at up to 30 g/day, no harm in healthy people</span></div>
+    </div>
+
+    <p>It is not just the all-nighter case. A meta-analysis of healthy adults found creatine improves memory, especially short-term memory, with the clearest gains in older people and those under stress. <span class="src"><a href="https://www.sciencedirect.com/science/article/abs/pii/S0531556518300263">Avgerinos 2018</a></span> <span class="grade g-b">good</span> Newer work even points to a modest mood and anti-depression effect when it is added on top of normal treatment. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41189312/">2025 meta-analysis</a></span> <span class="grade g-c">mixed</span> Two honest caveats: the brain is pickier than muscle about taking creatine up (the blood-brain barrier only lets stores rise a few percent), so brain benefits probably need the higher end of dosing, and vegetarians, who eat no creatine, tend to gain the most. <span class="src"><a href="https://www.mdpi.com/2072-6643/13/2/586">Roschel 2021</a></span></p>
+
+    <h3>How to take it (the whole protocol is two lines)</h3>
+    <p>This is the least complicated part of the entire guide. Buy plain <strong>creatine monohydrate</strong>, the original cheap form. Nothing fancier has ever been shown to beat it, and the fancy versions cost more to do the same job. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
+    <ul>
+      <li><strong>Take 3 to 5 grams a day, every day.</strong> A flat teaspoon. It saturates your muscles in three to four weeks.</li>
+      <li><strong>Loading is optional.</strong> If you are impatient, 20 grams a day (split into four doses) for five to seven days fills the tank in under a week. It reaches the exact same place, just faster. Most people skip it.</li>
+      <li><strong>Timing does not matter.</strong> Morning, post-workout, with food or without. Consistency is the only thing that counts. Miss a day and nothing happens.</li>
+      <li><strong>Expect 1 to 2 kg on the scale in week one.</strong> That is water drawn into the muscle, not fat, and not bloat in the visible sense. It is a sign it is working.</li>
+    </ul>
+
+    <h3>The myths, retired</h3>
+    <p>Creatine has been studied harder than almost any supplement on Earth, which means the scary stories have all had their day in court.</p>
+    <div class="myth"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It does nudge a blood marker called creatinine upward, which can spook a doctor reading a lab result, but that is a measurement artifact, not damage. If your kidneys are already compromised, ask your doctor first. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></div>
+    <div class="myth"><b>"It makes your hair fall out."</b> This entire fear traces to one small 2009 study that measured a hormone (DHT), not actual hair, and has never been replicated. The first trial to look directly at hair, in 2025, found no difference between creatine and placebo. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <span class="grade g-b">good</span></div>
+    <div class="myth"><b>"It causes cramps and dehydration."</b> The opposite, if anything. Studies find creatine users get <em>fewer</em> cramps and heat problems, not more. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></div>
+
+    <div class="balance-note"><b>The one catch.</b> Roughly 20 to 30 percent of people are "non-responders" whose muscles barely take up extra creatine, often because they already eat a lot of meat and start near full. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">Syrotuik 2004</a></span> If a month of creatine does nothing for your training, you may simply be one of them, and that is fine. It is a cheap experiment with no downside, which is exactly why it is the one supplement worth running.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 3. HOW MUSCLE GROWS ===================== -->
+  <section id="grows" class="sec" aria-labelledby="grows-h">
+    <span class="sec-kicker">Building it</span>
+    <h2 id="grows-h" class="sec-h">How muscle actually grows</h2>
+
+    <p class="lede">Muscle is a cost. It is expensive tissue to carry and to feed, and your body will not build a gram of it unless you convince it there is no choice. The way you convince it is by making your muscles produce high tension, over and over, until the only sane response is to come back bigger. Strip away every supplement, every gadget, and every guru, and that single sentence is the whole of hypertrophy.</p>
+
+    <h3>The signal: tension, not damage</h3>
+    <p>For years people thought you had to "tear the muscle down" and that soreness was the proof of a good workout. That is mostly wrong. The primary signal for growth is <strong>mechanical tension</strong>: the muscle sensing a heavy, demanding load through a full range of motion and converting that strain into chemical "build" signals, a process called mechanotransduction. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> Muscle damage and the metabolic "burn" play supporting roles, but neither is required, and chasing soreness for its own sake just buys you fatigue. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
+    <p>You deliver that tension by pulling on a handful of levers. The good news is there are only about six of them. The theme of this chapter, and of the whole guide, is that every one of those levers has a sweet spot, and pushing past it costs more than it pays.</p>
+
+    <h3>Lever one: volume (the big one)</h3>
+    <p>Volume, the total number of hard sets you do per muscle per week, is the lever most tightly tied to growth. The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (about 3 mm of thickness versus less than 1 mm in eight weeks), even though both got similarly stronger. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
+
+    <p>But, and here is the whole guide in miniature, the curve bends. The newest and largest analysis confirms that growth keeps rising with volume but with steep diminishing returns: each extra set buys less than the one before. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Past a point, you pay the full price in fatigue and recovery for almost no extra muscle. Lifters call those wasted sets "junk volume."</p>
+
+    <figure class="viz reveal" aria-label="A curve of muscle growth against weekly training volume.">
+      <figcaption>More sets, more muscle, up to a point</figcaption>
+      <p class="viz-sub">Growth climbs fast through the first ten or so weekly sets, keeps climbing with diminishing returns to about twenty, then flattens. Beyond that, the sets cost recovery and buy almost nothing.</p>
+      <svg viewBox="0 0 700 320" role="img" aria-label="Muscle growth rises steeply from zero to about ten weekly sets, continues more slowly to about twenty sets in the productive band, then flattens into a junk-volume zone where extra sets add little.">
+        <!-- bands -->
+        <rect x="245" y="40" width="207" height="220" fill="#9ec79a" opacity="0.07"/>
+        <rect x="452" y="40" width="178" height="220" fill="#e98e7f" opacity="0.07"/>
+        <text x="348" y="84" text-anchor="middle" class="v-axis-t" fill="#9ec79a">productive band</text>
+        <text x="541" y="84" text-anchor="middle" class="v-axis-t" fill="#e98e7f">junk volume</text>
+        <!-- axes -->
+        <line x1="55" y1="260" x2="660" y2="260" class="v-grid-s"/>
+        <line x1="55" y1="40" x2="55" y2="260" class="v-grid-s"/>
+        <!-- x ticks: 0,10,20,30 across 55..630 (~19.2px/set) -->
+        <g class="v-axis">
+          <text x="55" y="280" text-anchor="middle">0</text>
+          <text x="245" y="280" text-anchor="middle">10</text>
+          <text x="452" y="280" text-anchor="middle">20</text>
+          <text x="630" y="280" text-anchor="middle">30</text>
+          <text x="345" y="305" text-anchor="middle" fill="#B8B2A2">hard sets per muscle, per week</text>
+        </g>
+        <text x="46" y="50" text-anchor="end" class="v-axis-t">growth</text>
+        <!-- curve: rises steeply, flattens. points approx -->
+        <path class="draw" style="--len:780" d="M55 260 C 130 150 200 95 245 86 C 340 68 410 60 452 58 C 540 55 600 56 630 57" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- 10-set and 20-set markers -->
+        <line x1="245" y1="86" x2="245" y2="260" class="v-grid"/>
+        <line x1="452" y1="58" x2="452" y2="260" class="v-grid"/>
+        <circle cx="245" cy="86" r="4" fill="#9ec79a"/>
+        <circle cx="452" cy="58" r="4" fill="#e6c074"/>
+      </svg>
+      <p class="viz-note"><b>The practical band is 10 to 20 hard sets per muscle per week.</b> Beginners start near 10, intermediates push toward 20, and you only climb past that on purpose, watching whether recovery keeps up.</p>
+    </figure>
+
+    <h3>Lever two: load (lighter than you think)</h3>
+    <p>How heavy do the weights need to be? For <em>growth</em>, surprisingly flexible: anywhere from about 30 percent to 85 percent of your one-rep max builds similar muscle, as long as you take the set close to failure. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> A set of 8 with a heavy weight and a set of 25 with a light one, both pushed hard, grow about the same muscle. For pure <em>strength</em>, though, heavy wins clearly. So pick loads that let you train hard without wrecking your joints, lean heavier on your main lifts, and stop worrying that 12-rep sets are "too light to grow."</p>
+
+    <h3>Lever three: effort (close to failure, not always to it)</h3>
+    <p>You have to train hard, but you do not have to train to the point of total failure on every set. Pooled trials show that going all the way to failure is <em>not</em> better for growth than stopping a rep or two short, and it piles on fatigue that can hurt your strength and your next session. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span> <span class="grade g-b">good</span> The sweet spot is leaving about <strong>1 to 3 reps in reserve</strong> on most sets: close enough to trigger nearly all the growth, far enough to keep the tank from running dry. Save true failure for the occasional last set, or for safe machine work.</p>
+
+    <div class="balance-note"><b>Notice the pattern already.</b> Three levers in, and all three say the same thing: get most of the way, then stop. Ten to twenty sets, not forty. Close to failure, not into the wall every time. This is not laziness. It is the literal finding of the research, that the last increment of intensity mostly buys fatigue.</div>
+
+    <h3>The smaller levers</h3>
+    <ul>
+      <li><strong>Frequency.</strong> Hitting a muscle about twice a week beats once a week at the same total volume. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span> But the magic is not the calendar, it is that two sessions let you do (and recover from) more quality sets than one brutal session. Frequency is really just a way to deliver volume. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Rest between sets.</strong> Longer is better for growth. Resting 2 to 3 minutes beat 1 minute in trained men, because the longer rest preserves your strength across sets and protects total volume. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span> <span class="grade g-b">good</span> Do not rush your big lifts to feel the burn.</li>
+      <li><strong>Tempo.</strong> Control the lowering phase (1 to 3 seconds), do not bounce, and do not crawl. Super-slow reps are not better and just cost you reps. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28486337/">Schoenfeld 2017</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Progressive overload.</strong> The one non-negotiable. The stimulus has to keep rising: add a rep, then add weight, week over week. A workout that never gets harder stops building.</li>
+    </ul>
+
+    <h3>The part that happens out of the gym</h3>
+    <p>You do not grow during the workout. You grow during the recovery, and the two biggest recovery inputs are sleep and protein. A single night of no sleep cut muscle protein synthesis by about <strong>18 percent</strong> and tipped hormones toward breakdown. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-b">good</span> Chronic short sleep blunts the whole training response. Seven to nine hours is not optional comfort, it is part of the program.</p>
+    <p>And the famous "anabolic window," the panic that you must drink protein within thirty minutes of your last rep? A myth. Once you account for how much protein someone eats across the whole day, the magic of timing it around the workout disappears. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">Schoenfeld 2013</a></span> <span class="grade g-a">strong</span> The window is hours wide. Hit your daily total and the clock takes care of itself. We will get to exactly how much in the <a href="#diet">food chapter</a>.</p>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 4. THE EXACT TRAINING ===================== -->
+  <section id="training" class="sec" aria-labelledby="training-h">
+    <style>
+      .week { display: grid; grid-template-columns: 7.5em repeat(7, 1fr); gap: 4px; margin: 0.4em 0; align-items: stretch; }
+      .week .wk-name { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); align-self: center; }
+      .week .wk-cell { font-family: var(--font-mono); font-size: 0.7rem; text-align: center; padding: 0.5em 0.1em; border-radius: 5px; color: var(--bg); font-weight: 700; }
+      .week .wk-head { color: var(--text-dim); background: none !important; font-weight: 400; padding-bottom: 0.1em; }
+      .wk-push { background: #8fb3c7; } .wk-pull { background: #b79bc4; } .wk-legs { background: #e6c074; }
+      .wk-full { background: #9ec79a; } .wk-up { background: #D4C4A0; } .wk-low { background: #cf9f78; }
+      .wk-rest { background: #3a443b; color: var(--text-dim) !important; }
+      @media (max-width: 560px) { .week { grid-template-columns: 5.2em repeat(7, 1fr); } .week .wk-cell { font-size: 0.6rem; } .week .wk-name { font-size: 0.72rem; } }
+      .form-fig svg .fseg { fill: none; stroke: #E8E2D6; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .form-fig svg .fbar { stroke: #D4C4A0; stroke-width: 5; stroke-linecap: round; }
+      .form-fig svg .fplate { fill: #D4C4A0; }
+      .form-fig svg .fhead { fill: none; stroke: #E8E2D6; stroke-width: 5; }
+      .form-fig svg .fground { stroke: #6f7a6f; stroke-width: 2; }
+      .form-fig svg .fguide { stroke: #9ec79a; stroke-width: 1.5; stroke-dasharray: 4 5; fill: none; }
+      .form-fig figcaption { font-family: var(--font-body); font-size: 0.82rem; font-style: italic; color: var(--text-dim); text-align: center; margin-top: 0.4em; }
+    </style>
+    <span class="sec-kicker">Building it</span>
+    <h2 id="training-h" class="sec-h">The exact training</h2>
+
+    <p class="lede">A training program is not magic. It is just a delivery system for the levers in the last chapter: enough hard sets, near enough to failure, often enough, with enough rest, getting a little harder over time. Below are three complete, evidence-based templates, one for each stage of a lifter's life, and then, folded away so they do not clutter the page, a proper-form guide to every major lift. Pick one template, run it for months, and change as little as possible. The people who make the best progress are almost always the ones who got bored of a good plan instead of excited about a new one.</p>
+
+    <h3>The rules every good program obeys</h3>
+    <div class="fork">
+      <p class="fork-q" data-label="The evidence-based spine">Six numbers that drive all three templates</p>
+      <ul style="margin:0">
+        <li><b>10 to 20 hard sets</b> per muscle per week (start low, build up). <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></li>
+        <li>Train each muscle <b>about twice a week</b>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span></li>
+        <li>Stop most sets at <b>1 to 3 reps in reserve</b>; true failure only occasionally. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span></li>
+        <li>Use <b>6 to 15 reps</b> on most work, heavier low-rep sets on the main lifts. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span></li>
+        <li>Rest <b>2 to 3 minutes</b> on compounds, about a minute on small isolation. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span></li>
+        <li>Add a rep or a little weight <b>most weeks</b>. That is the whole game.</li>
+      </ul>
+    </div>
+
+    <h3>Pick the split that fits your life</h3>
+    <p>The "split" is just how you divide the body across the week. More training days means more days you have to show up, not more obligation to. Choose the one you can actually sustain.</p>
+
+    <figure class="viz reveal" aria-label="Three weekly training schedules.">
+      <figcaption>Three ways to carve up a week</figcaption>
+      <p class="viz-sub">Each colored cell is a training day. All three hit every muscle about twice a week; they just spread it across 3, 4, or 6 sessions.</p>
+      <div class="week"><span class="wk-name">&nbsp;</span><span class="wk-cell wk-head">Mon</span><span class="wk-cell wk-head">Tue</span><span class="wk-cell wk-head">Wed</span><span class="wk-cell wk-head">Thu</span><span class="wk-cell wk-head">Fri</span><span class="wk-cell wk-head">Sat</span><span class="wk-cell wk-head">Sun</span></div>
+      <div class="week"><span class="wk-name">Full body &#215;3</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
+      <div class="week"><span class="wk-name">Upper / lower &#215;4</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
+      <div class="week"><span class="wk-name">Push / pull / legs &#215;6</span><span class="wk-cell wk-push">Push</span><span class="wk-cell wk-pull">Pull</span><span class="wk-cell wk-legs">Legs</span><span class="wk-cell wk-push">Push</span><span class="wk-cell wk-pull">Pull</span><span class="wk-cell wk-legs">Legs</span><span class="wk-cell wk-rest">rest</span></div>
+      <p class="viz-note">More days is not more growth, it is just more room to fit your sets in with good quality. Three honest full-body days beat six half-hearted ones.</p>
+    </figure>
+
+    <details class="deeper">
+      <summary>Beginner: Full body, 3 days a week<span class="form-tag">template A</span></summary>
+      <p>The best place to start. Every session trains the whole body, so you practice the big lifts often and miss nothing if life eats a day. Keep per-session volume low because each muscle works three times a week.</p>
+      <div class="prog-wrap"><table class="prog">
+        <thead><tr><th>Each session (rotate variations)</th><th class="n">Sets &#215; reps</th></tr></thead>
+        <tbody>
+          <tr><td>Squat or leg press</td><td class="n">3 &#215; 6-10</td></tr>
+          <tr><td>Bench or machine chest press</td><td class="n">3 &#215; 6-10</td></tr>
+          <tr><td>Row (barbell or cable)</td><td class="n">3 &#215; 8-12</td></tr>
+          <tr><td>Overhead press</td><td class="n">2 &#215; 8-12</td></tr>
+          <tr><td>Romanian deadlift or leg curl</td><td class="n">2 &#215; 8-12</td></tr>
+          <tr><td>Lat pulldown or pull-up</td><td class="n">2 &#215; 8-12</td></tr>
+          <tr><td>Biceps curl + triceps extension</td><td class="n">2 &#215; 10-15</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:0.92rem;color:var(--text-dim)">Weekly sets land near 6 to 12 per muscle, the right starting dose. Add a rep or a little load each week. <span class="src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
+    </details>
+
+    <details class="deeper">
+      <summary>Intermediate: Upper / Lower, 4 days a week<span class="form-tag">template B</span></summary>
+      <p>Once 3 full-body days are not enough to fit your volume, split into two upper days and two lower days. Each muscle still trains twice a week, but now you can do more per session.</p>
+      <div class="prog-wrap"><table class="prog">
+        <thead><tr><th>Upper day</th><th class="n">Sets &#215; reps</th><th>Lower day</th><th class="n">Sets &#215; reps</th></tr></thead>
+        <tbody>
+          <tr><td>Bench press</td><td class="n">4 &#215; 6-10</td><td>Squat</td><td class="n">4 &#215; 5-8</td></tr>
+          <tr><td>Row</td><td class="n">4 &#215; 8-12</td><td>Romanian deadlift</td><td class="n">3 &#215; 8-10</td></tr>
+          <tr><td>Overhead press</td><td class="n">3 &#215; 8-12</td><td>Leg press</td><td class="n">3 &#215; 10-12</td></tr>
+          <tr><td>Pulldown or pull-up</td><td class="n">3 &#215; 8-12</td><td>Leg curl</td><td class="n">3 &#215; 10-12</td></tr>
+          <tr><td>Incline dumbbell press</td><td class="n">2 &#215; 10-12</td><td>Walking lunge</td><td class="n">2 &#215; 10-12</td></tr>
+          <tr><td>Biceps + triceps</td><td class="n">3 &#215; 10-15</td><td>Calf raise + abs</td><td class="n">3 &#215; 10-15</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:0.92rem;color:var(--text-dim)">Weekly sets land around 12 to 16 per muscle, the meat of the productive band.</p>
+    </details>
+
+    <details class="deeper">
+      <summary>Advanced: Push / Pull / Legs, 6 days a week<span class="form-tag">template C</span></summary>
+      <p>For experienced lifters who recover well and want maximum volume. Run the three days twice through. This sits near the top of the productive band, so treat any extra sets as candidates for "junk volume" and watch your recovery.</p>
+      <div class="prog-wrap"><table class="prog">
+        <thead><tr><th>Push</th><th class="n">Sets</th><th>Pull</th><th class="n">Sets</th><th>Legs</th><th class="n">Sets</th></tr></thead>
+        <tbody>
+          <tr><td>Bench press</td><td class="n">4 &#215; 6-10</td><td>Deadlift or heavy row</td><td class="n">3 &#215; 5-8</td><td>Squat</td><td class="n">4 &#215; 5-8</td></tr>
+          <tr><td>Overhead press</td><td class="n">3 &#215; 8-12</td><td>Pull-up / pulldown</td><td class="n">4 &#215; 8-12</td><td>Romanian deadlift</td><td class="n">3 &#215; 8-10</td></tr>
+          <tr><td>Incline dumbbell press</td><td class="n">3 &#215; 10-12</td><td>Cable row</td><td class="n">3 &#215; 10-12</td><td>Leg press</td><td class="n">3 &#215; 10-12</td></tr>
+          <tr><td>Lateral raise</td><td class="n">4 &#215; 12-20</td><td>Face pull</td><td class="n">3 &#215; 12-20</td><td>Leg curl</td><td class="n">4 &#215; 10-12</td></tr>
+          <tr><td>Triceps (2 moves)</td><td class="n">3 &#215; 10-15</td><td>Biceps (2 moves)</td><td class="n">3 &#215; 10-15</td><td>Leg extension + calves</td><td class="n">3 &#215; 12-20</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:0.92rem;color:var(--text-dim)">Weekly sets reach 16 to 20 per muscle. Only worth it if your sleep and food are already handled.</p>
+    </details>
+
+    <h3>Proper form, lift by lift</h3>
+    <p>Good form is not about looking textbook. It is about putting the tension on the muscle instead of the joint, through a full range of motion, so you can keep doing the lift for decades. Tap any lift to open its guide. The single rule under all of them: <strong>full range, controlled, owned weight</strong>. If you cannot control it, it is too heavy to be building anything but your ego.</p>
+
+    <details class="deeper">
+      <summary>The squat<span class="form-tag">knees + hips + quads</span></summary>
+      <figure class="form-fig">
+        <svg viewBox="0 0 300 200" role="img" aria-label="Side view of a squat at the bottom: hips sunk below the knees, torso leaning forward over mid-foot, bar resting across the upper back and stacked over the middle of the foot.">
+          <line class="fground" x1="20" y1="185" x2="280" y2="185"/>
+          <!-- vertical bar path over midfoot -->
+          <line class="fguide" x1="150" y1="40" x2="150" y2="185"/>
+          <!-- leg: foot, shin, thigh -->
+          <path class="fseg" d="M130 185 L170 185"/>            <!-- foot -->
+          <path class="fseg" d="M160 185 L182 130"/>            <!-- shin -->
+          <path class="fseg" d="M182 130 L120 128"/>            <!-- thigh (below parallel) -->
+          <!-- torso lean from hip to shoulder -->
+          <path class="fseg" d="M120 128 L150 70"/>
+          <!-- head -->
+          <circle class="fhead" cx="153" cy="58" r="12"/>
+          <!-- arm to bar -->
+          <path class="fseg" d="M150 78 L138 86"/>
+          <!-- bar across upper back -->
+          <line class="fbar" x1="110" y1="74" x2="190" y2="74"/>
+          <circle class="fplate" cx="110" cy="74" r="13"/>
+          <circle class="fplate" cx="190" cy="74" r="13"/>
+        </svg>
+        <figcaption>Bottom position: hip crease below the knee, bar over mid-foot.</figcaption>
+      </figure>
+      <ul>
+        <li><span class="cue">Do:</span> sit down and back until your hip crease drops below the top of your knee (full depth, if your hips allow it). Drive the floor away through your whole foot.</li>
+        <li><span class="cue">Do:</span> keep the bar stacked over the middle of your foot the whole way, brace your core as if about to be punched, and let your knees travel forward over your toes.</li>
+        <li><span class="miss">Avoid:</span> heels lifting, knees caving inward, or cutting depth short to add plates. A deep squat with less weight beats a shallow one with more.</li>
+      </ul>
+    </details>
+
+    <details class="deeper">
+      <summary>The hinge: deadlift and Romanian deadlift<span class="form-tag">hamstrings + glutes + back</span></summary>
+      <figure class="form-fig">
+        <svg viewBox="0 0 300 200" role="img" aria-label="Side view of a hip hinge: hips pushed far back, knees softly bent, back flat and angled forward, bar hanging straight down from the shoulders close to the legs.">
+          <line class="fground" x1="20" y1="185" x2="280" y2="185"/>
+          <!-- leg -->
+          <path class="fseg" d="M150 185 L185 185"/>           <!-- foot -->
+          <path class="fseg" d="M168 185 L172 120"/>           <!-- shin near vertical -->
+          <path class="fseg" d="M172 120 L208 118"/>           <!-- short thigh, hips back -->
+          <!-- flat back angled forward -->
+          <path class="fseg" d="M208 118 L120 92"/>
+          <!-- head -->
+          <circle class="fhead" cx="108" cy="86" r="12"/>
+          <!-- arm hanging to bar -->
+          <path class="fseg" d="M128 96 L132 150"/>
+          <!-- bar -->
+          <line class="fbar" x1="110" y1="155" x2="155" y2="155"/>
+          <circle class="fplate" cx="118" cy="155" r="13"/>
+          <circle class="fplate" cx="148" cy="155" r="13"/>
+          <!-- hips-back arrow guide -->
+          <path class="fguide" d="M225 118 L255 118"/>
+          <text x="262" y="122" font-family="var(--font-mono)" font-size="9" fill="#9ec79a">hips</text>
+        </svg>
+        <figcaption>Push the hips back, not down. The bar stays close and the back stays flat.</figcaption>
+      </figure>
+      <ul>
+        <li><span class="cue">Do:</span> push your hips backward to load the hamstrings, keeping the bar dragging close to your legs and your back flat (not rounded, not hyper-arched).</li>
+        <li><span class="cue">Do:</span> feel a stretch in the hamstrings, then drive your hips forward to stand tall and squeeze the glutes at the top.</li>
+        <li><span class="miss">Avoid:</span> rounding your lower back, turning it into a squat, or yanking the bar away from your body. The hinge is a hips movement, not a knees one.</li>
+      </ul>
+    </details>
+
+    <details class="deeper">
+      <summary>The bench press<span class="form-tag">chest + shoulders + triceps</span></summary>
+      <figure class="form-fig">
+        <svg viewBox="0 0 300 200" role="img" aria-label="Side view of a bench press: lifter lying on a bench with a slight arch and planted feet, lowering the bar to the lower chest with forearms vertical.">
+          <line class="fground" x1="20" y1="185" x2="280" y2="185"/>
+          <!-- bench -->
+          <rect x="70" y="120" width="150" height="10" rx="3" fill="#3a443b"/>
+          <line class="fseg" x1="95" y1="130" x2="95" y2="185" stroke="#3a443b"/>
+          <line class="fseg" x1="200" y1="130" x2="200" y2="185" stroke="#3a443b"/>
+          <!-- body lying, slight arch -->
+          <path class="fseg" d="M90 118 Q140 110 200 118"/>
+          <!-- head -->
+          <circle class="fhead" cx="80" cy="116" r="11"/>
+          <!-- thigh + shin (feet planted) -->
+          <path class="fseg" d="M200 118 L228 150"/>
+          <path class="fseg" d="M228 150 L222 185"/>
+          <!-- upper arm + forearm to bar over chest -->
+          <path class="fseg" d="M150 112 L150 78"/>
+          <!-- bar over lower chest -->
+          <line class="fbar" x1="120" y1="74" x2="180" y2="74"/>
+          <circle class="fplate" cx="120" cy="74" r="13"/>
+          <circle class="fplate" cx="180" cy="74" r="13"/>
+          <line class="fguide" x1="150" y1="74" x2="150" y2="112"/>
+        </svg>
+        <figcaption>Bar to the lower chest, forearms vertical, feet driving into the floor.</figcaption>
+      </figure>
+      <ul>
+        <li><span class="cue">Do:</span> pull your shoulder blades back and down into the bench, keep a small natural arch, and plant your feet to push the floor away.</li>
+        <li><span class="cue">Do:</span> lower the bar with control to your lower chest, elbows tucked to roughly 45 degrees, then press up and slightly back over your shoulders.</li>
+        <li><span class="miss">Avoid:</span> bouncing the bar off your chest, flaring your elbows straight out (hard on the shoulders), or lifting your hips off the bench.</li>
+      </ul>
+    </details>
+
+    <details class="deeper">
+      <summary>The overhead press<span class="form-tag">shoulders + triceps</span></summary>
+      <figure class="form-fig">
+        <svg viewBox="0 0 300 200" role="img" aria-label="Front view of a standing overhead press: bar locked out overhead, arms straight, ribs stacked over hips, bar over the mid-foot.">
+          <line class="fground" x1="20" y1="185" x2="280" y2="185"/>
+          <line class="fguide" x1="150" y1="30" x2="150" y2="185"/>
+          <!-- legs -->
+          <path class="fseg" d="M150 120 L135 185"/>
+          <path class="fseg" d="M150 120 L165 185"/>
+          <!-- torso stacked -->
+          <path class="fseg" d="M150 120 L150 70"/>
+          <!-- head -->
+          <circle class="fhead" cx="150" cy="56" r="12"/>
+          <!-- arms up to bar -->
+          <path class="fseg" d="M150 76 L125 44"/>
+          <path class="fseg" d="M150 76 L175 44"/>
+          <!-- bar overhead -->
+          <line class="fbar" x1="110" y1="40" x2="190" y2="40"/>
+          <circle class="fplate" cx="110" cy="40" r="13"/>
+          <circle class="fplate" cx="190" cy="40" r="13"/>
+        </svg>
+        <figcaption>Locked out: bar over the crown of the head and the mid-foot, ribs down.</figcaption>
+      </figure>
+      <ul>
+        <li><span class="cue">Do:</span> start with the bar on your front shoulders, squeeze your glutes and brace so you do not lean back, and press straight up, moving your head "through the window" as the bar passes.</li>
+        <li><span class="cue">Do:</span> finish with the bar stacked over the middle of your foot, arms fully locked, shoulders shrugged up slightly.</li>
+        <li><span class="miss">Avoid:</span> a big backward lean (that is your lower back, not your shoulders), or pressing the bar out in front of you.</li>
+      </ul>
+    </details>
+
+    <details class="deeper">
+      <summary>The row<span class="form-tag">upper back + lats</span></summary>
+      <figure class="form-fig">
+        <svg viewBox="0 0 300 200" role="img" aria-label="Side view of a bent-over row: torso hinged forward and flat, bar pulled up to the lower stomach with the elbows driving back.">
+          <line class="fground" x1="20" y1="185" x2="280" y2="185"/>
+          <!-- legs, soft knee -->
+          <path class="fseg" d="M150 185 L185 185"/>
+          <path class="fseg" d="M168 185 L172 128"/>
+          <path class="fseg" d="M172 128 L200 124"/>
+          <!-- flat torso forward -->
+          <path class="fseg" d="M200 124 L110 100"/>
+          <circle class="fhead" cx="100" cy="94" r="12"/>
+          <!-- arm pulling bar to stomach -->
+          <path class="fseg" d="M150 110 L150 150"/>
+          <!-- elbow drive arrow -->
+          <path class="fguide" d="M150 110 L185 96"/>
+          <!-- bar at stomach -->
+          <line class="fbar" x1="128" y1="150" x2="172" y2="150"/>
+          <circle class="fplate" cx="136" cy="150" r="13"/>
+          <circle class="fplate" cx="164" cy="150" r="13"/>
+        </svg>
+        <figcaption>Flat back, bar pulled to the lower ribs, elbows driving back and up.</figcaption>
+      </figure>
+      <ul>
+        <li><span class="cue">Do:</span> hinge forward to a flat, braced back, let the bar hang, then pull it to your lower ribs by driving your elbows back, squeezing your shoulder blades together.</li>
+        <li><span class="cue">Do:</span> lower under control to a full stretch each rep. The stretch is where a lot of the growth lives.</li>
+        <li><span class="miss">Avoid:</span> heaving with your whole body, shrugging the weight up with your traps, or rounding your back to chase heavier loads.</li>
+      </ul>
+    </details>
+
+    <details class="deeper">
+      <summary>The pull-up (and pulldown)<span class="form-tag">lats + biceps</span></summary>
+      <figure class="form-fig">
+        <svg viewBox="0 0 300 200" role="img" aria-label="Front view of a pull-up at the top: chin above a fixed overhead bar, arms bent, body hanging straight below.">
+          <!-- fixed bar -->
+          <line class="fbar" x1="90" y1="30" x2="210" y2="30"/>
+          <!-- hands gripping -->
+          <path class="fseg" d="M125 32 L130 60"/>
+          <path class="fseg" d="M175 32 L170 60"/>
+          <!-- arms to shoulders -->
+          <path class="fseg" d="M130 60 L150 70"/>
+          <path class="fseg" d="M170 60 L150 70"/>
+          <!-- head above-ish bar line -->
+          <circle class="fhead" cx="150" cy="48" r="11"/>
+          <!-- torso hanging -->
+          <path class="fseg" d="M150 70 L150 140"/>
+          <!-- legs -->
+          <path class="fseg" d="M150 140 L138 180"/>
+          <path class="fseg" d="M150 140 L162 180"/>
+        </svg>
+        <figcaption>Top: chin clears the bar, chest toward it; bottom: a full dead hang.</figcaption>
+      </figure>
+      <ul>
+        <li><span class="cue">Do:</span> start from a full hang, pull your elbows down and back to bring your chest toward the bar until your chin clears it, then lower all the way down.</li>
+        <li><span class="cue">Do:</span> if you cannot do them yet, use a band or the assisted machine, or do slow lowering-only reps. A lat pulldown trains the same pattern.</li>
+        <li><span class="miss">Avoid:</span> half reps that never straighten the arms, or kipping and swinging to fling yourself up.</li>
+      </ul>
+    </details>
+
+    <div class="edge"><span class="edge-lbl">The most underrated variable</span><b>Consistency beats optimization.</b> A merely good program run for two years will build more muscle than a perfect program abandoned every six weeks. The templates above are interchangeable enough that switching between them is fine; what is not fine is never giving any of them time to work.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 5. TENDONS ===================== -->
+  <section id="tendons" class="sec" aria-labelledby="tendons-h">
+    <span class="sec-kicker">Building it</span>
+    <h2 id="tendons-h" class="sec-h">Tendons: the slow tissue</h2>
+
+    <p class="lede">Muscle is the engine; tendons are the cables that bolt it to your bones. The engine is lavishly supplied with blood and rebuilds itself in days. The cables are starved of blood and rebuild themselves over months, if at all. That mismatch in speed is the single most common reason strong, motivated people get hurt: the muscle gets strong enough to pull harder than the tendon is ready for.</p>
+
+    <p>Just how slow is tendon? Astonishingly slow. By using carbon-14 left over from Cold War nuclear tests as a built-in date stamp, researchers showed that the core load-bearing collagen of your Achilles tendon is laid down during childhood and then <strong>essentially never replaced for the rest of your life</strong>. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3633810/">Heinemeier 2013</a></span> <span class="grade g-b">good</span> The cable you train on at forty is largely the one you grew as a teenager.</p>
+
+    <figure class="viz reveal" aria-label="Muscle strength rises faster than tendon stiffness over the first months of training.">
+      <figcaption>The engine outruns the cable</figcaption>
+      <p class="viz-sub">Early strength gains are mostly your nervous system learning to fire harder, so force climbs in weeks while the tendon is still slowly remodeling. The gap between the two lines is the injury window.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="Over twenty-four weeks, muscle strength rises quickly and plateaus while tendon stiffness rises slowly and keeps climbing, with the early gap between them shaded as a risk window.">
+        <line x1="55" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <line x1="55" y1="40" x2="55" y2="250" class="v-grid-s"/>
+        <g class="v-axis">
+          <text x="55" y="270" text-anchor="middle">0</text>
+          <text x="257" y="270" text-anchor="middle">8</text>
+          <text x="459" y="270" text-anchor="middle">16</text>
+          <text x="635" y="270" text-anchor="middle">24 wk</text>
+        </g>
+        <text x="46" y="50" text-anchor="end" class="v-axis-t">capacity</text>
+        <!-- risk window shading between muscle and tendon early on -->
+        <path d="M55 250 C 120 110 200 80 257 78 C 360 76 460 75 635 74 L 635 250 C 460 210 360 195 257 182 C 200 178 120 200 55 250 Z" fill="#e98e7f" opacity="0.10"/>
+        <!-- muscle strength: fast then flat -->
+        <path class="draw" style="--len:720" d="M55 250 C 120 110 200 80 257 78 C 360 76 460 75 635 74" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- tendon stiffness: slow, still rising -->
+        <path class="draw" style="--len:720" d="M55 250 C 200 235 360 205 635 150" fill="none" stroke="#8fb3c7" stroke-width="3.5" stroke-linecap="round"/>
+        <text x="540" y="64" class="v-label-b" font-size="12" fill="#D4C4A0">muscle strength</text>
+        <text x="540" y="142" class="v-label-b" font-size="12" fill="#8fb3c7">tendon stiffness</text>
+        <text x="250" y="150" text-anchor="middle" class="v-axis-t" fill="#e98e7f">risk window</text>
+      </svg>
+      <p class="viz-note">This is why the boring advice (add weight slowly, do not chase a new record every week) is not timidity. It is letting the cable catch up to the engine.</p>
+    </figure>
+
+    <h3>How to keep tendons happy</h3>
+    <ul>
+      <li><strong>Ramp load slowly.</strong> The most protective thing you can do is add weight in small, patient steps so the tendon has time to adapt. Most ego-driven injuries are a tendon being asked to do, today, what the muscle could already do last month.</li>
+      <li><strong>Use heavy, slow reps and the occasional long hold.</strong> Heavy slow resistance training and isometric holds both build tendon stiffness and are proven tools for cranky tendons, working over weeks to months, not days. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26018970/">Beyer 2015</a></span> <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/25979840/">Rio 2015</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Respect full range.</strong> Loading a tendon through its whole stretch, under control, is what tells it to get stronger.</li>
+    </ul>
+
+    <div class="balance-note"><b>The tendon tax on impatience.</b> Muscle will happily get stronger faster than your tendons can safely keep up. The lifters who are still training pain-free in their fifties are almost never the ones who added weight the fastest. They are the ones who let the slow tissue set the pace.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 6. STRETCHING ===================== -->
+  <section id="stretching" class="sec" aria-labelledby="stretching-h">
+    <span class="sec-kicker">Building it</span>
+    <h2 id="stretching-h" class="sec-h">Stretching and mobility</h2>
+
+    <p class="lede">Stretching is one of the most misunderstood habits in fitness. The thing most people do (sit and hold a long static stretch before they lift) is the one version the evidence is least kind to. Meanwhile, the genuinely useful idea hiding inside "stretching" turns out not to be stretching at all. It is training your muscles through their full, lengthened range, which may grow them faster.</p>
+
+    <div class="myth"><b>Static stretching does not prevent injury,</b> despite decades of being sold as a warm-up. Trials do not support it. <span class="src"><a href="https://www.tandfonline.com/doi/full/10.1080/15438620802310784">Small 2008</a></span> And held right before lifting, a long static stretch (60 seconds or more on a muscle) can temporarily <em>weaken</em> you by around 4 to 5 percent for that session. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21659901/">Kay 2012</a></span> <span class="grade g-b">good</span> So static stretching right before a heavy set is, at best, a small tax on your own strength.</div>
+
+    <h3>What to actually do</h3>
+    <ul>
+      <li><strong>Warm up by moving, not holding.</strong> A dynamic warm-up (leg swings, lunges, light ramp-up sets) preps you for explosive work better than static stretching does. <span class="src"><a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">Behm 2016</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Train the full range, especially the stretch.</strong> A growing line of research finds that emphasizing the lengthened part of a movement (a deep stretch under load) can match or beat conventional lifting for muscle growth. <span class="src"><a href="https://onlinelibrary.wiley.com/doi/10.1080/17461391.2021.1927199">Pedrosa 2022</a></span> <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">Kassiano 2023</a></span> <span class="grade g-c">mixed</span> It is still maturing (a few trials find no difference), so call it promising, not proven. But it reframes the goal: the bottom of a squat or a deep romanian deadlift is not something to rush through, it may be the best part.</li>
+      <li><strong>Stretch for range when you want range.</strong> If you genuinely lack the mobility to hit a position safely (a deep squat, an overhead press), then stretching and mobility work to earn that range is worth doing, just not crammed in right before your heaviest set.</li>
+    </ul>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 7. CARDIO ===================== -->
+  <section id="cardio" class="sec" aria-labelledby="cardio-h">
+    <span class="sec-kicker">Building it</span>
+    <h2 id="cardio-h" class="sec-h">Cardio and the heart</h2>
+
+    <p class="lede">Lifting builds the muscle. Cardio keeps alive the heart and lungs that have to carry it. It is tempting, in a guide about getting big, to wave cardio away, and plenty of lifters do. That is a mistake, because of all the numbers in this entire guide, the one most tightly linked to how long you live is not how much you can bench. It is how fit your heart is.</p>
+
+    <p>In a study of over 120,000 people, those with the lowest cardiorespiratory fitness had about <strong>five times</strong> the risk of dying as the fittest, and being unfit carried a higher mortality risk than smoking, diabetes, or heart disease. There was no ceiling: fitter was always better. <span class="src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal scrollx" aria-label="Risk of death by factor: low fitness dwarfs smoking, diabetes, and heart disease.">
+      <figcaption>The deadliest risk factor is being unfit</figcaption>
+      <p class="viz-sub">Adjusted risk of death compared with a fit, healthy reference (1.0). Low fitness outweighs every classic risk factor on the chart.</p>
+      <svg viewBox="0 0 700 280" role="img" aria-label="Relative mortality risk: low fitness about 5.0, coronary artery disease 1.29, diabetes 1.40, smoking 1.41, all far above the reference of 1.0.">
+        <line x1="180" y1="30" x2="180" y2="240" class="v-grid-s"/>
+        <g class="v-axis">
+          <text x="180" y="260" text-anchor="middle">1&#215;</text>
+          <text x="300" y="260" text-anchor="middle">2&#215;</text>
+          <text x="420" y="260" text-anchor="middle">3&#215;</text>
+          <text x="540" y="260" text-anchor="middle">4&#215;</text>
+          <text x="660" y="260" text-anchor="middle">5&#215;</text>
+        </g>
+        <line x1="300" y1="30" x2="300" y2="240" class="v-grid"/>
+        <line x1="420" y1="30" x2="420" y2="240" class="v-grid"/>
+        <line x1="540" y1="30" x2="540" y2="240" class="v-grid"/>
+        <line x1="660" y1="30" x2="660" y2="240" class="v-grid"/>
+        <!-- scale: 120px per 1.0, baseline at x=180 (=1.0). width = (HR-1)*120 -->
+        <g>
+          <text x="172" y="62" text-anchor="end" class="v-label" font-size="13">Low fitness</text>
+          <rect class="grow-b" x="180" y="48" width="485" height="24" rx="4" fill="#e98e7f" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="660" y="42" text-anchor="end" class="v-mono" font-size="12" fill="#e98e7f">5.0&#215;</text>
+        </g>
+        <g>
+          <text x="172" y="106" text-anchor="end" class="v-label" font-size="13">Smoking</text>
+          <rect class="grow-b" x="180" y="92" width="49" height="24" rx="4" fill="#B8B2A2" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="236" y="110" class="v-mono" font-size="12" fill="#B8B2A2">1.41&#215;</text>
+        </g>
+        <g>
+          <text x="172" y="150" text-anchor="end" class="v-label" font-size="13">Diabetes</text>
+          <rect class="grow-b" x="180" y="136" width="48" height="24" rx="4" fill="#B8B2A2" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="235" y="154" class="v-mono" font-size="12" fill="#B8B2A2">1.40&#215;</text>
+        </g>
+        <g>
+          <text x="172" y="194" text-anchor="end" class="v-label" font-size="13">Heart disease</text>
+          <rect class="grow-b" x="180" y="180" width="35" height="24" rx="4" fill="#B8B2A2" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="222" y="198" class="v-mono" font-size="12" fill="#B8B2A2">1.29&#215;</text>
+        </g>
+      </svg>
+      <p class="viz-note">Just 15 minutes of moderate activity a day is linked to <b>14 percent lower mortality and about three extra years of life</b>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">Wen 2011</a></span> The minimum effective dose is genuinely tiny.</p>
+    </figure>
+
+    <h3>Will cardio eat my gains?</h3>
+    <p>This is the real worry, and the honest answer is: only if you do a lot of it. Piling heavy endurance work on top of lifting can blunt strength and size gains, an effect called <strong>interference</strong>, and it scales with how much you do. Running interferes more than cycling, and doing it right before lifting is worse than separating them. <span class="src"><a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training__a_meta_analysis_examining.35.aspx">Wilson 2012</a></span> <span class="grade g-b">good</span> The fix is easy:</p>
+    <ul>
+      <li>Two or three moderate sessions a week (a couple of brisk walks, a bike ride, some intervals) buys nearly all the health benefit and interferes with almost nothing.</li>
+      <li>Separate cardio from lifting when you can, or put it after, not before.</li>
+      <li>Favor low-impact modes (bike, incline walk, rower) if you are protecting your legs for squats.</li>
+    </ul>
+
+    <div class="balance-note"><b>You do not have to choose.</b> The lifter who skips all cardio to "protect gains" is trading a few percent of muscle for a real cut in lifespan. A little cardio is one of the highest-return things in this whole guide, and the dose that helps your heart is far below the dose that hurts your gains.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 8. DIET ===================== -->
+  <section id="diet" class="sec" aria-labelledby="diet-h">
+    <span class="sec-kicker">Feeding it</span>
+    <h2 id="diet-h" class="sec-h">Food is the other 90 percent</h2>
+
+    <p class="lede">Training is the signal that tells your body to build. Food is the raw material it builds with. You can send a perfect signal and, if the warehouse is empty, nothing gets made. The good news, again, is how simple the real answer is, and how quickly it stops paying to do more. Two things matter: eat enough protein, and eat slightly more total food than you burn. Almost everything else in nutrition is rounding error by comparison.</p>
+
+    <h3>Protein: hit the number, then stop chasing it</h3>
+    <p>Protein is the brick. But there is a clean ceiling on how much helps. Pooling 49 studies and nearly 1,900 people, the benefit of more protein for building muscle flattens out at about <strong>1.6 grams per kilogram of bodyweight per day</strong>. Past that, extra protein adds essentially no extra muscle. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span> (When you are dieting in a calorie deficit, nudging up toward 2.2 g/kg helps protect muscle, which is the one time the higher number earns its keep.)</p>
+
+    <figure class="viz reveal" aria-label="Muscle gain rises with protein intake then plateaus around 1.6 grams per kilogram.">
+      <figcaption>Protein has a ceiling, and it is lower than you think</figcaption>
+      <p class="viz-sub">Muscle gain climbs with protein up to about 1.6 g/kg/day, then the line goes flat. The protein-shake industry is mostly selling you the flat part.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="A curve where muscle benefit rises steeply with protein intake to about 1.6 grams per kilogram, then plateaus, with everything beyond marked as no extra benefit.">
+        <rect x="395" y="40" width="265" height="210" fill="#9ec79a" opacity="0.06"/>
+        <text x="527" y="58" text-anchor="middle" class="v-axis-t" fill="#9ec79a">no extra muscle here</text>
+        <line x1="55" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <line x1="55" y1="40" x2="55" y2="250" class="v-grid-s"/>
+        <g class="v-axis">
+          <text x="55" y="270" text-anchor="middle">0</text>
+          <text x="257" y="270" text-anchor="middle">1.0</text>
+          <text x="395" y="270" text-anchor="middle">1.6</text>
+          <text x="535" y="270" text-anchor="middle">2.2</text>
+          <text x="635" y="270" text-anchor="middle">3.0</text>
+          <text x="350" y="294" text-anchor="middle" fill="#B8B2A2">grams of protein per kg of bodyweight, per day</text>
+        </g>
+        <text x="46" y="50" text-anchor="end" class="v-axis-t">muscle</text>
+        <path class="draw" style="--len:760" d="M55 250 C 160 150 320 92 395 86 C 480 82 560 82 635 82" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="395" y1="86" x2="395" y2="250" class="v-grid"/>
+        <circle cx="395" cy="86" r="5" fill="#9ec79a"/>
+        <text x="403" y="110" class="v-label-b" font-size="12" fill="#9ec79a">the plateau</text>
+      </svg>
+      <p class="viz-note">Spread it across the day, roughly <b>0.4 g/kg per meal over 3 to 4 meals</b>, to keep the muscle-building machinery topped up. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">Schoenfeld 2018</a></span></p>
+    </figure>
+
+    <div class="tool" id="protein-tool">
+      <div class="tool-head"><h4>Your protein target</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-body">
+        <div class="tool-row">
+          <label for="pc-weight">Bodyweight</label>
+          <input type="number" id="pc-weight" value="75" min="30" max="250" step="1" inputmode="decimal">
+          <span class="seg" role="group" aria-label="weight unit"><button type="button" id="pc-kg" class="on">kg</button><button type="button" id="pc-lb">lb</button></span>
+        </div>
+        <div class="tool-row">
+          <label>Goal</label>
+          <span class="seg" role="group" aria-label="goal"><button type="button" id="pc-gain" class="on">build muscle</button><button type="button" id="pc-cut">lose fat, keep muscle</button></span>
+        </div>
+        <div class="tool-out">
+          <div><span class="big" id="pc-out">120 g</span> <span class="lbl">of protein a day</span></div>
+          <div class="tool-rail" id="pc-meal">That is about <b>30 g per meal</b> across 4 meals.</div>
+          <div class="tool-rail" id="pc-foods">Roughly: 2 eggs + Greek yogurt at breakfast, a chicken breast at lunch, a palm of salmon and some lentils at dinner, a glass of milk. No powder required.</div>
+          <div class="tool-rail">Plus <b>3 to 5 g of creatine</b>, taken whenever. That is the whole supplement plan.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Whole food beats powder, and you cannot out-supplement a bad diet</h3>
+    <p>Protein powder is not special. It is just dried, convenient groceries. In the studies, supplements helped only to the extent they pushed someone's <em>total</em> daily protein up to target, and the benefit faded once the diet was already adequate. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> Whole foods hit the same target and bring vitamins, minerals, and fiber that no scoop does. Eggs, dairy, meat, fish, beans, lentils, tofu, and grains will cover you completely. Powder is a tool for a busy day, not a requirement.</p>
+
+    <h3>Eat a little more than you burn</h3>
+    <p>To build new tissue you need slightly more energy coming in than going out. The key word is <em>slightly</em>. A surplus of about <strong>200 to 500 calories a day</strong> is plenty; the small end favors lean gains. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6680710/">Iraki 2019</a></span> When researchers compared a bigger surplus to a smaller one, the bigger one mostly just added fat, with no extra muscle. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span> <span class="grade g-b">good</span> The "dirty bulk," eating everything in sight to grow, buys you a longer, harder diet later and not much more muscle now.</p>
+
+    <div class="balance-note"><b>The diet sweet spot, again.</b> Enough protein, not maximum protein. A small surplus, not a feast. Both levers go flat fast: past 1.6 g/kg the protein does nothing, past a few hundred surplus calories the extra is just fat. The body builds muscle at a fixed, unhurried pace no amount of overeating can rush.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 9. SUN ===================== -->
+  <section id="sun" class="sec" aria-labelledby="sun-h">
+    <span class="sec-kicker">Feeding it</span>
+    <h2 id="sun-h" class="sec-h">Sunlight and vitamin D</h2>
+
+    <p class="lede">There is one input your body wants that does not come from the kitchen at all. It comes from the sky. Sunlight on your skin makes vitamin D, a hormone you need for strong bones, working muscles, and a steady mood, and roughly a billion people on Earth do not get enough of it. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK532266/">Sizar 2024</a></span> <span class="grade g-b">good</span></p>
+
+    <p>The mechanism is genuinely strange and lovely: ultraviolet B light hits a cholesterol-like molecule in your skin and physically rearranges it into vitamin D. <span class="src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> Food is a poor source (a little oily fish, some egg yolk, fortified milk), which is exactly why sunlight, or a cheap pill in winter, matters.</p>
+
+    <figure class="viz reveal" aria-label="Sunlight converts a skin molecule into vitamin D, which supports muscle, bone, and mood.">
+      <figcaption>How the sky feeds your muscles</figcaption>
+      <svg viewBox="0 0 700 250" role="img" aria-label="UVB light from the sun strikes the skin, turning 7-dehydrocholesterol into vitamin D, which then supports muscle function, bone strength, and mood.">
+        <!-- sun -->
+        <circle cx="80" cy="70" r="30" fill="#e6c074" class="drift"/>
+        <g stroke="#e6c074" stroke-width="3" stroke-linecap="round">
+          <line x1="80" y1="20" x2="80" y2="6"/><line x1="120" y1="40" x2="132" y2="30"/>
+          <line x1="38" y1="40" x2="26" y2="30"/><line x1="130" y1="78" x2="146" y2="80"/>
+        </g>
+        <!-- UVB rays to skin -->
+        <line x1="108" y1="92" x2="250" y2="150" stroke="#b79bc4" stroke-width="2.5" stroke-dasharray="5 5" marker-end="url(#sunArr)"/>
+        <text x="150" y="118" class="v-axis-t" fill="#b79bc4">UVB</text>
+        <defs><marker id="sunArr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#b79bc4"/></marker></defs>
+        <!-- skin block -->
+        <g transform="translate(255,120)">
+          <rect width="170" height="80" rx="10" fill="#232a25" stroke="#cdb89a"/>
+          <text x="85" y="30" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">in your skin</text>
+          <text x="85" y="52" text-anchor="middle" class="v-cap" font-size="12" fill="#cdb89a">7-DHC &#8594; vitamin D</text>
+        </g>
+        <line x1="425" y1="160" x2="470" y2="160" stroke="#4A544B" stroke-width="2" marker-end="url(#sunArr2)"/>
+        <defs><marker id="sunArr2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#4A544B"/></marker></defs>
+        <!-- uses -->
+        <g transform="translate(478,108)" font-family="var(--font-body)">
+          <g><circle cx="10" cy="6" r="5" fill="#D4C4A0"/><text x="24" y="10" class="v-label" font-size="12">muscle function and strength</text></g>
+          <g transform="translate(0,34)"><circle cx="10" cy="6" r="5" fill="#8fb3c7"/><text x="24" y="10" class="v-label" font-size="12">bone strength</text></g>
+          <g transform="translate(0,68)"><circle cx="10" cy="6" r="5" fill="#9ec79a"/><text x="24" y="10" class="v-label" font-size="12">mood and immunity</text></g>
+        </g>
+        <!-- blood level scale -->
+        <g transform="translate(60,215)">
+          <rect x="0" y="0" width="120" height="14" fill="#e98e7f" opacity="0.6"/>
+          <rect x="120" y="0" width="80" height="14" fill="#e6c074" opacity="0.6"/>
+          <rect x="200" y="0" width="380" height="14" fill="#9ec79a" opacity="0.6"/>
+          <text x="60" y="11" text-anchor="middle" font-size="9" font-family="var(--font-mono)" fill="#1e2420">deficient</text>
+          <text x="160" y="11" text-anchor="middle" font-size="9" font-family="var(--font-mono)" fill="#1e2420">low</text>
+          <text x="390" y="11" text-anchor="middle" font-size="9" font-family="var(--font-mono)" fill="#1e2420">sufficient (30+ ng/mL)</text>
+        </g>
+      </svg>
+      <p class="viz-note">Aim for blood levels of <b>30 ng/mL or above</b>. The often-hyped link to testosterone, by contrast, is weak and unreliable, not the hormone hack the internet sells. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11506788/">Cordeiro 2024</a></span></p>
+    </figure>
+
+    <h3>How much sun</h3>
+    <p>It varies enormously by skin tone, season, and latitude, but a useful rule of thumb is roughly <strong>10 to 30 minutes</strong> of midday sun on bare arms and legs, most days, for lighter skin; darker skin and higher latitudes need meaningfully longer. <span class="src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> The goal is brief and regular, never a burn.</p>
+
+    <div class="balance-note"><b>Sun is the same story one more time.</b> A little is one of the best free things you can do for your body. Too much (a sunburn) raises skin-cancer risk for no extra vitamin D, because the skin stops making more once it has enough. The dose that helps is well short of the dose that harms. If you cannot get sun, a cheap daily pill is a fine stand-in.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 10. TIMING ===================== -->
+  <section id="timing" class="sec" aria-labelledby="timing-h">
+    <span class="sec-kicker">Feeding it</span>
+    <h2 id="timing-h" class="sec-h">When to train</h2>
+
+    <p class="lede">People love to ask what time of day is best to lift, hoping for a free edge. There is a real answer, and then there is the answer that actually matters, and they are not the same.</p>
+
+    <p>The real one: your muscles are genuinely a little stronger in the late afternoon and early evening, roughly 4 to 8 PM, when your core body temperature peaks. Warmer muscle fires faster and stretches easier, worth a few percent on a max effort. <span class="src"><a href="https://journals.physiology.org/doi/full/10.1152/physiol.00030.2020">Douglas 2021</a></span> <span class="grade g-c">mixed</span></p>
+
+    <figure class="viz reveal" aria-label="Strength over the day peaks in the late afternoon.">
+      <figcaption>Your strongest hours</figcaption>
+      <p class="viz-sub">Neuromuscular performance rises and falls with body temperature across the day, peaking in the late afternoon. Note the vertical scale: the whole swing is only a few percent.</p>
+      <svg viewBox="0 0 700 240" role="img" aria-label="A gentle curve of strength across 24 hours, lowest in the early morning, rising to a broad peak around 5 PM, then declining at night. The total range is small.">
+        <line x1="55" y1="200" x2="660" y2="200" class="v-grid-s"/>
+        <g class="v-axis">
+          <text x="55" y="220" text-anchor="middle">6 AM</text>
+          <text x="206" y="220" text-anchor="middle">11 AM</text>
+          <text x="357" y="220" text-anchor="middle">4 PM</text>
+          <text x="508" y="220" text-anchor="middle">9 PM</text>
+          <text x="635" y="220" text-anchor="middle">1 AM</text>
+        </g>
+        <!-- peak band -->
+        <rect x="320" y="40" width="120" height="160" fill="#D4C4A0" opacity="0.08"/>
+        <path class="draw" style="--len:760" d="M55 165 C 150 150 240 95 357 78 C 440 67 470 70 520 92 C 580 120 620 140 660 150" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="380" cy="74" r="5" fill="#e6c074"/>
+        <text x="380" y="62" text-anchor="middle" class="v-axis-t" fill="#e6c074">late-afternoon peak</text>
+      </svg>
+      <p class="viz-note">But over months, morning lifters and evening lifters <b>build the same muscle and strength</b>, and morning bodies adapt to morning training. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30704301/">Grgic 2019</a></span> <span class="grade g-b">good</span></p>
+    </figure>
+
+    <p>So here is the answer that matters: <strong>train at the time you will actually keep showing up.</strong> The few percent you might gain by lifting at 5 PM is dwarfed by the 100 percent you lose on the days you skip because the "optimal" time did not fit your life. Consistency is the only timing variable with real teeth. The one mild caveat: very intense exercise right before bed can disturb some people's sleep, so if you train late and sleep poorly, that is worth a look.</p>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 11. CAFFEINE ===================== -->
+  <section id="caffeine" class="sec" aria-labelledby="caffeine-h">
+    <span class="sec-kicker">Feeding it</span>
+    <h2 id="caffeine-h" class="sec-h">Caffeine: the one you can skip</h2>
+
+    <p class="lede">Caffeine is the most popular performance drug on Earth, and walk into any gym and half the people there are sipping a brightly colored pre-workout. So let me say the quiet part plainly: it works, but barely, it does nothing for muscle growth directly, and I personally never touch it. If that sounds like heresy, look at the actual numbers.</p>
+
+    <p>Caffeine is a genuine, well-established performance aid. At a typical dose it improves endurance power by about <strong>3 percent</strong> and shaves around 2 percent off a time trial. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/29876876/">Southward 2018</a></span> <span class="grade g-a">strong</span> For strength and power the boost is in the low single digits too. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> Those are real edges if you are racing for a medal. For someone trying to build muscle over years, they are a rounding error.</p>
+
+    <figure class="viz reveal" aria-label="Caffeine's small share of performance next to everything else.">
+      <figcaption>What caffeine actually adds</figcaption>
+      <p class="viz-sub">Its documented edge is a few percent on acute performance, and none of it is muscle growth. Everything that builds muscle is in the other slice.</p>
+      <svg viewBox="0 0 700 120" role="img" aria-label="A bar that is about 97 percent labeled training, food, sleep, creatine, and years, and a thin 3 percent sliver labeled caffeine.">
+        <rect x="40" y="35" width="600" height="46" rx="8" fill="#232a25" stroke="#4A544B"/>
+        <rect x="42" y="37" width="560" height="42" rx="7" fill="#D4C4A0" opacity="0.85"/>
+        <rect x="602" y="37" width="36" height="42" rx="3" fill="#e98e7f"/>
+        <text x="320" y="63" text-anchor="middle" font-family="var(--font-heading)" font-weight="700" font-size="14" fill="#1e2420">training &#183; food &#183; sleep &#183; creatine &#183; years</text>
+        <text x="620" y="26" text-anchor="middle" class="v-axis-t" fill="#e98e7f">caffeine, ~3%</text>
+        <line x1="620" y1="30" x2="620" y2="37" stroke="#e98e7f" stroke-width="1.5"/>
+      </svg>
+      <p class="viz-note">And that 3 percent is performance on the day, not muscle at the end of the year. Caffeine helps you push a hard session; it does not, by itself, build a single extra fiber.</p>
+    </figure>
+
+    <h3>The honest ledger</h3>
+    <div class="choices">
+      <div class="choice use"><div><b>Where it helps:</b> a genuinely tired day when you need to get through a session, or a one-off effort where 3 percent matters. Effective dose is 3 to 6 mg per kg, about an hour before. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span></div></div>
+      <div class="choice skip"><div><b>Where it hurts:</b> taken later in the day it wrecks sleep, and sleep is one of your biggest growth inputs, so a late pre-workout can cost you more than it gave. Tolerance also builds fast, so the daily user gets less and less.</div></div>
+      <div class="choice meh"><div><b>The bottom line:</b> a useful occasional tool, never a requirement. Plenty of strong, muscular people, myself included, never use it and lose nothing for it. If you love your coffee, enjoy it; just do not mistake it for a building block.</div></div>
+    </div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 12. THE BRAIN ===================== -->
+  <section id="brain" class="sec" aria-labelledby="brain-h">
+    <span class="sec-kicker">The mind</span>
+    <h2 id="brain-h" class="sec-h">Lifting and the brain</h2>
+
+    <p class="lede">If the only payoff from exercise were a better-looking body, it would still be worth it. But the most remarkable benefits happen above the neck. Movement is, as far as we can tell, the single most effective thing a healthy person can do for their brain, and it is one of the few interventions that visibly rebuilds brain structure rather than just slowing its decline.</p>
+
+    <p>The landmark result is almost hard to believe. Older adults who walked regularly for a year <em>grew</em> their hippocampus (the brain's memory center) by about 2 percent, effectively turning back one to two years of age-related shrinkage, while the control group's brains kept shrinking. Their memory improved alongside it. <span class="src"><a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">Erickson 2011</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal" aria-label="A brain with the hippocampus highlighted, fed by exercise-driven BDNF.">
+      <figcaption>Exercise grows the memory center</figcaption>
+      <svg viewBox="0 0 700 280" role="img" aria-label="A stylized brain in profile with the hippocampus highlighted and glowing, fed by sparks of BDNF released during exercise.">
+        <!-- brain outline -->
+        <path d="M180 150 C 160 90 220 50 290 56 C 320 30 400 30 430 60 C 500 56 540 100 520 150 C 545 175 520 220 470 220 C 450 245 380 248 360 222 C 300 240 220 232 210 200 C 165 200 160 170 180 150 Z"
+              fill="#232a25" stroke="#b79bc4" stroke-width="2.5"/>
+        <!-- gyri (wavy folds) -->
+        <g stroke="#5a675c" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8">
+          <path d="M230 90 q 25 18 50 0 q 25 -18 50 0"/>
+          <path d="M250 120 q 25 18 50 0 q 25 -18 45 4"/>
+          <path d="M340 80 q 25 18 50 0 q 20 -15 40 2"/>
+          <path d="M360 120 q 25 18 50 0"/>
+          <path d="M220 165 q 30 16 60 2"/>
+        </g>
+        <!-- hippocampus highlight (a curl) -->
+        <path class="cr-glow" d="M330 185 q 30 -10 45 12 q 12 22 -12 30 q -26 7 -30 -16" fill="none" stroke="#9ec79a" stroke-width="6" stroke-linecap="round"/>
+        <text x="372" y="246" text-anchor="middle" class="v-axis-t" fill="#9ec79a">hippocampus (memory)</text>
+        <!-- BDNF sparks -->
+        <g class="drift">
+          <g fill="#e6c074">
+            <path d="M120 70 l-7 11 l6 0 l-5 11 l9 -13 l-6 0 z"/>
+            <path d="M150 200 l-6 9 l5 0 l-4 9 l7 -11 l-5 0 z"/>
+            <path d="M580 90 l-6 9 l5 0 l-4 9 l7 -11 l-5 0 z"/>
+          </g>
+        </g>
+        <text x="120" y="110" text-anchor="middle" class="v-axis-t" fill="#e6c074">BDNF</text>
+        <text x="120" y="124" text-anchor="middle" class="v-label" font-size="10" fill="#B8B2A2">"fertilizer</text>
+        <text x="120" y="138" text-anchor="middle" class="v-label" font-size="10" fill="#B8B2A2">for neurons"</text>
+      </svg>
+      <p class="viz-note">Exercise raises <b>BDNF</b>, a protein that acts like fertilizer for brain cells, helping them grow, connect, and survive. A single workout bumps it up; regular training raises your baseline. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4314337/">Szuhany 2015</a></span></p>
+    </figure>
+
+    <div class="stat-row">
+      <div class="stat green"><span class="fig">+2%</span><span class="fig-lbl">hippocampus growth from a year of walking, reversing years of aging</span></div>
+      <div class="stat sky"><span class="fig">&#8805;</span><span class="fig-lbl">exercise matches or beats medication and therapy for mild-to-moderate depression</span></div>
+      <div class="stat amber"><span class="fig">1 set</span><span class="fig-lbl">even a single workout sharpens focus and working memory for a while after</span></div>
+    </div>
+
+    <h3>The everyday version</h3>
+    <p>You do not have to be elderly to collect these benefits. A single bout of exercise gives a small, reliable boost to focus and working memory in the hours after, which is why a hard morning session can leave your head clearer. <span class="src"><a href="https://www.nature.com/articles/s44271-024-00124-2">2024 meta-analysis</a></span> <span class="grade g-b">good</span> And for low mood, the evidence is striking: across a huge umbrella review, physical activity was at least as effective as medication and therapy for mild-to-moderate depression and anxiety. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">Singh 2023</a></span> <span class="grade g-a">strong</span></p>
+
+    <p>And this is not just a runner's high. Lifting specifically helps the aging brain: progressive resistance training improved thinking in older adults with mild cognitive impairment, with gains still measurable more than a year later, and recent imaging suggests it actually protects the hippocampus from shrinking. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3110111/">Mavros / SMART trial</a></span> <span class="src"><a href="https://link.springer.com/article/10.1007/s11357-024-01483-8">Broadhouse 2024</a></span> <span class="grade g-c">mixed</span></p>
+
+    <div class="balance-note"><b>And here is the kicker for this whole guide.</b> Every one of these brain benefits shows up at <em>moderate</em> doses, the same modest, sustainable training this guide recommends. You do not need to be huge, or lean, or anywhere near your genetic ceiling to get the sharper memory, the steadier mood, the protected aging brain. The brain rewards showing up, not maxing out. The cheapest part of the climb buys nearly all of the mental prize.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 13. GENETICS ===================== -->
+  <section id="genetics" class="sec" aria-labelledby="genetics-h">
+    <span class="sec-kicker">The limits and the balance</span>
+    <h2 id="genetics-h" class="sec-h">Born different: genes and fibers</h2>
+
+    <p class="lede">Here is the least comfortable truth in this guide, and the most freeing once you accept it. Two people can do the exact same program, eat the same food, sleep the same hours, and end up with wildly different bodies, because a large share of how you respond to training was decided before you ever touched a weight. Understanding what is fixed, and what is not, is the difference between training with the genes you have and resenting the ones you do not.</p>
+
+    <p>The cleanest evidence is a single, beautiful study. 585 people did the identical 12-week arm program. The change in muscle size ranged from <strong>minus 2 percent to plus 59 percent</strong>, and strength gains ran from zero to plus 250 percent. Same program. Same effort, as best anyone could control. Completely different bodies. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal" aria-label="The spread of muscle growth among 585 people on the same program.">
+      <figcaption>Same program, 585 different results</figcaption>
+      <p class="viz-sub">Each dot is a person. They all did the same training; where they landed was mostly not up to them. A few barely moved. A few exploded. Most clustered around a 19 percent gain.</p>
+      <svg viewBox="0 0 700 220" role="img" aria-label="A dot plot of biceps growth from minus 2 percent to plus 59 percent, with most people clustered near 19 percent, a handful of non-responders near zero, and a handful of high responders near 60 percent.">
+        <line x1="55" y1="180" x2="660" y2="180" class="v-grid-s"/>
+        <g class="v-axis">
+          <text x="55" y="200" text-anchor="middle">0%</text>
+          <text x="205" y="200" text-anchor="middle">15%</text>
+          <text x="355" y="200" text-anchor="middle">30%</text>
+          <text x="505" y="200" text-anchor="middle">45%</text>
+          <text x="640" y="200" text-anchor="middle">+59%</text>
+          <text x="350" y="216" text-anchor="middle" fill="#B8B2A2">change in muscle size after the same 12 weeks</text>
+        </g>
+        <!-- scale: 0% at x=55, 10px per 1% -> 59% at x=645 -->
+        <g class="fade-el">
+          <!-- non-responders -->
+          <circle cx="35" cy="170" r="6" fill="#e98e7f"/><circle cx="55" cy="158" r="6" fill="#e98e7f"/><circle cx="75" cy="172" r="6" fill="#e98e7f"/><circle cx="95" cy="150" r="6" fill="#e6c074"/>
+          <!-- the big cluster around 19% (x~245) -->
+          <circle cx="150" cy="165" r="6" fill="#D4C4A0"/><circle cx="170" cy="150" r="6" fill="#D4C4A0"/><circle cx="190" cy="172" r="6" fill="#D4C4A0"/><circle cx="205" cy="140" r="6" fill="#D4C4A0"/>
+          <circle cx="225" cy="160" r="6" fill="#D4C4A0"/><circle cx="245" cy="128" r="6" fill="#D4C4A0"/><circle cx="245" cy="172" r="6" fill="#D4C4A0"/><circle cx="265" cy="148" r="6" fill="#D4C4A0"/>
+          <circle cx="285" cy="166" r="6" fill="#D4C4A0"/><circle cx="225" cy="138" r="6" fill="#D4C4A0"/><circle cx="265" cy="170" r="6" fill="#D4C4A0"/><circle cx="305" cy="152" r="6" fill="#D4C4A0"/>
+          <!-- moderate -->
+          <circle cx="335" cy="164" r="6" fill="#9ec79a"/><circle cx="360" cy="150" r="6" fill="#9ec79a"/><circle cx="390" cy="168" r="6" fill="#9ec79a"/><circle cx="420" cy="156" r="6" fill="#9ec79a"/>
+          <!-- high responders -->
+          <circle cx="470" cy="168" r="6" fill="#9ec79a"/><circle cx="510" cy="158" r="6" fill="#9ec79a"/><circle cx="555" cy="166" r="6" fill="#9ec79a"/><circle cx="600" cy="160" r="6" fill="#9ec79a"/><circle cx="640" cy="168" r="6" fill="#9ec79a"/>
+        </g>
+        <text x="65" y="120" text-anchor="middle" class="v-axis-t" fill="#e98e7f">non-responders</text>
+        <text x="245" y="112" text-anchor="middle" class="v-axis-t" fill="#D4C4A0">average (~19%)</text>
+        <text x="590" y="140" text-anchor="middle" class="v-axis-t" fill="#9ec79a">high responders</text>
+      </svg>
+      <p class="viz-note">When researchers sorted lifters by results, they found clean groups: extreme responders grew their fibers about 58 percent, modest responders about 28 percent, and non-responders close to zero, and the big responders started with more muscle stem cells to draw on. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">Petrella 2008</a></span></p>
+    </figure>
+
+    <h3>You are born with your fibers, and you cannot make more</h3>
+    <p>The number of muscle fibers you have is largely set in early life and varies roughly <strong>twofold between people</strong>, from around four hundred thousand to nine hundred thousand in a single thigh muscle. <span class="src"><a href="https://www.sciencedirect.com/science/article/abs/pii/0022510X88901323">Lexell 1988</a></span> <span class="grade g-c">mixed</span> And here is the part that matters: adult training does not add fibers. In humans, making new muscle fibers is minimal or unproven. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">2024 review</a></span> When you "build muscle," you are enlarging the fibers you were born with, not growing new ones. Start with more fibers and your ceiling is simply higher.</p>
+
+    <figure class="viz reveal" aria-label="Two muscle cross-sections, one with many fibers and one with fewer.">
+      <figcaption>The lottery you cannot enter twice</figcaption>
+      <p class="viz-sub">A cross-section through two people's muscle. Same size today, but the one on the left was born with more fibers, so its ceiling sits higher. Training enlarges these circles. It never adds new ones.</p>
+      <svg viewBox="0 0 700 280" role="img" aria-label="Two circular muscle cross-sections side by side. The left is densely packed with many fiber circles; the right has noticeably fewer, with gaps between them.">
+        <!-- left: many fibers -->
+        <g>
+          <circle cx="170" cy="140" r="120" fill="#232a25" stroke="#cf9f78" stroke-width="2"/>
+          <g fill="#cdb89a" opacity="0.9">
+            <circle cx="120" cy="80" r="17"/><circle cx="162" cy="74" r="16"/><circle cx="205" cy="82" r="17"/><circle cx="245" cy="96" r="15"/>
+            <circle cx="98" cy="118" r="16"/><circle cx="140" cy="116" r="17"/><circle cx="182" cy="112" r="16"/><circle cx="222" cy="120" r="17"/><circle cx="258" cy="134" r="15"/>
+            <circle cx="92" cy="158" r="17"/><circle cx="134" cy="156" r="16"/><circle cx="176" cy="152" r="17"/><circle cx="218" cy="158" r="16"/><circle cx="252" cy="172" r="16"/>
+            <circle cx="108" cy="196" r="16"/><circle cx="150" cy="194" r="17"/><circle cx="192" cy="192" r="16"/><circle cx="230" cy="196" r="15"/>
+            <circle cx="140" cy="228" r="15"/><circle cx="184" cy="226" r="16"/>
+          </g>
+          <text x="170" y="276" text-anchor="middle" class="v-cap" font-size="13" fill="#cf9f78">more fibers, higher ceiling</text>
+        </g>
+        <!-- right: fewer fibers -->
+        <g>
+          <circle cx="510" cy="140" r="120" fill="#232a25" stroke="#8fb3c7" stroke-width="2"/>
+          <g fill="#9aaeb8" opacity="0.9">
+            <circle cx="470" cy="92" r="17"/><circle cx="540" cy="96" r="17"/>
+            <circle cx="448" cy="148" r="17"/><circle cx="512" cy="140" r="17"/><circle cx="572" cy="150" r="17"/>
+            <circle cx="478" cy="200" r="17"/><circle cx="548" cy="196" r="17"/>
+          </g>
+          <text x="510" y="276" text-anchor="middle" class="v-cap" font-size="13" fill="#8fb3c7">fewer fibers, lower ceiling</text>
+        </g>
+      </svg>
+      <p class="viz-note"><b>This is not a reason to despair.</b> It is a reason to stop comparing. The person next to you may have been dealt twice the fibers. Your job is to fill out the hand you were dealt, not theirs.</p>
+    </figure>
+
+    <h3>Fast and slow: the other genetic dial</h3>
+    <p>Your fibers also come in types: slow, fatigue-resistant ones built for endurance, and fast, powerful ones built for force. The mix is largely inherited, and the spread between people is enormous. Elite sprinters can be around 80 percent fast fibers; elite distance runners up to 90 percent slow. <span class="src"><a href="https://www.sciencedirect.com/science/article/abs/pii/B9780128161937000142">fiber-type review</a></span> <span class="grade g-c">mixed</span> About half of that variation is genetic, traceable in part to specific genes like ACTN3, the so-called "sprint gene." <span class="src"><a href="https://journals.physiology.org/doi/full/10.1152/physiolgenomics.00173.2007">Vincent 2007</a></span></p>
+
+    <figure class="viz reveal scrollx" aria-label="Fiber-type makeup of a sprinter, an average person, and an endurance athlete.">
+      <figcaption>Why some people are just built to be powerful</figcaption>
+      <svg viewBox="0 0 700 220" role="img" aria-label="Stacked bars showing a sprinter is about 80 percent fast fibers, an average person roughly half and half, and an endurance athlete about 80 percent slow fibers.">
+        <g font-family="var(--font-body)">
+          <text x="150" y="50" text-anchor="end" class="v-label" font-size="13">Sprinter</text>
+          <rect class="grow-b" x="160" y="32" width="384" height="30" fill="#e98e7f" style="transform-box:fill-box;transform-origin:left"/>
+          <rect class="grow-b" x="544" y="32" width="96" height="30" fill="#8fb3c7" style="transform-box:fill-box;transform-origin:left"/>
+
+          <text x="150" y="110" text-anchor="end" class="v-label" font-size="13">Average</text>
+          <rect class="grow-b" x="160" y="92" width="245" height="30" fill="#e98e7f" style="transform-box:fill-box;transform-origin:left"/>
+          <rect class="grow-b" x="405" y="92" width="235" height="30" fill="#8fb3c7" style="transform-box:fill-box;transform-origin:left"/>
+
+          <text x="150" y="170" text-anchor="end" class="v-label" font-size="13">Endurance</text>
+          <rect class="grow-b" x="160" y="152" width="96" height="30" fill="#e98e7f" style="transform-box:fill-box;transform-origin:left"/>
+          <rect class="grow-b" x="256" y="152" width="384" height="30" fill="#8fb3c7" style="transform-box:fill-box;transform-origin:left"/>
+        </g>
+        <g font-size="12" font-family="var(--font-mono)">
+          <rect x="160" y="196" width="14" height="14" fill="#e98e7f"/><text x="182" y="207" fill="#B8B2A2">fast (power)</text>
+          <rect x="320" y="196" width="14" height="14" fill="#8fb3c7"/><text x="342" y="207" fill="#B8B2A2">slow (endurance)</text>
+        </g>
+      </svg>
+      <p class="viz-note">You can shift this mix a little with training, but you cannot rewrite it. Some people really were born to lift heavy, and others to run far.</p>
+    </figure>
+
+    <h3>The brake, and the people born without it</h3>
+    <p>Muscle has a built-in brake: a protein called myostatin that actively limits how big you get. Break that gene and the limit comes off, which produces some of the most striking creatures in biology. A boy born in 2004 with two broken copies was extraordinarily muscular from birth. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa040933">Schuelke 2004</a></span> The grotesquely muscled Belgian Blue cattle carry the same kind of mutation. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9314496/">McPherron 1997</a></span> So do "bully whippets," and remarkably, whippets with just <em>one</em> broken copy are more muscular and race significantly faster. <span class="src"><a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0030079">Mosher 2007</a></span> <span class="grade g-c">mixed</span></p>
+
+    <p>Most of us carry two working copies and a fully engaged brake. The natural genetic ceiling on muscle is real, and you cannot file it off.</p>
+
+    <p>How much of all this is genetic? Studies of twins put the heritability of lean body mass and strength somewhere around <strong>50 to 80 percent</strong>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">Arden 1997</a></span> <span class="grade g-b">good</span> Your genes hold a lot of the cards.</p>
+
+    <div class="balance-note"><b>But read the hopeful half of that number.</b> Genes set your ceiling and your speed, not whether training works at all. Almost everyone gets stronger, healthier, and better-built by lifting; the high responders just get there faster and end up higher. The health benefits, the brain benefits, the strength to carry your own life, those are available to every genotype. The only thing genes really steal from you is the right to compare yourself to anyone else.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 14. GAIN VS LOSS ===================== -->
+  <section id="gainloss" class="sec" aria-labelledby="gainloss-h">
+    <span class="sec-kicker">The limits and the balance</span>
+    <h2 id="gainloss-h" class="sec-h">Easy come, easy go (mostly go)</h2>
+
+    <p class="lede">Building muscle is slow. Losing it is fast. That asymmetry sounds cruel, and people use it to justify never missing a workout, but the full picture is far more forgiving than the gym-bro panic suggests, because your muscle keeps a permanent record of having been big before. Once you have built it, you never quite start from zero again.</p>
+
+    <p>First, the sobering side. With <em>complete</em> immobilization, a cast or a hospital bed, you can lose muscle at around <strong>half a percent of its mass per day</strong> early on, and, strangely, your strength drains about four times faster than your size does. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> <span class="grade g-b">good</span> But normal life is nothing like a hospital bed. Just stopping training for a couple of weeks barely touches your strength; real declines only show up after three or four weeks off. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">Mujika 2000</a></span> A vacation will not undo your year.</p>
+
+    <figure class="viz reveal" aria-label="A timeline showing muscle built slowly, lost faster, then regained fastest.">
+      <figcaption>Built slow, lost fast, regained fastest</figcaption>
+      <p class="viz-sub">The same muscle over two years: a long climb, a layoff that drops it faster than it rose, then a return that snaps back far quicker than the first time. The brain of the muscle, its extra nuclei, never left.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="Muscle rises slowly over the first year, falls more steeply during a three-month layoff, then climbs back to its old peak much faster than the original build once training resumes.">
+        <line x1="55" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <line x1="55" y1="40" x2="55" y2="250" class="v-grid-s"/>
+        <g class="v-axis">
+          <text x="55" y="270" text-anchor="middle">start</text>
+          <text x="300" y="270" text-anchor="middle">1 yr</text>
+          <text x="420" y="270" text-anchor="middle">layoff</text>
+          <text x="600" y="270" text-anchor="middle">return</text>
+        </g>
+        <text x="46" y="50" text-anchor="end" class="v-axis-t">muscle</text>
+        <!-- retained myonuclei floor -->
+        <line x1="300" y1="95" x2="660" y2="95" stroke="#b79bc4" stroke-width="1.5" stroke-dasharray="3 6"/>
+        <text x="655" y="86" text-anchor="end" class="v-axis-t" fill="#b79bc4">the nuclei stay (muscle memory)</text>
+        <!-- build: slow rise 55->300 -->
+        <path class="draw" style="--len:360" d="M55 240 C 150 215 230 130 300 92" fill="none" stroke="#9ec79a" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- loss: faster drop 300->420 -->
+        <path class="draw" style="--len:200" d="M300 92 C 350 110 390 150 430 175" fill="none" stroke="#e98e7f" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- regain: fast rise 430->600 back to peak -->
+        <path class="draw" style="--len:240" d="M430 175 C 490 120 545 98 600 92" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="300" cy="92" r="4" fill="#9ec79a"/>
+        <circle cx="600" cy="92" r="4" fill="#D4C4A0"/>
+        <text x="175" y="150" class="v-axis-t" fill="#9ec79a">slow build</text>
+        <text x="360" y="205" class="v-axis-t" fill="#e98e7f">faster loss</text>
+        <text x="505" y="150" class="v-axis-t" fill="#D4C4A0">fastest regain</text>
+      </svg>
+      <p class="viz-note">When a muscle grows, it gains permanent control centers called myonuclei, and a DNA-level memory of having been trained. Neither is lost when the muscle shrinks, which is why coming back is so much faster than starting out. <span class="src"><a href="https://www.pnas.org/doi/10.1073/pnas.0913935107">Bruusgaard 2010</a></span> <span class="src"><a href="https://www.nature.com/articles/s41598-018-20287-3">Seaborne 2018</a></span></p>
+    </figure>
+
+    <h3>What this means for you</h3>
+    <ul>
+      <li><strong>Missing a week or two is genuinely nothing.</strong> Illness, travel, a busy stretch at work: your muscle barely notices. Do not torch your sleep or your sanity to avoid a missed session.</li>
+      <li><strong>Coming back is not starting over.</strong> Whatever you built once comes back faster the second time, thanks to those retained nuclei. The hardest muscle you will ever build is the muscle you have never built before.</li>
+      <li><strong>The clock you cannot ignore is age.</strong> After about 50, muscle quietly slips away at roughly 1 to 2 percent a year, and strength faster still. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">von Haehling 2010</a></span> <span class="grade g-b">good</span> Lifting is the one proven brake. The muscle you bank in your thirties and forties is a deposit against the decades when your body starts trying to spend it.</li>
+    </ul>
+
+    <div class="balance-note"><b>The reassuring math of consistency.</b> Because losses are slow in normal life and regains are fast, you do not need to be perfect, you need to be persistent. A lifter who trains hard most weeks for ten years, with all the missed sessions real life demands, will end up far ahead of one who trains flawlessly for six months and quits. Show up most of the time, for a long time. That is the entire secret.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 15. DIMINISHING RETURNS ===================== -->
+  <section id="returns" class="sec" aria-labelledby="returns-h">
+    <span class="sec-kicker">The limits and the balance</span>
+    <h2 id="returns-h" class="sec-h">Diminishing returns, and the art of enough</h2>
+
+    <p class="lede">This is the most important chapter in the guide, and it is the one the fitness industry least wants you to read, because its entire business depends on selling you the part of the curve that barely moves. Here is the idea in a sentence: your first year of training can build as much muscle as the next four or five combined, and the closer you get to your genetic ceiling, the more obscenely expensive each additional pound becomes. The "maximum" you can reach is real, but the last stretch of the way there costs so much time, effort, and health that, for almost everyone, the smart target is not the maximum at all.</p>
+
+    <h3>The taper is brutal, and it is normal</h3>
+    <p>Every serious coaching model agrees on the shape, even if the exact numbers vary. A natural male lifter might gain something like 20 to 25 pounds of muscle in year one, then 10 to 12 in year two, 5 to 6 in year three, and just 2 to 3 in year four, before it slows to a trickle. <span class="src"><a href="https://bodyrecomposition.com/muscle-gain/genetic-muscular-potential">McDonald</a></span> <span class="src"><a href="https://alanaragon.com/wp-content/uploads/2018/01/A.A.R.R_Feb..2009.pdf">Aragon 2009</a></span> <span class="grade g-c">mixed</span> (Women gain at roughly half these rates, on the same curve.) The total natural ceiling, measured as a fat-free mass index, sits around 25 for men, a line that drug-free athletes essentially never cross. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">Kouri 1995</a></span></p>
+
+    <figure class="viz reveal" aria-label="Muscle gained per year falls steeply after the first year.">
+      <figcaption>The first year is a gift. It never comes again.</figcaption>
+      <p class="viz-sub">Approximate muscle gained each year by a natural male lifter doing everything right. The bars fall off a cliff, and no supplement, program, or amount of trying flattens that fall.</p>
+      <svg viewBox="0 0 700 280" role="img" aria-label="Bars of muscle gained per year: about 22 pounds in year one, 11 in year two, 5.5 in year three, 2.5 in year four, and 1.5 in year five.">
+        <line x1="60" y1="240" x2="660" y2="240" class="v-grid-s"/>
+        <text x="50" y="80" text-anchor="end" class="v-axis-t">lb of</text>
+        <text x="50" y="94" text-anchor="end" class="v-axis-t">muscle</text>
+        <!-- bars: scale 8px/lb, baseline 240 -->
+        <g>
+          <rect class="grow-v" x="90" y="64" width="80" height="176" rx="4" fill="#9ec79a" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="130" y="54" text-anchor="middle" class="v-mono" font-size="13" fill="#9ec79a">~22</text>
+          <text x="130" y="262" text-anchor="middle" class="v-axis">Year 1</text>
+        </g>
+        <g>
+          <rect class="grow-v" x="210" y="152" width="80" height="88" rx="4" fill="#D4C4A0" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="250" y="142" text-anchor="middle" class="v-mono" font-size="13" fill="#D4C4A0">~11</text>
+          <text x="250" y="262" text-anchor="middle" class="v-axis">Year 2</text>
+        </g>
+        <g>
+          <rect class="grow-v" x="330" y="196" width="80" height="44" rx="4" fill="#e6c074" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="370" y="186" text-anchor="middle" class="v-mono" font-size="13" fill="#e6c074">~5.5</text>
+          <text x="370" y="262" text-anchor="middle" class="v-axis">Year 3</text>
+        </g>
+        <g>
+          <rect class="grow-v" x="450" y="220" width="80" height="20" rx="4" fill="#cf9f78" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="490" y="210" text-anchor="middle" class="v-mono" font-size="13" fill="#cf9f78">~2.5</text>
+          <text x="490" y="262" text-anchor="middle" class="v-axis">Year 4</text>
+        </g>
+        <g>
+          <rect class="grow-v" x="570" y="228" width="80" height="12" rx="4" fill="#e98e7f" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="610" y="218" text-anchor="middle" class="v-mono" font-size="13" fill="#e98e7f">~1.5</text>
+          <text x="610" y="262" text-anchor="middle" class="v-axis">Year 5+</text>
+        </g>
+      </svg>
+      <p class="viz-note">This is not a sign you are doing something wrong. It is the shape of the thing. Lifters who do not understand it quit in year three, convinced they are "broken," when they are simply standing on the flat part of a curve they were never told about.</p>
+    </figure>
+
+    <h3>Play with the curve yourself</h3>
+    <p>Drag the slider to pick how close to your genetic ceiling you want to chase, and watch what it costs. The lesson lands faster when you feel it: the line is generous early and merciless late.</p>
+
+    <div class="tool" id="returns-tool">
+      <div class="tool-head"><h4>The cost of the last few percent</h4><span class="tool-tag">drag me</span></div>
+      <div class="tool-body">
+        <div class="tool-row">
+          <label for="dr-slider">Chase this much of your potential:</label>
+          <input type="range" id="dr-slider" min="50" max="99" value="90" step="1">
+          <span class="val" id="dr-pct">90%</span>
+        </div>
+        <svg viewBox="0 0 700 290" role="img" aria-label="An interactive curve of percent of genetic potential against years of training, with a marker you move along it.">
+          <line x1="70" y1="250" x2="660" y2="250" class="v-grid-s"/>
+          <line x1="70" y1="50" x2="70" y2="250" class="v-grid-s"/>
+          <g class="v-axis">
+            <text x="70" y="268" text-anchor="middle">0</text>
+            <text x="212" y="268" text-anchor="middle">2</text>
+            <text x="355" y="268" text-anchor="middle">4</text>
+            <text x="497" y="268" text-anchor="middle">6</text>
+            <text x="640" y="268" text-anchor="middle">8 yrs</text>
+            <text x="365" y="286" text-anchor="middle" fill="#B8B2A2">years of dedicated training</text>
+          </g>
+          <text x="62" y="56" text-anchor="end" class="v-axis-t">% of</text>
+          <text x="62" y="70" text-anchor="end" class="v-axis-t">ceiling</text>
+          <!-- 90% reference -->
+          <line x1="70" y1="70" x2="660" y2="70" stroke="#9ec79a" stroke-width="1" stroke-dasharray="3 6" opacity="0.5"/>
+          <text x="80" y="64" class="v-axis-t" fill="#9ec79a">90% line</text>
+          <!-- the potential curve (precomputed: f=1-e^(-yr/1.1)) -->
+          <path d="M70 250 L105.6 177 L141.3 131 L176.9 101 L212.5 82 L248.1 70 L283.8 63 L355 55 L426.3 52 L497.5 51 L640 50" fill="none" stroke="#D4C4A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- movable marker -->
+          <line id="dr-vline" x1="248" y1="70" x2="248" y2="250" stroke="#e6c074" stroke-width="1.5" stroke-dasharray="2 5"/>
+          <circle id="dr-dot" cx="248" cy="70" r="7" fill="#e6c074" stroke="#1e2420" stroke-width="2"/>
+        </svg>
+        <div class="tool-out">
+          <div><span class="big" id="dr-years">2.5 years</span> <span class="lbl">of dedicated, near-perfect training to get there</span></div>
+          <div class="tool-rail" id="dr-verdict">Stopping at 90 percent gets you nearly all the muscle for a fraction of the lifetime cost.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Why "big enough" beats "maximum"</h3>
+    <p>Put the pieces together and the case makes itself. The first chunk of progress is cheap and fast. The last chunk is slow, expensive, and, as the <a href="#toomuch">next chapter</a> shows, sometimes actively bad for you. Getting to <strong>90 percent of your potential</strong> takes a few focused years of training you would want to do anyway. Squeezing out the final 10 percent can take as long again, demands a level of dietary precision and training volume that bleeds into the rest of your life, and yields a difference most people will never consciously notice.</p>
+
+    <p>That trade is genuinely worth it for a competitive athlete, whose living depends on the last percent. For nearly everyone else, the honest answer is that the practical maximum, the point worth aiming at, sits comfortably below the absolute one. You get to be strong, lean, capable, and visibly built, and you get your evenings, your joints, and your peace of mind back. That point, where the curve goes flat and the cost goes vertical, is what this whole guide means by <em>big enough</em>.</p>
+
+    <p class="pullquote">The maximum is for people who are paid to reach it. Everyone else is better served by the place where the line goes flat.<cite>The whole argument, in one sentence</cite></p>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 16. WHEN BIG GOES WRONG ===================== -->
+  <section id="toomuch" class="sec" aria-labelledby="toomuch-h">
+    <span class="sec-kicker">The limits and the balance</span>
+    <h2 id="toomuch-h" class="sec-h">When big goes wrong</h2>
+
+    <p class="lede">For most of this guide, more muscle has been good news: better health, a sharper brain, a longer life. That stays true across the whole normal range. But the relationship is not a straight line forever. Push to the genetic edge and past it, almost always with drugs, and the same trait that protected you starts to take years back. The point of this chapter is not to scare you off the weights. It is to mark, honestly, where the curve turns.</p>
+
+    <p>Start with the good news, because it is the rule and the rest is the exception. Ordinary, functional muscle is strongly protective. Grip strength alone is such a good predictor of longevity that every 5 kg drop in it was tied to a <strong>16 percent higher risk of death</strong> across 140,000 people. <span class="src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(14)62000-6/abstract">Leong 2015</a></span> <span class="grade g-a">strong</span> Being strong is one of the best bets you can make.</p>
+
+    <figure class="viz reveal" aria-label="A J-shaped curve of mortality risk against muscularity.">
+      <figcaption>The curve turns at the extreme</figcaption>
+      <p class="viz-sub">Risk of death is high when you are frail, drops to its lowest when you are strong and healthy, and the protection comes from function and strength, not sheer bulk. At the drug-fueled extreme, the line starts climbing again.</p>
+      <svg viewBox="0 0 700 290" role="img" aria-label="Mortality risk is high for frail people, falls to a broad minimum for strong healthy people, then rises again at the extreme bodybuilder end of the scale, forming a J shape.">
+        <line x1="60" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <line x1="60" y1="40" x2="60" y2="250" class="v-grid-s"/>
+        <text x="52" y="50" text-anchor="end" class="v-axis-t">risk of</text>
+        <text x="52" y="64" text-anchor="end" class="v-axis-t">death</text>
+        <text x="360" y="284" text-anchor="middle" class="v-axis" fill="#B8B2A2">frail &#8592;&#160;&#160;&#160;muscularity and strength&#160;&#160;&#160;&#8594; extreme</text>
+        <!-- healthy band -->
+        <rect x="250" y="40" width="230" height="210" fill="#9ec79a" opacity="0.07"/>
+        <!-- J curve -->
+        <path class="draw" style="--len:780" d="M70 70 C 130 200 220 222 360 222 C 470 222 560 205 640 120" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="360" cy="222" r="5" fill="#9ec79a"/>
+        <text x="100" y="105" class="v-axis-t" fill="#e98e7f">frail / sarcopenic</text>
+        <text x="365" y="212" text-anchor="middle" class="v-axis-t" fill="#9ec79a">strong and healthy (lowest risk)</text>
+        <text x="610" y="100" text-anchor="end" class="v-axis-t" fill="#e98e7f">drug-fueled extreme</text>
+      </svg>
+      <p class="viz-note">Muscle-strengthening activity follows the same J: about 30 to 60 minutes a week is tied to 10 to 20 percent lower mortality, and the benefit flattens, with a hint of reversal, past about an hour a week. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">Momma 2022</a></span> More is not endlessly better.</p>
+    </figure>
+
+    <h3>The far end of the scale</h3>
+    <p>The bodies at the very edge of human muscularity, professional bodybuilders, are not a picture of health, and the numbers are sobering. In a study of more than 20,000 male competitors, professionals had over <strong>five times</strong> the death rate of amateurs, and their rate of sudden cardiac death was more than fourteen times higher. Among the elite "open" class, 7 percent died during the study window, several from cardiac arrest at an average age of just 36. <span class="src"><a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">Vecchiato 2025</a></span> <span class="grade g-b">good</span></p>
+
+    <div class="stat-row">
+      <div class="stat rose"><span class="fig">5&#215;</span><span class="fig-lbl">the death rate of pro bodybuilders versus amateurs</span></div>
+      <div class="stat rose"><span class="fig">14&#215;</span><span class="fig-lbl">their rate of sudden cardiac death</span></div>
+      <div class="stat amber"><span class="fig">36</span><span class="fig-lbl">average age at sudden cardiac death among the elite class</span></div>
+    </div>
+
+    <p>What goes wrong is mostly the heart. Carrying that much mass, almost always with the help of anabolic steroids, thickens the heart's walls in a way that is the opposite of the healthy "athlete's heart." An autopsy series of bodybuilders who died young found hearts averaging <strong>575 grams against a normal 330</strong>, every one of them with thickened walls. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">Escalante 2022</a></span> <span class="grade g-c">mixed</span> Layered on top is the contest-prep ritual of deliberate dehydration and diuretics to look "dry" on stage, which has killed competitors outright through heart-stopping electrolyte crashes.</p>
+
+    <p>Two honest clarifications so this lands as truth and not a scare:</p>
+    <ul>
+      <li><strong>This is the drug end of the spectrum, not the natural one.</strong> The lethal risks cluster around anabolic steroid use, extreme size, and acute contest practices, none of which the program in this guide involves or requires.</li>
+      <li><strong>High protein does not wreck normal kidneys.</strong> In people with healthy kidneys, even a lot of protein is fine; the real risk is specific to those who already have kidney disease. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4031217/">2014 meta-analysis</a></span> <span class="grade g-b">good</span></li>
+    </ul>
+
+    <div class="balance-note"><b>The dark mirror of diminishing returns.</b> The last chapter showed that the final 10 percent of size costs twice the effort. This one shows the rest of the bill: past the natural ceiling, more muscle stops buying health and starts selling it back. The protective sweet spot, strong, lean, functional, is the same "big enough" you reach naturally. The bodies that go further are not winning a longevity contest. They are quietly losing one.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 17. THE FRONTIER ===================== -->
+  <section id="frontier" class="sec" aria-labelledby="frontier-h">
+    <span class="sec-kicker">The limits and the balance</span>
+    <h2 id="frontier-h" class="sec-h">Nobody has run this experiment yet</h2>
+
+    <p class="lede">Here is a strange thing to sit with. The specific approach this guide describes, a natural lifter using modern training science, a dialed-in protein target, and lifelong creatine to extract close to their genetic maximum, is genuinely new. Not new like a fad. New like the data does not exist yet. The people doing it have not finished doing it, because they are not old enough.</p>
+
+    <p>Almost everything load-bearing in this guide was settled in the last fifteen years. The dose-response of training volume, the protein ceiling, the case for lengthened-range training, the surprising brain effects of creatine, all of it is recent, and some of it is from the last couple of years.</p>
+
+    <figure class="viz reveal scrollx" aria-label="A timeline showing most of the key findings are very recent.">
+      <figcaption>How recently we learned all this</figcaption>
+      <p class="viz-sub">The science behind "optimal natural hypertrophy" is mostly younger than a teenager. The long-term study, people doing this for fifty years, cannot have results yet, because it started too recently.</p>
+      <svg viewBox="0 0 700 210" role="img" aria-label="A timeline from 2005 to 2026 marking key research findings, most clustered in the 2015 to 2026 range.">
+        <line x1="40" y1="120" x2="660" y2="120" stroke="#5a675c" stroke-width="2"/>
+        <g class="v-axis">
+          <text x="40" y="150" text-anchor="middle">2005</text>
+          <text x="217" y="150" text-anchor="middle">2012</text>
+          <text x="394" y="150" text-anchor="middle">2018</text>
+          <text x="571" y="150" text-anchor="middle">2024</text>
+        </g>
+        <!-- scale: 2005 at x=40, ~29.5px/yr -> year y => 40+(y-2005)*29.5 -->
+        <g class="fade-el" font-family="var(--font-body)" font-size="10.5">
+          <!-- 2005 Hubal -->
+          <circle cx="40" cy="120" r="5" fill="#b79bc4"/>
+          <text x="40" y="104" text-anchor="middle" fill="#B8B2A2">responders</text>
+          <text x="40" y="92" text-anchor="middle" fill="#8b8675">2005</text>
+          <!-- 2016/17 volume + frequency -->
+          <circle cx="394" cy="120" r="5" fill="#9ec79a"/>
+          <text x="394" y="104" text-anchor="middle" fill="#B8B2A2">volume dose-response</text>
+          <text x="394" y="92" text-anchor="middle" fill="#8b8675">2017</text>
+          <!-- 2018 protein -->
+          <circle cx="424" cy="120" r="5" fill="#D4C4A0"/>
+          <text x="430" y="172" text-anchor="middle" fill="#B8B2A2">protein ceiling 2018</text>
+          <!-- 2022 lengthened -->
+          <circle cx="542" cy="120" r="5" fill="#8fb3c7"/>
+          <text x="542" y="104" text-anchor="middle" fill="#B8B2A2">train-the-stretch</text>
+          <text x="542" y="92" text-anchor="middle" fill="#8b8675">2022</text>
+          <!-- 2024 creatine brain -->
+          <circle cx="601" cy="120" r="5" fill="#e6c074"/>
+          <text x="601" y="172" text-anchor="middle" fill="#B8B2A2">creatine + brain 2024</text>
+          <!-- 2026 newest volume meta -->
+          <circle cx="660" cy="120" r="5" fill="#e98e7f"/>
+          <text x="650" y="104" text-anchor="middle" fill="#B8B2A2">newest dose data</text>
+          <text x="650" y="92" text-anchor="middle" fill="#8b8675">2026</text>
+        </g>
+      </svg>
+      <p class="viz-note">A 25-year-old who started training "optimally" the day the protein meta-analysis published will not turn 60 until the 2050s. Until then, the very long-run health story of doing this perfectly is, honestly, a blank page.</p>
+    </figure>
+
+    <h3>What that uncertainty should do to you</h3>
+    <p>It should make you a little humble, and it should push you, once again, toward the middle. We know the short and medium term extremely well: the program in this guide is safe and effective over the years and decades that have been studied. Creatine has clean safety data out to five years of daily use, which is reassuring but is not fifty. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> The further you push past the well-mapped, moderate path, toward extreme volumes, extreme leanness, extreme size, the more you are wandering off the edge of the map, into territory no long-term study has covered, because there has not been time to run one.</p>
+
+    <div class="balance-note"><b>One more vote for "enough."</b> When the long-term data does not exist, the conservative move is to stay where the evidence is solid: train hard but sanely, eat well, take your creatine, get your sun and sleep, and let the people who insist on being the experiment find out the hard way what the back half of the curve costs. Big enough is also the position of least regret.</div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== 18. THE BALANCE SHEET ===================== -->
+  <section id="balance" class="sec" aria-labelledby="balance-h">
+    <span class="sec-kicker">The limits and the balance</span>
+    <h2 id="balance-h" class="sec-h">The balance sheet</h2>
+
+    <p class="lede">If you read only one chapter, read this one, because it is the point of all the others. Every lever in this guide does the same thing: it works wonderfully up to a point, and then it quietly stops, or turns on you. The skill that actually builds a good, lasting body is not the willingness to push every lever to the wall. It is the judgment to know where each one goes flat, and the discipline to stop there and go live your life.</p>
+
+    <p>Here is the whole guide on one balance sheet. The left column is what the evidence says to do. The right column is the trap on the far side of it, the place where more becomes worse.</p>
+
+    <figure class="viz reveal" aria-label="A table of each lever's sweet spot versus its trap.">
+      <figcaption>Where every lever goes flat</figcaption>
+      <div class="prog-wrap"><table class="prog">
+        <thead><tr><th>Lever</th><th>The sweet spot</th><th>The trap past it</th></tr></thead>
+        <tbody>
+          <tr><td>Training volume</td><td>10 to 20 hard sets per muscle a week</td><td>junk volume: fatigue with no extra muscle</td></tr>
+          <tr><td>Effort</td><td>1 to 3 reps left in reserve</td><td>failure every set: more fatigue, no more growth</td></tr>
+          <tr><td>Protein</td><td>about 1.6 g per kg a day</td><td>more does nothing but cost money</td></tr>
+          <tr><td>Calories</td><td>a 200 to 500 surplus</td><td>a dirty bulk: mostly fat to diet off later</td></tr>
+          <tr><td>Cardio</td><td>a few moderate sessions a week</td><td>excess endurance blunts your gains</td></tr>
+          <tr><td>Sun</td><td>10 to 30 minutes on skin</td><td>a burn: cancer risk, no extra vitamin D</td></tr>
+          <tr><td>Load progression</td><td>small, patient jumps</td><td>ego loading: tendons and joints pay</td></tr>
+          <tr><td>Total size</td><td>near your natural ceiling</td><td>past it (with drugs): health goes backward</td></tr>
+        </tbody>
+      </table></div>
+      <p class="viz-note">Eight levers, one shape. Generous at first, flat in the middle, costly at the end. Learn to read that shape and you have learned the whole game.</p>
+    </figure>
+
+    <p>The body you are actually after is probably closer than you think, and cheaper. A few focused years of honest training, real food, enough sleep, a little sun, and a few grams of cheap white powder will carry almost anyone to a place that is strong, capable, visibly built, and genuinely healthier in body and mind. That place is most of the way up the mountain, and the view from there is nearly identical to the summit, for a fraction of the price, and without the thin air at the top that, it turns out, is not very good for you.</p>
+
+    <p>So train hard, but not endlessly. Eat well, but not obsessively. Take the one supplement that earns it, skip the aisle that does not, get some sun, sleep, and be patient. Build a body that serves the rest of your life instead of consuming it. Get strong. Get healthy. Get sharp. And then, the bravest move in all of fitness, decide that you are big enough, and go enjoy it.</p>
+
+    <p class="pullquote">Most of the mountain, none of the thin air at the top. That is the deal, and it is a good one.<cite>Big Enough</cite></p>
+
+    <div class="disclaimer" role="note">
+      <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your history, your heart, or your joints. Talk to a physician before starting creatine, a new diet, or a serious training program, especially if you have any kidney, heart, or metabolic condition. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
+    </div>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== SOURCES ===================== -->
+  <section id="sources" class="sec">
+    <span class="sec-kicker">The fine print</span>
+    <h2 class="sec-h">Sources, and how to read them</h2>
+    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. This is the full list, with the strongest evidence first within each topic. Where the research is one study, or mixed, or still moving, the text says so.</p>
+    <div class="legend">
+      <span><span class="grade g-a">strong</span> meta-analyses or many trials agreeing</span>
+      <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
+      <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
+      <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
+    </div>
+    <h3>Creatine</h3>
+    <ol>
+      <li><b>Gordji-Nejad A, et al. (2024).</b> Single dose creatine improves cognition in sleep deprivation. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-024-54249-9">nature.com</a></li>
+      <li><b>Kreider RB, et al. (2017).</b> ISSN position stand: safety and efficacy of creatine. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">PMC5469049</a></li>
+      <li><b>Antonio J, et al. (2021).</b> Common questions and misconceptions about creatine. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">PMC7871530</a></li>
+      <li><b>Kazeminasab F, et al. (2025).</b> Creatine, strength and power: meta-analysis. <i>Nutrients</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">PMC12430374</a></li>
+      <li><b>Burke R, et al. (2023).</b> Creatine and regional hypertrophy: meta-analysis. <i>Nutrients</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">PMC10180745</a></li>
+      <li><b>Chilibeck PD, et al. (2017).</b> Creatine and lean mass in older adults. <i>Open Access J Sports Med</i>. <a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">OAJSM.S123529</a></li>
+      <li><b>Olsen S, et al. (2006).</b> Creatine, satellite cells and myonuclei. <i>J Physiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1779717/">PMC1779717</a></li>
+      <li><b>Avgerinos KI, et al. (2018).</b> Creatine and cognition: meta-analysis. <i>Exp Gerontology</i>. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0531556518300263">ScienceDirect</a></li>
+      <li><b>Roschel H, et al. (2021).</b> Creatine and the brain. <i>Nutrients</i>. <a href="https://www.mdpi.com/2072-6643/13/2/586">MDPI</a></li>
+      <li><b>Lak M, et al. (2025).</b> Creatine and hair / DHT: 12-week RCT. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">PMC12020143</a></li>
+      <li><b>Syrotuik DG, Bell GJ (2004).</b> Responders vs non-responders to creatine. <i>J Strength Cond Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">PubMed</a></li>
+      <li><b>Creatine and depression (2025).</b> Meta-analysis. <i>British Journal of Nutrition</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41189312/">PubMed</a></li>
+    </ol>
+
+    <h3>How muscle grows, and how to train</h3>
+    <ol start="13">
+      <li><b>Wackerhage H, et al. (2019).</b> Stimuli and sensors that initiate hypertrophy. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, Ogborn D, Krieger JW (2017).</b> Volume dose-response: meta-analysis. <i>J Sports Sci</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, et al. (2019).</b> Volume (1 vs 3 vs 5 sets) in trained men. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">PubMed</a></li>
+      <li><b>Pelland JC, et al. (2026).</b> Volume and frequency dose-response meta-regression. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, et al. (2017).</b> Low- vs high-load training: meta-analysis. <i>J Strength Cond Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">PubMed</a></li>
+      <li><b>Refalo MC, et al. (2022).</b> Proximity to failure and hypertrophy. <i>Sports Medicine</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">PMC9935748</a></li>
+      <li><b>Grgic J, et al. (2022).</b> Training to failure or not: meta-analysis. <i>J Sport Health Sci</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/33555822/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, et al. (2016).</b> Training frequency: meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, et al. (2016).</b> Rest intervals and hypertrophy. <i>J Strength Cond Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, et al. (2017).</b> Concentric vs eccentric actions. <i>J Strength Cond Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28486337/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, Aragon AA, Krieger JW (2013).</b> Protein timing ("anabolic window"). <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">PMC3879660</a></li>
+      <li><b>Lamon S, et al. (2021).</b> Sleep deprivation and muscle protein synthesis. <i>Physiol Reports</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">PMC7785053</a></li>
+      <li><b>Bernardez-Vazquez R, et al. (2022).</b> Hypertrophy variables: umbrella review. <i>Front Sports Act Living</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">PMC9302196</a></li>
+      <li><b>Schoenfeld BJ (2020).</b> <i>Science and Development of Muscle Hypertrophy</i>, 2nd ed. Human Kinetics. <a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">publisher</a></li>
+    </ol>
+
+    <h3>Genetics, responders, and diminishing returns</h3>
+    <ol start="27">
+      <li><b>Hubal MJ, et al. (2005).</b> Variability in response to resistance training. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">PubMed</a></li>
+      <li><b>Petrella JK, et al. (2008).</b> Extreme, modest and non-responders. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">PubMed</a></li>
+      <li><b>Lexell J, et al. (1988).</b> Whole-muscle fiber number and aging. <i>J Neurol Sci</i>. <a href="https://www.sciencedirect.com/science/article/abs/pii/0022510X88901323">ScienceDirect</a></li>
+      <li><b>Hyperplasia in humans (2024).</b> Systematic review and meta-analysis. <i>PubMed</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">PubMed</a></li>
+      <li><b>Vincent B, et al. (2007).</b> ACTN3 and fiber-type distribution. <i>Physiol Genomics</i>. <a href="https://journals.physiology.org/doi/full/10.1152/physiolgenomics.00173.2007">journal</a></li>
+      <li><b>Arden NK, Spector TD (1997).</b> Heritability of lean mass and strength (twins). <i>J Bone Miner Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">PubMed</a></li>
+      <li><b>Schuelke M, et al. (2004).</b> Myostatin mutation and muscle hypertrophy in a child. <i>N Engl J Med</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa040933">NEJM</a></li>
+      <li><b>McPherron AC, Lee SJ (1997).</b> Myostatin in double-muscled cattle. <i>PNAS</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/9314496/">PubMed</a></li>
+      <li><b>Mosher DS, et al. (2007).</b> Myostatin and racing performance in whippets. <i>PLoS Genetics</i>. <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0030079">PLoS</a></li>
+      <li><b>Kouri EM, et al. (1995).</b> Fat-free mass index in steroid users and nonusers. <i>Clin J Sport Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">PubMed</a></li>
+      <li><b>McDonald L.</b> Genetic muscular potential. <i>bodyrecomposition.com</i>. <a href="https://bodyrecomposition.com/muscle-gain/genetic-muscular-potential">link</a></li>
+      <li><b>Aragon A (2009).</b> How much muscle can you gain? <i>AARR</i>. <a href="https://alanaragon.com/wp-content/uploads/2018/01/A.A.R.R_Feb..2009.pdf">PDF</a></li>
+    </ol>
+
+    <h3>Loss, tendons, stretching, cardio</h3>
+    <ol start="39">
+      <li><b>Marusic U, et al. (2021).</b> Muscle loss and strength loss in bed rest. <i>J Appl Physiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">PMC8325614</a></li>
+      <li><b>Mujika I, Padilla S (2000).</b> Detraining. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">PubMed</a></li>
+      <li><b>Bruusgaard JC, et al. (2010).</b> Myonuclei and muscle memory. <i>PNAS</i>. <a href="https://www.pnas.org/doi/10.1073/pnas.0913935107">PNAS</a></li>
+      <li><b>Seaborne RA, et al. (2018).</b> Epigenetic muscle memory. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-018-20287-3">nature.com</a></li>
+      <li><b>von Haehling S, et al. (2010).</b> Sarcopenia. <i>J Cachexia Sarcopenia Muscle</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">PMC3060646</a></li>
+      <li><b>Heinemeier KM, et al. (2013).</b> Achilles collagen turnover (carbon-14). <i>PNAS</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3633810/">PMC3633810</a></li>
+      <li><b>Beyer R, et al. (2015).</b> Heavy slow resistance for tendinopathy. <i>Am J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26018970/">PubMed</a></li>
+      <li><b>Rio E, et al. (2015).</b> Isometrics and tendon pain. <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/25979840/">PubMed</a></li>
+      <li><b>Small K, et al. (2008).</b> Static stretching and injury prevention. <i>Res Sports Med</i>. <a href="https://www.tandfonline.com/doi/full/10.1080/15438620802310784">link</a></li>
+      <li><b>Kay AD, Blazevich AJ (2012).</b> Acute effect of static stretch on force. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21659901/">PubMed</a></li>
+      <li><b>Behm DG, et al. (2016).</b> Acute effects of stretching: systematic review. <i>Appl Physiol Nutr Metab</i>. <a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">link</a></li>
+      <li><b>Pedrosa GF, et al. (2022).</b> Long-length (lengthened) training and growth. <i>Eur J Sport Sci</i>. <a href="https://onlinelibrary.wiley.com/doi/10.1080/17461391.2021.1927199">link</a></li>
+      <li><b>Kassiano W, et al. (2023).</b> Range of motion and hypertrophy. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">PubMed</a></li>
+      <li><b>Mandsager K, et al. (2018).</b> Cardiorespiratory fitness and mortality. <i>JAMA Netw Open</i>. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">JAMA</a></li>
+      <li><b>Wen CP, et al. (2011).</b> 15 minutes a day and mortality. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">PubMed</a></li>
+      <li><b>Wilson JM, et al. (2012).</b> Concurrent training interference: meta-analysis. <i>J Strength Cond Res</i>. <a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training__a_meta_analysis_examining.35.aspx">link</a></li>
+    </ol>
+
+    <h3>The brain, and the unhealthy extreme</h3>
+    <ol start="55">
+      <li><b>Erickson KI, et al. (2011).</b> Exercise increases hippocampal volume. <i>PNAS</i>. <a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">PNAS</a></li>
+      <li><b>Szuhany KL, et al. (2015).</b> Exercise and BDNF: meta-analysis. <i>J Psychiatr Res</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4314337/">PMC4314337</a></li>
+      <li><b>Acute exercise and cognition (2024).</b> Bayesian meta-analysis. <i>Communications Psychology</i>. <a href="https://www.nature.com/articles/s44271-024-00124-2">nature.com</a></li>
+      <li><b>Singh B, et al. (2023).</b> Physical activity for depression/anxiety: umbrella review. <i>Br J Sports Med</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">PMC10579187</a></li>
+      <li><b>SMART trial (Mavros Y, et al.).</b> Resistance training and cognition. <i>BMC Geriatrics / JAGS</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3110111/">PMC3110111</a></li>
+      <li><b>Broadhouse KM, et al. (2024).</b> Resistance training protects the hippocampus. <i>GeroScience</i>. <a href="https://link.springer.com/article/10.1007/s11357-024-01483-8">Springer</a></li>
+      <li><b>Leong DP, et al. (2015).</b> Grip strength and mortality (PURE). <i>The Lancet</i>. <a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(14)62000-6/abstract">Lancet</a></li>
+      <li><b>Momma H, et al. (2022).</b> Muscle-strengthening activity and mortality. <i>Br J Sports Med</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">PMC9209691</a></li>
+      <li><b>Vecchiato M, et al. (2025).</b> Mortality in competitive bodybuilders. <i>Eur Heart J</i>. <a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">EHJ</a></li>
+      <li><b>Escalante G, et al. (2022).</b> Cardiac findings in deceased bodybuilders. <i>J Funct Morphol Kinesiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">PMC9781327</a></li>
+      <li><b>High protein and kidney function (2014).</b> Meta-analysis in people without CKD. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4031217/">PMC4031217</a></li>
+    </ol>
+
+    <h3>Food, sun, timing, caffeine</h3>
+    <ol start="66">
+      <li><b>Morton RW, et al. (2018).</b> Protein supplementation: meta-analysis (1.6 g/kg). <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">PubMed</a></li>
+      <li><b>Schoenfeld BJ, Aragon AA (2018).</b> Protein per meal and distribution. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">PMC5828430</a></li>
+      <li><b>Iraki J, et al. (2019).</b> Nutrition for the natural lifter (surplus). <i>Sports (Basel)</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6680710/">PMC6680710</a></li>
+      <li><b>Helms ER, et al. (2023).</b> Larger vs smaller surplus. <i>Int J Exerc Sci</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">PMC10620361</a></li>
+      <li><b>Holick MF (2011).</b> Vitamin D: Endocrine Society guideline. <i>J Clin Endocrinol Metab</i>. <a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">JCEM</a></li>
+      <li><b>Sizar O, et al. (2024).</b> Vitamin D deficiency (prevalence). <i>StatPearls</i>. <a href="https://www.ncbi.nlm.nih.gov/books/NBK532266/">NCBI</a></li>
+      <li><b>Cordeiro RC, et al. (2024).</b> Vitamin D and testosterone. <i>Diseases</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11506788/">PMC11506788</a></li>
+      <li><b>Douglas CM, et al. (2021).</b> Time of day and performance. <i>Physiology</i>. <a href="https://journals.physiology.org/doi/full/10.1152/physiol.00030.2020">journal</a></li>
+      <li><b>Grgic J, et al. (2019).</b> Morning vs evening training adaptations. <i>Chronobiol Int</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30704301/">PubMed</a></li>
+      <li><b>Southward K, et al. (2018).</b> Caffeine and endurance: meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/29876876/">PubMed</a></li>
+      <li><b>Guest NS, et al. (2021).</b> ISSN position stand: caffeine and exercise. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">PMC7777221</a></li>
+    </ol>
+
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  <!-- ===================== COLOPHON ===================== -->
+  <section id="colophon" class="sec">
+    <span class="sec-kicker">Colophon</span>
+    <h2 class="sec-h">How this was made</h2>
+    <p class="lede">Like everything on this site, this guide was researched, written, fact-checked, and built mostly by AI agents (Anthropic's Claude), working in parallel and steered by one human who lifts but is emphatically not a doctor. In the spirit of showing the work, here is what went into it.</p>
+
+    <div class="colo-grid">
+      <div class="colo-stat c-gold"><div class="n">6</div><div class="l">parallel research agents, one per topic cluster</div></div>
+      <div class="colo-stat c-sky"><div class="n">~300</div><div class="l">studies and sources read</div></div>
+      <div class="colo-stat c-green"><div class="n">76</div><div class="l">cited on this page</div></div>
+      <div class="colo-stat c-amber"><div class="n">20+</div><div class="l">custom charts and diagrams, all hand-drawn in code</div></div>
+      <div class="colo-stat c-plum"><div class="n">2</div><div class="l">interactive tools and 6 form guides</div></div>
+      <div class="colo-stat c-rose"><div class="n">0</div><div class="l">stock photos: every visual is drawn from data or by hand</div></div>
+    </div>
+
+    <p>The method was the one this site uses for everything: split the field into clusters (creatine, training mechanics, genetics, recovery, the brain, nutrition), send a research agent into each to gather every claim with a primary source, then build the page so the short answer sits in plain view and the studies sit underneath it. Where the evidence is one trial, or mixed, or still moving, the text says so rather than rounding up to false certainty. The lengthened-training and brain-creatine findings, in particular, are flagged as promising-not-settled on purpose.</p>
+
+    <p>Two things worth saying plainly. First, this is an enthusiast writing for the love of getting one thing right, not a clinician, and the page is the visible tip of a much larger pile of reading. Second, AI can be confidently wrong, so every number here is cited and was checked against the source. If you find an error, that is worth more to me than a compliment. Use it to ask better questions, not to replace a doctor who actually knows your body.</p>
+
+    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Built with Claude (Anthropic). Researched and written June 2026. Not medical advice.</p>
+    <p class="sec-divider">&middot; &middot; &middot;</p>
+  </section>
+
+  </main>
+
+  <!-- right-rail contents (wide desktop) -->
+  <nav class="railnav" id="railnav" aria-label="Section navigation"><ul id="railnav-list"></ul></nav>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+      <span class="src" style="white-space:normal">Educational, not medical advice. Talk to a doctor before starting creatine or a new program.</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/big-enough.js"></script>
+</body>
+</html>
