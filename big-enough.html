@@ -219,6 +219,24 @@
     figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note, figure.viz.scrollx > .src { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
   }
 
+  /* ---------- PHOTOGRAPHY (curated public-domain works: borderless, filling the frame) ---------- */
+  figure.photo { margin: clamp(2.2rem, 5vw, 3.4rem) 0; }
+  figure.photo img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  figure.photo.cover .ph-frame { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 3 / 2; background: var(--panel-2); }
+  figure.photo.cover.wide .ph-frame { aspect-ratio: 16 / 9; }
+  figure.photo.cover .ph-frame img { width: 100%; height: 100%; object-fit: cover; }
+  figure.photo.portrait { max-width: 28rem; margin-left: auto; margin-right: auto; }
+  figure.photo.portrait img { max-width: 100%; }
+  figure.photo figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.5; margin-top: 0.75em; text-wrap: pretty; }
+  figure.photo .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
+  figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
+  figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  figure.photo .cred a:hover { color: var(--accent-hover); }
+  .photo-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin: clamp(2.2rem, 5vw, 3.4rem) 0; align-items: start; }
+  .photo-duo figure.photo { margin: 0; }
+  .photo-duo figcaption { font-size: 0.82rem; }
+  @media (max-width: 480px) { .photo-duo { grid-template-columns: 1fr; } }
+
   /* ---------- INTERACTIVE TOOL PANELS ---------- */
   .tool { margin: 2.2em 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(12,16,13,0.4), 0 14px 34px -18px rgba(8,12,9,0.5); }
   .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 0.7rem; padding: 0.75em 1.15em; background: var(--panel-2); border-bottom: 1px solid var(--rule); }
@@ -363,7 +381,7 @@
     <p class="hero-eyebrow">A field guide to natural muscle</p>
     <h1 class="hero-title">Big Enough</h1>
     <p class="hero-dek">How to build muscle the natural way, on one supplement, real food, and sunlight, and how to know where the smart effort stops.</p>
-    <p class="hero-byline">Sourced and illustrated. <b>76 sources cited.</b> Last reviewed June 2026.</p>
+    <p class="hero-byline">Sourced and illustrated. <b>80 sources cited.</b> Last reviewed June 2026.</p>
 
     <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
       <!-- The signature curve: effort/time on x, muscle on y. Steep, then a long
@@ -407,6 +425,13 @@
 
   <main id="guide">
 
+  <figure class="photo portrait reveal">
+    <img src="assets/images/big-enough/hercules.webp" width="858" height="1500" loading="eager" decoding="async" alt="The Farnese Hercules, a colossal ancient marble statue of a heavily muscled bearded man resting on his club.">
+    <figcaption>For most of history, the muscular human ideal was a story about gods and heroes, carved by people who had never seen a dumbbell. The recipe turned out to be mostly food, effort, and patience.
+      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Herakles_Farnese_MAN_Napoli_Inv6001_n01.jpg">Farnese Hercules (Roman, after Lysippos), Naples. Photo: Marie-Lan Nguyen, CC BY 2.5</a></span>
+    </figcaption>
+  </figure>
+
   <!-- ===================== CONTENTS MAP ===================== -->
   <aside class="map reveal" aria-label="What is inside this guide">
     <p class="map-kicker">What is inside</p>
@@ -414,7 +439,7 @@
     <div class="map-stats">
       <span class="map-stat"><b>1</b> supplement worth taking</span>
       <span class="map-stat"><b>3</b> free inputs: food, sun, sleep</span>
-      <span class="map-stat"><b>76</b> sources cited</span>
+      <span class="map-stat"><b>80</b> sources cited</span>
       <span class="map-stat"><b>~90 min</b> full read</span>
     </div>
     <div class="map-groups">
@@ -632,7 +657,7 @@
     </figure>
 
     <h3>The part nobody expects: the brain</h3>
-    <p>Your brain runs on the same energy economy your muscles do, and it turns out creatine helps there too, most visibly when the brain is under stress. The headline result is genuinely startling. In 2024, researchers gave sleep-deprived adults a <em>single</em> high dose of creatine and watched their cognition partly recover: processing speed and short-term memory improved, and the brain's own phosphocreatine stopped crashing the way it normally does after a night without sleep. The effect kicked in about three and a half hours after the dose and lasted up to nine hours. <span class="src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="grade g-b">good</span> One dose, measurable thinking, in tired humans. That had never been shown before.</p>
+    <p>Your brain runs on the same energy economy your muscles do, and it turns out creatine helps there too, most visibly when the brain is under stress. The headline result is genuinely startling. In 2024, researchers gave sleep-deprived adults a <em>single</em> large dose of creatine (about 25 grams, far more than the daily 3 to 5) and watched their cognition partly recover: processing speed and short-term memory improved, and the brain's own phosphocreatine stopped crashing the way it normally does after a night without sleep. The effect kicked in about three and a half hours after the dose and lasted up to nine hours. <span class="src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="grade g-b">good</span> It is one small study, and that megadose is not your daily spoonful, so treat it as a striking hint rather than a promise. But one dose producing measurable thinking in tired humans had never been shown before.</p>
 
     <div class="stat-row">
       <div class="stat sky"><span class="fig">+24%</span><span class="fig-lbl">faster processing under sleep deprivation, one dose</span></div>
@@ -669,12 +694,19 @@
 
     <p class="lede">Muscle is a cost. It is expensive tissue to carry and to feed, and your body will not build a gram of it unless you convince it there is no choice. The way you convince it is by making your muscles produce high tension, over and over, until the only sane response is to come back bigger. Strip away every supplement, every gadget, and every guru, and that single sentence is the whole of hypertrophy.</p>
 
+    <figure class="photo portrait reveal">
+      <img src="assets/images/big-enough/vesalius.webp" width="908" height="1500" loading="lazy" decoding="async" alt="A 1543 anatomical woodcut by Vesalius: a flayed human figure showing all the muscles, standing in a landscape of ruins.">
+      <figcaption>Andreas Vesalius mapped every muscle by hand in 1543. The machine has not changed since; only our understanding of how to grow it has.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Vesalius_Fabrica_p174.jpg">Andreas Vesalius, De humani corporis fabrica (1543). Public domain</a></span>
+      </figcaption>
+    </figure>
+
     <h3>The signal: tension, not damage</h3>
     <p>For years people thought you had to "tear the muscle down" and that soreness was the proof of a good workout. That is mostly wrong. The primary signal for growth is <strong>mechanical tension</strong>: the muscle sensing a heavy, demanding load through a full range of motion and converting that strain into chemical "build" signals, a process called mechanotransduction. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> Muscle damage and the metabolic "burn" play supporting roles, but neither is required, and chasing soreness for its own sake just buys you fatigue. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
     <p>You deliver that tension by pulling on a handful of levers. The good news is there are only about six of them. The theme of this chapter, and of the whole guide, is that every one of those levers has a sweet spot, and pushing past it costs more than it pays.</p>
 
     <h3>Lever one: volume (the big one)</h3>
-    <p>Volume, the total number of hard sets you do per muscle per week, is the lever most tightly tied to growth. The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (a clear, measurable difference versus almost nothing in eight weeks), even though both got similarly stronger. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
+    <p>Volume, the total number of hard sets you do per muscle per week, is the lever most tightly tied to growth. The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (a clear, measurable difference versus almost nothing, in one tightly controlled eight-week study), even though both got similarly stronger. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
 
     <p>But, and here is the whole guide in miniature, the curve bends. The newest and largest analysis confirms that growth keeps rising with volume but with steep diminishing returns: each extra set buys less than the one before. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Past a point, you pay the full price in fatigue and recovery for almost no extra muscle. Lifters call those wasted sets "junk volume."</p>
 
@@ -756,6 +788,13 @@
     <h2 id="training-h" class="sec-h">The exact training</h2>
 
     <p class="lede">A training program is not magic. It is just a delivery system for the levers in the last chapter: enough hard sets, near enough to failure, often enough, with enough rest, getting a little harder over time. Below are three complete, evidence-based templates, one for each stage of a lifter's life, and then, folded away so they do not clutter the page, a proper-form guide to every major lift. Pick one template, run it for months, and change as little as possible. The people who make the best progress are almost always the ones who got bored of a good plan instead of excited about a new one.</p>
+
+    <figure class="photo reveal">
+      <img src="assets/images/big-enough/muybridge.webp" width="1500" height="837" loading="lazy" decoding="async" alt="An 1887 Eadweard Muybridge motion study: eighteen sequential photographs of a muscular man swinging a pick, in a grid of three rows.">
+      <figcaption>Eadweard Muybridge froze a man swinging a pick into its eighteen parts, 1887. Good form is just this: one honest movement, owned and repeated, until the body has no choice but to adapt.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Athletes._Swinging_pick_LCCN2009630545.jpg">Eadweard Muybridge, Animal Locomotion (1887). Library of Congress, public domain</a></span>
+      </figcaption>
+    </figure>
 
     <h3>The rules every good program obeys</h3>
     <div class="fork">
@@ -1081,7 +1120,7 @@
 
     <p class="lede">Stretching is one of the most misunderstood habits in fitness. The thing most people do (sit and hold a long static stretch before they lift) is the one version the evidence is least kind to. Meanwhile, the genuinely useful idea hiding inside "stretching" turns out not to be stretching at all. It is training your muscles through their full, lengthened range, which may grow them faster.</p>
 
-    <div class="myth"><b>Static stretching does not prevent injury,</b> despite decades of being sold as a warm-up. Trials do not support it. <span class="src"><a href="https://www.tandfonline.com/doi/full/10.1080/15438620802310784">Small 2008</a></span> And held right before lifting, a long static stretch (60 seconds or more on a muscle) can temporarily <em>weaken</em> you by around 4 to 5 percent for that session. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21659901/">Kay 2012</a></span> <span class="grade g-b">good</span> So static stretching right before a heavy set is, at best, a small tax on your own strength.</div>
+    <div class="myth"><b>Static stretching does not prevent injury,</b> despite decades of being sold as a warm-up. Trials do not support it. <span class="src"><a href="https://www.tandfonline.com/doi/full/10.1080/15438620802310784">Small 2008</a></span> And held right before lifting, a long static stretch (60 seconds or more on a muscle) can temporarily <em>weaken</em> you by as much as 7 percent for that session. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21659901/">Kay 2012</a></span> <span class="grade g-b">good</span> In fairness, the newest and largest review finds that real-world penalty is small and does not hurt general athletic performance, so it is a minor tax, not a disaster. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/38735533/">Warneke 2024</a></span> Still, there is no reason to pay it right before a heavy set.</div>
 
     <h3>What to actually do</h3>
     <ul>
@@ -1100,7 +1139,7 @@
 
     <p class="lede">Lifting builds the muscle. Cardio keeps alive the heart and lungs that have to carry it. It is tempting, in a guide about getting big, to wave cardio away, and plenty of lifters do. That is a mistake, because of all the numbers in this entire guide, the one most tightly linked to how long you live is not how much you can bench. It is how fit your heart is.</p>
 
-    <p>In a study of over 120,000 people, those with the lowest cardiorespiratory fitness had about <strong>five times</strong> the risk of dying as the fittest, and being unfit carried a higher mortality risk than smoking, diabetes, or heart disease. There was no ceiling: fitter was always better. <span class="src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+    <p>In a study of over 120,000 people, those with the lowest cardiorespiratory fitness had about <strong>five times</strong> the risk of dying as the fittest, and being unfit carried a higher mortality risk than smoking, diabetes, or heart disease. (That comparison comes from a large group of patients referred for treadmill testing, so read it as a strong association in a selected population, not a literal head-to-head, but the direction is not subtle.) There was no ceiling: fitter was always better. <span class="src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal scrollx" aria-label="Risk of death by factor: low fitness dwarfs smoking, diabetes, and heart disease.">
       <figcaption>The deadliest risk factor is being unfit</figcaption>
@@ -1326,7 +1365,7 @@
 
     <figure class="viz reveal" aria-label="Caffeine's small share of performance next to everything else.">
       <figcaption>What caffeine actually adds</figcaption>
-      <p class="viz-sub">Its documented edge is a few percent on acute performance, and none of it is muscle growth. Everything that builds muscle is in the other slice.</p>
+      <p class="viz-sub">Its documented edge is a few percent on acute performance, and almost none of it is muscle growth. Everything that builds muscle is in the other slice.</p>
       <svg viewBox="0 0 700 120" role="img" aria-label="A bar that is about 97 percent labeled training, food, sleep, creatine, and years, and a thin 3 percent sliver labeled caffeine.">
         <rect x="40" y="35" width="600" height="46" rx="8" fill="#232a25" stroke="#4A544B"/>
         <rect x="42" y="37" width="560" height="42" rx="7" fill="#D4C4A0" opacity="0.85"/>
@@ -1335,13 +1374,20 @@
         <text x="620" y="26" text-anchor="middle" class="v-axis-t" fill="#e98e7f">caffeine, ~3%</text>
         <line x1="620" y1="30" x2="620" y2="37" stroke="#e98e7f" stroke-width="1.5"/>
       </svg>
-      <p class="viz-note">And that 3 percent is performance on the day, not muscle at the end of the year. Caffeine helps you push a hard session; it does not, by itself, build a single extra fiber.</p>
+      <p class="viz-note">And that few percent is performance on the day, not muscle at the end of the year. Caffeine has no direct muscle-building effect; any long-term gain is small, indirect (a slightly harder session here and there), and unreliable.</p>
     </figure>
+
+    <div class="fork">
+      <p class="fork-q" data-label="The question a reader actually asked">Does someone who drinks caffeine twice a day have an edge over someone who never touches it?</p>
+      <p class="fork-a"><b>Short answer: no, not a lasting one,</b> and the honest reasoning cuts against the marketing. Two things are true at once. The acute boost is real, and habitual users do keep most of it (the cleaner real-world studies find their response is barely blunted). <span class="src"><a href="https://link.springer.com/article/10.1007/s40279-022-01685-0">Carvalho 2022</a></span> But studies that make people take caffeine daily do show tolerance creeping in. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6343867/">Lara 2019</a></span></p>
+      <p class="fork-a">The detail that settles it: much of a daily user's morning lift is just <b>reversing overnight withdrawal</b>, dragging them back up to the baseline a non-user already lives at, not above it. <span class="src"><a href="https://www.tandfonline.com/doi/full/10.1080/00049530500125090">James 2005</a></span> And a caffeine-naive person tends to respond <em>more</em> strongly on the rare day they do use it. So the never-user is not behind. They are holding an un-blunted tool in reserve.</p>
+      <p class="fork-take"><b>The upshot:</b> caffeine is a real but small acute aid, best kept as an occasional tool rather than a daily crutch. Skipping it costs you almost nothing, and arguably keeps it sharper for the day you actually want it.</p>
+    </div>
 
     <h3>The honest ledger</h3>
     <div class="choices">
       <div class="choice use"><div><b>Where it helps:</b> a genuinely tired day when you need to get through a session, or a one-off effort where 3 percent matters. Effective dose is about 1.5 to 3 mg per pound of bodyweight, roughly an hour before. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span></div></div>
-      <div class="choice skip"><div><b>Where it hurts:</b> taken later in the day it wrecks sleep, and sleep is one of your biggest growth inputs, so a late pre-workout can cost you more than it gave. Tolerance also builds fast, so the daily user gets less and less.</div></div>
+      <div class="choice skip"><div><b>Where it hurts:</b> taken later in the day it wrecks sleep, and sleep is one of your biggest growth inputs, so a late pre-workout can cost you more than it gave.</div></div>
       <div class="choice meh"><div><b>The bottom line:</b> a useful occasional tool, never a requirement. Plenty of strong, muscular people, myself included, never use it and lose nothing for it. If you love your coffee, enjoy it; just do not mistake it for a building block.</div></div>
     </div>
 
@@ -1396,7 +1442,7 @@
     </div>
 
     <h3>The everyday version</h3>
-    <p>You do not have to be elderly to collect these benefits. A single bout of exercise gives a small, reliable boost to focus and working memory in the hours after, which is why a hard morning session can leave your head clearer. <span class="src"><a href="https://www.nature.com/articles/s44271-024-00124-2">2024 meta-analysis</a></span> <span class="grade g-b">good</span> And for low mood, the evidence is striking: across a huge umbrella review, physical activity was at least as effective as medication and therapy for mild-to-moderate depression and anxiety. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">Singh 2023</a></span> <span class="grade g-a">strong</span></p>
+    <p>You do not have to be elderly to collect these benefits. A single bout of exercise gives a small, reliable boost to focus and working memory in the hours after, which is why a hard morning session can leave your head clearer. <span class="src"><a href="https://www.nature.com/articles/s44271-024-00124-2">2024 meta-analysis</a></span> <span class="grade g-b">good</span> And for low mood, the evidence is striking: across a huge umbrella review, physical activity was at least as effective as medication and therapy for mild-to-moderate depression and anxiety, though that is a comparison drawn across separate studies, not a head-to-head trial. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">Singh 2023</a></span> <span class="grade g-a">strong</span></p>
 
     <p>And this is not just a runner's high. Lifting specifically helps the aging brain: progressive resistance training improved thinking in older adults with mild cognitive impairment, with gains still measurable more than a year later, and recent imaging suggests it actually protects the hippocampus from shrinking. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3110111/">Mavros / SMART trial</a></span> <span class="src"><a href="https://link.springer.com/article/10.1007/s11357-024-01483-8">Broadhouse 2024</a></span> <span class="grade g-c">mixed</span></p>
 
@@ -1509,6 +1555,13 @@
 
     <h3>The brake, and the people born without it</h3>
     <p>Muscle has a built-in brake: a protein called myostatin that actively limits how big you get. Break that gene and the limit comes off, which produces some of the most striking creatures in biology. A boy born in 2004 with two broken copies was extraordinarily muscular from birth. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa040933">Schuelke 2004</a></span> The grotesquely muscled Belgian Blue cattle carry the same kind of mutation. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9314496/">McPherron 1997</a></span> So do "bully whippets," and remarkably, whippets with just <em>one</em> broken copy are more muscular and race significantly faster. <span class="src"><a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0030079">Mosher 2007</a></span> <span class="grade g-c">mixed</span></p>
+
+    <figure class="photo reveal">
+      <img src="assets/images/big-enough/belgianblue.webp" width="1500" height="1005" loading="lazy" decoding="async" alt="A Belgian Blue bull standing in a field, its hindquarters and shoulders grotesquely bulging with double muscling.">
+      <figcaption>A Belgian Blue bull. Break the myostatin gene, the body's own brake on muscle, and the animal balloons like this. Most of us carry two working copies, and a fully engaged brake.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Belgische_blauwe.jpg">Photo: Reginald Dierckx, CC BY-SA 3.0</a></span>
+      </figcaption>
+    </figure>
 
     <p>Most of us carry two working copies and a fully engaged brake. The natural genetic ceiling on muscle is real, and you cannot file it off.</p>
 
@@ -1727,6 +1780,13 @@
 
     <p class="lede">Here is a strange thing to sit with. The specific approach this guide describes, a natural lifter using modern training science, a dialed-in protein target, and lifelong creatine to extract close to their genetic maximum, is genuinely new. Not new like a fad. New like the data does not exist yet. The people doing it have not finished doing it, because they are not old enough.</p>
 
+    <figure class="photo portrait reveal">
+      <img src="assets/images/big-enough/sandow.webp" width="1135" height="1500" loading="lazy" decoding="async" alt="An 1894 studio photograph of Eugen Sandow, an extremely muscular man posing like a Greek statue against a dark background.">
+      <figcaption>Eugen Sandow, 1894, the father of modern bodybuilding, posing as a Greek statue. He built this on food, barbells, and showmanship, decades before anabolic steroids existed. The drug-free experiment is old; the modern, science-optimized version of it is the part that has barely begun.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Eugen_Sandow,_full-length_nude_portrait,_standing,_facing_left)_-_Steckel,_Los_Angeles,_Cal_LCCN90715319.jpg">Photo: George Steckel, 1894. Library of Congress, public domain</a></span>
+      </figcaption>
+    </figure>
+
     <p>Almost everything load-bearing in this guide was settled in the last fifteen years. The dose-response of training volume, the protein ceiling, the case for lengthened-range training, the surprising brain effects of creatine, all of it is recent, and some of it is from the last couple of years.</p>
 
     <figure class="viz reveal scrollx" aria-label="A timeline showing most of the key findings are very recent.">
@@ -1783,6 +1843,13 @@
     <h2 id="balance-h" class="sec-h">The balance sheet</h2>
 
     <p class="lede">If you read only one chapter, read this one, because it is the point of all the others. Every lever in this guide does the same thing: it works wonderfully up to a point, and then it quietly stops, or turns on you. The skill that actually builds a good, lasting body is not the willingness to push every lever to the wall. It is the judgment to know where each one goes flat, and the discipline to stop there and go live your life.</p>
+
+    <figure class="photo portrait reveal">
+      <img src="assets/images/big-enough/doryphoros.webp" width="750" height="1500" loading="lazy" decoding="async" alt="The Doryphoros, a classical marble statue of an idealized, evenly muscled young man standing in a relaxed contrapposto pose.">
+      <figcaption>The Doryphoros of Polykleitos, his "Canon" of ideal proportion. The Greeks did not carve the biggest possible body. They carved the best-proportioned one. Big enough, on purpose, twenty-four centuries ago.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Doryphoros_MAN_Napoli_Inv6011.jpg">Doryphoros of Polykleitos (Roman copy), Naples. Photo: Marie-Lan Nguyen, CC BY 2.5</a></span>
+      </figcaption>
+    </figure>
 
     <p>Here is the whole guide on one balance sheet. The left column is what the evidence says to do. The right column is the trap on the far side of it, the place where more becomes worse.</p>
 
@@ -1893,13 +1960,14 @@
       <li><b>Behm DG, et al. (2016).</b> Acute effects of stretching: systematic review. <i>Appl Physiol Nutr Metab</i>. <a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">link</a></li>
       <li><b>Pedrosa GF, et al. (2022).</b> Long-length (lengthened) training and growth. <i>Eur J Sport Sci</i>. <a href="https://onlinelibrary.wiley.com/doi/10.1080/17461391.2021.1927199">link</a></li>
       <li><b>Kassiano W, et al. (2023).</b> Range of motion and hypertrophy. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">PubMed</a></li>
+      <li><b>Warneke K, Lohmann LH (2024).</b> Acute stretching and performance: multilevel meta-analysis (real-world deficit is small). <a href="https://pubmed.ncbi.nlm.nih.gov/38735533/">PubMed</a></li>
       <li><b>Mandsager K, et al. (2018).</b> Cardiorespiratory fitness and mortality. <i>JAMA Netw Open</i>. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">JAMA</a></li>
       <li><b>Wen CP, et al. (2011).</b> 15 minutes a day and mortality. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">PubMed</a></li>
       <li><b>Wilson JM, et al. (2012).</b> Concurrent training interference: meta-analysis. <i>J Strength Cond Res</i>. <a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training__a_meta_analysis_examining.35.aspx">link</a></li>
     </ol>
 
     <h3>The brain, and the unhealthy extreme</h3>
-    <ol start="55">
+    <ol start="56">
       <li><b>Erickson KI, et al. (2011).</b> Exercise increases hippocampal volume. <i>PNAS</i>. <a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">PNAS</a></li>
       <li><b>Szuhany KL, et al. (2015).</b> Exercise and BDNF: meta-analysis. <i>J Psychiatr Res</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4314337/">PMC4314337</a></li>
       <li><b>Acute exercise and cognition (2024).</b> Bayesian meta-analysis. <i>Communications Psychology</i>. <a href="https://www.nature.com/articles/s44271-024-00124-2">nature.com</a></li>
@@ -1914,7 +1982,7 @@
     </ol>
 
     <h3>Food, sun, timing, caffeine</h3>
-    <ol start="66">
+    <ol start="67">
       <li><b>Morton RW, et al. (2018).</b> Protein supplementation: meta-analysis (about 0.7 g/lb). <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">PubMed</a></li>
       <li><b>Schoenfeld BJ, Aragon AA (2018).</b> Protein per meal and distribution. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">PMC5828430</a></li>
       <li><b>Iraki J, et al. (2019).</b> Nutrition for the natural lifter (surplus). <i>Sports (Basel)</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6680710/">PMC6680710</a></li>
@@ -1926,6 +1994,9 @@
       <li><b>Grgic J, et al. (2019).</b> Morning vs evening training adaptations. <i>Chronobiol Int</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30704301/">PubMed</a></li>
       <li><b>Southward K, et al. (2018).</b> Caffeine and endurance: meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/29876876/">PubMed</a></li>
       <li><b>Guest NS, et al. (2021).</b> ISSN position stand: caffeine and exercise. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">PMC7777221</a></li>
+      <li><b>Carvalho A, et al. (2022).</b> Habitual caffeine intake and the acute ergogenic effect. <i>Sports Medicine</i>. <a href="https://link.springer.com/article/10.1007/s40279-022-01685-0">Springer</a></li>
+      <li><b>Lara B, et al. (2019).</b> Tolerance to the ergogenic effect of caffeine. <i>PLoS ONE</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6343867/">PMC6343867</a></li>
+      <li><b>James JE, Rogers PJ (2005).</b> Caffeine, withdrawal reversal, and performance. <i>Aust J Psychol</i>. <a href="https://www.tandfonline.com/doi/full/10.1080/00049530500125090">link</a></li>
     </ol>
 
     <p class="sec-divider">&middot; &middot; &middot;</p>
@@ -1940,7 +2011,7 @@
     <div class="colo-grid">
       <div class="colo-stat c-gold"><div class="n">6</div><div class="l">parallel research agents, one per topic cluster</div></div>
       <div class="colo-stat c-sky"><div class="n">~300</div><div class="l">studies and sources read</div></div>
-      <div class="colo-stat c-green"><div class="n">76</div><div class="l">cited on this page</div></div>
+      <div class="colo-stat c-green"><div class="n">80</div><div class="l">cited on this page</div></div>
       <div class="colo-stat c-amber"><div class="n">20+</div><div class="l">custom charts and diagrams, all hand-drawn in code</div></div>
       <div class="colo-stat c-plum"><div class="n">2</div><div class="l">interactive tools and 6 form guides</div></div>
       <div class="colo-stat c-rose"><div class="n">0</div><div class="l">stock photos: every visual is drawn from data or by hand</div></div>
