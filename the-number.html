@@ -158,6 +158,9 @@
     .tn-deal { font-family: var(--font-body); font-size: 1.17rem; line-height: 1.55; color: var(--text); margin: 1.35rem 0 0.3rem; padding: 0.85rem 1.05rem; border-left: 3px solid var(--accent); background: rgba(212, 196, 160, 0.06); border-radius: 0 8px 8px 0; }
     .tn-deal strong { color: var(--accent-hover); font-weight: 600; }
     .tn-deal-sub { display: block; font-family: var(--font-mono); font-size: 0.73rem; line-height: 1.65; color: var(--text-dim); margin-top: 0.55rem; }
+    .tn-infl { font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.7; color: var(--text-dim); border: 1px solid rgba(74, 84, 75, 0.8); border-radius: 10px; background: rgba(26, 32, 28, 0.5); padding: 0.85rem 1.05rem 0.8rem; margin: 0.95rem 0; }
+    .tn-infl strong { color: var(--accent-hover); font-weight: 400; }
+    .tn-infl-k { display: block; font-size: 0.64rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.45rem; }
     .tn-plan { font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; color: var(--text); text-align: center; margin: 0.7rem 0 0.4rem; }
     .tn-plan strong { color: var(--accent-hover); font-weight: 400; }
     .tn-plan .dim2 { color: var(--text-dim); }
@@ -291,6 +294,10 @@
           <input type="range" id="tn-debt" min="0" max="600000" step="1000" value="40000" aria-label="Total debt in dollars">
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench lo" style="left:15%"><span>avg car+student+cards $90K</span></span></span>
         </label>
+        <label class="tn-slider">
+          <span class="tn-slider-row"><span class="tn-slider-name">When you want it <small>years from now; stays glued to your own pace until you drag it</small></span><span class="tn-inwrap"><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein pct" id="tn-when-n" value="28" aria-label="Years until you want the number, typed"><span class="tn-unit">yrs &middot; <span id="tn-when-yr">2054</span></span></span></span>
+          <input type="range" id="tn-when" min="5" max="50" step="1" value="28" aria-label="Years until you want the number">
+        </label>
         </div>
 
         <div class="tn-minor">
@@ -314,8 +321,9 @@
           <button type="button" class="tn-preset" id="tn-preset">Load the median American household</button>
         </div>
 
-        <p class="tn-deal"><span id="tn-deal">&nbsp;</span><span class="tn-deal-sub" id="tn-infl" style="display:none"></span></p>
+        <p class="tn-deal"><span id="tn-deal">&nbsp;</span></p>
         <p class="tn-plan" id="tn-plan" style="display:none">&nbsp;</p>
+        <div class="tn-infl" id="tn-infl" style="display:none"></div>
 
         <div class="tn-kpis" aria-live="polite">
           <div class="tn-kpi"><span class="tn-kpi-label">You save</span><span class="tn-kpi-val" id="tn-rate">32%</span><span class="tn-kpi-sub" id="tn-rate-sub">of take-home pay</span></div>
@@ -598,8 +606,11 @@
 
       /* State in today's dollars. Sliders clamp visually; typed values can
          exceed them. want === null means the income-you-want dial is still
-         glued to spending; it unglues the first time the user moves it. */
-      var S = { inc: 65000, spend: 3700, want: null, inv: 10000, debt: 40000, rdebt: 9, rinv: 5, mult: 25 };
+         glued to spending, and when === null means the when-you-want-it dial
+         is still glued to the computed pace; each unglues the first time the
+         user moves it. */
+      var S = { inc: 65000, spend: 3700, want: null, when: null, inv: 10000, debt: 40000, rdebt: 9, rinv: 5, mult: 25 };
+      var NOWYR = new Date().getFullYear();
 
       /* The median American household, sourced in the panel footer:
          take-home $72,330 (Census 2025, post-tax), saving at the national
@@ -612,6 +623,7 @@
         { key: 'want',  slider: 'tn-want',  typed: 'tn-want-n',  money: true },
         { key: 'inv',   slider: 'tn-inv',   typed: 'tn-inv-n',   money: true },
         { key: 'debt',  slider: 'tn-debt',  typed: 'tn-debt-n',  money: true },
+        { key: 'when',  slider: 'tn-when',  typed: 'tn-when-n',  money: false },
         { key: 'rdebt', slider: 'tn-rdebt', typed: 'tn-rdebt-n', money: false },
         { key: 'rinv',  slider: 'tn-rinv',  typed: 'tn-rinv-n',  money: false }
       ];
@@ -633,6 +645,7 @@
         if (c.money) v = Math.round(v);
         if (c.key === 'spend') v = Math.max(100, v);
         if (c.key === 'want') v = Math.max(1200, v);
+        if (c.key === 'when') v = Math.min(80, Math.max(1, Math.round(v)));
         if (c.key === 'rdebt') v = Math.min(60, Math.max(0, v));
         if (c.key === 'rinv') v = Math.min(12, Math.max(0, v));
         return Math.max(0, v);
@@ -674,6 +687,26 @@
       }
       function simulate(incYr, spendYr, inv0, debt0, rInvPct, rDebtPct, targetAmt, capYears) {
         return simCore((incYr - spendYr) / 12, inv0, debt0, rInvPct, rDebtPct, targetAmt, capYears);
+      }
+
+      /* The freeze test: same simulation, but the monthly saving stays a
+         flat nominal figure, so its real value decays 3% a year. Returns
+         years to the line on that decaying pace. */
+      function frozenPace(surplusMo, target) {
+        var rI = Math.pow(1 + S.rinv / 100, 1 / 12) - 1;
+        var rD = Math.pow(1 + S.rdebt / 100, 1 / 12) - 1;
+        var k = Math.pow(1 / 1.03, 1 / 12);
+        var inv = S.inv, debt = S.debt, f = 1;
+        if (inv - debt >= target) return 0;
+        for (var m = 1; m <= 1200; m++) {
+          debt *= (1 + rD); inv *= (1 + rI); f *= k;
+          var s = surplusMo * f;
+          if (debt > 0 && S.rdebt >= S.rinv) { var pay = Math.min(s, debt); debt -= pay; s -= pay; }
+          inv += s;
+          if (debt <= 0.5) debt = 0;
+          if (inv - debt >= target) return m / 12;
+        }
+        return Infinity;
       }
 
       /* Goal seek: the monthly saving that reaches the target inside T years
@@ -808,6 +841,17 @@
         var yearsEl = $('tn-years'), subEl = $('tn-years-sub'), verdict = $('tn-verdict'), deal = $('tn-deal');
         var yrs = you.hitYrs;
 
+        /* Glue the when dial to the computed pace until the user drags it,
+           and keep its calendar-year readout honest either way. */
+        if (S.when === null && isFinite(yrs) && yrs > 0) {
+          var wnSl = $('tn-when'), wnTy = $('tn-when-n');
+          var yShow = Math.max(1, Math.round(yrs));
+          wnSl.value = Math.min(+wnSl.max, Math.max(+wnSl.min, yShow));
+          if (document.activeElement !== wnTy) wnTy.value = String(yShow);
+        }
+        var Dcal = S.when !== null ? S.when : (isFinite(yrs) && yrs > 0 ? Math.round(yrs) : null);
+        $('tn-when-yr').textContent = Dcal === null ? 'n/a' : String(NOWYR + Dcal);
+
         /* The point of the whole panel, stated as one sentence: want this
            much a year without working, you must stack this much. */
         var dealLine = 'Want <strong>' + fmt(wantYr) + ' a year</strong> without working? You need <strong>' + fmt(target) + '</strong> invested. ';
@@ -849,27 +893,63 @@
           verdict.innerHTML = notes.join(' ');
         }
 
-        /* What has to change: the monthly saving that buys the same target
-           on faster clocks, goal-sought through the same simulation. */
+        /* What has to change: the when dial drives a goal-seek through the
+           same simulation. Glued, it teases the canned horizons; dragged,
+           it prices the user's own deadline. */
         var planEl = $('tn-plan');
-        var horizons = [10, 20, 30].filter(function (h) { return isFinite(yrs) ? h < yrs - 1 : true; });
-        if (yrs === 0 || !horizons.length) {
+        var curMo = Math.max(0, Math.round((S.inc - spendYr) / 12));
+        if (yrs === 0) {
           planEl.style.display = 'none';
+        } else if (S.when === null) {
+          var horizons = [10, 20, 30].filter(function (h) { return isFinite(yrs) ? h < yrs - 1 : true; });
+          if (!horizons.length) {
+            planEl.style.display = 'none';
+          } else {
+            var parts = horizons.map(function (h) {
+              var req = requiredMonthly(h, target);
+              return 'in ' + h + ' yrs: <strong>' + (isFinite(req) ? fmt(req) + '/mo' : 'not reachable') + '</strong>';
+            });
+            planEl.innerHTML = (isFinite(yrs) ? 'Want it sooner? Drag the when dial, or: ' : 'What it takes: saving ') + parts.join(' &middot; ') + ' <span class="dim2">(you save ' + fmt(curMo) + '/mo now)</span>';
+            planEl.style.display = '';
+          }
         } else {
-          var parts = horizons.map(function (h) {
-            var req = requiredMonthly(h, target);
-            return 'in ' + h + ' yrs: <strong>' + (isFinite(req) ? fmt(req) + '/mo' : 'not reachable') + '</strong>';
-          });
-          var cur = Math.max(0, Math.round((S.inc - spendYr) / 12));
-          planEl.innerHTML = (isFinite(yrs) ? 'Want it sooner? It takes saving ' : 'What it takes: saving ') + parts.join(' &middot; ') + ' <span class="dim2">(you save ' + fmt(cur) + '/mo now)</span>';
+          var calW = NOWYR + S.when;
+          var reqW = requiredMonthly(S.when, target);
+          var lineW;
+          if (!isFinite(reqW)) {
+            lineW = 'By <strong>' + calW + '</strong> (' + S.when + ' yrs): not reachable from here even banking $80,000 a month. That date needs a smaller number or more runway.';
+          } else {
+            var reqR = Math.ceil(reqW / 10) * 10;
+            var diffW = reqR - curMo;
+            lineW = 'To have it by <strong>' + calW + '</strong> (' + S.when + ' yrs) takes <strong>' + fmt(reqR) + '/mo</strong>';
+            if (diffW > 5) lineW += ', which is <strong>' + fmt(diffW) + '/mo more</strong> than the ' + fmt(curMo) + ' you save now.';
+            else if (diffW < -5) lineW += '; at your current ' + fmt(curMo) + '/mo you are <strong>ahead of that date</strong>' + (isFinite(yrs) && yrs > 0 ? ' (on pace for year ' + yearsLabel(yrs) + ')' : '') + '.';
+            else lineW += ', almost exactly your current pace.';
+          }
+          planEl.innerHTML = lineW;
           planEl.style.display = '';
         }
 
-        /* Inflation, made concrete: the nominal sticker on arrival day. */
+        /* Inflation, answered head-on: the sticker at the chosen date, why
+           today's-dollar math already absorbs it, and the cost of freezing
+           the monthly saving at a flat figure instead of indexing it. */
         var infl = $('tn-infl');
-        if (isFinite(yrs) && yrs > 1.5) {
-          var nominal = target * Math.pow(1.03, yrs);
-          infl.innerHTML = 'Inflation check: by year ' + Math.round(yrs) + ' the account statement will actually read about <strong>' + fmt(nominal) + '</strong>. That is not extra money; at 3% a year it is simply what <strong>' + fmt(target) + '</strong> of today&#39;s buying power will be called by then. This page stays in today&#39;s dollars so every figure means what it means right now.';
+        var Hh = S.when !== null ? S.when : yrs;
+        if (yrs !== 0 && isFinite(Hh) && Hh > 1.5) {
+          var nominal = target * Math.pow(1.03, Hh);
+          var calY = NOWYR + Math.round(Hh);
+          var html = '<span class="tn-infl-k">Inflation, in plain English</span>' +
+            'In <strong>' + calY + '</strong> the statement will not say ' + fmt(target) + '. It will say about <strong>' + fmt(nominal) + '</strong>: same buying power, bigger sticker, because at 3% a year that is simply what today&#39;s ' + fmt(target) + ' will be called by then. So does inflation mean saving more than this page says? <strong>No, on one condition.</strong> Everything here runs in today&#39;s dollars on after-inflation returns, so the plan absorbs inflation by itself as long as your monthly saving rises with prices too: hold the share of an inflating paycheck, not the dollar figure.';
+          if (curMo > 5 && isFinite(yrs) && yrs > 1.5) {
+            var fz = frozenPace(curMo, target);
+            if (!isFinite(fz)) {
+              html += ' Freeze it at a flat ' + fmt(curMo) + '/mo for good and the line drifts out of reach entirely.';
+            } else {
+              var slip = fz - yrs;
+              if (slip >= 0.75) html += ' Freeze it at a flat ' + fmt(curMo) + '/mo for good and your arrival slips from year ' + yearsLabel(yrs) + ' to about <strong>year ' + yearsLabel(fz) + '</strong>: ' + (Math.round(slip * 10) / 10) + ' years donated to inflation.';
+            }
+          }
+          infl.innerHTML = html;
           infl.style.display = '';
         } else {
           infl.style.display = 'none';
@@ -935,7 +1015,7 @@
 
       $('tn-preset').addEventListener('click', function () {
         S.inc = MEDIAN.inc; S.spend = MEDIAN.spend; S.inv = MEDIAN.inv; S.debt = MEDIAN.debt;
-        S.want = null; /* the median household wants what it spends; re-glue */
+        S.want = null; S.when = null; /* the median household wants what it spends, on its own pace; re-glue both dials */
         CONTROLS.forEach(function (c) {
           if (!(c.key in MEDIAN)) return;
           var sl = $(c.slider), ty = $(c.typed);
