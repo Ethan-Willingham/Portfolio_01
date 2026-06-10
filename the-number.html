@@ -157,6 +157,10 @@
     .tn-compare { font-family: var(--font-mono); font-size: 0.73rem; color: var(--text-dim); text-align: center; margin: 0 0 1rem; }
     .tn-deal { font-family: var(--font-body); font-size: 1.17rem; line-height: 1.55; color: var(--text); margin: 1.35rem 0 0.3rem; padding: 0.85rem 1.05rem; border-left: 3px solid var(--accent); background: rgba(212, 196, 160, 0.06); border-radius: 0 8px 8px 0; }
     .tn-deal strong { color: var(--accent-hover); font-weight: 600; }
+    .tn-deal-sub { display: block; font-family: var(--font-mono); font-size: 0.73rem; line-height: 1.65; color: var(--text-dim); margin-top: 0.55rem; }
+    .tn-plan { font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; color: var(--text); text-align: center; margin: 0.7rem 0 0.4rem; }
+    .tn-plan strong { color: var(--accent-hover); font-weight: 400; }
+    .tn-plan .dim2 { color: var(--text-dim); }
     .tn-verdict { font-family: var(--font-body); font-size: 1.06rem; line-height: 1.6; color: var(--text); margin: 0 0 1rem; min-height: 2.6em; }
     .tn-verdict strong { color: var(--text-bright); }
     .tn-chart { margin: 0.2rem 0 0.4rem; }
@@ -255,7 +259,7 @@
       </div>
 
       <!-- ============================ FIND YOUR NUMBER ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">03</span><h2 id="calculator">Find Your Number</h2><p class="tn-sub">Six dials, drag or type. Your debt gets its own dial, and the median American household runs on the same chart.</p></div></div>
+      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">03</span><h2 id="calculator">Find Your Number</h2><p class="tn-sub">Pick the income you want, see exactly what has to change to get it, and race the median American household.</p></div></div>
 
       <div class="tn-calc tn-rev" id="calculator-panel">
         <h3>Where is your line?</h3>
@@ -271,6 +275,11 @@
           <span class="tn-slider-row"><span class="tn-slider-name">Spending <small>all of it: rent, car, food, fun. The yearly side is the passive income you are buying.</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spend-n" value="3,700" style="width:4.6em" aria-label="Monthly spending in dollars, typed"><span class="tn-unit">/mo</span><span class="tn-unit tn-eq">=</span><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spendyr-n" value="44,400" style="width:5.4em" aria-label="Yearly spending, the passive income you want, typed"><span class="tn-unit">/yr</span></span></span>
           <input type="range" id="tn-spend" min="800" max="20000" step="50" value="3700" aria-label="Monthly spending in dollars">
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:29.9%"><span>US average $6,545</span></span></span>
+        </label>
+        <label class="tn-slider">
+          <span class="tn-slider-row"><span class="tn-slider-name">The income you want <small>per year, without working; stays glued to your spending until you change it</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-want-n" value="44,400" aria-label="Yearly passive income you want, typed"><span class="tn-unit">/yr</span></span></span>
+          <input type="range" id="tn-want" min="20000" max="400000" step="100" value="44400" aria-label="Yearly passive income you want">
+          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:21.1%"><span>the $100K life</span></span></span>
         </label>
         <label class="tn-slider">
           <span class="tn-slider-row"><span class="tn-slider-name">Investments and cash <small>everything you own that is not a debt</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-inv-n" value="10,000" aria-label="Current investments and cash in dollars, typed"></span></span>
@@ -305,7 +314,8 @@
           <button type="button" class="tn-preset" id="tn-preset">Load the median American household</button>
         </div>
 
-        <p class="tn-deal" id="tn-deal">&nbsp;</p>
+        <p class="tn-deal"><span id="tn-deal">&nbsp;</span><span class="tn-deal-sub" id="tn-infl" style="display:none"></span></p>
+        <p class="tn-plan" id="tn-plan" style="display:none">&nbsp;</p>
 
         <div class="tn-kpis" aria-live="polite">
           <div class="tn-kpi"><span class="tn-kpi-label">You save</span><span class="tn-kpi-val" id="tn-rate">32%</span><span class="tn-kpi-sub" id="tn-rate-sub">of take-home pay</span></div>
@@ -586,8 +596,10 @@
       var $ = function (id) { return document.getElementById(id); };
       if (!$('tn-inc')) return;
 
-      /* State in today's dollars. Sliders clamp visually; typed values can exceed them. */
-      var S = { inc: 65000, spend: 3700, inv: 10000, debt: 40000, rdebt: 9, rinv: 5, mult: 25 };
+      /* State in today's dollars. Sliders clamp visually; typed values can
+         exceed them. want === null means the income-you-want dial is still
+         glued to spending; it unglues the first time the user moves it. */
+      var S = { inc: 65000, spend: 3700, want: null, inv: 10000, debt: 40000, rdebt: 9, rinv: 5, mult: 25 };
 
       /* The median American household, sourced in the panel footer:
          take-home $72,330 (Census 2025, post-tax), saving at the national
@@ -597,6 +609,7 @@
       var CONTROLS = [
         { key: 'inc',   slider: 'tn-inc',   typed: 'tn-inc-n',   money: true },
         { key: 'spend', slider: 'tn-spend', typed: 'tn-spend-n', money: true },
+        { key: 'want',  slider: 'tn-want',  typed: 'tn-want-n',  money: true },
         { key: 'inv',   slider: 'tn-inv',   typed: 'tn-inv-n',   money: true },
         { key: 'debt',  slider: 'tn-debt',  typed: 'tn-debt-n',  money: true },
         { key: 'rdebt', slider: 'tn-rdebt', typed: 'tn-rdebt-n', money: false },
@@ -619,6 +632,7 @@
         if (isNaN(v)) return null;
         if (c.money) v = Math.round(v);
         if (c.key === 'spend') v = Math.max(100, v);
+        if (c.key === 'want') v = Math.max(1200, v);
         if (c.key === 'rdebt') v = Math.min(60, Math.max(0, v));
         if (c.key === 'rinv') v = Math.min(12, Math.max(0, v));
         return Math.max(0, v);
@@ -628,9 +642,7 @@
          tracked separately: while the debt rate beats the return, every
          spare dollar attacks the debt (avalanche); cheaper debt rides.
          Returns the net-worth series plus crossing times in years. */
-      function simulate(incYr, spendYr, inv0, debt0, rInvPct, rDebtPct, mult, capYears) {
-        var surplus = (incYr - spendYr) / 12;
-        var target = spendYr * mult;
+      function simCore(surplus, inv0, debt0, rInvPct, rDebtPct, target, capYears) {
         var rI = Math.pow(1 + rInvPct / 100, 1 / 12) - 1;
         var rD = Math.pow(1 + rDebtPct / 100, 1 / 12) - 1;
         var inv = inv0, debt = debt0;
@@ -659,6 +671,21 @@
           debtFreeYrs: debtFree < 0 ? Infinity : debtFree / 12,
           hitYrs: hit < 0 ? Infinity : hit / 12
         };
+      }
+      function simulate(incYr, spendYr, inv0, debt0, rInvPct, rDebtPct, targetAmt, capYears) {
+        return simCore((incYr - spendYr) / 12, inv0, debt0, rInvPct, rDebtPct, targetAmt, capYears);
+      }
+
+      /* Goal seek: the monthly saving that reaches the target inside T years
+         from today's investments and debt, found by bisection on the sim. */
+      function requiredMonthly(T, target) {
+        var lo = 0, hi = 80000;
+        if (!isFinite(simCore(hi, S.inv, S.debt, S.rinv, S.rdebt, target, T).hitYrs)) return Infinity;
+        for (var i = 0; i < 22; i++) {
+          var mid = (lo + hi) / 2;
+          if (isFinite(simCore(mid, S.inv, S.debt, S.rinv, S.rdebt, target, T).hitYrs)) hi = mid; else lo = mid;
+        }
+        return hi;
       }
 
       function yearsLabel(y) { return y < 10 ? (Math.round(y * 10) / 10) : Math.round(y); }
@@ -710,24 +737,37 @@
           return '<polyline points="' + d + '" fill="none" stroke="' + color + '" stroke-width="' + width + '" opacity="' + op + '" stroke-linejoin="round" stroke-linecap="round"/>';
         }
 
-        var ty = Y(you.target).toFixed(1);
-        var targetLine = '<line x1="' + padL + '" y1="' + ty + '" x2="' + (W - padR) + '" y2="' + ty + '" stroke="#D4C4A0" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.9"/>' +
-          '<text x="' + (W - padR) + '" y="' + (ty - 6) + '" text-anchor="end" fill="#D4C4A0" font-family="Commit Mono, monospace" font-size="11">your number ' + fmtAxis(you.target) + '</text>';
+        /* Label placement that stays out of the curves. The crossing splits
+           the chart into quadrants: before the crossing the gold curve runs
+           BELOW the target line, after it ABOVE. So: the number label takes
+           the side away from the crossing, the crossing label sits in the
+           empty above-line quadrant left of its dot (flipping below-right
+           when the dot hugs the left edge), and debt-gone sits below the
+           zero line right of its dot where the curve has already left. */
+        var tyN = Y(you.target);
+        var hitIn = isFinite(you.hitYrs) && you.hitYrs > 0 && you.hitYrs <= T;
+        var hx = hitIn ? X(you.hitYrs) : -1;
+        var numLeft = hitIn && hx > padL + iw * 0.55;
+        var targetLine = '<line x1="' + padL + '" y1="' + tyN.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + tyN.toFixed(1) + '" stroke="#D4C4A0" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.9"/>' +
+          '<text x="' + (numLeft ? padL + 8 : W - padR) + '" y="' + (tyN - 7).toFixed(1) + '" text-anchor="' + (numLeft ? 'start' : 'end') + '" fill="#D4C4A0" font-family="Commit Mono, monospace" font-size="11">your number ' + fmtAxis(you.target) + '</text>';
 
         var marks = '';
-        if (isFinite(you.hitYrs) && you.hitYrs > 0 && you.hitYrs <= T) {
-          var hx = X(you.hitYrs), anc = you.hitYrs > T * 0.78 ? 'end' : 'start', dx = anc === 'end' ? -8 : 8;
-          marks += '<circle cx="' + hx.toFixed(1) + '" cy="' + ty + '" r="4.5" fill="#EDE0C0"/>' +
-            '<text x="' + (hx + dx).toFixed(1) + '" y="' + (+ty + 16) + '" text-anchor="' + anc + '" fill="#EDE0C0">the line &middot; yr ' + yearsLabel(you.hitYrs) + '</text>';
+        if (hitIn) {
+          var hitFlip = hx < padL + 160;
+          marks += '<circle cx="' + hx.toFixed(1) + '" cy="' + tyN.toFixed(1) + '" r="4.5" fill="#EDE0C0"/>' +
+            '<text x="' + (hitFlip ? hx + 9 : hx - 9).toFixed(1) + '" y="' + (hitFlip ? tyN + 17 : tyN - 9).toFixed(1) + '" text-anchor="' + (hitFlip ? 'start' : 'end') + '" fill="#EDE0C0">the line &middot; yr ' + yearsLabel(you.hitYrs) + '</text>';
         }
         if (you.pts[0] < 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0 && you.debtFreeYrs <= T) {
           var zx = X(you.debtFreeYrs), zy = Y(0);
+          var dbBelow = zy + 18 <= padT + ih - 4;
+          var dbRight = zx <= padL + iw - 170;
           marks += '<circle cx="' + zx.toFixed(1) + '" cy="' + zy.toFixed(1) + '" r="4" fill="#C9A66B"/>' +
-            '<text x="' + (zx + 8).toFixed(1) + '" y="' + (zy - 8).toFixed(1) + '" fill="#C9A66B">debt gone &middot; yr ' + yearsLabel(you.debtFreeYrs) + '</text>';
+            '<text x="' + (dbRight ? zx + 9 : zx - 9).toFixed(1) + '" y="' + (dbBelow ? zy + 17 : zy - 10).toFixed(1) + '" text-anchor="' + (dbRight ? 'start' : 'end') + '" fill="#C9A66B">debt gone &middot; yr ' + yearsLabel(you.debtFreeYrs) + '</text>';
         }
 
         var medEndV = med.pts[Math.min(T * 12, med.pts.length - 1)];
-        var medLabelY = Math.min(H - padB - 6, Math.max(padT + 10, Y(medEndV) - 8));
+        var medLabelY = Math.min(padT + ih - 8, Math.max(padT + 12, Y(medEndV) + 18));
+        if (Math.abs(medLabelY - (tyN - 7)) < 15) medLabelY = tyN + 16;
         var medLabel = '<text x="' + (W - padR) + '" y="' + medLabelY.toFixed(1) + '" text-anchor="end" fill="#8A9A8A">median US household</text>';
 
         $('tn-chart').innerHTML =
@@ -744,29 +784,47 @@
 
       function update() {
         var spendYr = S.spend * 12;
-        var target = spendYr * S.mult;
+        var wantYr = (S.want === null) ? spendYr : S.want;
+        var target = wantYr * S.mult;
         var rate = S.inc > 0 ? (S.inc - spendYr) / S.inc : 0;
 
+        /* While the want dial is still glued to spending, walk its slider and
+           typed field along so the UI matches the math. Setting .value fires
+           no input event, so this never unglues it. */
+        if (S.want === null) {
+          var wsl = $('tn-want'), wty = $('tn-want-n');
+          wsl.value = Math.min(+wsl.max, Math.max(+wsl.min, Math.round(wantYr)));
+          if (document.activeElement !== wty) wty.value = Math.round(wantYr).toLocaleString('en-US');
+        }
+
         $('tn-num').textContent = fmt(target);
-        $('tn-num-sub').innerHTML = S.mult + ' &times; yearly spending';
+        $('tn-num-sub').innerHTML = S.mult + ' &times; the income you want';
         $('tn-rate').textContent = (rate > 0 ? Math.round(rate * 100) : 0) + '%';
         $('tn-rate-sub').textContent = rate >= 0 ? 'of take-home pay' : 'spending beats income';
 
-        var you = simulate(S.inc, spendYr, S.inv, S.debt, S.rinv, S.rdebt, S.mult, 100);
-        var med = simulate(MEDIAN.inc, MEDIAN.spend * 12, MEDIAN.inv, MEDIAN.debt, S.rinv, S.rdebt, S.mult, 100);
+        var you = simulate(S.inc, spendYr, S.inv, S.debt, S.rinv, S.rdebt, target, 100);
+        var med = simulate(MEDIAN.inc, MEDIAN.spend * 12, MEDIAN.inv, MEDIAN.debt, S.rinv, S.rdebt, MEDIAN.spend * 12 * S.mult, 100);
 
         var yearsEl = $('tn-years'), subEl = $('tn-years-sub'), verdict = $('tn-verdict'), deal = $('tn-deal');
         var yrs = you.hitYrs;
 
         /* The point of the whole panel, stated as one sentence: want this
            much a year without working, you must stack this much. */
-        var dealLine = 'Want <strong>' + fmt(spendYr) + ' a year</strong> without working? You need <strong>' + fmt(target) + '</strong> invested. ';
+        var dealLine = 'Want <strong>' + fmt(wantYr) + ' a year</strong> without working? You need <strong>' + fmt(target) + '</strong> invested. ';
 
         if (yrs === 0) {
           yearsEl.textContent = '0';
           subEl.textContent = 'you are past it';
           deal.innerHTML = dealLine + '<strong>You already have it.</strong>';
-          verdict.innerHTML = 'You are across the line: the pile pays your spending forever, every year, without an alarm clock. The rest of this page is a victory lap.';
+          verdict.innerHTML = 'You are across the line: the pile pays your ' + fmt(wantYr) + ' a year forever, without an alarm clock. The rest of this page is a victory lap.';
+        } else if (S.inc - spendYr <= 0 && isFinite(yrs)) {
+          /* Deficit, but the existing pile out-earns it; the sim, not the
+             paycheck, decides. Rare and fragile, so the copy says so. */
+          var yc = yearsLabel(yrs);
+          yearsEl.textContent = String(yc);
+          subEl.textContent = 'carried by compounding';
+          deal.innerHTML = dealLine + 'Saving <strong>$0 a month</strong>, the pile you already have carries it alone in <strong>' + yc + ' years</strong>.';
+          verdict.innerHTML = 'Spending beats income, yet the investments out-earn the gap, so the line still arrives in about ' + yc + ' years on compounding alone. A fragile way to travel: one wider deficit stalls it, and any monthly saving at all would bring it decades closer.';
         } else if (S.inc - spendYr <= 0) {
           yearsEl.textContent = 'never';
           subEl.textContent = 'no gap, no climb';
@@ -789,6 +847,32 @@
           if (rate >= 0.5) notes.push('A 50%+ savings rate is the express lane.');
           if (!notes.length) notes.push('Lower spending moves the line twice: less to need forever, more saved every month.');
           verdict.innerHTML = notes.join(' ');
+        }
+
+        /* What has to change: the monthly saving that buys the same target
+           on faster clocks, goal-sought through the same simulation. */
+        var planEl = $('tn-plan');
+        var horizons = [10, 20, 30].filter(function (h) { return isFinite(yrs) ? h < yrs - 1 : true; });
+        if (yrs === 0 || !horizons.length) {
+          planEl.style.display = 'none';
+        } else {
+          var parts = horizons.map(function (h) {
+            var req = requiredMonthly(h, target);
+            return 'in ' + h + ' yrs: <strong>' + (isFinite(req) ? fmt(req) + '/mo' : 'not reachable') + '</strong>';
+          });
+          var cur = Math.max(0, Math.round((S.inc - spendYr) / 12));
+          planEl.innerHTML = (isFinite(yrs) ? 'Want it sooner? It takes saving ' : 'What it takes: saving ') + parts.join(' &middot; ') + ' <span class="dim2">(you save ' + fmt(cur) + '/mo now)</span>';
+          planEl.style.display = '';
+        }
+
+        /* Inflation, made concrete: the nominal sticker on arrival day. */
+        var infl = $('tn-infl');
+        if (isFinite(yrs) && yrs > 1.5) {
+          var nominal = target * Math.pow(1.03, yrs);
+          infl.innerHTML = 'Inflation check: by year ' + Math.round(yrs) + ' the account statement will actually read about <strong>' + fmt(nominal) + '</strong>. That is not extra money; at 3% a year it is simply what <strong>' + fmt(target) + '</strong> of today&#39;s buying power will be called by then. This page stays in today&#39;s dollars so every figure means what it means right now.';
+          infl.style.display = '';
+        } else {
+          infl.style.display = 'none';
         }
 
         var medTxt;
@@ -851,6 +935,7 @@
 
       $('tn-preset').addEventListener('click', function () {
         S.inc = MEDIAN.inc; S.spend = MEDIAN.spend; S.inv = MEDIAN.inv; S.debt = MEDIAN.debt;
+        S.want = null; /* the median household wants what it spends; re-glue */
         CONTROLS.forEach(function (c) {
           if (!(c.key in MEDIAN)) return;
           var sl = $(c.slider), ty = $(c.typed);
