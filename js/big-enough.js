@@ -98,7 +98,7 @@
     var kg = document.getElementById('pc-kg'), lb = document.getElementById('pc-lb');
     var gain = document.getElementById('pc-gain'), cut = document.getElementById('pc-cut');
     var out = document.getElementById('pc-out'), meal = document.getElementById('pc-meal');
-    var unit = 'kg', goal = 'gain';
+    var unit = 'lb', goal = 'gain';
 
     function calc() {
       var val = parseFloat(w.value);
