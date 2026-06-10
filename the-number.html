@@ -153,6 +153,8 @@
     .tn-kpi-main .tn-kpi-val { color: var(--accent-hover); }
     .tn-kpi-sub { display: block; font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-dim); margin-top: 0.35rem; }
     .tn-compare { font-family: var(--font-mono); font-size: 0.73rem; color: var(--text-dim); text-align: center; margin: 0 0 1rem; }
+    .tn-deal { font-family: var(--font-body); font-size: 1.17rem; line-height: 1.55; color: var(--text); margin: 1.35rem 0 0.3rem; padding: 0.85rem 1.05rem; border-left: 3px solid var(--accent); background: rgba(212, 196, 160, 0.06); border-radius: 0 8px 8px 0; }
+    .tn-deal strong { color: var(--accent-hover); font-weight: 600; }
     .tn-verdict { font-family: var(--font-body); font-size: 1.06rem; line-height: 1.6; color: var(--text); margin: 0 0 1rem; min-height: 2.6em; }
     .tn-verdict strong { color: var(--text-bright); }
     .tn-chart { margin: 0.2rem 0 0.4rem; }
@@ -169,6 +171,15 @@
     }
     @media (max-width: 520px) {
       .tn-bench span { display: none; }
+    }
+    /* On big screens the panel takes the whole content column: longer slider
+       throws, a chart half again as large, bigger readouts. */
+    @media (min-width: 1100px) {
+      .tn-calc { max-width: 1044px; padding: 2rem 2.4rem 1.7rem; }
+      .tn-mains { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem 2.6rem; }
+      .tn-kpi-val { font-size: 2.05rem; }
+      .tn-deal { font-size: 1.34rem; padding: 1rem 1.3rem; }
+      .tn-verdict { font-size: 1.12rem; }
     }
 
     /* Closing line */
@@ -248,6 +259,7 @@
         <h3>Where is your line?</h3>
         <p class="tn-calc-intro">Drag the sliders or type straight over the numbers. Everything runs in today's dollars, so inflation is already handled. The small <span style="color:var(--accent-hover)">&#9650;</span> marks under the tracks are the US median or average for that dial: the country, for comparison, as you go.</p>
 
+        <div class="tn-mains">
         <label class="tn-slider">
           <span class="tn-slider-row"><span class="tn-slider-name">Take-home pay <small>per year, after taxes</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-inc-n" value="65,000" aria-label="Yearly take-home pay in dollars, typed"></span></span>
           <input type="range" id="tn-inc" min="12000" max="400000" step="1000" value="65000" aria-label="Yearly take-home pay in dollars">
@@ -268,6 +280,7 @@
           <input type="range" id="tn-debt" min="0" max="600000" step="1000" value="40000" aria-label="Total debt in dollars">
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench lo" style="left:15%"><span>avg car+student+cards $90K</span></span></span>
         </label>
+        </div>
 
         <div class="tn-minor">
           <label class="tn-slider">
@@ -289,6 +302,8 @@
           </div>
           <button type="button" class="tn-preset" id="tn-preset">Load the median American household</button>
         </div>
+
+        <p class="tn-deal" id="tn-deal">&nbsp;</p>
 
         <div class="tn-kpis" aria-live="polite">
           <div class="tn-kpi"><span class="tn-kpi-label">You save</span><span class="tn-kpi-val" id="tn-rate">32%</span><span class="tn-kpi-sub" id="tn-rate-sub">of take-home pay</span></div>
@@ -651,7 +666,11 @@
         var iw = W - padL - padR, ih = H - padT - padB;
         var maxPts = Math.max.apply(null, you.pts.slice(0, T * 12 + 1).concat(med.pts.slice(0, T * 12 + 1)));
         var ymax = Math.max(you.target * 1.06, maxPts * 1.02);
-        var ymin = Math.min(0, you.pts[0] * 1.08);
+        /* Floor: always include the starting position; if the path sinks
+           (spending beats income), show the dive down to 30% of the chart
+           height below zero, then truncate the curve at the floor. */
+        var rawMin = Math.min.apply(null, you.pts.slice(0, T * 12 + 1));
+        var ymin = Math.min(0, you.pts[0] * 1.08, Math.max(rawMin * 1.05, -0.3 * ymax));
         var X = function (yr) { return padL + (yr / T) * iw; };
         var Y = function (v) { return padT + (1 - (v - ymin) / (ymax - ymin)) * ih; };
 
@@ -670,10 +689,22 @@
 
         function line(sim, color, width, op) {
           var n = T * 12, every = Math.max(1, Math.round(n / 220)), d = '';
+          var prevV = null, prevM = 0;
           for (var m = 0; m <= n; m += every) {
             var v = sim.pts[Math.min(m, sim.pts.length - 1)];
+            if (v < ymin) {
+              /* Curve exits the bottom of the plot: end it exactly at the
+                 floor crossing instead of drawing over the axis. */
+              if (prevV !== null && prevV >= ymin && v !== prevV) {
+                var f = (ymin - prevV) / (v - prevV);
+                d += (d ? ' ' : '') + X((prevM + f * (m - prevM)) / 12).toFixed(1) + ',' + Y(ymin).toFixed(1);
+              }
+              break;
+            }
             d += (d ? ' ' : '') + X(m / 12).toFixed(1) + ',' + Math.max(padT - 6, Y(v)).toFixed(1);
+            prevV = v; prevM = m;
           }
+          if (!d) return '';
           return '<polyline points="' + d + '" fill="none" stroke="' + color + '" stroke-width="' + width + '" opacity="' + op + '" stroke-linejoin="round" stroke-linecap="round"/>';
         }
 
@@ -722,30 +753,40 @@
         var you = simulate(S.inc, spendYr, S.inv, S.debt, S.rinv, S.rdebt, S.mult, 100);
         var med = simulate(MEDIAN.inc, MEDIAN.spend * 12, MEDIAN.inv, MEDIAN.debt, S.rinv, S.rdebt, S.mult, 100);
 
-        var yearsEl = $('tn-years'), subEl = $('tn-years-sub'), verdict = $('tn-verdict');
+        var yearsEl = $('tn-years'), subEl = $('tn-years-sub'), verdict = $('tn-verdict'), deal = $('tn-deal');
         var yrs = you.hitYrs;
+
+        /* The point of the whole panel, stated as one sentence: want this
+           much a year without working, you must stack this much. */
+        var dealLine = 'Want <strong>' + fmt(spendYr) + ' a year</strong> without working? You need <strong>' + fmt(target) + '</strong> invested. ';
 
         if (yrs === 0) {
           yearsEl.textContent = '0';
           subEl.textContent = 'you are past it';
-          verdict.innerHTML = 'You are already across the line: <strong>' + fmt(target) + '</strong> at this rule pays your <strong>' + fmt(spendYr) + '</strong> a year without work. The rest of this page is a victory lap.';
+          deal.innerHTML = dealLine + '<strong>You already have it.</strong>';
+          verdict.innerHTML = 'You are across the line: the pile pays your spending forever, every year, without an alarm clock. The rest of this page is a victory lap.';
         } else if (S.inc - spendYr <= 0) {
           yearsEl.textContent = 'never';
           subEl.textContent = 'no gap, no climb';
-          verdict.innerHTML = 'Spending equals (or beats) income, so nothing compounds' + (S.debt > 0 ? ' and the debt grows on its own' : '') + '. The dial only moves on the gap between the two. Open a $200 monthly gap and a number appears; the climb sections are about widening it.';
+          deal.innerHTML = dealLine + 'Saving <strong>$0 a month</strong>, it never arrives.';
+          verdict.innerHTML = 'Spending equals (or beats) income, so nothing compounds' + (S.debt > 0 ? ' and the debt grows on its own' : '') + '. The dial only moves on the gap between the two. Open a $200 monthly gap and a date appears; the climb sections are about widening it.';
         } else if (!isFinite(yrs)) {
           yearsEl.textContent = 'never';
           subEl.textContent = 'debt outruns the surplus';
-          verdict.innerHTML = 'At these rates the <strong>' + S.rdebt + '% debt grows faster than your whole surplus</strong>, so the pile never starts. Widen the gap or knock the rate down (refinance, consolidate, negotiate); every dollar thrown at that debt earns a guaranteed ' + S.rdebt + '%.';
+          deal.innerHTML = dealLine + 'At these rates it never arrives: <strong>the debt wins.</strong>';
+          verdict.innerHTML = 'The <strong>' + S.rdebt + '% debt grows faster than your whole surplus</strong>, so the pile never starts. Widen the gap or knock the rate down (refinance, consolidate, negotiate); every dollar thrown at that debt earns a guaranteed ' + S.rdebt + '%.';
         } else {
           var y = yearsLabel(yrs);
           yearsEl.textContent = String(y);
           subEl.textContent = S.debt > 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0 ? ('debt gone in ' + yearsLabel(you.debtFreeYrs) + ' yrs') : 'from today';
-          var line = 'Hold this savings rate and in <strong>' + y + ' years</strong> a pile of <strong>' + fmt(target) + '</strong> pays you <strong>' + fmt(spendYr) + '</strong> a year, every year, without an alarm clock.';
-          if (S.debt > 0 && S.rdebt < S.rinv) line += ' Your cheap debt rides along instead of being attacked; the line still arrives.';
-          if (target >= 2500000) line += ' That is the comfortable tier of the dial.';
-          if (rate >= 0.5) line += ' A 50%+ savings rate is the express lane.';
-          verdict.innerHTML = line;
+          deal.innerHTML = dealLine + 'Saving <strong>' + fmt((S.inc - spendYr) / 12) + ' a month</strong>, you have it in <strong>' + y + ' years</strong>.';
+          var notes = [];
+          if (S.debt > 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0) notes.push('The debt dies in year ' + yearsLabel(you.debtFreeYrs) + ' and the curve turns upward.');
+          if (S.debt > 0 && S.rdebt < S.rinv) notes.push('Your cheap debt rides along instead of being attacked; the line still arrives.');
+          if (target >= 2500000) notes.push('That pile is the comfortable tier of the dial.');
+          if (rate >= 0.5) notes.push('A 50%+ savings rate is the express lane.');
+          if (!notes.length) notes.push('Lower spending moves the line twice: less to need forever, more saved every month.');
+          verdict.innerHTML = notes.join(' ');
         }
 
         var medTxt;
