@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Long Can You Live?</title>
+  <meta name="description" content="The truth about human longevity, sourced and illustrated. Is there a hard wall around 120? Is eating less the only real hack? Are the Blue Zones real? What the evidence actually says, and what actually adds years.">
+  <meta property="og:title" content="How Long Can You Live?">
+  <meta property="og:description" content="There is supposed to be a hard wall around 120, and eating less is supposed to be the only real hack. The evidence says something stranger: the wall is unproven, the records are riddled with fraud, and the thing that actually adds years is the one nobody calls a hack.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/how-long-can-you-live.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/how-long-can-you-live-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/how-long-can-you-live-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     HOW LONG CAN YOU LIVE?
+     A sourced, illustrated, myth-versus-truth field guide to human
+     longevity. Sits inside the site shell (forest green, parchment,
+     Century Supra / Segoe UI / Commit Mono). This block adds only the
+     post's own components: hero, accented sections, headline stats,
+     the "fork" controversy boxes, evidence-grade citation chips, the
+     four code-drawn figures, and the contents map. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --wide: 1080px;                   /* breakout width for big visuals */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #D4C4A0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #e6c074;
+    --c-rose:  #e98e7f;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+    --panel:   #2a322b;
+    --panel-2: #232a25;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--wide); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 40ch; text-wrap: pretty; }
+  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; }
+  .hero-byline b { color: var(--accent); font-weight: 400; }
+
+  .hero-figure { margin: 2.2rem 0 0.5rem; }
+  .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .hero-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.9rem; max-width: 62ch; line-height: 1.5; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--sec-accent, var(--accent)); }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
+  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+
+  /* per-section color rhythm */
+  #wall { --sec-accent:#8fb3c7; } #rotten { --sec-accent:#e98e7f; } #plateau { --sec-accent:#b79bc4; }
+  #eatless { --sec-accent:#e6c074; } #works { --sec-accent:#9ec79a; } #sources { --sec-accent:#D4C4A0; }
+
+  /* a wide visual that breaks out of the reading column on big screens */
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- CONTENTS MAP ---------- */
+  .map { margin: 2rem auto 0; max-width: var(--wide); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
+  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
+  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
+  .map-stat { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); }
+  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--accent); margin-right: 0.35em; }
+  .map-list { list-style: none; margin: 0; padding: 0; }
+  .map-list li { margin: 0; }
+  .map-list li a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(120,134,120,0.12); color: var(--text); text-decoration: none; transition: color 0.18s, padding-left 0.18s; }
+  .map-list li a:hover { color: var(--accent); padding-left: 0.4rem; }
+  .map-list .map-m { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
+  .map-list .mnum { font-family: var(--font-mono); font-size: 0.72rem; color: var(--sec-accent, var(--accent)); margin-right: 0.7em; }
+
+  /* ---------- HEADLINE STATS ---------- */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1.7em 0; }
+  .stat { border: 1px solid var(--rule); border-left: 4px solid var(--sc, var(--accent)); border-radius: 10px; padding: 0.9em 1em; background: rgba(0,0,0,0.13); }
+  .stat .fig { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1; color: var(--sc, var(--accent)); font-variant-numeric: tabular-nums; }
+  .stat .fig-lbl { display: block; font-family: var(--font-body); font-size: 0.86rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.45em; }
+  .stat.sky { --sc:#8fb3c7; } .stat.plum { --sc:#b79bc4; } .stat.green { --sc:#9ec79a; }
+  .stat.amber { --sc:#e6c074; } .stat.rose { --sc:#e98e7f; } .stat.gold { --sc:#D4C4A0; }
+
+  /* ---------- CITATION + GRADE CHIPS ---------- */
+  .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
+  .src a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
+  .src a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
+  .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
+  .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
+  .grade.g-c { background: rgba(230,192,116,0.15); color: #e6c074; border: 1px solid rgba(230,192,116,0.4); }
+  .grade.g-d { background: rgba(233,142,127,0.14); color: #e98e7f; border: 1px solid rgba(233,142,127,0.4); }
+
+  /* ---------- FORK (live controversy) ---------- */
+  .fork { border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.14); padding: 1.1em 1.2em; margin: 1.7em 0; }
+  .fork-q { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; color: var(--text-bright); margin: 0 0 0.7em; }
+  .fork-q::before { content: "Still unsettled"; display: inline-block; font-family: var(--font-mono); font-weight: 400; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); border: 1px solid var(--sec-accent, var(--accent)); border-radius: 999px; padding: 0.12em 0.6em; margin-right: 0.7em; vertical-align: 0.18em; }
+  .fork-a { display: grid; gap: 0.7em; margin-bottom: 0.8em; }
+  @media (min-width: 620px) { .fork-a { grid-template-columns: 1fr 1fr; } }
+  .fork-side { border-left: 3px solid var(--fc, var(--accent)); padding-left: 0.8em; }
+  .fork-side.one { --fc:#D4C4A0; } .fork-side.two { --fc:#e98e7f; }
+  .fork-side h4 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--fc, var(--accent)); margin: 0 0 0.3em; text-transform: uppercase; }
+  .fork-side p { font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
+  .fork-take { font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; padding-top: 0.6em; border-top: 1px solid var(--rule); }
+  .fork-take b { color: var(--text-bright); }
+
+  /* ---------- MYTH / TRUTH callout ---------- */
+  .mt { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin: 1.7em 0; background: rgba(0,0,0,0.13); }
+  .mt-claim { padding: 0.85em 1.1em; background: rgba(233,142,127,0.08); border-bottom: 1px solid var(--rule); font-size: 1.02rem; line-height: 1.5; color: var(--text); }
+  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #e98e7f; display: block; margin-bottom: 0.25em; }
+  .mt-truth { padding: 0.85em 1.1em; font-size: 1.02rem; line-height: 1.5; color: var(--text-bright); }
+  .mt-truth b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9ec79a; display: block; margin-bottom: 0.25em; }
+
+  /* ---------- FIGURES ---------- */
+  .viz { margin: 2em auto; }
+  .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; color: var(--text-bright); margin: 0 0 0.15em; }
+  .viz-sub { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); margin: 0 0 1em; }
+  .viz-cap { font-family: var(--font-body); font-style: italic; font-size: 0.9rem; color: var(--text-dim); margin-top: 0.9rem; line-height: 1.5; max-width: 64ch; }
+  .viz-duo { display: grid; gap: 1.6rem; align-items: end; }
+  @media (min-width: 680px) { .viz-duo { grid-template-columns: 0.78fr 1.22fr; } }
+  text { font-family: var(--font-mono); }
+  .ax { fill: var(--text-dim); font-size: 13px; }
+  .axs { fill: var(--text-dim); font-size: 11px; opacity: 0.85; }
+  .lbl-name { fill: var(--text); font-size: 14px; font-family: var(--font-body); }
+  .lbl-val { fill: var(--text-bright); font-size: 13px; font-weight: 600; }
+  .anno { fill: var(--text-bright); font-size: 13px; font-family: var(--font-body); }
+  .anno-i { fill: var(--text-dim); font-size: 12px; font-family: var(--font-body); font-style: italic; }
+  .gridln { stroke: var(--c-grid); stroke-width: 1; }
+  .axisln { stroke: var(--c-grid-strong); stroke-width: 1; }
+
+  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.4rem, 4vw, 1.9rem); line-height: 1.3; color: var(--text-bright); border-left: 3px solid var(--sec-accent, var(--accent)); padding-left: 1rem; margin: 2rem 0; text-wrap: pretty; }
+  .pullquote cite { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 0.7rem; }
+
+  .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.0rem; line-height: 1.6; color: var(--text); }
+  .disclaimer strong { color: var(--accent-hover); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0 0 1.6rem; font-size: 0.86rem; color: var(--text-dim); }
+  .legend span span { margin-right: 0.4em; }
+
+  /* ---------- REFERENCES ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
+  #sources li { margin-bottom: 0.38em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 3px solid var(--accent); padding-left: 0.7em; margin: 2.3rem 0 0.8rem; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.4rem; } #sources li { break-inside: avoid; } }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe: only hide under html.js) ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+    html.js .draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); }
+    html.js .draw.go { animation: draw 1.6s var(--ease) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    html.js .grow-b { transform: scaleX(0.001); transform-origin: left; }
+    html.js .grow-b.go { animation: growL 1.05s var(--ease) forwards; }
+    @keyframes growL { to { transform: scaleX(1); } }
+    html.js .grow-v { transform: scaleY(0.001); transform-origin: bottom; }
+    html.js .grow-v.go { animation: growV 1s var(--ease) forwards; }
+    @keyframes growV { to { transform: scaleY(1); } }
+    .pulse-dot { animation: pulseDot 2.8s ease-in-out infinite; }
+    @keyframes pulseDot { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero, .map { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    figure.viz, .fork, .stat, .pullquote, .mt { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <p class="hero-eyebrow">An honest field guide to longevity</p>
+    <h1 class="hero-title">How Long Can You Live?</h1>
+    <p class="hero-dek">There is supposed to be a hard wall around 120, and eating less is supposed to be the only real hack. The evidence says something stranger.</p>
+    <p class="hero-byline">Sourced and illustrated. <b>28 sources cited.</b> Last reviewed June 2026.</p>
+
+    <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
+      <svg viewBox="0 0 960 360" role="img" aria-label="A line showing the oldest age any human has ever reached, climbing for decades then going flat at 122 after 1997.">
+        <defs>
+          <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#D4C4A0" stop-opacity="0.22"/>
+            <stop offset="1" stop-color="#D4C4A0" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- gridlines -->
+        <line class="gridln" x1="80" y1="93" x2="920" y2="93"/>
+        <line class="gridln" x1="80" y1="125" x2="920" y2="125" stroke-dasharray="2 6"/>
+        <line class="gridln" x1="80" y1="206" x2="920" y2="206"/>
+        <line class="gridln" x1="80" y1="287" x2="920" y2="287"/>
+        <line class="axisln" x1="80" y1="320" x2="920" y2="320"/>
+        <!-- y labels (age) -->
+        <text class="axs" x="70" y="97" text-anchor="end">122</text>
+        <text class="axs" x="70" y="129" text-anchor="end">120</text>
+        <text class="axs" x="70" y="210" text-anchor="end">115</text>
+        <text class="axs" x="70" y="291" text-anchor="end">110</text>
+        <!-- x labels (year) -->
+        <text class="axs" x="80" y="338" text-anchor="middle">1960</text>
+        <text class="axs" x="334" y="338" text-anchor="middle">1980</text>
+        <text class="axs" x="588" y="338" text-anchor="middle">2000</text>
+        <text class="axs" x="842" y="338" text-anchor="middle">2020</text>
+        <!-- area + curve -->
+        <path class="fade-area" d="M80 239 L271 223 L436 206 L526 174 L551 93 L920 93 L920 320 L80 320 Z" fill="url(#heroFill)" opacity="0.9"/>
+        <path class="draw" id="hero-curve" style="--len:1180" d="M80 239 L271 223 L436 206 L526 174 L551 93 L920 93" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Calment marker -->
+        <circle class="pulse-dot" cx="551" cy="93" r="6" fill="#D4C4A0"/>
+        <text class="anno" x="565" y="78">Jeanne Calment, 122 (1997)</text>
+        <text class="anno-i" x="916" y="84" text-anchor="end">still the record in 2026</text>
+        <text class="anno-i" x="86" y="118">the 120 line</text>
+      </svg>
+      <figcaption class="hero-cap" id="hero-fig-cap">The oldest age any human has ever been verified to reach, plotted over time. It climbed for most of a century, then a French woman named Jeanne Calment died at 122 in 1997, and the record has not moved since. Whether that flat line is a wall, an accident, or a trick of bad data is the whole story.</figcaption>
+    </figure>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ MAP ============================ -->
+    <aside class="map reveal" aria-label="What is inside this guide">
+      <p class="map-kicker">What is inside</p>
+      <p class="map-note">Five short chapters, about twenty-five minutes end to end. Each one takes something everyone "knows" about living longer and checks it against the actual studies. The corrections to my own first guesses are left in on purpose. If you read only one chapter, read <a href="#works">the last one</a>.</p>
+      <div class="map-stats">
+        <span class="map-stat"><b>1</b> human ever past 120</span>
+        <span class="map-stat"><b>69 to 82%</b> of the oldest records vanish with paperwork</span>
+        <span class="map-stat"><b>0</b> human trials that measured a longer life</span>
+        <span class="map-stat"><b>28</b> sources cited</span>
+      </div>
+      <ul class="map-list">
+        <li><a href="#wall"><span><span class="mnum">01</span>Is there really a wall at 120?</span><span class="map-m">5 min</span></a></li>
+        <li><a href="#rotten"><span><span class="mnum">02</span>The oldest people are mostly a paperwork error</span><span class="map-m">6 min</span></a></li>
+        <li><a href="#plateau"><span><span class="mnum">03</span>Does aging ever stop?</span><span class="map-m">4 min</span></a></li>
+        <li><a href="#eatless"><span><span class="mnum">04</span>Is eating less the only hack?</span><span class="map-m">5 min</span></a></li>
+        <li><a href="#works"><span><span class="mnum">05</span>What actually adds years</span><span class="map-m">5 min</span></a></li>
+      </ul>
+    </aside>
+
+    <!-- ============================ 01 WALL ============================ -->
+    <section id="wall" class="sec first" aria-labelledby="wall-h">
+      <span class="sec-kicker">The famous limit</span>
+      <h2 id="wall-h" class="sec-h">Is there really a wall at 120?</h2>
+      <p class="lede">The number everyone repeats is about 120. No proven biology says it has to be there. And yet the ceiling is real enough that you can almost touch it.</p>
+
+      <p>Start with the one fact nobody disputes. The longest verified human life belongs to <strong>Jeanne Calment</strong>, a French woman who was born in 1875, sold colored pencils to Vincent van Gogh as a girl, and died in 1997 at <strong>122 years and 164 days</strong>. <span class="src"><a href="https://en.wikipedia.org/wiki/Jeanne_Calment">Calment</a></span> She is the only person in recorded history ever confirmed to pass 120. The second and third oldest, Sarah Knauss and Kane Tanaka, both fell more than three years short. <span class="src"><a href="https://en.wikipedia.org/wiki/List_of_the_verified_oldest_people">verified list</a></span></p>
+
+      <figure class="viz breakout reveal" aria-labelledby="wall-fig-t">
+        <p class="viz-title" id="wall-fig-t">The verified oldest humans, ever and now</p>
+        <p class="viz-sub">age at death, in years &middot; blue is the oldest person alive today</p>
+        <svg viewBox="0 0 960 470" role="img" aria-label="Bar chart of the oldest verified humans. Only Jeanne Calment at 122.4 crosses the dashed 120 line. Everyone else, including the oldest living person at about 116, falls short.">
+          <!-- 120 reference line -->
+          <line x1="762" y1="40" x2="762" y2="416" stroke="#D4C4A0" stroke-width="1.5" stroke-dasharray="3 6" opacity="0.8"/>
+          <text class="axs" x="762" y="34" text-anchor="middle" fill="#D4C4A0">120</text>
+          <!-- baseline axis at age 110 -->
+          <line class="axisln" x1="300" y1="40" x2="300" y2="416"/>
+          <text class="axs" x="300" y="436" text-anchor="middle">110</text>
+          <text class="axs" x="900" y="436" text-anchor="middle">123</text>
+          <!-- rows: y for each, bar from x=300 to x=300+(age-110)/13*600 -->
+          <!-- Calment 122.4 -> 872 -->
+          <g>
+            <text class="lbl-name" x="290" y="62" text-anchor="end">Jeanne Calment</text>
+            <rect class="grow-b" x="300" y="48" width="572" height="22" rx="3" fill="#D4C4A0"/>
+            <text class="lbl-val" x="882" y="64">122.4</text>
+          </g>
+          <!-- Kane Tanaka 119.3 -> 730 -->
+          <g>
+            <text class="lbl-name" x="290" y="104" text-anchor="end">Kane Tanaka</text>
+            <rect class="grow-b" x="300" y="90" width="430" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="740" y="106">119.3</text>
+          </g>
+          <!-- Sarah Knauss 119.3 -> 730 -->
+          <g>
+            <text class="lbl-name" x="290" y="146" text-anchor="end">Sarah Knauss</text>
+            <rect class="grow-b" x="300" y="132" width="429" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="739" y="148">119.3</text>
+          </g>
+          <!-- Lucile Randon 118.9 -> 706 -->
+          <g>
+            <text class="lbl-name" x="290" y="188" text-anchor="end">Lucile Randon</text>
+            <rect class="grow-b" x="300" y="174" width="411" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="721" y="190">118.9</text>
+          </g>
+          <!-- Nabi Tajima 117.7 -> 661 -->
+          <g>
+            <text class="lbl-name" x="290" y="230" text-anchor="end">Nabi Tajima</text>
+            <rect class="grow-b" x="300" y="216" width="356" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="666" y="232">117.7</text>
+          </g>
+          <!-- Marie-Louise Meilleur 117.6 -> 656 -->
+          <g>
+            <text class="lbl-name" x="290" y="272" text-anchor="end">Marie-Louise Meilleur</text>
+            <rect class="grow-b" x="300" y="258" width="351" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="661" y="274">117.6</text>
+          </g>
+          <!-- Emma Morano 117.4 -> 646 -->
+          <g>
+            <text class="lbl-name" x="290" y="314" text-anchor="end">Emma Morano</text>
+            <rect class="grow-b" x="300" y="300" width="341" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="651" y="316">117.4</text>
+          </g>
+          <!-- Violet Brown 117.2 -> 637 -->
+          <g>
+            <text class="lbl-name" x="290" y="356" text-anchor="end">Violet Brown</text>
+            <rect class="grow-b" x="300" y="342" width="332" height="22" rx="3" fill="#7f8d80"/>
+            <text class="lbl-val" x="642" y="358">117.2</text>
+          </g>
+          <!-- Ethel Caterham (alive) ~116.3 -> 591 -->
+          <g>
+            <text class="lbl-name" x="290" y="398" text-anchor="end" fill="#a9cad9">Ethel Caterham</text>
+            <rect class="grow-b" x="300" y="384" width="291" height="22" rx="3" fill="#8fb3c7"/>
+            <text class="lbl-val" x="601" y="400" fill="#a9cad9">116.3</text>
+          </g>
+        </svg>
+        <figcaption class="viz-cap">Every verified record-holder of the modern era, and the oldest person alive today in blue. The dashed line is 120. One bar crosses it, set almost thirty years ago. Sources: the verified-oldest-people register and the Gerontology Research Group. <span class="src"><a href="https://www.grg-supercentenarians.org/world-supercentenarian-rankings-list/">GRG</a></span></figcaption>
+      </figure>
+
+      <p>So where did the hard "115 to 125" cap come from? In 2016, three geneticists published a short paper in <em>Nature</em> arguing that human lifespan is "fixed," with a natural limit near 115 and almost no chance of beating 125. <span class="src"><a href="https://www.nature.com/articles/nature19793">Dong 2016</a></span> <span class="grade g-c">contested</span> It made headlines worldwide. It also, within eight months, drew <strong>five separate rebuttals in the same journal</strong>. <span class="src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="src"><a href="https://www.nature.com/articles/nature22790">Hughes 2017</a></span></p>
+
+      <p>The critics were blunt about the flaws. The paper split its data at the year 1995, a cut chosen right before Calment died, which manufactured the "decline" it then claimed to discover. The supposed downward trend was driven almost entirely by that single woman. And the analysis used the same data to both invent and test its hypothesis. Correct a couple of those choices, one group showed, and the 125-year limit simply disappears. <span class="src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="grade g-b">good</span> The honest summary is that the famous wall is a popular idea resting on one paper the field never accepted.</p>
+
+      <div class="mt">
+        <div class="mt-claim"><b>The claim</b>Science has proven a hard biological cap on human life at about 120.</div>
+        <div class="mt-truth"><b>What the evidence says</b>No, it has not. The paper that said so was rebutted five times in its own journal. But only one human has ever crossed 120, the record has stood since 1997, and the oldest person alive is about 116. There is no proven wall, and there is a very real ceiling. Both things are true.</div>
+      </div>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 02 ROTTEN ============================ -->
+    <section id="rotten" class="sec" aria-labelledby="rotten-h">
+      <span class="sec-kicker">The data problem</span>
+      <h2 id="rotten-h" class="sec-h">The oldest people are mostly a paperwork error</h2>
+      <p class="lede">This is the part that genuinely changed how I read every longevity headline. The reason we cannot be sure about the wall is that the data at the wall is, in one researcher's words, rotten from the inside out.</p>
+
+      <p>The researcher is <strong>Saul Justin Newman</strong>, and in 2024 he won an Ig Nobel Prize for a deceptively simple discovery: the places and records that produce the world's oldest people line up almost perfectly with the places and records you would expect if the ages were wrong. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="src"><a href="https://www.ucl.ac.uk/ioe/news/2024/sep/ucl-demographers-work-debunking-blue-zone-regions-exceptional-lifespans-wins-ig-nobel-prize">Ig Nobel</a></span> <span class="grade g-b">good</span> Not longevity. Poverty, missing documents, and pension fraud.</p>
+
+      <p>The cleanest single piece of evidence is what happens when real birth certificates arrive. In the United States, when a state started issuing them, the number of people claiming to be 110 or older <strong>fell by 69 to 82 percent</strong>. The "supercentenarians" were mostly an artifact of nobody being able to check. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="grade g-b">good</span></p>
+
+      <figure class="viz breakout reveal" aria-labelledby="rot-fig-t">
+        <p class="viz-title" id="rot-fig-t">What happens when you can finally check</p>
+        <p class="viz-sub">two ways the records give themselves away</p>
+        <div class="viz-duo">
+          <!-- LEFT: before/after bars -->
+          <svg viewBox="0 0 360 320" role="img" aria-label="Two bars. Before birth certificates, supercentenarian records are at 100 percent. After, they fall to about a quarter.">
+            <line class="axisln" x1="60" y1="280" x2="340" y2="280"/>
+            <text class="axs" x="40" y="60" text-anchor="end">100%</text>
+            <text class="axs" x="40" y="170" text-anchor="end">50%</text>
+            <text class="axs" x="40" y="284" text-anchor="end">0</text>
+            <line class="gridln" x1="60" y1="55" x2="340" y2="55"/>
+            <line class="gridln" x1="60" y1="167.5" x2="340" y2="167.5"/>
+            <!-- before = 100% (height 225 from y=55 to 280) -->
+            <rect class="grow-v" x="95" y="55" width="84" height="225" rx="3" fill="#7f8d80"/>
+            <text class="ax" x="137" y="305" text-anchor="middle">before</text>
+            <text class="axs" x="137" y="46" text-anchor="middle">100%</text>
+            <!-- after = ~24% (height 54 from y=226 to 280) -->
+            <rect class="grow-v" x="221" y="226" width="84" height="54" rx="3" fill="#e98e7f"/>
+            <text class="ax" x="263" y="305" text-anchor="middle">after</text>
+            <text class="axs" x="263" y="217" text-anchor="middle" fill="#e98e7f">~24%</text>
+          </svg>
+          <!-- RIGHT: birthday heaping -->
+          <svg viewBox="0 0 580 320" role="img" aria-label="A schematic histogram of birth days of the month. Genuine records are roughly even; suspect ones pile onto round numbers like 1, 5, 10, 15, 20, 25 and 30.">
+            <line class="axisln" x1="40" y1="270" x2="565" y2="270"/>
+            <line x1="40" y1="222" x2="565" y2="222" stroke="#9ec79a" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.6"/>
+            <text class="axs" x="565" y="216" text-anchor="end" fill="#9ec79a">if birthdays fell evenly</text>
+            <!-- 31 day bars; base ~ small, spikes on multiples of 5 and day 1 -->
+            <!-- baseline y=270, max top y=70 (height 200 for tallest) -->
+            <!-- helper spacing: x = 46 + (d-1)*16.6, width 12 -->
+            <g fill="#e98e7f">
+              <rect class="grow-v" x="46"  y="120" width="12" height="150"/><!--1 spike-->
+              <rect class="grow-v" x="62.6" y="232" width="12" height="38"/>
+              <rect class="grow-v" x="79.2" y="240" width="12" height="30"/>
+              <rect class="grow-v" x="95.8" y="226" width="12" height="44"/>
+              <rect class="grow-v" x="112.4" y="150" width="12" height="120"/><!--5-->
+              <rect class="grow-v" x="129" y="236" width="12" height="34"/>
+              <rect class="grow-v" x="145.6" y="244" width="12" height="26"/>
+              <rect class="grow-v" x="162.2" y="230" width="12" height="40"/>
+              <rect class="grow-v" x="178.8" y="238" width="12" height="32"/>
+              <rect class="grow-v" x="195.4" y="135" width="12" height="135"/><!--10-->
+              <rect class="grow-v" x="212" y="240" width="12" height="30"/>
+              <rect class="grow-v" x="228.6" y="232" width="12" height="38"/>
+              <rect class="grow-v" x="245.2" y="245" width="12" height="25"/>
+              <rect class="grow-v" x="261.8" y="236" width="12" height="34"/>
+              <rect class="grow-v" x="278.4" y="142" width="12" height="128"/><!--15-->
+              <rect class="grow-v" x="295" y="242" width="12" height="28"/>
+              <rect class="grow-v" x="311.6" y="234" width="12" height="36"/>
+              <rect class="grow-v" x="328.2" y="246" width="12" height="24"/>
+              <rect class="grow-v" x="344.8" y="238" width="12" height="32"/>
+              <rect class="grow-v" x="361.4" y="150" width="12" height="120"/><!--20-->
+              <rect class="grow-v" x="378" y="244" width="12" height="26"/>
+              <rect class="grow-v" x="394.6" y="236" width="12" height="34"/>
+              <rect class="grow-v" x="411.2" y="247" width="12" height="23"/>
+              <rect class="grow-v" x="427.8" y="240" width="12" height="30"/>
+              <rect class="grow-v" x="444.4" y="158" width="12" height="112"/><!--25-->
+              <rect class="grow-v" x="461" y="246" width="12" height="24"/>
+              <rect class="grow-v" x="477.6" y="238" width="12" height="32"/>
+              <rect class="grow-v" x="494.2" y="244" width="12" height="26"/>
+              <rect class="grow-v" x="510.8" y="168" width="12" height="102"/><!--30-->
+              <rect class="grow-v" x="527.4" y="250" width="12" height="20"/>
+            </g>
+            <text class="axs" x="52"  y="286" text-anchor="middle">1</text>
+            <text class="axs" x="201" y="286" text-anchor="middle">10</text>
+            <text class="axs" x="350" y="286" text-anchor="middle">20</text>
+            <text class="axs" x="499" y="286" text-anchor="middle">30</text>
+            <text class="anno-i" x="40" y="56">day of the month claimed as a birthday</text>
+          </svg>
+        </div>
+        <figcaption class="viz-cap">Left, a real and citable number: once a US state required birth certificates, its count of people aged 110-plus dropped by 69 to 82 percent. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> Right, a schematic of the second tell. Genuine birthdays fall evenly across the month, but suspect age records pile onto round numbers, the 1st, the 5th, the 10th. Newman found exactly this round-number "heaping" in the oldest-age data, a fingerprint of guessed and invented ages.</figcaption>
+      </figure>
+
+      <p>It is not subtle once you look. Of the 500-plus Americans on record as 110 or older, <strong>seven</strong> have a birth certificate. Worldwide, only about 18 percent of the most carefully validated supercentenarians have one, and in the United States that figure is zero. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> A 2010 audit in Japan found that <strong>82 percent</strong> of its 230,000 registered centenarians were dead or untraceable. <span class="src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> In Greece, an audit found at least 72 percent of centenarians were dead, missing, or collecting a pension they should not have been. One Japanese man feted as the country's oldest was found mummified in his bedroom, having died 32 years earlier while his family quietly cashed his pension checks. <span class="src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span></p>
+
+      <p>Even the beloved <strong>Blue Zones</strong>, the regions sold as longevity paradises, fit the pattern. Sardinia, Okinawa, and Ikaria turn out to rank below their own national averages on income, literacy, and life expectancy. Okinawa eats the fewest vegetables and has the highest obesity rate in Japan. And the single best predictor of where Okinawa's 100-year-olds live is which towns had their birth records destroyed by American bombing in the war. <span class="src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span> <span class="grade g-b">good</span> More bombing, more centenarians.</p>
+
+      <div class="stat-row">
+        <div class="stat rose"><span class="fig">7</span><span class="fig-lbl">of 500-plus Americans recorded as 110-plus who have a birth certificate</span></div>
+        <div class="stat rose"><span class="fig">82%</span><span class="fig-lbl">of Japan's registered centenarians found dead or untraceable in a 2010 audit</span></div>
+        <div class="stat rose"><span class="fig">32 yrs</span><span class="fig-lbl">that one family kept drawing the pension of a man who was already dead</span></div>
+      </div>
+
+      <p>One fair caveat, kept in on purpose: not everyone agrees the rot is total. A geriatrician reviewing the work cautioned that it may overstate the error rate, and noted that some longevity research, such as studies of slow-aging families in the United States, does not lean on shaky birth records at all. <span class="src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> The point is not that no one is old. It is that the very oldest numbers, the ones used to argue about walls and limits, are the least trustworthy data in the whole field.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 03 PLATEAU ============================ -->
+    <section id="plateau" class="sec" aria-labelledby="plateau-h">
+      <span class="sec-kicker">The deep question</span>
+      <h2 id="plateau-h" class="sec-h">Does aging ever stop?</h2>
+      <p class="lede">Here is the genuinely unresolved science, and the honest answer is that the best datasets in the world disagree with each other.</p>
+
+      <p>Your risk of dying does not stay flat as you age. From your thirties onward it roughly doubles every eight years, a brutal exponential called the Gompertz curve. By 80 it is steep. The interesting question is what happens at the very top, past 105, where almost no one is left.</p>
+
+      <p>In 2018, a team led by demographers including James Vaupel and Kenneth Wachter tracked <strong>every Italian aged 105 and over</strong> for six years, nearly 4,000 carefully checked people. They found something strange: the death rate stopped climbing. It flattened into a <strong>plateau</strong> at roughly a coin-flip, about a 47 percent chance of dying each year, and it did not rise further with age. <span class="src"><a href="https://www.science.org/doi/10.1126/science.aat3119">Barbi 2018</a></span> <span class="grade g-b">good</span> A flat death rate is a profound thing, because a line that never climbs to certainty implies no fixed age where life must end.</p>
+
+      <figure class="viz breakout reveal" aria-labelledby="plat-fig-t">
+        <p class="viz-title" id="plat-fig-t">After 105, the best data forks</p>
+        <p class="viz-sub">annual chance of dying, by age</p>
+        <svg viewBox="0 0 960 420" role="img" aria-label="A curve of annual death risk rising steeply with age to about 105. After 105 it splits: the Italian data flattens into a plateau near 47 percent, while the French data keeps rising.">
+          <!-- axes -->
+          <line class="axisln" x1="100" y1="360" x2="920" y2="360"/>
+          <line class="axisln" x1="100" y1="60" x2="100" y2="360"/>
+          <!-- y gridlines / labels: p 0..0.6 -> y 360..60 -->
+          <line class="gridln" x1="100" y1="310" x2="920" y2="310"/><text class="axs" x="92" y="314" text-anchor="end">10%</text>
+          <line class="gridln" x1="100" y1="260" x2="920" y2="260"/><text class="axs" x="92" y="264" text-anchor="end">20%</text>
+          <line class="gridln" x1="100" y1="210" x2="920" y2="210"/><text class="axs" x="92" y="214" text-anchor="end">30%</text>
+          <line class="gridln" x1="100" y1="160" x2="920" y2="160"/><text class="axs" x="92" y="164" text-anchor="end">40%</text>
+          <line class="gridln" x1="100" y1="110" x2="920" y2="110"/><text class="axs" x="92" y="114" text-anchor="end">50%</text>
+          <!-- x labels: age 60..115 -> x 100..900 -->
+          <text class="axs" x="100" y="380" text-anchor="middle">60</text>
+          <text class="axs" x="245" y="380" text-anchor="middle">70</text>
+          <text class="axs" x="391" y="380" text-anchor="middle">80</text>
+          <text class="axs" x="536" y="380" text-anchor="middle">90</text>
+          <text class="axs" x="682" y="380" text-anchor="middle">100</text>
+          <text class="axs" x="755" y="380" text-anchor="middle">105</text>
+          <text class="axs" x="900" y="380" text-anchor="middle">115</text>
+          <!-- shared Gompertz rise: 60(0.02)->105(0.42) ; p->y: y=360-(p/0.6)*300 -->
+          <!-- pts: 60:0.02 y350 x100 ; 80:0.09 y315 x391 ; 90:0.18 y270 x536 ; 100:0.32 y200 x682 ; 105:0.42 y150 x755 -->
+          <line x1="755" y1="60" x2="755" y2="360" stroke="#b79bc4" stroke-width="1" stroke-dasharray="3 6" opacity="0.7"/>
+          <text class="axs" x="755" y="52" text-anchor="middle" fill="#b79bc4">105</text>
+          <path class="draw" style="--len:820" d="M100 350 Q 300 345 391 315 T 536 270 Q 620 232 682 200 L755 150" fill="none" stroke="#c9c3cf" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Italy plateau: 105(0.42 y150) flatten to ~0.475 (y123.75) and hold -->
+          <path class="draw" style="--len:200" d="M755 150 Q 800 132 845 126 L920 126" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="920" cy="126" r="4.5" fill="#D4C4A0"/>
+          <text class="anno" x="912" y="152" text-anchor="end" fill="#D4C4A0">Italy: levels off near 47% a year</text>
+          <text class="anno-i" x="912" y="168" text-anchor="end">Barbi 2018</text>
+          <!-- France keeps rising: 105(y150) -> 115 (0.58 y70) -->
+          <path class="draw" style="--len:200" d="M755 150 L920 73" fill="none" stroke="#e98e7f" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="920" cy="73" r="4.5" fill="#e98e7f"/>
+          <text class="anno" x="846" y="64" text-anchor="end" fill="#e98e7f">France: keeps climbing</text>
+          <text class="anno-i" x="846" y="49" text-anchor="end">Dang 2023</text>
+        </svg>
+        <figcaption class="viz-cap">Death risk climbs steeply with age, then the two best validated datasets part ways after 105. Italy's data flattens into a plateau, which would mean aging itself stalls at the extreme. France's, cleaned to the same standard, keeps rising, which would mean a real limit. Same question, opposite answers, and nobody has settled it.</figcaption>
+      </figure>
+
+      <p>If that plateau is real, it is the strongest argument against any fixed wall. But the case is genuinely shaky, and good scientists are on both sides.</p>
+
+      <div class="fork">
+        <p class="fork-q">Is the plateau real, or a mirage?</p>
+        <div class="fork-a">
+          <div class="fork-side one">
+            <h4>It is real</h4>
+            <p>The Italian data was individually checked against birth records, and an independent reanalysis of validated international data found the same flat hazard beyond age 108. A plateau keeps reappearing in the cleanest datasets. <span class="src"><a href="https://www.science.org/doi/10.1126/science.aat3119">Barbi 2018</a></span></p>
+          </div>
+          <div class="fork-side two">
+            <h4>It is a mirage</h4>
+            <p>The same French registry, cleaned to a higher standard, shows death rates that keep rising past 105, no plateau at all. And rare age errors, fewer than 1 in 10,000, are enough to manufacture a fake plateau out of thin air. <span class="src"><a href="https://www.demographic-research.org/volumes/vol48/11/48-11.pdf">Dang 2023</a></span> <span class="src"><a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.2006776">Newman 2018</a></span></p>
+          </div>
+        </div>
+        <p class="fork-take"><b>My read:</b> truly open. The statistics barely favor the plateau in Italy and reject it in France. Anyone who tells you aging definitely does or does not stop after 105 is ahead of the evidence. What we can say is that the case for a hard wall is weaker than the headlines, and the case for "no limit" is softer than its boosters admit.</p>
+      </div>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 04 EAT LESS ============================ -->
+    <section id="eatless" class="sec" aria-labelledby="eatless-h">
+      <span class="sec-kicker">The famous hack</span>
+      <h2 id="eatless-h" class="sec-h">Is eating less the only hack?</h2>
+      <p class="lede">Caloric restriction is the most-studied longevity idea there is. It is also the most oversold, and the part of this whole post where my own starting assumption took the biggest hit.</p>
+
+      <p>The dream is real in small animals. Feed a worm, a fly, or a mouse about a third less food and it can live dramatically longer. The trouble is that the effect <strong>shrinks as the animal gets bigger</strong>, and the two best tests in monkeys, our closest long-lived stand-ins, openly disagreed.</p>
+
+      <p>One trial, at the University of Wisconsin, found that 30 percent caloric restriction cut deaths from age-related disease roughly in half. <span class="src"><a href="https://www.nature.com/articles/ncomms3557">Colman 2014</a></span> A nearly identical trial at the National Institute on Aging found <strong>no survival benefit at all</strong>; the restricted monkeys actually averaged about a year less. <span class="src"><a href="https://www.nature.com/articles/nature11432">Mattison 2012</a></span> <span class="grade g-c">mixed</span> When the teams pooled their data, the tie-breaker was almost comic: the Wisconsin "control" monkeys, the ones supposedly eating normally, were being fed a diet that was nearly <strong>30 percent sugar</strong>. The restricted group partly just looked healthy because the comparison group was eating junk. <span class="src"><a href="https://www.nature.com/articles/ncomms14063">Mattison 2017</a></span></p>
+
+      <p>So what about people? The one serious trial is <strong>CALERIE</strong>, which asked healthy, non-obese adults to cut calories by 25 percent for two years. The first finding was about willpower: even motivated volunteers with a research team behind them only managed about <strong>12 percent</strong>, and it drifted back up over time. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">Ravussin 2015</a></span> The benefits they did get were real but ordinary: lower cholesterol, lower blood pressure, less inflammation, the same things you get from losing excess fat. <span class="src"><a href="https://www.thelancet.com/journals/landia/article/PIIS2213-8587(19)30151-2/abstract">Kraus 2019</a></span> <span class="grade g-b">good</span> One epigenetic "aging clock" slowed by about 2 to 3 percent; two others did not move at all. <span class="src"><a href="https://www.nature.com/articles/s43587-022-00357-y">Waziry 2023</a></span> <span class="grade g-c">mixed</span></p>
+
+      <p>And it came with a bill. The dieters lost measurable bone density at the hip and spine, and shed about <strong>16 pounds</strong>, of which roughly five were muscle, not fat. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4834845/">Villareal 2016</a></span> <span class="grade g-b">good</span> Most important of all: CALERIE never measured lifespan, and never could. The researchers say plainly that whether eating less makes a human live longer "will probably never be determined" by a trial. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">Ravussin 2015</a></span></p>
+
+      <div class="mt">
+        <div class="mt-claim"><b>The claim</b>Eating less is the one proven hack that extends human life.</div>
+        <div class="mt-truth"><b>What the evidence says</b>In humans, there is zero lifespan data, only improved blood markers that mostly track fat loss, at a cost of bone and muscle, from a diet almost nobody sustains. It is not nothing. It is also not a fountain of youth, and it is not the only lever. It mostly collapses into "do not carry excess fat."</div>
+      </div>
+
+      <p>The same goes for the pills sold as shortcuts to it. <strong>Rapamycin</strong> reliably extends life in mice but has no such proof in people. <strong>Metformin</strong>, the great hope, actually <em>blunted</em> the gains from exercise in one careful trial of older adults, dimming the very benefit people most want to keep. <span class="src"><a href="https://onlinelibrary.wiley.com/doi/full/10.1111/acel.12880">Konopka 2019</a></span> <span class="grade g-b">good</span> Resveratrol and most "NAD boosters" are hype well ahead of evidence. The one genuinely strong drug result is mundane by comparison: the obesity drug semaglutide cut heart attacks and strokes by 20 percent in a large trial, but only in people who were overweight to begin with. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="grade g-a">strong</span> Once again, the win is really about reversing excess fat, not a secret of aging.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 05 WORKS ============================ -->
+    <section id="works" class="sec" aria-labelledby="works-h">
+      <span class="sec-kicker">The honest payoff</span>
+      <h2 id="works-h" class="sec-h">What actually adds years</h2>
+      <p class="lede">If eating less is oversold and the wall is unproven, what is left is almost disappointingly old-fashioned. The single most powerful lever is the one nobody markets as a hack.</p>
+
+      <p>It is fitness. In a study of <strong>122,000 people</strong> that measured cardiorespiratory fitness on a treadmill and then followed who lived and who died, being in the least-fit group predicted death more strongly than smoking, diabetes, or heart disease did. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="grade g-a">strong</span> Read that again: in this data, being badly out of shape was a bigger killer than smoking. And unlike almost everything else, fitness showed <strong>no upper limit</strong>. The most fit kept gaining; there was no point where more became pointless.</p>
+
+      <figure class="viz breakout reveal" aria-labelledby="works-fig-t">
+        <p class="viz-title" id="works-fig-t">Being unfit outranked smoking</p>
+        <p class="viz-sub">risk of death versus the fittest group &middot; higher is worse</p>
+        <svg viewBox="0 0 960 360" role="img" aria-label="Horizontal bars of mortality risk. Being unfit has a risk ratio of about 5, far higher than smoking, diabetes, or heart disease at around 1.3 to 1.4.">
+          <!-- HR axis 0..5.5 -> x 230..900 ; HR=1 line at x=352 -->
+          <line class="axisln" x1="230" y1="40" x2="230" y2="300"/>
+          <line x1="352" y1="40" x2="352" y2="300" stroke="#9ec79a" stroke-width="1.5" stroke-dasharray="3 6" opacity="0.85"/>
+          <text class="axs" x="352" y="322" text-anchor="middle" fill="#9ec79a">1.0</text>
+          <text class="axs" x="352" y="338" text-anchor="middle">no extra risk</text>
+          <text class="axs" x="566" y="322" text-anchor="middle">3</text>
+          <text class="axs" x="840" y="322" text-anchor="middle">5</text>
+          <!-- bars: x0=230, len=(hr/5.5)*670 -->
+          <!-- Being unfit 5.04 -> 614 -->
+          <g>
+            <text class="lbl-name" x="220" y="78" text-anchor="end">Being unfit</text>
+            <rect class="grow-b" x="230" y="62" width="614" height="26" rx="3" fill="#e98e7f"/>
+            <text class="lbl-val" x="854" y="82" fill="#e98e7f">5.0x</text>
+          </g>
+          <!-- Smoking 1.41 -> 172 -->
+          <g>
+            <text class="lbl-name" x="220" y="138" text-anchor="end">Smoking</text>
+            <rect class="grow-b" x="230" y="122" width="172" height="26" rx="3" fill="#D4C4A0"/>
+            <text class="lbl-val" x="412" y="142">1.4x</text>
+          </g>
+          <!-- Diabetes 1.40 -> 171 -->
+          <g>
+            <text class="lbl-name" x="220" y="198" text-anchor="end">Diabetes</text>
+            <rect class="grow-b" x="230" y="182" width="171" height="26" rx="3" fill="#e6c074"/>
+            <text class="lbl-val" x="411" y="202">1.4x</text>
+          </g>
+          <!-- Heart disease 1.29 -> 157 -->
+          <g>
+            <text class="lbl-name" x="220" y="258" text-anchor="end">Heart disease</text>
+            <rect class="grow-b" x="230" y="242" width="157" height="26" rx="3" fill="#8fb3c7"/>
+            <text class="lbl-val" x="397" y="262">1.3x</text>
+          </g>
+        </svg>
+        <figcaption class="viz-cap">Risk of death relative to the fittest group, from 122,000 patients followed for years (Mandsager 2018). The least-fit faced about five times the risk, dwarfing the classic villains. The catch is honest too: this is observational, so some of the unfit were sick to begin with. But the size and the no-upper-limit shape line up with everything else we know about exercise.</figcaption>
+      </figure>
+
+      <p>So here is the whole field, ranked by how strong the human evidence actually is, with the hype stripped out.</p>
+
+      <ul>
+        <li><strong>Do not smoke.</strong> The largest, least controversial lever there is. Quitting by 40 buys back almost a decade. <span class="grade g-a">strong</span></li>
+        <li><strong>Be fit, and keep moving.</strong> Cardio and strength both, for as long as you can. Being unfit rivals smoking, and there is no point of diminishing returns. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="grade g-a">strong</span></li>
+        <li><strong>Keep blood pressure and LDL cholesterol in check.</strong> Unglamorous, deadly when ignored, and well proven in trials. <span class="grade g-a">strong</span></li>
+        <li><strong>Do not carry excess fat.</strong> This is what most "diet hacks," fasting, and the obesity drugs are really doing. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="grade g-a">strong</span></li>
+        <li><strong>Sleep, and stay connected to people.</strong> Loneliness carries a mortality risk on the order of smoking; both are easy to underrate. <span class="grade g-b">good</span></li>
+        <li><strong>Caloric restriction, fasting, rapamycin, metformin, NAD, resveratrol.</strong> Interesting, occasionally useful, wildly oversold. None has shown a longer human life. <span class="grade g-c">unproven in humans</span></li>
+      </ul>
+
+      <p>Notice what the strong list has in common. None of it raises the ceiling. It works by <strong>not dying early</strong>, by clearing the heart attacks and cancers and accidents that take most people decades before any theoretical limit. That is the real shape of the thing. We are very good at helping more people approach the old ceiling, and we have no proven way to lift the ceiling itself.</p>
+
+      <p class="pullquote">The honest goal is not to find the cheat code for 120. It is to not get cheated out of 85.</p>
+
+      <p>Which leaves the wall exactly where we found it: unproven as biology, undeniable as a fact, and guarded by data too rotten to trust. Maybe someone breaks 122 this century; a serious forecast puts the odds above 99 percent by 2100. <span class="src"><a href="https://www.demographic-research.org/articles/volume/44/52/">Pearce 2021</a></span> <span class="grade g-c">model</span> Maybe the plateau is real and there is no wall at all. Either way, it has almost nothing to do with how long <em>you</em> will live. That part, unglamorously, is mostly up to the basics.</p>
+
+      <div class="disclaimer"><strong>One honest note.</strong> This is a guide to what the evidence says, not medical advice. The strong levers above are worth acting on, but blood pressure, cholesterol, and any drug belong in a conversation with your own doctor, who knows the rest of your story.</div>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <span class="sec-kicker">The fine print</span>
+      <h2 id="sources-h" class="sec-h">Sources, and how I checked them</h2>
+      <p class="lede">I started this with two beliefs: a hard wall at 120, and eating less as the only hack. Both took damage. Before writing, every major claim was run through an adversarial fact-check whose job was to refute it, and the corrections were left visible in the text. Here is the full list, strongest evidence first.</p>
+      <div class="legend">
+        <span><span class="grade g-a">strong</span> many trials or large cohorts agreeing</span>
+        <span><span class="grade g-b">good</span> one strong study</span>
+        <span><span class="grade g-c">mixed</span> contested or model-based</span>
+        <span><span class="grade g-d">thin</span> a single claim</span>
+      </div>
+
+      <h3>The limit and the records</h3>
+      <ol>
+        <li><b>Dong X, Milholland B, Vijg J (2016).</b> Evidence for a limit to human lifespan. <i>Nature</i>. <a href="https://www.nature.com/articles/nature19793">nature.com</a></li>
+        <li><b>Brown NJL, Albers CJ, Ritchie SJ (2017).</b> Contesting the evidence for limited human lifespan. <i>Nature</i>. <a href="https://www.nature.com/articles/nature22784">nature.com</a></li>
+        <li><b>Hughes BG, Hekimi S (2017).</b> Many possible maximum lifespan trajectories. <i>Nature</i>. <a href="https://www.nature.com/articles/nature22790">nature.com</a></li>
+        <li><b>Pearce M, Raftery AE (2021).</b> Probabilistic forecasting of maximum human lifespan by 2100. <i>Demographic Research</i>. <a href="https://www.demographic-research.org/articles/volume/44/52/">demographic-research.org</a></li>
+        <li><b>Gerontology Research Group.</b> World supercentenarian rankings. <a href="https://www.grg-supercentenarians.org/world-supercentenarian-rankings-list/">grg-supercentenarians.org</a></li>
+        <li><b>Jeanne Calment.</b> Biography and validation. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Jeanne_Calment">wikipedia.org</a></li>
+        <li><b>List of the verified oldest people.</b> <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/List_of_the_verified_oldest_people">wikipedia.org</a></li>
+      </ol>
+
+      <h3>Why the oldest-age data is rotten</h3>
+      <ol start="8">
+        <li><b>Newman SJ (2024).</b> Supercentenarian and remarkable age records exhibit patterns indicative of clerical errors and pension fraud. <i>bioRxiv</i>. <a href="https://www.biorxiv.org/content/10.1101/704080v3">biorxiv.org</a></li>
+        <li><b>Newman SJ (2024).</b> The data on extreme human ageing is rotten from the inside out (essay). <i>The Conversation</i>. <a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">theconversation.com</a></li>
+        <li><b>UCL (2024).</b> Blue Zones debunking wins Ig Nobel in Demography. <a href="https://www.ucl.ac.uk/ioe/news/2024/sep/ucl-demographers-work-debunking-blue-zone-regions-exceptional-lifespans-wins-ig-nobel-prize">ucl.ac.uk</a></li>
+        <li><b>NPR (2024).</b> Alive on paper but dead in reality. <a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">npr.org</a></li>
+      </ol>
+
+      <h3>The mortality plateau debate</h3>
+      <ol start="12">
+        <li><b>Barbi E, Lagona F, Marsili M, Vaupel JW, Wachter KW (2018).</b> The plateau of human mortality. <i>Science</i>. <a href="https://www.science.org/doi/10.1126/science.aat3119">science.org</a></li>
+        <li><b>Newman SJ (2018).</b> Errors as a primary cause of late-life mortality deceleration and plateaus. <i>PLOS Biology</i>. <a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.2006776">journals.plos.org</a></li>
+        <li><b>Gavrilov LA, Gavrilova NS (2019).</b> Late-life mortality is underestimated because of data errors. <i>PLOS Biology</i>. <a href="https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3000148">journals.plos.org</a></li>
+        <li><b>Dang LHK, et al. (2023).</b> The question of the human mortality plateau (French data). <i>Demographic Research</i>. <a href="https://www.demographic-research.org/volumes/vol48/11/48-11.pdf">demographic-research.org</a></li>
+      </ol>
+
+      <h3>Caloric restriction and the drugs</h3>
+      <ol start="16">
+        <li><b>Colman RJ, et al. (2014).</b> Caloric restriction reduces age-related mortality in rhesus monkeys (Wisconsin). <i>Nature Communications</i>. <a href="https://www.nature.com/articles/ncomms3557">nature.com</a></li>
+        <li><b>Mattison JA, et al. (2012).</b> Impact of caloric restriction on health and survival in rhesus monkeys (NIA). <i>Nature</i>. <a href="https://www.nature.com/articles/nature11432">nature.com</a></li>
+        <li><b>Mattison JA, et al. (2017).</b> Caloric restriction improves health and survival of rhesus monkeys (reconciliation). <i>Nature Communications</i>. <a href="https://www.nature.com/articles/ncomms14063">nature.com</a></li>
+        <li><b>Ravussin E, et al. (2015).</b> A 2-year RCT of human caloric restriction: feasibility and safety (CALERIE). <i>J Gerontol A</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">ncbi.nlm.nih.gov</a></li>
+        <li><b>Kraus WE, et al. (2019).</b> 2 years of calorie restriction and cardiometabolic risk (CALERIE). <i>Lancet Diabetes Endocrinol</i>. <a href="https://www.thelancet.com/journals/landia/article/PIIS2213-8587(19)30151-2/abstract">thelancet.com</a></li>
+        <li><b>Waziry R, et al. (2023).</b> Caloric restriction and DNA-methylation measures of aging (CALERIE). <i>Nature Aging</i>. <a href="https://www.nature.com/articles/s43587-022-00357-y">nature.com</a></li>
+        <li><b>Villareal DT, et al. (2016).</b> Effect of two-year caloric restriction on bone metabolism (CALERIE). <i>J Bone Miner Res</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4834845/">ncbi.nlm.nih.gov</a></li>
+        <li><b>Konopka AR, et al. (2019).</b> Metformin inhibits mitochondrial adaptations to aerobic exercise. <i>Aging Cell</i>. <a href="https://onlinelibrary.wiley.com/doi/full/10.1111/acel.12880">wiley.com</a></li>
+      </ol>
+
+      <h3>What actually works</h3>
+      <ol start="24">
+        <li><b>Mandsager K, et al. (2018).</b> Cardiorespiratory fitness and long-term mortality, 122,007 patients. <i>JAMA Network Open</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">ncbi.nlm.nih.gov</a></li>
+        <li><b>Lincoff AM, et al. (2023).</b> Semaglutide and cardiovascular outcomes in obesity without diabetes (SELECT). <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">nejm.org</a></li>
+        <li><b>NIA Interventions Testing Program.</b> Rapamycin reproducibly extends mouse lifespan; metformin alone did not. <i>PMC</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5892694/">ncbi.nlm.nih.gov</a></li>
+        <li><b>Holt-Lunstad J, et al.</b> Loneliness and social isolation as mortality risk factors. <i>PMC</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4734880/">ncbi.nlm.nih.gov</a></li>
+        <li><b>Wachter KW (2018).</b> Hypothetical errors and plateaus: a response to Newman. <i>PLOS Biology</i>. <a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3000076">journals.plos.org</a></li>
+      </ol>
+    </section>
+
+    <p class="sec-divider" style="--sec-accent:#D4C4A0">&middot; &middot; &middot;</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+      <span class="ftr-links">
+        <a href="git-history.html">Colophon</a>
+        <a href="/">More posts</a>
+      </span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script>
+  /* Per-post: scroll-reveal + figure draw-ins. No-JS safe (CSS only hides under
+     html.js), reduced-motion safe (fires everything immediately), and a 4s
+     watchdog guarantees nothing is ever left hidden. */
+  (function () {
+    'use strict';
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+
+    function fire(el) {
+      el.classList.add('in');
+      // kick any draw/grow elements inside this block
+      Array.prototype.slice.call(el.querySelectorAll('.draw, .grow-b, .grow-v')).forEach(function (g, i) {
+        setTimeout(function () { g.classList.add('go'); }, 90 + i * 55);
+      });
+    }
+
+    if (reduce || !('IntersectionObserver' in window)) {
+      reveals.forEach(fire);
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      reveals.forEach(function (el) { io.observe(el); });
+      // watchdog: never leave anything hidden
+      setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
+    }
+  })();
+  </script>
+</body>
+</html>
