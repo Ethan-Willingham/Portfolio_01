@@ -117,10 +117,12 @@
     .tn-calc h3 { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-bright); margin: 0.15rem 0 0.4rem; }
     .tn-calc-intro { font-family: var(--font-body); font-size: 1rem; line-height: 1.6; color: var(--text-dim); margin: 0 0 1.2rem; }
     .tn-slider { display: block; margin-bottom: 1.05rem; }
-    .tn-slider-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 0.4rem; }
+    .tn-slider-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.2rem 1rem; margin-bottom: 0.4rem; }
     .tn-slider-name { font-family: var(--font-body); font-size: 1.02rem; color: var(--text); }
     .tn-slider-name small { display: block; font-size: 0.8rem; color: var(--text-dim); }
-    .tn-inwrap { display: flex; align-items: baseline; flex: none; }
+    .tn-inwrap { display: flex; align-items: baseline; flex: none; margin-left: auto; }
+    .tn-unit { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); margin: 0 1px; }
+    .tn-eq { margin: 0 7px; }
     .tn-fix { font-family: var(--font-mono); font-size: 1.12rem; color: var(--accent-hover); }
     .tn-typein { font-family: var(--font-mono); font-size: 1.12rem; color: var(--accent-hover); background: transparent; border: none; border-bottom: 1px dashed rgba(212, 196, 160, 0.4); border-radius: 0; width: 6.2em; text-align: right; padding: 0 1px 1px; }
     .tn-typein:focus { outline: none; border-bottom: 1px solid var(--accent); background: rgba(26, 32, 28, 0.6); }
@@ -266,7 +268,7 @@
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:15.5%"><span>US median $72,330</span></span></span>
         </label>
         <label class="tn-slider">
-          <span class="tn-slider-row"><span class="tn-slider-name">Spending <small>per month, all of it: rent, car, food, fun</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spend-n" value="3,700" aria-label="Monthly spending in dollars, typed"></span></span>
+          <span class="tn-slider-row"><span class="tn-slider-name">Spending <small>all of it: rent, car, food, fun. The yearly side is the passive income you are buying.</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spend-n" value="3,700" style="width:4.6em" aria-label="Monthly spending in dollars, typed"><span class="tn-unit">/mo</span><span class="tn-unit tn-eq">=</span><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spendyr-n" value="44,400" style="width:5.4em" aria-label="Yearly spending, the passive income you want, typed"><span class="tn-unit">/yr</span></span></span>
           <input type="range" id="tn-spend" min="800" max="20000" step="50" value="3700" aria-label="Monthly spending in dollars">
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:29.9%"><span>US average $6,545</span></span></span>
         </label>
@@ -799,12 +801,20 @@
         drawChart(you, med, T);
       }
 
+      /* The yearly twin of the spending dial: the passive income you are
+         shopping for. Monthly stays canonical; either field edits the other. */
+      var spendYrIn = $('tn-spendyr-n');
+      function syncSpendYr() {
+        if (document.activeElement !== spendYrIn) spendYrIn.value = Math.round(S.spend * 12).toLocaleString('en-US');
+      }
+
       /* Slider <-> typed input sync. Typed values may exceed slider ranges. */
       CONTROLS.forEach(function (c) {
         var sl = $(c.slider), ty = $(c.typed);
         sl.addEventListener('input', function () {
           S[c.key] = +sl.value;
           ty.value = fmtTyped(c, S[c.key]);
+          if (c.key === 'spend') syncSpendYr();
           update();
         });
         ty.addEventListener('input', function () {
@@ -812,10 +822,23 @@
           if (v === null) return;
           S[c.key] = v;
           sl.value = Math.min(+sl.max, Math.max(+sl.min, v));
+          if (c.key === 'spend') syncSpendYr();
           update();
         });
         ty.addEventListener('blur', function () { ty.value = fmtTyped(c, S[c.key]); });
       });
+
+      spendYrIn.addEventListener('input', function () {
+        var v = parseFloat(String(spendYrIn.value).replace(/[^0-9.]/g, ''));
+        if (isNaN(v)) return;
+        S.spend = Math.max(100, v / 12);
+        var sl = $('tn-spend');
+        sl.value = Math.min(+sl.max, Math.max(+sl.min, Math.round(S.spend)));
+        var mo = $('tn-spend-n');
+        if (document.activeElement !== mo) mo.value = Math.round(S.spend).toLocaleString('en-US');
+        update();
+      });
+      spendYrIn.addEventListener('blur', function () { spendYrIn.value = Math.round(S.spend * 12).toLocaleString('en-US'); });
 
       document.querySelectorAll('.tn-seg button').forEach(function (b) {
         b.addEventListener('click', function () {
@@ -834,6 +857,7 @@
           sl.value = Math.min(+sl.max, Math.max(+sl.min, S[c.key]));
           ty.value = fmtTyped(c, S[c.key]);
         });
+        syncSpendYr();
         update();
       });
 
