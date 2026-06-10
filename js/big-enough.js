@@ -35,64 +35,7 @@
     setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
   })();
 
-  /* ---------- 2. RIGHT-RAIL CONTENTS + SCROLLSPY ---------- */
-  (function () {
-    var list = document.getElementById('railnav-list');
-    if (!list) return;
-    var items = [
-      ['start', 'The one-page version'],
-      ['creatine', 'Creatine: the one hack'],
-      ['grows', 'How muscle grows'],
-      ['training', 'The exact training'],
-      ['tendons', 'Tendons'],
-      ['stretching', 'Stretching'],
-      ['cardio', 'Cardio and the heart'],
-      ['diet', 'Food'],
-      ['sun', 'Sunlight'],
-      ['timing', 'When to train'],
-      ['caffeine', 'Caffeine'],
-      ['brain', 'The brain'],
-      ['genetics', 'Genes and fibers'],
-      ['gainloss', 'Gain vs loss'],
-      ['returns', 'Diminishing returns'],
-      ['enough', 'How much you need'],
-      ['toomuch', 'When big goes wrong'],
-      ['frontier', 'The frontier'],
-      ['balance', 'The balance sheet'],
-      ['sources', 'Sources'],
-      ['colophon', 'How it was made']
-    ];
-    var links = [];
-    items.forEach(function (it) {
-      var sec = document.getElementById(it[0]);
-      if (!sec) return;
-      var li = document.createElement('li');
-      var a = document.createElement('a');
-      a.href = '#' + it[0];
-      a.innerHTML = '<span class="rn-label">' + it[1] + '</span><span class="rn-dot"></span>';
-      li.appendChild(a);
-      list.appendChild(li);
-      links.push({ a: a, sec: sec });
-    });
-
-    var ticking = false;
-    function spy() {
-      ticking = false;
-      var mid = window.scrollY + window.innerHeight * 0.35;
-      var current = links[0];
-      for (var i = 0; i < links.length; i++) {
-        if (links[i].sec.offsetTop <= mid) current = links[i];
-      }
-      links.forEach(function (l) { l.a.classList.toggle('active', l === current); });
-    }
-    window.addEventListener('scroll', function () {
-      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
-    }, { passive: true });
-    window.addEventListener('resize', spy, { passive: true });
-    spy();
-  })();
-
-  /* ---------- 3a. PROTEIN TARGET TOOL ---------- */
+  /* ---------- 2. PROTEIN TARGET TOOL ---------- */
   (function () {
     var w = document.getElementById('pc-weight');
     if (!w) return;

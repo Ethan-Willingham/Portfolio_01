@@ -90,7 +90,8 @@
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
   .sec > :last-child { margin-bottom: 0; }
-  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
   .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
@@ -105,7 +106,16 @@
   .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
   .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
-  .sec-divider { text-align: center; color: var(--text-dim); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.7; }
+  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+
+  /* ---- per-section color rhythm: each chapter carries its own accent, so the eye
+     gets variety as it scrolls instead of green on green. Keyed on section id. ---- */
+  #creatine { --sec-accent:#8fb3c7; } #grows { --sec-accent:#9ec79a; } #training { --sec-accent:#e6c074; }
+  #tendons { --sec-accent:#cf9f78; } #stretching { --sec-accent:#b79bc4; } #cardio { --sec-accent:#e98e7f; }
+  #diet { --sec-accent:#9ec79a; } #sun { --sec-accent:#e6c074; } #timing { --sec-accent:#8fb3c7; }
+  #caffeine { --sec-accent:#cf9f78; } #brain { --sec-accent:#b79bc4; } #genetics { --sec-accent:#8fb3c7; }
+  #gainloss { --sec-accent:#e98e7f; } #returns { --sec-accent:#e6c074; } #enough { --sec-accent:#9ec79a; }
+  #toomuch { --sec-accent:#e98e7f; } #frontier { --sec-accent:#b79bc4; }
 
   /* a wide visual that breaks out of the reading column on big screens */
   .breakout { max-width: var(--wide); }
@@ -186,8 +196,11 @@
   .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); text-decoration: none; }
   .src a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .src::before { content: '\2009'; }
-  .grade { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; vertical-align: 0.12em; }
-  .g-a { color: var(--c-green); } .g-b { color: var(--accent); } .g-c { color: var(--c-amber); } .g-d { color: var(--c-rose); }
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
+  .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
+  .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
+  .g-c { color: #f2d69d; background: rgba(230,192,116,0.20); border-color: rgba(230,192,116,0.55); }
+  .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
   .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
   .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
 
@@ -301,11 +314,15 @@
   table.prog tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
 
   /* ---------- REFERENCES ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.6em; }
-  #sources li { margin-bottom: 0.55em; }
+  #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
+  #sources li { margin-bottom: 0.38em; }
+  #sources li::marker { color: var(--accent); }
   #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
   #sources li a:hover { border-bottom-color: var(--accent); }
   #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 3px solid var(--accent); padding-left: 0.7em; margin: 2.3rem 0 0.8rem; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.4rem; } #sources li { break-inside: avoid; } }
 
   /* ---------- COLOPHON ---------- */
   #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
@@ -317,22 +334,6 @@
 
   .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .disclaimer strong { color: var(--accent-hover); }
-
-  /* ---------- RIGHT-RAIL CONTENTS (wide desktop only) ---------- */
-  .railnav { display: none; }
-  @media (min-width: 1280px) and (prefers-reduced-motion: no-preference) { .railnav { scroll-behavior: smooth; } }
-  @media (min-width: 1280px) {
-    .railnav { display: block; position: fixed; top: 50%; right: clamp(1rem, 2.5vw, 2.2rem); transform: translateY(-50%); z-index: 60; max-height: 86vh; overflow: hidden; }
-    .railnav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.05rem; }
-    .railnav a { display: flex; align-items: center; gap: 0.6em; justify-content: flex-end; padding: 0.18em 0; text-decoration: none; color: var(--text-dim); font-family: var(--font-body); font-size: 0.78rem; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
-    .railnav .rn-label { max-width: 0; overflow: hidden; white-space: nowrap; text-align: right; opacity: 0; transition: max-width 0.3s var(--ease), opacity 0.2s; }
-    .railnav .rn-dot { flex: none; width: 22px; height: 2px; border-radius: 2px; background: currentColor; transition: width 0.2s, background 0.2s; }
-    .railnav a:hover { opacity: 1; color: var(--text-bright); }
-    .railnav a:hover .rn-label { max-width: 16rem; opacity: 1; }
-    .railnav a.active { opacity: 1; color: var(--accent); }
-    .railnav a.active .rn-dot { width: 30px; background: var(--accent); }
-    .railnav a.active .rn-label { max-width: 16rem; opacity: 1; color: var(--accent); }
-  }
 
   /* ---------- ANIMATION + REDUCED MOTION ---------- */
   @media (prefers-reduced-motion: no-preference) {
@@ -402,8 +403,8 @@
         <line x1="70" y1="70" x2="950" y2="70" class="v-grid-s" stroke-dasharray="3 7"/>
         <text x="945" y="58" text-anchor="end" class="v-axis-t" fill="#b79bc4">genetic ceiling (the absolute maximum)</text>
         <!-- the "last 10%" cost zone -->
-        <rect class="fade-el" id="hero-zone" x="640" y="70" width="310" height="58" fill="#e98e7f" opacity="0.10"/>
-        <text x="795" y="104" text-anchor="middle" class="v-axis-t" fill="#e98e7f">the last 10%: twice the work</text>
+        <rect class="fade-el" id="hero-zone" x="640" y="72" width="312" height="54" rx="5" fill="#e98e7f" opacity="0.16"/>
+        <text x="796" y="104" text-anchor="middle" class="v-axis-t" font-size="11.5" font-weight="700" fill="#f7ccc2">the last 10%: twice the work</text>
         <!-- axes -->
         <line x1="70" y1="330" x2="950" y2="330" class="v-grid-s"/>
         <line x1="70" y1="50" x2="70" y2="330" class="v-grid-s"/>
@@ -2173,7 +2174,6 @@
   </main>
 
   <!-- right-rail contents (wide desktop) -->
-  <nav class="railnav" id="railnav" aria-label="Section navigation"><ul id="railnav-list"></ul></nav>
 
   <footer class="site-footer">
     <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
