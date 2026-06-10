@@ -1,6 +1,6 @@
 # AGENTS.md — Portfolio site (public)
 
-This is the **public** portfolio site, served from AWS Amplify on every push to `main`.
+This is the **public** portfolio site, served from GitHub Pages on every push to `main`.
 `CLAUDE.md` imports this file via `@AGENTS.md`, so the same doc serves every AI assistant.
 
 ---
