@@ -288,6 +288,22 @@
   .wv-punch b { color: var(--text); font-weight: 600; }
   @media (prefers-reduced-motion: reduce) { .wv-fill, .wv-you { transition: none; } }
 
+  /* ---------- 5. THE GOLDEN-RULE MAP ---------- */
+  .gr-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1.1rem; }
+  .gr-chip { font-family: var(--font-body); font-size: 0.9rem; color: var(--text); background: rgba(0,0,0,0.18); border: 1px solid var(--rule); border-radius: 999px; padding: 0.45em 0.95em; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .gr-chip:hover { color: var(--text-bright); border-color: var(--accent); }
+  .gr-chip.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .gr-card { padding: 1.2em 1.3em; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; background: rgba(0,0,0,0.16); }
+  .gr-quote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.3rem, 3.6vw, 1.7rem); line-height: 1.3; color: var(--text-bright); margin: 0 0 0.8rem; text-wrap: balance; }
+  .gr-meta { display: flex; flex-wrap: wrap; gap: 0.45rem 0.9rem; align-items: baseline; }
+  .gr-trad { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .gr-date { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+  .gr-form { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18em 0.62em; border-radius: 999px; }
+  .gr-form.do { color: #d4eecb; background: rgba(122,178,112,0.22); }
+  .gr-form.dont { color: #cfe0ea; background: rgba(143,179,199,0.2); }
+  .gr-note { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); margin: 0.7rem 0 0; line-height: 1.5; }
+  @keyframes grpop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
   /* ---------- REFERENCES ---------- */
   #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
   #sources li { margin-bottom: 0.38em; }
@@ -856,11 +872,62 @@
       <p class="lede">Do to others as you would have them do to you. What is hateful to you, do not do to your neighbor. The line shows up, in nearly the same words, in roughly fourteen traditions across four thousand years, scratched onto Egyptian papyrus and set in the mouth of the Buddha and Confucius and Hillel and Jesus.</p>
       <p>It was not borrowed down a single chain. It was found, again and again, by people who had never heard of each other, on every continent, because there was only ever one place to find it. The deepest instruction we have is also the most repeated. That is not a coincidence to explain away. That is the fingerprint of something true.</p>
 
-      <!-- INTERACTIVE: the golden-rule map (the same rule lighting up across a dozen traditions) -->
+      <!-- INTERACTIVE: the golden-rule map (the same rule across a dozen traditions, each found alone) -->
       <div class="tool reveal" id="goldenrule">
         <div class="tool-head"><h4>One rule, many tongues</h4><span class="tool-tag">interactive</span></div>
-        <div class="tool-body"><div class="tool-soon">The same rule, lit up across the traditions that each found it alone. Being built here.</div></div>
+        <div class="tool-body">
+          <p class="alm-intro">The same instruction, found alone by people who never met, across four thousand years and three continents. Tap any tradition.</p>
+          <div class="gr-grid" id="gr-grid"></div>
+          <div class="gr-card" id="gr-card" aria-live="polite"></div>
+          <p class="tool-rail">One rule, in two grammars: most say it as “do,” a few as “do not.” <b>The agreement is real; the wording is not identical,</b> and the scholar who wrote the standard book on it says so. That honest seam is the only thing more interesting than the rule.</p>
+        </div>
       </div>
+      <script>
+      (function () {
+        'use strict';
+        var grid = document.getElementById('gr-grid'), card = document.getElementById('gr-card');
+        if (!grid || !card) return;
+        var DATA = [
+          {trad:'Ancient Egypt', date:'c. 1800 BCE', form:'do', quote:'Do for one who may do for you, that you may cause him thus to do.', note:'From the Tale of the Eloquent Peasant, often called the oldest written version.'},
+          {trad:'Hinduism', date:'c. 400 BCE', form:'do not', quote:'One should never do to another what one regards as hurtful to one’s own self.', note:'The Mahabharata, called there “the sum of duty.”'},
+          {trad:'Confucianism', date:'c. 500 BCE', form:'do not', quote:'What you do not wish for yourself, do not do to others.', note:'Confucius, the Analects. He named the principle shu, reciprocity.'},
+          {trad:'Zoroastrianism', date:'c. 500 BCE', form:'do not', quote:'Whatever is disagreeable to yourself, do not do unto others.', note:'The Shayast-na-Shayast.'},
+          {trad:'Jainism', date:'c. 500 BCE', form:'do', quote:'A man should wander about treating all creatures as he himself would be treated.', note:'The Sutrakritanga.'},
+          {trad:'Judaism', date:'c. 500 BCE', form:'do', quote:'Love your neighbor as yourself.', note:'Leviticus. Centuries later Hillel: “What is hateful to you, do not do to your neighbor. That is the whole Torah.”'},
+          {trad:'Greece', date:'c. 400 BCE', form:'do not', quote:'Do not do to others what would anger you if done to you by others.', note:'Isocrates, to the young king Nicocles.'},
+          {trad:'Christianity', date:'c. 30 CE', form:'do', quote:'Do to others as you would have them do to you.', note:'The Sermon on the Mount, the Gospel of Matthew.'},
+          {trad:'Buddhism', date:'c. 100 CE', form:'do not', quote:'Hurt not others in ways that you yourself would find hurtful.', note:'The Udanavarga.'},
+          {trad:'Islam', date:'c. 630 CE', form:'do', quote:'None of you truly believes until he wishes for his brother what he wishes for himself.', note:'A saying of the Prophet, collected by an-Nawawi.'},
+          {trad:'Taoism', date:'c. 1100 CE', form:'do', quote:'Regard your neighbor’s gain as your own gain, and your neighbor’s loss as your own loss.', note:'The T’ai Shang Kan Ying P’ien.'},
+          {trad:'Baha’i Faith', date:'19th century', form:'do', quote:'Choose thou for thy neighbor that which thou choosest for thyself.', note:'Baha’u’llah.'}
+        ];
+        var motionOK = window.matchMedia && window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+        var sel = -1, chips = [];
+        function render(i) {
+          var d = DATA[i];
+          card.textContent = '';
+          var q = document.createElement('p'); q.className = 'gr-quote'; q.textContent = '“' + d.quote + '”';
+          var meta = document.createElement('div'); meta.className = 'gr-meta';
+          var tr = document.createElement('span'); tr.className = 'gr-trad'; tr.textContent = d.trad;
+          var dt = document.createElement('span'); dt.className = 'gr-date'; dt.textContent = d.date;
+          var fm = document.createElement('span'); fm.className = 'gr-form ' + (d.form === 'do' ? 'do' : 'dont'); fm.textContent = 'the “' + d.form + '” form';
+          meta.appendChild(tr); meta.appendChild(dt); meta.appendChild(fm);
+          var nt = document.createElement('p'); nt.className = 'gr-note'; nt.textContent = d.note;
+          card.appendChild(q); card.appendChild(meta); card.appendChild(nt);
+        }
+        function select(i) {
+          if (sel >= 0 && chips[sel]) chips[sel].classList.remove('on');
+          sel = i; chips[i].classList.add('on'); render(i);
+        }
+        DATA.forEach(function (d, i) {
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'gr-chip'; b.textContent = d.trad;
+          if (motionOK) { b.style.animation = 'grpop 0.5s var(--ease) backwards'; b.style.animationDelay = (i * 0.045) + 's'; }
+          b.addEventListener('click', function () { select(i); });
+          grid.appendChild(b); chips[i] = b;
+        });
+        select(0);
+      })();
+      </script>
 
       <p>So here is the whole of it. The doom you feel has been felt by everyone. The feelings you feel were issued to everyone, in the same small kit, and they level off at the same ceiling for everyone. Two of the three things that make you were handed to you, the way they are handed to everyone. You are, in every way that the evidence can find, equivalent to every human who ever lived. There is no one having a richer time of it on the inside.</p>
       <p>Which leaves the third thing, the one lever, the one part that was ever actually yours. And the instruction for it has been sitting in plain sight, in every language, the entire time. Nothing new under the sun, including the way out.</p>
