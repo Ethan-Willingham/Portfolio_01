@@ -257,49 +257,54 @@
     <p class="hero-byline">Sourced and illustrated. <b>28 sources cited.</b> Last reviewed June 2026.</p>
 
     <figure class="hero-figure breakout reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
-      <svg viewBox="0 0 960 380" role="img" aria-label="The highest age any human has been verified to reach, from 1920 to today. It sat flat at 113 for fifty-four years, climbed steeply once Jeanne Calment began breaking it in 1990, peaked at 122 when she died in 1997, and has been flat ever since.">
+      <!-- Survivorship: of a hundred newborns, how many are still alive at each age.
+           The 1900 line sags early; the modern line stays high then drops late. Both
+           still end at the same place. We filled the space under the ceiling, we did
+           not raise it. The whole post lives in the gap between these two curves. -->
+      <svg viewBox="0 0 1000 390" role="img" aria-label="Two survival curves showing how many of a hundred newborns are still alive at each age. The line for people born in 1900 sags early and falls steadily. The line for people born today stays near the top until the seventies, then drops steeply. Both lines converge near age 110: almost no one passes it, then or now.">
         <defs>
-          <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#D4C4A0" stop-opacity="0.20"/>
-            <stop offset="1" stop-color="#D4C4A0" stop-opacity="0"/>
+          <linearGradient id="heroGain" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#9ec79a" stop-opacity="0.20"/>
+            <stop offset="1" stop-color="#9ec79a" stop-opacity="0.05"/>
           </linearGradient>
         </defs>
 
-        <!-- y gridlines + labels (age) -->
-        <line class="gridln" x1="92" y1="286" x2="916" y2="286"/>
-        <text class="axs" x="78" y="290" text-anchor="end">110</text>
-        <line class="gridln" x1="92" y1="201" x2="916" y2="201"/>
-        <text class="axs" x="78" y="205" text-anchor="end">115</text>
-        <!-- the famous 120 line -->
-        <line class="axisln" x1="92" y1="116" x2="916" y2="116" stroke-dasharray="2 7" opacity="0.65"/>
-        <text class="axs" x="78" y="120" text-anchor="end">120</text>
-        <text class="anno-i" x="100" y="108">the famous &ldquo;120 limit&rdquo;</text>
+        <!-- frame + gridlines -->
+        <line class="gridln" x1="80" y1="127.5" x2="920" y2="127.5"/>
+        <line class="gridln" x1="80" y1="195"   x2="920" y2="195"/>
+        <line class="gridln" x1="80" y1="262.5" x2="920" y2="262.5"/>
+        <line class="axisln" x1="80" y1="60" x2="80" y2="330"/>
+        <line class="axisln" x1="80" y1="330" x2="920" y2="330"/>
+        <!-- y labels (share still alive) -->
+        <text class="axs" x="68" y="64"  text-anchor="end">100%</text>
+        <text class="axs" x="68" y="199" text-anchor="end">50%</text>
+        <text class="axs" x="68" y="333" text-anchor="end">0</text>
+        <!-- x labels (age) -->
+        <text class="axs" x="233" y="352" text-anchor="middle">20</text>
+        <text class="axs" x="385" y="352" text-anchor="middle">40</text>
+        <text class="axs" x="538" y="352" text-anchor="middle">60</text>
+        <text class="axs" x="691" y="352" text-anchor="middle">80</text>
+        <text class="axs" x="844" y="352" text-anchor="middle">100</text>
+        <text class="axs" x="500" y="376" text-anchor="middle">age in years &#8594;</text>
 
-        <!-- x axis -->
-        <line class="axisln" x1="92" y1="320" x2="916" y2="320"/>
-        <text class="axs" x="92"  y="343" text-anchor="middle">1920</text>
-        <text class="axs" x="317" y="343" text-anchor="middle">1950</text>
-        <text class="axs" x="541" y="343" text-anchor="middle">1980</text>
-        <text class="axs" x="766" y="343" text-anchor="middle">2010</text>
-        <text class="axs" x="886" y="343" text-anchor="middle">2026</text>
+        <!-- the gap: lives gained by not dying young -->
+        <path class="fade-area" d="M80,62 C300,60 470,66 560,84 C660,104 705,175 745,225 C790,285 860,318 920,330 C890,330 850,327 800,315 C740,295 660,250 575,215 C495,188 410,165 280,142 C210,132 150,108 80,62 Z" fill="url(#heroGain)"/>
 
-        <!-- area under the running record -->
-        <path class="fade-area" d="M92,269 L152,225 L541,225 L586,201 L616,200 L631,167 L654,116 L668,74 L886,74 L886,320 L92,320 Z" fill="url(#heroFill)"/>
+        <!-- born in 1900 (lower) -->
+        <path class="draw" style="--len:1050" d="M80,62 C150,108 210,132 280,142 C410,165 495,188 575,215 C660,250 740,295 800,315 C850,327 890,330 920,331" fill="none" stroke="#8fb3c7" stroke-width="3" stroke-linecap="round"/>
+        <!-- born today (upper) -->
+        <path class="draw" id="hero-curve" style="--len:1000" d="M80,62 C300,60 470,66 560,84 C660,104 705,175 745,225 C790,285 860,318 920,330" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round"/>
 
-        <!-- the running record (highest verified age to date) -->
-        <path class="draw" id="hero-curve" style="--len:950" d="M92,269 L152,225 L541,225 L586,201 L616,200 L631,167 L654,116 L668,74 L886,74" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- curve labels, hugging the lines where they diverge -->
+        <text class="anno" x="300" y="52" fill="#D4C4A0">Born today</text>
+        <text class="anno" x="300" y="132" fill="#8fb3c7">Born in 1900</text>
 
-        <!-- Filkins plateau -->
-        <circle cx="346" cy="225" r="5" fill="#8fb3c7"/>
-        <text class="lbl-name" x="346" y="251" text-anchor="middle">Delina Filkins, 113</text>
-        <text class="anno-i" x="346" y="269" text-anchor="middle">the record for fifty-four years</text>
-
-        <!-- Calment peak + the current wall -->
-        <circle class="pulse-dot" cx="668" cy="74" r="6" fill="#D4C4A0"/>
-        <text class="anno" x="684" y="66" fill="#D4C4A0">Jeanne Calment, 122</text>
-        <text class="anno-i" x="788" y="98" text-anchor="middle">unbroken for 29 years</text>
+        <!-- the shared ending: the ceiling -->
+        <circle class="pulse-dot" cx="920" cy="330" r="5.5" fill="#e98e7f"/>
+        <text class="anno" x="908" y="172" text-anchor="end" fill="#e98e7f">Both lines end together</text>
+        <text class="anno-i" x="908" y="191" text-anchor="end">almost no one passes about 110</text>
       </svg>
-      <figcaption class="hero-cap" id="hero-fig-cap">The highest age any human has ever been verified to reach, plotted over time. It sat at 113 for fifty-four years, then a French woman named Jeanne Calment broke it again and again until she died at 122 in 1997. The record has not moved since. Whether that flat line is a wall, an accident, or a trick of bad data is the whole story.</figcaption>
+      <figcaption class="hero-cap" id="hero-fig-cap">Out of a hundred newborns, how many are still alive at each age. A century ago the line sagged early, as disease and childhood took a heavy cut. Today it holds near the top, then bends down hard in the eighties and nineties. We squared off the curve, far more of us now reach old age, but look where both lines finish. We learned to fill the room under the ceiling, not to raise it.</figcaption>
     </figure>
   </header>
 
@@ -694,14 +699,11 @@
     </section>
 
     <p class="img-credit">Cover photograph: <a href="https://commons.wikimedia.org/wiki/File:Gnarly_Bristlecone_Pine.jpg">Gnarly Bristlecone Pine</a> by Rick Goldwaser, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. The bristlecone pines of California's White Mountains are the oldest individual living things on Earth, some more than 4,700 years old.</p>
-
-    <p class="sec-divider" style="--sec-accent:#D4C4A0">&middot; &middot; &middot;</p>
   </main>
 
   <footer class="site-footer">
     <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
       <a href="/">&copy; 2026 Ethan Willingham</a>
-      <span class="src" style="white-space:normal">Educational, not medical advice. Last reviewed June 2026.</span>
     </div>
   </footer>
 
