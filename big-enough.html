@@ -312,17 +312,20 @@
   table.prog tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
   table.prog .swap { display: block; font-size: 0.84em; color: var(--text-dim); }
 
-  /* ---------- REFERENCES ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.62rem; color: var(--text-dim); line-height: 1.35; padding-left: 1.3em; margin: 0.25em 0 1.1em; }
-  #sources li { margin-bottom: 0.22em; }
+  /* ---------- REFERENCES (fine print: the whole list should fit one screen) ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.52rem; color: var(--text-dim); line-height: 1.3; padding-left: 1.6em; margin: 0.2em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.12em; break-inside: avoid; }
   #sources li::marker { color: var(--accent); }
   #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
   #sources li a:hover { border-bottom-color: var(--accent); }
   #sources b { color: var(--text); font-weight: 600; }
   #sources i { color: var(--text-dim); }
-  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 2px solid var(--accent); padding-left: 0.6em; margin: 1.6rem 0 0.55rem; }
-  #sources .legend { font-size: 0.78rem; gap: 0.5rem 1rem; margin: 0.8em 0 1em; }
-  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 1.8rem; } #sources li { break-inside: avoid; } }
+  #sources li.shead { list-style: none; margin: 0.9em 0 0.25em -1.6em; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); break-after: avoid; }
+  #sources li.shead:first-child { margin-top: 0; }
+  #sources .lede { font-size: 0.84rem; }
+  #sources .legend { font-size: 0.6rem; gap: 0.3rem 0.8rem; margin: 0.6em 0 0.8em; }
+  #sources .legend .grade { font-size: 0.48rem; padding: 0.16em 0.5em; }
+  @media (min-width: 700px) { #sources ol { columns: 3; column-gap: 1.4rem; } }
 
   /* ---------- COLOPHON ---------- */
   #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
@@ -1595,9 +1598,9 @@
       <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
       <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
     </div>
-    <h3>Creatine</h3>
     <ol>
-      <li><b>Gordji-Nejad A, et al. (2024).</b> Single dose creatine improves cognition in sleep deprivation. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-024-54249-9">nature.com</a></li>
+      <li class="shead">Creatine</li>
+      <li value="1"><b>Gordji-Nejad A, et al. (2024).</b> Single dose creatine improves cognition in sleep deprivation. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-024-54249-9">nature.com</a></li>
       <li><b>Kreider RB, et al. (2017).</b> ISSN position stand: safety and efficacy of creatine. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">PMC5469049</a></li>
       <li><b>Antonio J, et al. (2021).</b> Common questions and misconceptions about creatine. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">PMC7871530</a></li>
       <li><b>Kazeminasab F, et al. (2025).</b> Creatine, strength and power: meta-analysis. <i>Nutrients</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">PMC12430374</a></li>
@@ -1609,11 +1612,8 @@
       <li><b>Lak M, et al. (2025).</b> Creatine and hair / DHT: 12-week RCT. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">PMC12020143</a></li>
       <li><b>Syrotuik DG, Bell GJ (2004).</b> Responders vs non-responders to creatine. <i>J Strength Cond Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">PubMed</a></li>
       <li><b>Creatine and depression (2025).</b> Meta-analysis. <i>British Journal of Nutrition</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41189312/">PubMed</a></li>
-    </ol>
-
-    <h3>How muscle grows, and how to train</h3>
-    <ol start="13">
-      <li><b>Wackerhage H, et al. (2019).</b> Stimuli and sensors that initiate hypertrophy. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">PubMed</a></li>
+      <li class="shead">How muscle grows, and how to train</li>
+      <li value="13"><b>Wackerhage H, et al. (2019).</b> Stimuli and sensors that initiate hypertrophy. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">PubMed</a></li>
       <li><b>Schoenfeld BJ, Ogborn D, Krieger JW (2017).</b> Volume dose-response: meta-analysis. <i>J Sports Sci</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">PubMed</a></li>
       <li><b>Schoenfeld BJ, et al. (2019).</b> Volume (1 vs 3 vs 5 sets) in trained men. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">PubMed</a></li>
       <li><b>Pelland JC, et al. (2026).</b> Volume and frequency dose-response meta-regression. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">PubMed</a></li>
@@ -1627,11 +1627,8 @@
       <li><b>Lamon S, et al. (2021).</b> Sleep deprivation and muscle protein synthesis. <i>Physiol Reports</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">PMC7785053</a></li>
       <li><b>Bernardez-Vazquez R, et al. (2022).</b> Hypertrophy variables: umbrella review. <i>Front Sports Act Living</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">PMC9302196</a></li>
       <li><b>Schoenfeld BJ (2020).</b> <i>Science and Development of Muscle Hypertrophy</i>, 2nd ed. Human Kinetics. <a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">publisher</a></li>
-    </ol>
-
-    <h3>Genetics, responders, and diminishing returns</h3>
-    <ol start="27">
-      <li><b>Hubal MJ, et al. (2005).</b> Variability in response to resistance training. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">PubMed</a></li>
+      <li class="shead">Genetics, responders, and diminishing returns</li>
+      <li value="27"><b>Hubal MJ, et al. (2005).</b> Variability in response to resistance training. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">PubMed</a></li>
       <li><b>Petrella JK, et al. (2008).</b> Extreme, modest and non-responders. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">PubMed</a></li>
       <li><b>Lexell J, et al. (1988).</b> Whole-muscle fiber number and aging. <i>J Neurol Sci</i>. <a href="https://www.sciencedirect.com/science/article/abs/pii/0022510X88901323">ScienceDirect</a></li>
       <li><b>Hyperplasia in humans (2024).</b> Systematic review and meta-analysis. <i>PubMed</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">PubMed</a></li>
@@ -1643,11 +1640,8 @@
       <li><b>Kouri EM, et al. (1995).</b> Fat-free mass index in steroid users and nonusers. <i>Clin J Sport Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">PubMed</a></li>
       <li><b>McDonald L.</b> Genetic muscular potential. <i>bodyrecomposition.com</i>. <a href="https://bodyrecomposition.com/muscle-gain/genetic-muscular-potential">link</a></li>
       <li><b>Aragon A (2009).</b> How much muscle can you gain? <i>AARR</i>. <a href="https://alanaragon.com/wp-content/uploads/2018/01/A.A.R.R_Feb..2009.pdf">PDF</a></li>
-    </ol>
-
-    <h3>Loss, tendons, stretching, cardio</h3>
-    <ol start="39">
-      <li><b>Marusic U, et al. (2021).</b> Muscle loss and strength loss in bed rest. <i>J Appl Physiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">PMC8325614</a></li>
+      <li class="shead">Loss, tendons, stretching, cardio</li>
+      <li value="39"><b>Marusic U, et al. (2021).</b> Muscle loss and strength loss in bed rest. <i>J Appl Physiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">PMC8325614</a></li>
       <li><b>Mujika I, Padilla S (2000).</b> Detraining. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">PubMed</a></li>
       <li><b>Bruusgaard JC, et al. (2010).</b> Myonuclei and muscle memory. <i>PNAS</i>. <a href="https://www.pnas.org/doi/10.1073/pnas.0913935107">PNAS</a></li>
       <li><b>Seaborne RA, et al. (2018).</b> Epigenetic muscle memory. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-018-20287-3">nature.com</a></li>
@@ -1664,11 +1658,8 @@
       <li><b>Mandsager K, et al. (2018).</b> Cardiorespiratory fitness and mortality. <i>JAMA Netw Open</i>. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">JAMA</a></li>
       <li><b>Wen CP, et al. (2011).</b> 15 minutes a day and mortality. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">PubMed</a></li>
       <li><b>Wilson JM, et al. (2012).</b> Concurrent training interference: meta-analysis. <i>J Strength Cond Res</i>. <a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training__a_meta_analysis_examining.35.aspx">link</a></li>
-    </ol>
-
-    <h3>The brain, and the unhealthy extreme</h3>
-    <ol start="56">
-      <li><b>Erickson KI, et al. (2011).</b> Exercise increases hippocampal volume. <i>PNAS</i>. <a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">PNAS</a></li>
+      <li class="shead">The brain, and the unhealthy extreme</li>
+      <li value="56"><b>Erickson KI, et al. (2011).</b> Exercise increases hippocampal volume. <i>PNAS</i>. <a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">PNAS</a></li>
       <li><b>Szuhany KL, et al. (2015).</b> Exercise and BDNF: meta-analysis. <i>J Psychiatr Res</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4314337/">PMC4314337</a></li>
       <li><b>Acute exercise and cognition (2024).</b> Bayesian meta-analysis. <i>Communications Psychology</i>. <a href="https://www.nature.com/articles/s44271-024-00124-2">nature.com</a></li>
       <li><b>Singh B, et al. (2023).</b> Physical activity for depression/anxiety: umbrella review. <i>Br J Sports Med</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">PMC10579187</a></li>
@@ -1679,11 +1670,8 @@
       <li><b>Vecchiato M, et al. (2025).</b> Mortality in competitive bodybuilders. <i>Eur Heart J</i>. <a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">EHJ</a></li>
       <li><b>Escalante G, et al. (2022).</b> Cardiac findings in deceased bodybuilders. <i>J Funct Morphol Kinesiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">PMC9781327</a></li>
       <li><b>High protein and kidney function (2014).</b> Meta-analysis in people without CKD. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4031217/">PMC4031217</a></li>
-    </ol>
-
-    <h3>Food, sun, timing, caffeine</h3>
-    <ol start="67">
-      <li><b>Morton RW, et al. (2018).</b> Protein supplementation: meta-analysis (about 0.7 g/lb). <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">PubMed</a></li>
+      <li class="shead">Food, sun, timing, caffeine</li>
+      <li value="67"><b>Morton RW, et al. (2018).</b> Protein supplementation: meta-analysis (about 0.7 g/lb). <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">PubMed</a></li>
       <li><b>Schoenfeld BJ, Aragon AA (2018).</b> Protein per meal and distribution. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">PMC5828430</a></li>
       <li><b>Iraki J, et al. (2019).</b> Nutrition for the natural lifter (surplus). <i>Sports (Basel)</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6680710/">PMC6680710</a></li>
       <li><b>Helms ER, et al. (2023).</b> Larger vs smaller surplus. <i>Int J Exerc Sci</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">PMC10620361</a></li>
@@ -1697,11 +1685,8 @@
       <li><b>Carvalho A, et al. (2022).</b> Habitual caffeine intake and the acute ergogenic effect. <i>Sports Medicine</i>. <a href="https://link.springer.com/article/10.1007/s40279-022-01685-0">Springer</a></li>
       <li><b>Lara B, et al. (2019).</b> Tolerance to the ergogenic effect of caffeine. <i>PLoS ONE</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6343867/">PMC6343867</a></li>
       <li><b>James JE, Rogers PJ (2005).</b> Caffeine, withdrawal reversal, and performance. <i>Aust J Psychol</i>. <a href="https://www.tandfonline.com/doi/full/10.1080/00049530500125090">link</a></li>
-    </ol>
-
-    <h3>How much you actually need (dose-response)</h3>
-    <ol start="81">
-      <li><b>Tagawa R, et al. (2021).</b> Protein intake and lean mass: dose-response meta-analysis (inflection ~1.3 g/kg). <i>Nutrition Reviews</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/">PMC7727026</a></li>
+      <li class="shead">How much you actually need (dose-response)</li>
+      <li value="81"><b>Tagawa R, et al. (2021).</b> Protein intake and lean mass: dose-response meta-analysis (inflection ~1.3 g/kg). <i>Nutrition Reviews</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/">PMC7727026</a></li>
       <li><b>Enes A, et al. (2024).</b> Adding vs simply maintaining training volume. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/39665246/">PubMed</a></li>
       <li><b>Robinson ZP, et al. (2024).</b> Proximity to failure and hypertrophy: meta-regression. <i>Sports Medicine</i>. <a href="https://link.springer.com/article/10.1007/s40279-024-02069-2">Springer</a></li>
       <li><b>Nedeltcheva AV, et al. (2010).</b> Sleep curtailment and the muscle-vs-fat partition while dieting. <i>Annals of Internal Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/20921542/">PubMed</a></li>
@@ -1741,7 +1726,6 @@
   <footer class="site-footer">
     <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
       <a href="/">&copy; 2026 Ethan Willingham</a>
-      <span class="src" style="white-space:normal">Educational, not medical advice. Talk to a doctor before starting creatine or a new program.</span>
     </div>
   </footer>
 
