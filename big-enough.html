@@ -310,17 +310,19 @@
   table.prog thead th { background: var(--panel-2); color: var(--text-bright); font-family: var(--font-heading); }
   table.prog td.n, table.prog th.n { font-family: var(--font-mono); text-align: right; white-space: nowrap; color: var(--accent-hover); }
   table.prog tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+  table.prog .swap { display: block; font-size: 0.84em; color: var(--text-dim); }
 
   /* ---------- REFERENCES ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
-  #sources li { margin-bottom: 0.38em; }
+  #sources ol { font-family: var(--font-body); font-size: 0.62rem; color: var(--text-dim); line-height: 1.35; padding-left: 1.3em; margin: 0.25em 0 1.1em; }
+  #sources li { margin-bottom: 0.22em; }
   #sources li::marker { color: var(--accent); }
   #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
   #sources li a:hover { border-bottom-color: var(--accent); }
   #sources b { color: var(--text); font-weight: 600; }
   #sources i { color: var(--text-dim); }
-  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 3px solid var(--accent); padding-left: 0.7em; margin: 2.3rem 0 0.8rem; }
-  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.4rem; } #sources li { break-inside: avoid; } }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 2px solid var(--accent); padding-left: 0.6em; margin: 1.6rem 0 0.55rem; }
+  #sources .legend { font-size: 0.78rem; gap: 0.5rem 1rem; margin: 0.8em 0 1em; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 1.8rem; } #sources li { break-inside: avoid; } }
 
   /* ---------- COLOPHON ---------- */
   #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
@@ -486,7 +488,7 @@
             <text x="18" y="34" class="v-cap" font-size="15" fill="#D4C4A0">1 &#183; Lift</text>
             <text x="18" y="60" class="v-label" font-size="13">3 to 5 times a week,</text>
             <text x="18" y="80" class="v-label" font-size="13">hard sets near failure,</text>
-            <text x="18" y="100" class="v-label" font-size="13">10 to 20 sets per muscle.</text>
+            <text x="18" y="100" class="v-label" font-size="13">10 to 20 per muscle group.</text>
           </g>
           <g transform="translate(240,10)">
             <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
@@ -694,7 +696,7 @@
     <p>You deliver that tension with a handful of levers, about six of them. Every one has a sweet spot, and pushing past it costs more than it pays.</p>
 
     <h3>Lever one: volume (the big one)</h3>
-    <p>Volume, the total number of hard sets you do per muscle per week, is the lever most tightly tied to growth. The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (a clear, measurable difference versus almost nothing, in one tightly controlled eight-week study), even though both got similarly stronger. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
+    <p>Volume, the total number of hard sets you do per muscle group per week, is the lever most tightly tied to growth. (The unit is the muscle group, chest or back or quads, not each individual muscle, and a set counts for every group doing serious work in it: a bench press is a set for chest and for triceps, a row is a set for back and for biceps.) The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (a clear, measurable difference versus almost nothing, in one tightly controlled eight-week study), even though both got similarly stronger. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
 
     <p>But the returns shrink. The newest and largest analysis is honest about this: growth keeps rising as you add volume, with no point where it turns into nothing, but the slope gets gentler and gentler, so each set buys less than the last. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Eventually the fatigue and joint cost of another set outruns the muscle it adds. Lifters call the far end "junk volume," but the truth is gentler: those sets are rarely useless, just a worse and worse trade. How much you actually need is <a href="#returns">a chapter of its own</a>.</p>
 
@@ -716,7 +718,7 @@
           <text x="245" y="280" text-anchor="middle">10</text>
           <text x="452" y="280" text-anchor="middle">20</text>
           <text x="630" y="280" text-anchor="middle">30</text>
-          <text x="345" y="305" text-anchor="middle" fill="#B8B2A2">hard sets per muscle, per week</text>
+          <text x="345" y="305" text-anchor="middle" fill="#B8B2A2">hard sets per muscle group, per week</text>
         </g>
         <text x="46" y="50" text-anchor="end" class="v-axis-t">growth</text>
         <!-- curve: rises steeply, flattens. points approx -->
@@ -727,7 +729,7 @@
         <circle cx="245" cy="86" r="4" fill="#9ec79a"/>
         <circle cx="452" cy="58" r="4" fill="#e6c074"/>
       </svg>
-      <p class="viz-note"><b>The practical band is 10 to 20 hard sets per muscle per week.</b> Beginners start near 10, intermediates push toward 20, and you only climb past that on purpose, watching whether recovery keeps up.</p>
+      <p class="viz-note"><b>The practical band is 10 to 20 hard sets per muscle group per week.</b> The range is wide on purpose: it is one answer to three different questions. How long you have trained (a first-year lifter grows fine on 10; by year three the same muscle wants more), how well you recover (sleep, food, stress, age), and how you count (pressing already pays the triceps, rowing already pays the biceps). If you want one sharp number, take <b>12</b>. Start there, and add a couple of sets to a muscle group only after it stops gaining reps for a few weeks while sleep and food are in order. That walks you to your own number, which is the only sharp one there is.</p>
     </figure>
 
     <h3>Lever two: load (lighter than you think)</h3>
@@ -781,8 +783,8 @@
     <div class="fork">
       <p class="fork-q" data-label="The evidence-based spine">Six numbers that drive all three templates</p>
       <ul style="margin:0">
-        <li><b>10 to 20 hard sets</b> per muscle per week (start low, build up). <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></li>
-        <li>Train each muscle <b>about twice a week</b>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span></li>
+        <li><b>10 to 20 hard sets</b> per muscle group per week. Default to 12; add sets only when progress stalls. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></li>
+        <li>Train each muscle group <b>about twice a week</b>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span></li>
         <li>Stop most sets at <b>1 to 3 reps in reserve</b>; true failure only occasionally. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span></li>
         <li>Use <b>6 to 15 reps</b> on most work, heavier low-rep sets on the main lifts. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span></li>
         <li>Rest <b>2 to 3 minutes</b> on compounds, about a minute on small isolation. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span></li>
@@ -791,11 +793,11 @@
     </div>
 
     <h3>Pick the split that fits your life</h3>
-    <p>The "split" is just how you divide the body across the week. More training days means more days you show up, not more obligation to. All three below hit every muscle about twice a week, so choose the one you can actually sustain.</p>
+    <p>The "split" is just how you divide the body across the week. More training days means more days you show up, not more obligation to. All three below hit every muscle group about twice a week, so choose the one you can actually sustain.</p>
 
     <figure class="viz reveal" aria-label="Three weekly training schedules.">
       <figcaption>Three ways to carve up a week</figcaption>
-      <p class="viz-sub">Each colored cell is a training day. All three hit every muscle about twice a week; they just spread it across 3, 4, or 6 sessions.</p>
+      <p class="viz-sub">Each colored cell is a training day. All three hit every muscle group about twice a week; they just spread it across 3, 4, or 6 sessions.</p>
       <div class="week"><span class="wk-name">&nbsp;</span><span class="wk-cell wk-head">Mon</span><span class="wk-cell wk-head">Tue</span><span class="wk-cell wk-head">Wed</span><span class="wk-cell wk-head">Thu</span><span class="wk-cell wk-head">Fri</span><span class="wk-cell wk-head">Sat</span><span class="wk-cell wk-head">Sun</span></div>
       <div class="week"><span class="wk-name">Full body &#215;3</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
       <div class="week"><span class="wk-name">Upper / lower &#215;4</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
@@ -804,7 +806,7 @@
     </figure>
 
     <h3>Where to start</h3>
-    <p>If you are new, run this three-day full-body plan: you practice the big lifts often and miss nothing if life eats a day. Rotate variations and add a rep or a little weight most weeks. When three days no longer fit your volume, move up to the upper/lower or push/pull/legs layouts above. <span class="src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
+    <p>If you are new, run this three-day full-body plan: you practice the big lifts often and miss nothing if life eats a day. Rotate variations and add a rep or a little weight most weeks. When three days no longer fit your volume, move up to the upper/lower layout or the full push/pull/legs program written out below. <span class="src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>Each full-body session, 3x a week</th><th class="n">Sets &#215; reps</th></tr></thead>
       <tbody>
@@ -817,6 +819,59 @@
         <tr><td>Biceps curl + triceps extension</td><td class="n">2 &#215; 10-15</td></tr>
       </tbody>
     </table></div>
+
+    <p>That table is the whole 90 percent program, so be honest about its clock. It is 17 to 19 hard sets; a hard set takes 30 to 40 seconds, and the rest between sets is most of your gym time. At honest rest that is roughly 50 minutes of work plus a short warm-up: <strong>an hour in the door and out, three times a week</strong>. There is no real 30-minute version of building muscle; half an hour maintains what you have, or builds only if you superset everything in an empty gym. The upper/lower four-day, if you want the middle step, is this same session cut in half and doubled, built from the same exercise pool.</p>
+
+    <h3>The 100 percent version: push / pull / legs, six days</h3>
+    <p>This is the far end, written out for the day the gym becomes the hobby instead of the chore. You run push, pull, legs twice each week, and the second pass swaps the lifts in parentheses so joints and boredom both get a break. Counting the overlap (presses pay the triceps, rows pay the biceps), the big muscle groups land 12 to 20 hard sets a week, the top of the <a href="#grows">volume band</a>, with the small ones close behind. Be clear about the purchase before you sign: against three honest full-body days, six days buys the last slow stretch, not a second physique.</p>
+
+    <div class="prog-wrap"><table class="prog">
+      <thead><tr><th>Push, Monday and Thursday</th><th class="n">Sets &#215; reps</th></tr></thead>
+      <tbody>
+        <tr><td>Bench press <span class="swap">second pass: incline dumbbell press</span></td><td class="n">4 &#215; 5-8</td></tr>
+        <tr><td>Seated dumbbell shoulder press <span class="swap">second pass: machine shoulder press</span></td><td class="n">3 &#215; 8-12</td></tr>
+        <tr><td>Cable fly <span class="swap">second pass: pec-deck</span></td><td class="n">2 &#215; 12-15</td></tr>
+        <tr><td>Lateral raise, both days</td><td class="n">3 &#215; 12-20</td></tr>
+        <tr><td>Triceps pressdown <span class="swap">second pass: overhead extension</span></td><td class="n">3 &#215; 10-15</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="prog-wrap"><table class="prog">
+      <thead><tr><th>Pull, Tuesday and Friday</th><th class="n">Sets &#215; reps</th></tr></thead>
+      <tbody>
+        <tr><td>Deadlift <span class="swap">second pass: barbell row</span></td><td class="n">3 &#215; 3-6</td></tr>
+        <tr><td>Pull-up or lat pulldown, both days</td><td class="n">3 &#215; 6-10</td></tr>
+        <tr><td>Chest-supported row <span class="swap">second pass: single-arm dumbbell row</span></td><td class="n">3 &#215; 8-12</td></tr>
+        <tr><td>Face pull or rear-delt fly, both days</td><td class="n">3 &#215; 12-20</td></tr>
+        <tr><td>Barbell curl <span class="swap">second pass: hammer curl</span></td><td class="n">3 &#215; 8-12</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="prog-wrap"><table class="prog">
+      <thead><tr><th>Legs, Wednesday and Saturday</th><th class="n">Sets &#215; reps</th></tr></thead>
+      <tbody>
+        <tr><td>Back squat <span class="swap">second pass: hack squat or leg press</span></td><td class="n">3 &#215; 5-8</td></tr>
+        <tr><td>Romanian deadlift <span class="swap">second pass: hip thrust</span></td><td class="n">3 &#215; 6-10</td></tr>
+        <tr><td>Walking lunge or leg press, both days</td><td class="n">2 &#215; 10-15</td></tr>
+        <tr><td>Seated leg curl <span class="swap">second pass: leg extension</span></td><td class="n">2 &#215; 10-15</td></tr>
+        <tr><td>Standing calf raise <span class="swap">second pass: seated calf raise</span></td><td class="n">4 &#215; 8-15</td></tr>
+        <tr><td>Hanging knee raise or ab wheel, both days</td><td class="n">3 &#215; 10-15</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>Progress it the same way as the starter plan: a rep or a small plate most weeks, and when a slot stalls for a month, swap the exercise for its cousin in parentheses, not the program for a new one. If a day will not fit your hour, cut the last set of the isolation work, never the first lift.</p>
+
+    <p>Now the question everyone actually asks: <strong>how long is a session?</strong> Count it like a cashier. Each day above is 15 to 17 working sets. The sets themselves only total about 10 minutes; rest is the real spend, 2 to 3 minutes after compounds and about one after isolation work. That lands every session at <strong>55 to 70 minutes including a 10-minute warm-up</strong>, with legs the longest day. So the honest answer is: not 30 minutes, and not 90 either. Six days at about an hour. If a session hits an hour and a half, the extra is almost never training; it is rest you do not need or a phone you did not put away.</p>
+
+    <div class="prog-wrap"><table class="prog">
+      <thead><tr><th>The week, in hours</th><th class="n">Days</th><th class="n">One session</th><th class="n">Per week</th><th>What it buys</th></tr></thead>
+      <tbody>
+        <tr><td>Full body</td><td class="n">3</td><td class="n">~60 min</td><td class="n">~3 hrs</td><td>roughly 90 percent of your ceiling</td></tr>
+        <tr><td>Upper / lower</td><td class="n">4</td><td class="n">~60 min</td><td class="n">~4 hrs</td><td>a little more volume, easier sessions</td></tr>
+        <tr><td>Push / pull / legs</td><td class="n">6</td><td class="n">55-70 min</td><td class="n">~6.5 hrs</td><td>the slow last stretch, if you love it</td></tr>
+      </tbody>
+    </table></div>
+    <p class="src" style="white-space:normal;display:block;margin:-0.6em 0 1.4em">Times assume honest rest and a 10-minute warm-up. The ceiling shares are the same kind of honest estimate as the <a href="#returns">diminishing-returns chapter</a>: read off noisy curves, not reported by any single study.</p>
 
     <h3>Form, in one rule and six cues</h3>
     <p>Good form is not about looking textbook. It is about putting the tension on the muscle instead of the joint, through a full range of motion, so you can keep lifting for decades. The one rule under all of it: <strong>full range, controlled, owned weight.</strong> If you cannot control it, it is too heavy to build anything but your ego. The cues that matter most, lift by lift:</p>
@@ -1304,9 +1359,9 @@
       <thead><tr><th>Lever</th><th>The sane dose</th><th class="n">Of the max</th><th>Going to the extreme buys you</th></tr></thead>
       <tbody>
         <tr><td>Protein</td><td>~0.7 g per pound a day</td><td class="n">~98%</td><td>nothing (unless you are dieting lean)</td></tr>
-        <tr class="hl"><td>Training volume</td><td>10 to 20 hard sets / muscle / week</td><td class="n">~85-95%</td><td><b>a little, and it keeps climbing</b></td></tr>
+        <tr class="hl"><td>Training volume</td><td>10 to 20 hard sets / muscle group / week</td><td class="n">~85-95%</td><td><b>a little, and it keeps climbing</b></td></tr>
         <tr><td>Effort</td><td>stop 1 to 2 reps short of failure</td><td class="n">~95%</td><td>barely (failure just adds fatigue)</td></tr>
-        <tr><td>Frequency</td><td>each muscle ~2x a week</td><td class="n">~100%</td><td>nothing at matched volume</td></tr>
+        <tr><td>Frequency</td><td>each muscle group ~2x a week</td><td class="n">~100%</td><td>nothing at matched volume</td></tr>
         <tr class="hl"><td>Sleep</td><td>at least ~7 hours</td><td class="n">~95%</td><td><b>nothing above; under 6 hurts a lot</b></td></tr>
         <tr><td>Calorie surplus</td><td>+150 to 300 a day</td><td class="n">~100%</td><td>mostly fat</td></tr>
         <tr><td>Time</td><td>3 to 5 years, consistent</td><td class="n">~90%</td><td>the years are not optional</td></tr>
@@ -1413,7 +1468,7 @@
     <h3>The part the comfortable version hides</h3>
     <p>"Not insane" is not the same as "barely trying." The inputs above are moderate; the <em>consistency</em> they demand is not. Reaching 90 percent of your potential means three to five years of near-uninterrupted, progressive, hard training. The person who "cannot build muscle" has rarely hit the extremity ceiling; they failed the floor, which is non-negotiable:</p>
     <ul>
-      <li><strong>At least 10 hard sets per muscle, every week, for years.</strong> Two sets when you feel like it maintains at best.</li>
+      <li><strong>At least 10 hard sets per muscle group, every week, for years.</strong> Two sets when you feel like it maintains at best.</li>
       <li><strong>Most sets within 1 to 2 reps of failure.</strong> Comfortable, chatty sets do almost nothing. <span class="src"><a href="https://link.springer.com/article/10.1007/s40279-024-02069-2">Robinson 2024</a></span></li>
       <li><strong>The weight on the bar has to climb over months.</strong> No progression, no growth.</li>
       <li><strong>Enough protein and enough sleep, repeated for years.</strong></li>
@@ -1501,7 +1556,7 @@
       <div class="prog-wrap"><table class="prog">
         <thead><tr><th>Lever</th><th>The sweet spot</th><th>The trap past it</th></tr></thead>
         <tbody>
-          <tr><td>Training volume</td><td>10 to 20 hard sets per muscle a week</td><td>junk volume: fatigue with no extra muscle</td></tr>
+          <tr><td>Training volume</td><td>10 to 20 hard sets per muscle group a week</td><td>junk volume: fatigue with no extra muscle</td></tr>
           <tr><td>Effort</td><td>1 to 3 reps left in reserve</td><td>failure every set: more fatigue, no more growth</td></tr>
           <tr><td>Protein</td><td>about 0.7 g per pound a day</td><td>more does nothing but cost money</td></tr>
           <tr><td>Calories</td><td>a 200 to 500 surplus</td><td>a dirty bulk: mostly fat to diet off later</td></tr>
