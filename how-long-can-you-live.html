@@ -70,7 +70,7 @@
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--wide); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
   .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
   .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
   .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 40ch; text-wrap: pretty; }
@@ -256,40 +256,50 @@
     <p class="hero-dek">There is supposed to be a hard wall around 120, and eating less is supposed to be the only real hack. The evidence says something stranger.</p>
     <p class="hero-byline">Sourced and illustrated. <b>28 sources cited.</b> Last reviewed June 2026.</p>
 
-    <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
-      <svg viewBox="0 0 960 360" role="img" aria-label="A line showing the oldest age any human has ever reached, climbing for decades then going flat at 122 after 1997.">
+    <figure class="hero-figure breakout reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
+      <svg viewBox="0 0 960 380" role="img" aria-label="The highest age any human has been verified to reach, from 1920 to today. It sat flat at 113 for fifty-four years, climbed steeply once Jeanne Calment began breaking it in 1990, peaked at 122 when she died in 1997, and has been flat ever since.">
         <defs>
           <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#D4C4A0" stop-opacity="0.22"/>
+            <stop offset="0" stop-color="#D4C4A0" stop-opacity="0.20"/>
             <stop offset="1" stop-color="#D4C4A0" stop-opacity="0"/>
           </linearGradient>
         </defs>
-        <!-- gridlines -->
-        <line class="gridln" x1="80" y1="93" x2="920" y2="93"/>
-        <line class="gridln" x1="80" y1="125" x2="920" y2="125" stroke-dasharray="2 6"/>
-        <line class="gridln" x1="80" y1="206" x2="920" y2="206"/>
-        <line class="gridln" x1="80" y1="287" x2="920" y2="287"/>
-        <line class="axisln" x1="80" y1="320" x2="920" y2="320"/>
-        <!-- y labels (age) -->
-        <text class="axs" x="70" y="97" text-anchor="end">122</text>
-        <text class="axs" x="70" y="129" text-anchor="end">120</text>
-        <text class="axs" x="70" y="210" text-anchor="end">115</text>
-        <text class="axs" x="70" y="291" text-anchor="end">110</text>
-        <!-- x labels (year) -->
-        <text class="axs" x="80" y="338" text-anchor="middle">1960</text>
-        <text class="axs" x="334" y="338" text-anchor="middle">1980</text>
-        <text class="axs" x="588" y="338" text-anchor="middle">2000</text>
-        <text class="axs" x="842" y="338" text-anchor="middle">2020</text>
-        <!-- area + curve -->
-        <path class="fade-area" d="M80 239 L271 223 L436 206 L526 174 L551 93 L920 93 L920 320 L80 320 Z" fill="url(#heroFill)" opacity="0.9"/>
-        <path class="draw" id="hero-curve" style="--len:1180" d="M80 239 L271 223 L436 206 L526 174 L551 93 L920 93" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Calment marker -->
-        <circle class="pulse-dot" cx="551" cy="93" r="6" fill="#D4C4A0"/>
-        <text class="anno" x="565" y="78">Jeanne Calment, 122 (1997)</text>
-        <text class="anno-i" x="916" y="84" text-anchor="end">still the record in 2026</text>
-        <text class="anno-i" x="86" y="118">the 120 line</text>
+
+        <!-- y gridlines + labels (age) -->
+        <line class="gridln" x1="92" y1="286" x2="916" y2="286"/>
+        <text class="axs" x="78" y="290" text-anchor="end">110</text>
+        <line class="gridln" x1="92" y1="201" x2="916" y2="201"/>
+        <text class="axs" x="78" y="205" text-anchor="end">115</text>
+        <!-- the famous 120 line -->
+        <line class="axisln" x1="92" y1="116" x2="916" y2="116" stroke-dasharray="2 7" opacity="0.65"/>
+        <text class="axs" x="78" y="120" text-anchor="end">120</text>
+        <text class="anno-i" x="100" y="108">the famous &ldquo;120 limit&rdquo;</text>
+
+        <!-- x axis -->
+        <line class="axisln" x1="92" y1="320" x2="916" y2="320"/>
+        <text class="axs" x="92"  y="343" text-anchor="middle">1920</text>
+        <text class="axs" x="317" y="343" text-anchor="middle">1950</text>
+        <text class="axs" x="541" y="343" text-anchor="middle">1980</text>
+        <text class="axs" x="766" y="343" text-anchor="middle">2010</text>
+        <text class="axs" x="886" y="343" text-anchor="middle">2026</text>
+
+        <!-- area under the running record -->
+        <path class="fade-area" d="M92,269 L152,225 L541,225 L586,201 L616,200 L631,167 L654,116 L668,74 L886,74 L886,320 L92,320 Z" fill="url(#heroFill)"/>
+
+        <!-- the running record (highest verified age to date) -->
+        <path class="draw" id="hero-curve" style="--len:950" d="M92,269 L152,225 L541,225 L586,201 L616,200 L631,167 L654,116 L668,74 L886,74" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Filkins plateau -->
+        <circle cx="346" cy="225" r="5" fill="#8fb3c7"/>
+        <text class="lbl-name" x="346" y="251" text-anchor="middle">Delina Filkins, 113</text>
+        <text class="anno-i" x="346" y="269" text-anchor="middle">the record for fifty-four years</text>
+
+        <!-- Calment peak + the current wall -->
+        <circle class="pulse-dot" cx="668" cy="74" r="6" fill="#D4C4A0"/>
+        <text class="anno" x="684" y="66" fill="#D4C4A0">Jeanne Calment, 122</text>
+        <text class="anno-i" x="788" y="98" text-anchor="middle">unbroken for 29 years</text>
       </svg>
-      <figcaption class="hero-cap" id="hero-fig-cap">The oldest age any human has ever been verified to reach, plotted over time. It climbed for most of a century, then a French woman named Jeanne Calment died at 122 in 1997, and the record has not moved since. Whether that flat line is a wall, an accident, or a trick of bad data is the whole story.</figcaption>
+      <figcaption class="hero-cap" id="hero-fig-cap">The highest age any human has ever been verified to reach, plotted over time. It sat at 113 for fifty-four years, then a French woman named Jeanne Calment broke it again and again until she died at 122 in 1997. The record has not moved since. Whether that flat line is a wall, an accident, or a trick of bad data is the whole story.</figcaption>
     </figure>
   </header>
 
@@ -691,10 +701,7 @@
   <footer class="site-footer">
     <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
       <a href="/">&copy; 2026 Ethan Willingham</a>
-      <span class="ftr-links">
-        <a href="git-history.html">Colophon</a>
-        <a href="/">More posts</a>
-      </span>
+      <span class="src" style="white-space:normal">Educational, not medical advice. Last reviewed June 2026.</span>
     </div>
   </footer>
 
