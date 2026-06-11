@@ -262,6 +262,32 @@
   .tm-read .tmr-verdict { font-size: 1rem; line-height: 1.55; color: var(--text-dim); margin: 0; max-width: 60ch; }
   .tm-read .tmr-verdict b { color: var(--text); font-weight: 600; }
 
+  /* ---------- 4. WEALTH VS FEELING ---------- */
+  .wv-readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 0 0 1rem; }
+  .wv-r { padding: 0.7em 0.9em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.14); }
+  .wv-r.wealth { border-left: 3px solid var(--c-gold); }
+  .wv-r.feel { border-left: 3px solid var(--c-green); }
+  .wv-k { display: block; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.25rem; }
+  .wv-v { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 5.2vw, 2.1rem); color: var(--text-bright); line-height: 1; font-variant-numeric: tabular-nums; }
+  .wv-v em { font-style: normal; font-size: 0.5em; color: var(--text-dim); margin-left: 0.15em; }
+  .wv-sub { display: block; font-family: var(--font-body); font-size: 0.8rem; color: var(--text-dim); margin-top: 0.3rem; }
+  #wv-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; cursor: pointer; margin: 0.2rem 0 1.4rem; }
+  #wv-slider::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(90deg, var(--c-rose), var(--c-amber) 55%, var(--c-gold)); border-radius: 3px; }
+  #wv-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; background: var(--text-bright); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.4); }
+  #wv-slider::-moz-range-track { height: 4px; background: linear-gradient(90deg, var(--c-rose), var(--c-amber) 55%, var(--c-gold)); border-radius: 3px; }
+  #wv-slider::-moz-range-thumb { width: 20px; height: 20px; background: var(--text-bright); border: none; border-radius: 50%; }
+  .wv-meter-lbl { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.45rem; }
+  .wv-bar { position: relative; height: 34px; background: rgba(0,0,0,0.28); border: 1px solid var(--rule); border-radius: 7px; }
+  .wv-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #cf6a59, #e6c074 55%, #9ec79a); border-radius: 6px 0 0 6px; transition: width 0.06s linear; }
+  .wv-you { position: absolute; top: -5px; width: 2px; height: 44px; background: var(--text-bright); transition: left 0.06s linear; }
+  .wv-you::after { content: ''; position: absolute; left: -3px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-bright); }
+  .wv-tick { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--c-grid-strong); }
+  .wv-ticklbl { position: absolute; top: 40px; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); transform: translateX(-50%); white-space: nowrap; }
+  .wv-meter { margin-bottom: 2.7rem; }
+  .wv-punch { font-size: 1rem; line-height: 1.55; color: var(--text-dim); margin: 0.4rem 0 0; max-width: 62ch; }
+  .wv-punch b { color: var(--text); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .wv-fill, .wv-you { transition: none; } }
+
   /* ---------- REFERENCES ---------- */
   #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
   #sources li { margin-bottom: 0.38em; }
@@ -716,11 +742,78 @@
       </div>
       <p>The gap between the richest people alive and a people with almost nothing is one tenth of one point. The range of human wealth is astronomical. The range of human contentment is a hand's width. Whatever money is buying, it is mostly not this.</p>
 
-      <!-- INTERACTIVE: wealth vs feeling (drag wealth up a thousandfold, watch satisfaction barely move; drag to the bottom, watch it crater) -->
+      <!-- INTERACTIVE: wealth vs feeling (drag wealth across its whole range; satisfaction barely moves above the floor) -->
       <div class="tool reveal" id="wealth-tool">
         <div class="tool-head"><h4>Wealth against feeling</h4><span class="tool-tag">interactive</span></div>
-        <div class="tool-body"><div class="tool-soon">A wealth bar that runs off the screen beside a satisfaction bar that barely moves. Being built here.</div></div>
+        <div class="tool-body">
+          <p class="alm-intro">Drag your fortune from almost nothing to the richest people alive, and watch your own rating of your life.</p>
+          <div class="wv-readouts">
+            <div class="wv-r wealth"><span class="wv-k">your wealth</span><span class="wv-v" id="wv-wealth">$50k</span><span class="wv-sub" id="wv-mult">about the median</span></div>
+            <div class="wv-r feel"><span class="wv-k">your rating of your life</span><span class="wv-v" id="wv-sat">5.4<em>/ 7</em></span><span class="wv-sub" id="wv-band">comfortable</span></div>
+          </div>
+          <input type="range" id="wv-slider" min="0" max="1000" value="260" aria-label="Your wealth, from almost nothing to billionaire">
+          <div class="wv-meter">
+            <div class="wv-meter-lbl">where that puts your life satisfaction (1 to 7)</div>
+            <div class="wv-bar">
+              <div class="wv-fill" id="wv-fill"></div>
+              <div id="wv-ticks"></div>
+              <div class="wv-you" id="wv-you"></div>
+            </div>
+          </div>
+          <p class="wv-punch" id="wv-punch"></p>
+        </div>
       </div>
+      <script>
+      (function () {
+        'use strict';
+        var sl = document.getElementById('wv-slider');
+        if (!sl) return;
+        var Lmin = 2.48, Lspan = 8.52; // $300 to $100B on a log10 scale
+        function satOf(L) { var s = 5.85 - 2.95 * Math.exp(-(L - Lmin) * 0.9); return Math.max(2.9, Math.min(5.85, s)); }
+        function pct(s) { return (s - 1) / 6 * 100; }
+        function fmt(w) {
+          if (w >= 1e9) return '$' + (w / 1e9 >= 100 ? Math.round(w / 1e9) : (w / 1e9).toFixed(1)) + 'B';
+          if (w >= 1e6) return '$' + (w / 1e6).toFixed(1) + 'M';
+          if (w >= 1e3) return '$' + Math.round(w / 1e3) + 'k';
+          return '$' + Math.round(w);
+        }
+        function mult(w) {
+          var m = w / 50000;
+          if (m < 0.5) return 'a sliver of the median';
+          if (m < 1.5) return 'about the median income';
+          if (m < 1000) return Math.round(m) + '× the median';
+          return Math.round(m).toLocaleString() + '× the median';
+        }
+        function band(s) { return s < 3.4 ? 'in real deprivation' : s < 4.8 ? 'getting by' : s < 5.6 ? 'comfortable' : 'as content as the scale goes'; }
+        function punch(s) {
+          if (s < 3.6) return 'This is the only stretch where money truly buys feeling. Climbing out of deprivation is the part that moves the needle.';
+          if (s < 5.5) return 'Most of the lift is already behind you. From here, vast increases in wealth buy almost nothing.';
+          return 'You could multiply this fortune a thousandfold and the rating would barely twitch. <b>The herder with almost nothing is standing right beside you.</b>';
+        }
+        // reference ticks
+        var ticks = document.getElementById('wv-ticks');
+        [[2.9, 'the destitute · 2.9', 0], [5.7, '', 0], [5.8, 'herder 5.7 / billionaire 5.8', 1]].forEach(function (t) {
+          var x = pct(t[0]);
+          var line = document.createElement('div'); line.className = 'wv-tick'; line.style.left = x + '%'; ticks.appendChild(line);
+          if (t[1]) { var lab = document.createElement('div'); lab.className = 'wv-ticklbl'; lab.style.left = (t[2] ? pct(5.75) : x) + '%'; lab.textContent = t[1]; ticks.appendChild(lab); }
+        });
+        var wEl = document.getElementById('wv-wealth'), mEl = document.getElementById('wv-mult'),
+            sEl = document.getElementById('wv-sat'), bEl = document.getElementById('wv-band'),
+            fill = document.getElementById('wv-fill'), you = document.getElementById('wv-you'), pEl = document.getElementById('wv-punch');
+        function update() {
+          var p = (+sl.value) / 1000, L = Lmin + p * Lspan, w = Math.pow(10, L), s = satOf(L);
+          wEl.textContent = fmt(w);
+          mEl.textContent = mult(w);
+          sEl.innerHTML = s.toFixed(1) + '<em>/ 7</em>';
+          bEl.textContent = band(s);
+          fill.style.width = pct(s) + '%';
+          you.style.left = pct(s) + '%';
+          pEl.innerHTML = punch(s);
+        }
+        sl.addEventListener('input', update);
+        update();
+      })();
+      </script>
 
       <div class="honest">
         <span class="h-lbl">Two true exceptions</span>
