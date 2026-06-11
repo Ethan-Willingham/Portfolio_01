@@ -198,6 +198,54 @@
   /* a placeholder shown where an interactive will land while the essay is still being built */
   .tool-soon { padding: 2.2em 1.2em; text-align: center; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
 
+  /* ---------- 1. THE DOOMSDAY ALMANAC ---------- */
+  .alm-intro { font-family: var(--font-body); font-size: 0.98rem; color: var(--text-dim); margin: 0 0 0.5rem; }
+  .alm-track { margin: 0 0 0.2rem; }
+  .alm-bead-hit { cursor: pointer; }
+  .alm-bead-hit:focus { outline: none; }
+  .alm-bead { fill: var(--c-grid-strong); transition: r 0.2s var(--ease), fill 0.2s; }
+  .alm-bead-hit:hover .alm-bead, .alm-bead-hit:focus-visible .alm-bead { fill: var(--accent); r: 7; }
+  .alm-bead-hit.on .alm-bead { fill: var(--c-rose); r: 8; }
+  .alm-year { fill: var(--text-dim); font-family: var(--font-mono); font-size: 9px; transition: fill 0.2s; }
+  .alm-bead-hit.on .alm-year, .alm-bead-hit:hover .alm-year { fill: var(--text-bright); }
+  .alm-spark { stroke: var(--c-rose); stroke-width: 1; opacity: 0; transition: opacity 0.2s; }
+  .alm-bead-hit.on .alm-spark { opacity: 0.45; }
+  .alm-card { margin: 0.6rem 0 0; padding: 1em 1.1em; border: 1px solid var(--rule); border-left: 3px solid var(--c-rose); border-radius: 0 10px 10px 0; background: rgba(0,0,0,0.16); }
+  .alm-card .ac-year { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-rose); }
+  .alm-card .ac-who { font-family: var(--font-heading); font-weight: 700; font-size: 1.28rem; color: var(--text-bright); margin: 0.12em 0 0.45em; line-height: 1.15; }
+  .alm-card .ac-claim { font-size: 1rem; line-height: 1.55; color: var(--text); margin: 0 0 0.5em; }
+  .alm-card .ac-after { font-size: 0.95rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
+  .alm-card .ac-after b { color: var(--text); font-weight: 600; }
+  .alm-tally { display: flex; gap: 2.2rem; margin: 0.95rem 0 0; align-items: baseline; }
+  .alm-tally span { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); }
+  .alm-tally b { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: var(--text-bright); margin-right: 0.35rem; font-variant-numeric: tabular-nums; }
+  .alm-tally b.alm-zero { color: var(--c-green); }
+  @media (prefers-reduced-motion: reduce) { .alm-bead, .alm-spark, .alm-year { transition: none; } }
+
+  /* ---------- 2. THE TWO DIALS ---------- */
+  .dials-wrap { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+  @media (min-width: 640px) { .dials-wrap { grid-template-columns: 1.25fr 1fr; align-items: center; } }
+  .dials-plane { touch-action: none; }
+  .dials-plane svg { cursor: crosshair; }
+  .dp-axis { stroke: var(--c-grid-strong); stroke-width: 1; }
+  .dp-axis-lbl { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .dp-emo { fill: var(--c-grid-strong); transition: fill 0.15s, r 0.15s; }
+  .dp-emo-hit { cursor: pointer; }
+  .dp-emo-hit:focus { outline: none; }
+  .dp-emo-lbl { fill: var(--text-dim); font-family: var(--font-body); font-size: 11px; transition: fill 0.15s; pointer-events: none; }
+  .dp-emo-hit:hover .dp-emo, .dp-emo-hit:focus-visible .dp-emo, .dp-emo-hit.near .dp-emo { fill: var(--accent); r: 4.5; }
+  .dp-emo-hit:hover .dp-emo-lbl, .dp-emo-hit:focus-visible .dp-emo-lbl, .dp-emo-hit.near .dp-emo-lbl { fill: var(--text-bright); }
+  .dp-you-glow { fill: var(--accent); opacity: 0.16; pointer-events: none; }
+  .dp-you { fill: var(--accent); stroke: var(--bg); stroke-width: 2; pointer-events: none; }
+  .dial-read .dr-near { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4.5vw, 1.9rem); color: var(--text-bright); margin: 0 0 0.8rem; line-height: 1; text-transform: lowercase; }
+  .dial-gauge { margin: 0 0 0.75rem; }
+  .dial-gauge .dg-lbl { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); display: flex; justify-content: space-between; margin-bottom: 0.28rem; }
+  .dial-gauge .dg-track { position: relative; height: 7px; background: rgba(0,0,0,0.28); border-radius: 4px; }
+  .dial-gauge .dg-mid { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--c-grid-strong); }
+  .dial-gauge .dg-fill { position: absolute; top: 0; bottom: 0; border-radius: 4px; transition: left 0.12s linear, width 0.12s linear; }
+  .dial-read .dr-note { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; margin: 0.2rem 0 0; }
+  @media (prefers-reduced-motion: reduce) { .dp-emo, .dial-gauge .dg-fill { transition: none; } }
+
   /* ---------- REFERENCES ---------- */
   #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
   #sources li { margin-bottom: 0.38em; }
@@ -302,8 +350,81 @@
       <!-- INTERACTIVE: doomsday almanac (a clickable run of failed end-of-world predictions across ~2,000 years) -->
       <div class="tool reveal" id="almanac">
         <div class="tool-head"><h4>The doomsday almanac</h4><span class="tool-tag">interactive</span></div>
-        <div class="tool-body"><div class="tool-soon">A clickable run of the world's failed endings is being built here.</div></div>
+        <div class="tool-body">
+          <p class="alm-intro">Every one of these was, for someone entirely sincere, the certain end of the world. Tap any year.</p>
+          <div class="alm-track">
+            <svg viewBox="0 0 1000 78" id="alm-svg" role="group" aria-label="A timeline of failed end-of-the-world predictions. Select a year to read it.">
+              <line x1="40" y1="34" x2="960" y2="34" class="v-grid-s"/>
+              <g id="alm-beads"></g>
+            </svg>
+          </div>
+          <div class="alm-card" id="alm-card" aria-live="polite"></div>
+          <div class="alm-tally">
+            <span><b id="alm-count">0</b>endings foretold</span>
+            <span><b class="alm-zero">0</b>of them arrived</span>
+          </div>
+          <p class="tool-rail">Somewhere today, by someone entirely sincere, a thirteenth is being calculated.</p>
+        </div>
       </div>
+      <script>
+      (function () {
+        'use strict';
+        var DATA = [
+          {lab:"~50", y:"Around 50 AD", who:"Paul of Tarsus", claim:"The Lord would return within the lifetime of people then alive. “We who are alive, who are left.”", after:"That generation lived and died like any other. The letters became scripture."},
+          {lab:"156", y:"156 AD", who:"Montanus", claim:"The heavenly New Jerusalem was about to descend onto the plain at Pepuza, in Asia Minor.", after:"It never came down. Today no one can even agree where Pepuza was."},
+          {lab:"1000", y:"The year 1000", who:"Latin Christendom", claim:"The thousandth year since Christ would bring the Last Judgment.", after:"January 1st arrived on schedule. Later writers played up the panic, but the dread itself was real."},
+          {lab:"1260", y:"1260", who:"Joachim of Fiore", claim:"History’s final chapter, the Age of the Spirit, would dawn by the year 1260.", after:"1260 came and went. His followers simply moved the date forward."},
+          {lab:"1534", y:"1534", who:"The Anabaptists of Münster", claim:"Christ would return at Easter, and Münster would be the New Jerusalem. They seized the city to wait for him.", after:"The siege ended in 1535 with the leaders tortured and their bodies hung in iron cages from the church tower, where the cages still hang."},
+          {lab:"1844", y:"October 22, 1844", who:"The Millerites", claim:"Tens of thousands of William Miller’s followers gave away their belongings for the Second Coming.", after:"They named the next morning the Great Disappointment. Most quietly went back to their farms."},
+          {lab:"1910", y:"1910", who:"Halley’s Comet", claim:"Earth would pass through the comet’s tail, whose cyanogen gas would “snuff out all life on the planet.”", after:"People bought comet pills and gas masks. The tail was thinner than a laboratory vacuum. Everyone woke up."},
+          {lab:"1914", y:"1914", who:"The Watch Tower", claim:"The present world order would end in the battle of Armageddon.", after:"A world war came instead. The date was revised to 1925, and then to 1975."},
+          {lab:"1997", y:"March 1997", who:"Heaven’s Gate", claim:"A spacecraft hidden in the tail of Comet Hale-Bopp would lift believers off a doomed Earth.", after:"Thirty-nine people died to catch it. The Earth was not doomed."},
+          {lab:"2000", y:"January 1, 2000", who:"Y2K", claim:"A two-digit date bug would ripple through the world’s computers and pull civilization down at midnight.", after:"Engineers spent years and billions fixing it first, and the lights stayed on. The one doom that may have failed because we believed it."},
+          {lab:"2011", y:"May 21, 2011", who:"Harold Camping", claim:"The Rapture would come on May 21st, a date he worked out from the year of Noah’s flood.", after:"When the day passed he recalculated for October. October passed too. He apologized."},
+          {lab:"2012", y:"December 21, 2012", who:"The Maya calendar", claim:"The end of the 13th b’ak’tun would bring a global cataclysm.", after:"The Maya foretold nothing of the kind. The date was just where one of their long counts rolled over, like an odometer reaching all zeros."}
+        ];
+        var beads = document.getElementById('alm-beads');
+        var card = document.getElementById('alm-card');
+        if (!beads || !card) return;
+        var NS = 'http://www.w3.org/2000/svg';
+        var x0 = 70, x1 = 930, cy = 34, n = DATA.length, sel = -1, nodes = [];
+        function render(i) {
+          var d = DATA[i];
+          card.textContent = '';
+          var yr = document.createElement('div'); yr.className = 'ac-year'; yr.textContent = d.y;
+          var who = document.createElement('div'); who.className = 'ac-who'; who.textContent = d.who;
+          var cl = document.createElement('p'); cl.className = 'ac-claim'; cl.textContent = d.claim;
+          var af = document.createElement('p'); af.className = 'ac-after';
+          var b = document.createElement('b'); b.textContent = 'The morning after. ';
+          af.appendChild(b); af.appendChild(document.createTextNode(d.after));
+          card.appendChild(yr); card.appendChild(who); card.appendChild(cl); card.appendChild(af);
+        }
+        function select(i) {
+          if (sel >= 0 && nodes[sel]) nodes[sel].classList.remove('on');
+          sel = i; nodes[i].classList.add('on'); render(i);
+        }
+        DATA.forEach(function (d, i) {
+          var x = x0 + (x1 - x0) * (n === 1 ? 0.5 : i / (n - 1));
+          var g = document.createElementNS(NS, 'g');
+          g.setAttribute('class', 'alm-bead-hit'); g.setAttribute('tabindex', '0');
+          g.setAttribute('role', 'button'); g.setAttribute('aria-label', d.y + ': ' + d.who);
+          var spark = document.createElementNS(NS, 'line');
+          spark.setAttribute('class', 'alm-spark'); spark.setAttribute('x1', x); spark.setAttribute('y1', cy - 13); spark.setAttribute('x2', x); spark.setAttribute('y2', cy + 13);
+          var hit = document.createElementNS(NS, 'circle');
+          hit.setAttribute('cx', x); hit.setAttribute('cy', cy); hit.setAttribute('r', 18); hit.setAttribute('fill', 'transparent');
+          var bead = document.createElementNS(NS, 'circle');
+          bead.setAttribute('class', 'alm-bead'); bead.setAttribute('cx', x); bead.setAttribute('cy', cy); bead.setAttribute('r', 5.5);
+          var lab = document.createElementNS(NS, 'text');
+          lab.setAttribute('class', 'alm-year'); lab.setAttribute('x', x); lab.setAttribute('y', cy + 24); lab.setAttribute('text-anchor', 'middle'); lab.textContent = d.lab;
+          g.appendChild(spark); g.appendChild(hit); g.appendChild(bead); g.appendChild(lab);
+          g.addEventListener('click', function () { select(i); });
+          g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(i); } });
+          beads.appendChild(g); nodes[i] = g;
+        });
+        document.getElementById('alm-count').textContent = n;
+        select(0);
+      })();
+      </script>
 
       <div class="honest">
         <span class="h-lbl">The fair objection</span>
@@ -318,11 +439,128 @@
       <p class="lede">The hardware is old beyond reckoning. The circuit that floods you with fear is one you share, almost part for part, with a rat. It was installed long before there were humans to be afraid, and the whole range of what a person can feel was issued, unchanged, to the pharaoh and to you.</p>
       <p>For four hundred years, people trying to list the basic feelings kept landing on a tiny set. Descartes counted six. Spinoza got it down to three. Modern labs argue the floor is just two dials, a sense of good or bad and a sense of calm or worked up, and that everything we name on top of that is built in the moment. Nobody agrees on the exact count, which is the honest catch. But they all agree it is small, and old, and standard issue.</p>
 
-      <!-- INTERACTIVE: the two dials (valence x arousal plane; click a feeling, watch it land as a point) -->
+      <!-- INTERACTIVE: the two dials (valence x arousal plane; drag the marker, the nearest feeling lights up) -->
       <div class="tool reveal" id="dials">
         <div class="tool-head"><h4>The two dials</h4><span class="tool-tag">interactive</span></div>
-        <div class="tool-body"><div class="tool-soon">A map of feeling on two dials is being built here.</div></div>
+        <div class="tool-body">
+          <p class="alm-intro">Drag the dot, or tap a feeling. Wherever you land is just a spot on two dials: how good or bad it feels, and how stirred up or calm.</p>
+          <div class="dials-wrap">
+            <div class="dials-plane">
+              <svg viewBox="0 0 520 410" id="dp-svg" role="group" aria-label="A map of feelings on two axes, pleasant to unpleasant and worked up to calm. Drag the marker, or select a feeling, to move through the space.">
+                <g id="dp-static"></g>
+                <g id="dp-emos"></g>
+                <g id="dp-marker"></g>
+              </svg>
+            </div>
+            <div class="dial-read" aria-live="polite">
+              <p class="dr-near" id="dr-near">content</p>
+              <div class="dial-gauge">
+                <div class="dg-lbl"><span>unpleasant</span><span>pleasant</span></div>
+                <div class="dg-track"><span class="dg-mid"></span><span class="dg-fill" id="dg-val"></span></div>
+              </div>
+              <div class="dial-gauge">
+                <div class="dg-lbl"><span>calm</span><span>worked up</span></div>
+                <div class="dg-track"><span class="dg-mid"></span><span class="dg-fill" id="dg-aro"></span></div>
+              </div>
+              <p class="dr-note">Every name you know is a pin in this one square. The kit is two dials. The words are just how your language chose to cut it up.</p>
+            </div>
+          </div>
+        </div>
       </div>
+      <script>
+      (function () {
+        'use strict';
+        var svg = document.getElementById('dp-svg');
+        if (!svg) return;
+        var NS = 'http://www.w3.org/2000/svg';
+        var X0 = 64, X1 = 456, Y0 = 40, Y1 = 360;       // plane box
+        var CX = (X0 + X1) / 2, CY = (Y0 + Y1) / 2;
+        function vx(v) { return X0 + (v + 1) / 2 * (X1 - X0); }
+        function ay(a) { return Y1 - (a + 1) / 2 * (Y1 - Y0); }
+        function vFromX(x) { return Math.max(-1, Math.min(1, (x - X0) / (X1 - X0) * 2 - 1)); }
+        function aFromY(y) { return Math.max(-1, Math.min(1, 1 - (y - Y0) / (Y1 - Y0) * 2)); }
+        var EMO = [
+          {n:'excited',v:0.55,a:0.78},{n:'elated',v:0.82,a:0.5},{n:'happy',v:0.8,a:0.2},
+          {n:'content',v:0.62,a:-0.28},{n:'serene',v:0.55,a:-0.62},{n:'calm',v:0.28,a:-0.84},
+          {n:'bored',v:-0.45,a:-0.66},{n:'glum',v:-0.72,a:-0.4},{n:'sad',v:-0.82,a:-0.14},
+          {n:'miserable',v:-0.84,a:0.16},{n:'distressed',v:-0.62,a:0.52},{n:'afraid',v:-0.58,a:0.74},
+          {n:'angry',v:-0.5,a:0.86},{n:'astonished',v:0.14,a:0.88}
+        ];
+        function mk(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+        // static axes + labels
+        var st = document.getElementById('dp-static');
+        st.appendChild(mk('line', {x1: X0, y1: CY, x2: X1, y2: CY, class: 'dp-axis'}));
+        st.appendChild(mk('line', {x1: CX, y1: Y0, x2: CX, y2: Y1, class: 'dp-axis'}));
+        function axlbl(x, y, anchor, text) { var t = mk('text', {x: x, y: y, 'text-anchor': anchor, class: 'dp-axis-lbl'}); t.textContent = text; st.appendChild(t); }
+        axlbl(X1 + 4, CY + 3, 'end', 'pleasant');
+        axlbl(X0 - 4, CY + 3, 'start', 'unpleasant');
+        axlbl(CX, Y0 - 12, 'middle', 'worked up');
+        axlbl(CX, Y1 + 22, 'middle', 'calm');
+
+        // emotion points (clickable)
+        var emoG = document.getElementById('dp-emos'), emoNodes = [];
+        EMO.forEach(function (d, i) {
+          var px = vx(d.v), py = ay(d.a);
+          var g = mk('g', {class: 'dp-emo-hit', tabindex: '0', role: 'button', 'aria-label': d.n});
+          g.appendChild(mk('circle', {cx: px, cy: py, r: 16, fill: 'transparent'}));
+          g.appendChild(mk('circle', {class: 'dp-emo', cx: px, cy: py, r: 3}));
+          var side = d.v >= 0 ? 1 : -1;
+          var lbl = mk('text', {class: 'dp-emo-lbl', x: px + side * 9, y: py + 4, 'text-anchor': d.v >= 0 ? 'start' : 'end'});
+          lbl.textContent = d.n; g.appendChild(lbl);
+          g.addEventListener('pointerdown', function (e) { e.stopPropagation(); setTo(d.v, d.a); });
+          g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTo(d.v, d.a); } });
+          emoG.appendChild(g); emoNodes[i] = g;
+        });
+
+        // the draggable marker
+        var mg = document.getElementById('dp-marker');
+        var glow = mk('circle', {class: 'dp-you-glow', r: 15});
+        var you = mk('circle', {class: 'dp-you', r: 7});
+        mg.appendChild(glow); mg.appendChild(you);
+
+        var valFill = document.getElementById('dg-val'), aroFill = document.getElementById('dg-aro'), nearEl = document.getElementById('dr-near');
+        function gauge(el, val, pos, neg) {
+          var w = Math.abs(val) * 50;
+          if (val >= 0) { el.style.left = '50%'; el.style.width = w + '%'; el.style.background = pos; }
+          else { el.style.left = (50 - w) + '%'; el.style.width = w + '%'; el.style.background = neg; }
+        }
+        function nearest(v, a) {
+          var best = 0, bd = 1e9;
+          EMO.forEach(function (d, i) { var dd = (d.v - v) * (d.v - v) + (d.a - a) * (d.a - a); if (dd < bd) { bd = dd; best = i; } });
+          return best;
+        }
+        function update(v, a) {
+          you.setAttribute('cx', vx(v)); you.setAttribute('cy', ay(a));
+          glow.setAttribute('cx', vx(v)); glow.setAttribute('cy', ay(a));
+          gauge(valFill, v, '#9ec79a', '#e98e7f');
+          gauge(aroFill, a, '#e6c074', '#8fb3c7');
+          var ni = nearest(v, a);
+          nearEl.textContent = EMO[ni].n;
+          emoNodes.forEach(function (g, i) { g.classList.toggle('near', i === ni); });
+        }
+        function setTo(v, a) { update(Math.max(-1, Math.min(1, v)), Math.max(-1, Math.min(1, a))); }
+        // pointer math
+        function ptToVA(evt) {
+          var pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+          var ctm = svg.getScreenCTM(); if (!ctm) return null;
+          var p = pt.matrixTransform(ctm.inverse());
+          return {v: vFromX(p.x), a: aFromY(p.y)};
+        }
+        var dragging = false;
+        svg.addEventListener('pointerdown', function (e) {
+          var va = ptToVA(e); if (!va) return;
+          dragging = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {}
+          setTo(va.v, va.a);
+        });
+        svg.addEventListener('pointermove', function (e) { if (!dragging) return; var va = ptToVA(e); if (va) setTo(va.v, va.a); });
+        function endDrag() { dragging = false; }
+        svg.addEventListener('pointerup', endDrag);
+        svg.addEventListener('pointercancel', endDrag);
+
+        setTo(0.62, -0.28); // open on "content"
+      })();
+      </script>
 
       <div class="honest">
         <span class="h-lbl">Where this overstates</span>
