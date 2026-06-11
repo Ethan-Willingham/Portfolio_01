@@ -694,7 +694,7 @@
         // grid: baseline + ticks
         var grid = document.getElementById('tm-grid');
         grid.appendChild(mk('line', {class: 'tm-base', x1: px(T_PRE), y1: py(0), x2: px(T_MAX), y2: py(0)}));
-        var bl = mk('text', {class: 'tm-glabel', x: px(T_MAX), y: py(0) - 7, 'text-anchor': 'end'}); bl.textContent = 'where you started'; grid.appendChild(bl);
+        var bl = mk('text', {class: 'tm-glabel', x: px(T_PRE) + 6, y: py(0) - 8, 'text-anchor': 'start'}); bl.textContent = 'where you started'; grid.appendChild(bl);
         [[0, 'the event'], [5, '5 years'], [10, '10 years']].forEach(function (t) {
           grid.appendChild(mk('line', {class: 'tm-tick', x1: px(t[0]), y1: PY0, x2: px(t[0]), y2: PY1}));
           var tx = mk('text', {class: 'tm-glabel', x: px(t[0]), y: PY1 + 16, 'text-anchor': 'middle'}); tx.textContent = t[1]; grid.appendChild(tx);
