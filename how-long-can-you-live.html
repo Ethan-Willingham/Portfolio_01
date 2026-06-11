@@ -113,7 +113,7 @@
   }
 
   /* ---------- CONTENTS MAP ---------- */
-  .map { margin: 2rem auto 0; max-width: var(--wide); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
+  .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
   .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
   .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
   .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
@@ -256,7 +256,7 @@
     <p class="hero-dek">There is supposed to be a hard wall around 120, and eating less is supposed to be the only real hack. The evidence says something stranger.</p>
     <p class="hero-byline">Sourced and illustrated. <b>28 sources cited.</b> Last reviewed June 2026.</p>
 
-    <figure class="hero-figure breakout reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
+    <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
       <!-- Survivorship: of a hundred newborns, how many are still alive at each age.
            The 1900 line sags early; the modern line stays high then drops late. Both
            still end at the same place. We filled the space under the ceiling, we did
