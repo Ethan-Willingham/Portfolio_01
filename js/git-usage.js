@@ -1,18 +1,19 @@
 /* Usage charts for the git-history post. Static SVG, baked from ccusage
    snapshots, May into June 2026. May 1-21 carry the prior two-machine
-   (laptop + desktop) snapshot; May 22 to June 4 are this machine's ccusage,
-   refreshed June 5. Renders once (no rAF), then wires a hover readout. */
+   (laptop + desktop) snapshot; May 22 to June 10 are this machine's ccusage,
+   refreshed June 11. Renders once (no rAF), then wires a hover readout. */
 (function () {
   'use strict';
   var el = document.getElementById('gh-chart-daily');
   if (!el) return;
 
-  // combined tokens per day, May 1 to June 4 2026 (index 0 = May 1; the 15th had no activity)
+  // combined tokens per day, May 1 to June 10 2026 (index 0 = May 1; the 15th had no activity)
   var vals = [16607317, 36137104, 69177645, 42724566, 39884750, 410619, 81899196,
     71871667, 113285745, 159976758, 329253840, 295195507, 457538327, 127231443, 0,
     285454643, 309323557, 623423505, 271215837, 66298045, 290609738, 1197709924,
     1543803732, 1320336965, 702974597, 285643166, 67725588, 507072587, 829700193,
-    948042044, 779405982, 553922455, 691281258, 98965260, 130233736];
+    948042044, 779405982, 553922455, 691281258, 98965260, 130233736,
+    49406229, 437292700, 97568887, 927412697, 737451722, 207300888];
 
   var W = 1000, H = 360, padL = 46, padR = 16, padT = 30, padB = 34;
   var plotW = W - padL - padR, plotH = H - padT - padB, ground = padT + plotH;
@@ -60,7 +61,7 @@
   s += '<text x="' + pcx.toFixed(1) + '" y="' + (y(vals[peakI]) - 9) + '" text-anchor="middle" font-family="century_supra_a,Georgia,serif" font-size="16" fill="#F5F1EA">1.54B</text>';
 
   // x labels
-  [[0, 'May 1'], [9, '10'], [19, '20'], [30, '31'], [34, 'Jun 4']].forEach(function (t) {
+  [[0, 'May 1'], [9, '10'], [19, '20'], [30, '31'], [40, 'Jun 10']].forEach(function (t) {
     var lx = padL + t[0] * slot + slot / 2;
     s += '<text x="' + lx.toFixed(1) + '" y="' + (ground + 16) + '" text-anchor="middle" font-family="Commit Mono,ui-monospace,monospace" font-size="11" fill="rgba(184,178,162,0.5)">' + t[1] + '</text>';
   });
