@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Strangest Thing That Works</title>
+  <meta name="description" content="Alcoholics Anonymous is the most copied self-help idea in the world, the one thing science now says actually helps drunks, and it was built by a chain of barely sober men on a single bottle of beer. A field guide to the good, the bad, and the very strange.">
+  <meta property="og:title" content="The Strangest Thing That Works">
+  <meta property="og:description" content="Two million people, more than 180 countries, the closest thing to a free lunch in addiction medicine, and it was assembled by a failed stockbroker and a hungover surgeon. The whole strange history of Alcoholics Anonymous, good and bad and in between.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/alcoholics-anonymous.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/aa/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/aa/og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE STRANGEST THING THAT WORKS
+     A field guide to the history of Alcoholics Anonymous, built on
+     the site shell (forest green, parchment, Century Supra / Segoe UI
+     / Commit Mono). Reuses the Five Hundred Children component set:
+     hero, accented sections, the contents map, real free-license
+     photographs with credit lines, the load-bearing turn line, and a
+     graded source list. No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --measure: 780px;
+    --wide: 1080px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #D4C4A0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #e6c074;
+    --c-rose:  #e98e7f;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; line-height: 1.7; }
+  .hero-byline b { color: var(--accent); font-weight: 400; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
+  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+
+  /* the load-bearing line of each section */
+  .turn { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.3rem, 3.4vw, 1.6rem); line-height: 1.3; color: var(--text-bright); margin: 1.5em 0; text-wrap: pretty; }
+  .turn::before { content: ""; display: inline-block; width: 1.5em; height: 2px; background: var(--sec-accent, var(--accent)); vertical-align: 0.3em; margin-right: 0.7em; }
+
+  /* per-section color rhythm */
+  #scale { --sec-accent:#D4C4A0; } #before { --sec-accent:#e6c074; } #chain { --sec-accent:#8fb3c7; }
+  #book { --sec-accent:#9ec79a; } #works { --sec-accent:#D4C4A0; } #strange { --sec-accent:#b79bc4; }
+  #religion { --sec-accent:#e98e7f; } #spawn { --sec-accent:#e6c074; } #close { --sec-accent:#8fb3c7; }
+  #sources { --sec-accent:#D4C4A0; }
+
+  /* ---------- CONTENTS MAP ---------- */
+  .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
+  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
+  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
+  .map-stat { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); }
+  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--accent); margin-right: 0.35em; }
+  .map-list { list-style: none; margin: 0; padding: 0; }
+  .map-list li { margin: 0; }
+  .map-list li a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(120,134,120,0.12); color: var(--text); text-decoration: none; transition: color 0.18s, padding-left 0.18s; }
+  .map-list li a:hover { color: var(--accent); padding-left: 0.4rem; }
+  .map-list .map-m { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
+  .map-list .mnum { font-family: var(--font-mono); font-size: 0.72rem; color: var(--sec-accent, var(--accent)); margin-right: 0.7em; }
+
+  /* ---------- PHOTOGRAPHS ---------- */
+  .photo { margin: 2.2em auto; }
+  .photo img { display: block; width: 100%; height: auto; border-radius: 4px; background: var(--bg-raised); }
+  .photo.tall picture { display: block; max-width: 470px; margin: 0 auto; }
+  .photo-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.85rem; line-height: 1.5; max-width: 62ch; }
+  .photo-cap b { font-style: normal; font-weight: 600; color: var(--text); }
+  .img-credit { font-family: var(--font-body); font-size: 0.72rem; line-height: 1.5; color: var(--text-dim); margin-top: 0.5rem; }
+  .img-credit a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); text-decoration: none; }
+  .img-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- PULL STAT ---------- */
+  .stat { margin: 1.8em 0; padding: 0 0 0 1.3em; border-left: 3px solid var(--sec-accent, var(--accent)); }
+  .stat .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3.1rem); line-height: 1; color: var(--text-bright); letter-spacing: -0.02em; }
+  .stat .cap { font-size: 1rem; color: var(--text-dim); margin-top: 0.45rem; line-height: 1.5; }
+
+  /* ---------- CITATION + GRADE CHIPS ---------- */
+  .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
+  .src a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
+  .src a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
+  .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
+  .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
+  .grade.g-c { background: rgba(230,192,116,0.15); color: #e6c074; border: 1px solid rgba(230,192,116,0.4); }
+
+  /* ---------- REFERENCES ---------- */
+  #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
+  #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
+  .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 0.4em; }
+  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
+  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
+  .src-details > summary::-webkit-details-marker { display: none; }
+  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
+  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
+  .src-details > summary:hover { color: var(--accent-hover); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0.2rem 0 1.1rem; font-size: 0.78rem; color: var(--text-dim); }
+  #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
+  #sources li { margin-bottom: 0.3em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 1.4rem 0 0.5rem; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
+
+  /* ---------- ANIMATION + REDUCED MOTION ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero, .map { max-width: none; }
+    .sec p, .lede { color: #161616; }
+    .photo, .stat { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <p class="hero-eyebrow">A field guide to Alcoholics Anonymous</p>
+    <h1 class="hero-title">The Strangest Thing That Works</h1>
+    <p class="hero-dek">It is the most copied self-help idea on Earth, the one thing the evidence now says actually helps drunks, and it was built by a failed stockbroker and a hungover surgeon on a single bottle of beer.</p>
+    <p class="hero-byline">The good, the bad, and the genuinely strange. Sourced to the standard histories and pressure tested against the critics, it takes no side on whether the program is right for you. <b>Twenty-nine sources cited.</b> Last reviewed June 2026.</p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ MAP ============================ -->
+    <aside class="map reveal" aria-label="What is inside this guide">
+      <p class="map-kicker">What is inside</p>
+      <p class="map-note">A tour of the most surprising things about Alcoholics Anonymous, sorted by how much they make you stop, not by date. It admires the program and it does not flinch from the founder. About a twenty-five minute read.</p>
+      <div class="map-stats">
+        <span class="map-stat"><b>2 million</b> members, give or take</span>
+        <span class="map-stat"><b>180+</b> countries</span>
+        <span class="map-stat"><b>1</b> bottle of beer, where it started</span>
+        <span class="map-stat"><b>29</b> sources cited</span>
+      </div>
+      <ul class="map-list">
+        <li><a href="#scale"><span><span class="mnum">01</span>The most copied idea you never think about</span><span class="map-m">the scale</span></a></li>
+        <li><a href="#before"><span><span class="mnum">02</span>Before it, drunks got a gold cure with no gold</span><span class="map-m">the vacuum</span></a></li>
+        <li><a href="#chain"><span><span class="mnum">03</span>It came down a chain of five people</span><span class="map-m">the chain</span></a></li>
+        <li><a href="#book"><span><span class="mnum">04</span>The book that had no business selling</span><span class="map-m">the book</span></a></li>
+        <li><a href="#works"><span><span class="mnum">05</span>It took eighty years to prove it works</span><span class="map-m">the good</span></a></li>
+        <li><a href="#strange"><span><span class="mnum">06</span>The founder was a very strange man</span><span class="map-m">the founder</span></a></li>
+        <li><a href="#religion"><span><span class="mnum">07</span>Every court that looked called it religion</span><span class="map-m">the hard part</span></a></li>
+        <li><a href="#spawn"><span><span class="mnum">08</span>It accidentally built an industry</span><span class="map-m">the offspring</span></a></li>
+        <li><a href="#close"><span><span class="mnum">09</span>The name they left off the stone</span><span class="map-m">the close</span></a></li>
+      </ul>
+    </aside>
+
+    <!-- ============================ 01 SCALE ============================ -->
+    <section id="scale" class="sec first" aria-labelledby="scale-h">
+      <span class="sec-kicker">The scale</span>
+      <h2 id="scale-h" class="sec-h">The most copied idea you never think about</h2>
+      <p class="lede">Somewhere near you tonight, a group of strangers will sit in a circle of folding chairs, drink bad coffee, and try to keep each other alive. They are running a piece of software written in 1939, and it is everywhere.</p>
+
+      <p>Alcoholics Anonymous has somewhere around two million members in more than 180 countries. Nobody knows the exact number, because there are no rolls and no dues and you join by saying you have joined. The Twelve Steps it invented have been bolted onto almost everything: narcotics, gambling, food, debt, sex, cocaine, the families of all of the above. More than fifty separate fellowships now run on the same engine.</p>
+
+      <figure class="photo breakout reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/scale.webp">
+          <img src="assets/aa/scale.jpg" width="1920" height="649" loading="lazy" decoding="async" alt="Tens of thousands of people fill the floor and stands of a domed stadium for the opening of an AA convention.">
+        </picture>
+        <figcaption class="photo-cap">The opening of the 2010 International Convention in San Antonio. Around 53,000 people who are not supposed to use their last names, in one room.</figcaption>
+        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Opening_Ceremony_2010_AA_International_San_Antonio_(4762223655).jpg">Opening ceremony, 2010 International Convention</a> by Tony Kent, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>, via Wikimedia Commons.</p>
+      </figure>
+
+      <p>Here is the part that should not be true. After eighty years of people insisting it was a cult, or a placebo, or a religion in a trench coat, the best evidence we have now says it works. A 2020 review of 27 studies and more than 10,000 people found that a structured push into AA beats standard therapy at keeping people sober, and does it for free. One of the authors, a Stanford professor, called it the closest thing to a free lunch in health care. <span class="src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD012880.pub2/full">Cochrane 2020</a></span> We will come back to that, because the road to it is wild.</p>
+
+      <p>And it was built by two men who could barely stand up.</p>
+
+      <p class="turn">The largest, most studied, most imitated answer to addiction on the planet started with a hallucination and a single bottle of beer.</p>
+
+      <p>That sentence is doing real work, so let me earn every piece of it. This is the good, the bad, and the strange, sorted by what makes you stop, not by what happened first.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 02 BEFORE ============================ -->
+    <section id="before" class="sec" aria-labelledby="before-h">
+      <span class="sec-kicker">The vacuum</span>
+      <h2 id="before-h" class="sec-h">Before it, drunks got a gold cure with no gold</h2>
+
+      <p>To see why AA landed the way it did, you have to see the hole it landed in. For most of American history, a hopeless drunk had almost nowhere to go, and what little there was ranged from useless to a scam.</p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/drunkards-progress.webp">
+          <img src="assets/aa/drunkards-progress.jpg" width="1920" height="1461" loading="lazy" decoding="async" alt="An 1846 color lithograph showing a man climbing an arch of steps from a first social drink up to ruin and back down to a grave, with a destitute wife and child beneath the arch.">
+        </picture>
+        <figcaption class="photo-cap">The temperance era's idea of alcoholism: a staircase of moral choices ending at the grave. The disease idea would take another century to win.</figcaption>
+        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:The_drunkards_progress._From_the_first_glass_to_the_grave_-_lith._%26_pub._by_N._Currier._LCCN91796265.jpg">The Drunkard's Progress</a>, N. Currier, 1846. Library of Congress, public domain.</p>
+      </figure>
+
+      <p>The most successful one was a fraud with a great pitch. From 1879, Dr. Leslie Keeley sold the Double Chloride of Gold Cure, a tonic and a series of shots he promised would end the craving. He franchised it. At its peak there were more than a hundred Keeley Institutes, and by some counts around 400,000 people took the cure. <span class="src"><a href="https://en.wikipedia.org/wiki/Keeley_Institute">Keeley</a></span> When chemists later tested the tonic, it turned out to contain no gold at all, and was about 27 percent alcohol. People were being treated for drinking with a stiff drink.</p>
+
+      <figure class="photo tall reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/keeley.webp">
+          <img src="assets/aa/keeley.jpg" width="762" height="1200" loading="lazy" decoding="async" alt="A 1909 newspaper advertisement for the Keeley Cure for liquor and drug addictions, promising all correspondence strictly confidential.">
+        </picture>
+        <figcaption class="photo-cap">A 1909 ad for the Keeley Cure. The promise was medical, the tonic was mostly liquor, and the customers came by the hundreds of thousands.</figcaption>
+        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Keeley_Institute_(1909)_(ADVERT_207).jpeg">Keeley Institute advertisement, Seattle, 1909</a>. University of Washington Libraries, public domain.</p>
+      </figure>
+
+      <p>There had been one real glimpse of what worked, and it had already come and gone. In the 1840s a group of reformed drunkards in Baltimore called the Washingtonians did the thing AA would later be famous for: they met, they told their stories, and they kept each other sober by sheer mutual attention. It spread like a brush fire and claimed hundreds of thousands of pledges. Then, within about a decade, it fell apart, torn up by politics, religious fights, and having no real program underneath the meetings. <span class="src"><a href="https://en.wikipedia.org/wiki/Washingtonian_movement">Washingtonians</a></span></p>
+
+      <p>AA's founders knew this story cold, and it scared them. The hard rules they later wrote, no opinions on outside issues, no leaders, no money beyond what the hat brings in, were built specifically so AA would not die the way the Washingtonians had. <strong>They designed the thing around the autopsy of the last thing.</strong></p>
+
+      <p>Then Prohibition came, failed, and was repealed in 1933, and the few drying-out hospitals that remained were grim. So when two desperate men met in 1935, there was almost nothing standing in the field. That emptiness is half of why what they built took root.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 03 CHAIN ============================ -->
+    <section id="chain" class="sec" aria-labelledby="chain-h">
+      <span class="sec-kicker">The chain</span>
+      <h2 id="chain-h" class="sec-h">It came down a chain of five people</h2>
+
+      <p>Here is the strangest fact about the founding, and it is true: you can trace the whole movement back through a short chain of individual people, one telling the next, like a fuse burning toward Akron.</p>
+
+      <p>It starts in Switzerland. In the 1920s a wealthy American alcoholic named Rowland Hazard went to the famous psychiatrist Carl Jung. After a long course of treatment that failed, Jung told him the truth: medicine could do nothing more for him, and his only hope was a vital spiritual experience, the kind that remakes a person from the inside. <span class="src"><a href="https://en.wikipedia.org/wiki/Carl_Jung">Jung</a></span> Decades later, Jung and AA's founder closed a letter to each other with a Latin pun: <em>spiritus contra spiritum</em>, spirit against spirits, the medicine against the bottle.</p>
+
+      <figure class="photo tall reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/jung.webp">
+          <img src="assets/aa/jung.jpg" width="1297" height="1600" loading="lazy" decoding="async" alt="A 1935 portrait of Carl Jung, holding a pipe.">
+        </picture>
+        <figcaption class="photo-cap">Carl Jung, around 1935. He told one rich drunk that only a spiritual conversion could save him. That sentence is the headwater of the whole thing.</figcaption>
+        <p class="img-credit">Carl Jung, ca. 1935. ETH-Bibliothek Z&uuml;rich, Bildarchiv, public domain.</p>
+      </figure>
+
+      <p>Rowland carried that idea into a Christian movement called the Oxford Group, popular at the time, built on confession, making amends, and surrendering your will to God. He then carried it to an old drinking friend named Ebby Thacher, who was about to be locked up and got saved instead. Ebby, newly sober, carried it to <em>his</em> old drinking friend: a failing New York stockbroker named Bill Wilson.</p>
+
+      <p>Bill was drying out in Towns Hospital in Manhattan in December 1934, on a since-abandoned treatment that included belladonna, a plant that can cause hallucinations. At his lowest he cried out for God to show himself, and the room, he said, filled with white light and a feeling of total peace. His doctor, William Silkworth, did not call it madness. He told Bill that something had happened he did not understand, and that Bill had better hang on to it. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Bill W.</a></span></p>
+
+      <p>Was it God or was it the belladonna? People have argued ever since, and the honest answer is that you cannot separate the two from here. The critic Lance Dodes reads it as a drug reaction; the believers note the calm that followed lasted the rest of his life. The piece does not need to settle it. <span class="src"><a href="https://en.wikipedia.org/wiki/Towns_Hospital">contested</a> <span class="grade g-c">debated</span></span></p>
+
+      <figure class="photo tall reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/towns.webp">
+          <img src="assets/aa/towns.jpg" width="900" height="1600" loading="lazy" decoding="async" alt="The tall brick and stone facade of the former Towns Hospital building on Central Park West in Manhattan today.">
+        </picture>
+        <figcaption class="photo-cap">293 Central Park West, the former Towns Hospital, today. Bill Wilson's white-light moment happened on an upper floor, on a treatment nobody uses anymore.</figcaption>
+        <p class="img-credit"><a href="https://www.flickr.com/photos/edenpictures/53714606916">The former Towns Hospital, Central Park West</a> by Eden, Janine and Jim, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via Flickr.</p>
+      </figure>
+
+      <p>Sober but shaky, Bill spent months trying to save other drunks and failing every time. The one thing he noticed: preaching at them did nothing, but he himself stayed sober as long as he kept trying. Then a business trip to Akron, Ohio collapsed and left him broke and tempted in a hotel lobby, a bar at one end and a wall of church phone numbers at the other. He chose the phones. He needed to talk to another drunk or he would drink.</p>
+
+      <p>The calls led him, through a local woman named Henrietta Seiberling, to a surgeon who could not stop drinking either: Dr. Bob Smith. Bob agreed to give the strange New Yorker fifteen minutes. They talked for six hours. <span class="src"><a href="https://www.aa.org/the-start-and-growth-of-aa">aa.org</a></span></p>
+
+      <p>What worked, finally, was the thing that had failed as a sermon and succeeded as a confession: one drunk talking to another as an equal, neither one preaching. Dr. Bob took one more drink, a beer to steady his shaking hands before surgery, on a June morning in 1935. As far as anyone can tell, it was his last. AA dates its birth to that beer. <span class="src"><a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">history</a></span> (The exact day is itself debated, which is somehow perfect.)</p>
+
+      <p class="turn">Jung to Rowland to Ebby to Bill to Bob. Five people, and then it was no longer a chain. It was a fire.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 04 BOOK ============================ -->
+    <section id="book" class="sec" aria-labelledby="book-h">
+      <span class="sec-kicker">The book</span>
+      <h2 id="book-h" class="sec-h">The book that had no business selling</h2>
+
+      <p>By 1939 the little fellowship decided to write a book, both to spread the method and to make a little money. It is the book members still call, simply, the Big Book. The nickname is an accident of cost cutting: they printed it on the thickest, cheapest paper the shop had, so that a $3.50 book would feel fat enough to be worth the money. <span class="src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">Big Book</a></span> The first run was 4,730 copies. It has now sold on the order of 40 million.</p>
+
+      <p>It nearly died in the crib. To sell the first copies, the group ran a radio spot and mailed 20,000 postcards to doctors across the country. The flood of orders they were counting on came back as exactly two book orders. The next day, broke, the Wilsons faced eviction. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Bill W.</a></span></p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/mail.webp">
+          <img src="assets/aa/mail.jpg" width="1500" height="1133" loading="lazy" decoding="async" alt="Clerks sorting mail behind heaps of tied bundles of letters in 1938.">
+        </picture>
+        <figcaption class="photo-cap">The plan was to bury the country in mail and get orders back. Twenty thousand postcards went out. Two orders came in.</figcaption>
+        <p class="img-credit">Mail clerks and bundled letters, 1938. Arthur Rothstein, Farm Security Administration, Library of Congress, public domain.</p>
+      </figure>
+
+      <p>The money story has one more twist that the program treats as a founding miracle. The oil heir John D. Rockefeller Jr. was approached for funding. He gave a little, but pointedly refused to give a lot, saying that real money would ruin the thing, would turn it from a fellowship into a business with salaries to protect. <span class="src"><a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">Rockefeller</a></span> AA later decided he was right, and built poverty into its rules on purpose.</p>
+
+      <p>And here is the bit I admire most, the thing that keeps the cult accusation at arm's length. To this day AA declines outside donations, sells its own literature, and caps what any single member can give: only a few thousand dollars a year, and a modest one-time gift in a will. <span class="src"><a href="https://www.aa.org/self-support">self-support</a></span> A two-million-member global organization that returns your check if you are too generous is a genuinely strange and admirable thing.</p>
+
+      <p>One honest correction, because the book made a claim the records do not quite support. Its foreword spoke of more than one hundred recovered men and women. When the historian William Schaberg later went through the actual rolls, the number of people who had truly gotten and stayed sober by publication was closer to forty. <span class="src"><a href="https://aaagora.org/">Schaberg</a> <span class="grade g-c">revised</span></span> The book was selling the dream a little ahead of the receipts. It just happened to come true later.</p>
+
+      <p class="turn">A book named for cheap paper, launched by a mailing that drew two orders, is now one of the best selling American books ever printed.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 05 WORKS ============================ -->
+    <section id="works" class="sec" aria-labelledby="works-h">
+      <span class="sec-kicker">The good</span>
+      <h2 id="works-h" class="sec-h">It took eighty years to prove it works</h2>
+
+      <p>For most of its life, the honest scientific verdict on AA was a shrug. The program is anonymous, voluntary, and spiritual, which makes it almost impossible to study the clean way you study a drug. In 2006 a major review looked at the evidence and concluded that no study had clearly shown AA worked better than anything else. Critics quoted that line for years. <span class="src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD005032.pub2/full">Cochrane 2006</a></span></p>
+
+      <p>Then the science caught up with the thing. Researchers stopped trying to study AA itself and studied something cleaner: what happens when a doctor actively walks a patient into AA, using a structured method called Twelve Step Facilitation. That you can run as a proper trial.</p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/meeting.webp">
+          <img src="assets/aa/meeting.jpg" width="1500" height="1193" loading="lazy" decoding="async" alt="Rows of men in suits sitting on folding chairs in a plain New England hall, seen from behind.">
+        </picture>
+        <figcaption class="photo-cap">The basic technology: folding chairs, a plain room, people who keep showing up. The 1942 hall is not an AA meeting, but it is exactly the shape of one.</figcaption>
+        <p class="img-credit">Men on folding chairs, town meeting, 1942. Fenno Jacobs, Office of War Information, Library of Congress, public domain.</p>
+      </figure>
+
+      <p>In 2020 the Cochrane Collaboration, the most cautious name in evidence-based medicine, pulled together 27 studies covering more than 10,000 people. The finding was clear enough to surprise even the authors: structured Twelve Step Facilitation produced higher rates of continuous abstinence than other well-respected treatments like cognitive behavioral therapy, and kept doing it years out. <span class="src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD012880.pub2/full">Cochrane 2020</a></span> Because the meetings themselves are free, it also saved money. Hence the line about the free lunch.</p>
+
+      <p>The likely reason is not magic and not even mainly God. The researchers who dug into the mechanism, like John Kelly at Harvard, found AA mostly works by quietly swapping your social network, trading the friends you drank with for friends who do not, and by raising your confidence that you can cope sober. <span class="src"><a href="https://www.recoveryanswers.org/">mechanism</a></span> It is group therapy that never ends and never sends a bill.</p>
+
+      <p>While we are being truthful, let me kill a famous number. You have probably heard that AA has a 5 percent success rate, that 95 percent fail in the first year. That figure is a misreading of an internal survey chart from 1990, which tracked something else entirely. It was never a dropout rate, and the people who made the chart have said so. <span class="src"><a href="https://en.wikipedia.org/wiki/Alcoholics_Anonymous">retention</a> <span class="grade g-c">myth</span></span> Real retention is messy, like all of addiction, but the scary number is simply not real.</p>
+
+      <p class="turn">The thing science could not measure for eighty years turns out, when you finally measure it right, to be one of the best deals in medicine.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 06 STRANGE ============================ -->
+    <section id="strange" class="sec" aria-labelledby="strange-h">
+      <span class="sec-kicker">The founder</span>
+      <h2 id="strange-h" class="sec-h">The founder was a very strange man</h2>
+
+      <p>If you only knew the official story, Bill Wilson is a saint in a suit. The real man is far more interesting, and the program has been unusually honest about it, including in its own authorized biography. He stayed sober for 36 years and never stopped being a strange, searching, troubled person.</p>
+
+      <p>Start with the drugs. In the 1950s, sober for two decades, Bill became fascinated with LSD. He took it for the first time in 1956 in Los Angeles, in a session guided by the writer Gerald Heard and arranged around the circle of Aldous Huxley, the novelist. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.#LSD">LSD</a></span> Bill thought the drug might chemically reproduce the ego-collapse of his white-light night, and might crack open the hardest cases. The AA trustees were horrified that the founder of a sobriety movement was dropping acid, and he eventually stepped back.</p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/stepping-stones.webp">
+          <img src="assets/aa/stepping-stones.jpg" width="1600" height="1059" loading="lazy" decoding="async" alt="A brown-shingled two-story house among bare winter trees in Katonah, New York.">
+        </picture>
+        <figcaption class="photo-cap">Stepping Stones, the Wilsons' home in Katonah, New York. There was a small room here the family called the spook room.</figcaption>
+        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Stepping_Stones,_Katonah,_NY.jpg">Stepping Stones, Katonah, New York</a> by Daniel Case, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
+      </figure>
+
+      <p>Then the seances. For years Bill and his wife Lois held spiritualist sessions at home, with a ouija board and a small room they nicknamed the spook room, trying to contact the dead. He believed he was in touch with a long-dead figure he called Boniface. He also spent his last years campaigning for megadoses of niacin, a B vitamin, as a treatment for alcoholism, to the renewed alarm of the trustees. All of this is in the official biography, <em>Pass It On</em>, not dug up by enemies. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Pass It On</a></span></p>
+
+      <p>There is a darker thread too, and the honest histories include it. By the accounts of biographers like Francis Hartigan and Susan Cheever, Bill had affairs, enough that friends reportedly kept a quiet watch to steer admiring women away from him at gatherings. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">biographies</a> <span class="grade g-c">sourcing</span></span> The man who taught millions to take a fearless moral inventory was not always able to live up to his own fourth step.</p>
+
+      <p>And the end is the most human detail of all. Bill Wilson died in January 1971 of the emphysema he earned from a lifetime of chain smoking. According to the nurse's log on his final flight, the founder of Alcoholics Anonymous asked for whiskey several times in his last days. He did not get it, and he died sober, on the very date that was his and Lois's wedding anniversary. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Cheever</a></span></p>
+
+      <p class="turn">The man who built the machine could never quite stop searching, with acid, with vitamins, with the dead, for the next white light.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 07 RELIGION ============================ -->
+    <section id="religion" class="sec" aria-labelledby="religion-h">
+      <span class="sec-kicker">The hard part</span>
+      <h2 id="religion-h" class="sec-h">Every court that looked called it religion</h2>
+
+      <p>AA insists, carefully and constantly, that it is spiritual but not religious. You can pick your own higher power; an atheist and a believer can sit in the same room. That careful line holds up fine inside the meeting. It has not held up in court.</p>
+
+      <p>When American courts started forcing convicts and parolees to attend AA as a condition of their freedom, people who did not want a god in their sentence pushed back, and the judges kept agreeing with them. Federal court after federal court has ruled that ordering someone to attend AA violates the Establishment Clause, the part of the Constitution that bars the government from establishing religion. In other words, the courts looked closely at the program and concluded it is religious in character. <span class="src"><a href="https://en.wikipedia.org/wiki/Inouye_v._Kemna">Inouye v. Kemna</a></span></p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/hearing-room.webp">
+          <img src="assets/aa/hearing-room.jpg" width="1500" height="1025" loading="lazy" decoding="async" alt="An empty wood-paneled Senate committee hearing room with a raised dais and witness tables.">
+        </picture>
+        <figcaption class="photo-cap">The program calls itself spiritual, not religious. Every federal court that examined the question for the Constitution came down on the other side.</figcaption>
+        <p class="img-credit">Empty Senate hearing room, 1959. Warren K. Leffler, U.S. News and World Report Collection, Library of Congress, public domain.</p>
+      </figure>
+
+      <p>So there is the deep irony, stated plainly. A fellowship that swears it is not a religion has been ruled a religion by essentially every appeals court that has looked, while the comparative-religion scholars would tell you it has almost every feature of one: a conversion story, a confession, a core text, rituals, and a higher power. It is the rare thing that calls itself not-a-duck and keeps getting legally classified as a duck.</p>
+
+      <p>The critics go further, and they deserve a fair hearing. The psychiatrist Lance Dodes argues the real success rate is tiny and the whole disease framing is shaky. <span class="src"><a href="https://en.wikipedia.org/wiki/The_Sober_Truth">Dodes</a></span> The journalist Gabrielle Glaser, in a widely read 2015 piece, argued that America funnels people into AA by default while ignoring medications that have better evidence in much of the world. <span class="src"><a href="https://www.theatlantic.com/magazine/archive/2015/04/the-irrationality-of-alcoholics-anonymous/386255/">Glaser, The Atlantic</a></span> Both points are real. They sit, a little uncomfortably, right next to the 2020 evidence that the program does help a lot of people. Two true things at once.</p>
+
+      <p class="turn">It looks like a religion, the law treats it like a religion, and it still works for a lot of people who do not believe in any of it.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 08 SPAWN ============================ -->
+    <section id="spawn" class="sec" aria-labelledby="spawn-h">
+      <span class="sec-kicker">The offspring</span>
+      <h2 id="spawn-h" class="sec-h">It accidentally built an industry</h2>
+
+      <p>AA itself owns no hospitals, employs no counselors, and takes no insurance money. But the idea it proved, that addicts could be treated in groups by other addicts, escaped into the world and built a multibillion-dollar industry that AA neither controls nor profits from.</p>
+
+      <p>First came the copies. Narcotics Anonymous, Gamblers Anonymous, Overeaters Anonymous, Cocaine Anonymous, Al-Anon for the families, and dozens more, all running the Twelve Steps with the noun swapped out. Then came the professionals. In 1949 a Minnesota center called Hazelden married the steps to medical staff and a fixed 28-day stay, and that template, the Minnesota Model, became how America does rehab.</p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/betty-ford.webp">
+          <img src="assets/aa/betty-ford.jpg" width="1600" height="1502" loading="lazy" decoding="async" alt="Former First Lady Betty Ford, smiling, leaving Long Beach Naval Hospital in 1978, in a raw press negative with film-edge markings.">
+        </picture>
+        <figcaption class="photo-cap">Betty Ford leaving the hospital in 1978 after going public about her addictions. A former First Lady saying it out loud cracked the shame open.</figcaption>
+        <p class="img-credit"><a href="https://digital.library.ucla.edu/catalog/ark:/21198/zz0002rkdf">Betty Ford leaving Long Beach Naval Hospital, May 1978</a> by Michael Mally, Los Angeles Times Photographic Collection, UCLA Library Special Collections, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
+      </figure>
+
+      <p>It went mainstream in 1978 when Betty Ford, the sitting president's wife, told the country she was an addict, and then built the Betty Ford Center. Celebrity rehab became a cultural institution. <span class="src"><a href="https://en.wikipedia.org/wiki/Betty_Ford_Center">Betty Ford</a></span></p>
+
+      <p>Not every branch was healthy. Synanon began in 1958 as a bold drug-rehab community spun off from AA, was praised for years, and then curdled into a violent cult under its founder; at its worst, members put a live rattlesnake in the mailbox of a lawyer who crossed it. <span class="src"><a href="https://en.wikipedia.org/wiki/Synanon">Synanon</a></span> And the fight over whether some drinkers can ever drink in moderation produced its own tragedy: Audrey Kishline, who founded a moderation-based group as an alternative to AA, announced she was giving up and switching to abstinence, and then, drunk, killed a man and his 12-year-old daughter in a head-on crash. <span class="src"><a href="https://en.wikipedia.org/wiki/Moderation_Management">Kishline</a></span> Both sides of the abstinence argument still invoke her.</p>
+
+      <p class="turn">The most imitated idea in recovery is owned by no one, and it spawned both the Betty Ford Center and a rattlesnake in a mailbox.</p>
+
+      <p class="sec-divider">&middot; &middot; &middot;</p>
+    </section>
+
+    <!-- ============================ 09 CLOSE ============================ -->
+    <section id="close" class="sec" aria-labelledby="close-h">
+      <span class="sec-kicker">The close</span>
+      <h2 id="close-h" class="sec-h">The name they left off the stone</h2>
+
+      <p>The last surprising thing about AA is the one hiding in its name. The anonymity is not shyness. It is the load-bearing rule, and it was learned the hard way.</p>
+
+      <p>In 1940 a Cleveland baseball catcher named Rollie Hemsley, newly sober, was behind the plate for the only opening-day no-hitter in major league history, and then happily told the newspapers that AA had gotten him sober. Membership jumped. It also taught the fellowship a lesson: tie the program to a famous name and you tie its reputation to whether that person stays sober. So they made anonymity a principle. Put the principles before the personalities, always. <span class="src"><a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">anonymity</a></span></p>
+
+      <p>Bill Wilson lived it to the end. He turned down an honorary degree from Yale and declined to appear, even with his face hidden, on the cover of <em>Time</em>, because being publicly the face of AA would break the rule he had written. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Bill W.</a></span> When he died, his obituary ran on the front page of the New York Times, and only then was his full name attached to the movement, by an arrangement he had agreed to in advance.</p>
+
+      <figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/aa/grave.webp">
+          <img src="assets/aa/grave.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="A plain granite gravestone reading William G. Wilson 1895 to 1971, with sobriety chips and coins lined up along the top edge.">
+        </picture>
+        <figcaption class="photo-cap">Bill Wilson's grave in East Dorset, Vermont. The stone gives his name and his years and nothing else. The sobriety chips on top were left by strangers who knew exactly who he was.</figcaption>
+        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:William_Griffith_Wilson_gravestone.jpg">Bill Wilson's gravestone, East Dorset, Vermont</a> by Whoisjohngalt, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
+      </figure>
+
+      <p>Go to his grave in Vermont and you will find a plain stone. It gives his name and his dates. It does not mention Alcoholics Anonymous at all. The man who built the most famous recovery program on Earth kept his own name off it even in death.</p>
+
+      <p>And yet the top of the stone is always covered in sobriety chips and coins, left by people who drove a long way to thank a stranger they were never supposed to be able to name. That is the whole thing in one image. A program that hides every name, remembered by people who could not say theirs either, keeping each other alive in a circle of folding chairs tonight, somewhere near you.</p>
+
+      <p>You probably know someone in that circle. That is the last surprise. It is much closer than it looks.</p>
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <span class="sec-kicker">The fine print</span>
+      <h2 id="sources-h" class="sec-h">Sources, and what I was careful about</h2>
+      <p class="src-note">This is a tour, not a textbook, and it leans on the standard histories (Kurtz's <i>Not-God</i>, William White's <i>Slaying the Dragon</i>, Schaberg's <i>Writing the Big Book</i>) plus the official AA accounts, checked against the critics. A few load-bearing places are genuinely debated, and I flagged them in the text rather than smoothing them over: whether Bill Wilson's white-light experience was a spiritual event or a belladonna reaction; the exact founding date; and the gap between the Big Book's claim of "more than one hundred" recovered members and the roughly forty the archival rolls support. The 5 percent success figure is a debunked myth, and the section on the program working leans on the 2020 Cochrane review, with its 2006 predecessor and the strongest critics cited right alongside it.</p>
+      <details class="src-details">
+        <summary>The full list, twenty-nine sources, grouped by section</summary>
+      <div class="legend">
+        <span><span class="grade g-a">solid</span> primary or strong consensus</span>
+        <span><span class="grade g-b">good</span> reliable secondary</span>
+        <span><span class="grade g-c">contested</span> genuinely debated, flagged in text</span>
+      </div>
+
+      <h3>The scale, and the program</h3>
+      <ol>
+        <li><b>Alcoholics Anonymous.</b> Estimates of membership and groups; the Twelve Steps and Traditions. <a href="https://www.aa.org/">aa.org</a></li>
+        <li><b>Kelly JF, Humphreys K, Ferri M (2020).</b> Alcoholics Anonymous and other 12-step programs for alcohol use disorder. Cochrane Database Syst Rev. <a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD012880.pub2/full">cochranelibrary.com</a></li>
+        <li><b>Ferri M, Amato L, Davoli M (2006).</b> The earlier review finding no clear advantage. Cochrane Database Syst Rev. <a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD005032.pub2/full">cochranelibrary.com</a></li>
+        <li><b>Recovery Research Institute (J. Kelly et al.).</b> How AA works: social network change and self-efficacy. <a href="https://www.recoveryanswers.org/">recoveryanswers.org</a></li>
+        <li><b>Alcoholics Anonymous.</b> Retention and the misread 1990 survey chart (the 5 percent myth). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Alcoholics_Anonymous">wikipedia.org</a></li>
+      </ol>
+
+      <h3>The vacuum before it</h3>
+      <ol start="6">
+        <li><b>Keeley Institute.</b> The Double Chloride of Gold Cure; franchises and scale; the tonic's real contents. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Keeley_Institute">wikipedia.org</a></li>
+        <li><b>Washingtonian movement.</b> Reformed-drunkard meetings of the 1840s, rapid rise and collapse. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Washingtonian_movement">wikipedia.org</a></li>
+        <li><b>White WL (1998).</b> <i>Slaying the Dragon</i>. The full history of American addiction treatment, including the inebriate asylums and the cure era. <a href="https://www.williamwhitepapers.com/">williamwhitepapers.com</a></li>
+        <li><b>Benjamin Rush.</b> The 1784 <i>Inquiry</i> and the first American disease framing of habitual drunkenness. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Benjamin_Rush">wikipedia.org</a></li>
+      </ol>
+
+      <h3>The chain, and the founding</h3>
+      <ol start="10">
+        <li><b>Carl Jung.</b> The treatment of Rowland Hazard and the verdict that only a spiritual experience could help; the 1961 letter. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Carl_Jung">wikipedia.org</a></li>
+        <li><b>Bill W. (Wilson).</b> Towns Hospital, the belladonna treatment, the white-light experience, Silkworth's response. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Bill_W.">wikipedia.org</a></li>
+        <li><b>Towns Hospital.</b> The belladonna regimen; the contested reading of the white-light experience (Dodes vs. the traditional account). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Towns_Hospital">wikipedia.org</a> <span class="grade g-c">contested</span></li>
+        <li><b>Oxford Group.</b> Buchman's movement: confession, amends, surrender; AA's parent. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Oxford_Group">wikipedia.org</a></li>
+        <li><b>Alcoholics Anonymous.</b> The start and growth of A.A.: Akron, the Mayflower lobby, Dr. Bob, June 1935. <a href="https://www.aa.org/the-start-and-growth-of-aa">aa.org</a></li>
+        <li><b>History of Alcoholics Anonymous.</b> The founding date debate and the early spread. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">wikipedia.org</a> <span class="grade g-c">date debated</span></li>
+      </ol>
+
+      <h3>The book and the money</h3>
+      <ol start="16">
+        <li><b>The Big Book (Alcoholics Anonymous).</b> The 1939 first edition, the thick-paper nickname, sales over time. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">wikipedia.org</a></li>
+        <li><b>Schaberg WH (2019).</b> <i>Writing the Big Book: The Creation of A.A.</i> Archival correction of the "more than one hundred" claim and the founding legends. <a href="https://aaagora.org/">aaagora.org</a> <span class="grade g-c">revises the official story</span></li>
+        <li><b>Alcoholics Anonymous.</b> The Seventh Tradition and self-support: declining outside money, the contribution cap. <a href="https://www.aa.org/self-support">aa.org</a></li>
+        <li><b>Kurtz E (1979).</b> <i>Not-God: A History of Alcoholics Anonymous.</i> The standard scholarly history, including the Rockefeller decision. Hazelden. <a href="https://www.hazelden.org/">hazelden.org</a></li>
+      </ol>
+
+      <h3>The founder, in full</h3>
+      <ol start="20">
+        <li><b>Alcoholics Anonymous (1984).</b> <i>Pass It On.</i> The authorized biography, frank about the LSD experiments, the spiritualism, and the depression. <a href="https://www.aa.org/pass-it-on">aa.org</a></li>
+        <li><b>Bill Wilson and LSD.</b> The 1956 sessions with Gerald Heard, the Huxley circle, the trustees' alarm. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Bill_W.">wikipedia.org</a></li>
+        <li><b>Hartigan F (2000).</b> <i>Bill W.: A Biography.</i> The affairs and the informal watch kept at gatherings. <a href="https://us.macmillan.com/books/9780312283919/billw">macmillan.com</a> <span class="grade g-c">sourcing varies</span></li>
+        <li><b>Cheever S (2004).</b> <i>My Name Is Bill.</i> The chain smoking, the emphysema, the deathbed accounts. <a href="https://www.simonandschuster.com/books/My-Name-Is-Bill/Susan-Cheever/9780743201551">simonandschuster.com</a></li>
+      </ol>
+
+      <h3>The hard part: is it religion</h3>
+      <ol start="24">
+        <li><b>Inouye v. Kemna (9th Cir. 2007).</b> Coerced 12-step attendance violates the Establishment Clause; the program is religious for that purpose. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Inouye_v._Kemna">wikipedia.org</a></li>
+        <li><b>Glaser G (2015).</b> The Irrationality of Alcoholics Anonymous. <i>The Atlantic</i>. <a href="https://www.theatlantic.com/magazine/archive/2015/04/the-irrationality-of-alcoholics-anonymous/386255/">theatlantic.com</a></li>
+        <li><b>Dodes L, Dodes Z (2014).</b> <i>The Sober Truth.</i> The case that the success rate is small and the model is flawed. <a href="https://en.wikipedia.org/wiki/The_Sober_Truth">summary</a> <span class="grade g-c">contested</span></li>
+      </ol>
+
+      <h3>The offspring</h3>
+      <ol start="27">
+        <li><b>Betty Ford Center; Hazelden Betty Ford.</b> The 1978 disclosure, the 1982 center, the Minnesota Model. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Betty_Ford_Center">wikipedia.org</a></li>
+        <li><b>Synanon.</b> The AA offshoot that became a cult; the rattlesnake left for attorney Paul Morantz, 1978. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Synanon">wikipedia.org</a></li>
+        <li><b>Moderation Management; Audrey Kishline.</b> The moderation alternative and the 2000 crash that killed two people. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Moderation_Management">wikipedia.org</a></li>
+      </ol>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script>
+  /* Per-post: scroll-reveal. No-JS safe (CSS only hides under html.js),
+     reduced-motion safe (fires immediately), with a 4s watchdog so nothing
+     is ever left hidden. */
+  (function () {
+    'use strict';
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    function fire(el) { el.classList.add('in'); }
+    if (reduce || !('IntersectionObserver' in window)) {
+      reveals.forEach(fire);
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      reveals.forEach(function (el) { io.observe(el); });
+      setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
+    }
+  })();
+  </script>
+</body>
+</html>
