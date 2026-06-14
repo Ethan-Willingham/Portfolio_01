@@ -511,12 +511,26 @@
      is mirrored in warehouse.html.
      ============================================================ */
 
-  /* 1. Numbered glossary: same design, about a third shorter. */
-  .essay .dlnum-wrap .dlnum-head    { margin-bottom: 1.05rem; }
-  .essay .dlnum-wrap .dlnum-item    { padding: 1.05rem 0; }
-  .essay .dlnum-wrap .dlnum-numeral { font-size: 2.1rem; }
-  .essay .dlnum-wrap .dlnum-term    { font-size: 1.26rem; margin-bottom: 0.22rem; }
-  .essay .dlnum-wrap .dlnum-def     { font-size: 1.02rem; line-height: 1.46; }
+  /* 1. The four-word glossary as a compact 2-up grid (4 short terms),
+        roughly half the height of the single-column list. The hairline
+        rules go (they break across a column gap); the gold numerals and
+        the row gaps carry the structure. Stacks back to one column on
+        narrow screens. */
+  .essay .dlnum-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: clamp(1.8rem, 4vw, 3rem);
+    row-gap: 1.5rem;
+    align-items: start;
+  }
+  .essay .dlnum-wrap .dlnum-head    { grid-column: 1 / -1; margin: 0; }
+  .essay .dlnum-wrap .dlnum-item    { border: none; padding: 0; }
+  .essay .dlnum-wrap .dlnum-numeral { font-size: 1.9rem; }
+  .essay .dlnum-wrap .dlnum-term    { font-size: 1.2rem; margin-bottom: 0.2rem; }
+  .essay .dlnum-wrap .dlnum-def     { font-size: 1rem; line-height: 1.42; }
+  @media (max-width: 640px) {
+    .essay .dlnum-wrap { grid-template-columns: 1fr; row-gap: 1.2rem; }
+  }
 
   /* 2. Kit blocks ship margin-free; give them flow air so stacked ones
         never collapse together and the pull-quote never crowds. */
@@ -555,7 +569,7 @@
   }
   .essay .u-callout-k { display: none; }
   .essay .u-callout-body {
-    font-size: 1.16rem; line-height: 1.6; color: var(--text-bright);
+    font-size: 1.16rem; line-height: 1.6; color: var(--accent);
     font-style: italic; padding-left: 1.7rem; text-indent: -1.7rem;
   }
   .essay .u-callout-body::before {
