@@ -41,10 +41,14 @@
        PAGE-SPECIFIC STYLES FOR THE GALLERY POST
        ============================================================ */
 
-    /* Divider between the opener (title + definition) and the plates.
-       Extra top room so the ornament sits evenly between the two, since
-       the first .plate already carries 3.5em above it. */
-    hr.opener-divider { margin: 3.5em 0 0; }
+    /* Frontispiece opener (option 3, "stripped"): the whole masthead is a
+       centered title card. Big title, no kicker/subtitle; short gold ornament
+       rules above the title and below the definition do the framing. */
+    .post-header.fp { text-align: center; padding: 1.4em 0 1.6em; margin-bottom: 0; }
+    .post-header.fp .post-title { font-size: clamp(3.2rem, 8.5vw, 5rem); line-height: 1.06; margin: 0 0 .9em; }
+    .post-header.fp .post-title::before { content: ""; display: block; width: 64px; height: 2px; background: var(--accent); opacity: .55; margin: 0 auto 1.1em; }
+    .post-header.fp .u-def { display: block; max-width: 30rem; margin: 0 auto; text-align: left; border-left: none; padding-left: 0; }
+    .post-header.fp::after { content: ""; display: block; width: 64px; height: 2px; background: var(--accent); opacity: .55; margin: 1.8em auto 0; }
 
     /* The artwork "plate" — each painting gets its own framed display. */
     .plate {
@@ -386,24 +390,20 @@
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
-    <header class="post-header fade-in">
+    <header class="post-header fp fade-in">
       <h1 class="post-title">The Old Masters</h1>
-      <p class="post-subtitle">A collection of paintings by some of the greatest of the old masters.</p>
+      <dl class="u-def">
+        <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+        <dd class="u-def-gloss">
+          <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+          <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+        </dd>
+      </dl>
     </header>
 
     <main>
       <article>
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
-
-          <dl class="u-def">
-            <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
-            <dd class="u-def-gloss">
-              <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
-              <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
-            </dd>
-          </dl>
-
-          <hr class="u-divider opener-divider">
 
           <!-- ============================================================
                PLATE 1 — CARAVAGGIO, THE MUSICIANS
