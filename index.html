@@ -402,6 +402,10 @@
   (function () {
     var d = document.querySelector('.ftr-lucky');
     if (!d) return;
+    function clearVeil() {
+      var veils = document.querySelectorAll('.re-veil');
+      for (var i = 0; i < veils.length; i++) veils[i].remove();
+    }
     d.addEventListener('click', function (e) {
       e.preventDefault();
       var v = document.createElement('div');
@@ -412,6 +416,14 @@
       requestAnimationFrame(function () { v.classList.add('on'); });
       setTimeout(function () { window.location.href = d.href; }, 1500);
     });
+    // The send-off veil covers the whole screen, then we leave for Wikipedia.
+    // Browsers keep this page in the back-forward cache, so a visitor hitting Back
+    // to return would otherwise land on index.html restored exactly as they left
+    // it, veil still on top, looking like Back never reached the homepage. Strip
+    // the veil before the page is frozen (clean snapshot, no flash) and again on
+    // restore as a safety net, so Back always lands on a clean homepage.
+    window.addEventListener('pagehide', clearVeil);
+    window.addEventListener('pageshow', function (e) { if (e.persisted) clearVeil(); });
   })();
   </script>
 
