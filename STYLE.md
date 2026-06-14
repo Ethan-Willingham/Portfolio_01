@@ -150,7 +150,7 @@ Use at the top of every post. The eyebrow + meta strip are optional.
 <aside class="u-callout"><p class="u-callout-k">The honest goal</p><p class="u-callout-body">The point.</p></aside>
 <aside class="u-callout u-move"><p class="u-callout-k">label (hidden)</p><p class="u-callout-body">The takeaway, in the essay's own voice.</p></aside>
 ```
-Plain `.u-callout` is a boxed, **labelled** highlight: use it for a one-off, meaningfully-named callout. Add **`.u-move`** for a long essay's *recurring* takeaway after every section: it drops the box and hides the label, leaving a quiet gold marker line in the essay's italic voice (a labelled box repeated a dozen-plus times reads like homework). Keep the label in the markup; `.u-move` just hides it.
+Plain `.u-callout` is a boxed, **labelled** highlight: use it for a one-off, meaningfully-named callout. Add **`.u-move`** for a long essay's *recurring* takeaway after every section: it drops the box and hides the label, leaving a quiet gold marker line in the essay's italic voice (a labelled box repeated a dozen-plus times reads like homework). Keep the label in the markup; `.u-move` just hides it. Add **`.u-aside`** for a *recurring synthesis / connective* beat (the "notice the pattern", "the one catch" step-backs): it drops the box for a quiet gold left-rule line in the essay's voice, with the opening sentence bolded as a run-in lead. Reserve the boxed `.u-callout` for the things that earn weight (titled highlights, myth-busters, disclaimers); if a post leans on the box a dozen-plus times for different jobs, that is the signal to demote the soft ones to `.u-aside`.
 
 ### Two sides of a debate - `.debateA` (Stacked tint)
 ```html

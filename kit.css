@@ -58,6 +58,10 @@
 .u-move .u-callout-k{ display:none; }
 .u-move .u-callout-body{ color: var(--accent); font-style:italic; font-size:1.16rem; line-height:1.6; padding-left:1.7rem; text-indent:-1.7rem; }
 .u-move .u-callout-body::before{ content:"\25B6"; font-style:normal; color: var(--accent); margin-right:.7em; font-size:.9em; }
+/* .u-aside - a label-less "synthesis / connective" aside: a quiet gold left-rule line in the essay's voice, NOT a box, so a post that leans on this device a lot does not become a wall of identical cards. Reserves the boxed .u-callout for titled highlights + disclaimers. Bold the opening sentence as a run-in lead. */
+.u-callout.u-aside{ background:none; border:none; box-shadow:none; border-radius:0; margin:1.7rem 0; padding:.1rem 0 .1rem 1.3rem; border-left:2px solid var(--s-gold-hair); }
+.u-callout.u-aside .u-callout-body{ font-size:1.1rem; line-height:1.6; color: var(--text-bright); }
+.u-callout.u-aside .u-callout-body b, .u-callout.u-aside .u-callout-body strong{ color: var(--accent); font-weight:700; }
 .u-stats{ display:flex; flex-wrap:wrap; gap:14px; } .u-stat{ flex:1 1 140px; display:flex; flex-direction:column; gap:.35em; padding:8px 4px; } .u-stat + .u-stat{ border-left:1px solid var(--s-divide); padding-left:22px; }
 .u-fig{ font-family: var(--font-heading); font-size: clamp(2.2rem,5vw,2.8rem); font-weight:700; line-height:1; color: var(--accent); } .u-fig-lbl{ font-size:.86rem; line-height:1.4; color: var(--text-dim); }
 /* big stat: figure on the LEFT, caption + source fill the right, so the card never reads as a number floating in empty space. Grid carries long captions; stacks on narrow screens. */
