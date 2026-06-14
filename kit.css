@@ -50,8 +50,8 @@
 .u-figure{ margin: 0; } .u-figure-img{ display:block; width:100%; height:auto; border-radius: 20px; box-shadow: var(--s-shadow-3); background: var(--s-surface-2); }
 .u-figure-cap{ margin: 1em 0 0; font-size: .92rem; font-style: italic; line-height: 1.5; color: var(--text-dim); text-align: center; }
 .u-callout{ background: var(--s-gold-tint); border: 1px solid var(--s-gold-hair); border-radius: 20px; padding: clamp(22px,4vw,32px); box-shadow: var(--s-shadow-gold); margin: 1.7rem 0; }
-.u-callout-k{ display:flex; align-items:center; gap:.6em; font-family: var(--font-mono); font-size:.74rem; letter-spacing:.14em; text-transform:uppercase; color: var(--accent); margin:0 0 .8em; }
-.u-callout-k::before{ content:""; width:10px; height:10px; border-radius:999px; background: var(--accent); box-shadow: 0 0 0 4px var(--s-gold-tint-2); flex:none; }
+.u-callout-k{ display:flex; align-items:center; gap:.5em; font-family: var(--font-heading); font-variant: small-caps; letter-spacing:.06em; color: var(--accent); font-size:.98rem; margin:0 0 .7em; }
+.u-callout-k::before{ content:""; width:8px; height:8px; border-radius:999px; background: var(--accent); box-shadow: 0 0 0 3px var(--s-gold-tint-2); flex:none; }
 .u-callout-body{ font-size: 1.18rem; line-height: 1.55; color: var(--text-bright); margin: 0; }
 /* .u-move - the recurring "essay takeaway" line. Add it to a .u-callout (markup unchanged) when a boxed, labelled callout after every section reads like homework: drops the box + the repeated label for a quiet gold marker line in the essay's own italic voice. Keep plain .u-callout for one-off, meaningfully-labelled highlights. */
 .u-callout.u-move{ background:none; border:none; box-shadow:none; padding:0; border-radius:0; margin:1.7rem 0; }
