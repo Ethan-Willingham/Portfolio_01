@@ -275,10 +275,6 @@
   .edge { margin: 1.2em 0; padding: 0.8em 1em; border-left: 3px solid var(--accent); background: rgba(212,196,160,0.07); border-radius: 0 8px 8px 0; font-size: 0.98rem; color: var(--text); }
   .edge b { color: var(--accent-hover); }
 
-  /* prominent but calm medical disclaimer */
-  .disclaimer { margin: 1.6em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.62; color: var(--text); }
-  .disclaimer strong { color: var(--accent-hover); }
-
   /* ---------- CONTROVERSY BOX ---------- */
   .fork { margin: 1.6em 0; padding: 1.1em 1.2em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.12); }
   .fork-q { margin: 0 0 0.7em; font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); }
@@ -288,17 +284,7 @@
   .fork-take { margin: 0.7em 0 0; padding: 0.7em 0.9em; background: var(--ok-bg); border-radius: 8px; font-size: 1rem; color: var(--text); }
   .fork-take b { color: var(--ok); }
 
-  /* ---------- HEADLINE STAT ---------- */
-  .stat { display: flex; align-items: baseline; gap: 0.7rem; margin: 1.4em 0; }
-  .stat .fig { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.4rem, 7vw, 3.4rem); line-height: 0.95; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .stat .fig-lbl { font-family: var(--font-heading); font-size: 1.02rem; line-height: 1.3; color: var(--text-dim); }
-  .stat-row { display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; margin: 1.6em 0; }
-  .stat-row .stat { margin: 0; }
-
   /* ---------- EDITORIAL TEXTURE (variety to break the block monotony) ---------- */
-  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.45rem, 3.2vw, 1.95rem); line-height: 1.32; color: var(--text-bright); margin: clamp(2.2rem, 5vw, 3.2rem) 0; padding-left: 1.1rem; border-left: 3px solid var(--accent); text-wrap: balance; }
-  .pullquote cite { display: block; margin-top: 0.55rem; font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); }
-  .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
   .choices { display: grid; gap: 0.7rem; margin: 1.7em 0; }
   .choice { display: flex; gap: 0.75em; align-items: baseline; padding: 0.8em 1em; border: 1px solid var(--rule); border-radius: 9px; background: rgba(0,0,0,0.12); font-size: 1rem; line-height: 1.5; color: var(--text); }
   .choice::before { font-family: var(--font-mono); font-weight: 700; flex: none; line-height: 1.4; }
@@ -519,9 +505,9 @@
     <figcaption><span class="cred">Photo: Bello Olamide / Pexels</span></figcaption>
   </figure>
 
-  <div class="disclaimer" role="note" aria-label="Important medical disclaimer">
-    <strong>This is educational, not medical advice.</strong> It cannot examine your baby or know your situation. Use it to ask better questions, not to replace your pediatrician, midwife, or health visitor. If you think something is wrong, trust that instinct and call them. In an emergency, call your local emergency number (911 in the US, 999 in the UK, 112 in much of Europe) or go to the nearest emergency department. There is a consolidated <a href="#emergency">when to get help now</a> layer pinned at the top of the contents, the first thing to find if something is wrong right now.
-  </div>
+  <aside class="u-callout" role="note" aria-label="Important medical disclaimer">
+    <div class="u-callout-body"><strong>This is educational, not medical advice.</strong> It cannot examine your baby or know your situation. Use it to ask better questions, not to replace your pediatrician, midwife, or health visitor. If you think something is wrong, trust that instinct and call them. In an emergency, call your local emergency number (911 in the US, 999 in the UK, 112 in much of Europe) or go to the nearest emergency department. There is a consolidated <a href="#emergency">when to get help now</a> layer pinned at the top of the contents, the first thing to find if something is wrong right now.</div>
+  </aside>
 
   <h3 id="the-map">The map</h3>
   <p>The guide has three ways in, and you can mix them freely:</p>
@@ -701,7 +687,7 @@
 
   <p class="lede">Buy a rear-facing infant seat, install it, and have it checked by a certified technician before your due date, because the hospital will not let you drive home without a correctly installed one. This matters more than it sounds: in the largest US study, more than 46 percent of car seats were misused in a way that reduces crash protection <span class="src"><a href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812142">NHTSA 2015</a></span> <span class="grade g-a">strong evidence</span>. A free inspection is the single highest-yield safety thing you can do before the birth.</p>
 
-  <p class="stat"><span class="fig">46%</span> <span class="fig-lbl">of car seats are installed or used wrong, the reason a free inspection is worth it</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">46%</span><span class="u-fig-lbl">of car seats are installed or used wrong, the reason a free inspection is worth it</span></div></div>
 
   <aside class="offramp">When in doubt about your install, get it checked by a certified child passenger safety technician before you drive the baby anywhere. If you are ever in a crash with the baby in the car, call 911.</aside>
 
@@ -883,7 +869,7 @@
   <h4>Hepatitis B: the one timing difference you will actually notice</h4>
   <p>In the US, every medically stable newborn is offered the first hepatitis B shot within 24 hours, regardless of the mother's status, as a safety net. The reason is stark: a baby who catches hepatitis B around birth has about a <strong>90 percent</strong> chance of carrying it for life (versus about 5 percent for an infected adult), and roughly a quarter of lifelong carriers eventually die of liver disease. <span class="grade g-a">strong evidence</span> <span class="src"><a href="https://www.cdc.gov/hepatitis-b/hcp/perinatal-provider-overview/index.html">CDC</a></span></p>
 
-  <p class="stat"><span class="fig">90%</span> <span class="fig-lbl">chance a baby infected with hepatitis B around birth carries it for life, versus about 5% for an infected adult, which is why the shot is timed to day one</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">90%</span><span class="u-fig-lbl">chance a baby infected with hepatitis B around birth carries it for life, versus about 5% for an infected adult, which is why the shot is timed to day one</span></div></div>
 
   <div class="fork">
     <h4 class="fork-q">Should every newborn get a hepatitis B shot on day one, or only babies of infected mothers?</h4>
@@ -1122,7 +1108,7 @@
 
   <p class="lede">In the first days, the two truth-tellers are the diaper count and the weight, not how fussy the baby seems. Colostrum comes in tiny amounts on purpose (a newborn's stomach is marble-sized), and milk "comes in" around day 3 to 5. The simple rule that catches almost every underfed newborn: by day 5, expect at least 6 wet diapers a day. <span class="grade g-b">good evidence</span> <span class="src"><a href="https://www.cdc.gov/infant-toddler-nutrition/breastfeeding/newborn-basics.html">CDC 2024</a></span></p>
 
-  <p class="stat"><span class="fig">6</span> <span class="fig-lbl">wet diapers a day by day 5, the single most useful "getting enough" number in the newborn period</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">6</span><span class="u-fig-lbl">wet diapers a day by day 5, the single most useful "getting enough" number in the newborn period</span></div></div>
 
   <aside class="reassure">
     <p>Tiny early feeds are not a sign of failure; they are the design. Colostrum is measured in teaspoons because that is all a day-one stomach holds. Frequent feeding (8 to 12 times a day) is normal and is exactly how a breastfeeding parent's supply is built. A baby who is latching, swallowing, and filling diapers is feeding enough, even if it feels like nothing is happening.</p>
@@ -1216,7 +1202,7 @@
 
 <p class="lede">There is a real, measurable arc to early infant crying: it climbs from birth, peaks at roughly five to six weeks, and eases by three to four months. The same few weeks also tend to bring the first true social smile (around six weeks) and the moment the baby blues should be lifting. We put the full crying-curve chart, with the spread band and a "you are here" marker, in the <a href="#soothing">Soothing</a> section, because that is where the soothing toolkit lives. Here the point is simpler: most of what peaks now is also about to turn.</p>
 
-<p class="stat"><span class="fig">126</span> <span class="fig-lbl">minutes of fussing and crying a day, the pooled peak at five to six weeks (a quarter of babies are far above or below)</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">126</span><span class="u-fig-lbl">minutes of fussing and crying a day, the pooled peak at five to six weeks (a quarter of babies are far above or below)</span></div></div>
 
 <details class="deeper" id="fw-curve-deep">
 <summary>Go deeper</summary>
@@ -1315,7 +1301,7 @@
   <p class="nvw-flip">What turns it serious: duration and function. Blues that have not lifted by two weeks, or that keep you from sleeping, eating, or caring for yourself, have crossed the line into something worth treating.</p>
 </div>
 
-<p class="stat"><span class="fig">1 in 7</span> <span class="fig-lbl">mothers screen positive for postpartum depression, and most of those have a diagnosable condition</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">1 in 7</span><span class="u-fig-lbl">mothers screen positive for postpartum depression, and most of those have a diagnosable condition</span></div></div>
 
 <details class="deeper" id="fw-blues-deep">
 <summary>The evidence</summary>
@@ -1582,7 +1568,7 @@
     <summary>Go deeper</summary>
     <p><b>Milk storage, the rule of fours and sixes (CDC).</b> Freshly expressed breast milk keeps about <em>4 hours</em> on the counter (at 77 F / 25 C or cooler), about <em>4 days</em> in the fridge (40 F / 4 C), and about <em>6 months</em> in the freezer is best (up to 12 months is acceptable). <span class="src"><a href="https://www.cdc.gov/breastfeeding/breast-milk-preparation-and-storage/handling-breastmilk.html">CDC 2026</a></span> <span class="grade g-a">strong evidence</span> Thawed milk lasts 24 hours in the fridge (never refreeze it), and once warmed, use within 2 hours; toss whatever the baby's mouth touched after 2 hours. Store toward the back, not the door, and never microwave (hot spots scald and destroy protective factors). Cross-country note: the NHS allows a longer fridge time, up to 8 days for very cleanly expressed milk, reflecting the same underlying data the CDC rounds down. <span class="src"><a href="https://www.nhs.uk/baby/breastfeeding-and-bottle-feeding/breastfeeding/expressing-breast-milk/">NHS</a></span> A soapy or off smell in stored milk is usually a harmless lipase quirk, not spoilage.</p>
 
-    <p class="stat"><span class="fig">2&ndash;3 h</span> <span class="fig-lbl">to clear one standard drink from breast milk; pumping and dumping does not speed it up, only time does</span></p>
+    <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">2&ndash;3 h</span><span class="u-fig-lbl">to clear one standard drink from breast milk; pumping and dumping does not speed it up, only time does</span></div></div>
 
     <p><b>Alcohol.</b> Alcohol leaves your milk as it leaves your blood, so the rule is to time feeds, not to "clean" the milk. A standard drink (14 g of alcohol, about 12 oz of beer, 5 oz of wine, or 1.5 oz of spirits) is detectable in milk for roughly 2 to 3 hours; two drinks, 4 to 5 hours; three drinks, 6 to 8 hours. <span class="src"><a href="https://www.cdc.gov/breastfeeding-special-circumstances/hcp/vaccine-medication-drugs/alcohol.html">CDC 2026</a></span> <span class="grade g-a">strong evidence</span> Up to one standard drink a day is not known to harm the infant, and the safest practice is to wait about 2 hours per drink before nursing. The myth-buster: pumping and discarding does <em>not</em> remove alcohol any faster. Roughly, if you are sober enough to drive, the milk is fine. (Pumping for comfort or schedule is fine, it just does not "clean" the milk.)</p>
 
@@ -1879,7 +1865,7 @@
 
   <p class="lede">The honest answer is "a very wide range." US guidance (the AAP, via the American Academy of Sleep Medicine) recommends <b>about 12 to 16 hours per 24 hours including naps for babies 4 to 12 months old</b>, and deliberately gives no number under 4 months because the spread is too wide to set one. For newborns, descriptive ranges run roughly 14 to 17 hours, but the real normal band is much wider than any single target.</p>
 
-  <p class="stat"><span class="fig">10.4 to 18.1</span> <span class="fig-lbl">hours per 24, the 2nd-to-98th percentile band of total sleep at 6 months. The huge spread is the point, not a problem.</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">10.4 to 18.1</span><span class="u-fig-lbl">hours per 24, the 2nd-to-98th percentile band of total sleep at 6 months. The huge spread is the point, not a problem.</span></div></div>
 
   <figure class="viz" data-viz="sleep-band">
     <figcaption>Sleep needs are a wide band, not a line. Total sleep per 24 hours, 2nd to 98th percentile. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/12563055/">Iglowstein 2003</a></span></figcaption>
@@ -2089,7 +2075,7 @@
 
   <p class="lede">Infant crying follows a predictable arc. It rises from birth, peaks somewhere around four to six weeks, and tapers off by three to four months. The pooled average at the peak is about <strong>126 minutes a day</strong> of fussing and crying combined, and a daily evening cluster (the "witching hour") is part of the normal pattern, not a sign that anything is wrong. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9541248/">Vermillet 2022</a></span> <span class="grade g-a">strong evidence</span></p>
 
-  <p class="stat"><span class="fig">126</span> <span class="fig-lbl">minutes a day of fussing and crying, on average, at the six-week peak (and the middle band of babies runs from about 45 to 205 minutes)</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">126</span><span class="u-fig-lbl">minutes a day of fussing and crying, on average, at the six-week peak (and the middle band of babies runs from about 45 to 205 minutes)</span></div></div>
 
   <aside class="reassure">
     <p>If your baby cries a lot, you are almost certainly inside the normal range. The largest study ever done on infant crying pooled 7,580 babies across 17 countries, and its main finding was that crying is "highly variable." Crying that resists soothing, comes with a pain-like face, and clusters in the evening is the textbook normal pattern, not an emergency. It gets better on its own.</p>
@@ -2395,7 +2381,7 @@
 
 <p class="lede">Fever is a rectal temperature of <b>38.0 C (100.4 F) or higher</b>, the same line in every country <span class="src"><a href="https://www.nhs.uk/conditions/fever-in-children/">NHS</a></span> <span class="src"><a href="https://www.rch.org.au/clinicalguide/guideline_index/febrile_child/">RCH</a></span> <span class="grade g-a">strong consensus</span>. Past the under-3-months rule, the modern message from every major body is the same: treat for the child's <b>comfort, not to chase a number down</b>. A happy, drinking, playing febrile baby may need no medicine at all, and you should not wake a comfortable sleeping baby to give one. Fever medicines do not shorten the illness and do not prevent febrile seizures <span class="src"><a href="https://www.aafp.org/pubs/afp/issues/2012/0301/p518.pdf">AAP/AAFP 2012</a></span> <span class="grade g-a">strong evidence</span>.</p>
 
-<p class="stat"><span class="fig">38.0</span> <span class="fig-lbl">degrees Celsius (100.4 F) rectal, the fever line in the US, UK, Canada and Australia alike</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">38.0</span><span class="u-fig-lbl">degrees Celsius (100.4 F) rectal, the fever line in the US, UK, Canada and Australia alike</span></div></div>
 
 <div class="nvw">
   <div class="nvw-ok">
@@ -2512,7 +2498,7 @@
 
 <p class="lede">The big infant respiratory illness is <b>RSV</b> (respiratory syncytial virus), which causes <b>bronchiolitis</b> (inflammation of the smallest airways) and is the leading cause of infant hospitalization in the US. Most babies recover at home in 1 to 2 weeks with nothing but saline, suction, fluids, and patience. There is no useful medicine for it: the AAP says do <em>not</em> routinely use inhalers, steroids, antibiotics, or chest physiotherapy <span class="src"><a href="https://www.cdc.gov/rsv/about/index.html">CDC</a></span> <span class="grade g-a">strong evidence</span>. The real news of the last few years is that RSV is now largely <em>preventable</em>.</p>
 
-<p class="stat"><span class="fig">2 to 3</span> <span class="fig-lbl">of every 100 infants under 3 months are hospitalized with RSV each year, before the new prevention tools</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">2 to 3</span><span class="u-fig-lbl">of every 100 infants under 3 months are hospitalized with RSV each year, before the new prevention tools</span></div></div>
 
 <details class="deeper" id="hl-rsv-deep">
 <summary>RSV prevention: the antibody shot and the maternal vaccine</summary>
@@ -2746,7 +2732,7 @@
 
   <p class="lede">A percentile is a rank: the 30th percentile means about 30 of 100 same-age, same-sex babies weigh (or measure) less, and 70 weigh more. <span class="src"><a href="https://www.healthychildren.org/english/health-issues/conditions/glands-growth-disorders/pages/growth-charts-by-the-numbers.aspx">AAP</a></span> What matters is the trajectory (is your baby following their own line) and the whole picture (feeding, energy, development), not where the line sits. One odd point, especially a length reading, is usually a measurement quirk, not a change in your baby.</p>
 
-  <p class="stat"><span class="fig">0.73 cm</span> <span class="fig-lbl">the typical disagreement between two careful people measuring the same baby's length, which is why a single "drop" in length is usually a re-measure, not an alarm</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">0.73 cm</span><span class="u-fig-lbl">the typical disagreement between two careful people measuring the same baby's length, which is why a single "drop" in length is usually a re-measure, not an alarm</span></div></div>
 
   <div class="tool" data-tool="growth">
     <p class="tool-fallback"><b>Growth percentile plotter.</b> Enter your baby's age, sex, and a weight, length, or head measurement to see the WHO percentile and z-score (this interactive tool needs JavaScript). For reference, on the WHO standard a 6-month-old boy at the median weighs about 7.9 kg and a 12-month-old about 9.6 kg; a 6-month-old girl about 7.3 kg and a 12-month-old about 8.9 kg. The math is the published WHO standard, so any plotter that uses it (or your pediatrician's chart) will agree. <span class="src"><a href="https://www.cdc.gov/growthcharts/who-data-files.htm">WHO via CDC</a></span></p>
@@ -3155,7 +3141,7 @@
 
   <p class="lede">Changing a diaper is settled, low-controversy territory. Change often (newborns go through roughly 10 to 12 a day at first, easing to 6 to 8), clean the whole area front to back, and use a thick barrier cream to head off rash. <span class="src"><a href="https://www.nhs.uk/start-for-life/baby/baby-basics/caring-for-your-baby/changing-a-nappy/">NHS 2024</a></span> About half of babies get diaper rash at some point, it peaks around 9 to 12 months, and the common kind clears with barrier paste, frequent changes, and a little diaper-free air time. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK559067/">StatPearls 2023</a></span> <span class="grade g-b">good evidence</span></p>
 
-  <p class="stat"><span class="fig">~50%</span> <span class="fig-lbl">of infants get diaper rash at some point, peaking at 9 to 12 months; most of it is the ordinary irritant kind that barrier cream and frequent changes fix</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">~50%</span><span class="u-fig-lbl">of infants get diaper rash at some point, peaking at 9 to 12 months; most of it is the ordinary irritant kind that barrier cream and frequent changes fix</span></div></div>
 
   <aside class="reassure">
     <p>A red bottom is almost never a sign you are doing something wrong. Diaper rash is one of the most common things a doctor sees in a baby's first year, and the vast majority is simple irritation from moisture and friction, not infection, allergy, or neglect. The fix is usually a thicker layer of plain barrier cream and changing a bit more often. It is also fine to let the skin air-dry for a few minutes before the next diaper goes on.</p>
@@ -3230,7 +3216,7 @@
 
   <p class="lede">A healthy newborn's skin needs very little. Bathe about <strong>three times a week</strong> in the first year, not daily, because over-bathing dries the skin. Use plain water, or a small amount of a mild, fragrance-free cleanser, and skip lotions, oils, and powders unless there is a reason. <span class="src"><a href="https://www.healthychildren.org/English/ages-stages/baby/bathing-skin-care/Pages/Bathing-Your-Newborn.aspx">AAP HealthyChildren</a></span> <span class="grade g-b">good evidence</span> Until the cord stump falls off (about 1 to 2 weeks), give sponge baths rather than putting the baby in water.</p>
 
-  <p class="stat"><span class="fig">3</span> <span class="fig-lbl">baths a week is plenty in the first year for a baby who barely gets dirty; daily bathing can dry the skin out</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">3</span><span class="u-fig-lbl">baths a week is plenty in the first year for a baby who barely gets dirty; daily bathing can dry the skin out</span></div></div>
 
   <aside class="reassure">
     <p>You do not need a shelf of baby products, and you do not need to bathe a baby every day. A newborn who is topped and tailed (face, neck, hands, and bottom wiped clean) between baths stays perfectly clean. The "less is more" approach is not laziness; a baby's skin barrier is still maturing, and leaving it mostly alone is what helps it finish the job.</p>
@@ -3336,7 +3322,7 @@
     <p><b>What actually helps (and is safe).</b> A clean, cool (refrigerated, not frozen-solid) teething ring; a cold, clean, damp washcloth to chew; or gentle gum massage with a clean finger. <span class="grade g-c">expert consensus</span> If a baby is genuinely uncomfortable, weight-based infant acetaminophen (or ibuprofen over 6 months) is reasonable; dosing lives in <a href="#health">Health</a>. Avoid frozen-solid objects (they can damage gums) and never rub whiskey, brandy, or any alcohol on the gums, which is toxic to a baby.</p>
   </details>
 
-  <p class="pullquote">Teething is real, but it is modest, and it is not a fever.</p>
+  <blockquote class="u-pq">Teething is real, but it is modest, and it is not a fever.</blockquote>
 
   <h3 id="dc-teething-avoid">Three teething products to skip</h3>
 
@@ -3364,7 +3350,7 @@
 
   <p class="lede">As soon as the first tooth comes in, start brushing twice a day with a soft brush and a <strong>rice-grain-sized smear</strong> of fluoride toothpaste, moving up to a pea-sized amount at age 3. <span class="src"><a href="https://www.healthychildren.org/English/healthy-living/oral-health/Pages/Brushing-Up-on-Oral-Health-Never-Too-Early-to-Start.aspx">AAP HealthyChildren</a></span> <span class="grade g-a">strong evidence</span> No bottle in bed (or fill it with water only if you must), and plan a first dental visit by the first birthday or within 6 months of the first tooth. That is the whole early-oral-care routine.</p>
 
-  <p class="stat"><span class="fig">rice grain</span> <span class="fig-lbl">the amount of fluoride toothpaste for under-3s, twice a day, from the very first tooth (a pea-sized amount from age 3)</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">rice grain</span><span class="u-fig-lbl">the amount of fluoride toothpaste for under-3s, twice a day, from the very first tooth (a pea-sized amount from age 3)</span></div></div>
 
   <aside class="reassure">
     <p>The fluoride smear is meant to be tiny, and that is by design. A rice-grain amount of toothpaste delivers real cavity protection with negligible risk of the cosmetic enamel mottling (fluorosis) that worries parents; survey data show the actual fluorosis risk comes from over-applying and swallowing too much paste in toddlers, not from the smear itself. <span class="src"><a href="https://www.cdc.gov/mmwr/volumes/68/wr/mm6804a3.htm">CDC 2019</a></span> Brushing baby teeth genuinely matters even though they fall out, because decay hurts, can affect the adult teeth forming underneath, and sets lifelong habits.</p>
@@ -3409,7 +3395,7 @@
 
   <p class="lede">The single most useful idea in this whole section: the danger moves with your baby's stage. For a baby who cannot move yet, almost all injury death is suffocation in an unsafe sleep space. The week they learn to crawl and climb, the map redraws, and falls, drowning, poisoning, and furniture tip-over arrive. Aim your effort at your baby's actual stage, not at a generic fear.</p>
 
-  <p class="stat"><span class="fig">85%</span> <span class="fig-lbl">of unintentional-injury deaths in the first year are suffocation, most of it in an unsafe sleep environment, which is why safe sleep is the highest-leverage safety habit of the early months</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">85%</span><span class="u-fig-lbl">of unintentional-injury deaths in the first year are suffocation, most of it in an unsafe sleep environment, which is why safe sleep is the highest-leverage safety habit of the early months</span></div></div>
 
   <figure class="viz" data-viz="injury-age">
     <figcaption>What actually kills babies, by age: the injury cliff and the mechanism flip. <span class="src"><a href="https://wisqars.cdc.gov/">CDC WISQARS 2022</a></span></figcaption>
@@ -3433,7 +3419,7 @@
     <p>So the safety plan changes shape over the year. For the first months: the car seat on every ride, and a flat firm bare sleep space (covered in the Sleep section). From the moment of mobility: water (bathtub, then pools), small swallowable objects, furniture that can tip, and falls. The rest of this section follows that order.</p>
   </details>
 
-  <p class="pullquote">Only two baby buys are genuinely load-bearing for safety: a current car seat, and a flat, firm place to sleep. Almost everything else is optional.</p>
+  <blockquote class="u-pq">Only two baby buys are genuinely load-bearing for safety: a current car seat, and a flat, firm place to sleep. Almost everything else is optional.</blockquote>
 
   <h3 id="safety-carseat">Car seats: rear-facing as long as the seat allows</h3>
 
@@ -3448,7 +3434,7 @@
 
   <aside class="offramp">When in doubt about a fit or an install, find a free certified Child Passenger Safety Technician (many fire departments and hospitals host checks) through the NHTSA inspection-station locator. If your child was in a moderate or severe crash, replace the seat.</aside>
 
-  <p class="stat"><span class="fig">71%</span> <span class="fig-lbl">lower risk of a fatal injury for infants under 1 in a correctly used car seat (about 54% for toddlers 1 to 4), in passenger cars</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">71%</span><span class="u-fig-lbl">lower risk of a fatal injury for infants under 1 in a correctly used car seat (about 54% for toddlers 1 to 4), in passenger cars</span></div></div>
 
   <details class="deeper" id="safety-carseat-deep">
     <summary>The stages, and the install details</summary>
@@ -3617,7 +3603,7 @@
 
   <p class="lede">This belongs in a baby guide because firearm injury in the very youngest children is almost entirely a <b>storage</b> story, and the storage decisions are made by the adults who bring a baby home. If there is a gun in the home, store it locked and unloaded, with the ammunition locked separately. That is one of the most uniform recommendations in all of pediatric safety, and it is neutral safety counseling, not a political position.</p>
 
-  <p class="stat"><span class="fig">99%</span> <span class="fig-lbl">of unintentional firearm deaths of children 0 to 5 (2003 to 2021) involved a gun stored both unlocked and loaded, which is what makes secure storage so high-leverage</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">99%</span><span class="u-fig-lbl">of unintentional firearm deaths of children 0 to 5 (2003 to 2021) involved a gun stored both unlocked and loaded, which is what makes secure storage so high-leverage</span></div></div>
 
   <details class="deeper" id="safety-firearm-deep">
     <summary>The evidence and the storage rule</summary>
@@ -3713,7 +3699,7 @@
 
   <p class="lede">Over the 50 years of the global immunization program (1974 to 2024), vaccines are estimated to have prevented about 154 million deaths, 101 million of them in babies under one year old, with the measles vaccine alone accounting for roughly 94 million. Vaccination is credited with about 40 percent of the entire global decline in infant mortality. <span class="grade g-a">strong evidence</span> <span class="src"><a href="https://www.who.int/news/item/24-04-2024-global-immunization-efforts-have-saved-at-least-154-million-lives-over-the-past-50-years">WHO 2024</a></span> <span class="src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(24)00850-X/fulltext">Lancet 2024</a></span></p>
 
-  <p class="stat"><span class="fig">154M</span> <span class="fig-lbl">deaths prevented by vaccines in 50 years, about 101 million of them infants, with measles vaccine alone responsible for roughly 94 million</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">154M</span><span class="u-fig-lbl">deaths prevented by vaccines in 50 years, about 101 million of them infants, with measles vaccine alone responsible for roughly 94 million</span></div></div>
 
   <figure class="viz" data-viz="vaccines-154m">
     <figcaption>The benefit (154 million lives saved, measles vaccine dominating) and the live consequence (US measles cases climbing as MMR coverage slips below the herd-immunity line). <span class="src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(24)00850-X/fulltext">Lancet 2024</a></span> <span class="src"><a href="https://www.cdc.gov/measles/data-research/index.html">CDC 2026</a></span></figcaption>
@@ -3836,7 +3822,7 @@
 
   <p class="lede">The measles-mumps-rubella vaccine does not cause autism. This is one of the most thoroughly investigated questions in medicine, with more than 1.2 million children studied across multiple countries, and no link appears in any of them. The original claim came from a 1998 paper that was not merely wrong but found to be deliberately falsified, was fully retracted by the journal, and cost its lead author his medical license. <span class="grade g-a">strong evidence</span> <span class="src"><a href="https://annals.org/aim/article-abstract/2727726">Hviid 2019</a></span> <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/24814559/">Taylor 2014</a></span></p>
 
-  <p class="stat"><span class="fig">1.2M+</span> <span class="fig-lbl">children studied for an MMR-autism link across multiple countries, with the number of excess autism cases attributable to the vaccine sitting at zero</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">1.2M+</span><span class="u-fig-lbl">children studied for an MMR-autism link across multiple countries, with the number of excess autism cases attributable to the vaccine sitting at zero</span></div></div>
 
   <aside class="reassure">
     <p>If this is the fear that brought you to this page, you are in good company, and it is worth saying clearly: looking into it is reasonable, the fear is understandable, and the answer is genuinely reassuring. The studies below are not a single lab's word; they are entire national populations of children, checked and rechecked by independent teams who would have made their careers by finding a link if one existed.</p>
@@ -4028,7 +4014,7 @@
 
   <p class="lede">The US calendar comes from one document, the Bright Futures / AAP "Recommendations for Preventive Pediatric Health Care," updated roughly every year. It places eleven scheduled visits between birth and 30 months: newborn, 3 to 5 days, by 1 month, then 2, 4, 6, 9, 12, 15, 18, 24, and 30 months. That is about eight or nine by 18 months, more than any peer country. <span class="grade g-b">good evidence</span> <span class="src"><a href="https://downloads.aap.org/AAP/PDF/periodicity_schedule.pdf">Bright Futures/AAP 2025</a></span></p>
 
-  <p class="stat"><span class="fig">11</span> <span class="fig-lbl">scheduled US well visits from birth to 30 months, about 8 to 9 of them by 18 months</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">11</span><span class="u-fig-lbl">scheduled US well visits from birth to 30 months, about 8 to 9 of them by 18 months</span></div></div>
 
   <p>Six things happen at <em>every</em> visit from newborn through the toddler years: a history (how things are going since last time), length and weight (plus head circumference through 24 months), a head-to-toe physical exam, a behavioral and emotional check, anticipatory guidance (the "here is what is coming next" talk), and any vaccines that are due. Everything else, the blood tests and structured questionnaires, is layered on at specific ages. <span class="grade g-b">good evidence</span> <span class="src"><a href="https://downloads.aap.org/AAP/PDF/periodicity_schedule.pdf">Bright Futures/AAP 2025</a></span></p>
 
@@ -4093,7 +4079,7 @@
 
   <p>Why this matters in practice: a structured screen detects more delays than a clinician's gut alone, and earlier detection opens the door to early intervention during the window when it helps most. So the questionnaire at 9 months is not busywork. If your 9-month visit did not include one (a paper or tablet questionnaire you filled out), it is reasonable to ask for it by name <span class="src"><a href="https://doi.org/10.1542/peds.2019-3449">AAP 2020</a></span> <span class="grade g-a">strong evidence</span>.</p>
 
-  <p class="stat"><span class="fig">35%</span> <span class="fig-lbl">of US toddlers actually get a structured developmental screen, so roughly two-thirds are missed</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">35%</span><span class="u-fig-lbl">of US toddlers actually get a structured developmental screen, so roughly two-thirds are missed</span></div></div>
 
   <!-- ============================ AUTISM ============================ -->
   <h3 id="wb-autism">Autism screening: AAP vs USPSTF</h3>
@@ -4141,7 +4127,7 @@
     <summary>Go deeper: photoscreening, amblyopia, and the hearing follow-up gap</summary>
     <p><b>Vision.</b> Instrument-based "photoscreening" (a camera-style device that detects amblyopia risk factors) may be used from 12 months and is the recommended method for ages 1 to 5, before a child can do a letter chart. It flags <em>risk factors</em> for amblyopia rather than amblyopia itself, with high sensitivity but a notable false-positive rate (referrals reported as high as 34%) <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11750595/">amblyopia review 2025</a></span>. Amblyopia affects roughly 2 to 4% of children and is the leading cause of decreased vision in one eye in childhood, and it is treated most effectively before about age 6 to 8, which is exactly why surveillance starts in infancy rather than waiting for a school chart <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK430890/">StatPearls</a></span> <span class="grade g-a">strong evidence</span>. If a vision check is borderline or gets skipped, you can ask for photoscreening or a referral.</p>
     <p><b>Hearing.</b> The framework is "1-3-6": screen by 1 month, diagnose by 3 months, begin intervention by 6 months if loss is confirmed. The US largely meets the first step (about 98% of babies are screened, 95.5% by one month) but the funnel leaks badly after a "refer" result: of babies referred for diagnostic testing, only about 42.7% are diagnosed before 3 months, and roughly one in three (32.4%) falls out of the documented pathway entirely <span class="src"><a href="https://archive.cdc.gov/www_cdc_gov/ncbddd/hearingloss/2021-data/01-data-summary.html">CDC EHDI 2021</a></span> <span class="grade g-a">strong evidence</span>. Permanent hearing loss is found in about 1.7 of every 1,000 babies screened <span class="src"><a href="https://www.cdc.gov/hearing-loss-children/data/index.html">CDC 2022</a></span>. The single biggest failure is the family that never returns for the re-screen, so if your newborn got a "refer," the one thing that matters is keeping the follow-up appointment.</p>
-    <p class="stat"><span class="fig">32%</span> <span class="fig-lbl">of US babies referred after a newborn hearing screen fall out of the documented follow-up pathway</span></p>
+    <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">32%</span><span class="u-fig-lbl">of US babies referred after a newborn hearing screen fall out of the documented follow-up pathway</span></div></div>
   </details>
 
   <aside class="offramp">When in doubt about your baby's vision, hearing, or development, call your pediatrician or nurse line, and ask specifically about a referral. None of these are emergencies, but none of them improve from waiting.</aside>
@@ -4328,7 +4314,7 @@
 <p>There is also a stark and unambiguous equity story in the numbers: US Black women die of pregnancy-related causes at roughly three times the rate of White women, persistently (in 2024, 44.8 versus 14.2 per 100,000), and American Indian and Alaska Native women have at times had the highest rate of all <span class="src"><a href="https://www.cdc.gov/nchs/data/hestat/hestat113.htm">NCHS 2024</a></span> <span class="grade g-a">strong evidence</span>. This is about access, bias, and being listened to, not individual behavior, and it is the reason the CDC's warning-sign campaign pairs its list with the message to keep asking until you are heard.</p>
 </details>
 
-<p class="stat"><span class="fig">84%</span> <span class="fig-lbl">of US pregnancy-related deaths are judged preventable, and about a third happen 6 weeks to 1 year after birth</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">84%</span><span class="u-fig-lbl">of US pregnancy-related deaths are judged preventable, and about a third happen 6 weeks to 1 year after birth</span></div></div>
 
 <aside class="reassure"><p>Knowing the warning signs is empowerment, not a reason to panic. Read the list once, keep it in the back of your mind for the year, and otherwise let it go. The whole purpose is so the rare emergency is unmistakable.</p></aside>
 
@@ -4610,7 +4596,7 @@
 
 <p class="lede">A baby born before 37 weeks is a preterm baby, and the standard newborn advice needs adjusting, not discarding. The single most evidence-backed thing you can do is also one of the few things only you can do: hold your baby skin-to-skin (kangaroo mother care), as much and as early as the medical team allows. In a large WHO-led trial of babies weighing 1.0 to under 1.8 kg, starting continuous skin-to-skin care immediately rather than waiting for the baby to be "stable" cut newborn deaths by about a quarter, so the WHO now recommends it for all preterm or low-birth-weight infants, started as soon as possible after birth, for as many hours a day as you can manage <span class="src"><a href="https://www.who.int/news/item/15-11-2022-who-advises-immediate-skin-to-skin-care-for-survival-of-small-and-preterm-babies">WHO 2022</a></span> <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2026486">NEJM 2021</a></span> <span class="grade g-a">strong, multi-body consensus</span>. You can ask for it. The exceptions are narrow: a baby who is critically ill, in shock, or cannot breathe without a ventilator.</p>
 
-<p class="stat"><span class="fig">25%</span> <span class="fig-lbl">lower newborn death rate with immediate continuous skin-to-skin care vs the old "stabilize first" approach (in a low-resource trial; the thermoregulation and bonding benefits are universal)</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">25%</span><span class="u-fig-lbl">lower newborn death rate with immediate continuous skin-to-skin care vs the old "stabilize first" approach (in a low-resource trial; the thermoregulation and bonding benefits are universal)</span></div></div>
 
 <details class="deeper" id="ed-preterm-deep">
 <summary>Go deeper</summary>
@@ -4650,7 +4636,7 @@
 
 <p class="lede">Multiples are a genuinely higher-risk situation than "two singletons," mostly because they are far more likely to arrive early and small. About 6 in 10 twins are born preterm (before 37 weeks), versus under 1 in 10 singletons, and <b>43% of babies from multiple-birth deliveries go to the NICU, compared with 9% of singletons</b> <span class="src"><a href="https://www.cdc.gov/nchs/products/databriefs/db525.htm">NCHS 2023</a></span> <span class="grade g-a">national vital statistics</span>. So the preterm and NICU cards above often apply to you, and the practical center of gravity is feeding logistics and your own support.</p>
 
-<p class="stat"><span class="fig">43%</span> <span class="fig-lbl">of babies from multiple-birth deliveries go to the NICU, vs 9% of singletons (US 2023)</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">43%</span><span class="u-fig-lbl">of babies from multiple-birth deliveries go to the NICU, vs 9% of singletons (US 2023)</span></div></div>
 
 <details class="deeper" id="ed-multiples-deep">
 <summary>Go deeper</summary>
@@ -4714,7 +4700,7 @@
 
 <p class="lede">The most powerful medicine for a newborn withdrawing from prenatal opioid exposure (neonatal opioid withdrawal syndrome, NOWS) is, more often than parents are told, the parent. The modern standard of care, called Eat, Sleep, Console, throws out symptom-counting and asks three functional questions: can the baby eat, sleep, and be consoled? It maximizes a quiet room, swaddling, gentle motion, frequent small feeds, skin-to-skin, rooming-in, and a present, supported parent first, and adds medicine only if those fail <span class="src"><a href="https://www.cdc.gov/opioid-use-during-pregnancy/treatment/infants-opioid.html">CDC</a></span> <span class="grade g-a">AAP/CDC plus large RCT</span>. In the pivotal trial, babies on this approach were ready for discharge about a week sooner and 62% less likely to need opioid treatment, with no increase in adverse outcomes.</p>
 
-<p class="stat"><span class="fig">62%</span> <span class="fig-lbl">lower chance of needing medication when a substance-exposed newborn is cared for with the Eat, Sleep, Console approach (rooming-in and a present parent are the active ingredient)</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">62%</span><span class="u-fig-lbl">lower chance of needing medication when a substance-exposed newborn is cared for with the Eat, Sleep, Console approach (rooming-in and a present parent are the active ingredient)</span></div></div>
 
 <aside class="reassure"><p>The words matter here, and we use them deliberately: your baby is "a baby with neonatal opioid withdrawal syndrome," not an "addicted baby," and a parent on treatment is "a person with a substance use disorder," not an "addict." This is not just politeness. Non-stigmatizing care is what keeps parents at the bedside, and a present, coached parent is the treatment <span class="src"><a href="https://publications.aap.org/aapnews/news/20262/Recommended-terminology-on-substance-use-aims-to">AAP</a></span> <span class="grade g-a">professional-society stance</span>. A positive drug screen alone should never decide your baby's feeding or your fitness; it is interpreted with the whole clinical picture.</p></aside>
 
@@ -4855,7 +4841,7 @@
 
 <p class="lede">If you live far from maternity care, this is a system failure, not yours. More than a third of US counties are "maternity care deserts" with no birthing facility and no obstetric clinician, and women living in them face about a 13% higher risk of preterm birth <span class="src"><a href="https://www.marchofdimes.org/peristats/reports/united-states/maternity-care-deserts">March of Dimes 2024</a></span> <span class="grade g-a">national analysis</span>. Distance genuinely matters for outcomes, so two things protect you: planning the birth around the nearest capable hospital (especially for a higher-risk pregnancy), and knowing the newborn danger signs cold so you act fast.</p>
 
-<p class="stat"><span class="fig">1 in 3</span> <span class="fig-lbl">US counties have no birthing facility and no obstetric clinician; nearly two-thirds of these deserts are rural</span></p>
+<div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">1 in 3</span><span class="u-fig-lbl">US counties have no birthing facility and no obstetric clinician; nearly two-thirds of these deserts are rural</span></div></div>
 
 <details class="deeper" id="ed-rural-deep">
 <summary>Go deeper</summary>
@@ -4922,7 +4908,7 @@
 
   <p class="lede">The most-quoted figure, "it costs about $300,000 to raise a child," is real but routinely misread. It is an eighteen-year total, it is dominated by housing and food (not baby gear), and it is an inflation estimate of old data, not a fresh measurement. For the first year specifically, plan on something closer to $12,000 to $20,000 for an average family, with paid childcare as the single swing factor that can push it far higher.</p>
 
-  <p class="stat"><span class="fig">29%</span> <span class="fig-lbl">of the "cost to raise a child" is housing, the largest slice; baby clothes are about 6%</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">29%</span><span class="u-fig-lbl">of the "cost to raise a child" is housing, the largest slice; baby clothes are about 6%</span></div></div>
 
   <details class="deeper" id="money-cost-deep">
     <summary>Go deeper</summary>
@@ -4945,7 +4931,7 @@
     <p>One protection worth understanding precisely. The federal <b>No Surprises Act</b> (in effect since January 1, 2022) bans "balance billing" for emergency care and, crucially for new parents, for an out-of-network provider who treats you at your in-network hospital, the classic trap of an out-of-network anesthesiologist doing your epidural, or an out-of-network neonatologist in the nursery <span class="src"><a href="https://www.cms.gov/newsroom/fact-sheets/no-surprises-understand-your-rights-against-surprise-medical-bills">CMS</a></span> <span class="grade g-a">strong, federal law</span>. It does <b>not</b> lower your ordinary in-network deductible or coinsurance, a planned in-network delivery was never a "surprise bill," and it does not cover <b>ground ambulance</b>. If you are uninsured or self-pay, you have a right to a Good Faith Estimate in advance, and a dispute process if the final bill exceeds it by $400 or more.</p>
   </details>
 
-  <p class="pullquote">The gear that actually matters is short. Almost all of the rest is optional.</p>
+  <blockquote class="u-pq">The gear that actually matters is short. Almost all of the rest is optional.</blockquote>
 
   <h3 id="money-gear">Essentials vs marketing: the short list and the long skip list</h3>
 
@@ -4990,7 +4976,7 @@
 
   <p class="lede">Whether you get paid time off after a birth depends almost entirely on your state and your employer, because the US has no national paid leave. The federal floor (FMLA) is 12 weeks of <b>unpaid</b>, job-protected leave, and only about 56% of workers even qualify. Then comes childcare, the largest single line of the first year for working parents, which in most states costs more than in-state college tuition and rivals or exceeds rent.</p>
 
-  <p class="stat"><span class="fig">0</span> <span class="fig-lbl">US states with national paid leave, the only OECD country with none; 14 states plus DC run their own</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">0</span><span class="u-fig-lbl">US states with national paid leave, the only OECD country with none; 14 states plus DC run their own</span></div></div>
 
   <figure class="viz" data-viz="paid-leave">
     <figcaption>Paid leave for a new mother, made comparable: full-rate-equivalent weeks (weeks of leave if it were paid at 100% of prior earnings). The US is the only bar at zero. <span class="src"><a href="https://webfs.oecd.org/els-com/Family_Database/PF2_1_Parental_leave_systems.pdf">OECD Family Database PF2.1, April 2025</a></span></figcaption>
@@ -5164,7 +5150,7 @@
 
   <p class="src" style="white-space:normal;display:block;margin-top:-0.4em">Several of these have their own fuller treatment elsewhere: spoiling and gripe water in <a href="#soothing">Soothing</a>, "closer to breast milk" and cereal-in-the-bottle in <a href="#feeding">Feeding</a>, teething products and amber necklaces in <a href="#daily-care">Daily care</a>, walkers in <a href="#growth-dev">Growth and development</a>, and the Mozart and screen-enrichment claims in <a href="#growth-dev">Growth and development</a>.</p>
 
-  <p class="stat"><span class="fig">0</span> <span class="fig-lbl">dietary supplements the FDA reviews for safety or effectiveness before they go on sale, which is why "immune boost" products can promise so much</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">0</span><span class="u-fig-lbl">dietary supplements the FDA reviews for safety or effectiveness before they go on sale, which is why "immune boost" products can promise so much</span></div></div>
 
   <details class="deeper" id="myths-table-deep">
     <summary>Go deeper on the table</summary>
@@ -5325,7 +5311,7 @@
 
   <p class="lede">"It takes a village" is not a slogan, it is literal evolutionary anthropology. Across hunter-gatherer societies, helpers other than the mother (fathers, grandmothers, older siblings, aunts, unrelated campmates) provide roughly <b>40% to 50%</b> of a young child's care. Humans are what biologists call cooperative breeders: mothers were never meant to do this alone. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10955362/">Chaudhary, Page et al. 2024</a></span> <span class="grade g-b">good evidence</span></p>
 
-  <p class="stat"><span class="fig">~6 s</span> <span class="fig-lbl">the average time a !Kung forager infant waits for a response to crying; nearly every cry is answered, and you cannot "spoil" a baby this way</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">~6 s</span><span class="u-fig-lbl">the average time a !Kung forager infant waits for a response to crying; nearly every cry is answered, and you cannot "spoil" a baby this way</span></div></div>
 
   <p>The most intensively measured case is the !Kung (Ju/'hoansi) of the Kalahari, studied by Melvin Konner. Young infants there are <b>in physical contact with someone about 90% of the time</b> in the first months, declining only gradually to around 25% by the middle of the second year, and caregivers respond to crying within <b>an average of about six seconds</b>. <span class="src"><a href="https://www.naturalchild.org/articles/guest/melvin_konner.html">Konner</a></span> In a closer analysis, <b>88% of crying bouts got a response within 3 seconds</b> and essentially all within ten, almost always with comfort or a feed, with scolding vanishingly rare. <span class="src"><a href="https://www.melvinkonner.com/wp-content/uploads/2009/05/Kruger-Konner-Who-responds-to-crying-as-published-2010.pdf">Kruger and Konner 2010</a></span> <span class="grade g-b">good evidence</span> This is the cross-cultural answer to the "am I spoiling my baby" worry: the worry has no support, and fast, warm response to distress is the human norm.</p>
 
@@ -5370,7 +5356,7 @@
 
   <p class="lede">The single most important thing to know about the history of having a baby is that the thing parents fear most, their baby dying, became roughly twenty times rarer within living memory. In 1900 about 1 in 10 US infants died before their first birthday; today it is closer to 1 in 180. Almost every other risk number in this guide should be read against that backdrop.</p>
 
-  <p class="stat"><span class="fig">1 in 10</span> <span class="fig-lbl">US infants who died before age 1 in 1900; today it is about 1 in 180, roughly a 20-fold drop in a century</span></p>
+  <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">1 in 10</span><span class="u-fig-lbl">US infants who died before age 1 in 1900; today it is about 1 in 180, roughly a 20-fold drop in a century</span></div></div>
 
   <figure class="viz" data-viz="infant-mortality">
     <figcaption>The vanishing of infant death: US infant mortality per 1,000 live births, registration-based from 1915, with the pre-1915 years drawn as an estimate band (not a confident point) because births were not yet nationally counted. <span class="src"><a href="https://www.cdc.gov/mmwr/preview/mmwrhtml/mm4838a2.htm">CDC and NCHS</a></span></figcaption>
@@ -5580,7 +5566,7 @@
   <details class="deeper" id="turning-one-supplements-deep">
     <summary>Go deeper</summary>
     <p><b>Vitamin D.</b> Breast milk is naturally very low in vitamin D, so in the US every breastfed or partly breastfed infant should get <span class="fig">400</span> IU a day from the first days of life. At twelve to twenty-four months the recommendation rises to <b>600 IU/day</b>. A formula-fed baby drinking enough fortified formula (the AAP states the threshold as both 32 oz and "more than 27 oz" across its materials, so think roughly a quart a day) is already covered. <span class="src"><a href="https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/Vitamin-Iron-Supplements.aspx">AAP HealthyChildren</a></span> <span class="grade g-a">strong evidence</span> Get it from the standard 400 IU infant product: vitamin D overdoses in babies have come from concentrated drops dosed by the dropperful instead of the drop.</p>
-    <p class="stat"><span class="fig">96%</span> <span class="fig-lbl">of US nutritional-rickets cases in a national case review were in breastfed babies, and only 5% of those had been given any vitamin D, almost all in dark-skinned, exclusively breastfed, unsupplemented infants <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/15585790/">Weisberg, Am J Clin Nutr 2004</a></span></span></p>
+    <div class="u-stats" style="margin:1.4em 0"><div class="u-stat"><span class="u-fig">96%</span><span class="u-fig-lbl">of US nutritional-rickets cases in a national case review were in breastfed babies, and only 5% of those had been given any vitamin D, almost all in dark-skinned, exclusively breastfed, unsupplemented infants <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/15585790/">Weisberg, Am J Clin Nutr 2004</a></span></span></div></div>
 
     <p><b>Iron.</b> A term baby is born with iron stores that, with breast milk, last about four to six months; after that, iron has to come from food (or a supplement), which is the real reason solids exist and "food before one is just for fun" is a myth. In the US the AAP recommends <b>1 mg/kg/day</b> of iron for breastfed and partly breastfed infants from four months until iron-rich foods are well established, and a universal anemia (hemoglobin) check at <b>twelve months</b>. <span class="src"><a href="https://www.aafp.org/pubs/afp/issues/2011/0301/p624.html">AAP 2010 via AAFP</a></span> <span class="grade g-b">good evidence</span> Standard infant formula is already iron-fortified (about 10 to 12 mg per liter), so formula-fed babies generally need no separate iron drop. By the first birthday the lever shifts almost entirely to food: iron-rich meats, beans and lentils, tofu, egg, and fortified cereals, helped along by not letting milk crowd them out.</p>
 
@@ -5649,18 +5635,18 @@
   <p>United States, the default lens: the <a href="https://www.healthychildren.org/">American Academy of Pediatrics (HealthyChildren.org)</a>, the <a href="https://www.cdc.gov/">CDC</a>, the <a href="https://www.acog.org/">American College of Obstetricians and Gynecologists</a>, the <a href="https://www.aafp.org/">American Academy of Family Physicians</a>, and the <a href="https://www.fda.gov/">FDA</a>. Other countries, for the forks: the UK <a href="https://www.nhs.uk/start-for-life/">NHS</a> and <a href="https://www.nice.org.uk/">NICE</a>, the <a href="https://cps.ca/">Canadian Paediatric Society</a>, Australia's <a href="https://www.rch.org.au/kidsinfo/">Royal Children's Hospital Melbourne</a>, and the <a href="https://www.who.int/">World Health Organization</a> and <a href="https://www.unicef.org/">UNICEF</a>. For the strength of evidence behind specific questions: <a href="https://www.cochranelibrary.com/">Cochrane</a> systematic reviews and the primary trial literature on PubMed. Charts ride wherever possible on public data (CDC, NCHS, WHO, UN IGME, OECD); journal figures are rebuilt from the reported numbers and cited.</p>
 
   <h3 id="glossary">A short glossary</h3>
-  <ul>
-    <li><strong>Corrected (adjusted) age</strong> for a premature baby is age counted from the due date, not the birth date. Use it for milestones and growth, usually until about age 2.</li>
-    <li><strong>Percentile</strong> is where a baby sits among 100 healthy babies of the same age and sex. The 5th and the 95th are both perfectly healthy; the trend matters more than any one point.</li>
-    <li><strong>Exclusive breastfeeding</strong> means only breast milk, no formula, water, or solids. The headline recommendation is about the first ~6 months.</li>
-    <li><strong>SUID, SIDS, and ASSB</strong> are sudden unexpected infant death, the sudden-infant-death subset, and accidental suffocation or strangulation in bed. The safe-sleep rules target all three.</li>
-    <li><strong>The ABCs of safe sleep</strong>: a baby sleeps <strong>A</strong>lone, on the <strong>B</strong>ack, in a <strong>C</strong>rib (a firm, flat, bare surface).</li>
-    <li><strong>EPDS</strong> is the Edinburgh Postnatal Depression Scale, a short screening questionnaire for postpartum mood.</li>
-  </ul>
-
-  <div class="disclaimer" role="note">
-    <strong>One more time, because it matters.</strong> This guide is educational and cannot replace a clinician who can see your baby. It will be wrong for some babies and some families, and medicine moves. Use it to be a better-informed partner to your pediatrician, midwife, or health visitor, and when your gut says something is wrong, call them. Built with care, and with gratitude to the public-health bodies whose openly available data made the charts possible.
+  <div class="dlnum-wrap">
+    <div class="dlnum-item"><div class="dlnum-numeral">1</div><div class="dlnum-body"><div class="dlnum-term">Corrected (adjusted) age</div><div class="dlnum-def">for a premature baby is age counted from the due date, not the birth date. Use it for milestones and growth, usually until about age 2.</div></div></div>
+    <div class="dlnum-item"><div class="dlnum-numeral">2</div><div class="dlnum-body"><div class="dlnum-term">Percentile</div><div class="dlnum-def">is where a baby sits among 100 healthy babies of the same age and sex. The 5th and the 95th are both perfectly healthy; the trend matters more than any one point.</div></div></div>
+    <div class="dlnum-item"><div class="dlnum-numeral">3</div><div class="dlnum-body"><div class="dlnum-term">Exclusive breastfeeding</div><div class="dlnum-def">means only breast milk, no formula, water, or solids. The headline recommendation is about the first ~6 months.</div></div></div>
+    <div class="dlnum-item"><div class="dlnum-numeral">4</div><div class="dlnum-body"><div class="dlnum-term">SUID, SIDS, and ASSB</div><div class="dlnum-def">are sudden unexpected infant death, the sudden-infant-death subset, and accidental suffocation or strangulation in bed. The safe-sleep rules target all three.</div></div></div>
+    <div class="dlnum-item"><div class="dlnum-numeral">5</div><div class="dlnum-body"><div class="dlnum-term">The ABCs of safe sleep</div><div class="dlnum-def">a baby sleeps <strong>A</strong>lone, on the <strong>B</strong>ack, in a <strong>C</strong>rib (a firm, flat, bare surface).</div></div></div>
+    <div class="dlnum-item"><div class="dlnum-numeral">6</div><div class="dlnum-body"><div class="dlnum-term">EPDS</div><div class="dlnum-def">is the Edinburgh Postnatal Depression Scale, a short screening questionnaire for postpartum mood.</div></div></div>
   </div>
+
+  <aside class="u-callout" role="note">
+    <div class="u-callout-body"><strong>One more time, because it matters.</strong> This guide is educational and cannot replace a clinician who can see your baby. It will be wrong for some babies and some families, and medicine moves. Use it to be a better-informed partner to your pediatrician, midwife, or health visitor, and when your gut says something is wrong, call them. Built with care, and with gratitude to the public-health bodies whose openly available data made the charts possible.</div>
+  </aside>
 
   <p class="gsec-divider">&middot; &middot; &middot;</p>
 </section>

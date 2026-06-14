@@ -85,9 +85,9 @@
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
   .sec > :last-child { margin-bottom: 0; }
-  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
-  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
-  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  /* kit .u-sechead heads each section now; give it the same breathing room the
+     old .sec-h had above the lede, and left-align it to the reading column. */
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
@@ -99,10 +99,11 @@
   .sec li::marker { color: var(--sec-accent, var(--accent)); }
   .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
-  .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
-  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+  /* kit .u-divider replaced the old .sec-divider; restore the generous top gap
+     the divider had between sections (kit default margin is tight). */
+  .sec .u-divider { margin-top: 3.4rem; }
 
-  /* per-section color rhythm */
+  /* per-section color rhythm (still drives the SVG figures + list markers) */
   #wall { --sec-accent:#8fb3c7; } #rotten { --sec-accent:#d9978c; } #plateau { --sec-accent:#b79bc4; }
   #eatless { --sec-accent:#dfc288; } #works { --sec-accent:#9ec79a; } #sources { --sec-accent:#D4C4A0; }
 
@@ -112,49 +113,10 @@
     .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
   }
 
-  /* ---------- CHAPTER STRIP ---------- */
-  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
-  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
-  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
-  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
-
-  /* ---------- HEADLINE STATS ---------- */
-  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1.7em 0; }
-  .stat { border: 1px solid var(--rule); border-left: 4px solid var(--sc, var(--accent)); border-radius: 10px; padding: 0.9em 1em; background: rgba(0,0,0,0.13); }
-  .stat .fig { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1; color: var(--sc, var(--accent)); font-variant-numeric: tabular-nums; }
-  .stat .fig-lbl { display: block; font-family: var(--font-body); font-size: 0.86rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.45em; }
-  .stat.sky { --sc:#8fb3c7; } .stat.plum { --sc:#b79bc4; } .stat.green { --sc:#9ec79a; }
-  .stat.amber { --sc:#dfc288; } .stat.rose { --sc:#d9978c; } .stat.gold { --sc:#D4C4A0; }
-
-  /* ---------- CITATION + GRADE CHIPS ---------- */
-  .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
-  .src a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
-  .src a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-  .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
-  .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
-  .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
-  .grade.g-c { background: rgba(230,192,116,0.15); color: #dfc288; border: 1px solid rgba(230,192,116,0.4); }
-  .grade.g-d { background: rgba(233,142,127,0.14); color: #d9978c; border: 1px solid rgba(233,142,127,0.4); }
-
-  /* ---------- FORK (live controversy) ---------- */
-  .fork { border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.14); padding: 1.1em 1.2em; margin: 1.7em 0; }
-  .fork-q { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; color: var(--text-bright); margin: 0 0 0.7em; }
-  .fork-q::before { content: "Still unsettled"; display: inline-block; font-family: var(--font-mono); font-weight: 400; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); border: 1px solid var(--sec-accent, var(--accent)); border-radius: 999px; padding: 0.12em 0.6em; margin-right: 0.7em; vertical-align: 0.18em; }
-  .fork-a { display: grid; gap: 0.7em; margin-bottom: 0.8em; }
-  @media (min-width: 620px) { .fork-a { grid-template-columns: 1fr 1fr; } }
-  .fork-side { border-left: 3px solid var(--fc, var(--accent)); padding-left: 0.8em; }
-  .fork-side.one { --fc:#D4C4A0; } .fork-side.two { --fc:#d9978c; }
-  .fork-side h4 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--fc, var(--accent)); margin: 0 0 0.3em; text-transform: uppercase; }
-  .fork-side p { font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
-  .fork-take { font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; padding-top: 0.6em; border-top: 1px solid var(--rule); }
-  .fork-take b { color: var(--text-bright); }
-
-  /* ---------- MYTH / TRUTH callout ---------- */
-  .mt { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin: 1.7em 0; background: rgba(0,0,0,0.13); }
-  .mt-claim { padding: 0.85em 1.1em; background: rgba(233,142,127,0.08); border-bottom: 1px solid var(--rule); font-size: 1.02rem; line-height: 1.5; color: var(--text); }
-  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #d9978c; display: block; margin-bottom: 0.25em; }
-  .mt-truth { padding: 0.85em 1.1em; font-size: 1.02rem; line-height: 1.5; color: var(--text-bright); }
-  .mt-truth b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9ec79a; display: block; margin-bottom: 0.25em; }
+  /* ---------- CITATION GRADE CHIPS: the two variants the kit (.u-grade) does
+     not ship (-b, -d). Base shape/size + -a/-c come from kit.css. ---------- */
+  .u-grade-b { color: #a9cad9; background: rgba(143,179,199,0.16); border: 1px solid rgba(143,179,199,0.4); }
+  .u-grade-d { color: #d9978c; background: rgba(233,142,127,0.14); border: 1px solid rgba(233,142,127,0.4); }
 
   /* ---------- FIGURES ---------- */
   .viz { margin: 2em auto; }
@@ -174,12 +136,6 @@
   .gridln { stroke: var(--c-grid); stroke-width: 1; }
   .axisln { stroke: var(--c-grid-strong); stroke-width: 1; }
 
-  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.4rem, 4vw, 1.9rem); line-height: 1.3; color: var(--text-bright); border-left: 3px solid var(--sec-accent, var(--accent)); padding-left: 1rem; margin: 2rem 0; text-wrap: pretty; }
-  .pullquote cite { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 0.7rem; }
-
-  .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.0rem; line-height: 1.6; color: var(--text); }
-  .disclaimer strong { color: var(--accent-hover); }
-
   .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0 0 1.6rem; font-size: 0.86rem; color: var(--text-dim); }
   .legend span span { margin-right: 0.4em; }
 
@@ -188,15 +144,11 @@
   .img-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ---------- REFERENCES ---------- */
+  /* the collapsible shell is now the kit .u-collapse; the grouped source list
+     inside it (legend + h3 subheads + 2-col ol) keeps its bespoke styling. */
   #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
-  #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
-  .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 0.4em; }
-  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
-  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
-  .src-details > summary::-webkit-details-marker { display: none; }
-  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
-  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
-  .src-details > summary:hover { color: var(--accent-hover); }
+  #sources .u-sechead-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
+  .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 1.1em; }
   #sources .legend { font-size: 0.78rem; margin: 0.2rem 0 1.1rem; }
   #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
   #sources li { margin-bottom: 0.3em; }
@@ -231,7 +183,7 @@
     body { background: #fff; color: #161616; }
     .sec, .hero, .map { max-width: none; }
     .sec p, .sec li, .lede { color: #161616; }
-    figure.viz, .fork, .stat, .pullquote, .mt { break-inside: avoid; }
+    figure.viz, .debateA, .stat-bartab, .u-pq, .u-callout { break-inside: avoid; }
     a { color: #161616; }
   }
   </style>
@@ -302,22 +254,23 @@
   <main id="guide">
 
     <!-- chapter strip -->
-    <nav class="chapters" aria-label="Chapters">
-      <span class="lead">Five chapters</span>
-      <a href="#wall">The wall at 120</a>
-      <a href="#rotten">A paperwork error</a>
-      <a href="#plateau">Does aging stop?</a>
-      <a href="#eatless">The eating-less hack</a>
-      <a href="#works">What adds years</a>
+    <nav class="u-toc" aria-label="Chapters">
+      <p class="u-toc-k">Five chapters</p>
+      <ul class="u-toc-list">
+        <li><a class="u-toc-row" href="#wall"><span class="u-toc-name"><span class="u-toc-n">01</span>The wall at 120</span></a></li>
+        <li><a class="u-toc-row" href="#rotten"><span class="u-toc-name"><span class="u-toc-n">02</span>A paperwork error</span></a></li>
+        <li><a class="u-toc-row" href="#plateau"><span class="u-toc-name"><span class="u-toc-n">03</span>Does aging stop?</span></a></li>
+        <li><a class="u-toc-row" href="#eatless"><span class="u-toc-name"><span class="u-toc-n">04</span>The eating-less hack</span></a></li>
+        <li><a class="u-toc-row" href="#works"><span class="u-toc-name"><span class="u-toc-n">05</span>What adds years</span></a></li>
+      </ul>
     </nav>
 
     <!-- ============================ 01 WALL ============================ -->
     <section id="wall" class="sec first" aria-labelledby="wall-h">
-      <span class="sec-kicker">The famous limit</span>
-      <h2 id="wall-h" class="sec-h">Is there really a wall at 120?</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The famous limit</p><h2 id="wall-h" class="u-sechead-h">Is there really a wall at 120?</h2></div>
       <p class="lede">The number everyone repeats is about 120. No proven biology says it has to be there. And yet the ceiling is real enough that you can almost touch it.</p>
 
-      <p>Start with the one fact nobody disputes. The longest verified human life belongs to <strong>Jeanne Calment</strong>, a French woman who was born in 1875, sold colored pencils to Vincent van Gogh as a girl, and died in 1997 at <strong>122 years and 164 days</strong>. <span class="src"><a href="https://en.wikipedia.org/wiki/Jeanne_Calment">Calment</a></span> She is the only person in recorded history ever confirmed to pass 120. The second and third oldest, Sarah Knauss and Kane Tanaka, both fell more than three years short. <span class="src"><a href="https://en.wikipedia.org/wiki/List_of_the_verified_oldest_people">verified list</a></span></p>
+      <p>Start with the one fact nobody disputes. The longest verified human life belongs to <strong>Jeanne Calment</strong>, a French woman who was born in 1875, sold colored pencils to Vincent van Gogh as a girl, and died in 1997 at <strong>122 years and 164 days</strong>. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Jeanne_Calment">Calment</a></span> She is the only person in recorded history ever confirmed to pass 120. The second and third oldest, Sarah Knauss and Kane Tanaka, both fell more than three years short. <span class="u-src"><a href="https://en.wikipedia.org/wiki/List_of_the_verified_oldest_people">verified list</a></span></p>
 
       <figure class="viz breakout reveal" aria-labelledby="wall-fig-t">
         <p class="viz-title" id="wall-fig-t">The verified oldest humans, ever and now</p>
@@ -386,30 +339,29 @@
             <text class="lbl-val" x="601" y="400" fill="#a9cad9">116.3</text>
           </g>
         </svg>
-        <figcaption class="viz-cap">Only Jeanne Calment has ever crossed 120, almost thirty years ago. Everyone else falls short. <span class="src"><a href="https://www.grg-supercentenarians.org/world-supercentenarian-rankings-list/">GRG</a></span></figcaption>
+        <figcaption class="viz-cap">Only Jeanne Calment has ever crossed 120, almost thirty years ago. Everyone else falls short. <span class="u-src"><a href="https://www.grg-supercentenarians.org/world-supercentenarian-rankings-list/">GRG</a></span></figcaption>
       </figure>
 
-      <p>So where did the hard "115 to 125" cap come from? In 2016, three geneticists published a short paper in <em>Nature</em> arguing that human lifespan is "fixed," with a natural limit near 115 and almost no chance of beating 125. <span class="src"><a href="https://www.nature.com/articles/nature19793">Dong 2016</a></span> <span class="grade g-c">contested</span> It made headlines worldwide. It also, within eight months, drew <strong>five separate rebuttals in the same journal</strong>. <span class="src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="src"><a href="https://www.nature.com/articles/nature22790">Hughes 2017</a></span></p>
+      <p>So where did the hard "115 to 125" cap come from? In 2016, three geneticists published a short paper in <em>Nature</em> arguing that human lifespan is "fixed," with a natural limit near 115 and almost no chance of beating 125. <span class="u-src"><a href="https://www.nature.com/articles/nature19793">Dong 2016</a></span> <span class="u-grade u-grade-c">contested</span> It made headlines worldwide. It also, within eight months, drew <strong>five separate rebuttals in the same journal</strong>. <span class="u-src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="u-src"><a href="https://www.nature.com/articles/nature22790">Hughes 2017</a></span></p>
 
-      <p>The critics were blunt about the flaws. The paper split its data at the year 1995, a cut chosen right before Calment died, which manufactured the "decline" it then claimed to discover. The supposed downward trend was driven almost entirely by that single woman. And the analysis used the same data to both invent and test its hypothesis. Correct a couple of those choices, one group showed, and the 125-year limit simply disappears. <span class="src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="grade g-b">good</span> The honest summary is that the famous wall is a popular idea resting on one paper the field never accepted.</p>
+      <p>The critics were blunt about the flaws. The paper split its data at the year 1995, a cut chosen right before Calment died, which manufactured the "decline" it then claimed to discover. The supposed downward trend was driven almost entirely by that single woman. And the analysis used the same data to both invent and test its hypothesis. Correct a couple of those choices, one group showed, and the 125-year limit simply disappears. <span class="u-src"><a href="https://www.nature.com/articles/nature22784">Brown 2017</a></span> <span class="u-grade u-grade-b">good</span> The honest summary is that the famous wall is a popular idea resting on one paper the field never accepted.</p>
 
-      <div class="mt">
-        <div class="mt-claim"><b>The claim</b>Science has proven a hard biological cap on human life at about 120.</div>
-        <div class="mt-truth"><b>What the evidence says</b>No, it has not. The paper that said so was rebutted five times in its own journal. But only one human has ever crossed 120, the record has stood since 1997, and the oldest person alive is about 116. There is no proven wall, and there is a very real ceiling. Both things are true.</div>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The claim</span><p class="debateA-text">Science has proven a hard biological cap on human life at about 120.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">What the evidence says</span><p class="debateA-text">No, it has not. The paper that said so was rebutted five times in its own journal. But only one human has ever crossed 120, the record has stood since 1997, and the oldest person alive is about 116. There is no proven wall, and there is a very real ceiling. Both things are true.</p></div>
       </div>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 02 ROTTEN ============================ -->
     <section id="rotten" class="sec" aria-labelledby="rotten-h">
-      <span class="sec-kicker">The data problem</span>
-      <h2 id="rotten-h" class="sec-h">The oldest people are mostly a paperwork error</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The data problem</p><h2 id="rotten-h" class="u-sechead-h">The oldest people are mostly a paperwork error</h2></div>
       <p class="lede">This is the part that genuinely changed how I read every longevity headline. The reason we cannot be sure about the wall is that the data at the wall is, in one researcher's words, rotten from the inside out.</p>
 
-      <p>The researcher is <strong>Saul Justin Newman</strong>, and in 2024 he won an Ig Nobel Prize for a deceptively simple discovery: the places and records that produce the world's oldest people line up almost perfectly with the places and records you would expect if the ages were wrong. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="src"><a href="https://www.ucl.ac.uk/ioe/news/2024/sep/ucl-demographers-work-debunking-blue-zone-regions-exceptional-lifespans-wins-ig-nobel-prize">Ig Nobel</a></span> <span class="grade g-b">good</span> Not longevity. Poverty, missing documents, and pension fraud.</p>
+      <p>The researcher is <strong>Saul Justin Newman</strong>, and in 2024 he won an Ig Nobel Prize for a deceptively simple discovery: the places and records that produce the world's oldest people line up almost perfectly with the places and records you would expect if the ages were wrong. <span class="u-src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="u-src"><a href="https://www.ucl.ac.uk/ioe/news/2024/sep/ucl-demographers-work-debunking-blue-zone-regions-exceptional-lifespans-wins-ig-nobel-prize">Ig Nobel</a></span> <span class="u-grade u-grade-b">good</span> Not longevity. Poverty, missing documents, and pension fraud.</p>
 
-      <p>The cleanest single piece of evidence is what happens when real birth certificates arrive. In the United States, when a state started issuing them, the number of people claiming to be 110 or older <strong>fell by 69 to 82 percent</strong>. The "supercentenarians" were mostly an artifact of nobody being able to check. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="grade g-b">good</span></p>
+      <p>The cleanest single piece of evidence is what happens when real birth certificates arrive. In the United States, when a state started issuing them, the number of people claiming to be 110 or older <strong>fell by 69 to 82 percent</strong>. The "supercentenarians" were mostly an artifact of nobody being able to check. <span class="u-src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> <span class="u-grade u-grade-b">good</span></p>
 
       <figure class="viz reveal" aria-labelledby="rot-fig-t">
         <p class="viz-title" id="rot-fig-t">What happens when you can finally check</p>
@@ -434,33 +386,32 @@
           <text x="505" y="150" text-anchor="middle" font-weight="700" font-size="31" fill="#d9978c">69 to 82%</text>
           <text class="anno-i" x="505" y="173" text-anchor="middle">of the records vanish</text>
         </svg>
-        <figcaption class="viz-cap">Once the paperwork could be checked, most of the "supercentenarians" disappeared. They were missing records, not people. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span></figcaption>
+        <figcaption class="viz-cap">Once the paperwork could be checked, most of the "supercentenarians" disappeared. They were missing records, not people. <span class="u-src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span></figcaption>
       </figure>
 
-      <p>It is not subtle once you look. Of the 500-plus Americans on record as 110 or older, <strong>seven</strong> have a birth certificate. Worldwide, only about 18 percent of the most carefully validated supercentenarians have one, and in the United States that figure is zero. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> A 2010 audit in Japan found that <strong>82 percent</strong> of its 230,000 registered centenarians were dead or untraceable. <span class="src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> In Greece, an audit found at least 72 percent of centenarians were dead, missing, or collecting a pension they should not have been. One Japanese man feted as the country's oldest was found mummified in his bedroom, having died 32 years earlier while his family quietly cashed his pension checks. <span class="src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span></p>
+      <p>It is not subtle once you look. Of the 500-plus Americans on record as 110 or older, <strong>seven</strong> have a birth certificate. Worldwide, only about 18 percent of the most carefully validated supercentenarians have one, and in the United States that figure is zero. <span class="u-src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span> A 2010 audit in Japan found that <strong>82 percent</strong> of its 230,000 registered centenarians were dead or untraceable. <span class="u-src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> In Greece, an audit found at least 72 percent of centenarians were dead, missing, or collecting a pension they should not have been. One Japanese man feted as the country's oldest was found mummified in his bedroom, having died 32 years earlier while his family quietly cashed his pension checks. <span class="u-src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span></p>
 
-      <p>Even the beloved <strong>Blue Zones</strong>, the regions sold as longevity paradises, fit the pattern. Sardinia, Okinawa, and Ikaria turn out to rank below their own national averages on income, literacy, and life expectancy. Okinawa eats the fewest vegetables and has the highest obesity rate in Japan. And the single best predictor of where Okinawa's 100-year-olds live is which towns had their birth records destroyed by American bombing in the war. <span class="src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span> <span class="grade g-b">good</span> More bombing, more centenarians.</p>
+      <p>Even the beloved <strong>Blue Zones</strong>, the regions sold as longevity paradises, fit the pattern. Sardinia, Okinawa, and Ikaria turn out to rank below their own national averages on income, literacy, and life expectancy. Okinawa eats the fewest vegetables and has the highest obesity rate in Japan. And the single best predictor of where Okinawa's 100-year-olds live is which towns had their birth records destroyed by American bombing in the war. <span class="u-src"><a href="https://theconversation.com/the-data-on-extreme-human-ageing-is-rotten-from-the-inside-out-ig-nobel-winner-saul-justin-newman-239023">Newman essay</a></span> <span class="u-grade u-grade-b">good</span> More bombing, more centenarians.</p>
 
-      <div class="stat-row">
-        <div class="stat rose"><span class="fig">7</span><span class="fig-lbl">of 500-plus Americans recorded as 110-plus who have a birth certificate</span></div>
-        <div class="stat rose"><span class="fig">82%</span><span class="fig-lbl">of Japan's registered centenarians found dead or untraceable in a 2010 audit</span></div>
-        <div class="stat rose"><span class="fig">32 yrs</span><span class="fig-lbl">that one family kept drawing the pension of a man who was already dead</span></div>
+      <div class="stat-bartab-row">
+        <div class="stat-bartab stat-bartab--amber"><div class="stat-num">7</div><p class="stat-label">of 500-plus Americans recorded as 110-plus who have a birth certificate</p></div>
+        <div class="stat-bartab stat-bartab--amber"><div class="stat-num">82%</div><p class="stat-label">of Japan's registered centenarians found dead or untraceable in a 2010 audit</p></div>
+        <div class="stat-bartab stat-bartab--amber"><div class="stat-num">32 yrs</div><p class="stat-label">that one family kept drawing the pension of a man who was already dead</p></div>
       </div>
 
-      <p>One fair caveat, kept in on purpose: not everyone agrees the rot is total. A geriatrician reviewing the work cautioned that it may overstate the error rate, and noted that some longevity research, such as studies of slow-aging families in the United States, does not lean on shaky birth records at all. <span class="src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> The point is not that no one is old. It is that the very oldest numbers, the ones used to argue about walls and limits, are the least trustworthy data in the whole field.</p>
+      <p>One fair caveat, kept in on purpose: not everyone agrees the rot is total. A geriatrician reviewing the work cautioned that it may overstate the error rate, and noted that some longevity research, such as studies of slow-aging families in the United States, does not lean on shaky birth records at all. <span class="u-src"><a href="https://www.npr.org/2024/10/08/nx-s1-5133252/alive-on-paper-but-dead-in-reality-why-fewer-people-may-be-reaching-advanced-age">NPR 2024</a></span> The point is not that no one is old. It is that the very oldest numbers, the ones used to argue about walls and limits, are the least trustworthy data in the whole field.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 03 PLATEAU ============================ -->
     <section id="plateau" class="sec" aria-labelledby="plateau-h">
-      <span class="sec-kicker">The deep question</span>
-      <h2 id="plateau-h" class="sec-h">Does aging ever stop?</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The deep question</p><h2 id="plateau-h" class="u-sechead-h">Does aging ever stop?</h2></div>
       <p class="lede">Here is the genuinely unresolved science, and the honest answer is that the best datasets in the world disagree with each other.</p>
 
       <p>Your risk of dying does not stay flat as you age. From your thirties onward it roughly doubles every eight years, a brutal exponential called the Gompertz curve. By 80 it is steep. The interesting question is what happens at the very top, past 105, where almost no one is left.</p>
 
-      <p>In 2018, a team led by demographers including James Vaupel and Kenneth Wachter tracked <strong>every Italian aged 105 and over</strong> for six years, nearly 4,000 carefully checked people. They found something strange: the death rate stopped climbing. It flattened into a <strong>plateau</strong> at roughly a coin-flip, about a 47 percent chance of dying each year, and it did not rise further with age. <span class="src"><a href="https://www.science.org/doi/10.1126/science.aat3119">Barbi 2018</a></span> <span class="grade g-b">good</span> A flat death rate is a profound thing, because a line that never climbs to certainty implies no fixed age where life must end.</p>
+      <p>In 2018, a team led by demographers including James Vaupel and Kenneth Wachter tracked <strong>every Italian aged 105 and over</strong> for six years, nearly 4,000 carefully checked people. They found something strange: the death rate stopped climbing. It flattened into a <strong>plateau</strong> at roughly a coin-flip, about a 47 percent chance of dying each year, and it did not rise further with age. <span class="u-src"><a href="https://www.science.org/doi/10.1126/science.aat3119">Barbi 2018</a></span> <span class="u-grade u-grade-b">good</span> A flat death rate is a profound thing, because a line that never climbs to certainty implies no fixed age where life must end.</p>
 
       <figure class="viz breakout reveal" aria-labelledby="plat-fig-t">
         <p class="viz-title" id="plat-fig-t">After 105, the best data forks</p>
@@ -504,55 +455,46 @@
 
       <p>If that plateau is real, it is the strongest argument against any fixed wall. But the case is genuinely shaky, and good scientists are on both sides.</p>
 
-      <div class="fork">
-        <p class="fork-q">Is the plateau real, or a mirage?</p>
-        <div class="fork-a">
-          <div class="fork-side one">
-            <h4>It is real</h4>
-            <p>The Italian data was individually checked against birth records, and an independent reanalysis of validated international data found the same flat hazard beyond age 108. A plateau keeps reappearing in the cleanest datasets. <span class="src"><a href="https://www.science.org/doi/10.1126/science.aat3119">Barbi 2018</a></span></p>
-          </div>
-          <div class="fork-side two">
-            <h4>It is a mirage</h4>
-            <p>The same French registry, cleaned to a higher standard, shows death rates that keep rising past 105, no plateau at all. And rare age errors, fewer than 1 in 10,000, are enough to manufacture a fake plateau out of thin air. <span class="src"><a href="https://www.demographic-research.org/volumes/vol48/11/48-11.pdf">Dang 2023</a></span> <span class="src"><a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.2006776">Newman 2018</a></span></p>
-          </div>
-        </div>
-        <p class="fork-take"><b>My read:</b> truly open. The statistics barely favor the plateau in Italy and reject it in France. Anyone who tells you aging definitely does or does not stop after 105 is ahead of the evidence. What we can say is that the case for a hard wall is weaker than the headlines, and the case for "no limit" is softer than its boosters admit.</p>
+      <p class="u-eyebrow">Still unsettled</p>
+      <h3>Is the plateau real, or a mirage?</h3>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">It is real</span><p class="debateA-text">The Italian data was individually checked against birth records, and an independent reanalysis of validated international data found the same flat hazard beyond age 108. A plateau keeps reappearing in the cleanest datasets. <span class="u-src"><a href="https://www.science.org/doi/10.1126/science.aat3119">Barbi 2018</a></span></p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">It is a mirage</span><p class="debateA-text">The same French registry, cleaned to a higher standard, shows death rates that keep rising past 105, no plateau at all. And rare age errors, fewer than 1 in 10,000, are enough to manufacture a fake plateau out of thin air. <span class="u-src"><a href="https://www.demographic-research.org/volumes/vol48/11/48-11.pdf">Dang 2023</a></span> <span class="u-src"><a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.2006776">Newman 2018</a></span></p></div>
       </div>
+      <aside class="u-callout"><p class="u-callout-k">My read</p><p class="u-callout-body">Truly open. The statistics barely favor the plateau in Italy and reject it in France. Anyone who tells you aging definitely does or does not stop after 105 is ahead of the evidence. What we can say is that the case for a hard wall is weaker than the headlines, and the case for "no limit" is softer than its boosters admit.</p></aside>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 04 EAT LESS ============================ -->
     <section id="eatless" class="sec" aria-labelledby="eatless-h">
-      <span class="sec-kicker">The famous hack</span>
-      <h2 id="eatless-h" class="sec-h">Is eating less the only hack?</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The famous hack</p><h2 id="eatless-h" class="u-sechead-h">Is eating less the only hack?</h2></div>
       <p class="lede">Caloric restriction is the most-studied longevity idea there is. It is also the most oversold, and the part of this whole post where my own starting assumption took the biggest hit.</p>
 
       <p>The dream is real in small animals. Feed a worm, a fly, or a mouse about a third less food and it can live dramatically longer. The trouble is that the effect <strong>shrinks as the animal gets bigger</strong>, and the two best tests in monkeys, our closest long-lived stand-ins, openly disagreed.</p>
 
-      <p>One trial, at the University of Wisconsin, found that 30 percent caloric restriction cut deaths from age-related disease roughly in half. <span class="src"><a href="https://www.nature.com/articles/ncomms3557">Colman 2014</a></span> A nearly identical trial at the National Institute on Aging found <strong>no survival benefit at all</strong>; the restricted monkeys actually averaged about a year less. <span class="src"><a href="https://www.nature.com/articles/nature11432">Mattison 2012</a></span> <span class="grade g-c">mixed</span> When the teams pooled their data, the tie-breaker was almost comic: the Wisconsin "control" monkeys, the ones supposedly eating normally, were being fed a diet that was nearly <strong>30 percent sugar</strong>. The restricted group partly just looked healthy because the comparison group was eating junk. <span class="src"><a href="https://www.nature.com/articles/ncomms14063">Mattison 2017</a></span></p>
+      <p>One trial, at the University of Wisconsin, found that 30 percent caloric restriction cut deaths from age-related disease roughly in half. <span class="u-src"><a href="https://www.nature.com/articles/ncomms3557">Colman 2014</a></span> A nearly identical trial at the National Institute on Aging found <strong>no survival benefit at all</strong>; the restricted monkeys actually averaged about a year less. <span class="u-src"><a href="https://www.nature.com/articles/nature11432">Mattison 2012</a></span> <span class="u-grade u-grade-c">mixed</span> When the teams pooled their data, the tie-breaker was almost comic: the Wisconsin "control" monkeys, the ones supposedly eating normally, were being fed a diet that was nearly <strong>30 percent sugar</strong>. The restricted group partly just looked healthy because the comparison group was eating junk. <span class="u-src"><a href="https://www.nature.com/articles/ncomms14063">Mattison 2017</a></span></p>
 
-      <p>So what about people? The one serious trial is <strong>CALERIE</strong>, which asked healthy, non-obese adults to cut calories by 25 percent for two years. The first finding was about willpower: even motivated volunteers with a research team behind them only managed about <strong>12 percent</strong>, and it drifted back up over time. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">Ravussin 2015</a></span> The benefits they did get were real but ordinary: lower cholesterol, lower blood pressure, less inflammation, the same things you get from losing excess fat. <span class="src"><a href="https://www.thelancet.com/journals/landia/article/PIIS2213-8587(19)30151-2/abstract">Kraus 2019</a></span> <span class="grade g-b">good</span> One epigenetic "aging clock" slowed by about 2 to 3 percent; two others did not move at all. <span class="src"><a href="https://www.nature.com/articles/s43587-022-00357-y">Waziry 2023</a></span> <span class="grade g-c">mixed</span></p>
+      <p>So what about people? The one serious trial is <strong>CALERIE</strong>, which asked healthy, non-obese adults to cut calories by 25 percent for two years. The first finding was about willpower: even motivated volunteers with a research team behind them only managed about <strong>12 percent</strong>, and it drifted back up over time. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">Ravussin 2015</a></span> The benefits they did get were real but ordinary: lower cholesterol, lower blood pressure, less inflammation, the same things you get from losing excess fat. <span class="u-src"><a href="https://www.thelancet.com/journals/landia/article/PIIS2213-8587(19)30151-2/abstract">Kraus 2019</a></span> <span class="u-grade u-grade-b">good</span> One epigenetic "aging clock" slowed by about 2 to 3 percent; two others did not move at all. <span class="u-src"><a href="https://www.nature.com/articles/s43587-022-00357-y">Waziry 2023</a></span> <span class="u-grade u-grade-c">mixed</span></p>
 
-      <p>And it came with a bill. The dieters lost measurable bone density at the hip and spine, and shed about <strong>16 pounds</strong>, of which roughly five were muscle, not fat. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4834845/">Villareal 2016</a></span> <span class="grade g-b">good</span> Most important of all: CALERIE never measured lifespan, and never could. The researchers say plainly that whether eating less makes a human live longer "will probably never be determined" by a trial. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">Ravussin 2015</a></span></p>
+      <p>And it came with a bill. The dieters lost measurable bone density at the hip and spine, and shed about <strong>16 pounds</strong>, of which roughly five were muscle, not fat. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4834845/">Villareal 2016</a></span> <span class="u-grade u-grade-b">good</span> Most important of all: CALERIE never measured lifespan, and never could. The researchers say plainly that whether eating less makes a human live longer "will probably never be determined" by a trial. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4991370/">Ravussin 2015</a></span></p>
 
-      <div class="mt">
-        <div class="mt-claim"><b>The claim</b>Eating less is the one proven hack that extends human life.</div>
-        <div class="mt-truth"><b>What the evidence says</b>In humans, there is zero lifespan data, only improved blood markers that mostly track fat loss, at a cost of bone and muscle, from a diet almost nobody sustains. It is not nothing. It is also not a fountain of youth, and it is not the only lever. It mostly collapses into "do not carry excess fat."</div>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The claim</span><p class="debateA-text">Eating less is the one proven hack that extends human life.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">What the evidence says</span><p class="debateA-text">In humans, there is zero lifespan data, only improved blood markers that mostly track fat loss, at a cost of bone and muscle, from a diet almost nobody sustains. It is not nothing. It is also not a fountain of youth, and it is not the only lever. It mostly collapses into "do not carry excess fat."</p></div>
       </div>
 
-      <p>The same goes for the pills sold as shortcuts to it. <strong>Rapamycin</strong> reliably extends life in mice but has no such proof in people. <strong>Metformin</strong>, the great hope, actually <em>blunted</em> the gains from exercise in one careful trial of older adults, dimming the very benefit people most want to keep. <span class="src"><a href="https://onlinelibrary.wiley.com/doi/full/10.1111/acel.12880">Konopka 2019</a></span> <span class="grade g-b">good</span> Resveratrol and most "NAD boosters" are hype well ahead of evidence. The one genuinely strong drug result is mundane by comparison: the obesity drug semaglutide cut heart attacks and strokes by 20 percent in a large trial, but only in people who were overweight to begin with. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="grade g-a">strong</span> Once again, the win is really about reversing excess fat, not a secret of aging.</p>
+      <p>The same goes for the pills sold as shortcuts to it. <strong>Rapamycin</strong> reliably extends life in mice but has no such proof in people. <strong>Metformin</strong>, the great hope, actually <em>blunted</em> the gains from exercise in one careful trial of older adults, dimming the very benefit people most want to keep. <span class="u-src"><a href="https://onlinelibrary.wiley.com/doi/full/10.1111/acel.12880">Konopka 2019</a></span> <span class="u-grade u-grade-b">good</span> Resveratrol and most "NAD boosters" are hype well ahead of evidence. The one genuinely strong drug result is mundane by comparison: the obesity drug semaglutide cut heart attacks and strokes by 20 percent in a large trial, but only in people who were overweight to begin with. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="u-grade u-grade-a">strong</span> Once again, the win is really about reversing excess fat, not a secret of aging.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 05 WORKS ============================ -->
     <section id="works" class="sec" aria-labelledby="works-h">
-      <span class="sec-kicker">The honest payoff</span>
-      <h2 id="works-h" class="sec-h">What actually adds years</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The honest payoff</p><h2 id="works-h" class="u-sechead-h">What actually adds years</h2></div>
       <p class="lede">If eating less is oversold and the wall is unproven, what is left is almost disappointingly old-fashioned. The single most powerful lever is the one nobody markets as a hack.</p>
 
-      <p>It is fitness. In a study of <strong>122,000 people</strong> that measured cardiorespiratory fitness on a treadmill and then followed who lived and who died, being in the least-fit group predicted death more strongly than smoking, diabetes, or heart disease did. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="grade g-a">strong</span> Read that again: in this data, being badly out of shape was a bigger killer than smoking. And unlike almost everything else, fitness showed <strong>no upper limit</strong>. The most fit kept gaining; there was no point where more became pointless.</p>
+      <p>It is fitness. In a study of <strong>122,000 people</strong> that measured cardiorespiratory fitness on a treadmill and then followed who lived and who died, being in the least-fit group predicted death more strongly than smoking, diabetes, or heart disease did. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="u-grade u-grade-a">strong</span> Read that again: in this data, being badly out of shape was a bigger killer than smoking. And unlike almost everything else, fitness showed <strong>no upper limit</strong>. The most fit kept gaining; there was no point where more became pointless.</p>
 
       <figure class="viz breakout reveal" aria-labelledby="works-fig-t">
         <p class="viz-title" id="works-fig-t">Being unfit outranked smoking</p>
@@ -591,43 +533,42 @@
             <text class="lbl-val" x="397" y="262">1.3x</text>
           </g>
         </svg>
-        <figcaption class="viz-cap">Across 122,000 patients, the least-fit faced about five times the risk of death. Observational, so some were already sick, but the size is hard to ignore. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span></figcaption>
+        <figcaption class="viz-cap">Across 122,000 patients, the least-fit faced about five times the risk of death. Observational, so some were already sick, but the size is hard to ignore. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span></figcaption>
       </figure>
 
       <p>So here is the whole field, ranked by how strong the human evidence actually is, with the hype stripped out.</p>
 
       <ul>
-        <li><strong>Be fit, and keep moving.</strong> Cardio and strength both, for as long as you can. Being unfit carried an even higher risk than smoking in the study above, and fitness has no point of diminishing returns. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="grade g-a">strong</span></li>
-        <li><strong>Do not smoke.</strong> Just as essential and far better understood; quitting by 40 buys back almost a decade. <span class="grade g-a">strong</span></li>
-        <li><strong>Keep blood pressure and LDL cholesterol in check.</strong> Unglamorous, deadly when ignored, and well proven in trials. <span class="grade g-a">strong</span></li>
-        <li><strong>Do not carry excess fat.</strong> This is what most "diet hacks," fasting, and the obesity drugs are really doing. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="grade g-a">strong</span></li>
-        <li><strong>Sleep, and stay connected to people.</strong> Loneliness carries a mortality risk on the order of smoking; both are easy to underrate. <span class="grade g-b">good</span></li>
-        <li><strong>Caloric restriction, fasting, rapamycin, metformin, NAD, resveratrol.</strong> Interesting, occasionally useful, wildly oversold. None has shown a longer human life. <span class="grade g-c">unproven in humans</span></li>
+        <li><strong>Be fit, and keep moving.</strong> Cardio and strength both, for as long as you can. Being unfit carried an even higher risk than smoking in the study above, and fitness has no point of diminishing returns. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6324439/">Mandsager 2018</a></span> <span class="u-grade u-grade-a">strong</span></li>
+        <li><strong>Do not smoke.</strong> Just as essential and far better understood; quitting by 40 buys back almost a decade. <span class="u-grade u-grade-a">strong</span></li>
+        <li><strong>Keep blood pressure and LDL cholesterol in check.</strong> Unglamorous, deadly when ignored, and well proven in trials. <span class="u-grade u-grade-a">strong</span></li>
+        <li><strong>Do not carry excess fat.</strong> This is what most "diet hacks," fasting, and the obesity drugs are really doing. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="u-grade u-grade-a">strong</span></li>
+        <li><strong>Sleep, and stay connected to people.</strong> Loneliness carries a mortality risk on the order of smoking; both are easy to underrate. <span class="u-grade u-grade-b">good</span></li>
+        <li><strong>Caloric restriction, fasting, rapamycin, metformin, NAD, resveratrol.</strong> Interesting, occasionally useful, wildly oversold. None has shown a longer human life. <span class="u-grade u-grade-c">unproven in humans</span></li>
       </ul>
 
       <p>Notice what the strong list has in common. None of it raises the ceiling. It works by <strong>not dying early</strong>, by clearing the heart attacks and cancers and accidents that take most people decades before any theoretical limit. That is the real shape of the thing. We are very good at helping more people approach the old ceiling, and we have no proven way to lift the ceiling itself.</p>
 
-      <p class="pullquote">The honest goal is not to find the cheat code for 120. It is to not get cheated out of 85.</p>
+      <blockquote class="u-pq">The honest goal is not to find the cheat code for 120. It is to not get cheated out of 85.</blockquote>
 
-      <p>Which leaves the wall exactly where we found it: unproven as biology, undeniable as a fact, and guarded by data too rotten to trust. Maybe someone breaks 122 this century; a serious forecast puts the odds above 99 percent by 2100. <span class="src"><a href="https://www.demographic-research.org/articles/volume/44/52/">Pearce 2021</a></span> <span class="grade g-c">model</span> Maybe the plateau is real and there is no wall at all. Either way, it has almost nothing to do with how long <em>you</em> will live. That part, unglamorously, is mostly up to the basics.</p>
+      <p>Which leaves the wall exactly where we found it: unproven as biology, undeniable as a fact, and guarded by data too rotten to trust. Maybe someone breaks 122 this century; a serious forecast puts the odds above 99 percent by 2100. <span class="u-src"><a href="https://www.demographic-research.org/articles/volume/44/52/">Pearce 2021</a></span> <span class="u-grade u-grade-c">model</span> Maybe the plateau is real and there is no wall at all. Either way, it has almost nothing to do with how long <em>you</em> will live. That part, unglamorously, is mostly up to the basics.</p>
 
-      <div class="disclaimer"><strong>One honest note.</strong> This is a guide to what the evidence says, not medical advice. The strong levers above are worth acting on, but blood pressure, cholesterol, and any drug belong in a conversation with your own doctor, who knows the rest of your story.</div>
+      <aside class="u-callout"><p class="u-callout-k">One honest note</p><p class="u-callout-body">This is a guide to what the evidence says, not medical advice. The strong levers above are worth acting on, but blood pressure, cholesterol, and any drug belong in a conversation with your own doctor, who knows the rest of your story.</p></aside>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <span class="sec-kicker">The fine print</span>
-      <h2 id="sources-h" class="sec-h">Sources, and how I checked them</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and how I checked them</h2></div>
       <p class="src-note">I started with two beliefs, a hard wall at 120 and eating less as the only hack. Both took damage. Before writing, every major claim was run through an adversarial fact-check whose job was to refute it, and the corrections were left visible above.</p>
-      <details class="src-details">
-        <summary>The full list, 28 sources, strongest evidence first</summary>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 28 sources, strongest evidence first</summary>
       <div class="legend">
-        <span><span class="grade g-a">strong</span> many trials or large cohorts agreeing</span>
-        <span><span class="grade g-b">good</span> one strong study</span>
-        <span><span class="grade g-c">mixed</span> contested or model-based</span>
-        <span><span class="grade g-d">thin</span> a single claim</span>
+        <span><span class="u-grade u-grade-a">strong</span> many trials or large cohorts agreeing</span>
+        <span><span class="u-grade u-grade-b">good</span> one strong study</span>
+        <span><span class="u-grade u-grade-c">mixed</span> contested or model-based</span>
+        <span><span class="u-grade u-grade-d">thin</span> a single claim</span>
       </div>
 
       <h3>The limit and the records</h3>

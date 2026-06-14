@@ -132,52 +132,7 @@
   .sec-index a:hover { background: var(--row-hover); color: var(--accent-hover); }
   @media (min-width: 620px) { .sec-index { grid-template-columns: 1fr 1fr; } }
 
-  /* ---------- HEADLINE STATS ---------- */
-  .stat-row { display: flex; flex-wrap: wrap; gap: 1.4rem 2.6rem; margin: 1.7em 0; }
-  .stat { display: flex; align-items: baseline; gap: 0.7rem; margin: 1.4em 0; }
-  .stat-row .stat { margin: 0; }
-  .stat .fig { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.4rem, 7vw, 3.4rem); line-height: 0.92; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .stat .fig-lbl { font-family: var(--font-heading); font-size: 1rem; line-height: 1.28; color: var(--text-dim); max-width: 22ch; }
-  .stat.sky .fig { color: var(--c-sky); } .stat.green .fig { color: var(--c-green); }
-  .stat.plum .fig { color: var(--c-plum); } .stat.amber .fig { color: var(--c-amber); }
-  .stat.rose .fig { color: var(--c-rose); }
-
-  /* ---------- CONTROVERSY / NUANCE BOX ---------- */
-  .fork { margin: 1.7em 0; padding: 1.1em 1.2em; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.12); }
-  .fork-q { margin: 0 0 0.7em; font-family: var(--font-heading); font-size: 1.14rem; color: var(--text-bright); }
-  .fork-q::before { content: attr(data-label); display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4em; font-weight: 400; }
-  .fork-a { margin: 0 0 0.55em; font-size: 1rem; line-height: 1.55; color: var(--text); }
-  .fork-a b { color: var(--text-bright); }
-  .fork-take { margin: 0.7em 0 0; padding: 0.7em 0.9em; background: rgba(120, 160, 116, 0.10); border-radius: 8px; font-size: 1rem; color: var(--text); }
-  .fork-take b { color: var(--c-green); }
-
-  /* ---------- CALLOUTS ---------- */
-  .edge { margin: 1.4em 0; padding: 0.85em 1.1em; border-left: 3px solid var(--accent); background: rgba(212,196,160,0.07); border-radius: 0 10px 10px 0; font-size: 1rem; line-height: 1.55; color: var(--text); }
-  .edge b { color: var(--accent-hover); }
-  .edge .edge-lbl { display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35em; }
-  .balance-note { margin: 1.4em 0; padding: 0.95em 1.15em 0.95em 3em; position: relative; border: 1px solid rgba(212,196,160,0.32); background: rgba(212,196,160,0.05); border-radius: 10px; font-size: 1rem; line-height: 1.55; color: var(--text); }
-  .balance-note::before { content: '\2696'; position: absolute; left: 0.95em; top: 0.8em; font-size: 1.2rem; color: var(--accent); }
-  .balance-note b { color: var(--accent-hover); }
-  .myth { margin: 1.3em 0; padding: 0.85em 1.05em; border: 1px solid var(--rule); border-left: 3px solid var(--c-rose); border-radius: 0 10px 10px 0; background: rgba(207,106,89,0.06); font-size: 1rem; line-height: 1.55; }
-  .myth b { color: var(--c-rose); }
-
-  /* USE / SKIP rows */
-  .choices { display: grid; gap: 0.7rem; margin: 1.7em 0; }
-  .choice { display: flex; gap: 0.8em; align-items: baseline; padding: 0.85em 1em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.12); font-size: 1rem; line-height: 1.5; color: var(--text); }
-  .choice::before { font-family: var(--font-mono); font-weight: 700; flex: none; line-height: 1.4; }
-  .choice.use { border-left: 3px solid var(--ok-rule, #6f9a6c); }
-  .choice.use::before { content: '\2713'; color: var(--c-green); }
-  .choice.skip { border-left: 3px solid #b8796d; }
-  .choice.skip::before { content: '\2717'; color: var(--c-rose); }
-  .choice.meh { border-left: 3px solid #bc9d65; }
-  .choice.meh::before { content: '\2013'; color: var(--c-amber); }
-  .choice b { color: var(--text-bright); }
-
-  /* ---------- CITATIONS + EVIDENCE GRADES ---------- */
-  .src { font-family: var(--font-body); font-size: 0.8em; color: var(--text-dim); white-space: nowrap; }
-  .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); text-decoration: none; }
-  .src a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .src::before { content: '\2009'; }
+  /* ---------- EVIDENCE GRADES (4-tier: no kit equivalent, kept) ---------- */
   .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
   .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
   .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
@@ -185,10 +140,6 @@
   .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
   .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
   .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
-
-  /* ---------- PULL QUOTE ---------- */
-  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.45rem, 3.4vw, 2rem); line-height: 1.3; color: var(--text-bright); margin: clamp(2.2rem, 5vw, 3.2rem) 0; padding-left: 1.1rem; border-left: 3px solid var(--accent); text-wrap: balance; }
-  .pullquote cite { display: block; margin-top: 0.55rem; font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); }
 
   /* ---------- DATA-VIZ FIGURES ---------- */
   figure.viz { margin: clamp(2.2rem, 5vw, 3rem) 0; padding: 1.1em 1.2em 1.3em; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; }
@@ -198,7 +149,6 @@
   figure.viz .viz-sub { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); margin-bottom: 0.9em; line-height: 1.45; }
   figure.viz .viz-note { font-family: var(--font-body); font-size: 0.88rem; font-style: italic; color: var(--text-dim); margin-top: 0.85em; line-height: 1.5; }
   figure.viz .viz-note b { font-style: normal; color: var(--text); }
-  figure.viz .src { white-space: normal; overflow-wrap: break-word; }
   .v-axis { fill: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
   .v-axis-t { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; }
   .v-grid { stroke: var(--c-grid); stroke-width: 1; }
@@ -211,7 +161,7 @@
   @media (max-width: 720px) {
     figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     figure.viz.scrollx > svg { min-width: 560px; }
-    figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note, figure.viz.scrollx > .src { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
+    figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
   }
 
   /* ---------- PHOTOGRAPHY (curated public-domain works: borderless, filling the frame) ---------- */
@@ -315,14 +265,6 @@
   #sources .legend .grade { font-size: 0.48rem; padding: 0.16em 0.5em; }
   @media (min-width: 700px) { #sources ol { columns: 3; column-gap: 1.4rem; } }
 
-  /* ---------- COLOPHON ---------- */
-  #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
-  #colophon .colo-stat { border: 1px solid var(--rule); border-left: 4px solid var(--cc); border-radius: 10px; padding: 0.85em 1em; background: rgba(0,0,0,0.13); }
-  #colophon .colo-stat .n { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.05rem); line-height: 1; color: var(--cc); font-variant-numeric: tabular-nums; }
-  #colophon .colo-stat .l { font-family: var(--font-body); font-size: 0.84rem; line-height: 1.35; color: var(--text-dim); margin-top: 0.35em; }
-  #colophon .c-gold { --cc: #D4C4A0; } #colophon .c-sky { --cc: #8fb3c7; } #colophon .c-plum { --cc: #b79bc4; }
-  #colophon .c-green { --cc: #9ec79a; } #colophon .c-amber { --cc: #dfc288; } #colophon .c-rose { --cc: #d9978c; }
-
   .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .disclaimer strong { color: var(--accent-hover); }
 
@@ -355,7 +297,7 @@
     .sec, .hero, .map { max-width: none; }
     .sec p, .sec li, .lede { color: #161616; }
     details.deeper > *:not(summary) { display: block !important; }
-    figure.viz, .tool, .fork, .stat, .pullquote { break-inside: avoid; }
+    figure.viz, .tool, .u-callout, .u-stats, .u-pq { break-inside: avoid; }
     a { color: #161616; }
   }
   </style>
@@ -456,17 +398,17 @@
     <h3>The supplement aisle, in one glance</h3>
     <p>A supermarket of powders exists to convince you that muscle is a purchasing problem. It mostly is not. Here is the honest sort: one thing worth taking, one thing that is optional and oversold, and a long shelf of things you can walk past.</p>
 
-    <div class="choices">
-      <div class="choice use"><div><b>Creatine monohydrate.</b> The most-studied, most reliably effective legal supplement in sport, and one of the cheapest. Real benefits for muscle and, more surprisingly, for the brain. The plain monohydrate, 3 to 5 grams a day. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></div></div>
-      <div class="choice use"><div><b>Protein powder (only if your food falls short).</b> Not magic, just convenient groceries. It helps exactly to the degree it fills a gap in your daily protein, and not one bit more. Whole food does the same job and brings vitamins along. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></div></div>
-      <div class="choice use"><div><b>Vitamin D (if you cannot get sun).</b> A real deficiency is worth fixing for muscle, bone, and mood. Sunlight is the free version; a cheap pill is the backup for winter and indoor lives. <span class="src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> <span class="grade g-b">good</span></div></div>
-      <div class="choice meh"><div><b>Caffeine.</b> A genuine performance aid, but a small one (a few percent), and it buys nothing for muscle growth directly. Useful on a tired day, easy to live without, and a sleep wrecker if taken late. I never touch it. More in <a href="#inputs">its own section</a>. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-b">good</span></div></div>
-      <div class="choice skip"><div><b>Almost everything else.</b> Testosterone "boosters," BCAAs on top of enough protein, fat burners, pre-workout pixie dust, exotic creatine blends that cost more than the monohydrate they are diluting. The evidence is thin to nonexistent, and your money is better spent on food. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></div></div>
-    </div>
+    <ul class="u-checks">
+      <li class="u-check u-use"><b>Creatine monohydrate.</b> The most-studied, most reliably effective legal supplement in sport, and one of the cheapest. Real benefits for muscle and, more surprisingly, for the brain. The plain monohydrate, 3 to 5 grams a day. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></li>
+      <li class="u-check u-use"><b>Protein powder (only if your food falls short).</b> Not magic, just convenient groceries. It helps exactly to the degree it fills a gap in your daily protein, and not one bit more. Whole food does the same job and brings vitamins along. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></li>
+      <li class="u-check u-use"><b>Vitamin D (if you cannot get sun).</b> A real deficiency is worth fixing for muscle, bone, and mood. Sunlight is the free version; a cheap pill is the backup for winter and indoor lives. <span class="u-src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> <span class="grade g-b">good</span></li>
+      <li class="u-check u-meh"><b>Caffeine.</b> A genuine performance aid, but a small one (a few percent), and it buys nothing for muscle growth directly. Useful on a tired day, easy to live without, and a sleep wrecker if taken late. I never touch it. More in <a href="#inputs">its own section</a>. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-b">good</span></li>
+      <li class="u-check u-skip"><b>Almost everything else.</b> Testosterone "boosters," BCAAs on top of enough protein, fat burners, pre-workout pixie dust, exotic creatine blends that cost more than the monohydrate they are diluting. The evidence is thin to nonexistent, and your money is better spent on food. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></li>
+    </ul>
 
-    <div class="balance-note"><b>The thread that ties this together.</b> Almost every chapter ends in the same place: a lever that works beautifully up to a point, then quietly stops paying you back. More sets, more protein, more cardio, more failure, more sheer size. The skill this guide is really teaching is not how to push every lever to the wall, but how to find where each one goes flat, park it there, and spend the rest of your life on the things that still move.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>The thread that ties this together.</b> Almost every chapter ends in the same place: a lever that works beautifully up to a point, then quietly stops paying you back. More sets, more protein, more cardio, more failure, more sheer size. The skill this guide is really teaching is not how to push every lever to the wall, but how to find where each one goes flat, park it there, and spend the rest of your life on the things that still move.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 2. CREATINE ===================== -->
@@ -489,7 +431,7 @@
     <p>Creatine is not exotic. It is a small molecule your liver already makes and your muscles already store, and you eat about a gram of it a day if you eat meat or fish. Supplementing simply tops the tank up past what food can manage, and a fuller tank does measurable work.</p>
 
     <h3>What it actually does, in one diagram</h3>
-    <p>Your muscles run their hardest, fastest efforts on a tiny, instant battery called the <strong>phosphocreatine system</strong>. When a muscle fires, it spends ATP (the cell's energy coin) and is left holding spent change, ADP. Phosphocreatine immediately hands over a phosphate to turn that ADP back into fresh ATP, in a fraction of a second, faster than any other energy pathway in the body. The more phosphocreatine you have banked, the longer you can keep that instant battery topped up. Supplementing raises the muscle's creatine and phosphocreatine stores by <strong>20 to 40 percent</strong>. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
+    <p>Your muscles run their hardest, fastest efforts on a tiny, instant battery called the <strong>phosphocreatine system</strong>. When a muscle fires, it spends ATP (the cell's energy coin) and is left holding spent change, ADP. Phosphocreatine immediately hands over a phosphate to turn that ADP back into fresh ATP, in a fraction of a second, faster than any other energy pathway in the body. The more phosphocreatine you have banked, the longer you can keep that instant battery topped up. Supplementing raises the muscle's creatine and phosphocreatine stores by <strong>20 to 40 percent</strong>. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
 
     <figure class="viz reveal" aria-label="A diagram of the phosphocreatine energy shuttle.">
       <figcaption>The instant battery</figcaption>
@@ -529,7 +471,7 @@
     </figure>
 
     <h3>The muscle effect: real, but be honest about the size</h3>
-    <p>Here is where the marketing and the science part ways. Most of creatine's muscle-building power is <em>indirect</em>: by topping up that battery it lets you grind out an extra rep or two and recover a little faster, so you pile up more good training over months. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> Its <em>direct</em> contribution to muscle thickness, isolated from the training, is small, on the order of a fraction of an inch. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-a">strong</span> The training builds the muscle. Creatine just lets you train a bit harder and hold a bit more.</p>
+    <p>Here is where the marketing and the science part ways. Most of creatine's muscle-building power is <em>indirect</em>: by topping up that battery it lets you grind out an extra rep or two and recover a little faster, so you pile up more good training over months. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> Its <em>direct</em> contribution to muscle thickness, isolated from the training, is small, on the order of a fraction of an inch. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-a">strong</span> The training builds the muscle. Creatine just lets you train a bit harder and hold a bit more.</p>
 
     <figure class="viz reveal scrollx" aria-label="Bar chart of extra strength and lean mass from adding creatine to training.">
       <figcaption>What creatine adds, on top of training</figcaption>
@@ -565,24 +507,24 @@
         </g>
       </svg>
       <table class="viz-data" style="font-size:0.74rem;color:#B8B2A2;border-collapse:collapse;margin-top:0.6em;">
-        <tr><td style="padding-right:1em">Bench +3.2 lb, squat +12.4 lb vs placebo</td><td><span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span></td></tr>
-        <tr><td style="padding-right:1em">Older adults +3 lb lean mass</td><td><span class="src"><a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">Chilibeck 2017</a></span></td></tr>
+        <tr><td style="padding-right:1em">Bench +3.2 lb, squat +12.4 lb vs placebo</td><td><span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span></td></tr>
+        <tr><td style="padding-right:1em">Older adults +3 lb lean mass</td><td><span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">Chilibeck 2017</a></span></td></tr>
       </table>
     </figure>
 
     <h3>The part nobody expects: the brain</h3>
-    <p>Your brain runs on the same energy economy your muscles do, and creatine helps there too, most visibly under stress. The headline result is startling: in 2024, researchers gave sleep-deprived adults a <em>single</em> large dose (about 25 grams, far more than the daily 3 to 5) and watched their cognition partly recover, with processing speed and short-term memory improving for up to nine hours. <span class="src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="grade g-b">good</span> It is one small study using a megadose, not your daily spoonful, so treat it as a striking hint rather than a promise. But one dose producing measurable thinking in tired humans had never been shown before.</p>
+    <p>Your brain runs on the same energy economy your muscles do, and creatine helps there too, most visibly under stress. The headline result is startling: in 2024, researchers gave sleep-deprived adults a <em>single</em> large dose (about 25 grams, far more than the daily 3 to 5) and watched their cognition partly recover, with processing speed and short-term memory improving for up to nine hours. <span class="u-src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="grade g-b">good</span> It is one small study using a megadose, not your daily spoonful, so treat it as a striking hint rather than a promise. But one dose producing measurable thinking in tired humans had never been shown before.</p>
 
-    <div class="stat-row">
-      <div class="stat sky"><span class="fig">+24%</span><span class="fig-lbl">faster processing under sleep deprivation, one dose</span></div>
-      <div class="stat plum"><span class="fig">9 hrs</span><span class="fig-lbl">how long that single dose kept working</span></div>
-      <div class="stat green"><span class="fig">5 yrs</span><span class="fig-lbl">used safely at up to 30 g/day, no harm in healthy people</span></div>
+    <div class="u-stats">
+      <div class="u-stat"><span class="u-fig">+24%</span><span class="u-fig-lbl">faster processing under sleep deprivation, one dose</span></div>
+      <div class="u-stat"><span class="u-fig">9 hrs</span><span class="u-fig-lbl">how long that single dose kept working</span></div>
+      <div class="u-stat"><span class="u-fig">5 yrs</span><span class="u-fig-lbl">used safely at up to 30 g/day, no harm in healthy people</span></div>
     </div>
 
-    <p>It is not just the all-nighter case. A meta-analysis found creatine improves memory, especially in older people and those under stress, <span class="src"><a href="https://www.sciencedirect.com/science/article/abs/pii/S0531556518300263">Avgerinos 2018</a></span> <span class="grade g-b">good</span> and newer work hints at a modest anti-depression effect on top of normal treatment. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41189312/">2025 meta-analysis</a></span> <span class="grade g-c">mixed</span> The brain takes creatine up more grudgingly than muscle, so these benefits likely need the higher end of dosing, and vegetarians gain the most. <span class="src"><a href="https://www.mdpi.com/2072-6643/13/2/586">Roschel 2021</a></span></p>
+    <p>It is not just the all-nighter case. A meta-analysis found creatine improves memory, especially in older people and those under stress, <span class="u-src"><a href="https://www.sciencedirect.com/science/article/abs/pii/S0531556518300263">Avgerinos 2018</a></span> <span class="grade g-b">good</span> and newer work hints at a modest anti-depression effect on top of normal treatment. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41189312/">2025 meta-analysis</a></span> <span class="grade g-c">mixed</span> The brain takes creatine up more grudgingly than muscle, so these benefits likely need the higher end of dosing, and vegetarians gain the most. <span class="u-src"><a href="https://www.mdpi.com/2072-6643/13/2/586">Roschel 2021</a></span></p>
 
     <h3>How to take it (the whole protocol is two lines)</h3>
-    <p>Buy plain <strong>creatine monohydrate</strong>, the original cheap form. Nothing fancier has been shown to beat it; the fancy versions cost more to do the same job. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
+    <p>Buy plain <strong>creatine monohydrate</strong>, the original cheap form. Nothing fancier has been shown to beat it; the fancy versions cost more to do the same job. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
     <ul>
       <li><strong>3 to 5 grams a day, every day.</strong> A flat teaspoon; it saturates your muscles in three to four weeks.</li>
       <li><strong>Loading is optional.</strong> 20 grams a day for five to seven days fills the tank faster, but reaches the same place. Most people skip it.</li>
@@ -591,13 +533,13 @@
     </ul>
 
     <h3>The myths, retired</h3>
-    <div class="myth"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It nudges a blood marker (creatinine) that can spook a doctor reading a lab result, but that is a measurement artifact, not damage. With existing kidney disease, ask your doctor first. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></div>
-    <div class="myth"><b>"It makes your hair fall out."</b> Traces to one 2009 study that measured a hormone (DHT), not actual hair, and was never replicated. The first trial to look directly at hair, in 2025, found no difference from placebo. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <span class="grade g-b">good</span></div>
-    <div class="myth"><b>"It causes cramps and dehydration."</b> The opposite, if anything: users get <em>fewer</em> cramps and heat problems. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></div>
+    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It nudges a blood marker (creatinine) that can spook a doctor reading a lab result, but that is a measurement artifact, not damage. With existing kidney disease, ask your doctor first. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></p></aside>
+    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>"It makes your hair fall out."</b> Traces to one 2009 study that measured a hormone (DHT), not actual hair, and was never replicated. The first trial to look directly at hair, in 2025, found no difference from placebo. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <span class="grade g-b">good</span></p></aside>
+    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>"It causes cramps and dehydration."</b> The opposite, if anything: users get <em>fewer</em> cramps and heat problems. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></p></aside>
 
-    <div class="balance-note"><b>The one catch.</b> Roughly 20 to 30 percent of people are "non-responders" whose muscles barely take up extra creatine, often because they already eat a lot of meat. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">Syrotuik 2004</a></span> If a month does nothing, you may be one of them. It is a cheap experiment with no downside, which is exactly why it is the one supplement worth running.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>The one catch.</b> Roughly 20 to 30 percent of people are "non-responders" whose muscles barely take up extra creatine, often because they already eat a lot of meat. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">Syrotuik 2004</a></span> If a month does nothing, you may be one of them. It is a cheap experiment with no downside, which is exactly why it is the one supplement worth running.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 3. HOW MUSCLE GROWS ===================== -->
@@ -615,13 +557,13 @@
     </figure>
 
     <h3>The signal: tension, not damage</h3>
-    <p>For years people thought you had to "tear the muscle down," and that soreness proved a good workout. That is mostly wrong. The primary signal for growth is <strong>mechanical tension</strong>: the muscle sensing a heavy load through a full range of motion and converting that strain into "build" signals. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> Damage and the metabolic "burn" are supporting players at most, and chasing soreness just buys fatigue. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
+    <p>For years people thought you had to "tear the muscle down," and that soreness proved a good workout. That is mostly wrong. The primary signal for growth is <strong>mechanical tension</strong>: the muscle sensing a heavy load through a full range of motion and converting that strain into "build" signals. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> Damage and the metabolic "burn" are supporting players at most, and chasing soreness just buys fatigue. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
     <p>You deliver that tension with a handful of levers, about six of them. Every one has a sweet spot, and pushing past it costs more than it pays.</p>
 
     <h3>Lever one: volume (the big one)</h3>
-    <p>Volume, the total number of hard sets you do per muscle group per week, is the lever most tightly tied to growth. (The unit is the muscle group, chest or back or quads, not each individual muscle, and a set counts for every group doing serious work in it: a bench press is a set for chest and for triceps, a row is a set for back and for biceps.) The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (a clear, measurable difference versus almost nothing, in one tightly controlled eight-week study), even though both got similarly stronger. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
+    <p>Volume, the total number of hard sets you do per muscle group per week, is the lever most tightly tied to growth. (The unit is the muscle group, chest or back or quads, not each individual muscle, and a set counts for every group doing serious work in it: a bench press is a set for chest and for triceps, a row is a set for back and for biceps.) The dose-response is real: across studies, each added weekly set bought about <strong>0.37 percent</strong> more growth, and groups doing 10 or more sets beat groups doing fewer. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> The cleanest single demonstration: trained men doing five sets per exercise grew their quads about three times more than men doing one set (a clear, measurable difference versus almost nothing, in one tightly controlled eight-week study), even though both got similarly stronger. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30153194/">Schoenfeld 2019</a></span> <span class="grade g-b">good</span> Size is bought with volume. Strength is bought with heavy weight. They are not the same purchase.</p>
 
-    <p>But the returns shrink. The newest and largest analysis is honest about this: growth keeps rising as you add volume, with no point where it turns into nothing, but the slope gets gentler and gentler, so each set buys less than the last. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Eventually the fatigue and joint cost of another set outruns the muscle it adds. Lifters call the far end "junk volume," but the truth is gentler: those sets are rarely useless, just a worse and worse trade. How much you actually need is <a href="#returns">a chapter of its own</a>.</p>
+    <p>But the returns shrink. The newest and largest analysis is honest about this: growth keeps rising as you add volume, with no point where it turns into nothing, but the slope gets gentler and gentler, so each set buys less than the last. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Eventually the fatigue and joint cost of another set outruns the muscle it adds. Lifters call the far end "junk volume," but the truth is gentler: those sets are rarely useless, just a worse and worse trade. How much you actually need is <a href="#returns">a chapter of its own</a>.</p>
 
     <figure class="viz reveal" aria-label="A curve of muscle growth against weekly training volume.">
       <figcaption>More sets, more muscle, up to a point</figcaption>
@@ -656,26 +598,26 @@
     </figure>
 
     <h3>Lever two: load (lighter than you think)</h3>
-    <p>How heavy? For <em>growth</em>, surprisingly flexible: anywhere from about 30 to 85 percent of your one-rep max builds similar muscle, as long as you take the set close to failure. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> A hard set of 8 and a hard set of 25 grow about the same. For pure <em>strength</em>, heavy wins clearly. So pick loads that let you train hard without wrecking your joints, and stop worrying that 12-rep sets are "too light to grow."</p>
+    <p>How heavy? For <em>growth</em>, surprisingly flexible: anywhere from about 30 to 85 percent of your one-rep max builds similar muscle, as long as you take the set close to failure. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> A hard set of 8 and a hard set of 25 grow about the same. For pure <em>strength</em>, heavy wins clearly. So pick loads that let you train hard without wrecking your joints, and stop worrying that 12-rep sets are "too light to grow."</p>
 
     <h3>Lever three: effort (close to failure, not always to it)</h3>
-    <p>You have to train hard, but not to total failure on every set. Pooled trials show going all the way to failure is <em>not</em> better for growth than stopping a rep or two short, and it piles on fatigue that hurts your next session. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span> <span class="grade g-b">good</span> The sweet spot is leaving <strong>1 to 3 reps in reserve</strong>: close enough to trigger nearly all the growth, far enough to keep the tank from running dry. Save true failure for the occasional last set.</p>
+    <p>You have to train hard, but not to total failure on every set. Pooled trials show going all the way to failure is <em>not</em> better for growth than stopping a rep or two short, and it piles on fatigue that hurts your next session. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span> <span class="grade g-b">good</span> The sweet spot is leaving <strong>1 to 3 reps in reserve</strong>: close enough to trigger nearly all the growth, far enough to keep the tank from running dry. Save true failure for the occasional last set.</p>
 
-    <div class="balance-note"><b>Notice the pattern already.</b> Three levers in, all three say the same thing: get most of the way, then stop. Ten to twenty sets, not forty. Close to failure, not into the wall every time. That is not laziness, it is the literal finding of the research: the last increment mostly buys fatigue.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>Notice the pattern already.</b> Three levers in, all three say the same thing: get most of the way, then stop. Ten to twenty sets, not forty. Close to failure, not into the wall every time. That is not laziness, it is the literal finding of the research: the last increment mostly buys fatigue.</p></aside>
 
     <h3>The smaller levers</h3>
     <ul>
-      <li><strong>Frequency.</strong> Hitting a muscle about twice a week beats once at the same total volume, <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span> mostly because two sessions let you do (and recover from) more quality sets. Frequency is really just a way to deliver volume. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-b">good</span></li>
-      <li><strong>Rest between sets.</strong> Longer is better for growth: 2 to 3 minutes beat 1 minute in trained men, because it preserves strength across sets and protects total volume. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span> <span class="grade g-b">good</span></li>
-      <li><strong>Tempo.</strong> Control the lowering (1 to 3 seconds), do not bounce, do not crawl. Super-slow reps just cost you reps. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28486337/">Schoenfeld 2017</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Frequency.</strong> Hitting a muscle about twice a week beats once at the same total volume, <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span> mostly because two sessions let you do (and recover from) more quality sets. Frequency is really just a way to deliver volume. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Rest between sets.</strong> Longer is better for growth: 2 to 3 minutes beat 1 minute in trained men, because it preserves strength across sets and protects total volume. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Tempo.</strong> Control the lowering (1 to 3 seconds), do not bounce, do not crawl. Super-slow reps just cost you reps. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28486337/">Schoenfeld 2017</a></span> <span class="grade g-b">good</span></li>
       <li><strong>Progressive overload.</strong> The one non-negotiable: the stimulus has to keep rising. A workout that never gets harder stops building.</li>
     </ul>
 
     <h3>The part that happens out of the gym</h3>
-    <p>You do not grow during the workout, you grow during recovery, and the two biggest recovery inputs are sleep and protein. A single night of no sleep cut muscle protein synthesis by about <strong>18 percent</strong> and tipped hormones toward breakdown. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-b">good</span> Seven to nine hours is not optional comfort, it is part of the program.</p>
-    <p>And the famous "anabolic window," the panic that you must drink protein within thirty minutes of your last rep? A myth: once you account for total daily protein, the timing magic disappears. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">Schoenfeld 2013</a></span> <span class="grade g-a">strong</span> The window is hours wide. Hit your daily total and the clock takes care of itself, as the <a href="#diet">food chapter</a> covers.</p>
+    <p>You do not grow during the workout, you grow during recovery, and the two biggest recovery inputs are sleep and protein. A single night of no sleep cut muscle protein synthesis by about <strong>18 percent</strong> and tipped hormones toward breakdown. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-b">good</span> Seven to nine hours is not optional comfort, it is part of the program.</p>
+    <p>And the famous "anabolic window," the panic that you must drink protein within thirty minutes of your last rep? A myth: once you account for total daily protein, the timing magic disappears. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">Schoenfeld 2013</a></span> <span class="grade g-a">strong</span> The window is hours wide. Hit your daily total and the clock takes care of itself, as the <a href="#diet">food chapter</a> covers.</p>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 4. THE EXACT TRAINING ===================== -->
@@ -703,17 +645,18 @@
     </figure>
 
     <h3>The rules every good program obeys</h3>
-    <div class="fork">
-      <p class="fork-q" data-label="The evidence-based spine">Six numbers that drive all three templates</p>
-      <ul style="margin:0">
-        <li><b>10 to 20 hard sets</b> per muscle group per week. Default to 12; add sets only when progress stalls. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></li>
-        <li>Train each muscle group <b>about twice a week</b>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span></li>
-        <li>Stop most sets at <b>1 to 3 reps in reserve</b>; true failure only occasionally. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span></li>
-        <li>Use <b>6 to 15 reps</b> on most work, heavier low-rep sets on the main lifts. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span></li>
-        <li>Rest <b>2 to 3 minutes</b> on compounds, about a minute on small isolation. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span></li>
+    <aside class="u-callout">
+      <p class="u-callout-k">The evidence-based spine</p>
+      <p class="u-callout-body">Six numbers that drive all three templates</p>
+      <ul style="margin:0.8em 0 0">
+        <li><b>10 to 20 hard sets</b> per muscle group per week. Default to 12; add sets only when progress stalls. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></li>
+        <li>Train each muscle group <b>about twice a week</b>. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27102172/">Schoenfeld 2016</a></span></li>
+        <li>Stop most sets at <b>1 to 3 reps in reserve</b>; true failure only occasionally. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9935748/">Refalo 2022</a></span></li>
+        <li>Use <b>6 to 15 reps</b> on most work, heavier low-rep sets on the main lifts. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span></li>
+        <li>Rest <b>2 to 3 minutes</b> on compounds, about a minute on small isolation. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span></li>
         <li>Add a rep or a little weight <b>most weeks</b>. That is the whole game.</li>
       </ul>
-    </div>
+    </aside>
 
     <h3>Pick the split that fits your life</h3>
     <p>The "split" is just how you divide the body across the week. More training days means more days you show up, not more obligation to. All three below hit every muscle group about twice a week, so choose the one you can actually sustain.</p>
@@ -729,7 +672,7 @@
     </figure>
 
     <h3>Where to start</h3>
-    <p>If you are new, run this three-day full-body plan: you practice the big lifts often and miss nothing if life eats a day. Rotate variations and add a rep or a little weight most weeks. When three days no longer fit your volume, move up to the upper/lower layout or the full push/pull/legs program written out below. <span class="src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
+    <p>If you are new, run this three-day full-body plan: you practice the big lifts often and miss nothing if life eats a day. Rotate variations and add a rep or a little weight most weeks. When three days no longer fit your volume, move up to the upper/lower layout or the full push/pull/legs program written out below. <span class="u-src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>Each full-body session, 3x a week</th><th class="n">Sets &#215; reps</th></tr></thead>
       <tbody>
@@ -794,7 +737,7 @@
         <tr><td>Push / pull / legs</td><td class="n">6</td><td class="n">45-60 min</td><td class="n">~5 hrs</td><td>the same dose, plus direct arm, delt, and calf work</td></tr>
       </tbody>
     </table></div>
-    <p class="src" style="white-space:normal;display:block;margin:-0.6em 0 1.4em">Times assume honest rest and a 10-minute warm-up. All three carry the sane dose from the <a href="#returns">diminishing-returns chapter</a>; the six-day costs more hours mostly because the small muscles get sets of their own.</p>
+    <p style="white-space:normal;display:block;font-size:0.8em;color:var(--text-dim);margin:-0.6em 0 1.4em">Times assume honest rest and a 10-minute warm-up. All three carry the sane dose from the <a href="#returns">diminishing-returns chapter</a>; the six-day costs more hours mostly because the small muscles get sets of their own.</p>
 
     <h3>Form, in one rule and six cues</h3>
     <p>Good form is not about looking textbook. It is about putting the tension on the muscle instead of the joint, through a full range of motion, so you can keep lifting for decades. The one rule under all of it: <strong>full range, controlled, owned weight.</strong> If you cannot control it, it is too heavy to build anything but your ego. The cues that matter most, lift by lift:</p>
@@ -807,9 +750,9 @@
       <li><strong>Pull-up and pulldown:</strong> start from a full hang, pull the elbows down and back until the chin clears, then lower all the way. No half reps, no kipping.</li>
     </ul>
 
-    <div class="edge"><span class="edge-lbl">The most underrated variable</span><b>Consistency beats optimization.</b> A merely good program run for two years will build more muscle than a perfect program abandoned every six weeks. The templates above are interchangeable enough that switching between them is fine; what is not fine is never giving any of them time to work.</div>
+    <aside class="u-callout"><p class="u-callout-k">The most underrated variable</p><p class="u-callout-body"><b>Consistency beats optimization.</b> A merely good program run for two years will build more muscle than a perfect program abandoned every six weeks. The templates above are interchangeable enough that switching between them is fine; what is not fine is never giving any of them time to work.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 5. AROUND THE MUSCLE ===================== -->
@@ -821,7 +764,7 @@
 
     <h3>Tendons: the slow tissue</h3>
     <p>Muscle is the engine; tendons are the cables that bolt it to your bones. The engine is lavishly supplied with blood and rebuilds in days. The cables are starved of blood and rebuild over months, if at all. That mismatch is the most common reason strong, motivated people get hurt: the muscle gets strong enough to pull harder than the tendon is ready for.</p>
-    <p>Just how slow is tendon? Using carbon-14 left over from Cold War nuclear tests as a built-in date stamp, researchers showed the core collagen of your Achilles tendon is laid down in childhood and then <strong>essentially never replaced</strong>. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3633810/">Heinemeier 2013</a></span> <span class="grade g-b">good</span> The cable you train on at forty is largely the one you grew as a teenager.</p>
+    <p>Just how slow is tendon? Using carbon-14 left over from Cold War nuclear tests as a built-in date stamp, researchers showed the core collagen of your Achilles tendon is laid down in childhood and then <strong>essentially never replaced</strong>. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3633810/">Heinemeier 2013</a></span> <span class="grade g-b">good</span> The cable you train on at forty is largely the one you grew as a teenager.</p>
 
     <figure class="viz reveal" aria-label="Muscle strength rises faster than tendon stiffness over the first months of training.">
       <figcaption>The engine outruns the cable</figcaption>
@@ -849,15 +792,15 @@
       <p class="viz-note">This is why the boring advice (add weight slowly, do not chase a new record every week) is not timidity. It is letting the cable catch up to the engine.</p>
     </figure>
 
-    <p>So the protective move is simple and boring: <strong>add weight in small, patient steps</strong> so the tendon can adapt, and use heavy slow reps and the occasional long isometric hold, both proven tools for cranky tendons over weeks to months. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/26018970/">Beyer 2015</a></span> <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/25979840/">Rio 2015</a></span> <span class="grade g-b">good</span> The lifters still training pain-free in their fifties are almost never the ones who added weight the fastest.</p>
+    <p>So the protective move is simple and boring: <strong>add weight in small, patient steps</strong> so the tendon can adapt, and use heavy slow reps and the occasional long isometric hold, both proven tools for cranky tendons over weeks to months. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26018970/">Beyer 2015</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25979840/">Rio 2015</a></span> <span class="grade g-b">good</span> The lifters still training pain-free in their fifties are almost never the ones who added weight the fastest.</p>
 
     <h3>Stretching and mobility</h3>
     <p>Stretching is one of the most misunderstood habits in fitness. The thing most people do, a long static hold right before they lift, is the one version the evidence is least kind to.</p>
-    <div class="myth"><b>Static stretching does not prevent injury,</b> despite decades of being sold as a warm-up. Trials do not support it. <span class="src"><a href="https://www.tandfonline.com/doi/full/10.1080/15438620802310784">Small 2008</a></span> And held right before lifting, a long static stretch (60 seconds or more on a muscle) can temporarily <em>weaken</em> you by as much as 7 percent for that session. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21659901/">Kay 2012</a></span> <span class="grade g-b">good</span> In fairness, the newest and largest review finds that real-world penalty is small and does not hurt general athletic performance, so it is a minor tax, not a disaster. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/38735533/">Warneke 2024</a></span> Still, there is no reason to pay it right before a heavy set.</div>
-    <p>What to actually do: <strong>warm up by moving, not holding</strong> (leg swings, lunges, light ramp-up sets), which preps you for hard work better than static stretching. <span class="src"><a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">Behm 2016</a></span> <span class="grade g-b">good</span> <strong>Train the full range, especially the stretch:</strong> a growing line of research finds emphasizing the lengthened part of a movement can match or beat conventional lifting for growth, <span class="src"><a href="https://onlinelibrary.wiley.com/doi/10.1080/17461391.2021.1927199">Pedrosa 2022</a></span> <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">Kassiano 2023</a></span> <span class="grade g-c">mixed</span> so the bottom of a squat is not something to rush, it may be the best part. And <strong>stretch for range when you genuinely lack it</strong>, just not crammed in before your heaviest set.</p>
+    <aside class="u-callout"><p class="u-callout-k">The myth</p><p class="u-callout-body"><b>Static stretching does not prevent injury,</b> despite decades of being sold as a warm-up. Trials do not support it. <span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.1080/15438620802310784">Small 2008</a></span> And held right before lifting, a long static stretch (60 seconds or more on a muscle) can temporarily <em>weaken</em> you by as much as 7 percent for that session. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21659901/">Kay 2012</a></span> <span class="grade g-b">good</span> In fairness, the newest and largest review finds that real-world penalty is small and does not hurt general athletic performance, so it is a minor tax, not a disaster. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38735533/">Warneke 2024</a></span> Still, there is no reason to pay it right before a heavy set.</p></aside>
+    <p>What to actually do: <strong>warm up by moving, not holding</strong> (leg swings, lunges, light ramp-up sets), which preps you for hard work better than static stretching. <span class="u-src"><a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">Behm 2016</a></span> <span class="grade g-b">good</span> <strong>Train the full range, especially the stretch:</strong> a growing line of research finds emphasizing the lengthened part of a movement can match or beat conventional lifting for growth, <span class="u-src"><a href="https://onlinelibrary.wiley.com/doi/10.1080/17461391.2021.1927199">Pedrosa 2022</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">Kassiano 2023</a></span> <span class="grade g-c">mixed</span> so the bottom of a squat is not something to rush, it may be the best part. And <strong>stretch for range when you genuinely lack it</strong>, just not crammed in before your heaviest set.</p>
 
     <h3>Cardio and the heart</h3>
-    <p>Lifting builds the muscle; cardio keeps alive the heart and lungs that carry it. And of every number in this guide, the one most tightly linked to how long you live is not how much you can bench, it is how fit your heart is. In a study of over 120,000 people, those with the lowest cardiorespiratory fitness had about <strong>five times</strong> the risk of dying as the fittest, with no ceiling: fitter was always better. (Read it as a strong association in a selected population, not a literal head-to-head, but the direction is not subtle.) <span class="src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+    <p>Lifting builds the muscle; cardio keeps alive the heart and lungs that carry it. And of every number in this guide, the one most tightly linked to how long you live is not how much you can bench, it is how fit your heart is. In a study of over 120,000 people, those with the lowest cardiorespiratory fitness had about <strong>five times</strong> the risk of dying as the fittest, with no ceiling: fitter was always better. (Read it as a strong association in a selected population, not a literal head-to-head, but the direction is not subtle.) <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal scrollx" aria-label="Risk of death by factor: low fitness dwarfs smoking, diabetes, and heart disease.">
       <figcaption>The deadliest risk factor is being unfit</figcaption>
@@ -897,14 +840,14 @@
           <text x="222" y="198" class="v-mono" font-size="12" fill="#B8B2A2">1.29&#215;</text>
         </g>
       </svg>
-      <p class="viz-note">Just 15 minutes of moderate activity a day is linked to <b>14 percent lower mortality and about three extra years of life</b>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">Wen 2011</a></span> The minimum effective dose is genuinely tiny.</p>
+      <p class="viz-note">Just 15 minutes of moderate activity a day is linked to <b>14 percent lower mortality and about three extra years of life</b>. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">Wen 2011</a></span> The minimum effective dose is genuinely tiny.</p>
     </figure>
 
-    <p>Will cardio eat your gains? Only if you do a lot of it. Piling heavy endurance work on top of lifting can blunt growth, an effect called <strong>interference</strong> that scales with dose; running interferes more than cycling, and doing it right before lifting is worst. <span class="src"><a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training__a_meta_analysis_examining.35.aspx">Wilson 2012</a></span> <span class="grade g-b">good</span> The fix is easy: two or three moderate sessions a week buys nearly all the health benefit and interferes with almost nothing. Separate it from lifting when you can, and favor low-impact modes (bike, incline walk, rower) if you are protecting your legs for squats.</p>
+    <p>Will cardio eat your gains? Only if you do a lot of it. Piling heavy endurance work on top of lifting can blunt growth, an effect called <strong>interference</strong> that scales with dose; running interferes more than cycling, and doing it right before lifting is worst. <span class="u-src"><a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training__a_meta_analysis_examining.35.aspx">Wilson 2012</a></span> <span class="grade g-b">good</span> The fix is easy: two or three moderate sessions a week buys nearly all the health benefit and interferes with almost nothing. Separate it from lifting when you can, and favor low-impact modes (bike, incline walk, rower) if you are protecting your legs for squats.</p>
 
-    <div class="balance-note"><b>The same shape, three more times.</b> A little of each is among the highest-return things in this whole guide: patient loading saves your tendons, full-range training may grow you faster, and a couple of cardio sessions buy real years. The lifter who skips all cardio to "protect gains" trades a few percent of muscle for a real cut in lifespan. The dose that helps is far below the dose that hurts.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>The same shape, three more times.</b> A little of each is among the highest-return things in this whole guide: patient loading saves your tendons, full-range training may grow you faster, and a couple of cardio sessions buy real years. The lifter who skips all cardio to "protect gains" trades a few percent of muscle for a real cut in lifespan. The dose that helps is far below the dose that hurts.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 8. DIET ===================== -->
@@ -915,7 +858,7 @@
     <p class="lede">Training is the signal to build; food is the raw material it builds with. Send a perfect signal to an empty warehouse and nothing gets made. The good news, again, is how simple the answer is, and how fast it stops paying to do more. Two things matter: eat enough protein, and eat slightly more than you burn. Almost everything else in nutrition is rounding error.</p>
 
     <h3>Protein: hit the number, then stop chasing it</h3>
-    <p>Protein is the brick. But there is a clean ceiling on how much helps. Pooling 49 studies and nearly 1,900 people, the benefit of more protein for building muscle flattens out at about <strong>0.7 grams per pound of bodyweight per day</strong>. Past that, extra protein adds essentially no extra muscle. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span> (When you are dieting in a calorie deficit, nudging up toward the old "1 gram per pound" rule helps protect muscle, which is the one time the higher number earns its keep.)</p>
+    <p>Protein is the brick. But there is a clean ceiling on how much helps. Pooling 49 studies and nearly 1,900 people, the benefit of more protein for building muscle flattens out at about <strong>0.7 grams per pound of bodyweight per day</strong>. Past that, extra protein adds essentially no extra muscle. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span> (When you are dieting in a calorie deficit, nudging up toward the old "1 gram per pound" rule helps protect muscle, which is the one time the higher number earns its keep.)</p>
 
     <figure class="viz reveal" aria-label="Muscle gain rises with protein intake then plateaus around 0.7 grams per pound.">
       <figcaption>Protein has a ceiling, and it is lower than you think</figcaption>
@@ -939,7 +882,7 @@
         <circle cx="395" cy="86" r="5" fill="#9ec79a"/>
         <text x="403" y="110" class="v-label-b" font-size="12" fill="#9ec79a">the plateau</text>
       </svg>
-      <p class="viz-note">Spread it across the day, roughly <b>0.2 grams per pound per meal over 3 to 4 meals</b>, to keep the muscle-building machinery topped up. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">Schoenfeld 2018</a></span></p>
+      <p class="viz-note">Spread it across the day, roughly <b>0.2 grams per pound per meal over 3 to 4 meals</b>, to keep the muscle-building machinery topped up. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">Schoenfeld 2018</a></span></p>
     </figure>
 
     <div class="tool" id="protein-tool">
@@ -964,14 +907,14 @@
     </div>
 
     <h3>Whole food beats powder, and you cannot out-supplement a bad diet</h3>
-    <p>Protein powder is not special, just dried convenient groceries. In the studies it helped only to the degree it pushed someone's <em>total</em> daily protein to target, and did nothing once the diet was already adequate. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> Eggs, dairy, meat, fish, beans, lentils, tofu, and grains hit the same target and bring vitamins a scoop does not. Powder is a tool for a busy day, not a requirement.</p>
+    <p>Protein powder is not special, just dried convenient groceries. In the studies it helped only to the degree it pushed someone's <em>total</em> daily protein to target, and did nothing once the diet was already adequate. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> Eggs, dairy, meat, fish, beans, lentils, tofu, and grains hit the same target and bring vitamins a scoop does not. Powder is a tool for a busy day, not a requirement.</p>
 
     <h3>Eat a little more than you burn</h3>
-    <p>To build new tissue you need slightly more energy in than out, and <em>slightly</em> is the key word: a surplus of about <strong>200 to 500 calories a day</strong> is plenty, the small end favoring lean gains. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6680710/">Iraki 2019</a></span> A bigger surplus mostly just adds fat, with no extra muscle. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span> <span class="grade g-b">good</span> The "dirty bulk" buys a longer, harder diet later and not much more muscle now.</p>
+    <p>To build new tissue you need slightly more energy in than out, and <em>slightly</em> is the key word: a surplus of about <strong>200 to 500 calories a day</strong> is plenty, the small end favoring lean gains. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6680710/">Iraki 2019</a></span> A bigger surplus mostly just adds fat, with no extra muscle. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span> <span class="grade g-b">good</span> The "dirty bulk" buys a longer, harder diet later and not much more muscle now.</p>
 
-    <div class="balance-note"><b>The diet sweet spot, again.</b> Enough protein, not maximum protein. A small surplus, not a feast. Both levers go flat fast: past about 0.7 g per pound the protein does nothing, past a few hundred surplus calories the extra is just fat. The body builds muscle at a fixed, unhurried pace no amount of overeating can rush.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>The diet sweet spot, again.</b> Enough protein, not maximum protein. A small surplus, not a feast. Both levers go flat fast: past about 0.7 g per pound the protein does nothing, past a few hundred surplus calories the extra is just fat. The body builds muscle at a fixed, unhurried pace no amount of overeating can rush.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 9. THE SMALLER INPUTS ===================== -->
@@ -982,14 +925,14 @@
     <p class="lede">Three more inputs get far more attention than they deserve: the sun on your skin, the hour you train, and the pre-workout in your shaker. One matters more than people think, one matters less, and one you can skip entirely. None of them moves the needle like food and sleep.</p>
 
     <h3>Sunlight and vitamin D</h3>
-    <p>One input your body wants comes not from the kitchen but from the sky. Ultraviolet B light hits a cholesterol-like molecule in your skin and physically rearranges it into vitamin D, <span class="src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> a hormone you need for strong bones, working muscles, and a steady mood, and roughly a billion people do not get enough. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK532266/">Sizar 2024</a></span> <span class="grade g-b">good</span> Food is a poor source, which is exactly why sunlight, or a cheap pill in winter, matters.</p>
-    <p>A useful rule of thumb is <strong>10 to 30 minutes</strong> of midday sun on bare arms and legs, most days, for lighter skin; darker skin and higher latitudes need meaningfully longer, aiming for a blood level of <strong>30 ng/mL or above</strong>. The goal is brief and regular, never a burn: too much raises skin-cancer risk for no extra vitamin D, because the skin stops making more once it has enough. The often-hyped link to testosterone, by contrast, is weak and unreliable. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11506788/">Cordeiro 2024</a></span></p>
+    <p>One input your body wants comes not from the kitchen but from the sky. Ultraviolet B light hits a cholesterol-like molecule in your skin and physically rearranges it into vitamin D, <span class="u-src"><a href="https://academic.oup.com/jcem/article/96/7/1911/2833671">Holick 2011</a></span> a hormone you need for strong bones, working muscles, and a steady mood, and roughly a billion people do not get enough. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK532266/">Sizar 2024</a></span> <span class="grade g-b">good</span> Food is a poor source, which is exactly why sunlight, or a cheap pill in winter, matters.</p>
+    <p>A useful rule of thumb is <strong>10 to 30 minutes</strong> of midday sun on bare arms and legs, most days, for lighter skin; darker skin and higher latitudes need meaningfully longer, aiming for a blood level of <strong>30 ng/mL or above</strong>. The goal is brief and regular, never a burn: too much raises skin-cancer risk for no extra vitamin D, because the skin stops making more once it has enough. The often-hyped link to testosterone, by contrast, is weak and unreliable. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11506788/">Cordeiro 2024</a></span></p>
 
     <h3>When to train</h3>
-    <p>Your muscles are genuinely a little stronger in the late afternoon and early evening, when core body temperature peaks, worth a few percent on a max effort. <span class="src"><a href="https://journals.physiology.org/doi/full/10.1152/physiol.00030.2020">Douglas 2021</a></span> <span class="grade g-c">mixed</span> But over months, morning and evening lifters <strong>build the same muscle and strength</strong>, and morning bodies adapt to morning training. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/30704301/">Grgic 2019</a></span> <span class="grade g-b">good</span> So the answer that matters: <strong>train at the time you will actually keep showing up.</strong> The few percent from lifting at 5 PM is dwarfed by the 100 percent you lose on a skipped session. The one caveat: very intense exercise right before bed disturbs some people's sleep.</p>
+    <p>Your muscles are genuinely a little stronger in the late afternoon and early evening, when core body temperature peaks, worth a few percent on a max effort. <span class="u-src"><a href="https://journals.physiology.org/doi/full/10.1152/physiol.00030.2020">Douglas 2021</a></span> <span class="grade g-c">mixed</span> But over months, morning and evening lifters <strong>build the same muscle and strength</strong>, and morning bodies adapt to morning training. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30704301/">Grgic 2019</a></span> <span class="grade g-b">good</span> So the answer that matters: <strong>train at the time you will actually keep showing up.</strong> The few percent from lifting at 5 PM is dwarfed by the 100 percent you lose on a skipped session. The one caveat: very intense exercise right before bed disturbs some people's sleep.</p>
 
     <h3>Caffeine: the one you can skip</h3>
-    <p>Caffeine is the most popular performance drug on Earth, and I never touch it. It works, but barely: at a typical dose it improves endurance power by about <strong>3 percent</strong> and strength by low single digits, <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/29876876/">Southward 2018</a></span> <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-a">strong</span> and it does nothing for muscle growth directly. Those are real edges if you are racing for a medal, and a rounding error if you are building muscle over years.</p>
+    <p>Caffeine is the most popular performance drug on Earth, and I never touch it. It works, but barely: at a typical dose it improves endurance power by about <strong>3 percent</strong> and strength by low single digits, <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29876876/">Southward 2018</a></span> <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-a">strong</span> and it does nothing for muscle growth directly. Those are real edges if you are racing for a medal, and a rounding error if you are building muscle over years.</p>
 
     <figure class="viz reveal" aria-label="Caffeine's small share of performance next to everything else.">
       <figcaption>What caffeine actually adds</figcaption>
@@ -1005,11 +948,11 @@
       <p class="viz-note">And that few percent is performance on the day, not muscle at the end of the year. Caffeine has no direct muscle-building effect; any long-term gain is small, indirect (a slightly harder session here and there), and unreliable.</p>
     </figure>
 
-    <p>Does a daily user have a lasting edge over someone who never touches it? Not really. Much of a daily user's morning lift is just <strong>reversing overnight withdrawal</strong>, dragging them back to the baseline a non-user already lives at, <span class="src"><a href="https://www.tandfonline.com/doi/full/10.1080/00049530500125090">James 2005</a></span> and a caffeine-naive person responds more strongly on the rare day they do use it. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6343867/">Lara 2019</a></span> So keep it as an occasional tool for a genuinely tired day (about 1.5 to 3 mg per pound, an hour before), never a daily crutch, and never late, because it wrecks the sleep that builds you. Skipping it costs almost nothing.</p>
+    <p>Does a daily user have a lasting edge over someone who never touches it? Not really. Much of a daily user's morning lift is just <strong>reversing overnight withdrawal</strong>, dragging them back to the baseline a non-user already lives at, <span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.1080/00049530500125090">James 2005</a></span> and a caffeine-naive person responds more strongly on the rare day they do use it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6343867/">Lara 2019</a></span> So keep it as an occasional tool for a genuinely tired day (about 1.5 to 3 mg per pound, an hour before), never a daily crutch, and never late, because it wrecks the sleep that builds you. Skipping it costs almost nothing.</p>
 
-    <div class="balance-note"><b>One up, one even, one down.</b> Sun is a free, high-return habit most people under-do. Training time barely matters next to consistency. Caffeine is a small, optional acute aid the marketing inflates into a building block. As ever, the sane dose of each sits well short of the maximum, and two of the three you can stop worrying about entirely.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>One up, one even, one down.</b> Sun is a free, high-return habit most people under-do. Training time barely matters next to consistency. Caffeine is a small, optional acute aid the marketing inflates into a building block. As ever, the sane dose of each sits well short of the maximum, and two of the three you can stop worrying about entirely.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 12. THE BRAIN ===================== -->
@@ -1019,7 +962,7 @@
 
     <p class="lede">If the only payoff from exercise were a better-looking body, it would still be worth it. But the most remarkable benefits happen above the neck. Movement is about the single most effective thing a healthy person can do for their brain, and one of the few interventions that visibly rebuilds brain structure rather than just slowing its decline.</p>
 
-    <p>The landmark result is almost hard to believe. Older adults who walked regularly for a year <em>grew</em> their hippocampus (the brain's memory center) by about 2 percent, effectively turning back one to two years of age-related shrinkage, while the control group's brains kept shrinking. Their memory improved alongside it. <span class="src"><a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">Erickson 2011</a></span> <span class="grade g-b">good</span></p>
+    <p>The landmark result is almost hard to believe. Older adults who walked regularly for a year <em>grew</em> their hippocampus (the brain's memory center) by about 2 percent, effectively turning back one to two years of age-related shrinkage, while the control group's brains kept shrinking. Their memory improved alongside it. <span class="u-src"><a href="https://www.pnas.org/doi/10.1073/pnas.1015950108">Erickson 2011</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal" aria-label="A brain with the hippocampus highlighted, fed by exercise-driven BDNF.">
       <figcaption>Exercise grows the memory center</figcaption>
@@ -1050,21 +993,21 @@
         <text x="120" y="124" text-anchor="middle" class="v-label" font-size="10" fill="#B8B2A2">"fertilizer</text>
         <text x="120" y="138" text-anchor="middle" class="v-label" font-size="10" fill="#B8B2A2">for neurons"</text>
       </svg>
-      <p class="viz-note">Exercise raises <b>BDNF</b>, a protein that acts like fertilizer for brain cells, helping them grow, connect, and survive. A single workout bumps it up; regular training raises your baseline. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4314337/">Szuhany 2015</a></span></p>
+      <p class="viz-note">Exercise raises <b>BDNF</b>, a protein that acts like fertilizer for brain cells, helping them grow, connect, and survive. A single workout bumps it up; regular training raises your baseline. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4314337/">Szuhany 2015</a></span></p>
     </figure>
 
-    <div class="stat-row">
-      <div class="stat green"><span class="fig">+2%</span><span class="fig-lbl">hippocampus growth from a year of walking, reversing years of aging</span></div>
-      <div class="stat sky"><span class="fig">&#8805;</span><span class="fig-lbl">exercise matches or beats medication and therapy for mild-to-moderate depression</span></div>
-      <div class="stat amber"><span class="fig">1 set</span><span class="fig-lbl">even a single workout sharpens focus and working memory for a while after</span></div>
+    <div class="u-stats">
+      <div class="u-stat"><span class="u-fig">+2%</span><span class="u-fig-lbl">hippocampus growth from a year of walking, reversing years of aging</span></div>
+      <div class="u-stat"><span class="u-fig">&#8805;</span><span class="u-fig-lbl">exercise matches or beats medication and therapy for mild-to-moderate depression</span></div>
+      <div class="u-stat"><span class="u-fig">1 set</span><span class="u-fig-lbl">even a single workout sharpens focus and working memory for a while after</span></div>
     </div>
 
     <h3>The everyday version</h3>
-    <p>You do not have to be elderly to collect this. A single bout of exercise reliably sharpens focus and working memory for hours after, which is why a hard morning session leaves your head clearer. <span class="src"><a href="https://www.nature.com/articles/s44271-024-00124-2">2024 meta-analysis</a></span> <span class="grade g-b">good</span> For low mood the evidence is striking: across a huge umbrella review, physical activity was at least as effective as medication and therapy for mild-to-moderate depression and anxiety (a comparison across separate studies, not a head-to-head). <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">Singh 2023</a></span> <span class="grade g-a">strong</span> And it is not just a runner's high: lifting improved thinking in older adults with mild cognitive impairment more than a year later, and imaging suggests it protects the hippocampus from shrinking. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3110111/">Mavros / SMART trial</a></span> <span class="src"><a href="https://link.springer.com/article/10.1007/s11357-024-01483-8">Broadhouse 2024</a></span> <span class="grade g-c">mixed</span></p>
+    <p>You do not have to be elderly to collect this. A single bout of exercise reliably sharpens focus and working memory for hours after, which is why a hard morning session leaves your head clearer. <span class="u-src"><a href="https://www.nature.com/articles/s44271-024-00124-2">2024 meta-analysis</a></span> <span class="grade g-b">good</span> For low mood the evidence is striking: across a huge umbrella review, physical activity was at least as effective as medication and therapy for mild-to-moderate depression and anxiety (a comparison across separate studies, not a head-to-head). <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10579187/">Singh 2023</a></span> <span class="grade g-a">strong</span> And it is not just a runner's high: lifting improved thinking in older adults with mild cognitive impairment more than a year later, and imaging suggests it protects the hippocampus from shrinking. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3110111/">Mavros / SMART trial</a></span> <span class="u-src"><a href="https://link.springer.com/article/10.1007/s11357-024-01483-8">Broadhouse 2024</a></span> <span class="grade g-c">mixed</span></p>
 
-    <div class="balance-note"><b>And here is the kicker.</b> Every one of these brain benefits shows up at <em>moderate</em> doses, the same sustainable training this guide recommends. You do not need to be huge, or lean, or near your ceiling for the sharper memory, the steadier mood, the protected aging brain. The brain rewards showing up, not maxing out.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>And here is the kicker.</b> Every one of these brain benefits shows up at <em>moderate</em> doses, the same sustainable training this guide recommends. You do not need to be huge, or lean, or near your ceiling for the sharper memory, the steadier mood, the protected aging brain. The brain rewards showing up, not maxing out.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 13. GENETICS ===================== -->
@@ -1074,7 +1017,7 @@
 
     <p class="lede">Here is the least comfortable truth in this guide, and the most freeing once you accept it. Two people can run the exact same program, eat the same food, sleep the same hours, and end up with wildly different bodies, because much of how you respond to training was decided before you ever touched a weight. Knowing what is fixed and what is not is the difference between training with the genes you have and resenting the ones you do not.</p>
 
-    <p>The cleanest evidence is a single, beautiful study. 585 people did the identical 12-week arm program. The change in muscle size ranged from <strong>minus 2 percent to plus 59 percent</strong>, and strength gains ran from zero to plus 250 percent. Same program. Same effort, as best anyone could control. Completely different bodies. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
+    <p>The cleanest evidence is a single, beautiful study. 585 people did the identical 12-week arm program. The change in muscle size ranged from <strong>minus 2 percent to plus 59 percent</strong>, and strength gains ran from zero to plus 250 percent. Same program. Same effort, as best anyone could control. Completely different bodies. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal" aria-label="The spread of muscle growth among 585 people on the same program.">
       <figcaption>Same program, 585 different results</figcaption>
@@ -1106,17 +1049,17 @@
         <text x="245" y="112" text-anchor="middle" class="v-axis-t" fill="#D4C4A0">average (~19%)</text>
         <text x="590" y="140" text-anchor="middle" class="v-axis-t" fill="#9ec79a">high responders</text>
       </svg>
-      <p class="viz-note">When researchers sorted lifters by results, they found clean groups: extreme responders grew their fibers about 58 percent, modest responders about 28 percent, and non-responders close to zero, and the big responders started with more muscle stem cells to draw on. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">Petrella 2008</a></span></p>
+      <p class="viz-note">When researchers sorted lifters by results, they found clean groups: extreme responders grew their fibers about 58 percent, modest responders about 28 percent, and non-responders close to zero, and the big responders started with more muscle stem cells to draw on. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">Petrella 2008</a></span></p>
     </figure>
 
     <h3>You are born with your fibers, and you cannot make more</h3>
-    <p>The number of muscle fibers you have is largely set in early life and varies roughly <strong>twofold between people</strong>, from around four hundred thousand to nine hundred thousand in a single thigh muscle. <span class="src"><a href="https://www.sciencedirect.com/science/article/abs/pii/0022510X88901323">Lexell 1988</a></span> <span class="grade g-c">mixed</span> And adult training does not add fibers; making new ones in humans is minimal or unproven. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">2024 review</a></span> When you "build muscle," you enlarge the fibers you were born with. Start with more, and your ceiling is simply higher. It is a lottery you cannot enter twice, so stop comparing: your job is to fill out the hand you were dealt, not the hand of the person next to you.</p>
+    <p>The number of muscle fibers you have is largely set in early life and varies roughly <strong>twofold between people</strong>, from around four hundred thousand to nine hundred thousand in a single thigh muscle. <span class="u-src"><a href="https://www.sciencedirect.com/science/article/abs/pii/0022510X88901323">Lexell 1988</a></span> <span class="grade g-c">mixed</span> And adult training does not add fibers; making new ones in humans is minimal or unproven. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">2024 review</a></span> When you "build muscle," you enlarge the fibers you were born with. Start with more, and your ceiling is simply higher. It is a lottery you cannot enter twice, so stop comparing: your job is to fill out the hand you were dealt, not the hand of the person next to you.</p>
 
     <h3>Fast and slow: the other genetic dial</h3>
-    <p>Your fibers also come in types: slow, fatigue-resistant ones for endurance, and fast, powerful ones for force. The mix is largely inherited and the spread is enormous, from elite sprinters around 80 percent fast to elite distance runners up to 90 percent slow, about half of it genetic and traceable to genes like ACTN3, the so-called "sprint gene." <span class="src"><a href="https://www.sciencedirect.com/science/article/abs/pii/B9780128161937000142">fiber-type review</a></span> <span class="src"><a href="https://journals.physiology.org/doi/full/10.1152/physiolgenomics.00173.2007">Vincent 2007</a></span> <span class="grade g-c">mixed</span> You can shift the mix a little, but not rewrite it: some people really were born to lift heavy, others to run far.</p>
+    <p>Your fibers also come in types: slow, fatigue-resistant ones for endurance, and fast, powerful ones for force. The mix is largely inherited and the spread is enormous, from elite sprinters around 80 percent fast to elite distance runners up to 90 percent slow, about half of it genetic and traceable to genes like ACTN3, the so-called "sprint gene." <span class="u-src"><a href="https://www.sciencedirect.com/science/article/abs/pii/B9780128161937000142">fiber-type review</a></span> <span class="u-src"><a href="https://journals.physiology.org/doi/full/10.1152/physiolgenomics.00173.2007">Vincent 2007</a></span> <span class="grade g-c">mixed</span> You can shift the mix a little, but not rewrite it: some people really were born to lift heavy, others to run far.</p>
 
     <h3>The brake, and the people born without it</h3>
-    <p>Muscle has a built-in brake: a protein called myostatin that actively limits how big you get. Break that gene and the limit comes off, which produces some of the most striking creatures in biology. A boy born in 2004 with two broken copies was extraordinarily muscular from birth. <span class="src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa040933">Schuelke 2004</a></span> The grotesquely muscled Belgian Blue cattle carry the same kind of mutation. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9314496/">McPherron 1997</a></span> So do "bully whippets," and remarkably, whippets with just <em>one</em> broken copy are more muscular and race significantly faster. <span class="src"><a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0030079">Mosher 2007</a></span> <span class="grade g-c">mixed</span></p>
+    <p>Muscle has a built-in brake: a protein called myostatin that actively limits how big you get. Break that gene and the limit comes off, which produces some of the most striking creatures in biology. A boy born in 2004 with two broken copies was extraordinarily muscular from birth. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa040933">Schuelke 2004</a></span> The grotesquely muscled Belgian Blue cattle carry the same kind of mutation. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/9314496/">McPherron 1997</a></span> So do "bully whippets," and remarkably, whippets with just <em>one</em> broken copy are more muscular and race significantly faster. <span class="u-src"><a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0030079">Mosher 2007</a></span> <span class="grade g-c">mixed</span></p>
 
     <figure class="photo reveal">
       <img src="assets/images/big-enough/belgianblue.webp" width="1500" height="1005" loading="lazy" decoding="async" alt="A Belgian Blue bull standing in a field, its hindquarters and shoulders grotesquely bulging with double muscling.">
@@ -1125,11 +1068,11 @@
       </figcaption>
     </figure>
 
-    <p>The natural genetic ceiling on muscle is real, and you cannot file it off. Twin studies put the heritability of lean mass and strength somewhere around <strong>50 to 80 percent</strong>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">Arden 1997</a></span> <span class="grade g-b">good</span> Your genes hold a lot of the cards.</p>
+    <p>The natural genetic ceiling on muscle is real, and you cannot file it off. Twin studies put the heritability of lean mass and strength somewhere around <strong>50 to 80 percent</strong>. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">Arden 1997</a></span> <span class="grade g-b">good</span> Your genes hold a lot of the cards.</p>
 
-    <div class="balance-note"><b>But read the hopeful half of that number.</b> Genes set your ceiling and your speed, not whether training works. Almost everyone gets stronger, healthier, and better-built by lifting; the high responders just get there faster. The health, the brain benefits, the strength to carry your own life, those are available to every genotype. The only thing genes really steal is your right to compare yourself to anyone else.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>But read the hopeful half of that number.</b> Genes set your ceiling and your speed, not whether training works. Almost everyone gets stronger, healthier, and better-built by lifting; the high responders just get there faster. The health, the brain benefits, the strength to carry your own life, those are available to every genotype. The only thing genes really steal is your right to compare yourself to anyone else.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 14. GAIN VS LOSS ===================== -->
@@ -1139,7 +1082,7 @@
 
     <p class="lede">Building muscle is slow. Losing it is fast. That asymmetry sounds cruel, and people use it to justify never missing a workout, but the real picture is far more forgiving, because your muscle keeps a permanent record of having been big before. Once built, you never quite start from zero again.</p>
 
-    <p>First the sobering side: with <em>complete</em> immobilization, a cast or a hospital bed, you can lose muscle at around <strong>half a percent of its mass per day</strong> early on, and strength drains about four times faster than size. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> <span class="grade g-b">good</span> But normal life is nothing like a hospital bed. Stopping for a couple of weeks barely touches your strength; real declines show up only after three or four weeks off. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">Mujika 2000</a></span> A vacation will not undo your year.</p>
+    <p>First the sobering side: with <em>complete</em> immobilization, a cast or a hospital bed, you can lose muscle at around <strong>half a percent of its mass per day</strong> early on, and strength drains about four times faster than size. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> <span class="grade g-b">good</span> But normal life is nothing like a hospital bed. Stopping for a couple of weeks barely touches your strength; real declines show up only after three or four weeks off. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">Mujika 2000</a></span> A vacation will not undo your year.</p>
 
     <figure class="viz reveal" aria-label="A timeline showing muscle built slowly, lost faster, then regained fastest.">
       <figcaption>Built slow, lost fast, regained fastest</figcaption>
@@ -1169,19 +1112,19 @@
         <text x="360" y="205" class="v-axis-t" fill="#d9978c">faster loss</text>
         <text x="505" y="150" class="v-axis-t" fill="#D4C4A0">fastest regain</text>
       </svg>
-      <p class="viz-note">When a muscle grows, it gains permanent control centers called myonuclei, and a DNA-level memory of having been trained. Neither is lost when the muscle shrinks, which is why coming back is so much faster than starting out. <span class="src"><a href="https://www.pnas.org/doi/10.1073/pnas.0913935107">Bruusgaard 2010</a></span> <span class="src"><a href="https://www.nature.com/articles/s41598-018-20287-3">Seaborne 2018</a></span></p>
+      <p class="viz-note">When a muscle grows, it gains permanent control centers called myonuclei, and a DNA-level memory of having been trained. Neither is lost when the muscle shrinks, which is why coming back is so much faster than starting out. <span class="u-src"><a href="https://www.pnas.org/doi/10.1073/pnas.0913935107">Bruusgaard 2010</a></span> <span class="u-src"><a href="https://www.nature.com/articles/s41598-018-20287-3">Seaborne 2018</a></span></p>
     </figure>
 
     <h3>What this means for you</h3>
     <ul>
       <li><strong>Missing a week or two is genuinely nothing.</strong> Illness, travel, a busy stretch at work: your muscle barely notices. Do not torch your sleep or your sanity to avoid a missed session.</li>
       <li><strong>Coming back is not starting over.</strong> Whatever you built once returns faster the second time, thanks to those retained nuclei. The hardest muscle you will ever build is the muscle you have never built before.</li>
-      <li><strong>The clock you cannot ignore is age.</strong> After about 50, muscle slips away at roughly 1 to 2 percent a year, strength faster still. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">von Haehling 2010</a></span> <span class="grade g-b">good</span> Lifting is the one proven brake; the muscle you bank in your thirties and forties is a deposit against the decades your body starts trying to spend it.</li>
+      <li><strong>The clock you cannot ignore is age.</strong> After about 50, muscle slips away at roughly 1 to 2 percent a year, strength faster still. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">von Haehling 2010</a></span> <span class="grade g-b">good</span> Lifting is the one proven brake; the muscle you bank in your thirties and forties is a deposit against the decades your body starts trying to spend it.</li>
     </ul>
 
-    <div class="balance-note"><b>The reassuring math of consistency.</b> Because losses are slow in normal life and regains are fast, you do not need to be perfect, you need to be persistent. A lifter who trains hard most weeks for ten years, missed sessions and all, ends up far ahead of one who trains flawlessly for six months and quits. Show up most of the time, for a long time. That is the entire secret.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>The reassuring math of consistency.</b> Because losses are slow in normal life and regains are fast, you do not need to be perfect, you need to be persistent. A lifter who trains hard most weeks for ten years, missed sessions and all, ends up far ahead of one who trains flawlessly for six months and quits. Show up most of the time, for a long time. That is the entire secret.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 11. DIMINISHING RETURNS + ENOUGH ===================== -->
@@ -1192,7 +1135,7 @@
     <p class="lede">This is the most important chapter in the guide, and the one the fitness industry least wants you to read, because its business depends on selling you the part of the curve that barely moves. In a sentence: your first year of training can build as much muscle as the next four or five combined, and the closer you get to your genetic ceiling, the more obscenely expensive each additional pound becomes. The maximum is real, but the last stretch costs so much time, effort, and health that, for almost everyone, the smart target is not the maximum at all.</p>
 
     <h3>The taper is brutal, and it is normal</h3>
-    <p>Every serious coaching model agrees on the shape. A natural male lifter might gain 20 to 25 pounds of muscle in year one, then 10 to 12 in year two, 5 to 6 in year three, and just 2 to 3 in year four, before it slows to a trickle. <span class="src"><a href="https://bodyrecomposition.com/muscle-gain/genetic-muscular-potential">McDonald</a></span> <span class="src"><a href="https://alanaragon.com/wp-content/uploads/2018/01/A.A.R.R_Feb..2009.pdf">Aragon 2009</a></span> <span class="grade g-c">mixed</span> (Women gain at roughly half these rates, on the same curve.) The total natural ceiling, as a fat-free mass index, sits around 25 for men, a line drug-free athletes essentially never cross. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">Kouri 1995</a></span></p>
+    <p>Every serious coaching model agrees on the shape. A natural male lifter might gain 20 to 25 pounds of muscle in year one, then 10 to 12 in year two, 5 to 6 in year three, and just 2 to 3 in year four, before it slows to a trickle. <span class="u-src"><a href="https://bodyrecomposition.com/muscle-gain/genetic-muscular-potential">McDonald</a></span> <span class="u-src"><a href="https://alanaragon.com/wp-content/uploads/2018/01/A.A.R.R_Feb..2009.pdf">Aragon 2009</a></span> <span class="grade g-c">mixed</span> (Women gain at roughly half these rates, on the same curve.) The total natural ceiling, as a fat-free mass index, sits around 25 for men, a line drug-free athletes essentially never cross. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">Kouri 1995</a></span></p>
 
     <figure class="viz reveal" aria-label="Muscle gained per year falls steeply after the first year.">
       <figcaption>The first year is a gift. It never comes again.</figcaption>
@@ -1273,7 +1216,7 @@
 
     <p>Put the pieces together and the case makes itself. The first chunk of progress is cheap and fast; the last is slow, expensive, and, as the <a href="#toomuch">next chapter</a> shows, sometimes actively bad for you. Getting to <strong>90 percent of your potential</strong> takes a few focused years you would want anyway. The final 10 percent can take as long again, demands a precision that bleeds into the rest of your life, and yields a difference most people never notice. That trade is worth it for a competitive athlete; for everyone else, the point worth aiming at sits below the absolute maximum: strong, lean, capable, visibly built, with your evenings and joints intact. That is what this guide means by <em>big enough</em>.</p>
 
-    <p class="pullquote">The maximum is for people who are paid to reach it. Everyone else is better served by the place where the line goes flat.<cite>The whole argument, in one sentence</cite></p>
+    <blockquote class="u-pq">The maximum is for people who are paid to reach it. Everyone else is better served by the place where the line goes flat.<cite class="u-pq-cite">The whole argument, in one sentence</cite></blockquote>
 
     <h3>So, how much do you actually need?</h3>
     <p>Forget the maximum. How much does it actually take to get <em>most</em> of the way there, the 80 to 90 percent a sane person can sustain for life? I had the research torn apart to answer exactly this, with a skeptic told to attack the comfortable answer. Here is what the data say, including the two places it refused to say what I wanted.</p>
@@ -1290,9 +1233,9 @@
         <tr><td>Time</td><td>3 to 5 years, consistent</td><td class="n">~90%</td><td>the years are not optional</td></tr>
       </tbody>
     </table></div>
-    <p class="src" style="white-space:normal;display:block;margin:-0.6em 0 1.4em">The percentages are honest estimates read off noisy dose-response curves, not figures any one study reports. The effect sizes underneath them are real and cited below. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/">Tagawa 2021</a></span> <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span></p>
+    <p style="white-space:normal;display:block;font-size:0.8em;color:var(--text-dim);margin:-0.6em 0 1.4em">The percentages are honest estimates read off noisy dose-response curves, not figures any one study reports. The effect sizes underneath them are real and cited below. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/">Tagawa 2021</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span></p>
 
-    <p>Read down that table and a pattern jumps out: almost every input is a <strong>threshold, not a ladder</strong>. You climb fast to a sane dose, capture nearly all the benefit, and the line goes flat. The maximalist eating a gram of protein per pound is not out-growing you at 0.7, he is just spending more: a trial that doubled trained lifters to roughly 1.5 g per pound added <strong>zero</strong> extra muscle. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></p>
+    <p>Read down that table and a pattern jumps out: almost every input is a <strong>threshold, not a ladder</strong>. You climb fast to a sane dose, capture nearly all the benefit, and the line goes flat. The maximalist eating a gram of protein per pound is not out-growing you at 0.7, he is just spending more: a trial that doubled trained lifters to roughly 1.5 g per pound added <strong>zero</strong> extra muscle. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></p>
 
     <figure class="viz reveal scrollx" aria-label="Six small diminishing-returns curves, one per input, each marking the sane point.">
       <figcaption>The same shape, over and over</figcaption>
@@ -1384,26 +1327,26 @@
     </figure>
 
     <h3>The two the data would not flatten</h3>
-    <p><strong>Volume keeps climbing.</strong> This is where my comfortable story broke, so I am keeping the truth instead. The best evidence to date, a 2026 meta-regression, found that more weekly sets keep adding muscle across the entire range studied, with no point where it turns into "junk," just a gentler and gentler slope. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> So "you only need ten sets" is too convenient. The honest version: ten hard sets gets the large majority, fifteen to twenty keeps adding a real if shrinking amount, and past twenty you are still buying muscle, just at a worse price in time, fatigue, and joints. Chasing your ceiling is the one place the maximalist is not wasting effort, only paying a premium. (The gift on the flip side: <em>keeping</em> muscle is cheap. Lifters who merely held their volume steady grew as much as those who piled on 30 to 60 percent more sets.) <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/39665246/">Enes 2024</a></span></p>
+    <p><strong>Volume keeps climbing.</strong> This is where my comfortable story broke, so I am keeping the truth instead. The best evidence to date, a 2026 meta-regression, found that more weekly sets keep adding muscle across the entire range studied, with no point where it turns into "junk," just a gentler and gentler slope. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> So "you only need ten sets" is too convenient. The honest version: ten hard sets gets the large majority, fifteen to twenty keeps adding a real if shrinking amount, and past twenty you are still buying muscle, just at a worse price in time, fatigue, and joints. Chasing your ceiling is the one place the maximalist is not wasting effort, only paying a premium. (The gift on the flip side: <em>keeping</em> muscle is cheap. Lifters who merely held their volume steady grew as much as those who piled on 30 to 60 percent more sets.) <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39665246/">Enes 2024</a></span></p>
 
-    <p><strong>Sleep is a floor you can fall through.</strong> Not "more is better," but "clear the bar or pay." When dieters slept 5.5 hours instead of 8.5, they lost the same weight but <strong>60 percent more of it came from muscle, and 55 percent less from fat</strong>. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/20921542/">Nedeltcheva 2010</a></span> <span class="grade g-b">good</span> Past eight or nine hours adds little, so it is a threshold like the others. But it is the one "sane" compromise that quietly does real damage: "I will just sleep six" is not moderation, it is a tax on everything else you are doing.</p>
+    <p><strong>Sleep is a floor you can fall through.</strong> Not "more is better," but "clear the bar or pay." When dieters slept 5.5 hours instead of 8.5, they lost the same weight but <strong>60 percent more of it came from muscle, and 55 percent less from fat</strong>. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/20921542/">Nedeltcheva 2010</a></span> <span class="grade g-b">good</span> Past eight or nine hours adds little, so it is a threshold like the others. But it is the one "sane" compromise that quietly does real damage: "I will just sleep six" is not moderation, it is a tax on everything else you are doing.</p>
 
     <h3>The part the comfortable version hides</h3>
     <p>"Not insane" is not the same as "barely trying." The inputs above are moderate; the <em>consistency</em> they demand is not. Reaching 90 percent of your potential means three to five years of near-uninterrupted, progressive, hard training. The person who "cannot build muscle" has rarely hit the extremity ceiling; they failed the floor, which is non-negotiable:</p>
     <ul>
       <li><strong>At least 10 hard sets per muscle group, every week, for years.</strong> Two sets when you feel like it maintains at best.</li>
-      <li><strong>Most sets within 1 to 2 reps of failure.</strong> Comfortable, chatty sets do almost nothing. <span class="src"><a href="https://link.springer.com/article/10.1007/s40279-024-02069-2">Robinson 2024</a></span></li>
+      <li><strong>Most sets within 1 to 2 reps of failure.</strong> Comfortable, chatty sets do almost nothing. <span class="u-src"><a href="https://link.springer.com/article/10.1007/s40279-024-02069-2">Robinson 2024</a></span></li>
       <li><strong>The weight on the bar has to climb over months.</strong> No progression, no growth.</li>
       <li><strong>Enough protein and enough sleep, repeated for years.</strong></li>
     </ul>
     <p>You can skip the six meals a day, the 40-set marathons, the 300 grams of protein, the obsession. You cannot skip showing up and working hard, most weeks, for a long time. Any guide that tells you otherwise is lying.</p>
 
     <h3>And one blunt word about "huge"</h3>
-    <p>You can get genuinely, head-turningly muscular without drugs. You cannot get <em>magazine-cover</em> huge, and it matters that someone says so. The natural ceiling, as fat-free mass index, sits around 25: a lean 185 to 195 pounds on a 5-foot-10 frame, impressive, rare, unmistakably "he lifts." Drug users in the same study averaged more than four FFMI points higher, roughly 30 extra pounds of muscle not available to a natural body. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">Kouri 1995</a></span> <span class="grade g-b">good</span> (That 25 is the edge most well-trained naturals reach, not a wall of physics; rare outliers push to 26 or 27. <span class="src"><a href="https://gregnuckols.com/2016/12/11/ffmi/">Nuckols</a></span>) The physique you can build naturally is excellent, and it is <em>not</em> the look being sold to you by people on pharmacology. Aim at your own ceiling. It is high enough.</p>
+    <p>You can get genuinely, head-turningly muscular without drugs. You cannot get <em>magazine-cover</em> huge, and it matters that someone says so. The natural ceiling, as fat-free mass index, sits around 25: a lean 185 to 195 pounds on a 5-foot-10 frame, impressive, rare, unmistakably "he lifts." Drug users in the same study averaged more than four FFMI points higher, roughly 30 extra pounds of muscle not available to a natural body. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/7496846/">Kouri 1995</a></span> <span class="grade g-b">good</span> (That 25 is the edge most well-trained naturals reach, not a wall of physics; rare outliers push to 26 or 27. <span class="u-src"><a href="https://gregnuckols.com/2016/12/11/ffmi/">Nuckols</a></span>) The physique you can build naturally is excellent, and it is <em>not</em> the look being sold to you by people on pharmacology. Aim at your own ceiling. It is high enough.</p>
 
-    <div class="balance-note"><b>So, how much do you actually need?</b> Less of almost everything than the internet says, and more patience than it admits. Moderate protein, moderate volume (the one you might honestly push a bit), enough sleep, a small surplus, real effort, for years. That gets you to about 90 percent of a ceiling that is itself the healthy, sustainable, drug-free kind of big. The last 10 percent, and the magazine look beyond it, is where the cost goes vertical and, eventually, the drugs come out. Stop at the sane maximum. It was always the only one worth wanting.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>So, how much do you actually need?</b> Less of almost everything than the internet says, and more patience than it admits. Moderate protein, moderate volume (the one you might honestly push a bit), enough sleep, a small surplus, real effort, for years. That gets you to about 90 percent of a ceiling that is itself the healthy, sustainable, drug-free kind of big. The last 10 percent, and the magazine look beyond it, is where the cost goes vertical and, eventually, the drugs come out. Stop at the sane maximum. It was always the only one worth wanting.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 16. WHEN BIG GOES WRONG ===================== -->
@@ -1413,7 +1356,7 @@
 
     <p class="lede">For most of this guide, more muscle has been good news: better health, a sharper brain, a longer life. That stays true across the whole normal range. But the line does not run straight forever. Push to the genetic edge and past it, almost always with drugs, and the same trait that protected you starts taking years back. This is not to scare you off the weights, but to mark honestly where the curve turns.</p>
 
-    <p>Start with the good news, because it is the rule and the rest is the exception. Ordinary, functional muscle is strongly protective: grip strength alone predicts longevity so well that every 11-pound drop was tied to a <strong>16 percent higher risk of death</strong> across 140,000 people. <span class="src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(14)62000-6/abstract">Leong 2015</a></span> <span class="grade g-a">strong</span> Being strong is one of the best bets you can make.</p>
+    <p>Start with the good news, because it is the rule and the rest is the exception. Ordinary, functional muscle is strongly protective: grip strength alone predicts longevity so well that every 11-pound drop was tied to a <strong>16 percent higher risk of death</strong> across 140,000 people. <span class="u-src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(14)62000-6/abstract">Leong 2015</a></span> <span class="grade g-a">strong</span> Being strong is one of the best bets you can make.</p>
 
     <figure class="viz reveal" aria-label="A J-shaped curve of mortality risk against muscularity.">
       <figcaption>The curve turns at the extreme</figcaption>
@@ -1433,29 +1376,29 @@
         <text x="365" y="212" text-anchor="middle" class="v-axis-t" fill="#9ec79a">strong and healthy (lowest risk)</text>
         <text x="610" y="100" text-anchor="end" class="v-axis-t" fill="#d9978c">drug-fueled extreme</text>
       </svg>
-      <p class="viz-note">Muscle-strengthening activity follows the same J: about 30 to 60 minutes a week is tied to 10 to 20 percent lower mortality, and the benefit flattens, with a hint of reversal, past about an hour a week. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">Momma 2022</a></span> More is not endlessly better.</p>
+      <p class="viz-note">Muscle-strengthening activity follows the same J: about 30 to 60 minutes a week is tied to 10 to 20 percent lower mortality, and the benefit flattens, with a hint of reversal, past about an hour a week. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">Momma 2022</a></span> More is not endlessly better.</p>
     </figure>
 
     <h3>The far end of the scale</h3>
-    <p>The bodies at the very edge of human muscularity, professional bodybuilders, are not a picture of health. In a study of more than 20,000 male competitors, professionals had over <strong>five times</strong> the death rate of amateurs, and their rate of sudden cardiac death was more than fourteen times higher; among the elite "open" class, 7 percent died during the study window, several from cardiac arrest at an average age of just 36. <span class="src"><a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">Vecchiato 2025</a></span> <span class="grade g-b">good</span></p>
+    <p>The bodies at the very edge of human muscularity, professional bodybuilders, are not a picture of health. In a study of more than 20,000 male competitors, professionals had over <strong>five times</strong> the death rate of amateurs, and their rate of sudden cardiac death was more than fourteen times higher; among the elite "open" class, 7 percent died during the study window, several from cardiac arrest at an average age of just 36. <span class="u-src"><a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">Vecchiato 2025</a></span> <span class="grade g-b">good</span></p>
 
-    <div class="stat-row">
-      <div class="stat rose"><span class="fig">5&#215;</span><span class="fig-lbl">the death rate of pro bodybuilders versus amateurs</span></div>
-      <div class="stat rose"><span class="fig">14&#215;</span><span class="fig-lbl">their rate of sudden cardiac death</span></div>
-      <div class="stat amber"><span class="fig">36</span><span class="fig-lbl">average age at sudden cardiac death among the elite class</span></div>
+    <div class="u-stats">
+      <div class="u-stat"><span class="u-fig">5&#215;</span><span class="u-fig-lbl">the death rate of pro bodybuilders versus amateurs</span></div>
+      <div class="u-stat"><span class="u-fig">14&#215;</span><span class="u-fig-lbl">their rate of sudden cardiac death</span></div>
+      <div class="u-stat"><span class="u-fig">36</span><span class="u-fig-lbl">average age at sudden cardiac death among the elite class</span></div>
     </div>
 
-    <p>What goes wrong is mostly the heart. Carrying that much mass, almost always with anabolic steroids, thickens the heart's walls the opposite way from the healthy "athlete's heart": an autopsy series of bodybuilders who died young found hearts averaging <strong>20 ounces against a normal 12</strong>, every one with thickened walls. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">Escalante 2022</a></span> <span class="grade g-c">mixed</span> On top sits the contest ritual of deliberate dehydration and diuretics to look "dry" on stage, which has killed competitors outright.</p>
+    <p>What goes wrong is mostly the heart. Carrying that much mass, almost always with anabolic steroids, thickens the heart's walls the opposite way from the healthy "athlete's heart": an autopsy series of bodybuilders who died young found hearts averaging <strong>20 ounces against a normal 12</strong>, every one with thickened walls. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">Escalante 2022</a></span> <span class="grade g-c">mixed</span> On top sits the contest ritual of deliberate dehydration and diuretics to look "dry" on stage, which has killed competitors outright.</p>
 
     <p>Two honest clarifications:</p>
     <ul>
       <li><strong>This is the drug end of the spectrum, not the natural one.</strong> The lethal risks cluster around anabolic steroid use, extreme size, and acute contest practices, none of which the program in this guide involves or requires.</li>
-      <li><strong>High protein does not wreck normal kidneys.</strong> In people with healthy kidneys, even a lot of protein is fine; the real risk is specific to those who already have kidney disease. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4031217/">2014 meta-analysis</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>High protein does not wreck normal kidneys.</strong> In people with healthy kidneys, even a lot of protein is fine; the real risk is specific to those who already have kidney disease. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4031217/">2014 meta-analysis</a></span> <span class="grade g-b">good</span></li>
     </ul>
 
-    <div class="balance-note"><b>The dark mirror of diminishing returns.</b> The last chapter showed that the final 10 percent of size costs twice the effort. This one shows the rest of the bill: past the natural ceiling, more muscle stops buying health and starts selling it back. The protective sweet spot, strong, lean, functional, is the same "big enough" you reach naturally. The bodies that go further are not winning a longevity contest. They are quietly losing one.</div>
+    <aside class="u-callout"><p class="u-callout-body"><b>The dark mirror of diminishing returns.</b> The last chapter showed that the final 10 percent of size costs twice the effort. This one shows the rest of the bill: past the natural ceiling, more muscle stops buying health and starts selling it back. The protective sweet spot, strong, lean, functional, is the same "big enough" you reach naturally. The bodies that go further are not winning a longevity contest. They are quietly losing one.</p></aside>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== 18. THE BALANCE SHEET ===================== -->
@@ -1492,19 +1435,19 @@
       <p class="viz-note">Eight levers, one shape. Generous at first, flat in the middle, costly at the end. Learn to read that shape and you have learned the whole game.</p>
     </figure>
 
-    <p>And there is one last reason to aim for the middle: nobody has finished running this experiment. The specific approach here, a natural lifter using modern training science, a dialed-in protein target, and lifelong creatine, is genuinely new, settled mostly in the last fifteen years. Creatine has clean safety data out to five years of daily use, reassuring but not fifty. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> The further you push past the well-mapped, moderate path, the more you wander off the edge of the map, where no long-term study has had time to follow. Staying where the evidence is solid is also the position of least regret.</p>
+    <p>And there is one last reason to aim for the middle: nobody has finished running this experiment. The specific approach here, a natural lifter using modern training science, a dialed-in protein target, and lifelong creatine, is genuinely new, settled mostly in the last fifteen years. Creatine has clean safety data out to five years of daily use, reassuring but not fifty. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> The further you push past the well-mapped, moderate path, the more you wander off the edge of the map, where no long-term study has had time to follow. Staying where the evidence is solid is also the position of least regret.</p>
 
     <p>The body you are actually after is probably closer than you think, and cheaper. A few focused years of honest training, real food, enough sleep, a little sun, and a few grams of cheap white powder will carry almost anyone to a place that is strong, capable, visibly built, and genuinely healthier in body and mind. That place is most of the way up the mountain, and the view from there is nearly identical to the summit, for a fraction of the price, and without the thin air at the top that, it turns out, is not very good for you.</p>
 
     <p>So train hard, but not endlessly. Eat well, but not obsessively. Take the one supplement that earns it, skip the aisle that does not, get some sun, sleep, and be patient. Build a body that serves the rest of your life instead of consuming it. Get strong. Get healthy. Get sharp. And then, the bravest move in all of fitness, decide that you are big enough, and go enjoy it.</p>
 
-    <p class="pullquote">Most of the mountain, none of the thin air at the top. That is the deal, and it is a good one.<cite>Big Enough</cite></p>
+    <blockquote class="u-pq">Most of the mountain, none of the thin air at the top. That is the deal, and it is a good one.<cite class="u-pq-cite">Big Enough</cite></blockquote>
 
     <div class="disclaimer" role="note">
       <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your history, your heart, or your joints. Talk to a physician before starting creatine, a new diet, or a serious training program, especially if you have any kidney, heart, or metabolic condition. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
     </div>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== SOURCES ===================== -->
@@ -1613,7 +1556,7 @@
       <li><b>Nuckols G (2016).</b> On FFMI and the natural muscular ceiling (25 is the edge, not a wall). <a href="https://gregnuckols.com/2016/12/11/ffmi/">gregnuckols.com</a></li>
     </ol>
 
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   <!-- ===================== COLOPHON ===================== -->
@@ -1622,13 +1565,13 @@
     <h2 class="sec-h">How this was made</h2>
     <p class="lede">Like everything on this site, this guide was researched, written, fact-checked, and built mostly by AI agents (Anthropic's Claude), working in parallel and steered by one human who lifts but is emphatically not a doctor. In the spirit of showing the work, here is what went into it.</p>
 
-    <div class="colo-grid">
-      <div class="colo-stat c-gold"><div class="n">6</div><div class="l">parallel research agents, one per topic cluster</div></div>
-      <div class="colo-stat c-sky"><div class="n">~300</div><div class="l">studies and sources read</div></div>
-      <div class="colo-stat c-green"><div class="n">85</div><div class="l">cited on this page</div></div>
-      <div class="colo-stat c-amber"><div class="n">16</div><div class="l">custom charts and diagrams, all hand-drawn in code</div></div>
-      <div class="colo-stat c-plum"><div class="n">2</div><div class="l">interactive tools you can drive yourself</div></div>
-      <div class="colo-stat c-rose"><div class="n">0</div><div class="l">stock photos: every visual is drawn from data or by hand</div></div>
+    <div class="u-kpis">
+      <div class="u-kpi"><span class="u-kpi-val">6</span><span class="u-kpi-sub">parallel research agents, one per topic cluster</span></div>
+      <div class="u-kpi"><span class="u-kpi-val">~300</span><span class="u-kpi-sub">studies and sources read</span></div>
+      <div class="u-kpi"><span class="u-kpi-val">85</span><span class="u-kpi-sub">cited on this page</span></div>
+      <div class="u-kpi"><span class="u-kpi-val">16</span><span class="u-kpi-sub">custom charts and diagrams, all hand-drawn in code</span></div>
+      <div class="u-kpi"><span class="u-kpi-val">2</span><span class="u-kpi-sub">interactive tools you can drive yourself</span></div>
+      <div class="u-kpi"><span class="u-kpi-val">0</span><span class="u-kpi-sub">stock photos: every visual is drawn from data or by hand</span></div>
     </div>
 
     <p>The method was the one this site uses for everything: split the field into clusters (creatine, training mechanics, genetics, recovery, the brain, nutrition), send a research agent into each to gather every claim with a primary source, then build the page so the short answer sits in plain view and the studies sit underneath it. Where the evidence is one trial, or mixed, or still moving, the text says so rather than rounding up to false certainty. The lengthened-training and brain-creatine findings, in particular, are flagged as promising-not-settled on purpose.</p>
@@ -1636,7 +1579,7 @@
     <p>Two things worth saying plainly. First, this is an enthusiast writing for the love of getting one thing right, not a clinician, and the page is the visible tip of a much larger pile of reading. Second, AI can be confidently wrong, so every number here is cited and was checked against the source. If you find an error, that is worth more to me than a compliment. Use it to ask better questions, not to replace a doctor who actually knows your body.</p>
 
     <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Built with Claude (Anthropic). Researched and written June 2026. Not medical advice.</p>
-    <p class="sec-divider">&middot; &middot; &middot;</p>
+    <hr class="u-divider">
   </section>
 
   </main>

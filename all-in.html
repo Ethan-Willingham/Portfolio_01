@@ -133,14 +133,6 @@
     padding: 0.06em 0.12em 0 0; color: var(--accent);
   }
 
-  /* pre-training glossary box */
-  .gloss { margin: 2.4rem 0; padding: 1.3rem 1.5rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 6px; }
-  .gloss h2 { font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.9rem; }
-  .gloss dl { margin: 0; }
-  .gloss dt { font-weight: 700; color: var(--text-bright); font-size: 1.04rem; }
-  .gloss dd { margin: 0 0 0.85rem; font-size: 1.04rem; line-height: 1.55; color: var(--text-dim); }
-  .gloss dd:last-child { margin-bottom: 0; }
-
   /* act divider */
   .act { text-align: center; margin: 7svh auto 1svh; }
   .act .act-k { font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.84rem; color: var(--text-dim); }
@@ -152,22 +144,6 @@
   .sec-num { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; color: var(--accent); display: block; margin-bottom: 0.5rem; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 4.6vw, 2.3rem); line-height: 1.1; letter-spacing: -0.015em; color: var(--text-bright); margin: 0 0 0.5rem; text-wrap: balance; }
   .sec .sub { font-style: italic; font-size: 1.18rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.4rem; text-wrap: pretty; }
-
-  /* ---- big stat anchor (Bloomberg-style: one number, then the comparison) ---- */
-  .stat { margin: 2.4rem 0; text-align: center; }
-  .stat .fig { font-weight: 700; font-size: clamp(3.6rem, 11vw, 6rem); line-height: 0.9; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; display: block; }
-  .stat .fig .u { font-size: 0.42em; font-weight: 700; letter-spacing: 0.01em; }
-  .stat .cap { font-size: 1.06rem; line-height: 1.5; color: var(--text-dim); max-width: 34ch; margin: 0.7rem auto 0; text-wrap: pretty; }
-  .stat .src { display:block; font-variant: small-caps; letter-spacing: 0.05em; font-size: 0.8rem; color: var(--text-dim); opacity: 0.7; margin-top: 0.5rem; }
-
-  /* ---- "the manager's move" callout (the section's retrieval cue) ---- */
-  .move { margin: 1.7rem 0 0; padding: 0.2rem 0 0.2rem 1.1rem; border-left: 2px solid var(--accent); }
-  .move .k { font-variant: small-caps; letter-spacing: 0.13em; font-size: 0.82rem; color: var(--accent); display: block; margin-bottom: 0.15rem; }
-  .move p { font-size: 1.1rem; line-height: 1.55; color: var(--text-bright); margin: 0; }
-
-  /* ---- pull quote ---- */
-  .pq { margin: 2.4rem 0; font-style: italic; font-size: 1.5rem; line-height: 1.32; color: var(--accent); text-align: center; text-wrap: balance; }
-  .pq cite { display: block; font-style: normal; font-size: 0.92rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 0.8rem; }
 
   /* ============================================================
      FIGURES / DIAGRAMS  (clean HTML, no images; on the dark canvas)
@@ -554,18 +530,36 @@
       <p>And here is the trap nobody warns you about. Almost everything our culture knows about getting more out of people was figured out for a different kind of worker, on a factory floor, a century ago. Those instincts still feel like management. With professionals, they quietly backfire. This is a tour of what a hundred years of research says instead, ending with the playbook your own development depends on.</p>
     </div>
 
-    <div class="gloss reveal">
-      <h2>Four words, before we start</h2>
-      <dl>
-        <dt>Professional (knowledge worker)</dt>
-        <dd>Someone hired for what they know and judge, not for hours of repeatable motion. Drucker's coinage. The engineer, the analyst, the designer, the customer success manager.</dd>
-        <dt>Engagement</dt>
-        <dd>Whether a person is psychologically present and invested, or just physically present. Gallup has measured it across millions of workers for decades.</dd>
-        <dt>Discretionary effort</dt>
-        <dd>The gap between the least a person can do without getting fired and the most they are capable of giving. You can command the floor. You can only earn the ceiling.</dd>
-        <dt>All in</dt>
-        <dd>What it looks like when that gap closes: a professional who gives you their full judgment, initiative, and care because they have chosen to.</dd>
-      </dl>
+    <div class="dlnum-wrap reveal">
+      <p class="dlnum-head">Four words, before we start</p>
+      <div class="dlnum-item">
+        <div class="dlnum-numeral">1</div>
+        <div class="dlnum-body">
+          <h3 class="dlnum-term">Professional (knowledge worker)</h3>
+          <p class="dlnum-def">Someone hired for what they know and judge, not for hours of repeatable motion. Drucker's coinage. The engineer, the analyst, the designer, the customer success manager.</p>
+        </div>
+      </div>
+      <div class="dlnum-item">
+        <div class="dlnum-numeral">2</div>
+        <div class="dlnum-body">
+          <h3 class="dlnum-term">Engagement</h3>
+          <p class="dlnum-def">Whether a person is psychologically present and invested, or just physically present. Gallup has measured it across millions of workers for decades.</p>
+        </div>
+      </div>
+      <div class="dlnum-item">
+        <div class="dlnum-numeral">3</div>
+        <div class="dlnum-body">
+          <h3 class="dlnum-term">Discretionary effort</h3>
+          <p class="dlnum-def">The gap between the least a person can do without getting fired and the most they are capable of giving. You can command the floor. You can only earn the ceiling.</p>
+        </div>
+      </div>
+      <div class="dlnum-item">
+        <div class="dlnum-numeral">4</div>
+        <div class="dlnum-body">
+          <h3 class="dlnum-term">All in</h3>
+          <p class="dlnum-def">What it looks like when that gap closes: a professional who gives you their full judgment, initiative, and care because they have chosen to.</p>
+        </div>
+      </div>
     </div>
 
     <!-- ============ ACT I ============ -->
@@ -577,8 +571,8 @@
       <p class="sub">Where our management instincts were born, and why they worked.</p>
       <p>In 1899, Frederick Taylor stood over a man loading pig iron at Bethlehem Steel with a stopwatch and a clipboard. He timed every motion, removed the wasted ones, prescribed the exact rest intervals, and handed the worker a script. Then he did the same with shoveling, deciding that the one best shovel load was 21 pounds. Every time, the output climbed steeply.</p>
       <p>This is the birth of modern management, and it genuinely worked. It worked for one reason: the task was simple, repeated, and <em>fully visible</em> to a stranger with a stopwatch. When all the value lives in observable motion, the boss really can know the one best way, and the worker's job is to follow it.</p>
-      <div class="stat reveal"><span class="fig">47<span class="u"> tons</span></span><span class="cap">What one laborer hauled in a day under Taylor's system, up from 12.5. When the work is visible, control multiplies it.</span><span class="src">Taylor, scientific management, 1911</span></div>
-      <div class="move"><span class="k">The manager's move</span><p>Before you borrow a management instinct, ask what kind of work it was built for. The stopwatch was built for labor you can watch. Professional work almost never is.</p></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">47<span class="u-bignum-u"> tons</span></span><span class="u-bignum-cap">What one laborer hauled in a day under Taylor's system, up from 12.5. When the work is visible, control multiplies it.</span><span class="u-bignum-src">Taylor, scientific management, 1911</span></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Before you borrow a management instinct, ask what kind of work it was built for. The stopwatch was built for labor you can watch. Professional work almost never is.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -586,9 +580,9 @@
       <h3>The worker who owns the factory</h3>
       <p class="sub">Why the stopwatch breaks the moment the value moves inside someone's head.</p>
       <p>Now picture your best person. The thing that makes them valuable is not a motion you can time. It is a judgment that happens somewhere behind their eyes, and when they go home at night, they take the entire factory with them. Peter Drucker saw this coming decades ago, when he coined the term <em>knowledge worker</em>.</p>
-      <p class="pq">Knowledge workers own the means of production. It is the knowledge between their ears, and it is a totally portable and enormous capital asset.<cite>Peter Drucker</cite></p>
+      <blockquote class="u-pq">Knowledge workers own the means of production. It is the knowledge between their ears, and it is a totally portable and enormous capital asset.<cite class="u-pq-cite">Peter Drucker</cite></blockquote>
       <p>Two things follow, and Taylor's system survives neither. First, you usually cannot see the work, so you cannot prescribe the one best way. Second, past the apprentice stage, a good professional <em>knows their job better than you do</em>. The old deal, where the manager does the thinking and the worker does the executing, runs backward. So you stop managing professionals as subordinates and start treating them as partners, even as volunteers. And partners cannot be ordered. They have to be persuaded.</p>
-      <div class="move"><span class="k">The manager's move</span><p>Give a professional the outcome and the context, then let the how be theirs. Scripting an expert's steps throws away the exact thing you hired them for.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Give a professional the outcome and the context, then let the how be theirs. Scripting an expert's steps throws away the exact thing you hired them for.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -597,7 +591,7 @@
       <p class="sub">Your private theory of people is not private. It comes true.</p>
       <p>In 1960, Douglas McGregor noticed that every manager quietly runs on one of two assumptions. <b>Theory X</b> says people dislike work and need to be pushed, watched, and controlled. <b>Theory Y</b> says effort is as natural as rest, and people will direct themselves toward goals they actually believe in. McGregor's unsettling point was that both are self-fulfilling. Watch people like they cannot be trusted, and they stop showing you the judgment you are not looking for. You manufacture the very passivity you then cite as proof you were right.</p>
       <p>With laborers on a line, a Theory X system can still produce tons. With professionals, it is corrosive, because the thing you are suppressing, their initiative, is the entire reason you hired them.</p>
-      <div class="move"><span class="k">The manager's move</span><p>Before fixing any process, audit the assumption underneath it. Are you designing for the person you fear, or the person you hired?</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Before fixing any process, audit the assumption underneath it. Are you designing for the person you fear, or the person you hired?</p></aside>
     </section>
 
     <!-- ============ ACT II ============ -->
@@ -620,8 +614,8 @@
         <p class="fig-note">You can mandate attendance, hours, and compliance. The shaded distance above them, the judgment and care, is volunteered or withheld. Management is the work of earning it.</p>
       </div>
       <p>And the single biggest factor deciding whether it gets volunteered is not pay, perks, or the company logo. It is the person they report to.</p>
-      <div class="stat reveal"><span class="fig">70<span class="u">%</span></span><span class="cap">of the variance in a team's engagement traces to the manager alone. Tell me who someone's boss is and I can largely predict their engagement.</span><span class="src">Gallup, across 2.5 million teams</span></div>
-      <div class="move"><span class="k">The manager's move</span><p>Stop treating engagement as a company-wide weather system you suffer. On your team, in your one-on-ones, you are roughly 70 percent of the climate.</p></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">70<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">of the variance in a team's engagement traces to the manager alone. Tell me who someone's boss is and I can largely predict their engagement.</span><span class="u-bignum-src">Gallup, across 2.5 million teams</span></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Stop treating engagement as a company-wide weather system you suffer. On your team, in your one-on-ones, you are roughly 70 percent of the climate.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -638,8 +632,8 @@
         <p class="fig-note">Fixing hygiene moves a professional from miserable to neutral. Only the right-hand column moves them from neutral to all in. Pay is the floor, never the fuel.</p>
       </div>
       <p>Herzberg watched this run as an experiment at <b>AT&amp;T</b>. A group of clerks who answered letters from shareholders were handed real ownership of the work: the authority to sign their own names, and personal accountability for getting the answer right. Their pay did not change. A service-quality score climbed from the mid-20s into the 90s within months. The work itself, made whole, did the motivating.</p>
-      <p class="pq">I can charge a man's battery, and recharge it, and recharge it again. But it is only when he has his own generator that we can talk about motivation.<cite>Frederick Herzberg</cite></p>
-      <div class="move"><span class="k">The manager's move</span><p>Pay people fairly so money leaves the room as a topic, then stop using it as your motivation tool. Enrich the work instead. Give whole problems, real ownership, and harder challenges.</p></div>
+      <blockquote class="u-pq">I can charge a man's battery, and recharge it, and recharge it again. But it is only when he has his own generator that we can talk about motivation.<cite class="u-pq-cite">Frederick Herzberg</cite></blockquote>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Pay people fairly so money leaves the room as a topic, then stop using it as your motivation tool. Enrich the work instead. Give whole problems, real ownership, and harder challenges.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -680,7 +674,7 @@
       </div>
 
       <p>The upside of the opposite approach is easy to find in the wild. <b>3M</b> has long let engineers spend around 15 percent of their time on projects of their own choosing; that policy produced the Post-it Note. <b>Google</b> copied the idea as "20 percent time," and it gave the company Gmail and the bones of Google Maps. Nobody ordered those things built. People were trusted with their own attention, and they over-delivered.</p>
-      <div class="move"><span class="k">The manager's move</span><p>For routine work, by all means tie a reward to it. For the creative, judgment-heavy work professionals are hired for, stop dangling carrots and start handing over autonomy, mastery, and a reason that matters.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">For routine work, by all means tie a reward to it. For the creative, judgment-heavy work professionals are hired for, stop dangling carrots and start handing over autonomy, mastery, and a reason that matters.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -689,8 +683,8 @@
       <p class="sub">The most powerful daily motivator is also the easiest one to step on.</p>
       <p>Teresa Amabile collected nearly 12,000 daily diary entries from professionals and asked a simple question: on the days people felt most motivated, what had actually happened? The answer was not a bonus or a pep talk. It was <em>progress in meaningful work</em>. The single most powerful thing inside a good workday is the feeling of moving something forward. The corollary is brutal: small setbacks and petty interference hurt more than small wins help.</p>
       <p>Dan Ariely showed the dark edge of this. When people's finished work was ignored, not shredded, just ignored and set aside unread, they gave up almost as fast as people whose work was destroyed in front of them. To a professional, being unseen is nearly as demotivating as being torn down.</p>
-      <div class="stat reveal"><span class="fig">15&cent; <span class="u">vs 29&cent;</span></span><span class="cap">People did a dull task for pay that shrank each round, and could quit anytime. A glance and a nod kept them working until the pay sank to 15&cent; a page; ignoring their work made them quit much earlier, at 29&cent;. A small sign of attention bought real effort.</span><span class="src">Ariely, on meaning at work</span></div>
-      <div class="move"><span class="k">The manager's move</span><p>Your highest-leverage daily act is clearing the obstacle in front of someone and noticing what they finished. Never let good work pass unread.</p></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">15&cent; <span class="u-bignum-u">vs 29&cent;</span></span><span class="u-bignum-cap">People did a dull task for pay that shrank each round, and could quit anytime. A glance and a nod kept them working until the pay sank to 15&cent; a page; ignoring their work made them quit much earlier, at 29&cent;. A small sign of attention bought real effort.</span><span class="u-bignum-src">Ariely, on meaning at work</span></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Your highest-leverage daily act is clearing the obstacle in front of someone and noticing what they finished. Never let good work pass unread.</p></aside>
     </section>
 
     <!-- ============ ACT III ============ -->
@@ -712,7 +706,7 @@
         <p class="fig-note">Micromanaging an owner insults them. Delegating to a beginner abandons them. Both disengage. Read the stage first.</p>
         <div class="fig-src">The four named styles are the <a href="https://en.wikipedia.org/wiki/Situational_leadership_theory" target="_blank" rel="noopener">Situational Leadership</a> model of Paul Hersey and Ken Blanchard, which pairs each style with a person's readiness for the task at hand. It is the same idea as Andy Grove's task-relevant maturity, from <a href="https://en.wikipedia.org/wiki/High_Output_Management" target="_blank" rel="noopener">High Output Management</a>.</div>
       </div>
-      <div class="move"><span class="k">The manager's move</span><p>For each person and each task, ask "how mature are they on <em>this</em>?" and set your grip accordingly. When you promote someone, increase support, do not withdraw it.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">For each person and each task, ask "how mature are they on <em>this</em>?" and set your grip accordingly. When you promote someone, increase support, do not withdraw it.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -721,8 +715,8 @@
       <p class="sub">When Google went looking for what makes a great manager, the answer surprised even Google.</p>
       <p>Google's engineers suspected managers were overhead. So Google studied it, hard, across thousands of data points, expecting to find that technical brilliance was what mattered. Technical skill came in <em>last</em>. The number one behavior of their best managers was the same one Bill Campbell used to coach the founders of Google, Apple, and Intuit: being a good coach. Not having the answers. Drawing them out. And when Google trained its managers on these behaviors, the share of employees who rated their manager favorably climbed from 83 percent to 88 percent, with the lowest-scoring managers improving the most.</p>
       <p>Michael Bungay Stanier calls the instinct to jump in with answers the "advice monster," and it has a hidden cost: every time you solve it for them, they bring you the next one, and they never build the muscle. The repair is almost embarrassingly simple. Open the conversation with "What's on your mind?", then resist filling the silence. Ask "And what else?" The real issue is rarely the first one named.</p>
-      <p class="pq">Coaching is no longer a specialty. You cannot be a good manager without being a good coach.<cite>The leadership handbook of Bill Campbell</cite></p>
-      <div class="move"><span class="k">The manager's move</span><p>Stay curious one beat longer than is comfortable. Replace "here is what I would do" with "what do you think the real challenge is?" Their plan, owned by them, beats your plan every time.</p></div>
+      <blockquote class="u-pq">Coaching is no longer a specialty. You cannot be a good manager without being a good coach.<cite class="u-pq-cite">The leadership handbook of Bill Campbell</cite></blockquote>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Stay curious one beat longer than is comfortable. Replace "here is what I would do" with "what do you think the real challenge is?" Their plan, owned by them, beats your plan every time.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -741,7 +735,7 @@
         <div class="quad-ax"><span>&larr; doesn't challenge</span><span>challenges directly &rarr;</span></div>
       </div>
       <p>And when you do praise, be specific, because there is a deeper truth in the research: people grow far more from understanding what they did <em>well</em> than from a list of what they did poorly. Excellence is idiosyncratic. It shows up differently in every person, so your job is to notice what each one does especially well, and tell them exactly what you saw.</p>
-      <div class="move"><span class="k">The manager's move</span><p>Before softening a hard message, ask whether you are protecting them or protecting yourself from an awkward minute. Say the true thing, and make plain that you say it because you are on their side.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Before softening a hard message, ask whether you are protecting them or protecting yourself from an awkward minute. Say the true thing, and make plain that you say it because you are on their side.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -749,9 +743,9 @@
       <h3>Multiply, do not diminish</h3>
       <p class="sub">Two leaders, the same team, double the output. The difference is who has to be the genius.</p>
       <p>Liz Wiseman studied leaders and found two types. <b>Diminishers</b> are the smartest person in the room, and they prove it, so the room goes quiet. <b>Multipliers</b> treat their people as smart and get more out of them by asking hard questions and handing over real ownership. The measured difference is about two times the usable capability from the very same people. The most humbling part of her work: most diminishing is accidental, done by well-meaning managers who jump in to rescue, set a blistering pace, or fire off ideas faster than anyone can act on them. The encouraging part is that it is trainable: one Fortune 500 company that taught 200 of its managers to lead as Multipliers reported a 28 percent rise in team output, without adding a single person.</p>
-      <div class="stat reveal"><span class="fig">2&times;</span><span class="cap">The capability a Multiplier draws out of a team versus a Diminisher. The average manager leaves about a third of their people's brainpower sitting idle.</span><span class="src">Wiseman, across 150+ leaders</span></div>
-      <p class="pq">It isn't how much you know that matters. What matters is how much access you have to what other people know.<cite>Liz Wiseman</cite></p>
-      <div class="move"><span class="k">The manager's move</span><p>In your next meeting, count how much of it you talk. Aim to be the person who asks the question that puts someone else on stage, not the one with every answer.</p></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">2&times;</span><span class="u-bignum-cap">The capability a Multiplier draws out of a team versus a Diminisher. The average manager leaves about a third of their people's brainpower sitting idle.</span><span class="u-bignum-src">Wiseman, across 150+ leaders</span></div>
+      <blockquote class="u-pq">It isn't how much you know that matters. What matters is how much access you have to what other people know.<cite class="u-pq-cite">Liz Wiseman</cite></blockquote>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">In your next meeting, count how much of it you talk. Aim to be the person who asks the question that puts someone else on stage, not the one with every answer.</p></aside>
     </section>
 
     <!-- ============ ACT IV ============ -->
@@ -762,9 +756,9 @@
       <h3>Make it safe to say the hard thing</h3>
       <p class="sub">The best teams do not make fewer mistakes. They are simply not afraid to tell you about them.</p>
       <p>Amy Edmondson went into hospitals expecting the best nursing teams to report the fewest medication errors. She found the opposite, and it puzzled her until she saw what was really going on. The best teams reported <em>more</em> errors not because they made more, but because they felt safe enough to admit them. On the weak teams, people quietly hid their mistakes, so nobody could fix them or learn from them. The point is counterintuitive: a team that surfaces lots of problems is usually the healthy one, and a silent team is the worrying one. That sense of safety is what she named <em>psychological safety</em>, the shared belief that you can speak up, with a worry, a mistake, or a half-formed idea, without being punished or humiliated. Years later, when Google studied what set its own best teams apart, this was the single biggest factor, ahead of talent, ahead of resources.</p>
-      <div class="stat reveal"><span class="fig">85<span class="u">%</span></span><span class="cap">of employees admit to staying silent with their manager about something important, out of fear. Every buried concern is a problem you find out about too late.</span><span class="src">Edmondson and Detert</span></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">85<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">of employees admit to staying silent with their manager about something important, out of fear. Every buried concern is a problem you find out about too late.</span><span class="u-bignum-src">Edmondson and Detert</span></div>
       <p>For professionals, this is not a nice-to-have. Their real work is thinking, and good thinking needs people who will disagree out loud, float an idea before it is polished, and admit when they are not sure. None of that happens on a team where speaking up feels risky. A team that cannot say "I think this is wrong" cannot do its best work.</p>
-      <div class="move"><span class="k">The manager's move</span><p>Go first. Say "I don't know" and "I got that wrong" out loud. The fastest way to make a room safe is to take the first risk in it yourself.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Go first. Say "I don't know" and "I got that wrong" out loud. The fastest way to make a room safe is to take the first risk in it yourself.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -773,8 +767,8 @@
       <p class="sub">The more you have to approve, the less they can think. Trade approvals for understanding.</p>
       <p>The instinct of an anxious manager is to add a checkpoint: route the decision up, require a sign-off, keep control. Netflix built one of the most productive cultures on earth on the opposite reflex, which they call <em>context, not control</em>. Instead of approving a professional's decisions, you flood them with the context, the strategy, the constraints, the why, until they can make the call you would have made, without asking. Every approval you remove is a vote of confidence the professional can feel. Every one you add says, quietly, "I do not trust your judgment."</p>
       <p>The worry, of course, is that all this freedom turns into a free-for-all. But the chaos managers dread does not come from people having room to decide. It comes from nobody being sure <em>who</em> decides. So taking the approval gates away is only half the job. The other half is clarity: each person needs to know exactly which calls are theirs to own. That is not a new leash. It is the opposite, the thing that makes the freedom safe, because you are handing people their own judgment and cutting the hesitation of "wait, is this mine to call?" Remove the approvals, name the owners, and you have done one coherent thing, not two opposite ones.</p>
-      <p class="pq">If you dummy-proof the system, only dummies will want to work there.<cite>Reed Hastings, Netflix</cite></p>
-      <div class="move"><span class="k">The manager's move</span><p>For each recurring decision, say plainly who owns it. Then spend your energy giving context rather than giving permission.</p></div>
+      <blockquote class="u-pq">If you dummy-proof the system, only dummies will want to work there.<cite class="u-pq-cite">Reed Hastings, Netflix</cite></blockquote>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">For each recurring decision, say plainly who owns it. Then spend your energy giving context rather than giving permission.</p></aside>
     </section>
 
     <section class="sec reveal">
@@ -809,7 +803,7 @@
         <p class="fig-note">Four industries, four decades, one pattern: real autonomy paired with genuinely high standards. Not softness, structure.</p>
       </div>
       <p>One honest caveat. Copying the trappings does not work. Plenty of companies have borrowed the open offices and the flat titles without the underlying trust, and ended up with the vocabulary and none of the results. Autonomy has to be real authority, not theater, and professionals can tell the difference in a week.</p>
-      <div class="move"><span class="k">The manager's move</span><p>Compute what losing one of your best people actually costs to replace. That number is the budget you already have for treating them like the asset they are.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Compute what losing one of your best people actually costs to replace. That number is the budget you already have for treating them like the asset they are.</p></aside>
     </section>
 
     <!-- ============ ACT V: THE HARD PART (no seat fillers) ============ -->
@@ -820,7 +814,7 @@
       <h3>No seat fillers</h3>
       <p class="sub">You can do every one of these things right and still get stuck with someone who won't rise. The failure isn't them. It's the seat you let them fill forever.</p>
       <p>There's an old reading of the parable of the sower: the story is less about how well you scatter the seed than about how fertile the soil is. Even in a room full of professionals, some of the ground is rock. You will manage people who coast, who quietly settle, who fill a seat without ever filling the role. And the costliest one is rarely the obvious flop. It's the capable person who stopped growing years ago and now collects a check while the team carries them. Your best people notice that long before you do, and they draw the obvious conclusion: if the standard is optional for the coaster, it's optional. The message lands on exactly the people you most need to keep.</p>
-      <div class="stat reveal"><span class="fig">30-40<span class="u">%</span></span><span class="cap">How far one checked-out or disruptive member can drag down a whole team's performance in controlled studies, and the behavior spreads. A seat-filler never costs just one seat.</span><span class="src">Felps, Mitchell &amp; Byington</span></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">30-40<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">How far one checked-out or disruptive member can drag down a whole team's performance in controlled studies, and the behavior spreads. A seat-filler never costs just one seat.</span><span class="u-bignum-src">Felps, Mitchell &amp; Byington</span></div>
       <p>Start, though, with the humbling half. A manager's ceiling is partly set by the soil: who is in the seat, and whether it is the right one. People do not change all that much once grown; you draw out what is in them, you cannot pour in what is not. So before you decide someone is the wrong person, ask the cheaper question first, are they simply in the wrong seat? A struggling performer is very often a strong one aimed at the wrong work.</p>
       <p>The sharpest proof is a car factory. In 1982 General Motors shut its Fremont plant and called its workers some of the worst in America: 20 percent absenteeism, sabotage on the line, open contempt. Two years later Toyota reopened the same building, rehired 85 percent of the very same people, and within a year it was one of the most productive auto plants on the continent. Nobody replaced the workers. They replaced the system around them. What looks like a bad person is often just a bad fit.</p>
       <div class="fig-block wide reveal">
@@ -837,7 +831,7 @@
       <p>There is a brutal counterfeit of this idea, though, and it is worth naming so you never reach for it. The version where you rank everyone and cut the bottom tenth every year, on a schedule, is not rigor. It is sorting. It hollowed out Microsoft for a decade, turning teammates into rivals who hid information so a colleague would score below them, and the company that invented the practice eventually scrapped it. Take the candor, not the curve. This is one honest judgment about one real person, never a quota you fill.</p>
       <p>And the hardest seat-filler of all to remove is the one posting the best numbers. A brilliant jerk is not dead weight in any obvious way; they are filling their seat with output. But the output is a trick of the eye. Men's Wearhouse once fired its single best salesman, a man who hit every target and poisoned everyone near him, hoarding customers and helping no one. Afterward, no remaining person matched his individual sales, and the store's total sales went up. His good numbers had been hiding the damage he did to everyone else's. The research is consistent: avoiding one toxic worker is worth more than twice what hiring a star is worth, because the star lifts their own work while the jerk drags down everybody's.</p>
       <p>It comes back to the bargain this whole essay rests on. A professional's side of it is judgment: you hand over the decisions, and they bring the thinking to make them well. Someone who refuses, who won't own a call or risk an opinion and only wants to be told exactly what to do, has quietly taken the laborer's deal instead. Fine. Give it to them honestly: a clear bar, close direction, and no mystery about what good looks like. Some people wake up the moment the deal is said out loud. And the ones who don't? They have just made your decision for you.</p>
-      <div class="move"><span class="k">The manager's move</span><p>Picture your weakest performer and name the honest answer: wrong seat, my fault, or wrong person? Then do what that answer demands this quarter, instead of waiting for the problem to fix itself. It won't.</p></div>
+      <aside class="u-callout"><p class="u-callout-k">The manager's move</p><p class="u-callout-body">Picture your weakest performer and name the honest answer: wrong seat, my fault, or wrong person? Then do what that answer demands this quarter, instead of waiting for the problem to fix itself. It won't.</p></aside>
     </section>
 
   </article>

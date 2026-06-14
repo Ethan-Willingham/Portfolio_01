@@ -60,7 +60,7 @@
   .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
-  /* ---------- HERO ---------- */
+  /* ---------- HERO (preserved per-post; not a kit component) ---------- */
   .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
   .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
   .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
@@ -68,22 +68,16 @@
   .hero-meta b { color: var(--accent); font-weight: 400; }
   .hero-meta .sep { opacity: 0.4; }
 
-  /* ---------- SECTIONS ---------- */
+  /* ---------- SECTION CONTAINER (headings/entries now use the kit) ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
   .sec > :last-child { margin-bottom: 0; }
-  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
-  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
-  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
-  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
-  .sec em { font-style: italic; }
-  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 0.4em; }
-  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  /* breathing room between the kit section head, lead, and the entries list */
+  .u-sechead { margin-bottom: 0.9rem; }
+  .sec .u-lead { margin-bottom: 1.6rem; }
 
-  /* per-section color rhythm */
+  /* per-section color rhythm: re-point the kit accents to each section's hue
+     (the kit components hardcode the gold --accent; this carries the meaning) */
   #count   { --sec-accent:#D4C4A0; }
   #book    { --sec-accent:#8fb3c7; }
   #rooms   { --sec-accent:#9ec79a; }
@@ -91,71 +85,43 @@
   #machine { --sec-accent:#dfc288; }
   #late    { --sec-accent:#d9978c; }
   #sources { --sec-accent:#D4C4A0; }
+  .sec .u-sechead-k { color: var(--sec-accent, var(--accent)); }
+  .sec .u-entry-num { color: var(--sec-accent, var(--accent)); }
+  .sec .u-src a { color: var(--sec-accent, var(--accent)); }
+  /* media inside a kit entry: the kit .u-entry is a num+text grid; let figures,
+     the portrait grid, and the trailing credit line use the FULL entry width
+     (column 2 only would squeeze them into the narrow text column; pre-kit they
+     spanned the whole reading column) and give figures a little air above */
+  .u-entry > .u-figure,
+  .u-entry > .u-grid,
+  .u-entry > .img-credit { grid-column: 1 / -1; }
+  .u-entry > .u-figure { margin-top: 1.4rem; }
+  .u-figure-img { background: var(--bg-raised); }
 
-  /* ---------- THE NUMBERED LIST ENTRIES ---------- */
-  .cut { padding-top: 2.1rem; }
-  .cut + .cut { margin-top: 2.1rem; border-top: 1px solid var(--rule); }
-  .cut-num { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.55rem; }
-  .cut-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.32rem, 3.4vw, 1.66rem); line-height: 1.16; letter-spacing: -0.01em; color: var(--text-bright); margin: 0 0 0.6rem; text-wrap: balance; }
-  .cut > :last-child { margin-bottom: 0; }
-
-  /* ---------- CHAPTER STRIP ---------- */
+  /* ---------- CHAPTER STRIP (pill nav; no kit equivalent) ---------- */
   .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
   .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
   .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
   .chapters a:hover { color: var(--accent); border-color: var(--accent); }
 
-  /* ---------- PHOTOGRAPHS ---------- */
-  .photo { margin: 1.7em auto 0; }
-  .photo img { display: block; width: 100%; height: auto; border-radius: 4px; background: var(--bg-raised); }
-  .photo.tall picture { display: block; max-width: 460px; margin: 0 auto; }
-  .photo-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.85rem; line-height: 1.5; max-width: 62ch; }
-  .photo-cap b { font-style: normal; font-weight: 600; color: var(--text); }
-  .img-credit { font-family: var(--font-body); font-size: 0.72rem; line-height: 1.5; color: var(--text-dim); margin-top: 0.5rem; }
+  /* ---------- FIGURE MODIFIERS + IMAGE CREDITS (no kit equivalent) ---------- */
+  /* tall = a constrained-width portrait; breakout = a wide image past the column */
+  .u-figure.tall picture { display: block; max-width: 460px; margin: 0 auto; }
+  .u-figure.breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .u-figure.breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+  /* legal attribution line under a figure; kept (the kit caption carries no credit slot) */
+  .img-credit { font-family: var(--font-body); font-size: 0.72rem; line-height: 1.5; color: var(--text-dim); margin-top: 0.5rem; text-align: center; }
   .img-credit a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); text-decoration: none; }
   .img-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* a wide photo that breaks out of the reading column on big screens */
-  .breakout { max-width: var(--wide); }
-  @media (min-width: 1140px) {
-    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
-  }
-
-  /* the row of "the faces that do exist" */
-  .faces-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.7em 0 0; }
-  .faces-row figure { margin: 0; }
-  .faces-row img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 28%; border-radius: 4px; background: var(--bg-raised); }
-  .faces-row figcaption { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.03em; line-height: 1.45; color: var(--text-dim); margin-top: 0.45rem; }
-  .faces-row figcaption b { display: block; color: var(--text); font-size: 0.72rem; letter-spacing: 0; margin-bottom: 0.1rem; }
-
-  /* the founder and pioneer portrait gallery */
-  .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; margin: 1.9em 0 0; }
-  @media (min-width: 520px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 760px) { .gallery { grid-template-columns: repeat(4, 1fr); } }
-  .gallery figure { margin: 0; }
-  .gallery img { display: block; width: 100%; height: auto; aspect-ratio: 466 / 591; object-fit: cover; object-position: 50% 18%; border-radius: 4px; background: var(--bg-raised); filter: saturate(0.88); }
-  .gallery figcaption { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.02em; line-height: 1.42; color: var(--text-dim); margin-top: 0.45rem; }
-  .gallery figcaption b { display: block; font-family: var(--font-body); color: var(--text); font-size: 0.8rem; letter-spacing: 0; margin-bottom: 0.14rem; }
-
-  /* ---------- CITATION + GRADE CHIPS ---------- */
-  .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
-  .src a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
-  .src a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-  .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
-  .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
-  .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
-  .grade.g-c { background: rgba(230,192,116,0.15); color: #dfc288; border: 1px solid rgba(230,192,116,0.4); }
-
-  /* ---------- REFERENCES ---------- */
+  /* ---------- REFERENCES (grouped, graded source list; the lists themselves
+     have no kit equivalent, but the chips/grades/collapsible shell are kit) ---------- */
+  /* the "good" grade has no kit tier; keep it on the kit .u-grade base */
+  .u-grade-b { color: #a9cad9; background: rgba(143,179,199,0.16); border: 1px solid rgba(143,179,199,0.4); }
   #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
-  #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
   .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 0.4em; }
-  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
-  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
-  .src-details > summary::-webkit-details-marker { display: none; }
-  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
-  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
-  .src-details > summary:hover { color: var(--accent-hover); }
   .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0.2rem 0 1.1rem; font-size: 0.78rem; color: var(--text-dim); }
   #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
   #sources li { margin-bottom: 0.3em; }
@@ -178,8 +144,8 @@
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
     body { background: #fff; color: #161616; }
     .sec, .hero, .map { max-width: none; }
-    .sec p, .lede { color: #161616; }
-    .photo, .faces-row, .cut { break-inside: avoid; }
+    .sec p, .u-lead, .u-entry-p, .u-entry-h { color: #161616; }
+    .u-figure, .u-entry { break-inside: avoid; }
     a { color: #161616; }
   }
   </style>
@@ -211,271 +177,274 @@
 
     <!-- ============================ 01 THE COUNT ============================ -->
     <section id="count" class="sec first" aria-labelledby="count-h">
-      <span class="sec-kicker">The count</span>
-      <h2 id="count-h" class="sec-h">The roll, and the real start</h2>
-      <p class="lede">Start with the number on the cover, because it was not true.</p>
+      <div class="u-sechead"><p class="u-sechead-k">The count</p><h2 id="count-h" class="u-sechead-h">The roll, and the real start</h2></div>
+      <p class="u-lead">Start with the number on the cover, because it was not true.</p>
 
-      <article class="cut">
-        <span class="cut-num">No. 01</span>
-        <h3 class="cut-h">The book said a hundred. There were about forty.</h3>
-        <p>When <em>Alcoholics Anonymous</em> went to press in April 1939, its foreword announced "more than one hundred men and women who have recovered." The best reconstruction of the actual roll: 74 people had ever passed through the two groups, and roughly 41 were sober. Bill Wilson, years later, dropped the salesmanship and just said "about 40." <span class="src"><a href="https://www.aashropshire.org/guidance-resources/big-book-study-notes">the roll</a></span></p>
+      <div class="u-entries">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 01</span>
+        <h3 class="u-entry-h">The book said a hundred. There were about forty.</h3>
+        <p class="u-entry-p">When <em>Alcoholics Anonymous</em> went to press in April 1939, its foreword announced "more than one hundred men and women who have recovered." The best reconstruction of the actual roll: 74 people had ever passed through the two groups, and roughly 41 were sober. Bill Wilson, years later, dropped the salesmanship and just said "about 40." <span class="u-src"><a href="https://www.aashropshire.org/guidance-resources/big-book-study-notes">the roll</a></span></p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 02</span>
-        <h3 class="cut-h">"One Hundred Men" was the title, until a woman wrote a chapter.</h3>
-        <p>The working title for the book was <em>One Hundred Men</em>. It had to be thrown out for a simple reason: one of the personal stories was a woman's. The runner-up, <em>The Way Out</em>, lost too, after a check at the Library of Congress found at least a dozen books already using it and none at all called Alcoholics Anonymous.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 02</span>
+        <h3 class="u-entry-h">"One Hundred Men" was the title, until a woman wrote a chapter.</h3>
+        <p class="u-entry-p">The working title for the book was <em>One Hundred Men</em>. It had to be thrown out for a simple reason: one of the personal stories was a woman's. The runner-up, <em>The Way Out</em>, lost too, after a check at the Library of Congress found at least a dozen books already using it and none at all called Alcoholics Anonymous.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 03</span>
-        <h3 class="cut-h">AA exists because a hostile takeover failed.</h3>
-        <p>Bill Wilson was in Akron in May 1935 to win a proxy fight for a rubber-machinery company. He lost, and found himself broke and alone in the lobby of the Mayflower Hotel, one end of the corridor leading to the bar and the other to a church directory and a payphone. He worked the phone instead, looking for another drunk to talk to, and reached Dr. Bob through it. The whole fellowship turns on which way he walked.</p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 03</span>
+        <h3 class="u-entry-h">AA exists because a hostile takeover failed.</h3>
+        <p class="u-entry-p">Bill Wilson was in Akron in May 1935 to win a proxy fight for a rubber-machinery company. He lost, and found himself broke and alone in the lobby of the Mayflower Hotel, one end of the corridor leading to the bar and the other to a church directory and a payphone. He worked the phone instead, looking for another drunk to talk to, and reached Dr. Bob through it. The whole fellowship turns on which way he walked.</p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/mayflower-lobby.webp">
-            <img src="assets/aa/mayflower-lobby.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="The restored octagonal lobby of the Mayflower Hotel in Akron, with patterned tile, columns, and chandeliers.">
+            <img class="u-figure-img" src="assets/aa/mayflower-lobby.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="The restored octagonal lobby of the Mayflower Hotel in Akron, with patterned tile, columns, and chandeliers.">
           </picture>
-          <figcaption class="photo-cap">The Mayflower lobby in Akron, where Bill Wilson chose the church directory over the bar in May 1935.</figcaption>
+          <figcaption class="u-figure-cap">The Mayflower lobby in Akron, where Bill Wilson chose the church directory over the bar in May 1935.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Main_Lobby,_Mayflower_Hotel,_Akron,_OH.jpg">Main lobby, Mayflower Hotel, Akron</a> by Warren LeMay, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 04</span>
-        <h3 class="cut-h">The founding vision arrived during a belladonna delirium.</h3>
-        <p>Bill's famous white-light experience, the spiritual jolt the whole program traces back to, came in December 1934 at Towns Hospital, while he was being dosed around the clock with belladonna and henbane, two deadly nightshades. Whether the light was God or the pharmacology is still openly argued, including by AA's own historians. Bill always insisted it was real.</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 04</span>
+        <h3 class="u-entry-h">The founding vision arrived during a belladonna delirium.</h3>
+        <p class="u-entry-p">Bill's famous white-light experience, the spiritual jolt the whole program traces back to, came in December 1934 at Towns Hospital, while he was being dosed around the clock with belladonna and henbane, two deadly nightshades. Whether the light was God or the pharmacology is still openly argued, including by AA's own historians. Bill always insisted it was real.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/towns-hospital.webp">
-            <img src="assets/aa/towns-hospital.jpg" width="1500" height="2666" loading="lazy" decoding="async" alt="The tall brick facade of the former Towns Hospital building at 293 Central Park West in New York.">
+            <img class="u-figure-img" src="assets/aa/towns-hospital.jpg" width="1500" height="2666" loading="lazy" decoding="async" alt="The tall brick facade of the former Towns Hospital building at 293 Central Park West in New York.">
           </picture>
-          <figcaption class="photo-cap">The former Towns Hospital on Central Park West, where the vision happened in a belladonna ward.</figcaption>
+          <figcaption class="u-figure-cap">The former Towns Hospital on Central Park West, where the vision happened in a belladonna ward.</figcaption>
           <p class="img-credit"><a href="https://www.flickr.com/photos/edenpictures/53714606916">293 Central Park West, the former Towns Hospital</a> by Eden, Janine and Jim, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via Flickr.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 05</span>
-        <h3 class="cut-h">Its official birthday is probably a week wrong.</h3>
-        <p>June 10, 1935, the date of Dr. Bob's last drink, is the fellowship's birthday. But the medical convention Dr. Bob drank his way through that week did not even open until June 10, which puts his real final beer closer to June 17. The most celebrated date in AA is a best guess.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 05</span>
+        <h3 class="u-entry-h">Its official birthday is probably a week wrong.</h3>
+        <p class="u-entry-p">June 10, 1935, the date of Dr. Bob's last drink, is the fellowship's birthday. But the medical convention Dr. Bob drank his way through that week did not even open until June 10, which puts his real final beer closer to June 17. The most celebrated date in AA is a best guess.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 06</span>
-        <h3 class="cut-h">Four years made the first hundred. Two more made six thousand.</h3>
-        <p>It took from 1935 to 1939 to produce about a hundred sober members across three cities. Then a single Saturday Evening Post article in March 1941 set the curve on fire, and the fellowship roughly quadrupled in ten months, to six or eight thousand by the end of that year. <span class="src"><a href="https://www.aa.org/the-start-and-growth-of-aa">growth</a></span></p>
-        <figure class="photo breakout reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 06</span>
+        <h3 class="u-entry-h">Four years made the first hundred. Two more made six thousand.</h3>
+        <p class="u-entry-p">It took from 1935 to 1939 to produce about a hundred sober members across three cities. Then a single Saturday Evening Post article in March 1941 set the curve on fire, and the fellowship roughly quadrupled in ten months, to six or eight thousand by the end of that year. <span class="u-src"><a href="https://www.aa.org/the-start-and-growth-of-aa">growth</a></span></p>
+        <figure class="u-figure breakout reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/alamodome.webp">
-            <img src="assets/aa/alamodome.jpg" width="1600" height="541" loading="lazy" decoding="async" alt="A vast arena floor and stands packed with tens of thousands of people at an AA international convention in the Alamodome.">
+            <img class="u-figure-img" src="assets/aa/alamodome.jpg" width="1600" height="541" loading="lazy" decoding="async" alt="A vast arena floor and stands packed with tens of thousands of people at an AA international convention in the Alamodome.">
           </picture>
-          <figcaption class="photo-cap">The opening of one AA convention, San Antonio, 2010. Forty people once. More than fifty thousand in this room alone.</figcaption>
+          <figcaption class="u-figure-cap">The opening of one AA convention, San Antonio, 2010. Forty people once. More than fifty thousand in this room alone.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Opening_Ceremony_2010_AA_International_San_Antonio_(4762223655).jpg">Opening ceremony, A.A. International Convention, San Antonio, 2010</a> by Tony Kent, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 07</span>
-        <h3 class="cut-h">The membership table still opens with "1935: two members."</h3>
-        <p>AA's headquarters keeps a running census, and the very first row reads "1935: 2 members, 0 groups," backdated to Bill and Bob themselves. The same table peaks at 2,138,201 members in 129,790 groups in 2020. It is the only census on earth that begins with two named men.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 07</span>
+        <h3 class="u-entry-h">The membership table still opens with "1935: two members."</h3>
+        <p class="u-entry-p">AA's headquarters keeps a running census, and the very first row reads "1935: 2 members, 0 groups," backdated to Bill and Bob themselves. The same table peaks at 2,138,201 members in 129,790 groups in 2020. It is the only census on earth that begins with two named men.</p>
       </article>
+      </div>
     </section>
 
     <!-- ============================ 02 THE BOOK ============================ -->
     <section id="book" class="sec" aria-labelledby="book-h">
-      <span class="sec-kicker">The big book</span>
-      <h2 id="book-h" class="sec-h">The book itself</h2>
-      <p class="lede">Nine decades, and the whole approved library fits on one short shelf.</p>
+      <div class="u-sechead"><p class="u-sechead-k">The big book</p><h2 id="book-h" class="u-sechead-h">The book itself</h2></div>
+      <p class="u-lead">Nine decades, and the whole approved library fits on one short shelf.</p>
 
-      <article class="cut">
-        <span class="cut-num">No. 08</span>
-        <h3 class="cut-h">In ninety years, AA has approved exactly eleven books.</h3>
-        <p>The General Service Conference has put its stamp on eleven full-length books, from the Big Book in 1939 to a volume of Bill's talks in 2019. Everything else AA publishes, the great bulk of its paper, is pamphlets, around sixty of them. The "Conference-approved" label itself only goes back to 1951. <span class="src"><a href="https://www.aa.org/faq/what-does-conference-approved-mean">approved</a></span></p>
+      <div class="u-entries">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 08</span>
+        <h3 class="u-entry-h">In ninety years, AA has approved exactly eleven books.</h3>
+        <p class="u-entry-p">The General Service Conference has put its stamp on eleven full-length books, from the Big Book in 1939 to a volume of Bill's talks in 2019. Everything else AA publishes, the great bulk of its paper, is pamphlets, around sixty of them. The "Conference-approved" label itself only goes back to 1951. <span class="u-src"><a href="https://www.aa.org/faq/what-does-conference-approved-mean">approved</a></span></p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 09</span>
-        <h3 class="cut-h">Bill Wilson wrote three of them.</h3>
-        <p>Three of the eleven are genuinely his: the Big Book, the <em>Twelve Steps and Twelve Traditions</em> (1953), and <em>Alcoholics Anonymous Comes of Age</em> (1957). Three more are anthologies of his own words, assembled by other hands. The rest, including both official biographies and the daily meditation book, were written by other members or by anonymous committee. Even the Twelve and Twelve was not a solo act: Bill wrote it with two paid editors at his elbow. <span class="src"><a href="https://aaagnostica.org/2019/08/18/why-bill-w-wrote-the-12-steps-twice/">the 12 and 12</a></span></p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 09</span>
+        <h3 class="u-entry-h">Bill Wilson wrote three of them.</h3>
+        <p class="u-entry-p">Three of the eleven are genuinely his: the Big Book, the <em>Twelve Steps and Twelve Traditions</em> (1953), and <em>Alcoholics Anonymous Comes of Age</em> (1957). Three more are anthologies of his own words, assembled by other hands. The rest, including both official biographies and the daily meditation book, were written by other members or by anonymous committee. Even the Twelve and Twelve was not a solo act: Bill wrote it with two paid editors at his elbow. <span class="u-src"><a href="https://aaagnostica.org/2019/08/18/why-bill-w-wrote-the-12-steps-twice/">the 12 and 12</a></span></p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 10</span>
-        <h3 class="cut-h">He wrote all of the first 164 pages but two chapters.</h3>
-        <p>The famous front half of the Big Book is Bill's, with two exceptions. "The Doctor's Opinion" was a letter from Dr. William Silkworth, and "To Employers" was written by Hank Parkhurst. The personal stories filling the back third were written by the members themselves. The copyright names Bill as sole author, but he admitted he had become "much more of an umpire than an author." <span class="src"><a href="https://www.prestongroup.org/aa_docs/big_book_facts_and_myths.pdf">who wrote what</a></span></p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 10</span>
+        <h3 class="u-entry-h">He wrote all of the first 164 pages but two chapters.</h3>
+        <p class="u-entry-p">The famous front half of the Big Book is Bill's, with two exceptions. "The Doctor's Opinion" was a letter from Dr. William Silkworth, and "To Employers" was written by Hank Parkhurst. The personal stories filling the back third were written by the members themselves. The copyright names Bill as sole author, but he admitted he had become "much more of an umpire than an author." <span class="u-src"><a href="https://www.prestongroup.org/aa_docs/big_book_facts_and_myths.pdf">who wrote what</a></span></p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/silkworth.webp">
-            <img src="assets/aa/silkworth.jpg" width="466" height="591" loading="lazy" decoding="async" alt="Dr. William Silkworth, a portrait.">
+            <img class="u-figure-img" src="assets/aa/silkworth.jpg" width="466" height="591" loading="lazy" decoding="async" alt="Dr. William Silkworth, a portrait.">
           </picture>
-          <figcaption class="photo-cap">Dr. William Silkworth, whose letter of support became "The Doctor's Opinion," one of the two front chapters Bill did not write.</figcaption>
+          <figcaption class="u-figure-cap">Dr. William Silkworth, whose letter of support became "The Doctor's Opinion," one of the two front chapters Bill did not write.</figcaption>
           <p class="img-credit">Portrait via <a href="https://storiesofrecovery.org/">storiesofrecovery.org</a>.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 11</span>
-        <h3 class="cut-h">Lois wanted to write the chapter to the wives. Bill took it.</h3>
-        <p>The chapter addressed to the wives of alcoholics was offered first to Dr. Bob's wife Anne, who declined, and then claimed by Bill, over the wishes of his own wife, who had lived every line of it. Asked about it decades later, Lois answered without softening it: "Bill wrote it, and I was mad." <span class="src"><a href="https://emotionalsobrietyandfood.com/2015/06/17/historical-tidbit-who-wrote-chapter-8-of-the-big-book-to-wives/">to wives</a></span></p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 11</span>
+        <h3 class="u-entry-h">Lois wanted to write the chapter to the wives. Bill took it.</h3>
+        <p class="u-entry-p">The chapter addressed to the wives of alcoholics was offered first to Dr. Bob's wife Anne, who declined, and then claimed by Bill, over the wishes of his own wife, who had lived every line of it. Asked about it decades later, Lois answered without softening it: "Bill wrote it, and I was mad." <span class="u-src"><a href="https://emotionalsobrietyandfood.com/2015/06/17/historical-tidbit-who-wrote-chapter-8-of-the-big-book-to-wives/">to wives</a></span></p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 12</span>
-        <h3 class="cut-h">The hundred drunks fighting over every word never happened.</h3>
-        <p>The romantic image is the whole membership battling over the text in meetings. The archival historian William Schaberg checked the record and put it flatly: "blood on the floor... it didn't happen in meetings; it did happen in a New Jersey office." The real editing was a handful of men in Hank Parkhurst's Newark office. A wider circle of about four hundred did get to weigh in, by mail: mimeographed loan copies went out to members, doctors, clergy, and judges for comment before the book was set. <span class="src"><a href="https://www.thefix.com/the-big-book-creation-story-alcoholics-anonymous/">Schaberg</a></span></p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 12</span>
+        <h3 class="u-entry-h">The hundred drunks fighting over every word never happened.</h3>
+        <p class="u-entry-p">The romantic image is the whole membership battling over the text in meetings. The archival historian William Schaberg checked the record and put it flatly: "blood on the floor... it didn't happen in meetings; it did happen in a New Jersey office." The real editing was a handful of men in Hank Parkhurst's Newark office. A wider circle of about four hundred did get to weigh in, by mail: mimeographed loan copies went out to members, doctors, clergy, and judges for comment before the book was set. <span class="u-src"><a href="https://www.thefix.com/the-big-book-creation-story-alcoholics-anonymous/">Schaberg</a></span></p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/sorting-mail.webp">
-            <img src="assets/aa/sorting-mail.jpg" width="1500" height="1133" loading="lazy" decoding="async" alt="Clerks at sorting cases behind heaps of tied bundles of letters in a 1938 mail room.">
+            <img class="u-figure-img" src="assets/aa/sorting-mail.jpg" width="1500" height="1133" loading="lazy" decoding="async" alt="Clerks at sorting cases behind heaps of tied bundles of letters in a 1938 mail room.">
           </picture>
-          <figcaption class="photo-cap">The mail was the nervous system of early AA: draft chapters, loan copies, and later the floods of pleas for help all moved by post.</figcaption>
+          <figcaption class="u-figure-cap">The mail was the nervous system of early AA: draft chapters, loan copies, and later the floods of pleas for help all moved by post.</figcaption>
           <p class="img-credit"><a href="https://www.loc.gov/item/2017764849/">Sorting the mail, 1938</a>. Arthur Rothstein, Farm Security Administration, Library of Congress, public domain.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 13</span>
-        <h3 class="cut-h">"God as we understood Him" was the unbelievers' victory.</h3>
-        <p>The phrase that lets an atheist stay in the room was the price of peace with the New York agnostics, usually credited to a former salesman named Jim Burwell. In the same compromise, the Seventh Step lost the words "on our knees." The book's most famous opening to non-believers was won by its non-believers.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 13</span>
+        <h3 class="u-entry-h">"God as we understood Him" was the unbelievers' victory.</h3>
+        <p class="u-entry-p">The phrase that lets an atheist stay in the room was the price of peace with the New York agnostics, usually credited to a former salesman named Jim Burwell. In the same compromise, the Seventh Step lost the words "on our knees." The book's most famous opening to non-believers was won by its non-believers.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 14</span>
-        <h3 class="cut-h">It is called the Big Book because of the paper.</h3>
-        <p>Nothing about its length earned the nickname. The first printer ran it on the thickest stock in the shop, so that a $3.50 book in 1939 would feel hefty enough to be worth the money. The first run was 4,730 copies. The name is a printing decision, not a compliment.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 14</span>
+        <h3 class="u-entry-h">It is called the Big Book because of the paper.</h3>
+        <p class="u-entry-p">Nothing about its length earned the nickname. The first printer ran it on the thickest stock in the shop, so that a $3.50 book in 1939 would feel hefty enough to be worth the money. The first run was 4,730 copies. The name is a printing decision, not a compliment.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 15</span>
-        <h3 class="cut-h">AA forgot to renew the copyright.</h3>
-        <p>Through a clerical lapse, the first edition's United States copyright was never renewed, and the original text has been in the public domain since 1967. AA still maintains it controls the book everywhere else on earth, and has fought to keep doing so.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 15</span>
+        <h3 class="u-entry-h">AA forgot to renew the copyright.</h3>
+        <p class="u-entry-p">Through a clerical lapse, the first edition's United States copyright was never renewed, and the original text has been in the public domain since 1967. AA still maintains it controls the book everywhere else on earth, and has fought to keep doing so.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 16</span>
-        <h3 class="cut-h">The marked-up 1939 manuscript sold for $2.4 million.</h3>
-        <p>The typed printer's copy of the Big Book, the handwritten edits still on its pages, sold at auction in 2018 to the owner of the Indianapolis Colts. AA's publishing arm sued to stop the sale, then settled by signing away any and all claims to it.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 16</span>
+        <h3 class="u-entry-h">The marked-up 1939 manuscript sold for $2.4 million.</h3>
+        <p class="u-entry-p">The typed printer's copy of the Big Book, the handwritten edits still on its pages, sold at auction in 2018 to the owner of the Indianapolis Colts. AA's publishing arm sued to stop the sale, then settled by signing away any and all claims to it.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 17</span>
-        <h3 class="cut-h">The book now exists in more than seventy languages.</h3>
-        <p>From a first run of under five thousand, the basic text has been carried into seventy-plus languages. One of them, Navajo, has no written form for it: the translation took four years and was issued as a spoken fourteen-disc recording, sold out of its first run of eight hundred sets.</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 17</span>
+        <h3 class="u-entry-h">The book now exists in more than seventy languages.</h3>
+        <p class="u-entry-p">From a first run of under five thousand, the basic text has been carried into seventy-plus languages. One of them, Navajo, has no written form for it: the translation took four years and was issued as a spoken fourteen-disc recording, sold out of its first run of eight hundred sets.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/big-book-hebrew.webp">
-            <img src="assets/aa/big-book-hebrew.jpg" width="1120" height="1764" loading="lazy" decoding="async" alt="A plain blue hardcover of the Big Book printed in Hebrew, with white lettering.">
+            <img class="u-figure-img" src="assets/aa/big-book-hebrew.jpg" width="1120" height="1764" loading="lazy" decoding="async" alt="A plain blue hardcover of the Big Book printed in Hebrew, with white lettering.">
           </picture>
-          <figcaption class="photo-cap">The Big Book in Hebrew. The cover is the same plain promise in every alphabet it reaches.</figcaption>
+          <figcaption class="u-figure-cap">The Big Book in Hebrew. The cover is the same plain promise in every alphabet it reaches.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Aa_big_book_hebrew.jpg">The Big Book in Hebrew</a>. Released under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
+      </div>
     </section>
 
     <!-- ============================ 03 THE ROOMS ============================ -->
     <section id="rooms" class="sec" aria-labelledby="rooms-h">
-      <span class="sec-kicker">The rooms</span>
-      <h2 id="rooms-h" class="sec-h">The rooms before the book</h2>
-      <p class="lede">Before there was a book, there was a house, a hospital bed, and a set of rules nobody wrote down.</p>
+      <div class="u-sechead"><p class="u-sechead-k">The rooms</p><h2 id="rooms-h" class="u-sechead-h">The rooms before the book</h2></div>
+      <p class="u-lead">Before there was a book, there was a house, a hospital bed, and a set of rules nobody wrote down.</p>
 
-      <article class="cut">
-        <span class="cut-num">No. 18</span>
-        <h3 class="cut-h">When it was forty people, Akron met in a living room on Wednesday nights.</h3>
-        <p>There was no clubhouse and no book. From 1935 to 1939 the Akron group met every Wednesday in the living room of T. Henry and Clarace Williams, at 676 Palisades Drive, inside an Oxford Group meeting where the alcoholics were a minority bloc. When that grew impossible the meeting moved to Dr. Bob's own house, which once held 74 people in one night. <span class="src"><a href="https://akronaa.org/history-and-archives/historic-sites/">the sites</a></span></p>
-        <figure class="photo reveal">
+      <div class="u-entries">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 18</span>
+        <h3 class="u-entry-h">When it was forty people, Akron met in a living room on Wednesday nights.</h3>
+        <p class="u-entry-p">There was no clubhouse and no book. From 1935 to 1939 the Akron group met every Wednesday in the living room of T. Henry and Clarace Williams, at 676 Palisades Drive, inside an Oxford Group meeting where the alcoholics were a minority bloc. When that grew impossible the meeting moved to Dr. Bob's own house, which once held 74 people in one night. <span class="u-src"><a href="https://akronaa.org/history-and-archives/historic-sites/">the sites</a></span></p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/dr-bobs-house.webp">
-            <img src="assets/aa/dr-bobs-house.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="A modest two-and-a-half-story house with white trim at 855 Ardmore Avenue in Akron, Dr. Bob's home.">
+            <img class="u-figure-img" src="assets/aa/dr-bobs-house.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="A modest two-and-a-half-story house with white trim at 855 Ardmore Avenue in Akron, Dr. Bob's home.">
           </picture>
-          <figcaption class="photo-cap">Dr. Bob's house at 855 Ardmore Avenue. For a stretch in early 1940 the whole Akron meeting crammed inside it.</figcaption>
+          <figcaption class="u-figure-cap">Dr. Bob's house at 855 Ardmore Avenue. For a stretch in early 1940 the whole Akron meeting crammed inside it.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Dr._Bob%27s_House.jpg">Dr. Bob's House, Akron</a>. Photo by Nyttend, public domain, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 19</span>
-        <h3 class="cut-h">There was a meeting about the meeting.</h3>
-        <p>Every Monday the most surrendered members held a "set-up meeting," sitting in silence with pads and pencils to write down the name God gave them for who should lead on Wednesday. One member marveled that they nearly always wrote the same name.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 19</span>
+        <h3 class="u-entry-h">There was a meeting about the meeting.</h3>
+        <p class="u-entry-p">Every Monday the most surrendered members held a "set-up meeting," sitting in silence with pads and pencils to write down the name God gave them for who should lead on Wednesday. One member marveled that they nearly always wrote the same name.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 20</span>
-        <h3 class="cut-h">You could not attend until you had knelt.</h3>
-        <p>A newcomer was taken to an upstairs bedroom and made to kneel and surrender out loud before he was allowed into a meeting at all. The wives waited downstairs. One of them remembered the door opening and "down would come the new man, shaking, white, serious, and grim."</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 20</span>
+        <h3 class="u-entry-h">You could not attend until you had knelt.</h3>
+        <p class="u-entry-p">A newcomer was taken to an upstairs bedroom and made to kneel and surrender out loud before he was allowed into a meeting at all. The wives waited downstairs. One of them remembered the door opening and "down would come the new man, shaking, white, serious, and grim."</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 21</span>
-        <h3 class="cut-h">The weekly meeting was rated "important, but not vital."</h3>
-        <p>A 1938 fact-finding memo, the only contemporary written description of the program, ranked the meeting itself as merely important. The truly mandatory part was a daily morning quiet time, skipped at "grave danger of backsliding." The thing AA is now built around was once the optional part.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 21</span>
+        <h3 class="u-entry-h">The weekly meeting was rated "important, but not vital."</h3>
+        <p class="u-entry-p">A 1938 fact-finding memo, the only contemporary written description of the program, ranked the meeting itself as merely important. The truly mandatory part was a daily morning quiet time, skipped at "grave danger of backsliding." The thing AA is now built around was once the optional part.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 22</span>
-        <h3 class="cut-h">New York met on Tuesdays, in the Wilsons' front room.</h3>
-        <p>The other founding group met at 182 Clinton Street in Brooklyn, about fifteen people counting families, looser and far less scriptural than Akron. Drunks boarded in the house and were sometimes drunk in it; Bill called it a boiler factory, "from which practically no one issued sober, but we had a pile of experience."</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 22</span>
+        <h3 class="u-entry-h">New York met on Tuesdays, in the Wilsons' front room.</h3>
+        <p class="u-entry-p">The other founding group met at 182 Clinton Street in Brooklyn, about fifteen people counting families, looser and far less scriptural than Akron. Drunks boarded in the house and were sometimes drunk in it; Bill called it a boiler factory, "from which practically no one issued sober, but we had a pile of experience."</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 23</span>
-        <h3 class="cut-h">The front door was a hospital bed.</h3>
-        <p>In Akron, getting in meant five to eight days in a hospital room with nothing to read but a Bible, visited two or three at a time by recovered drinkers a sponsor had summoned with twenty or thirty phone calls. The visits, a manual explained, were the medicine.</p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 23</span>
+        <h3 class="u-entry-h">The front door was a hospital bed.</h3>
+        <p class="u-entry-p">In Akron, getting in meant five to eight days in a hospital room with nothing to read but a Bible, visited two or three at a time by recovered drinkers a sponsor had summoned with twenty or thirty phone calls. The visits, a manual explained, were the medicine.</p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/akron-hospital.webp">
-            <img src="assets/aa/akron-hospital.jpg" width="1600" height="1009" loading="lazy" decoding="async" alt="A linen postcard of the multistory City Hospital in Akron, Ohio, with lawns in front.">
+            <img class="u-figure-img" src="assets/aa/akron-hospital.jpg" width="1600" height="1009" loading="lazy" decoding="async" alt="A linen postcard of the multistory City Hospital in Akron, Ohio, with lawns in front.">
           </picture>
-          <figcaption class="photo-cap">Akron City Hospital, where Bill Dotson, AA number three, sobered up in a bed in June 1935.</figcaption>
+          <figcaption class="u-figure-cap">Akron City Hospital, where Bill Dotson, AA number three, sobered up in a bed in June 1935.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:City_Hospital,_Akron,_Ohio_(74839).jpg">City Hospital, Akron, Ohio</a>. Tichnor Brothers Collection, Boston Public Library, public domain.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 24</span>
-        <h3 class="cut-h">The sobriety chip began as a deal with a nun.</h3>
-        <p>Sister Ignatia gave every alcoholic leaving St. Thomas Hospital in Akron a Sacred Heart badge, on one condition: if he ever decided to drink, he had to come back and hand it to her first. The chip handed out for years of sobriety descends directly from that small contract. <span class="src"><a href="https://www.aa.org/sister-ignatia">Ignatia</a></span></p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 24</span>
+        <h3 class="u-entry-h">The sobriety chip began as a deal with a nun.</h3>
+        <p class="u-entry-p">Sister Ignatia gave every alcoholic leaving St. Thomas Hospital in Akron a Sacred Heart badge, on one condition: if he ever decided to drink, he had to come back and hand it to her first. The chip handed out for years of sobriety descends directly from that small contract. <span class="u-src"><a href="https://www.aa.org/sister-ignatia">Ignatia</a></span></p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 25</span>
-        <h3 class="cut-h">"Hi, I'm an alcoholic" has no early paper trail.</h3>
-        <p>Nobody can document the ritual greeting at any meeting before the mid-1940s; AA's own archives say the earliest member memory of hearing it dates to about 1945. The Akron old-timers found the later custom of reciting your drinking history strange. As one put it, they did not think it was anybody's business. <span class="src"><a href="https://www.aacle.org/my-name-is-and-im-an-alcoholic/">the phrase</a></span></p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 25</span>
+        <h3 class="u-entry-h">"Hi, I'm an alcoholic" has no early paper trail.</h3>
+        <p class="u-entry-p">Nobody can document the ritual greeting at any meeting before the mid-1940s; AA's own archives say the earliest member memory of hearing it dates to about 1945. The Akron old-timers found the later custom of reciting your drinking history strange. As one put it, they did not think it was anybody's business. <span class="u-src"><a href="https://www.aacle.org/my-name-is-and-im-an-alcoholic/">the phrase</a></span></p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 26</span>
-        <h3 class="cut-h">The Serenity Prayer came out of a newspaper obituary.</h3>
-        <p>A member spotted the lines in a June 1941 death notice in the New York Herald Tribune. Within weeks the office had them printed on wallet cards, known at first simply as the "God Grant Me" cards. The most quoted prayer in recovery entered AA off the obituary page. <span class="src"><a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">the prayer</a></span></p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 26</span>
+        <h3 class="u-entry-h">The Serenity Prayer came out of a newspaper obituary.</h3>
+        <p class="u-entry-p">A member spotted the lines in a June 1941 death notice in the New York Herald Tribune. Within weeks the office had them printed on wallet cards, known at first simply as the "God Grant Me" cards. The most quoted prayer in recovery entered AA off the obituary page. <span class="u-src"><a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">the prayer</a></span></p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/medallion.webp">
-            <img src="assets/aa/medallion.jpg" width="800" height="793" loading="lazy" decoding="async" alt="A bronze sobriety medallion photographed close up, the full Serenity Prayer engraved on its reverse.">
+            <img class="u-figure-img" src="assets/aa/medallion.jpg" width="800" height="793" loading="lazy" decoding="async" alt="A bronze sobriety medallion photographed close up, the full Serenity Prayer engraved on its reverse.">
           </picture>
-          <figcaption class="photo-cap">A modern sobriety medallion, the prayer engraved on the back. Two customs, the chip and the prayer, both improvised in the early years, fused onto one coin.</figcaption>
+          <figcaption class="u-figure-cap">A modern sobriety medallion, the prayer engraved on the back. Two customs, the chip and the prayer, both improvised in the early years, fused onto one coin.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Sobriety_medallion_(3408248678).jpg">Sobriety medallion</a> by Yolanda, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via Flickr.</p>
         </figure>
       </article>
+      </div>
     </section>
 
     <!-- ============================ 04 THE FACES ============================ -->
     <section id="faces" class="sec" aria-labelledby="faces-h">
-      <span class="sec-kicker">The cast</span>
-      <h2 id="faces-h" class="sec-h">Putting faces to the forty</h2>
-      <p class="lede">A movement built on anonymity barely sat for the camera. Here, gathered, is the founding generation.</p>
+      <div class="u-sechead"><p class="u-sechead-k">The cast</p><h2 id="faces-h" class="u-sechead-h">Putting faces to the forty</h2></div>
+      <p class="u-lead">A movement built on anonymity barely sat for the camera. Here, gathered, is the founding generation.</p>
 
-      <article class="cut">
-        <span class="cut-num">No. 27</span>
-        <h3 class="cut-h">The founders left a thin public record on purpose.</h3>
-        <p>This is why you will not find most of these people on Wikipedia or in the photo archives: the anonymity tradition kept them out of the mainstream record, and their portraits survive mainly because the recovery-history community held onto them. Here is the founding generation, the real faces behind the number forty.</p>
-        <figure class="photo tall reveal">
+      <div class="u-entries">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 27</span>
+        <h3 class="u-entry-h">The founders left a thin public record on purpose.</h3>
+        <p class="u-entry-p">This is why you will not find most of these people on Wikipedia or in the photo archives: the anonymity tradition kept them out of the mainstream record, and their portraits survive mainly because the recovery-history community held onto them. Here is the founding generation, the real faces behind the number forty.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/founders.webp">
-            <img src="assets/aa/founders.jpg" width="436" height="469" loading="lazy" decoding="async" alt="Dr. Bob Smith, older and bespectacled, standing beside a taller, younger Bill Wilson, both in suits.">
+            <img class="u-figure-img" src="assets/aa/founders.jpg" width="436" height="469" loading="lazy" decoding="async" alt="Dr. Bob Smith, older and bespectacled, standing beside a taller, younger Bill Wilson, both in suits.">
           </picture>
-          <figcaption class="photo-cap">The two founders: Dr. Bob Smith, left, and Bill Wilson. The warm cast on these portraits is later colorizing of black-and-white originals.</figcaption>
+          <figcaption class="u-figure-cap">The two founders: Dr. Bob Smith, left, and Bill Wilson. The warm cast on these portraits is later colorizing of black-and-white originals.</figcaption>
         </figure>
-        <div class="gallery reveal" aria-label="Portraits of the founding generation of Alcoholics Anonymous">
+        <div class="u-grid reveal" aria-label="Portraits of the founding generation of Alcoholics Anonymous">
           <figure>
             <picture><source type="image/webp" srcset="assets/aa/anne-smith.webp"><img src="assets/aa/anne-smith.jpg" width="466" height="591" loading="lazy" decoding="async" alt="Anne Smith, a portrait."></picture>
             <figcaption><b>Anne Smith</b>Dr. Bob's wife. Ran the morning quiet time and worked the phones.</figcaption>
@@ -528,255 +497,257 @@
         <p class="img-credit">Founder and pioneer portraits via <a href="https://storiesofrecovery.org/">storiesofrecovery.org</a> (Marty Mann via NCADD), reproduced from the early-AA photographic record.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 28</span>
-        <h3 class="cut-h">The houses all survived as museums.</h3>
-        <p>What the founders did not leave in photographs they left in real estate. The Vermont inn where Bill was born, Dr. Bob's home in Akron, the Gate Lodge where Henrietta staged their first meeting, and Stepping Stones, the Katonah house where Lois ran Al-Anon from an upstairs desk, are all preserved and open to visitors.</p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 28</span>
+        <h3 class="u-entry-h">The houses all survived as museums.</h3>
+        <p class="u-entry-p">What the founders did not leave in photographs they left in real estate. The Vermont inn where Bill was born, Dr. Bob's home in Akron, the Gate Lodge where Henrietta staged their first meeting, and Stepping Stones, the Katonah house where Lois ran Al-Anon from an upstairs desk, are all preserved and open to visitors.</p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/stepping-stones.webp">
-            <img src="assets/aa/stepping-stones.jpg" width="1600" height="1059" loading="lazy" decoding="async" alt="Stepping Stones, a brown shingled house among bare winter trees in Katonah, New York.">
+            <img class="u-figure-img" src="assets/aa/stepping-stones.jpg" width="1600" height="1059" loading="lazy" decoding="async" alt="Stepping Stones, a brown shingled house among bare winter trees in Katonah, New York.">
           </picture>
-          <figcaption class="photo-cap">Stepping Stones, the Wilsons' home from 1941 to 1971, now a museum and archive.</figcaption>
+          <figcaption class="u-figure-cap">Stepping Stones, the Wilsons' home from 1941 to 1971, now a museum and archive.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Stepping_Stones,_Katonah,_NY.jpg">Stepping Stones, Katonah, NY</a> by Daniel Case, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 29</span>
-        <h3 class="cut-h">The graves never mention AA.</h3>
-        <p>Bill's headstone in East Dorset, Vermont gives only his name and dates. Dr. Bob and Anne Smith's modest stone in Akron is the same. Neither says a word about the fellowship the two men built. The only thing that marks them is the sobriety chips strangers leave on top.</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 29</span>
+        <h3 class="u-entry-h">The graves never mention AA.</h3>
+        <p class="u-entry-p">Bill's headstone in East Dorset, Vermont gives only his name and dates. Dr. Bob and Anne Smith's modest stone in Akron is the same. Neither says a word about the fellowship the two men built. The only thing that marks them is the sobriety chips strangers leave on top.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/dr-bob-grave.webp">
-            <img src="assets/aa/dr-bob-grave.jpg" width="642" height="856" loading="lazy" decoding="async" alt="The plain granite gravestone of Robert and Anne Smith at Mount Peace Cemetery in Akron, with small tokens left on it.">
+            <img class="u-figure-img" src="assets/aa/dr-bob-grave.jpg" width="642" height="856" loading="lazy" decoding="async" alt="The plain granite gravestone of Robert and Anne Smith at Mount Peace Cemetery in Akron, with small tokens left on it.">
           </picture>
-          <figcaption class="photo-cap">Dr. Bob and Anne Smith's grave in Akron. Like Bill's, it leaves AA unmentioned.</figcaption>
+          <figcaption class="u-figure-cap">Dr. Bob and Anne Smith's grave in Akron. Like Bill's, it leaves AA unmentioned.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Michael_J._Farrand_Robert_Holbrook_Smith_gravesite_Mount_Peace_Cemetery_Akron_OH_March_2022.jpg">Robert Holbrook Smith gravesite, Mount Peace Cemetery, Akron</a> by Michael J. Farrand, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 30</span>
-        <h3 class="cut-h">The first woman left no photograph at all.</h3>
-        <p>Florence Rankin was the first woman to get sober in AA and the only woman in the first edition; her story was titled "A Feminine Victory." She drank again, moved to Washington, and was found dead, and Fitz Mayo (above) had to identify the body. Of the whole early cast she is the one face still missing: no photograph of her is known to exist. Her death hardened a folklore that the program did not work for women, which Marty Mann then spent a sober lifetime dismantling. Even "first woman to stay sober" is contested, since Mann herself had an early slip. <span class="src"><a href="https://www.pointshistory.org/post/who-was-the-first-woman-in-alcoholics-anonymous-and-why-do-we-care">the first woman</a></span></p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 30</span>
+        <h3 class="u-entry-h">The first woman left no photograph at all.</h3>
+        <p class="u-entry-p">Florence Rankin was the first woman to get sober in AA and the only woman in the first edition; her story was titled "A Feminine Victory." She drank again, moved to Washington, and was found dead, and Fitz Mayo (above) had to identify the body. Of the whole early cast she is the one face still missing: no photograph of her is known to exist. Her death hardened a folklore that the program did not work for women, which Marty Mann then spent a sober lifetime dismantling. Even "first woman to stay sober" is contested, since Mann herself had an early slip. <span class="u-src"><a href="https://www.pointshistory.org/post/who-was-the-first-woman-in-alcoholics-anonymous-and-why-do-we-care">the first woman</a></span></p>
       </article>
+      </div>
     </section>
 
     <!-- ============================ 05 THE MACHINE ============================ -->
     <section id="machine" class="sec" aria-labelledby="machine-h">
-      <span class="sec-kicker">The institution</span>
-      <h2 id="machine-h" class="sec-h">The money and the machine</h2>
-      <p class="lede">The strangest thing about the institution is how hard it works to give its own power away.</p>
+      <div class="u-sechead"><p class="u-sechead-k">The institution</p><h2 id="machine-h" class="u-sechead-h">The money and the machine</h2></div>
+      <p class="u-lead">The strangest thing about the institution is how hard it works to give its own power away.</p>
 
-      <article class="cut">
-        <span class="cut-num">No. 31</span>
-        <h3 class="cut-h">Rockefeller gave a tenth of what they asked, on purpose.</h3>
-        <p>Asked for $50,000 to bankroll the young fellowship, John D. Rockefeller Jr. gave $5,000 and explained the cut: "I am afraid that money will spoil this thing." His instinct became permanent policy. AA has been refusing big money ever since.</p>
-        <figure class="photo tall reveal">
+      <div class="u-entries">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 31</span>
+        <h3 class="u-entry-h">Rockefeller gave a tenth of what they asked, on purpose.</h3>
+        <p class="u-entry-p">Asked for $50,000 to bankroll the young fellowship, John D. Rockefeller Jr. gave $5,000 and explained the cut: "I am afraid that money will spoil this thing." His instinct became permanent policy. AA has been refusing big money ever since.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/rockefeller.webp">
-            <img src="assets/aa/rockefeller.jpg" width="1600" height="2160" loading="lazy" decoding="async" alt="John D. Rockefeller Jr. in a dark suit, a 1917 studio portrait.">
+            <img class="u-figure-img" src="assets/aa/rockefeller.jpg" width="1600" height="2160" loading="lazy" decoding="async" alt="John D. Rockefeller Jr. in a dark suit, a 1917 studio portrait.">
           </picture>
-          <figcaption class="photo-cap">John D. Rockefeller Jr., 1917. The richest backer AA ever had decided, deliberately, to give it very little.</figcaption>
+          <figcaption class="u-figure-cap">John D. Rockefeller Jr., 1917. The richest backer AA ever had decided, deliberately, to give it very little.</figcaption>
           <p class="img-credit"><a href="https://www.loc.gov/pictures/item/2016867174/">John D. Rockefeller Jr., 1917</a>. Harris &amp; Ewing Collection, Library of Congress, public domain.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 32</span>
-        <h3 class="cut-h">A national radio broadcast produced two book orders.</h3>
-        <p>To sell the new Big Book, the group put a pitch on the <em>We the People</em> radio show and mailed 20,000 postcards to doctors. The return was twelve reply cards, ten of them illegible, and exactly two orders. The morning after the broadcast, the Wilsons were foreclosed out of their Brooklyn house.</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 32</span>
+        <h3 class="u-entry-h">A national radio broadcast produced two book orders.</h3>
+        <p class="u-entry-p">To sell the new Big Book, the group put a pitch on the <em>We the People</em> radio show and mailed 20,000 postcards to doctors. The return was twelve reply cards, ten of them illegible, and exactly two orders. The morning after the broadcast, the Wilsons were foreclosed out of their Brooklyn house.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/boys-radio.webp">
-            <img src="assets/aa/boys-radio.jpg" width="1500" height="1952" loading="lazy" decoding="async" alt="Two farm boys slumped beside a tall console radio in a 1940 living room.">
+            <img class="u-figure-img" src="assets/aa/boys-radio.jpg" width="1500" height="1952" loading="lazy" decoding="async" alt="Two farm boys slumped beside a tall console radio in a 1940 living room.">
           </picture>
-          <figcaption class="photo-cap">A console radio, 1940, the kind the AA pitch went out on. The medium was national. The result was two books.</figcaption>
+          <figcaption class="u-figure-cap">A console radio, 1940, the kind the AA pitch went out on. The medium was national. The result was two books.</figcaption>
           <p class="img-credit"><a href="https://www.loc.gov/item/2017811135/">Boys at a console radio, Aberdeen, South Dakota, 1940</a>. John Vachon, Farm Security Administration, Library of Congress, public domain.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 33</span>
-        <h3 class="cut-h">AA caps what you are allowed to give it.</h3>
-        <p>No member may donate more than $7,500 in a year, or leave more than $12,500 in a will, and the office mails back any check from someone who is not a member at all. It is an organization that turns away money on principle, the long shadow of Rockefeller's warning.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 33</span>
+        <h3 class="u-entry-h">AA caps what you are allowed to give it.</h3>
+        <p class="u-entry-p">No member may donate more than $7,500 in a year, or leave more than $12,500 in a will, and the office mails back any check from someone who is not a member at all. It is an organization that turns away money on principle, the long shadow of Rockefeller's warning.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 34</span>
-        <h3 class="cut-h">It let its own trademark die.</h3>
-        <p>After roughly two hundred cease-and-desist letters and a revolt by the medallion makers who stamp the chips, AA stopped defending its circle-and-triangle symbol in 1993, and the 1994 conference stripped it from the literature. The fellowship gave away its own logo rather than fight its own members over it.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 34</span>
+        <h3 class="u-entry-h">It let its own trademark die.</h3>
+        <p class="u-entry-p">After roughly two hundred cease-and-desist letters and a revolt by the medallion makers who stamp the chips, AA stopped defending its circle-and-triangle symbol in 1993, and the 1994 conference stripped it from the literature. The fellowship gave away its own logo rather than fight its own members over it.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 35</span>
-        <h3 class="cut-h">The first meeting called "Alcoholics Anonymous" was broken up by AA.</h3>
-        <p>In May 1939 the Cleveland members split off and held the first meeting ever to use the name Alcoholics Anonymous. The Akron group they had left came over to break it up. One Cleveland pioneer's verdict on the whole launch: "A.A. started and grew in riots."</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 35</span>
+        <h3 class="u-entry-h">The first meeting called "Alcoholics Anonymous" was broken up by AA.</h3>
+        <p class="u-entry-p">In May 1939 the Cleveland members split off and held the first meeting ever to use the name Alcoholics Anonymous. The Akron group they had left came over to break it up. One Cleveland pioneer's verdict on the whole launch: "A.A. started and grew in riots."</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 36</span>
-        <h3 class="cut-h">Dr. Bob treated five thousand alcoholics and never charged a cent.</h3>
-        <p>Between 1939 and 1950, working alongside Sister Ignatia at St. Thomas Hospital in Akron, Dr. Bob detoxed roughly 5,000 people and took no fee from any of them. Ignatia's own lifetime total, counting her later years in Cleveland, runs to about 15,000.</p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 36</span>
+        <h3 class="u-entry-h">Dr. Bob treated five thousand alcoholics and never charged a cent.</h3>
+        <p class="u-entry-p">Between 1939 and 1950, working alongside Sister Ignatia at St. Thomas Hospital in Akron, Dr. Bob detoxed roughly 5,000 people and took no fee from any of them. Ignatia's own lifetime total, counting her later years in Cleveland, runs to about 15,000.</p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/st-thomas-chapel.webp">
-            <img src="assets/aa/st-thomas-chapel.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="The quiet interior chapel of St. Thomas Hospital in Akron, with pews and stained glass.">
+            <img class="u-figure-img" src="assets/aa/st-thomas-chapel.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="The quiet interior chapel of St. Thomas Hospital in Akron, with pews and stained glass.">
           </picture>
-          <figcaption class="photo-cap">The chapel at St. Thomas Hospital in Akron, where Dr. Bob and Sister Ignatia ran the first alcoholic ward in the country.</figcaption>
+          <figcaption class="u-figure-cap">The chapel at St. Thomas Hospital in Akron, where Dr. Bob and Sister Ignatia ran the first alcoholic ward in the country.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Chapel_of_Summa_St._Thomas_Hospital_in_Akron,_OH.jpg">Chapel of St. Thomas Hospital, Akron</a> by PFAStudent, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 37</span>
-        <h3 class="cut-h">In 2025 the volunteers censured the board that owns everything.</h3>
-        <p>AA is governed as an upside-down pyramid: a board legally holds the copyrights and the money but answers to a conference of volunteer delegates. In 2025 that conference formally censured the board for "harassment, intimidation, and bullying," and because the structure has no head, there was no higher authority to settle the fight.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 37</span>
+        <h3 class="u-entry-h">In 2025 the volunteers censured the board that owns everything.</h3>
+        <p class="u-entry-p">AA is governed as an upside-down pyramid: a board legally holds the copyrights and the money but answers to a conference of volunteer delegates. In 2025 that conference formally censured the board for "harassment, intimidation, and bullying," and because the structure has no head, there was no higher authority to settle the fight.</p>
       </article>
+      </div>
     </section>
 
     <!-- ============================ 06 LATE BILL ============================ -->
     <section id="late" class="sec" aria-labelledby="late-h">
-      <span class="sec-kicker">After</span>
-      <h2 id="late-h" class="sec-h">Strange late Bill</h2>
-      <p class="lede">The co-founder stayed sober to the end. Almost everything else about his last years is stranger than the legend allows.</p>
+      <div class="u-sechead"><p class="u-sechead-k">After</p><h2 id="late-h" class="u-sechead-h">Strange late Bill</h2></div>
+      <p class="u-lead">The co-founder stayed sober to the end. Almost everything else about his last years is stranger than the legend allows.</p>
 
-      <article class="cut">
-        <span class="cut-num">No. 38</span>
-        <h3 class="cut-h">He spent eleven years in a depression, writing through it.</h3>
-        <p>From roughly 1944 to 1955 the co-founder of AA was sunk in recurring depression. On some mornings he wrote the <em>Twelve Steps and Twelve Traditions</em>, the book that codified the program, with his head down on the desk, weeping.</p>
+      <div class="u-entries">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 38</span>
+        <h3 class="u-entry-h">He spent eleven years in a depression, writing through it.</h3>
+        <p class="u-entry-p">From roughly 1944 to 1955 the co-founder of AA was sunk in recurring depression. On some mornings he wrote the <em>Twelve Steps and Twelve Traditions</em>, the book that codified the program, with his head down on the desk, weeping.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 39</span>
-        <h3 class="cut-h">He took LSD, and believed it could sober people up.</h3>
-        <p>In 1956 Bill took LSD under a doctor's supervision and came away convinced it could trigger the kind of spiritual opening that got drinkers sober. He kept at it for years; the circle around the experiments included his wife, two priests, Marty Mann, and his mistress. In one letter he called the drug "about as harmless as aspirin."</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 39</span>
+        <h3 class="u-entry-h">He took LSD, and believed it could sober people up.</h3>
+        <p class="u-entry-p">In 1956 Bill took LSD under a doctor's supervision and came away convinced it could trigger the kind of spiritual opening that got drinkers sober. He kept at it for years; the circle around the experiments included his wife, two priests, Marty Mann, and his mistress. In one letter he called the drug "about as harmless as aspirin."</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/gerald-heard.webp">
-            <img src="assets/aa/gerald-heard.jpg" width="557" height="576" loading="lazy" decoding="async" alt="Gerald Heard, a bearded writer in glasses, around 1955.">
+            <img class="u-figure-img" src="assets/aa/gerald-heard.jpg" width="557" height="576" loading="lazy" decoding="async" alt="Gerald Heard, a bearded writer in glasses, around 1955.">
           </picture>
-          <figcaption class="photo-cap">Gerald Heard, who guided Bill's first LSD session in 1956. He is one of the few in that circle with a free photograph.</figcaption>
+          <figcaption class="u-figure-cap">Gerald Heard, who guided Bill's first LSD session in 1956. He is one of the few in that circle with a free photograph.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Gerald_Heard,_ca._1955,_cropped_from_original.jpg">Gerald Heard, c. 1955</a>. Photo by Jay Michael Barrie, The Barrie Family Trust, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 40</span>
-        <h3 class="cut-h">He ran a vitamin crusade out of AA's headquarters.</h3>
-        <p>Late in life Bill became an evangelist for niacin, took 3,000 milligrams a day, and ran an informal trial on thirty AA friends. The 1967 conference made him move the operation out of the General Service Office and strip its address from his stationery. Insiders called it the great niacin flap.</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 40</span>
+        <h3 class="u-entry-h">He ran a vitamin crusade out of AA's headquarters.</h3>
+        <p class="u-entry-p">Late in life Bill became an evangelist for niacin, took 3,000 milligrams a day, and ran an informal trial on thirty AA friends. The 1967 conference made him move the operation out of the General Service Office and strip its address from his stationery. Insiders called it the great niacin flap.</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 41</span>
-        <h3 class="cut-h">He reported that a dead monk was helping him write.</h3>
-        <p>In a 1952 letter to his Jesuit adviser, Bill wrote that a monk named Boniface was assisting him with the Twelve and Twelve from the spirit world. He and Lois held seances at home, in a room their circle called the spook room.</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 41</span>
+        <h3 class="u-entry-h">He reported that a dead monk was helping him write.</h3>
+        <p class="u-entry-p">In a 1952 letter to his Jesuit adviser, Bill wrote that a monk named Boniface was assisting him with the Twelve and Twelve from the spirit world. He and Lois held seances at home, in a room their circle called the spook room.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/ed-dowling.webp">
-            <img src="assets/aa/ed-dowling.jpg" width="1600" height="2313" loading="lazy" decoding="async" alt="A young Father Ed Dowling in a Roman collar.">
+            <img class="u-figure-img" src="assets/aa/ed-dowling.jpg" width="1600" height="2313" loading="lazy" decoding="async" alt="A young Father Ed Dowling in a Roman collar.">
           </picture>
-          <figcaption class="photo-cap">Father Ed Dowling, the Jesuit who became Bill's spiritual sponsor in 1940 and fielded his strangest letters.</figcaption>
+          <figcaption class="u-figure-cap">Father Ed Dowling, the Jesuit who became Bill's spiritual sponsor in 1940 and fielded his strangest letters.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Edward_Dowling.jpg">Father Ed Dowling, S.J.</a> Released under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>, courtesy Maryville University Archives, via Wikimedia Commons.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 42</span>
-        <h3 class="cut-h">He turned down a Yale degree, then admitted he wanted it.</h3>
-        <p>Citing the anonymity tradition, Bill refused an honorary doctorate from Yale and a <em>Time</em> cover that would have shown only the back of his head. Years later he came clean: "I'm not so damn noble as you suppose. In reality, I rather wanted that degree."</p>
+      <article class="u-entry">
+        <span class="u-entry-num">No. 42</span>
+        <h3 class="u-entry-h">He turned down a Yale degree, then admitted he wanted it.</h3>
+        <p class="u-entry-p">Citing the anonymity tradition, Bill refused an honorary doctorate from Yale and a <em>Time</em> cover that would have shown only the back of his head. Years later he came clean: "I'm not so damn noble as you suppose. In reality, I rather wanted that degree."</p>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 43</span>
-        <h3 class="cut-h">Dying, he asked four times for whiskey.</h3>
-        <p>In his last weeks the founder of AA asked his nurses for whiskey on four occasions between Christmas 1970 and the middle of January 1971, starting with three shots at ten past six on Christmas morning. He was refused every time, and once swung at a nurse. He had been sober more than thirty-six years.</p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 43</span>
+        <h3 class="u-entry-h">Dying, he asked four times for whiskey.</h3>
+        <p class="u-entry-p">In his last weeks the founder of AA asked his nurses for whiskey on four occasions between Christmas 1970 and the middle of January 1971, starting with three shots at ten past six on Christmas morning. He was refused every time, and once swung at a nurse. He had been sober more than thirty-six years.</p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/oxygen-tent.webp">
-            <img src="assets/aa/oxygen-tent.jpg" width="1500" height="1612" loading="lazy" decoding="async" alt="A nurse at the bedside of a man lying under a clear oxygen tent in a 1942 hospital room.">
+            <img class="u-figure-img" src="assets/aa/oxygen-tent.jpg" width="1500" height="1612" loading="lazy" decoding="async" alt="A nurse at the bedside of a man lying under a clear oxygen tent in a 1942 hospital room.">
           </picture>
-          <figcaption class="photo-cap">A hospital oxygen tent, 1942. Bill died of emphysema in 1971, the same disease that killed the man who first carried him the message.</figcaption>
+          <figcaption class="u-figure-cap">A hospital oxygen tent, 1942. Bill died of emphysema in 1971, the same disease that killed the man who first carried him the message.</figcaption>
           <p class="img-credit"><a href="https://www.loc.gov/item/2017694545/">Nurse and patient under an oxygen tent, 1942</a>. Fritz Henle, Office of War Information, Library of Congress, public domain.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 44</span>
-        <h3 class="cut-h">He died on his wedding anniversary, fifty-three years on.</h3>
-        <p>Bill Wilson died on January 24, 1971, exactly fifty-three years to the day after he married Lois. The New York Times put his full name on the front page, undoing the anonymity at last, by his own signed permission given years before.</p>
-        <figure class="photo tall reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 44</span>
+        <h3 class="u-entry-h">He died on his wedding anniversary, fifty-three years on.</h3>
+        <p class="u-entry-p">Bill Wilson died on January 24, 1971, exactly fifty-three years to the day after he married Lois. The New York Times put his full name on the front page, undoing the anonymity at last, by his own signed permission given years before.</p>
+        <figure class="u-figure tall reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/bill-lois.webp">
-            <img src="assets/aa/bill-lois.jpg" width="466" height="591" loading="lazy" decoding="async" alt="Bill and Lois Wilson together in later life.">
+            <img class="u-figure-img" src="assets/aa/bill-lois.jpg" width="466" height="591" loading="lazy" decoding="async" alt="Bill and Lois Wilson together in later life.">
           </picture>
-          <figcaption class="photo-cap">Bill and Lois Wilson, married fifty-three years to the day before he died. She outlived him by seventeen years and built Al-Anon.</figcaption>
+          <figcaption class="u-figure-cap">Bill and Lois Wilson, married fifty-three years to the day before he died. She outlived him by seventeen years and built Al-Anon.</figcaption>
           <p class="img-credit">Portrait via <a href="https://storiesofrecovery.org/">storiesofrecovery.org</a>.</p>
         </figure>
       </article>
 
-      <article class="cut">
-        <span class="cut-num">No. 45</span>
-        <h3 class="cut-h">His grave gives only his name.</h3>
-        <p>The stone in East Dorset reads WILLIAM G. WILSON, 1895 to 1971, and nothing else. People who never met him leave sobriety chips along the top edge. It is the closest thing the most influential figure in the history of addiction has to a monument, and it does not say what he did.</p>
-        <figure class="photo reveal">
+      <article class="u-entry">
+        <span class="u-entry-num">No. 45</span>
+        <h3 class="u-entry-h">His grave gives only his name.</h3>
+        <p class="u-entry-p">The stone in East Dorset reads WILLIAM G. WILSON, 1895 to 1971, and nothing else. People who never met him leave sobriety chips along the top edge. It is the closest thing the most influential figure in the history of addiction has to a monument, and it does not say what he did.</p>
+        <figure class="u-figure reveal">
           <picture>
             <source type="image/webp" srcset="assets/aa/bill-grave.webp">
-            <img src="assets/aa/bill-grave.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="Bill Wilson's plain granite headstone reading William G. Wilson, 1895 to 1971, with sobriety chips and coins lined along the top.">
+            <img class="u-figure-img" src="assets/aa/bill-grave.jpg" width="1600" height="1200" loading="lazy" decoding="async" alt="Bill Wilson's plain granite headstone reading William G. Wilson, 1895 to 1971, with sobriety chips and coins lined along the top.">
           </picture>
-          <figcaption class="photo-cap">The grave in East Dorset, Vermont. Forty people once, more than two million now, and the stone keeps the anonymity to the end.</figcaption>
+          <figcaption class="u-figure-cap">The grave in East Dorset, Vermont. Forty people once, more than two million now, and the stone keeps the anonymity to the end.</figcaption>
           <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:William_Griffith_Wilson_gravestone.jpg">William Griffith Wilson gravestone, East Dorset</a> by Whoisjohngalt, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
         </figure>
       </article>
+      </div>
     </section>
 
     <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <span class="sec-kicker">The fine print</span>
-      <h2 id="sources-h" class="sec-h">Sources, and what I was careful about</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and what I was careful about</h2></div>
       <p class="src-note">Every figure here is drawn from a 150,000-word research dossier compiled for this piece, and the load-bearing numbers, the eleven approved books, the count of about forty, the two chapters Bill did not write, were re-verified against the sources below. The dossier is deliberately light on verification in places, and the genuinely disputed points are left visible in the text rather than smoothed over: the date of Dr. Bob's last drink, whether Bill's vision was grace or belladonna, how Florence Rankin died, and who was truly the first woman to keep her sobriety. Photographs of the places, the era, and the graves are public domain or Creative Commons. The portraits of the founders and early members come from the recovery-history community, chiefly storiesofrecovery.org, which has preserved images the mainstream archives never carried; my own searches turned up no free portrait of any founder, which is why these faces are so rarely seen.</p>
-      <details class="src-details">
-        <summary>The working source list, grouped by section</summary>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The working source list, grouped by section</summary>
       <div class="legend">
-        <span><span class="grade g-a">solid</span> primary or strong consensus</span>
-        <span><span class="grade g-b">good</span> reliable secondary</span>
-        <span><span class="grade g-c">contested</span> genuinely debated, flagged in text</span>
+        <span><span class="u-grade u-grade-a">solid</span> primary or strong consensus</span>
+        <span><span class="u-grade u-grade-b">good</span> reliable secondary</span>
+        <span><span class="u-grade u-grade-c">contested</span> genuinely debated, flagged in text</span>
       </div>
 
       <h3>The count, and the book</h3>
       <ol>
-        <li><span class="grade g-a">solid</span> <b>Alcoholics Anonymous.</b> The start and growth of A.A. (the first hundred in four years, the 1941 surge). <a href="https://www.aa.org/the-start-and-growth-of-aa">aa.org</a></li>
-        <li><span class="grade g-a">solid</span> <b>Alcoholics Anonymous.</b> What does "Conference-approved" mean (the label, in use since the first Conference of 1951). <a href="https://www.aa.org/faq/what-does-conference-approved-mean">aa.org</a></li>
-        <li><span class="grade g-a">solid</span> <b>Schaberg WH (2019).</b> Writing the Big Book, via The Fix interview (the Newark office, the real editorial circle, "it didn't happen in meetings"). <a href="https://www.thefix.com/the-big-book-creation-story-alcoholics-anonymous/">thefix.com</a></li>
-        <li><span class="grade g-b">good</span> <b>Arthur S.</b> Big Book History and Myths (chapter authorship: Silkworth's "Doctor's Opinion," Parkhurst's "To Employers"). <a href="https://www.prestongroup.org/aa_docs/big_book_facts_and_myths.pdf">prestongroup.org</a></li>
-        <li><span class="grade g-b">good</span> <b>AA Agnostica.</b> Why Bill W. wrote the 12 Steps twice (Tom Powers and Betty Love as paid collaborators on the 12 and 12). <a href="https://aaagnostica.org/2019/08/18/why-bill-w-wrote-the-12-steps-twice/">aaagnostica.org</a></li>
-        <li><span class="grade g-b">good</span> <b>"Who wrote To Wives?"</b> (Anne Smith declined, Lois wanted it, "Bill wrote it, and I was mad"). <a href="https://emotionalsobrietyandfood.com/2015/06/17/historical-tidbit-who-wrote-chapter-8-of-the-big-book-to-wives/">historical tidbit</a></li>
-        <li><span class="grade g-b">good</span> <b>AA Shropshire.</b> Big Book study notes (74 people through the groups by 1939, about 41 sober). <a href="https://www.aashropshire.org/guidance-resources/big-book-study-notes">aashropshire.org</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Alcoholics Anonymous.</b> The start and growth of A.A. (the first hundred in four years, the 1941 surge). <a href="https://www.aa.org/the-start-and-growth-of-aa">aa.org</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Alcoholics Anonymous.</b> What does "Conference-approved" mean (the label, in use since the first Conference of 1951). <a href="https://www.aa.org/faq/what-does-conference-approved-mean">aa.org</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Schaberg WH (2019).</b> Writing the Big Book, via The Fix interview (the Newark office, the real editorial circle, "it didn't happen in meetings"). <a href="https://www.thefix.com/the-big-book-creation-story-alcoholics-anonymous/">thefix.com</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>Arthur S.</b> Big Book History and Myths (chapter authorship: Silkworth's "Doctor's Opinion," Parkhurst's "To Employers"). <a href="https://www.prestongroup.org/aa_docs/big_book_facts_and_myths.pdf">prestongroup.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>AA Agnostica.</b> Why Bill W. wrote the 12 Steps twice (Tom Powers and Betty Love as paid collaborators on the 12 and 12). <a href="https://aaagnostica.org/2019/08/18/why-bill-w-wrote-the-12-steps-twice/">aaagnostica.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>"Who wrote To Wives?"</b> (Anne Smith declined, Lois wanted it, "Bill wrote it, and I was mad"). <a href="https://emotionalsobrietyandfood.com/2015/06/17/historical-tidbit-who-wrote-chapter-8-of-the-big-book-to-wives/">historical tidbit</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>AA Shropshire.</b> Big Book study notes (74 people through the groups by 1939, about 41 sober). <a href="https://www.aashropshire.org/guidance-resources/big-book-study-notes">aashropshire.org</a></li>
       </ol>
 
       <h3>The rooms before the book</h3>
       <ol start="8">
-        <li><span class="grade g-a">solid</span> <b>Alcoholics Anonymous (1980).</b> Dr. Bob and the Good Oldtimers (the Monday set-up meeting, the kneeling surrender, the hospital front door, the early head counts). <a href="https://julianconorreid.com/wp-content/uploads/2020/12/dr.-bob-and-the-good-oldtimers-a-biography-with-recollections-of-early-a.a.-in-the-midwest.pdf">full text</a></li>
-        <li><span class="grade g-a">solid</span> <b>Akron Area Intergroup.</b> Historic Sites (676 Palisades Drive, 855 Ardmore Avenue, and the early addresses). <a href="https://akronaa.org/history-and-archives/historic-sites/">akronaa.org</a></li>
-        <li><span class="grade g-a">solid</span> <b>Alcoholics Anonymous.</b> Sister Ignatia (the Sacred Heart badge returned before a drink, ancestor of the chip). <a href="https://www.aa.org/sister-ignatia">aa.org</a></li>
-        <li><span class="grade g-a">solid</span> <b>Alcoholics Anonymous (SMF-129).</b> Origin of the Serenity Prayer (the 1941 newspaper notice, the "God Grant Me" cards). <a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">aa.org</a></li>
-        <li><span class="grade g-b">good</span> <b>AA Cleveland.</b> "My name is... and I'm an alcoholic" (the missing early paper trail for the greeting). <a href="https://www.aacle.org/my-name-is-and-im-an-alcoholic/">aacle.org</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Alcoholics Anonymous (1980).</b> Dr. Bob and the Good Oldtimers (the Monday set-up meeting, the kneeling surrender, the hospital front door, the early head counts). <a href="https://julianconorreid.com/wp-content/uploads/2020/12/dr.-bob-and-the-good-oldtimers-a-biography-with-recollections-of-early-a.a.-in-the-midwest.pdf">full text</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Akron Area Intergroup.</b> Historic Sites (676 Palisades Drive, 855 Ardmore Avenue, and the early addresses). <a href="https://akronaa.org/history-and-archives/historic-sites/">akronaa.org</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Alcoholics Anonymous.</b> Sister Ignatia (the Sacred Heart badge returned before a drink, ancestor of the chip). <a href="https://www.aa.org/sister-ignatia">aa.org</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Alcoholics Anonymous (SMF-129).</b> Origin of the Serenity Prayer (the 1941 newspaper notice, the "God Grant Me" cards). <a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">aa.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>AA Cleveland.</b> "My name is... and I'm an alcoholic" (the missing early paper trail for the greeting). <a href="https://www.aacle.org/my-name-is-and-im-an-alcoholic/">aacle.org</a></li>
       </ol>
 
       <h3>The faces, and the women</h3>
       <ol start="13">
-        <li><span class="grade g-c">contested</span> <b>Michelle McClellan.</b> Who was the first woman in Alcoholics Anonymous (Florence Rankin, and the disputed death and "first" claims). <a href="https://www.pointshistory.org/post/who-was-the-first-woman-in-alcoholics-anonymous-and-why-do-we-care">pointshistory.org</a></li>
-        <li><span class="grade g-b">good</span> <b>AA Agnostica.</b> Marty Mann and the early women of AA (Mann's early slip; Sylvia Kauffmann as a rival "first"). <a href="https://aaagnostica.org/2013/04/14/marty-mann-and-the-early-women-of-aa/">aaagnostica.org</a></li>
-        <li><span class="grade g-b">good</span> <b>storiesofrecovery.org.</b> The photographic record of the founders and early members (New York, Akron, and other regions), the source for the portrait gallery here. <a href="https://storiesofrecovery.org/">storiesofrecovery.org</a></li>
+        <li><span class="u-grade u-grade-c">contested</span> <b>Michelle McClellan.</b> Who was the first woman in Alcoholics Anonymous (Florence Rankin, and the disputed death and "first" claims). <a href="https://www.pointshistory.org/post/who-was-the-first-woman-in-alcoholics-anonymous-and-why-do-we-care">pointshistory.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>AA Agnostica.</b> Marty Mann and the early women of AA (Mann's early slip; Sylvia Kauffmann as a rival "first"). <a href="https://aaagnostica.org/2013/04/14/marty-mann-and-the-early-women-of-aa/">aaagnostica.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>storiesofrecovery.org.</b> The photographic record of the founders and early members (New York, Akron, and other regions), the source for the portrait gallery here. <a href="https://storiesofrecovery.org/">storiesofrecovery.org</a></li>
       </ol>
 
       <h3>The machine, and late Bill</h3>
       <ol start="16">
-        <li><span class="grade g-b">good</span> <b>History of Alcoholics Anonymous.</b> Rockefeller's $5,000, the Cleveland split of 1939, the upside-down service structure. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">wikipedia.org</a></li>
-        <li><span class="grade g-b">good</span> <b>William Wilson.</b> Life, the LSD experiments, the niacin campaign, the deathbed log, the front-page unmasking. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Bill_W.">wikipedia.org</a></li>
-        <li><span class="grade g-b">good</span> <b>Don Lattin (2012).</b> Distilled Spirits, on Bill Wilson, Gerald Heard, and Aldous Huxley and the LSD circle. <a href="https://en.wikipedia.org/wiki/Bill_W._and_Mr._Wilson">overview</a></li>
-        <li><span class="grade g-a">solid</span> <b>Alcoholics Anonymous.</b> Self-support and the Seventh Tradition (the donation caps, the returned outside money). <a href="https://www.aa.org/self-support-where-money-and-spirituality-mix">aa.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>History of Alcoholics Anonymous.</b> Rockefeller's $5,000, the Cleveland split of 1939, the upside-down service structure. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">wikipedia.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>William Wilson.</b> Life, the LSD experiments, the niacin campaign, the deathbed log, the front-page unmasking. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Bill_W.">wikipedia.org</a></li>
+        <li><span class="u-grade u-grade-b">good</span> <b>Don Lattin (2012).</b> Distilled Spirits, on Bill Wilson, Gerald Heard, and Aldous Huxley and the LSD circle. <a href="https://en.wikipedia.org/wiki/Bill_W._and_Mr._Wilson">overview</a></li>
+        <li><span class="u-grade u-grade-a">solid</span> <b>Alcoholics Anonymous.</b> Self-support and the Seventh Tradition (the donation caps, the returned outside money). <a href="https://www.aa.org/self-support-where-money-and-spirituality-mix">aa.org</a></li>
       </ol>
       <p class="src-note" style="margin-top:1.2em;">The full dossier runs to nineteen files and roughly 835 cited sources, with the most-quoted facts starred and the thin spots marked. It is the spine behind every entry above.</p>
       </details>
