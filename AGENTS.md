@@ -40,5 +40,6 @@ The portfolio pages and their assets:
 - Site pages use the three self-hosted typefaces (Century Supra, Segoe UI, Commit Mono);
   keep new text on one of those and avoid font CDNs. (The frozen game demo is historical and
   may reference an old CDN font; leave it as-is.)
+- Color: the whole site runs on one warm, OKLCH-tuned palette on a locked dark-green background (`--bg: #303931`). **Read `PALETTE.md` before adding or changing any color.** The source of truth is the `:root` block in `style.css`; prefer `var(--token)` over a raw hex. Never recolor photographs, `--img-bg` mattes, `@media print` blocks, or the `best-photographs` gallery.
 - Commit and push every change to `main`; Amplify auto-deploys. No manual deploy step.
 - No em dashes in any content or commit messages (use commas, periods, parentheses, or "to").
