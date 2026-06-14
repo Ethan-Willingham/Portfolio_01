@@ -571,6 +571,22 @@
     }
   }
 
+  /* Reflect a slider's value as a CSS --fill percentage (0%-100%) so the track
+     can paint a filled "traveled" portion left of the thumb. Cached so we only
+     touch the CSSOM when the value actually changes. */
+  function setSliderFill(el) {
+    if (!el) return;
+    var min = parseFloat(el.min) || 0;
+    var max = parseFloat(el.max);
+    if (!(max > min)) return;
+    var pct = (parseFloat(el.value) - min) / (max - min) * 100;
+    if (pct < 0) pct = 0; else if (pct > 100) pct = 100;
+    if (el._fillPct !== pct) {
+      el._fillPct = pct;
+      el.style.setProperty('--fill', pct + '%');
+    }
+  }
+
   /* ---- Animate ---- */
   function animate() {
     requestAnimationFrame(animate);
@@ -584,6 +600,8 @@
     updateMoon();
     updateDaylightBar(localHour, day, tilt);
     updateLabels(localHour, day);
+    setSliderFill(hourSlider);
+    setSliderFill(daySlider);
     renderer.render(scene, camera);
   }
 
