@@ -82,10 +82,6 @@
   .hero-meta b { color: var(--accent); font-weight: 400; }
   .hero-meta .sep { opacity: 0.4; }
 
-  .hero-figure { margin: 2.2rem 0 0.5rem; }
-  .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .hero-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.9rem; max-width: 60ch; line-height: 1.5; }
-
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
@@ -119,8 +115,6 @@
   .breakout { max-width: var(--wide); }
   @media (min-width: 1140px) {
     .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
-    /* one axis: the hero caption steps back onto the text column while only the chart breaks out */
-    .hero-cap { margin-left: calc((var(--wide) - var(--measure)) / 2); margin-right: calc((var(--wide) - var(--measure)) / 2); max-width: none; }
   }
 
   /* ---------- CHAPTER STRIP ---------- */
@@ -376,45 +370,6 @@
     <h1 class="hero-title">Big Enough</h1>
     <p class="hero-dek">How big you can get the natural way, on one supplement, real food, and sunlight, and how little it actually takes to get most of the way there.</p>
     <p class="hero-meta">A field guide to natural muscle <span class="sep">/</span> <b>85 sources</b> <span class="sep">/</span> 40 min read</p>
-
-    <figure class="hero-figure breakout reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
-      <!-- The signature curve: effort/time on x, muscle on y. Steep, then a long
-           crawl toward a ceiling. The whole post lives in the shape of this line. -->
-      <svg viewBox="0 0 1000 380" role="img" aria-label="A curve of muscle gained against effort over time. It rises steeply at first, then flattens into a long crawl toward a dashed genetic ceiling. A marker sits at the 90 percent point, where the curve has nearly leveled off; the final stretch above it is shaded as the zone that costs twice the work.">
-        <defs>
-          <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#D4C4A0" stop-opacity="0.30"/>
-            <stop offset="1" stop-color="#D4C4A0" stop-opacity="0.02"/>
-          </linearGradient>
-          <linearGradient id="heroLine" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#9ec79a"/>
-            <stop offset="0.6" stop-color="#D4C4A0"/>
-            <stop offset="1" stop-color="#e6c074"/>
-          </linearGradient>
-        </defs>
-        <!-- ceiling -->
-        <line x1="70" y1="70" x2="950" y2="70" class="v-grid-s" stroke-dasharray="3 7"/>
-        <text x="945" y="58" text-anchor="end" class="v-axis-t" fill="#b79bc4">genetic ceiling (the absolute maximum)</text>
-        <!-- the "last 10%" cost zone -->
-        <rect class="fade-el" id="hero-zone" x="640" y="72" width="312" height="54" rx="5" fill="#e98e7f" opacity="0.16"/>
-        <text x="796" y="104" text-anchor="middle" class="v-axis-t" font-size="11.5" font-weight="700" fill="#f7ccc2">the last 10%: twice the work</text>
-        <!-- axes -->
-        <line x1="70" y1="330" x2="950" y2="330" class="v-grid-s"/>
-        <line x1="70" y1="50" x2="70" y2="330" class="v-grid-s"/>
-        <!-- area under curve -->
-        <path class="fade-el" id="hero-area" d="M70 330 C 250 330 330 150 470 118 C 620 84 760 76 950 72 L 950 330 Z" fill="url(#heroFill)"/>
-        <!-- the curve -->
-        <path class="draw" id="hero-curve" style="--len:1080" d="M70 330 C 250 330 330 150 470 118 C 620 84 760 76 950 72" fill="none" stroke="url(#heroLine)" stroke-width="4" stroke-linecap="round"/>
-        <!-- 90% marker -->
-        <line class="fade-el" id="hero-mark" x1="640" y1="128" x2="640" y2="330" stroke="#D4C4A0" stroke-width="1" stroke-dasharray="2 6" opacity="0.5"/>
-        <circle class="pulse-dot fade-el" id="hero-dot" cx="640" cy="128" r="5.5" fill="#D4C4A0"/>
-        <text x="640" y="352" text-anchor="middle" class="v-axis-t" fill="#D4C4A0">about 90% of your potential</text>
-        <!-- axis labels -->
-        <text x="74" y="60" class="v-axis-t">muscle</text>
-        <text x="500" y="372" text-anchor="middle" class="v-axis-t">effort and years in the gym &#8594;</text>
-      </svg>
-      <figcaption class="hero-cap" id="hero-fig-cap">The whole argument in one line. Muscle comes fast at first, then slows to a crawl as you near the ceiling your genes set. Getting most of the way there is the cheap part. The last sliver is where people trade their twenties, their joints, and sometimes their health, for inches almost no one will ever notice.</figcaption>
-    </figure>
   </header>
 
   <main id="guide">
