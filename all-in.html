@@ -503,48 +503,65 @@
 
   /* ============================================================
      VISUAL BALANCING  (2026-06-14)
-     Scoped overrides on the shared kit blocks (.dlnum-*, .u-callout,
-     .u-bignum, .u-pq) so this essay reads lighter and spaces cleanly,
-     without touching the other posts that share kit.css. Promote any
-     of these into kit.css if we ever want them site-wide.
+     Scoped overrides on the shared kit blocks (.dlnum-*, .u-bignum,
+     .u-callout, .u-pq) so this essay reads lighter and fills its
+     space, without touching kit.css. Stat card = number left with the
+     text filling the right; the recurring "manager's move" = a quiet
+     label-less marker line instead of a boxed study card. Same block
+     is mirrored in warehouse.html.
      ============================================================ */
 
-  /* 1. The opening "Four words" glossary: same design, about a third
-        shorter. Tighter rows, smaller numerals, snugger head + def. */
-  .dlnum-wrap .dlnum-head    { margin-bottom: 1.05rem; }
-  .dlnum-wrap .dlnum-item    { padding: 1.05rem 0; }
-  .dlnum-wrap .dlnum-numeral { font-size: 2.1rem; }
-  .dlnum-wrap .dlnum-term    { font-size: 1.26rem; margin-bottom: 0.22rem; }
-  .dlnum-wrap .dlnum-def     { font-size: 1.02rem; line-height: 1.46; }
+  /* 1. Numbered glossary: same design, about a third shorter. */
+  .essay .dlnum-wrap .dlnum-head    { margin-bottom: 1.05rem; }
+  .essay .dlnum-wrap .dlnum-item    { padding: 1.05rem 0; }
+  .essay .dlnum-wrap .dlnum-numeral { font-size: 2.1rem; }
+  .essay .dlnum-wrap .dlnum-term    { font-size: 1.26rem; margin-bottom: 0.22rem; }
+  .essay .dlnum-wrap .dlnum-def     { font-size: 1.02rem; line-height: 1.46; }
 
-  /* 2. The kit blocks ship with no outer margin, so two stacked ones
-        (the stat card + "the manager's move") collapse into each other,
-        and the pull-quote crowds the paragraph below it. Give them air. */
+  /* 2. Kit blocks ship margin-free; give them flow air so stacked ones
+        never collapse together and the pull-quote never crowds. */
   .essay .u-bignum,
   .essay .u-callout,
   .essay .u-pq { margin: 2.1rem 0; }
 
-  /* 3. "The manager's move" recurs 15 times. Lighten it from a heavy
-        gold drop-shadow card into a quieter aside: flat, less padding,
-        smaller body, so it stops dominating every section. */
-  .essay .u-callout {
-    padding: clamp(16px, 2.6vw, 22px) clamp(18px, 3.2vw, 26px);
-    box-shadow: none;
-    border-radius: 16px;
+  /* 3. Stat card: big number on the left, the explanation fills the
+        right, so the card never looks empty. Grid carries long
+        captions; it stacks on narrow screens. */
+  .essay .u-bignum {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: clamp(1.2rem, 3vw, 2rem);
+    row-gap: 0.5em;
+    text-align: left;
   }
-  .essay .u-callout .u-callout-body { font-size: 1.04rem; line-height: 1.5; }
+  .essay .u-bignum-fig { grid-area: 1 / 1 / 3 / 2; align-self: center; font-size: clamp(3rem, 8vw, 4.8rem); }
+  .essay .u-bignum-cap { grid-area: 1 / 2 / 2 / 3; align-self: end;   max-width: none; text-align: left; font-size: 1.12rem; }
+  .essay .u-bignum-src { grid-area: 2 / 2 / 3 / 3; align-self: start; justify-self: start; }
+  @media (max-width: 560px) {
+    .essay .u-bignum { grid-template-columns: 1fr; row-gap: 0.4em; }
+    .essay .u-bignum-fig,
+    .essay .u-bignum-cap,
+    .essay .u-bignum-src { grid-area: auto; align-self: start; }
+  }
 
-  /* 4. Its kicker: trade the hard mono ALL-CAPS for the essay's own
-        editorial voice, serif small-caps like the cover + act labels. */
-  .essay .u-callout-k {
-    font-family: var(--font-heading);
-    font-variant: small-caps;
-    text-transform: none;
-    letter-spacing: 0.06em;
-    font-size: 0.98rem;
-    gap: 0.5em;
+  /* 4. The recurring takeaway: no box, no repeated label. A quiet gold
+        marker and the line in the essay's own italic voice, so it reads
+        as a closing thought, not homework after every section. */
+  .essay .u-callout {
+    background: none; border: none; box-shadow: none;
+    padding: 0; border-radius: 0; margin: 1.7rem 0;
   }
-  .essay .u-callout-k::before { width: 7px; height: 7px; box-shadow: 0 0 0 3px var(--s-gold-tint-2); }
+  .essay .u-callout-k { display: none; }
+  .essay .u-callout-body {
+    font-size: 1.16rem; line-height: 1.6; color: var(--text-bright);
+    font-style: italic; padding-left: 1.7rem; text-indent: -1.7rem;
+  }
+  .essay .u-callout-body::before {
+    content: "\25B6"; font-style: normal; color: var(--accent);
+    margin-right: 0.7em; font-size: 0.9em;
+  }
   </style>
 </head>
 <body>

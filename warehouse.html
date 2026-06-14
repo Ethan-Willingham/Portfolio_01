@@ -138,12 +138,67 @@
   .sec .u-sechead { margin-bottom: 0.5rem; }
   .sec .sub { font-style: italic; font-size: 1.18rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.4rem; text-wrap: pretty; }
 
-  /* shared kit components flow in the essay column; the kit ships them margin-free,
-     so this restores the vertical rhythm the old bespoke blocks carried. */
-  .essay .u-bignum { margin: 2.4rem 0; }
+  /* ============================================================
+     VISUAL BALANCING  (2026-06-14)
+     Mirrors the pass on all-in.html: tighter numbered glossary, flow
+     margins so the margin-free kit blocks never collapse together, a
+     "number left / text fills the right" stat card, and the recurring
+     "WMS pro's read" rendered as a quiet label-less marker line rather
+     than a boxed study card after every section.
+     ============================================================ */
+
+  /* 1. Numbered glossary: same design, about a third shorter. */
   .essay .dlnum-wrap { margin: 2.4rem auto; }
-  .essay .u-pq { margin: 2.4rem 0; }
-  .essay .u-callout { margin: 1.7rem 0 0; }
+  .essay .dlnum-wrap .dlnum-head    { margin-bottom: 1.05rem; }
+  .essay .dlnum-wrap .dlnum-item    { padding: 1.05rem 0; }
+  .essay .dlnum-wrap .dlnum-numeral { font-size: 2.1rem; }
+  .essay .dlnum-wrap .dlnum-term    { font-size: 1.26rem; margin-bottom: 0.22rem; }
+  .essay .dlnum-wrap .dlnum-def     { font-size: 1.02rem; line-height: 1.46; }
+
+  /* 2. Kit blocks ship margin-free; give them flow air so stacked ones
+        never collapse together and the pull-quote never crowds. */
+  .essay .u-bignum,
+  .essay .u-callout,
+  .essay .u-pq { margin: 2.1rem 0; }
+
+  /* 3. Stat card: big number on the left, the explanation fills the
+        right, so the card never looks empty. Grid carries long
+        captions; it stacks on narrow screens. */
+  .essay .u-bignum {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: clamp(1.2rem, 3vw, 2rem);
+    row-gap: 0.5em;
+    text-align: left;
+  }
+  .essay .u-bignum-fig { grid-area: 1 / 1 / 3 / 2; align-self: center; font-size: clamp(3rem, 8vw, 4.8rem); }
+  .essay .u-bignum-cap { grid-area: 1 / 2 / 2 / 3; align-self: end;   max-width: none; text-align: left; font-size: 1.12rem; }
+  .essay .u-bignum-src { grid-area: 2 / 2 / 3 / 3; align-self: start; justify-self: start; }
+  @media (max-width: 560px) {
+    .essay .u-bignum { grid-template-columns: 1fr; row-gap: 0.4em; }
+    .essay .u-bignum-fig,
+    .essay .u-bignum-cap,
+    .essay .u-bignum-src { grid-area: auto; align-self: start; }
+  }
+
+  /* 4. The recurring takeaway: no box, no repeated label. A quiet gold
+        marker and the line in the essay's own italic voice, so it reads
+        as a closing thought, not homework after every section. */
+  .essay .u-callout {
+    background: none; border: none; box-shadow: none;
+    padding: 0; border-radius: 0; margin: 1.7rem 0;
+  }
+  .essay .u-callout-k { display: none; }
+  .essay .u-callout-body {
+    font-size: 1.16rem; line-height: 1.6; color: var(--text-bright);
+    font-style: italic; padding-left: 1.7rem; text-indent: -1.7rem;
+  }
+  .essay .u-callout-body::before {
+    content: "\25B6"; font-style: normal; color: var(--accent);
+    margin-right: 0.7em; font-size: 0.9em;
+  }
 
   /* ============ FIGURES ============ */
   .fig-block { margin: 2.8rem 0; }
