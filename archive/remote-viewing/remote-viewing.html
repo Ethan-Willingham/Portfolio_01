@@ -104,7 +104,6 @@
   .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
   .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
-  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
 
   /* per-section color rhythm */
   #legit { --sec-accent:#8fb3c7; } #methods { --sec-accent:#b79bc4; } #train { --sec-accent:#9ec79a; }
@@ -115,31 +114,14 @@
     .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
   }
 
-  /* ---------- CONTENTS MAP ---------- */
-  .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
-  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  /* ---------- CONTENTS MAP (kit: .u-strip stats + .u-toc list) ---------- */
+  .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); }
+  .map .u-strip { margin-bottom: 1.3rem; }
   .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
   .map-note a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
   .map-note a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
-  .map-stat { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); }
-  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--accent); margin-right: 0.35em; }
-  .map-list { list-style: none; margin: 0; padding: 0; }
-  .map-list li { margin: 0; }
-  .map-list li a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(120,134,120,0.12); color: var(--text); text-decoration: none; transition: color 0.18s, padding-left 0.18s; }
-  .map-list li a:hover { color: var(--accent); padding-left: 0.4rem; }
-  .map-list .map-m { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
-  .map-list .mnum { font-family: var(--font-mono); font-size: 0.72rem; color: var(--sec-accent, var(--accent)); margin-right: 0.7em; }
 
-  /* ---------- HEADLINE STATS ---------- */
-  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1.7em 0; }
-  .stat { border: 1px solid var(--rule); border-left: 4px solid var(--sc, var(--accent)); border-radius: 10px; padding: 0.9em 1em; background: rgba(0,0,0,0.13); }
-  .stat .fig { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1; color: var(--sc, var(--accent)); font-variant-numeric: tabular-nums; }
-  .stat .fig-lbl { display: block; font-family: var(--font-body); font-size: 0.86rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.45em; }
-  .stat.sky { --sc:#8fb3c7; } .stat.plum { --sc:#b79bc4; } .stat.green { --sc:#9ec79a; }
-  .stat.amber { --sc:#dfc288; } .stat.rose { --sc:#d9978c; } .stat.gold { --sc:#D4C4A0; }
-
-  /* ---------- CITATION + GRADE CHIPS ---------- */
+  /* ---------- CITATION + GRADE CHIPS (legend in references; body chips use kit .u-src/.u-grade) ---------- */
   .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
   .src a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
   .src a:hover { color: var(--accent); border-bottom-color: var(--accent); }
@@ -162,13 +144,6 @@
   .fork-take { font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; padding-top: 0.6em; border-top: 1px solid var(--rule); }
   .fork-take b { color: var(--text-bright); }
 
-  /* ---------- CLAIM / TRUTH callout ---------- */
-  .mt { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin: 1.7em 0; background: rgba(0,0,0,0.13); }
-  .mt-claim { padding: 0.85em 1.1em; background: rgba(233,142,127,0.08); border-bottom: 1px solid var(--rule); font-size: 1.02rem; line-height: 1.5; color: var(--text); }
-  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #d9978c; display: block; margin-bottom: 0.25em; }
-  .mt-truth { padding: 0.85em 1.1em; font-size: 1.02rem; line-height: 1.5; color: var(--text-bright); }
-  .mt-truth b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9ec79a; display: block; margin-bottom: 0.25em; }
-
   /* ---------- FIGURES ---------- */
   .viz { margin: 2em auto; }
   .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -183,31 +158,7 @@
   .gridln { stroke: var(--c-grid); stroke-width: 1; }
   .axisln { stroke: var(--c-grid-strong); stroke-width: 1; }
 
-  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.4rem, 4vw, 1.9rem); line-height: 1.3; color: var(--text-bright); border-left: 3px solid var(--sec-accent, var(--accent)); padding-left: 1rem; margin: 2rem 0; text-wrap: pretty; }
-  .pullquote cite { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 0.7rem; }
-
-  .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.0rem; line-height: 1.6; color: var(--text); }
-  .disclaimer strong { color: var(--accent-hover); }
-
-  /* ---------- METHOD CARDS (the family tree, in cards) ---------- */
-  .methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); gap: 0.7rem; margin: 1.7em 0; }
-  .method { border: 1px solid var(--rule); border-left: 4px solid var(--mc, var(--accent)); border-radius: 10px; padding: 0.9em 1em 1em; background: rgba(0,0,0,0.13); }
-  .method .m-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); line-height: 1.15; }
-  .method .m-name .m-abbr { color: var(--mc, var(--accent)); }
-  .method .m-who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-dim); margin: 0.3em 0 0.55em; text-transform: uppercase; }
-  .method .m-what { font-size: 0.92rem; line-height: 1.48; color: var(--text-dim); margin: 0; }
-  .method.crv { --mc:#D4C4A0; } .method.trv { --mc:#8fb3c7; } .method.srv { --mc:#b79bc4; }
-  .method.erv { --mc:#9ec79a; } .method.arv { --mc:#dfc288; }
-
-  /* ---------- NUMBERED LISTS (invariants + the protocol) ---------- */
-  .numlist { list-style: none; counter-reset: nl; margin: 1.7em 0; padding: 0; }
-  .numlist > li { counter-increment: nl; position: relative; padding: 0.8em 0 0.85em 3.1rem; border-top: 1px solid var(--rule); }
-  .numlist > li:last-child { border-bottom: 1px solid var(--rule); }
-  .numlist > li::before { content: counter(nl); position: absolute; left: 0.3rem; top: 0.62em; font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--sec-accent, var(--accent)); font-variant-numeric: tabular-nums; }
-  .numlist .nl-h { font-weight: 600; color: var(--text-bright); font-size: 1.06rem; }
-  .numlist p { margin: 0.25em 0 0; font-size: 0.96rem; line-height: 1.52; color: var(--text-dim); }
-
-  /* ---------- RESOURCE KIT ---------- */
+  /* ---------- RESOURCE KIT (annotated bibliography; multi-link + book entries, no clean kit map) ---------- */
   .kit { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 1.7em 0; }
   .kit-grp { border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.12); padding: 1em 1.15em 1.1em; }
   .kit-grp h4 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); margin: 0 0 0.75em; }
@@ -229,12 +180,7 @@
   #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
   #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
   .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 0.4em; }
-  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
-  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
-  .src-details > summary::-webkit-details-marker { display: none; }
-  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
-  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
-  .src-details > summary:hover { color: var(--accent-hover); }
+  #sources .u-collapse { margin-top: 1.1em; }
   #sources .legend { font-size: 0.78rem; margin: 0.2rem 0 1.1rem; }
   #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
   #sources li { margin-bottom: 0.3em; }
@@ -266,7 +212,7 @@
     body { background: #fff; color: #161616; }
     .sec, .hero, .map { max-width: none; }
     .sec p, .sec li, .lede { color: #161616; }
-    figure.viz, .fork, .stat, .pullquote, .mt, .method, .kit-grp { break-inside: avoid; }
+    figure.viz, .fork, .u-stat, .u-pq, .debateA, .u-card, .u-callout, .kit-grp { break-inside: avoid; }
     a { color: #161616; }
   }
   </style>
@@ -339,20 +285,22 @@
 
     <!-- ============================ MAP ============================ -->
     <aside class="map reveal" aria-label="What is inside this guide">
-      <p class="map-kicker">What is inside</p>
-      <p class="map-note">Four short chapters, about twenty minutes end to end. We start with the strangest part, that this was a real government program, then sort the evidence, then show how the technique is actually taught and how you would train tonight for free. It ends on the one test remote viewing has never passed. If you read one chapter, read <a href="#lunch">the last one</a>.</p>
-      <div class="map-stats">
-        <span class="map-stat"><b>~20 yrs</b> the U.S. funded it</span>
-        <span class="map-stat"><b>~$20M</b> spent</span>
-        <span class="map-stat"><b>52.65%</b> best hit rate, vs 50% chance</span>
-        <span class="map-stat"><b>$0</b> anyone provably got rich</span>
+      <div class="u-strip">
+        <span class="u-strip-item"><b>~20 yrs</b> the U.S. funded it</span>
+        <span class="u-strip-item"><b>~$20M</b> spent</span>
+        <span class="u-strip-item"><b>52.65%</b> best hit rate, vs 50% chance</span>
+        <span class="u-strip-item"><b>$0</b> anyone provably got rich</span>
       </div>
-      <ul class="map-list">
-        <li><a href="#legit"><span><span class="mnum">01</span>Is any of this legit?</span><span class="map-m">8 min</span></a></li>
-        <li><a href="#methods"><span><span class="mnum">02</span>Everyone teaches it differently. The bones never change.</span><span class="map-m">5 min</span></a></li>
-        <li><a href="#train"><span><span class="mnum">03</span>How you would actually train</span><span class="map-m">5 min</span></a></li>
-        <li><a href="#lunch"><span><span class="mnum">04</span>There are no free lunches</span><span class="map-m">3 min</span></a></li>
-      </ul>
+      <p class="map-note">Four short chapters, about twenty minutes end to end. We start with the strangest part, that this was a real government program, then sort the evidence, then show how the technique is actually taught and how you would train tonight for free. It ends on the one test remote viewing has never passed. If you read one chapter, read <a href="#lunch">the last one</a>.</p>
+      <nav class="u-toc">
+        <p class="u-toc-k">What is inside</p>
+        <ul class="u-toc-list">
+          <li><a class="u-toc-row" href="#legit"><span class="u-toc-name"><span class="u-toc-n">01</span>Is any of this legit?</span><span class="u-toc-m">8 min</span></a></li>
+          <li><a class="u-toc-row" href="#methods"><span class="u-toc-name"><span class="u-toc-n">02</span>Everyone teaches it differently. The bones never change.</span><span class="u-toc-m">5 min</span></a></li>
+          <li><a class="u-toc-row" href="#train"><span class="u-toc-name"><span class="u-toc-n">03</span>How you would actually train</span><span class="u-toc-m">5 min</span></a></li>
+          <li><a class="u-toc-row" href="#lunch"><span class="u-toc-name"><span class="u-toc-n">04</span>There are no free lunches</span><span class="u-toc-m">3 min</span></a></li>
+        </ul>
+      </nav>
     </aside>
 
     <!-- ============================ 01 LEGIT ============================ -->
@@ -361,7 +309,7 @@
       <h2 id="legit-h" class="sec-h">Is any of this legit?</h2>
       <p class="lede">The honest answer comes in two halves that are both true. A real arm of the United States government took remote viewing seriously enough to fund it for two decades. And after twenty years it concluded the effect was real enough to measure in a lab, and far too unreliable to ever use.</p>
 
-      <p>Start with the part that surprises people, because it is the part that is not in dispute. This was not a fringe forum. Beginning in <strong>1972</strong>, the CIA paid the <strong>Stanford Research Institute</strong>, a serious think tank, to test whether people could describe distant places they had never seen. The physicists who ran it, <strong>Russell Targ</strong> and <strong>Harold Puthoff</strong>, published some of the early work in <em>Nature</em>. <span class="src"><a href="https://en.wikipedia.org/wiki/Remote_viewing">overview</a></span> The military took over the operational side, and for the next twenty years a small unit at Fort Meade collected intelligence this way under a parade of code names: SCANATE, GRILL FLAME, CENTER LANE, SUN STREAK, and finally <strong>STAR GATE</strong>. <span class="src"><a href="https://irp.fas.org/program/collect/stargate.htm">FAS</a></span> <span class="grade g-a">documented</span></p>
+      <p>Start with the part that surprises people, because it is the part that is not in dispute. This was not a fringe forum. Beginning in <strong>1972</strong>, the CIA paid the <strong>Stanford Research Institute</strong>, a serious think tank, to test whether people could describe distant places they had never seen. The physicists who ran it, <strong>Russell Targ</strong> and <strong>Harold Puthoff</strong>, published some of the early work in <em>Nature</em>. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Remote_viewing">overview</a></span> The military took over the operational side, and for the next twenty years a small unit at Fort Meade collected intelligence this way under a parade of code names: SCANATE, GRILL FLAME, CENTER LANE, SUN STREAK, and finally <strong>STAR GATE</strong>. <span class="u-src"><a href="https://irp.fas.org/program/collect/stargate.htm">FAS</a></span> <span class="u-grade u-grade-a">documented</span></p>
 
       <figure class="viz breakout reveal" aria-labelledby="time-fig-t">
         <p class="viz-title" id="time-fig-t">Twenty years, one program, five names</p>
@@ -400,40 +348,40 @@
 
       <p>The unit had real performers. <strong>Joseph McMoneagle</strong>, the program's "Remote Viewer 001," was later awarded a Legion of Merit, in part for intelligence work the citation describes carefully. The files include sessions people still point to: a viewer sketching a hidden Soviet crane and a giant submarine under construction, another describing a downed aircraft's location. The believers' case rests on dozens of these hits. The catch, every time, is that a striking hit is impossible to score after the fact. You cannot tell a real signal from a lucky guess plus a generous reading, which is exactly why the lab work matters more than the war stories.</p>
 
-      <div class="stat-row">
-        <div class="stat sky"><span class="fig">1972</span><span class="fig-lbl">the year serious lab testing began, at Stanford Research Institute</span></div>
-        <div class="stat gold"><span class="fig">~$20M</span><span class="fig-lbl">spent across roughly two decades of government funding</span></div>
-        <div class="stat rose"><span class="fig">~15%</span><span class="fig-lbl">how often the CIA judged its viewers actually accurate, in the end</span></div>
+      <div class="u-stats">
+        <div class="u-stat"><span class="u-fig">1972</span><span class="u-fig-lbl">the year serious lab testing began, at Stanford Research Institute</span></div>
+        <div class="u-stat"><span class="u-fig">~$20M</span><span class="u-fig-lbl">spent across roughly two decades of government funding</span></div>
+        <div class="u-stat"><span class="u-fig">~15%</span><span class="u-fig-lbl">how often the CIA judged its viewers actually accurate, in the end</span></div>
       </div>
 
       <h3>So a panel of two was asked to settle it</h3>
-      <p>When the program was wound down in 1995, the CIA did the responsible thing and hired a neutral outside body, the <strong>American Institutes for Research</strong>, to judge whether any of it worked. The review leaned on two experts who could not have been more different, and the result was a genuine split. <span class="src"><a href="https://irp.fas.org/program/collect/stargate.htm">AIR via FAS</a></span> <span class="grade g-c">contested</span></p>
+      <p>When the program was wound down in 1995, the CIA did the responsible thing and hired a neutral outside body, the <strong>American Institutes for Research</strong>, to judge whether any of it worked. The review leaned on two experts who could not have been more different, and the result was a genuine split. <span class="u-src"><a href="https://irp.fas.org/program/collect/stargate.htm">AIR via FAS</a></span> <span class="u-grade u-grade-c">contested</span></p>
 
       <div class="fork">
         <p class="fork-q">Was there a real effect in the lab?</p>
         <div class="fork-a">
           <div class="fork-side one">
             <h4>Utts: yes</h4>
-            <p><strong>Jessica Utts</strong>, a respected statistician, concluded that a statistically significant effect had been demonstrated, that it was too large and too consistent to be chance, and that it had shown up across different labs and experimenters. In her words, the case was strong enough that continued small-scale replication was no longer even interesting. <span class="src"><a href="https://www.ucdavis.edu/news/psychic-spying-research-produces-credible-evidence">UC Davis</a></span></p>
+            <p><strong>Jessica Utts</strong>, a respected statistician, concluded that a statistically significant effect had been demonstrated, that it was too large and too consistent to be chance, and that it had shown up across different labs and experimenters. In her words, the case was strong enough that continued small-scale replication was no longer even interesting. <span class="u-src"><a href="https://www.ucdavis.edu/news/psychic-spying-research-produces-credible-evidence">UC Davis</a></span></p>
           </div>
           <div class="fork-side two">
             <h4>Hyman: not so fast</h4>
-            <p><strong>Ray Hyman</strong>, a psychologist and career skeptic, agreed the numbers ran above chance but argued that points to flaws, not telepathy: subtle cues, loose judging, and the absence of any known mechanism. Anomalies that vanish the moment the controls tighten, he said, are the oldest story in the field. <span class="src"><a href="https://cdn.centerforinquiry.org/wp-content/uploads/sites/29/1996/03/22165045/p21.pdf">Hyman 1996</a></span></p>
+            <p><strong>Ray Hyman</strong>, a psychologist and career skeptic, agreed the numbers ran above chance but argued that points to flaws, not telepathy: subtle cues, loose judging, and the absence of any known mechanism. Anomalies that vanish the moment the controls tighten, he said, are the oldest story in the field. <span class="u-src"><a href="https://cdn.centerforinquiry.org/wp-content/uploads/sites/29/1996/03/22165045/p21.pdf">Hyman 1996</a></span></p>
           </div>
         </div>
         <p class="fork-take"><b>The deciding vote was practical.</b> Whatever the lab effect was, the reviewers agreed it produced nothing useful. The intelligence was too vague to act on, accurate only about 15 percent of the time, and never the sole basis for a decision. AIR recommended termination, and the program ended.</p>
       </div>
 
-      <p>The single most interesting piece of evidence came later and from outside the government. A Canadian named <strong>Greg Kolodziejzyk</strong> spent thirteen years running a tightly controlled, computer-blind prediction experiment on himself, the dataset behind the chart at the top of this page. Over <strong>5,677 trials</strong>, he correctly predicted a future yes-or-no outcome <strong>52.65%</strong> of the time, where 50% is chance, for a result with odds against luck of about 16,000 to 1. <span class="src"><a href="https://rvtournament.com/docs/ARVpaper.pdf">Kolodziejzyk 2012</a></span> <span class="grade g-c">single large study</span> It is the kind of clean, large, machine-run dataset skeptics usually ask for. And the effect it found is, by any practical measure, almost nothing.</p>
+      <p>The single most interesting piece of evidence came later and from outside the government. A Canadian named <strong>Greg Kolodziejzyk</strong> spent thirteen years running a tightly controlled, computer-blind prediction experiment on himself, the dataset behind the chart at the top of this page. Over <strong>5,677 trials</strong>, he correctly predicted a future yes-or-no outcome <strong>52.65%</strong> of the time, where 50% is chance, for a result with odds against luck of about 16,000 to 1. <span class="u-src"><a href="https://rvtournament.com/docs/ARVpaper.pdf">Kolodziejzyk 2012</a></span> <span class="u-grade u-grade-c">single large study</span> It is the kind of clean, large, machine-run dataset skeptics usually ask for. And the effect it found is, by any practical measure, almost nothing.</p>
 
-      <div class="mt">
-        <div class="mt-claim"><b>The claim</b>Remote viewing is a proven psychic power. The government used it, so it must work.</div>
-        <div class="mt-truth"><b>What the evidence says</b>It has been tested, more seriously than almost any other paranormal claim. The most you can honestly say: there is a small, stubborn, above-chance signal in the best lab data that nobody has cleanly explained away, and there is no evidence it works reliably enough to be useful. Not proven real. Not proven fake. Stuck, uncomfortably, in the middle.</div>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The claim</span><p class="debateA-text">Remote viewing is a proven psychic power. The government used it, so it must work.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">What the evidence says</span><p class="debateA-text">It has been tested, more seriously than almost any other paranormal claim. The most you can honestly say: there is a small, stubborn, above-chance signal in the best lab data that nobody has cleanly explained away, and there is no evidence it works reliably enough to be useful. Not proven real. Not proven fake. Stuck, uncomfortably, in the middle.</p></div>
       </div>
 
       <p>That middle is the only honest place to stand, and it is more interesting than either cheerleading or debunking. The government tested it and quit. The best skeptic and the best believer looked at the same numbers and walked away with opposite conclusions. So the question stops being "is it real" and becomes the one you can actually act on: if you wanted to try it, how would you, and would anything happen?</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 02 METHODS ============================ -->
@@ -442,66 +390,66 @@
       <h2 id="methods-h" class="sec-h">Everyone teaches it differently. The bones never change.</h2>
       <p class="lede">Search "learn remote viewing" and you hit a dozen branded systems in capital letters, each with a trademark sign and each insisting it is the real one. Strip the branding off and they are the same skeleton, because they all descend from the same man.</p>
 
-      <p>That man is <strong>Ingo Swann</strong>, an artist and SRI test subject who, in the late 1970s, turned a loose psychic talent into a fixed, teachable procedure called <strong>Controlled Remote Viewing</strong>, or CRV. The Army had it written into a training manual, and that manual is online for free. <span class="src"><a href="https://remoteviewed.com/files/CRV%20manual%20full.pdf">CRV manual</a></span> Almost everything sold today is a fork of it: someone reordered the steps, renamed the jargon, bolted on more or less metaphysics, and stamped a new acronym on the result.</p>
+      <p>That man is <strong>Ingo Swann</strong>, an artist and SRI test subject who, in the late 1970s, turned a loose psychic talent into a fixed, teachable procedure called <strong>Controlled Remote Viewing</strong>, or CRV. The Army had it written into a training manual, and that manual is online for free. <span class="u-src"><a href="https://remoteviewed.com/files/CRV%20manual%20full.pdf">CRV manual</a></span> Almost everything sold today is a fork of it: someone reordered the steps, renamed the jargon, bolted on more or less metaphysics, and stamped a new acronym on the result.</p>
 
-      <div class="methods">
-        <div class="method crv">
-          <div class="m-name">Controlled RV <span class="m-abbr">(CRV)</span></div>
-          <div class="m-who">Swann, Puthoff &middot; taught by Paul H. Smith, Lyn Buchanan</div>
-          <p class="m-what">The original. Sit at a table, fully awake, work through six numbered stages, sketch as you go. Every other method is measured against this one.</p>
+      <div class="u-cards">
+        <div class="u-card">
+          <h4 class="u-card-h">Controlled RV (CRV)</h4>
+          <p class="u-card-p"><em>Swann, Puthoff &middot; taught by Paul H. Smith, Lyn Buchanan</em></p>
+          <p class="u-card-p">The original. Sit at a table, fully awake, work through six numbered stages, sketch as you go. Every other method is measured against this one.</p>
         </div>
-        <div class="method trv">
-          <div class="m-name">Technical RV <span class="m-abbr">(TRV)</span></div>
-          <div class="m-who">Ed Dames, PSI TECH</div>
-          <p class="m-what">A stripped-down, heavily marketed repackage of CRV, sold on tapes and DVDs. Dames later lost the trademark in a legal fight. Big on certainty, light on humility.</p>
+        <div class="u-card">
+          <h4 class="u-card-h">Technical RV (TRV)</h4>
+          <p class="u-card-p"><em>Ed Dames, PSI TECH</em></p>
+          <p class="u-card-p">A stripped-down, heavily marketed repackage of CRV, sold on tapes and DVDs. Dames later lost the trademark in a legal fight. Big on certainty, light on humility.</p>
         </div>
-        <div class="method srv">
-          <div class="m-name">Scientific RV <span class="m-abbr">(SRV)</span></div>
-          <div class="m-who">Courtney Brown, Farsight Institute</div>
-          <p class="m-what">An offshoot of Dames' version, with the most public output: long themed "projects" and a free video library. Leans hard into the cosmic.</p>
+        <div class="u-card">
+          <h4 class="u-card-h">Scientific RV (SRV)</h4>
+          <p class="u-card-p"><em>Courtney Brown, Farsight Institute</em></p>
+          <p class="u-card-p">An offshoot of Dames' version, with the most public output: long themed "projects" and a free video library. Leans hard into the cosmic.</p>
         </div>
-        <div class="method erv">
-          <div class="m-name">Extended RV <span class="m-abbr">(ERV)</span></div>
-          <div class="m-who">the natural style, McMoneagle</div>
-          <p class="m-what">No table, no stages. Lie down, get to the edge of sleep, and let impressions come. Older than CRV, and closer to how the unit's best viewer actually worked.</p>
+        <div class="u-card">
+          <h4 class="u-card-h">Extended RV (ERV)</h4>
+          <p class="u-card-p"><em>the natural style, McMoneagle</em></p>
+          <p class="u-card-p">No table, no stages. Lie down, get to the edge of sleep, and let impressions come. Older than CRV, and closer to how the unit's best viewer actually worked.</p>
         </div>
-        <div class="method arv">
-          <div class="m-name">Associative RV <span class="m-abbr">(ARV)</span></div>
-          <div class="m-who">the prediction protocol</div>
-          <p class="m-what">Not a viewing style but a trick for yes-or-no questions: tie each answer to a photo, view the photo you will be shown later, read off the prediction. The markets-and-lottery method.</p>
+        <div class="u-card">
+          <h4 class="u-card-h">Associative RV (ARV)</h4>
+          <p class="u-card-p"><em>the prediction protocol</em></p>
+          <p class="u-card-p">Not a viewing style but a trick for yes-or-no questions: tie each answer to a photo, view the photo you will be shown later, read off the prediction. The markets-and-lottery method.</p>
         </div>
       </div>
 
       <p>What changes between them is mostly surface: the number of stages, the vocabulary, the price (a free PDF versus a fifteen-hundred-dollar course), and how much of the universe each one asks you to believe in. What never changes is the actual engine. Underneath every brand, five rules hold.</p>
 
-      <ol class="numlist">
-        <li>
-          <span class="nl-h">The target is always blind.</span>
-          <p>You never know what you are looking at. A random number stands in for it. The number is just a label, not an address and not a clue.</p>
+      <ol class="u-steps">
+        <li class="u-step">
+          <span class="u-step-h">The target is always blind.</span>
+          <p class="u-step-p">You never know what you are looking at. A random number stands in for it. The number is just a label, not an address and not a clue.</p>
         </li>
-        <li>
-          <span class="nl-h">Structure beats the psychic flash.</span>
-          <p>You do not sit and wait for a vision. You work a fixed sequence, capturing data in a set order, because the structure is what holds back your imagination.</p>
+        <li class="u-step">
+          <span class="u-step-h">Structure beats the psychic flash.</span>
+          <p class="u-step-p">You do not sit and wait for a vision. You work a fixed sequence, capturing data in a set order, because the structure is what holds back your imagination.</p>
         </li>
-        <li>
-          <span class="nl-h">The enemy is your own guessing.</span>
-          <p>Every system has a name for the logical mind jumping to conclusions. CRV calls it Analytic Overlay, or AOL, and the whole craft is learning to notice it, write it down, and set it aside.</p>
+        <li class="u-step">
+          <span class="u-step-h">The enemy is your own guessing.</span>
+          <p class="u-step-p">Every system has a name for the logical mind jumping to conclusions. CRV calls it Analytic Overlay, or AOL, and the whole craft is learning to notice it, write it down, and set it aside.</p>
         </li>
-        <li>
-          <span class="nl-h">Describe, do not name.</span>
-          <p>"Cold, hard, vertical, gray, tall" is data. "It is the Eiffel Tower" is a guess that ends the session early. You collect qualities, not labels.</p>
+        <li class="u-step">
+          <span class="u-step-h">Describe, do not name.</span>
+          <p class="u-step-p">"Cold, hard, vertical, gray, tall" is data. "It is the Eiffel Tower" is a guess that ends the session early. You collect qualities, not labels.</p>
         </li>
-        <li>
-          <span class="nl-h">Always get feedback.</span>
-          <p>At the end you see the real target. Without that loop you are not training, you are daydreaming. Feedback is the entire point.</p>
+        <li class="u-step">
+          <span class="u-step-h">Always get feedback.</span>
+          <p class="u-step-p">At the end you see the real target. Without that loop you are not training, you are daydreaming. Feedback is the entire point.</p>
         </li>
       </ol>
 
-      <p class="pullquote">The acronyms are the marketing. The blind target, the fixed structure, and the war on your own guessing are the method.</p>
+      <p class="u-pq">The acronyms are the marketing. The blind target, the fixed structure, and the war on your own guessing are the method.</p>
 
       <p>This is genuinely good news if you want to try it, because it means you can ignore the brand wars entirely. Pick any teacher whose voice you trust, and you are learning the same five things. Which is the whole of the next chapter.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 03 TRAIN ============================ -->
@@ -512,35 +460,35 @@
 
       <p>Here is the entire beginner loop. Everything else, all six stages and the rest, is just this done more carefully.</p>
 
-      <ol class="numlist">
-        <li>
-          <span class="nl-h">Get a blind target.</span>
-          <p>A website or app shows you a random reference number that stands for a hidden photo you cannot see. That is all you start with: a number on a page.</p>
+      <ol class="u-steps">
+        <li class="u-step">
+          <span class="u-step-h">Get a blind target.</span>
+          <p class="u-step-p">A website or app shows you a random reference number that stands for a hidden photo you cannot see. That is all you start with: a number on a page.</p>
         </li>
-        <li>
-          <span class="nl-h">Open the session.</span>
-          <p>Write the date and the number, relax, and draw the first reflexive squiggle your hand makes, the "ideogram." Do not think about it.</p>
+        <li class="u-step">
+          <span class="u-step-h">Open the session.</span>
+          <p class="u-step-p">Write the date and the number, relax, and draw the first reflexive squiggle your hand makes, the "ideogram." Do not think about it.</p>
         </li>
-        <li>
-          <span class="nl-h">Collect raw sense data.</span>
-          <p>Colors, textures, temperatures, sounds, smells, shapes, sizes. One word at a time. The instant you catch yourself naming the thing, write the guess in a separate margin and let it go.</p>
+        <li class="u-step">
+          <span class="u-step-h">Collect raw sense data.</span>
+          <p class="u-step-p">Colors, textures, temperatures, sounds, smells, shapes, sizes. One word at a time. The instant you catch yourself naming the thing, write the guess in a separate margin and let it go.</p>
         </li>
-        <li>
-          <span class="nl-h">Sketch what you sense.</span>
-          <p>Rough shapes and how they relate. Not art, just the geometry of the impressions.</p>
+        <li class="u-step">
+          <span class="u-step-h">Sketch what you sense.</span>
+          <p class="u-step-p">Rough shapes and how they relate. Not art, just the geometry of the impressions.</p>
         </li>
-        <li>
-          <span class="nl-h">Commit, then reveal.</span>
-          <p>Stop, and only then look at the photo. Compare honestly. Note every real match and every miss. That comparison is the rep that trains you.</p>
+        <li class="u-step">
+          <span class="u-step-h">Commit, then reveal.</span>
+          <p class="u-step-p">Stop, and only then look at the photo. Compare honestly. Note every real match and every miss. That comparison is the rep that trains you.</p>
         </li>
       </ol>
 
-      <p>This is also where your original question gets answered, the one about the number and the Eiffel Tower. <strong>The number is not a magic address, and nobody is "sending" it to you.</strong> It is just a blind tag so a target exists without you knowing it. A computer can pick that target with no human aware of it, which is the cleanest possible setup. The best free tools go one step further and use a <strong>precognitive mode</strong>: the software does not even choose the photo until after you finish, so there is literally nothing to leak. <span class="src"><a href="https://github.com/nykotar/rvme">RV Me</a></span> You are, in theory, describing the feedback you are about to be shown. So no, the connection does not have to be made by a person first, and yes, a machine can make it, even afterward.</p>
+      <p>This is also where your original question gets answered, the one about the number and the Eiffel Tower. <strong>The number is not a magic address, and nobody is "sending" it to you.</strong> It is just a blind tag so a target exists without you knowing it. A computer can pick that target with no human aware of it, which is the cleanest possible setup. The best free tools go one step further and use a <strong>precognitive mode</strong>: the software does not even choose the photo until after you finish, so there is literally nothing to leak. <span class="u-src"><a href="https://github.com/nykotar/rvme">RV Me</a></span> You are, in theory, describing the feedback you are about to be shown. So no, the connection does not have to be made by a person first, and yes, a machine can make it, even afterward.</p>
 
-      <div class="stat-row">
-        <div class="stat green"><span class="fig">a weekend</span><span class="fig-lbl">to learn the protocol itself, by most teachers' accounts</span></div>
-        <div class="stat amber"><span class="fig">months to years</span><span class="fig-lbl">to get any good, with disciplined, honest, regular practice</span></div>
-        <div class="stat gold"><span class="fig">50/50</span><span class="fig-lbl">your baseline on a yes-or-no target. that coin flip is the thing you are trying to beat</span></div>
+      <div class="u-stats">
+        <div class="u-stat"><span class="u-fig">a weekend</span><span class="u-fig-lbl">to learn the protocol itself, by most teachers' accounts</span></div>
+        <div class="u-stat"><span class="u-fig">months to years</span><span class="u-fig-lbl">to get any good, with disciplined, honest, regular practice</span></div>
+        <div class="u-stat"><span class="u-fig">50/50</span><span class="u-fig-lbl">your baseline on a yes-or-no target. that coin flip is the thing you are trying to beat</span></div>
       </div>
 
       <p>Set your expectations at the door. Your first sessions will be mostly noise, and the skill being built is not "seeing," it is honesty: separating the faint signal from the flood of your own guesses, and not flattering yourself when you score. Joseph McMoneagle, the most credible operational viewer there ever was, insists anyone can be trained and is just as insistent that it takes a disciplined mind and real commitment. Treat it as a curious experiment you run on yourself, not a power you are unlocking.</p>
@@ -586,9 +534,9 @@
         </div>
       </div>
 
-      <div class="disclaimer"><strong>One honest note.</strong> This is a guide to what the evidence shows and what practitioners teach, not a promise that remote viewing works. The science is genuinely contested. Run it as a curiosity, never as the basis for a decision that matters, and be suspicious of anyone who tells you otherwise while taking your money.</div>
+      <aside class="u-callout"><p class="u-callout-k">One honest note</p><p class="u-callout-body">This is a guide to what the evidence shows and what practitioners teach, not a promise that remote viewing works. The science is genuinely contested. Run it as a curiosity, never as the basis for a decision that matters, and be suspicious of anyone who tells you otherwise while taking your money.</p></aside>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 04 LUNCH ============================ -->
@@ -599,9 +547,9 @@
 
       <p>Suppose it were real, and reliable enough to matter. The path to almost unlimited money would be obvious, and it would be private. You would not publish. You would not teach a course. You would quietly read tomorrow's closing prices, or next week's winning numbers, or the card the dealer is about to turn, and you would compound a small edge into the GDP of a small country. Then you would tell absolutely no one, because every person you told would shave your edge.</p>
 
-      <p>That has not happened. Nobody has gotten visibly, unambiguously rich this way and then shown their work. The closest thing the field has, that thirteen-year experiment at the top of this page, is the tell. It was real. It was statistically significant. And over thirteen years of trading on it, it netted about <strong>$146,000</strong>. <span class="src"><a href="https://rvtournament.com/docs/ARVpaper.pdf">Kolodziejzyk 2012</a></span> Real money, and also roughly a part-time wage spread across more than a decade. The signal is strong enough to see in a spreadsheet and far too weak to break a bank. That single fact is the most honest summary of the entire subject.</p>
+      <p>That has not happened. Nobody has gotten visibly, unambiguously rich this way and then shown their work. The closest thing the field has, that thirteen-year experiment at the top of this page, is the tell. It was real. It was statistically significant. And over thirteen years of trading on it, it netted about <strong>$146,000</strong>. <span class="u-src"><a href="https://rvtournament.com/docs/ARVpaper.pdf">Kolodziejzyk 2012</a></span> Real money, and also roughly a part-time wage spread across more than a decade. The signal is strong enough to see in a spreadsheet and far too weak to break a bank. That single fact is the most honest summary of the entire subject.</p>
 
-      <p class="pullquote">The signal is strong enough to see in a spreadsheet, and far too weak to break a bank.</p>
+      <p class="u-pq">The signal is strong enough to see in a spreadsheet, and far too weak to break a bank.</p>
 
       <p>Which leaves exactly two ways to read all of it, and the honest move is to let both of them stand.</p>
 
@@ -624,7 +572,7 @@
 
       <p>So if you want to see something true at a distance, the price turns out to be the same as it has always been, for everything. Sit down. Do the reps. And tell yourself the truth about what you really saw. That part has never been free, and it never will be.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ SOURCES ============================ -->
@@ -632,8 +580,8 @@
       <span class="sec-kicker">The fine print</span>
       <h2 id="sources-h" class="sec-h">Sources, and how to read them</h2>
       <p class="src-note">Remote viewing is a contested subject, so the grades below mark how solid each source is, not whether I find the claim persuasive. Government records and the existence of the program are documented fact. The lab effects are real numbers under genuine dispute. Treat everything in the "what practitioners teach" tier as claims faithfully reported, not endorsed.</p>
-      <details class="src-details">
-        <summary>The full list, 21 sources</summary>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 21 sources</summary>
       <div class="legend">
         <span><span class="grade g-a">documented</span> public record, not in dispute</span>
         <span><span class="grade g-b">good</span> one solid study</span>
