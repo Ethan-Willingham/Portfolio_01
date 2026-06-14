@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tile motion · dev lab</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0; color: var(--text, #e9e5da);
+      background:
+        radial-gradient(130% 100% at 50% 0%, #12160f 0%, #0c0e0b 55%, #090a08 100%);
+      background-attachment: fixed; min-height: 100vh;
+      font-family: var(--font-body, system-ui);
+    }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 3.5rem 1.4rem 7rem; }
+    .lab-h { font-family: var(--font-heading, Georgia); font-weight: 400; font-size: 2.3rem; color: #F5F1EA; margin: 0 0 0.4rem; letter-spacing: -0.02em; }
+    .lab-sub { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.55; color: #9aa195; max-width: 60ch; margin: 0 0 1rem; }
+    .lab-note { font-family: var(--font-mono, monospace); font-size: 0.74rem; color: #7f857a; max-width: 64ch; line-height: 1.5; }
+
+    section.v { margin-top: 4.5rem; padding-top: 2.2rem; border-top: 1px solid rgba(245,241,234,0.08); }
+    .v-head { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; }
+    .v-num { font-family: var(--font-mono); font-size: 0.72rem; color: #8d9387; letter-spacing: 0.16em; }
+    .v-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: #F5F1EA; letter-spacing: -0.01em; margin: 0; }
+    .v-tag { font-family: var(--font-mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.12em; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid rgba(245,241,234,0.14); color: #b7bdb1; }
+    .v-tag.live { color: #cdbd8e; border-color: rgba(232,149,78,0.4); }
+    .v-blurb { font-family: var(--font-body); font-size: 0.94rem; line-height: 1.55; color: #9aa195; max-width: 64ch; margin: 0.6rem 0 1.2rem; }
+
+    .v-bar { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+    .replay {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      font-family: var(--font-body); font-size: 0.86rem; color: #1a1f1a;
+      background: linear-gradient(180deg, #F4B36B, #E8954E); border: 0; cursor: pointer;
+      padding: 0.45rem 0.9rem; border-radius: 999px; font-weight: 600;
+      box-shadow: 0 2px 10px -2px rgba(232,149,78,0.5); transition: filter 0.15s, transform 0.1s;
+    }
+    .replay:hover { filter: brightness(1.06); }
+    .replay:active { transform: scale(0.97); }
+
+    /* ---- the family.co tile system (same as the live post) ---- */
+    .ma-grid {
+      --ma-card: #333b34; --ma-card-hi: #3a4239; --ma-hair: rgba(245,241,234,0.07);
+      --ma-hair-2: rgba(245,241,234,0.12); --ma-r: 20px; --ma-spring: cubic-bezier(0.34,1.56,0.64,1);
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 0.85rem;
+    }
+    .ma-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+      padding: 1.1rem 0.7rem 0.95rem; cursor: pointer; will-change: transform, opacity;
+      background: var(--ma-card); border: 1px solid var(--ma-hair);
+      border-radius: var(--ma-r);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.22), 0 10px 24px -10px rgba(0,0,0,0.55);
+      transition: transform 0.34s var(--ma-spring), box-shadow 0.34s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    @media (hover: hover) {
+      .ma-tile:hover { transform: translateY(-4px); box-shadow: 0 2px 6px rgba(0,0,0,0.28), 0 22px 44px -14px rgba(0,0,0,0.62); background: var(--ma-card-hi); border-color: var(--ma-hair-2); }
+      .ma-tile:hover .ma-donut { transform: scale(1.05) rotate(-3deg); }
+      .ma-tile:hover .ma-donut-val { transform: scale(1.07); }
+      .v-calm .ma-tile:hover { transform: translateY(-2px); }
+      .v-calm .ma-tile:hover .ma-donut { transform: scale(1.02) rotate(0deg); }
+    }
+    .ma-donut { position: relative; width: 66px; height: 66px; border-radius: 50%; background: #3a443b; transition: transform 0.34s var(--ma-spring); }
+    .ma-donut-hole { position: absolute; inset: 9px; border-radius: 50%; background: var(--ma-card); display: grid; place-items: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
+    .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: #F5F1EA; letter-spacing: -0.02em; line-height: 1; transition: transform 0.34s var(--ma-spring); }
+    .ma-tile-title { font-family: var(--font-heading); font-size: 0.92rem; font-weight: 700; color: #F5F1EA; text-align: center; line-height: 1.15; letter-spacing: -0.01em; }
+    .ma-tile.is-arch .ma-tile-title { font-style: italic; color: #cfcabb; }
+    .ma-tile-sub { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; letter-spacing: 0.01em; text-align: center; }
+    @keyframes ma-pop { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
+    .ma-donut-val.is-pop { animation: ma-pop 0.5s var(--ma-spring); }
+
+    /* metric toggle */
+    .ma-toggle { position: relative; display: inline-flex; padding: 3px; background: #232a24; border: 1px solid rgba(245,241,234,0.08); border-radius: 999px; }
+    .ma-seg { position: relative; z-index: 2; border: 0; background: none; cursor: pointer; font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: #9aa195; padding: 0.38rem 0.9rem; border-radius: 999px; transition: color 0.25s ease; }
+    .ma-seg.is-on { color: #1a1f1a; }
+    .ma-seg-glider { position: absolute; z-index: 1; top: 3px; left: 3px; bottom: 3px; width: calc(50% - 3px); border-radius: 999px; background: linear-gradient(180deg, #F4B36B, #E8954E); transition: transform 0.4s var(--ma-spring); }
+    .ma-toggle.is-tokens .ma-seg-glider { transform: translateX(100%); }
+
+    /* ---- the over-the-top section: bigger tiles, room to scroll ---- */
+    .v-wow .ma-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.3rem; perspective: 1100px; }
+    .v-wow .ma-tile { padding: 1.5rem 0.9rem 1.25rem; transform-style: preserve-3d; transition: none; }
+    .v-wow .ma-donut { width: 78px; height: 78px; }
+    .v-wow .ma-donut-val { font-size: 1.2rem; }
+    .scrollhint { font-family: var(--font-mono); font-size: 0.72rem; color: #8d9387; text-align: center; margin: 1.5rem 0 0; opacity: 0.8; }
+    .scrollhint .a { display: inline-block; animation: bob 1.8s ease-in-out infinite; }
+    @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+    .v-wow .spacer { height: 38vh; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="lab-h">Tile motion lab</h1>
+    <p class="lab-sub">Five takes on the "which AI built which page" tiles. Hit <b style="color:#cdbd8e">Replay</b> to re-run a reveal, flip the toggle to feel the metric change, and hover a tile. The last one is driven entirely by your scroll.</p>
+    <p class="lab-note">Throwaway chooser, not linked anywhere. Real data from this site. Motion here always plays so you can judge it; the live post still respects reduced-motion.</p>
+    <div id="lab"></div>
+  </div>
+
+  <script src="js/git-attribution-data.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var DATA = window.GIT_ATTRIBUTION;
+    var host = document.getElementById('lab');
+    if (!DATA || !host) { host.textContent = 'no data'; return; }
+
+    var MID = {}; DATA.models.forEach(function (m) { MID[m.id] = m; });
+    // a representative handful, biggest first
+    var POSTS = DATA.posts.slice().sort(function (a, b) { return b.edits - a.edits; }).slice(0, 9);
+
+    // ---------- helpers (mirrors js/git-attribution.js) ----------
+    var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function fmtEdits(n) { return Math.round(n).toLocaleString('en-US'); }
+    function fmtTok(n) { if (n >= 1e9) return (n/1e9).toFixed(2)+'B'; if (n >= 1e6) return (n/1e6).toFixed(n>=1e7?0:1)+'M'; if (n >= 1e3) return Math.round(n/1e3)+'K'; return Math.round(n).toString(); }
+    function fmtVal(n, metric) { return metric === 'tokens' ? fmtTok(n) : fmtEdits(n); }
+    function fmtDate(s) { var p = s.split('-'); return MO[(+p[1])-1] + ' ' + (+p[2]); }
+    function dateRange(a, b) { if (a === b) return fmtDate(a); var pa = a.split('-'), pb = b.split('-'); if (pa[1] === pb[1]) return MO[(+pa[1])-1] + ' ' + (+pa[2]) + '–' + (+pb[2]); return fmtDate(a) + ' – ' + fmtDate(b); }
+    function val(post, mid, metric) { var r = post.models[mid]; return r ? (metric === 'tokens' ? r.tokens : r.edits) : 0; }
+    function total(post, metric) { return metric === 'tokens' ? post.tokens : post.edits; }
+    function split(post, metric) {
+      var t = total(post, metric) || 1;
+      var arr = Object.keys(post.models).map(function (mid) { return { m: MID[mid], v: val(post, mid, metric), pct: val(post, mid, metric) / t * 100 }; })
+        .filter(function (x) { return x.m && x.v > 0; });
+      arr.sort(function (a, b) { return b.v - a.v; });
+      return arr;
+    }
+    function donutCSS(parts, frac) {
+      if (!parts.length) return '#3a443b';
+      var stops = [], acc = 0;
+      parts.forEach(function (p) { var to = acc + p.pct * frac; stops.push(p.m.color + ' ' + acc.toFixed(2) + '% ' + to.toFixed(2) + '%'); acc = to; });
+      if (acc < 99.99) stops.push('#3a443b ' + acc.toFixed(2) + '% 100%');
+      return 'conic-gradient(from -90deg, ' + stops.join(', ') + ')';
+    }
+    var easeOutCubic = function (t) { return 1 - Math.pow(1 - t, 3); };
+    var easeOutBack = function (t) { var c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+    function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+    var now = function () { return (window.performance && performance.now) ? performance.now() : 0; };
+
+    function rafTween(dur, ease, onStep, onDone) {
+      var t0 = null;
+      function step(ts) {
+        if (t0 == null) t0 = ts;
+        var k = clamp((ts - t0) / dur, 0, 1);
+        onStep(ease ? ease(k) : k);
+        if (k < 1) requestAnimationFrame(step); else if (onDone) onDone();
+      }
+      requestAnimationFrame(step);
+    }
+    function drawDonut(el, parts, dur, ease) { if (el._r) cancelAnimationFrame(el._r); rafTween(dur, ease || easeOutCubic, function (e) { el.style.background = donutCSS(parts, e); }); }
+    function countNum(el, to, fmt, dur, ease, pop) {
+      el._v = to;
+      rafTween(dur, ease || easeOutCubic, function (e) { el.textContent = fmt(to * e); }, function () {
+        el.textContent = fmt(to);
+        if (pop) { el.classList.remove('is-pop'); void el.offsetWidth; el.classList.add('is-pop'); }
+      });
+    }
+
+    // ---------- one tile ----------
+    function makeTile(post) {
+      var b = document.createElement('button');
+      b.className = 'ma-tile' + (post.kind === 'archived' ? ' is-arch' : '');
+      b.innerHTML = '<span class="ma-donut"><span class="ma-donut-hole"><span class="ma-donut-val"></span></span></span>' +
+        '<span class="ma-tile-title">' + post.label + '</span>' +
+        '<span class="ma-tile-sub">' + dateRange(post.first, post.last) + '</span>';
+      b._post = post;
+      return b;
+    }
+    function paintFinal(tile, metric) {
+      var p = split(tile._post, metric);
+      tile.querySelector('.ma-donut').style.background = donutCSS(p, 1);
+      var v = tile.querySelector('.ma-donut-val'); v._v = total(tile._post, metric); v.textContent = fmtVal(total(tile._post, metric), metric);
+      tile.style.transform = 'none'; tile.style.opacity = '1';
+    }
+
+    // ---------- the five profiles ----------
+    var VARIANTS = [
+      { key: 'before', name: 'Before', tag: 'old', blurb: 'What it was: tiles rise once on page load and the rings are just there. By the time you scroll down to it, nothing moves. Hover and toggle still work.',
+        reveal: function (tiles, metric) { revealRise(tiles, metric, { riseDur: 480, riseEase: 'cubic-bezier(0.22,1,0.36,1)', dist: 12, donut: 'instant', count: false, stagger: 28 }); } },
+      { key: 'now', name: 'Now', tag: 'live', blurb: 'What is live right now: the rings draw on and the numbers count up in a stagger when the grid scrolls into view; the toggle springs each ring; subtle hover pop.',
+        reveal: function (tiles, metric) { revealRise(tiles, metric, { riseDur: 550, riseEase: 'cubic-bezier(0.34,1.56,0.64,1)', dist: 14, donut: 'draw', donutDur: 720, count: true, countDur: 620, stagger: 45 }); } },
+      { key: 'calm', name: 'Calmer', tag: 'refined', blurb: 'Quieter and slower. No spring, no overshoot. Tiles ease up a hair, rings fade in rather than sweep, numbers settle gently. Hover barely lifts. The grown-up option.',
+        reveal: function (tiles, metric) { revealRise(tiles, metric, { riseDur: 900, riseEase: 'cubic-bezier(0.4,0,0.2,1)', dist: 8, donut: 'fade', donutDur: 900, count: true, countDur: 1100, countEase: easeOutCubic, stagger: 70 }); } },
+      { key: 'exciting', name: 'Punchier', tag: 'lively', blurb: 'More energy. Tiles overshoot in on a snappy spring wave, rings whip on fast, the number pops at the end. Reads as playful without going off the rails.',
+        reveal: function (tiles, metric) { revealRise(tiles, metric, { riseDur: 620, riseEase: 'cubic-bezier(0.2,1.5,0.4,1)', dist: 22, donut: 'draw', donutDur: 480, donutEase: easeOutBack, count: true, countDur: 520, pop: true, stagger: 60 }); } },
+      { key: 'wow', name: 'Over the top', tag: 'scroll-driven', blurb: 'Every ring fills and every number counts tied to where the tile sits on your screen, scrubbing forward and back as you scroll, with the tiles tilting in 3D toward your cursor. You drive it. Scroll slowly.',
+        reveal: null }
+    ];
+
+    // shared rise/draw/count reveal used by the first four
+    function revealRise(tiles, metric, o) {
+      if (document.hidden) { tiles.forEach(function (t) { paintFinal(t, metric); }); return; }
+      tiles.forEach(function (tile, i) {
+        var post = tile._post, parts = split(post, metric);
+        var donut = tile.querySelector('.ma-donut'), v = tile.querySelector('.ma-donut-val');
+        var delay = i * o.stagger;
+        tile.style.transition = 'none';
+        tile.style.transform = 'translateY(' + o.dist + 'px) scale(0.95)';
+        tile.style.opacity = '0';
+        if (o.donut === 'draw') donut.style.background = donutCSS(parts, 0);
+        else if (o.donut === 'fade') { donut.style.background = donutCSS(parts, 1); donut.style.opacity = '0'; donut.style.transition = 'none'; }
+        else donut.style.background = donutCSS(parts, 1);
+        v.textContent = o.count ? fmtVal(0, metric) : fmtVal(total(post, metric), metric);
+        void tile.offsetWidth;
+        tile.style.transition = 'transform ' + o.riseDur + 'ms ' + o.riseEase + ' ' + delay + 'ms, opacity ' + o.riseDur + 'ms ease ' + delay + 'ms';
+        tile.style.transform = 'none'; tile.style.opacity = '1';
+        setTimeout(function () {
+          if (o.donut === 'draw') drawDonut(donut, parts, o.donutDur, o.donutEase);
+          else if (o.donut === 'fade') { donut.style.transition = 'opacity ' + o.donutDur + 'ms ease'; donut.style.opacity = '1'; }
+          if (o.count) countNum(v, total(post, metric), function (x) { return fmtVal(x, metric); }, o.countDur, o.countEase, o.pop);
+        }, delay);
+      });
+    }
+
+    // ---------- the scroll-scrubbed "over the top" engine ----------
+    function wowEngine(section, tiles) {
+      var state = section._state;
+      var tilt = { x: 0, y: 0, tx: 0, ty: 0 };
+      var grid = section.querySelector('.ma-grid');
+      grid.addEventListener('pointermove', function (e) {
+        var r = grid.getBoundingClientRect();
+        tilt.tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        tilt.ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      });
+      grid.addEventListener('pointerleave', function () { tilt.tx = 0; tilt.ty = 0; });
+      var running = true;
+      function frame() {
+        if (!running) return;
+        tilt.x += (tilt.tx - tilt.x) * 0.08;
+        tilt.y += (tilt.ty - tilt.y) * 0.08;
+        var vh = window.innerHeight;
+        for (var i = 0; i < tiles.length; i++) {
+          var tile = tiles[i], r = tile.getBoundingClientRect();
+          var center = r.top + r.height / 2;
+          // 0 when the tile center is near the bottom, 1 once it reaches ~42% up the screen
+          var p = clamp((vh * 0.96 - center) / (vh * 0.54), 0, 1);
+          var e = easeOutCubic(p);
+          var ry = tilt.x * 9, rx = -tilt.y * 9 + (1 - e) * 16;
+          tile.style.transform = 'translateY(' + ((1 - e) * 46).toFixed(1) + 'px) scale(' + (0.85 + e * 0.15).toFixed(3) + ') rotateX(' + rx.toFixed(1) + 'deg) rotateY(' + ry.toFixed(1) + 'deg)';
+          tile.style.opacity = (0.18 + 0.82 * e).toFixed(3);
+          var parts = split(tile._post, state.metric);
+          tile.querySelector('.ma-donut').style.background = donutCSS(parts, e);
+          tile.querySelector('.ma-donut-val').textContent = fmtVal(total(tile._post, state.metric) * e, state.metric);
+        }
+        requestAnimationFrame(frame);
+      }
+      // run only while near the viewport
+      var io = new IntersectionObserver(function (ents) {
+        ents.forEach(function (en) {
+          if (en.isIntersecting && !running) { running = true; requestAnimationFrame(frame); }
+          else if (!en.isIntersecting) { running = false; }
+        });
+      }, { rootMargin: '40% 0px 40% 0px' });
+      io.observe(section);
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- build a section ----------
+    function buildSection(variant, idx) {
+      var section = document.createElement('section');
+      section.className = 'v v-' + variant.key;
+      section._state = { metric: 'edits' };
+
+      var head = document.createElement('div');
+      head.className = 'v-head';
+      head.innerHTML = '<span class="v-num">0' + (idx + 1) + '</span><h2 class="v-name">' + variant.name + '</h2>' +
+        '<span class="v-tag' + (variant.key === 'now' ? ' live' : '') + '">' + variant.tag + '</span>';
+      section.appendChild(head);
+
+      var blurb = document.createElement('p'); blurb.className = 'v-blurb'; blurb.textContent = variant.blurb; section.appendChild(blurb);
+
+      var bar = document.createElement('div'); bar.className = 'v-bar';
+      var toggle = document.createElement('div'); toggle.className = 'ma-toggle';
+      toggle.innerHTML = '<button class="ma-seg is-on" data-m="edits">Changes</button><button class="ma-seg" data-m="tokens">Tokens</button><span class="ma-seg-glider"></span>';
+      bar.appendChild(toggle);
+      if (variant.reveal) {
+        var btn = document.createElement('button'); btn.className = 'replay';
+        btn.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Replay';
+        bar.appendChild(btn);
+      }
+      section.appendChild(bar);
+
+      var grid = document.createElement('div'); grid.className = 'ma-grid';
+      var tiles = POSTS.map(function (post) { var t = makeTile(post); grid.appendChild(t); return t; });
+      section.appendChild(grid);
+
+      if (variant.key === 'wow') {
+        var hint = document.createElement('p'); hint.className = 'scrollhint';
+        hint.innerHTML = 'scroll through me slowly <span class="a">&#8595;</span>';
+        section.appendChild(hint);
+        var sp = document.createElement('div'); sp.className = 'spacer'; section.appendChild(sp);
+      }
+
+      // toggle behaviour
+      toggle.addEventListener('click', function (e) {
+        var seg = e.target.closest('.ma-seg'); if (!seg) return;
+        var m = seg.getAttribute('data-m'); if (m === section._state.metric) return;
+        section._state.metric = m;
+        toggle.querySelectorAll('.ma-seg').forEach(function (s) { s.classList.toggle('is-on', s.getAttribute('data-m') === m); });
+        toggle.classList.toggle('is-tokens', m === 'tokens');
+        if (variant.key === 'wow') return; // scrub picks it up live
+        // pulse + re-count for the static variants
+        tiles.forEach(function (tile) {
+          var parts = split(tile._post, m), d = tile.querySelector('.ma-donut');
+          d.style.background = donutCSS(parts, 1);
+          countNum(tile.querySelector('.ma-donut-val'), total(tile._post, m), function (x) { return fmtVal(x, m); }, 480, easeOutCubic, variant.key === 'exciting');
+          if (variant.key !== 'calm') { d.style.transition = 'transform 0.45s var(--ma-spring)'; d.animate ? d.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.9)' }, { transform: 'scale(1)' }], { duration: 460, easing: 'cubic-bezier(0.34,1.56,0.64,1)' }) : 0; }
+        });
+      });
+
+      if (variant.reveal) {
+        // reveal when scrolled into view (once), and on Replay
+        var armed = true;
+        function run() { variant.reveal(tiles, section._state.metric); }
+        if (document.hidden) {
+          tiles.forEach(function (t) { paintFinal(t, 'edits'); });
+        } else {
+          var io = new IntersectionObserver(function (ents) { ents.forEach(function (en) { if (en.isIntersecting && armed) { armed = false; run(); io.disconnect(); } }); }, { threshold: 0.25 });
+          tiles.forEach(function (t) { t.style.opacity = '0'; }); // start hidden so the first scroll-in plays
+          io.observe(section);
+        }
+        section.querySelector('.replay').addEventListener('click', run);
+      } else {
+        // wow: paint a baseline then let the scrub engine drive
+        tiles.forEach(function (t) { paintFinal(t, 'edits'); });
+        wowEngine(section, tiles);
+      }
+
+      return section;
+    }
+
+    VARIANTS.forEach(function (v, i) { host.appendChild(buildSection(v, i)); });
+  })();
+  </script>
+</body>
+</html>
