@@ -51,11 +51,29 @@
     arr.sort(function (a, b) { return b.v - a.v; });
     return arr;
   }
-  function conic(parts) {
+  // a conic ring; frac (0..1) is how much of the ring is drawn, the remainder
+  // falls back to the empty track colour so the ring can "draw on".
+  function donutCSS(parts, frac) {
     if (!parts.length) return '#3a443b';
     var stops = [], acc = 0;
-    parts.forEach(function (p) { var to = acc + p.pct; stops.push(p.m.color + ' ' + acc.toFixed(2) + '% ' + to.toFixed(2) + '%'); acc = to; });
+    parts.forEach(function (p) { var to = acc + p.pct * frac; stops.push(p.m.color + ' ' + acc.toFixed(2) + '% ' + to.toFixed(2) + '%'); acc = to; });
+    if (acc < 99.99) stops.push('#3a443b ' + acc.toFixed(2) + '% 100%');
     return 'conic-gradient(from -90deg, ' + stops.join(', ') + ')';
+  }
+  function conic(parts) { return donutCSS(parts, 1); }
+  // draw the ring on (frac 0 -> 1), optionally after a stagger delay
+  function drawDonut(el, parts, animate, delay) {
+    if (el._raf2) cancelAnimationFrame(el._raf2);
+    if (REDUCE || !animate || document.hidden) { el.style.background = donutCSS(parts, 1); return; }
+    var t0 = null, dur = 720, dl = delay || 0;
+    el.style.background = donutCSS(parts, 0);
+    function step(ts) {
+      if (t0 == null) t0 = ts;
+      var k = (ts - t0 - dl) / dur; if (k < 0) k = 0; if (k > 1) k = 1;
+      el.style.background = donutCSS(parts, easeOut(k));
+      if (k < 1) el._raf2 = requestAnimationFrame(step); else el._raf2 = 0;
+    }
+    el._raf2 = requestAnimationFrame(step);
   }
 
   // ---------- animated number (interruptible) ----------
@@ -63,7 +81,7 @@
   function animNum(el, to, fmt) {
     var from = el._v == null ? 0 : el._v;
     el._v = to;
-    if (REDUCE || from === to) { el.textContent = fmt(to); return; }
+    if (REDUCE || from === to || document.hidden) { el.textContent = fmt(to); return; }
     if (el._raf) cancelAnimationFrame(el._raf);
     var t0 = null, dur = 620;
     function step(ts) {
@@ -104,6 +122,7 @@
   // ---------- build: tile grid ----------
   var grid = document.createElement('div');
   grid.className = 'ma-grid';
+  var ANIM = !REDUCE && ('IntersectionObserver' in window);
   POSTS.forEach(function (post, i) {
     var b = document.createElement('button');
     b.className = 'ma-tile';
@@ -116,16 +135,33 @@
       '<span class="ma-tile-sub"></span>';
     grid.appendChild(b);
     post._el = b;
-    paintTile(post);
+    // the italic title already marks archived, so the sub stays a compact date
+    b.querySelector('.ma-tile-sub').textContent = dateRange(post.first, post.last);
+    if (ANIM) b.querySelector('.ma-donut').style.background = '#3a443b'; // held empty until reveal
+    else paintTile(post);
   });
 
-  function paintTile(post) {
-    var parts = split(post);
+  // repaint a tile's donut + number for the current metric.
+  // opts.pulse gives the ring a quick spring (used on the metric toggle).
+  function paintTile(post, opts) {
+    opts = opts || {};
     var d = post._el.querySelector('.ma-donut');
-    d.style.background = conic(parts);
+    d.style.background = conic(split(post));
     animNum(post._el.querySelector('.ma-donut-val'), total(post), fmtVal);
-    // the italic title already marks archived (timeline-legend convention), so the sub stays a compact date
-    post._el.querySelector('.ma-tile-sub').textContent = dateRange(post.first, post.last);
+    if (opts.pulse && !REDUCE) { d.classList.remove('is-pulse'); void d.offsetWidth; d.classList.add('is-pulse'); }
+  }
+
+  // staggered reveal: rings draw on + numbers count up when the grid first appears
+  var revealed = false;
+  function revealGrid() {
+    if (revealed) return; revealed = true;
+    POSTS.forEach(function (post, i) {
+      var delay = i * 45;
+      drawDonut(post._el.querySelector('.ma-donut'), split(post), true, delay);
+      var v = post._el.querySelector('.ma-donut-val');
+      v._v = 0; v.textContent = fmtVal(0);
+      setTimeout(function () { animNum(v, total(post), fmtVal); }, delay + 90);
+    });
   }
 
   // ---------- build: tray ----------
@@ -158,15 +194,15 @@
     var link = tray.querySelector('.ma-tray-link');
     if (post.href) { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
     else link.style.display = 'none';
-    paintTray(post, parts);
+    paintTray(post, parts, true);
     scrim.classList.add('is-on');
     tray.classList.add('is-on');
     document.addEventListener('keydown', onKey);
     tray.querySelector('.ma-tray-x').focus();
   }
-  function paintTray(post, parts) {
+  function paintTray(post, parts, animDonut) {
     parts = parts || split(post);
-    tray.querySelector('.ma-donut-lg').style.background = conic(parts);
+    drawDonut(tray.querySelector('.ma-donut-lg'), parts, !!animDonut, 0);
     animNum(tray.querySelector('.ma-donut-lg .ma-donut-val'), total(post), fmtVal);
     // stacked bar
     var bar = tray.querySelector('.ma-tray-bar');
@@ -226,7 +262,7 @@
     document.getElementById('ma-note').textContent = metric === 'tokens'
       ? 'Share of output tokens each model actually wrote into a post.'
       : 'Share of file changes each model made to a post.';
-    POSTS.forEach(paintTile);
+    POSTS.forEach(function (p) { paintTile(p, { pulse: true }); });
     if (openPost) paintTray(openPost);
   });
 
@@ -236,4 +272,14 @@
   root.appendChild(grid);
   root.appendChild(scrim);
   root.appendChild(tray);
+
+  // reveal the grid (draw the rings on + count up) when it scrolls into view
+  if (ANIM) {
+    var io = new IntersectionObserver(function (entries) {
+      for (var j = 0; j < entries.length; j++) {
+        if (entries[j].isIntersecting) { revealGrid(); io.disconnect(); break; }
+      }
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+    io.observe(grid);
+  }
 })();
