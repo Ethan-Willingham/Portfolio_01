@@ -81,6 +81,7 @@
     <p class="sub">Same job, built several different ways across your posts. For each job, keep the one you like best.</p>
     <div class="how">
       <p>Right now the same thing is styled several different ways across your 18 posts. This page sorts them <b>by job</b>. There are 6 ways you highlight a note, 4 ways you box a debate, 3 ways you show a photo, and so on.</p>
+      <p><b>New:</b> every job now also carries three brand-new options — <b>Soft</b>, <b>Sharp</b>, and <b>Editorial</b> — built fresh in your locked colors (green background, parchment, gold) and your three fonts. Same content, three different treatments. Pick whichever you like best, old or new.</p>
       <p>For each job below, <span class="pick-word">click "keep this one"</span> on your favorite. That becomes the official version. Everything else in the group gets <b>rebuilt to match your pick</b> later, so the whole site looks consistent. You are not deleting any writing, just standardizing the look.</p>
       <p>Groups marked <b>"keeps"</b> only have one version, so there is nothing to choose. When you are done, hit <b>copy my picks</b> and paste them back to me.</p>
     </div>
@@ -108,6 +109,7 @@
   <textarea id="sum-text" readonly></textarea>
 </div>
 
+<script src="lab-skins.js"></script>
 <script>
 (function () {
   'use strict';
@@ -417,6 +419,25 @@
       when:'Academic-style citing inside the prose.',
       members:[ m('Superscript footnotes','best-photographs (archived)','New genre.', C.footnote) ]}
   ];
+
+  /* ---- three new treatment options per component, in the locked palette ---- */
+  var SKINMAP = { photo:'figure', dossier:'dossier', highlight:'callout', titledbox:'callout', debate:'debate', checklist:'checklist', define:'defs', statcards:'statcards', statinline:'statinline', bignum:'bignum', strip:'strip', pullquote:'pq', quote:'blockquote', divider:'divider', secheader:'sechead', cites:'cite', footnote:'footnote', hero:'hero', numentries:'entries', numsteps:'steps', toc:'toc', cardgrid:'cards', collapse:'collapse', table:'table', leaderboard:'leaderboard', kpi:'kpi', spec:'spec' };
+  var SKIN_DEFS = [
+    { key:'soft', name:'Soft option', src:'new · Family DNA', desc:'Rounded corners, soft shadows, generous. The Family.co feel, in your green + gold.' },
+    { key:'sharp', name:'Sharp option', src:'new · Linear DNA', desc:'Hairline borders, dense, mono labels. The Linear feel, in your green + gold.' },
+    { key:'editorial', name:'Editorial option', src:'new · Stripe Press DNA', desc:'Thin rules, serif, small caps, flat. The Stripe Press feel, in your green + gold.' }
+  ];
+  if (window.LAB_SKINS && window.LAB_UNIFIED) {
+    GROUPS.forEach(function (g) {
+      if (!g.id) return;
+      var uid = SKINMAP[g.id];
+      if (!uid || !window.LAB_UNIFIED[uid]) return;
+      g.decide = true;
+      SKIN_DEFS.forEach(function (sd) {
+        g.members.push({ name: sd.name, src: sd.src, desc: sd.desc, css: window.LAB_SKINS[sd.key], html: window.LAB_UNIFIED[uid], bodyClass: 'skin-' + sd.key, wide: true });
+      });
+    });
+  }
 
   /* ---------- render ---------- */
   var lab = document.getElementById('lab');
