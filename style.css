@@ -179,7 +179,7 @@ body {
   font-optical-sizing: auto;
   transition: color 0.18s ease-out;
 }
-.article-item-date { display: block; font-size: 0.82rem; color: var(--text-dim); letter-spacing: 0.04em; margin-bottom: 0.55rem; }
+.article-item-date { display: block; font-size: 0.82rem; color: var(--text-faint); letter-spacing: 0.04em; margin-bottom: 0.55rem; }
 .article-item-description { font-size: 1.12rem; color: var(--text); font-style: italic; line-height: 1.58; text-wrap: pretty; }
 
 /* thumbnail: borderless, landscape, keeping its own natural height (varied
@@ -288,13 +288,16 @@ body {
 .post-body h3 { font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; color: var(--text-bright); margin-top: 2.2em; margin-bottom: 0.6em; line-height: 1.35; }
 .post-body a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.25s, color 0.25s; }
 .post-body a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+/* reserve accent: the single most important link in an essay (the background's rose complement). use sparingly, at most once per page */
+.post-body a.key { color: var(--emphasis); border-bottom-color: transparent; }
+.post-body a.key:hover { color: var(--emphasis-hover); border-bottom-color: var(--emphasis); }
 .post-body em { font-style: italic; }
 .post-body strong { font-weight: 600; color: var(--text-bright); }
 .post-body blockquote { margin: 1.8em 0; padding: 0 0 0 1.4em; border-left: 2px solid var(--rule); color: var(--text); font-style: italic; opacity: 0.88; }
 .post-body blockquote p { margin-bottom: 0.8em; }
 .post-body blockquote p:last-child { margin-bottom: 0; }
 .post-body .divider { text-align: center; margin: 2.5em 0; color: var(--text-dim); font-size: 1.1rem; letter-spacing: 0.6em; user-select: none; }
-.post-body hr { border: none; border-top: 1px solid var(--rule); margin: 2.5em 0; }
+.post-body hr { border: none; border-top: 1px solid var(--line-mid); margin: 2.5em 0; }
 .post-body code { font-family: var(--font-mono); font-size: 0.84em; background: rgba(255,255,255,0.06); padding: 0.15em 0.4em; border-radius: 3px; color: var(--text); }
 
 /* Code blocks */
@@ -332,8 +335,8 @@ body {
 .post-body li { margin-bottom: 0.4em; }
 .post-body img { max-width: 100%; height: auto; display: block; margin: 2em auto; border-radius: 3px; }
 .post-body figure { margin: 2.2em 0; }
-.post-body figcaption { text-align: center; font-size: 0.88rem; color: var(--text-dim); margin-top: 0.6em; font-style: italic; }
-.post-body .note { font-size: 0.95rem; color: var(--text-dim); line-height: 1.5; margin-top: 2em; }
+.post-body figcaption { text-align: center; font-size: 0.88rem; color: var(--text-faint); margin-top: 0.6em; font-style: italic; }
+.post-body .note { font-size: 0.95rem; color: var(--text-faint); line-height: 1.5; margin-top: 2em; }
 
 /* ============================================================
    DEMO PANEL SYSTEM
@@ -955,7 +958,7 @@ body {
    wrapper) so the full-bleed cover posts, which have no .site-wrapper, get the
    same clearance. */
 .site-footer { margin-top: auto; padding-top: 3.5rem; padding-bottom: 4rem; }
-.site-footer-inner { border-top: 1px solid var(--rule); padding-top: 1.5rem; padding-bottom: 1rem; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1.5rem; font-size: 0.88rem; color: var(--text-dim); }
+.site-footer-inner { border-top: 1px solid var(--rule); padding-top: 1.5rem; padding-bottom: 1rem; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1.5rem; font-size: 0.88rem; color: var(--text-faint); }
 .site-footer a { color: var(--text-dim); text-decoration: none; transition: color 0.25s; }
 .site-footer a:hover { color: var(--text-bright); }
 .footer-links { display: flex; gap: 1rem; }
@@ -993,5 +996,5 @@ body {
   body { background: #fff; color: #222; }
   .reading-progress, .site-nav-links, .site-footer,
   .demo-wrapper, .globe-wrapper, .pl-wrapper, .game-wrapper { display: none; }
-  .post-body a { color: #222; text-decoration: underline; border-bottom: none; }
+  .post-body a, .post-body a.key { color: #222; text-decoration: underline; border-bottom: none; }
 }
