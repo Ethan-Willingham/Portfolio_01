@@ -110,6 +110,7 @@
 </div>
 
 <script src="lab-skins.js"></script>
+<script src="lab-extras.js"></script>
 <script>
 (function () {
   'use strict';
@@ -435,6 +436,17 @@
       g.decide = true;
       SKIN_DEFS.forEach(function (sd) {
         g.members.push({ name: sd.name, src: sd.src, desc: sd.desc, css: window.LAB_SKINS[sd.key], html: window.LAB_UNIFIED[uid], bodyClass: 'skin-' + sd.key, wide: true });
+      });
+    });
+  }
+
+  /* ---- extra hand-built options the owner requested for specific components ---- */
+  if (window.LAB_EXTRAS) {
+    GROUPS.forEach(function (g) {
+      if (!g.id || !window.LAB_EXTRAS[g.id]) return;
+      g.decide = true;
+      window.LAB_EXTRAS[g.id].forEach(function (o) {
+        g.members.push({ name: o.name, src: o.src || 'new option', desc: o.desc, css: o.css, html: o.html, bodyClass: o.bodyClass || '', wide: true });
       });
     });
   }
