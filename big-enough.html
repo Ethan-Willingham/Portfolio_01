@@ -76,11 +76,11 @@
 
   /* ---------- HERO ---------- */
   .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
   .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
   .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 40ch; text-wrap: pretty; }
-  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; }
-  .hero-byline b { color: var(--accent); font-weight: 400; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
 
   .hero-figure { margin: 2.2rem 0 0.5rem; }
   .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -123,25 +123,11 @@
     .hero-cap { margin-left: calc((var(--wide) - var(--measure)) / 2); margin-right: calc((var(--wide) - var(--measure)) / 2); max-width: none; }
   }
 
-  /* ---------- CONTENTS MAP ("what's inside") ---------- */
-  .map { margin: 2rem auto 0; max-width: var(--wide); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
-  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
-  .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
-  .map-note a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
-  .map-note a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
-  .map-stat { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); white-space: nowrap; }
-  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem; color: var(--accent); margin-right: 0.35rem; font-variant-numeric: tabular-nums; }
-  .map-groups { columns: 1; column-gap: 2.4rem; }
-  @media (min-width: 640px) { .map-groups { columns: 2; } }
-  @media (min-width: 980px) { .map-groups { columns: 3; } }
-  .map-group { break-inside: avoid; margin: 0 0 1.3rem; }
-  .map-phase { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; color: var(--accent); margin: 0 0 0.35rem; }
-  .map-list { list-style: none; margin: 0; padding: 0; }
-  .map-list li { margin: 0; }
-  .map-list a { display: flex; justify-content: space-between; gap: 0.6em; font-size: 0.98rem; text-decoration: none; color: var(--text); padding: 0.32em 0.4em; border-radius: 6px; line-height: 1.32; transition: background 0.15s, color 0.15s; border: none; }
-  .map-list a:hover { background: var(--row-hover); color: var(--text-bright); }
-  .map-m { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); white-space: nowrap; opacity: 0.8; align-self: center; }
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
 
   /* in-section jump menu */
   .sec-index { list-style: none; counter-reset: si; display: grid; grid-template-columns: 1fr; gap: 0.1rem 1.4rem; margin: 0 0 1.8rem; padding: 1rem 1.05rem 1.1rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.13); }
@@ -387,10 +373,9 @@
 
   <!-- ===================== HERO ===================== -->
   <header class="hero">
-    <p class="hero-eyebrow">A field guide to natural muscle</p>
     <h1 class="hero-title">Big Enough</h1>
     <p class="hero-dek">How big you can get the natural way, on one supplement, real food, and sunlight, and how little it actually takes to get most of the way there.</p>
-    <p class="hero-byline">Sourced and illustrated. <b>85 sources cited.</b> Last reviewed June 2026.</p>
+    <p class="hero-meta">A field guide to natural muscle <span class="sep">/</span> <b>85 sources</b> <span class="sep">/</span> 40 min read</p>
 
     <figure class="hero-figure breakout reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
       <!-- The signature curve: effort/time on x, muscle on y. Steep, then a long
@@ -441,44 +426,16 @@
     </figcaption>
   </figure>
 
-  <!-- ===================== CONTENTS MAP ===================== -->
-  <aside class="map reveal" aria-label="What is inside this guide">
-    <p class="map-kicker">What is inside</p>
-    <p class="map-note">Thirteen short chapters, about forty minutes end to end, and you are not meant to read it in one sitting. It is a reference. Skim the map, jump to the one thing you came for, and the rest will be here later. The through-line, if you read nothing else, is <a href="#returns">balance</a>.</p>
-    <div class="map-stats">
-      <span class="map-stat"><b>1</b> supplement worth taking</span>
-      <span class="map-stat"><b>3</b> free inputs: food, sun, sleep</span>
-      <span class="map-stat"><b>85</b> sources cited</span>
-      <span class="map-stat"><b>~40 min</b> full read</span>
-    </div>
-    <div class="map-groups">
-      <div class="map-group"><p class="map-phase">Start here</p><ul class="map-list">
-        <li><a href="#start"><span>The one-page version</span><span class="map-m">2 min</span></a></li>
-      </ul></div>
-      <div class="map-group"><p class="map-phase">The one supplement</p><ul class="map-list">
-        <li><a href="#creatine"><span>Creatine: the one hack</span><span class="map-m">4 min</span></a></li>
-      </ul></div>
-      <div class="map-group"><p class="map-phase">Building it</p><ul class="map-list">
-        <li><a href="#grows"><span>How muscle actually grows</span><span class="map-m">4 min</span></a></li>
-        <li><a href="#training"><span>The exact training</span><span class="map-m">3 min</span></a></li>
-        <li><a href="#around"><span>Around the muscle: tendons, mobility, cardio</span><span class="map-m">3 min</span></a></li>
-      </ul></div>
-      <div class="map-group"><p class="map-phase">Feeding it</p><ul class="map-list">
-        <li><a href="#diet"><span>Food is the other 90%</span><span class="map-m">2 min</span></a></li>
-        <li><a href="#inputs"><span>The smaller inputs: sun, timing, caffeine</span><span class="map-m">2 min</span></a></li>
-      </ul></div>
-      <div class="map-group"><p class="map-phase">The mind</p><ul class="map-list">
-        <li><a href="#brain"><span>Lifting and the brain</span><span class="map-m">2 min</span></a></li>
-      </ul></div>
-      <div class="map-group"><p class="map-phase">The limits and the balance</p><ul class="map-list">
-        <li><a href="#genetics"><span>Born different: genes and fibers</span><span class="map-m">3 min</span></a></li>
-        <li><a href="#gainloss"><span>Easy come, easy go</span><span class="map-m">2 min</span></a></li>
-        <li><a href="#returns"><span>Diminishing returns, and how much you need</span><span class="map-m">5 min</span></a></li>
-        <li><a href="#toomuch"><span>When big goes wrong</span><span class="map-m">3 min</span></a></li>
-        <li><a href="#balance"><span>The balance sheet</span><span class="map-m">2 min</span></a></li>
-      </ul></div>
-    </div>
-  </aside>
+  <!-- chapter strip -->
+  <nav class="chapters" aria-label="Chapters">
+    <span class="lead">Six parts</span>
+    <a href="#start">Start here</a>
+    <a href="#creatine">The supplement</a>
+    <a href="#grows">Building it</a>
+    <a href="#diet">Feeding it</a>
+    <a href="#brain">The mind</a>
+    <a href="#genetics">Limits and balance</a>
+  </nav>
 
   <!-- ===================== 1. THE ONE-PAGE VERSION ===================== -->
   <section id="start" class="sec first" aria-labelledby="start-h">
