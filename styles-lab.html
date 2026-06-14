@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Three design directions &middot; dev lab</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { padding: 0; }
+  .lab-wrap { max-width: 1180px; margin: 0 auto; padding: 2.5rem 1.25rem 6rem; }
+  .lab-head h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 6vw, 3.2rem); font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 0.6rem; }
+  .lab-head .sub { font-family: var(--font-heading); font-style: italic; font-size: 1.25rem; color: var(--text-dim); max-width: 62ch; }
+  .how { margin: 1.3rem 0 0; padding: 1.1rem 1.3rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.13); max-width: 72ch; }
+  .how p { font-size: 1.02rem; line-height: 1.62; color: var(--text); margin: 0 0 0.6rem; }
+  .how p:last-child { margin: 0; }
+  .how b { color: var(--text-bright); }
+
+  .tabwrap { position: sticky; top: 0; z-index: 30; background: var(--bg); padding: 1.4rem 0 1rem; margin-top: 1.8rem; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .tab { flex: 1; min-width: 150px; text-align: left; cursor: pointer; background: rgba(0,0,0,0.14); border: 1px solid var(--rule); border-radius: 12px; padding: 0.8rem 1rem; transition: border-color .18s, background .18s; }
+  .tab:hover { border-color: var(--text-dim); }
+  .tab.on { border-color: var(--accent); background: rgba(212,196,160,0.08); }
+  .tab .t-name { display: block; font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-bright); }
+  .tab .t-tag { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 0.2rem; }
+  .tab.on .t-tag { color: var(--accent); }
+
+  .activedesc { font-size: 1rem; color: var(--text-dim); font-style: italic; margin: 0.9rem 0 0.4rem; min-height: 1.5em; }
+
+  .browser { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; background: var(--bg-raised); box-shadow: 0 24px 60px -24px rgba(0,0,0,0.6); margin-top: 0.8rem; }
+  .browser-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.85rem; background: var(--bg-raised); border-bottom: 1px solid var(--rule); }
+  .browser-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .browser-bar .url { margin-left: 0.6rem; flex: 1; font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); background: rgba(0,0,0,0.22); border-radius: 6px; padding: 0.35em 0.7em; }
+  .browser iframe { display: block; width: 100%; border: 0; background: #fff; min-height: 600px; }
+
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; margin-top: 1.1rem; }
+  .pick-btn { font-family: var(--font-body); font-size: 0.95rem; color: var(--text); background: transparent; border: 1px solid var(--rule); border-radius: 8px; padding: 0.6em 1.3em; cursor: pointer; transition: all .15s; }
+  .pick-btn:hover { color: var(--text-bright); border-color: #9ec79a; }
+  .pick-btn.chosen { color: #0c0e0b; background: #9ec79a; border-color: #9ec79a; font-weight: 600; }
+  .open-link { font-family: var(--font-body); font-size: 0.9rem; color: var(--accent); text-decoration: none; }
+  .open-link:hover { color: var(--accent-hover); }
+  .chosen-note { font-family: var(--font-mono); font-size: 0.74rem; color: #9ec79a; }
+</style>
+</head>
+<body>
+<div class="lab-wrap">
+  <header class="lab-head">
+    <h1>Three design directions</h1>
+    <p class="sub">Your real components, living together as one sample article, rebuilt in three world-class styles. Pick the direction you want.</p>
+    <div class="how">
+      <p>This is the same article (same words, same components) shown in three complete design systems. Flip between the tabs and watch the whole page change personality.</p>
+      <p><b>Family.co</b> is your pick: warm, soft, rounded, light. I chose <b>Linear</b> (dark and razor-sharp, the closest to your current site) and <b>Stripe Press</b> (warm cream paper and beautiful serif, the refined version of what you already have) as the other two real references.</p>
+      <p>When one feels right, hit <b>choose this direction</b>. Then I apply that style to all 55 components and write it into the site.</p>
+    </div>
+  </header>
+
+  <div class="tabwrap">
+    <div class="tabs" id="tabs"></div>
+    <p class="activedesc" id="activedesc"></p>
+  </div>
+
+  <div class="browser">
+    <div class="browser-bar">
+      <span class="dot" style="background:#ff5f57"></span>
+      <span class="dot" style="background:#febc2e"></span>
+      <span class="dot" style="background:#28c840"></span>
+      <span class="url" id="url">ethanwillingham.com</span>
+    </div>
+    <iframe id="preview" title="Style preview"></iframe>
+  </div>
+
+  <div class="actions">
+    <button class="pick-btn" id="pick" type="button">choose this direction</button>
+    <a class="open-link" id="openlink" href="#" target="_blank" rel="noopener">open full page &#8599;</a>
+    <span class="chosen-note" id="chosennote"></span>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var STYLES = [
+    { id:'family', name:'Family.co', file:'style-family.html', tag:'warm · soft · rounded · light',
+      desc:'Family.co: warm, soft, rounded, light. Friendly and tactile, like a premium consumer app. Big rounded cards, soft shadows, a friendly blue accent.' },
+    { id:'linear', name:'Linear', file:'style-linear.html', tag:'dark · sharp · dense · precise',
+      desc:'Linear: dark, sharp, dense, high-contrast. The benchmark pro-tool look, and the closest to your current dark site. Hairline borders, a faint indigo glow, crisp type.' },
+    { id:'press', name:'Stripe Press', file:'style-press.html', tag:'cream · serif · editorial · timeless',
+      desc:'Stripe Press: warm cream paper and exquisite serif typography. The most book-like option, and the natural refinement of your current editorial style. Thin rules, one confident accent, a drop cap.' }
+  ];
+  var KEY = 'cl-direction-v1';
+  var chosen = null;
+  try { chosen = localStorage.getItem(KEY); } catch (e) {}
+  var active = STYLES[0].id;
+
+  var tabsEl = document.getElementById('tabs');
+  var descEl = document.getElementById('activedesc');
+  var urlEl = document.getElementById('url');
+  var frame = document.getElementById('preview');
+  var pickBtn = document.getElementById('pick');
+  var openLink = document.getElementById('openlink');
+  var noteEl = document.getElementById('chosennote');
+
+  function sizeFrame() {
+    try { var d = frame.contentDocument; if (d && d.body) frame.style.height = Math.max(600, d.body.scrollHeight) + 'px'; } catch (e) {}
+  }
+  frame.addEventListener('load', function () { sizeFrame(); setTimeout(sizeFrame, 400); setTimeout(sizeFrame, 1200); });
+
+  function render() {
+    tabsEl.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.id === active); });
+    var s = STYLES.filter(function (x) { return x.id === active; })[0];
+    descEl.textContent = s.desc;
+    urlEl.textContent = 'ethanwillingham.com  ·  ' + s.name + ' direction';
+    openLink.href = s.file;
+    if (frame.getAttribute('src') !== s.file) { frame.style.height = '600px'; frame.setAttribute('src', s.file); }
+    pickBtn.classList.toggle('chosen', chosen === active);
+    pickBtn.textContent = (chosen === active) ? '✓ this is your direction' : 'choose this direction';
+    if (chosen) {
+      var cs = STYLES.filter(function (x) { return x.id === chosen; })[0];
+      noteEl.textContent = 'chosen: ' + (cs ? cs.name : chosen);
+    } else { noteEl.textContent = ''; }
+  }
+
+  STYLES.forEach(function (s) {
+    var b = document.createElement('button');
+    b.className = 'tab'; b.type = 'button'; b.dataset.id = s.id;
+    b.innerHTML = '<span class="t-name">' + s.name + '</span><span class="t-tag">' + s.tag + '</span>';
+    b.addEventListener('click', function () { active = s.id; render(); });
+    tabsEl.appendChild(b);
+  });
+
+  pickBtn.addEventListener('click', function () {
+    chosen = (chosen === active) ? null : active;
+    if (chosen) { try { localStorage.setItem(KEY, chosen); } catch (e) {} } else { try { localStorage.removeItem(KEY); } catch (e) {} }
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

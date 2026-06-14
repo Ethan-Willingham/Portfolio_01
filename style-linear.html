@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Long Can You Live? — Field guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;510;560;590;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Linear palette */
+    --bg:#08090A;
+    --bg-elev:#0F1011;
+    --bg-card:#16171A;
+    --bg-card-2:#1A1B1F;
+
+    --text-primary:#F7F8F8;
+    --text-secondary:#8A8F98;
+    --text-tertiary:#62666D;
+
+    --accent:#7170FF;
+    --accent-deep:#5E6AD2;
+    --accent-weak:rgba(113,112,255,0.12);
+    --accent-weaker:rgba(113,112,255,0.06);
+
+    --border:rgba(255,255,255,0.08);
+    --border-hover:rgba(255,255,255,0.14);
+    --border-strong:rgba(255,255,255,0.10);
+    --inset-top:rgba(255,255,255,0.05);
+
+    --green:#4CB782;
+    --green-weak:rgba(76,183,130,0.10);
+
+    --radius-card:10px;
+    --radius-sm:8px;
+    --radius-chip:6px;
+
+    --font-sans:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+
+    --col:720px;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:var(--font-sans);
+    font-size:16px;
+    line-height:1.6;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+    font-feature-settings:"cv01","cv11","ss03";
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* Faint indigo radial glow behind the hero, echoing Linear's gradient headers */
+  body::before{
+    content:"";
+    position:fixed;
+    top:-340px;
+    left:50%;
+    transform:translateX(-50%);
+    width:1100px;
+    height:760px;
+    background:
+      radial-gradient(48% 52% at 50% 38%, rgba(113,112,255,0.16) 0%, rgba(94,106,210,0.07) 38%, rgba(113,112,255,0) 72%);
+    pointer-events:none;
+    z-index:0;
+    filter:blur(8px);
+  }
+  /* Hairline grid wash, extremely faint — the "technical" substrate */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+      linear-gradient(180deg, rgba(8,9,10,0) 0%, rgba(8,9,10,0) 60%, rgba(8,9,10,0.6) 100%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:var(--col);
+    margin:0 auto;
+    padding:96px 24px 120px;
+  }
+
+  ::selection{background:rgba(113,112,255,0.30);color:#fff;}
+
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{color:#9B9AFF;text-decoration:none;}
+
+  /* ---------- HERO ---------- */
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:0.10em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 22px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 4px var(--accent-weak), 0 0 10px rgba(113,112,255,0.6);
+  }
+
+  h1{
+    font-size:clamp(2.2rem,4.5vw,3rem);
+    line-height:1.06;
+    font-weight:600;
+    letter-spacing:-0.022em;
+    margin:0 0 22px;
+    color:var(--text-primary);
+    background:linear-gradient(180deg,#FFFFFF 0%, #D7D9DD 130%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+
+  .dek{
+    font-size:1.2rem;
+    line-height:1.5;
+    font-weight:400;
+    letter-spacing:-0.013em;
+    color:var(--text-secondary);
+    margin:0 0 26px;
+    max-width:38em;
+  }
+
+  .meta{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    letter-spacing:0.01em;
+    color:var(--text-tertiary);
+    padding:14px 0 0;
+    border-top:1px solid var(--border);
+    margin-top:30px;
+    margin-bottom:40px;
+  }
+  .meta .dot{width:3px;height:3px;border-radius:50%;background:var(--text-tertiary);display:inline-block;}
+  .meta strong{color:var(--text-secondary);font-weight:500;}
+
+  /* ---------- BODY PROSE ---------- */
+  p{margin:0 0 20px;color:var(--text-primary);font-weight:400;letter-spacing:-0.003em;}
+  .lead{
+    font-size:1.075rem;
+    line-height:1.62;
+    color:#D6D8DC;
+  }
+  .lead a{border-bottom:1px solid rgba(113,112,255,0.4);transition:border-color .15s ease;}
+  .lead a:hover{border-color:var(--accent);}
+  strong{color:var(--text-primary);font-weight:590;}
+
+  h2{
+    font-size:1.55rem;
+    line-height:1.18;
+    font-weight:600;
+    letter-spacing:-0.02em;
+    color:var(--text-primary);
+    margin:56px 0 18px;
+    scroll-margin-top:80px;
+  }
+  h2 .h2-num{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    font-weight:500;
+    letter-spacing:0.04em;
+    color:var(--accent);
+    vertical-align:middle;
+    margin-right:12px;
+    padding:3px 7px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-chip);
+    background:var(--accent-weaker);
+    position:relative;
+    top:-2px;
+  }
+
+  /* ---------- FIGURE ---------- */
+  figure{
+    margin:38px 0;
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    overflow:hidden;
+    background:var(--bg-card);
+    box-shadow:inset 0 1px 0 var(--inset-top), 0 1px 2px rgba(0,0,0,0.4), 0 12px 34px rgba(0,0,0,0.35);
+  }
+  figure img{
+    display:block;
+    width:100%;
+    height:auto;
+    border-bottom:1px solid var(--border);
+  }
+  figcaption{
+    font-size:13px;
+    line-height:1.5;
+    color:var(--text-secondary);
+    padding:13px 18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0));
+  }
+  figcaption::before{
+    content:"FIG";
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:var(--text-tertiary);
+    padding:2px 6px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    flex:none;
+  }
+
+  /* ---------- HIGHLIGHT CALLOUT ---------- */
+  .callout{
+    position:relative;
+    margin:34px 0;
+    padding:20px 22px 20px 24px;
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-left:none;
+    border-radius:var(--radius-card);
+    box-shadow:inset 0 1px 0 var(--inset-top), 0 1px 2px rgba(0,0,0,0.4);
+    overflow:hidden;
+  }
+  .callout::before{
+    content:"";
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:3px;
+    background:linear-gradient(180deg,var(--accent),var(--accent-deep));
+    box-shadow:0 0 18px rgba(113,112,255,0.45);
+  }
+  .callout .c-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:0.09em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .callout .c-body{
+    margin:0;
+    font-size:1.02rem;
+    line-height:1.55;
+    color:var(--text-primary);
+    letter-spacing:-0.006em;
+  }
+
+  /* ---------- STAT TRIO ---------- */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:38px 0;
+  }
+  .stat{
+    position:relative;
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    padding:20px 18px 16px;
+    box-shadow:inset 0 1px 0 var(--inset-top);
+    transition:border-color .16s ease, transform .16s ease;
+    overflow:hidden;
+  }
+  .stat::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(120% 100% at 0% 0%, rgba(113,112,255,0.07), rgba(113,112,255,0) 55%);
+    opacity:0;
+    transition:opacity .18s ease;
+    pointer-events:none;
+  }
+  .stat:hover{border-color:var(--border-hover);transform:translateY(-1px);}
+  .stat:hover::after{opacity:1;}
+  .stat .num{
+    font-size:2.15rem;
+    line-height:1;
+    font-weight:600;
+    letter-spacing:-0.03em;
+    color:var(--text-primary);
+    font-variant-numeric:tabular-nums;
+    margin:0 0 9px;
+  }
+  .stat .num .pct{font-size:1.3rem;font-weight:500;color:var(--text-secondary);margin-left:1px;}
+  .stat .lbl{
+    font-size:12px;
+    line-height:1.4;
+    color:var(--text-secondary);
+    letter-spacing:0.005em;
+    margin:0;
+  }
+
+  /* ---------- PULL QUOTE ---------- */
+  blockquote{
+    margin:44px 0;
+    padding:6px 0 6px 26px;
+    border-left:2px solid var(--accent);
+    position:relative;
+  }
+  blockquote .q{
+    font-size:1.55rem;
+    line-height:1.32;
+    font-weight:510;
+    letter-spacing:-0.02em;
+    color:#E9EBEE;
+    margin:0 0 14px;
+  }
+  blockquote cite{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-style:normal;
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--text-tertiary);
+  }
+  blockquote cite::before{
+    content:"";
+    width:18px;height:1px;background:var(--border-hover);
+  }
+
+  /* ---------- DATA TABLE ---------- */
+  .table-shell{
+    margin:32px 0;
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    overflow:hidden;
+    background:var(--bg-card);
+    box-shadow:inset 0 1px 0 var(--inset-top), 0 1px 2px rgba(0,0,0,0.35);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14.5px;
+  }
+  thead th{
+    text-align:left;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    font-weight:500;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-tertiary);
+    padding:12px 18px;
+    background:rgba(255,255,255,0.018);
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+    color:var(--text-primary);
+    vertical-align:middle;
+    letter-spacing:-0.003em;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr{transition:background .14s ease;}
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  td.years{font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;}
+  td.lever-name{font-weight:500;}
+
+  tr.featured{background:var(--accent-weak);}
+  tr.featured:hover{background:rgba(113,112,255,0.16);}
+  tr.featured td{color:var(--text-primary);}
+  tr.featured td.lever-name{position:relative;}
+  tr.featured td.lever-name::before{
+    content:"";
+    position:absolute;left:0;top:0;bottom:0;width:2px;
+    background:var(--accent);
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:500;
+    letter-spacing:0.01em;
+    padding:3px 9px 3px 7px;
+    border-radius:100px;
+    white-space:nowrap;
+  }
+  .pill::before{content:"";width:5px;height:5px;border-radius:50%;}
+  .pill.strong{
+    color:#7BE0AE;
+    background:var(--green-weak);
+    border:1px solid rgba(76,183,130,0.28);
+  }
+  .pill.strong::before{background:#4CB782;box-shadow:0 0 7px rgba(76,183,130,0.7);}
+  .pill.mixed{
+    color:var(--text-secondary);
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+  }
+  .pill.mixed::before{background:var(--text-tertiary);}
+
+  /* ---------- INFO CARDS ---------- */
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:32px 0;
+  }
+  .card{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:var(--radius-card);
+    padding:18px 18px 20px;
+    box-shadow:inset 0 1px 0 var(--inset-top);
+    transition:border-color .16s ease, transform .16s ease, background .16s ease;
+  }
+  .card:hover{border-color:var(--border-hover);transform:translateY(-2px);background:var(--bg-card-2);}
+  .card .ic{
+    width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;
+    background:var(--accent-weak);
+    border:1px solid rgba(113,112,255,0.22);
+    margin:0 0 14px;
+    color:var(--accent);
+  }
+  .card .ic svg{width:15px;height:15px;display:block;}
+  .card h3{
+    font-size:14.5px;
+    font-weight:560;
+    letter-spacing:-0.01em;
+    color:var(--text-primary);
+    margin:0 0 6px;
+  }
+  .card p{
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--text-secondary);
+    margin:0;
+    letter-spacing:-0.002em;
+  }
+
+  /* ---------- BUTTON ROW ---------- */
+  .btn-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin:34px 0;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-sans);
+    font-size:14px;
+    font-weight:510;
+    letter-spacing:-0.006em;
+    padding:0 16px;
+    height:38px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    text-decoration:none;
+    transition:transform .12s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+    border:1px solid transparent;
+  }
+  .btn:active{transform:translateY(0.5px) scale(0.992);}
+  .btn svg{width:15px;height:15px;display:block;}
+  .btn-primary{
+    color:#fff;
+    background:linear-gradient(180deg,#7B79FF 0%, #5E6AD2 100%);
+    box-shadow:0 0 0 1px rgba(113,112,255,0.5), 0 2px 8px rgba(113,112,255,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .btn-primary:hover{
+    color:#fff;
+    background:linear-gradient(180deg,#8B89FF 0%, #6B76E0 100%);
+    box-shadow:0 0 0 1px rgba(113,112,255,0.6), 0 4px 16px rgba(113,112,255,0.35), inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+  .btn-secondary{
+    color:var(--text-primary);
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+  }
+  .btn-secondary:hover{
+    color:var(--text-primary);
+    background:rgba(255,255,255,0.05);
+    border-color:var(--border-hover);
+  }
+
+  /* ---------- DIVIDER ---------- */
+  .rule{
+    height:1px;
+    border:none;
+    margin:48px 0 32px;
+    background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0) 100%);
+  }
+
+  /* ---------- TAGS ---------- */
+  .tags{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+  }
+  .tags .tags-label{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-tertiary);
+    margin-right:4px;
+  }
+  .tag{
+    font-size:12.5px;
+    font-weight:450;
+    color:var(--text-secondary);
+    padding:4px 11px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-chip);
+    background:rgba(255,255,255,0.015);
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+    cursor:default;
+  }
+  .tag:hover{border-color:var(--border-hover);color:var(--text-primary);background:rgba(255,255,255,0.04);}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:680px){
+    .wrap{padding:64px 20px 96px;}
+    .stats{grid-template-columns:1fr;}
+    .cards{grid-template-columns:1fr;}
+    .stat .num{font-size:1.9rem;}
+    blockquote .q{font-size:1.32rem;}
+    .btn{flex:1 1 auto;justify-content:center;}
+  }
+  @media (max-width:520px){
+    thead th:nth-child(3),tbody td:nth-child(3){display:none;}
+  }
+</style>
+</head>
+<body>
+  <article class="wrap">
+
+    <!-- HERO -->
+    <header>
+      <span class="eyebrow">Field guide</span>
+      <h1>How Long Can You Live?</h1>
+      <p class="dek">The hard wall at 120 is unproven, the records are riddled with fraud, and the thing that actually adds years is the one nobody calls a hack.</p>
+      <div class="meta">
+        <span><strong>28</strong> sources</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span><strong>25 min</strong> read</span>
+      </div>
+    </header>
+
+    <!-- LEAD -->
+    <p class="lead">There is supposed to be a hard wall around 120, and eating less is supposed to be the only real lever. The evidence says something stranger. The <a href="#">cleanest datasets</a> keep showing a flat mortality hazard beyond the extremes, which is <strong>not</strong> what a hard limit would predict.</p>
+
+    <!-- FIGURE -->
+    <figure>
+      <img src="assets/thumbs/how-long-can-you-live.jpg" alt="A gnarled, weathered bristlecone pine standing in snow against a clear evening sky, its twisted trunk stripped to bare, sun-reddened wood." loading="lazy">
+      <figcaption>A bristlecone pine, nearly five thousand years old.</figcaption>
+    </figure>
+
+    <!-- SECTION 1 -->
+    <h2><span class="h2-num">01</span>The wall that isn't</h2>
+    <p>When researchers clean the same registry to a higher standard, the plateau that looked so convincing tends to thin out, and then it vanishes.</p>
+
+    <!-- CALLOUT -->
+    <aside class="callout">
+      <p class="c-label">The honest goal</p>
+      <p class="c-body">Not to find the cheat code for 120. It is to not get cheated out of 85.</p>
+    </aside>
+
+    <!-- STAT TRIO -->
+    <div class="stats">
+      <div class="stat">
+        <p class="num">120</p>
+        <p class="lbl">proposed hard cap, disputed</p>
+      </div>
+      <div class="stat">
+        <p class="num">82<span class="pct">%</span></p>
+        <p class="lbl">of 110+ records that fail an audit</p>
+      </div>
+      <div class="stat">
+        <p class="num">7</p>
+        <p class="lbl">verified supercentenarians with papers</p>
+      </div>
+    </div>
+
+    <!-- PULL QUOTE -->
+    <blockquote>
+      <p class="q">Whatever the lab effect was, it produced nothing useful.</p>
+      <cite>A skeptic, 1995</cite>
+    </blockquote>
+
+    <!-- SECTION 2 -->
+    <h2><span class="h2-num">02</span>What actually moves the needle</h2>
+
+    <!-- DATA TABLE -->
+    <div class="table-shell">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Lever</th>
+            <th scope="col">Years added</th>
+            <th scope="col">Evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lever-name">Daily movement</td>
+            <td class="years">~3 to 7</td>
+            <td><span class="pill strong">strong</span></td>
+          </tr>
+          <tr class="featured">
+            <td class="lever-name">Real social connection</td>
+            <td class="years">~5+</td>
+            <td><span class="pill strong">strong</span></td>
+          </tr>
+          <tr>
+            <td class="lever-name">Caloric restriction</td>
+            <td class="years">?</td>
+            <td><span class="pill mixed">mixed in humans</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INFO CARDS -->
+    <div class="cards">
+      <div class="card">
+        <div class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 4 14h7l-1 7 9-11h-7l1-7z"/></svg>
+        </div>
+        <h3>Move</h3>
+        <p>A merely good routine, kept for decades, beats a perfect one you quit.</p>
+      </div>
+      <div class="card">
+        <div class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+        </div>
+        <h3>Sleep</h3>
+        <p>Boring, and it outperforms most supplements.</p>
+      </div>
+      <div class="card">
+        <div class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.2a3.2 3.2 0 0 1 0 6.1"/><path d="M17 13.6A6.5 6.5 0 0 1 21.5 20"/></svg>
+        </div>
+        <h3>Connect</h3>
+        <p>The one nobody calls a hack.</p>
+      </div>
+    </div>
+
+    <!-- BUTTON ROW -->
+    <div class="btn-row">
+      <a class="btn btn-primary" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h11a3 3 0 0 1 3 3v11"/><path d="M4 5v14h11"/><path d="M8 9h6M8 13h4"/></svg>
+        Read the 28 sources
+      </a>
+      <a class="btn btn-secondary" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 3 4-6"/></svg>
+        Jump to the charts
+      </a>
+    </div>
+
+    <!-- DIVIDER -->
+    <hr class="rule">
+
+    <!-- TAGS -->
+    <div class="tags">
+      <span class="tags-label">Filed under</span>
+      <span class="tag">longevity</span>
+      <span class="tag">aging</span>
+      <span class="tag">data</span>
+    </div>
+
+  </article>
+</body>
+</html>
