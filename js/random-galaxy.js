@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.60';
+  var VERSION = 'v1.61';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -5397,7 +5397,7 @@
   // notes stay consonant. The golden ratio is NOT used for pitch (it is maximally
   // dissonant as an interval); instead phi^2 sets a quiet inharmonic shimmer partial
   // and the golden angle (137.5 deg) spaces successive notes across the stereo field.
-  var sortAudio = { ctx:null, ready:false, on:true, bus:null, master:null, voices:0, nextT:0, panN:0 };   // sound defaults ON (all devices); the context is unlocked on the first gesture (sortAudioUnlock)
+  var sortAudio = { ctx:null, ready:false, on:false, bus:null, master:null, voices:0, nextT:0, panN:0 };   // sound defaults OFF; the sort panel's sound button toggles it on (sortAudioToggle resumes the context). First-gesture unlock still inits the context, just leaves it suspended.
   var SORT_NOTE_RATE = 500;        // max scheduled notes/sec (firehose ceiling; only reached at high Speed)
   var SORT_VOICE_CAP = 160;        // max simultaneously ringing voices
   var sortFNVal = new Float32Array(512), sortFNSwap = new Uint8Array(512), sortFNCount = 0;   // this frame's op events to sonify
