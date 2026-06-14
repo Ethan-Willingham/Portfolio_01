@@ -286,13 +286,13 @@
   /* ---- Camera ---- */
   var isDragging = false;
   var prevMouse = { x: 0, y: 0 };
-  var spherical = { theta: -0.5, phi: Math.PI / 2 - 0.25, radius: 3.2 };
+  var spherical = { theta: -0.5, phi: Math.PI / 2 - 0.25, radius: 2.8 };
   var autoSpin = !reducedMotion;
   var targetTheta = spherical.theta;
   var targetPhi = spherical.phi;
   var targetRadius = spherical.radius;
   var MIN_R = 1.5, MAX_R = 8;
-  var DEF_THETA = -0.5, DEF_PHI = Math.PI / 2 - 0.25, DEF_RADIUS = 3.2;
+  var DEF_THETA = -0.5, DEF_PHI = Math.PI / 2 - 0.25, DEF_RADIUS = 2.8;
 
   function updateCamera() {
     spherical.theta += (targetTheta - spherical.theta) * 0.1;

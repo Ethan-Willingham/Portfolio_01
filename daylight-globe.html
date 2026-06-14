@@ -125,7 +125,7 @@
         grid-template-columns: minmax(0, 1fr) clamp(300px, 33%, 348px);
         grid-template-areas: "canvas side";
         /* outset past the 780px text column, capped and viewport-safe */
-        width: min(960px, 90vw);
+        width: min(1040px, 92vw);
         margin-left: 50%;
         transform: translateX(-50%);
       }
@@ -135,8 +135,8 @@
         max-height: none;
         /* roughly tracks the control rail's natural height so the rail fills
            without a big empty tail, while keeping the globe large */
-        min-height: clamp(440px, 56vh, 560px);
-        min-height: clamp(440px, 56dvh, 560px);
+        min-height: clamp(460px, 58vh, 560px);
+        min-height: clamp(460px, 58dvh, 560px);
       }
       .globe-side {
         grid-area: side;
@@ -326,6 +326,12 @@
     .daylight-panel {
       padding: 1.05rem 1.25rem 1.15rem;
       border-top: 1px solid var(--rule);
+      /* When the rail is taller than its contents (big globe), let the daylight
+         readout sit centered in its zone so the spare space reads as deliberate
+         rather than as an empty tail below "Rise/Set". */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .daylight-label {
       font-family: var(--font-heading);
