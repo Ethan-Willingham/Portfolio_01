@@ -407,6 +407,16 @@
       <article>
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
 
+          <p>
+            The line dividing day from night on this globe is not
+            painted on. Drag the Earth, then move the hour and the
+            date: the shaded edge, the daylight bar, and the sunrise
+            and sunset times all shift together, because every one of
+            them is computed from a single fact, where the Sun actually
+            is for the moment you dialed in. Jump to the June solstice,
+            set the clock to midnight, and watch the Arctic stay lit.
+          </p>
+
           <div class="globe-wrapper">
             <div id="globe-container" class="is-loading">
               <div class="globe-loading" aria-live="polite">Loading Earth textures</div>
@@ -465,10 +475,46 @@
           <h2 class="u-h2">How it works</h2>
 
           <p>
-            Drag the Earth. Change the hour, date, or tilt. The shader
-            blends NASA day and night textures against a computed sun
-            vector; the side panel uses the same inputs for daylight
-            hours and sunrise/set.
+            Everything keys off the Sun's direction. From the date and
+            time, the page works out where the Sun sits relative to the
+            Earth as a single 3D vector, and the shader lights each
+            point on the globe by how directly it faces that vector.
+            Spots aimed at the Sun show the NASA daytime map; spots
+            facing away show the night map, the one stitched from city
+            lights. The soft band where the two meet is the terminator,
+            the real line of sunrise and sunset, sweeping around the
+            planet at roughly a thousand miles an hour.
+          </p>
+
+          <p>
+            The side panel reads off the same geometry. The length of
+            your day is just how much of your latitude's daily circle
+            falls on the lit side of that line. At the equator it stays
+            near twelve hours all year. The farther you travel from it,
+            the harder the Earth's tilt swings the answer, until past
+            the polar circles the Sun never sets in summer or never
+            rises in winter, and the daylight bar fills or empties all
+            the way.
+          </p>
+
+          <p>
+            That tilt is why seasons exist at all, and it is the most
+            interesting dial here. Earth leans about 23.4 degrees, and
+            that one number sets how harsh your summers and winters get.
+            The three smaller buttons are not arbitrary: the real tilt
+            breathes between roughly 22.1 and 24.5 degrees over a
+            41,000-year cycle, drifting by about a hundredth of a degree
+            per century right now.
+          </p>
+
+          <p>
+            Push it to 45 degrees and the seasons get extreme; drop it
+            toward zero and they nearly vanish. The unsettling part is
+            the note on that last button. Without a large Moon to steady
+            it, Earth's tilt would not stay near 23 degrees at all. It
+            would wander chaotically over millions of years and drag the
+            climate along with it. A big Moon is the reason your seasons
+            stay this regular.
           </p>
 
         </div>
