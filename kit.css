@@ -43,6 +43,10 @@
 .u-def-word{ font-size: clamp(1.35rem,2.8vw,1.7rem); font-weight: 700; font-style: normal; color: var(--text-bright); }
 .u-def-pos{ font-style: italic; font-weight: 400; font-size: .78em; color: var(--text-dim); margin-left: .45em; }
 .u-def-gloss{ font-family: var(--font-heading); font-style: italic; font-size: clamp(1.05rem,2.2vw,1.2rem); line-height: 1.5; color: var(--text); margin: 0; }
+/* Numbered senses inside a .u-def gloss (hanging indent, accent numerals) */
+.u-def-sense{ display: block; padding-left: 1.5em; text-indent: -1.5em; }
+.u-def-sense + .u-def-sense{ margin-top: .5em; }
+.u-def-n{ font-style: normal; font-weight: 700; color: var(--accent); margin-right: .4em; }
 .u-figure{ margin: 0; } .u-figure-img{ display:block; width:100%; height:auto; border-radius: 20px; box-shadow: var(--s-shadow-3); background: var(--s-surface-2); }
 .u-figure-cap{ margin: 1em 0 0; font-size: .92rem; font-style: italic; line-height: 1.5; color: var(--text-dim); text-align: center; }
 .u-callout{ background: var(--s-gold-tint); border: 1px solid var(--s-gold-hair); border-radius: 20px; padding: clamp(22px,4vw,32px); box-shadow: var(--s-shadow-gold); }
