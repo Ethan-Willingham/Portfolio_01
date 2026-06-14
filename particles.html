@@ -90,40 +90,6 @@
       <article>
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
 
-          <p>
-            Scroll down and drag your cursor through a few hundred
-            balls that fall, collide, and snap back like jelly. Then
-            look for the trick, because there is one: there is no
-            canvas on this page. No WebGL, no SVG, not even one
-            <code>div</code> per ball. Every particle in every demo
-            below is a single <em>shadow</em>. Not a metaphor. Each is
-            a literal CSS <code>box-shadow</code>, and the whole thing
-            works because one element can carry as many comma-separated
-            shadow offsets as you care to give it. So you keep one
-            1-pixel <code>div</code>, pile a few hundred shadows on it,
-            move every offset each frame, and hand the browser a fresh
-            string to paint.
-          </p>
-
-          <p>
-            This is the wrong way to render anything, which is most of
-            why it is fun. It would have run in a browser from 2011,
-            the year <code>box-shadow</code> went unprefixed in IE9,
-            Firefox 4, and Chrome 10. The physics under each demo is a
-            few dozen lines of plain math, and all of it is yours to
-            poke: drag inside any panel, shove the sliders past sane
-            values, watch the frame counter. I save the rendering
-            trick, and the reason it both works and falls apart, for
-            the end.
-          </p>
-
-          <p>
-            Inspired by David Gerrells'
-            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">brilliant, unhinged experiments</a>.
-          </p>
-
-          <hr class="u-divider">
-
           <!-- ============================================
                DEMO 1: GRAVITY + BOUNCE
                ============================================ -->
@@ -381,9 +347,11 @@
           <h2>The renderer is one CSS property</h2>
 
           <p>
-            Each frame: sort the balls back-to-front, build a
-            comma-separated string of shadow offsets, assign it to
-            <code>boxShadow</code>:
+            Here is the whole trick: every ball is a single
+            <em>shadow</em>. Not a metaphor. One element can hold
+            hundreds of comma-separated <code>box-shadow</code> offsets,
+            so each frame you sort them back-to-front, build the string,
+            and assign it once:
           </p>
 
 <pre><code><span class="var">balls</span>.<span class="fn">sort</span>(<span class="kw">function</span>(<span class="var">a</span>,<span class="var">b</span>) { <span class="kw">return</span> <span class="var">b</span>.<span class="prop">z</span> - <span class="var">a</span>.<span class="prop">z</span>; });
@@ -395,25 +363,17 @@
 <span class="var">dot</span>.<span class="prop">style</span>.<span class="prop">boxShadow</span> = <span class="var">s</span>.<span class="fn">join</span>(<span class="str">','</span>);</code></pre>
 
           <p>
-            The browser does the rest. No drawing context, no transform
-            matrices, no vertex buffers, just a string parsed and
-            painted by the same code that draws the drop shadow under
-            your buttons. The hand sort is the catch: all the shadows
-            ride on one element, so they paint in the order you list
-            them, and that order is the only sense of depth there is.
+            The browser paints all of them on the same path that draws
+            the shadow under a button, no drawing API, no buffers.
+            Changing <code>box-shadow</code> repaints but never lays the
+            page out again, so a few hundred shadows fly and a few
+            thousand crawl, with no GPU instancing to save them. The
+            wrong way to render anything serious, and glorious for this.
           </p>
 
           <p>
-            It stays smooth for a backwards reason. Rewriting
-            <code>box-shadow</code> repaints that one node but never
-            lays the page out again, because nothing changes size or
-            position, so you skip the most expensive thing a browser
-            does, along with the weight of hundreds of real DOM nodes.
-            The flip side shows up the moment you push it: the browser
-            re-rasterizes the div's whole footprint every frame, with
-            no GPU instancing and no culling, so a few hundred shadows
-            fly and a few thousand crawl. It is the wrong way to render
-            anything serious, and it is glorious for this.
+            Inspired by David Gerrells'
+            <a href="https://dgerrells.com/blog/how-not-to-use-box-shadows">brilliant, unhinged box-shadow experiments</a>.
           </p>
 
         </div>
