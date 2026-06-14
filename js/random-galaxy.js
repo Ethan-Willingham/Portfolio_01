@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.59';
+  var VERSION = 'v1.60';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -3921,60 +3921,65 @@
               SAC_solidIdx = (SAC_solidIdx + 1) % 5;
           }
 
-          var eased   = sacredEase(Math.max(0, Math.min(1, SAC_morphT)));
-          var fromBuf = SAC_solids[SAC_solidIdx];
-          var toBuf   = SAC_solids[(SAC_solidIdx + 1) % 5];
-
           SAC_yaw      += dt * SAC_YAW_SPEED;
           SAC_tumble   += dt * SAC_TUMBLE_SPEED;
           SAC_innerYaw += dt * SAC_YAW_SPEED * (-1.7);  // counter-rotate
+      }
 
-          var breathScale = 1.0 + SAC_BREATH_AMP * Math.sin(2.0 * Math.PI * SAC_BREATH_FREQ * SAC_time);
-          var outerN = Math.floor(SAC_N * (1.0 - SAC_INNER_FRAC));
-          var devMorph = 1.0 + eased * 4.5;          // 1.0 (cyan) -> 5.5 as the morph ignites
-          var invR = 1.0 / (SAC_CIRCUMRADIUS * 1.1);
+      // Always (re)write positions from the current state, even while transitioning, so a
+      // fresh entry uploads THIS scene's geometry and not the previous scene's stale buffer
+      // (the held-geometry shader then fades it up by brightness). Mirrors oceanTick, which
+      // gates only the time advance, never the position write. Without this, entering Sacred
+      // from any other scene showed the prior cloud fade up, then pop into the polyhedron.
+      var eased   = sacredEase(Math.max(0, Math.min(1, SAC_morphT)));
+      var fromBuf = SAC_solids[SAC_solidIdx];
+      var toBuf   = SAC_solids[(SAC_solidIdx + 1) % 5];
 
-          // Rotation trig is constant across all points this frame — hoist it out of
-          // the loop (was recomputed per point) and inline the rotate (was a function
-          // call returning a fresh array per point -> heavy GC). Numerically identical.
-          var cyO = Math.cos(SAC_yaw),         syO = Math.sin(SAC_yaw);
-          var cxO = Math.cos(SAC_tumble),      sxO = Math.sin(SAC_tumble);
-          var cyI = Math.cos(SAC_innerYaw),    syI = Math.sin(SAC_innerYaw);
-          var cxI = Math.cos(SAC_tumble * 0.7), sxI = Math.sin(SAC_tumble * 0.7);
+      var breathScale = 1.0 + SAC_BREATH_AMP * Math.sin(2.0 * Math.PI * SAC_BREATH_FREQ * SAC_time);
+      var outerN = Math.floor(SAC_N * (1.0 - SAC_INNER_FRAC));
+      var devMorph = 1.0 + eased * 4.5;          // 1.0 (cyan) -> 5.5 as the morph ignites
+      var invR = 1.0 / (SAC_CIRCUMRADIUS * 1.1);
 
-          var i, bx, by, bz, x2, z2, ry, rz, rdist, dev, b4;
+      // Rotation trig is constant across all points this frame — hoist it out of
+      // the loop (was recomputed per point) and inline the rotate (was a function
+      // call returning a fresh array per point -> heavy GC). Numerically identical.
+      var cyO = Math.cos(SAC_yaw),         syO = Math.sin(SAC_yaw);
+      var cxO = Math.cos(SAC_tumble),      sxO = Math.sin(SAC_tumble);
+      var cyI = Math.cos(SAC_innerYaw),    syI = Math.sin(SAC_innerYaw);
+      var cxI = Math.cos(SAC_tumble * 0.7), sxI = Math.sin(SAC_tumble * 0.7);
 
-          // -- Outer copy [0, outerN): rotate by (yaw, tumble) --
-          for (i = 0; i < outerN; i++) {
-              bx = (fromBuf[i*3]   + eased * (toBuf[i*3]   - fromBuf[i*3]))   * breathScale;
-              by = (fromBuf[i*3+1] + eased * (toBuf[i*3+1] - fromBuf[i*3+1])) * breathScale;
-              bz = (fromBuf[i*3+2] + eased * (toBuf[i*3+2] - fromBuf[i*3+2])) * breathScale;
-              x2 = cyO*bx + syO*bz;  z2 = -syO*bx + cyO*bz;   // yaw about Y
-              ry = cxO*by - sxO*z2;  rz =  sxO*by + cxO*z2;   // tilt about X
-              b4 = i*4;
-              positions[b4]   = x2 + 0.5;
-              positions[b4+1] = ry + 0.5;
-              positions[b4+2] = rz + 0.5;
-              rdist = Math.sqrt(bx*bx + by*by + bz*bz);
-              dev = devMorph + (rdist * invR) * 0.8;
-              positions[b4+3] = dev < 0.4 ? 0.4 : (dev > 6.0 ? 6.0 : dev);
-          }
+      var i, bx, by, bz, x2, z2, ry, rz, rdist, dev, b4;
 
-          // -- Inner copy [outerN, N): counter-rotate by (innerYaw, tumble*0.7), shifted colour lane --
-          for (i = outerN; i < SAC_N; i++) {
-              bx = (fromBuf[i*3]   + eased * (toBuf[i*3]   - fromBuf[i*3]))   * breathScale;
-              by = (fromBuf[i*3+1] + eased * (toBuf[i*3+1] - fromBuf[i*3+1])) * breathScale;
-              bz = (fromBuf[i*3+2] + eased * (toBuf[i*3+2] - fromBuf[i*3+2])) * breathScale;
-              x2 = cyI*bx + syI*bz;  z2 = -syI*bx + cyI*bz;
-              ry = cxI*by - sxI*z2;  rz =  sxI*by + cxI*z2;
-              b4 = i*4;
-              positions[b4]   = x2 + 0.5;
-              positions[b4+1] = ry + 0.5;
-              positions[b4+2] = rz + 0.5;
-              rdist = Math.sqrt(bx*bx + by*by + bz*bz);
-              dev = (devMorph * 0.75 + 1.5) + (rdist * invR) * 0.8;
-              positions[b4+3] = dev < 0.4 ? 0.4 : (dev > 6.0 ? 6.0 : dev);
-          }
+      // -- Outer copy [0, outerN): rotate by (yaw, tumble) --
+      for (i = 0; i < outerN; i++) {
+          bx = (fromBuf[i*3]   + eased * (toBuf[i*3]   - fromBuf[i*3]))   * breathScale;
+          by = (fromBuf[i*3+1] + eased * (toBuf[i*3+1] - fromBuf[i*3+1])) * breathScale;
+          bz = (fromBuf[i*3+2] + eased * (toBuf[i*3+2] - fromBuf[i*3+2])) * breathScale;
+          x2 = cyO*bx + syO*bz;  z2 = -syO*bx + cyO*bz;   // yaw about Y
+          ry = cxO*by - sxO*z2;  rz =  sxO*by + cxO*z2;   // tilt about X
+          b4 = i*4;
+          positions[b4]   = x2 + 0.5;
+          positions[b4+1] = ry + 0.5;
+          positions[b4+2] = rz + 0.5;
+          rdist = Math.sqrt(bx*bx + by*by + bz*bz);
+          dev = devMorph + (rdist * invR) * 0.8;
+          positions[b4+3] = dev < 0.4 ? 0.4 : (dev > 6.0 ? 6.0 : dev);
+      }
+
+      // -- Inner copy [outerN, N): counter-rotate by (innerYaw, tumble*0.7), shifted colour lane --
+      for (i = outerN; i < SAC_N; i++) {
+          bx = (fromBuf[i*3]   + eased * (toBuf[i*3]   - fromBuf[i*3]))   * breathScale;
+          by = (fromBuf[i*3+1] + eased * (toBuf[i*3+1] - fromBuf[i*3+1])) * breathScale;
+          bz = (fromBuf[i*3+2] + eased * (toBuf[i*3+2] - fromBuf[i*3+2])) * breathScale;
+          x2 = cyI*bx + syI*bz;  z2 = -syI*bx + cyI*bz;
+          ry = cxI*by - sxI*z2;  rz =  sxI*by + cxI*z2;
+          b4 = i*4;
+          positions[b4]   = x2 + 0.5;
+          positions[b4+1] = ry + 0.5;
+          positions[b4+2] = rz + 0.5;
+          rdist = Math.sqrt(bx*bx + by*by + bz*bz);
+          dev = (devMorph * 0.75 + 1.5) + (rdist * invR) * 0.8;
+          positions[b4+3] = dev < 0.4 ? 0.4 : (dev > 6.0 ? 6.0 : dev);
       }
 
       if (instanceBuffer && device) device.queue.writeBuffer(instanceBuffer, 0, positions, 0, lifeDrawCount * 4);
@@ -5428,6 +5433,20 @@
     sortAudioInit();
     if (sortAudio.ready && sortAudio.on && sortAudio.ctx.state === 'suspended') sortAudio.ctx.resume();
   }
+  // Kill / restore the sort bus so note tails do not ring past a scene change. Leaving a
+  // sort scene ramps the master to 0 (silencing in-flight + scheduled voices); a fresh sort
+  // entry (generateSort) ramps it back. Both guard on a built context (no-op before the
+  // first gesture), so they are safe to call from any transition.
+  function sortAudioSilence(){
+    var A = sortAudio; if (!A.ready || !A.master) return;
+    var now = A.ctx.currentTime, g = A.master.gain;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0.0, now + 0.08);
+  }
+  function sortAudioRestore(){
+    var A = sortAudio; if (!A.ready || !A.master) return;
+    var now = A.ctx.currentTime, g = A.master.gain;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0.55, now + 0.05);   // 0.55 = sortAudioInit master gain
+  }
   function sortPlayNote(freq, peak, bright, t0, dur){
     var A = sortAudio; if (!A.ready || A.voices >= SORT_VOICE_CAP) return;
     var ctx = A.ctx; if (t0 === undefined) t0 = ctx.currentTime;
@@ -5511,6 +5530,7 @@
     // currentField is still the PREVIOUS field here (loadField sets it after).
     var wasSort = isSortField(currentField);
     var prevN = sr ? sr.n : -1;
+    sortAudioRestore();                          // re-arm the sort bus (silenced when you leave a sort scene)
     sortEnsure(algo);
     ensurePointCapacity(sr.total);
     var animateSwap = wasSort && sr.built && sr.n === prevN;   // same ring count -> sr.x positions are valid to animate from
@@ -6242,6 +6262,7 @@
   // (1) and the even grid people imagine "random" to be (0). The hero proof.
   var morph = 1;
   var morphTarget = 1;
+  var gridPending = false;                    // one-shot: Perfect grid was picked from a held (search/sort/life) scene, so after the dip settle on the grid, not the swapped point field
   var MORPH_SMOOTH = 3.4;                     // morph easing rate (frame-rate independent, ~1s settle)
   var MORPH_GRID_N = Math.max(2, Math.round(Math.cbrt(POINT_COUNT)));  // imagined-field lattice side (100 for 1,000,000)
 
@@ -7002,7 +7023,8 @@
       loadField(swField);
       applyStartView(swField);                      // re-assert the captured start view NOW (the dip drifted the camera) so the scene always rises at the right orientation
       pendingField = null;
-      morphTarget = 1;
+      morphTarget = gridPending ? 0 : 1;            // grid-from-held: settle on the grid (morph 0), not the just-swapped point field
+      gridPending = false;
     }
 
     if (isSearchField(currentField)) searchTick(dt);   // live pathfinding scene: step the search + repaint the lattice each frame
@@ -7473,6 +7495,9 @@
     // (Mulberry <-> Perfect grid) leaves the camera put so the morph reads.
     function selectScene(scene) {
       lastSelectedScene = scene;                 // remembered for the C-key camera capture
+      // Leaving a sort scene for anything else: ramp the sort audio down so its note
+      // tails do not ring into the next scene. No-op when audio is idle or staying in sort.
+      if (isSortField(currentField) && !isSortField(scene)) sortAudioSilence();
       if (wrapperEl) {
         // Reflect the active scene in the category dropdowns: the owning
         // category shows the scene and gets the lit style; the others reset to
@@ -7486,9 +7511,17 @@
         }
       }
       if (scene === 'grid') {
-        // The grid is just the morph target. No field reload (the buffer is
-        // invisible at morph 0), so any field dissolves smoothly into the grid.
-        pendingField = null;
+        // The grid is a morph target on the POINT cloud: from a point scene the buffer
+        // dissolves straight into it with no reload. But the held-geometry scenes
+        // (search/sort/life) ignore the imagined-grid blend in the shader, so morphing
+        // one toward the grid just fades the organism to black, the grid never shows. So
+        // from a held scene, dip out to the point cloud first, then settle on the grid.
+        if (isSearchField(currentField) || isSortField(currentField) || isLifeField(currentField)) {
+          pendingField = 'mulberry';
+          gridPending = true;
+        } else {
+          pendingField = null;
+        }
         morphTarget = 0;
         if (blurbEl) blurbEl.textContent = 'The tidy, evenly spaced grid everyone pictures when they hear the word random. It looks right, and it is completely wrong: real chance never lands this clean. The twist? Perfect order is so unlikely a real generator would essentially never roll it. Perfection is the one result that is truly impossible.';
         showReveal('A perfect grid: tidy, even, and almost impossible by chance.');
