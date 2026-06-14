@@ -598,30 +598,32 @@ body {
   box-shadow: 0 0 0 1px rgba(0,0,0,0.25), 0 0 0 4px rgba(212,196,160,0.18);
 }
 
-/* === Daylight Globe sliders: extra visual weight ===
-   The globe panel is dense (filled timezone/tilt pills, the Reset button, the
-   gold daylight bar), so the two sliders need to read as siblings to those
-   heavier controls instead of as faint wires. They get a thicker rail, a
-   filled "traveled" portion in warm gold (echoing the daylight bar below
-   them), and a slightly larger thumb. globe.js sets --fill (0%-100%) per
-   input; on Firefox ::-moz-range-progress fills natively. */
+/* === Daylight Globe sliders: weight + rhythm ===
+   The panel is built on the kit .pillbar component (the timezone/tilt pills and
+   Reset all use it), so the sliders adopt the kit's own rail language instead of
+   the slim .p-slider-row wire: a complete 4px fully-rounded rail with the
+   traveled portion filled warm gold and the rest a visible warm "ghost", so the
+   rail reads as one whole object (not a line that trails off into nothing).
+   globe.js sets --fill (0%-100%) per input; on Firefox ::-moz-range-progress
+   fills natively. The one-line row layout lives in daylight-globe.html. */
 .globe-controls .p-slider-row input[type="range"]::-webkit-slider-runnable-track {
-  height: 3px;
-  border-radius: 2px;
+  height: 4px;
+  border-radius: 999px;
   background: linear-gradient(to right,
-    var(--d-accent) var(--fill, 0%), var(--d-rule) var(--fill, 0%));
+    var(--d-accent) var(--fill, 0%), rgba(212,196,160,0.16) var(--fill, 0%));
 }
 .globe-controls .p-slider-row input[type="range"]::-webkit-slider-thumb {
   width: 16px; height: 16px;
-  margin-top: -6.5px;
+  margin-top: -6px;
 }
 .globe-controls .p-slider-row input[type="range"]::-moz-range-track {
-  height: 3px;
-  border-radius: 2px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(212,196,160,0.16);
 }
 .globe-controls .p-slider-row input[type="range"]::-moz-range-progress {
-  height: 3px;
-  border-radius: 2px;
+  height: 4px;
+  border-radius: 999px;
   background: var(--d-accent);
 }
 .globe-controls .p-slider-row input[type="range"]::-moz-range-thumb {

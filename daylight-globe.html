@@ -276,14 +276,16 @@
     button#globe-reset.pillbar-btn { border-radius: 999px; font-family: var(--font-body); font-size: 0.82rem; }
     button#globe-reset.pillbar-btn:hover { color: var(--text-dim); border-color: var(--rule); background: rgba(212,196,160,0.10); }
 
-    /* Slider rows: the rail is narrow (~181px inner) and the values are long
-       ("12:00 PM CT"), so stack them. The label and value share the top line
-       (value pushed to the right), and the range fills its own full-width line
-       below. Fits at any rail width and keeps the range + value-span JS hooks. */
-    .globe-controls .pillbar-sliderrow { flex-wrap: wrap; align-items: center; row-gap: 5px; }
-    .globe-controls .pillbar-sliderrow label { min-width: 2.8em; }
-    .globe-controls .pillbar-sliderval { margin-left: auto; min-width: 0; font-size: 0.78rem; white-space: nowrap; text-align: right; }
-    .globe-controls .pillbar-sliderrow input[type="range"] { flex: 1 0 100%; min-width: 0; order: 5; }
+    /* Slider rows on ONE line (label / rail / value), tightened so the two
+       sliders read as a dense unit like the pills below, instead of rails left
+       floating on their own line. Only the range flexes and may shrink
+       (min-width:0); the label and value keep their natural width and the value
+       stays nowrap, so the row holds at every rail width (rail >= ~140px even at
+       the 300px rail floor). */
+    .globe-controls .pillbar-sliderrow { flex-wrap: nowrap; align-items: center; gap: 0.9rem; margin-bottom: 11px; }
+    .globe-controls .pillbar-sliderrow label { min-width: 2.6em; order: 0; flex: 0 0 auto; }
+    .globe-controls .pillbar-sliderrow input[type="range"] { flex: 1 1 auto; min-width: 0; order: 1; }
+    .globe-controls .pillbar-sliderval { order: 2; flex: 0 0 auto; margin-left: 0; font-size: 0.78rem; white-space: nowrap; text-align: right; }
 
     /* Ensure the TZ seg fits without clipping. */
     .globe-controls .pillbar-foot { flex-wrap: nowrap; align-items: center; }
