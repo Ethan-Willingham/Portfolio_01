@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>The Old Masters &mdash; masthead chooser</title>
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ---- lab chrome (throwaway, noindex) ---- */
+    body { padding: 0 1.2rem 6rem; }
+    .lab-head { max-width: var(--content-width); margin: 2.5rem auto 1rem; }
+    .lab-head h1 { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.8rem; margin: 0 0 .4em; }
+    .lab-head p { font-family: var(--font-body); color: var(--text-dim); font-size: 1rem; line-height: 1.6; margin: 0; }
+    .opt { border-top: 1px dashed var(--rule); margin-top: 3.4rem; padding-top: 1.3rem; }
+    .opt-label { max-width: var(--content-width); margin: 0 auto 1.4rem; font-family: var(--font-body); font-size: 1rem; line-height: 1.5; color: var(--text); }
+    .opt-tag { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); background: rgba(212,196,160,.1); padding: .3em .7em; border-radius: 999px; margin-right: .6em; white-space: nowrap; }
+    .opt-note { color: var(--text-dim); }
+    .col { max-width: var(--content-width); margin: 0 auto; }
+
+    /* ---- plate header styles (copied from gallery.html, which keeps them page-local) ---- */
+    .plate { margin: 3.5em 0 2.8em; padding: 0; }
+    .plate-number { display: block; font-family: var(--font-heading); font-size: .85rem; letter-spacing: .18em; color: var(--text-dim); text-transform: uppercase; margin-bottom: .5em; }
+    .plate-title { font-family: var(--font-heading); font-size: 1.7rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 .2em; }
+    .plate-title em { font-style: italic; }
+    .plate-attribution { font-family: var(--font-body); font-size: 1rem; color: var(--text-dim); font-style: italic; margin: 0 0 1.3em; }
+    .plate-attribution .artist-name { color: var(--accent); font-style: normal; font-weight: 500; }
+    .plate-stub-img { max-height: 300px; overflow: hidden; border-radius: 4px; border: 1px solid var(--rule); background: #14181a; }
+    .plate-stub-img img { display: block; width: 100%; object-fit: cover; }
+
+    /* current's divider */
+    .opener-divider { margin: 3.5em 0 0; }
+
+    /* ============ OPTION A — Frontispiece (centered title card, ruled) ============ */
+    .fp { text-align: center; border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); padding: 2.6em 0 2.8em; }
+    .fp-kicker { font-family: var(--font-mono); font-size: .74rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 1.2em; }
+    .fp-title { font-family: var(--font-heading); font-weight: 700; font-size: min(3rem,10vw); color: var(--text-bright); line-height: 1.08; letter-spacing: -.015em; margin: 0 0 1.4em; }
+    .fp .u-def { display: inline-block; text-align: left; border-left: none; padding-left: 0; max-width: 33rem; }
+
+    /* ============ OPTION B — Lead with art (montage band) ============ */
+    .art-band { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin: 1.8em 0 1.4em; border-radius: 4px; overflow: hidden; }
+    .art-cell { height: 260px; overflow: hidden; background: #14181a; line-height: 0; }
+    .art-cell img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; margin: 0 !important; vertical-align: top; }
+    .art-def .u-def-word { font-size: 1.35rem; }
+
+    /* ============ OPTION C — Asymmetric wall-label ============ */
+    .asym { display: grid; grid-template-columns: 1fr; gap: 1.6em; align-items: start; margin: 0; }
+    @media (min-width: 760px) { .asym { grid-template-columns: 1.15fr .85fr; gap: 3em; } }
+    .asym .post-title { margin-bottom: .4rem; }
+    .asym-label { border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); padding: 1.2em 1.1em; background: rgba(255,255,255,.022); }
+    .asym-label .u-def { border-left: none; padding-left: 0; }
+    .asym-label .u-def-word { font-size: 1.3rem; }
+    .asym-label .u-def-gloss { font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="lab-head">
+    <h1>The Old Masters &mdash; masthead chooser</h1>
+    <p>Four takes on everything before Plate I, each shown in the real reading column with the real Plate I beneath, so the balance reads in context. Throwaway, noindex, not linked from the site.</p>
+  </div>
+
+  <!-- ============================ CURRENT ============================ -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">Current</span><span class="opt-note">Live now: title, subtitle, definition, a floating divider, then the plate. A single left-aligned stack with no anchor &mdash; the thing that keeps reading as off.</span></div>
+    <div class="col">
+      <header class="post-header">
+        <h1 class="post-title">The Old Masters</h1>
+        <p class="post-subtitle">A collection of paintings by some of the greatest of the old masters.</p>
+      </header>
+      <div class="post-body">
+        <dl class="u-def">
+          <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+          <dd class="u-def-gloss">
+            <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+            <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+          </dd>
+        </dl>
+        <hr class="u-divider opener-divider">
+        <section class="plate">
+          <span class="plate-number">Plate I &middot; 1597</span>
+          <h2 class="plate-title"><em>The Musicians</em></h2>
+          <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+          <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ OPTION A — FRONTISPIECE ============================ -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">A &middot; Frontispiece</span><span class="opt-note">A fine-art-book title page. Centered, framed by two rules so the whole opener is one composed plate; the rules do the separating (no floating dots). The definition gets ceremony. Subtitle folded into a small kicker.</span></div>
+    <div class="col">
+      <div class="fp">
+        <p class="fp-kicker">A private collection</p>
+        <h1 class="fp-title">The Old Masters</h1>
+        <dl class="u-def">
+          <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+          <dd class="u-def-gloss">
+            <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+            <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+          </dd>
+        </dl>
+      </div>
+      <section class="plate">
+        <span class="plate-number">Plate I &middot; 1597</span>
+        <h2 class="plate-title"><em>The Musicians</em></h2>
+        <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+        <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============================ OPTION B — LEAD WITH ART ============================ -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">B &middot; Lead with art</span><span class="opt-note">Fix the real sin for a gallery: art arrives in the first screen. Title, subtitle, then a band of three detail crops that previews the range, the definition as a quiet caption beneath, then the plates.</span></div>
+    <div class="col">
+      <header class="post-header">
+        <h1 class="post-title">The Old Masters</h1>
+        <p class="post-subtitle">A collection of paintings by some of the greatest of the old masters.</p>
+      </header>
+      <div class="post-body">
+        <div class="art-band">
+          <div class="art-cell"><img src="assets/images/Aivazovsky, Ivan - The Ninth Wave.jpg" alt=""></div>
+          <div class="art-cell"><img src="assets/images/Breton Brother and Sister - William-Adolphe Bouguereau.jpg" alt=""></div>
+          <div class="art-cell"><img src="assets/images/Venice The Dogana and San Giorgio Maggiore - Joseph Mallord William Turner.jpg" alt=""></div>
+        </div>
+        <dl class="u-def art-def">
+          <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+          <dd class="u-def-gloss">
+            <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+            <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+          </dd>
+        </dl>
+        <section class="plate">
+          <span class="plate-number">Plate I &middot; 1597</span>
+          <h2 class="plate-title"><em>The Musicians</em></h2>
+          <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+          <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ OPTION C — ASYMMETRIC WALL-LABEL ============================ -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">C &middot; Asymmetric</span><span class="opt-note">Use the horizontal axis instead of stacking. Title + subtitle on the left; the definition set as a museum wall label on the right (it rhymes with the plate metadata cards below). Composition, not a column. Stacks on mobile.</span></div>
+    <div class="col">
+      <div class="asym">
+        <div class="asym-main">
+          <h1 class="post-title">The Old Masters</h1>
+          <p class="post-subtitle">A collection of paintings by some of the greatest of the old masters.</p>
+        </div>
+        <aside class="asym-label">
+          <dl class="u-def">
+            <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+            <dd class="u-def-gloss">
+              <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+              <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+            </dd>
+          </dl>
+        </aside>
+      </div>
+      <section class="plate">
+        <span class="plate-number">Plate I &middot; 1597</span>
+        <h2 class="plate-title"><em>The Musicians</em></h2>
+        <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+        <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+      </section>
+    </div>
+  </section>
+
+</body>
+</html>
