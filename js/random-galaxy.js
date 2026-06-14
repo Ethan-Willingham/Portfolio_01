@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.57';
+  var VERSION = 'v1.59';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -6936,6 +6936,23 @@
   // the demo is on screen. Otherwise the loop stops, so the million-point GPU
   // pass is not cooking the laptop in a background tab or while scrolled past.
   function wantLoop() { return running && pageVisible && onScreen; }
+
+  // ----- Intro: "first light" bloom-up (once, on initial load) -----
+  // The old load showed two uncoordinated pops: a million points snapped onto black at
+  // full brightness, then the 8MB nebula popped in behind them whenever it finished
+  // downloading. Instead, hold a beat until the nebula texture is ready (or a short max
+  // wait), then ease the whole field up from black in one slow bloom with a gentle
+  // settling pan. introLum drives the star + gas brightness; skyReadyEase * introLum
+  // drives the nebula (so a late/slow nebula still fades in rather than popping). At
+  // lum = 1 every multiplier is 1, so this is completely inert once it finishes.
+  var reduceMotion = (typeof matchMedia === 'function') && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var introLum = 0, skyReadyEase = 0, introT = 0, introWait = 0;
+  var introStarted = false, INTRO_DONE = false;
+  var INTRO_DUR = reduceMotion ? 0.001 : 2.2;   // bloom-up duration (s); reduced-motion: appear at once, no animated bloom
+  var INTRO_SKY_WAIT_MAX = 0.9;                 // hold the bloom at most this long for the nebula, then begin regardless
+  var INTRO_SKY_EASE = 2.5;                     // nebula fade-in rate once its texture lands (also smooths a late/slow load, no pop)
+  var INTRO_YAW = 0.05;                         // gentle settling-pan rate during the bloom (rad/s, decays to 0); skipped under reduced-motion
+
   function startLoop() {
     if (loopRunning || !wantLoop()) return;
     loopRunning = true;
@@ -6952,6 +6969,25 @@
     var dt = lastTime ? Math.min((now - lastTime) / 1000, 0.05) : 0.016;
     lastTime = now;
     gxTime += dt;                              // drives the breathe + spin "life" motion
+
+    // Intro "first light" bloom-up. skyReadyEase tracks the nebula texture landing; the
+    // bloom clock waits for it (or INTRO_SKY_WAIT_MAX) so the background and the points
+    // rise together, then introLum eases 0->1 once. Inert after INTRO_DONE.
+    skyReadyEase += ((skyBindGroup ? 1 : 0) - skyReadyEase) * (1 - Math.exp(-INTRO_SKY_EASE * dt));
+    if (!INTRO_DONE) {
+      if (!introStarted) {
+        introWait += dt;
+        if (skyBindGroup || introWait >= INTRO_SKY_WAIT_MAX) {
+          introStarted = true;
+          if (statusEl) statusEl.style.display = 'none';   // belt-and-suspenders: clear any status as first light begins (empty in the normal path)
+        }
+      } else {
+        introT += dt;
+        var ip = introT >= INTRO_DUR ? 1 : introT / INTRO_DUR;
+        introLum = ip * ip * ip * (ip * (ip * 6 - 15) + 10);   // smootherstep: slow-in, slow-out
+        if (ip >= 1) { introLum = 1; INTRO_DONE = true; }
+      }
+    }
 
     if (fpsEl) {
       fpsFrames++; fpsAccum += dt;
@@ -7011,6 +7047,11 @@
       camFwd = vnorm(camFwd);
       rt = vnorm(vcross(camFwd, camUp));
       camUp = vcross(rt, camFwd);                        // re-orthonormalize so up loops over the top
+      if (introStarted && !INTRO_DONE && !reduceMotion) {   // gentle settling pan during first light, decays to 0 as the field arrives
+        camFwd = vnorm(rotAxis(camFwd, camUp, INTRO_YAW * (1 - introLum) * dt));
+        rt = vnorm(vcross(camFwd, camUp));
+        camUp = vcross(rt, camFwd);
+      }
       camPos[0] += camFwd[0] * flightSpeed * dt;
       camPos[1] += camFwd[1] * flightSpeed * dt;
       camPos[2] += camFwd[2] * flightSpeed * dt;
@@ -7050,9 +7091,9 @@
       uniformData[32] = POINT_RADIUS * (currentField === 'boids' ? 3.0 : 1.0);   // boids: fatter points so each bird reads up close
       uniformData[33] = aspect;
       uniformData[34] = POINT_COUNT;
-      uniformData[35] = BRIGHTNESS;
+      uniformData[35] = BRIGHTNESS * introLum;       // first-light bloom-up: stars rise from black
       uniformData[36] = AURA_GROWTH;
-      uniformData[37] = GAS_BRIGHTNESS;
+      uniformData[37] = GAS_BRIGHTNESS * introLum;   // ...and the nebular gas with them
       uniformData[38] = morph;
       uniformData[39] = MORPH_GRID_N;
       uniformData[44] = gxTime;
@@ -7070,7 +7111,8 @@
         if (currentField !== skyOrientField) { captureSkyOrient(); skyOrientField = currentField; }   // new scene: pin the galaxy to the spawn-facing direction
         skyData[0] = camFwd[0]; skyData[1] = camFwd[1]; skyData[2] = camFwd[2]; skyData[3] = FOV_TAN;
         skyData[4] = camUp[0];  skyData[5] = camUp[1];  skyData[6] = camUp[2];  skyData[7] = aspect;
-        skyData[8] = SKY_TINT[0]; skyData[9] = SKY_TINT[1]; skyData[10] = SKY_TINT[2]; skyData[11] = 0;
+        var skyMul = introLum * skyReadyEase;   // first-light: nebula rises with the points (and eases in cleanly if it loads late)
+        skyData[8] = SKY_TINT[0] * skyMul; skyData[9] = SKY_TINT[1] * skyMul; skyData[10] = SKY_TINT[2] * skyMul; skyData[11] = 0;
         skyData[12] = skyRotCols[0]; skyData[13] = skyRotCols[1]; skyData[14] = skyRotCols[2]; skyData[15] = 0;
         skyData[16] = skyRotCols[3]; skyData[17] = skyRotCols[4]; skyData[18] = skyRotCols[5]; skyData[19] = 0;
         skyData[20] = skyRotCols[6]; skyData[21] = skyRotCols[7]; skyData[22] = skyRotCols[8]; skyData[23] = 0;
@@ -7829,7 +7871,8 @@
     updateLabel();
 
     if (verEl) verEl.textContent = VERSION;
-    if (statusEl) statusEl.style.display = 'none';
+    // No status to hide here: the pre-roll is pure black (empty #galaxy-status), and the
+    // intro block clears the element anyway as first light begins. fail() owns the error case.
     running = true;
     initInput();
     updateHint();

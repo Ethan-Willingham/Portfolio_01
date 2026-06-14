@@ -127,6 +127,17 @@
        is No. NN / title / big stat / body, two clear focal points. The caption and
        kicker were split into spans (.cap-no, .kno/.ksep) purely as mobile hide
        hooks; desktop renders identically and keeps the full hierarchy.
+     v23: the weight spine rebuilt as a continuous spring gauge (desktop). The bob
+       no longer jumps from one centred part to the next on a CSS transition; it,
+       the fill, the bob's size and the lb / percentage readout are all sprung toward
+       targets read continuously from scroll, so the weight sinks and rolls the way a
+       plumb on a line would (family.co-style physical motion). The numbers still
+       land exactly on each part's true weight as it reaches the reading line (a
+       smootherstep between parts gives a soft magnetic settle), so the readout stays
+       honest. The readout now rides just above the bob, a velocity sheen swells while
+       you move, and reduced-motion keeps the scroll-linked positions without springs.
+       The readout sits on a small chip of page bg (z above the line, below the bob) so
+       the rail / fill never cuts through the digits or the decimal point.
      No em dashes anywhere.
      ============================================================ */
   :root {
@@ -190,25 +201,33 @@
   /* ---- The descent ---- */
   .descent { position: relative; padding: 0 0 8svh; }
 
-  /* the weight spine: a left-margin plumb line. the bob sinks with descent
-     progress (--paid) and shrinks with remaining mass (--bob); at the end it
-     releases and floats up. low-contrast until a part crosses the reading line. */
-  .spine { position: fixed; left: max(0.7rem, calc(50% - 560px)); top: 9svh; bottom: 9svh; width: 26px; z-index: 20; pointer-events: none; opacity: 0; transition: opacity 800ms var(--ease-out); }
+  /* the weight spine: a left-margin plumb line driven by a spring loop in JS
+     (continuous + scroll-linked, family.co-style). the bob SINKS down the rail with
+     descent progress and SHRINKS with the body's remaining mass; the weight readout
+     rides just above it and rolls; a velocity sheen swells while you move. all motion
+     is integrated in JS, so the only CSS transition here is the opacity fade-in /
+     release. positions ride on transforms (compositor-only), set per frame:
+       --y   bob offset down the rail (px)     --fp  fill fraction 0..1
+       --ry  readout offset down the rail (px) --bob bob diameter (px)
+       --glow 0..1 velocity sheen */
+  .spine { position: fixed; left: max(0.7rem, calc(50% - 560px)); top: 9svh; bottom: 9svh; width: 26px; z-index: 20; pointer-events: none; opacity: 0; transition: opacity 900ms var(--ease-out); }
   .spine.on { opacity: 1; }
-  .spine-rail { position: absolute; left: 11px; top: 0; bottom: 0; width: 1.5px; background: rgba(212,196,160,0.14); }
-  .spine-fill { position: absolute; left: 11px; top: 0; width: 1.5px; height: calc(var(--paid, 0) * 100%); background: var(--accent); opacity: 0.5; transition: height 640ms var(--ease-out), opacity 900ms var(--ease-out); }
-  .spine-bob { position: absolute; left: 11.75px; top: calc(var(--paid, 0) * 100%); width: var(--bob, 19px); height: var(--bob, 19px);
-    margin-left: calc(var(--bob, 19px) / -2 + 0px); margin-top: calc(var(--bob, 19px) / -2); border-radius: 50%; background: var(--accent);
-    box-shadow: 0 0 9px rgba(212,196,160,0.45); transition: top 640ms var(--ease-out), width 640ms var(--ease-out), height 640ms var(--ease-out), opacity 1s, transform 1.5s var(--ease-out), box-shadow 500ms; }
-  .spine-bob.tick { animation: bobpulse 700ms var(--ease-out); }
-  @keyframes bobpulse { 0% { box-shadow: 0 0 9px rgba(212,196,160,0.45); } 30% { box-shadow: 0 0 16px rgba(212,196,160,0.85); } 100% { box-shadow: 0 0 9px rgba(212,196,160,0.45); } }
-  /* readout centered on the rail/bob axis (11.75px) so the line sits centered below the numbers */
-  .spine-read { position: absolute; left: 11.75px; top: 0; transform: translate(-50%, -130%); text-align: center; font-family: var(--mono); font-size: 0.6rem; line-height: 1.32; color: var(--text-dim); white-space: nowrap; transition: opacity 700ms var(--ease-out); }
-  .spine-read b { display: block; color: var(--accent); font-weight: 400; font-size: 0.82rem; letter-spacing: 0.01em; }
   .spine.release { opacity: 0; }
-  .spine.release .spine-bob { transform: translateY(-15svh); opacity: 0; }
-  .spine.release .spine-fill { opacity: 0; }
-  .spine.release .spine-read { opacity: 0; }
+  .spine-rail { position: absolute; left: 11px; top: 0; bottom: 0; width: 1.5px; background: rgba(212,196,160,0.14); }
+  .spine-fill { position: absolute; left: 11px; top: 0; width: 1.5px; height: 100%; transform-origin: top; transform: scaleY(var(--fp, 0));
+    background: linear-gradient(180deg, rgba(212,196,160,0.28), var(--accent)); opacity: 0.6; will-change: transform; }
+  .spine-bob { position: absolute; left: 11.75px; top: 0; width: var(--bob, 19px); height: var(--bob, 19px); z-index: 3;
+    border-radius: 50%; background: var(--accent); will-change: transform;
+    transform: translate(-50%, -50%) translateY(var(--y, 0px));
+    box-shadow: 0 0 calc(8px + var(--glow, 0) * 15px) rgba(212,196,160, calc(0.38 + var(--glow, 0) * 0.46)); }
+  /* the readout rides just above the bob (centred on the rail/bob axis, 11.75px). it
+     sits on a small chip of page bg (z above the line, below the bob) so the rail /
+     fill never cuts through the digits or the decimal point; the line resumes cleanly
+     above and below it, reading as a label clipped onto the plumb line. */
+  .spine-read { position: absolute; left: 11.75px; top: 0; z-index: 2; text-align: center; white-space: nowrap; will-change: transform;
+    transform: translate(-50%, -50%) translateY(var(--ry, 0px)); background: var(--bg); border-radius: 4px; padding: 2px 6px;
+    font-family: var(--mono); font-size: 0.6rem; line-height: 1.3; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .spine-read b { display: block; color: var(--accent); font-weight: 400; font-size: 0.82rem; letter-spacing: 0.01em; }
 
   /* the reel of specimens lives in normal document flow and physically scrolls */
   .reel { position: relative; z-index: 1; }
@@ -772,63 +791,129 @@
       else { img.addEventListener('load', function () { img.classList.add('loaded'); }, { once: true }); }
     });
 
-    /* ---- the weight spine ---- */
-    function setGauge(i) {
-      var st = STATIONS[i]; if (!st || !spine) return;
-      if (elPct) elPct.textContent = st.pct.toFixed(2) + '%';
-      if (elLb) elLb.textContent = st.lb.toFixed(1) + ' lb';
-      var frac = Math.max(0, st.lb / BASE_LB);
-      spine.style.setProperty('--paid', (lastN > 0 ? i / lastN : 0).toFixed(4));
-      spine.style.setProperty('--bob', (6 + 13 * frac).toFixed(1) + 'px');
-      if (spineBob) { spineBob.classList.remove('tick'); void spineBob.offsetWidth; spineBob.classList.add('tick'); }
-    }
-    setGauge(0);
-
-    /* ---- observers: reveal each specimen once, and let the part at the reading
-       line own the gauge. spine visibility + release are driven from the scroll
-       frame below (deterministic regardless of how you arrive). ---- */
-    var curIdx = 0;
+    /* ---- the weight spine: a continuous, scroll-linked spring gauge ----
+       Replaces the old quantised "jump to the centred station" gauge. The bob, the
+       fill, the bob's size and the lb / percentage readout are sprung toward targets
+       derived continuously from scroll, so the weight SINKS and ROLLS smoothly the
+       way a real plumb on a line would (family.co-style physical motion). The numbers
+       still land exactly on each part's true weight as it reaches the reading line (a
+       smootherstep between parts gives a soft magnetic settle), so the readout stays
+       honest while feeling alive. ---- */
     var descentEl = document.querySelector('.descent');
     var endingEl = document.querySelector('.ending');
+    var spineRead = spine ? spine.querySelector('.spine-read') : null;
+    var curIdx = 0;   /* nearest station, kept for the arrow-key glide below */
 
+    /* reveal each specimen / threshold once as it enters view */
     if ('IntersectionObserver' in window) {
       var revObs = new IntersectionObserver(function (es) {
         es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); } });
       }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
       specimens.forEach(function (s) { revObs.observe(s); });
       thresholds.forEach(function (s) { revObs.observe(s); });
-
-      var sightObs = new IntersectionObserver(function (es) {
-        es.forEach(function (e) {
-          if (!e.isIntersecting) return;
-          var i = +e.target.getAttribute('data-i');
-          if (i === curIdx) return;
-          curIdx = i;
-          setGauge(i);
-        });
-      }, { rootMargin: '-48% 0px -48% 0px', threshold: 0 });
-      specimens.forEach(function (s) { sightObs.observe(s); });
     } else {
       specimens.forEach(function (s) { s.classList.add('in'); });
       thresholds.forEach(function (s) { s.classList.add('in'); });
     }
 
-    /* the spine fades in once you leave the cover, then releases (floats up and
-       dissolves) as the ending rises into view. */
-    function syncSpine() {
+    /* ---- layout: the document-space centre of each specimen + the rail height.
+       Measured off the offset chain (transform-immune) so the reveal slide and the
+       parallax never skew it; the matted plates reserve their space via aspect-ratio,
+       so heights are stable and we only relayout on resize / load. ---- */
+    var railH = 0, marks = [];
+    function centerOf(el) { var y = 0, n = el; while (n) { y += n.offsetTop; n = n.offsetParent; } return y + el.offsetHeight / 2; }
+    function layout() {
+      if (!spine) return;
+      railH = spine.clientHeight || 0;
+      marks = [];
+      if (!specimens.length) return;
+      /* mark 0 = the intact body, anchored a screen above the first part so the bob
+         eases off the top of the rail as you leave the cover */
+      marks.push({ y: Math.max(0, centerOf(specimens[0]) - window.innerHeight * 0.85), lb: STATIONS[0].lb, pct: STATIONS[0].pct });
+      specimens.forEach(function (s) {
+        var idx = +s.getAttribute('data-i');
+        marks.push({ y: centerOf(s), lb: STATIONS[idx].lb, pct: STATIONS[idx].pct });
+      });
+    }
+
+    /* continuous target from the reading line (the viewport middle) */
+    function targetAt(cur) {
+      if (!marks.length) return { p: 0, lb: BASE_LB, pct: 100 };
+      var last = marks.length - 1;
+      if (cur <= marks[0].y) return { p: 0, lb: marks[0].lb, pct: marks[0].pct };
+      if (cur >= marks[last].y) return { p: 1, lb: marks[last].lb, pct: marks[last].pct };
+      var k = 0; while (k < last && marks[k + 1].y <= cur) k++;
+      var a = marks[k], b = marks[k + 1];
+      var t = (cur - a.y) / Math.max(1, b.y - a.y); t = t < 0 ? 0 : t > 1 ? 1 : t;
+      var ts = t * t * (3 - 2 * t);   /* smootherstep: a soft magnetic settle at each part */
+      return { p: (k + ts) / last, lb: a.lb + (b.lb - a.lb) * ts, pct: a.pct + (b.pct - a.pct) * ts };
+    }
+
+    /* ---- the spring loop. springs are integrated against a clamped dt so the feel
+       holds at 60 and 120 Hz alike. position + size carry a touch of momentum (a
+       weighty settle); the numbers ease without overshoot (a clean odometer roll). */
+    var pos = 0, posV = 0;          /* bob position down the rail (px) */
+    var bsize = 19, bsizeV = 0;     /* bob diameter (px) */
+    var dLb = BASE_LB, dPct = 100;  /* displayed (rolling) numbers */
+    var glow = 0, relDrift = 0;     /* velocity sheen 0..1, release float-up (px) */
+    var lastT = 0, raf = null, lastScroll = -1e5, first = true;
+    function nowT() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+
+    function frame(t) {
+      raf = null;
       if (!spine) return;
       var vh = window.innerHeight;
+      if (!railH) layout();
+
+      /* visibility + release, deterministic from scroll (not from how you arrived) */
       spine.classList.toggle('on', window.scrollY > vh * 0.6);
-      if (endingEl) {
-        var er = endingEl.getBoundingClientRect();
-        spine.classList.toggle('release', er.top < vh * 0.55);
+      var releasing = false;
+      if (endingEl) { var er = endingEl.getBoundingClientRect(); releasing = er.top < vh * 0.55; }
+      spine.classList.toggle('release', releasing);
+
+      var tg = targetAt(window.scrollY + vh * 0.5);
+      var targetY = tg.p * railH;
+      var targetSize = 6 + 13 * Math.max(0, Math.min(1, tg.lb / BASE_LB));
+      var relTarget = releasing ? railH * 0.16 : 0;
+      curIdx = Math.max(0, Math.min(lastN, Math.round(tg.p * lastN)));
+
+      var dt = Math.min(2.5, Math.max(0.001, (t - lastT) / 16.667)); lastT = t;
+
+      if (first || reduce) {
+        pos = targetY; bsize = targetSize; dLb = tg.lb; dPct = tg.pct; glow = 0; relDrift = relTarget; posV = bsizeV = 0; first = false;
+      } else {
+        posV += (targetY - pos) * 0.13 * dt; posV *= Math.pow(0.76, dt); pos += posV * dt;
+        bsizeV += (targetSize - bsize) * 0.11 * dt; bsizeV *= Math.pow(0.74, dt); bsize += bsizeV * dt;
+        var nk = 1 - Math.pow(1 - 0.16, dt);
+        dLb += (tg.lb - dLb) * nk; dPct += (tg.pct - dPct) * nk;
+        var gT = Math.min(1, Math.abs(posV) / 5);
+        glow += (gT - glow) * (1 - Math.pow(1 - 0.22, dt));
+        relDrift += (relTarget - relDrift) * (1 - Math.pow(1 - 0.06, dt));
       }
+
+      var y = pos - relDrift;
+      spine.style.setProperty('--y', y.toFixed(2) + 'px');
+      spine.style.setProperty('--fp', (railH > 0 ? Math.max(0, Math.min(1, pos / railH)) : 0).toFixed(4));
+      spine.style.setProperty('--bob', bsize.toFixed(2) + 'px');
+      spine.style.setProperty('--glow', glow.toFixed(3));
+      spine.style.setProperty('--ry', Math.max(-8, y - bsize * 0.5 - 16).toFixed(2) + 'px');   /* readout just above the bob */
+      if (spineRead) spineRead.style.opacity = (1 - glow * 0.45).toFixed(3);   /* numbers focus when you settle */
+      if (elPct) elPct.textContent = dPct.toFixed(2) + '%';
+      if (elLb) elLb.textContent = dLb.toFixed(1) + ' lb';
+
+      if (!reduce && window.innerWidth >= 760) parallax();
+
+      /* keep animating while you scrolled recently or until the springs settle */
+      var settled = Math.abs(targetY - pos) < 0.15 && Math.abs(posV) < 0.15 &&
+        Math.abs(targetSize - bsize) < 0.1 && Math.abs(tg.lb - dLb) < 0.02 &&
+        glow < 0.005 && Math.abs(relTarget - relDrift) < 0.4;
+      if (!settled || t - lastScroll < 280) raf = requestAnimationFrame(frame);
     }
+    function ensure() { if (raf === null) raf = requestAnimationFrame(frame); }
 
     /* gentle parallax: the figures drift against the scroll for depth. lives on
        .plate-col so it composes with the cursor tilt on .plate. */
     function parallax() {
-      if (window.innerWidth < 760) return;   /* parallax reads janky on touch; desktop only */
       var vh = window.innerHeight, c = vh / 2;
       for (var i = 0; i < specimens.length; i++) {
         var r = specimens[i].getBoundingClientRect();
@@ -838,12 +923,13 @@
       }
     }
 
-    var sRaf = null;
-    function onScrollFrame() { sRaf = null; syncSpine(); if (!reduce) parallax(); }
-    function onScroll() { if (sRaf === null) sRaf = requestAnimationFrame(onScrollFrame); }
+    function onScroll() { lastScroll = nowT(); ensure(); }
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    onScrollFrame();
+    window.addEventListener('resize', function () { layout(); lastScroll = nowT(); ensure(); }, { passive: true });
+    window.addEventListener('load', function () { layout(); ensure(); }, { passive: true });
+    lastT = nowT();
+    layout();
+    ensure();
 
     /* ---- lightbox: tap a plate to inspect the engraving close up ---- */
     var lightbox = document.getElementById('lightbox');

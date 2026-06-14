@@ -22,6 +22,10 @@
   <title>Obi Juan Algorithm</title>
   <meta name="description" content="A WebGPU observatory of math and algorithms rendered as a million points in 3D that you fly straight through: strange attractors, fractals, the prime numbers, sacred geometry, the shadow of a four-dimensional shape, plus live pathfinding and sorting you watch run, with sound.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Kick off the 6k nebula skybox fetch at parse time (not when init() runs), so the
+       background is ready for the "first light" bloom-up instead of popping in late. The
+       href + ?v must match the request in js/random-galaxy.js (loadSkyTexture) for one cache hit. -->
+  <link rel="preload" href="assets/images/nebula-bg.jpg?v=6k" as="image">
   <meta property="og:title" content="Obi Juan Algorithm">
   <meta property="og:description" content="A WebGPU observatory of math and algorithms rendered as a million points in 3D that you fly straight through: strange attractors, fractals, the prime numbers, sacred geometry, the shadow of a four-dimensional shape, plus live pathfinding and sorting you watch run, with sound.">
   <meta property="og:type" content="article">
@@ -137,9 +141,23 @@
        demo and closes instantly) rather than a custom menu that would fight the
        layout. The closed control is themed; the open list is the platform's. */
 
-    /* Scene selects row, sits inside .pillbar, needs its own flex wrap since
-       .pillbar-sliderrow is a single row and can't double as a wrap container. */
-    .gx-controls-row { display: flex; flex-wrap: wrap; gap: 0.45rem 0.5rem; align-items: center; margin-bottom: 14px; padding: 0 4px; }
+    /* Scene controls, in two labeled groups so it reads at a glance what the demo
+       can do: the LIVE algorithms you watch run (pathfinding / sorting / life, the
+       showpieces) sit first and accent-labeled, then the static structures you fly
+       through. Each group is its own flex-wrap row (the .pillbar-sliderrow below is
+       a single row and can't double as a wrap container). */
+    .gx-controls { display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 14px; padding: 0 4px; }
+    .gx-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .gx-group-label {
+      display: inline-flex; align-items: center; gap: 0.5em;
+      font-family: var(--d-mono); font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .gx-group--live .gx-group-label { color: var(--accent); }   /* the showpiece group, gently emphasized */
+    .gx-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 7px rgba(212, 196, 160, 0.5); }
+    .gx-group-row { display: flex; flex-wrap: wrap; gap: 0.45rem 0.5rem; align-items: center; }
+    /* The category title is a disabled, greyed header in the open list, not a pick. */
+    .gx-cat-select option:disabled { color: var(--text-faint, var(--text-dim)); font-style: italic; }
     .gx-cat-select {
       font-family: var(--font-body);
       font-size: 0.82rem;
@@ -392,80 +410,93 @@
               </div>
               <div class="globe-info" id="galaxy-hint">drag or WASD to steer &middot; Q/E roll &middot; scroll for speed &middot; H to hide UI</div>
               <div class="gx-reveal" id="galaxy-reveal"></div>
-              <div class="gx-status" id="galaxy-status">initializing&hellip;</div>
+              <!-- Empty by default so the WebGPU-init gap is pure black, dissolving straight
+                 into the first-light bloom (no "initializing" text). Still the surface fail()
+                 writes the no-WebGPU / error message into. -->
+            <div class="gx-status" id="galaxy-status"></div>
             </div>
             <div class="pillbar">
               <div class="pillbar-head">
                 <span class="pillbar-title">Scene</span>
               </div>
-              <div class="gx-controls-row">
-                <select class="gx-cat-select gx-cat-select--active" aria-label="Randomness scene">
-                  <option value="">Randomness</option>
-                  <option value="mulberry" selected>Mulberry</option>
-                  <option value="grid">Perfect grid</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Attractor scene">
-                  <option value="">Attractors</option>
-                  <option value="thomas">Thomas</option>
-                  <option value="lorenz">Lorenz</option>
-                  <option value="aizawa">Aizawa</option>
-                  <option value="dadras">Dadras</option>
-                  <option value="clifford">Clifford</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Fractal scene">
-                  <option value="">Fractals</option>
-                  <option value="sierpinski">Sierpinski</option>
-                  <option value="jerusalem">Jerusalem cube</option>
-                  <option value="vicsek">Vicsek</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Number scene">
-                  <option value="">Numbers</option>
-                  <option value="primes3d">Primes</option>
-                  <option value="gprimes">Gaussian primes</option>
-                  <option value="collatz">Collatz</option>
-                  <option value="pi">Pi</option>
-                  <option value="recaman">Recaman</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Sacred geometry scene">
-                  <option value="">Sacred geometry</option>
-                  <option value="metatron">Metatron</option>
-                  <option value="hopf">Hopf</option>
-                  <option value="lotus">Lotus</option>
-                  <option value="harmonics">Harmonics</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Pathfinding scene">
-                  <option value="">Pathfinding</option>
-                  <option value="bfs">BFS</option>
-                  <option value="bidir">Bidirectional</option>
-                  <option value="dijkstra">Stochastic Dijkstra</option>
-                  <option value="wavefront">Multi-Source</option>
-                  <option value="randomflood">Noisy Flood</option>
-                  <option value="dfs">DFS</option>
-                  <option value="randomwalk">Random walk</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Sorting scene">
-                  <option value="">Sorting</option>
-                  <option value="selection">Selection</option>
-                  <option value="bubble">Bubble</option>
-                  <option value="cocktail">Cocktail</option>
-                  <option value="insertion">Insertion</option>
-                  <option value="gnome">Gnome</option>
-                  <option value="shell">Shell</option>
-                  <option value="comb">Comb</option>
-                  <option value="quick">Quicksort</option>
-                  <option value="heap">Heapsort</option>
-                  <option value="bitonic">Bitonic</option>
-                  <option value="oddeven">Odd-even</option>
-                  <option value="pancake">Pancake</option>
-                  <option value="bogo">Bogo</option>
-                </select>
-                <select class="gx-cat-select" aria-label="Life scene">
-                  <option value="">Life</option>
-                  <option value="boids">Boids</option>
-                  <option value="ocean">Ocean</option>
-                  <option value="sacred">Sacred geometry</option>
-                  <option value="attractor">Strange attractor</option>
-                </select>
+              <div class="gx-controls">
+                <div class="gx-group gx-group--live">
+                  <span class="gx-group-label"><span class="gx-live-dot" aria-hidden="true"></span>Watch it run</span>
+                  <div class="gx-group-row">
+                    <select class="gx-cat-select" aria-label="Pathfinding scene">
+                      <option value="" disabled selected>Pathfinding</option>
+                      <option value="bfs">BFS</option>
+                      <option value="bidir">Bidirectional</option>
+                      <option value="dijkstra">Stochastic Dijkstra</option>
+                      <option value="wavefront">Multi-Source</option>
+                      <option value="randomflood">Noisy Flood</option>
+                      <option value="dfs">DFS</option>
+                      <option value="randomwalk">Random walk</option>
+                    </select>
+                    <select class="gx-cat-select" aria-label="Sorting scene">
+                      <option value="" disabled selected>Sorting</option>
+                      <option value="selection">Selection</option>
+                      <option value="bubble">Bubble</option>
+                      <option value="cocktail">Cocktail</option>
+                      <option value="insertion">Insertion</option>
+                      <option value="gnome">Gnome</option>
+                      <option value="shell">Shell</option>
+                      <option value="comb">Comb</option>
+                      <option value="quick">Quicksort</option>
+                      <option value="heap">Heapsort</option>
+                      <option value="bitonic">Bitonic</option>
+                      <option value="oddeven">Odd-even</option>
+                      <option value="pancake">Pancake</option>
+                      <option value="bogo">Bogo</option>
+                    </select>
+                    <select class="gx-cat-select" aria-label="Life scene">
+                      <option value="" disabled selected>Life</option>
+                      <option value="boids">Boids</option>
+                      <option value="ocean">Ocean</option>
+                      <option value="sacred">Sacred geometry</option>
+                      <option value="attractor">Strange attractor</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="gx-group gx-group--explore">
+                  <span class="gx-group-label">Fly through</span>
+                  <div class="gx-group-row">
+                    <select class="gx-cat-select gx-cat-select--active" aria-label="Randomness scene">
+                      <option value="" disabled>Randomness</option>
+                      <option value="mulberry" selected>Mulberry</option>
+                      <option value="grid">Perfect grid</option>
+                    </select>
+                    <select class="gx-cat-select" aria-label="Attractor scene">
+                      <option value="" disabled selected>Attractors</option>
+                      <option value="thomas">Thomas</option>
+                      <option value="lorenz">Lorenz</option>
+                      <option value="aizawa">Aizawa</option>
+                      <option value="dadras">Dadras</option>
+                      <option value="clifford">Clifford</option>
+                    </select>
+                    <select class="gx-cat-select" aria-label="Fractal scene">
+                      <option value="" disabled selected>Fractals</option>
+                      <option value="sierpinski">Sierpinski</option>
+                      <option value="jerusalem">Jerusalem cube</option>
+                      <option value="vicsek">Vicsek</option>
+                    </select>
+                    <select class="gx-cat-select" aria-label="Number scene">
+                      <option value="" disabled selected>Numbers</option>
+                      <option value="primes3d">Primes</option>
+                      <option value="gprimes">Gaussian primes</option>
+                      <option value="collatz">Collatz</option>
+                      <option value="pi">Pi</option>
+                      <option value="recaman">Recaman</option>
+                    </select>
+                    <select class="gx-cat-select" aria-label="Sacred geometry scene">
+                      <option value="" disabled selected>Sacred geometry</option>
+                      <option value="metatron">Metatron</option>
+                      <option value="hopf">Hopf</option>
+                      <option value="lotus">Lotus</option>
+                      <option value="harmonics">Harmonics</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               <div class="gx-desc" id="galaxy-blurb"></div>
               <div class="pillbar-sliderrow">
