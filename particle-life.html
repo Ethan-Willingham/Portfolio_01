@@ -94,7 +94,10 @@
 
         display: grid;
         grid-template-columns: minmax(240px, 1fr) var(--pl-stage) minmax(240px, 1fr);
-        grid-template-rows: auto var(--pl-stage) auto;
+        /* Row 2 grows to the tallest side panel so dense controls (the Force
+           Matrix + Rogue field column) are never clipped; the canvas stays its
+           square --pl-stage size, top-aligned in the row. */
+        grid-template-rows: auto minmax(var(--pl-stage), max-content) auto;
         column-gap: 0;
         row-gap: 0;
         align-items: stretch;
@@ -103,6 +106,7 @@
       .pl-wrapper:not(.is-fs) > .pl-canvas-wrap {
         grid-column: 2;
         grid-row: 2;
+        align-self: start;
         width: var(--pl-stage);
         height: var(--pl-stage);
         aspect-ratio: auto;
@@ -117,9 +121,8 @@
         grid-row: 2;
         background: var(--d-bg-raised);
         padding: 0.9rem 1.05rem 1rem;
-        max-height: var(--pl-stage);
-        overflow-y: auto;
-        overflow-x: hidden;
+        max-height: none;
+        overflow: visible;
         min-width: 0;
       }
       .pl-wrapper:not(.is-fs) > .pl-controls > .pl-group-matrix {
@@ -895,12 +898,13 @@
 
     .pl-share-row {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.4rem;
       margin-top: 0.75rem;
     }
     .pl-slot-share {
-      flex: 1;
-      min-width: 0;
+      flex: 1 1 11em;
+      min-width: 11em;
       font-family: var(--d-mono);
       font-size: 0.74rem;
       color: var(--d-text);
@@ -1238,7 +1242,7 @@
                     delete. Slots persist in your browser.
                   </p>
                   <div class="pl-share-row">
-                    <input type="text" class="pl-slot-share" placeholder="Paste a share string here, or click Export"/>
+                    <input type="text" class="pl-slot-share" placeholder="Paste a share string"/>
                     <button class="pl-slot-export pillbar-btn pillbar-btn--reset">Export</button>
                     <button class="pl-slot-import pillbar-btn pillbar-btn--primary">Import</button>
                   </div>
