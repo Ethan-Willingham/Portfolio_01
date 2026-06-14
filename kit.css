@@ -164,6 +164,7 @@
 .dlnum-2up{display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(1.8rem,4vw,3rem);row-gap:1.5rem;align-items:start}
 .dlnum-2up .dlnum-head{grid-column:1 / -1;margin:0}
 .dlnum-2up .dlnum-item{border:none;padding:0}
+.dlnum-2up .dlnum-item:last-child:nth-child(even){grid-column:1 / -1}/* odd term count (the head shifts parity): last term spans both columns so it never orphans an empty cell */
 .dlnum-2up .dlnum-numeral{font-size:1.9rem}
 .dlnum-2up .dlnum-term{font-size:1.2rem;margin-bottom:0.2rem}
 .dlnum-2up .dlnum-def{font-size:1rem;line-height:1.42}

@@ -139,16 +139,17 @@
   .sec .sub { font-style: italic; font-size: 1.18rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.4rem; text-wrap: pretty; }
 
   /* VISUAL BALANCING is now in the shared kit (kit.css): the number-left
-     .u-bignum, the .u-move takeaway line, and the kit-block flow margins.
-     This post opts in via class names in the markup below (u-move on the
-     callouts). Its 5-term glossary stays single-column (a 2-up would
-     orphan the 5th term), just kept compact: */
+     .u-bignum, the .u-move takeaway line, the .dlnum-2up compact glossary,
+     and the kit-block flow margins. This post opts in via class names in
+     the markup below (u-move on the callouts, dlnum-2up on the glossary;
+     its 5 terms 2-up with the last spanning, handled by the kit). */
   .essay .dlnum-wrap { margin: 2.4rem auto; }
-  .essay .dlnum-wrap .dlnum-head    { margin-bottom: 1.05rem; }
-  .essay .dlnum-wrap .dlnum-item    { padding: 1.05rem 0; }
-  .essay .dlnum-wrap .dlnum-numeral { font-size: 2.1rem; }
-  .essay .dlnum-wrap .dlnum-term    { font-size: 1.26rem; margin-bottom: 0.22rem; }
-  .essay .dlnum-wrap .dlnum-def     { font-size: 1.02rem; line-height: 1.46; }
+
+  /* section numbers: drop the kit's gold pill for a plain understated
+     number, like all-in's .sec-num. A bare "01" in a pill read too loud
+     here; the pill stays for the text eyebrows on other posts. */
+  .essay .u-sechead { gap: 0.45em; }
+  .essay .u-sechead-k { background: none; padding: 0; border-radius: 0; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: none; }
 
   /* ============ FIGURES ============ */
   .fig-block { margin: 2.8rem 0; }
@@ -373,7 +374,7 @@
       <p>The software is a <b>Warehouse Management System</b>, a WMS, and an entire industry of companies sells it, installs it, and keeps it running. If you want to understand the modern economy of stuff, the factory that makes it and the warehouse that ships it, the fastest way in is through the system that runs the floor. By the end of this you should be able to stand in a distribution center, follow a box from the truck to the door, and understand every step, well enough to be the person a warehouse calls when their software starts misbehaving.</p>
     </div>
 
-    <div class="dlnum-wrap reveal">
+    <div class="dlnum-wrap dlnum-2up reveal">
       <p class="dlnum-head">Five words before we start</p>
       <div class="dlnum-item">
         <div class="dlnum-numeral">1</div>

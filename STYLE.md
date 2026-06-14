@@ -172,7 +172,7 @@ For one set-apart definition (an epigraph opener). Use `.dlnum-*` below when you
 ```html
 <div class="dlnum-wrap"><p class="dlnum-head">Define some terms.</p><div class="dlnum-item"><div class="dlnum-numeral">1</div><div class="dlnum-body"><h3 class="dlnum-term">Term</h3><p class="dlnum-def">Definition.</p></div></div> … </div>
 ```
-Default is a single column with hairline rules. For a **short, even-count** glossary (4 or 6 terms) where the single column eats too much height, add **`.dlnum-2up`** to `.dlnum-wrap` for a compact 2-up grid (about half the height; drops the rules, stacks on mobile). Do not use it for odd counts (it orphans the last term).
+Default is a single column with hairline rules. For a **short** glossary (roughly 4 to 6 terms) where the single column eats too much height, add **`.dlnum-2up`** to `.dlnum-wrap` for a compact 2-up grid (about half the height; drops the rules, stacks on mobile). An odd last term spans both columns, so odd counts work too.
 
 ### Safety callout - `.scallout-banner` (health posts)
 ```html
