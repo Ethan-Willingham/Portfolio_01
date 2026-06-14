@@ -453,6 +453,14 @@
 
   /* ---------- render ---------- */
   var lab = document.getElementById('lab');
+  var PENDING = { debate:1, safety:1, define:1, statcards:1, panel:1, resources:1, barchart:1 };
+  var FOCUS = !/[?&]all=1/.test(location.search);
+  if (FOCUS) {
+    var howEl = document.querySelector('.how');
+    if (howEl) howEl.innerHTML = '<p><b>Focus mode.</b> Showing only the components you have not finished choosing. The ones you already picked are hidden. <a href="?all=1" style="color:var(--accent);text-decoration:none">Show everything &#8599;</a> to bring them back.</p><p>For each one below, click <b>keep this one</b> on your favorite, then hit <b>copy my picks</b> and paste it back.</p>';
+    var rampEl = document.getElementById('ramp');
+    if (rampEl) { var rgrp = rampEl.closest('.group'); if (rgrp) { rgrp.style.display = 'none'; var pband = rgrp.previousElementSibling; if (pband && pband.classList.contains('catband')) pband.style.display = 'none'; } }
+  }
   var base = location.href.replace(/[^\/]*$/, '');
   var KEY = 'cl-picks-v2';
   var picks = {};
@@ -481,7 +489,8 @@
   var decideGroups = [];
 
   GROUPS.forEach(function (g) {
-    if (g.cat) { var band = document.createElement('div'); band.className = 'catband'; band.textContent = g.cat; lab.appendChild(band); return; }
+    if (g.cat) { if (FOCUS) return; var band = document.createElement('div'); band.className = 'catband'; band.textContent = g.cat; lab.appendChild(band); return; }
+    if (FOCUS && !PENDING[g.id]) return;
     if (g.decide) decideGroups.push(g.id);
 
     var sec = document.createElement('section');
@@ -572,6 +581,7 @@
     var lines = ['MY COMPONENT PICKS', ''];
     GROUPS.forEach(function (g) {
       if (g.cat || !g.decide) return;
+      if (FOCUS && !PENDING[g.id]) return;
       var chosen = picks[g.id];
       var pickName = (chosen != null) ? g.members[chosen].name + ' (from ' + g.members[chosen].src + ')' : '— not chosen yet —';
       lines.push(g.title);
