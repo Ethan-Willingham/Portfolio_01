@@ -20,10 +20,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Ghost in the Swarm: Particle Life on the GPU</title>
-  <meta name="description" content="The Ghost in the Swarm: a WebGPU Particle Life simulation of 100,000 particles, quietly steered through sacred geometry by an invisible, morphing field.">
+  <meta name="description" content="The Ghost in the Swarm: 100,000 Particle Life particles on the GPU, plus a hidden field I added that pushes the whole swarm into shapes.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="The Ghost in the Swarm: Particle Life on the GPU">
-  <meta property="og:description" content="The Ghost in the Swarm: a WebGPU Particle Life simulation of 100,000 particles, quietly steered through sacred geometry by an invisible, morphing field.">
+  <meta property="og:description" content="The Ghost in the Swarm: 100,000 Particle Life particles on the GPU, plus a hidden field I added that pushes the whole swarm into shapes.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/particle-life.html">
@@ -660,19 +660,20 @@
       border-bottom: 1px solid var(--d-rule);
     }
     .pl-control-group.pillbar .pillbar-title {
-      font-family: var(--d-mono);
-      font-size: 0.64rem;
-      font-weight: 500;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--d-text-dim);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--d-text);
     }
-    /* Studio side panels already set padding; let that win over pillbar default. */
+    /* Side panels: drop the pillbar card chrome (the studio grid frames them),
+       but keep comfortable padding so content never sits against the edge. */
     .pl-wrapper:not(.is-fs) > .pl-controls > .pl-control-group.pillbar {
       background: transparent;
       border: 0;
       border-radius: 0;
-      padding: 0;
+      padding: 0.5rem 1.3rem 0.6rem;
       box-shadow: none;
     }
     /* Slider rows: keep the studio overflow-safe gap + min-width from the old rules. */
@@ -1064,7 +1065,7 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">The Ghost in the Swarm</h1>
-      <p class="post-subtitle">Particle Life on your GPU, with an invisible field that quietly steers a hundred thousand particles through sacred geometry.</p>
+      <p class="post-subtitle">A hundred thousand particles on your GPU, each following one simple rule, plus a hidden field I added that pushes the whole swarm into shapes.</p>
     </header>
 
     <main>
@@ -1136,11 +1137,11 @@
                 </div>
                 <div class="pl-field-section">
                   <div class="pillbar-head" style="margin-top:0.6rem;margin-bottom:0.5rem;">
-                    <span class="pillbar-title" style="font-size:0.95rem;">Rogue field</span>
+                    <span class="pillbar-title">Rogue field</span>
                   </div>
                   <p class="pl-field-explainer">
-                    An invisible flow that slowly morphs through golden-ratio
-                    and sacred-geometry patterns, conducting the whole swarm.
+                    A hidden flow that slowly cycles through patterns and
+                    steers the whole swarm.
                   </p>
                   <div class="pl-toggles">
                     <label class="pl-toggle">
@@ -1219,7 +1220,7 @@
                 </div>
                 <div class="pl-slot-section">
                   <div class="pillbar-head" style="margin-bottom:0.5rem;">
-                    <span class="pillbar-title" style="font-size:0.95rem;">Your saves</span>
+                    <span class="pillbar-title">Your saves</span>
                   </div>
                   <div class="pl-slot-row">
                     <div class="pl-slots">
@@ -1248,11 +1249,11 @@
           </div>
 
           <p class="d-lead">
-            Two systems share this canvas. The dots are <em>Particle Life</em>:
-            a hundred thousand specks on your GPU, each obeying one tiny rule
-            about whom to chase and whom to flee. Out of that alone come cells,
-            chains, and shapes that look unsettlingly alive. The second system
-            is the ghost.
+            There are two things going on here. The dots are <em>Particle
+            Life</em>: a hundred thousand of them on your GPU, each following one
+            rule about which colors to chase and which to run from. That rule by
+            itself is enough to grow cells, chains, and blobs that move like
+            they're alive. The second thing is the part I added, the ghost.
           </p>
 
           <figure class="pl-figure">
@@ -1271,34 +1272,20 @@
             <span class="d-eyebrow">The part that's mine</span>
             <h2 class="d-name">An invisible hand</h2>
             <p class="d-lead">
-              Watch a while and you'll catch the whole swarm leaning into a
-              slow, coherent shape, then dissolving and leaning into the next.
-              That is an unseen flow field laid over the simulation, morphing
-              forever through golden-ratio spirals, mandalas, quasicrystals and
-              the flower of life, the way an old Winamp visualizer drifted from
-              one scene into the next.
+              Watch for a bit and you'll see the whole swarm settle into a
+              shape, hold it, then melt and form the next one. That's a hidden
+              flow field I laid over the simulation. It keeps cycling through
+              patterns, spirals, mandalas, that sort of thing, like an old
+              Winamp visualizer drifting from one scene to the next.
             </p>
             <p>
-              The trick that keeps it alive instead of dead: each pattern is a
-              <em>curl field</em>. The force runs <em>along</em> the geometry's
-              contours instead of <em>toward</em> it, so the particles stream
-              around the shape and keep their own behavior while they trace it,
-              never collapsing into a few bright points.
+              The trick is that each pattern pushes the particles <em>along</em>
+              its lines instead of straight <em>at</em> them (a curl field). So
+              the swarm flows around the shape and keeps doing its own thing
+              while it traces it, instead of all clumping into a few dots.
             </p>
-            <p class="d-quote">
-              It is choreography, not a cage. The field suggests; the swarm
-              still argues.
-            </p>
-            <div class="d-stat">
-              <span class="fig">137.5&deg;</span>
-              <span class="fig-lbl">the golden angle, seed of the sunflower
-                spiral and one of ten shapes in the tour</span>
-            </div>
             <p class="d-caveat">
-              The controls live under <em>Rogue field</em>: turn it off for bare
-              Particle Life, push the strength until it takes the wheel, step the
-              shapes by hand, or split dense clusters and loose dust onto two
-              patterns at once. The simulation itself descends from
+              Builds on
               <a href="https://www.ventrella.com/Clusters/">Ventrella's Clusters</a>,
               <a href="https://particle-life.com/">Tom Mohr's Particle Life</a>, and
               <a href="https://lisyarus.github.io/blog/posts/particle-life-simulation-in-browser-using-webgpu.html">lisyarus's WebGPU port</a>;
