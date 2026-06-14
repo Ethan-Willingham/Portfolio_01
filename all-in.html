@@ -500,6 +500,51 @@
   @media (max-width: 380px) {
     .stages { grid-template-columns: 1fr; }
   }
+
+  /* ============================================================
+     VISUAL BALANCING  (2026-06-14)
+     Scoped overrides on the shared kit blocks (.dlnum-*, .u-callout,
+     .u-bignum, .u-pq) so this essay reads lighter and spaces cleanly,
+     without touching the other posts that share kit.css. Promote any
+     of these into kit.css if we ever want them site-wide.
+     ============================================================ */
+
+  /* 1. The opening "Four words" glossary: same design, about a third
+        shorter. Tighter rows, smaller numerals, snugger head + def. */
+  .dlnum-wrap .dlnum-head    { margin-bottom: 1.05rem; }
+  .dlnum-wrap .dlnum-item    { padding: 1.05rem 0; }
+  .dlnum-wrap .dlnum-numeral { font-size: 2.1rem; }
+  .dlnum-wrap .dlnum-term    { font-size: 1.26rem; margin-bottom: 0.22rem; }
+  .dlnum-wrap .dlnum-def     { font-size: 1.02rem; line-height: 1.46; }
+
+  /* 2. The kit blocks ship with no outer margin, so two stacked ones
+        (the stat card + "the manager's move") collapse into each other,
+        and the pull-quote crowds the paragraph below it. Give them air. */
+  .essay .u-bignum,
+  .essay .u-callout,
+  .essay .u-pq { margin: 2.1rem 0; }
+
+  /* 3. "The manager's move" recurs 15 times. Lighten it from a heavy
+        gold drop-shadow card into a quieter aside: flat, less padding,
+        smaller body, so it stops dominating every section. */
+  .essay .u-callout {
+    padding: clamp(16px, 2.6vw, 22px) clamp(18px, 3.2vw, 26px);
+    box-shadow: none;
+    border-radius: 16px;
+  }
+  .essay .u-callout .u-callout-body { font-size: 1.04rem; line-height: 1.5; }
+
+  /* 4. Its kicker: trade the hard mono ALL-CAPS for the essay's own
+        editorial voice, serif small-caps like the cover + act labels. */
+  .essay .u-callout-k {
+    font-family: var(--font-heading);
+    font-variant: small-caps;
+    text-transform: none;
+    letter-spacing: 0.06em;
+    font-size: 0.98rem;
+    gap: 0.5em;
+  }
+  .essay .u-callout-k::before { width: 7px; height: 7px; box-shadow: 0 0 0 3px var(--s-gold-tint-2); }
   </style>
 </head>
 <body>
