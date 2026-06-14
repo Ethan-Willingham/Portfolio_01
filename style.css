@@ -4,6 +4,9 @@
    Big name header (Geerling style). Dynomight-style post titles.
    ============================================================ */
 
+/* Blog component kit. Must precede @font-face per CSS @import ordering. See STYLE.md. */
+@import url("kit.css");
+
 @font-face { font-family: century_supra_a; font-style: normal; font-weight: normal; font-display: swap; src: url('assets/fonts/century_supra_a_regular.woff2') format('woff2'); }
 @font-face { font-family: century_supra_a; font-style: italic; font-weight: normal; font-display: swap; src: url('assets/fonts/century_supra_a_italic.woff2') format('woff2'); }
 @font-face { font-family: century_supra_a; font-style: normal; font-weight: bold; font-display: swap; src: url('assets/fonts/century_supra_a_bold.woff2') format('woff2'); }
