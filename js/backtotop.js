@@ -76,21 +76,27 @@
   // Only worth a back-to-top on a genuinely long page.
   function longEnough() { return document.documentElement.scrollHeight > window.innerHeight * 1.8; }
 
-  // Reveal only while at the bottom AND moving down; hide the moment we move up.
+  // Reveal as you ARRIVE at the bottom (within the zone, heading down); the instant you
+  // back away upward it's gone, and it stays gone until you return to the bottom. We track
+  // the deepest point reached rather than per-frame direction, so even a slow scroll-up
+  // dismisses it promptly and pausing on the way up can never re-show it.
   var REVEAL_ZONE = 120;                                  // px from the bottom where it may appear
+  var UP_DISMISS = 8;                                     // back away this far upward and it hides at once
   var lastY = window.scrollY || window.pageYOffset || 0;
+  var deepest = lastY;                                    // furthest-down scrollY since we last headed down
   var ticking = false;
   function evaluate() {
     ticking = false;
     var y = window.scrollY || window.pageYOffset || 0;
-    var goingUp = y < lastY - 2;                          // small threshold ignores scroll jitter
+    if (y > lastY + 1 || y > deepest) deepest = y;        // heading down: chase the bottom so arrival re-reveals
     lastY = y;
-    if (goingUp || !longEnough()) { hide(); return; }
-    var atBottom = (window.innerHeight + y) >= (document.documentElement.scrollHeight - REVEAL_ZONE);
-    if (atBottom) show(); else hide();
+    if (!longEnough()) { hide(); return; }
+    if (deepest - y > UP_DISMISS) { hide(); return; }     // backed away from the bottom: dismiss immediately
+    var fromBottom = document.documentElement.scrollHeight - (window.innerHeight + y);
+    if (fromBottom <= REVEAL_ZONE) show(); else hide();
   }
   function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(evaluate); } }
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', function () { lastY = window.scrollY || window.pageYOffset || 0; evaluate(); }, { passive: true });
+  window.addEventListener('resize', function () { lastY = deepest = window.scrollY || window.pageYOffset || 0; evaluate(); }, { passive: true });
   evaluate();
 })();
