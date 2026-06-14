@@ -58,8 +58,8 @@
     --c-sky:   #8fb3c7;
     --c-plum:  #b79bc4;
     --c-green: #9ec79a;
-    --c-amber: #e6c074;
-    --c-rose:  #e98e7f;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
     --c-grid:  rgba(120, 134, 120, 0.22);
     --c-grid-strong: rgba(120, 134, 120, 0.4);
     --panel:   #2a322b;
@@ -106,10 +106,10 @@
 
   /* ---- per-section color rhythm: each chapter carries its own accent, so the eye
      gets variety as it scrolls instead of green on green. Keyed on section id. ---- */
-  #creatine { --sec-accent:#8fb3c7; } #grows { --sec-accent:#9ec79a; } #training { --sec-accent:#e6c074; }
+  #creatine { --sec-accent:#8fb3c7; } #grows { --sec-accent:#9ec79a; } #training { --sec-accent:#dfc288; }
   #around { --sec-accent:#cf9f78; } #diet { --sec-accent:#9ec79a; } #inputs { --sec-accent:#8fb3c7; }
-  #brain { --sec-accent:#b79bc4; } #genetics { --sec-accent:#8fb3c7; } #gainloss { --sec-accent:#e98e7f; }
-  #returns { --sec-accent:#e6c074; } #toomuch { --sec-accent:#e98e7f; }
+  #brain { --sec-accent:#b79bc4; } #genetics { --sec-accent:#8fb3c7; } #gainloss { --sec-accent:#d9978c; }
+  #returns { --sec-accent:#dfc288; } #toomuch { --sec-accent:#d9978c; }
 
   /* a wide visual that breaks out of the reading column on big screens */
   .breakout { max-width: var(--wide); }
@@ -167,9 +167,9 @@
   .choice::before { font-family: var(--font-mono); font-weight: 700; flex: none; line-height: 1.4; }
   .choice.use { border-left: 3px solid var(--ok-rule, #6f9a6c); }
   .choice.use::before { content: '\2713'; color: var(--c-green); }
-  .choice.skip { border-left: 3px solid #cf6a59; }
+  .choice.skip { border-left: 3px solid #b8796d; }
   .choice.skip::before { content: '\2717'; color: var(--c-rose); }
-  .choice.meh { border-left: 3px solid #c79a3f; }
+  .choice.meh { border-left: 3px solid #bc9d65; }
   .choice.meh::before { content: '\2013'; color: var(--c-amber); }
   .choice b { color: var(--text-bright); }
 
@@ -321,7 +321,7 @@
   #colophon .colo-stat .n { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.05rem); line-height: 1; color: var(--cc); font-variant-numeric: tabular-nums; }
   #colophon .colo-stat .l { font-family: var(--font-body); font-size: 0.84rem; line-height: 1.35; color: var(--text-dim); margin-top: 0.35em; }
   #colophon .c-gold { --cc: #D4C4A0; } #colophon .c-sky { --cc: #8fb3c7; } #colophon .c-plum { --cc: #b79bc4; }
-  #colophon .c-green { --cc: #9ec79a; } #colophon .c-amber { --cc: #e6c074; } #colophon .c-rose { --cc: #e98e7f; }
+  #colophon .c-green { --cc: #9ec79a; } #colophon .c-amber { --cc: #dfc288; } #colophon .c-rose { --cc: #d9978c; }
 
   .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .disclaimer strong { color: var(--accent-hover); }
@@ -429,7 +429,7 @@
           </g>
           <g transform="translate(10,130)">
             <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#e6c074">4 &#183; Sun</text>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#dfc288">4 &#183; Sun</text>
             <text x="18" y="60" class="v-label" font-size="13">10 to 30 min on skin,</text>
             <text x="18" y="80" class="v-label" font-size="13">most days, no burning.</text>
             <text x="18" y="100" class="v-label" font-size="13">Free vitamin D.</text>
@@ -521,7 +521,7 @@
         <g class="cr-p2" transform="translate(458,140)"><circle r="7" fill="#4A544B"/></g>
         <!-- energy burst -->
         <g class="cr-glow" transform="translate(575,30)">
-          <path d="M0 0 L-10 16 L-1 16 L-8 32 L12 12 L2 12 L9 0 Z" fill="#e6c074"/>
+          <path d="M0 0 L-10 16 L-1 16 L-8 32 L12 12 L2 12 L9 0 Z" fill="#dfc288"/>
         </g>
         <text x="350" y="214" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">creatine kinase runs this swap in well under a second, the fastest energy system you have</text>
       </svg>
@@ -629,9 +629,9 @@
       <svg viewBox="0 0 700 320" role="img" aria-label="Muscle growth rises steeply from zero to about ten weekly sets, continues more slowly through a productive band to about twenty sets, then keeps rising gently, with each added set buying less.">
         <!-- bands -->
         <rect x="245" y="40" width="207" height="220" fill="#9ec79a" opacity="0.07"/>
-        <rect x="452" y="40" width="178" height="220" fill="#e6c074" opacity="0.06"/>
+        <rect x="452" y="40" width="178" height="220" fill="#dfc288" opacity="0.06"/>
         <text x="348" y="84" text-anchor="middle" class="v-axis-t" fill="#9ec79a">productive band</text>
-        <text x="541" y="84" text-anchor="middle" class="v-axis-t" fill="#e6c074">a worse and worse trade</text>
+        <text x="541" y="84" text-anchor="middle" class="v-axis-t" fill="#dfc288">a worse and worse trade</text>
         <!-- axes -->
         <line x1="55" y1="260" x2="660" y2="260" class="v-grid-s"/>
         <line x1="55" y1="40" x2="55" y2="260" class="v-grid-s"/>
@@ -650,7 +650,7 @@
         <line x1="245" y1="86" x2="245" y2="260" class="v-grid"/>
         <line x1="452" y1="58" x2="452" y2="260" class="v-grid"/>
         <circle cx="245" cy="86" r="4" fill="#9ec79a"/>
-        <circle cx="452" cy="58" r="4" fill="#e6c074"/>
+        <circle cx="452" cy="58" r="4" fill="#dfc288"/>
       </svg>
       <p class="viz-note"><b>The practical band is 10 to 20 hard sets per muscle group per week.</b> The range is wide on purpose: it is one answer to three different questions. How long you have trained (a first-year lifter grows fine on 10; by year three the same muscle wants more), how well you recover (sleep, food, stress, age), and how you count (pressing already pays the triceps, rowing already pays the biceps). If you want one sharp number, take <b>12</b>. Start there, and add a couple of sets to a muscle group only after it stops gaining reps for a few weeks while sleep and food are in order. That walks you to your own number, which is the only sharp one there is.</p>
     </figure>
@@ -685,7 +685,7 @@
       .week .wk-name { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); align-self: center; }
       .week .wk-cell { font-family: var(--font-mono); font-size: 0.7rem; text-align: center; padding: 0.5em 0.1em; border-radius: 5px; color: var(--bg); font-weight: 700; }
       .week .wk-head { color: var(--text-dim); background: none !important; font-weight: 400; padding-bottom: 0.1em; }
-      .wk-push { background: #8fb3c7; } .wk-pull { background: #b79bc4; } .wk-legs { background: #e6c074; }
+      .wk-push { background: #8fb3c7; } .wk-pull { background: #b79bc4; } .wk-legs { background: #dfc288; }
       .wk-full { background: #9ec79a; } .wk-up { background: #D4C4A0; } .wk-low { background: #cf9f78; }
       .wk-rest { background: #3a443b; color: var(--text-dim) !important; }
       @media (max-width: 560px) { .week { grid-template-columns: 5.2em repeat(7, 1fr); } .week .wk-cell { font-size: 0.6rem; } .week .wk-name { font-size: 0.72rem; } }
@@ -837,14 +837,14 @@
         </g>
         <text x="46" y="50" text-anchor="end" class="v-axis-t">capacity</text>
         <!-- risk window shading between muscle and tendon early on -->
-        <path d="M55 250 C 120 110 200 80 257 78 C 360 76 460 75 635 74 L 635 250 C 460 210 360 195 257 182 C 200 178 120 200 55 250 Z" fill="#e98e7f" opacity="0.10"/>
+        <path d="M55 250 C 120 110 200 80 257 78 C 360 76 460 75 635 74 L 635 250 C 460 210 360 195 257 182 C 200 178 120 200 55 250 Z" fill="#d9978c" opacity="0.10"/>
         <!-- muscle strength: fast then flat -->
         <path class="draw" style="--len:720" d="M55 250 C 120 110 200 80 257 78 C 360 76 460 75 635 74" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
         <!-- tendon stiffness: slow, still rising -->
         <path class="draw" style="--len:720" d="M55 250 C 200 235 360 205 635 150" fill="none" stroke="#8fb3c7" stroke-width="3.5" stroke-linecap="round"/>
         <text x="540" y="64" class="v-label-b" font-size="12" fill="#D4C4A0">muscle strength</text>
         <text x="540" y="142" class="v-label-b" font-size="12" fill="#8fb3c7">tendon stiffness</text>
-        <text x="250" y="150" text-anchor="middle" class="v-axis-t" fill="#e98e7f">risk window</text>
+        <text x="250" y="150" text-anchor="middle" class="v-axis-t" fill="#d9978c">risk window</text>
       </svg>
       <p class="viz-note">This is why the boring advice (add weight slowly, do not chase a new record every week) is not timidity. It is letting the cable catch up to the engine.</p>
     </figure>
@@ -878,8 +878,8 @@
         <!-- scale: 120px per 1.0, baseline at x=180 (=1.0). width = (HR-1)*120 -->
         <g>
           <text x="172" y="62" text-anchor="end" class="v-label" font-size="13">Low fitness</text>
-          <rect class="grow-b" x="180" y="48" width="485" height="24" rx="4" fill="#e98e7f" style="transform-box:fill-box;transform-origin:left;"/>
-          <text x="660" y="42" text-anchor="end" class="v-mono" font-size="12" fill="#e98e7f">5.0&#215;</text>
+          <rect class="grow-b" x="180" y="48" width="485" height="24" rx="4" fill="#d9978c" style="transform-box:fill-box;transform-origin:left;"/>
+          <text x="660" y="42" text-anchor="end" class="v-mono" font-size="12" fill="#d9978c">5.0&#215;</text>
         </g>
         <g>
           <text x="172" y="106" text-anchor="end" class="v-label" font-size="13">Smoking</text>
@@ -997,10 +997,10 @@
       <svg viewBox="0 0 700 120" role="img" aria-label="A bar that is about 97 percent labeled training, food, sleep, creatine, and years, and a thin 3 percent sliver labeled caffeine.">
         <rect x="40" y="35" width="600" height="46" rx="8" fill="#232a25" stroke="#4A544B"/>
         <rect x="42" y="37" width="560" height="42" rx="7" fill="#D4C4A0" opacity="0.85"/>
-        <rect x="602" y="37" width="36" height="42" rx="3" fill="#e98e7f"/>
+        <rect x="602" y="37" width="36" height="42" rx="3" fill="#d9978c"/>
         <text x="320" y="63" text-anchor="middle" font-family="var(--font-heading)" font-weight="700" font-size="14" fill="#1e2420">training &#183; food &#183; sleep &#183; creatine &#183; years</text>
-        <text x="620" y="26" text-anchor="middle" class="v-axis-t" fill="#e98e7f">caffeine, ~3%</text>
-        <line x1="620" y1="30" x2="620" y2="37" stroke="#e98e7f" stroke-width="1.5"/>
+        <text x="620" y="26" text-anchor="middle" class="v-axis-t" fill="#d9978c">caffeine, ~3%</text>
+        <line x1="620" y1="30" x2="620" y2="37" stroke="#d9978c" stroke-width="1.5"/>
       </svg>
       <p class="viz-note">And that few percent is performance on the day, not muscle at the end of the year. Caffeine has no direct muscle-building effect; any long-term gain is small, indirect (a slightly harder session here and there), and unreliable.</p>
     </figure>
@@ -1040,13 +1040,13 @@
         <text x="372" y="246" text-anchor="middle" class="v-axis-t" fill="#9ec79a">hippocampus (memory)</text>
         <!-- BDNF sparks -->
         <g class="drift">
-          <g fill="#e6c074">
+          <g fill="#dfc288">
             <path d="M120 70 l-7 11 l6 0 l-5 11 l9 -13 l-6 0 z"/>
             <path d="M150 200 l-6 9 l5 0 l-4 9 l7 -11 l-5 0 z"/>
             <path d="M580 90 l-6 9 l5 0 l-4 9 l7 -11 l-5 0 z"/>
           </g>
         </g>
-        <text x="120" y="110" text-anchor="middle" class="v-axis-t" fill="#e6c074">BDNF</text>
+        <text x="120" y="110" text-anchor="middle" class="v-axis-t" fill="#dfc288">BDNF</text>
         <text x="120" y="124" text-anchor="middle" class="v-label" font-size="10" fill="#B8B2A2">"fertilizer</text>
         <text x="120" y="138" text-anchor="middle" class="v-label" font-size="10" fill="#B8B2A2">for neurons"</text>
       </svg>
@@ -1092,7 +1092,7 @@
         <!-- scale: 0% at x=55, 10px per 1% -> 59% at x=645 -->
         <g class="fade-el">
           <!-- non-responders -->
-          <circle cx="35" cy="170" r="6" fill="#e98e7f"/><circle cx="55" cy="158" r="6" fill="#e98e7f"/><circle cx="75" cy="172" r="6" fill="#e98e7f"/><circle cx="95" cy="150" r="6" fill="#e6c074"/>
+          <circle cx="35" cy="170" r="6" fill="#d9978c"/><circle cx="55" cy="158" r="6" fill="#d9978c"/><circle cx="75" cy="172" r="6" fill="#d9978c"/><circle cx="95" cy="150" r="6" fill="#dfc288"/>
           <!-- the big cluster around 19% (x~245) -->
           <circle cx="150" cy="165" r="6" fill="#D4C4A0"/><circle cx="170" cy="150" r="6" fill="#D4C4A0"/><circle cx="190" cy="172" r="6" fill="#D4C4A0"/><circle cx="205" cy="140" r="6" fill="#D4C4A0"/>
           <circle cx="225" cy="160" r="6" fill="#D4C4A0"/><circle cx="245" cy="128" r="6" fill="#D4C4A0"/><circle cx="245" cy="172" r="6" fill="#D4C4A0"/><circle cx="265" cy="148" r="6" fill="#D4C4A0"/>
@@ -1102,7 +1102,7 @@
           <!-- high responders -->
           <circle cx="470" cy="168" r="6" fill="#9ec79a"/><circle cx="510" cy="158" r="6" fill="#9ec79a"/><circle cx="555" cy="166" r="6" fill="#9ec79a"/><circle cx="600" cy="160" r="6" fill="#9ec79a"/><circle cx="640" cy="168" r="6" fill="#9ec79a"/>
         </g>
-        <text x="65" y="120" text-anchor="middle" class="v-axis-t" fill="#e98e7f">non-responders</text>
+        <text x="65" y="120" text-anchor="middle" class="v-axis-t" fill="#d9978c">non-responders</text>
         <text x="245" y="112" text-anchor="middle" class="v-axis-t" fill="#D4C4A0">average (~19%)</text>
         <text x="590" y="140" text-anchor="middle" class="v-axis-t" fill="#9ec79a">high responders</text>
       </svg>
@@ -1160,13 +1160,13 @@
         <!-- build: slow rise 55->300 -->
         <path class="draw" style="--len:360" d="M55 240 C 150 215 230 130 300 92" fill="none" stroke="#9ec79a" stroke-width="3.5" stroke-linecap="round"/>
         <!-- loss: faster drop 300->420 -->
-        <path class="draw" style="--len:200" d="M300 92 C 350 110 390 150 430 175" fill="none" stroke="#e98e7f" stroke-width="3.5" stroke-linecap="round"/>
+        <path class="draw" style="--len:200" d="M300 92 C 350 110 390 150 430 175" fill="none" stroke="#d9978c" stroke-width="3.5" stroke-linecap="round"/>
         <!-- regain: fast rise 430->600 back to peak -->
         <path class="draw" style="--len:240" d="M430 175 C 490 120 545 98 600 92" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
         <circle cx="300" cy="92" r="4" fill="#9ec79a"/>
         <circle cx="600" cy="92" r="4" fill="#D4C4A0"/>
         <text x="175" y="150" class="v-axis-t" fill="#9ec79a">slow build</text>
-        <text x="360" y="205" class="v-axis-t" fill="#e98e7f">faster loss</text>
+        <text x="360" y="205" class="v-axis-t" fill="#d9978c">faster loss</text>
         <text x="505" y="150" class="v-axis-t" fill="#D4C4A0">fastest regain</text>
       </svg>
       <p class="viz-note">When a muscle grows, it gains permanent control centers called myonuclei, and a DNA-level memory of having been trained. Neither is lost when the muscle shrinks, which is why coming back is so much faster than starting out. <span class="src"><a href="https://www.pnas.org/doi/10.1073/pnas.0913935107">Bruusgaard 2010</a></span> <span class="src"><a href="https://www.nature.com/articles/s41598-018-20287-3">Seaborne 2018</a></span></p>
@@ -1213,8 +1213,8 @@
           <text x="250" y="262" text-anchor="middle" class="v-axis">Year 2</text>
         </g>
         <g>
-          <rect class="grow-v" x="330" y="196" width="80" height="44" rx="4" fill="#e6c074" style="transform-box:fill-box;transform-origin:bottom"/>
-          <text x="370" y="186" text-anchor="middle" class="v-mono" font-size="13" fill="#e6c074">~5.5</text>
+          <rect class="grow-v" x="330" y="196" width="80" height="44" rx="4" fill="#dfc288" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="370" y="186" text-anchor="middle" class="v-mono" font-size="13" fill="#dfc288">~5.5</text>
           <text x="370" y="262" text-anchor="middle" class="v-axis">Year 3</text>
         </g>
         <g>
@@ -1223,8 +1223,8 @@
           <text x="490" y="262" text-anchor="middle" class="v-axis">Year 4</text>
         </g>
         <g>
-          <rect class="grow-v" x="570" y="228" width="80" height="12" rx="4" fill="#e98e7f" style="transform-box:fill-box;transform-origin:bottom"/>
-          <text x="610" y="218" text-anchor="middle" class="v-mono" font-size="13" fill="#e98e7f">~1.5</text>
+          <rect class="grow-v" x="570" y="228" width="80" height="12" rx="4" fill="#d9978c" style="transform-box:fill-box;transform-origin:bottom"/>
+          <text x="610" y="218" text-anchor="middle" class="v-mono" font-size="13" fill="#d9978c">~1.5</text>
           <text x="610" y="262" text-anchor="middle" class="v-axis">Year 5+</text>
         </g>
       </svg>
@@ -1261,8 +1261,8 @@
           <!-- the potential curve (precomputed: f=1-e^(-yr/1.1)) -->
           <path d="M70 250 L105.6 177 L141.3 131 L176.9 101 L212.5 82 L248.1 70 L283.8 63 L355 55 L426.3 52 L497.5 51 L640 50" fill="none" stroke="#D4C4A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
           <!-- movable marker -->
-          <line id="dr-vline" x1="248" y1="70" x2="248" y2="250" stroke="#e6c074" stroke-width="1.5" stroke-dasharray="2 5"/>
-          <circle id="dr-dot" cx="248" cy="70" r="7" fill="#e6c074" stroke="#1e2420" stroke-width="2"/>
+          <line id="dr-vline" x1="248" y1="70" x2="248" y2="250" stroke="#dfc288" stroke-width="1.5" stroke-dasharray="2 5"/>
+          <circle id="dr-dot" cx="248" cy="70" r="7" fill="#dfc288" stroke="#1e2420" stroke-width="2"/>
         </svg>
         <div class="tool-out">
           <div><span class="big" id="dr-years">2.5 years</span> <span class="lbl">of dedicated, near-perfect training to get there</span></div>
@@ -1321,7 +1321,7 @@
           <path d="M22 185 C 62 145 102 116 142 98 C 178 83 212 70 222 67" fill="none" stroke="#D4C4A0" stroke-width="2.5"/>
           <circle cx="120" cy="106" r="5" fill="#9ec79a"/>
           <text x="40" y="96" class="v-mono" font-size="11" fill="#9ec79a">~90%</text>
-          <text x="220" y="58" text-anchor="end" class="v-axis-t" font-size="9.5" fill="#e6c074">still climbing &#8599;</text>
+          <text x="220" y="58" text-anchor="end" class="v-axis-t" font-size="9.5" fill="#dfc288">still climbing &#8599;</text>
           <text x="22" y="203" class="v-axis-t" font-size="9">few</text>
           <text x="222" y="203" text-anchor="end" class="v-axis-t" font-size="9">30+</text>
         </g>
@@ -1355,14 +1355,14 @@
         <g transform="translate(240,250)">
           <text x="16" y="26" class="v-cap" font-size="15" fill="#F5F1EA">Sleep</text>
           <text x="16" y="44" class="v-axis-t" font-size="10" fill="#cdbd92">~7 hours</text>
-          <rect x="22" y="62" width="56" height="123" fill="#e98e7f" opacity="0.08"/>
+          <rect x="22" y="62" width="56" height="123" fill="#d9978c" opacity="0.08"/>
           <line x1="22" y1="185" x2="222" y2="185" class="v-grid"/>
           <line x1="22" y1="62" x2="22" y2="185" class="v-grid"/>
           <path d="M22 152 L74 150 C 96 148 104 82 124 72 C 150 64 222 64 222 64" fill="none" stroke="#D4C4A0" stroke-width="2.5"/>
           <circle cx="124" cy="72" r="5" fill="#9ec79a"/>
           <text x="134" y="66" class="v-mono" font-size="11" fill="#9ec79a">~95%</text>
-          <text x="30" y="138" class="v-axis-t" font-size="9" fill="#e98e7f">under 6h:</text>
-          <text x="30" y="150" class="v-axis-t" font-size="9" fill="#e98e7f">real damage</text>
+          <text x="30" y="138" class="v-axis-t" font-size="9" fill="#d9978c">under 6h:</text>
+          <text x="30" y="150" class="v-axis-t" font-size="9" fill="#d9978c">real damage</text>
           <text x="22" y="203" class="v-axis-t" font-size="9">5h</text>
           <text x="222" y="203" text-anchor="end" class="v-axis-t" font-size="9">9h</text>
         </g>
@@ -1429,9 +1429,9 @@
         <!-- J curve -->
         <path class="draw" style="--len:780" d="M70 70 C 130 200 220 222 360 222 C 470 222 560 205 640 120" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
         <circle cx="360" cy="222" r="5" fill="#9ec79a"/>
-        <text x="100" y="105" class="v-axis-t" fill="#e98e7f">frail / sarcopenic</text>
+        <text x="100" y="105" class="v-axis-t" fill="#d9978c">frail / sarcopenic</text>
         <text x="365" y="212" text-anchor="middle" class="v-axis-t" fill="#9ec79a">strong and healthy (lowest risk)</text>
-        <text x="610" y="100" text-anchor="end" class="v-axis-t" fill="#e98e7f">drug-fueled extreme</text>
+        <text x="610" y="100" text-anchor="end" class="v-axis-t" fill="#d9978c">drug-fueled extreme</text>
       </svg>
       <p class="viz-note">Muscle-strengthening activity follows the same J: about 30 to 60 minutes a week is tied to 10 to 20 percent lower mortality, and the benefit flattens, with a hint of reversal, past about an hour a week. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">Momma 2022</a></span> More is not endlessly better.</p>
     </figure>

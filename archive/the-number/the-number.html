@@ -794,8 +794,8 @@
           var zx = X(you.debtFreeYrs), zy = Y(0);
           var dbBelow = zy + 18 <= padT + ih - 4;
           var dbRight = zx <= padL + iw - 170;
-          marks += '<circle cx="' + zx.toFixed(1) + '" cy="' + zy.toFixed(1) + '" r="4" fill="#C9A66B"/>' +
-            '<text x="' + (dbRight ? zx + 9 : zx - 9).toFixed(1) + '" y="' + (dbBelow ? zy + 17 : zy - 10).toFixed(1) + '" text-anchor="' + (dbRight ? 'start' : 'end') + '" fill="#C9A66B">debt gone &middot; yr ' + yearsLabel(you.debtFreeYrs) + '</text>';
+          marks += '<circle cx="' + zx.toFixed(1) + '" cy="' + zy.toFixed(1) + '" r="4" fill="#c7a66f"/>' +
+            '<text x="' + (dbRight ? zx + 9 : zx - 9).toFixed(1) + '" y="' + (dbBelow ? zy + 17 : zy - 10).toFixed(1) + '" text-anchor="' + (dbRight ? 'start' : 'end') + '" fill="#c7a66f">debt gone &middot; yr ' + yearsLabel(you.debtFreeYrs) + '</text>';
         }
 
         var medEndV = med.pts[Math.min(T * 12, med.pts.length - 1)];

@@ -46,6 +46,18 @@
   --row-hover:       rgba(245, 241, 234, 0.05);
   --selection-bg:    #5A6B5A;
   --selection-text:  #F5F1EA;
+  /* --- Perfected ramp (OKLCH-tuned, additive) --- */
+  /* Two transitional neutrals bridge the old --rule -> --text-dim gap so the
+     neutral ramp is one smooth green->cream curve (hue glides 150°->90°, no jump). */
+  --line-mid:        #767d71;   /* L58 H132 — mid divider / gridline / active border */
+  --text-faint:      #a4a293;   /* L71 H102 — tertiary text, AA 4.65:1 on --bg */
+  /* Rose = the background's complement, mirror of --accent (same lightness & chroma,
+     hue rotated to 342°). The deliberate high-emphasis note — pairs with the warm
+     gold, never competes with it. Staying warm: rose nudged off pure-complement. */
+  --emphasis:        #deb9cf;   /* rose link / accent, mirrors --accent (6.8:1) */
+  --emphasis-hover:  #f7d6e9;   /* rose hover, mirrors --accent-hover */
+  --emphasis-strong: #d697be;   /* louder rose for a true CTA (5.1:1) */
+  --emphasis-weak:   #55384a;   /* deep rose for a tinted chip bg (use light rose text) */
   --font-heading:    century_supra_a, 'Century Schoolbook', Palatino, Georgia, serif;
   --font-body:       'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
   --font-mono:       'Commit Mono', ui-monospace, Consolas, monospace;
@@ -353,6 +365,12 @@ body {
   --d-accent:       #D4C4A0;          /* matches site --accent */
   --d-accent-strong:#EDE0C0;          /* matches site --accent-hover */
   --d-warn:         #d99090;
+  --d-line-mid:     #767d71;            /* matches site --line-mid */
+  --d-text-faint:   #a4a293;            /* matches site --text-faint */
+  --d-emphasis:     #deb9cf;            /* matches site --emphasis (rose) */
+  --d-emphasis-hover:#f7d6e9;           /* matches site --emphasis-hover */
+  --d-emphasis-strong:#d697be;          /* matches site --emphasis-strong */
+  --d-emphasis-weak:#55384a;            /* matches site --emphasis-weak */
   --d-corner:       14px;
 }
 

@@ -59,8 +59,8 @@
     --c-sky:   #8fb3c7;
     --c-plum:  #b79bc4;
     --c-green: #9ec79a;
-    --c-amber: #e6c074;
-    --c-rose:  #e98e7f;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
     --c-grid:  rgba(120, 134, 120, 0.22);
     --c-grid-strong: rgba(120, 134, 120, 0.4);
     --panel:   #2a322b;
@@ -108,7 +108,7 @@
 
   /* per-section color rhythm */
   #legit { --sec-accent:#8fb3c7; } #methods { --sec-accent:#b79bc4; } #train { --sec-accent:#9ec79a; }
-  #lunch { --sec-accent:#e6c074; } #sources { --sec-accent:#D4C4A0; }
+  #lunch { --sec-accent:#dfc288; } #sources { --sec-accent:#D4C4A0; }
 
   .breakout { max-width: var(--wide); }
   @media (min-width: 1140px) {
@@ -137,7 +137,7 @@
   .stat .fig { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1; color: var(--sc, var(--accent)); font-variant-numeric: tabular-nums; }
   .stat .fig-lbl { display: block; font-family: var(--font-body); font-size: 0.86rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.45em; }
   .stat.sky { --sc:#8fb3c7; } .stat.plum { --sc:#b79bc4; } .stat.green { --sc:#9ec79a; }
-  .stat.amber { --sc:#e6c074; } .stat.rose { --sc:#e98e7f; } .stat.gold { --sc:#D4C4A0; }
+  .stat.amber { --sc:#dfc288; } .stat.rose { --sc:#d9978c; } .stat.gold { --sc:#D4C4A0; }
 
   /* ---------- CITATION + GRADE CHIPS ---------- */
   .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
@@ -146,8 +146,8 @@
   .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
   .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
   .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
-  .grade.g-c { background: rgba(230,192,116,0.15); color: #e6c074; border: 1px solid rgba(230,192,116,0.4); }
-  .grade.g-d { background: rgba(233,142,127,0.14); color: #e98e7f; border: 1px solid rgba(233,142,127,0.4); }
+  .grade.g-c { background: rgba(230,192,116,0.15); color: #dfc288; border: 1px solid rgba(230,192,116,0.4); }
+  .grade.g-d { background: rgba(233,142,127,0.14); color: #d9978c; border: 1px solid rgba(233,142,127,0.4); }
 
   /* ---------- FORK (live controversy) ---------- */
   .fork { border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.14); padding: 1.1em 1.2em; margin: 1.7em 0; }
@@ -156,7 +156,7 @@
   .fork-a { display: grid; gap: 0.7em; margin-bottom: 0.8em; }
   @media (min-width: 620px) { .fork-a { grid-template-columns: 1fr 1fr; } }
   .fork-side { border-left: 3px solid var(--fc, var(--accent)); padding-left: 0.8em; }
-  .fork-side.one { --fc:#9ec79a; } .fork-side.two { --fc:#e98e7f; }
+  .fork-side.one { --fc:#9ec79a; } .fork-side.two { --fc:#d9978c; }
   .fork-side h4 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--fc, var(--accent)); margin: 0 0 0.3em; text-transform: uppercase; }
   .fork-side p { font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
   .fork-take { font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; padding-top: 0.6em; border-top: 1px solid var(--rule); }
@@ -165,7 +165,7 @@
   /* ---------- CLAIM / TRUTH callout ---------- */
   .mt { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin: 1.7em 0; background: rgba(0,0,0,0.13); }
   .mt-claim { padding: 0.85em 1.1em; background: rgba(233,142,127,0.08); border-bottom: 1px solid var(--rule); font-size: 1.02rem; line-height: 1.5; color: var(--text); }
-  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #e98e7f; display: block; margin-bottom: 0.25em; }
+  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #d9978c; display: block; margin-bottom: 0.25em; }
   .mt-truth { padding: 0.85em 1.1em; font-size: 1.02rem; line-height: 1.5; color: var(--text-bright); }
   .mt-truth b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9ec79a; display: block; margin-bottom: 0.25em; }
 
@@ -197,7 +197,7 @@
   .method .m-who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-dim); margin: 0.3em 0 0.55em; text-transform: uppercase; }
   .method .m-what { font-size: 0.92rem; line-height: 1.48; color: var(--text-dim); margin: 0; }
   .method.crv { --mc:#D4C4A0; } .method.trv { --mc:#8fb3c7; } .method.srv { --mc:#b79bc4; }
-  .method.erv { --mc:#9ec79a; } .method.arv { --mc:#e6c074; }
+  .method.erv { --mc:#9ec79a; } .method.arv { --mc:#dfc288; }
 
   /* ---------- NUMBERED LISTS (invariants + the protocol) ---------- */
   .numlist { list-style: none; counter-reset: nl; margin: 1.7em 0; padding: 0; }
@@ -387,12 +387,12 @@
           <text class="anno" x="600" y="138" text-anchor="middle" fill="#9ec79a">1985</text>
           <text class="anno-i" x="600" y="64" text-anchor="middle">to the DIA: SUN STREAK</text>
           <!-- 1991 -->
-          <circle cx="760" cy="92" r="6" fill="#e6c074"/>
-          <text class="anno" x="760" y="64" text-anchor="middle" fill="#e6c074">1991</text>
+          <circle cx="760" cy="92" r="6" fill="#dfc288"/>
+          <text class="anno" x="760" y="64" text-anchor="middle" fill="#dfc288">1991</text>
           <text class="anno-i" x="760" y="120" text-anchor="middle">STAR GATE, at SAIC</text>
           <!-- 1995 -->
-          <circle class="pulse-dot" cx="895" cy="92" r="7" fill="#e98e7f"/>
-          <text class="anno" x="895" y="138" text-anchor="end" fill="#e98e7f">1995</text>
+          <circle class="pulse-dot" cx="895" cy="92" r="7" fill="#d9978c"/>
+          <text class="anno" x="895" y="138" text-anchor="end" fill="#d9978c">1995</text>
           <text class="anno-i" x="895" y="64" text-anchor="end">declassified, shut down</text>
         </svg>
         <figcaption class="viz-cap">It really happened, on the public record. The whole archive, tens of thousands of pages, now sits in the CIA's online reading room. <span class="src"><a href="https://www.cia.gov/readingroom/collection/stargate">CIA reading room</a></span></figcaption>

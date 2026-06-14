@@ -55,8 +55,8 @@
     --c-sky:   #8fb3c7;
     --c-plum:  #b79bc4;
     --c-green: #9ec79a;
-    --c-amber: #e6c074;
-    --c-rose:  #e98e7f;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
     --c-grid:  rgba(120, 134, 120, 0.22);
     --c-grid-strong: rgba(120, 134, 120, 0.4);
     --panel:   #2a322b;
@@ -103,8 +103,8 @@
   .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
 
   /* per-section color rhythm */
-  #wall { --sec-accent:#8fb3c7; } #rotten { --sec-accent:#e98e7f; } #plateau { --sec-accent:#b79bc4; }
-  #eatless { --sec-accent:#e6c074; } #works { --sec-accent:#9ec79a; } #sources { --sec-accent:#D4C4A0; }
+  #wall { --sec-accent:#8fb3c7; } #rotten { --sec-accent:#d9978c; } #plateau { --sec-accent:#b79bc4; }
+  #eatless { --sec-accent:#dfc288; } #works { --sec-accent:#9ec79a; } #sources { --sec-accent:#D4C4A0; }
 
   /* a wide visual that breaks out of the reading column on big screens */
   .breakout { max-width: var(--wide); }
@@ -124,7 +124,7 @@
   .stat .fig { display: block; font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1; color: var(--sc, var(--accent)); font-variant-numeric: tabular-nums; }
   .stat .fig-lbl { display: block; font-family: var(--font-body); font-size: 0.86rem; line-height: 1.4; color: var(--text-dim); margin-top: 0.45em; }
   .stat.sky { --sc:#8fb3c7; } .stat.plum { --sc:#b79bc4; } .stat.green { --sc:#9ec79a; }
-  .stat.amber { --sc:#e6c074; } .stat.rose { --sc:#e98e7f; } .stat.gold { --sc:#D4C4A0; }
+  .stat.amber { --sc:#dfc288; } .stat.rose { --sc:#d9978c; } .stat.gold { --sc:#D4C4A0; }
 
   /* ---------- CITATION + GRADE CHIPS ---------- */
   .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
@@ -133,8 +133,8 @@
   .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
   .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
   .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
-  .grade.g-c { background: rgba(230,192,116,0.15); color: #e6c074; border: 1px solid rgba(230,192,116,0.4); }
-  .grade.g-d { background: rgba(233,142,127,0.14); color: #e98e7f; border: 1px solid rgba(233,142,127,0.4); }
+  .grade.g-c { background: rgba(230,192,116,0.15); color: #dfc288; border: 1px solid rgba(230,192,116,0.4); }
+  .grade.g-d { background: rgba(233,142,127,0.14); color: #d9978c; border: 1px solid rgba(233,142,127,0.4); }
 
   /* ---------- FORK (live controversy) ---------- */
   .fork { border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.14); padding: 1.1em 1.2em; margin: 1.7em 0; }
@@ -143,7 +143,7 @@
   .fork-a { display: grid; gap: 0.7em; margin-bottom: 0.8em; }
   @media (min-width: 620px) { .fork-a { grid-template-columns: 1fr 1fr; } }
   .fork-side { border-left: 3px solid var(--fc, var(--accent)); padding-left: 0.8em; }
-  .fork-side.one { --fc:#D4C4A0; } .fork-side.two { --fc:#e98e7f; }
+  .fork-side.one { --fc:#D4C4A0; } .fork-side.two { --fc:#d9978c; }
   .fork-side h4 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--fc, var(--accent)); margin: 0 0 0.3em; text-transform: uppercase; }
   .fork-side p { font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
   .fork-take { font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; padding-top: 0.6em; border-top: 1px solid var(--rule); }
@@ -152,7 +152,7 @@
   /* ---------- MYTH / TRUTH callout ---------- */
   .mt { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin: 1.7em 0; background: rgba(0,0,0,0.13); }
   .mt-claim { padding: 0.85em 1.1em; background: rgba(233,142,127,0.08); border-bottom: 1px solid var(--rule); font-size: 1.02rem; line-height: 1.5; color: var(--text); }
-  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #e98e7f; display: block; margin-bottom: 0.25em; }
+  .mt-claim b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #d9978c; display: block; margin-bottom: 0.25em; }
   .mt-truth { padding: 0.85em 1.1em; font-size: 1.02rem; line-height: 1.5; color: var(--text-bright); }
   .mt-truth b { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9ec79a; display: block; margin-bottom: 0.25em; }
 
@@ -291,8 +291,8 @@
         <text class="anno" x="300" y="132" fill="#8fb3c7">Born in 1900</text>
 
         <!-- the shared ending: the ceiling -->
-        <circle class="pulse-dot" cx="920" cy="330" r="5.5" fill="#e98e7f"/>
-        <text class="anno" x="908" y="172" text-anchor="end" fill="#e98e7f">Both lines end together</text>
+        <circle class="pulse-dot" cx="920" cy="330" r="5.5" fill="#d9978c"/>
+        <text class="anno" x="908" y="172" text-anchor="end" fill="#d9978c">Both lines end together</text>
         <text class="anno-i" x="908" y="191" text-anchor="end">almost no one passes about 110</text>
       </svg>
       <figcaption class="hero-cap" id="hero-fig-cap">Out of a hundred newborns, how many are still alive at each age. A century ago the line sagged early, as disease and childhood took a heavy cut. Today it holds near the top, then bends down hard in the eighties and nineties. We squared off the curve, far more of us now reach old age, but look where both lines finish. We learned to fill the room under the ceiling, not to raise it.</figcaption>
@@ -427,11 +427,11 @@
           <text class="lbl-val" x="275" y="48" text-anchor="middle">100%</text>
           <text class="ax" x="275" y="356" text-anchor="middle">before</text>
           <!-- after: ~24% -> height 65, y 265..330 -->
-          <rect class="grow-v" x="430" y="265" width="150" height="65" rx="4" fill="#e98e7f"/>
-          <text class="lbl-val" x="505" y="253" text-anchor="middle" fill="#e98e7f">~24%</text>
+          <rect class="grow-v" x="430" y="265" width="150" height="65" rx="4" fill="#d9978c"/>
+          <text class="lbl-val" x="505" y="253" text-anchor="middle" fill="#d9978c">~24%</text>
           <text class="ax" x="505" y="356" text-anchor="middle">after</text>
           <!-- drop annotation in the open zone above the short "after" bar -->
-          <text x="505" y="150" text-anchor="middle" font-weight="700" font-size="31" fill="#e98e7f">69 to 82%</text>
+          <text x="505" y="150" text-anchor="middle" font-weight="700" font-size="31" fill="#d9978c">69 to 82%</text>
           <text class="anno-i" x="505" y="173" text-anchor="middle">of the records vanish</text>
         </svg>
         <figcaption class="viz-cap">Once the paperwork could be checked, most of the "supercentenarians" disappeared. They were missing records, not people. <span class="src"><a href="https://www.biorxiv.org/content/10.1101/704080v3">Newman 2024</a></span></figcaption>
@@ -487,16 +487,16 @@
           <!-- pts: 60:0.02 y350 x100 ; 80:0.09 y315 x391 ; 90:0.18 y270 x536 ; 100:0.32 y200 x682 ; 105:0.42 y150 x755 -->
           <line x1="755" y1="60" x2="755" y2="360" stroke="#b79bc4" stroke-width="1" stroke-dasharray="3 6" opacity="0.7"/>
           <text class="axs" x="755" y="52" text-anchor="middle" fill="#b79bc4">105</text>
-          <path class="draw" style="--len:820" d="M100 350 Q 300 345 391 315 T 536 270 Q 620 232 682 200 L755 150" fill="none" stroke="#c9c3cf" stroke-width="3.5" stroke-linecap="round"/>
+          <path class="draw" style="--len:820" d="M100 350 Q 300 345 391 315 T 536 270 Q 620 232 682 200 L755 150" fill="none" stroke="#cbc5b9" stroke-width="3.5" stroke-linecap="round"/>
           <!-- Italy plateau: 105(0.42 y150) flatten to ~0.475 (y123.75) and hold -->
           <path class="draw" style="--len:200" d="M755 150 Q 800 132 845 126 L920 126" fill="none" stroke="#D4C4A0" stroke-width="4" stroke-linecap="round"/>
           <circle cx="920" cy="126" r="4.5" fill="#D4C4A0"/>
           <text class="anno" x="912" y="152" text-anchor="end" fill="#D4C4A0">Italy: levels off near 47% a year</text>
           <text class="anno-i" x="912" y="168" text-anchor="end">Barbi 2018</text>
           <!-- France keeps rising: 105(y150) -> 115 (0.58 y70) -->
-          <path class="draw" style="--len:200" d="M755 150 L920 73" fill="none" stroke="#e98e7f" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="920" cy="73" r="4.5" fill="#e98e7f"/>
-          <text class="anno" x="846" y="64" text-anchor="end" fill="#e98e7f">France: keeps climbing</text>
+          <path class="draw" style="--len:200" d="M755 150 L920 73" fill="none" stroke="#d9978c" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="920" cy="73" r="4.5" fill="#d9978c"/>
+          <text class="anno" x="846" y="64" text-anchor="end" fill="#d9978c">France: keeps climbing</text>
           <text class="anno-i" x="846" y="49" text-anchor="end">Dang 2023</text>
         </svg>
         <figcaption class="viz-cap">After 105 the two best datasets disagree: Italy flattens into a plateau, France keeps climbing. Same question, opposite answers, still unsettled.</figcaption>
@@ -569,8 +569,8 @@
           <!-- Being unfit 5.04 -> 614 -->
           <g>
             <text class="lbl-name" x="220" y="78" text-anchor="end">Being unfit</text>
-            <rect class="grow-b" x="230" y="62" width="614" height="26" rx="3" fill="#e98e7f"/>
-            <text class="lbl-val" x="854" y="82" fill="#e98e7f">5.0x</text>
+            <rect class="grow-b" x="230" y="62" width="614" height="26" rx="3" fill="#d9978c"/>
+            <text class="lbl-val" x="854" y="82" fill="#d9978c">5.0x</text>
           </g>
           <!-- Smoking 1.41 -> 172 -->
           <g>
@@ -581,7 +581,7 @@
           <!-- Diabetes 1.40 -> 171 -->
           <g>
             <text class="lbl-name" x="220" y="198" text-anchor="end">Diabetes</text>
-            <rect class="grow-b" x="230" y="182" width="171" height="26" rx="3" fill="#e6c074"/>
+            <rect class="grow-b" x="230" y="182" width="171" height="26" rx="3" fill="#dfc288"/>
             <text class="lbl-val" x="411" y="202">1.4x</text>
           </g>
           <!-- Heart disease 1.29 -> 157 -->
