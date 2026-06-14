@@ -145,10 +145,12 @@ Use at the top of every post. The eyebrow + meta strip are optional.
 <div class="u-grid"><figure><img src="assets/..." alt=""><figcaption><b>Name</b>Caption.</figcaption></figure> … </div>
 ```
 
-### Highlight / titled callout - `.u-callout`
+### Highlight / titled callout - `.u-callout` (+ `.u-move` takeaway line)
 ```html
 <aside class="u-callout"><p class="u-callout-k">The honest goal</p><p class="u-callout-body">The point.</p></aside>
+<aside class="u-callout u-move"><p class="u-callout-k">label (hidden)</p><p class="u-callout-body">The takeaway, in the essay's own voice.</p></aside>
 ```
+Plain `.u-callout` is a boxed, **labelled** highlight: use it for a one-off, meaningfully-named callout. Add **`.u-move`** for a long essay's *recurring* takeaway after every section: it drops the box and hides the label, leaving a quiet gold marker line in the essay's italic voice (a labelled box repeated a dozen-plus times reads like homework). Keep the label in the markup; `.u-move` just hides it.
 
 ### Two sides of a debate - `.debateA` (Stacked tint)
 ```html
@@ -170,6 +172,7 @@ For one set-apart definition (an epigraph opener). Use `.dlnum-*` below when you
 ```html
 <div class="dlnum-wrap"><p class="dlnum-head">Define some terms.</p><div class="dlnum-item"><div class="dlnum-numeral">1</div><div class="dlnum-body"><h3 class="dlnum-term">Term</h3><p class="dlnum-def">Definition.</p></div></div> … </div>
 ```
+Default is a single column with hairline rules. For a **short, even-count** glossary (4 or 6 terms) where the single column eats too much height, add **`.dlnum-2up`** to `.dlnum-wrap` for a compact 2-up grid (about half the height; drops the rules, stacks on mobile). Do not use it for odd counts (it orphans the last term).
 
 ### Safety callout - `.scallout-banner` (health posts)
 ```html
@@ -183,7 +186,7 @@ For one set-apart definition (an epigraph opener). Use `.dlnum-*` below when you
 <div class="u-bignum"><span class="u-bignum-fig">82<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">caption</span><span class="u-bignum-src">source</span></div>
 <div class="u-strip"><span class="u-strip-item"><b>122</b> oldest age</span> … </div>
 ```
-Boxed-card accents: `--sky`, `--amber`, `--green` (also works with the other rhythm hues if you add them).
+`.u-bignum` lays out **figure on the left, caption + source filling the right** (it stacks on narrow screens), so the card never reads as a number floating in empty space. Boxed-card accents: `--sky`, `--amber`, `--green` (also works with the other rhythm hues if you add them).
 
 ### Data table - `.u-table` (feature a row with `.u-feature`)
 ```html
