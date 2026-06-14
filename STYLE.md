@@ -160,6 +160,12 @@ Use at the top of every post. The eyebrow + meta strip are optional.
 <ul class="u-checks"><li class="u-check u-use"><strong>Do this.</strong> …</li><li class="u-check u-meh"><strong>Maybe.</strong> …</li><li class="u-check u-skip"><strong>Skip.</strong> …</li></ul>
 ```
 
+### Dictionary definition opener - `.u-def` (single entry)
+```html
+<dl class="u-def"><dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt><dd class="u-def-gloss">a European painter working before about 1800, or a painting by one.</dd></dl>
+```
+For one set-apart definition (an epigraph opener). Use `.dlnum-*` below when you have several terms to number.
+
 ### Define terms - `.dlnum-*` (Numbered glossary)
 ```html
 <div class="dlnum-wrap"><p class="dlnum-head">Define some terms.</p><div class="dlnum-item"><div class="dlnum-numeral">1</div><div class="dlnum-body"><h3 class="dlnum-term">Term</h3><p class="dlnum-def">Definition.</p></div></div> … </div>
