@@ -44,12 +44,16 @@
        binds to [data-param], [data-value], .p-reset, .p-fps, .p-canvas, .p-hint
        and .render-dot, which all remain. */
 
-    /* The pillbar sits flush under each demo's canvas area. */
+    /* The pillbar is the bottom section of the demo frame: no border or shadow
+       of its own (the .demo-wrapper provides the single outer frame), just a
+       hairline separator between the canvas and the controls. Bottom corners
+       match the wrapper's radius so nothing pokes past it. */
     .demo-wrapper .pillbar {
       max-width: 100%;
-      border-radius: 0 0 14px 14px;
-      border-top: none;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.32), inset 0 -1px 0 rgba(245,241,234,0.04);
+      border: none;
+      border-top: 1px solid var(--rule);
+      border-radius: 0 0 4px 4px;
+      box-shadow: none;
     }
 
     /* The reset button keeps its .p-reset class (the demo JS binds to it) and
