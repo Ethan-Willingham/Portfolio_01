@@ -41,38 +41,10 @@
        PAGE-SPECIFIC STYLES FOR THE GALLERY POST
        ============================================================ */
 
-    /* Zoom hint: a quiet one-line nudge. The paintings are full-resolution
-       scans (up to 22 MP), so the post is pointless if a reader never opens
-       the lightbox, but it doesn't need a heavy box to say so. */
-    .zoom-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.55em;
-      margin: 1.5em 0 2.4em;
-      font-size: 0.95rem;
-      line-height: 1.45;
-      color: var(--text-dim);
-    }
-    .zoom-banner svg {
-      flex-shrink: 0;
-      width: 17px;
-      height: 17px;
-      stroke: var(--accent);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transform: translateY(3px);
-    }
-    .zoom-banner em {
-      font-style: italic;
-      color: var(--accent);
-    }
-    .touch-verb { display: none; }
-    @media (hover: none), (pointer: coarse) {
-      .desktop-verb { display: none; }
-      .touch-verb { display: inline; }
-    }
+    /* Divider between the opener (title + definition) and the plates.
+       Extra top room so the ornament sits evenly between the two, since
+       the first .plate already carries 3.5em above it. */
+    hr.opener-divider { margin: 3.5em 0 0; }
 
     /* The artwork "plate" — each painting gets its own framed display. */
     .plate {
@@ -427,15 +399,7 @@
             <dd class="u-def-gloss">a European painter working before about 1800, or a painting by one.</dd>
           </dl>
 
-          <div class="zoom-banner">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="7"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              <line x1="11" y1="8" x2="11" y2="14"></line>
-              <line x1="8" y1="11" x2="14" y2="11"></line>
-            </svg>
-            <span>Every plate is a full-resolution scan, up to 22&nbsp;MP. <span class="desktop-verb">Click</span><span class="touch-verb">Tap</span> any plate to zoom into the brushwork; <em>Esc</em> to close.</span>
-          </div>
+          <hr class="u-divider opener-divider">
 
           <!-- ============================================================
                PLATE 1 — CARAVAGGIO, THE MUSICIANS
