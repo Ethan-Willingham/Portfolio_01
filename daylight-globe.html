@@ -267,17 +267,6 @@
     }
     .tilt-btn.active .tilt-note { color: rgba(10,13,10,0.7); }
 
-    /* Article-level fact box. Content style, kept understated. */
-    .fact-box {
-      margin: 2em 0;
-      padding: 1.2em 1.4em;
-      background: rgba(255,255,255,0.03);
-      border-left: 3px solid var(--accent);
-      border-radius: 0 6px 6px 0;
-    }
-    .fact-box strong { color: var(--text-bright); }
-    .fact-box p { margin-bottom: 0.5em; font-size: 0.95rem; line-height: 1.55; }
-    .fact-box p:last-child { margin-bottom: 0; }
   </style>
 </head>
 <body>
@@ -349,9 +338,9 @@
             </div>
           </div>
 
-          <div class="divider">&bull; &bull; &bull;</div>
+          <hr class="u-divider">
 
-          <h2>Notes</h2>
+          <h2 class="u-h2">Notes</h2>
 
           <p>
             Drag the Earth. Change the hour, date, or tilt. The shader
