@@ -244,6 +244,61 @@
     /* ---- share ---- */
     .ss-share { margin-top:1.6rem; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .ss-share-out { font-family:var(--font-mono); font-size:11px; color:var(--faint); }
+
+    /* ---- world-class date / time pickers (popovers are portaled to <body>) ---- */
+    .ss-page .pk-trigger { display:inline-flex; align-items:center; gap:8px; cursor:pointer; min-width:150px;
+      font-family:var(--font-mono); font-size:12.5px; color:var(--bright); background:var(--field);
+      border:1px solid var(--line); border-radius:6px; padding:7px 10px; user-select:none;
+      transition:border-color .14s, box-shadow .14s; }
+    .ss-page .pk-trigger:hover { border-color:var(--accent); }
+    .ss-page .pk-trigger.open, .ss-page .pk-trigger:focus-visible { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak); }
+    .ss-page .pk-trigger .pk-i { margin-left:auto; color:var(--dim); font-size:13px; line-height:1; }
+    .ss-page .pk-trigger.muted { color:var(--faint); }
+    .ss-bn-ask .pk-trigger { min-width:170px; }
+
+    .pk-pop { position:fixed; z-index:200; display:none; background:var(--ss-panel,#1e2420);
+      border:1px solid var(--ss-line,#3c463d); border-radius:12px; padding:10px;
+      box-shadow:0 24px 60px -28px rgba(0,0,0,.9); color:var(--ss-ink,#E8E2D6);
+      --ss-accent:#D4C4A0; --ss-weak:rgba(212,196,160,.14); --ss-hover:rgba(245,241,234,.05);
+      --ss-dim:#9aa294; --ss-faint:#828a7d; --ss-bright:#F5F1EA; font-family:var(--font-mono); }
+    .pk-pop.show { display:block; }
+    .pk-pop.tpop.show { display:flex; gap:8px; }
+
+    .pk-head { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+    .pk-arrow { all:unset; cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+      border-radius:6px; color:var(--ss-dim); font-size:16px; transition:background .12s,color .12s; }
+    .pk-arrow:hover { background:var(--ss-hover); color:var(--ss-bright); }
+    .pk-title { all:unset; cursor:pointer; flex:1; text-align:center; font-size:12.5px; color:var(--ss-bright);
+      padding:6px; border-radius:6px; transition:background .12s,color .12s; }
+    .pk-title:hover { background:var(--ss-hover); color:var(--ss-accent); }
+    .pk-grid { display:grid; grid-template-columns:repeat(7,34px); gap:1px; }
+    .pk-wd { text-align:center; font-size:9px; letter-spacing:.03em; color:var(--ss-faint); padding:3px 0; text-transform:uppercase; }
+    .pk-day { all:unset; cursor:pointer; height:32px; display:flex; align-items:center; justify-content:center;
+      font-size:12px; color:var(--ss-ink); border-radius:6px; transition:background .1s,color .1s; }
+    .pk-day:hover { background:var(--ss-hover); }
+    .pk-day.oth { color:var(--ss-faint); opacity:.45; }
+    .pk-day.today { box-shadow:inset 0 0 0 1px var(--ss-line,#3c463d); }
+    .pk-day.foc { box-shadow:inset 0 0 0 1px var(--ss-accent); }
+    .pk-day.sel { background:var(--ss-accent); color:#23291f; }
+
+    .pk-months { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; width:238px; }
+    .pk-mo { all:unset; cursor:pointer; text-align:center; font-size:11.5px; color:var(--ss-ink); padding:9px 0; border-radius:6px; transition:background .12s,color .12s; }
+    .pk-mo:hover { background:var(--ss-hover); } .pk-mo.on { background:var(--ss-weak); color:var(--ss-accent); }
+    .pk-years { max-height:148px; overflow-y:auto; display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
+      border-top:1px solid var(--ss-line,#3c463d); padding-top:8px; width:238px; }
+    .pk-yr { all:unset; cursor:pointer; text-align:center; font-size:11.5px; color:var(--ss-ink); padding:7px 0; border-radius:6px; transition:background .12s,color .12s; }
+    .pk-yr:hover { background:var(--ss-hover); } .pk-yr.on { background:var(--ss-accent); color:#23291f; }
+
+    .pk-col { display:flex; flex-direction:column; }
+    .pk-collab { font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--ss-faint); text-align:center; margin-bottom:5px; }
+    .pk-scroll { height:158px; overflow-y:auto; width:50px; display:flex; flex-direction:column; gap:2px; scrollbar-width:thin; }
+    .pk-opt { all:unset; cursor:pointer; text-align:center; font-size:12px; color:var(--ss-ink); padding:6px 0; border-radius:6px; transition:background .1s; }
+    .pk-opt:hover { background:var(--ss-hover); } .pk-opt.on { background:var(--ss-accent); color:#23291f; }
+    .pk-ampm { display:flex; flex-direction:column; gap:5px; justify-content:center; padding-left:2px; }
+    .pk-ap { all:unset; cursor:pointer; text-align:center; font-size:11px; color:var(--ss-dim); border:1px solid var(--ss-line,#3c463d); border-radius:6px; padding:9px 12px; transition:background .12s,color .12s,border-color .12s; }
+    .pk-ap.on { background:var(--ss-weak); color:var(--ss-accent); border-color:var(--ss-accent); }
+    .pk-noknow { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; color:var(--dim); cursor:pointer; user-select:none; white-space:nowrap; }
+    .pk-noknow input { accent-color:var(--accent); width:13px; height:13px; }
 </style>
 </head>
 <body class="ss-page">
@@ -262,8 +317,8 @@
       <section class="ss-barnum ss-card fade-in" id="ss-barnum" style="animation-delay:.15s">
         <div class="ss-bn-ask">
           <div>
-            <label for="ss-bn-date">Before anything, when were you born?</label>
-            <input type="date" id="ss-bn-date" value="1990-06-15">
+            <label>Before anything, when were you born?</label>
+            <div id="ss-bn-date-mount"></div>
           </div>
           <button class="ss-btn" id="ss-bn-go" type="button">Read me</button>
         </div>

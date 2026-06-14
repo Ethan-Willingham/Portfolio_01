@@ -131,8 +131,186 @@
     return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" font-size="' + size + '" fill="' + col + '" font-family="var(--font-mono)">' + t + '</text>';
   }
 
+  /* ---------------- world-class pickers ---------------- */
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var WD = ['S','M','T','W','T','F','S'];
+  function z2(n) { return ('0' + n).slice(-2); }
+
+  // shared popover placement + outside-close, used by both pickers
+  function popController(trig, pop, onRender) {
+    function place() {
+      var r = trig.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+      var left = Math.max(8, Math.min(r.left, window.innerWidth - pw - 8));
+      var top = r.bottom + 6;
+      if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+      pop.style.left = left + 'px'; pop.style.top = top + 'px';
+    }
+    var onOutside, onKey;
+    function open() {
+      onRender(); pop.classList.add('show'); trig.classList.add('open'); place();
+      onOutside = function (e) { if (!pop.contains(e.target) && !trig.contains(e.target)) close(); };
+      onKey = function (e) { if (e.key === 'Escape') { close(); trig.focus(); } };
+      setTimeout(function () { document.addEventListener('mousedown', onOutside); }, 0);
+      document.addEventListener('keydown', onKey);
+      window.addEventListener('scroll', place, true); window.addEventListener('resize', place);
+    }
+    function close() {
+      pop.classList.remove('show'); trig.classList.remove('open');
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place);
+    }
+    return { open: open, close: close, place: place, isOpen: function () { return pop.classList.contains('show'); } };
+  }
+
+  // DATE: trigger + portaled calendar with instant month/year jump + keyboard
+  function createDatePicker(mount, hiddenId, initialYMD, onChange) {
+    var p = initialYMD.split('-');
+    var sel = { y: +p[0], m: +p[1] - 1, d: +p[2] };
+    var view = { y: sel.y, m: sel.m };
+    var foc = new Date(sel.y, sel.m, sel.d);
+    var mode = 'days';
+    var TODAY = new Date();
+
+    var hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.id = hiddenId;
+    var trig = document.createElement('button'); trig.type = 'button'; trig.className = 'pk-trigger';
+    trig.setAttribute('aria-label', 'Choose date');
+    trig.innerHTML = '<span class="pk-val"></span><span class="pk-i" aria-hidden="true">&#9662;</span>';
+    mount.appendChild(hidden); mount.appendChild(trig);
+    var pop = document.createElement('div'); pop.className = 'pk-pop'; pop.setAttribute('role', 'dialog');
+    document.body.appendChild(pop);
+
+    function commit() {
+      hidden.value = sel.y + '-' + z2(sel.m + 1) + '-' + z2(sel.d);
+      trig.querySelector('.pk-val').textContent = sel.d + ' ' + MON[sel.m] + ' ' + sel.y;
+    }
+    function sameDay(a, y, m, d) { return a.getFullYear() === y && a.getMonth() === m && a.getDate() === d; }
+
+    function renderDays() {
+      var first = new Date(view.y, view.m, 1).getDay();
+      var h = '<div class="pk-head"><button class="pk-arrow" type="button" data-a="pm" aria-label="Previous month">&#8249;</button>' +
+        '<button class="pk-title" type="button" data-a="pick">' + MONTHS[view.m] + ' ' + view.y + '</button>' +
+        '<button class="pk-arrow" type="button" data-a="nm" aria-label="Next month">&#8250;</button></div><div class="pk-grid">';
+      for (var w = 0; w < 7; w++) h += '<div class="pk-wd">' + WD[w] + '</div>';
+      for (var i = 0; i < 42; i++) {
+        var cur = new Date(view.y, view.m, 1 - first + i);
+        var inM = cur.getMonth() === view.m, cls = 'pk-day';
+        if (!inM) cls += ' oth';
+        if (sameDay(cur, sel.y, sel.m, sel.d)) cls += ' sel';
+        if (sameDay(cur, TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate())) cls += ' today';
+        if (sameDay(cur, foc.getFullYear(), foc.getMonth(), foc.getDate())) cls += ' foc';
+        h += '<button type="button" class="' + cls + '" data-date="' +
+          cur.getFullYear() + '-' + z2(cur.getMonth() + 1) + '-' + z2(cur.getDate()) + '">' + cur.getDate() + '</button>';
+      }
+      pop.innerHTML = h + '</div>';
+    }
+    function renderPick() {
+      var h = '<div class="pk-head"><button class="pk-arrow" type="button" data-a="days" aria-label="Back">&#8249;</button>' +
+        '<button class="pk-title" type="button" data-a="days">' + view.y + '</button><span style="width:28px"></span></div>';
+      h += '<div class="pk-months">';
+      for (var m = 0; m < 12; m++) h += '<button type="button" class="pk-mo' + (m === view.m ? ' on' : '') + '" data-m="' + m + '">' + MON[m] + '</button>';
+      h += '</div><div class="pk-years">';
+      for (var y = 1900; y <= TODAY.getFullYear(); y++) h += '<button type="button" class="pk-yr' + (y === view.y ? ' on' : '') + '" data-y="' + y + '">' + y + '</button>';
+      pop.innerHTML = h + '</div>';
+      var on = pop.querySelector('.pk-yr.on'); if (on) on.scrollIntoView({ block: 'center' });
+    }
+    function render() { if (mode === 'days') renderDays(); else renderPick(); }
+    var ctl = popController(trig, pop, render);
+
+    function pick(dateStr) {
+      var q = dateStr.split('-'); sel = { y: +q[0], m: +q[1] - 1, d: +q[2] };
+      view = { y: sel.y, m: sel.m }; foc = new Date(sel.y, sel.m, sel.d);
+      commit(); ctl.close(); trig.focus(); if (onChange) onChange();
+    }
+
+    pop.addEventListener('click', function (e) {
+      var t = e.target.closest('button'); if (!t) return;
+      var a = t.getAttribute('data-a');
+      if (a === 'pm') { view.m--; if (view.m < 0) { view.m = 11; view.y--; } renderDays(); ctl.place(); return; }
+      if (a === 'nm') { view.m++; if (view.m > 11) { view.m = 0; view.y++; } renderDays(); ctl.place(); return; }
+      if (a === 'pick') { mode = 'pick'; renderPick(); ctl.place(); return; }
+      if (a === 'days') { mode = 'days'; renderDays(); ctl.place(); return; }
+      if (t.classList.contains('pk-mo')) { view.m = +t.getAttribute('data-m'); mode = 'days'; renderDays(); ctl.place(); return; }
+      if (t.classList.contains('pk-yr')) { view.y = +t.getAttribute('data-y'); renderPick(); ctl.place(); return; }
+      if (t.classList.contains('pk-day')) pick(t.getAttribute('data-date'));
+    });
+    // keyboard: arrows move focus, Enter picks (only in day mode)
+    pop.addEventListener('keydown', function (e) {
+      if (mode !== 'days') return;
+      var step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+      if (step) { e.preventDefault(); foc = new Date(foc.getFullYear(), foc.getMonth(), foc.getDate() + step);
+        view = { y: foc.getFullYear(), m: foc.getMonth() }; renderDays(); ctl.place(); return; }
+      if (e.key === 'Enter') { e.preventDefault();
+        pick(foc.getFullYear() + '-' + z2(foc.getMonth() + 1) + '-' + z2(foc.getDate())); }
+    });
+    trig.addEventListener('click', function () { ctl.isOpen() ? ctl.close() : ctl.open(); });
+    trig.setAttribute('tabindex', '0');
+
+    commit();
+    return { getValue: function () { return hidden.value; }, setValue: function (v) { pick(v); ctl.close(); } };
+  }
+
+  // TIME: trigger + portaled hour/minute/AM-PM columns + "don't know" toggle
+  function createTimePicker(mount, hiddenId, initialHHMM, onChange, onKnown) {
+    var hp = initialHHMM.split(':'); var h24 = +hp[0] || 0, mn = +hp[1] || 0; var known = true;
+    var hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.id = hiddenId;
+    var trig = document.createElement('button'); trig.type = 'button'; trig.className = 'pk-trigger';
+    trig.setAttribute('aria-label', 'Choose time');
+    trig.innerHTML = '<span class="pk-val"></span><span class="pk-i" aria-hidden="true">&#9662;</span>';
+    var know = document.createElement('label'); know.className = 'pk-noknow';
+    know.innerHTML = '<input type="checkbox"> don’t know';
+    var wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '5px';
+    wrap.appendChild(trig); wrap.appendChild(know);
+    mount.appendChild(hidden); mount.appendChild(wrap);
+    var pop = document.createElement('div'); pop.className = 'pk-pop tpop'; pop.setAttribute('role', 'dialog');
+    document.body.appendChild(pop);
+
+    function label() {
+      if (!known) return 'unknown';
+      var ap = h24 >= 12 ? 'PM' : 'AM', h12 = h24 % 12; if (h12 === 0) h12 = 12;
+      return z2(h12) + ':' + z2(mn) + ' ' + ap;
+    }
+    function commit() { hidden.value = z2(h24) + ':' + z2(mn); trig.querySelector('.pk-val').textContent = label(); }
+
+    function render() {
+      var ap = h24 >= 12 ? 'PM' : 'AM', h12 = h24 % 12; if (h12 === 0) h12 = 12;
+      var h = '<div class="pk-col"><div class="pk-collab">Hour</div><div class="pk-scroll" data-col="h">';
+      for (var i = 1; i <= 12; i++) h += '<button type="button" class="pk-opt' + (i === h12 ? ' on' : '') + '" data-h="' + i + '">' + z2(i) + '</button>';
+      h += '</div></div><div class="pk-col"><div class="pk-collab">Min</div><div class="pk-scroll" data-col="m">';
+      for (var j = 0; j < 60; j++) h += '<button type="button" class="pk-opt' + (j === mn ? ' on' : '') + '" data-mn="' + j + '">' + z2(j) + '</button>';
+      h += '</div></div><div class="pk-ampm"><button type="button" class="pk-ap' + (ap === 'AM' ? ' on' : '') + '" data-ap="AM">AM</button>' +
+        '<button type="button" class="pk-ap' + (ap === 'PM' ? ' on' : '') + '" data-ap="PM">PM</button></div>';
+      pop.innerHTML = h;
+      var onh = pop.querySelector('[data-col="h"] .on'); if (onh) onh.scrollIntoView({ block: 'center' });
+      var onm = pop.querySelector('[data-col="m"] .on'); if (onm) onm.scrollIntoView({ block: 'center' });
+    }
+    var ctl = popController(trig, pop, render);
+
+    pop.addEventListener('click', function (e) {
+      var t = e.target.closest('button'); if (!t) return;
+      if (t.hasAttribute('data-h')) { var pm = h24 >= 12; h24 = (+t.getAttribute('data-h') % 12) + (pm ? 12 : 0); }
+      else if (t.hasAttribute('data-mn')) { mn = +t.getAttribute('data-mn'); }
+      else if (t.hasAttribute('data-ap')) { var wantPM = t.getAttribute('data-ap') === 'PM';
+        if (wantPM && h24 < 12) h24 += 12; if (!wantPM && h24 >= 12) h24 -= 12; }
+      else return;
+      commit(); render(); ctl.place(); if (onChange) onChange();
+    });
+    trig.addEventListener('click', function () { if (!known) return; ctl.isOpen() ? ctl.close() : ctl.open(); });
+    know.querySelector('input').addEventListener('change', function () {
+      known = !this.checked; trig.classList.toggle('muted', !known);
+      if (!known) ctl.close(); commit(); if (onKnown) onKnown(known);
+    });
+
+    commit();
+    return { getValue: function () { return hidden.value; },
+      setValue: function (v) { var s = v.split(':'); h24 = +s[0] || 0; mn = +s[1] || 0; commit(); if (ctl.isOpen()) render(); },
+      isKnown: function () { return known; } };
+  }
+
   /* ---------------- panel state + build ---------------- */
-  var state = { sys: 'whole', lat: 40.71, lon: -74.01, off: -5, hasPlace: true };
+  var datePicker, timePicker;
+  var state = { sys: 'whole', lat: 40.71, lon: -74.01, off: -5, hasPlace: true, timeKnown: true };
 
   function buildPanel() {
     var ip = $('ss-ip');
@@ -144,8 +322,8 @@
           '<button data-sys="equal">Equal</button>' +
           '<button data-sys="placidus">Placidus</button></div></div>' +
       '<div class="ss-inputs">' +
-        '<div class="ss-fld"><label for="ss-date">Birth date</label><input type="date" id="ss-date" value="1990-06-15"></div>' +
-        '<div class="ss-fld"><label for="ss-time">Birth time</label><input type="time" id="ss-time" value="12:00"></div>' +
+        '<div class="ss-fld"><label>Birth date</label><div id="ss-date-mount"></div></div>' +
+        '<div class="ss-fld"><label>Birth time</label><div id="ss-time-mount"></div></div>' +
         '<div class="ss-fld ss-place"><label for="ss-city">Birthplace</label><input id="ss-city" list="ss-cities" placeholder="city" value="New York, USA"></div>' +
         '<button class="ss-adv" id="ss-adv" type="button">coords</button>' +
         '<div class="ss-coords" id="ss-coords">' +
@@ -167,6 +345,12 @@
       CITIES.forEach(function (c) { var o = document.createElement('option'); o.value = c[0]; dl.appendChild(o); });
     }
 
+    // custom pickers (replace the native date/time inputs)
+    datePicker = createDatePicker($('ss-date-mount'), 'ss-date', '1990-06-15', function () { update(); });
+    timePicker = createTimePicker($('ss-time-mount'), 'ss-time', '12:00',
+      function () { syncScrubFromTime(); update(); },
+      function (known) { state.timeKnown = known; update(); });
+
     // events
     $('ss-seg').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -176,9 +360,6 @@
       if (!$('ss-cmp-wrap').hidden) renderCompare();
     });
     $('ss-adv').addEventListener('click', function () { $('ss-coords').classList.toggle('show'); });
-    ['ss-date', 'ss-time'].forEach(function (id) {
-      $(id).addEventListener('input', function () { syncScrubFromTime(); update(); });
-    });
     $('ss-city').addEventListener('input', onCity);
     ['ss-lat', 'ss-lon', 'ss-off'].forEach(function (id) {
       $(id).addEventListener('input', function () {
@@ -189,8 +370,7 @@
       });
     });
     $('ss-scrub').addEventListener('input', function () {
-      var m = +this.value; var hh = ('0' + Math.floor(m / 60)).slice(-2), mm = ('0' + (m % 60)).slice(-2);
-      $('ss-time').value = hh + ':' + mm; update();
+      var m = +this.value; timePicker.setValue(z2(Math.floor(m / 60)) + ':' + z2(m % 60)); update();
     });
     onCity(); syncScrubFromTime();
   }
@@ -214,10 +394,11 @@
   function readOpts() {
     var d = ($('ss-date').value || '1990-06-15').split('-');
     var t = ($('ss-time').value || '12:00').split(':');
+    var angles = state.hasPlace && state.timeKnown;  // Ascendant + houses need both a place and a known time
     return { year:+d[0], month:+d[1], day:+d[2], hour:+t[0], minute:+t[1] || 0,
       tzOffsetHours: state.off, houseSystem: state.sys,
-      latDeg: state.hasPlace ? state.lat : null,
-      lonEastDeg: state.hasPlace ? state.lon : null };
+      latDeg: angles ? state.lat : null,
+      lonEastDeg: angles ? state.lon : null };
   }
 
   /* ---------------- render ---------------- */
@@ -232,7 +413,8 @@
       b3('☉', 'Sun', sun.sign, degTxt(sun)) +
       b3('☽', 'Moon', moon.sign, degTxt(moon)) +
       (rising ? b3('ASC', 'Rising', rising.sign, Math.floor(rising.deg) + '°')
-              : '<div class="ss-b3"><div class="k"><span class="g">ASC</span>Rising</div><div class="v" style="font-size:11px;color:var(--dim)">add birthplace</div></div>');
+              : '<div class="ss-b3"><div class="k"><span class="g">ASC</span>Rising</div><div class="v" style="font-size:11px;color:var(--dim)">' +
+                (state.timeKnown ? 'add birthplace' : 'needs birth time') + '</div></div>');
 
     $('ss-table').innerHTML = c.bodies.map(function (b) {
       var pv = PLANET_PROV[b.key];
@@ -260,19 +442,27 @@
 
     // scrubber readout
     if (c.angles) {
-      $('ss-scrub-read').innerHTML = 'Rising sign <b>' + rising.sign + '</b> at ' + $('ss-time').value +
-        ' · drag to watch it change';
+      $('ss-scrub-read').innerHTML = 'Rising sign <b>' + rising.sign + '</b> · drag the slider to watch it change';
       $('ss-scrub').disabled = false;
+    } else if (!state.timeKnown) {
+      $('ss-scrub-read').innerHTML = 'Birth time unknown, so the rising sign and houses are hidden';
+      $('ss-scrub').disabled = true;
     } else {
-      $('ss-scrub-read').innerHTML = 'Enter a birthplace to see your rising sign';
+      $('ss-scrub-read').innerHTML = 'Add a birthplace to see your rising sign';
       $('ss-scrub').disabled = true;
     }
 
     // honest note
-    $('ss-note').innerHTML = c.angles
-      ? 'Positions are real astronomy (Schlyter\'s ephemeris), accurate to well under a degree. The rising sign and houses depend on the exact birth minute and a clean timezone; we use a fixed modern UTC offset, so a daylight-saving or historical-zone error of an hour can nudge the Ascendant. ' +
-        '<button class="ss-adv" id="ss-cmp-btn" type="button" style="display:inline">compare the three house systems →</button>'
-      : 'Sun, Moon, and planets need only your date and time. Add a birthplace for the Ascendant and houses.';
+    var note;
+    if (c.angles) {
+      note = 'Positions are real astronomy (Schlyter\'s ephemeris), accurate to well under a degree. The rising sign and houses depend on the exact birth minute and a clean timezone; we use a fixed modern UTC offset, so a daylight-saving or historical-zone error of an hour can nudge the Ascendant. ' +
+        '<button class="ss-adv" id="ss-cmp-btn" type="button" style="display:inline">compare the three house systems →</button>';
+    } else if (!state.timeKnown) {
+      note = 'Without a birth time the Sun and planets are still right (the Moon is approximate), but the rising sign and houses, which turn a full circle every day, cannot be placed. That gap is exactly why astrologers fuss over your precise birth minute.';
+    } else {
+      note = 'Sun, Moon, and planets need only your date and time. Add a birthplace for the Ascendant and houses.';
+    }
+    $('ss-note').innerHTML = note;
     var cb = $('ss-cmp-btn');
     if (cb) cb.addEventListener('click', function () {
       var w = $('ss-cmp-wrap'); w.hidden = !w.hidden; if (!w.hidden) { renderCompare(); w.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
@@ -303,6 +493,7 @@
   /* ---------------- Barnum opener ---------------- */
   var FORER = 'You have a great need for other people to like and admire you, yet you tend to be critical of yourself. You have a great deal of unused capacity you have not turned to your advantage. Disciplined and self-controlled outside, you tend to be worried and insecure inside. At times you have serious doubts about whether you have made the right decision. You prefer a certain amount of variety and grow dissatisfied when hemmed in. You pride yourself on being an independent thinker, and you do not accept others’ claims without proof. But you have found it unwise to be too frank in revealing yourself to others.';
   function initBarnum() {
+    createDatePicker($('ss-bn-date-mount'), 'ss-bn-date', '1990-06-15', function () {});
     var go = $('ss-bn-go'), dateEl = $('ss-bn-date'),
         reading = $('ss-bn-reading'), rate = $('ss-bn-rate'), stars = $('ss-bn-stars'),
         reveal = $('ss-bn-reveal'), revealText = $('ss-bn-reveal-text');
