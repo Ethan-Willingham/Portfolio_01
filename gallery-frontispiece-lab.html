@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Frontispiece &mdash; bigger title chooser</title>
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ---- lab chrome (throwaway, noindex) ---- */
+    body { padding: 0 1.2rem 6rem; }
+    .lab-head { max-width: var(--content-width); margin: 2.5rem auto 1rem; }
+    .lab-head h1 { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.8rem; margin: 0 0 .4em; }
+    .lab-head p { font-family: var(--font-body); color: var(--text-dim); font-size: 1rem; line-height: 1.6; margin: 0; }
+    .opt { border-top: 1px dashed var(--rule); margin-top: 3.4rem; padding-top: 1.3rem; }
+    .opt-label { max-width: var(--content-width); margin: 0 auto 1.4rem; font-family: var(--font-body); font-size: 1rem; line-height: 1.5; color: var(--text); }
+    .opt-tag { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); background: rgba(212,196,160,.1); padding: .3em .7em; border-radius: 999px; margin-right: .6em; white-space: nowrap; }
+    .opt-note { color: var(--text-dim); }
+    .col { max-width: var(--content-width); margin: 0 auto; }
+
+    /* ---- plate header styles (copied from gallery.html) ---- */
+    .plate { margin: 3.5em 0 2.8em; padding: 0; }
+    .plate-number { display: block; font-family: var(--font-heading); font-size: .85rem; letter-spacing: .18em; color: var(--text-dim); text-transform: uppercase; margin-bottom: .5em; }
+    .plate-title { font-family: var(--font-heading); font-size: 1.7rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 .2em; }
+    .plate-title em { font-style: italic; }
+    .plate-attribution { font-family: var(--font-body); font-size: 1rem; color: var(--text-dim); font-style: italic; margin: 0 0 1.3em; }
+    .plate-attribution .artist-name { color: var(--accent); font-style: normal; font-weight: 500; }
+    .plate-stub-img { max-height: 300px; overflow: hidden; border-radius: 4px; border: 1px solid var(--rule); background: #14181a; line-height: 0; }
+    .plate-stub-img img { display: block; width: 100%; object-fit: cover; margin: 0; }
+
+    /* ============ FRONTISPIECE base (centered, ruled title card) ============ */
+    .fp { text-align: center; border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); padding: 2.6em 0 2.8em; }
+    .fp-kicker { font-family: var(--font-mono); font-size: .74rem; letter-spacing: .22em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 1.2em; }
+    .fp-title { font-family: var(--font-heading); font-weight: 700; color: var(--text-bright); line-height: 1.06; letter-spacing: -.015em; margin: 0 0 1.3em; }
+    /* def: a real centered block (fixed max-width, auto margins) so it stops looking ragged-left */
+    .fp .u-def { display: block; max-width: 30rem; margin: 0 auto; text-align: left; border-left: none; padding-left: 0; }
+
+    /* ===== 1 · Monumental — big title, supporting stays small, more air ===== */
+    .fp-v1 .fp { padding: 3.2em 0 3.4em; }
+    .fp-v1 .fp-title { font-size: clamp(3.2rem,8.5vw,5.2rem); margin-bottom: 1.5em; }
+    .fp-v1 .fp-kicker { letter-spacing: .3em; margin-bottom: 1.4em; }
+
+    /* ===== 2 · Proportional — title AND definition scale up together ===== */
+    .fp-v2 .fp { padding: 2.9em 0 3.1em; }
+    .fp-v2 .fp-title { font-size: clamp(2.9rem,7vw,4.3rem); margin-bottom: 1.4em; }
+    .fp-v2 .fp-kicker { font-size: .8rem; letter-spacing: .2em; margin-bottom: 1.5em; }
+    .fp-v2 .u-def { max-width: 34rem; }
+    .fp-v2 .u-def-word { font-size: clamp(1.5rem,3.2vw,1.95rem); }
+    .fp-v2 .u-def-gloss { font-size: clamp(1.12rem,2.4vw,1.32rem); }
+
+    /* ===== 3 · Stripped — big title, NO kicker, short ornament rules + whitespace ===== */
+    .fp-v3 .fp { border: none; padding: 1.2em 0 1.6em; }
+    .fp-v3 .fp-kicker { display: none; }
+    .fp-v3 .fp-title { font-size: clamp(3.2rem,8.5vw,5rem); margin: 0 0 1.3em; }
+    .fp-v3 .fp-title::before { content: ""; display: block; width: 64px; height: 2px; background: var(--accent); opacity: .55; margin: 0 auto 1.1em; }
+    .fp-v3 .fp::after { content: ""; display: block; width: 64px; height: 2px; background: var(--accent); opacity: .55; margin: 1.8em auto 0; }
+  </style>
+</head>
+<body>
+  <div class="lab-head">
+    <h1>Frontispiece &mdash; bigger title</h1>
+    <p>Option A with a larger title, and three ways to keep the kicker, definition, and spacing balanced under it. Each shown above the real Plate I. Throwaway, noindex.</p>
+  </div>
+
+  <!-- ===================== 1 · MONUMENTAL ===================== -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">1 &middot; Monumental</span><span class="opt-note">Title goes big (up to ~5.2rem); kicker and definition stay small on purpose. The size jump IS the drama. Just add air around the title. Most commanding.</span></div>
+    <div class="col fp-v1">
+      <div class="fp">
+        <p class="fp-kicker">A private collection</p>
+        <h1 class="fp-title">The Old Masters</h1>
+        <dl class="u-def">
+          <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+          <dd class="u-def-gloss">
+            <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+            <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+          </dd>
+        </dl>
+      </div>
+      <section class="plate">
+        <span class="plate-number">Plate I &middot; 1597</span>
+        <h2 class="plate-title"><em>The Musicians</em></h2>
+        <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+        <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== 2 · PROPORTIONAL ===================== -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">2 &middot; Proportional</span><span class="opt-note">Title goes big (~4.3rem) and the definition scales up with it, so nothing looks tiny. Reads as a larger, fuller title card. Most balanced.</span></div>
+    <div class="col fp-v2">
+      <div class="fp">
+        <p class="fp-kicker">A private collection</p>
+        <h1 class="fp-title">The Old Masters</h1>
+        <dl class="u-def">
+          <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+          <dd class="u-def-gloss">
+            <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+            <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+          </dd>
+        </dl>
+      </div>
+      <section class="plate">
+        <span class="plate-number">Plate I &middot; 1597</span>
+        <h2 class="plate-title"><em>The Musicians</em></h2>
+        <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+        <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== 3 · STRIPPED ===================== -->
+  <section class="opt">
+    <div class="opt-label"><span class="opt-tag">3 &middot; Stripped</span><span class="opt-note">Title goes big, the kicker is dropped, and the full-width rules become short centered gold ornaments above the title and below the definition. Most title-page, most minimal.</span></div>
+    <div class="col fp-v3">
+      <div class="fp">
+        <h1 class="fp-title">The Old Masters</h1>
+        <dl class="u-def">
+          <dt class="u-def-term"><dfn class="u-def-word">old master</dfn> <span class="u-def-pos">(n.)</span></dt>
+          <dd class="u-def-gloss">
+            <span class="u-def-sense"><span class="u-def-n">1.</span>a European painter of the great age of Western painting, roughly 1400 to 1800.</span>
+            <span class="u-def-sense"><span class="u-def-n">2.</span>a painting by such an artist, the kind that now hangs in museums and rarely changes hands.</span>
+          </dd>
+        </dl>
+      </div>
+      <section class="plate">
+        <span class="plate-number">Plate I &middot; 1597</span>
+        <h2 class="plate-title"><em>The Musicians</em></h2>
+        <p class="plate-attribution"><span class="artist-name">Michelangelo Merisi da Caravaggio</span></p>
+        <div class="plate-stub-img"><img src="assets/images/The Musicians - Caravaggio.jpg" alt="The Musicians by Caravaggio"></div>
+      </section>
+    </div>
+  </section>
+
+</body>
+</html>
