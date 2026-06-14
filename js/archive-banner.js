@@ -58,8 +58,8 @@
     '<p class="arc-banner__lead">You’re reading something I shelved.</p>' +
     "<p>I move things into the archive when I lose interest, decide the idea was " +
     "better in my head than on the page, or just don’t feel like finishing them " +
-    "right now. About " + PCT + "% of what I start (" + ARCHIVED + " of " + TOTAL +
-    " so far) ends up in here, so this one is in good company.</p>" +
+    "right now. About " + PCT + "% of what I start ends up in here, so this one " +
+    "is in good company.</p>" +
     "<p>So set your expectations: the design is rough in spots, some of it is " +
     "half-built, and parts read exactly like what they are, a draft that an AI and " +
     "I never came back to polish. It is here for the idea, not the finish. " +
