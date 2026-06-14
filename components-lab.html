@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Pick your components &middot; dev lab</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { padding: 0; }
+  .lab-wrap { max-width: 1180px; margin: 0 auto; padding: 2.5rem 1.25rem 7rem; }
+  .lab-head h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 6vw, 3.2rem); font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 0.6rem; }
+  .lab-head .sub { font-family: var(--font-heading); font-style: italic; font-size: 1.25rem; color: var(--text-dim); max-width: 62ch; }
+
+  .how { margin: 1.4rem 0 0; padding: 1.1rem 1.3rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.13); max-width: 70ch; }
+  .how p { font-size: 1.02rem; line-height: 1.62; color: var(--text); margin: 0 0 0.6rem; }
+  .how p:last-child { margin-bottom: 0; }
+  .how b { color: var(--text-bright); }
+  .how .pick-word { color: #9ec79a; font-weight: 600; }
+
+  .bar { position: sticky; top: 0; z-index: 40; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1.2rem; margin: 1.6rem 0 0; padding: 0.85rem 1.1rem; border: 1px solid var(--accent); border-radius: 12px; background: var(--bg-raised); }
+  .bar .prog { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text); }
+  .bar .prog b { color: #9ec79a; }
+  .bar .track { flex: 1; min-width: 120px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .bar .fill { height: 100%; width: 0%; background: #9ec79a; transition: width 0.3s ease; }
+  .bar button { font-family: var(--font-body); font-size: 0.82rem; color: var(--text); background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: 0.42em 0.95em; cursor: pointer; transition: border-color .2s, color .2s; }
+  .bar button:hover { color: var(--text-bright); border-color: var(--accent); }
+  .bar button.primary { color: #0c0e0b; background: var(--accent); border-color: var(--accent); }
+
+  .catband { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin: 3.4rem 0 0; padding-bottom: 0.4rem; border-bottom: 1px solid var(--rule); }
+
+  .group { margin-top: 2.2rem; }
+  .group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.9rem; }
+  .group-head h2 { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-bright); line-height: 1.15; }
+  .group-status { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.18em 0.7em; border-radius: 999px; border: 1px solid; }
+  .gs-todo { color: #e6c074; border-color: rgba(230,192,116,0.5); background: rgba(230,192,116,0.1); }
+  .gs-done { color: #9ec79a; border-color: rgba(158,199,154,0.5); background: rgba(158,199,154,0.12); }
+  .gs-keep { color: var(--text-dim); border-color: var(--rule); }
+  .group-what { font-size: 1rem; color: var(--text); margin: 0.5rem 0 0.2rem; max-width: 76ch; line-height: 1.55; }
+  .group-when { font-size: 0.92rem; color: var(--text-dim); font-style: italic; margin: 0 0 1.1rem; max-width: 76ch; }
+  .group-count { color: var(--text-dim); font-style: normal; font-family: var(--font-mono); font-size: 0.72rem; }
+
+  .members { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1.1rem; }
+  .members.few { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+  .member { border: 2px solid var(--rule); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.16); display: flex; flex-direction: column; transition: border-color .2s, opacity .2s; }
+  .member.wide { grid-column: 1 / -1; }
+  .member.picked { border-color: #9ec79a; }
+  .member.notpicked { opacity: 0.5; }
+  .member-head { padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--rule); background: var(--bg-raised); }
+  .member-name { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); }
+  .member-src { font-family: var(--font-mono); font-size: 0.64rem; color: var(--text-dim); margin-left: 0.4rem; }
+  .member-desc { font-size: 0.9rem; color: var(--text); line-height: 1.45; margin-top: 0.4rem; }
+  .member-stage { background: var(--bg); }
+  .member iframe { display: block; width: 100%; border: 0; background: var(--bg); }
+  .member-foot { padding: 0.6rem 0.85rem; border-top: 1px solid var(--rule); background: var(--bg-raised); display: flex; align-items: center; gap: 0.6rem; }
+  .pick-btn { font-family: var(--font-body); font-size: 0.86rem; color: var(--text); background: transparent; border: 1px solid var(--rule); border-radius: 7px; padding: 0.45em 1.1em; cursor: pointer; transition: all .15s; }
+  .pick-btn:hover { color: var(--text-bright); border-color: #9ec79a; }
+  .member.picked .pick-btn { color: #0c0e0b; background: #9ec79a; border-color: #9ec79a; font-weight: 600; }
+  .pick-note { font-family: var(--font-body); font-size: 0.82rem; font-style: italic; color: var(--text-dim); }
+  .member.picked .pick-note { color: #9ec79a; font-style: normal; }
+  .keeps-badge { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); padding: 0.45em 0; }
+
+  /* type scale */
+  .scale-row { display: flex; align-items: baseline; gap: 1.2rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(74,84,75,0.4); }
+  .scale-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); min-width: 14ch; }
+  .scale-meta b { color: var(--accent); font-weight: 400; }
+  .scale-sample { font-family: var(--font-heading); color: var(--text-bright); line-height: 1; letter-spacing: -0.02em; }
+  .scale-gap { color: #e98e7f; font-family: var(--font-mono); font-size: 0.74rem; padding: 0.5rem 0; }
+
+  .summary-box { position: fixed; right: 1rem; bottom: 1rem; width: min(380px, 88vw); max-height: 62vh; overflow: auto; background: var(--bg-raised); border: 1px solid var(--accent); border-radius: 12px; padding: 1rem; z-index: 60; box-shadow: 0 18px 50px -16px rgba(0,0,0,0.7); display: none; }
+  .summary-box.on { display: block; }
+  .summary-box h3 { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .summary-box textarea { width: 100%; height: 260px; background: var(--bg); color: var(--text); border: 1px solid var(--rule); border-radius: 8px; font-family: var(--font-mono); font-size: 0.72rem; padding: 0.6rem; resize: vertical; }
+  .summary-box .close { float: right; cursor: pointer; color: var(--text-dim); border: none; background: none; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+<div class="lab-wrap">
+  <header class="lab-head">
+    <h1>Pick your components</h1>
+    <p class="sub">Same job, built several different ways across your posts. For each job, keep the one you like best.</p>
+    <div class="how">
+      <p>Right now the same thing is styled several different ways across your 18 posts. This page sorts them <b>by job</b>. There are 6 ways you highlight a note, 4 ways you box a debate, 3 ways you show a photo, and so on.</p>
+      <p>For each job below, <span class="pick-word">click "keep this one"</span> on your favorite. That becomes the official version. Everything else in the group gets <b>rebuilt to match your pick</b> later, so the whole site looks consistent. You are not deleting any writing, just standardizing the look.</p>
+      <p>Groups marked <b>"keeps"</b> only have one version, so there is nothing to choose. When you are done, hit <b>copy my picks</b> and paste them back to me.</p>
+    </div>
+    <div class="bar">
+      <span class="prog">Choices made: <b id="prog-n">0</b> of <span id="prog-tot">0</span></span>
+      <span class="track"><span class="fill" id="prog-fill"></span></span>
+      <button class="primary" id="btn-summary" type="button">copy my picks</button>
+      <button id="btn-reset" type="button">start over</button>
+    </div>
+  </header>
+
+  <main id="lab"></main>
+
+  <div class="catband">Bonus: type size</div>
+  <div class="group">
+    <div class="group-head"><h2>How big should the text be?</h2><span class="group-status gs-keep">just a preview</span></div>
+    <p class="group-what">Your real sizes (left) next to a slightly bigger, evened-out set (right). The red line is the gap where nothing currently lives.</p>
+    <div id="ramp"></div>
+  </div>
+</div>
+
+<div class="summary-box" id="summary">
+  <button class="close" id="sum-close" type="button">&times;</button>
+  <h3>Your picks</h3>
+  <textarea id="sum-text" readonly></textarea>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var V_FIELD = ':root{--c-gold:#D4C4A0;--c-sky:#8fb3c7;--c-plum:#b79bc4;--c-green:#9ec79a;--c-amber:#e6c074;--c-rose:#e98e7f;--measure:780px;--wide:1080px;--gutter:0;}';
+  var V_SEM   = ':root{--ok:#9ec79a;--ok-rule:#6f9a6c;--ok-bg:rgba(120,160,116,0.10);--call:#e6c074;--call-rule:#c79a3f;--call-bg:rgba(216,176,96,0.10);--emerg:#e98e7f;--emerg-rule:#cf6a59;--emerg-bg:rgba(207,106,89,0.12);--measure:780px;--gutter:0;}';
+  var V_ALLIN = ':root{--hair:rgba(212,196,160,0.18);--tint:#2a322b;--ease-out:cubic-bezier(0.23,1,0.32,1);--measure:780px;--gutter:0;}';
+  var V_PAPER = ":root{--paper:#e7dcc2;--ink:150 32% 4%;--mono:'Commit Mono',ui-monospace,Consolas,monospace;--tier:var(--accent);--ease-out:cubic-bezier(0.23,1,0.32,1);--col:62ch;--reel-w:min(94vw,760px);--measure:780px;--gutter:0;}";
+
+  var IMG = 'assets/thumbs/ocean.jpg', IMG2 = 'assets/thumbs/gallery.jpg', IMGP = 'assets/thumbs/optional-body.jpg';
+
+  /* css/html building blocks (verbatim from each post) */
+  var C = {};
+  C.shot = {css:'.shot{margin:0}.shot img{display:block;width:100%;height:auto;margin:0;border-radius:3px}.shot figcaption{margin:0.95rem auto 0;text-align:center;font-family:var(--font-body);font-size:1.02rem;line-height:1.55;color:var(--text-dim)}.shot figcaption .sp{display:block;margin-bottom:0.4rem;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--accent)}.shot figcaption .sp em{font-style:italic;text-transform:none;letter-spacing:0}',
+    html:'<figure class="shot"><img src="'+IMG+'" alt=""><figcaption><span class="sp">Mandarinfish &middot; <em>Synchiropus splendidus</em></span>One of two animals that make blue with real blue pigment.</figcaption></figure>'};
+  C.photo = {css:V_FIELD+'.photo{margin:0 auto}.photo img{display:block;width:100%;height:auto;border-radius:4px;background:var(--bg-raised)}.photo-cap{font-family:var(--font-body);font-style:italic;font-size:0.92rem;color:var(--text-dim);margin-top:0.85rem;line-height:1.5}.photo-cap b{font-style:normal;font-weight:600;color:var(--text)}.img-credit{font-family:var(--font-body);font-size:0.72rem;line-height:1.5;color:var(--text-dim);margin-top:0.5rem}.img-credit a{color:var(--text-dim);border-bottom:1px dotted rgba(120,134,120,0.5);text-decoration:none}',
+    html:'<figure class="photo"><img src="'+IMG+'" alt=""><figcaption class="photo-cap">The Mayflower lobby in Akron, May 1935.</figcaption><p class="img-credit"><a href="#">Mayflower Hotel, Akron</a> by Warren LeMay, CC BY-SA 2.0.</p></figure>'};
+  C.figure = {css:V_PAPER+'.plate{position:relative;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(8,12,9,0.3),0 16px 40px -20px rgba(8,12,9,0.5)}.plate.dark{background:#0e1216}.plate-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.caption{margin-top:0.8rem;text-align:center;font-variant:small-caps;letter-spacing:0.06em;font-size:0.84rem;line-height:1.45;color:var(--text-dim)}.caption .no{font-family:var(--font-mono);font-variant:normal;color:var(--tier,var(--accent))}.figure{display:flex;flex-direction:column;gap:1.3rem;margin:0;max-width:1040px}.figure .plate{width:100%;max-width:300px;aspect-ratio:4/3;margin:0 auto}.d-eyebrow{font-variant:small-caps;letter-spacing:0.13em;font-size:0.9rem;color:var(--tier,var(--accent))}.d-name{font-weight:700;font-size:clamp(1.5rem,4.4vw,2.05rem);line-height:1.08;color:var(--text-bright);margin-top:0.45rem}.d-stat{display:flex;align-items:baseline;gap:0.55rem;margin-top:0.95rem}.d-stat .fig{font-weight:700;font-size:clamp(2.1rem,6vw,3rem);line-height:0.92;color:var(--tier,var(--accent))}.d-stat .fig-lbl{font-variant:small-caps;font-size:0.92rem;color:var(--text-dim)}.d-lead{font-size:1.14rem;line-height:1.58;color:var(--text);margin-top:0.85rem}@media(min-width:760px){.figure{flex-direction:row;align-items:center;gap:3rem}.figure .plate{flex:0 0 42%;max-width:440px}.dossier{flex:1 1 auto}}',
+    html:'<div class="figure" style="--tier:#9fc6cf"><figure style="margin:0"><div class="plate dark"><img class="plate-img" src="'+IMG+'" alt=""></div><figcaption class="caption"><span class="no">No. 01</span> &middot; The Sun in extreme UV. NASA/SDO</figcaption></figure><div class="dossier"><div class="d-eyebrow">the engine</div><h3 class="d-name">The Sun</h3><div class="d-stat"><span class="fig">1,361 W</span><span class="fig-lbl">on every sunlit square metre</span></div><p class="d-lead">Start with the simplest planet you can picture: a windless ball of air lit by the Sun.</p></div></div>'};
+  C.specimen = {css:V_PAPER+'.plate{position:relative;background:var(--paper);border-radius:3px;padding:6%;box-shadow:0 1px 1px hsl(var(--ink)/0.5),0 9px 16px -5px hsl(var(--ink)/0.3),0 24px 44px -18px hsl(var(--ink)/0.55)}.plate::before{content:"";position:absolute;inset:9px;border:1px solid rgba(48,36,22,0.4);pointer-events:none;z-index:3}.plate-img{position:absolute;top:6%;left:6%;width:88%;height:88%;object-fit:cover;mix-blend-mode:multiply;filter:contrast(1.06) sepia(0.16)}.caption{margin-top:0.85rem;text-align:center;font-family:var(--font-heading);font-variant:small-caps;letter-spacing:0.07em;font-size:0.86rem;color:var(--text-dim)}.caption .no{font-family:var(--mono);font-variant:normal;color:var(--tier,var(--accent))}.specimen{display:flex;flex-direction:column;gap:1.4rem;margin:0}.specimen .plate{width:100%;max-width:240px;aspect-ratio:4/5;margin:0 auto}.d-eyebrow{font-family:var(--font-heading);font-variant:small-caps;letter-spacing:0.14em;font-size:0.92rem;color:var(--tier,var(--accent))}.d-name{font-family:var(--font-heading);font-weight:700;font-size:clamp(1.55rem,4.6vw,2.15rem);line-height:1.08;color:var(--text-bright);margin-top:0.5rem}.d-stat{display:flex;align-items:baseline;gap:0.55rem;margin-top:0.9rem}.d-stat .fig{font-family:var(--font-heading);font-weight:700;font-size:clamp(2.2rem,6vw,3rem);line-height:0.95;color:var(--tier,var(--accent))}.d-stat .fig-lbl{font-family:var(--font-heading);font-variant:small-caps;font-size:0.92rem;color:var(--text-dim)}.d-lead{font-size:1.16rem;line-height:1.58;color:var(--text);margin-top:0.95rem}@media(min-width:760px){.specimen{flex-direction:row;align-items:center;gap:3rem}.specimen .plate{flex:0 0 42%;max-width:440px}.dossier{flex:1 1 auto}}',
+    html:'<div class="specimen" style="--tier:#9fc6cf"><div><div class="plate"><img class="plate-img" src="'+IMGP+'" alt=""></div><p class="caption"><span class="no">Plate XI</span> &middot; Gray, 1918</p></div><div class="dossier"><div class="d-eyebrow">parts you can edit out</div><h3 class="d-name">The appendix</h3><div class="d-stat"><span class="fig">~500k</span><span class="fig-lbl">removed worldwide each year</span></div><p class="d-lead">A worm of tissue off the large intestine, famous mostly for the trouble it causes.</p></div></div>'};
+  C.faces = {css:'.faces-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.7rem;margin:0}.faces-row figure{margin:0}.faces-row img{display:block;width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;object-position:50% 28%;border-radius:4px;background:var(--bg-raised)}.faces-row figcaption{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.03em;line-height:1.45;color:var(--text-dim);margin-top:0.45rem}.faces-row figcaption b{display:block;color:var(--text);font-size:0.72rem;margin-bottom:0.1rem}',
+    html:'<div class="faces-row"><figure><img src="'+IMGP+'" alt=""><figcaption><b>Anne Smith</b>Ran the morning quiet time.</figcaption></figure><figure><img src="'+IMG2+'" alt=""><figcaption><b>Ebby Thacher</b>Carried the message to Bill.</figcaption></figure><figure><img src="'+IMG+'" alt=""><figcaption><b>Ruth Hock</b>Typed the whole Big Book.</figcaption></figure></div>'};
+  C.gallery = {css:'.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:0.7rem;margin:0}.gallery figure{margin:0}.gallery img{display:block;width:100%;height:auto;aspect-ratio:466/591;object-fit:cover;object-position:50% 18%;border-radius:4px;background:var(--bg-raised);filter:saturate(0.88)}.gallery figcaption{font-family:var(--font-mono);font-size:0.62rem;line-height:1.42;color:var(--text-dim);margin-top:0.45rem}.gallery figcaption b{display:block;font-family:var(--font-body);color:var(--text);font-size:0.8rem;margin-bottom:0.14rem}',
+    html:'<div class="gallery"><figure><img src="'+IMG2+'" alt=""><figcaption><b>Bill Dotson</b>AA number three.</figcaption></figure><figure><img src="'+IMGP+'" alt=""><figcaption><b>Henrietta Seiberling</b>Put Bill and Dr. Bob in one room.</figcaption></figure><figure><img src="'+IMG+'" alt=""><figcaption><b>Clarence Snyder</b>First AA meeting.</figcaption></figure></div>'};
+  C.museum = {css:'.plate{margin:0}.plate-number{display:block;font-family:var(--font-heading);font-size:0.85rem;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5em}.plate-title{font-family:var(--font-heading);font-size:1.7rem;font-weight:700;color:var(--text-bright);line-height:1.25;margin:0 0 0.25em}.plate-title em{font-style:italic}.plate-attribution{font-family:var(--font-body);font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:1.3em}.plate-attribution .artist-name{color:var(--accent);font-style:normal;font-weight:500}.plate-image-wrap{position:relative;margin:0 0 1.4em;background:#14181a;border-radius:4px;overflow:hidden;border:1px solid var(--rule);box-shadow:0 8px 22px -8px rgba(8,12,9,0.55)}.plate-image-wrap img{display:block;width:100%;height:auto;margin:0}.plate-meta{display:grid;grid-template-columns:auto 1fr;gap:0.35em 1.4em;margin:0;padding:0.9em 1em 1em;background:rgba(255,255,255,0.025);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:0.92rem;line-height:1.55}.plate-meta dt{font-family:var(--font-heading);font-size:0.78rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim)}.plate-meta dd{margin:0 0 0.25em;color:var(--text)}.plate-meta dd .em-museum{color:var(--accent);font-weight:500}',
+    html:'<section class="plate"><span class="plate-number">Plate I &middot; 1597</span><h2 class="plate-title"><em>The Musicians</em></h2><p class="plate-attribution"><span class="artist-name">Caravaggio</span></p><div class="plate-image-wrap"><img src="'+IMG2+'" alt=""></div><dl class="plate-meta"><dt>Medium</dt><dd>Oil on canvas</dd><dt>Held at</dt><dd><span class="em-museum">The Met, New York</span></dd></dl></section>'};
+
+  C.edge = {css:'.edge{margin:0;padding:0.85em 1.1em;border-left:3px solid var(--accent);background:rgba(212,196,160,0.07);border-radius:0 10px 10px 0;font-size:1rem;line-height:1.55;color:var(--text)}.edge b{color:var(--accent-hover)}.edge .edge-lbl{display:block;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:0.35em}',
+    html:'<div class="edge"><span class="edge-lbl">The most underrated variable</span><b>Consistency beats optimization.</b> A good program run for two years beats a perfect one abandoned every six weeks.</div>'};
+  C.balance = {css:'.balance-note{margin:0;padding:0.95em 1.15em 0.95em 3em;position:relative;border:1px solid rgba(212,196,160,0.32);background:rgba(212,196,160,0.05);border-radius:10px;font-size:1rem;line-height:1.55;color:var(--text)}.balance-note::before{content:"\\2696";position:absolute;left:0.95em;top:0.8em;font-size:1.2rem;color:var(--accent)}.balance-note b{color:var(--accent-hover)}',
+    html:'<div class="balance-note"><b>The thread that ties this together.</b> Almost every chapter ends in the same place: a lever that works up to a point, then quietly stops paying you back.</div>'};
+  C.myth = {css:V_FIELD+'.myth{margin:0;padding:0.85em 1.05em;border:1px solid var(--rule);border-left:3px solid var(--c-rose);border-radius:0 10px 10px 0;background:rgba(207,106,89,0.06);font-size:1rem;line-height:1.55;color:var(--text)}.myth b{color:var(--c-rose)}',
+    html:'<div class="myth"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It nudges one blood marker, but that is a measurement artifact, not damage.</div>'};
+  C.move = {css:'.move{margin:0;padding:0.2rem 0 0.2rem 1.1rem;border-left:2px solid var(--accent)}.move .k{font-variant:small-caps;letter-spacing:0.13em;font-size:0.82rem;color:var(--accent);display:block;margin-bottom:0.15rem}.move p{font-size:1.1rem;line-height:1.55;color:var(--text-bright);margin:0}',
+    html:'<div class="move"><span class="k">The manager’s move</span><p>Give a professional the outcome and the context, then let the how be theirs.</p></div>'};
+  C.reassure = {css:V_SEM+'.reassure{margin:0;padding:0.9em 1.1em;border-left:3px solid var(--ok-rule);background:var(--ok-bg);border-radius:0 8px 8px 0}.reassure::before{content:"You are doing fine";display:block;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--ok);margin-bottom:0.35em}.reassure p{margin:0;color:var(--text)}',
+    html:'<div class="reassure"><p>Most of what looks alarming in a newborn is normal: crying, spitting up, odd sleep breathing.</p></div>'};
+  C.offramp = {css:V_SEM+'.offramp{margin:0;padding:0.7em 1em;border:1px dashed var(--emerg-rule);border-radius:8px;background:var(--emerg-bg);font-size:0.98rem;color:var(--text)}.offramp::before{content:"\\260E";color:var(--emerg);margin-right:0.5em}',
+    html:'<aside class="offramp">When in doubt about the cord stump, call your pediatrician. Spreading redness or a fever needs to be seen the same day.</aside>'};
+
+  C.fork2 = {css:V_FIELD+'.fork{border:1px solid var(--rule);border-radius:12px;background:rgba(0,0,0,0.14);padding:1.1em 1.2em;margin:0}.fork-q{font-family:var(--font-heading);font-weight:700;font-size:1.12rem;color:var(--text-bright);margin:0 0 0.7em}.fork-q::before{content:"Still unsettled";display:inline-block;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--sec-accent,var(--accent));border:1px solid var(--sec-accent,var(--accent));border-radius:999px;padding:0.12em 0.6em;margin-right:0.7em;vertical-align:0.18em}.fork-a{display:grid;gap:0.7em;margin-bottom:0.8em}@media(min-width:560px){.fork-a{grid-template-columns:1fr 1fr}}.fork-side{border-left:3px solid var(--fc,var(--accent));padding-left:0.8em}.fork-side.one{--fc:#D4C4A0}.fork-side.two{--fc:#e98e7f}.fork-side h4{font-family:var(--font-mono);font-size:0.72rem;color:var(--fc,var(--accent));margin:0 0 0.3em;text-transform:uppercase}.fork-side p{font-size:0.96rem;line-height:1.5;color:var(--text-dim);margin:0}.fork-take{font-size:0.98rem;line-height:1.55;color:var(--text);margin:0;padding-top:0.6em;border-top:1px solid var(--rule)}.fork-take b{color:var(--text-bright)}',
+    html:'<div class="fork" style="--sec-accent:#b79bc4"><p class="fork-q">Is the plateau real, or a mirage?</p><div class="fork-a"><div class="fork-side one"><h4>It is real</h4><p>The cleanest datasets show a flat hazard beyond the extremes.</p></div><div class="fork-side two"><h4>It is a mirage</h4><p>A higher-standard cleaning shows no plateau at all.</p></div></div><p class="fork-take"><b>My read:</b> truly open.</p></div>'};
+  C.mt = {css:'.mt{border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:0;background:rgba(0,0,0,0.13)}.mt-claim{padding:0.85em 1.1em;background:rgba(233,142,127,0.08);border-bottom:1px solid var(--rule);font-size:1.02rem;line-height:1.5;color:var(--text)}.mt-claim b{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.1em;text-transform:uppercase;color:#e98e7f;display:block;margin-bottom:0.25em}.mt-truth{padding:0.85em 1.1em;font-size:1.02rem;line-height:1.5;color:var(--text-bright)}.mt-truth b{font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.1em;text-transform:uppercase;color:#9ec79a;display:block;margin-bottom:0.25em}',
+    html:'<div class="mt"><div class="mt-claim"><b>The claim</b>Science has proven a hard cap on human life at about 120.</div><div class="mt-truth"><b>What the evidence says</b>No. The one paper that said so was rebutted five times in its own journal.</div></div>'};
+  C.fork1 = {css:V_FIELD+'.fork{margin:0;padding:1.1em 1.2em;border:1px solid var(--rule);border-radius:12px;background:rgba(0,0,0,0.12)}.fork-q{margin:0 0 0.7em;font-family:var(--font-heading);font-size:1.14rem;color:var(--text-bright)}.fork-q::before{content:attr(data-label);display:block;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:0.4em}.fork ul{margin:0;padding-left:1.1em}.fork li{color:var(--text);line-height:1.55}.fork b{color:var(--text-bright)}',
+    html:'<div class="fork"><p class="fork-q" data-label="The evidence-based spine">The numbers that drive every template</p><ul><li><b>10 to 20 hard sets</b> per muscle per week.</li><li>Train each muscle <b>about twice a week</b>.</li></ul></div>'};
+  C.fork3 = {css:V_SEM+'.fork{margin:0;padding:1.1em 1.2em;border:1px solid var(--rule);border-radius:10px;background:rgba(0,0,0,0.12)}.fork-q{margin:0 0 0.7em;font-family:var(--font-heading);font-size:1.12rem;color:var(--text-bright)}.fork-q::before{content:"What experts argue about";display:block;font-family:var(--font-mono);font-size:0.64rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:0.4em}.fork-a{margin:0 0 0.55em;font-size:1rem;line-height:1.55;color:var(--text)}.fork-a b{color:var(--text-bright)}.fork-ev{margin:0.7em 0;font-size:0.96rem;color:var(--text-dim)}.fork-take{margin:0.7em 0 0;padding:0.7em 0.9em;background:var(--ok-bg);border-radius:8px;font-size:1rem;color:var(--text)}.fork-take b{color:var(--ok)}',
+    html:'<div class="fork"><h4 class="fork-q">Day-one shot for every newborn, or only exposed babies?</h4><p class="fork-a"><b>Universal:</b> give every stable newborn the birth dose.</p><p class="fork-ev">A policy difference about prevalence, not vaccine safety.</p><p class="fork-take"><b>A reasonable default:</b> follow your country’s program.</p></div>'};
+  C.choice3 = {css:V_FIELD+'.choices{display:grid;gap:0.7rem;margin:0}.choice{display:flex;gap:0.8em;align-items:baseline;padding:0.85em 1em;border:1px solid var(--rule);border-radius:10px;background:rgba(0,0,0,0.12);font-size:1rem;line-height:1.5;color:var(--text)}.choice::before{font-family:var(--font-mono);font-weight:700;flex:none}.choice.use{border-left:3px solid #6f9a6c}.choice.use::before{content:"\\2713";color:var(--c-green)}.choice.skip{border-left:3px solid #cf6a59}.choice.skip::before{content:"\\2717";color:var(--c-rose)}.choice.meh{border-left:3px solid #c79a3f}.choice.meh::before{content:"\\2013";color:var(--c-amber)}.choice b{color:var(--text-bright)}',
+    html:'<div class="choices"><div class="choice use"><div><b>Creatine.</b> Most-studied legal supplement. 3 to 5 g a day.</div></div><div class="choice meh"><div><b>Caffeine.</b> A small performance aid; nothing for growth.</div></div><div class="choice skip"><div><b>Almost everything else.</b> Evidence thin to nonexistent.</div></div></div>'};
+  C.choice2 = {css:V_SEM+'.choices{display:grid;gap:0.7rem;margin:0}.choice{display:flex;gap:0.75em;align-items:baseline;padding:0.8em 1em;border:1px solid var(--rule);border-radius:9px;background:rgba(0,0,0,0.12);font-size:1rem;line-height:1.5;color:var(--text)}.choice::before{font-family:var(--font-mono);font-weight:700;flex:none}.choice.skip{border-left:3px solid var(--emerg-rule)}.choice.skip::before{content:"\\2717";color:var(--emerg)}.choice.use{border-left:3px solid var(--ok-rule)}.choice.use::before{content:"\\2713";color:var(--ok)}.choice b{color:var(--text-bright)}',
+    html:'<div class="choices"><div class="choice use"><div><b>A firm flat sleep surface.</b> A bare crib mattress and a fitted sheet is the whole list.</div></div><div class="choice skip"><div><b>Bumpers, pillows, loose blankets.</b> Tied to suffocation risk; keep the space empty.</div></div></div>'};
+  C.gloss = {css:V_ALLIN+'.gloss{margin:0;padding:1.3rem 1.5rem;background:var(--tint);border:1px solid var(--hair);border-radius:6px}.gloss h2{font-family:var(--font-body);font-size:0.74rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin:0 0 0.9rem}.gloss dl{margin:0}.gloss dt{font-weight:700;color:var(--text-bright);font-size:1.04rem}.gloss dd{margin:0 0 0.85rem;font-size:1.04rem;line-height:1.55;color:var(--text-dim)}.gloss dd:last-child{margin-bottom:0}',
+    html:'<div class="gloss"><h2>Two words, before we start</h2><dl><dt>Discretionary effort</dt><dd>The gap between the least a person can do without getting fired and the most they can give.</dd><dt>All in</dt><dd>What it looks like when that gap closes.</dd></dl></div>'};
+  C.etier = {css:V_SEM+'.etier{margin:0 0 1em;padding:0.9em 1.1em;border-radius:8px;border-left:4px solid var(--emerg-rule);background:rgba(0,0,0,0.18)}.etier h4{margin:0 0 0.4em;font-family:var(--font-heading);font-size:1.05rem;color:var(--emerg)}.etier.t-call{border-left-color:var(--call-rule)}.etier.t-call h4{color:var(--call)}.etier ul{margin:0;padding-left:1.1em;color:var(--text)}',
+    html:'<div class="etier"><h4>Call 911 now if your baby</h4><ul><li>is not breathing or turning blue</li></ul></div><div class="etier t-call"><h4>Call your doctor today if your baby</h4><ul><li>is feeding noticeably less</li></ul></div>'};
+  C.disclaimer = {css:'.disclaimer{margin:0;padding:1em 1.2em;border:1px solid var(--accent);border-radius:10px;background:rgba(212,196,160,0.08);font-size:1rem;line-height:1.6;color:var(--text)}.disclaimer strong{color:var(--accent-hover)}',
+    html:'<div class="disclaimer"><strong>This is educational, not medical advice.</strong> Use it to ask better questions, not to replace your doctor.</div>'};
+
+  C.statbox = {css:'.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.7rem;margin:0}.stat{border:1px solid var(--rule);border-left:4px solid var(--sc,var(--accent));border-radius:10px;padding:0.9em 1em;background:rgba(0,0,0,0.13)}.stat .fig{display:block;font-family:var(--font-heading);font-weight:700;font-size:clamp(1.7rem,5vw,2.3rem);line-height:1;color:var(--sc,var(--accent))}.stat .fig-lbl{display:block;font-family:var(--font-body);font-size:0.86rem;line-height:1.4;color:var(--text-dim);margin-top:0.45em}.stat.rose{--sc:#e98e7f}.stat.gold{--sc:#D4C4A0}',
+    html:'<div class="stat-row"><div class="stat rose"><span class="fig">7</span><span class="fig-lbl">of 500+ recorded 110-year-olds with a birth certificate</span></div><div class="stat gold"><span class="fig">32 yrs</span><span class="fig-lbl">that one family drew a dead man’s pension</span></div></div>'};
+  C.colophon = {css:'#colophon .colo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.7rem;margin:0}#colophon .colo-stat{border:1px solid var(--rule);border-left:4px solid var(--cc);border-radius:10px;padding:0.85em 1em;background:rgba(0,0,0,0.13)}#colophon .colo-stat .n{font-family:var(--font-mono);font-weight:700;font-size:clamp(1.5rem,4.4vw,2.1rem);line-height:1;color:var(--cc)}#colophon .colo-stat .l{font-family:var(--font-body);font-size:0.84rem;line-height:1.35;color:var(--text-dim);margin-top:0.35em}#colophon .c-gold{--cc:#D4C4A0}#colophon .c-sky{--cc:#8fb3c7}#colophon .c-green{--cc:#9ec79a}',
+    html:'<div id="colophon"><div class="colo-grid"><div class="colo-stat c-gold"><div class="n">~50M</div><div class="l">tokens of AI reasoning</div></div><div class="colo-stat c-sky"><div class="n">~470</div><div class="l">agents run in parallel</div></div><div class="colo-stat c-green"><div class="n">~2,500</div><div class="l">sources consulted</div></div></div></div>'};
+  C.statinline = {css:V_FIELD+'.stat-row{display:flex;flex-wrap:wrap;gap:1.4rem 2.6rem;margin:0}.stat{display:flex;align-items:baseline;gap:0.7rem;margin:0}.stat .fig{font-family:var(--font-heading);font-weight:700;font-size:clamp(2.4rem,7vw,3.4rem);line-height:0.92;color:var(--accent)}.stat .fig-lbl{font-family:var(--font-heading);font-size:1rem;line-height:1.28;color:var(--text-dim);max-width:22ch}.stat.green .fig{color:var(--c-green)}.stat.amber .fig{color:var(--c-amber)}',
+    html:'<div class="stat-row"><div class="stat green"><span class="fig">+2%</span><span class="fig-lbl">hippocampus growth from a year of walking</span></div><div class="stat amber"><span class="fig">1 set</span><span class="fig-lbl">even one workout sharpens focus after</span></div></div>'};
+  C.dstat = {css:'.d-stat{display:flex;align-items:baseline;gap:0.55rem;margin:0}.d-stat .fig{font-weight:700;font-size:clamp(2.1rem,6vw,3rem);line-height:0.92;color:var(--tier,var(--accent))}.d-stat .fig-lbl{font-variant:small-caps;letter-spacing:0.06em;font-size:0.92rem;color:var(--text-dim)}',
+    html:'<div class="d-stat" style="--tier:#e98e7f"><span class="fig">14&times;</span><span class="fig-lbl">deadlier than the next-worst storm</span></div>'};
+  C.bignum = {css:'.stat{margin:0;text-align:center}.stat .fig{font-weight:700;font-size:clamp(3.6rem,11vw,6rem);line-height:0.9;letter-spacing:-0.02em;color:var(--accent);display:block}.stat .fig .u{font-size:0.42em;font-weight:700}.stat .cap{font-size:1.06rem;line-height:1.5;color:var(--text-dim);max-width:34ch;margin:0.7rem auto 0}.stat .src{display:block;font-variant:small-caps;letter-spacing:0.05em;font-size:0.8rem;color:var(--text-dim);opacity:0.7;margin-top:0.5rem}',
+    html:'<div class="stat"><span class="fig">70<span class="u">%</span></span><span class="cap">of the variance in a team’s engagement traces to the manager alone.</span><span class="src">Gallup, across 2.5 million teams</span></div>'};
+  C.mapstats = {css:'.map-stats{display:flex;flex-wrap:wrap;gap:0.5rem 1.9rem;margin:0;padding-bottom:1.2rem;border-bottom:1px solid var(--rule)}.map-stat{font-family:var(--font-body);font-size:0.92rem;color:var(--text-dim)}.map-stat b{font-family:var(--font-heading);font-weight:700;font-size:1.15rem;color:var(--accent);margin-right:0.35em}',
+    html:'<div class="map-stats"><span class="map-stat"><b>~20 yrs</b> the U.S. funded it</span><span class="map-stat"><b>~$20M</b> spent</span><span class="map-stat"><b>52.65%</b> best hit rate</span><span class="map-stat"><b>$0</b> anyone got rich</span></div>'};
+
+  C.pq = {css:'.pq{margin:0;font-style:italic;font-size:1.5rem;line-height:1.32;color:var(--accent);text-align:center;text-wrap:balance}.pq cite{display:block;font-style:normal;font-size:0.92rem;letter-spacing:0.04em;color:var(--text-dim);margin-top:0.8rem}',
+    html:'<p class="pq">Knowledge workers own the means of production. It is the knowledge between their ears.<cite>Peter Drucker</cite></p>'};
+  C.pullquote = {css:'.pullquote{font-family:var(--font-heading);font-style:italic;font-size:clamp(1.45rem,3.4vw,2rem);line-height:1.3;color:var(--text-bright);margin:0;padding-left:1.1rem;border-left:3px solid var(--accent);text-wrap:balance}.pullquote cite{display:block;margin-top:0.55rem;font-family:var(--font-mono);font-style:normal;font-size:0.72rem;color:var(--text-dim)}',
+    html:'<p class="pullquote">Whole food does the same job and brings vitamins along.<cite>Morton 2018</cite></p>'};
+  C.blockquote = {bodyClass:'post-body', css:'.post-body blockquote{margin:0;padding:0 0 0 1.4em;border-left:2px solid var(--rule);color:var(--text);font-style:italic;opacity:0.88}.post-body blockquote p{margin:0}',
+    html:'<blockquote><p>The work that made people valuable changed; the way we manage them mostly did not.</p></blockquote>'};
+  C.act = {css:V_ALLIN+'.act{text-align:center;margin:0}.act .act-k{font-variant:small-caps;letter-spacing:0.24em;font-size:0.84rem;color:var(--text-dim)}.act .act-t{font-family:var(--font-heading);font-weight:700;font-style:italic;font-size:clamp(1.5rem,4vw,2.1rem);color:var(--accent);line-height:1.2;margin-top:0.3rem}.act::after{content:"";display:block;width:90px;height:1px;margin:1.3rem auto 0;background:linear-gradient(90deg,transparent,var(--hair) 30%,var(--hair) 70%,transparent)}',
+    html:'<div class="act"><div class="act-k">Act I</div><div class="act-t">Two kinds of worker</div></div>'};
+  C.dots = {css:'.sec-divider{text-align:center;color:var(--sec-accent,var(--text-dim));letter-spacing:0.6em;margin:0;opacity:0.7}',
+    html:'<p class="sec-divider" style="--sec-accent:#9ec79a">&middot; &middot; &middot;</p>'};
+  C.secheader = {css:V_FIELD+'.sec-kicker{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--sec-accent,var(--accent));display:block;margin-bottom:0.7rem}.sec-kicker::before{content:"";display:block;width:44px;height:3px;border-radius:2px;background:var(--sec-accent,var(--accent));margin-bottom:0.95rem}.sec-h{font-family:var(--font-heading);font-weight:700;font-size:clamp(1.95rem,5.4vw,2.7rem);line-height:1.08;letter-spacing:-0.018em;color:var(--text-bright);margin:0}',
+    html:'<section style="--sec-accent:#8fb3c7"><span class="sec-kicker">The big book</span><h2 class="sec-h">Eleven books, and who really wrote them</h2></section>'};
+  C.cite = {css:'.src{font-family:var(--font-mono);font-size:0.72rem}.src a{color:var(--text-dim);border-bottom:1px dotted rgba(120,134,120,0.5);text-decoration:none}.grade{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.12em 0.5em;border-radius:999px;margin-left:0.5em}.grade.g-a{background:rgba(158,199,154,0.16);color:#b6d8b2;border:1px solid rgba(158,199,154,0.4)}.grade.g-c{background:rgba(230,192,116,0.15);color:#e6c074;border:1px solid rgba(230,192,116,0.4)}',
+    html:'<p style="color:var(--text);font-size:1rem">...about forty stayed sober. <span class="src"><a href="#">the roll</a></span> <span class="grade g-a">solid</span> <span class="grade g-c">contested</span></p>'};
+
+  C.h_standard = {css:'.post-title{font-family:var(--font-heading);font-size:min(3.2rem,7vw);font-weight:700;color:var(--text-bright);line-height:1.12;margin:0 0 0.6rem;letter-spacing:-0.015em}.post-subtitle{font-family:var(--font-body);font-size:1.1rem;font-style:italic;color:var(--text-dim);line-height:1.5}',
+    html:'<header><h1 class="post-title">A Standard Post Title</h1><p class="post-subtitle">An italic subtitle in the body face, sitting just beneath.</p></header>'};
+  C.h_field = {css:V_FIELD+'.hero-title{font-family:var(--font-heading);font-weight:700;font-size:clamp(3rem,11vw,6rem);line-height:0.96;letter-spacing:-0.025em;color:var(--text-bright);margin:0}.hero-dek{font-family:var(--font-heading);font-style:italic;font-size:clamp(1.2rem,3.2vw,1.6rem);line-height:1.46;color:var(--text-dim);margin:1.2rem 0 0;max-width:40ch}.hero-meta{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.13em;text-transform:uppercase;color:var(--text-dim);margin:1.4rem 0 0;padding-top:1.1rem;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:0.5em 1.1em}.hero-meta b{color:var(--accent);font-weight:400}.hero-meta .sep{opacity:0.4}',
+    html:'<header><h1 class="hero-title">Big Enough</h1><p class="hero-dek">How big you can get the natural way, on one supplement, real food, and sunlight.</p><p class="hero-meta">A field guide <span class="sep">/</span> <b>85 sources</b> <span class="sep">/</span> 40 min read</p></header>'};
+  C.h_first = {css:'.fy-kicker{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}.fy-title{font-family:var(--font-heading);font-weight:700;font-size:clamp(2.8rem,9vw,4.4rem);line-height:1.02;letter-spacing:-0.02em;color:var(--text-bright)}.fy-sub{font-family:var(--font-heading);font-style:italic;font-size:clamp(1.2rem,3.4vw,1.5rem);line-height:1.5;color:var(--text-dim);margin-top:1rem;max-width:40ch;padding-bottom:1.4rem;border-bottom:1px solid var(--rule)}',
+    html:'<header><p class="fy-kicker">A field guide to infancy</p><h1 class="fy-title">The First Year</h1><p class="fy-sub">A calm, exhaustively sourced map of a baby’s first year.</p></header>'};
+  C.h_star = {bodyClass:'ss-page', css:'.ss-page{--bright:#F5F1EA;--dim:#9aa294;--accent:#D4C4A0}.ss-eyebrow{font-family:var(--font-mono);font-size:0.74rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin:0 0 0.9rem}.ss-h1{font-family:var(--font-heading);font-weight:400;line-height:1.04;font-size:clamp(2.5rem,7vw,4.1rem);letter-spacing:-0.02em;color:var(--bright);margin:0}.ss-hook{font-family:var(--font-heading);font-style:italic;color:var(--dim);font-size:clamp(1.2rem,3.4vw,1.55rem);line-height:1.4;max-width:30ch;margin:1rem 0 0}',
+    html:'<section><p class="ss-eyebrow">An interactive autopsy</p><h1 class="ss-h1">Star Signs, X-Rayed</h1><p class="ss-hook">A working horoscope that takes itself apart while you watch.</p></section>'};
+
+  C.demopanel = {css:'.demo-wrapper{margin:0;background:var(--d-bg);border:1px solid var(--d-rule);border-radius:4px;overflow:hidden}.demo-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:0.7em 1.2em;background:var(--d-bg-raised);border-bottom:1px solid var(--d-rule)}.demo-label{font-family:var(--font-heading);font-size:1.1rem;font-weight:700;color:var(--d-text-bright);padding-bottom:0.3em;border-bottom:1px solid var(--d-accent)}.demo-fps{font-family:var(--font-heading);font-size:0.92rem;color:var(--d-text-dim)}.p-controls{background:var(--d-bg-raised);border-top:1px solid var(--d-rule);display:flex;flex-direction:column;gap:0.85rem;padding:1.1rem 1.25rem}.p-slider-row{display:flex;align-items:center;gap:0.95rem}.p-slider-row label{font-family:var(--font-heading);font-size:0.95rem;color:var(--d-text);min-width:5.5em}.p-slider-val{font-family:var(--font-heading);font-size:0.95rem;color:var(--d-accent-strong);min-width:4em;text-align:right}.p-slider-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:20px;background:transparent}.p-slider-row input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--d-rule)}.p-slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-6px;background:var(--d-accent);border-radius:50%}.p-reset{font-family:var(--font-heading);font-size:0.92rem;color:var(--d-text);background:transparent;border:1px solid var(--d-rule-strong);border-radius:3px;padding:0.42em 1.05em;align-self:flex-start}.tz-group{display:inline-flex;border:1px solid var(--d-rule-strong);border-radius:3px;overflow:hidden}.tz-btn{font-family:var(--font-heading);font-size:0.9rem;color:var(--d-text-dim);background:transparent;border:none;border-right:1px solid var(--d-rule-strong);padding:0.42em 1em}.tz-btn:last-child{border-right:none}.tz-btn.active{color:var(--d-bg);background:var(--d-accent)}',
+    html:'<div class="demo-wrapper"><div class="demo-header"><span class="demo-label">Particle Field</span><span class="demo-fps">58 fps</span></div><div class="p-controls"><div class="p-slider-row"><label>Particles</label><input type="range" value="60"><span class="p-slider-val">1,200</span></div><div class="tz-group"><button class="tz-btn active">Local</button><button class="tz-btn">UTC</button></div><button class="p-reset">Reset</button></div></div>'};
+  C.instrument = {bodyClass:'ss-page', css:'.ss-page{--ink:#E8E2D6;--dim:#9aa294;--bright:#F5F1EA;--accent:#D4C4A0;--accent-weak:rgba(212,196,160,.12);--panel:#1e2420;--bar:#232a25;--field:#262d27;--line:#3c463d}.ss-ip{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-family:var(--font-mono)}.ss-ip-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--bar);flex-wrap:wrap}.ss-ip-bar .lhs{display:flex;align-items:center;gap:10px}.ss-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}.ss-ip-title{font-size:12.5px;color:var(--bright)}.ss-stamp{font-size:11px;color:var(--dim)}.ss-seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.ss-seg button{all:unset;cursor:pointer;font-family:var(--font-mono);font-size:11px;color:var(--dim);padding:5px 10px}.ss-seg button.on{color:var(--accent);background:var(--accent-weak)}.ss-seg button+button{border-left:1px solid var(--line)}.ss-inputs{display:flex;gap:10px;padding:13px 14px;flex-wrap:wrap}.ss-fld{display:flex;flex-direction:column;gap:5px}.ss-fld label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}.ss-inputs input{font-family:var(--font-mono);font-size:12.5px;color:var(--bright);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px}',
+    html:'<div class="ss-ip"><div class="ss-ip-bar"><div class="lhs"><span class="ss-dot"></span><span class="ss-ip-title">NATAL INSTRUMENT</span><span class="ss-stamp">v2.1</span></div><div class="ss-seg"><button class="on">Tropical</button><button>Sidereal</button></div></div><div class="ss-inputs"><div class="ss-fld"><label>Birth date</label><input value="1990-06-13" readonly></div><div class="ss-fld"><label>Time</label><input value="14:25" readonly></div></div></div>'};
+
+  function m(name, src, desc, base, opts) { var o = {name:name, src:src, desc:desc, css:base.css, html:base.html, bodyClass:base.bodyClass}; if(opts){ for(var k in opts) o[k]=opts[k]; } return o; }
+
+  /* ---------- the groups (organized by JOB) ---------- */
+  var GROUPS = [
+    { cat:'Pictures' },
+    { id:'photo', title:'A photo with a caption', decide:true,
+      what:'One picture with a line of text under it. The everyday way to show a single photo.',
+      when:'Any time you have one image and want to say what it is.',
+      members:[ m('Centered caption','ocean','Caption centered under the image, with a small uppercase label. Calm, gallery-like.', C.shot),
+                m('Left caption + credit','forty','Caption left-aligned, plus a small grey source credit line. More journalistic.', C.photo) ]},
+    { id:'dossier', title:'A picture with text beside it', decide:true,
+      what:'A picture on one side; a headline, a big number, and a paragraph on the other. A "feature card".',
+      when:'A standout moment where one image deserves a write-up next to it.',
+      members:[ m('Clean photo','weather','A plain photo with a soft shadow, no frame. Modern.', C.figure, {wide:true}),
+                m('Cream museum mat','optional-body','The image printed on a cream mat with a thin keyline, like a museum catalogue. Vintage.', C.specimen, {wide:true}) ]},
+    { id:'photogrid', title:'A grid of photos', decide:true,
+      what:'Several pictures in a tidy grid, each with a tiny caption.',
+      when:'Showing a set: people, places, examples.',
+      members:[ m('Fixed 3 across','forty','Always three columns, tall portrait crops. Mono captions.', C.faces),
+                m('Reflows 2-3-4','forty','Grows from 2 to 4 columns as the screen widens; slightly desaturated.', C.gallery) ]},
+    { id:'artplate', title:'A framed artwork with a museum label', decide:false,
+      what:'A bordered image with a formal label block underneath (medium, where it is held).',
+      when:'Art posts, like the Old Masters gallery.',
+      members:[ m('Museum plate','gallery','The only one of its kind, so nothing to choose here.', C.museum, {wide:true}) ]},
+
+    { cat:'Callout boxes' },
+    { id:'highlight', title:'Highlight one important note', decide:true,
+      what:'A short, eye-catching aside, usually with a colored bar down one side. Your most-used callout, built six different ways.',
+      when:'When one sentence or idea needs to pop out of the running text.',
+      members:[ m('Gold bar + label','big-enough','Gold left bar with a small optional label on top.', C.edge),
+                m('Boxed + scales icon','big-enough','A full bordered box with a little balance-scale icon.', C.balance),
+                m('Rose myth-buster','big-enough','Red/rose bar, made for correcting a myth.', C.myth),
+                m('Quiet thin bar','all-in','No box at all, just a thin gold bar and a tiny label. The most understated.', C.move),
+                m('Green reassurance','the-first-year','Soft green with a fixed calming label. (Health posts.)', C.reassure),
+                m('Dashed phone','the-first-year','Dashed red with a phone icon, a "call someone" nudge.', C.offramp) ]},
+    { id:'debate', title:'Show two sides of a debate', decide:true,
+      what:'Lays out both sides of an argument, then your verdict.',
+      when:'Genuinely contested topics where you want to be fair before taking a side.',
+      members:[ m('Two columns','how-long','Both sides side by side, then a takeaway line underneath.', C.fork2, {wide:true}),
+                m('Claim over truth','how-long','Stacks "the claim" above "what the evidence says".', C.mt) ]},
+    { id:'titledbox', title:'A titled box that makes a point', decide:true,
+      what:'A bordered box with a heading and a body, sometimes a highlighted takeaway at the end.',
+      when:'Pulling a structured point out of the flow.',
+      members:[ m('Heading + list','big-enough','A title with a small label, then a bulleted list.', C.fork1),
+                m('Claim, evidence, take','the-first-year','Three parts: the question, the evidence, then a green takeaway.', C.fork3) ]},
+    { id:'checklist', title:'A do-this / skip-this checklist', decide:true,
+      what:'A list where each row is marked good or bad with a check or an X.',
+      when:'Clear recommendations: what to use, what to avoid.',
+      members:[ m('Three levels','big-enough','Use (green check), meh (amber dash), skip (red X).', C.choice3),
+                m('Two levels','the-first-year','Just use (check) and skip (X).', C.choice2) ]},
+    { id:'define', title:'Define some terms', decide:false,
+      what:'A boxed list of terms and their definitions.',
+      when:'Setting up vocabulary before an essay.',
+      members:[ m('Definition box','all-in','The only one of its kind.', C.gloss) ]},
+    { id:'safety', title:'Specialized safety callouts', decide:false,
+      what:'Purpose-built boxes for the health guides (emergency levels, a disclaimer). These are special-purpose, so they just keep.',
+      when:'Only in the health posts.',
+      members:[ m('Emergency tiers','the-first-year','Red "call 911" / amber "call today".', C.etier),
+                m('Disclaimer','how-long','"Educational, not medical advice."', C.disclaimer) ]},
+
+    { cat:'Numbers & stats' },
+    { id:'statcards', title:'Numbers as boxed cards', decide:true,
+      what:'A row of small cards, each holding one number with a label.',
+      when:'A handful of key figures you want to show as a group.',
+      members:[ m('Serif number card','how-long','Bordered card, colored left edge, serif number.', C.statbox, {wide:true}),
+                m('Mono number card','the-first-year','Same idea but the number is in monospace (techy).', C.colophon, {wide:true}) ]},
+    { id:'statinline', title:'A number with a label, inline', decide:true,
+      what:'A big number sitting right next to its short label, flowing in the text.',
+      when:'Dropping one or two figures into the prose.',
+      members:[ m('Color-coded row','big-enough','Big serif numbers in a row, each color-coded.', C.statinline),
+                m('Small-caps label','weather','Number with a small-caps label, used inside feature cards.', C.dstat) ]},
+    { id:'bignum', title:'One giant headline number', decide:false,
+      what:'A single huge number, centered, with a caption and a source. A real showstopper.',
+      when:'The one killer statistic of a piece.',
+      members:[ m('Headline number','all-in','The only one of its kind.', C.bignum, {wide:true}) ]},
+    { id:'strip', title:'A one-line stats strip', decide:false,
+      what:'Several tiny figures on one line, like a scoreboard.',
+      when:'A quick "at a glance" summary, often near the top.',
+      members:[ m('Stats strip','remote-viewing','The only one of its kind.', C.mapstats, {wide:true}) ]},
+
+    { cat:'Quotes, dividers, sources' },
+    { id:'pullquote', title:'Pull a quote out, big', decide:true,
+      what:'A quote enlarged and set apart so it stands out from the text.',
+      when:'A line worth dwelling on.',
+      members:[ m('Centered gold','all-in','Centered, gold italic, author underneath.', C.pq),
+                m('Left bar','big-enough','Gold left bar, bright text, small credit.', C.pullquote) ]},
+    { id:'quote', title:'A plain indented quote', decide:false,
+      what:'A normal block quote, just indented with a thin bar. The quiet default.',
+      when:'Quoting a source without making a fuss.',
+      members:[ m('Blockquote','style.css','The site-wide default.', C.blockquote) ]},
+    { id:'divider', title:'A divider between sections', decide:true,
+      what:'A visual break between parts of a long piece.',
+      when:'Separating chapters or shifting topics.',
+      members:[ m('Labeled chapter break','all-in','A kicker, an italic title, and a hairline. The most formal.', C.act),
+                m('Three dots','big-enough','Just three dots in the section color. Minimal.', C.dots) ]},
+    { id:'secheader', title:'A section heading', decide:false,
+      what:'The heading that opens a numbered section, with a colored accent bar.',
+      when:'The main section breaks in a long post.',
+      members:[ m('Color-rhythm header','forty','The shared style; only the color changes per section.', C.secheader, {wide:true}) ]},
+    { id:'cites', title:'Source links & evidence badges', decide:false,
+      what:'Tiny inline source links and the colored "evidence grade" badges.',
+      when:'Citing as you go in the well-researched posts.',
+      members:[ m('Source + grade','forty','The small print kit. Keeps as-is.', C.cite) ]},
+
+    { cat:'Post titles' },
+    { id:'hero', title:'Your default post title', decide:true,
+      what:'The big title at the top of a post. Pick the one that should be your everyday default. (You can still go huge for a one-off showpiece.)',
+      when:'Every post.',
+      members:[ m('Standard (~51px)','style.css','Your current baseline. Bold serif.', C.h_standard, {wide:true}),
+                m('First Year (~70px)','the-first-year','A bit bigger, with a kicker and a bottom rule. The "slightly bigger" sweet spot.', C.h_first, {wide:true}),
+                m('Field guide (~96px)','big-enough','Large, with a sources / read-time strip. Bold.', C.h_field, {wide:true}),
+                m('Light weight','star-signs','Same size band but lighter weight. Quieter, more modern.', C.h_star, {wide:true}) ]},
+
+    { cat:'Interactive panels' },
+    { id:'panel', title:'The control panel for demos', decide:true,
+      what:'The frame and knobs around your interactive demos.',
+      when:'Posts with a live demo (particles, globe, star chart).',
+      members:[ m('Warm panel','style.css','Framed serif panel with parchment knobs. Cozy, matches the site.', C.demopanel, {wide:true}),
+                m('Precision instrument','star-signs','All-monospace, hairline borders. Technical and exact.', C.instrument, {wide:true}) ]}
+  ];
+
+  /* ---------- render ---------- */
+  var lab = document.getElementById('lab');
+  var base = location.href.replace(/[^\/]*$/, '');
+  var KEY = 'cl-picks-v2';
+  var picks = {};
+  try { picks = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { picks = {}; }
+
+  function buildDoc(mem) {
+    var bodyStyle = 'body{margin:0;padding:20px;background:var(--bg);color:var(--text);' + (mem.serif ? 'font-family:var(--font-heading);' : '') + '}*{box-sizing:border-box}';
+    return '<!doctype html><html><head><meta charset="utf-8"><base href="' + base + '">' +
+      '<link rel="stylesheet" href="style.css"><style>' + bodyStyle + mem.css + '</style></head>' +
+      '<body class="' + (mem.bodyClass || '') + '">' + mem.html + '</body></html>';
+  }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var f = e.target;
+      if (f.dataset.loaded) return;
+      f.dataset.loaded = '1';
+      f.srcdoc = f.__doc;
+      io.unobserve(f);
+    });
+  }, { rootMargin: '600px' });
+
+  function sizeFrame(f) { try { var d = f.contentDocument; if (d && d.body) f.style.height = d.body.scrollHeight + 'px'; } catch (e) {} }
+
+  var decideGroups = [];
+
+  GROUPS.forEach(function (g) {
+    if (g.cat) { var band = document.createElement('div'); band.className = 'catband'; band.textContent = g.cat; lab.appendChild(band); return; }
+    if (g.decide) decideGroups.push(g.id);
+
+    var sec = document.createElement('section');
+    sec.className = 'group';
+    sec.dataset.gid = g.id;
+
+    var head = document.createElement('div');
+    head.className = 'group-head';
+    head.innerHTML = '<h2>' + g.title + '</h2><span class="group-status" data-st></span>' +
+      (g.decide ? '<span class="group-count">' + g.members.length + ' to compare — keep 1</span>' : '');
+    sec.appendChild(head);
+
+    var what = document.createElement('p'); what.className = 'group-what'; what.textContent = g.what; sec.appendChild(what);
+    var when = document.createElement('p'); when.className = 'group-when'; when.textContent = 'Used for: ' + g.when; sec.appendChild(when);
+
+    var grid = document.createElement('div');
+    grid.className = 'members' + (g.members.length <= 2 ? ' few' : '');
+
+    g.members.forEach(function (mem, idx) {
+      var card = document.createElement('div');
+      card.className = 'member' + (mem.wide ? ' wide' : '');
+
+      var mh = document.createElement('div');
+      mh.className = 'member-head';
+      mh.innerHTML = '<span class="member-name">' + mem.name + '</span><span class="member-src">from ' + mem.src + '</span>' +
+        '<div class="member-desc">' + mem.desc + '</div>';
+      card.appendChild(mh);
+
+      var stage = document.createElement('div'); stage.className = 'member-stage';
+      var f = document.createElement('iframe');
+      f.setAttribute('scrolling', 'no');
+      f.style.height = (mem.wide ? '280px' : '210px');
+      f.__doc = buildDoc(mem);
+      f.addEventListener('load', function () { sizeFrame(f); setTimeout(function(){sizeFrame(f);}, 350); setTimeout(function(){sizeFrame(f);}, 1100); });
+      stage.appendChild(f);
+      card.appendChild(stage);
+
+      var foot = document.createElement('div'); foot.className = 'member-foot';
+      if (g.decide) {
+        var btn = document.createElement('button');
+        btn.className = 'pick-btn'; btn.type = 'button';
+        var note = document.createElement('span'); note.className = 'pick-note';
+        function paint() {
+          var chosen = picks[g.id];
+          if (chosen === idx) { card.classList.add('picked'); card.classList.remove('notpicked'); btn.textContent = '✓ Your pick'; note.textContent = ''; }
+          else if (chosen != null) { card.classList.remove('picked'); card.classList.add('notpicked'); btn.textContent = 'keep this instead'; note.textContent = '→ will be rebuilt to match your pick'; }
+          else { card.classList.remove('picked','notpicked'); btn.textContent = 'keep this one'; note.textContent = ''; }
+        }
+        btn.addEventListener('click', function () {
+          picks[g.id] = (picks[g.id] === idx ? null : idx);
+          localStorage.setItem(KEY, JSON.stringify(picks));
+          sec.querySelectorAll('.member').forEach(function(c){ c.classList.remove('picked','notpicked'); });
+          sec.__repaint();
+          updateProg();
+        });
+        foot.appendChild(btn); foot.appendChild(note);
+        card.__paint = paint;
+      } else {
+        foot.innerHTML = '<span class="keeps-badge">✓ keeps (one of a kind)</span>';
+      }
+      card.appendChild(foot);
+      grid.appendChild(card);
+      io.observe(f);
+    });
+
+    sec.appendChild(grid);
+    sec.__repaint = function () {
+      grid.querySelectorAll('.member').forEach(function (c) { if (c.__paint) c.__paint(); });
+      var st = head.querySelector('[data-st]');
+      if (!g.decide) { st.className = 'group-status gs-keep'; st.textContent = 'keeps'; }
+      else if (picks[g.id] != null) { st.className = 'group-status gs-done'; st.textContent = '✓ chosen'; }
+      else { st.className = 'group-status gs-todo'; st.textContent = 'pick one'; }
+    };
+    sec.__repaint();
+    lab.appendChild(sec);
+  });
+
+  function updateProg() {
+    var n = 0;
+    decideGroups.forEach(function (id) { if (picks[id] != null) n++; });
+    document.getElementById('prog-n').textContent = n;
+    document.getElementById('prog-tot').textContent = decideGroups.length;
+    document.getElementById('prog-fill').style.width = (decideGroups.length ? (100 * n / decideGroups.length) : 0) + '%';
+  }
+  updateProg();
+
+  document.getElementById('btn-summary').addEventListener('click', function () {
+    var lines = ['MY COMPONENT PICKS', ''];
+    GROUPS.forEach(function (g) {
+      if (g.cat || !g.decide) return;
+      var chosen = picks[g.id];
+      var pickName = (chosen != null) ? g.members[chosen].name + ' (from ' + g.members[chosen].src + ')' : '— not chosen yet —';
+      lines.push(g.title);
+      lines.push('   keep: ' + pickName);
+      var others = g.members.filter(function (mm, i) { return i !== chosen; }).map(function (mm) { return mm.name; });
+      if (chosen != null && others.length) lines.push('   rebuild to match: ' + others.join(', '));
+      lines.push('');
+    });
+    var txt = lines.join('\n');
+    var box = document.getElementById('summary'), ta = document.getElementById('sum-text');
+    ta.value = txt; box.classList.add('on'); ta.select();
+    try { navigator.clipboard.writeText(txt); } catch (e) {}
+  });
+  document.getElementById('sum-close').addEventListener('click', function () { document.getElementById('summary').classList.remove('on'); });
+  document.getElementById('btn-reset').addEventListener('click', function () { if (!confirm('Clear all your picks?')) return; picks = {}; localStorage.removeItem(KEY); location.reload(); });
+
+  /* ---------- type-scale ramp ---------- */
+  var ramp = document.getElementById('ramp');
+  var rampRows = [
+    { label: 'body text', now: '20px', rec: '20px (same)', px: 20 },
+    { label: 'small heading', now: '21px', rec: '23px', px: 23, note: 'currently smaller than your homepage titles' },
+    { label: 'section heading', now: '28px', rec: '32px', px: 32 },
+    { label: 'new mid size', now: 'missing', rec: '42px', px: 42, gap: true },
+    { label: 'normal title', now: '51px', rec: '~52px', px: 50 },
+    { label: 'big title', now: '64-96px', rec: '58px (one size)', px: 58 },
+    { label: 'showpiece', now: '144px', rec: '88px', px: 80 }
+  ];
+  rampRows.forEach(function (r) {
+    if (r.gap) { var gg = document.createElement('div'); gg.className = 'scale-gap'; gg.textContent = '—— nothing lives between 51px and 64px today (the gap) ——'; ramp.appendChild(gg); }
+    var row = document.createElement('div'); row.className = 'scale-row';
+    row.innerHTML = '<span class="scale-meta">' + r.label + '<br>now <b>' + r.now + '</b><br>suggest <b>' + r.rec + '</b>' + (r.note ? '<br><span style="color:#e6c074">' + r.note + '</span>' : '') + '</span>' +
+      '<span class="scale-sample" style="font-size:' + Math.min(r.px, 92) + 'px">Sluice</span>';
+    ramp.appendChild(row);
+  });
+
+})();
+</script>
+</body>
+</html>
