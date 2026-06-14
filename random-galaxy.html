@@ -55,7 +55,15 @@
     #galaxy-wrapper .demo-canvas-wrapper:active { cursor: grabbing; }
     #galaxy-canvas { display: block; width: 100%; height: 100%; outline: none; }
     .demo-header-right { display: inline-flex; align-items: center; gap: 0.95rem; }
-    #galaxy-wrapper .p-slider-row label { min-width: 5em; }
+    /* pillbar overrides for the galaxy panel */
+    #galaxy-wrapper .pillbar { max-width: none; border-radius: 0; border-left: none; border-right: none; border-bottom: none; border-top: 1px solid var(--rule); background: var(--bg-raised); box-shadow: none; padding: 14px 20px 18px; }
+    /* In fullscreen the panel floats as a bar at the bottom with blur backdrop */
+    /* (position/background set in the fullscreen rule block below, near .demo-canvas-wrapper) */
+    #galaxy-wrapper .pillbar-head { margin-bottom: 12px; }
+    /* Speed slider label width override */
+    #galaxy-wrapper .pillbar-sliderrow label { min-width: 4.5em; }
+    /* Description sits between select row and slider; give it breathing room */
+    #galaxy-wrapper .gx-desc { margin-bottom: 12px; }
 
     /* Per-generator description, the "what am I looking at" line. Kept readable
        (not dimmed) and right under the generator buttons, since it is the main
@@ -128,29 +136,33 @@
        <select> on purpose: on a phone you get the OS picker (it overlays the
        demo and closes instantly) rather than a custom menu that would fight the
        layout. The closed control is themed; the open list is the platform's. */
-    .gx-controls-row { display: flex; flex-wrap: wrap; gap: 0.5rem 0.55rem; align-items: center; }
+
+    /* Scene selects row, sits inside .pillbar, needs its own flex wrap since
+       .pillbar-sliderrow is a single row and can't double as a wrap container. */
+    .gx-controls-row { display: flex; flex-wrap: wrap; gap: 0.45rem 0.5rem; align-items: center; margin-bottom: 14px; padding: 0 4px; }
     .gx-cat-select {
-      font-family: var(--font-heading);
-      font-size: 0.9rem;
-      color: var(--d-text-dim);
-      background-color: rgba(212, 196, 160, 0.05);
-      border: 1px solid var(--d-rule-strong);
-      border-radius: 4px;
-      padding: 0.44em 1.95em 0.44em 0.78em;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background-color: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 6px 2em 6px 15px;
       cursor: pointer;
       max-width: 100%;
       -webkit-appearance: none; -moz-appearance: none; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9384' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 0.72em center;
+      background-position: right 0.65em center;
       transition: color 0.18s, background-color 0.18s, border-color 0.18s, box-shadow 0.18s;
     }
-    .gx-cat-select:hover { color: var(--d-text-bright); border-color: var(--d-accent); }
+    .gx-cat-select:hover { color: var(--text); border-color: var(--accent); }
     .gx-cat-select:focus { outline: none; }
-    .gx-cat-select:focus-visible { outline: 2px solid var(--d-accent-strong); outline-offset: 2px; }
+    .gx-cat-select:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
     .gx-cat-select--active {
-      color: var(--d-bg); background-color: var(--d-accent); border-color: var(--d-accent);
-      box-shadow: 0 0 14px rgba(212, 196, 160, 0.28);
+      color: var(--bg-raised); background-color: var(--accent); border-color: var(--accent);
+      font-weight: 600;
+      box-shadow: 0 0 14px rgba(212, 196, 160, 0.18);
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a25' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
     /* The open list is OS-drawn; theme it where the browser allows (Chrome/FF). */
@@ -191,12 +203,11 @@
     }
     .gx-reveal.show { opacity: 1; transform: translate(-50%, 0); }
 
-    /* Generator buttons, Fly, Reseed, and the sliders reuse the shared
-       .tz-btn / .pl-btn / .p-reset / .p-slider-row styles from style.css.
+    /* Generator buttons, Fly, Reseed, and the sliders use the pillbar kit classes.
        Page-scoped polish below; nothing here leaks to the other demo pages. */
 
     /* Even control-strip rhythm: the shared .controls-top adds a 0.3rem
-       bottom margin on top of the .p-controls gap, which made one gap bigger
+       bottom margin on top of the pillbar gap, which made one gap bigger
        than the others. Zero it so every row is evenly spaced. */
     #galaxy-wrapper .controls-top { margin-bottom: 0; }
 
@@ -246,12 +257,12 @@
     #galaxy-wrapper.gx-pseudo-fs .demo-canvas-wrapper {
       height: 100%;
     }
-    #galaxy-wrapper:fullscreen .p-controls,
-    #galaxy-wrapper:-webkit-full-screen .p-controls,
-    #galaxy-wrapper.gx-pseudo-fs .p-controls {
+    #galaxy-wrapper:fullscreen .pillbar,
+    #galaxy-wrapper:-webkit-full-screen .pillbar,
+    #galaxy-wrapper.gx-pseudo-fs .pillbar {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 6;
       background: rgba(35, 42, 37, 0.88); border-top: none;
-      padding: 0.7rem 0.9rem; gap: 0.55rem;
+      padding: 0; gap: 0.55rem;
       -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
     }
     /* Keep the floating bar minimal: the scene blurb is hidden in flight (it is
@@ -261,7 +272,7 @@
     #galaxy-wrapper.gx-pseudo-fs .gx-desc { display: none; }
     /* Clean / screenshot mode (H key or the hide button): hide every UI overlay,
        leaving only the rendered scene. */
-    #galaxy-wrapper.gx-clean .p-controls,
+    #galaxy-wrapper.gx-clean .pillbar,
     #galaxy-wrapper.gx-clean .gx-topright,
     #galaxy-wrapper.gx-clean .globe-info,
     #galaxy-wrapper.gx-clean .gx-reveal,
@@ -269,9 +280,9 @@
 
     /* Immersive dim (fullscreen): click the scene to fade the UI translucent (but
        still visible + clickable); click any control to bring it fully back. */
-    #galaxy-wrapper .p-controls, #galaxy-wrapper .gx-topright, #galaxy-wrapper .globe-info,
+    #galaxy-wrapper .pillbar, #galaxy-wrapper .gx-topright, #galaxy-wrapper .globe-info,
     #galaxy-wrapper #gx-sort-hud, #galaxy-wrapper #gx-search-hud { transition: opacity 0.55s ease; }
-    #galaxy-wrapper.gx-dim .p-controls,
+    #galaxy-wrapper.gx-dim .pillbar,
     #galaxy-wrapper.gx-dim .gx-topright,
     #galaxy-wrapper.gx-dim .globe-info,
     #galaxy-wrapper.gx-dim .gx-reveal,
@@ -322,7 +333,7 @@
     }
     .gx-callout-big { font-size: 1.05rem; color: var(--d-text-bright); line-height: 1.15; }
 
-    /* The Speed slider uses the shared .p-slider-row style from style.css. */
+    /* The Speed slider uses the shared .pillbar-sliderrow style from kit.css. */
 
     /* === Responsive polish (mobile + touch) === */
     /* The flight hint is mouse/keyboard guidance (drag, WASD, scroll, H). Cap its
@@ -344,7 +355,7 @@
     @media (max-width: 560px) {
       #galaxy-wrapper .globe-info { display: none; }
       #galaxy-wrapper .demo-canvas-wrapper { height: 380px; }
-      #galaxy-wrapper .p-controls { padding: 1rem 1rem 1.1rem; }
+      #galaxy-wrapper .pillbar { padding: 1rem 1rem 1.1rem; }
     }
   </style>
 </head>
@@ -383,7 +394,10 @@
               <div class="gx-reveal" id="galaxy-reveal"></div>
               <div class="gx-status" id="galaxy-status">initializing&hellip;</div>
             </div>
-            <div class="p-controls">
+            <div class="pillbar">
+              <div class="pillbar-head">
+                <span class="pillbar-title">Scene</span>
+              </div>
               <div class="gx-controls-row">
                 <select class="gx-cat-select gx-cat-select--active" aria-label="Randomness scene">
                   <option value="">Randomness</option>
@@ -454,10 +468,10 @@
                 </select>
               </div>
               <div class="gx-desc" id="galaxy-blurb"></div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Speed</label>
                 <input type="range" id="gx-speed-range" min="0" max="0.3" step="0.005" value="0.05" aria-label="Flight speed" title="How fast you cruise the field in fullscreen flight.">
-                <span class="p-slider-val" id="gx-speed-val">17%</span>
+                <span class="pillbar-sliderval" id="gx-speed-val">17%</span>
               </div>
             </div>
           </div>

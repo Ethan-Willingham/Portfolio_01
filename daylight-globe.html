@@ -256,7 +256,44 @@
       .globe-fs-btn { width: 44px; height: 44px; }
     }
 
-    /* Tilt button with the small "no moon" caption rendered subtly. */
+    /* Bridge: the JS uses .active (not .is-on) for both button groups.
+       Map .active to the pillbar-seg active look so the JS contract is
+       untouched and the visual stays consistent. */
+    .pillbar-seg button.active {
+      color: var(--bg-raised);
+      background: var(--accent);
+      font-weight: 600;
+    }
+
+    /* The globe pillbar fills the side rail, no fixed max-width. */
+    .globe-controls.pillbar { max-width: none; border-radius: 0; border: none; box-shadow: none; padding: 1.1rem 1.25rem 1.2rem; }
+
+    /* style.css adds ::before content '↻' to #globe-reset; pillbar-btn--reset
+       already styles the button cleanly, so suppress the pseudo-element. */
+    #globe-reset::before { content: none; }
+
+    /* Override style.css #globe-reset rules that fight pillbar-btn--reset. */
+    button#globe-reset.pillbar-btn { border-radius: 999px; font-family: var(--font-body); font-size: 0.82rem; }
+    button#globe-reset.pillbar-btn:hover { color: var(--text-dim); border-color: var(--rule); background: rgba(212,196,160,0.10); }
+
+    /* Slider rows: the rail is narrow (~181px inner) and the values are long
+       ("12:00 PM CT"), so stack them. The label and value share the top line
+       (value pushed to the right), and the range fills its own full-width line
+       below. Fits at any rail width and keeps the range + value-span JS hooks. */
+    .globe-controls .pillbar-sliderrow { flex-wrap: wrap; align-items: center; row-gap: 5px; }
+    .globe-controls .pillbar-sliderrow label { min-width: 2.8em; }
+    .globe-controls .pillbar-sliderval { margin-left: auto; min-width: 0; font-size: 0.78rem; white-space: nowrap; text-align: right; }
+    .globe-controls .pillbar-sliderrow input[type="range"] { flex: 1 0 100%; min-width: 0; order: 5; }
+
+    /* Ensure the TZ seg fits without clipping. */
+    .globe-controls .pillbar-foot { flex-wrap: nowrap; align-items: center; }
+    .globe-controls .pillbar-seg.tz-group { min-width: 0; flex-shrink: 1; }
+    .globe-controls .pillbar-seg.tz-group button { padding-left: 0.55em; padding-right: 0.55em; min-width: 0; }
+
+    /* Tilt seg: four buttons need to fit in ~173px; shrink padding. */
+    .globe-controls .pillbar-seg.tilt-group button { padding-left: 0.3em; padding-right: 0.3em; font-size: 0.74rem; }
+
+    /* Tilt-note sub-label inside .tilt-btn */
     .tilt-btn .tilt-note {
       display: inline-block;
       margin-left: 0.35em;
@@ -266,6 +303,84 @@
       text-transform: lowercase;
     }
     .tilt-btn.active .tilt-note { color: rgba(10,13,10,0.7); }
+
+    /* The tilt-group fills the remaining width in the pillbar foot so the
+       four tilt buttons share the space evenly. */
+    .pillbar-seg.tilt-group { flex: 1; }
+    .pillbar-seg.tilt-group button { flex: 1; text-align: center; }
+
+    /* Tilt description text below the controls */
+    .tilt-desc-text {
+      font-family: var(--font-body);
+      font-size: 0.84rem;
+      font-style: italic;
+      color: var(--text-dim);
+      padding: 0.5rem 4px 0;
+      line-height: 1.55;
+      letter-spacing: 0;
+    }
+
+    /* Daylight panel: keep its top border as an in-rail divider */
+    .daylight-panel {
+      padding: 1.05rem 1.25rem 1.15rem;
+      border-top: 1px solid var(--rule);
+    }
+    .daylight-label {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-bright);
+      letter-spacing: 0.005em;
+      margin-bottom: 0.55rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .daylight-bar-wrap {
+      position: relative;
+      width: 100%; height: 10px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 0.4rem;
+      border: 1px solid var(--rule);
+    }
+    .daylight-bar-wrap canvas { width: 100%; height: 100%; display: block; border-radius: 0; }
+    .daylight-bar-ticks {
+      display: flex; justify-content: space-between;
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: var(--text-dim);
+      padding: 0 1px;
+      margin-bottom: 0.35rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .daylight-sub {
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      font-style: italic;
+      color: var(--text-dim);
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Narrow rail overrides for pillbar-sliderrow labels (same as before) */
+    @media (min-width: 880px) {
+      .globe-wrapper .pillbar-sliderrow label { min-width: 3.4em; }
+      .globe-wrapper .pillbar-seg.tz-group button { padding-left: 0.62em; padding-right: 0.62em; }
+    }
+
+    /* Touch targets for pillbar buttons */
+    @media (pointer: coarse) {
+      .globe-wrapper .pillbar-seg button,
+      .globe-wrapper .pillbar-btn { min-height: 44px; }
+      .globe-wrapper .pillbar-sliderrow input[type="range"] { height: 30px; }
+      .globe-wrapper .pillbar-sliderrow input[type="range"]::-webkit-slider-thumb {
+        width: 24px; height: 24px; margin-top: -7px;
+      }
+      .globe-wrapper .pillbar-sliderrow input[type="range"]::-moz-range-thumb {
+        width: 24px; height: 24px;
+      }
+    }
 
   </style>
 </head>
@@ -294,29 +409,30 @@
               </button>
             </div>
             <div class="globe-side">
-            <div class="globe-controls">
-              <div class="controls-top">
-                <div class="tz-group">
+            <div class="globe-controls pillbar">
+              <div class="pillbar-sliderrow p-slider-row">
+                <label>Hour</label>
+                <input type="range" id="hour-slider" min="0" max="24" value="12" step="0.25">
+                <span class="pillbar-sliderval p-slider-val" id="hour-label">12:00 PM CT</span>
+              </div>
+              <div class="pillbar-sliderrow p-slider-row">
+                <label>Day</label>
+                <input type="range" id="day-slider" min="0" max="364" value="172">
+                <span class="pillbar-sliderval p-slider-val" id="day-label">21 Jun</span>
+              </div>
+              <div class="pillbar-foot controls-top">
+                <div class="pillbar-seg tz-group">
                   <button class="tz-btn" data-tz="ET">ET</button>
                   <button class="tz-btn active" data-tz="CT">CT</button>
                   <button class="tz-btn" data-tz="MT">MT</button>
                   <button class="tz-btn" data-tz="PT">PT</button>
                 </div>
-                <button class="p-reset" id="globe-reset">Reset</button>
+                <div class="pillbar-actions">
+                  <button class="pillbar-btn pillbar-btn--reset p-reset" id="globe-reset">Reset</button>
+                </div>
               </div>
-              <div class="p-slider-row">
-                <label>Hour</label>
-                <input type="range" id="hour-slider" min="0" max="24" value="12" step="0.25">
-                <span class="p-slider-val" id="hour-label">12:00 PM CT</span>
-              </div>
-              <div class="p-slider-row">
-                <label>Day</label>
-                <input type="range" id="day-slider" min="0" max="364" value="172">
-                <span class="p-slider-val" id="day-label">21 Jun</span>
-              </div>
-              <div class="tilt-row">
-                <span class="tilt-row-label">Tilt</span>
-                <div class="tilt-group">
+              <div class="pillbar-foot tilt-row" style="margin-top:10px;">
+                <div class="pillbar-seg tilt-group">
                   <button class="tilt-btn" data-idx="0">22.1&deg;</button>
                   <button class="tilt-btn active" data-idx="1">23.4&deg;</button>
                   <button class="tilt-btn" data-idx="2">24.5&deg;</button>

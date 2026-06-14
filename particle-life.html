@@ -139,9 +139,10 @@
       /* Tighten vertical rhythm inside the side panels so the seven
          sliders + saves section sit comfortably within the stage height
          without an internal scroll. Stacked/mobile keeps roomier spacing. */
-      .pl-wrapper:not(.is-fs) .pl-slider-row { margin-bottom: 0.3rem; }
+      .pl-wrapper:not(.is-fs) .pillbar-sliderrow { margin-bottom: 0.3rem; }
       .pl-wrapper:not(.is-fs) .pl-slot-section { margin-top: 0.7rem; padding-top: 0.75rem; }
-      .pl-wrapper:not(.is-fs) .pl-buttons { margin-top: 0.65rem; }
+      .pl-wrapper:not(.is-fs) .pl-buttons,
+      .pl-wrapper:not(.is-fs) .pillbar-foot { margin-top: 0.65rem; }
     }
 
     /* ============================================================
@@ -640,40 +641,45 @@
     .pl-group-physics { order: -1; }
     .pl-wrapper.is-fs .pl-group-physics { order: 0; }
 
-    /* Section heading inside controls */
-    .pl-control-group h4,
-    .pl-slot-section h4 {
+    /* Bridge: pillbar in the dark panel context, override its default light bg
+       so each control group reads as a dark raised panel, consistent with the
+       studio + fullscreen drawer. Radius 0 keeps the square Frontier Soviet feel. */
+    .pl-control-group.pillbar {
+      background: var(--d-bg-raised);
+      border: 1px solid var(--d-rule);
+      border-radius: 6px;
+      padding: 0.9rem 1rem 1rem;
+      box-shadow: none;
+      max-width: none;
+    }
+    /* pillbar-head inside the dark panel: smaller title weight to match the
+       former h4 scale, and a rule underline so sections read cleanly. */
+    .pl-control-group.pillbar .pillbar-head {
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--d-rule);
+    }
+    .pl-control-group.pillbar .pillbar-title {
       font-family: var(--d-mono);
       font-size: 0.64rem;
       font-weight: 500;
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--d-text-dim);
-      margin: 0 0 0.75rem 0;
-      padding-bottom: 0.4rem;
-      border-bottom: 1px solid var(--d-rule);
-      position: relative;
     }
-    .pl-control-group h4::before,
-    .pl-slot-section h4::before {
-      content: '/';
-      margin-right: 0.55em;
-      color: var(--d-accent);
-      font-weight: 400;
+    /* Studio side panels already set padding; let that win over pillbar default. */
+    .pl-wrapper:not(.is-fs) > .pl-controls > .pl-control-group.pillbar {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
     }
-
-    /* Slider rows inherit base styles; small spacing tweak */
-    .pl-slider-row { margin-bottom: 0.5rem; }
-
-    /* Keep the value readout (40k, 2.20, …) visible in the narrow studio
-       side panels: let the range input shrink instead of overflowing (the
-       default flex min-width:auto holds it at its intrinsic ~129px, which
-       pushed the value past the panel's overflow-x:hidden edge), and trim
-       the label/value gutters so the slider still has room. */
-    .pl-wrapper .pl-slider-row { gap: 0.7rem; }
-    .pl-wrapper .pl-slider-row label { min-width: 4.5em; }
-    .pl-wrapper .pl-slider-row input[type="range"] { min-width: 0; }
-    .pl-wrapper .pl-slider-val { min-width: 3em; }
+    /* Slider rows: keep the studio overflow-safe gap + min-width from the old rules. */
+    .pl-wrapper .pillbar-sliderrow { gap: 0.7rem; margin-bottom: 0.5rem; }
+    .pl-wrapper .pillbar-sliderrow label { min-width: 4.5em; font-size: 0.82rem; color: var(--d-text-dim); }
+    .pl-wrapper .pillbar-sliderrow input[type="range"] { min-width: 0; }
+    .pl-wrapper .pillbar-sliderval { min-width: 3em; color: var(--d-text); }
 
     /* Misc text inside controls */
     .pl-matrix-explainer,
@@ -832,14 +838,6 @@
       border: solid var(--d-bg);
       border-width: 0 2px 2px 0;
       transform: translate(-50%, -58%) rotate(45deg);
-    }
-
-    /* Preset buttons row */
-    .pl-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-top: 0.8rem;
     }
 
     /* "New colors" rerolls the palette; it sits beside "Randomize all" in the
@@ -1117,8 +1115,10 @@
                 <button class="pl-unlock" hidden><span class="pl-unlock-long">&hellip;</span><span class="pl-unlock-tiny">&hellip;</span></button>
                 <span class="pl-unlock-msg" aria-live="polite"></span>
               </div>
-              <div class="pl-control-group pl-group-matrix">
-                <h4>Force Matrix</h4>
+              <div class="pl-control-group pl-group-matrix pillbar">
+                <div class="pillbar-head">
+                  <span class="pillbar-title">Force Matrix</span>
+                </div>
                 <div class="pl-matrix-grid"></div>
                 <p class="pl-matrix-explainer">
                   Row attracts column. Green = attract, red = repel. Click a
@@ -1135,7 +1135,9 @@
                   </label>
                 </div>
                 <div class="pl-field-section">
-                  <h4>Rogue field</h4>
+                  <div class="pillbar-head" style="margin-top:0.6rem;margin-bottom:0.5rem;">
+                    <span class="pillbar-title" style="font-size:0.95rem;">Rogue field</span>
+                  </div>
                   <p class="pl-field-explainer">
                     An invisible flow that slowly morphs through golden-ratio
                     and sacred-geometry patterns, conducting the whole swarm.
@@ -1154,15 +1156,15 @@
                       <span>Auto-morph</span>
                     </label>
                   </div>
-                  <div class="pl-slider-row">
+                  <div class="pillbar-sliderrow">
                     <label>Field</label>
                     <input type="range" data-param="fieldstr" min="0" max="6" value="2.0" step="0.1">
-                    <span class="pl-slider-val" data-value="fieldstr">2.0</span>
+                    <span class="pillbar-sliderval" data-value="fieldstr">2.0</span>
                   </div>
-                  <div class="pl-slider-row">
+                  <div class="pillbar-sliderrow">
                     <label>Morph</label>
                     <input type="range" data-param="fieldmorph" min="0.2" max="3" value="1.0" step="0.1">
-                    <span class="pl-slider-val" data-value="fieldmorph">1.0&times;</span>
+                    <span class="pillbar-sliderval" data-value="fieldmorph">1.0&times;</span>
                   </div>
                   <div class="pl-field-stepper">
                     <button class="pl-field-arrow pl-field-prev" type="button" title="Morph back to the previous pattern" aria-label="Previous pattern">&lsaquo;</button>
@@ -1170,49 +1172,55 @@
                     <button class="pl-field-arrow pl-field-next" type="button" title="Morph on to the next pattern" aria-label="Next pattern">&rsaquo;</button>
                   </div>
                 </div>
-                <div class="pl-buttons">
-                  <button class="pl-btn pl-reset">Reset</button>
+                <div class="pl-buttons pillbar-foot" style="margin-top:1rem;">
+                  <div class="pillbar-actions">
+                    <button class="pl-reset pillbar-btn pillbar-btn--reset"><span class="gl">↻</span> Reset</button>
+                  </div>
                 </div>
               </div>
-              <div class="pl-control-group pl-group-physics">
-                <h4>Physics</h4>
-                <div class="pl-slider-row">
+              <div class="pl-control-group pl-group-physics pillbar">
+                <div class="pillbar-head">
+                  <span class="pillbar-title">Physics</span>
+                </div>
+                <div class="pillbar-sliderrow">
                   <label>Count</label>
                   <input type="range" data-param="count" min="5000" max="100000" value="30000" step="1000">
-                  <span class="pl-slider-val" data-value="count">30k</span>
+                  <span class="pillbar-sliderval" data-value="count">30k</span>
                 </div>
-                <div class="pl-slider-row">
+                <div class="pillbar-sliderrow">
                   <label>Radius</label>
                   <input type="range" data-param="rmax" min="16" max="80" value="32" step="1">
-                  <span class="pl-slider-val" data-value="rmax">32</span>
+                  <span class="pillbar-sliderval" data-value="rmax">32</span>
                 </div>
-                <div class="pl-slider-row">
+                <div class="pillbar-sliderrow">
                   <label>Force</label>
                   <input type="range" data-param="force" min="0.10" max="3.0" value="1.0" step="0.05">
-                  <span class="pl-slider-val" data-value="force">1.00</span>
+                  <span class="pillbar-sliderval" data-value="force">1.00</span>
                 </div>
-                <div class="pl-slider-row">
+                <div class="pillbar-sliderrow">
                   <label>Friction</label>
                   <input type="range" data-param="friction" min="0.10" max="2.5" value="0.55" step="0.05">
-                  <span class="pl-slider-val" data-value="friction">0.55</span>
+                  <span class="pillbar-sliderval" data-value="friction">0.55</span>
                 </div>
-                <div class="pl-slider-row">
+                <div class="pillbar-sliderrow">
                   <label>Beta</label>
                   <input type="range" data-param="beta" min="0.10" max="0.80" value="0.30" step="0.01">
-                  <span class="pl-slider-val" data-value="beta">0.30</span>
+                  <span class="pillbar-sliderval" data-value="beta">0.30</span>
                 </div>
-                <div class="pl-slider-row">
+                <div class="pillbar-sliderrow">
                   <label>Repel</label>
                   <input type="range" data-param="repel" min="0.5" max="12.0" value="4.0" step="0.1">
-                  <span class="pl-slider-val" data-value="repel">4.0</span>
+                  <span class="pillbar-sliderval" data-value="repel">4.0</span>
                 </div>
-                <div class="pl-slider-row">
+                <div class="pillbar-sliderrow">
                   <label>Species</label>
                   <input type="range" data-param="species" min="1" max="15" value="8" step="1">
-                  <span class="pl-slider-val" data-value="species">8</span>
+                  <span class="pillbar-sliderval" data-value="species">8</span>
                 </div>
                 <div class="pl-slot-section">
-                  <h4>Your saves</h4>
+                  <div class="pillbar-head" style="margin-bottom:0.5rem;">
+                    <span class="pillbar-title" style="font-size:0.95rem;">Your saves</span>
+                  </div>
                   <div class="pl-slot-row">
                     <div class="pl-slots">
                       <button class="pl-slot pl-slot-empty" data-slot="0">1</button>
@@ -1221,7 +1229,7 @@
                       <button class="pl-slot pl-slot-empty" data-slot="3">4</button>
                       <button class="pl-slot pl-slot-empty" data-slot="4">5</button>
                     </div>
-                    <button class="pl-btn pl-slot-save">Save current</button>
+                    <button class="pl-slot-save pillbar-btn pillbar-btn--primary">Save current</button>
                   </div>
                   <p class="pl-slot-hint">
                     Save the current setup to a slot; click a filled slot to
@@ -1230,8 +1238,8 @@
                   </p>
                   <div class="pl-share-row">
                     <input type="text" class="pl-slot-share" placeholder="Paste a share string here, or click Export"/>
-                    <button class="pl-btn pl-slot-export">Export</button>
-                    <button class="pl-btn pl-slot-import">Import</button>
+                    <button class="pl-slot-export pillbar-btn pillbar-btn--reset">Export</button>
+                    <button class="pl-slot-import pillbar-btn pillbar-btn--primary">Import</button>
                   </div>
                   <div class="pl-slot-msg" aria-live="polite"></div>
                 </div>

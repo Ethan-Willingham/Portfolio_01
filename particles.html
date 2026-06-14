@@ -36,6 +36,40 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ---- Pillbar: scoped tweaks for this page only ----
+       The control panels carry only pillbar classes now (the old .p-controls /
+       .p-slider-row / .p-slider-val classes were dropped from the markup so the
+       shared style.css rules no longer compete with pillbar). The demo JS still
+       binds to [data-param], [data-value], .p-reset, .p-fps, .p-canvas, .p-hint
+       and .render-dot, which all remain. */
+
+    /* The pillbar sits flush under each demo's canvas area. */
+    .demo-wrapper .pillbar {
+      max-width: 100%;
+      border-radius: 0 0 14px 14px;
+      border-top: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.32), inset 0 -1px 0 rgba(245,241,234,0.04);
+    }
+
+    /* The reset button keeps its .p-reset class (the demo JS binds to it) and
+       style.css styles .p-reset, so re-assert the pillbar button look here at a
+       higher specificity, and drop the shared rule's duplicate ::before glyph. */
+    .demo-wrapper .pillbar-btn {
+      font-family: var(--font-body); font-size: 0.82rem;
+      border-radius: 999px; padding: 8px 18px; cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .demo-wrapper .pillbar-btn--reset {
+      background: transparent; color: var(--text-dim);
+      border-color: var(--rule); display: inline-flex; align-items: center; gap: 6px;
+    }
+    .demo-wrapper .pillbar-btn--reset:hover {
+      color: var(--text-bright); border-color: var(--accent);
+      background: rgba(212,196,160,0.10);
+    }
+    .demo-wrapper .pillbar-btn--reset::before { content: none; }
+  </style>
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -94,36 +128,40 @@
           <div class="demo-wrapper" data-mode="bounce">
             <div class="demo-header">
               <span class="demo-label">Gravity &amp; bounce</span>
-              <span class="p-fps"></span>
             </div>
             <div class="demo-canvas-wrapper p-canvas">
               <div class="render-dot"></div>
               <div class="p-hint">click &amp; drag to attract</div>
             </div>
-            <div class="p-controls">
-              <div class="p-controls-header">
-                <span></span>
-                <button class="p-reset">Reset</button>
+            <div class="pillbar">
+              <div class="pillbar-head">
+                <span class="pillbar-title">Controls</span>
+                <span class="pillbar-readout"><b class="p-fps"></b><span>FPS</span></span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Count</label>
                 <input type="range" data-param="count" min="10" max="400" value="150">
-                <span class="p-slider-val" data-value="count">150</span>
+                <span class="pillbar-sliderval" data-value="count">150</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Gravity</label>
                 <input type="range" data-param="gravity" min="-4000" max="4000" value="0">
-                <span class="p-slider-val" data-value="gravity">0</span>
+                <span class="pillbar-sliderval" data-value="gravity">0</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Damping</label>
                 <input type="range" data-param="damping" min="80" max="100" value="98" step="1">
-                <span class="p-slider-val" data-value="damping">98</span>
+                <span class="pillbar-sliderval" data-value="damping">98</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Pull</label>
                 <input type="range" data-param="pull" min="100" max="10000" value="4000">
-                <span class="p-slider-val" data-value="pull">4000</span>
+                <span class="pillbar-sliderval" data-value="pull">4000</span>
+              </div>
+              <div class="pillbar-foot">
+                <div class="pillbar-actions">
+                  <button class="p-reset pillbar-btn pillbar-btn--reset"><span class="gl">&#8635;</span> Reset</button>
+                </div>
               </div>
             </div>
           </div>
@@ -179,41 +217,45 @@
           <div class="demo-wrapper" data-mode="collide">
             <div class="demo-header">
               <span class="demo-label">Collisions</span>
-              <span class="p-fps"></span>
             </div>
             <div class="demo-canvas-wrapper p-canvas">
               <div class="render-dot"></div>
               <div class="p-hint">click &amp; drag to attract</div>
             </div>
-            <div class="p-controls">
-              <div class="p-controls-header">
-                <span></span>
-                <button class="p-reset">Reset</button>
+            <div class="pillbar">
+              <div class="pillbar-head">
+                <span class="pillbar-title">Controls</span>
+                <span class="pillbar-readout"><b class="p-fps"></b><span>FPS</span></span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Count</label>
                 <input type="range" data-param="count" min="5" max="300" value="150">
-                <span class="p-slider-val" data-value="count">150</span>
+                <span class="pillbar-sliderval" data-value="count">150</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Size</label>
                 <input type="range" data-param="size" min="4" max="12" value="9">
-                <span class="p-slider-val" data-value="size">9</span>
+                <span class="pillbar-sliderval" data-value="size">9</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Gravity</label>
                 <input type="range" data-param="gravity" min="-4000" max="4000" value="0">
-                <span class="p-slider-val" data-value="gravity">0</span>
+                <span class="pillbar-sliderval" data-value="gravity">0</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Bounce</label>
                 <input type="range" data-param="bounce" min="10" max="100" value="60">
-                <span class="p-slider-val" data-value="bounce">60</span>
+                <span class="pillbar-sliderval" data-value="bounce">60</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Pull</label>
                 <input type="range" data-param="pull" min="100" max="5000" value="2400">
-                <span class="p-slider-val" data-value="pull">2400</span>
+                <span class="pillbar-sliderval" data-value="pull">2400</span>
+              </div>
+              <div class="pillbar-foot">
+                <div class="pillbar-actions">
+                  <button class="p-reset pillbar-btn pillbar-btn--reset"><span class="gl">&#8635;</span> Reset</button>
+                </div>
               </div>
             </div>
           </div>
@@ -265,41 +307,45 @@
           <div class="demo-wrapper" data-mode="sponge">
             <div class="demo-header">
               <span class="demo-label">Sponge</span>
-              <span class="p-fps"></span>
             </div>
             <div class="demo-canvas-wrapper p-canvas">
               <div class="render-dot"></div>
               <div class="p-hint">click &amp; drag to tear</div>
             </div>
-            <div class="p-controls">
-              <div class="p-controls-header">
-                <span></span>
-                <button class="p-reset">Reset</button>
+            <div class="pillbar">
+              <div class="pillbar-head">
+                <span class="pillbar-title">Controls</span>
+                <span class="pillbar-readout"><b class="p-fps"></b><span>FPS</span></span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Count</label>
                 <input type="range" data-param="count" min="20" max="300" value="160">
-                <span class="p-slider-val" data-value="count">160</span>
+                <span class="pillbar-sliderval" data-value="count">160</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Spring</label>
                 <input type="range" data-param="spring" min="0.5" max="12" value="7.5" step="0.5">
-                <span class="p-slider-val" data-value="spring">7.5</span>
+                <span class="pillbar-sliderval" data-value="spring">7.5</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Pull</label>
                 <input type="range" data-param="pull" min="200" max="5000" value="2700">
-                <span class="p-slider-val" data-value="pull">2700</span>
+                <span class="pillbar-sliderval" data-value="pull">2700</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Radius</label>
                 <input type="range" data-param="radius" min="50" max="400" value="260">
-                <span class="p-slider-val" data-value="radius">260</span>
+                <span class="pillbar-sliderval" data-value="radius">260</span>
               </div>
-              <div class="p-slider-row">
+              <div class="pillbar-sliderrow">
                 <label>Damping</label>
                 <input type="range" data-param="damping" min="80" max="99" value="97">
-                <span class="p-slider-val" data-value="damping">97</span>
+                <span class="pillbar-sliderval" data-value="damping">97</span>
+              </div>
+              <div class="pillbar-foot">
+                <div class="pillbar-actions">
+                  <button class="p-reset pillbar-btn pillbar-btn--reset"><span class="gl">&#8635;</span> Reset</button>
+                </div>
               </div>
             </div>
           </div>
