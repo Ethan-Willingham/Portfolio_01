@@ -45,7 +45,7 @@
      Mono). This block adds only the essay's own components: the
      hero, the section system, headline stats, honest-caveat boxes,
      pull quotes, data-viz figures, public-domain photography, the
-     interactive tool panels, references, and the colophon. The
+     interactive tool panels, and the references. The
      component vocabulary is shared with the other long-form posts
      on this site so the reader feels at home. No em dashes anywhere.
      ============================================================ */
@@ -57,8 +57,8 @@
     --c-sky:   #8fb3c7;
     --c-plum:  #b79bc4;
     --c-green: #9ec79a;
-    --c-amber: #e6c074;
-    --c-rose:  #e98e7f;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
     --c-grid:  rgba(120, 134, 120, 0.22);
     --c-grid-strong: rgba(120, 134, 120, 0.4);
     --panel:   #2a322b;
@@ -80,7 +80,12 @@
   .hero-byline b { color: var(--accent); font-weight: 400; }
   .hero-figure { margin: 2.4rem 0 0.5rem; }
   .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .hero-figure img { display: block; width: 100%; height: auto; border-radius: 10px; }
   .hero-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.9rem; max-width: 60ch; line-height: 1.5; }
+  .hero-cap .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
+  .hero-cap .cred::before { content: '\00B7  '; color: var(--accent); }
+  .hero-cap .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  .hero-cap .cred a:hover { color: var(--accent-hover); }
 
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
@@ -101,11 +106,10 @@
   .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
   .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
-  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
 
   /* per-section color rhythm, keyed on section id */
-  #doom { --sec-accent:#e98e7f; } #instrument { --sec-accent:#8fb3c7; } #treadmill { --sec-accent:#9ec79a; }
-  #leveling { --sec-accent:#D4C4A0; } #three { --sec-accent:#b79bc4; } #lever { --sec-accent:#e6c074; }
+  #doom { --sec-accent:#d9978c; } #instrument { --sec-accent:#8fb3c7; } #treadmill { --sec-accent:#9ec79a; }
+  #leveling { --sec-accent:#D4C4A0; } #three { --sec-accent:#b79bc4; } #lever { --sec-accent:#dfc288; }
   #wayout { --sec-accent:#D4C4A0; }
 
   /* a wide visual that breaks out of the reading column on big screens */
@@ -136,9 +140,6 @@
   .myth { margin: 1.3em 0; padding: 0.85em 1.05em; border: 1px solid var(--rule); border-left: 3px solid var(--c-rose); border-radius: 0 10px 10px 0; background: rgba(207,106,89,0.06); font-size: 1rem; line-height: 1.55; }
   .myth b { color: var(--c-rose); }
 
-  /* ---------- PULL QUOTE ---------- */
-  .pullquote { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.45rem, 3.4vw, 2rem); line-height: 1.3; color: var(--text-bright); margin: clamp(2.2rem, 5vw, 3.2rem) 0; padding-left: 1.1rem; border-left: 3px solid var(--accent); text-wrap: balance; }
-  .pullquote cite { display: block; margin-top: 0.55rem; font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); }
 
   /* ---------- DATA-VIZ FIGURES ---------- */
   figure.viz { margin: clamp(2.2rem, 5vw, 3rem) 0; padding: 1.1em 1.2em 1.3em; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; }
@@ -279,7 +280,7 @@
   #wv-slider::-moz-range-thumb { width: 20px; height: 20px; background: var(--text-bright); border: none; border-radius: 50%; }
   .wv-meter-lbl { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.45rem; }
   .wv-bar { position: relative; height: 34px; background: rgba(0,0,0,0.28); border: 1px solid var(--rule); border-radius: 7px; }
-  .wv-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #cf6a59, #e6c074 55%, #9ec79a); border-radius: 6px 0 0 6px; transition: width 0.06s linear; }
+  .wv-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #b8796d, #dfc288 55%, #9ec79a); border-radius: 6px 0 0 6px; transition: width 0.06s linear; }
   .wv-you { position: absolute; top: -5px; width: 2px; height: 44px; background: var(--text-bright); transition: left 0.06s linear; }
   .wv-you::after { content: ''; position: absolute; left: -3px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-bright); }
   .wv-tick { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--c-grid-strong); }
@@ -305,42 +306,26 @@
   .gr-note { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); margin: 0.7rem 0 0; line-height: 1.5; }
   @keyframes grpop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  /* ---------- REFERENCES ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.76rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.5em; margin: 0.3em 0 1.4em; }
-  #sources li { margin-bottom: 0.38em; }
+  /* ---------- REFERENCES (true fine print, the big-enough treatment) ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.52rem; color: var(--text-dim); line-height: 1.3; padding-left: 1.6em; margin: 0.2em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.12em; break-inside: avoid; }
   #sources li::marker { color: var(--accent); }
   #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
   #sources li a:hover { border-bottom-color: var(--accent); }
   #sources b { color: var(--text); font-weight: 600; }
   #sources i { color: var(--text-dim); }
-  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-left: 3px solid var(--accent); padding-left: 0.7em; margin: 2.3rem 0 0.8rem; }
-  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
-  .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
-  .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
-  .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
-  .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
-  .g-c { color: #f2d69d; background: rgba(230,192,116,0.20); border-color: rgba(230,192,116,0.55); }
-  .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
+  #sources li.shead { list-style: none; margin: 0.9em 0 0.25em -1.6em; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); break-after: avoid; }
+  #sources li.shead:first-child { margin-top: 0; }
+  #sources .lede { font-size: 0.84rem; }
   .src { font-family: var(--font-body); font-size: 0.8em; color: var(--text-dim); }
   .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); text-decoration: none; }
   .src a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.4rem; } #sources li { break-inside: avoid; } }
-
-  /* ---------- COLOPHON ---------- */
-  #colophon .colo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin: 1.5em 0; }
-  #colophon .colo-stat { border: 1px solid var(--rule); border-left: 4px solid var(--cc); border-radius: 10px; padding: 0.85em 1em; background: rgba(0,0,0,0.13); }
-  #colophon .colo-stat .n { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.05rem); line-height: 1; color: var(--cc); font-variant-numeric: tabular-nums; }
-  #colophon .colo-stat .l { font-family: var(--font-body); font-size: 0.84rem; line-height: 1.35; color: var(--text-dim); margin-top: 0.35em; }
-  #colophon .c-gold { --cc: #D4C4A0; } #colophon .c-sky { --cc: #8fb3c7; } #colophon .c-plum { --cc: #b79bc4; }
-  #colophon .c-green { --cc: #9ec79a; } #colophon .c-amber { --cc: #e6c074; } #colophon .c-rose { --cc: #e98e7f; }
+  @media (min-width: 700px) { #sources ol { columns: 3; column-gap: 1.4rem; } }
 
   /* ---------- ANIMATION + REDUCED MOTION ---------- */
   @media (prefers-reduced-motion: no-preference) {
     .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
     .reveal.in { opacity: 1; transform: none; }
-    .draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); }
-    .reveal.in .draw { animation: draw 1.6s var(--ease) forwards; }
-    @keyframes draw { to { stroke-dashoffset: 0; } }
   }
   @media print {
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
@@ -360,40 +345,11 @@
     <p class="hero-byline">Sourced and illustrated. <b>Every claim cited, every image public domain.</b></p>
 
     <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
-      <!-- The motif: one sun tracing the same arc it has traced every day there have
-           been eyes to watch it. Faint repeated arcs = countless identical days. -->
-      <svg viewBox="0 0 1000 360" role="img" aria-label="A single sun low over a long horizon line. Behind it, many faint copies of the same daily arc are stacked, suggesting countless identical days under one unchanging sun.">
-        <defs>
-          <linearGradient id="sunGlow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#e6c074" stop-opacity="0.9"/>
-            <stop offset="1" stop-color="#e98e7f" stop-opacity="0.85"/>
-          </linearGradient>
-          <linearGradient id="skyFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#8fb3c7" stop-opacity="0.10"/>
-            <stop offset="1" stop-color="#8fb3c7" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <!-- faint stacked daily arcs -->
-        <path d="M70 300 A 430 250 0 0 1 930 300" fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.10"/>
-        <path d="M120 300 A 380 215 0 0 1 880 300" fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.13"/>
-        <path d="M170 300 A 330 182 0 0 1 830 300" fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.16"/>
-        <!-- the one arc the sun rides now -->
-        <path class="draw" id="sun-arc" style="--len:1180" d="M220 300 A 280 150 0 0 1 780 300" fill="none" stroke="url(#sunGlow)" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
-        <!-- the sun -->
-        <circle cx="500" cy="150" r="34" fill="url(#sunGlow)"/>
-        <circle cx="500" cy="150" r="34" fill="none" stroke="#f3d9a6" stroke-width="1" opacity="0.6"/>
-        <!-- horizon -->
-        <line x1="40" y1="300" x2="960" y2="300" class="v-grid-s"/>
-        <rect x="40" y="300" width="920" height="46" fill="url(#skyFade)"/>
-        <!-- faint era ticks, all standing under the same sun -->
-        <g class="v-axis-t" fill="#8d978c" opacity="0.7" text-anchor="middle">
-          <line x1="150" y1="300" x2="150" y2="312" stroke="#6c766b"/><text x="150" y="328">stone age</text>
-          <line x1="370" y1="300" x2="370" y2="312" stroke="#6c766b"/><text x="370" y="328">pharaohs</text>
-          <line x1="560" y1="300" x2="560" y2="312" stroke="#6c766b"/><text x="560" y="328">the caesars</text>
-          <line x1="740" y1="300" x2="740" y2="312" stroke="#6c766b"/><text x="740" y="328">your feed</text>
-        </g>
-      </svg>
-      <figcaption class="hero-cap" id="hero-fig-cap">The same sun, the same arc, every day since there were eyes to watch it. The view from under it has changed far less than we like to think.</figcaption>
+      <!-- The motif made literal: Munch's aula sun, the one object every era shares. -->
+      <img src="assets/photos/munch-sun-960.webp" srcset="assets/photos/munch-sun-480.webp 480w, assets/photos/munch-sun-960.webp 960w, assets/photos/munch-sun-1600.webp 1600w" sizes="(max-width: 1128px) 100vw, 1080px" width="1600" height="928" fetchpriority="high" decoding="async" alt="Edvard Munch's The Sun: a blinding white-gold sun over a fjord, its rays detonating across the whole sky in streaks of gold, blue and rose.">
+      <figcaption class="hero-cap" id="hero-fig-cap">The one object every human who ever lived has stood under. Edvard Munch painted it twenty-six feet wide for a university wall in Oslo.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Solen_av_Edvard_Munch.jpg">Edvard Munch, The Sun (1911), University of Oslo aula. Public domain.</a></span>
+      </figcaption>
     </figure>
   </header>
 
@@ -604,8 +560,8 @@
         function update(v, a) {
           you.setAttribute('cx', vx(v)); you.setAttribute('cy', ay(a));
           glow.setAttribute('cx', vx(v)); glow.setAttribute('cy', ay(a));
-          gauge(valFill, v, '#9ec79a', '#e98e7f');
-          gauge(aroFill, a, '#e6c074', '#8fb3c7');
+          gauge(valFill, v, '#9ec79a', '#d9978c');
+          gauge(aroFill, a, '#dfc288', '#8fb3c7');
           var ni = nearest(v, a);
           nearEl.textContent = EMO[ni].n;
           emoNodes.forEach(function (g, i) { g.classList.toggle('near', i === ni); });
@@ -675,7 +631,7 @@
         var T_PRE = -1.6, T_MAX = 10, T_SPAN = T_MAX - T_PRE;
         function px(t) { return PX0 + (t - T_PRE) / T_SPAN * (PX1 - PX0); }
         function py(h) { return PYc - h * SY; }
-        var GOOD = '#D4C4A0', BAD = '#e98e7f';
+        var GOOD = '#D4C4A0', BAD = '#d9978c';
         var EV = [
           {k:'lottery', btn:'Win the lottery', name:'You win the lottery', peak:1.0, settle:0.05, tau:1.2, good:true,
            verdict:'The biggest high there is. A year or two later, you are basically back where you started. You even enjoy small everyday things a little less than before.'},
@@ -982,7 +938,7 @@
       <p>So here's the whole thing. The doom you feel, everyone has felt it. The feelings you feel came in the same small kit everyone got, and they max out at the same ceiling for everyone. Two of the three things that made you were handed to you, the same way they're handed to everybody. As far as anyone can measure, you are equal to every human who ever lived. Nobody is having a richer time of it on the inside than you are.</p>
       <p>Which leaves the third thing. The one lever. The one part that was ever really yours. And the instructions for it have been sitting in plain sight, in every language, the whole time. There's nothing new under the sun, including the way out.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ===================== SOURCES ===================== -->
@@ -990,73 +946,39 @@
       <span class="sec-kicker">The fine print</span>
       <h2 class="sec-h">Sources, and how to read them</h2>
       <p class="lede">Every claim here points to real research, cited where it shows up. Here's the full list, strongest evidence first in each group. Where it's one study, or mixed, or still up in the air, the text says so instead of pretending to be sure.</p>
-      <div class="legend">
-        <span><span class="grade g-a">strong</span> meta-analyses or many studies agreeing</span>
-        <span><span class="grade g-b">good</span> one strong study or large sample</span>
-        <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
-        <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
-      </div>
 
-      <h3>The end is always near</h3>
       <ol>
-        <li><b>Quote Investigator.</b> "The Children Now Love Luxury" is not Socrates; it traces to Kenneth John Freeman, Cambridge dissertation, 1907. <a href="https://quoteinvestigator.com/2010/05/01/misbehave/">quoteinvestigator.com</a></li>
-        <li><b>Britannica.</b> 10 failed doomsday predictions (Millerites 1844, Halley's Comet 1910, Camping 2011, and more). <a href="https://www.britannica.com/list/10-failed-doomsday-predictions">britannica.com</a></li>
-        <li><b>Cohn, N. (1957).</b> <i>The Pursuit of the Millennium.</i> The recurring shape of apocalyptic movements. <a href="https://en.wikipedia.org/wiki/The_Pursuit_of_the_Millennium">overview</a></li>
-        <li><b>Ord, T. (2020).</b> <i>The Precipice.</i> The honest counter: genuinely novel risk since 1945. <a href="https://theprecipice.com/">theprecipice.com</a></li>
+        <li class="shead">The end is always near</li>
+        <li value="1"><b>Quote Investigator.</b> "The Children Now Love Luxury" is not Socrates; it traces to Kenneth John Freeman, Cambridge dissertation, 1907. <a href="https://quoteinvestigator.com/2010/05/01/misbehave/">quoteinvestigator.com</a></li>
+        <li value="2"><b>Britannica.</b> 10 failed doomsday predictions (Millerites 1844, Halley's Comet 1910, Camping 2011, and more). <a href="https://www.britannica.com/list/10-failed-doomsday-predictions">britannica.com</a></li>
+        <li value="3"><b>Cohn, N. (1957).</b> <i>The Pursuit of the Millennium.</i> The recurring shape of apocalyptic movements. <a href="https://en.wikipedia.org/wiki/The_Pursuit_of_the_Millennium">overview</a></li>
+        <li value="4"><b>Ord, T. (2020).</b> <i>The Precipice.</i> The honest counter: genuinely novel risk since 1945. <a href="https://theprecipice.com/">theprecipice.com</a></li>
+        <li class="shead">The same instrument</li>
+        <li value="5"><b>Barrett, L. F. (2017).</b> How Emotions Are Made; core affect as valence by arousal. <a href="https://academic.oup.com/scan/article/12/1/1/2823712">SCAN</a></li>
+        <li value="6"><b>Barrett, Adolphs, et al. (2019).</b> Emotional expressions reconsidered. <i>Psych Sci in the Public Interest.</i> <a href="https://journals.sagepub.com/doi/10.1177/1529100619832930">journal</a></li>
+        <li value="7"><b>Crivelli, et al. (2016).</b> The fear face read as threat among the Trobrianders. <i>PNAS.</i> <a href="https://www.pnas.org/content/113/44/12403">pnas.org</a></li>
+        <li value="8"><b>LeDoux, J. (2012).</b> Conserved survival circuits across mammals. <i>Prog Brain Res.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3600914/">PMC3600914</a></li>
+        <li class="shead">The treadmill and the leveling</li>
+        <li value="9"><b>Brickman, Coates & Janoff-Bulman (1978).</b> Lottery winners and accident victims. <i>JPSP.</i> <a href="https://gwern.net/doc/psychology/1978-brickman.pdf">PDF</a></li>
+        <li value="10"><b>Diener, Lucas & Scollon (2006).</b> Beyond the hedonic treadmill (set points can move). <i>Am Psychologist.</i> <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Lucas-Scollon_2006.pdf">PDF</a></li>
+        <li value="11"><b>Lucas, et al. (2003, 2004).</b> Widowhood and unemployment durably lower the set point. <a href="https://www.apa.org/pubs/journals/releases/psp-843527.pdf">marital</a> / <a href="https://bura.brunel.ac.uk/bitstream/2438/926/1/02-16.pdf">unemployment</a></li>
+        <li value="12"><b>Diener & Seligman (2004).</b> "Beyond Money"; Forbes 400 (5.8) vs Maasai (5.7), homeless (2.9). <i>PSPI.</i> <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Seligman_2004.pdf">PDF</a></li>
+        <li value="13"><b>Kahneman & Deaton (2010).</b> Income improves life evaluation but not daily mood past a point. <i>PNAS.</i> <a href="https://www.pnas.org/doi/10.1073/pnas.1011492107">pnas.org</a></li>
+        <li class="shead">The three things, and the lever</li>
+        <li value="14"><b>Lykken & Tellegen (1996).</b> Happiness is roughly 50 percent heritable (twins). <i>Psych Science.</i> <a href="https://journals.sagepub.com/doi/10.1111/j.1467-9280.1996.tb00355.x">journal</a></li>
+        <li value="15"><b>Waldinger & Schulz (2023).</b> The Good Life; Harvard Study of Adult Development. <a href="https://www.robertwaldinger.com/post/what-harvard-s-study-of-adult-development-reveals-about-happiness">summary</a></li>
+        <li value="16"><b>Holt-Lunstad, et al. (2010).</b> Social connection and mortality (the "15 cigarettes" finding). <i>PLoS Medicine.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2910600/">PMC2910600</a></li>
+        <li value="17"><b>Konrath, et al. (2012).</b> Volunteering extends life only for other-oriented motives. <i>Health Psych.</i> <a href="https://www.apa.org/pubs/journals/releases/hea-31-1-87.pdf">PDF</a></li>
+        <li value="18"><b>Dunn, Aknin & Norton (2008).</b> Spending on others raises happiness (RCT). <i>Science.</i> <a href="https://www.science.org/doi/10.1126/science.1150952">science.org</a></li>
+        <li value="19"><b>AA (1939).</b> "Selfishness, self-centeredness, that we think is the root of our troubles." <i>Big Book, ch. 5.</i> <a href="https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt5.pdf">PDF</a></li>
+        <li value="20"><b>Brown & Rohrer (2020).</b> The honest caveat: the "40 percent" happiness pie is not sound. <i>J Happiness Studies.</i> <a href="https://link.springer.com/article/10.1007/s10902-019-00128-4">Springer</a></li>
+        <li class="shead">The way out, found everywhere</li>
+        <li value="21"><b>Wattles, J. (1996).</b> <i>The Golden Rule</i> (Oxford). The rule across traditions, with its honest differences. <a href="https://global.oup.com/academic/product/the-golden-rule-9780195110364">OUP</a></li>
+        <li value="22"><b>Hillel; Confucius; Matthew; Nawawi; Mahabharata.</b> Sourced cross-tradition table. <a href="https://en.wikipedia.org/wiki/Golden_Rule">overview</a></li>
+        <li value="23"><b>Henrich, et al. (2005).</b> Fairness in 15 small-scale societies: everywhere, but locally tuned. <i>BBS.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/16372952/">PubMed</a></li>
       </ol>
 
-      <h3>The same instrument</h3>
-      <ol start="5">
-        <li><b>Barrett, L. F. (2017).</b> How Emotions Are Made; core affect as valence by arousal. <a href="https://academic.oup.com/scan/article/12/1/1/2823712">SCAN</a></li>
-        <li><b>Barrett, Adolphs, et al. (2019).</b> Emotional expressions reconsidered. <i>Psych Sci in the Public Interest.</i> <a href="https://journals.sagepub.com/doi/10.1177/1529100619832930">journal</a></li>
-        <li><b>Crivelli, et al. (2016).</b> The fear face read as threat among the Trobrianders. <i>PNAS.</i> <a href="https://www.pnas.org/content/113/44/12403">pnas.org</a></li>
-        <li><b>LeDoux, J. (2012).</b> Conserved survival circuits across mammals. <i>Prog Brain Res.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3600914/">PMC3600914</a></li>
-      </ol>
-
-      <h3>The treadmill and the leveling</h3>
-      <ol start="9">
-        <li><b>Brickman, Coates & Janoff-Bulman (1978).</b> Lottery winners and accident victims. <i>JPSP.</i> <a href="https://gwern.net/doc/psychology/1978-brickman.pdf">PDF</a></li>
-        <li><b>Diener, Lucas & Scollon (2006).</b> Beyond the hedonic treadmill (set points can move). <i>Am Psychologist.</i> <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Lucas-Scollon_2006.pdf">PDF</a></li>
-        <li><b>Lucas, et al. (2003, 2004).</b> Widowhood and unemployment durably lower the set point. <a href="https://www.apa.org/pubs/journals/releases/psp-843527.pdf">marital</a> / <a href="https://bura.brunel.ac.uk/bitstream/2438/926/1/02-16.pdf">unemployment</a></li>
-        <li><b>Diener & Seligman (2004).</b> "Beyond Money"; Forbes 400 (5.8) vs Maasai (5.7), homeless (2.9). <i>PSPI.</i> <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Seligman_2004.pdf">PDF</a></li>
-        <li><b>Kahneman & Deaton (2010).</b> Income improves life evaluation but not daily mood past a point. <i>PNAS.</i> <a href="https://www.pnas.org/doi/10.1073/pnas.1011492107">pnas.org</a></li>
-      </ol>
-
-      <h3>The three things, and the lever</h3>
-      <ol start="14">
-        <li><b>Lykken & Tellegen (1996).</b> Happiness is roughly 50 percent heritable (twins). <i>Psych Science.</i> <a href="https://journals.sagepub.com/doi/10.1111/j.1467-9280.1996.tb00355.x">journal</a></li>
-        <li><b>Waldinger & Schulz (2023).</b> The Good Life; Harvard Study of Adult Development. <a href="https://www.robertwaldinger.com/post/what-harvard-s-study-of-adult-development-reveals-about-happiness">summary</a></li>
-        <li><b>Holt-Lunstad, et al. (2010).</b> Social connection and mortality (the "15 cigarettes" finding). <i>PLoS Medicine.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2910600/">PMC2910600</a></li>
-        <li><b>Konrath, et al. (2012).</b> Volunteering extends life only for other-oriented motives. <i>Health Psych.</i> <a href="https://www.apa.org/pubs/journals/releases/hea-31-1-87.pdf">PDF</a></li>
-        <li><b>Dunn, Aknin & Norton (2008).</b> Spending on others raises happiness (RCT). <i>Science.</i> <a href="https://www.science.org/doi/10.1126/science.1150952">science.org</a></li>
-        <li><b>AA (1939).</b> "Selfishness, self-centeredness, that we think is the root of our troubles." <i>Big Book, ch. 5.</i> <a href="https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt5.pdf">PDF</a></li>
-        <li><b>Brown & Rohrer (2020).</b> The honest caveat: the "40 percent" happiness pie is not sound. <i>J Happiness Studies.</i> <a href="https://link.springer.com/article/10.1007/s10902-019-00128-4">Springer</a></li>
-      </ol>
-
-      <h3>The way out, found everywhere</h3>
-      <ol start="21">
-        <li><b>Wattles, J. (1996).</b> <i>The Golden Rule</i> (Oxford). The rule across traditions, with its honest differences. <a href="https://global.oup.com/academic/product/the-golden-rule-9780195110364">OUP</a></li>
-        <li><b>Hillel; Confucius; Matthew; Nawawi; Mahabharata.</b> Sourced cross-tradition table. <a href="https://en.wikipedia.org/wiki/Golden_Rule">overview</a></li>
-        <li><b>Henrich, et al. (2005).</b> Fairness in 15 small-scale societies: everywhere, but locally tuned. <i>BBS.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/16372952/">PubMed</a></li>
-      </ol>
-
-      <p class="sec-divider">&middot; &middot; &middot;</p>
-    </section>
-
-    <!-- ===================== COLOPHON ===================== -->
-    <section id="colophon" class="sec">
-      <span class="sec-kicker">Colophon</span>
-      <h2 class="sec-h">How this was made</h2>
-      <p class="lede">Like everything on this site, this essay was researched, written, fact-checked, and built mostly by AI agents (Anthropic's Claude), working in parallel and steered by one human who wanted to get a hard idea right, not just a comforting one.</p>
-      <div class="colo-grid">
-        <div class="colo-stat c-gold"><div class="n">6</div><div class="l">parallel research sweeps, each told to attack the thesis as hard as defend it</div></div>
-        <div class="colo-stat c-sky"><div class="n">~70</div><div class="l">studies, books, and primary sources read</div></div>
-        <div class="colo-stat c-green"><div class="n">4</div><div class="l">interactive figures you can drive yourself</div></div>
-        <div class="colo-stat c-rose"><div class="n">0</div><div class="l">stock photos: every image is public domain or drawn from data</div></div>
-      </div>
-      <p>The rule throughout was truth over comfort. Each claim was sent to a sweep that hunted the strongest evidence for it and the strongest against, and where the leveling overreached, the correction was kept in view rather than buried. The point is not that everyone is equally fine, which is false. The point is the harder, better thing underneath it.</p>
-      <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Built with Claude (Anthropic). Researched and written June 2026.</p>
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
   </main>
@@ -1064,7 +986,6 @@
   <footer class="site-footer">
     <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
       <a href="/">&copy; 2026 Ethan Willingham</a>
-      <span class="src" style="white-space:normal">An essay about being no one special, which is meant as good news.</span>
     </div>
   </footer>
 
