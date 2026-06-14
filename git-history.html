@@ -260,6 +260,166 @@
       .gh-hint { font-size: 0.64rem; }
       .gh-stat .n { font-size: 1.7rem; }
     }
+
+    /* ============================================================
+       "Which mind built which page" — model-attribution viz.
+       family.co form language (soft rounded cards, conic app-icon
+       tiles, a single-focus bottom tray, morphing/counting numbers)
+       in the site's olive-black + eruption-orange palette. Scoped
+       under .ma- so nothing leaks into the page. (js/git-attribution.js) */
+    #ma-root {
+      --ma-card: #333b34;
+      --ma-card-hi: #3a4239;
+      --ma-tray: #2b322c;
+      --ma-hair: rgba(245, 241, 234, 0.07);
+      --ma-hair-2: rgba(245, 241, 234, 0.12);
+      --ma-r: 20px;
+      --ma-r-in: 13px;
+      --ma-shadow: 0 1px 2px rgba(0,0,0,0.22), 0 10px 24px -10px rgba(0,0,0,0.55);
+      --ma-shadow-lift: 0 2px 6px rgba(0,0,0,0.28), 0 22px 44px -14px rgba(0,0,0,0.62);
+      --ma-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin: 1.5rem 0 0;
+    }
+
+    /* the five minds (legend + fuel key) */
+    .ma-minds { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.6rem; }
+    .ma-mind {
+      display: inline-flex; align-items: baseline; gap: 0.5rem;
+      padding: 0.5rem 0.85rem; background: var(--ma-card);
+      border: 1px solid var(--ma-hair); border-radius: 999px;
+      box-shadow: var(--ma-shadow);
+    }
+    .ma-mind.is-minor { opacity: 0.5; }
+    .ma-mind-dot { width: 9px; height: 9px; border-radius: 50%; align-self: center; box-shadow: 0 0 8px currentColor; }
+    .ma-mind-name { font-family: var(--font-heading); font-size: 1.02rem; color: var(--text-bright); font-weight: 700; letter-spacing: -0.01em; }
+    .ma-mind-fuel { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.01em; }
+    .ma-mind-posts { font-family: var(--font-body); font-size: 0.72rem; color: #8d9387; }
+
+    /* controls: the Changes <-> Tokens toggle */
+    .ma-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 1rem; margin-bottom: 1.4rem; }
+    .ma-toggle {
+      position: relative; display: inline-flex; padding: 3px;
+      background: #232a24; border: 1px solid var(--ma-hair); border-radius: 999px;
+    }
+    .ma-seg {
+      position: relative; z-index: 2; border: 0; background: none; cursor: pointer;
+      font-family: var(--font-body); font-size: 0.82rem; font-weight: 600;
+      color: var(--text-dim); padding: 0.4rem 0.95rem; border-radius: 999px;
+      transition: color 0.25s ease;
+    }
+    .ma-seg.is-on { color: #1a1f1a; }
+    .ma-seg:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(232,149,78,0.55); }
+    .ma-seg-glider {
+      position: absolute; z-index: 1; top: 3px; left: 3px; bottom: 3px;
+      width: calc(50% - 3px); border-radius: 999px;
+      background: linear-gradient(180deg, #F4B36B, #E8954E);
+      box-shadow: 0 2px 8px -1px rgba(232,149,78,0.5);
+      transition: transform 0.4s var(--ma-spring);
+    }
+    .ma-toggle.is-tokens .ma-seg-glider { transform: translateX(100%); }
+    .ma-controls-note { margin: 0; font-family: var(--font-body); font-size: 0.84rem; color: var(--text-dim); font-style: italic; }
+
+    /* the tile grid */
+    .ma-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 0.85rem; }
+    .ma-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+      padding: 1.1rem 0.7rem 0.95rem; cursor: pointer;
+      background: var(--ma-card); border: 1px solid var(--ma-hair);
+      border-radius: var(--ma-r); box-shadow: var(--ma-shadow);
+      transition: transform 0.34s var(--ma-spring), box-shadow 0.34s ease, background 0.2s ease, border-color 0.2s ease;
+      animation: ma-rise 0.5s var(--ma-spring) both; animation-delay: calc(var(--i) * 28ms);
+    }
+    @keyframes ma-rise { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+    @media (hover: hover) {
+      .ma-tile:hover { transform: translateY(-4px); box-shadow: var(--ma-shadow-lift); background: var(--ma-card-hi); border-color: var(--ma-hair-2); }
+      .ma-tile:hover .ma-donut { transform: scale(1.04) rotate(-2deg); }
+    }
+    .ma-tile:focus-visible { outline: none; box-shadow: var(--ma-shadow-lift), 0 0 0 2px rgba(232,149,78,0.6); }
+    .ma-tile:active { transform: translateY(-1px) scale(0.985); }
+
+    .ma-donut {
+      position: relative; width: 66px; height: 66px; border-radius: 50%;
+      background: #3a443b; transition: transform 0.34s var(--ma-spring);
+    }
+    .ma-donut-hole {
+      position: absolute; inset: 9px; border-radius: 50%;
+      background: var(--ma-card); display: grid; place-items: center;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .ma-tile:hover .ma-donut-hole { background: var(--ma-card-hi); }
+    .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; }
+    .ma-tile-title { font-family: var(--font-heading); font-size: 0.92rem; font-weight: 700; color: var(--text-bright); text-align: center; line-height: 1.15; letter-spacing: -0.01em; max-width: 100%; }
+    .ma-tile.is-arch .ma-tile-title { font-style: italic; color: var(--text); }
+    .ma-tile-sub { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; letter-spacing: 0.01em; text-align: center; }
+
+    /* the single-focus tray */
+    .ma-scrim {
+      position: fixed; inset: 0; z-index: 50; background: rgba(8, 10, 8, 0.55);
+      -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+      opacity: 0; pointer-events: none; transition: opacity 0.32s ease;
+    }
+    .ma-scrim.is-on { opacity: 1; pointer-events: auto; }
+    .ma-tray {
+      position: fixed; z-index: 51; left: 50%; bottom: clamp(14px, 4vh, 46px);
+      width: min(540px, 92vw); transform: translateX(-50%) translateY(130%);
+      background: var(--ma-tray); border: 1px solid var(--ma-hair-2);
+      border-radius: 26px; padding: 1.4rem 1.5rem 1.5rem;
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.4);
+      opacity: 0; pointer-events: none;
+      transition: transform 0.52s var(--ma-spring), opacity 0.3s ease;
+      max-height: 86vh; overflow-y: auto;
+    }
+    .ma-tray.is-on { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+    .ma-tray-x {
+      position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px;
+      display: grid; place-items: center; color: var(--text-dim);
+      background: rgba(255,255,255,0.04); border: 1px solid var(--ma-hair); border-radius: 50%;
+      cursor: pointer; transition: color 0.2s, background 0.2s;
+    }
+    .ma-tray-x:hover { color: var(--text-bright); background: rgba(255,255,255,0.09); }
+    .ma-tray-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.3rem; }
+    .ma-donut-lg { width: 78px; height: 78px; flex: 0 0 auto; }
+    .ma-donut-lg .ma-donut-hole { inset: 11px; background: var(--ma-tray); }
+    .ma-donut-lg .ma-donut-val { font-size: 1.2rem; }
+    .ma-tray-id { min-width: 0; }
+    .ma-tray-kind { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8d9387; }
+    .ma-tray-kind.is-arch { color: #b39b6a; }
+    .ma-tray-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-bright); margin: 0.15rem 0 0.2rem; line-height: 1.1; letter-spacing: -0.015em; }
+    .ma-tray-when { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+
+    .ma-tray-bar { display: flex; gap: 2px; height: 14px; border-radius: 999px; overflow: hidden; background: #1c211d; margin-bottom: 1.1rem; }
+    .ma-barseg { width: 0; transition: width 0.7s var(--ma-spring); }
+    .ma-barseg:first-child { border-radius: 999px 0 0 999px; }
+    .ma-barseg:last-child { border-radius: 0 999px 999px 0; }
+
+    .ma-tray-rows { display: flex; flex-direction: column; gap: 0.1rem; }
+    .ma-row {
+      display: grid; grid-template-columns: auto 1fr auto auto; align-items: baseline; gap: 0.7rem;
+      padding: 0.55rem 0; border-bottom: 1px solid var(--ma-hair);
+      animation: ma-row-in 0.5s var(--ma-spring) both; animation-delay: calc(var(--i) * 70ms + 120ms);
+    }
+    .ma-row:last-child { border-bottom: 0; }
+    @keyframes ma-row-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+    .ma-row-dot { width: 11px; height: 11px; border-radius: 50%; align-self: center; box-shadow: 0 0 8px currentColor; }
+    .ma-row-name { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); }
+    .ma-row-val { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); }
+    .ma-row-pct { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-bright); min-width: 2.6em; text-align: right; letter-spacing: -0.02em; }
+    .ma-tray-link {
+      display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.2rem;
+      font-family: var(--font-body); font-size: 0.9rem; color: var(--accent);
+      text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s;
+    }
+    .ma-tray-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+    @media (max-width: 560px) {
+      .ma-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0.6rem; }
+      .ma-donut { width: 58px; height: 58px; }
+      .ma-tile-title { font-size: 0.84rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ma-tile, .ma-row { animation: none; }
+      .ma-donut, .ma-tile, .ma-barseg, .ma-tray, .ma-seg-glider { transition: opacity 0.2s ease; }
+    }
   </style>
 </head>
 <body>
@@ -316,30 +476,38 @@
           <p>That eruption runs on tokens, at the peak more than a billion in a single day.</p>
 
           <div class="gh-fuel">
-            <div class="gh-stat"><span class="n">16.0B</span><span class="l">tokens since April 23, to date</span></div>
+            <div class="gh-stat"><span class="n">16.9B</span><span class="l">tokens since April 23, to date</span></div>
             <div class="gh-stat"><span class="n">1.54B</span><span class="l">in a single day (May 23)</span></div>
-            <div class="gh-stat"><span class="n">~11.6M</span><span class="l">tokens per Apr 23-now commit</span></div>
-            <div class="gh-stat"><span class="n">~$13,000</span><span class="l">at public API prices</span></div>
+            <div class="gh-stat"><span class="n">~12.0M</span><span class="l">tokens per Apr 23-now commit</span></div>
+            <div class="gh-stat"><span class="n">~$16,000</span><span class="l">at public API prices</span></div>
           </div>
 
           <div class="gh-chart-title">Tokens burned per day &middot; May into June 2026</div>
           <div id="gh-chart-daily" class="gh-chart-daily"></div>
-          <p class="gh-cap">The same eruption, in fuel: May 22&ndash;24 each cleared a billion tokens, then a second wave over May 28&ndash;31 poured in 3.1 billion more. June added another 1.2 billion across its first two days, eased, then a late surge over June 5&ndash;12 poured in 2.7 billion more.</p>
+          <p class="gh-cap">The same eruption, in fuel: May 22&ndash;24 each cleared a billion tokens, then a second wave over May 28&ndash;31 poured in 3.1 billion more. June added another 1.2 billion across its first two days, eased, then a long second half, June 7 onward, poured in 3.5 billion more, closing on a 0.67 billion day.</p>
 
-          <div class="gh-chart-title">Where 16.0 billion tokens go</div>
-          <div class="gh-abar" role="img" aria-label="96 percent cache reads, 4 percent cache writes, under one percent each output and input">
-            <span style="width:95.55%;background:#E8954E" title="Cache reads, 95.5%"></span>
-            <span style="width:3.62%;background:#4FC0C4" title="Cache writes, 3.6%"></span>
-            <span style="width:0.63%;background:#DB8A72" title="Output, 0.6%"></span>
-            <span style="width:0.20%;background:#A6CB63" title="Input, 0.2%"></span>
+          <div class="gh-chart-title">Where 16.9 billion tokens go</div>
+          <div class="gh-abar" role="img" aria-label="95 percent cache reads, 4 percent cache writes, under one percent each output and input">
+            <span style="width:95.32%;background:#E8954E" title="Cache reads, 95.3%"></span>
+            <span style="width:3.85%;background:#4FC0C4" title="Cache writes, 3.9%"></span>
+            <span style="width:0.64%;background:#DB8A72" title="Output, 0.6%"></span>
+            <span style="width:0.19%;background:#A6CB63" title="Input, 0.2%"></span>
           </div>
           <div class="gh-alegend">
-            <span><i style="background:#E8954E"></i>Cache reads <b>95.5%</b></span>
-            <span><i style="background:#4FC0C4"></i>Cache writes <b>3.6%</b></span>
+            <span><i style="background:#E8954E"></i>Cache reads <b>95.3%</b></span>
+            <span><i style="background:#4FC0C4"></i>Cache writes <b>3.9%</b></span>
             <span><i style="background:#DB8A72"></i>Output <b>0.6%</b></span>
             <span><i style="background:#A6CB63"></i>Input <b>0.2%</b></span>
           </div>
           <p class="gh-cap">Almost none of it is new writing. About 96% is the models re-reading context they already hold, a 36,000-line game file, design bibles, the whole conversation, on every single turn. The bright column above is the exhaust.</p>
+
+          <h2>Which mind built which page</h2>
+
+          <p>Every page here was written by Claude, but not by the same Claude. Five models passed through the site between May 21 and June 14: <strong>Opus 4.7</strong> carried the May eruption and most of the interactive pieces, <strong>Opus 4.8</strong> became the June workhorse, and <strong>Fable 5</strong> wrote a couple of posts almost on its own. Each tile below is one post, and the ring shows who did the work. Tap one for the full split, and flip between changes and tokens to measure it two ways.</p>
+
+          <div id="ma-root"></div>
+
+          <p class="gh-cap">Drawn from this machine's Claude Code session logs, every edit attributed to the model that made it. It covers the logged era (May 21 on), so the earliest weeks, and a little work done in Codex, are not shown. <em>Changes</em> counts file edits; <em>tokens</em> counts what each model actually wrote into the post.</p>
 
         </div>
       </article>
@@ -355,6 +523,8 @@
   <script src="js/git-history-data.js"></script>
   <script src="js/git-history.js"></script>
   <script src="js/git-usage.js"></script>
+  <script src="js/git-attribution-data.js"></script>
+  <script src="js/git-attribution.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
