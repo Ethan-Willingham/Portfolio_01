@@ -79,28 +79,13 @@
     .tn-src a { color: var(--text-dim); text-decoration: underline; text-decoration-style: dotted; text-decoration-color: rgba(184,178,162,0.55); text-underline-offset: 2px; }
     .tn-src a:hover { color: var(--accent-hover); }
 
-    /* Pull quotes */
-    .tn-quote { max-width: 640px; margin: 2.2rem auto; padding: 0 0 0 1.3rem; border-left: 2px solid var(--accent); }
-    .tn-quote p { font-family: var(--font-heading); font-style: italic; font-size: 1.32rem; line-height: 1.45; color: var(--text-bright); margin: 0 0 0.45em; }
-    .tn-quote cite { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.74rem; color: var(--text-dim); }
-
-    /* Callout box */
-    .tn-callout { max-width: 700px; margin: 1.9rem auto; padding: 1.15rem 1.3rem 1.05rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(30, 36, 32, 0.55); }
-    .tn-callout .tn-co-label { display: block; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
-    .tn-callout p { font-size: 1.05rem; line-height: 1.62; margin-bottom: 0.7em; }
-    .tn-callout p:last-child { margin-bottom: 0; }
-
     /* Tables */
     .tn-tablewrap { max-width: 760px; margin: 1.9rem auto; overflow-x: auto; }
-    table.tn-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.02rem; }
-    .tn-table th { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 400; color: var(--text-dim); text-align: left; padding: 0 0.8rem 0.55rem 0.45rem; border-bottom: 1px solid var(--rule); }
-    .tn-table td { padding: 0.72rem 0.8rem 0.72rem 0.45rem; border-bottom: 1px solid rgba(74, 84, 75, 0.55); color: var(--text); vertical-align: top; line-height: 1.45; }
-    .tn-table td.num { font-family: var(--font-mono); font-size: 0.95rem; white-space: nowrap; }
-    .tn-table tr.tn-feature td { background: rgba(212, 196, 160, 0.07); color: var(--text-bright); }
-    .tn-table tr.tn-feature td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
-    .tn-table .dim { color: var(--text-dim); font-size: 0.92em; }
     .tn-tablenote { max-width: 760px; margin: -0.9rem auto 1.8rem; font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); line-height: 1.6; }
-    .tn-eng td.num { white-space: normal; line-height: 1.5; }
+    .tn-eng td.u-num { white-space: normal; line-height: 1.5; }
+
+    /* Bridge: kit callout body inside .tn-read keeps its bright color */
+    .tn-read .u-callout-body { color: var(--text-bright); }
 
     /* Figures and photographs */
     .tn-fig { max-width: 760px; margin: 2.3rem auto; }
@@ -233,7 +218,7 @@
         <p>In 1994 a financial planner named William Bengen fed every retirement year since 1926 into one blunt question: sell a fixed, inflation-adjusted slice of a stock-and-bond portfolio every year, and how big can the slice be without going broke inside 30 years, even starting at the worst moment in a century? The answer came back just over 4 percent. <span class="tn-src"><a href="https://robberger.com/research/determining-withdrawal-rates-using-historical-data/">Bengen 1994</a></span> A 1998 Trinity University study checked the work, and the "4% rule" was born. <span class="tn-src"><a href="https://www.aaii.com/journal/199802/feature.pdf">Trinity 1998</a></span></p>
         <p>Flip the 4 percent over and the whole plan is one line: <strong>the threshold is 25 times your yearly spending.</strong> Spend $40,000 a year and your number is $1 million. Spend $100,000 and it is $2.5 million. Not income. Spending. The cheaper your life, the closer the line stands.</p>
         <p>And 4 percent is not the expected case. It is the catastrophe case, calibrated to October 1968, the unluckiest retirement month in modern history. Across all the other start years the rate that would have worked averaged about 7 percent <span class="tn-src"><a href="https://www.morningstar.com/retirement/whats-safe-retirement-withdrawal-rate-2026">Morningstar 2025</a></span>, Bengen's own 2025 revision raised even the worst case to 4.7 <span class="tn-src"><a href="https://www.bankrate.com/retirement/revised-4-percent-rule/">Bankrate 2025</a></span>, and the median retiree who ran the rule for 30 years ended <strong>2.8 times richer than the day they quit</strong>. <span class="tn-src"><a href="https://www.kitces.com/blog/url-upside-potential-sequence-of-return-risk-in-retirement-median-final-wealth/">Kitces 2019</a></span></p>
-        <blockquote class="tn-quote"><p>The average over the last 100 years, believe it or not, is 7 percent.</p><cite>Bill Bengen, creator of the 4% rule, on the withdrawal rate history would actually have allowed</cite></blockquote>
+        <blockquote class="u-pq">The average over the last 100 years, believe it or not, is 7 percent.<cite class="u-pq-cite">Bill Bengen, creator of the 4% rule, on the withdrawal rate history would actually have allowed</cite></blockquote>
         <p>The machine itself is nothing exotic: a plain total-market index fund, roughly 10 percent a year over the last century, about 7 after inflation, with horrible decades hiding inside the average. <span class="tn-src"><a href="https://investor.vanguard.com/investor-resources-education/article/fueling-the-fire-movement-updating-the-4-rule-for-early-retirees">Vanguard 2021</a></span> You spend 4 points; the rest stays in to fight inflation and absorb the bad years. One honest asterisk: people retiring for 50 years rather than 30, into expensive markets, should plan on 3.25 to 3.5 percent, which moves the line from 25 times spending to about 29. <span class="tn-src"><a href="https://earlyretirementnow.com/safe-withdrawal-rate-series/">Jeske, ERN</a></span> The catches section returns to this.</p>
       </div>
 
@@ -245,13 +230,13 @@
       </div>
 
       <div class="tn-tablewrap tn-rev">
-        <table class="tn-table">
+        <table class="u-table">
           <thead><tr><th>The pile</th><th>Pays yearly</th><th>Monthly</th><th>What it is</th></tr></thead>
           <tbody>
-            <tr><td class="num">$1,000,000</td><td class="num">$40,000</td><td class="num">$3,333</td><td>Lean. Covered, careful, no margin for a taste for boats. Top 18% of households. <span class="dim">Roughly 1 in 6 US households is here, counting home equity.</span></td></tr>
-            <tr><td class="num">$1,500,000</td><td class="num">$60,000</td><td class="num">$5,000</td><td>Solid. A paid-off-house, normal-car version of comfort.</td></tr>
-            <tr class="tn-feature"><td class="num">$2,500,000</td><td class="num">$100,000</td><td class="num">$8,333</td><td>Comfortable. More than the median household earns by working. Top 8% or so of households.</td></tr>
-            <tr><td class="num">$5,000,000</td><td class="num">$200,000</td><td class="num">$16,667</td><td>Rich. The no-compromises version. Top 3 to 4%.</td></tr>
+            <tr><td class="u-num">$1,000,000</td><td class="u-num">$40,000</td><td class="u-num">$3,333</td><td>Lean. Covered, careful, no margin for a taste for boats. Top 18% of households. <span class="u-dim">Roughly 1 in 6 US households is here, counting home equity.</span></td></tr>
+            <tr><td class="u-num">$1,500,000</td><td class="u-num">$60,000</td><td class="u-num">$5,000</td><td>Solid. A paid-off-house, normal-car version of comfort.</td></tr>
+            <tr class="u-feature"><td class="u-num">$2,500,000</td><td class="u-num">$100,000</td><td class="u-num">$8,333</td><td>Comfortable. More than the median household earns by working. Top 8% or so of households.</td></tr>
+            <tr><td class="u-num">$5,000,000</td><td class="u-num">$200,000</td><td class="u-num">$16,667</td><td>Rich. The no-compromises version. Top 3 to 4%.</td></tr>
           </tbody>
         </table>
       </div>
@@ -430,18 +415,18 @@
       </div>
 
       <div class="tn-tablewrap tn-rev">
-        <table class="tn-table">
+        <table class="u-table">
           <thead><tr><th>Path</th><th>Median pay</th><th>The toll</th></tr></thead>
           <tbody>
-            <tr><td>Elevator mechanic</td><td class="num">$106,580</td><td>4-year apprenticeship, paid from day one, $0 tuition. Top tenth clear $149K. Highest odds in America of a no-degree six-figure job: 47.5% get there.</td></tr>
-            <tr><td>Air traffic controller</td><td class="num">$144,580</td><td>No degree required; the FAA pays you during the academy. Hard age-31 application cutoff.</td></tr>
-            <tr><td>Nuclear reactor operator</td><td class="num">$122,610</td><td>High school diploma plus employer training and a federal license. The worst-paid tenth still make about $99K.</td></tr>
-            <tr><td>Radiation therapist</td><td class="num">$101,990</td><td>2-year associate degree.</td></tr>
-            <tr><td>Registered nurse</td><td class="num">$93,600</td><td>2-year community-college ADN, roughly $10-20K all-in, same license as the 4-year grads. The metro-area spread runs $90K (Texas) to $188K (San Francisco).</td></tr>
-            <tr><td>Dental hygienist</td><td class="num">$94,260</td><td>Associate degree.</td></tr>
-            <tr><td>Power-line installer</td><td class="num">$92,560</td><td>Utility apprenticeship, paid training.</td></tr>
-            <tr><td>Tech sales (AE)</td><td class="num">$200,000 OTE</td><td>No degree gate, no tuition. The toll is brutal turnover: about a third of entry-level reps wash out or move on each year.</td></tr>
-            <tr><td>Military, 20 years</td><td class="num">~$37,200/yr pension</td><td>Pension for life starting around age 40, plus a free degree (GI Bill) and a zero-down home loan.</td></tr>
+            <tr><td>Elevator mechanic</td><td class="u-num">$106,580</td><td>4-year apprenticeship, paid from day one, $0 tuition. Top tenth clear $149K. Highest odds in America of a no-degree six-figure job: 47.5% get there.</td></tr>
+            <tr><td>Air traffic controller</td><td class="u-num">$144,580</td><td>No degree required; the FAA pays you during the academy. Hard age-31 application cutoff.</td></tr>
+            <tr><td>Nuclear reactor operator</td><td class="u-num">$122,610</td><td>High school diploma plus employer training and a federal license. The worst-paid tenth still make about $99K.</td></tr>
+            <tr><td>Radiation therapist</td><td class="u-num">$101,990</td><td>2-year associate degree.</td></tr>
+            <tr><td>Registered nurse</td><td class="u-num">$93,600</td><td>2-year community-college ADN, roughly $10-20K all-in, same license as the 4-year grads. The metro-area spread runs $90K (Texas) to $188K (San Francisco).</td></tr>
+            <tr><td>Dental hygienist</td><td class="u-num">$94,260</td><td>Associate degree.</td></tr>
+            <tr><td>Power-line installer</td><td class="u-num">$92,560</td><td>Utility apprenticeship, paid training.</td></tr>
+            <tr><td>Tech sales (AE)</td><td class="u-num">$200,000 OTE</td><td>No degree gate, no tuition. The toll is brutal turnover: about a third of entry-level reps wash out or move on each year.</td></tr>
+            <tr><td>Military, 20 years</td><td class="u-num">~$37,200/yr pension</td><td>Pension for life starting around age 40, plus a free degree (GI Bill) and a zero-down home loan.</td></tr>
           </tbody>
         </table>
       </div>
@@ -491,7 +476,7 @@
         <figcaption class="tn-figcap">Years per $100,000 at a $20,000-a-year saving pace, 7% returns. The millionth dollar arrives 3.5&times; faster than the hundred-thousandth.</figcaption>
       </figure>
 
-      <blockquote class="tn-quote tn-rev"><p>The first $100,000 is a bitch, but you gotta do it. I don't care what you have to do.</p><cite>Charlie Munger, to a Berkshire shareholder, as recounted in the authorized biography <a href="https://www.mymoneyblog.com/charlie-munger-the-first-100000-is-the-most-difficult.html" style="color:inherit">Damn Right! (2000)</a></cite></blockquote>
+      <blockquote class="u-pq tn-rev">The first $100,000 is a bitch, but you gotta do it. I don't care what you have to do.<cite class="u-pq-cite">Charlie Munger, to a Berkshire shareholder, as recounted in the authorized biography <a href="https://www.mymoneyblog.com/charlie-munger-the-first-100000-is-the-most-difficult.html" style="color:inherit">Damn Right! (2000)</a></cite></blockquote>
 
       <!-- ============================ THE PEOPLE ============================ -->
       <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">07</span><h2 id="people">People Who Actually Did It</h2><p class="tn-sub">Not founders. Not heirs. A janitor, three secretaries, and 665,000 quiet accounts.</p></div></div>
@@ -509,15 +494,15 @@
       </div>
 
       <div class="tn-tablewrap tn-rev">
-        <table class="tn-table tn-eng">
+        <table class="u-table tn-eng">
           <thead><tr><th style="width:21%">Engine</th><th style="width:27%">Pays</th><th>The catch</th></tr></thead>
           <tbody>
-            <tr class="tn-feature"><td>Total-market index fund, 4% withdrawals</td><td class="num">~4%/yr, rises with inflation</td><td>The default every number above assumes. No guarantees in any given decade; over the 15 years through 2024, 89.5% of paid professionals lost to it. <span class="tn-src"><a href="https://www.spglobal.com/spdji/en/documents/spiva/spiva-us-year-end-2024.pdf">SPIVA 2024</a></span></td></tr>
-            <tr><td>TIPS ladder</td><td class="num">~4.7%/yr, inflation-proof, US-guaranteed, 30 years</td><td>Built to hit zero in year 30. There is no year 31. <span class="tn-src"><a href="https://tipswatch.com/">Tipswatch 2026</a></span></td></tr>
-            <tr><td>Annuity, bought at 60</td><td class="num">~$75,000/yr per $1M, for life</td><td>Checks are frozen nominal dollars; inflation halves their bite in ~24 years. So good and so unpopular it has its own paradox, the annuity puzzle. <span class="tn-src"><a href="https://www.immediateannuities.com/annuity-rates/by-age.html">ImmediateAnnuities 2026</a></span></td></tr>
-            <tr><td>Rental property</td><td class="num">~7% yields</td><td>A job stapled to an asset: roughly 96 hours a year per property, and the water heater fails at 2 a.m. on principle. The hands-off REIT fund pays ~3.6% and never calls. <span class="tn-src"><a href="https://www.attomdata.com/news/market-trends/single-family-rental/2026-single-family-rental-market-report/">ATTOM 2026</a> <a href="https://www.hemlane.com/resources/cost-time-property-management/">Hemlane</a></span></td></tr>
-            <tr><td>Dividend funds</td><td class="num">3 to 3.4% in cash</td><td>Feels like free money; is mathematically the company selling pieces of itself on your behalf. Chasing yield trades away growth.</td></tr>
-            <tr><td>Social Security, the floor</td><td class="num">avg $2,081/mo</td><td>The forgotten asset: every $1,000 a month of benefit does the job of $300,000 of portfolio, and early retirees still collect at 67. The pile only has to carry you there, not to 100, alone. <span class="tn-src"><a href="https://www.kiplinger.com/retirement/social-security/what-is-the-average-social-security-check-by-age">Kiplinger 2026</a></span></td></tr>
+            <tr class="u-feature"><td>Total-market index fund, 4% withdrawals</td><td class="u-num">~4%/yr, rises with inflation</td><td>The default every number above assumes. No guarantees in any given decade; over the 15 years through 2024, 89.5% of paid professionals lost to it. <span class="tn-src"><a href="https://www.spglobal.com/spdji/en/documents/spiva/spiva-us-year-end-2024.pdf">SPIVA 2024</a></span></td></tr>
+            <tr><td>TIPS ladder</td><td class="u-num">~4.7%/yr, inflation-proof, US-guaranteed, 30 years</td><td>Built to hit zero in year 30. There is no year 31. <span class="tn-src"><a href="https://tipswatch.com/">Tipswatch 2026</a></span></td></tr>
+            <tr><td>Annuity, bought at 60</td><td class="u-num">~$75,000/yr per $1M, for life</td><td>Checks are frozen nominal dollars; inflation halves their bite in ~24 years. So good and so unpopular it has its own paradox, the annuity puzzle. <span class="tn-src"><a href="https://www.immediateannuities.com/annuity-rates/by-age.html">ImmediateAnnuities 2026</a></span></td></tr>
+            <tr><td>Rental property</td><td class="u-num">~7% yields</td><td>A job stapled to an asset: roughly 96 hours a year per property, and the water heater fails at 2 a.m. on principle. The hands-off REIT fund pays ~3.6% and never calls. <span class="tn-src"><a href="https://www.attomdata.com/news/market-trends/single-family-rental/2026-single-family-rental-market-report/">ATTOM 2026</a> <a href="https://www.hemlane.com/resources/cost-time-property-management/">Hemlane</a></span></td></tr>
+            <tr><td>Dividend funds</td><td class="u-num">3 to 3.4% in cash</td><td>Feels like free money; is mathematically the company selling pieces of itself on your behalf. Chasing yield trades away growth.</td></tr>
+            <tr><td>Social Security, the floor</td><td class="u-num">avg $2,081/mo</td><td>The forgotten asset: every $1,000 a month of benefit does the job of $300,000 of portfolio, and early retirees still collect at 67. The pile only has to carry you there, not to 100, alone. <span class="tn-src"><a href="https://www.kiplinger.com/retirement/social-security/what-is-the-average-social-security-check-by-age">Kiplinger 2026</a></span></td></tr>
           </tbody>
         </table>
       </div>
@@ -546,10 +531,10 @@
         <p>The least expected failure mode is winning. The problem moves from money to meaning, and profiles of early retirees who went back to work read identically; "I was bored out of my mind" is a direct quote from one who lasted five months. <span class="tn-src"><a href="https://www.cnbc.com/2024/02/15/40-year-old-who-retired-and-only-lasted-5-months-it-was-boring.html">CNBC 2024</a></span> The number buys back your 90,000 hours and then asks, with a straight face, what they were for.</p>
         <h3>The predators sell this exact dream</h3>
         <p>"Passive income" is the most profitable phrase in the scam economy precisely because everything above is true enough to believe. The FTC's recent docket: $25 million taken by an "AI-powered" storefront scheme, settlements against course-sellers promising $1,000 to $3,000 a month on autopilot, and MLM plans where, by some analyses, more than 99% of participants lose money. <span class="tn-src"><a href="https://www.ftc.gov/news-events/news/press-releases/2024/09/ftc-announces-crackdown-deceptive-ai-claims-schemes">FTC 2024</a> <a href="https://www.ftc.gov/news-events/news/press-releases/2026/04/publishingcom-pay-15-million-misleading-consumers-about-how-much-income-they-could-earn-using">FTC 2026</a></span> Even the famous Einstein line about compound interest is fake; an ad copywriter wrote it. <span class="tn-src"><a href="https://quoteinvestigator.com/2019/09/09/interest/">Quote Investigator 2019</a></span> The real machine has no webinar, no mentor, and no urgency. If someone is selling you passive income, you are the income.</p>
-        <div class="tn-callout">
-          <span class="tn-co-label">The loudest objection</span>
-          <p>Suze Orman, asked about early retirement on a 2018 podcast: "I hate it. I hate it. I hate it." Her number is $5 million, maybe $10 million, because a single catastrophe can burn $350,000 a year. <span class="tn-src"><a href="https://affordanything.com/153-hate-fire-movement-suze-orman/">Afford Anything 2018</a></span> She is pricing every disaster striking at once, which is how you get a number nobody reaches. But she is gesturing at the same tail risks listed above. The sane landing spot is between her and the brochure: a real cushion, real insurance, and flexibility.</p>
-        </div>
+        <aside class="u-callout">
+          <p class="u-callout-k">The loudest objection</p>
+          <p class="u-callout-body">Suze Orman, asked about early retirement on a 2018 podcast: "I hate it. I hate it. I hate it." Her number is $5 million, maybe $10 million, because a single catastrophe can burn $350,000 a year. <span class="tn-src"><a href="https://affordanything.com/153-hate-fire-movement-suze-orman/">Afford Anything 2018</a></span> She is pricing every disaster striking at once, which is how you get a number nobody reaches. But she is gesturing at the same tail risks listed above. The sane landing spot is between her and the brochure: a real cushion, real insurance, and flexibility.</p>
+        </aside>
       </div>
 
       <!-- ============================ THE DEAL ============================ -->

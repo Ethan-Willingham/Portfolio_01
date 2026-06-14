@@ -67,12 +67,8 @@
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
-  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; }
-  .hero-byline b { color: var(--accent); font-weight: 400; }
+  /* kit .u-hero used; bridge: scope to the reading column */
+  .u-hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
 
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
@@ -89,7 +85,8 @@
   .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
   .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
-  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+  /* .sec-divider replaced by kit .u-divider; bridge: add top margin to match old spacing */
+  .u-divider { margin-top: 3.4rem; }
 
   /* the load-bearing line of each section */
   .turn { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.3rem, 3.4vw, 1.6rem); line-height: 1.3; color: var(--text-bright); margin: 1.5em 0; text-wrap: pretty; }
@@ -107,12 +104,7 @@
   .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
   .map-stat { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); }
   .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--accent); margin-right: 0.35em; }
-  .map-list { list-style: none; margin: 0; padding: 0; }
-  .map-list li { margin: 0; }
-  .map-list li a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(120,134,120,0.12); color: var(--text); text-decoration: none; transition: color 0.18s, padding-left 0.18s; }
-  .map-list li a:hover { color: var(--accent); padding-left: 0.4rem; }
-  .map-list .map-m { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
-  .map-list .mnum { font-family: var(--font-mono); font-size: 0.72rem; color: var(--sec-accent, var(--accent)); margin-right: 0.7em; }
+  /* TOC list: kit .u-toc-list / .u-toc-row / .u-toc-n / .u-toc-m used inside .map */
 
   /* ---------- PHOTOGRAPHS ---------- */
   .photo { margin: 2.2em auto; }
@@ -162,12 +154,8 @@
   #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
   #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
   .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 0.4em; }
-  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
-  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
-  .src-details > summary::-webkit-details-marker { display: none; }
-  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
-  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
-  .src-details > summary:hover { color: var(--accent-hover); }
+  /* collapsible sources: kit .u-collapse used; bridge: match old border-top spacing */
+  .u-collapse { margin-top: 1.1em; }
   .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0.2rem 0 1.1rem; font-size: 0.78rem; color: var(--text-dim); }
   #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
   #sources li { margin-bottom: 0.3em; }
@@ -189,7 +177,7 @@
   @media print {
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
     body { background: #fff; color: #161616; }
-    .sec, .hero, .map { max-width: none; }
+    .sec, .u-hero, .map { max-width: none; }
     .sec p, .lede { color: #161616; }
     .photo, .guesses, .duo { break-inside: avoid; }
     a { color: #161616; }
@@ -202,11 +190,11 @@
   <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
 
   <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <p class="hero-eyebrow">A field guide to where religion comes from</p>
-    <h1 class="hero-title">Five Hundred Children, No Books</h1>
-    <p class="hero-dek">Leave them on an island for two hundred years with no religion handed down, no gods and no scripture to inherit. Come back. The odds are they will have built a faith of their own, and we can almost say so before we even look.</p>
-    <p class="hero-byline">Respectful, grounded in science, and it takes no side on whether God is real. <b>Thirty-seven sources cited.</b> Last reviewed June 2026.</p>
+  <header class="u-hero">
+    <p class="u-eyebrow">A field guide to where religion comes from</p>
+    <h1 class="u-title">Five Hundred Children, No Books</h1>
+    <p class="u-dek">Leave them on an island for two hundred years with no religion handed down, no gods and no scripture to inherit. Come back. The odds are they will have built a faith of their own, and we can almost say so before we even look.</p>
+    <p class="u-meta">Respectful, grounded in science, and it takes no side on whether God is real. <b>Thirty-seven sources cited.</b> <span class="u-sep">/</span> Last reviewed June 2026.</p>
   </header>
 
   <main id="guide">
@@ -220,18 +208,18 @@
         <span class="map-stat"><b>1492</b> the year the result came in</span>
         <span class="map-stat"><b>37</b> sources cited</span>
       </div>
-      <ul class="map-list">
-        <li><a href="#akron"><span><span class="mnum">01</span>Two men in Akron built a religion by accident</span><span class="map-m">the engine</span></a></li>
-        <li><a href="#guess"><span><span class="mnum">02</span>Everyone guesses the wrong parts</span><span class="map-m">the reveal</span></a></li>
-        <li><a href="#children"><span><span class="mnum">03</span>The youngest children give it away</span><span class="map-m">the mechanism</span></a></li>
-        <li><a href="#twice"><span><span class="mnum">04</span>The experiment already ran, at planetary scale</span><span class="map-m">isolation</span></a></li>
-        <li><a href="#islands"><span><span class="mnum">05</span>We have run this smaller, and faster</span><span class="map-m">small and fast</span></a></li>
-        <li><a href="#dissent"><span><span class="mnum">06</span>The tradition that would not surrender</span><span class="map-m">the dissenter</span></a></li>
-        <li><a href="#squid"><span><span class="mnum">07</span>Nobody calls a squid eye a human eye</span><span class="map-m">the frame</span></a></li>
-        <li><a href="#deletion"><span><span class="mnum">08</span>They banned the gods, and something grew back</span><span class="map-m">deletion</span></a></li>
-        <li><a href="#volunteers"><span><span class="mnum">09</span>The people rebuilding it on purpose</span><span class="map-m">on purpose</span></a></li>
-        <li><a href="#receipt"><span><span class="mnum">10</span>The receipt from Akron</span><span class="map-m">subtraction</span></a></li>
-        <li><a href="#installed"><span><span class="mnum">11</span>The oldest line in all the books</span><span class="map-m">the close</span></a></li>
+      <ul class="u-toc-list">
+        <li><a class="u-toc-row" href="#akron"><span class="u-toc-name"><span class="u-toc-n">01</span>Two men in Akron built a religion by accident</span><span class="u-toc-m">the engine</span></a></li>
+        <li><a class="u-toc-row" href="#guess"><span class="u-toc-name"><span class="u-toc-n">02</span>Everyone guesses the wrong parts</span><span class="u-toc-m">the reveal</span></a></li>
+        <li><a class="u-toc-row" href="#children"><span class="u-toc-name"><span class="u-toc-n">03</span>The youngest children give it away</span><span class="u-toc-m">the mechanism</span></a></li>
+        <li><a class="u-toc-row" href="#twice"><span class="u-toc-name"><span class="u-toc-n">04</span>The experiment already ran, at planetary scale</span><span class="u-toc-m">isolation</span></a></li>
+        <li><a class="u-toc-row" href="#islands"><span class="u-toc-name"><span class="u-toc-n">05</span>We have run this smaller, and faster</span><span class="u-toc-m">small and fast</span></a></li>
+        <li><a class="u-toc-row" href="#dissent"><span class="u-toc-name"><span class="u-toc-n">06</span>The tradition that would not surrender</span><span class="u-toc-m">the dissenter</span></a></li>
+        <li><a class="u-toc-row" href="#squid"><span class="u-toc-name"><span class="u-toc-n">07</span>Nobody calls a squid eye a human eye</span><span class="u-toc-m">the frame</span></a></li>
+        <li><a class="u-toc-row" href="#deletion"><span class="u-toc-name"><span class="u-toc-n">08</span>They banned the gods, and something grew back</span><span class="u-toc-m">deletion</span></a></li>
+        <li><a class="u-toc-row" href="#volunteers"><span class="u-toc-name"><span class="u-toc-n">09</span>The people rebuilding it on purpose</span><span class="u-toc-m">on purpose</span></a></li>
+        <li><a class="u-toc-row" href="#receipt"><span class="u-toc-name"><span class="u-toc-n">10</span>The receipt from Akron</span><span class="u-toc-m">subtraction</span></a></li>
+        <li><a class="u-toc-row" href="#installed"><span class="u-toc-name"><span class="u-toc-n">11</span>The oldest line in all the books</span><span class="u-toc-m">the close</span></a></li>
       </ul>
     </aside>
 
@@ -275,7 +263,7 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:NASA_HendersonIsland.jpg">Uninhabited Henderson Island, South Pacific</a>, from the International Space Station. NASA, public domain.</p>
       </figure>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 02 PREDICTION GAME ============================ -->
@@ -303,7 +291,7 @@
 
       <p>So the skeleton is universal. The actual beliefs are local. That is a big claim, which means it had better show up out in the real world, not just in a thought experiment.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ CHILDREN ============================ -->
@@ -350,7 +338,7 @@
 
       <p>That is right, and it is the whole reason the island has five hundred children and two centuries, not one feral child and an afternoon. The biases supply the shape. The crowd and the years supply the rest. Their gods will be their own invention. The reaching for one was packed before they sailed.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 03 TWICE ============================ -->
@@ -389,7 +377,7 @@
 
       <p>That is the experiment at planet scale. It has also run small.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ ISLANDS ============================ -->
@@ -422,7 +410,7 @@
 
       <p>All of that is the scaffolding, though. What about the inner content, the diagnosis of what is actually wrong with us?</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 04 DISSENT ============================ -->
@@ -453,7 +441,7 @@
 
       <p>Which means the real question is not what religions share. It is how you count them.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 05 SQUID ============================ -->
@@ -489,7 +477,7 @@
 
       <p>Isolation was one way to test all this. The last century ran a very different one.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 06 DELETION ============================ -->
@@ -522,7 +510,7 @@
 
       <p>Force was one way to test all this. Freedom is another, and it gives the same answer.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ VOLUNTEERS ============================ -->
@@ -551,7 +539,7 @@
 
       <p>One last case ran that filter all the way to the end, and it is the only one we can read line by line.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 07 RECEIPT ============================ -->
@@ -586,7 +574,7 @@
 
       <p>So what, exactly, did the island children reach?</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 08 INSTALLED ============================ -->
@@ -621,8 +609,8 @@
       <span class="sec-kicker">The fine print</span>
       <h2 id="sources-h" class="sec-h">Sources, and what I was careful about</h2>
       <p class="src-note">The argument here is deliberately narrow: separated people converge on the same structure, never on the same beliefs. Before publishing, every load-bearing claim was run through an adversarial fact-check whose job was to refute it. Two corrections made it in: the famous figure for the independent evolution of eyes counts light-sensors, not complex eyes, and those eyes still share one ancient control gene; and the early fellowship's six points are Bill Wilson's later summary, never a fixed list. A later expansion kept three more dents in plain view: where state atheism fell hardest, in East Germany, the belief never came back and only the secular rite did; the recurring skeleton is humbler at the scale of a few hundred people than the temples of 1492 imply; and the strongest objection, that one isolated child would not invent God, is left standing in the text rather than smoothed away.</p>
-      <details class="src-details">
-        <summary>The full list, thirty-seven sources, grouped by claim</summary>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, thirty-seven sources, grouped by claim</summary>
       <div class="legend">
         <span><span class="grade g-a">solid</span> primary or strong consensus</span>
         <span><span class="grade g-b">good</span> reliable secondary</span>

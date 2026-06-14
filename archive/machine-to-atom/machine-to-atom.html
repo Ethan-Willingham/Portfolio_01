@@ -59,22 +59,16 @@
     .act-lead { max-width: 48rem; margin: 0 auto 7vh; padding: 0 1.5rem; font-family: var(--font-body); font-size: 1.2rem; line-height: 1.72; color: var(--text); text-wrap: pretty; }
     .act-lead em { font-style: italic; }
 
-    .divider { max-width: 760px; margin: 13vh auto 9vh; padding: 0 1.4rem; text-align: center; }
-    .divider .dk { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
-    .divider h2 { margin-top: 0.7rem; font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.015em; color: var(--text-bright); line-height: 1.08; }
+    /* section break spacing for kit .u-sechead (replaces old .divider margins) */
+    .essay .u-sechead { max-width: 760px; margin: 13vh auto 9vh; padding: 0 1.4rem; }
 
     .essay-credits { max-width: 760px; margin: 12vh auto 0; padding: 3rem 1.4rem 2rem; border-top: 1px solid var(--rule); }
-    .essay-credits h2 { font-family: var(--font-heading); font-size: 1.3rem; color: var(--text-bright); margin-bottom: 0.6rem; }
     .essay-credits p { font-size: 0.95rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.4rem; max-width: 62ch; }
-    .essay-credits ul { list-style: none; columns: 2; column-gap: 2rem; font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.5; }
-    .essay-credits li { break-inside: avoid; margin-bottom: 0.5rem; color: var(--text-dim); }
-    .essay-credits a { color: var(--text); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.25); }
-    .essay-credits a:hover { color: var(--accent-hover); }
-    .essay-credits .ftr { display: block; margin-top: 2.5rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); text-decoration: none; }
-    @media (max-width: 620px) { .essay-credits ul { columns: 1; } }
+    /* bridge: pull the kit .u-h2 heading closer to its body in this compact credits block */
+    .essay-credits .u-h2 { margin-bottom: 0.8rem; }
 
-    html.reveal-on .shot, html.reveal-on .divider { opacity: 0; transform: translateY(18px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22,1,0.36,1); }
-    html.reveal-on .shot.is-in, html.reveal-on .divider.is-in { opacity: 1; transform: none; }
+    html.reveal-on .shot, html.reveal-on .u-sechead { opacity: 0; transform: translateY(18px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22,1,0.36,1); }
+    html.reveal-on .shot.is-in, html.reveal-on .u-sechead.is-in { opacity: 1; transform: none; }
     html.reveal-on .shot.hero { opacity: 1; transform: none; }
 
     /* Lightbox (from gallery.html) */
@@ -119,7 +113,7 @@
 
       <figure class="shot"><img class="zoom" src="assets/chip/euv-light.jpg" width="1000" height="571" loading="lazy" decoding="async" alt="A labeled diagram of the EUV light source: a laser entering through a curved multilayer collector mirror toward a falling tin-droplet stream, an inset showing each droplet flattened by a pre-pulse then a main pulse, and the light focused to the intermediate focus." data-zoom-src="assets/chip/full/euv-light.jpg" data-zoom-title="How the EUV light is made" data-zoom-artist="Versolato, Plasma Sources Sci. Technol., CC BY 3.0"><figcaption><span class="sp">The light &middot; <em>laser-produced tin plasma</em> &middot; 13.5 nm</span>This is how the light is made. Inside a vacuum chamber, molten tin is pushed through a nozzle as a stream of 50,000 droplets a second, each thinner than a hair. A laser catches every droplet twice: a gentle pulse flattens it into a disk, then a high-power carbon-dioxide laser blast vaporizes it into a plasma hotter than the surface of the sun. That plasma glows at exactly 13.5 nanometers, the extreme-ultraviolet light that draws the chip, and a giant curved mirror cupped behind it gathers the glow and funnels it into the scanner. The light is so short that air and even glass swallow it, so the whole path is mirrors, in vacuum.</figcaption></figure>
 
-      <div class="divider"><p class="dk">it starts as sand</p><h2>A single crystal</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">it starts as sand</p><h2 class="u-sechead-h">A single crystal</h2></div>
 
       <p class="act-lead">A chip begins as a rock. High-purity quartz, not beach sand, which is far too dirty, is cooked with carbon in a furnace until it becomes silicon that is already about 99 percent pure. To go the rest of the way, that silicon is turned into a gas, distilled like moonshine, and baked back into solid rods so clean that fewer than one atom in a billion is anything but silicon. Those rods are melted at over 1,400 degrees, a pencil-thin seed crystal is dipped into the glowing pool, and as it is drawn slowly upward and turned, the melt freezes onto it one atomic layer at a time, copying the seed so faithfully that the whole rod, grown over three to four days, is a single unbroken crystal. Most of the world's chip-grade crystal is grown in Japan.</p>
 
@@ -127,13 +121,13 @@
 
       <figure class="shot"><img class="zoom" src="assets/chip/ingot-scale.jpg" width="2000" height="1333" loading="lazy" decoding="async" alt="A man in a jacket standing beside a tall mirror-polished cylindrical silicon ingot in a display case; the ingot rises from his waist to above his shoulder." data-zoom-src="assets/chip/full/ingot-scale.jpg" data-zoom-title="A silicon ingot, to scale" data-zoom-artist="Intel Free Press, CC BY-SA 2.0"><figcaption><span class="sp">For scale &middot; <em>a full ingot, beside a person</em></span>A modern ingot stands up to two meters tall and weighs around 265 kilograms, taller than a person and about as heavy as a baby grand piano. (Beside it, Federico Faggin, who designed the first microprocessor.) This one crystal is then sliced into more than a thousand wafers.</figcaption></figure>
 
-      <div class="divider"><p class="dk">from log to disc</p><h2>Into a wafer</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">from log to disc</p><h2 class="u-sechead-h">Into a wafer</h2></div>
 
       <p class="act-lead">That crystal log still has to become flat discs. A single diamond-studded wire, kilometers long, is wound back and forth over rollers into a dense harp of hundreds of parallel strands, and the whole ingot is pushed through it at once, sliced into more than a thousand discs the way an egg-slicer goes through an egg. Each rough wafer, about three quarters of a millimeter thick, is then ground, etched, and polished to a mirror so flat that across its entire dinner-plate face the tallest bump is a fraction of a nanometer, a few atoms high. This blank, shining disc is what a chip is printed on.</p>
 
       <figure class="shot"><img class="zoom" src="assets/chip/wafer-blank.jpg" width="2000" height="1333" loading="lazy" decoding="async" alt="A worker in a yellow cleanroom, in mask and gloves, holding a blank dark mirror-finish silicon wafer." data-zoom-src="assets/chip/full/wafer-blank.jpg" data-zoom-title="A blank silicon wafer" data-zoom-artist="U.S. Dept. of Energy / LLNL, public domain"><figcaption><span class="sp">The wafer &middot; <em>a blank, mirror-polished disc</em></span>A bare 300 mm wafer, handled in the amber light of a lithography bay, where ordinary white light is filtered out so it cannot expose the coatings to come. Nothing is printed on it yet. From here it enters the loop.</figcaption></figure>
 
-      <div class="divider"><p class="dk">printed, not carved</p><h2>Printing the chip</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">printed, not carved</p><h2 class="u-sechead-h">Printing the chip</h2></div>
 
       <p class="act-lead">Here is the part nearly everyone pictures wrong. You do not slot a blank wafer into one machine and collect a finished chip at the other end. The wafer rides a <em>loop</em> through the clean room, and goes around it dozens of times. Each lap: a whisper-thin film is laid down, a light-sensitive coating is spun on, the scanner flashes one layer's pattern onto it (shrinking the design about four times as it prints), the pattern is developed and etched into the surface, the coating is stripped off, and the wafer heads back to the start for the next layer. A chip is built up this way like a tiny building, sixty to a hundred floors of circuitry stacked one on top of another, and a single wafer can spend weeks to months in the factory, much of that just waiting in line. The scanner only ever prints one floor at a time; dozens of other machines lay down, etch, and polish the rest.</p>
 
@@ -143,7 +137,7 @@
 
       <figure class="shot"><img class="zoom" src="assets/chip/dicing.jpg" width="2000" height="1439" loading="lazy" decoding="async" alt="A finished silicon wafer covered edge to edge in a fine grid of identical chips, divided by the narrow saw streets along which it will be cut apart." data-zoom-src="assets/chip/full/dicing.jpg" data-zoom-title="A wafer, ready to be cut into chips" data-zoom-artist="Phiarc, CC BY-SA 4.0"><figcaption><span class="sp">Cut apart &middot; <em>one wafer, hundreds of dies</em></span>Every chip is tested where it sits, then a diamond saw runs down the narrow streets between them, freeing the wafer into hundreds of separate chips. Not all of them work: a single speck of dust, landing on any one of the layers, can ruin a chip, so the failures are simply thrown away.</figcaption></figure>
 
-      <div class="divider"><p class="dk">one chip</p><h2>Into the Apple M1</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">one chip</p><h2 class="u-sechead-h">Into the Apple M1</h2></div>
 
       <p class="act-lead">Out of the loop comes one finished chip. This is the Apple M1, and the first surprise is that almost nothing you can see from the top is a switch: it is wiring. A chip is a city seen from a plane, the streets and power lines on the surface, the transistors buried at ground level under a dozen stacked layers of metal. The single largest block here is the graphics engine; the eight processor cores, the AI engine, and the memory are the other recognizable neighborhoods, and a good third of the chip is custom circuitry no one outside Apple can fully name.</p>
 
@@ -151,7 +145,7 @@
 
       <figure class="shot"><img class="zoom" src="assets/chip/die-blocks.jpg" width="1576" height="1600" loading="lazy" decoding="async" alt="A close view of part of the M1 die, showing large functional blocks: dense regular memory arrays, structured logic blocks, and finer fabric between them." data-zoom-src="assets/chip/full/die-blocks.jpg" data-zoom-title="The floor plan, up close" data-zoom-artist="Fritzchens Fritz, CC0"><figcaption><span class="sp">Zoom in &middot; <em>a few city blocks</em></span>Just one of the big processor cores is only about a thirtieth of the whole chip. And look at the split here: the flawless repeating grid is memory, one tiny storage cell, a few transistors, copied out millions of times in perfect rows. The busier, tangled regions beside it are logic, the part that actually does the thinking.</figcaption></figure>
 
-      <div class="divider"><p class="dk">below a wavelength of light</p><h2>Smaller than the eye can ever see</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">below a wavelength of light</p><h2 class="u-sechead-h">Smaller than the eye can ever see</h2></div>
 
       <p class="act-lead">Slip beneath that top surface and you reach the wiring itself, and it is not one layer but a dozen or more, stacked like the floors of a building. The lowest floors are a warren of hair-thin local streets between neighboring transistors; the top floors are wide highways carrying power and signals across the whole chip, and tiny vertical plugs called vias are the elevators between them. Slice straight down through the stack and something odd shows up: wires running along your cut appear as long bright bars, but wires running crosswise, off into the page, are caught end-on and look like little dots floating with nothing attached. They are connected, of course. They are simply racing off in a direction a flat slice cannot follow.</p>
 
@@ -167,32 +161,35 @@
 
       <figure class="shot"><img class="zoom" src="assets/chip/transistor.jpg" width="2000" height="1310" loading="lazy" decoding="async" alt="A scanning-electron view of an array of transistors with round, ring-shaped gates, a radiation-hardened design." data-zoom-src="assets/chip/full/transistor.jpg" data-zoom-title="Ring-gate transistors, for space" data-zoom-artist="TiberiusRufus, CC BY-SA 4.0"><figcaption><span class="sp">A transistor for space &middot; <em>ring-gate, radiation-hardened</em></span>Transistors can be reshaped for a job. These wear round ring gates instead of straight ones, a design that shrugs off radiation so the chip keeps working in orbit, where a stray cosmic ray would scramble an ordinary one.</figcaption></figure>
 
-      <div class="divider"><p class="dk">~0.5 nm</p><h2>The atom</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">~0.5 nm</p><h2 class="u-sechead-h">The atom</h2></div>
 
       <p class="act-lead">Keep going, past the wires and the switches, and silicon stops being a smooth material at all. It is, and always was, a lattice of individual atoms, and this is the floor of the whole story.</p>
 
       <figure class="shot"><img class="zoom" src="assets/chip/atoms.jpg" width="320" height="345" loading="lazy" decoding="async" alt="A false-color electron-microscope image resolving individual silicon atoms as a regular lattice of magenta dots." data-zoom-src="assets/chip/full/atoms.jpg" data-zoom-title="Silicon atoms" data-zoom-artist="Nat. Commun., CC BY 4.0"><figcaption><span class="sp">The atoms &middot; <em>silicon, down the [110] axis</em> &middot; ~0.5 nm apart</span>This is silicon itself, imaged atom by atom (a ptychographic reconstruction, false-colored). You are looking straight down the crystal's [110] direction; each bright dot is a column of silicon atoms, the rows only about half a nanometer apart. The whole $380 million machine, the disc of pure sand, the grown crystal, the city of copper, all of it exists to arrange these dots, a few atoms at a time, a hundred billion times over.</figcaption></figure>  </main>
 
   <section class="essay-credits">
-    <h2>Credits</h2>
+    <h2 class="u-h2">Credits</h2>
     <p>Images are press, public-domain, or Creative Commons works, gathered from Intel's press kit, Wikimedia Commons, Flickr, and open-access journals. The die photographs are by Fritzchens Fritz, released into the public domain (CC0). Each entry links to its source.</p>
-    <ul>
-      <li><a href="https://www.asml.com/en/news/media-library">ASML High-NA EUV scanner (EXE:5000)</a> &middot; Courtesy ASML / imec</li>
-      <li><a href="https://newsroom.intel.com/press-kit/intel-high-na-euv">Cleanroom briefing</a> &middot; Courtesy Intel</li>
-      <li><a href="https://iopscience.iop.org/article/10.1088/1361-6595/ab3302">EUV light source, labeled diagram</a> &middot; Versolato, Plasma Sources Sci. Technol. 28, 083001 (2019), CC BY 3.0</li>
-      <li><a href="https://www.flickr.com/photos/ddebold/">Silicon crystal (boule)</a> &middot; Don DeBold, CC BY 2.0</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Silicon_Ingots_Bigger_These_Days.jpg">Silicon ingot, to scale</a> &middot; Intel Free Press, CC BY-SA 2.0</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Silicon_wafer_researcher.jpg">Blank silicon wafer, in hand</a> &middot; U.S. Dept. of Energy / LLNL, public domain</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Photoresist_spin_coating.jpg">Photoresist on a spinning wafer</a> &middot; Sei, CC BY-SA 4.0</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Silicon_Wafer_20190210.jpg">Patterned wafer, rainbow</a> &middot; Enrique Jimenez, CC BY-SA 2.0</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Exposed_150mm_6%22_wafer_with_hundreds_of_chips.jpg">Wafer of dies, cut apart</a> &middot; Phiarc, CC BY-SA 4.0</li>
-      <li><a href="https://www.flickr.com/photos/130561288@N04/">Apple M1 die scans (whole die and a zoom)</a> &middot; Fritzchens Fritz, CC0</li>
-      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10427378/">Copper interconnect stack, SEM cross-section</a> &middot; Advanced Science, CC BY 4.0</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Influenza_virus_particle_8430_lores.jpg">Influenza virus, TEM</a> &middot; CDC / Cynthia Goldsmith, public domain</li>
-      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10145376/">FinFET transistor, TEM cross-section</a> &middot; Yu et al., Nanomaterials 13, 1310 (2023), CC BY 4.0</li>
-      <li><a href="https://commons.wikimedia.org/wiki/File:Ring-gate_transistor_of_radiation_hardening_memory_(low_mag).tif">Ring-gate transistor array, SEM</a> &middot; TiberiusRufus, CC BY-SA 4.0</li>
-      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12672990/">Silicon atoms, ptychographic reconstruction</a> &middot; Nature Communications, CC BY 4.0</li>
-    </ul>
+    <details class="u-collapse">
+      <summary class="u-collapse-s">Image sources</summary>
+      <ol class="u-collapse-list">
+        <li><b>ASML High-NA EUV scanner (EXE:5000).</b> <a href="https://www.asml.com/en/news/media-library">asml.com</a> &middot; Courtesy ASML / imec</li>
+        <li><b>Cleanroom briefing.</b> <a href="https://newsroom.intel.com/press-kit/intel-high-na-euv">newsroom.intel.com</a> &middot; Courtesy Intel</li>
+        <li><b>EUV light source, labeled diagram.</b> <a href="https://iopscience.iop.org/article/10.1088/1361-6595/ab3302">Versolato, Plasma Sources Sci. Technol. 28, 083001 (2019)</a> &middot; CC BY 3.0</li>
+        <li><b>Silicon crystal (boule).</b> <a href="https://www.flickr.com/photos/ddebold/">Don DeBold, Flickr</a> &middot; CC BY 2.0</li>
+        <li><b>Silicon ingot, to scale.</b> <a href="https://commons.wikimedia.org/wiki/File:Silicon_Ingots_Bigger_These_Days.jpg">Wikimedia Commons</a> &middot; Intel Free Press, CC BY-SA 2.0</li>
+        <li><b>Blank silicon wafer, in hand.</b> <a href="https://commons.wikimedia.org/wiki/File:Silicon_wafer_researcher.jpg">Wikimedia Commons</a> &middot; U.S. Dept. of Energy / LLNL, public domain</li>
+        <li><b>Photoresist on a spinning wafer.</b> <a href="https://commons.wikimedia.org/wiki/File:Photoresist_spin_coating.jpg">Wikimedia Commons</a> &middot; Sei, CC BY-SA 4.0</li>
+        <li><b>Patterned wafer, rainbow.</b> <a href="https://commons.wikimedia.org/wiki/File:Silicon_Wafer_20190210.jpg">Wikimedia Commons</a> &middot; Enrique Jimenez, CC BY-SA 2.0</li>
+        <li><b>Wafer of dies, cut apart.</b> <a href="https://commons.wikimedia.org/wiki/File:Exposed_150mm_6%22_wafer_with_hundreds_of_chips.jpg">Wikimedia Commons</a> &middot; Phiarc, CC BY-SA 4.0</li>
+        <li><b>Apple M1 die scans.</b> <a href="https://www.flickr.com/photos/130561288@N04/">Fritzchens Fritz, Flickr</a> &middot; CC0</li>
+        <li><b>Copper interconnect stack, SEM cross-section.</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10427378/">Advanced Science</a> &middot; CC BY 4.0</li>
+        <li><b>Influenza virus, TEM.</b> <a href="https://commons.wikimedia.org/wiki/File:Influenza_virus_particle_8430_lores.jpg">Wikimedia Commons</a> &middot; CDC / Cynthia Goldsmith, public domain</li>
+        <li><b>FinFET transistor, TEM cross-section.</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10145376/">Yu et al., Nanomaterials 13, 1310 (2023)</a> &middot; CC BY 4.0</li>
+        <li><b>Ring-gate transistor array, SEM.</b> <a href="https://commons.wikimedia.org/wiki/File:Ring-gate_transistor_of_radiation_hardening_memory_(low_mag).tif">Wikimedia Commons</a> &middot; TiberiusRufus, CC BY-SA 4.0</li>
+        <li><b>Silicon atoms, ptychographic reconstruction.</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12672990/">Nature Communications</a> &middot; CC BY 4.0</li>
+      </ol>
+    </details>
   </section>
 
   <footer class="site-footer">
@@ -227,7 +224,7 @@
     if (fine && motion && 'IntersectionObserver' in window) {
       document.documentElement.classList.add('reveal-on');
       var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } }); }, { rootMargin: '0px 0px -8% 0px' });
-      document.querySelectorAll('.shot, .divider').forEach(function (el) { io.observe(el); });
+      document.querySelectorAll('.shot, .u-sechead').forEach(function (el) { io.observe(el); });
     }
   })();
   </script>

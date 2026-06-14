@@ -65,13 +65,10 @@
   .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
-  /* ---------- HERO ---------- */
+  /* ---------- HERO (bridge: smaller title than kit default; byline line-height) ---------- */
   .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
-  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; line-height: 1.7; }
-  .hero-byline b { color: var(--accent); font-weight: 400; }
+  .hero.u-hero .u-title { font-size: clamp(2.7rem, 9vw, 5.4rem); text-wrap: balance; }
+  .hero.u-hero .u-meta { line-height: 1.7; text-transform: none; letter-spacing: 0.04em; font-size: 0.74rem; border-top: none; padding-top: 0; }
 
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
@@ -88,7 +85,6 @@
   .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
   @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
   .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
-  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
 
   /* the load-bearing line of each section */
   .turn { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.3rem, 3.4vw, 1.6rem); line-height: 1.3; color: var(--text-bright); margin: 1.5em 0; text-wrap: pretty; }
@@ -134,10 +130,7 @@
   .stat .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3.1rem); line-height: 1; color: var(--text-bright); letter-spacing: -0.02em; }
   .stat .cap { font-size: 1rem; color: var(--text-dim); margin-top: 0.45rem; line-height: 1.5; }
 
-  /* ---------- CITATION + GRADE CHIPS ---------- */
-  .src { font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; }
-  .src a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
-  .src a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  /* ---------- GRADE CHIPS (3-tier: solid/good/contested; kept bespoke, kit only has 2 tiers) ---------- */
   .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
   .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
   .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
@@ -187,11 +180,11 @@
   <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
 
   <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <p class="hero-eyebrow">A field guide for people who have it memorized</p>
-    <h1 class="hero-title">The Secret History of the First 164 Pages</h1>
-    <p class="hero-dek">You know the Big Book and the Twelve and Twelve by heart. Almost everything you believe about how they got written is myth. Here is what the archives actually say.</p>
-    <p class="hero-byline">This is the story of how the text was made, not the text itself, and it quotes none of it. For the people already in the rooms. <b>Twenty-six sources cited.</b> Last reviewed June 2026.</p>
+  <header class="hero u-hero">
+    <p class="u-eyebrow">A field guide for people who have it memorized</p>
+    <h1 class="u-title">The Secret History of the First 164 Pages</h1>
+    <p class="u-dek">You know the Big Book and the Twelve and Twelve by heart. Almost everything you believe about how they got written is myth. Here is what the archives actually say.</p>
+    <p class="u-meta">This is the story of how the text was made, not the text itself, and it quotes none of it. For the people already in the rooms. <b>Twenty-six sources cited.</b> Last reviewed June 2026.</p>
   </header>
 
   <main id="guide">
@@ -237,15 +230,15 @@
         <p class="img-credit"><a href="https://archive.org/details/soulsurgerysomet00walt">Soul-Surgery title page, 1919</a>. Princeton copy via Internet Archive, public domain.</p>
       </figure>
 
-      <p>The early Akron version ran roughly like this: you admitted you were licked, you got honest with God and with another person, you made your amends, and you carried it to the next drunk. Different old-timers counted it as six steps, or five, or seven, because nobody had frozen it yet. One Chicago founder remembered Dr. Bob taking him through the entire program in a single sitting of three or four hours. <span class="src"><a href="https://www.aacle.org/origin-of-the-twelve-steps/">the six steps</a></span></p>
+      <p>The early Akron version ran roughly like this: you admitted you were licked, you got honest with God and with another person, you made your amends, and you carried it to the next drunk. Different old-timers counted it as six steps, or five, or seven, because nobody had frozen it yet. One Chicago founder remembered Dr. Bob taking him through the entire program in a single sitting of three or four hours. <span class="u-src"><a href="https://www.aacle.org/origin-of-the-twelve-steps/">the six steps</a></span></p>
 
-      <p>The yardstick was not the Steps. It was the Oxford Group's Four Absolutes, honesty, purity, unselfishness, love. The reading was the Sermon on the Mount, the Book of James (some early members wanted to name the whole thing the James Club), the thirteenth chapter of First Corinthians, Emmet Fox, and a daily devotional. <span class="src"><a href="https://hindsfoot.org/">the Akron way</a></span> The newcomer was usually put in a hospital bed first, for the better part of a week, and only then taken upstairs to surrender on his knees.</p>
+      <p>The yardstick was not the Steps. It was the Oxford Group's Four Absolutes, honesty, purity, unselfishness, love. The reading was the Sermon on the Mount, the Book of James (some early members wanted to name the whole thing the James Club), the thirteenth chapter of First Corinthians, Emmet Fox, and a daily devotional. <span class="u-src"><a href="https://hindsfoot.org/">the Akron way</a></span> The newcomer was usually put in a hospital bed first, for the better part of a week, and only then taken upstairs to surrender on his knees.</p>
 
       <p class="turn">The program you carry as twelve printed steps was first carried as a half-dozen spoken ones, and as something you did, not something you owned.</p>
 
       <p>Which raises the obvious question. When the spoken thing finally got written down, who wrote it, and how?</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 02 THIRTY ============================ -->
@@ -264,7 +257,7 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Brooklyn_Facade,_65-71_Columbia_Heights,_Brooklyn_(NYPL_b13668355-482656).jpg">Brooklyn facades, 65 to 71 Columbia Heights</a>. Berenice Abbott, Changing New York, 1936, NYPL, public domain.</p>
       </figure>
 
-      <p>The night with the pad seems to have really happened. The legend is what gets bolted onto it. When the historian William Schaberg went through the surviving drafts and letters for his 2019 book <em>Writing the Big Book</em>, the clean lightning-bolt story fell apart. <span class="src"><a href="https://aaagora.org/">Schaberg</a> <span class="grade g-c">revises the legend</span></span></p>
+      <p>The night with the pad seems to have really happened. The legend is what gets bolted onto it. When the historian William Schaberg went through the surviving drafts and letters for his 2019 book <em>Writing the Big Book</em>, the clean lightning-bolt story fell apart. <span class="u-src"><a href="https://aaagora.org/">Schaberg</a> <span class="grade g-c">revises the legend</span></span></p>
 
       <p>The reality was a fight. Bill expanded an existing word-of-mouth program (those six-ish points) into twelve on purpose, splitting steps apart to close what he saw as loopholes a slippery drunk could crawl through. Then the New York group argued over the result line by line, and the drafts went back and forth to Akron by mail. The wording you have memorized was litigated for weeks, not received in an evening. The tidy "twelve like the apostles" detail is a meaning laid on afterward, not the reason there are twelve.</p>
 
@@ -272,7 +265,7 @@
 
       <p>That does not make it smaller. It makes it human. And the most human part is who was in the argument, because one of them did not believe in God at all.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 03 GOD ============================ -->
@@ -282,7 +275,7 @@
 
       <p>The single most important design choice in the book, the thing that lets a hard atheist and a devout believer kneel in the same room, was won by the atheist. Over the objections of the devout.</p>
 
-      <p>His name was Jim Burwell, the salesman whose story in the book is the one about the long, bitter road to belief. He was, by his own cheerful account, the group's resident unbeliever, and he dug in hard against the religious language in the drafts. He later said the New York group held what amounted to a prayer meeting about him, the hope being that he would either leave town or get drunk and solve the problem himself. <span class="src"><a href="https://silkworth.net/">Burwell</a></span></p>
+      <p>His name was Jim Burwell, the salesman whose story in the book is the one about the long, bitter road to belief. He was, by his own cheerful account, the group's resident unbeliever, and he dug in hard against the religious language in the drafts. He later said the New York group held what amounted to a prayer meeting about him, the hope being that he would either leave town or get drunk and solve the problem himself. <span class="u-src"><a href="https://silkworth.net/">Burwell</a></span></p>
 
       <figure class="photo reveal">
         <picture>
@@ -295,11 +288,11 @@
 
       <p>What he won instead of exile was the softening you can recite without thinking: the higher power left to your own definition, the qualifier that follows the word God, the lower-case "him" you can read as anything you like. The compromise phrases are not vague by accident. They are a peace treaty, negotiated word by word between a believer and a skeptic, and the skeptic's edits are why the door is wide enough for both.</p>
 
-      <p>It cut the other way too. A minister's son in the group, whose story is the southern one, pushed for more God, not less, and some of his pressure held. So the finished text is a settlement with marks from both sides still on it. <span class="src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the God language</a></span></p>
+      <p>It cut the other way too. A minister's son in the group, whose story is the southern one, pushed for more God, not less, and some of his pressure held. So the finished text is a settlement with marks from both sides still on it. <span class="u-src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the God language</a></span></p>
 
       <p class="turn">The open door that makes the program work for the faithless was installed by a faithless man, against the wishes of the faithful.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 04 HANK ============================ -->
@@ -309,7 +302,7 @@
 
       <p>The official telling is Bill's book. The archives say it was, for a crucial stretch, two men's book, and the fellowship spent decades quietly forgetting the second one.</p>
 
-      <p>His name was Hank Parkhurst, the first man Bill sobered up in New York, an ex-Standard Oil executive with the salesmanship Bill lacked. The book was physically assembled out of Hank's little office across the river in Newark. He ran the business end, set up the publishing company, and dreamed up the stock scheme that financed the printing by selling shares to members. He pushed hard for the pragmatic, less overtly religious tone, the same direction Burwell was pulling. And the non-alcoholic secretary in that office, Ruth Hock, typed every draft of the manuscript and fielded the early flood of mail. <span class="src"><a href="https://aaagora.org/">Schaberg</a></span></p>
+      <p>His name was Hank Parkhurst, the first man Bill sobered up in New York, an ex-Standard Oil executive with the salesmanship Bill lacked. The book was physically assembled out of Hank's little office across the river in Newark. He ran the business end, set up the publishing company, and dreamed up the stock scheme that financed the printing by selling shares to members. He pushed hard for the pragmatic, less overtly religious tone, the same direction Burwell was pulling. And the non-alcoholic secretary in that office, Ruth Hock, typed every draft of the manuscript and fielded the early flood of mail. <span class="u-src"><a href="https://aaagora.org/">Schaberg</a></span></p>
 
       <figure class="photo reveal">
         <picture>
@@ -320,11 +313,11 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Dr._Bob%27s_House.jpg">Dr. Bob's House, 855 Ardmore Avenue, Akron</a>. Photo by Nyttend, public domain, via Wikimedia Commons.</p>
       </figure>
 
-      <p>Then Hank drank again in 1939, and the partnership ended badly. He fell out with Bill, sold his share of the publishing company for two hundred dollars, and spent years bitter about it. The movement's authorized histories, written later, shrank him to a cautionary footnote. It took Schaberg's archival work to put the near-co-author back into the room where the book was built. <span class="src"><a href="https://en.wikipedia.org/wiki/Henry_Parkhurst">Parkhurst</a> <span class="grade g-c">long minimized</span></span></p>
+      <p>Then Hank drank again in 1939, and the partnership ended badly. He fell out with Bill, sold his share of the publishing company for two hundred dollars, and spent years bitter about it. The movement's authorized histories, written later, shrank him to a cautionary footnote. It took Schaberg's archival work to put the near-co-author back into the room where the book was built. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Henry_Parkhurst">Parkhurst</a> <span class="grade g-c">long minimized</span></span></p>
 
       <p class="turn">The book exists, in the shape it has, partly because of a man the fellowship spent fifty years leaving out of the story.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 05 ALMOST ============================ -->
@@ -332,7 +325,7 @@
       <span class="sec-kicker">The title</span>
       <h2 id="almost-h" class="sec-h">It almost had a different name, and it almost died</h2>
 
-      <p>The title everyone now treats as inevitable was a near miss. For a long stretch the front-runner was <em>The Way Out</em>. Someone, the story goes, checked the Library of Congress and found more than a dozen books already published under that title and only a handful called <em>Alcoholics Anonymous</em>, so they took the safer, emptier name. <span class="src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the title</a></span> The name that became the fellowship's was chosen because the better one was crowded.</p>
+      <p>The title everyone now treats as inevitable was a near miss. For a long stretch the front-runner was <em>The Way Out</em>. Someone, the story goes, checked the Library of Congress and found more than a dozen books already published under that title and only a handful called <em>Alcoholics Anonymous</em>, so they took the safer, emptier name. <span class="u-src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the title</a></span> The name that became the fellowship's was chosen because the better one was crowded.</p>
 
       <p>The nickname is humbler still. To make a thin manuscript feel like four dollars and a half of book, they printed the first run on the thickest, cheapest paper in the shop. That is the entire reason it is called the Big Book.</p>
 
@@ -341,11 +334,11 @@
         <div class="cap">What a national radio spot and 20,000 postcards mailed to doctors actually brought in. The next day the Wilsons faced eviction. The first edition was 4,730 copies, and for a while it looked like a failure.</div>
       </div>
 
-      <p>It nearly died in the crib more than once: the mailing that drew almost nothing, the eviction, the tailor who lent a thousand dollars against his own shop to keep it alive, the garish red-and-yellow dust jacket that old-timers came to call the circus cover. The most recognizable recovery text in the world spent its first year looking like a bad bet. <span class="src"><a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">the lean year</a></span></p>
+      <p>It nearly died in the crib more than once: the mailing that drew almost nothing, the eviction, the tailor who lent a thousand dollars against his own shop to keep it alive, the garish red-and-yellow dust jacket that old-timers came to call the circus cover. The most recognizable recovery text in the world spent its first year looking like a bad bet. <span class="u-src"><a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">the lean year</a></span></p>
 
       <p class="turn">The most famous title in recovery was a fallback, printed on cheap paper, and nearly went under in its first twelve months.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 06 TWELVE AND TWELVE ============================ -->
@@ -355,7 +348,7 @@
 
       <p>Read the 1939 book and the 1953 one back to back, as you have, and you can hear that the second voice is older, sadder, more interior. There is a reason. The Twelve Steps and Twelve Traditions was written by Bill Wilson largely alone, in the middle of an eleven-year clinical depression that began almost the moment the fellowship was safe.</p>
 
-      <p>From roughly 1944 to 1955, the co-founder of the most famous recovery movement on Earth could often barely get off the couch. The chastened, psychological tone you value in the Twelve and Twelve, the long looks at pride and fear and emotional sobriety, is the sound of a sober man writing his way through despair. <span class="src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Bill W.</a></span></p>
+      <p>From roughly 1944 to 1955, the co-founder of the most famous recovery movement on Earth could often barely get off the couch. The chastened, psychological tone you value in the Twelve and Twelve, the long looks at pride and fear and emotional sobriety, is the sound of a sober man writing his way through despair. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Bill_W.">Bill W.</a></span></p>
 
       <figure class="photo tall reveal">
         <picture>
@@ -366,13 +359,13 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Edward_Dowling.jpg">Father Edward Dowling, S.J.</a>. Courtesy Maryville University Archives, released CC0, via Wikimedia Commons.</p>
       </figure>
 
-      <p>He had help of a particular kind. Father Ed Dowling, a Jesuit from St. Louis, had climbed the stairs to the 24th Street clubhouse one rainy night in 1940 and told Bill that the Twelve Steps lined up almost exactly with the centuries-old Spiritual Exercises of Saint Ignatius. He became Bill's spiritual sponsor and heard his fifth step. <span class="src"><a href="https://en.wikipedia.org/wiki/Edward_Dowling">Dowling</a></span> The book's deeper, more Catholic-feeling interior owes a real debt to a priest most members have never heard of.</p>
+      <p>He had help of a particular kind. Father Ed Dowling, a Jesuit from St. Louis, had climbed the stairs to the 24th Street clubhouse one rainy night in 1940 and told Bill that the Twelve Steps lined up almost exactly with the centuries-old Spiritual Exercises of Saint Ignatius. He became Bill's spiritual sponsor and heard his fifth step. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Edward_Dowling">Dowling</a></span> The book's deeper, more Catholic-feeling interior owes a real debt to a priest most members have never heard of.</p>
 
       <p>Even the lightest thing in it has a wound under it. Rule 62, do not take yourself too seriously, comes from a real humiliation: an ambitious member's grand plan for a combined clubhouse, hospital, and education center that collapsed and embarrassed everyone. The joke is a scar with a number on it.</p>
 
       <p class="turn">The book you quote for its humility was written by a man who could hardly stand up, with a priest's hand on his shoulder.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 07 TRADITIONS ============================ -->
@@ -391,13 +384,13 @@
         <p class="img-credit"><a href="https://silkworth.net/">The Grapevine, Vol. I No. 1, June 1944</a>. Scan via silkworth.net; the issue's copyright was not renewed.</p>
       </figure>
 
-      <p>The anonymity traditions, the ones near the end about principles before personalities, are scar tissue from people putting their full names and faces to the program in the press and then, sometimes, drinking again and taking the reputation down with them. The traditions about money and property come from clubhouse fights and the bone-deep fear of repeating the Washingtonians, the great reformed-drunkard movement of the 1840s that pulled in hundreds of thousands and then vanished inside a decade once it got into politics and money. <span class="src"><a href="https://en.wikipedia.org/wiki/Twelve_Traditions">the Traditions</a></span></p>
+      <p>The anonymity traditions, the ones near the end about principles before personalities, are scar tissue from people putting their full names and faces to the program in the press and then, sometimes, drinking again and taking the reputation down with them. The traditions about money and property come from clubhouse fights and the bone-deep fear of repeating the Washingtonians, the great reformed-drunkard movement of the 1840s that pulled in hundreds of thousands and then vanished inside a decade once it got into politics and money. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Twelve_Traditions">the Traditions</a></span></p>
 
       <p>They first ran in the Grapevine in April 1946 as a workmanlike article titled "Twelve Points to Assure Our Future," and were formally adopted at the 1950 convention in Cleveland, the last time Dr. Bob spoke. Bill's whole case was that the fellowship had to bind its own hands before success and ego killed it the way they had killed every movement like it before.</p>
 
       <p class="turn">The Traditions are not commandments. They are a list of the exact ways the thing almost died, written down so it would not die that way again.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 08 SERENITY ============================ -->
@@ -407,7 +400,7 @@
 
       <p>The lines you say at the end of a thousand meetings are not AA's, and the fellowship has never pretended otherwise. The Serenity Prayer wandered in from the outside world, by chance, and AA simply kept it.</p>
 
-      <p>The accepted account is that around 1941 someone in the New York office spotted the prayer in a newspaper, in the obituary section by one telling, and brought it in. Ruth Hock, the same secretary who typed the Big Book, had it printed on cards, and it spread through the fellowship from there. Nobody composed it for AA. It was adopted, not authored. <span class="src"><a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">how it arrived</a></span></p>
+      <p>The accepted account is that around 1941 someone in the New York office spotted the prayer in a newspaper, in the obituary section by one telling, and brought it in. Ruth Hock, the same secretary who typed the Big Book, had it printed on cards, and it spread through the fellowship from there. Nobody composed it for AA. It was adopted, not authored. <span class="u-src"><a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">how it arrived</a></span></p>
 
       <figure class="photo tall reveal">
         <picture>
@@ -418,11 +411,11 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Rev._Reinhold_Niebuhr_1927.jpg">Reinhold Niebuhr, 1927</a>. Public domain, via Wikimedia Commons.</p>
       </figure>
 
-      <p>Who wrote it has been argued for almost a hundred years. The usual answer is the theologian Reinhold Niebuhr, in the 1930s or early 1940s. Then in 2008 the Yale researcher Fred Shapiro turned up several earlier versions in print and in private papers and suggested Niebuhr might not be the author after all. The challenge made news. Years later, after more evidence surfaced, Shapiro partly reversed himself and credited Niebuhr after all. <span class="src"><a href="https://en.wikipedia.org/wiki/Serenity_Prayer">Shapiro</a> <span class="grade g-c">contested for decades</span></span></p>
+      <p>Who wrote it has been argued for almost a hundred years. The usual answer is the theologian Reinhold Niebuhr, in the 1930s or early 1940s. Then in 2008 the Yale researcher Fred Shapiro turned up several earlier versions in print and in private papers and suggested Niebuhr might not be the author after all. The challenge made news. Years later, after more evidence surfaced, Shapiro partly reversed himself and credited Niebuhr after all. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Serenity_Prayer">Shapiro</a> <span class="grade g-c">contested for decades</span></span></p>
 
       <p class="turn">The most-spoken lines in the program arrived secondhand, from a newspaper, by an author the world spent a century arguing about.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 09 FATES ============================ -->
@@ -432,9 +425,9 @@
 
       <p>You have read the personal stories in the back more times than you can count, in the voices of people you half feel you know. The first edition carried twenty-eight of them. Here is the part the stories never tell you: a lot of those voices did not make it.</p>
 
-      <p>By the best reconstruction, only about half of the first-edition authors stayed continuously sober. The rest relapsed, some came back, and some were lost for good. The book has always been more durable than the people who filled it. <span class="src"><a href="https://silkworth.net/">the authors</a> <span class="grade g-c">counts vary</span></span></p>
+      <p>By the best reconstruction, only about half of the first-edition authors stayed continuously sober. The rest relapsed, some came back, and some were lost for good. The book has always been more durable than the people who filled it. <span class="u-src"><a href="https://silkworth.net/">the authors</a> <span class="grade g-c">counts vary</span></span></p>
 
-      <p>The hardest cases are the ones closest to the center. <strong>Ebby Thacher</strong>, the old friend who carried the message to Bill in the first place, the man without whom there is no AA, drank on and off for the next thirty years, lived for long stretches on Bill's money, and only got a steady footing near the very end. He died sober in 1966, about two years dry. <span class="src"><a href="https://en.wikipedia.org/wiki/Ebby_Thacher">Ebby</a></span></p>
+      <p>The hardest cases are the ones closest to the center. <strong>Ebby Thacher</strong>, the old friend who carried the message to Bill in the first place, the man without whom there is no AA, drank on and off for the next thirty years, lived for long stretches on Bill's money, and only got a steady footing near the very end. He died sober in 1966, about two years dry. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Ebby_Thacher">Ebby</a></span></p>
 
       <p><strong>Bill Dotson</strong>, AA number three, the man in the bed, did the opposite: he walked out of Akron City Hospital in 1935 and never drank again, and dictated his story for the second edition shortly before he died in 1954. <strong>Ernie Galbraith</strong>, number four, whose first-edition story is literally about a seven-month slip, relapsed for decades and married Dr. Bob's teenage daughter against the family's wishes.</p>
 
@@ -447,11 +440,11 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:William_Griffith_Wilson_gravestone.jpg">A founder's gravestone, East Dorset, Vermont</a> by Whoisjohngalt, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>And then there is <strong>Florence Rankin</strong>. Hers was the only woman's story in the first edition, the lone female voice in the entire 1939 book. She relapsed not long after, moved to Washington, and died around 1943, almost certainly by her own hand. It fell to the southern-story member, by then a friend, to identify her body. <span class="src"><a href="https://en.wikipedia.org/wiki/Florence_Rankin">Florence Rankin</a> <span class="grade g-c">date uncertain</span></span> Her chapter title, about a victory, sits in the book to this day.</p>
+      <p>And then there is <strong>Florence Rankin</strong>. Hers was the only woman's story in the first edition, the lone female voice in the entire 1939 book. She relapsed not long after, moved to Washington, and died around 1943, almost certainly by her own hand. It fell to the southern-story member, by then a friend, to identify her body. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Florence_Rankin">Florence Rankin</a> <span class="grade g-c">date uncertain</span></span> Her chapter title, about a victory, sits in the book to this day.</p>
 
       <p class="turn">The voices you trust most in the back of the book belonged to people who were still losing. The book outlived them.</p>
 
-      <p class="sec-divider">&middot; &middot; &middot;</p>
+      <hr class="u-divider">
     </section>
 
     <!-- ============================ 10 CLOSE ============================ -->
@@ -474,7 +467,7 @@
 
       <p>The fellowship clearly feels the weight of all this, because it has chosen to freeze the first 164 pages. The wording has barely moved in more than eighty years, and when a plain-language version finally arrived in 2024, it was published as a separate book rather than a change to the original. The freeze is not an accident of neglect. It is relic-keeping, a decision to leave the made thing exactly as the makers left it.</p>
 
-      <p>If you ever want the proof that it was once a draft, it exists. The marked-up printer's manuscript of the Big Book, the one with the edits and second thoughts still in the margins, sold at auction in 2018 for 2.4 million dollars. <span class="src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the manuscript</a></span> Somewhere in those margins, someone crossed a word out and wrote a better one. That is the whole story. It was made by hand, and it held.</p>
+      <p>If you ever want the proof that it was once a draft, it exists. The marked-up printer's manuscript of the Big Book, the one with the edits and second thoughts still in the margins, sold at auction in 2018 for 2.4 million dollars. <span class="u-src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the manuscript</a></span> Somewhere in those margins, someone crossed a word out and wrote a better one. That is the whole story. It was made by hand, and it held.</p>
     </section>
 
     <!-- ============================ SOURCES ============================ -->
