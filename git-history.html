@@ -19,11 +19,11 @@
     })(window, document, "clarity", "script", "wo3l78g9ld");
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Every Change This Website Ever Made</title>
-  <meta name="description" content="Every commit to this site, drawn as points of light on a three-year timeline: three near-silent years, then a thousand-commit eruption.">
+  <title>Colophon</title>
+  <meta name="description" content="A colophon is the note in the back of a book recording how it was made. This is this website's: every change it ever made, drawn as points of light on a three-year timeline, and the machines behind them.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <meta property="og:title" content="Every Change This Website Ever Made">
-  <meta property="og:description" content="Every commit to this site, drawn as points of light on a three-year timeline: three near-silent years, then a thousand-commit eruption.">
+  <meta property="og:title" content="Colophon">
+  <meta property="og:description" content="A colophon is the note in the back of a book recording how it was made. This is this website's: every change it ever made, drawn as points of light on a three-year timeline, and the machines behind them.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/git-history.html">
@@ -125,6 +125,8 @@
     .gh-card-topic { font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
     .gh-card-date { margin-left: auto; font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); }
     .gh-card-msg { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.4; color: var(--text-bright); margin: 0 0 0.5rem; word-break: break-word; }
+    .gh-card-fuel { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.02em; color: var(--accent); margin: 0 0 0.5rem; }
+    .gh-card-fuel.gh-card-byhand { color: var(--text-dim); font-style: italic; }
     .gh-card-foot { display: flex; align-items: center; gap: 0.7rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
     .gh-card-add { color: #7dd3a0; }
     .gh-card-del { color: #e08a7a; }
@@ -216,40 +218,7 @@
       color: var(--text-dim); letter-spacing: 0.01em; max-width: 24ch;
     }
 
-    /* usage charts */
-    .gh-chart-title {
-      font-family: var(--font-body); font-size: 0.7rem; font-weight: 600;
-      letter-spacing: 0.16em; text-transform: uppercase; color: #c3b589;
-      margin: 2em 0 0.85em;
-    }
-    .gh-chart-daily { position: relative; }
-    .gh-chart-daily svg { overflow: visible; }
-    /* hover readout for the daily token bars */
-    .gh-bar-tip {
-      position: absolute; z-index: 5; pointer-events: none;
-      transform: translate(-50%, -100%);
-      opacity: 0; transition: opacity 0.12s ease;
-      padding: 0.38rem 0.6rem; border-radius: 7px; white-space: nowrap;
-      background: rgba(14, 17, 13, 0.95); border: 1px solid var(--rule);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
-      font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.3;
-    }
-    .gh-bar-tip.is-on { opacity: 1; }
-    .gh-bar-tip .d { display: block; color: var(--accent); font-weight: 600; letter-spacing: 0.02em; }
-    .gh-bar-tip .v { color: var(--text-bright); }
-    .gh-abar {
-      display: flex; gap: 1px; width: 100%; height: 30px;
-      border-radius: 6px; overflow: hidden; background: #0c0e0b;
-    }
-    .gh-abar span { display: block; min-width: 2px; }
-    .gh-alegend {
-      display: flex; flex-wrap: wrap; gap: 0.45rem 1.4rem; margin-top: 0.7rem;
-      font-family: var(--font-body); font-size: 0.8rem; color: var(--text-dim);
-    }
-    .gh-alegend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
-    .gh-alegend i { width: 9px; height: 9px; border-radius: 2px; }
-    .gh-alegend b { color: var(--text-bright); font-weight: 600; }
+    /* caption under the in-body charts */
     .gh-cap {
       font-family: var(--font-body); font-size: 0.86rem; line-height: 1.5;
       color: var(--text-dim); margin: 0.55em 0 0;
@@ -429,8 +398,8 @@
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
     <header class="post-header fade-in">
-      <h1 class="post-title">Every Change This Website Ever Made</h1>
-      <p class="post-subtitle">Every commit to this site, drawn as a point of light on a three-year timeline. It sat nearly silent for three years, then erupted. Hover any point to read the change, click to open the commit on GitHub, and scroll down for the token firehose that powers it.</p>
+      <h1 class="post-title">Colophon</h1>
+      <p class="post-subtitle">You probably don't know this word, and that's fine; outside of typographers and people with opinions about fonts, almost nobody does. A colophon is the note in the back of a book that records how it was made: the typeface, the paper, the press. This page is this website's, every change it ever made, drawn as a point of light, and the machines behind them.</p>
     </header>
 
     <main>
@@ -462,52 +431,48 @@
           </div>
 
           <p>
-            Each point of light is one commit. Across is time, height is how many
-            lines it changed, colour is which corner of the site it touched.
-            <strong>Scroll</strong> to zoom, <strong>drag</strong> to pan,
-            <strong>hover</strong> a point to read it, <strong>click</strong> to
-            open it on GitHub. It opens on the spring-2026 eruption, the month
-            this became a thing I build with language models instead of by hand;
-            scroll out to see the three near-silent years before it.
+            Each point of light is one change to this site. Left to right is time;
+            the higher a point sits, the more it rewrote. For three years there is
+            almost nothing, a few faint specks. Then spring 2026 lights up like a
+            struck match, the month I stopped building this by hand and started
+            building it by talking to a machine. The glow rising underneath is the
+            fuel: the tokens spent, day by day. <strong>Scroll</strong> to zoom,
+            <strong>drag</strong> to pan, <strong>hover</strong> a point to read
+            what changed.
           </p>
 
           <h2 class="u-h2">The fuel</h2>
 
-          <p>That eruption runs on tokens, at the peak more than a billion in a single day.</p>
+          <p>That is the glow under the timeline. It runs on tokens, the words a
+          model reads and writes to think, and at the peak it burned more than a
+          billion of them in a single day.</p>
 
           <div class="gh-fuel">
-            <div class="gh-stat"><span class="n">16.9B</span><span class="l">tokens since April 23, to date</span></div>
-            <div class="gh-stat"><span class="n">1.54B</span><span class="l">in a single day (May 23)</span></div>
-            <div class="gh-stat"><span class="n">~12.0M</span><span class="l">tokens per Apr 23-now commit</span></div>
-            <div class="gh-stat"><span class="n">~$16,000</span><span class="l">at public API prices</span></div>
+            <div class="gh-stat"><span class="n">16.9B</span><span class="l">tokens spent so far, and counting</span></div>
+            <div class="gh-stat"><span class="n">1.54B</span><span class="l">in a single day, at the peak</span></div>
+            <div class="gh-stat"><span class="n">~$16,000</span><span class="l">at list prices, to date</span></div>
           </div>
 
-          <div class="gh-chart-title">Tokens burned per day &middot; May into June 2026</div>
-          <div id="gh-chart-daily" class="gh-chart-daily"></div>
-          <p class="gh-cap">The same eruption, in fuel: May 22&ndash;24 each cleared a billion tokens, then a second wave over May 28&ndash;31 poured in 3.1 billion more. June added another 1.2 billion across its first two days, eased, then a long second half, June 7 onward, poured in 3.5 billion more, closing on a 0.67 billion day.</p>
-
-          <div class="gh-chart-title">Where 16.9 billion tokens go</div>
-          <div class="gh-abar" role="img" aria-label="95 percent cache reads, 4 percent cache writes, under one percent each output and input">
-            <span style="width:95.32%;background:#E8954E" title="Cache reads, 95.3%"></span>
-            <span style="width:3.85%;background:#4FC0C4" title="Cache writes, 3.9%"></span>
-            <span style="width:0.64%;background:#DB8A72" title="Output, 0.6%"></span>
-            <span style="width:0.19%;background:#A6CB63" title="Input, 0.2%"></span>
-          </div>
-          <div class="gh-alegend">
-            <span><i style="background:#E8954E"></i>Cache reads <b>95.3%</b></span>
-            <span><i style="background:#4FC0C4"></i>Cache writes <b>3.9%</b></span>
-            <span><i style="background:#DB8A72"></i>Output <b>0.6%</b></span>
-            <span><i style="background:#A6CB63"></i>Input <b>0.2%</b></span>
-          </div>
-          <p class="gh-cap">Almost none of it is new writing. About 96% is the models re-reading context they already hold, a 36,000-line game file, design bibles, the whole conversation, on every single turn. The bright column above is the exhaust.</p>
+          <p>Almost none of that is new writing. Most of it is the machine
+          re-reading what it already knew, the same long files and the whole
+          conversation, on every single turn.</p>
 
           <h2 class="u-h2">Which mind built which page</h2>
 
-          <p>Every page here was written by Claude, but not by the same Claude. Five models passed through the site between May 21 and June 14: <strong>Opus 4.7</strong> carried the May eruption and most of the interactive pieces, <strong>Opus 4.8</strong> became the June workhorse, and <strong>Fable 5</strong> wrote a couple of posts almost on its own. Each tile below is one post, and the ring shows who did the work. Tap one for the full split, and flip between changes and tokens to measure it two ways.</p>
+          <p>Every page here was written by Claude, but not the same Claude twice.
+          Five versions passed through over a few weeks, each a little sharper than
+          the last. Each tile is one page, and the ring shows who did the work; tap
+          one for the full split, or flip between changes and tokens to weigh it two
+          ways.</p>
 
           <div id="ma-root"></div>
 
-          <p class="gh-cap">Drawn from this machine's Claude Code session logs, every edit attributed to the model that made it. It covers the logged era (May 21 on), so the earliest weeks, and a little work done in Codex, are not shown. <em>Changes</em> counts file edits; <em>tokens</em> counts what each model actually wrote into the post.</p>
+          <p class="gh-cap">Drawn from this machine's session logs, every edit
+          traced to the model that made it. It starts in late May, so the earliest
+          weeks are not shown.</p>
+
+          <p>Old books closed with a colophon: a quiet last note on how the object
+          in your hands was made. This is that note, for a thing with no pages.</p>
 
         </div>
       </article>
@@ -522,7 +487,6 @@
   <script src="js/main.js"></script>
   <script src="js/git-history-data.js"></script>
   <script src="js/git-history.js"></script>
-  <script src="js/git-usage.js"></script>
   <script src="js/git-attribution-data.js"></script>
   <script src="js/git-attribution.js"></script>
   <script src="js/backtotop.js"></script>

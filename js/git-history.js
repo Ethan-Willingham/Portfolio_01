@@ -21,6 +21,23 @@
   var topics = DATA.topics;
   var N = commits.length;
 
+  // ----- the fuel: tokens spent per day, drawn as a glow band on the shared
+  // time axis behind the dots (folded in from the old standalone usage chart).
+  // Index 0 = May 1 2026; one entry per day through Jun 13. Before May 1 the
+  // site was built by hand, so there is no band there — that absence is the point. -----
+  var DAILY = [16607317, 36137104, 69177645, 42724566, 39884750, 410619, 81899196,
+    71871667, 113285745, 159976758, 329253840, 295195507, 457538327, 127231443, 0,
+    285454643, 309323557, 623423505, 271215837, 66298045, 290609738, 1197709924,
+    1543803732, 1320336965, 702974597, 285643166, 67725588, 507072587, 829700193,
+    948042044, 779405982, 553922455, 691281258, 98965260, 130233736,
+    49406229, 0, 437292700, 97568887, 927412697, 737451722, 441003124, 189071669, 667926723];
+  var DAILY_T0 = new Date(2026, 4, 1).getTime() / 1000; // May 1 2026, local midnight
+  var DAILY_MAX = 1.6e9;                                 // scale ceiling (peak day ≈ 1.54B)
+  function tokensOnDay(sec) {
+    var idx = Math.floor((sec - DAILY_T0) / 86400);
+    return (idx >= 0 && idx < DAILY.length) ? DAILY[idx] : -1;
+  }
+
   // ----- precompute -----
   var tMin = commits[0][IX_T], tMax = commits[N - 1][IX_T];
   var span0 = tMax - tMin;
@@ -178,6 +195,35 @@
       ctx.beginPath(); ctx.moveTo(tx, P.T); ctx.lineTo(tx, P.G); ctx.stroke();
     }
 
+    // the fuel — daily token spend as a glow band rising from the floor, on the
+    // same time axis as the dots. Empty before May 2026 (the by-hand years), a
+    // bright swell over the eruption. Drawn here so the dots land on top of it.
+    var bandMax = P.Hh * 0.42;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(P.L, P.T, P.W, P.G - P.T); ctx.clip();
+    ctx.beginPath();
+    var fx0 = xFromT(DAILY_T0 + 43200, P), fx1 = 0;
+    ctx.moveTo(fx0, P.G);
+    for (var fd = 0; fd < DAILY.length; fd++) {
+      var fxx = xFromT(DAILY_T0 + fd * 86400 + 43200, P);
+      var fvv = DAILY[fd] / DAILY_MAX; if (fvv > 1) fvv = 1;
+      ctx.lineTo(fxx, P.G - fvv * bandMax);
+      fx1 = fxx;
+    }
+    ctx.lineTo(fx1, P.G); ctx.closePath();
+    var fg = ctx.createLinearGradient(0, P.G - bandMax, 0, P.G);
+    fg.addColorStop(0, 'rgba(232,149,78,0.40)');
+    fg.addColorStop(1, 'rgba(232,149,78,0.035)');
+    ctx.fillStyle = fg; ctx.fill();
+    ctx.beginPath();
+    for (var fe = 0; fe < DAILY.length; fe++) {
+      var fex = xFromT(DAILY_T0 + fe * 86400 + 43200, P);
+      var fev = DAILY[fe] / DAILY_MAX; if (fev > 1) fev = 1;
+      if (fe === 0) ctx.moveTo(fex, P.G - fev * bandMax); else ctx.lineTo(fex, P.G - fev * bandMax);
+    }
+    ctx.strokeStyle = 'rgba(244,179,107,0.5)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.restore();
+
     // dots — additive glow
     var elapsed = now - introStart;
     var intro = introOn && elapsed < (INTRO_RISE + INTRO_STAGGER + 60);
@@ -268,6 +314,12 @@
   // ----- card -----
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function fmtN(n) { return n.toLocaleString('en-US'); }
+  function fmtTok(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return Math.round(n / 1e6) + 'M';
+    if (n >= 1e3) return Math.round(n / 1e3) + 'k';
+    return String(n);
+  }
   function fmtDate(sec) {
     var d = new Date(sec * 1000);
     var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12; if (h12 === 0) h12 = 12;
@@ -276,6 +328,10 @@
   function showCard(idx, px, py, pinned) {
     var c = commits[idx], tp = topics[c[IX_TI]], col = tp.color;
     var url = DATA.repo; // commit links neutered (public history reset 2026-05-29; SHAs no longer resolve)
+    var dayTok = tokensOnDay(c[IX_T]);
+    var fuelLine = dayTok > 0
+      ? '<div class="gh-card-fuel">' + fmtTok(dayTok) + ' tokens spent that day</div>'
+      : (dayTok === 0 ? '' : '<div class="gh-card-fuel gh-card-byhand">built by hand</div>');
     cardEl.innerHTML =
       '<div class="gh-card-top">' +
         '<span class="gh-card-dot" style="color:' + col + ';background:' + col + '"></span>' +
@@ -283,6 +339,7 @@
         '<span class="gh-card-date">' + fmtDate(c[IX_T]) + '</span>' +
       '</div>' +
       '<p class="gh-card-msg">' + esc(c[IX_S] || '(no message)') + '</p>' +
+      fuelLine +
       '<div class="gh-card-foot">' +
         '<span class="gh-card-add">+' + fmtN(c[IX_A]) + '</span>' +
         '<span class="gh-card-del">−' + fmtN(c[IX_D]) + '</span>' +
