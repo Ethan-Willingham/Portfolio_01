@@ -12,27 +12,29 @@
   <style>
   /* ============================================================
      LEAVING PORTAL LAB  (throwaway, noindex)
-     The "Feeling lucky?" send-off. Built to Amelia Wattenberger's
-     exact colour recipe (wattenberger.com):
+     The "Feeling lucky?" send-off, frosted-glass version.
 
-       - big static serif "to a random wikipedia page", no letters moving
-       - her literal text fill: linear-gradient(to bottom right IN OKLCH
-         INCREASING HUE, oklch(6% 0.3 91) 0% 0%, <S>%, #8179FF 92% 100%)
-       - the mid hint S sweeps 84% -> 6% so the OKLCH spectrum floods in
+     Flow:
+       1. full green screen, static Century Supra line, the OKLCH
+          spectrum floods the text in place (Wattenberger's exact fill:
+          linear-gradient(to bottom right in oklch increasing hue,
+          oklch(6% 0.3 91), <S 84->6>%, #8179FF))
+       2. the screen AUTO-scrolls up to reveal the destination wiki
+          article underneath, behind FROSTED GLASS (the iframe is
+          blurred + tinted, so no harsh white and any content is soft)
+       3. it then resolves onto the REAL wikipedia.org article
+          (location.replace) - real URL, readable, Back returns here.
 
-     Flow (owner's choice, the SAFE one): the effect plays IN PLACE on a
-     full green screen (no scroll, so no white edge ever shows), then the
-     whole tab navigates to the real random Wikipedia article. They end
-     up literally on wikipedia.org (real URL) - not an embed under this
-     site's URL - and Back returns here. location.replace() means the
-     send-off is not a Back-stop (Back from Wikipedia -> the page they
-     came from, i.e. the homepage in production).
-
-     Font: site Century Supra (the three-font rule holds).
+     The frosted preview is a brief, blurred, transient embed; you end
+     on the genuine page. Font: site Century Supra (three-font rule).
      ============================================================ */
 
-  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg, #303931); }
-  .send { position: fixed; inset: 0; display: grid; place-items: center; padding: 8vh 6vw; box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg, #303931); }
+
+  .scene { position: relative; height: 200vh; height: 200svh; }
+  .pin { position: sticky; top: 0; height: 100vh; height: 100svh;
+         display: grid; place-items: center; padding: 8vh 6vw; box-sizing: border-box;
+         background: var(--bg, #303931); overflow: hidden; }
   .line {
     margin: 0; max-width: 16ch; text-align: center; text-wrap: balance;
     font-family: century_supra_a, 'Century Schoolbook', Georgia, serif;
@@ -41,61 +43,100 @@
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
     background-image: linear-gradient(to bottom right, #2b2f3a 0%, #8179FF 100%); /* no-oklch fallback */
   }
+
+  /* the destination, revealed behind frosted glass */
+  .wikiwrap { position: relative; height: 100vh; height: 100svh; background: var(--bg, #303931); overflow: hidden; }
+  .wiki { position: absolute; inset: -5%; width: 110%; height: 110%; border: 0; display: block;
+          filter: blur(14px) saturate(1.05) brightness(1.03); transform: translateZ(0); pointer-events: none; }
+  .frost { position: absolute; inset: 0; pointer-events: none;
+           background:
+             radial-gradient(120% 90% at 50% 0%, rgba(245,241,234,0.12), transparent 55%),
+             linear-gradient(180deg, rgba(48,57,49,0.10), rgba(48,57,49,0.20));
+           -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
   </style>
 </head>
 <body>
 
-  <main class="send">
-    <h1 class="line">to a random wikipedia page</h1>
-  </main>
+  <div class="scene">
+    <div class="pin">
+      <h1 class="line">to a random wikipedia page</h1>
+    </div>
+  </div>
+
+  <section class="wikiwrap">
+    <iframe class="wiki" title="" aria-hidden="true" tabindex="-1"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="frost"></div>
+  </section>
 
   <script>
   (function () {
     'use strict';
-    var line = document.querySelector('.line');
+    var line   = document.querySelector('.line');
+    var scene  = document.querySelector('.scene');
+    var iframe = document.querySelector('.wiki');
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    var HOLD = 900;       // ms to read the text before the colour starts
-    var FLOOD_MS = 2100;  // ms for the OKLCH spectrum to flood the letters
-    var SETTLE = 350;     // ms to sit on the full-colour text before leaving
+    var HOLD = 800;       // read the text
+    var FLOOD_MS = 1800;  // OKLCH floods the text in place
+    var SCROLL_MS = 1300; // auto-scroll up to reveal the frosted article
+    var SETTLE = 850;     // sit on the frosted article before resolving to the real one
 
-    // where we go. Resolve a specific random article up front so the jump is one
-    // hop (snappier than Special:Random's redirect); fall back to Special:Random.
+    // destination + frosted preview. Resolve a direct article up front (Special:Random's
+    // 302 aborts in a frame); preview the SAME article blurred, then really go to it.
     var DEST = 'https://en.wikipedia.org/wiki/Special:Random';
     fetch('https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*')
       .then(function (r) { return r.json(); })
       .then(function (d) {
         var t = d.query.random[0].title;
         DEST = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(t.replace(/ /g, '_'));
+        iframe.src = DEST;   // frosted preview of the page they are going to
       })
-      .catch(function () { /* keep Special:Random */ });
+      .catch(function () { /* keep Special:Random; leave the frosted panel as plain green */ });
 
-    // Wattenberger's exact fill; S is the sweeping mid hint.
     function grad(S) {
       return 'linear-gradient(to bottom right in oklch increasing hue, '
            + 'oklch(6% 0.3 91) 0% 0%, ' + S.toFixed(1) + '%, #8179FF 92% 100%)';
     }
-    line.style.backgroundImage = grad(84);   // rest state
+    line.style.backgroundImage = grad(84);
 
-    function go() { window.location.replace(DEST); }   // real navigation, Back returns to the site
+    // block manual scrolling during the show (programmatic scroll still works)
+    function block(e) { e.preventDefault(); }
+    function blockKeys(e) { if ([32,33,34,35,36,38,40].indexOf(e.keyCode) >= 0) e.preventDefault(); }
+    window.addEventListener('wheel', block, { passive: false });
+    window.addEventListener('touchmove', block, { passive: false });
+    window.addEventListener('keydown', blockKeys);
+
+    function go() { window.location.replace(DEST); }
+    function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
     if (reduce) {
-      line.style.backgroundImage = grad(24);
-      setTimeout(go, HOLD + 700);
-    } else {
-      var start = null;
-      function frame(ts) {
-        if (start === null) start = ts;
-        var el = ts - start;
-        if (el < HOLD) { requestAnimationFrame(frame); return; }
-        var t = Math.min(1, (el - HOLD) / FLOOD_MS);
-        var e = t * t * (3 - 2 * t);            // smoothstep
-        line.style.backgroundImage = grad(84 - e * 78);   // 84% -> 6%
-        if (t < 1) requestAnimationFrame(frame);
-        else setTimeout(go, SETTLE);
-      }
-      requestAnimationFrame(frame);
+      line.style.backgroundImage = grad(6);
+      setTimeout(go, HOLD + FLOOD_MS);
+      return;
     }
+
+    var start = null, targetY = 0;
+    function loop(ts) {
+      if (start === null) { start = ts; targetY = document.documentElement.scrollHeight - window.innerHeight; }
+      var el = ts - start;
+      if (el < HOLD) { requestAnimationFrame(loop); return; }
+      var fe = el - HOLD;
+      if (fe < FLOOD_MS) {                                   // phase 1: flood the text in place
+        var tf = fe / FLOOD_MS, ef = tf * tf * (3 - 2 * tf);
+        line.style.backgroundImage = grad(84 - ef * 78);
+        requestAnimationFrame(loop); return;
+      }
+      line.style.backgroundImage = grad(6);
+      var se = fe - FLOOD_MS;
+      if (se < SCROLL_MS) {                                  // phase 2: scroll up to the frosted article
+        window.scrollTo(0, Math.round(targetY * easeInOut(se / SCROLL_MS)));
+        requestAnimationFrame(loop); return;
+      }
+      window.scrollTo(0, targetY);
+      setTimeout(go, SETTLE);                                // phase 3: resolve onto the real article
+    }
+    requestAnimationFrame(loop);
   })();
   </script>
 </body>
