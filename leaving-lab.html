@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Leaving lab</title>
+  <link rel="preload" href="assets/fonts/century_supra_a_bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     LEAVING LAB  (throwaway chooser, not linked from the site)
+     The full-screen "you are off to a random page of Wikipedia"
+     send-off, redesigned three ways. We are judging the SEND-OFF
+     SCREEN only: one HUGE Century Supra line with a Wattenberger-
+     style "letters come alive" effect, on the site palette.
+
+     None of the three site faces is a variable font, so the weight
+     ripple is faked font-agnostically (per-letter stroke-weight +
+     scale/position waves), driven by time and the pointer.
+     ============================================================ */
+  html { overflow-x: hidden; }
+  body { margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+
+  /* ---- lab chrome ---- */
+  .lab-head { padding: 1.5rem var(--gutter) 0.9rem; max-width: 980px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+  .lab-head h1 { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.35rem; letter-spacing: -0.02em; }
+  .lab-head p { font-size: 0.96rem; line-height: 1.55; color: var(--text-dim); margin: 0; max-width: 78ch; }
+  .lab-head b { color: var(--accent); font-weight: 400; }
+
+  .opt-bar { position: sticky; top: 0; z-index: 20; background: rgba(30,36,32,0.94); backdrop-filter: blur(7px); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 0.6rem var(--gutter); }
+  .opt-bar .inner { max-width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 0.7rem 1.4rem; flex-wrap: wrap; }
+  .opt-group { display: flex; align-items: center; gap: 0.45rem; }
+  .opt-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+  .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; }
+  .seg button { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.02em; color: var(--text-dim); background: transparent; border: 0; padding: 0.34em 0.85em; cursor: pointer; transition: color .18s, background .18s; }
+  .seg button + button { border-left: 1px solid var(--rule); }
+  .seg button:hover { color: var(--text-bright); }
+  .seg button.is-on { color: var(--bg); background: var(--accent); }
+  .opt-act { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: 0.34em 0.95em; cursor: pointer; transition: color .18s, border-color .18s; }
+  .opt-act:hover { color: var(--accent); border-color: var(--accent); }
+  .opt-check { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); cursor: pointer; }
+  .opt-why { flex-basis: 100%; font-family: var(--font-body); font-size: 0.86rem; color: var(--text-faint); margin: 0; }
+  .opt-why b { color: var(--accent); font-weight: 400; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.04em; }
+
+  /* ---- the send-off stage ---- */
+  .stage { position: relative; flex: 1 1 auto; min-height: 420px; overflow: hidden; }
+  .veil { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(1rem, 3.2vh, 2.1rem); text-align: center; padding: 7vh 5vw; }
+  .veil-bg { position: absolute; inset: 0; background: radial-gradient(125% 118% at 50% 30%, #2c342c 0%, #1c221d 52%, #131712 100%); }
+  .veil-bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(135% 120% at 50% 48%, transparent 52%, rgba(11,14,11,0.55) 100%); }
+  .veil-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  .veil-stack { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: clamp(0.85rem, 2.4vh, 1.5rem); max-width: 16ch; will-change: transform; }
+  .veil-eyebrow { font-family: var(--font-mono); font-size: clamp(0.7rem, 1.5vw, 0.84rem); letter-spacing: 0.34em; text-transform: uppercase; color: var(--accent); margin: 0; padding-left: 0.34em; }
+  .veil-line { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 13vw, 11rem); line-height: 0.86; letter-spacing: -0.03em; color: var(--text-bright); margin: 0; text-wrap: balance; }
+  .veil-word { display: inline-block; white-space: nowrap; }
+  .veil-word + .veil-word::before { content: " "; }
+  .veil-ch { display: inline-block; will-change: transform; -webkit-text-stroke-color: var(--accent); paint-order: stroke; }
+  .veil-sub { font-family: var(--font-mono); font-size: clamp(0.74rem, 1.7vw, 0.92rem); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin: 0; }
+  .veil-progress { position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: rgba(212,196,160,0.1); z-index: 3; }
+  .veil-progress > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, rgba(212,196,160,0), var(--accent)); }
+
+  /* stardust hides the live text (canvas paints it as points) but keeps it for screen readers */
+  .veil.fx-stardust .veil-line { visibility: hidden; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .veil-progress > i { transition: none; }
+  }
+  </style>
+</head>
+<body>
+
+  <div class="lab-head">
+    <h1>Leaving lab</h1>
+    <p>The send-off screen for the footer <b>Feeling lucky?</b> link, redesigned three ways. One HUGE Century Supra line on the site palette, with a Wattenberger-style "letters come alive" effect. Move your pointer across the word. Pick a take (and a line of copy) and I will drop it into the live homepage.</p>
+  </div>
+
+  <div class="opt-bar">
+    <div class="inner">
+      <div class="opt-group">
+        <span class="opt-label">Effect</span>
+        <div class="seg" id="fxSeg">
+          <button data-fx="weight" class="is-on">Weight wave</button>
+          <button data-fx="buoyant">Buoyant</button>
+          <button data-fx="stardust">Stardust</button>
+        </div>
+      </div>
+      <div class="opt-group">
+        <span class="opt-label">Copy</span>
+        <div class="seg" id="copySeg">
+          <button data-copy="0" class="is-on">Feeling lucky</button>
+          <button data-copy="1">Off you go</button>
+          <button data-copy="2">Somewhere new</button>
+        </div>
+      </div>
+      <button class="opt-act" id="replayBtn">&#8634; Replay</button>
+      <label class="opt-check"><input type="checkbox" id="reduceChk"> reduced motion</label>
+      <p class="opt-why" id="whyLine"></p>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="veil fx-weight" id="veil">
+      <div class="veil-bg"></div>
+      <canvas class="veil-canvas" id="canvas"></canvas>
+      <div class="veil-stack" id="stack">
+        <p class="veil-eyebrow" id="eyebrow">Random</p>
+        <h1 class="veil-line" id="line" aria-label="Feeling lucky"></h1>
+        <p class="veil-sub" id="sub">a random page of Wikipedia</p>
+      </div>
+      <div class="veil-progress"><i id="prog"></i></div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var ACCENT = '#d4c4a0';
+    var CREAM  = '#f5f1ea';
+
+    // ---- copy sets: punchy HUGE line + the mono kicker/sub that keep the
+    //      reader informed they are off to a random Wikipedia page ----
+    var COPIES = [
+      { eyebrow: 'Random',        line: 'FEELING LUCKY',  sub: 'a random page of Wikipedia' },
+      { eyebrow: 'Feeling lucky', line: 'OFF YOU GO',     sub: 'to a random page of Wikipedia' },
+      { eyebrow: 'Wikipedia',     line: 'SOMEWHERE NEW',  sub: 'rolling the dice' }
+    ];
+    var WHY = {
+      weight:   'Per-letter weight + glow ripples through the word and pools under your pointer. Closest to the Wattenberger variable-font feel. <b>stroke + scale wave</b>',
+      buoyant:  'The letters bob and tilt on a slow swell over a drifting gold tide line. Lighter, playful, reads as "see where you land". <b>position wave</b>',
+      stardust: 'The word assembles out of drifting gold points, holds, then scatters off to its random destination. Nods to the galaxy and particle posts. <b>canvas particles</b>'
+    };
+
+    // ---- timing (ms). The live page navigates at DWELL; here we fade + loop. ----
+    var ENTER = 900, DWELL = 2800, EXIT = 650, CYCLE = DWELL + EXIT, STAGGER = 55;
+
+    var stage   = document.getElementById('stage');
+    var veil    = document.getElementById('veil');
+    var stack   = document.getElementById('stack');
+    var lineEl  = document.getElementById('line');
+    var eyebrow = document.getElementById('eyebrow');
+    var sub     = document.getElementById('sub');
+    var prog    = document.getElementById('prog');
+    var canvas  = document.getElementById('canvas');
+    var ctx     = canvas.getContext('2d');
+
+    var fx = 'weight';
+    var copyIdx = 0;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var chars = [];            // {el, cx, cy, nx}
+    var particles = [];
+    var pointer = { x: -1e9, y: 0, active: false };
+    var t0 = performance.now();
+    var lastCyc = 0;
+    var W = 0, H = 0, dpr = 1;
+    var ease = function (t) { return t < 0 ? 0 : t > 1 ? 1 : (t * t * (3 - 2 * t)); };
+
+    // ---------- build the per-letter spans ----------
+    function buildChars() {
+      var words = COPIES[copyIdx].line.split(' ');
+      lineEl.innerHTML = '';
+      chars = [];
+      words.forEach(function (w) {
+        var ws = document.createElement('span');
+        ws.className = 'veil-word';
+        for (var i = 0; i < w.length; i++) {
+          var cs = document.createElement('span');
+          cs.className = 'veil-ch';
+          cs.textContent = w[i];
+          ws.appendChild(cs);
+          chars.push({ el: cs, cx: 0, cy: 0, nx: 0 });
+        }
+        lineEl.appendChild(ws);
+      });
+    }
+
+    // ---------- measure letter centers (for the spatial wave + pointer) ----------
+    function measure() {
+      if (!chars.length) return;
+      var sr = stage.getBoundingClientRect();
+      var min = Infinity, max = -Infinity;
+      chars.forEach(function (c) {
+        var r = c.el.getBoundingClientRect();
+        c.cx = r.left + r.width / 2 - sr.left;
+        c.cy = r.top + r.height / 2 - sr.top;
+        if (c.cx < min) min = c.cx;
+        if (c.cx > max) max = c.cx;
+      });
+      var span = (max - min) || 1;
+      chars.forEach(function (c) { c.nx = (c.cx - min) / span; });
+    }
+
+    // ---------- stardust: sample the word into target points ----------
+    function buildStardust() {
+      particles = [];
+      if (!W || !H) return;
+      var off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      var octx = off.getContext('2d');
+      var lines = COPIES[copyIdx].line.split(' ');
+      var fs = Math.min(H * 0.42, (W * 0.92) / (maxLen(lines) * 0.6));
+      octx.fillStyle = '#fff';
+      octx.textAlign = 'center';
+      octx.textBaseline = 'middle';
+      octx.font = '700 ' + fs + 'px century_supra_a, "Century Schoolbook", Georgia, serif';
+      var lh = fs * 0.9;
+      lines.forEach(function (ln, li) {
+        octx.fillText(ln, W / 2, H / 2 + (li - (lines.length - 1) / 2) * lh);
+      });
+      var img = octx.getImageData(0, 0, W, H).data;
+      var step = Math.max(4, Math.round(fs / 30));
+      var pts = [];
+      for (var y = 0; y < H; y += step) {
+        for (var x = 0; x < W; x += step) {
+          if (img[(y * W + x) * 4 + 3] > 120) pts.push({ x: x, y: y });
+        }
+      }
+      // cap for perf, sampled evenly
+      var CAP = 2200;
+      if (pts.length > CAP) {
+        var keep = [], stride = pts.length / CAP;
+        for (var k = 0; k < CAP; k++) keep.push(pts[Math.floor(k * stride)]);
+        pts = keep;
+      }
+      particles = pts.map(function (p, i) {
+        return {
+          tx: p.x, ty: p.y,
+          x: W / 2, y: H / 2,
+          sx: 0, sy: 0,
+          k: 0.07 + (i % 7) * 0.006,
+          cream: (i % 4 === 0),
+          seed: i * 0.37
+        };
+      });
+      scatterStart();
+    }
+    function maxLen(arr) { var m = 1; arr.forEach(function (s) { if (s.length > m) m = s.length; }); return m; }
+    function scatterStart() {
+      // place particles scattered (where they fly in from each cycle)
+      particles.forEach(function (p) {
+        var a = (p.seed * 12.9898) % (Math.PI * 2);
+        var d = (0.55 + ((p.seed * 78.233) % 1) * 0.7) * Math.max(W, H);
+        p.x = p.tx + Math.cos(a) * d;
+        p.y = p.ty + Math.sin(a) * d * 0.7;
+        // outward scatter target for the exit
+        p.sx = p.tx + Math.cos(a) * Math.max(W, H);
+        p.sy = p.ty + Math.sin(a) * Math.max(W, H);
+      });
+    }
+
+    // ---------- sizing ----------
+    function resize() {
+      W = stage.clientWidth; H = stage.clientHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      measure();
+      if (fx === 'stardust') buildStardust();
+    }
+
+    // ---------- switching ----------
+    function setCopy(i) {
+      copyIdx = i;
+      eyebrow.textContent = COPIES[i].eyebrow;
+      sub.textContent = COPIES[i].sub;
+      lineEl.setAttribute('aria-label', COPIES[i].line.toLowerCase());
+      buildChars();
+      // let layout settle before measuring
+      requestAnimationFrame(function () { measure(); if (fx === 'stardust') buildStardust(); });
+      restart();
+    }
+    function setFx(name) {
+      fx = name;
+      veil.className = 'veil fx-' + name;
+      ctx.clearRect(0, 0, W, H);
+      if (name === 'stardust') buildStardust();
+      restart();
+    }
+    function restart() { t0 = performance.now(); lastCyc = CYCLE; }
+
+    // ---------- the frame loop ----------
+    function frame(now) {
+      var cyc = (now - t0) % CYCLE;
+      var inF = cyc / ENTER; if (inF > 1) inF = 1;
+      var exF = ease((cyc - DWELL) / EXIT);
+      var wrapped = cyc < lastCyc;
+      lastCyc = cyc;
+
+      // progress hairline
+      prog.style.width = (Math.min(cyc, DWELL) / DWELL * 100) + '%';
+      // stack opacity (used by weight + buoyant; stardust hides the text)
+      stack.style.opacity = (1 - exF).toFixed(3);
+
+      if (fx === 'stardust') {
+        drawStardust(now, cyc, wrapped, exF);
+      } else {
+        ctx.clearRect(0, 0, W, H);
+        if (fx === 'buoyant') drawTide(now);
+        applyLetters(now, cyc, exF);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- weight wave + buoyant: per-letter transforms ----------
+    function applyLetters(now, cyc, exF) {
+      var t = now / 1000;
+      var spotR = Math.max(120, W * 0.16);
+      for (var i = 0; i < chars.length; i++) {
+        var c = chars[i];
+        var intro = reduce ? 1 : ease((cyc - i * STAGGER) / ENTER);
+        var op = intro * (1 - exF);
+        c.el.style.opacity = op.toFixed(3);
+
+        if (reduce) {
+          // static, dignified: a touch of even weight, no motion
+          c.el.style.transform = 'none';
+          c.el.style.webkitTextStrokeWidth = (fx === 'weight' ? '0.8px' : '0');
+          c.el.style.textShadow = 'none';
+          continue;
+        }
+
+        var rise = (1 - intro) * 38;
+
+        if (fx === 'weight') {
+          var w = (Math.sin(t * 1.7 - c.nx * Math.PI * 2.2) + 1) / 2;
+          if (pointer.active) {
+            var d = (c.cx - pointer.x) / spotR;
+            var s = Math.exp(-d * d);
+            w = Math.min(1, w * 0.45 + s);
+          }
+          c.el.style.webkitTextStrokeWidth = (0.3 + w * 2.6).toFixed(2) + 'px';
+          c.el.style.textShadow = '0 0 ' + (w * 24).toFixed(1) + 'px rgba(212,196,160,' + (w * 0.5).toFixed(2) + ')';
+          c.el.style.transform = 'translateY(' + rise.toFixed(1) + 'px) scale(' + (1 + w * 0.055 * intro).toFixed(3) + ')';
+        } else { // buoyant
+          var ph = t * 1.5 - c.nx * Math.PI * 2.0;
+          var yy = Math.sin(ph) * 11 * intro;
+          var rot = Math.cos(ph) * 2.3 * intro;
+          c.el.style.webkitTextStrokeWidth = '0';
+          c.el.style.textShadow = 'none';
+          c.el.style.transform = 'translateY(' + (rise + yy).toFixed(1) + 'px) rotate(' + rot.toFixed(2) + 'deg)';
+        }
+      }
+      // buoyant: lean the whole stack gently toward the pointer
+      if (fx === 'buoyant' && pointer.active && !reduce) {
+        var lean = (pointer.x - W / 2) / W;
+        stack.style.transform = 'translateX(' + (lean * 16).toFixed(1) + 'px) rotate(' + (lean * 0.8).toFixed(2) + 'deg)';
+      } else {
+        stack.style.transform = 'none';
+      }
+    }
+
+    // ---------- buoyant: a slow gold tide line low in the frame ----------
+    function drawTide(now) {
+      if (reduce) return;
+      var t = now / 1000;
+      var baseY = H * 0.8;
+      ctx.lineWidth = 2;
+      for (var layer = 0; layer < 2; layer++) {
+        ctx.beginPath();
+        for (var x = 0; x <= W; x += 8) {
+          var y = baseY + layer * 16 + Math.sin(x * 0.012 + t * (1.1 + layer * 0.4)) * (10 + layer * 6);
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = 'rgba(212,196,160,' + (0.16 - layer * 0.07) + ')';
+        ctx.stroke();
+      }
+    }
+
+    // ---------- stardust: converge, hold, scatter ----------
+    function drawStardust(now, cyc, wrapped, exF) {
+      if (wrapped) scatterStart();
+      ctx.clearRect(0, 0, W, H);
+
+      if (reduce) {
+        // calm fallback: render the word solid, no motion
+        ctx.fillStyle = CREAM;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var lines = COPIES[copyIdx].line.split(' ');
+        var fs = Math.min(H * 0.42, (W * 0.92) / (maxLen(lines) * 0.6));
+        ctx.font = '700 ' + fs + 'px century_supra_a, Georgia, serif';
+        var lh = fs * 0.9;
+        lines.forEach(function (ln, li) { ctx.fillText(ln, W / 2, H / 2 + (li - (lines.length - 1) / 2) * lh); });
+        return;
+      }
+
+      var leaving = cyc > DWELL;
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        var tx = leaving ? p.sx : p.tx;
+        var ty = leaving ? p.sy : p.ty;
+        p.x += (tx - p.x) * p.k;
+        p.y += (ty - p.y) * p.k;
+        var dx = p.x - p.tx, dy = p.y - p.ty;
+        var near = 1 - Math.min(1, Math.sqrt(dx * dx + dy * dy) / 90);
+        var a = (leaving ? (1 - exF) : (0.25 + 0.75 * near));
+        if (a <= 0.02) continue;
+        var sh = 1.4 + near * 0.5 * Math.sin(now / 200 + p.seed);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = p.cream ? CREAM : ACCENT;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, sh, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // ---------- inputs ----------
+    stage.addEventListener('pointermove', function (e) {
+      var sr = stage.getBoundingClientRect();
+      pointer.x = e.clientX - sr.left;
+      pointer.y = e.clientY - sr.top;
+      pointer.active = true;
+    });
+    stage.addEventListener('pointerleave', function () { pointer.active = false; });
+
+    document.getElementById('fxSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      segOn('fxSeg', b);
+      setFx(b.dataset.fx);
+      document.getElementById('whyLine').innerHTML = WHY[b.dataset.fx];
+    });
+    document.getElementById('copySeg').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      segOn('copySeg', b);
+      setCopy(+b.dataset.copy);
+    });
+    document.getElementById('replayBtn').addEventListener('click', restart);
+    document.getElementById('reduceChk').addEventListener('change', function (e) {
+      reduce = e.target.checked || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      restart();
+    });
+    function segOn(id, btn) {
+      var bs = document.getElementById(id).querySelectorAll('button');
+      for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('is-on', bs[i] === btn);
+    }
+
+    window.addEventListener('resize', resize);
+
+    // ---------- boot (wait for the serif so measuring + sampling is right) ----------
+    function boot() {
+      buildChars();
+      resize();
+      document.getElementById('whyLine').innerHTML = WHY.weight;
+      requestAnimationFrame(frame);
+    }
+    if (document.fonts && document.fonts.load) {
+      Promise.all([
+        document.fonts.load('700 80px century_supra_a'),
+        document.fonts.load('400 40px century_supra_a')
+      ]).then(function () { return document.fonts.ready; }).then(boot).catch(boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</body>
+</html>
