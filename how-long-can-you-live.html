@@ -95,6 +95,15 @@
   .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
   .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
   .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+  /* "One honest note" disclaimer box read too heavy; tighten it (stays boxed + labelled, it IS a disclaimer). The :not(.u-move) keeps the "My read" takeaway line untouched. */
+  .sec .u-callout:not(.u-move) { padding: 18px 22px; border-radius: 14px; box-shadow: none; margin: 1.5rem 0; }
+  .sec .u-callout:not(.u-move) .u-callout-body { font-size: 1.02rem; line-height: 1.5; }
+  /* Stat tabs: smaller + neutral. The --amber gold read as a "highlight", but these are sobering data-rot numbers and gold is the site's positive accent — so drop the colour and shrink the chunky card. */
+  .sec .stat-bartab-row { gap: 14px; }
+  .sec .stat-bartab { padding: 16px 18px 15px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); background: rgba(255,255,255,0.035); }
+  .sec .stat-bartab::before { height: 3px; background: var(--rule); }
+  .sec .stat-bartab .stat-num { font-size: 34px; color: var(--text-bright); }
+  .sec .stat-bartab .stat-label { font-size: 12.5px; margin-top: 10px; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
