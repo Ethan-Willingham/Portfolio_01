@@ -74,9 +74,11 @@
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
   .sec > :last-child { margin-bottom: 0; }
-  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
-  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
-  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  /* .sec-kicker / .sec-h replaced by kit .u-sechead; bridge: left-align within reading column, color rhythm via --sec-accent */
+  .u-sechead { text-align: left; align-items: flex-start; }
+  .u-sechead .u-sechead-k { color: var(--sec-accent, var(--accent)); background: none; padding: 0; letter-spacing: 0.18em; }
+  .u-sechead .u-sechead-k::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .u-sechead .u-sechead-h { font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; margin-bottom: 0.7rem; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
   .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
@@ -96,19 +98,6 @@
   #traditions { --sec-accent:#D4C4A0; } #serenity { --sec-accent:#8fb3c7; } #fates { --sec-accent:#dfc288; }
   #close { --sec-accent:#9ec79a; } #sources { --sec-accent:#D4C4A0; }
 
-  /* ---------- CONTENTS MAP ---------- */
-  .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
-  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
-  .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
-  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
-  .map-stat { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); }
-  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--accent); margin-right: 0.35em; }
-  .map-list { list-style: none; margin: 0; padding: 0; }
-  .map-list li { margin: 0; }
-  .map-list li a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(120,134,120,0.12); color: var(--text); text-decoration: none; transition: color 0.18s, padding-left 0.18s; }
-  .map-list li a:hover { color: var(--accent); padding-left: 0.4rem; }
-  .map-list .map-m { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
-  .map-list .mnum { font-family: var(--font-mono); font-size: 0.72rem; color: var(--sec-accent, var(--accent)); margin-right: 0.7em; }
 
   /* ---------- PHOTOGRAPHS ---------- */
   .photo { margin: 2.2em auto; }
@@ -130,22 +119,18 @@
   .stat .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3.1rem); line-height: 1; color: var(--text-bright); letter-spacing: -0.02em; }
   .stat .cap { font-size: 1rem; color: var(--text-dim); margin-top: 0.45rem; line-height: 1.5; }
 
-  /* ---------- GRADE CHIPS (3-tier: solid/good/contested; kept bespoke, kit only has 2 tiers) ---------- */
-  .grade { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; vertical-align: 0.06em; white-space: nowrap; }
-  .grade.g-a { background: rgba(158,199,154,0.16); color: #b6d8b2; border: 1px solid rgba(158,199,154,0.4); }
-  .grade.g-b { background: rgba(143,179,199,0.16); color: #a9cad9; border: 1px solid rgba(143,179,199,0.4); }
-  .grade.g-c { background: rgba(230,192,116,0.15); color: #dfc288; border: 1px solid rgba(230,192,116,0.4); }
+  /* ---------- CONTENTS MAP ---------- */
+  .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); padding: 1.5rem 1.6rem 1.7rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(0,0,0,0.12); }
+  .map-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
+  .map-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.9rem; margin: 0 0 1.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
+  .map-stat { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); }
+  .map-stat b { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--accent); margin-right: 0.35em; }
+  /* TOC list: kit .u-toc-list / .u-toc-row / .u-toc-n / .u-toc-m used inside .map */
 
   /* ---------- REFERENCES ---------- */
   #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
-  #sources .sec-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
   .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 0.4em; }
-  .src-details { margin-top: 1.1em; border-top: 1px solid var(--rule); }
-  .src-details > summary { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--accent); cursor: pointer; padding: 0.85em 0; list-style: none; }
-  .src-details > summary::-webkit-details-marker { display: none; }
-  .src-details > summary::before { content: "+\00a0\00a0"; color: var(--text-dim); }
-  .src-details[open] > summary::before { content: "\2013\00a0\00a0"; }
-  .src-details > summary:hover { color: var(--accent-hover); }
   .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0.2rem 0 1.1rem; font-size: 0.78rem; color: var(--text-dim); }
   #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.38; padding-left: 1.4em; margin: 0.2em 0 1em; }
   #sources li { margin-bottom: 0.3em; }
@@ -200,24 +185,23 @@
         <span class="map-stat"><b>~40</b> truly sober when it claimed "more than one hundred"</span>
         <span class="map-stat"><b>26</b> sources cited</span>
       </div>
-      <ul class="map-list">
-        <li><a href="#before"><span><span class="mnum">01</span>The program had six steps, and they were never in print</span><span class="map-m">before the book</span></a></li>
-        <li><a href="#thirty"><span><span class="mnum">02</span>The Steps were not written in thirty minutes</span><span class="map-m">the myth</span></a></li>
-        <li><a href="#god"><span><span class="mnum">03</span>An atheist edited God into the background</span><span class="map-m">the truce</span></a></li>
-        <li><a href="#hank"><span><span class="mnum">04</span>The co-author they wrote out of the story</span><span class="map-m">Hank</span></a></li>
-        <li><a href="#almost"><span><span class="mnum">05</span>It almost had a different name, and it almost died</span><span class="map-m">the title</span></a></li>
-        <li><a href="#twelvetwelve"><span><span class="mnum">06</span>The Twelve and Twelve was written in the dark</span><span class="map-m">the second book</span></a></li>
-        <li><a href="#traditions"><span><span class="mnum">07</span>The Traditions are scar tissue</span><span class="map-m">paid in wreckage</span></a></li>
-        <li><a href="#serenity"><span><span class="mnum">08</span>The prayer arrived by accident, from outside</span><span class="map-m">the prayer</span></a></li>
-        <li><a href="#fates"><span><span class="mnum">09</span>What happened to the people in the back of the book</span><span class="map-m">the storytellers</span></a></li>
-        <li><a href="#close"><span><span class="mnum">10</span>It was made by hand, and it held</span><span class="map-m">the close</span></a></li>
+      <ul class="u-toc-list">
+        <li><a class="u-toc-row" href="#before"><span class="u-toc-name"><span class="u-toc-n">01</span>The program had six steps, and they were never in print</span><span class="u-toc-m">before the book</span></a></li>
+        <li><a class="u-toc-row" href="#thirty"><span class="u-toc-name"><span class="u-toc-n">02</span>The Steps were not written in thirty minutes</span><span class="u-toc-m">the myth</span></a></li>
+        <li><a class="u-toc-row" href="#god"><span class="u-toc-name"><span class="u-toc-n">03</span>An atheist edited God into the background</span><span class="u-toc-m">the truce</span></a></li>
+        <li><a class="u-toc-row" href="#hank"><span class="u-toc-name"><span class="u-toc-n">04</span>The co-author they wrote out of the story</span><span class="u-toc-m">Hank</span></a></li>
+        <li><a class="u-toc-row" href="#almost"><span class="u-toc-name"><span class="u-toc-n">05</span>It almost had a different name, and it almost died</span><span class="u-toc-m">the title</span></a></li>
+        <li><a class="u-toc-row" href="#twelvetwelve"><span class="u-toc-name"><span class="u-toc-n">06</span>The Twelve and Twelve was written in the dark</span><span class="u-toc-m">the second book</span></a></li>
+        <li><a class="u-toc-row" href="#traditions"><span class="u-toc-name"><span class="u-toc-n">07</span>The Traditions are scar tissue</span><span class="u-toc-m">paid in wreckage</span></a></li>
+        <li><a class="u-toc-row" href="#serenity"><span class="u-toc-name"><span class="u-toc-n">08</span>The prayer arrived by accident, from outside</span><span class="u-toc-m">the prayer</span></a></li>
+        <li><a class="u-toc-row" href="#fates"><span class="u-toc-name"><span class="u-toc-n">09</span>What happened to the people in the back of the book</span><span class="u-toc-m">the storytellers</span></a></li>
+        <li><a class="u-toc-row" href="#close"><span class="u-toc-name"><span class="u-toc-n">10</span>It was made by hand, and it held</span><span class="u-toc-m">the close</span></a></li>
       </ul>
     </aside>
 
     <!-- ============================ 01 BEFORE ============================ -->
     <section id="before" class="sec first" aria-labelledby="before-h">
-      <span class="sec-kicker">Before the book</span>
-      <h2 id="before-h" class="sec-h">The program had six steps, and they were never in print</h2>
+      <div class="u-sechead"><p class="u-sechead-k">Before the book</p><h2 id="before-h" class="u-sechead-h">The program had six steps, and they were never in print</h2></div>
       <p class="lede">For the first four years, there was no book. There were no twelve steps. If you got sober in 1936, you did it on a program that existed only in people's mouths, and it had six points, not twelve.</p>
 
       <p>This is the thing hardest to feel from inside a tradition that now treats a fixed text as the program. In Akron and New York from 1935 to 1939, the work was something you were walked through by another drunk, not something you read. The closest thing to a manual was a borrowed one: the Oxford Group's personal-work handbook, which is where the hand-on-shoulder, one-drunk-helps-another machinery came from in the first place.</p>
@@ -244,8 +228,7 @@
 
     <!-- ============================ 02 THIRTY ============================ -->
     <section id="thirty" class="sec" aria-labelledby="thirty-h">
-      <span class="sec-kicker">The myth</span>
-      <h2 id="thirty-h" class="sec-h">The Steps were not written in thirty minutes</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The myth</p><h2 id="thirty-h" class="u-sechead-h">The Steps were not written in thirty minutes</h2></div>
 
       <p>You have heard the origin story, probably from a podium. Bill Wilson, sick and discouraged in the front bedroom at 182 Clinton Street late in 1938, takes up a yellow pad, asks for help, and writes the Steps in a single rush. When he is done and counts them, there are twelve, the number of the apostles. A complete program, delivered whole.</p>
 
@@ -258,7 +241,7 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Brooklyn_Facade,_65-71_Columbia_Heights,_Brooklyn_(NYPL_b13668355-482656).jpg">Brooklyn facades, 65 to 71 Columbia Heights</a>. Berenice Abbott, Changing New York, 1936, NYPL, public domain.</p>
       </figure>
 
-      <p>The night with the pad seems to have really happened. The legend is what gets bolted onto it. When the historian William Schaberg went through the surviving drafts and letters for his 2019 book <em>Writing the Big Book</em>, the clean lightning-bolt story fell apart. <span class="u-src"><a href="https://aaagora.org/">Schaberg</a> <span class="grade g-c">revises the legend</span></span></p>
+      <p>The night with the pad seems to have really happened. The legend is what gets bolted onto it. When the historian William Schaberg went through the surviving drafts and letters for his 2019 book <em>Writing the Big Book</em>, the clean lightning-bolt story fell apart. <span class="u-src"><a href="https://aaagora.org/">Schaberg</a> <span class="u-grade u-grade-c">revises the legend</span></span></p>
 
       <p>The reality was a fight. Bill expanded an existing word-of-mouth program (those six-ish points) into twelve on purpose, splitting steps apart to close what he saw as loopholes a slippery drunk could crawl through. Then the New York group argued over the result line by line, and the drafts went back and forth to Akron by mail. The wording you have memorized was litigated for weeks, not received in an evening. The tidy "twelve like the apostles" detail is a meaning laid on afterward, not the reason there are twelve.</p>
 
@@ -271,8 +254,7 @@
 
     <!-- ============================ 03 GOD ============================ -->
     <section id="god" class="sec" aria-labelledby="god-h">
-      <span class="sec-kicker">The truce</span>
-      <h2 id="god-h" class="sec-h">An atheist edited God into the background</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The truce</p><h2 id="god-h" class="u-sechead-h">An atheist edited God into the background</h2></div>
 
       <p>The single most important design choice in the book, the thing that lets a hard atheist and a devout believer kneel in the same room, was won by the atheist. Over the objections of the devout.</p>
 
@@ -298,8 +280,7 @@
 
     <!-- ============================ 04 HANK ============================ -->
     <section id="hank" class="sec" aria-labelledby="hank-h">
-      <span class="sec-kicker">The forgotten man</span>
-      <h2 id="hank-h" class="sec-h">The co-author they wrote out of the story</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The forgotten man</p><h2 id="hank-h" class="u-sechead-h">The co-author they wrote out of the story</h2></div>
 
       <p>The official telling is Bill's book. The archives say it was, for a crucial stretch, two men's book, and the fellowship spent decades quietly forgetting the second one.</p>
 
@@ -314,7 +295,7 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Dr._Bob%27s_House.jpg">Dr. Bob's House, 855 Ardmore Avenue, Akron</a>. Photo by Nyttend, public domain, via Wikimedia Commons.</p>
       </figure>
 
-      <p>Then Hank drank again in 1939, and the partnership ended badly. He fell out with Bill, sold his share of the publishing company for two hundred dollars, and spent years bitter about it. The movement's authorized histories, written later, shrank him to a cautionary footnote. It took Schaberg's archival work to put the near-co-author back into the room where the book was built. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Henry_Parkhurst">Parkhurst</a> <span class="grade g-c">long minimized</span></span></p>
+      <p>Then Hank drank again in 1939, and the partnership ended badly. He fell out with Bill, sold his share of the publishing company for two hundred dollars, and spent years bitter about it. The movement's authorized histories, written later, shrank him to a cautionary footnote. It took Schaberg's archival work to put the near-co-author back into the room where the book was built. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Henry_Parkhurst">Parkhurst</a> <span class="u-grade u-grade-c">long minimized</span></span></p>
 
       <p class="turn">The book exists, in the shape it has, partly because of a man the fellowship spent fifty years leaving out of the story.</p>
 
@@ -323,8 +304,7 @@
 
     <!-- ============================ 05 ALMOST ============================ -->
     <section id="almost" class="sec" aria-labelledby="almost-h">
-      <span class="sec-kicker">The title</span>
-      <h2 id="almost-h" class="sec-h">It almost had a different name, and it almost died</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The title</p><h2 id="almost-h" class="u-sechead-h">It almost had a different name, and it almost died</h2></div>
 
       <p>The title everyone now treats as inevitable was a near miss. For a long stretch the front-runner was <em>The Way Out</em>. Someone, the story goes, checked the Library of Congress and found more than a dozen books already published under that title and only a handful called <em>Alcoholics Anonymous</em>, so they took the safer, emptier name. <span class="u-src"><a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">the title</a></span> The name that became the fellowship's was chosen because the better one was crowded.</p>
 
@@ -344,8 +324,7 @@
 
     <!-- ============================ 06 TWELVE AND TWELVE ============================ -->
     <section id="twelvetwelve" class="sec" aria-labelledby="twelvetwelve-h">
-      <span class="sec-kicker">The second book</span>
-      <h2 id="twelvetwelve-h" class="sec-h">The Twelve and Twelve was written in the dark</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The second book</p><h2 id="twelvetwelve-h" class="u-sechead-h">The Twelve and Twelve was written in the dark</h2></div>
 
       <p>Read the 1939 book and the 1953 one back to back, as you have, and you can hear that the second voice is older, sadder, more interior. There is a reason. The Twelve Steps and Twelve Traditions was written by Bill Wilson largely alone, in the middle of an eleven-year clinical depression that began almost the moment the fellowship was safe.</p>
 
@@ -371,8 +350,7 @@
 
     <!-- ============================ 07 TRADITIONS ============================ -->
     <section id="traditions" class="sec" aria-labelledby="traditions-h">
-      <span class="sec-kicker">Paid in wreckage</span>
-      <h2 id="traditions-h" class="sec-h">The Traditions are scar tissue</h2>
+      <div class="u-sechead"><p class="u-sechead-k">Paid in wreckage</p><h2 id="traditions-h" class="u-sechead-h">The Traditions are scar tissue</h2></div>
 
       <p>Members tend to receive the Twelve Traditions the way they receive the Steps, as principles handed down. They are nothing of the kind. Every one of them is a lesson the fellowship paid for in a specific disaster, and Bill wrote them by reading through thousands of letters about groups tearing themselves apart.</p>
 
@@ -396,8 +374,7 @@
 
     <!-- ============================ 08 SERENITY ============================ -->
     <section id="serenity" class="sec" aria-labelledby="serenity-h">
-      <span class="sec-kicker">The prayer</span>
-      <h2 id="serenity-h" class="sec-h">The prayer arrived by accident, from outside</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The prayer</p><h2 id="serenity-h" class="u-sechead-h">The prayer arrived by accident, from outside</h2></div>
 
       <p>The lines you say at the end of a thousand meetings are not AA's, and the fellowship has never pretended otherwise. The Serenity Prayer wandered in from the outside world, by chance, and AA simply kept it.</p>
 
@@ -412,7 +389,7 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Rev._Reinhold_Niebuhr_1927.jpg">Reinhold Niebuhr, 1927</a>. Public domain, via Wikimedia Commons.</p>
       </figure>
 
-      <p>Who wrote it has been argued for almost a hundred years. The usual answer is the theologian Reinhold Niebuhr, in the 1930s or early 1940s. Then in 2008 the Yale researcher Fred Shapiro turned up several earlier versions in print and in private papers and suggested Niebuhr might not be the author after all. The challenge made news. Years later, after more evidence surfaced, Shapiro partly reversed himself and credited Niebuhr after all. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Serenity_Prayer">Shapiro</a> <span class="grade g-c">contested for decades</span></span></p>
+      <p>Who wrote it has been argued for almost a hundred years. The usual answer is the theologian Reinhold Niebuhr, in the 1930s or early 1940s. Then in 2008 the Yale researcher Fred Shapiro turned up several earlier versions in print and in private papers and suggested Niebuhr might not be the author after all. The challenge made news. Years later, after more evidence surfaced, Shapiro partly reversed himself and credited Niebuhr after all. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Serenity_Prayer">Shapiro</a> <span class="u-grade u-grade-c">contested for decades</span></span></p>
 
       <p class="turn">The most-spoken lines in the program arrived secondhand, from a newspaper, by an author the world spent a century arguing about.</p>
 
@@ -421,12 +398,11 @@
 
     <!-- ============================ 09 FATES ============================ -->
     <section id="fates" class="sec" aria-labelledby="fates-h">
-      <span class="sec-kicker">The storytellers</span>
-      <h2 id="fates-h" class="sec-h">What happened to the people in the back of the book</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The storytellers</p><h2 id="fates-h" class="u-sechead-h">What happened to the people in the back of the book</h2></div>
 
       <p>You have read the personal stories in the back more times than you can count, in the voices of people you half feel you know. The first edition carried twenty-eight of them. Here is the part the stories never tell you: a lot of those voices did not make it.</p>
 
-      <p>By the best reconstruction, only about half of the first-edition authors stayed continuously sober. The rest relapsed, some came back, and some were lost for good. The book has always been more durable than the people who filled it. <span class="u-src"><a href="https://silkworth.net/">the authors</a> <span class="grade g-c">counts vary</span></span></p>
+      <p>By the best reconstruction, only about half of the first-edition authors stayed continuously sober. The rest relapsed, some came back, and some were lost for good. The book has always been more durable than the people who filled it. <span class="u-src"><a href="https://silkworth.net/">the authors</a> <span class="u-grade u-grade-c">counts vary</span></span></p>
 
       <p>The hardest cases are the ones closest to the center. <strong>Ebby Thacher</strong>, the old friend who carried the message to Bill in the first place, the man without whom there is no AA, drank on and off for the next thirty years, lived for long stretches on Bill's money, and only got a steady footing near the very end. He died sober in 1966, about two years dry. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Ebby_Thacher">Ebby</a></span></p>
 
@@ -441,7 +417,7 @@
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:William_Griffith_Wilson_gravestone.jpg">A founder's gravestone, East Dorset, Vermont</a> by Whoisjohngalt, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>And then there is <strong>Florence Rankin</strong>. Hers was the only woman's story in the first edition, the lone female voice in the entire 1939 book. She relapsed not long after, moved to Washington, and died around 1943, almost certainly by her own hand. It fell to the southern-story member, by then a friend, to identify her body. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Florence_Rankin">Florence Rankin</a> <span class="grade g-c">date uncertain</span></span> Her chapter title, about a victory, sits in the book to this day.</p>
+      <p>And then there is <strong>Florence Rankin</strong>. Hers was the only woman's story in the first edition, the lone female voice in the entire 1939 book. She relapsed not long after, moved to Washington, and died around 1943, almost certainly by her own hand. It fell to the southern-story member, by then a friend, to identify her body. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Florence_Rankin">Florence Rankin</a> <span class="u-grade u-grade-c">date uncertain</span></span> Her chapter title, about a victory, sits in the book to this day.</p>
 
       <p class="turn">The voices you trust most in the back of the book belonged to people who were still losing. The book outlived them.</p>
 
@@ -450,8 +426,7 @@
 
     <!-- ============================ 10 CLOSE ============================ -->
     <section id="close" class="sec" aria-labelledby="close-h">
-      <span class="sec-kicker">The close</span>
-      <h2 id="close-h" class="sec-h">It was made by hand, and it held</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The close</p><h2 id="close-h" class="u-sechead-h">It was made by hand, and it held</h2></div>
 
       <p>Put it all in one place. The program you treat as fixed was six steps before it was twelve. The Steps were a committee edit, not a lightning bolt. The open door for the unbeliever was cut by an unbeliever. The book was half-built by a man it later forgot, named by default, printed on cheap paper, and nearly died in its first year. The prayer was borrowed. The second book was written from inside a depression. The Traditions are a list of old wounds. And a good number of the people whose stories you trust did not stay sober.</p>
 
@@ -473,20 +448,19 @@
 
     <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <span class="sec-kicker">The fine print</span>
-      <h2 id="sources-h" class="sec-h">Sources, and what I was careful about</h2>
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and what I was careful about</h2></div>
       <p class="src-note">This piece is about the making of the AA literature, not its contents, and it deliberately quotes none of the Steps, the Traditions, the Promises, or the prayer. The archival spine is William Schaberg's <i>Writing the Big Book</i> (2019), set against the official histories (<i>Pass It On</i>, <i>Dr. Bob and the Good Oldtimers</i>, <i>AA Comes of Age</i>) and Ernest Kurtz's <i>Not-God</i>. Several points here are genuinely debated, and they are flagged in the text: how much of the Steps' drafting was a single night versus weeks of edits; how large Hank Parkhurst's role really was; the year and manner of Florence Rankin's death; and the long fight over who wrote the Serenity Prayer. Where the official story and the archival record disagree, both are noted.</p>
-      <details class="src-details">
-        <summary>The full list, twenty-six sources, grouped by section</summary>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, twenty-six sources, grouped by section</summary>
       <div class="legend">
-        <span><span class="grade g-a">solid</span> primary or strong consensus</span>
-        <span><span class="grade g-b">good</span> reliable secondary</span>
-        <span><span class="grade g-c">contested</span> genuinely debated, flagged in text</span>
+        <span><span class="u-grade u-grade-a">solid</span> primary or strong consensus</span>
+        <span><span class="u-grade u-grade-b">good</span> reliable secondary</span>
+        <span><span class="u-grade u-grade-c">contested</span> genuinely debated, flagged in text</span>
       </div>
 
       <h3>The archival backbone</h3>
       <ol>
-        <li><b>Schaberg WH (2019).</b> <i>Writing the Big Book: The Creation of A.A.</i> The ledger-level reconstruction behind most of the corrections here. <a href="https://aaagora.org/">aaagora.org</a> <span class="grade g-c">revises the official story</span></li>
+        <li><b>Schaberg WH (2019).</b> <i>Writing the Big Book: The Creation of A.A.</i> The ledger-level reconstruction behind most of the corrections here. <a href="https://aaagora.org/">aaagora.org</a> <span class="u-grade u-grade-c">revises the official story</span></li>
         <li><b>Kurtz E (1979).</b> <i>Not-God: A History of Alcoholics Anonymous.</i> The standard scholarly history. Hazelden. <a href="https://www.hazelden.org/">hazelden.org</a></li>
         <li><b>Alcoholics Anonymous (1957).</b> <i>Alcoholics Anonymous Comes of Age.</i> Bill Wilson's own account of writing the book and the Traditions. <a href="https://www.aa.org/">aa.org</a></li>
         <li><b>Alcoholics Anonymous (1980).</b> <i>Dr. Bob and the Good Oldtimers.</i> The Akron side, the early stories, the storytellers. <a href="https://www.aa.org/">aa.org</a></li>
@@ -503,7 +477,7 @@
       <ol start="8">
         <li><b>The Big Book (Alcoholics Anonymous).</b> The 1939 first edition: drafting, the God-language compromises, the thick-paper nickname, the title. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">wikipedia.org</a></li>
         <li><b>Jim Burwell ("The Vicious Cycle").</b> The atheist's memoirs and the fight over the religious language. <a href="https://silkworth.net/">silkworth.net</a></li>
-        <li><b>Henry "Hank" Parkhurst.</b> The near-co-author, Works Publishing, the Newark office, the break with Bill. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Henry_Parkhurst">wikipedia.org</a> <span class="grade g-c">long minimized</span></li>
+        <li><b>Henry "Hank" Parkhurst.</b> The near-co-author, Works Publishing, the Newark office, the break with Bill. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Henry_Parkhurst">wikipedia.org</a> <span class="u-grade u-grade-c">long minimized</span></li>
         <li><b>Alcoholics Anonymous (1984).</b> <i>Pass It On.</i> The authorized biography: the writing, Ruth Hock, the lean year, the depression. <a href="https://www.aa.org/pass-it-on">aa.org</a></li>
       </ol>
 
@@ -530,15 +504,15 @@
       <h3>The Serenity Prayer</h3>
       <ol start="20">
         <li><b>Alcoholics Anonymous (SMF-129).</b> How the Serenity Prayer entered AA, around 1941. <a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">aa.org</a></li>
-        <li><b>Serenity Prayer; Shapiro F (2008, rev.).</b> The Niebuhr attribution, the Yale challenge, and the partial reversal. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Serenity_Prayer">wikipedia.org</a> <span class="grade g-c">contested</span></li>
+        <li><b>Serenity Prayer; Shapiro F (2008, rev.).</b> The Niebuhr attribution, the Yale challenge, and the partial reversal. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Serenity_Prayer">wikipedia.org</a> <span class="u-grade u-grade-c">contested</span></li>
       </ol>
 
       <h3>The storytellers, and the manuscript</h3>
       <ol start="22">
-        <li><b>silkworth.net; AAHistoryLovers (N. Olson).</b> Biographies and fates of the first-edition story authors. <a href="https://silkworth.net/">silkworth.net</a> <span class="grade g-c">counts vary</span></li>
+        <li><b>silkworth.net; AAHistoryLovers (N. Olson).</b> Biographies and fates of the first-edition story authors. <a href="https://silkworth.net/">silkworth.net</a> <span class="u-grade u-grade-c">counts vary</span></li>
         <li><b>Ebby Thacher; Mel B. (1998), <i>Ebby</i>.</b> The man who carried the message, and his decades of relapse. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Ebby_Thacher">wikipedia.org</a></li>
         <li><b>Bill Dotson; Ernie Galbraith.</b> AA numbers three and four, and their opposite fates. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Bill_Dotson">wikipedia.org</a></li>
-        <li><b>Florence Rankin.</b> The first woman in the book; the relapse and the likely suicide, around 1943. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Florence_Rankin">wikipedia.org</a> <span class="grade g-c">date uncertain</span></li>
+        <li><b>Florence Rankin.</b> The first woman in the book; the relapse and the likely suicide, around 1943. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Florence_Rankin">wikipedia.org</a> <span class="u-grade u-grade-c">date uncertain</span></li>
         <li><b>Sotheby's (2018).</b> The marked-up printer's manuscript of the Big Book, sold for 2.4 million dollars. <a href="https://en.wikipedia.org/wiki/The_Big_Book_(Alcoholics_Anonymous)">summary</a></li>
       </ol>
       </details>
