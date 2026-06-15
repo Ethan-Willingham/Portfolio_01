@@ -98,12 +98,6 @@
   .u-entry > .u-figure { margin-top: 1.4rem; }
   .u-figure-img { background: var(--bg-raised); }
 
-  /* ---------- CHAPTER STRIP (pill nav; no kit equivalent) ---------- */
-  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
-  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
-  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
-  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
-
   /* ---------- FIGURE MODIFIERS + IMAGE CREDITS (no kit equivalent) ---------- */
   /* tall = a constrained-width portrait; breakout = a wide image past the column */
   .u-figure.tall picture { display: block; max-width: 460px; margin: 0 auto; }
@@ -163,17 +157,6 @@
   </header>
 
   <main id="guide">
-
-    <!-- chapter strip -->
-    <nav class="chapters" aria-label="Chapters">
-      <span class="lead">Six chapters</span>
-      <a href="#count">The count</a>
-      <a href="#book">The book</a>
-      <a href="#rooms">The rooms</a>
-      <a href="#faces">The faces</a>
-      <a href="#machine">Money and machine</a>
-      <a href="#late">Late Bill</a>
-    </nav>
 
     <!-- ============================ 01 THE COUNT ============================ -->
     <section id="count" class="sec first" aria-labelledby="count-h">
