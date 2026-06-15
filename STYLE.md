@@ -119,6 +119,8 @@ names. All are green/parchment/gold and use only the three fonts.
 ```
 Use at the top of every post. The eyebrow + meta strip are optional.
 
+**Title tiers (one per scale).** `.u-hero` (the Field-guide hero, `clamp(3rem,11vw,6rem)`) is the default. For a full-bleed cover post, the bespoke `.cover h1` pattern (`clamp(4rem,17vw,9rem)`) is the big option. `.post-title` (the small `min(2.8rem,9vw)` title in `style.css`) is **legacy**: it still titles six older posts (the four demo pages + gallery + git-history), but it is not a choice for new posts - reach for `.u-hero`.
+
 ### Section heading - `.u-sechead` (or plain `.u-h2`)
 ```html
 <div class="u-sechead"><p class="u-sechead-k">Chapter two</p><h2 class="u-sechead-h">What moves the needle</h2></div>
@@ -133,11 +135,6 @@ Use at the top of every post. The eyebrow + meta strip are optional.
 ### Photo with a caption - `.u-figure`
 ```html
 <figure class="u-figure"><img class="u-figure-img" src="assets/..." alt=""><figcaption class="u-figure-cap">Caption.</figcaption></figure>
-```
-
-### Picture with text beside it - `.u-dossier`
-```html
-<div class="u-dossier"><figure class="u-dossier-media"><img class="u-dossier-img" src="assets/..." alt=""><figcaption class="u-dossier-cap">No. 01 · Label</figcaption></figure><div class="u-dossier-body"><p class="u-dossier-eyebrow">eyebrow</p><h3 class="u-dossier-name">Name</h3><div class="u-dossier-stat"><span class="u-dossier-fig">4,855</span><span class="u-dossier-figlbl">label</span></div><p class="u-dossier-lead">Lead.</p></div></div>
 ```
 
 ### Grid of photos - `.u-grid` (Reflows 2-3-4)
@@ -174,48 +171,33 @@ For one set-apart definition (an epigraph opener). Use `.dlnum-*` below when you
 ```
 Default is a single column with hairline rules. For a **short** glossary (roughly 4 to 6 terms) where the single column eats too much height, add **`.dlnum-2up`** to `.dlnum-wrap` for a compact 2-up grid (about half the height; drops the rules, stacks on mobile). An odd last term spans both columns, so odd counts work too.
 
-### Safety callout - `.scallout-banner` (health posts)
-```html
-<div class="scallout-banner"><div class="scallout-banner__main"><div class="scallout-banner__phone">☎</div><div><p class="scallout-banner__kicker">Emergency</p><p class="scallout-banner__line">Call <b>911 now</b> if …</p></div></div><p class="scallout-banner__sub"><span class="scallout-banner__ok">✓</span> Otherwise, most is normal.</p></div>
-```
-
-### Numbers - inline `.u-stats`, boxed cards `.stat-bartab-*`, giant `.u-bignum`, strip `.u-strip`
+### Numbers - inline `.u-stats`, neutral cards `.stat-bartab`, giant `.u-bignum`
 ```html
 <div class="u-stats"><div class="u-stat"><span class="u-fig">82%</span><span class="u-fig-lbl">label</span></div> … </div>
-<div class="stat-bartab-row"><div class="stat-bartab stat-bartab--sky"><div class="stat-num">120</div><p class="stat-label">label</p></div><div class="stat-bartab stat-bartab--amber">…</div><div class="stat-bartab stat-bartab--green">…</div></div>
+<div class="stat-bartab-row"><div class="stat-bartab"><div class="stat-num">120</div><p class="stat-label">label</p></div><div class="stat-bartab">…</div><div class="stat-bartab">…</div></div>
 <div class="u-bignum"><span class="u-bignum-fig">82<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">caption</span><span class="u-bignum-src">source</span></div>
-<div class="u-strip"><span class="u-strip-item"><b>122</b> oldest age</span> … </div>
 ```
-`.u-bignum` lays out **figure on the left, caption + source filling the right** (it stacks on narrow screens), so the card never reads as a number floating in empty space. Boxed-card accents: `--sky`, `--amber`, `--green` (also works with the other rhythm hues if you add them).
+`.u-bignum` lays out **figure on the left, caption + source filling the right** (it stacks on narrow screens), so the card never reads as a number floating in empty space. `.stat-bartab` cards are **neutral** (cream figure, dim top rule): gold is the site's positive accent, so stat numbers - especially cautionary ones - stay neutral rather than reading as "look how great."
 
 ### Data table - `.u-table` (feature a row with `.u-feature`)
 ```html
 <table class="u-table"><thead><tr><th>Lever</th><th>Years</th><th>Evidence</th></tr></thead><tbody><tr><td>Movement</td><td class="u-num">~3–7</td><td>strong</td></tr><tr class="u-feature"><td>Connection</td><td class="u-num">~5+</td><td>strong</td></tr></tbody></table>
 ```
 
-### Dashboard readout `.u-kpis` · leaderboard `.u-board` · spec sheet `.u-spec`
+### Dashboard readout `.u-kpis` (legacy)
+`.u-kpis` is grandfathered - it dashboards big-enough (its only user). Not a choice for new posts; use `.u-stats` or `.stat-bartab` cards instead.
 ```html
 <div class="u-kpis"><div class="u-kpi"><span class="u-kpi-lbl">label</span><span class="u-kpi-val">38</span><span class="u-kpi-sub">sub</span></div><div class="u-kpi u-kpi-main">…</div>…</div>
-<div class="u-board"><p class="u-board-k">title</p><ol class="u-board-list"><li class="u-board-row"><span class="u-board-name">Name <i>· detail</i></span><span class="u-board-dots"></span><span class="u-board-val">122y</span></li>…</ol></div>
-<dl class="u-spec"><p class="u-spec-k">Field notes</p><div class="u-spec-row"><dt class="u-spec-dt">Field</dt><dd class="u-spec-dd">Value, <span class="u-spec-em">emphasis</span>.</dd></div>…</dl>
 ```
 
-### Bar chart - `.u-chartfig` (Featured bar)
-A hand-built inline SVG on the palette (gold bars `#D4C4A0`, the featured bar `#EDE0C0`, axes
-`#4A544B`, Commit Mono labels). Copy the SVG from the lab (`?all=1`) and edit the values/labels.
-```html
-<figure class="u-chartfig"><svg viewBox="0 0 700 320" role="img" aria-label="…"> … bars … </svg><figcaption>Caption.</figcaption></figure>
-```
-
-### Pull-quote `.u-pq` (Left bar) · plain blockquote `.u-quote` (Editorial)
+### Pull-quote `.u-pq` (Left bar)
 ```html
 <blockquote class="u-pq">A line worth dwelling on.<cite class="u-pq-cite">Source</cite></blockquote>
-<blockquote class="u-quote"><p>A quieter, centered quote.</p></blockquote>
 ```
 
-### Sources & footnotes - chips `.u-citep`/`.u-src`/`.u-grade`, footnotes `.u-fnp`/`.u-cite`
+### Sources & footnotes - chips `.u-citep`/`.u-src`/`.u-grade` (grades a/b/c/d), footnotes `.u-fnp`/`.u-cite`
 ```html
-<p class="u-citep">A claim. <span class="u-src"><a href="#">the roll</a></span> <span class="u-grade u-grade-a">solid</span> <span class="u-grade u-grade-c">contested</span></p>
+<p class="u-citep">A claim. <span class="u-src"><a href="#">the roll</a></span> <span class="u-grade u-grade-a">solid</span> <span class="u-grade u-grade-b">good</span> <span class="u-grade u-grade-c">contested</span> <span class="u-grade u-grade-d">weak</span></p>
 <p class="u-fnp">A claim with a footnote.<sup class="u-cite"><a href="#">1</a></sup></p>
 ```
 
@@ -225,10 +207,9 @@ A hand-built inline SVG on the palette (gold bars `#D4C4A0`, the featured bar `#
 <ol class="u-steps"><li class="u-step"><span class="u-step-h">Step.</span><p class="u-step-p">Detail.</p></li>…</ol>
 ```
 
-### Table of contents `.u-toc` · link directory `.rd-grid` · info cards `.u-cards` · collapsible `.u-collapse`
+### Table of contents `.u-toc` · info cards `.u-cards` · collapsible `.u-collapse`
 ```html
 <nav class="u-toc"><p class="u-toc-k">What is inside</p><ul class="u-toc-list"><li><a class="u-toc-row" href="#"><span class="u-toc-name"><span class="u-toc-n">01</span>Chapter</span><span class="u-toc-m">8 min</span></a></li>…</ul></nav>
-<div class="rd-grid"><div class="rd-grid__card"><p class="rd-grid__head">Start here</p><a class="rd-grid__item" href="#"><span class="rd-grid__link">Name</span><p class="rd-grid__desc">desc</p></a>…</div>…</div>
 <div class="u-cards"><div class="u-card"><h4 class="u-card-h">Title</h4><p class="u-card-p">Body.</p></div>…</div>
 <details class="u-collapse"><summary class="u-collapse-s">Sources</summary><ol class="u-collapse-list"><li><b>Name.</b> <a href="#">link</a></li></ol></details>
 ```
