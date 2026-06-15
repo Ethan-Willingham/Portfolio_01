@@ -104,11 +104,7 @@
   .sec .stat-bartab::before { height: 3px; background: var(--rule); }
   .sec .stat-bartab .stat-num { font-size: 34px; color: var(--text-bright); }
   .sec .stat-bartab .stat-label { font-size: 12.5px; margin-top: 10px; }
-  /* The .debateA claim/truth boxes read too big; shrink the padding + serif text (the red=claim / green=evidence colours stay — they DO carry meaning here, unlike the gold stats). */
-  .sec .debateA { padding: 10px; border-radius: 18px; box-shadow: 0 12px 30px -22px rgba(0,0,0,0.5); }
-  .sec .debateA-claim, .sec .debateA-truth { padding: 17px 22px; border-radius: 14px; }
-  .sec .debateA-truth { margin-top: 10px; }
-  .sec .debateA-text { font-size: 1.12rem; line-height: 1.5; }
+  /* (.debateA sizing promoted to kit.css — consistent across all posts that use the debate) */
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
