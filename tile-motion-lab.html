@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attribution looks · dev lab</title>
+  <title>Card variations · dev lab</title>
   <link rel="stylesheet" href="style.css">
   <style>
     :root {
@@ -26,79 +26,70 @@
     .v-num { font-family: var(--font-mono); font-size: 0.72rem; color: var(--faint); letter-spacing: 0.16em; }
     .v-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: var(--bright); letter-spacing: -0.01em; margin: 0; }
     .v-tag { font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; padding: 0.2rem 0.55rem; border-radius: 999px; border: 1px solid var(--hair2); color: #b7bdb1; }
-    .v-tag.live { color: #cdbd8e; border-color: rgba(232,149,78,0.4); }
+    .v-tag.star { color: #cdbd8e; border-color: rgba(232,149,78,0.45); }
     .v-blurb { font-size: 0.94rem; line-height: 1.55; color: var(--dim); max-width: 64ch; margin: 0.6rem 0 1.2rem; }
     .v-bar { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
     .replay { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-body); font-size: 0.84rem; color: #1a1f1a; background: linear-gradient(180deg, #F4B36B, #E8954E); border: 0; cursor: pointer; padding: 0.42rem 0.85rem; border-radius: 999px; font-weight: 600; box-shadow: 0 2px 10px -2px rgba(232,149,78,0.5); }
     .replay:hover { filter: brightness(1.06); } .replay:active { transform: scale(0.97); }
-
-    /* metric toggle (shared) */
     .ma-toggle { position: relative; display: inline-flex; padding: 3px; background: #232a24; border: 1px solid var(--hair); border-radius: 999px; }
     .ma-seg { position: relative; z-index: 2; border: 0; background: none; cursor: pointer; font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: var(--dim); padding: 0.38rem 0.9rem; border-radius: 999px; transition: color 0.25s; }
     .ma-seg.is-on { color: #1a1f1a; }
     .ma-seg-glider { position: absolute; z-index: 1; top: 3px; left: 3px; bottom: 3px; width: calc(50% - 3px); border-radius: 999px; background: linear-gradient(180deg, #F4B36B, #E8954E); transition: transform 0.4s var(--spring); }
     .ma-toggle.is-tokens .ma-seg-glider { transform: translateX(100%); }
 
-    /* reveal: every look uses the same "appear on scroll" entrance */
-    .rv { opacity: 0; transform: translateY(13px); }
+    /* ===== shared card ===== */
+    .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .cv { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem 1.05rem; background: var(--card); border: 1px solid var(--hair); border-radius: 16px; box-shadow: var(--shadow); cursor: pointer; text-align: left; position: relative; transition: transform 0.34s var(--spring), box-shadow 0.34s, background 0.2s, border-color 0.2s; }
+    @media (hover: hover) { .cv:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); background: var(--card-hi); border-color: var(--hair2); } }
+    .cv-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .cv-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; color: var(--dim); }
+    .cv-chip i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 7px currentColor; flex: none; }
+    .cv-val { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--bright); letter-spacing: -0.025em; line-height: 1; }
+    .cv-title { font-family: var(--font-heading); font-size: 1.02rem; font-weight: 700; color: var(--bright); line-height: 1.18; }
+    .cv.is-arch .cv-title { font-style: italic; color: #cfcabb; }
+    .cv-bar { height: 6px; border-radius: 999px; overflow: hidden; background: #1c211d; display: flex; margin-top: auto; }
+    .cv-bar i { height: 100%; width: 0; transition: width 0.6s var(--spring); }
+    .cv-date { font-family: var(--font-mono); font-size: 0.62rem; color: var(--faint); }
 
-    /* ===== LOOK 1 · RINGS (family.co, current) ===== */
-    .lk-rings { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 0.85rem; }
-    .ma-tile { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 1.1rem 0.7rem 0.95rem; cursor: pointer; background: var(--card); border: 1px solid var(--hair); border-radius: 20px; box-shadow: var(--shadow); transition: transform 0.34s var(--spring), box-shadow 0.34s ease, background 0.2s, border-color 0.2s; }
-    @media (hover: hover) {
-      .ma-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); background: var(--card-hi); border-color: var(--hair2); }
-      .ma-tile:hover .ma-donut { transform: scale(1.05) rotate(-3deg); }
-      .ma-tile:hover .ma-donut-val { transform: scale(1.07); }
+    /* variant 2 — spine */
+    .cv-spine { border-left-width: 4px; border-left-style: solid; }
+
+    /* variant 4 — glass */
+    .cv-glass { background: rgba(36,42,36,0.55); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); border-color: var(--hair2); overflow: hidden; }
+    .cv-glass .glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.16), rgba(255,255,255,0) 42%); opacity: var(--o,0); transition: opacity 0.3s; }
+
+    /* ===== variants 5 + 6 — HOLOGRAPHIC =====
+       pointer-driven foil (color-dodge) + glare + twin sparkle layers + 3D tilt,
+       after simeydotme/pokemon-cards-css. The effect blooms under the cursor and
+       fades to a clean card at rest. */
+    .cv-holo { overflow: hidden; transform-style: preserve-3d; transform: perspective(900px) rotateY(var(--rx,0deg)) rotateX(var(--ry,0deg)); transition: transform 0.4s var(--spring), box-shadow 0.34s; will-change: transform; --foil: 0.5; }
+    .cv-holo.is-live { transition: transform 0.08s ease-out; }
+    .cv-holo .lyr { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: var(--o,0); transition: opacity 0.3s ease; }
+    .cv-holo .foil {
+      background-image:
+        repeating-linear-gradient(0deg, rgb(255,119,115) 4%, rgb(255,237,95) 9%, rgb(168,255,95) 13%, rgb(131,255,247) 18%, rgb(120,148,255) 23%, rgb(216,117,255) 28%, rgb(255,119,115) 33%),
+        repeating-linear-gradient(128deg, #0e152e 0%, hsl(180,10%,60%) 4%, hsl(180,29%,66%) 4.5%, hsl(180,10%,60%) 5%, #0e152e 11%, #0e152e 13%);
+      background-blend-mode: color-dodge;
+      background-size: 160% 280%, 200% 220%;
+      background-position: var(--mx,50%) var(--my,50%), calc(var(--mx,50%) * -1 + 100%) var(--my,50%);
+      mix-blend-mode: color-dodge;
+      filter: brightness(0.8) contrast(2.2) saturate(1.5);
+      opacity: calc(var(--o,0) * var(--foil));
     }
-    .ma-donut { position: relative; width: 66px; height: 66px; border-radius: 50%; background: #3a443b; transition: transform 0.34s var(--spring); }
-    .ma-donut.is-pulse { animation: ma-pulse 0.5s var(--spring); }
-    @keyframes ma-pulse { 0% { transform: scale(1); } 38% { transform: scale(0.9); } 100% { transform: scale(1); } }
-    .ma-donut-hole { position: absolute; inset: 9px; border-radius: 50%; background: var(--card); display: grid; place-items: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
-    .ma-tile:hover .ma-donut-hole { background: var(--card-hi); }
-    .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--bright); letter-spacing: -0.02em; line-height: 1; transition: transform 0.34s var(--spring); }
-    .ma-tile-title { font-family: var(--font-heading); font-size: 0.92rem; font-weight: 700; color: var(--bright); text-align: center; line-height: 1.15; }
-    .ma-tile.is-arch .ma-tile-title { font-style: italic; color: #cfcabb; }
-    .ma-tile-sub { font-family: var(--font-mono); font-size: 0.62rem; color: var(--faint); text-align: center; }
+    .cv-holo .shine { background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.7), rgba(255,255,255,0.12) 25%, rgba(255,255,255,0) 50%); mix-blend-mode: soft-light; }
+    .cv-holo .glit {
+      background-image: var(--sparkle), var(--sparkle);
+      background-size: 90px 90px, 130px 130px;
+      background-position: var(--mx,50%) var(--my,50%), calc(var(--mx,50%) + 40px) calc(var(--my,50%) - 30px);
+      mix-blend-mode: color-dodge;
+      filter: brightness(1.1) contrast(1.5);
+      opacity: calc(var(--o,0) * 0.55);
+    }
+    .cv-holo2 { --foil: 0.28; }
+    .cv-holo2 .glit { opacity: calc(var(--o,0) * 0.3); }
+    .cv-holo .cv-top, .cv-holo .cv-title, .cv-holo .cv-bar, .cv-holo .cv-date { position: relative; z-index: 1; }
 
-    /* ===== LOOK 2 · BARS (Linear: scannable rows, common baseline) ===== */
-    .lk-bars { display: flex; flex-direction: column; }
-    .lk-row { display: grid; grid-template-columns: minmax(0,1fr) 40% auto; align-items: center; gap: 1rem; padding: 0.72rem 0.6rem; border-bottom: 1px solid var(--hair); cursor: pointer; border-radius: 9px; transition: background 0.16s; }
-    .lk-row:last-child { border-bottom: 0; }
-    .lk-row:hover { background: rgba(255,255,255,0.035); }
-    .lk-rt { min-width: 0; }
-    .lk-rt b { display: block; font-family: var(--font-heading); font-size: 1.02rem; font-weight: 700; color: var(--bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lk-row.is-arch .lk-rt b { font-style: italic; color: #cfcabb; }
-    .lk-rt span { font-family: var(--font-mono); font-size: 0.64rem; color: var(--faint); }
-    .lk-rbar { height: 9px; border-radius: 999px; overflow: hidden; background: #1c211d; display: flex; }
-    .lk-rbar i { height: 100%; width: 0; transition: width 0.6s var(--spring); }
-    .lk-rval { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--bright); text-align: right; min-width: 3.4em; letter-spacing: -0.02em; }
-
-    /* ===== LOOK 3 · CARDS (Stripe/Vercel: metric cards) ===== */
-    .lk-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 0.9rem; }
-    .lk-card { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem 1.05rem; background: var(--card); border: 1px solid var(--hair); border-radius: 16px; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.34s var(--spring), box-shadow 0.34s, background 0.2s, border-color 0.2s; }
-    @media (hover: hover) { .lk-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); background: var(--card-hi); border-color: var(--hair2); } }
-    .lk-ctop { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-    .lk-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; color: var(--dim); }
-    .lk-chip i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 7px currentColor; }
-    .lk-cval { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--bright); letter-spacing: -0.025em; line-height: 1; }
-    .lk-ctitle { font-family: var(--font-heading); font-size: 1.02rem; font-weight: 700; color: var(--bright); line-height: 1.18; }
-    .lk-card.is-arch .lk-ctitle { font-style: italic; color: #cfcabb; }
-    .lk-cbar { height: 6px; border-radius: 999px; overflow: hidden; background: #1c211d; display: flex; margin-top: auto; }
-    .lk-cbar i { height: 100%; width: 0; transition: width 0.6s var(--spring); }
-    .lk-cdate { font-family: var(--font-mono); font-size: 0.62rem; color: var(--faint); }
-
-    /* ===== LOOK 4 · LIST (Linear issue list: maximum restraint) ===== */
-    .lk-min { display: flex; flex-direction: column; }
-    .lk-mrow { display: grid; grid-template-columns: 11px minmax(0,1fr) auto auto; align-items: center; gap: 0.85rem; padding: 0.62rem 0.5rem; border-bottom: 1px solid var(--hair); cursor: pointer; transition: background 0.16s; }
-    .lk-mrow:last-child { border-bottom: 0; }
-    .lk-mrow:hover { background: rgba(255,255,255,0.035); }
-    .lk-mdot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 7px currentColor; }
-    .lk-mt { font-family: var(--font-heading); font-size: 1.0rem; font-weight: 700; color: var(--bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lk-mrow.is-arch .lk-mt { font-style: italic; color: #cfcabb; }
-    .lk-mm { font-family: var(--font-body); font-size: 0.8rem; color: var(--dim); }
-    .lk-mv { font-family: var(--font-heading); font-size: 1.0rem; font-weight: 700; color: var(--bright); min-width: 3.4em; text-align: right; letter-spacing: -0.02em; }
-
-    /* ===== shared tray (the "pop up", straight from the live post) ===== */
+    /* ===== shared tray (the pop-up, from the live post) ===== */
     .ma-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(8,10,8,0.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.32s; }
     .ma-scrim.is-on { opacity: 1; pointer-events: auto; }
     .ma-tray { position: fixed; z-index: 51; left: 50%; bottom: clamp(14px,4vh,46px); width: min(540px,92vw); transform: translateX(-50%) translateY(130%); background: var(--tray); border: 1px solid var(--hair2); border-radius: 26px; padding: 1.4rem 1.5rem 1.5rem; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75); opacity: 0; pointer-events: none; transition: transform 0.52s var(--spring), opacity 0.3s; max-height: 86vh; overflow-y: auto; }
@@ -107,8 +98,8 @@
     .ma-tray-x:hover { color: var(--bright); background: rgba(255,255,255,0.09); }
     .ma-tray-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.3rem; }
     .ma-donut-lg { position: relative; width: 78px; height: 78px; flex: 0 0 auto; border-radius: 50%; background: #3a443b; }
-    .ma-donut-lg .ma-donut-hole { inset: 11px; background: var(--tray); }
-    .ma-donut-lg .ma-donut-val { font-size: 1.2rem; }
+    .ma-donut-hole { position: absolute; inset: 11px; border-radius: 50%; background: var(--tray); display: grid; place-items: center; }
+    .ma-donut-val { font-family: var(--font-heading); font-weight: 700; color: var(--bright); font-size: 1.2rem; }
     .ma-tray-kind { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
     .ma-tray-kind.is-arch { color: #b39b6a; }
     .ma-tray-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--bright); margin: 0.15rem 0 0.2rem; line-height: 1.1; }
@@ -125,9 +116,9 @@
 </head>
 <body>
   <div class="wrap">
-    <h1 class="lab-h">Attribution looks</h1>
-    <p class="lab-sub">Four different ways to show which AI built which page, each borrowing from a different bench: family.co rings, a Linear-style row list, Stripe/Vercel metric cards, and a stripped-back issue list. Same data, same palette, same scroll-in. Tap any one to open the detail.</p>
-    <p class="lab-note">Throwaway, noindex, not linked. They appear as you scroll; numbers are static (no counting); hover + tap-to-open behave exactly like the live post. Hit Replay to re-run an entrance.</p>
+    <h1 class="lab-h">Card variations</h1>
+    <p class="lab-sub">Six takes on the metric card you liked. Same data, same palette. The last two are real holographic foil, pointer-driven, after Simey's pokemon-cards-css, not a fake gloss. Move your cursor across them.</p>
+    <p class="lab-note">Throwaway, noindex, not linked. Cards appear as you scroll; numbers static; tap any card for the detail tray (same as the live post). Holo blooms under the cursor and rests clean.</p>
     <div id="lab"></div>
   </div>
 
@@ -138,19 +129,19 @@
     var DATA = window.GIT_ATTRIBUTION, host = document.getElementById('lab');
     if (!DATA || !host) { if (host) host.textContent = 'no data'; return; }
     var MID = {}; DATA.models.forEach(function (m) { MID[m.id] = m; });
-    var POSTS = DATA.posts.slice().sort(function (a, b) { return b.edits - a.edits; }).slice(0, 9);
+    var POSTS = DATA.posts.slice().sort(function (a, b) { return b.edits - a.edits; }).slice(0, 8);
     var HIDDEN = function () { return document.hidden; };
 
     var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     function fmtTok(n) { if (n >= 1e9) return (n/1e9).toFixed(2)+'B'; if (n >= 1e6) return (n/1e6).toFixed(n>=1e7?0:1)+'M'; if (n >= 1e3) return Math.round(n/1e3)+'K'; return Math.round(n).toString(); }
-    function fmtVal(n, metric) { return metric === 'tokens' ? fmtTok(n) : Math.round(n).toLocaleString('en-US'); }
+    function fmtVal(n, m) { return m === 'tokens' ? fmtTok(n) : Math.round(n).toLocaleString('en-US'); }
     function fmtDate(s) { var p = s.split('-'); return MO[(+p[1])-1]+' '+(+p[2]); }
     function dateRange(a, b) { if (a === b) return fmtDate(a); var pa = a.split('-'), pb = b.split('-'); if (pa[1] === pb[1]) return MO[(+pa[1])-1]+' '+(+pa[2])+'–'+(+pb[2]); return fmtDate(a)+' – '+fmtDate(b); }
-    function total(post, metric) { return metric === 'tokens' ? post.tokens : post.edits; }
-    function val(post, mid, metric) { var r = post.models[mid]; return r ? (metric==='tokens'?r.tokens:r.edits) : 0; }
-    function split(post, metric) {
-      var t = total(post, metric) || 1;
-      return Object.keys(post.models).map(function (mid) { return { m: MID[mid], v: val(post,mid,metric), pct: val(post,mid,metric)/t*100 }; })
+    function total(post, m) { return m === 'tokens' ? post.tokens : post.edits; }
+    function val(post, id, m) { var r = post.models[id]; return r ? (m==='tokens'?r.tokens:r.edits) : 0; }
+    function split(post, m) {
+      var t = total(post, m) || 1;
+      return Object.keys(post.models).map(function (id) { return { m: MID[id], v: val(post,id,m), pct: val(post,id,m)/t*100 }; })
         .filter(function (x) { return x.m && x.v > 0; }).sort(function (a, b) { return b.v - a.v; });
     }
     function donutCSS(parts, frac) {
@@ -161,33 +152,39 @@
       return 'conic-gradient(from -90deg, '+stops.join(', ')+')';
     }
     var easeOut = function (t) { return 1 - Math.pow(1-t, 3); };
-    function drawDonut(el, parts, dur) {
-      if (el._r) cancelAnimationFrame(el._r);
-      if (HIDDEN()) { el.style.background = donutCSS(parts, 1); return; }
-      var t0 = null;
-      function step(ts) { if (t0==null) t0=ts; var k = Math.min(1,(ts-t0)/dur); el.style.background = donutCSS(parts, easeOut(k)); if (k<1) el._r = requestAnimationFrame(step); }
-      el.style.background = donutCSS(parts, 0); el._r = requestAnimationFrame(step);
-    }
     function barHTML(parts) { return parts.map(function (p) { return '<i style="background:'+p.m.color+'" data-pct="'+p.pct.toFixed(3)+'"></i>'; }).join(''); }
-    function growBars(barEl) { var hidden = HIDDEN(); barEl.querySelectorAll('i').forEach(function (i) { i.style.width = (hidden ? i.getAttribute('data-pct') : i.getAttribute('data-pct')) + '%'; }); }
-    function setBars(barEl, parts) { barEl.innerHTML = barHTML(parts); growBars(barEl); }
+    function growBars(barEl) { barEl.querySelectorAll('i').forEach(function (i) { i.style.width = i.getAttribute('data-pct') + '%'; }); }
 
-    // ---------- shared reveal: items "appear as you scroll" ----------
-    function reveal(items, grow) {
+    // procedural glitter texture (real sparkle, no external asset) -> --sparkle
+    function makeSparkle() {
+      var c = document.createElement('canvas'); c.width = c.height = 130;
+      var g = c.getContext('2d'); if (!g) return 'none';
+      for (var i = 0; i < 320; i++) {
+        var r = Math.random() * 1.5 + 0.25, a = Math.random() * 0.7 + 0.15;
+        g.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
+        g.beginPath(); g.arc(Math.random()*130, Math.random()*130, r, 0, 6.2832); g.fill();
+      }
+      return 'url(' + c.toDataURL('image/png') + ')';
+    }
+    try { document.documentElement.style.setProperty('--sparkle', makeSparkle()); } catch (e) { document.documentElement.style.setProperty('--sparkle', 'none'); }
+
+    // ---------- shared reveal ----------
+    function reveal(items) {
       items.forEach(function (el, i) {
-        if (HIDDEN()) { el.style.opacity = '1'; el.style.transform = 'none'; if (grow) grow(el, i); return; }
+        if (HIDDEN()) { el.style.opacity = '1'; el.style.transform = el._t || 'none'; growBars(el.querySelector('.cv-bar')); return; }
         el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(13px)';
+        el.querySelectorAll('.cv-bar i').forEach(function (b) { b.style.width = '0'; });
         void el.offsetWidth;
         var d = i * 42;
         el.style.transition = 'opacity 0.5s ease '+d+'ms, transform 0.55s var(--spring) '+d+'ms';
         el.style.opacity = '1'; el.style.transform = 'none';
-        if (grow) setTimeout(function () { grow(el, i); }, d + 60);
+        setTimeout(function () { growBars(el.querySelector('.cv-bar')); }, d + 80);
       });
     }
 
-    // ---------- shared tray (the pop-up) ----------
+    // ---------- shared tray ----------
     var scrim = document.createElement('div'); scrim.className = 'ma-scrim';
-    var tray = document.createElement('div'); tray.className = 'ma-tray'; tray.setAttribute('role','dialog'); tray.setAttribute('aria-modal','true');
+    var tray = document.createElement('div'); tray.className = 'ma-tray'; tray.setAttribute('role','dialog');
     tray.innerHTML =
       '<button class="ma-tray-x" aria-label="Close"><svg viewBox="0 0 16 16" width="15" height="15"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' +
       '<div class="ma-tray-head"><span class="ma-donut-lg"><span class="ma-donut-hole"><span class="ma-donut-val"></span></span></span>' +
@@ -200,7 +197,9 @@
       tray.querySelector('.ma-tray-kind').className = 'ma-tray-kind' + (post.kind === 'archived' ? ' is-arch' : '');
       tray.querySelector('.ma-tray-title').textContent = post.label;
       tray.querySelector('.ma-tray-when').textContent = 'Built ' + dateRange(post.first, post.last);
-      drawDonut(tray.querySelector('.ma-donut-lg'), parts, 600);
+      var lg = tray.querySelector('.ma-donut-lg');
+      if (HIDDEN()) lg.style.background = donutCSS(parts, 1);
+      else { (function () { var t0=null; if (lg._r) cancelAnimationFrame(lg._r); function step(ts){ if(t0==null)t0=ts; var k=Math.min(1,(ts-t0)/600); lg.style.background=donutCSS(parts,easeOut(k)); if(k<1) lg._r=requestAnimationFrame(step);} lg.style.background=donutCSS(parts,0); lg._r=requestAnimationFrame(step); })(); }
       tray.querySelector('.ma-donut-lg .ma-donut-val').textContent = fmtVal(total(post, metric), metric);
       var bar = tray.querySelector('.ma-tray-bar'); bar.innerHTML = '';
       parts.forEach(function (p) { var s = document.createElement('span'); s.className = 'ma-barseg'; s.style.background = p.m.color; bar.appendChild(s); requestAnimationFrame(function () { s.style.width = p.pct.toFixed(2)+'%'; }); });
@@ -218,69 +217,50 @@
     tray.querySelector('.ma-tray-x').addEventListener('click', closeTray);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTray(); });
 
-    // ---------- the four looks ----------
-    // each builder returns { root, items, reveal(), repaint(metric) }
-    function lookRings(state) {
-      var root = document.createElement('div'); root.className = 'lk-rings';
-      var items = POSTS.map(function (post) {
-        var b = document.createElement('button'); b.className = 'ma-tile rv' + (post.kind==='archived'?' is-arch':'');
-        b.innerHTML = '<span class="ma-donut"><span class="ma-donut-hole"><span class="ma-donut-val">'+fmtVal(total(post,state.metric),state.metric)+'</span></span></span><span class="ma-tile-title">'+post.label+'</span><span class="ma-tile-sub">'+dateRange(post.first,post.last)+'</span>';
-        b._post = post; b.addEventListener('click', function () { openTray(post, state.metric); }); root.appendChild(b); return b;
+    // ---------- pointer engine for glass + holo (tilt, glare, foil drift) ----------
+    function bindPointer(card, opts) {
+      var raf = 0, tx = 50, ty = 50;
+      function apply() {
+        raf = 0;
+        card.style.setProperty('--mx', tx.toFixed(1) + '%');
+        card.style.setProperty('--my', ty.toFixed(1) + '%');
+        if (opts.tilt) {
+          card.style.setProperty('--rx', ((tx - 50) / 50 * opts.tilt).toFixed(2) + 'deg');
+          card.style.setProperty('--ry', ((50 - ty) / 50 * opts.tilt).toFixed(2) + 'deg');
+        }
+      }
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        tx = (e.clientX - r.left) / r.width * 100; ty = (e.clientY - r.top) / r.height * 100;
+        card.style.setProperty('--o', '1'); card.classList.add('is-live');
+        if (!raf) raf = requestAnimationFrame(apply);
       });
-      function paint(animateRing) { items.forEach(function (b) { var p = split(b._post, state.metric); if (animateRing) drawDonut(b.querySelector('.ma-donut'), p, 700); else b.querySelector('.ma-donut').style.background = donutCSS(p,1); b.querySelector('.ma-donut-val').textContent = fmtVal(total(b._post,state.metric), state.metric); }); }
-      return { root: root, items: items,
-        reveal: function () { items.forEach(function (b) { b.querySelector('.ma-donut').style.background = '#3a443b'; }); reveal(items, function (b) { drawDonut(b.querySelector('.ma-donut'), split(b._post,state.metric), 700); }); },
-        repaint: function () { paint(false); items.forEach(function (b) { var d = b.querySelector('.ma-donut'); d.classList.remove('is-pulse'); void d.offsetWidth; d.classList.add('is-pulse'); }); } };
-    }
-    function lookBars(state) {
-      var root = document.createElement('div'); root.className = 'lk-bars';
-      var items = POSTS.map(function (post) {
-        var r = document.createElement('div'); r.className = 'lk-row rv' + (post.kind==='archived'?' is-arch':''); r.setAttribute('tabindex','0');
-        r.innerHTML = '<div class="lk-rt"><b>'+post.label+'</b><span>'+dateRange(post.first,post.last)+'</span></div><div class="lk-rbar">'+barHTML(split(post,state.metric))+'</div><div class="lk-rval">'+fmtVal(total(post,state.metric),state.metric)+'</div>';
-        r._post = post; r.addEventListener('click', function () { openTray(post, state.metric); }); root.appendChild(r); return r;
+      card.addEventListener('pointerleave', function () {
+        card.style.setProperty('--o', '0'); card.classList.remove('is-live');
+        if (opts.tilt) { card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg'); }
       });
-      function paint() { items.forEach(function (r) { setBars(r.querySelector('.lk-rbar'), split(r._post,state.metric)); r.querySelector('.lk-rval').textContent = fmtVal(total(r._post,state.metric),state.metric); }); }
-      return { root: root, items: items,
-        reveal: function () { items.forEach(function (r) { r.querySelectorAll('.lk-rbar i').forEach(function (i){ i.style.width='0'; }); }); reveal(items, function (r) { growBars(r.querySelector('.lk-rbar')); }); },
-        repaint: paint };
-    }
-    function lookCards(state) {
-      var root = document.createElement('div'); root.className = 'lk-cards';
-      var items = POSTS.map(function (post) {
-        var parts = split(post, state.metric), top = parts[0];
-        var c = document.createElement('button'); c.className = 'lk-card rv' + (post.kind==='archived'?' is-arch':'');
-        c.innerHTML = '<div class="lk-ctop"><span class="lk-chip"><i style="background:'+top.m.color+'"></i><span class="lk-chipn">'+top.m.label+'</span></span><span class="lk-cval">'+fmtVal(total(post,state.metric),state.metric)+'</span></div>' +
-          '<div class="lk-ctitle">'+post.label+'</div><div class="lk-cbar">'+barHTML(parts)+'</div><div class="lk-cdate">'+dateRange(post.first,post.last)+'</div>';
-        c._post = post; c.addEventListener('click', function () { openTray(post, state.metric); }); root.appendChild(c); return c;
-      });
-      function paint() { items.forEach(function (c) { var parts = split(c._post,state.metric), top = parts[0]; c.querySelector('.lk-chip i').style.background = top.m.color; c.querySelector('.lk-chipn').textContent = top.m.label; c.querySelector('.lk-cval').textContent = fmtVal(total(c._post,state.metric),state.metric); setBars(c.querySelector('.lk-cbar'), parts); }); }
-      return { root: root, items: items,
-        reveal: function () { items.forEach(function (c) { c.querySelectorAll('.lk-cbar i').forEach(function (i){ i.style.width='0'; }); }); reveal(items, function (c) { growBars(c.querySelector('.lk-cbar')); }); },
-        repaint: paint };
-    }
-    function lookList(state) {
-      var root = document.createElement('div'); root.className = 'lk-min';
-      var items = POSTS.map(function (post) {
-        var top = split(post, state.metric)[0];
-        var r = document.createElement('div'); r.className = 'lk-mrow rv' + (post.kind==='archived'?' is-arch':''); r.setAttribute('tabindex','0');
-        r.innerHTML = '<span class="lk-mdot" style="background:'+top.m.color+'"></span><span class="lk-mt">'+post.label+'</span><span class="lk-mm">'+top.m.label+'</span><span class="lk-mv">'+fmtVal(total(post,state.metric),state.metric)+'</span>';
-        r._post = post; r.addEventListener('click', function () { openTray(post, state.metric); }); root.appendChild(r); return r;
-      });
-      function paint() { items.forEach(function (r) { var top = split(r._post,state.metric)[0]; r.querySelector('.lk-mdot').style.background = top.m.color; r.querySelector('.lk-mm').textContent = top.m.label; r.querySelector('.lk-mv').textContent = fmtVal(total(r._post,state.metric),state.metric); }); }
-      return { root: root, items: items, reveal: function () { reveal(items, null); }, repaint: paint };
     }
 
-    var LOOKS = [
-      { key: 'rings', name: 'Rings', tag: 'family.co', blurb: 'The current look. A conic ring per post showing the model split, the count in the middle. Glanceable and pretty; harder to compare two posts precisely.', build: lookRings },
-      { key: 'bars', name: 'Bar rows', tag: 'Linear', blurb: 'A tight list: title, a single split bar on a shared baseline, the count. The most scannable, and the easiest to compare across posts. The calm, grown-up choice.', build: lookBars },
-      { key: 'cards', name: 'Metric cards', tag: 'Stripe / Vercel', blurb: 'Each post is a card that leads with who built most of it and the count, with a slim split bar along the bottom. Bold and dashboard-like.', build: lookCards },
-      { key: 'list', name: 'Plain list', tag: 'Linear, dialed down', blurb: 'Maximum restraint: a dot for the lead model, the title, the model name, the count. No chart at all. Reads like a changelog.', build: lookList }
+    // ---------- card builder ----------
+    function inner(post, metric, parts) {
+      var top = parts[0];
+      return '<div class="cv-top"><span class="cv-chip"><i style="background:'+top.m.color+'"></i><span class="cv-chipn">'+top.m.label+'</span></span><span class="cv-val">'+fmtVal(total(post,metric),metric)+'</span></div>' +
+        '<div class="cv-title">'+post.label+'</div><div class="cv-bar">'+barHTML(parts)+'</div><div class="cv-date">'+dateRange(post.first,post.last)+'</div>';
+    }
+
+    var VARIANTS = [
+      { key: 'base', name: 'Base', tag: 'your pick', cls: '', blurb: 'The metric card as-is: lead model, count, slim split bar, date. Clean and bold.' },
+      { key: 'spine', name: 'Color spine', tag: 'accent', cls: 'cv-spine', blurb: 'Same card with a bold left edge in the lead model colour, so you can sort the grid by who-built-it at a glance.', spine: true },
+      { key: 'tint', name: 'Tinted', tag: 'wash', cls: 'cv-tint', blurb: 'The card body takes a faint wash of the lead model colour. Subtle, gives each card its own temperature.', tint: true },
+      { key: 'glass', name: 'Glass', tag: 'frosted', cls: 'cv-glass', blurb: 'Frosted glass with a soft glare that follows your cursor. Quiet and premium.', glare: true },
+      { key: 'holo2', name: 'Holographic (subtle)', tag: 'foil, dialed back', cls: 'cv-holo cv-holo2', blurb: 'The real foil effect, kept restrained: a quiet rainbow sheen and tilt under the cursor. Probably the tasteful amount for a blog.', holo: true },
+      { key: 'holo', name: 'Holographic (full)', tag: 'the showpiece', cls: 'cv-holo', blurb: 'The full thing, after Simey\'s pokemon-cards-css: pointer-driven holo foil in color-dodge, a moving glare, twin sparkle layers, and 3D tilt. Move slowly across it. This is the "as good as hers" one.', holo: true, star: true }
     ];
 
-    LOOKS.forEach(function (look, idx) {
+    VARIANTS.forEach(function (variant, idx) {
       var state = { metric: 'edits' };
-      var section = document.createElement('section'); section.className = 'v v-' + look.key;
-      section.innerHTML = '<div class="v-head"><span class="v-num">0'+(idx+1)+'</span><h2 class="v-name">'+look.name+'</h2><span class="v-tag">'+look.tag+'</span></div><p class="v-blurb">'+look.blurb+'</p>';
+      var section = document.createElement('section'); section.className = 'v';
+      section.innerHTML = '<div class="v-head"><span class="v-num">0'+(idx+1)+'</span><h2 class="v-name">'+variant.name+'</h2><span class="v-tag'+(variant.star?' star':'')+'">'+variant.tag+'</span></div><p class="v-blurb">'+variant.blurb+'</p>';
       var bar = document.createElement('div'); bar.className = 'v-bar';
       var toggle = document.createElement('div'); toggle.className = 'ma-toggle';
       toggle.innerHTML = '<button class="ma-seg is-on" data-m="edits">Changes</button><button class="ma-seg" data-m="tokens">Tokens</button><span class="ma-seg-glider"></span>';
@@ -288,24 +268,48 @@
       replay.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Replay';
       bar.appendChild(toggle); bar.appendChild(replay); section.appendChild(bar);
 
-      var built = look.build(state);
-      section.appendChild(built.root);
-      host.appendChild(section);
+      var grid = document.createElement('div'); grid.className = 'cv-grid';
+      var items = POSTS.map(function (post) {
+        var parts = split(post, state.metric), top = parts[0];
+        var c = document.createElement('button'); c.className = 'cv ' + variant.cls + (post.kind==='archived'?' is-arch':'');
+        var lyrs = variant.holo ? '<div class="lyr foil"></div><div class="lyr shine"></div><div class="lyr glit"></div>' : (variant.glare ? '<div class="glare"></div>' : '');
+        c.innerHTML = lyrs + inner(post, state.metric, parts);
+        if (variant.spine) c.style.borderLeftColor = top.m.color;
+        if (variant.tint) c.style.background = 'linear-gradient(155deg, ' + hexA(top.m.color, 0.16) + ', rgba(51,59,52,0) 70%), var(--card)';
+        c._post = post;
+        c.addEventListener('click', function () { openTray(post, state.metric); });
+        if (variant.holo) bindPointer(c, { tilt: 9 });
+        else if (variant.glare) bindPointer(c, { tilt: 0 });
+        grid.appendChild(c); return c;
+      });
+      section.appendChild(grid); host.appendChild(section);
 
+      function repaint() {
+        items.forEach(function (c) {
+          var parts = split(c._post, state.metric), top = parts[0];
+          c.querySelector('.cv-chip i').style.background = top.m.color;
+          c.querySelector('.cv-chipn').textContent = top.m.label;
+          c.querySelector('.cv-val').textContent = fmtVal(total(c._post,state.metric),state.metric);
+          c.querySelector('.cv-bar').innerHTML = barHTML(parts); growBars(c.querySelector('.cv-bar'));
+          if (variant.spine) c.style.borderLeftColor = top.m.color;
+          if (variant.tint) c.style.background = 'linear-gradient(155deg, ' + hexA(top.m.color, 0.16) + ', rgba(51,59,52,0) 70%), var(--card)';
+        });
+      }
       toggle.addEventListener('click', function (e) {
         var seg = e.target.closest('.ma-seg'); if (!seg) return;
         var m = seg.getAttribute('data-m'); if (m === state.metric) return;
         state.metric = m;
         toggle.querySelectorAll('.ma-seg').forEach(function (s) { s.classList.toggle('is-on', s.getAttribute('data-m') === m); });
         toggle.classList.toggle('is-tokens', m === 'tokens');
-        built.repaint();
+        repaint();
       });
-      replay.addEventListener('click', built.reveal);
+      replay.addEventListener('click', function () { reveal(items); });
 
-      // appear on scroll-in, once
-      if (HIDDEN() || !('IntersectionObserver' in window)) { built.items.forEach(function (el) { el.style.opacity = '1'; el.style.transform = 'none'; }); built.reveal(); }
-      else { built.items.forEach(function (el) { el.style.opacity = '0'; }); var io = new IntersectionObserver(function (ents) { ents.forEach(function (en) { if (en.isIntersecting) { built.reveal(); io.disconnect(); } }); }, { threshold: 0.18 }); io.observe(section); }
+      if (HIDDEN() || !('IntersectionObserver' in window)) { items.forEach(function (el) { el.style.opacity='1'; }); reveal(items); }
+      else { items.forEach(function (el) { el.style.opacity = '0'; }); var io = new IntersectionObserver(function (en) { en.forEach(function (e) { if (e.isIntersecting) { reveal(items); io.disconnect(); } }); }, { threshold: 0.16 }); io.observe(section); }
     });
+
+    function hexA(hex, a) { hex = hex.replace('#',''); var r=parseInt(hex.substr(0,2),16), g=parseInt(hex.substr(2,2),16), b=parseInt(hex.substr(4,2),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
   })();
   </script>
 </body>
