@@ -78,20 +78,8 @@
 
   // ---------- animated number (interruptible) ----------
   var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
-  function animNum(el, to, fmt) {
-    var from = el._v == null ? 0 : el._v;
-    el._v = to;
-    if (REDUCE || from === to || document.hidden) { el.textContent = fmt(to); return; }
-    if (el._raf) cancelAnimationFrame(el._raf);
-    var t0 = null, dur = 620;
-    function step(ts) {
-      if (t0 == null) t0 = ts;
-      var k = Math.min(1, (ts - t0) / dur), e = easeOut(k);
-      el.textContent = fmt(from + (to - from) * e);
-      if (k < 1) el._raf = requestAnimationFrame(step); else el._raf = 0;
-    }
-    el._raf = requestAnimationFrame(step);
-  }
+  // numbers are shown static — owner does not want counting/moving numbers
+  function animNum(el, to, fmt) { el._v = to; el.textContent = fmt(to); }
 
   // ---------- build: model legend ----------
   var legend = document.createElement('div');
@@ -137,7 +125,8 @@
     post._el = b;
     // the italic title already marks archived, so the sub stays a compact date
     b.querySelector('.ma-tile-sub').textContent = dateRange(post.first, post.last);
-    if (ANIM) b.querySelector('.ma-donut').style.background = '#3a443b'; // held empty until reveal
+    var v0 = b.querySelector('.ma-donut-val'); v0._v = total(post); v0.textContent = fmtVal(total(post));
+    if (ANIM) b.querySelector('.ma-donut').style.background = '#3a443b'; // ring drawn on at reveal
     else paintTile(post);
   });
 
@@ -156,11 +145,8 @@
   function revealGrid() {
     if (revealed) return; revealed = true;
     POSTS.forEach(function (post, i) {
-      var delay = i * 45;
-      drawDonut(post._el.querySelector('.ma-donut'), split(post), true, delay);
-      var v = post._el.querySelector('.ma-donut-val');
-      v._v = 0; v.textContent = fmtVal(0);
-      setTimeout(function () { animNum(v, total(post), fmtVal); }, delay + 90);
+      drawDonut(post._el.querySelector('.ma-donut'), split(post), true, i * 45);
+      var v = post._el.querySelector('.ma-donut-val'); v._v = total(post); v.textContent = fmtVal(total(post));
     });
   }
 
