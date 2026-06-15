@@ -57,11 +57,11 @@
     /* tile variant: narrower image */
     figure.u-figure.tile .u-figure-img { max-width: 540px; margin-inline: auto; }
 
-    /* ---------- STAT BIGNUM bridge (keep compact vertical rhythm) ---------- */
-    .u-bignum { margin: 2.6rem auto; max-width: 480px; }
+    /* ---------- STAT BARTAB (neutral stat cards, replacing cautionary bignums) ---------- */
+    .stat-bartab-row { margin: 2.6rem auto; max-width: 540px; }
 
     /* ---------- FIELD-GUIDE CATEGORY CARDS ---------- */
-    .pa-cat { margin: 1.5rem 0; padding: 1.3rem 1.4rem 1.4rem; background: rgba(255,255,255,0.022); border: 1px solid var(--rule); border-radius: 6px; }
+    .pa-cat { margin: 1.5rem 0; padding: 1.3rem 1.4rem 1.4rem; background: var(--s-surface); border: 1px solid var(--rule); border-radius: 6px; }
     .pa-cat .n { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; color: var(--text-dim); }
     .pa-cat .name { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; color: var(--text-bright); margin: 0.15rem 0 0.5rem; line-height: 1.1; }
     .pa-cat .lever { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--accent); margin-bottom: 0.7rem; }
@@ -72,7 +72,7 @@
     .pa-cat .eg b { color: var(--text); font-weight: 600; }
 
     /* ---------- NOTE / ASIDE (bridges over kit .u-callout for warn variant) ---------- */
-    .u-callout.warn { background: rgba(207,106,89,0.08); border: 1px solid rgba(184,121,109,0.35); }
+    .u-callout.warn { background: var(--s-surface); border: 1px solid rgba(184,121,109,0.35); }
     .u-callout.warn .u-callout-k { color: #d9978c; }
     .u-callout.warn .u-callout-k::before { background: #d9978c; }
 
@@ -83,7 +83,7 @@
     .pa-defense li b { color: var(--text-bright); }
 
     /* ---------- NETWORK LOGOS ---------- */
-    .pa-logos { display: flex; align-items: center; justify-content: center; gap: 2.4rem; flex-wrap: wrap; margin: 2.2rem 0 1rem; padding: 1.4rem; background: rgba(255,255,255,0.05); border-radius: 6px; }
+    .pa-logos { display: flex; align-items: center; justify-content: center; gap: 2.4rem; flex-wrap: wrap; margin: 2.2rem 0 1rem; padding: 1.4rem; background: var(--s-surface); border-radius: 6px; }
     .pa-logos img { height: 26px; width: auto; }
     .pa-logos .lg-cap { width: 100%; text-align: center; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
 
@@ -147,7 +147,12 @@
 
       <p>And the gap is not a metaphor for a reward. It is a reward, chemically. When researchers put curious people in an fMRI scanner, high curiosity lights up the brain's dopamine circuitry, the caudate, the nucleus accumbens, the same midbrain machinery that anticipates money or food. The crucial finding, from work by Kang and colleagues in 2009 and Gruber and colleagues in 2014, is <em>when</em> it fires: during the wait for the answer, before you get it. The reward is in the anticipation. A withheld answer parks you in that pre-payoff state and holds you there. The pull you feel toward the unreadable photo is that circuit, lit up and unresolved.</p>
 
-      <div class="u-bignum"><span class="u-bignum-fig">+3.7 sec</span><span class="u-bignum-cap">how much longer people will sit and wait for an answer, per one notch of measured curiosity. Curiosity has a price, and we pay it.</span><span class="u-bignum-src">Kang et al. (2009), Psychological Science</span></div>
+      <div class="stat-bartab-row">
+        <div class="stat-bartab">
+          <div class="stat-num">+3.7 sec</div>
+          <p class="stat-label">how much longer people will sit and wait for an answer, per one notch of measured curiosity. Curiosity has a price, and we pay it. Kang et al. (2009), Psychological Science</p>
+        </div>
+      </div>
 
       <p>There is one more lever underneath the picture, and it explains why the <em>image</em> does the work rather than the words. Psychologists call it the <a href="https://en.wikipedia.org/wiki/MAIN_model">realism heuristic</a>: we treat a photograph as evidence and a sentence as a mere claim. A picture feels like proof that the thing is real. So the chumbox loads its promise into an image, where your guard is lowest. As the Michigan State researcher Maria Molina put it, studying exactly these ads: in fewer words, imagery drives clicks.</p>
 
@@ -254,7 +259,12 @@
 
       <p>The economics are an arbitrage, and once you see it the ugliness of the images finally makes sense. The play is to buy your attention cheaply and resell it for slightly more. As one industry analyst put it, if you can pay a network one cent for a click to your page and then earn two cents showing real advertising on that page, that is a juicy margin. Multiply a fraction of a cent by billions of clicks and you have a real industry.</p>
 
-      <div class="u-bignum"><span class="u-bignum-fig">$2.4 billion</span><span class="u-bignum-cap">spent on clicks through Taboola and Outbrain in a single year, 2022. The networks paid out around $1.6 billion of it to the publishers who hung the grids.</span><span class="u-bignum-src">Ebiquity / AdExchanger (2023)</span></div>
+      <div class="stat-bartab-row">
+        <div class="stat-bartab">
+          <div class="stat-num">$2.4B</div>
+          <p class="stat-label">spent on clicks through Taboola and Outbrain in a single year, 2022. The networks paid out around $1.6B of it to the publishers who hung the grids. Ebiquity / AdExchanger (2023)</p>
+        </div>
+      </div>
 
       <p>Where does the click actually land? Usually on a page built for no reason except to show you ads: a fifty-slide listicle where each slide carries five ad units, a thin "article" wedged between banners, a search-results page dressed up as content. This is the layer the industry quietly calls "made for advertising," and an estimated ten billion dollars a year flows into it. The crucial structural fact, the one that explains every design choice in this entire piece, is this: <strong>the money is made after the click, downstream, on the junk page.</strong> So the image at the front door never has to deliver on anything. It is optimized one hundred percent to win the click and zero percent to satisfy you once you have clicked.</p>
 
@@ -273,7 +283,12 @@
 
       <p>The catalogue of what rides the grid is its own small horror: tips to "empty your bowels," a "miracle enzyme," a fake claim that a nasal spray cuts infection risk by 78 percent, slideshows of celebrities who used to be ugly, and, depending on the site, political disinformation and conspiracy theories sitting one tile over from the coconut-oil ad.</p>
 
-      <div class="u-bignum"><span class="u-bignum-fig">~26%</span><span class="u-bignum-cap">of chumbox images, in a 2016 survey, were sexually suggestive or otherwise "interruptive." The bait skews toward the reflexes you cannot switch off.</span><span class="u-bignum-src">The New York Times (2016)</span></div>
+      <div class="stat-bartab-row">
+        <div class="stat-bartab">
+          <div class="stat-num">~26%</div>
+          <p class="stat-label">of chumbox images, in a 2016 survey, were sexually suggestive or otherwise "interruptive." The bait skews toward the reflexes you cannot switch off. The New York Times (2016)</p>
+        </div>
+      </div>
 
       <p>Regulators have crept in at the edges. In 2015 the U.S. Federal Trade Commission ruled that an ad's format is deceptive if it misleads you about the fact that it is an ad, which is why the chumbox now wears that whisper-quiet "Sponsored" label in the corner. In 2024 the FTC went after the format's ugliest corner directly, banning fake reviews and, pointedly, fake celebrity endorsements and AI-generated testimonials, with penalties that can run past fifty thousand dollars a violation. The law is real, but it is slow, and the grid is fast.</p>
 

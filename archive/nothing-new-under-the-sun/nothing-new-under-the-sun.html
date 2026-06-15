@@ -72,12 +72,7 @@
   .post-back.nn-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--wide); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9.4vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; max-width: 16ch; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 36ch; text-wrap: pretty; }
-  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; }
-  .hero-byline b { color: var(--accent); font-weight: 400; }
+  /* .hero* replaced by kit .u-hero, see markup below */
   .hero-figure { margin: 2.4rem 0 0.5rem; }
   .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
   .hero-figure img { display: block; width: 100%; height: auto; border-radius: 10px; }
@@ -118,25 +113,11 @@
     .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
   }
 
-  /* ---------- HEADLINE STATS ---------- */
-  .stat-row { display: flex; flex-wrap: wrap; gap: 1.4rem 2.6rem; margin: 1.7em 0; }
-  .stat { display: flex; align-items: baseline; gap: 0.7rem; margin: 1.4em 0; }
-  .stat-row .stat { margin: 0; }
-  .stat .fig { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.4rem, 7vw, 3.4rem); line-height: 0.92; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .stat .fig-lbl { font-family: var(--font-heading); font-size: 1rem; line-height: 1.28; color: var(--text-dim); max-width: 24ch; }
-  .stat.sky .fig { color: var(--c-sky); } .stat.green .fig { color: var(--c-green); }
-  .stat.plum .fig { color: var(--c-plum); } .stat.amber .fig { color: var(--c-amber); }
-  .stat.rose .fig { color: var(--c-rose); }
-
-  /* ---------- HONEST-CAVEAT + CALLOUT BOXES ---------- */
+  /* ---------- CALLOUT BOXES ---------- */
+  /* .honest* and .stat-row/.stat replaced by kit .u-callout.u-aside and .stat-bartab-row */
   .edge { margin: 1.4em 0; padding: 0.85em 1.1em; border-left: 3px solid var(--accent); background: rgba(212,196,160,0.07); border-radius: 0 10px 10px 0; font-size: 1rem; line-height: 1.55; color: var(--text); }
   .edge b { color: var(--accent-hover); }
   .edge .edge-lbl { display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35em; }
-  /* the honest-caveat box: where the thesis is told to admit its exceptions */
-  .honest { margin: 1.5em 0; padding: 0.95em 1.15em 0.95em 3em; position: relative; border: 1px solid rgba(143,179,199,0.32); background: rgba(143,179,199,0.06); border-radius: 10px; font-size: 1rem; line-height: 1.55; color: var(--text); }
-  .honest::before { content: '\2696'; position: absolute; left: 0.95em; top: 0.78em; font-size: 1.2rem; color: var(--c-sky); }
-  .honest b { color: #cfe0ea; }
-  .honest .h-lbl { display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-sky); margin-bottom: 0.3em; }
   .myth { margin: 1.3em 0; padding: 0.85em 1.05em; border: 1px solid var(--rule); border-left: 3px solid var(--c-rose); border-radius: 0 10px 10px 0; background: rgba(207,106,89,0.06); font-size: 1rem; line-height: 1.55; }
   .myth b { color: var(--c-rose); }
 
@@ -339,11 +320,11 @@
   <a href="/" class="post-back nn-back"><span class="pb-label">Home</span></a>
 
   <!-- ===================== HERO ===================== -->
-  <header class="hero">
-    <p class="hero-eyebrow">The oldest story there is</p>
-    <h1 class="hero-title">There's Nothing New Under the Sun</h1>
-    <p class="hero-dek">Every age is sure it's the strangest one ever, full of feelings nobody felt before. It never is. You run on the same wiring as everyone who ever lived.</p>
-    <p class="hero-byline">Sourced and illustrated. <b>Every claim cited, every image public domain.</b></p>
+  <header class="u-hero" style="max-width:var(--wide);margin:0 auto;padding:1rem var(--gutter) 0;">
+    <p class="u-eyebrow">The oldest story there is</p>
+    <h1 class="u-title">There's Nothing New Under the Sun</h1>
+    <p class="u-dek">Every age is sure it's the strangest one ever, full of feelings nobody felt before. It never is. You run on the same wiring as everyone who ever lived.</p>
+    <p class="u-meta">Sourced and illustrated <span class="u-sep">/</span> <b>Every claim cited, every image public domain</b></p>
 
     <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
       <!-- The motif made literal: Munch's aula sun, the one object every era shares. -->
@@ -448,10 +429,10 @@
       })();
       </script>
 
-      <div class="honest">
-        <span class="h-lbl">The fair objection</span>
-        <b>This doesn't mean we're safe.</b> A smoke alarm that's gone off at burnt toast a hundred times still can't tell you the kitchen isn't on fire tonight. Every doom before 1945 was about God or a misread calendar. The new ones, nuclear weapons, climate, engineered viruses, are real, and they only have to be right once. So don't trust the feeling of doom. But do look hard at each real danger on its own.
-      </div>
+      <aside class="u-callout u-aside">
+        <p class="u-callout-k">The fair objection</p>
+        <p class="u-callout-body"><b>This doesn't mean we're safe.</b> A smoke alarm that's gone off at burnt toast a hundred times still can't tell you the kitchen isn't on fire tonight. Every doom before 1945 was about God or a misread calendar. The new ones, nuclear weapons, climate, engineered viruses, are real, and they only have to be right once. So don't trust the feeling of doom. But do look hard at each real danger on its own.</p>
+      </aside>
     </section>
 
     <!-- ===================== 2. THE INSTRUMENT ===================== -->
@@ -590,10 +571,10 @@
       })();
       </script>
 
-      <div class="honest">
-        <span class="h-lbl">Where this overstates</span>
-        It's the same <b>dials</b> in everyone, but not the exact same named feelings. Where anger stops and contempt starts is partly taught to you, by your language and your culture. Show the famous wide-eyed "fear face" to people on the Trobriand Islands and they don't see fear. They see someone about to attack. The dials are shared. The words for them are local.
-      </div>
+      <aside class="u-callout u-aside">
+        <p class="u-callout-k">Where this overstates</p>
+        <p class="u-callout-body"><b>It's the same dials in everyone, but not the exact same named feelings.</b> Where anger stops and contempt starts is partly taught to you, by your language and your culture. Show the famous wide-eyed "fear face" to people on the Trobriand Islands and they don't see fear. They see someone about to attack. The dials are shared. The words for them are local.</p>
+      </aside>
     </section>
 
     <!-- ===================== 3. THE TREADMILL ===================== -->
@@ -711,10 +692,10 @@
       })();
       </script>
 
-      <div class="honest">
-        <span class="h-lbl">The floor is real</span>
-        This isn't a promise that everything heals. Some things don't. <b>Losing a spouse</b> drops people hard, and it takes about eight years to climb back, if they ever do. A long stretch of unemployment leaves you lower than before, even after you find work. Chronic pain, loneliness, and depression all hold you down. Bouncing back is the rule. But it has cruel exceptions, and they land hardest on the people already carrying the most.
-      </div>
+      <aside class="u-callout u-aside">
+        <p class="u-callout-k">The floor is real</p>
+        <p class="u-callout-body"><b>This isn't a promise that everything heals.</b> Some things don't. Losing a spouse drops people hard, and it takes about eight years to climb back, if they ever do. A long stretch of unemployment leaves you lower than before, even after you find work. Chronic pain, loneliness, and depression all hold you down. Bouncing back is the rule. But it has cruel exceptions, and they land hardest on the people already carrying the most.</p>
+      </aside>
     </section>
 
     <!-- ===================== 4. THE LEVELING / PROOF ===================== -->
@@ -722,9 +703,9 @@
       <span class="sec-kicker">The proof</span>
       <h2 class="sec-h">The billionaire and the herder come out even</h2>
       <p class="lede">Ask the 400 richest Americans how happy they are with their lives, on a scale of one to seven. They say 5.8. Now ask the Maasai in East Africa, who herd cattle, live in homes made of dung, and have no electricity or running water. They say 5.7.</p>
-      <div class="stat-row">
-        <div class="stat"><span class="fig">5.8</span><span class="fig-lbl">the Forbes 400, life satisfaction, 1 to 7</span></div>
-        <div class="stat green"><span class="fig">5.7</span><span class="fig-lbl">the Maasai, same scale, same survey</span></div>
+      <div class="stat-bartab-row">
+        <div class="stat-bartab"><div class="stat-num">5.8</div><p class="stat-label">the Forbes 400, life satisfaction, 1 to 7</p></div>
+        <div class="stat-bartab"><div class="stat-num">5.7</div><p class="stat-label">the Maasai, same scale, same survey</p></div>
       </div>
       <p>The richest people alive and a people with almost nothing come out a tenth of a point apart. Money comes in a range so huge it's hard to picture. Happiness comes in a tiny one. Whatever all that money is buying, it mostly isn't this.</p>
 
@@ -801,10 +782,10 @@
       })();
       </script>
 
-      <div class="honest">
-        <span class="h-lbl">Two true exceptions</span>
-        Money does still buy one thing. When you stop and rate your <b>whole life</b> at once, that score keeps climbing with income, even after your day-to-day mood has flattened out. And the tie only holds once your basic needs are met. Push things low enough and happiness really does collapse: the homeless in these same studies score about 2.9. Being poor is genuinely worse. What's a myth is the idea that the rich are happier than the merely comfortable.
-      </div>
+      <aside class="u-callout u-aside">
+        <p class="u-callout-k">Two true exceptions</p>
+        <p class="u-callout-body"><b>Money does still buy one thing.</b> When you stop and rate your whole life at once, that score keeps climbing with income, even after your day-to-day mood has flattened out. And the tie only holds once your basic needs are met. Push things low enough and happiness really does collapse: the homeless in these same studies score about 2.9. Being poor is genuinely worse. What's a myth is the idea that the rich are happier than the merely comfortable.</p>
+      </aside>
     </section>
 
     <!-- ===================== 5. THE THREE THINGS ===================== -->
@@ -849,8 +830,8 @@
       <h2 class="sec-h">The one lever you actually hold</h2>
       <p class="lede">Of everything inside you, the one part you can actually move is which way you're facing. Toward yourself, or toward everyone else. And out of every lever scientists have tested, this is the one that keeps winning.</p>
       <p>The longest study of human life ever run has followed people for more than 85 years. Its clearest finding isn't about money, or fame, or cholesterol. It's that the warmth of your relationships, more than anything else they measured, predicts how healthy and happy you'll be at the end of your life. And loneliness? It's about as bad for you as smoking 15 cigarettes a day.</p>
-      <div class="stat-row">
-        <div class="stat rose"><span class="fig">15</span><span class="fig-lbl">cigarettes a day: the mortality risk that matches chronic loneliness</span></div>
+      <div class="stat-bartab-row">
+        <div class="stat-bartab"><div class="stat-num">15</div><p class="stat-label">cigarettes a day: the mortality risk that matches chronic loneliness</p></div>
       </div>
       <p>And the thing the old traditions always insisted on turns out to be true. People who volunteer live longer, but only if they do it for other people. Do it to feel good about yourself and the benefit disappears. Alcoholics Anonymous said it in one line back in 1939, long before any data backed it up: <em>selfishness is the root of our trouble.</em> The fix was to be of service. But if you give to get something back, it doesn't work. You have to actually mean it.</p>
 
@@ -860,10 +841,10 @@
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Vincent_van_Gogh_-_The_Good_Samaritan,_1890_-_Google_Art_Project.jpg">Vincent van Gogh, 1890, public domain</a></span>
       </figure>
 
-      <div class="honest">
-        <span class="h-lbl">Stated honestly</span>
-        Most of this is <b>correlation</b>. Happy, healthy people can just afford to be more generous, so the cause and effect isn't nailed down. The clean experiments (give a stranger five dollars, do a week of small kindnesses) show a real lift, but a small one. And helping with no limits has its own trap: the burned-out caregiver, the martyr. So the honest version is smaller, and still amazing. Of the things you can actually control, how you treat people is one of the best-proven ways to change your own life.
-      </div>
+      <aside class="u-callout u-aside">
+        <p class="u-callout-k">Stated honestly</p>
+        <p class="u-callout-body"><b>Most of this is correlation.</b> Happy, healthy people can just afford to be more generous, so the cause and effect isn't nailed down. The clean experiments (give a stranger five dollars, do a week of small kindnesses) show a real lift, but a small one. And helping with no limits has its own trap: the burned-out caregiver, the martyr. So the honest version is smaller, and still amazing. Of the things you can actually control, how you treat people is one of the best-proven ways to change your own life.</p>
+      </aside>
     </section>
 
     <!-- ===================== 7. THE WAY OUT / LANDING ===================== -->

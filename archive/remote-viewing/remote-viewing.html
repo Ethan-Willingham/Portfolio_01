@@ -73,17 +73,6 @@
   .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.1rem; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
-  .hero-byline { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--text-dim); margin-top: 1.4rem; }
-  .hero-byline b { color: var(--accent); font-weight: 400; }
-
-  .hero-figure { margin: 2.2rem 0 0.5rem; }
-  .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .hero-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.9rem; max-width: 64ch; line-height: 1.5; }
 
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
@@ -114,9 +103,8 @@
     .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
   }
 
-  /* ---------- CONTENTS MAP (kit: .u-strip stats + .u-toc list) ---------- */
+  /* ---------- CONTENTS MAP (kit: .u-stats + .u-toc list) ---------- */
   .map { margin: 2rem auto 0; max-width: calc(var(--measure) - 2 * var(--gutter)); }
-  .map .u-strip { margin-bottom: 1.3rem; }
   .map-note { font-size: 1rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.2rem; max-width: 64ch; }
   .map-note a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
   .map-note a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
@@ -143,6 +131,11 @@
   .fork-side p { font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
   .fork-take { font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; padding-top: 0.6em; border-top: 1px solid var(--rule); }
   .fork-take b { color: var(--text-bright); }
+
+  /* ---------- HERO SVG FIGURE (the hit-rate bar, preserved as code-drawn art) ---------- */
+  .hero-figure { margin: 2.2rem 0 0.5rem; }
+  .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .hero-cap { font-family: var(--font-body); font-style: italic; font-size: 0.92rem; color: var(--text-dim); margin-top: 0.9rem; max-width: 64ch; line-height: 1.5; }
 
   /* ---------- FIGURES ---------- */
   .viz { margin: 2em auto; }
@@ -210,7 +203,7 @@
   @media print {
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
     body { background: #fff; color: #161616; }
-    .sec, .hero, .map { max-width: none; }
+    .sec, .u-hero, .map { max-width: none; }
     .sec p, .sec li, .lede { color: #161616; }
     figure.viz, .fork, .u-stat, .u-pq, .debateA, .u-card, .u-callout, .kit-grp { break-inside: avoid; }
     a { color: #161616; }
@@ -224,11 +217,11 @@
   <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
 
   <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <p class="hero-eyebrow">A believer-and-skeptic field guide</p>
-    <h1 class="hero-title">Is Remote Viewing Real?</h1>
-    <p class="hero-dek">For twenty years the CIA and the Army paid people to spy with their minds. Then they declassified the whole thing. Here is what holds up, what does not, and the one test it has never passed.</p>
-    <p class="hero-byline">Sourced, and honest about the science. <b>21 sources cited.</b> Last reviewed June 2026.</p>
+  <header class="u-hero">
+    <p class="u-eyebrow">A believer-and-skeptic field guide</p>
+    <h1 class="u-title">Is Remote Viewing Real?</h1>
+    <p class="u-dek">For twenty years the CIA and the Army paid people to spy with their minds. Then they declassified the whole thing. Here is what holds up, what does not, and the one test it has never passed.</p>
+    <p class="u-meta">Sourced, and honest about the science. <b>21 sources cited.</b> <span class="u-sep">/</span> Last reviewed June 2026.</p>
 
     <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
       <!-- The whole post in one bar. The best long-run remote-viewing dataset
@@ -286,11 +279,11 @@
 
     <!-- ============================ MAP ============================ -->
     <aside class="map reveal" aria-label="What is inside this guide">
-      <div class="u-strip">
-        <span class="u-strip-item"><b>~20 yrs</b> the U.S. funded it</span>
-        <span class="u-strip-item"><b>~$20M</b> spent</span>
-        <span class="u-strip-item"><b>52.65%</b> best hit rate, vs 50% chance</span>
-        <span class="u-strip-item"><b>$0</b> anyone provably got rich</span>
+      <div class="u-stats">
+        <div class="u-stat"><span class="u-fig">~20 yrs</span><span class="u-fig-lbl">the U.S. funded it</span></div>
+        <div class="u-stat"><span class="u-fig">~$20M</span><span class="u-fig-lbl">spent</span></div>
+        <div class="u-stat"><span class="u-fig">52.65%</span><span class="u-fig-lbl">best hit rate, vs 50% chance</span></div>
+        <div class="u-stat"><span class="u-fig">$0</span><span class="u-fig-lbl">anyone provably got rich</span></div>
       </div>
       <p class="map-note">Four short chapters, about twenty minutes end to end. We start with the strangest part, that this was a real government program, then sort the evidence, then show how the technique is actually taught and how you would train tonight for free. It ends on the one test remote viewing has never passed. If you read one chapter, read <a href="#lunch">the last one</a>.</p>
       <nav class="u-toc">
