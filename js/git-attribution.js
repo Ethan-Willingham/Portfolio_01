@@ -59,7 +59,6 @@
     if (acc < 99.99) stops.push('#3a443b ' + acc.toFixed(2) + '% 100%');
     return 'conic-gradient(from -90deg, ' + stops.join(', ') + ')';
   }
-  function conic(parts) { return donutCSS(parts, 1); }
   // draw the ring on (frac 0 -> 1), optionally after a stagger delay
   function drawDonut(el, parts, animate, delay) {
     if (el._raf2) cancelAnimationFrame(el._raf2);

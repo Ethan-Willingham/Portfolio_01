@@ -288,41 +288,14 @@
     .ma-toggle.is-tokens .ma-seg-glider { transform: translateX(100%); }
     .ma-controls-note { margin: 0; font-family: var(--font-body); font-size: 0.84rem; color: var(--text-dim); font-style: italic; }
 
-    /* the tile grid */
-    .ma-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 0.85rem; }
-    .ma-tile {
-      display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
-      padding: 1.1rem 0.7rem 0.95rem; cursor: pointer;
-      background: var(--ma-card); border: 1px solid var(--ma-hair);
-      border-radius: var(--ma-r); box-shadow: var(--ma-shadow);
-      transition: transform 0.34s var(--ma-spring), box-shadow 0.34s ease, background 0.2s ease, border-color 0.2s ease;
-      animation: ma-rise 0.55s var(--ma-spring) both; animation-delay: calc(var(--i) * 40ms);
-    }
-    @keyframes ma-rise { from { opacity: 0; transform: translateY(14px) scale(0.95); } to { opacity: 1; transform: none; } }
-    @keyframes ma-pulse { 0% { transform: scale(1); } 38% { transform: scale(0.9); } 100% { transform: scale(1); } }
-    @media (hover: hover) {
-      .ma-tile:hover { transform: translateY(-4px); box-shadow: var(--ma-shadow-lift); background: var(--ma-card-hi); border-color: var(--ma-hair-2); }
-      .ma-tile:hover .ma-donut { transform: scale(1.05) rotate(-3deg); }
-      .ma-tile:hover .ma-donut-val { transform: scale(1.07); }
-    }
-    .ma-tile:focus-visible { outline: none; box-shadow: var(--ma-shadow-lift), 0 0 0 2px rgba(232,149,78,0.6); }
-    .ma-tile:active { transform: translateY(-1px) scale(0.985); }
-
-    .ma-donut {
-      position: relative; width: 66px; height: 66px; border-radius: 50%;
-      background: #3a443b; transition: transform 0.34s var(--ma-spring);
-    }
-    .ma-donut.is-pulse { animation: ma-pulse 0.5s var(--ma-spring); }
+    /* the tray's big ring — the only donut left (the grid is cards now) */
+    .ma-donut { position: relative; width: 66px; height: 66px; border-radius: 50%; background: #3a443b; }
     .ma-donut-hole {
       position: absolute; inset: 9px; border-radius: 50%;
       background: var(--ma-card); display: grid; place-items: center;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
     }
-    .ma-tile:hover .ma-donut-hole { background: var(--ma-card-hi); }
-    .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; transition: transform 0.34s var(--ma-spring); }
-    .ma-tile-title { font-family: var(--font-heading); font-size: 0.92rem; font-weight: 700; color: var(--text-bright); text-align: center; line-height: 1.15; letter-spacing: -0.01em; max-width: 100%; }
-    .ma-tile.is-arch .ma-tile-title { font-style: italic; color: var(--text); }
-    .ma-tile-sub { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; letter-spacing: 0.01em; text-align: center; }
+    .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; }
 
     /* the live look: a metric card per post — lead model + count, slim split bar,
        a faint wash of the lead colour (JS sets the tint inline). Tap opens the tray. */
@@ -411,9 +384,7 @@
     .ma-tray-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
 
     @media (max-width: 560px) {
-      .ma-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0.6rem; }
       .ma-donut { width: 58px; height: 58px; }
-      .ma-tile-title { font-size: 0.84rem; }
     }
   </style>
 </head>
