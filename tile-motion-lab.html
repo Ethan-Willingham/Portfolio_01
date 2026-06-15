@@ -92,8 +92,14 @@
     /* ===== shared tray (the pop-up, from the live post) ===== */
     .ma-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(8,10,8,0.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.32s; }
     .ma-scrim.is-on { opacity: 1; pointer-events: auto; }
-    .ma-tray { position: fixed; z-index: 51; left: 50%; bottom: clamp(14px,4vh,46px); width: min(540px,92vw); transform: translateX(-50%) translateY(130%); background: var(--tray); border: 1px solid var(--hair2); border-radius: 26px; padding: 1.4rem 1.5rem 1.5rem; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75); opacity: 0; pointer-events: none; transition: transform 0.52s var(--spring), opacity 0.3s; max-height: 86vh; overflow-y: auto; }
-    .ma-tray.is-on { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+    .ma-tray { position: fixed; z-index: 51; width: min(540px,92vw); background: var(--tray); border: 1px solid var(--hair2); border-radius: 26px; padding: 1.4rem 1.5rem 1.5rem; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75); opacity: 0; pointer-events: none; transition: transform 0.52s var(--spring), opacity 0.3s; max-height: 86vh; overflow-y: auto; }
+    .ma-tray.is-on { opacity: 1; pointer-events: auto; }
+    /* mobile / default: bottom sheet */
+    .ma-tray:not(.is-anchored) { left: 50%; bottom: clamp(14px,4vh,46px); transform: translateX(-50%) translateY(130%); }
+    .ma-tray:not(.is-anchored).is-on { transform: translateX(-50%) translateY(0); }
+    /* desktop: popover anchored at the clicked card (JS sets left/top) */
+    .ma-tray.is-anchored { width: min(380px, 92vw); transform-origin: top center; transform: translateY(10px) scale(0.97); transition: transform 0.34s var(--spring), opacity 0.22s; }
+    .ma-tray.is-anchored.is-on { transform: translateY(0) scale(1); }
     .ma-tray-x { position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; display: grid; place-items: center; color: var(--dim); background: rgba(255,255,255,0.04); border: 1px solid var(--hair); border-radius: 50%; cursor: pointer; }
     .ma-tray-x:hover { color: var(--bright); background: rgba(255,255,255,0.09); }
     .ma-tray-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.3rem; }
@@ -191,7 +197,7 @@
       '<div><span class="ma-tray-kind"></span><h3 class="ma-tray-title"></h3><span class="ma-tray-when"></span></div></div>' +
       '<div class="ma-tray-bar"></div><div class="ma-tray-rows"></div>';
     document.body.appendChild(scrim); document.body.appendChild(tray);
-    function openTray(post, metric) {
+    function openTray(post, metric, anchorEl) {
       var parts = split(post, metric);
       tray.querySelector('.ma-tray-kind').textContent = post.kind === 'archived' ? 'Archived post' : 'Post';
       tray.querySelector('.ma-tray-kind').className = 'ma-tray-kind' + (post.kind === 'archived' ? ' is-arch' : '');
@@ -210,6 +216,16 @@
           '<span class="ma-row-val">'+fmtVal(p.v, metric)+(metric==='tokens'?' tokens':(p.v===1?' change':' changes'))+'</span><span class="ma-row-pct">'+Math.round(p.pct)+'%</span>';
         rows.appendChild(r);
       });
+      var anchored = window.innerWidth >= 600 && anchorEl;
+      tray.classList.toggle('is-anchored', !!anchored);
+      if (anchored) {
+        var tw = tray.offsetWidth, th = tray.offsetHeight, r = anchorEl.getBoundingClientRect(), gap = 10;
+        var lx = Math.max(12, Math.min(window.innerWidth - tw - 12, r.left + r.width / 2 - tw / 2));
+        var ty = r.bottom + gap;
+        if (ty + th > window.innerHeight - 12) ty = r.top - th - gap; // flip above if no room below
+        if (ty < 12) ty = 12;
+        tray.style.left = lx + 'px'; tray.style.top = ty + 'px';
+      } else { tray.style.left = ''; tray.style.top = ''; }
       scrim.classList.add('is-on'); tray.classList.add('is-on');
     }
     function closeTray() { scrim.classList.remove('is-on'); tray.classList.remove('is-on'); }
@@ -277,7 +293,7 @@
         if (variant.spine) c.style.borderLeftColor = top.m.color;
         if (variant.tint) c.style.background = 'linear-gradient(155deg, ' + hexA(top.m.color, 0.16) + ', rgba(51,59,52,0) 70%), var(--card)';
         c._post = post;
-        c.addEventListener('click', function () { openTray(post, state.metric); });
+        c.addEventListener('click', function () { openTray(post, state.metric, c); });
         if (variant.holo) bindPointer(c, { tilt: 9 });
         else if (variant.glare) bindPointer(c, { tilt: 0 });
         grid.appendChild(c); return c;
