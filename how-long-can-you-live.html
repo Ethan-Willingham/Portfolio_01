@@ -88,8 +88,8 @@
   /* kit .u-sechead heads each section now; give it the same breathing room the
      old .sec-h had above the lede, and left-align it to the reading column. */
   .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
-  /* Trim the section eyebrow: the filled kit pill (.74rem / .45em 1.1em / .18em tracking) read too large here. */
-  .sec .u-sechead-k { font-size: 0.68rem; letter-spacing: 0.14em; padding: 0.28em 0.78em; }
+  /* Trim ALL eyebrow pills to one small size: the section kicker (.u-sechead-k) AND the standalone mid-section eyebrow (.u-eyebrow, e.g. "Still unsettled"), which the kit left at the big default and sprawled with wide tracking. */
+  .sec .u-sechead-k, .sec .u-eyebrow { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; }
   /* The boxed kit .u-toc read too heavy at the top; restore the slim chapter strip (owner's pre-migration design). */
   .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
   .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
@@ -104,6 +104,11 @@
   .sec .stat-bartab::before { height: 3px; background: var(--rule); }
   .sec .stat-bartab .stat-num { font-size: 34px; color: var(--text-bright); }
   .sec .stat-bartab .stat-label { font-size: 12.5px; margin-top: 10px; }
+  /* The .debateA claim/truth boxes read too big; shrink the padding + serif text (the red=claim / green=evidence colours stay — they DO carry meaning here, unlike the gold stats). */
+  .sec .debateA { padding: 10px; border-radius: 18px; box-shadow: 0 12px 30px -22px rgba(0,0,0,0.5); }
+  .sec .debateA-claim, .sec .debateA-truth { padding: 17px 22px; border-radius: 14px; }
+  .sec .debateA-truth { margin-top: 10px; }
+  .sec .debateA-text { font-size: 1.12rem; line-height: 1.5; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
@@ -177,7 +182,7 @@
   @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
 
   /* ---------- ANIMATION + REDUCED MOTION (no-JS safe: only hide under html.js) ---------- */
-  @media (prefers-reduced-motion: no-preference) {
+  @media all {
     html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
     html.js .reveal.in { opacity: 1; transform: none; }
     html.js .draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); }
@@ -652,7 +657,7 @@
      watchdog guarantees nothing is ever left hidden. */
   (function () {
     'use strict';
-    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
     var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
 
     function fire(el) {
