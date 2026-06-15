@@ -70,19 +70,19 @@
   var logMaxChurn = Math.log10(1 + maxChurn);
   var sqrtMaxChurn = Math.sqrt(maxChurn);
 
-  // ----- glow sprites, one per topic colour -----
-  var SP = 64;
+  // ----- crisp point sprites, one per topic colour (Editorial look: precise dots, no bloom) -----
+  var SP = 24;
   function hexRgb(h) { h = h.replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
   var sprites = topics.map(function (tp) {
     var rgb = hexRgb(tp.color);
     var cv = document.createElement('canvas'); cv.width = cv.height = SP;
     var g = cv.getContext('2d');
     var m = SP / 2;
-    var lr = Math.min(255, rgb[0] + 95), lg = Math.min(255, rgb[1] + 95), lb = Math.min(255, rgb[2] + 95);
+    var lr = Math.min(255, rgb[0] + 70), lg = Math.min(255, rgb[1] + 70), lb = Math.min(255, rgb[2] + 70);
     var grad = g.createRadialGradient(m, m, 0, m, m, m);
-    grad.addColorStop(0.0, 'rgba(' + lr + ',' + lg + ',' + lb + ',0.95)');
-    grad.addColorStop(0.20, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.82)');
-    grad.addColorStop(0.50, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.20)');
+    grad.addColorStop(0.0, 'rgba(' + lr + ',' + lg + ',' + lb + ',1)');
+    grad.addColorStop(0.42, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.98)');
+    grad.addColorStop(0.62, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.38)');
     grad.addColorStop(1.0, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0)');
     g.fillStyle = grad; g.fillRect(0, 0, SP, SP);
     return cv;
@@ -160,30 +160,15 @@
     // churn reference lines (faint horizontal grid; labels drawn after the dots)
     ctx.lineWidth = 1;
     var refs = [10, 100, 1000, 10000, 100000];
-    ctx.strokeStyle = 'rgba(212,196,160,0.055)';
+    ctx.strokeStyle = 'rgba(245,241,234,0.08)';
     for (var ri = 0; ri < refs.length; ri++) {
       if (refs[ri] > maxChurn * 1.3) break;
       var ry = yForChurn(refs[ri], P);
       ctx.beginPath(); ctx.moveTo(P.L, ry); ctx.lineTo(P.L + P.W, ry); ctx.stroke();
     }
 
-    // cumulative code-volume ridge (the project's growing mass)
-    ctx.beginPath();
-    var started = false;
-    for (var k = 0; k < N; k++) {
-      var rx = xFromT(commits[k][IX_T], P);
-      var rv = Math.max(0, cum[k]) / maxCum;
-      var ryy = P.G - rv * P.Hh * 0.62;
-      if (!started) { ctx.moveTo(rx, ryy); started = true; } else ctx.lineTo(rx, ryy);
-    }
-    ctx.strokeStyle = 'rgba(212,196,160,0.18)'; ctx.lineWidth = 1.25; ctx.stroke();
-    ctx.lineTo(xFromT(tMax, P), P.G); ctx.lineTo(xFromT(tMin, P), P.G); ctx.closePath();
-    var rg = ctx.createLinearGradient(0, P.T, 0, P.G);
-    rg.addColorStop(0, 'rgba(212,196,160,0.05)'); rg.addColorStop(1, 'rgba(212,196,160,0.012)');
-    ctx.fillStyle = rg; ctx.fill();
-
     // ground line (the timeline floor)
-    ctx.strokeStyle = 'rgba(212,196,160,0.16)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(245,241,234,0.3)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(P.L, P.G + 0.5); ctx.lineTo(P.L + P.W, P.G + 0.5); ctx.stroke();
 
     // time axis gridlines (labels drawn after the dots)
@@ -191,7 +176,7 @@
     for (var ti = 0; ti < ticks.length; ti++) {
       var tx = xFromT(ticks[ti].t, P);
       if (tx < P.L - 1 || tx > P.L + P.W + 1) continue;
-      ctx.strokeStyle = ticks[ti].major ? 'rgba(212,196,160,0.10)' : 'rgba(212,196,160,0.045)';
+      ctx.strokeStyle = ticks[ti].major ? 'rgba(245,241,234,0.16)' : 'rgba(245,241,234,0.08)';
       ctx.beginPath(); ctx.moveTo(tx, P.T); ctx.lineTo(tx, P.G); ctx.stroke();
     }
 
@@ -212,8 +197,8 @@
     }
     ctx.lineTo(fx1, P.G); ctx.closePath();
     var fg = ctx.createLinearGradient(0, P.G - bandMax, 0, P.G);
-    fg.addColorStop(0, 'rgba(232,149,78,0.40)');
-    fg.addColorStop(1, 'rgba(232,149,78,0.035)');
+    fg.addColorStop(0, 'rgba(232,149,78,0.26)');
+    fg.addColorStop(1, 'rgba(232,149,78,0.07)');
     ctx.fillStyle = fg; ctx.fill();
     ctx.beginPath();
     for (var fe = 0; fe < DAILY.length; fe++) {
@@ -221,15 +206,14 @@
       var fev = DAILY[fe] / DAILY_MAX; if (fev > 1) fev = 1;
       if (fe === 0) ctx.moveTo(fex, P.G - fev * bandMax); else ctx.lineTo(fex, P.G - fev * bandMax);
     }
-    ctx.strokeStyle = 'rgba(244,179,107,0.5)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.strokeStyle = 'rgba(244,179,107,0.6)'; ctx.lineWidth = 1.1; ctx.stroke();
     ctx.restore();
 
-    // dots — additive glow
+    // dots — crisp points (Editorial look: source-over so dense weeks stay distinct)
     var elapsed = now - introStart;
     var intro = introOn && elapsed < (INTRO_RISE + INTRO_STAGGER + 60);
     var span = tMax - tMin || 1;
     var anyFilter = enabled.indexOf(false) !== -1;
-    ctx.globalCompositeOperation = 'lighter';
     for (var j = 0; j < N; j++) {
       var cc = commits[j];
       var x = xFromT(cc[IX_T], P);
@@ -250,8 +234,8 @@
       var alpha = e * tw * (on ? 0.92 : (anyFilter ? 0.05 : 0.92));
       if (j === hoverIdx || j === pinnedIdx) alpha = Math.min(1.4, alpha + 0.5);
       var cn = Math.sqrt(ch) / sqrtMaxChurn;
-      var coreR = 1.5 + cn * 3.3;
-      var gsz = coreR * 5.6 * (0.55 + 0.45 * e);
+      var coreR = 1.1 + cn * 2.3;
+      var gsz = coreR * 3.4 * (0.55 + 0.45 * e);
       ctx.globalAlpha = clamp(alpha, 0, 1);
       ctx.drawImage(sprites[cc[IX_TI]], x - gsz / 2, y - gsz / 2, gsz, gsz);
     }
@@ -267,9 +251,9 @@
       ctx.beginPath(); ctx.arc(sx, sy, 7.5, 0, 6.2831853); ctx.stroke();
     }
 
-    // labels last, so text reads crisply over the additive glow
-    ctx.font = '9px "Commit Mono", ui-monospace, monospace';
-    ctx.fillStyle = 'rgba(190,184,168,0.5)'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    // labels last, so text reads crisply over the dots
+    ctx.font = '500 11px "Commit Mono", ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(224,220,209,0.72)'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (var li = 0; li < refs.length; li++) {
       if (refs[li] > maxChurn * 1.3) break;
       ctx.fillText(fmtChurn(refs[li]), P.L + P.W + 6, yForChurn(refs[li], P));
@@ -278,7 +262,7 @@
     for (var lj = 0; lj < ticks.length; lj++) {
       var ltx = xFromT(ticks[lj].t, P);
       if (ltx < P.L - 1 || ltx > P.L + P.W + 1) continue;
-      ctx.fillStyle = ticks[lj].major ? 'rgba(212,196,160,0.62)' : 'rgba(184,178,162,0.4)';
+      ctx.fillStyle = ticks[lj].major ? 'rgba(244,240,229,0.9)' : 'rgba(224,220,209,0.6)';
       ctx.fillText(ticks[lj].label, ltx, P.G + 7);
     }
   }
