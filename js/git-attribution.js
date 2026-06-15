@@ -10,7 +10,7 @@
   var root = document.getElementById('ma-root');
   if (!DATA || !root) return;
 
-  var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var REDUCE = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var MODELS = DATA.models;
   var POSTS = DATA.posts;
   var MID = {};

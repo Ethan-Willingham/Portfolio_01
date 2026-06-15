@@ -250,12 +250,6 @@
 
   html:not(.js) .reel { display: none; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .cover .plate, .cover h1, .cover-rule, .cover-sub { animation: none; }
-    .plate { transform: none !important; }
-    .plate-img { transition: opacity 240ms linear; }
-    .figure, .wx-demo { transition: opacity 240ms linear; transform: none !important; }
-  }
   </style>
 </head>
 <body>
@@ -313,7 +307,7 @@
     'use strict';
     var reel = document.getElementById('reel');
     if (!reel) return;
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
 
     /* ---- Acts. Only the accent survives now (the Roman-numeral act
        interstitials were removed): it cools from gold through the chaotic

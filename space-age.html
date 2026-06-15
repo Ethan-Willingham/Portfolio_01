@@ -175,10 +175,6 @@
       4%   { opacity: 0; transform: rotate(-38deg) translateX(-380px); }
       100% { opacity: 0; transform: rotate(-38deg) translateX(-380px); }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .sa-page::before, .sa-page::after { animation: none; opacity: 0.7; }
-      .sa-sky { display: none; }
-    }
     .sa-page .site-wrapper { position: relative; z-index: 1; }
 
     /* keep the back link legible on the dark canvas */
@@ -426,11 +422,6 @@
       .pl-num { font-size: 2.3rem; }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      .sa-results.in .sa-rise { animation: none; opacity: 1; transform: none; }
-      .sa-rise { opacity: 1; transform: none; }
-      .sa-soon { transition: none; }
-    }
   </style>
 </head>
 <body class="sa-page">
@@ -514,7 +505,7 @@
     var resultsEl = document.getElementById('sa-results');
     var listEl = document.getElementById('sa-list');
 
-    var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduceMotion = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
     var shareMsg = '';
     var soonEl = document.getElementById('sa-soon');
 

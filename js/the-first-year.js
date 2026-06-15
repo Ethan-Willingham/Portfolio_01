@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   var FY = (window.FY = window.FY || { viz: {}, tool: {} });
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   function $(s, r) { return (r || document).querySelector(s); }
   function $all(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
 

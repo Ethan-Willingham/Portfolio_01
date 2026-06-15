@@ -92,7 +92,7 @@
   var view = { t0: defT0, t1: defT1 };
   var enabled = topics.map(function () { return true; });
   var hoverIdx = -1, pinnedIdx = -1;
-  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var introStart = performance.now();
   var introOn = !reduce && !document.hidden; // only play the rise when we can actually animate
   var INTRO_RISE = 850, INTRO_STAGGER = 700;

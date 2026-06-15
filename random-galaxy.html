@@ -323,10 +323,6 @@
     /* Honour reduced-motion: drop the decorative target pulse and the entrance
        fade so the page settles instantly. The flight demo is opt-in (you choose
        to enter fullscreen), so it is left untouched here. */
-    @media (prefers-reduced-motion: reduce) {
-      #gx-bracket { animation: none; }
-      .post-header.fade-in, .post-body.fade-in { animation: none; opacity: 1; transform: none; }
-    }
 
     /* Cluster callout: a technical target readout (Flight Director Box style). */
     .gx-callout {

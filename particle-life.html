@@ -267,7 +267,7 @@
     /* Immersive auto-dim: the header fades back while the pointer is idle
        and any movement restores it (driven by JS). Reduced-motion users
        keep it steady. */
-    @media (prefers-reduced-motion: no-preference) {
+    @media all {
       .pl-wrapper.is-fs.pl-ui-dim .pl-header { opacity: 0.16; }
     }
 
@@ -294,7 +294,7 @@
       transition: opacity 0.55s ease;
     }
     .pl-wrapper.is-fs .pl-action-bar > * { pointer-events: auto; }
-    @media (prefers-reduced-motion: no-preference) {
+    @media all {
       .pl-wrapper.is-fs.pl-ui-dim .pl-action-bar { opacity: 0.16; }
     }
 
@@ -496,10 +496,6 @@
       }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      .pl-wrapper.is-fs .pl-controls,
-      .pl-wrapper.is-fs .pl-scrim { transition: none; }
-    }
 
     /* Status overlay (shown while initialising or on error) */
     .pl-status {

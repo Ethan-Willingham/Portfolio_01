@@ -23,8 +23,7 @@
 
   /* Respect the OS "reduce motion" setting: no idle auto-spin and no moon
      drift. The globe is still fully interactive (drag to spin) on demand. */
-  var reducedMotion = !!(window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var reducedMotion = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
 
   /* ---- Timezone offsets from UTC ---- */
   var TZ_OFFSETS = { ET: -4, CT: -5, MT: -6, PT: -7 }; // DST offsets

@@ -395,7 +395,7 @@
   .ch-more-sum:hover .ch-more-icon { border-color: var(--accent-hover); }
   .ch-more-body { padding-top: 0.5rem; }
   .ch-more-body > .ch-body { margin-top: 0.85rem; padding-top: 0; border-top: none; }
-  @media (prefers-reduced-motion: no-preference) {
+  @media all {
     .ch-more[open] .ch-more-body { animation: chMoreIn 240ms var(--ease-out); }
   }
   @keyframes chMoreIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
@@ -418,7 +418,6 @@
   .ch-tip::after { content: ''; position: absolute; left: var(--ax, 50%); margin-left: -4.5px; width: 9px; height: 9px; background: #39433b; transform: rotate(45deg); }
   .ch-tip:not(.below)::after { bottom: -5px; border-right: 1px solid rgba(212,196,160,0.28); border-bottom: 1px solid rgba(212,196,160,0.28); }
   .ch-tip.below::after { top: -5px; border-left: 1px solid rgba(212,196,160,0.28); border-top: 1px solid rgba(212,196,160,0.28); }
-  @media (prefers-reduced-motion: reduce) { .ch-tip { transition: opacity 0.12s; transform: none; } }
 
   /* responsive: stack the wheel above its panel, then make the phone layout */
   @media (max-width: 880px) {
@@ -479,7 +478,7 @@
      REVEAL ON SCROLL  (gated: only fine pointer + motion allowed)
      default = fully visible, so content can never be trapped hidden
      ============================================================ */
-  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  @media (hover: hover) and (pointer: fine) {
     html.js .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out); }
     html.js .reveal.in { opacity: 1; transform: none; }
   }
@@ -1032,7 +1031,7 @@
     /* reveal on scroll, only where motion is welcome and the pointer is fine.
        default (no JS / reduced motion / touch) leaves everything visible. */
     var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    var wantsMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    var wantsMotion = true; /* owner: animate for everyone, even with prefers-reduced-motion set */
     if (fine && wantsMotion && 'IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
@@ -1156,7 +1155,7 @@
       var panel = document.getElementById('wheelPanel');
       var canHover = window.matchMedia('(hover: hover)').matches;
       var mqMobile = window.matchMedia('(max-width: 600px)');
-      var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      var mqReduce = { matches: false };
       var allArcs = [];
 
       var totalComp = 0;

@@ -134,7 +134,7 @@
   @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
 
   /* ---------- ANIMATION + REDUCED MOTION (no-JS safe: only hide under html.js) ---------- */
-  @media (prefers-reduced-motion: no-preference) {
+  @media all {
     html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
     html.js .reveal.in { opacity: 1; transform: none; }
   }
@@ -831,7 +831,7 @@
      is ever left hidden. */
   (function () {
     'use strict';
-    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
     var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
     function fire(el) { el.classList.add('in'); }
     if (reduce || !('IntersectionObserver' in window)) {

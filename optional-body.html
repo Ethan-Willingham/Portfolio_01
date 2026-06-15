@@ -354,15 +354,6 @@
   html:not(.js) .reel { display: none; }
 
   /* ---- Reduced motion: keep fades, drop movement ---- */
-  @media (prefers-reduced-motion: reduce) {
-    .cover .plate, .cover h1, .cover-rule, .cover-sub, .cover .caption { animation: none; }
-    .plate { transform: none !important; }
-    .plate-img { transition: opacity 240ms linear; }
-    .sheen { display: none; }
-    .specimen, .threshold { transition: opacity 240ms linear; transform: none !important; }
-    .spine-bob, .spine-fill, .spine-read { transition: opacity 260ms linear !important; }
-    .spine.release .spine-bob { transform: none !important; }
-  }
   </style>
 </head>
 <body>
@@ -430,7 +421,7 @@
     'use strict';
     var reel = document.getElementById('reel');
     if (!reel) return;
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
     var spine = document.getElementById('spine');
     var spineBob = document.getElementById('spineBob');
     var elPct = document.getElementById('spinePct');
@@ -983,7 +974,7 @@
      motion. ---- */
   (function () {
     'use strict';
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
     if (reduce) return;
     var plates = document.querySelectorAll('.specimen .plate, .cover .plate');
     if (!plates.length) return;

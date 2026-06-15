@@ -10,7 +10,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
 
   /* ---------- 1. REVEAL + CHART ANIMATION ---------- */
   (function () {

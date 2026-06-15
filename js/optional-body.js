@@ -198,7 +198,7 @@
   if (restart) {
     restart.addEventListener('click', function (ev) {
       ev.preventDefault();
-      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
       window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
     });
   }

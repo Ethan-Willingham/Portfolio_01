@@ -6966,7 +6966,7 @@
   // settling pan. introLum drives the star + gas brightness; skyReadyEase * introLum
   // drives the nebula (so a late/slow nebula still fades in rather than popping). At
   // lum = 1 every multiplier is 1, so this is completely inert once it finishes.
-  var reduceMotion = (typeof matchMedia === 'function') && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduceMotion = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var introLum = 0, skyReadyEase = 0, introT = 0, introWait = 0;
   var introStarted = false, INTRO_DONE = false;
   var INTRO_DUR = reduceMotion ? 0.001 : 2.2;   // bloom-up duration (s); reduced-motion: appear at once, no animated bloom
