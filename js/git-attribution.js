@@ -1,9 +1,8 @@
 /* "Which mind built which page" — the per-post model-attribution visualization.
-   A family.co-flavoured reading of js/git-attribution-data.js: a grid of rounded
-   app-icon tiles (one per post, each a conic ring of the models that built it),
-   a single-focus tray that springs up on tap, an Edits<->Tokens toggle whose
-   percentages morph and count. All motion is gated behind prefers-reduced-motion.
-   Renders into #ma-root; no external deps. */
+   A grid of tinted metric cards (one per post: lead model, count, a split bar,
+   washed with the lead model's colour), a detail tray that pops up anchored at the
+   clicked card (a bottom sheet on mobile), an Edits<->Tokens toggle. Cards appear
+   on scroll; numbers are static. Renders into #ma-root; no external deps. */
 (function () {
   'use strict';
   var DATA = window.GIT_ATTRIBUTION;
@@ -75,6 +74,10 @@
     }
     el._raf2 = requestAnimationFrame(step);
   }
+  function barHTML(parts) { return parts.map(function (p) { return '<i style="background:' + p.m.color + '" data-pct="' + p.pct.toFixed(3) + '"></i>'; }).join(''); }
+  function growBars(barEl) { if (!barEl) return; var ii = barEl.querySelectorAll('i'); for (var k = 0; k < ii.length; k++) ii[k].style.width = ii[k].getAttribute('data-pct') + '%'; }
+  function hexA(hex, a) { hex = hex.replace('#', ''); return 'rgba(' + parseInt(hex.substr(0, 2), 16) + ',' + parseInt(hex.substr(2, 2), 16) + ',' + parseInt(hex.substr(4, 2), 16) + ',' + a + ')'; }
+  function tintCard(el, color) { el.style.background = 'linear-gradient(155deg, ' + hexA(color, 0.16) + ', rgba(51,59,52,0) 70%), var(--ma-card)'; }
 
   // ---------- animated number (interruptible) ----------
   var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
@@ -107,46 +110,50 @@
     '</div>' +
     '<p class="ma-controls-note" id="ma-note">Share of file changes each model made to a post.</p>';
 
-  // ---------- build: tile grid ----------
+  // ---------- build: card grid ----------
+  function cardInner(post, parts) {
+    var top = parts[0];
+    return '<div class="cv-top"><span class="cv-chip"><i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span></span><span class="cv-val">' + fmtVal(total(post)) + '</span></div>' +
+      '<div class="cv-title">' + post.label + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + dateRange(post.first, post.last) + '</div>';
+  }
   var grid = document.createElement('div');
-  grid.className = 'ma-grid';
+  grid.className = 'cv-grid';
   var ANIM = !REDUCE && ('IntersectionObserver' in window);
-  POSTS.forEach(function (post, i) {
+  POSTS.forEach(function (post) {
+    var parts = split(post);
     var b = document.createElement('button');
-    b.className = 'ma-tile';
+    b.className = 'cv' + (post.kind === 'archived' ? ' is-arch' : '');
     b.setAttribute('data-key', post.key);
-    b.style.setProperty('--i', i);
-    if (post.kind === 'archived') b.classList.add('is-arch');
-    b.innerHTML =
-      '<span class="ma-donut"><span class="ma-donut-hole"><span class="ma-donut-val"></span></span></span>' +
-      '<span class="ma-tile-title">' + post.label + '</span>' +
-      '<span class="ma-tile-sub"></span>';
+    b.innerHTML = cardInner(post, parts);
+    tintCard(b, parts[0].m.color);
     grid.appendChild(b);
     post._el = b;
-    // the italic title already marks archived, so the sub stays a compact date
-    b.querySelector('.ma-tile-sub').textContent = dateRange(post.first, post.last);
-    var v0 = b.querySelector('.ma-donut-val'); v0._v = total(post); v0.textContent = fmtVal(total(post));
-    if (ANIM) b.querySelector('.ma-donut').style.background = '#3a443b'; // ring drawn on at reveal
-    else paintTile(post);
+    if (ANIM) b.style.opacity = '0';   // revealed on scroll-in
+    else growBars(b.querySelector('.cv-bar'));
   });
 
-  // repaint a tile's donut + number for the current metric.
-  // opts.pulse gives the ring a quick spring (used on the metric toggle).
-  function paintTile(post, opts) {
-    opts = opts || {};
-    var d = post._el.querySelector('.ma-donut');
-    d.style.background = conic(split(post));
-    animNum(post._el.querySelector('.ma-donut-val'), total(post), fmtVal);
-    if (opts.pulse && !REDUCE) { d.classList.remove('is-pulse'); void d.offsetWidth; d.classList.add('is-pulse'); }
+  // repaint a card for the current metric
+  function paintTile(post) {
+    var parts = split(post), el = post._el;
+    el.innerHTML = cardInner(post, parts);
+    tintCard(el, parts[0].m.color);
+    growBars(el.querySelector('.cv-bar'));
   }
 
-  // staggered reveal: rings draw on + numbers count up when the grid first appears
+  // staggered reveal: cards rise + fade in and the split bars grow, on scroll-in
   var revealed = false;
   function revealGrid() {
     if (revealed) return; revealed = true;
     POSTS.forEach(function (post, i) {
-      drawDonut(post._el.querySelector('.ma-donut'), split(post), true, i * 45);
-      var v = post._el.querySelector('.ma-donut-val'); v._v = total(post); v.textContent = fmtVal(total(post));
+      var el = post._el;
+      if (REDUCE || document.hidden) { el.style.opacity = '1'; el.style.transform = 'none'; growBars(el.querySelector('.cv-bar')); return; }
+      el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(13px)';
+      var bi = el.querySelectorAll('.cv-bar i'); for (var k = 0; k < bi.length; k++) bi[k].style.width = '0';
+      void el.offsetWidth;
+      var d = i * 38;
+      el.style.transition = 'opacity 0.5s ease ' + d + 'ms, transform 0.55s var(--ma-spring) ' + d + 'ms';
+      el.style.opacity = '1'; el.style.transform = 'none';
+      (function (e2) { setTimeout(function () { growBars(e2.querySelector('.cv-bar')); }, d + 70); })(el);
     });
   }
 
@@ -170,7 +177,7 @@
     '<a class="ma-tray-link" target="_self">Open the post <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3h8v8M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
 
   var openPost = null;
-  function openTray(post) {
+  function openTray(post, anchorEl) {
     openPost = post;
     var parts = split(post);
     tray.querySelector('.ma-tray-kind').textContent = post.kind === 'archived' ? 'Archived post' : 'Post';
@@ -181,6 +188,17 @@
     if (post.href) { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
     else link.style.display = 'none';
     paintTray(post, parts, true);
+    // desktop: anchor the popover at the clicked card; mobile: bottom sheet
+    var anchored = window.innerWidth >= 600 && anchorEl;
+    tray.classList.toggle('is-anchored', !!anchored);
+    if (anchored) {
+      var tw = tray.offsetWidth, th = tray.offsetHeight, r = anchorEl.getBoundingClientRect(), gap = 10;
+      var lx = Math.max(12, Math.min(window.innerWidth - tw - 12, r.left + r.width / 2 - tw / 2));
+      var ty = r.bottom + gap;
+      if (ty + th > window.innerHeight - 12) ty = r.top - th - gap; // flip above if no room below
+      if (ty < 12) ty = 12;
+      tray.style.left = lx + 'px'; tray.style.top = ty + 'px';
+    } else { tray.style.left = ''; tray.style.top = ''; }
     scrim.classList.add('is-on');
     tray.classList.add('is-on');
     document.addEventListener('keydown', onKey);
@@ -227,9 +245,9 @@
   function onKey(e) { if (e.key === 'Escape') closeTray(); }
 
   grid.addEventListener('click', function (e) {
-    var t = e.target.closest('.ma-tile'); if (!t) return;
+    var t = e.target.closest('.cv'); if (!t) return;
     var post = POSTS.filter(function (p) { return p.key === t.getAttribute('data-key'); })[0];
-    if (post) openTray(post);
+    if (post) openTray(post, t);
   });
   scrim.addEventListener('click', closeTray);
   tray.querySelector('.ma-tray-x').addEventListener('click', closeTray);
@@ -248,7 +266,7 @@
     document.getElementById('ma-note').textContent = metric === 'tokens'
       ? 'Share of output tokens each model actually wrote into a post.'
       : 'Share of file changes each model made to a post.';
-    POSTS.forEach(function (p) { paintTile(p, { pulse: true }); });
+    POSTS.forEach(function (p) { paintTile(p); });
     if (openPost) paintTray(openPost);
   });
 
