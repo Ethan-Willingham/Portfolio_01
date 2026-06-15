@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Leaving portal lab</title>
+  <link rel="preload" href="assets/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     LEAVING PORTAL LAB  (throwaway, noindex)
+     The "Feeling lucky?" send-off as a scroll portal, built to
+     Amelia Wattenberger's exact recipe (wattenberger.com):
+
+       - one gradient CLIPPED to the text, no letters moving
+       - linear-gradient(to bottom right IN OKLCH INCREASING HUE,
+           oklch(6% 0.3 91) 0% 0%,  <S>% ,  #8179FF 92% 100%)
+       - a single mid hint slides on SCROLL:  S = 84 - min(261, s)*0.3
+         so the dark start shrinks and the OKLCH spectrum floods in
+
+     Her face is Parclo Serif (Lettermatic, paid). This stand-in is
+     self-hosted Fraunces Black (open-license, OFL) at display optical
+     size, the closest free heavy contemporary serif; swap the
+     @font-face + family to Parclo once licensed.
+
+     Then the screen scrolls up and a live, real Wikipedia article is
+     revealed in an iframe. Article pages send no X-Frame-Options /
+     frame-ancestors, so they embed. We resolve a random TITLE via the
+     CORS API and load the article DIRECTLY (Special:Random's 302
+     redirect gets aborted inside a frame). The browser URL stays on
+     this site (it is an embed); the "open on Wikipedia" pill is the
+     real, full-URL hand-off.
+     ============================================================ */
+
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('assets/fonts/fraunces.woff2') format('woff2');
+  }
+
+  html { background: var(--bg, #303931); }
+  body { margin: 0; padding: 0; background: var(--bg, #303931); }
+
+  /* the send-off pins while you scroll it through the flood, then releases
+     and scrolls up to reveal the Wikipedia article underneath */
+  .scene { position: relative; height: 220vh; height: 220svh; }
+  .pin { position: sticky; top: 0; height: 100vh; height: 100svh;
+         display: grid; place-items: center; padding: 8vh 6vw; box-sizing: border-box;
+         background: var(--bg, #303931); overflow: hidden; }
+
+  .line {
+    margin: 0; max-width: 16ch; text-align: center; text-wrap: balance;
+    font-family: 'Fraunces', 'Century Schoolbook', Georgia, serif;
+    font-weight: 900; font-variation-settings: 'opsz' 144, 'wght' 900;
+    font-size: clamp(2.7rem, 12vw, 10rem); line-height: 0.93; letter-spacing: -0.025em;
+    color: transparent; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
+    background-image: linear-gradient(to bottom right, #2b2f3a 0%, #8179FF 100%); /* no-oklch fallback */
+  }
+
+  .hint { position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%);
+          font-family: var(--font-mono, ui-monospace, monospace);
+          font-size: 0.74rem; letter-spacing: 0.3em; text-transform: uppercase;
+          color: var(--text-faint, #a4a293); white-space: nowrap; }
+  .hint .chev { display: block; margin-top: 0.6rem; font-size: 1rem; letter-spacing: 0; animation: nudge 1.9s ease-in-out infinite; }
+  @keyframes nudge { 0%,100% { transform: translateY(0); opacity: 0.55; } 50% { transform: translateY(4px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .hint .chev { animation: none; } }
+
+  .wikiwrap { position: relative; height: 100vh; height: 100svh; background: var(--bg, #303931); }
+  .wiki { position: relative; z-index: 1; width: 100%; height: 100%; border: 0; display: block; background: transparent; }
+  .wikiwrap::before { /* a held breath while the random article loads */
+    content: 'opening a random page'; position: absolute; inset: 0; display: grid; place-items: center;
+    font-family: var(--font-mono, monospace); font-size: 0.8rem; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--text-faint, #a4a293); z-index: 0; }
+
+  /* the real-URL hand-off, fades in only once you are on the article */
+  .wiki-open { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; opacity: 0; pointer-events: none;
+    transition: opacity .3s ease; font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.72rem;
+    letter-spacing: 0.05em; color: var(--bg, #303931); background: var(--accent, #d4c4a0); text-decoration: none;
+    padding: 0.5em 0.95em; border-radius: 999px; box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
+  .wiki-open:hover { filter: brightness(1.08); }
+  </style>
+</head>
+<body>
+
+  <div class="scene">
+    <div class="pin">
+      <h1 class="line">to a random wikipedia page</h1>
+      <p class="hint" aria-hidden="true">scroll<span class="chev">&#8595;</span></p>
+    </div>
+  </div>
+
+  <section class="wikiwrap">
+    <iframe class="wiki" title="A random Wikipedia article" loading="eager"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <a class="wiki-open" id="wikiOpen" href="https://en.wikipedia.org/wiki/Special:Random"
+       target="_top" rel="noopener">open on Wikipedia &#8599;</a>
+  </section>
+
+  <script>
+  (function () {
+    'use strict';
+    var line   = document.querySelector('.line');
+    var hint   = document.querySelector('.hint');
+    var scene  = document.querySelector('.scene');
+    var iframe = document.querySelector('.wiki');
+    var openLink = document.getElementById('wikiOpen');
+
+    // Wattenberger's exact text fill: dark OKLCH start -> periwinkle, with the
+    // mid hint position S driven by scroll. "increasing hue" cycles the spectrum.
+    function grad(S) {
+      return 'linear-gradient(to bottom right in oklch increasing hue, '
+           + 'oklch(6% 0.3 91) 0% 0%, ' + S.toFixed(1) + '%, #8179FF 92% 100%)';
+    }
+
+    function onScroll() {
+      var vh = window.innerHeight || 1;
+      var pinned = Math.max(1, scene.offsetHeight - vh);   // px of pinned scroll runway
+      var p = Math.min(1, Math.max(0, window.scrollY / (pinned * 0.8))); // flood by 80% of runway
+      var S = 84 - Math.min(261, p * 261) * 0.3;           // her formula, scroll-mapped
+      line.style.backgroundImage = grad(S);
+      if (hint) hint.style.opacity = Math.max(0, 1 - p * 2).toFixed(2);
+      if (openLink) {
+        var inWiki = window.scrollY > pinned * 0.92;
+        openLink.style.opacity = inWiki ? '0.92' : '0';
+        openLink.style.pointerEvents = inWiki ? 'auto' : 'none';
+      }
+    }
+
+    // Resolve a random article via the CORS API, load it directly (no 302), and
+    // aim the hand-off link at the same one. Fall back to Special:Random.
+    function loadRandomArticle() {
+      fetch('https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var t = d.query.random[0].title;
+          var url = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(t.replace(/ /g, '_'));
+          iframe.src = url;
+          if (openLink) openLink.href = url;
+        })
+        .catch(function () { iframe.src = 'https://en.wikipedia.org/wiki/Special:Random'; });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
+    loadRandomArticle();
+  })();
+  </script>
+</body>
+</html>
