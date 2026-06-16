@@ -65,6 +65,8 @@
 
   /* slim reading-progress bar */
   .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
+  /* hidden on mobile (this archived post links a non-existent local style.css, so the rule lives here too) */
+  @media (max-width: 700px) { .reading-progress { display: none; } }
 
   /* ============================ COVER ============================ */
   .cover { max-width: 54rem; margin: 0 auto; padding: 11svh var(--gutter) 5svh; text-align: center; }
