@@ -275,12 +275,26 @@
       if (refs[li] > maxChurn * 1.3) break;
       ctx.fillText(fmtChurn(refs[li]), P.L + P.W + 6, yForChurn(refs[li], P));
     }
+    // x-axis date labels, thinned so they never overlap (a narrow/mobile width fits far
+    // fewer than the gridlines). Majors (month firsts) are placed first so they always
+    // survive; edge labels are nudged inward so they don't clip. Gridlines stay dense.
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    for (var lj = 0; lj < ticks.length; lj++) {
-      var ltx = xFromT(ticks[lj].t, P);
-      if (ltx < P.L - 1 || ltx > P.L + P.W + 1) continue;
-      ctx.fillStyle = ticks[lj].major ? 'rgba(244,240,229,0.9)' : 'rgba(224,220,209,0.6)';
-      ctx.fillText(ticks[lj].label, ltx, P.G + 7);
+    var placed = [], LGAP = 9;
+    for (var lp = 0; lp < 2; lp++) {
+      for (var lj = 0; lj < ticks.length; lj++) {
+        var tk = ticks[lj];
+        if ((lp === 0) !== !!tk.major) continue; // pass 0: majors, pass 1: minors
+        var ltx = xFromT(tk.t, P);
+        if (ltx < P.L - 1 || ltx > P.L + P.W + 1) continue;
+        var lw = ctx.measureText(tk.label).width;
+        var lcx = clamp(ltx, P.L + lw / 2, P.L + P.W - lw / 2);
+        var ll = lcx - lw / 2 - LGAP, lr = lcx + lw / 2 + LGAP, hit = false;
+        for (var pk = 0; pk < placed.length; pk++) { if (ll < placed[pk][1] && lr > placed[pk][0]) { hit = true; break; } }
+        if (hit) continue;
+        placed.push([ll, lr]);
+        ctx.fillStyle = tk.major ? 'rgba(244,240,229,0.9)' : 'rgba(224,220,209,0.6)';
+        ctx.fillText(tk.label, lcx, P.G + 7);
+      }
     }
 
     // band readout — the day under the cursor, snapped onto the orange token line,
