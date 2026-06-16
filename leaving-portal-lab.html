@@ -14,24 +14,24 @@
      LEAVING PORTAL LAB  (throwaway, noindex)
      The "Feeling lucky?" send-off, frosted-glass version.
 
-     - big BOLD ALL-CAPS Century Supra line
-     - bespoke OKLCH spectral fill (deep indigo -> warm gold, swept the
-       warm way through magenta/red/orange via "increasing hue")
-     - the COLOUR ONLY CHANGES DURING THE SCROLL: as the (slow) auto-
-       scroll rolls, the fill floods AND the gradient rotates by the
-       GOLDEN ANGLE (137.508deg = 360/phi^2), tied to scroll position
-     - then it reveals the destination article behind FROSTED GLASS and
-       resolves onto the REAL wikipedia.org page
+     - big BOLD ALL-CAPS Century Supra line, bespoke OKLCH spectral fill
+       (deep indigo -> warm gold, swept the warm way via "increasing hue")
+     - an ARROW invites the scroll; the USER scrolls / swipes down to
+       reveal the destination article. As they scroll, the words go up,
+       the frosted article comes up from below, and the colour rides the
+       scroll: it floods + rotates by the GOLDEN ANGLE (137.508deg),
+       finishing at the golden-ratio point (61.8%) of the roll
+     - the article is behind FROSTED GLASS; reaching the bottom resolves
+       onto the REAL wikipedia.org page (real URL, Back returns here)
 
      Font: site Century Supra (three-font rule holds).
      ============================================================ */
 
   html, body { margin: 0; padding: 0; background: var(--bg, #303931); }
 
-  .scene { position: relative; height: 200vh; height: 200svh; }
-  .pin { position: sticky; top: 0; height: 100vh; height: 100svh;
-         display: grid; place-items: center; padding: 8vh 5vw; box-sizing: border-box;
-         background: var(--bg, #303931); overflow: hidden; }
+  .send { position: relative; height: 100vh; height: 100svh;
+          display: grid; place-items: center; padding: 8vh 5vw; box-sizing: border-box;
+          background: var(--bg, #303931); }
   .line {
     margin: 0; max-width: 13ch; text-align: center; text-wrap: balance;
     font-family: century_supra_a, 'Century Schoolbook', Georgia, serif;
@@ -41,6 +41,17 @@
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
     background-image: linear-gradient(200deg, #2b2f3a 0%, #e7b663 100%); /* no-oklch fallback */
   }
+
+  /* the arrow cue */
+  .arrow { position: absolute; left: 50%; bottom: 5.5vh; transform: translateX(-50%);
+           display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
+           color: var(--accent, #d4c4a0); pointer-events: none; }
+  .arrow span { font-family: var(--font-mono, ui-monospace, monospace);
+                font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase; }
+  .arrow svg { width: 26px; height: auto; display: block; animation: bob 1.8s ease-in-out infinite; }
+  .arrow path { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  @keyframes bob { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(5px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .arrow svg { animation: none; } }
 
   /* the destination, revealed behind frosted glass */
   .wikiwrap { position: relative; height: 100vh; height: 100svh; background: var(--bg, #303931); overflow: hidden; }
@@ -55,11 +66,13 @@
 </head>
 <body>
 
-  <div class="scene">
-    <div class="pin">
-      <h1 class="line">to a random wikipedia page</h1>
+  <section class="send">
+    <h1 class="line">to a random wikipedia page</h1>
+    <div class="arrow" aria-hidden="true">
+      <span>scroll</span>
+      <svg viewBox="0 0 26 16"><path d="M3 3 L13 13 L23 3"/></svg>
     </div>
-  </div>
+  </section>
 
   <section class="wikiwrap">
     <iframe class="wiki" title="" aria-hidden="true" tabindex="-1"
@@ -70,25 +83,21 @@
   <script>
   (function () {
     'use strict';
-    var line   = document.querySelector('.line');
-    var scene  = document.querySelector('.scene');
+    var line  = document.querySelector('.line');
+    var arrow = document.querySelector('.arrow');
     var iframe = document.querySelector('.wiki');
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // ---- golden ratio ----
     var PHI = 1.6180339887498949;
     var GOLD = 360 / (PHI * PHI);     // golden angle, 137.50776 deg
     var ANGLE0 = 200;                 // bespoke base angle
-    var HOLD = 618;                   // 1000 / phi  : sit on the text first
-    var SCROLL_MS = 2618;             // 1000 * phi^2 : the SLOW scroll (colour rides it)
-    var SETTLE = 618;                 // 1000 / phi
+    var FLOOD_AT = 1 / PHI;           // colour fully floods at 61.8% of the scroll
 
     // ---- bespoke spectral fill: deep indigo -> warm gold, swept the warm way ----
     function grad(angle, S) {
       return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch increasing hue, '
            + 'oklch(18% 0.15 290) 0% 0%, ' + S.toFixed(1) + '%, oklch(80% 0.175 85) 92% 100%)';
     }
-    line.style.backgroundImage = grad(ANGLE0, 84);   // rest colour (stays put until the scroll)
 
     // destination + frosted preview (direct article; Special:Random's 302 aborts in a frame)
     var DEST = 'https://en.wikipedia.org/wiki/Special:Random';
@@ -101,35 +110,23 @@
       })
       .catch(function () { /* keep Special:Random; leave the frosted panel plain green */ });
 
-    function block(e) { e.preventDefault(); }
-    function blockKeys(e) { if ([32,33,34,35,36,38,40].indexOf(e.keyCode) >= 0) e.preventDefault(); }
-    window.addEventListener('wheel', block, { passive: false });
-    window.addEventListener('touchmove', block, { passive: false });
-    window.addEventListener('keydown', blockKeys);
-
-    function go() { window.location.replace(DEST); }
-    function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
-
-    if (reduce) { setTimeout(go, HOLD + 900); return; }   // no scroll -> no colour change, just go
-
-    var start = null, targetY = 0;
-    function loop(ts) {
-      if (start === null) { start = ts; targetY = document.documentElement.scrollHeight - window.innerHeight; }
-      var el = ts - start;
-      if (el < HOLD) { requestAnimationFrame(loop); return; }   // hold on the rest-colour text
-      var se = el - HOLD;
-      if (se < SCROLL_MS) {                                      // the slow scroll drives BOTH the move and the colour
-        var y = targetY * easeInOut(se / SCROLL_MS);
-        window.scrollTo(0, Math.round(y));
-        var cp = Math.min(1, y / (targetY * 0.55));             // colour flood, tied to scroll position
-        line.style.backgroundImage = grad(ANGLE0 + cp * GOLD, 84 - cp * 78);
-        requestAnimationFrame(loop); return;
+    var navigated = false;
+    function onScroll() {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;   // 0..1 scroll progress
+      var cp = Math.min(1, p / FLOOD_AT);                                     // colour flood, tied to scroll
+      line.style.backgroundImage = grad(ANGLE0 + cp * GOLD, 84 - cp * 78);
+      if (arrow) arrow.style.opacity = Math.max(0, 1 - p * 2.4).toFixed(2);
+      if (p >= 0.92 && !navigated) {                                          // reached the article -> the real page
+        navigated = true;
+        setTimeout(function () { window.location.replace(DEST); }, 260);
       }
-      window.scrollTo(0, targetY);
-      line.style.backgroundImage = grad(ANGLE0 + GOLD, 6);
-      setTimeout(go, SETTLE);                                    // resolve onto the real article
     }
-    requestAnimationFrame(loop);
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    window.scrollTo(0, 0);
+    onScroll();   // rest colour at the top
   })();
   </script>
 </body>
