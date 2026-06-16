@@ -994,6 +994,12 @@ body {
    same clearance. */
 .site-footer { margin-top: auto; padding-top: 3.5rem; padding-bottom: 4rem; }
 .site-footer-inner { border-top: 1px solid var(--rule); padding-top: 1.5rem; padding-bottom: 1rem; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1.5rem; font-size: 0.88rem; color: var(--text-faint); }
+/* Full-bleed post pages (no .site-wrapper) zero the body's side padding and inset
+   each section by the gutter themselves; the footer must match, or the copyright
+   byline ends up flush against the screen edge on mobile. Home-style pages keep
+   the footer inside .site-wrapper and inherit the body's gutter, so scope this to
+   pages without a wrapper. Posts that already set footer padding inline keep it. */
+body:not(:has(.site-wrapper)) .site-footer-inner { padding-left: var(--gutter); padding-right: var(--gutter); }
 .site-footer a { color: var(--text-dim); text-decoration: none; transition: color 0.25s; }
 .site-footer a:hover { color: var(--text-bright); }
 .footer-links { display: flex; gap: 1rem; }

@@ -19,7 +19,8 @@
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var css =
-    '.btt-fab{position:fixed;left:50%;bottom:clamp(1rem,4vw,2.4rem);z-index:50;' +
+    '.btt-fab{position:fixed;left:50%;' +
+      'bottom:calc(clamp(1rem,4vw,2.4rem) + env(safe-area-inset-bottom,0px) + var(--btt-vv,0px));z-index:50;' +
       'display:inline-flex;align-items:center;padding:0.7rem 0.8rem;border:none;' +
       'font-family:var(--font-body,system-ui,sans-serif);font-size:0.88rem;line-height:inherit;' +
       'border-radius:2px;background:transparent;color:var(--text-dim,#B8B2A2);cursor:pointer;overflow:hidden;' +
@@ -85,18 +86,42 @@
   var lastY = window.scrollY || window.pageYOffset || 0;
   var deepest = lastY;                                    // furthest-down scrollY since we last headed down
   var ticking = false;
+
+  // Mobile browsers slide a toolbar over the BOTTOM of the layout viewport, which
+  // is exactly where this button sits and exactly when it appears (at the page
+  // bottom). Lift it by however much of the layout viewport the toolbar (or an
+  // on-screen keyboard) currently hides, read from the visual viewport, so it is
+  // never tucked behind the chrome. No-op on desktop (visual == layout viewport).
+  function syncViewport() {
+    var vv = window.visualViewport;
+    var hidden = vv ? (window.innerHeight - vv.height - vv.offsetTop) : 0;
+    b.style.setProperty('--btt-vv', (hidden > 0 ? hidden : 0) + 'px');
+  }
+
   function evaluate() {
     ticking = false;
+    var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll < 0) maxScroll = 0;
     var y = window.scrollY || window.pageYOffset || 0;
+    if (y > maxScroll) y = maxScroll;                     // ignore iOS rubber-band overscroll past the end
     if (y > lastY + 1 || y > deepest) deepest = y;        // heading down: chase the bottom so arrival re-reveals
-    lastY = y;
+    if (deepest > maxScroll) deepest = maxScroll;         // overscroll must not inflate the high-water mark, or the
+    lastY = y;                                            // settle-back from the bounce would read as "scrolled up"
     if (!longEnough()) { hide(); return; }
     if (deepest - y > UP_DISMISS) { hide(); return; }     // backed away from the bottom: dismiss immediately
-    var fromBottom = document.documentElement.scrollHeight - (window.innerHeight + y);
+    var fromBottom = maxScroll - y;
     if (fromBottom <= REVEAL_ZONE) show(); else hide();
   }
   function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(evaluate); } }
+  function onResize() { syncViewport(); lastY = deepest = window.scrollY || window.pageYOffset || 0; evaluate(); }
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', function () { lastY = deepest = window.scrollY || window.pageYOffset || 0; evaluate(); }, { passive: true });
+  window.addEventListener('resize', onResize, { passive: true });
+  // The mobile toolbar showing/hiding fires on the visual viewport, often without
+  // a window 'resize', so track it directly to keep both the lift and the reveal current.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onResize, { passive: true });
+    window.visualViewport.addEventListener('scroll', function () { syncViewport(); onScroll(); }, { passive: true });
+  }
+  syncViewport();
   evaluate();
 })();
