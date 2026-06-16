@@ -23,14 +23,15 @@
 
   // ----- the fuel: tokens spent per day, drawn as a glow band on the shared
   // time axis behind the dots (folded in from the old standalone usage chart).
-  // Index 0 = May 1 2026; one entry per day through Jun 13. Before May 1 the
+  // Index 0 = May 1 2026; one entry per day through Jun 16. Before May 1 the
   // site was built by hand, so there is no band there — that absence is the point. -----
   var DAILY = [16607317, 36137104, 69177645, 42724566, 39884750, 410619, 81899196,
     71871667, 113285745, 159976758, 329253840, 295195507, 457538327, 127231443, 0,
     285454643, 309323557, 623423505, 271215837, 66298045, 290609738, 1197709924,
     1543803732, 1320336965, 702974597, 285643166, 67725588, 507072587, 829700193,
     948042044, 779405982, 553922455, 691281258, 98965260, 130233736,
-    49406229, 0, 437292700, 97568887, 927412697, 737451722, 441003124, 189071669, 667926723];
+    49406229, 0, 437292700, 97568887, 927412697, 737451722, 441003124, 189071669, 957780846,
+    828288732, 65467268, 18225562];
   var DAILY_T0 = new Date(2026, 4, 1).getTime() / 1000; // May 1 2026, local midnight
   var DAILY_MAX = 1.6e9;                                 // scale ceiling (peak day ≈ 1.54B)
   function tokensOnDay(sec) {
