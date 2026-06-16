@@ -365,7 +365,7 @@
         <a href="/">&copy; 2026 Ethan Willingham</a>
         <span class="ftr-links">
           <a href="https://github.com/Ethan-Willingham/Portfolio_01">GitHub <span class="arr">&#8599;</span></a>
-          <a class="ftr-lucky" href="https://en.wikipedia.org/wiki/Special:Random">Feeling lucky? <span class="arr">&#8599;</span></a>
+          <a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a>
         </span>
       </div>
     </footer>
@@ -374,47 +374,7 @@
   <style>
     .ftr-links { display: flex; flex-wrap: wrap; gap: 1.4rem; }
     .site-footer .arr { font-size: 0.82em; }
-    .re-veil { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.55rem; text-align: center; padding: 2rem; background: #1c2218; opacity: 0; transition: opacity .55s ease; }
-    .re-veil.on { opacity: 1; }
-    .re-veil .s { font-family: var(--font-heading); font-size: 2.4rem; line-height: 1; color: var(--accent); animation: reBreath 3.4s ease-in-out infinite; }
-    .re-veil .m { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.5rem, 4.6vw, 2.1rem); color: var(--text-bright); line-height: 1.34; max-width: 19ch; margin: 0; }
-    .re-veil .u { font-family: var(--font-body); font-size: 0.74rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-dim); }
-    .re-veil .m, .re-veil .u { transform: translateY(10px); opacity: 0; transition: transform .7s cubic-bezier(0.23, 1, 0.32, 1), opacity .7s ease; }
-    .re-veil.on .m { transform: none; opacity: 1; transition-delay: .1s; }
-    .re-veil.on .u { transform: none; opacity: 1; transition-delay: .2s; }
-    .re-veil .ln { position: absolute; left: 50%; bottom: 2.7rem; transform: translateX(-50%); width: min(42vw, 300px); height: 1px; background: linear-gradient(to right, transparent, rgba(212,196,160,0.4), transparent); opacity: 0; transition: opacity .9s ease .4s; }
-    .re-veil.on .ln { opacity: 1; }
-    @keyframes reBreath { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) { .re-veil, .re-veil .m, .re-veil .u, .re-veil .ln { transition: none; } .re-veil .m, .re-veil .u, .re-veil .ln { transform: none; opacity: 1; } .re-veil .s { animation: none; opacity: .9; } }
   </style>
-  <script>
-  (function () {
-    var d = document.querySelector('.ftr-lucky');
-    if (!d) return;
-    function clearVeil() {
-      var veils = document.querySelectorAll('.re-veil');
-      for (var i = 0; i < veils.length; i++) veils[i].remove();
-    }
-    d.addEventListener('click', function (e) {
-      e.preventDefault();
-      var v = document.createElement('div');
-      v.className = 're-veil';
-      v.setAttribute('role', 'status');
-      v.innerHTML = '<span class="s">&#10087;</span><p class="m">Off to a random page of Wikipedia</p><span class="u">see where you land</span><span class="ln"></span>';
-      document.body.appendChild(v);
-      requestAnimationFrame(function () { v.classList.add('on'); });
-      setTimeout(function () { window.location.href = d.href; }, 1500);
-    });
-    // The send-off veil covers the whole screen, then we leave for Wikipedia.
-    // Browsers keep this page in the back-forward cache, so a visitor hitting Back
-    // to return would otherwise land on index.html restored exactly as they left
-    // it, veil still on top, looking like Back never reached the homepage. Strip
-    // the veil before the page is frozen (clean snapshot, no flash) and again on
-    // restore as a safety net, so Back always lands on a clean homepage.
-    window.addEventListener('pagehide', clearVeil);
-    window.addEventListener('pageshow', function (e) { if (e.persisted) clearVeil(); });
-  })();
-  </script>
 
   <script>
   (function () {

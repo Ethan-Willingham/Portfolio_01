@@ -4,24 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>Leaving portal lab</title>
+  <title>Feeling lucky</title>
   <link rel="preload" href="assets/fonts/century_supra_a_bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://en.wikipedia.org">
   <link rel="dns-prefetch" href="https://en.wikipedia.org">
   <link rel="stylesheet" href="style.css">
   <style>
   /* ============================================================
-     LEAVING PORTAL LAB  (throwaway, noindex)
-     The "Feeling lucky?" send-off, frosted-glass version.
+     The "Feeling lucky?" send-off (linked from the homepage footer).
 
      - big BOLD ALL-CAPS Century Supra "RANDOM WIKIPEDIA PAGE"
-     - ON-BRAND bespoke OKLCH fill: deep rose -> warm gold (the site's
-       rose emphasis + gold accent), swept the warm way (rose/coral/
-       amber) via "increasing hue", from a 200deg base angle
-     - a big gradient-filled ARROW (same fill as the words) invites it;
-       the USER scrolls/swipes down. The words go up, the frosted article
-       comes up, and the colour rides the scroll: it floods + rotates by
-       the GOLDEN ANGLE (137.508deg), finishing at the golden point (61.8%)
+     - ON-BRAND OKLCH fill: warm coral -> gold (the site's warm earth +
+       gold accent), swept through amber via "increasing hue", 200deg base
+     - a sleek (family.co-ish) gradient-filled DOWN ARROW invites it; the
+       USER scrolls/swipes down. The words go up, the destination article
+       comes up behind FROSTED GLASS, and the colour rides the scroll: it
+       floods + rotates by the GOLDEN ANGLE (137.508deg), finishing at the
+       golden point (61.8%) of the roll
      - reaching the bottom resolves onto the REAL wikipedia.org page
 
      Font: site Century Supra (three-font rule holds).
@@ -39,19 +38,19 @@
     font-size: clamp(2.6rem, 13vw, 11.5rem); line-height: 0.9; letter-spacing: -0.005em;
     color: transparent; -webkit-text-fill-color: transparent;
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
-    background-image: linear-gradient(200deg, #6e3a52 0%, #e7c87f 100%); /* no-oklch fallback */
+    background-image: linear-gradient(200deg, #b8694a 0%, #e6c87e 100%); /* no-oklch fallback */
   }
 
-  /* a big arrow, filled with the SAME gradient as the words (CSS mask) */
+  /* a sleek down arrow, filled with the SAME gradient as the words (CSS mask) */
   .arrow-wrap { position: absolute; left: 50%; bottom: 5.5vh; transform: translateX(-50%); }
   .arrow {
-    width: clamp(44px, 6.8vw, 76px); aspect-ratio: 48 / 64;
-    background-image: linear-gradient(200deg, #6e3a52 0%, #e7c87f 100%);
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 64'%3E%3Cpath fill='white' d='M20 0 h8 v40 h13 L24 64 L7 40 h13 z'/%3E%3C/svg%3E") center / contain no-repeat;
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 64'%3E%3Cpath fill='white' d='M20 0 h8 v40 h13 L24 64 L7 40 h13 z'/%3E%3C/svg%3E") center / contain no-repeat;
-    animation: bob 1.9s ease-in-out infinite;
+    width: clamp(34px, 5vw, 56px); aspect-ratio: 40 / 72;
+    background-image: linear-gradient(200deg, #b8694a 0%, #e6c87e 100%);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 72'%3E%3Cpath d='M20 5 V57 M8 44 L20 57 L32 44' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 72'%3E%3Cpath d='M20 5 V57 M8 44 L20 57 L32 44' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    animation: bob 2s ease-in-out infinite;
   }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
   @media (prefers-reduced-motion: reduce) { .arrow { animation: none; } }
 
   /* the destination, revealed behind frosted glass */
@@ -89,14 +88,13 @@
     // ---- golden ratio ----
     var PHI = 1.6180339887498949;
     var GOLD = 360 / (PHI * PHI);     // golden angle, 137.50776 deg
-    var ANGLE0 = 200;                 // bespoke base angle
+    var ANGLE0 = 200;                 // base angle
     var FLOOD_AT = 1 / PHI;           // colour fully floods at 61.8% of the scroll
 
-    // ---- on-brand spectral fill: deep rose (the emphasis) -> warm gold (the
-    //      accent), swept the warm way through coral/amber via "increasing hue" ----
+    // ---- on-brand spectral fill: warm coral -> gold, swept the warm way ----
     function grad(angle, S) {
       return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch increasing hue, '
-           + 'oklch(44% 0.10 352) 0% 0%, ' + S.toFixed(1) + '%, oklch(86% 0.092 90) 92% 100%)';
+           + 'oklch(53% 0.12 32) 0% 0%, ' + S.toFixed(1) + '%, oklch(86% 0.09 88) 92% 100%)';
     }
     function paint(S, angle) { var g = grad(angle, S); line.style.backgroundImage = g; arrow.style.backgroundImage = g; }
 
