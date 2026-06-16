@@ -36,6 +36,10 @@
     '.btt-fab:hover{color:var(--text-bright,#F5F1EA);}' +
     '.btt-fab:hover .lbl,.btt-fab:focus-visible .lbl{max-width:5ch;opacity:1;margin-left:0.45em;}' +
     '.btt-fab:focus-visible{outline:none;color:var(--text-bright,#F5F1EA);box-shadow:0 0 0 2px rgba(212,196,160,0.5);}' +
+    // The click handler parks focus on the page title for keyboard/AT users.
+    // Safari draws a default focus ring around it even on a tap; suppress that
+    // ring when the move came from a tap/click (the handler adds .btt-noring).
+    '.btt-noring:focus{outline:none;}' +
     '@media (prefers-reduced-motion: reduce){.btt-fab,.btt-fab.show{transition:opacity .2s ease;}' +
       '.btt-fab .ar{transition:none;stroke-dashoffset:0;}.btt-fab .lbl{transition:none;}}';
   var st = document.createElement('style');
@@ -66,11 +70,18 @@
     b.classList.remove('show');
   }
 
-  b.addEventListener('click', function () {
+  b.addEventListener('click', function (ev) {
     hide(true);                                           // vanish at once the moment it's used
     window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
     var t = document.querySelector('h1') || document.querySelector('main') || document.body;
-    if (t) { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); }
+    if (t) {
+      t.setAttribute('tabindex', '-1');
+      // Keep moving focus to the top (keyboard/AT), but don't box the title in a
+      // focus ring when this was a tap or click (ev.detail > 0). A keyboard
+      // activation (ev.detail === 0) keeps the ring so the focus jump stays visible.
+      if (ev.detail !== 0) t.classList.add('btt-noring'); else t.classList.remove('btt-noring');
+      t.focus({ preventScroll: true });
+    }
   });
   document.body.appendChild(b);
 
