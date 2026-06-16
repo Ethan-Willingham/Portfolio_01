@@ -14,8 +14,9 @@
      The "Feeling lucky?" send-off (linked from the homepage footer).
 
      - big BOLD ALL-CAPS Century Supra "RANDOM WIKIPEDIA PAGE"
-     - ON-BRAND OKLCH fill: warm coral -> gold (the site's warm earth +
-       gold accent), swept through amber via "increasing hue", 200deg base
+     - OKLCH fill: vibrant azure -> green -> golden-yellow (a "golden
+       lagoon" - blue-green foundation + golden pop), swept through green
+       via "decreasing hue", 200deg base; the gold end ties to the site
      - a sleek (family.co-ish) gradient-filled DOWN ARROW invites it; the
        USER scrolls/swipes down. The words go up, the destination article
        comes up behind FROSTED GLASS, and the colour rides the scroll: it
@@ -38,14 +39,14 @@
     font-size: clamp(2.6rem, 13vw, 11.5rem); line-height: 0.9; letter-spacing: -0.005em;
     color: transparent; -webkit-text-fill-color: transparent;
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
-    background-image: linear-gradient(200deg, #b8694a 0%, #e6c87e 100%); /* no-oklch fallback */
+    background-image: linear-gradient(200deg, #3a6fb5 0%, #e6cf66 100%); /* no-oklch fallback */
   }
 
   /* a sleek down arrow, filled with the SAME gradient as the words (CSS mask) */
   .arrow-wrap { position: absolute; left: 50%; bottom: 5.5vh; transform: translateX(-50%); }
   .arrow {
     width: clamp(34px, 5vw, 56px); aspect-ratio: 40 / 72;
-    background-image: linear-gradient(200deg, #b8694a 0%, #e6c87e 100%);
+    background-image: linear-gradient(200deg, #3a6fb5 0%, #e6cf66 100%);
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 72'%3E%3Cpath d='M20 5 V57 M8 44 L20 57 L32 44' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 72'%3E%3Cpath d='M20 5 V57 M8 44 L20 57 L32 44' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
     animation: bob 2s ease-in-out infinite;
@@ -91,10 +92,12 @@
     var ANGLE0 = 200;                 // base angle
     var FLOOD_AT = 1 / PHI;           // colour fully floods at 61.8% of the scroll
 
-    // ---- on-brand spectral fill: warm coral -> gold, swept the warm way ----
+    // ---- vibrant azure -> green -> golden-yellow (a "golden lagoon": blue-green
+    //      foundation + golden pop, premium saturation), swept through green via
+    //      "decreasing hue"; the gold end ties back to the site accent ----
     function grad(angle, S) {
-      return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch increasing hue, '
-           + 'oklch(53% 0.12 32) 0% 0%, ' + S.toFixed(1) + '%, oklch(86% 0.09 88) 92% 100%)';
+      return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch decreasing hue, '
+           + 'oklch(56% 0.13 245) 0% 0%, ' + S.toFixed(1) + '%, oklch(86% 0.14 95) 92% 100%)';
     }
     function paint(S, angle) { var g = grad(angle, S); line.style.backgroundImage = g; arrow.style.backgroundImage = g; }
 
