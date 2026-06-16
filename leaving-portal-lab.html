@@ -17,11 +17,11 @@
      - big BOLD ALL-CAPS Century Supra line
      - bespoke OKLCH spectral fill (deep indigo -> warm gold, swept the
        warm way through magenta/red/orange via "increasing hue")
-     - the gradient arrives from a bespoke base angle and ROTATES by the
-       GOLDEN ANGLE (137.508deg = 360/phi^2) across the flood; the phase
-       timing is in golden-ratio proportion (618 : 1000 : 1618 ms)
-     - then the screen scrolls up to reveal the destination article
-       behind FROSTED GLASS, and resolves onto the REAL wikipedia.org page
+     - the COLOUR ONLY CHANGES DURING THE SCROLL: as the (slow) auto-
+       scroll rolls, the fill floods AND the gradient rotates by the
+       GOLDEN ANGLE (137.508deg = 360/phi^2), tied to scroll position
+     - then it reveals the destination article behind FROSTED GLASS and
+       resolves onto the REAL wikipedia.org page
 
      Font: site Century Supra (three-font rule holds).
      ============================================================ */
@@ -75,21 +75,20 @@
     var iframe = document.querySelector('.wiki');
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // ---- golden ratio everywhere ----
+    // ---- golden ratio ----
     var PHI = 1.6180339887498949;
     var GOLD = 360 / (PHI * PHI);     // golden angle, 137.50776 deg
-    var ANGLE0 = 200;                 // bespoke base angle (her gradient was to-bottom-right)
-    var HOLD = 618;                   // 1000 / phi
-    var FLOOD_MS = 1618;              // 1000 * phi
-    var SCROLL_MS = 1000;             // the golden unit
-    var SETTLE = 618;                 // 1000 / phi   (phases read 0.618 : 1 : 1.618)
+    var ANGLE0 = 200;                 // bespoke base angle
+    var HOLD = 618;                   // 1000 / phi  : sit on the text first
+    var SCROLL_MS = 2618;             // 1000 * phi^2 : the SLOW scroll (colour rides it)
+    var SETTLE = 618;                 // 1000 / phi
 
     // ---- bespoke spectral fill: deep indigo -> warm gold, swept the warm way ----
     function grad(angle, S) {
       return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch increasing hue, '
            + 'oklch(18% 0.15 290) 0% 0%, ' + S.toFixed(1) + '%, oklch(80% 0.175 85) 92% 100%)';
     }
-    line.style.backgroundImage = grad(ANGLE0, 84);
+    line.style.backgroundImage = grad(ANGLE0, 84);   // rest colour (stays put until the scroll)
 
     // destination + frosted preview (direct article; Special:Random's 302 aborts in a frame)
     var DEST = 'https://en.wikipedia.org/wiki/Special:Random';
@@ -111,31 +110,24 @@
     function go() { window.location.replace(DEST); }
     function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
-    if (reduce) {
-      line.style.backgroundImage = grad(ANGLE0 + GOLD, 6);
-      setTimeout(go, HOLD + FLOOD_MS);
-      return;
-    }
+    if (reduce) { setTimeout(go, HOLD + 900); return; }   // no scroll -> no colour change, just go
 
     var start = null, targetY = 0;
     function loop(ts) {
       if (start === null) { start = ts; targetY = document.documentElement.scrollHeight - window.innerHeight; }
       var el = ts - start;
-      if (el < HOLD) { requestAnimationFrame(loop); return; }
-      var fe = el - HOLD;
-      if (fe < FLOOD_MS) {                                   // phase 1: flood + rotate by the golden angle
-        var tf = fe / FLOOD_MS, ef = tf * tf * (3 - 2 * tf);
-        line.style.backgroundImage = grad(ANGLE0 + ef * GOLD, 84 - ef * 78);
-        requestAnimationFrame(loop); return;
-      }
-      line.style.backgroundImage = grad(ANGLE0 + GOLD, 6);
-      var se = fe - FLOOD_MS;
-      if (se < SCROLL_MS) {                                  // phase 2: scroll up to the frosted article
-        window.scrollTo(0, Math.round(targetY * easeInOut(se / SCROLL_MS)));
+      if (el < HOLD) { requestAnimationFrame(loop); return; }   // hold on the rest-colour text
+      var se = el - HOLD;
+      if (se < SCROLL_MS) {                                      // the slow scroll drives BOTH the move and the colour
+        var y = targetY * easeInOut(se / SCROLL_MS);
+        window.scrollTo(0, Math.round(y));
+        var cp = Math.min(1, y / (targetY * 0.55));             // colour flood, tied to scroll position
+        line.style.backgroundImage = grad(ANGLE0 + cp * GOLD, 84 - cp * 78);
         requestAnimationFrame(loop); return;
       }
       window.scrollTo(0, targetY);
-      setTimeout(go, SETTLE);                                // phase 3: resolve onto the real article
+      line.style.backgroundImage = grad(ANGLE0 + GOLD, 6);
+      setTimeout(go, SETTLE);                                    // resolve onto the real article
     }
     requestAnimationFrame(loop);
   })();
