@@ -14,15 +14,15 @@
      LEAVING PORTAL LAB  (throwaway, noindex)
      The "Feeling lucky?" send-off, frosted-glass version.
 
-     - big BOLD ALL-CAPS Century Supra line, bespoke OKLCH spectral fill
-       (deep indigo -> warm gold, swept the warm way via "increasing hue")
-     - an ARROW invites the scroll; the USER scrolls / swipes down to
-       reveal the destination article. As they scroll, the words go up,
-       the frosted article comes up from below, and the colour rides the
-       scroll: it floods + rotates by the GOLDEN ANGLE (137.508deg),
-       finishing at the golden-ratio point (61.8%) of the roll
-     - the article is behind FROSTED GLASS; reaching the bottom resolves
-       onto the REAL wikipedia.org page (real URL, Back returns here)
+     - big BOLD ALL-CAPS Century Supra "RANDOM WIKIPEDIA PAGE"
+     - ON-BRAND bespoke OKLCH fill: deep rose -> warm gold (the site's
+       rose emphasis + gold accent), swept the warm way (rose/coral/
+       amber) via "increasing hue", from a 200deg base angle
+     - a big gradient-filled ARROW (same fill as the words) invites it;
+       the USER scrolls/swipes down. The words go up, the frosted article
+       comes up, and the colour rides the scroll: it floods + rotates by
+       the GOLDEN ANGLE (137.508deg), finishing at the golden point (61.8%)
+     - reaching the bottom resolves onto the REAL wikipedia.org page
 
      Font: site Century Supra (three-font rule holds).
      ============================================================ */
@@ -30,28 +30,29 @@
   html, body { margin: 0; padding: 0; background: var(--bg, #303931); }
 
   .send { position: relative; height: 100vh; height: 100svh;
-          display: grid; place-items: center; padding: 8vh 5vw; box-sizing: border-box;
+          display: grid; place-items: center; padding: 9vh 5vw 16vh; box-sizing: border-box;
           background: var(--bg, #303931); }
   .line {
-    margin: 0; max-width: 13ch; text-align: center; text-wrap: balance;
+    margin: 0; max-width: 11ch; text-align: center; text-wrap: balance;
     font-family: century_supra_a, 'Century Schoolbook', Georgia, serif;
     font-weight: 700; text-transform: uppercase;
-    font-size: clamp(3rem, 13.5vw, 12.5rem); line-height: 0.9; letter-spacing: -0.005em;
+    font-size: clamp(2.6rem, 13vw, 11.5rem); line-height: 0.9; letter-spacing: -0.005em;
     color: transparent; -webkit-text-fill-color: transparent;
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
-    background-image: linear-gradient(200deg, #2b2f3a 0%, #e7b663 100%); /* no-oklch fallback */
+    background-image: linear-gradient(200deg, #6e3a52 0%, #e7c87f 100%); /* no-oklch fallback */
   }
 
-  /* the arrow cue */
-  .arrow { position: absolute; left: 50%; bottom: 5.5vh; transform: translateX(-50%);
-           display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
-           color: var(--accent, #d4c4a0); pointer-events: none; }
-  .arrow span { font-family: var(--font-mono, ui-monospace, monospace);
-                font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase; }
-  .arrow svg { width: 26px; height: auto; display: block; animation: bob 1.8s ease-in-out infinite; }
-  .arrow path { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-  @keyframes bob { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(5px); opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .arrow svg { animation: none; } }
+  /* a big arrow, filled with the SAME gradient as the words (CSS mask) */
+  .arrow-wrap { position: absolute; left: 50%; bottom: 5.5vh; transform: translateX(-50%); }
+  .arrow {
+    width: clamp(44px, 6.8vw, 76px); aspect-ratio: 48 / 64;
+    background-image: linear-gradient(200deg, #6e3a52 0%, #e7c87f 100%);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 64'%3E%3Cpath fill='white' d='M20 0 h8 v40 h13 L24 64 L7 40 h13 z'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 64'%3E%3Cpath fill='white' d='M20 0 h8 v40 h13 L24 64 L7 40 h13 z'/%3E%3C/svg%3E") center / contain no-repeat;
+    animation: bob 1.9s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+  @media (prefers-reduced-motion: reduce) { .arrow { animation: none; } }
 
   /* the destination, revealed behind frosted glass */
   .wikiwrap { position: relative; height: 100vh; height: 100svh; background: var(--bg, #303931); overflow: hidden; }
@@ -67,11 +68,8 @@
 <body>
 
   <section class="send">
-    <h1 class="line">to a random wikipedia page</h1>
-    <div class="arrow" aria-hidden="true">
-      <span>scroll</span>
-      <svg viewBox="0 0 26 16"><path d="M3 3 L13 13 L23 3"/></svg>
-    </div>
+    <h1 class="line">random wikipedia page</h1>
+    <div class="arrow-wrap" aria-hidden="true"><div class="arrow"></div></div>
   </section>
 
   <section class="wikiwrap">
@@ -85,6 +83,7 @@
     'use strict';
     var line  = document.querySelector('.line');
     var arrow = document.querySelector('.arrow');
+    var arrowWrap = document.querySelector('.arrow-wrap');
     var iframe = document.querySelector('.wiki');
 
     // ---- golden ratio ----
@@ -93,11 +92,13 @@
     var ANGLE0 = 200;                 // bespoke base angle
     var FLOOD_AT = 1 / PHI;           // colour fully floods at 61.8% of the scroll
 
-    // ---- bespoke spectral fill: deep indigo -> warm gold, swept the warm way ----
+    // ---- on-brand spectral fill: deep rose (the emphasis) -> warm gold (the
+    //      accent), swept the warm way through coral/amber via "increasing hue" ----
     function grad(angle, S) {
       return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch increasing hue, '
-           + 'oklch(18% 0.15 290) 0% 0%, ' + S.toFixed(1) + '%, oklch(80% 0.175 85) 92% 100%)';
+           + 'oklch(44% 0.10 352) 0% 0%, ' + S.toFixed(1) + '%, oklch(86% 0.092 90) 92% 100%)';
     }
+    function paint(S, angle) { var g = grad(angle, S); line.style.backgroundImage = g; arrow.style.backgroundImage = g; }
 
     // destination + frosted preview (direct article; Special:Random's 302 aborts in a frame)
     var DEST = 'https://en.wikipedia.org/wiki/Special:Random';
@@ -115,8 +116,8 @@
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;   // 0..1 scroll progress
       var cp = Math.min(1, p / FLOOD_AT);                                     // colour flood, tied to scroll
-      line.style.backgroundImage = grad(ANGLE0 + cp * GOLD, 84 - cp * 78);
-      if (arrow) arrow.style.opacity = Math.max(0, 1 - p * 2.4).toFixed(2);
+      paint(84 - cp * 78, ANGLE0 + cp * GOLD);
+      if (arrowWrap) arrowWrap.style.opacity = Math.max(0, 1 - p * 2.4).toFixed(2);
       if (p >= 0.92 && !navigated) {                                          // reached the article -> the real page
         navigated = true;
         setTimeout(function () { window.location.replace(DEST); }, 260);
