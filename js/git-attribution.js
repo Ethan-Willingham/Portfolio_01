@@ -75,8 +75,6 @@
   }
   function barHTML(parts) { return parts.map(function (p) { return '<i style="background:' + p.m.color + '" data-pct="' + p.pct.toFixed(3) + '"></i>'; }).join(''); }
   function growBars(barEl) { if (!barEl) return; var ii = barEl.querySelectorAll('i'); for (var k = 0; k < ii.length; k++) ii[k].style.width = ii[k].getAttribute('data-pct') + '%'; }
-  function hexA(hex, a) { hex = hex.replace('#', ''); return 'rgba(' + parseInt(hex.substr(0, 2), 16) + ',' + parseInt(hex.substr(2, 2), 16) + ',' + parseInt(hex.substr(4, 2), 16) + ',' + a + ')'; }
-  function tintCard(el, color) { el.style.background = 'linear-gradient(155deg, ' + hexA(color, 0.16) + ', rgba(51,59,52,0) 70%), var(--ma-card)'; }
 
   // ---------- animated number (interruptible) ----------
   var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
@@ -112,8 +110,9 @@
   // ---------- build: card grid ----------
   function cardInner(post, parts) {
     var top = parts[0];
+    var arch = post.kind === 'archived' ? '<span class="cv-arch">(archived)</span>' : '';
     return '<div class="cv-top"><span class="cv-chip"><i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span></span><span class="cv-val">' + fmtVal(total(post)) + '</span></div>' +
-      '<div class="cv-title">' + post.label + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + dateRange(post.first, post.last) + '</div>';
+      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + dateRange(post.first, post.last) + '</div>';
   }
   var grid = document.createElement('div');
   grid.className = 'cv-grid';
@@ -124,7 +123,6 @@
     b.className = 'cv' + (post.kind === 'archived' ? ' is-arch' : '');
     b.setAttribute('data-key', post.key);
     b.innerHTML = cardInner(post, parts);
-    tintCard(b, parts[0].m.color);
     grid.appendChild(b);
     post._el = b;
     if (ANIM) b.style.opacity = '0';   // revealed on scroll-in
@@ -135,7 +133,6 @@
   function paintTile(post) {
     var parts = split(post), el = post._el;
     el.innerHTML = cardInner(post, parts);
-    tintCard(el, parts[0].m.color);
     growBars(el.querySelector('.cv-bar'));
   }
 
@@ -187,22 +184,22 @@
     if (post.href) { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
     else link.style.display = 'none';
     paintTray(post, parts, true);
-    // desktop: anchor the popover at the clicked card; mobile: bottom sheet
-    var anchored = window.innerWidth >= 600 && anchorEl;
-    tray.classList.toggle('is-anchored', !!anchored);
-    if (anchored) {
-      var tw = tray.offsetWidth, th = tray.offsetHeight, r = anchorEl.getBoundingClientRect(), gap = 10;
-      var lx = Math.max(12, Math.min(window.innerWidth - tw - 12, r.left + r.width / 2 - tw / 2));
-      var ty = r.bottom + gap;
-      if (ty + th > window.innerHeight - 12) ty = r.top - th - gap; // flip above if no room below
-      if (ty < 12) ty = 12;
-      tray.style.left = lx + 'px'; tray.style.top = ty + 'px';
-    } else { tray.style.left = ''; tray.style.top = ''; }
+    setTrayMode(); // mode (centred modal vs bottom sheet) is already committed; just spring open
+    lockScroll();
     scrim.classList.add('is-on');
     tray.classList.add('is-on');
     document.addEventListener('keydown', onKey);
     tray.querySelector('.ma-tray-x').focus();
   }
+  // pick the mode from the viewport; only while closed, so the open transition stays same-mode
+  function setTrayMode() { if (!tray.classList.contains('is-on')) tray.classList.toggle('is-centered', window.innerWidth >= 600); }
+  // lock the page behind the modal without the scrollbar-jump (pad by its width)
+  function lockScroll() {
+    var sw = window.innerWidth - document.documentElement.clientWidth;
+    if (sw > 0) document.body.style.paddingRight = sw + 'px';
+    document.body.classList.add('ma-locked');
+  }
+  function unlockScroll() { document.body.style.paddingRight = ''; document.body.classList.remove('ma-locked'); }
   function paintTray(post, parts, animDonut) {
     parts = parts || split(post);
     drawDonut(tray.querySelector('.ma-donut-lg'), parts, !!animDonut, 0);
@@ -239,6 +236,7 @@
     openPost = null;
     scrim.classList.remove('is-on');
     tray.classList.remove('is-on');
+    unlockScroll();
     document.removeEventListener('keydown', onKey);
   }
   function onKey(e) { if (e.key === 'Escape') closeTray(); }
@@ -273,8 +271,13 @@
   root.appendChild(legend);
   root.appendChild(controls);
   root.appendChild(grid);
-  root.appendChild(scrim);
-  root.appendChild(tray);
+  // the tray + scrim are position:fixed; an ancestor of #ma-root carries a transform
+  // (the .fade-in reveal), which would trap fixed positioning inside it. Mount them on
+  // <body> so they centre against the viewport instead.
+  document.body.appendChild(scrim);
+  document.body.appendChild(tray);
+  setTrayMode(); // commit the closed-state mode up front so the first open springs cleanly
+  window.addEventListener('resize', setTrayMode);
 
   // reveal the grid (draw the rings on + count up) when it scrolls into view
   if (ANIM) {

@@ -42,9 +42,9 @@
   // ----- precompute -----
   var tMin = commits[0][IX_T], tMax = commits[N - 1][IX_T];
   var span0 = tMax - tMin;
-  // default focus window: the spring-2026 eruption (scroll out to reveal the full history)
-  var defT0 = new Date(2026, 3, 14).getTime() / 1000;  // Apr 14, 2026
-  var defT1 = new Date(2026, 5, 10).getTime() / 1000;  // Jun 10, 2026
+  // default focus window: the recent month (scroll/pinch out to reveal the full history)
+  var defT0 = new Date(2026, 4, 20).getTime() / 1000;  // May 20, 2026
+  var defT1 = new Date(2026, 5, 17).getTime() / 1000;  // Jun 17, 2026 (covers through Jun 16)
   var fullT0 = tMin - Math.max(86400, span0 * 0.015);
   var fullT1 = Math.max(tMax + 86400 * 7, defT1);       // zoom-out bound; always covers the default window
   var fullSpan = fullT1 - fullT0;
@@ -93,6 +93,7 @@
   var view = { t0: defT0, t1: defT1 };
   var enabled = topics.map(function () { return true; });
   var hoverIdx = -1, pinnedIdx = -1;
+  var bandX = -1; // cursor x (css px) when hovering the plot, drives the token readout; -1 = off
   var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var introStart = performance.now();
   var introOn = !reduce && !document.hidden; // only play the rise when we can actually animate
@@ -152,6 +153,21 @@
   }
 
   function fmtChurn(n) { return n >= 1000 ? (n / 1000) + 'k' : String(n); }
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+  function fmtTokFull(n) { // for the band readout: "623M" / "1.54B"
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e8 ? 0 : 1) + 'M';
+    if (n >= 1e3) return Math.round(n / 1e3) + 'K';
+    return String(n);
+  }
 
   function render() {
     var now = performance.now();
@@ -265,6 +281,50 @@
       if (ltx < P.L - 1 || ltx > P.L + P.W + 1) continue;
       ctx.fillStyle = ticks[lj].major ? 'rgba(244,240,229,0.9)' : 'rgba(224,220,209,0.6)';
       ctx.fillText(ticks[lj].label, ltx, P.G + 7);
+    }
+
+    // band readout — the day under the cursor, snapped onto the orange token line,
+    // with a guide line and a "18 May · 623M tokens" chip. Mouse hover only.
+    if (bandX >= P.L && bandX <= P.L + P.W) {
+      var rIdx = Math.floor((tFromX(bandX, P) - DAILY_T0) / 86400);
+      if (rIdx >= 0 && rIdx < DAILY.length) {
+        var rbx = xFromT(DAILY_T0 + rIdx * 86400 + 43200, P);
+        if (rbx >= P.L && rbx <= P.L + P.W) {
+          var rVal = DAILY[rIdx];
+          var rFr = rVal / DAILY_MAX; if (rFr > 1) rFr = 1;
+          var rby = P.G - rFr * bandMax;
+          // guide line + marker dot on the band
+          ctx.save();
+          ctx.strokeStyle = 'rgba(244,179,107,0.30)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(rbx, P.T); ctx.lineTo(rbx, P.G); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath(); ctx.arc(rbx, rby, 4, 0, 6.2831853);
+          ctx.fillStyle = '#F6BE78'; ctx.fill();
+          ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(12,14,11,0.92)'; ctx.stroke();
+          // chip
+          var rd = new Date((DAILY_T0 + rIdx * 86400) * 1000);
+          var rl1 = rd.getDate() + ' ' + MON[rd.getMonth()];
+          var rl2 = rVal > 0 ? fmtTokFull(rVal) + ' tokens' : 'no tokens that day';
+          ctx.font = '600 11.5px "Commit Mono", ui-monospace, monospace';
+          var rw1 = ctx.measureText(rl1).width;
+          ctx.font = '500 11.5px "Commit Mono", ui-monospace, monospace';
+          var rw2 = ctx.measureText(rl2).width;
+          var rpx = 9, rpy = 6, rlh = 15, rgap = 11;
+          var rbw = Math.max(rw1, rw2) + rpx * 2, rbh = rpy * 2 + rlh + 13;
+          var rbX = clamp(rbx - rbw / 2, P.L, P.L + P.W - rbw);
+          var rbY = rby - rgap - rbh;
+          if (rbY < P.T + 2) rbY = Math.min(rby + rgap, P.G - rbh - 2);
+          ctx.fillStyle = 'rgba(16,19,14,0.95)';
+          ctx.strokeStyle = 'rgba(244,179,107,0.38)'; ctx.lineWidth = 1;
+          roundRect(ctx, rbX, rbY, rbw, rbh, 7); ctx.fill(); ctx.stroke();
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.font = '600 11.5px "Commit Mono", ui-monospace, monospace';
+          ctx.fillStyle = 'rgba(244,240,229,0.96)'; ctx.fillText(rl1, rbX + rpx, rbY + rpy);
+          ctx.font = '500 11.5px "Commit Mono", ui-monospace, monospace';
+          ctx.fillStyle = '#F4B36B'; ctx.fillText(rl2, rbX + rpx, rbY + rpy + rlh);
+          ctx.restore();
+        }
+      }
     }
   }
 
@@ -395,12 +455,14 @@
       var P = plot(), span = panStart.t1 - panStart.t0;
       var dt = (pt.x - panStart.x) / P.W * span;
       view.t0 = panStart.t0 - dt; view.t1 = panStart.t1 - dt;
-      clampView(); killHint(); hideCard(); hoverIdx = -1; requestRender();
+      clampView(); killHint(); hideCard(); hoverIdx = -1; bandX = -1; requestRender();
       return;
     }
 
     // hover (mouse only)
     if (e.pointerType === 'mouse' || e.pointerType === '') {
+      var Pb = plot();
+      bandX = (pt.x >= Pb.L && pt.x <= Pb.L + Pb.W && pt.y >= Pb.T && pt.y <= Pb.G) ? pt.x : -1;
       var idx = pickAt(pt.x, pt.y);
       if (idx !== hoverIdx) {
         hoverIdx = idx;
@@ -441,7 +503,9 @@
     if (pcount === 0) { panStart = null; stage.classList.remove('is-panning'); }
   });
   stage.addEventListener('pointerleave', function () {
-    if (pcount === 0 && pinnedIdx < 0) { hoverIdx = -1; hideCard(); stage.style.cursor = ''; requestRender(); }
+    bandX = -1;
+    if (pcount === 0 && pinnedIdx < 0) { hoverIdx = -1; hideCard(); stage.style.cursor = ''; }
+    requestRender();
   });
 
   stage.addEventListener('wheel', function (e) {
