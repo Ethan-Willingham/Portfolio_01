@@ -14,34 +14,32 @@
      LEAVING PORTAL LAB  (throwaway, noindex)
      The "Feeling lucky?" send-off, frosted-glass version.
 
-     Flow:
-       1. full green screen, static Century Supra line, the OKLCH
-          spectrum floods the text in place (Wattenberger's exact fill:
-          linear-gradient(to bottom right in oklch increasing hue,
-          oklch(6% 0.3 91), <S 84->6>%, #8179FF))
-       2. the screen AUTO-scrolls up to reveal the destination wiki
-          article underneath, behind FROSTED GLASS (the iframe is
-          blurred + tinted, so no harsh white and any content is soft)
-       3. it then resolves onto the REAL wikipedia.org article
-          (location.replace) - real URL, readable, Back returns here.
+     - big BOLD ALL-CAPS Century Supra line
+     - bespoke OKLCH spectral fill (deep indigo -> warm gold, swept the
+       warm way through magenta/red/orange via "increasing hue")
+     - the gradient arrives from a bespoke base angle and ROTATES by the
+       GOLDEN ANGLE (137.508deg = 360/phi^2) across the flood; the phase
+       timing is in golden-ratio proportion (618 : 1000 : 1618 ms)
+     - then the screen scrolls up to reveal the destination article
+       behind FROSTED GLASS, and resolves onto the REAL wikipedia.org page
 
-     The frosted preview is a brief, blurred, transient embed; you end
-     on the genuine page. Font: site Century Supra (three-font rule).
+     Font: site Century Supra (three-font rule holds).
      ============================================================ */
 
   html, body { margin: 0; padding: 0; background: var(--bg, #303931); }
 
   .scene { position: relative; height: 200vh; height: 200svh; }
   .pin { position: sticky; top: 0; height: 100vh; height: 100svh;
-         display: grid; place-items: center; padding: 8vh 6vw; box-sizing: border-box;
+         display: grid; place-items: center; padding: 8vh 5vw; box-sizing: border-box;
          background: var(--bg, #303931); overflow: hidden; }
   .line {
-    margin: 0; max-width: 16ch; text-align: center; text-wrap: balance;
+    margin: 0; max-width: 13ch; text-align: center; text-wrap: balance;
     font-family: century_supra_a, 'Century Schoolbook', Georgia, serif;
-    font-weight: 700; font-size: clamp(2.7rem, 12vw, 10rem); line-height: 0.95; letter-spacing: -0.02em;
+    font-weight: 700; text-transform: uppercase;
+    font-size: clamp(3rem, 13.5vw, 12.5rem); line-height: 0.9; letter-spacing: -0.005em;
     color: transparent; -webkit-text-fill-color: transparent;
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
-    background-image: linear-gradient(to bottom right, #2b2f3a 0%, #8179FF 100%); /* no-oklch fallback */
+    background-image: linear-gradient(200deg, #2b2f3a 0%, #e7b663 100%); /* no-oklch fallback */
   }
 
   /* the destination, revealed behind frosted glass */
@@ -77,30 +75,33 @@
     var iframe = document.querySelector('.wiki');
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    var HOLD = 800;       // read the text
-    var FLOOD_MS = 1800;  // OKLCH floods the text in place
-    var SCROLL_MS = 1300; // auto-scroll up to reveal the frosted article
-    var SETTLE = 850;     // sit on the frosted article before resolving to the real one
+    // ---- golden ratio everywhere ----
+    var PHI = 1.6180339887498949;
+    var GOLD = 360 / (PHI * PHI);     // golden angle, 137.50776 deg
+    var ANGLE0 = 200;                 // bespoke base angle (her gradient was to-bottom-right)
+    var HOLD = 618;                   // 1000 / phi
+    var FLOOD_MS = 1618;              // 1000 * phi
+    var SCROLL_MS = 1000;             // the golden unit
+    var SETTLE = 618;                 // 1000 / phi   (phases read 0.618 : 1 : 1.618)
 
-    // destination + frosted preview. Resolve a direct article up front (Special:Random's
-    // 302 aborts in a frame); preview the SAME article blurred, then really go to it.
+    // ---- bespoke spectral fill: deep indigo -> warm gold, swept the warm way ----
+    function grad(angle, S) {
+      return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch increasing hue, '
+           + 'oklch(18% 0.15 290) 0% 0%, ' + S.toFixed(1) + '%, oklch(80% 0.175 85) 92% 100%)';
+    }
+    line.style.backgroundImage = grad(ANGLE0, 84);
+
+    // destination + frosted preview (direct article; Special:Random's 302 aborts in a frame)
     var DEST = 'https://en.wikipedia.org/wiki/Special:Random';
     fetch('https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*')
       .then(function (r) { return r.json(); })
       .then(function (d) {
         var t = d.query.random[0].title;
         DEST = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(t.replace(/ /g, '_'));
-        iframe.src = DEST;   // frosted preview of the page they are going to
+        iframe.src = DEST;
       })
-      .catch(function () { /* keep Special:Random; leave the frosted panel as plain green */ });
+      .catch(function () { /* keep Special:Random; leave the frosted panel plain green */ });
 
-    function grad(S) {
-      return 'linear-gradient(to bottom right in oklch increasing hue, '
-           + 'oklch(6% 0.3 91) 0% 0%, ' + S.toFixed(1) + '%, #8179FF 92% 100%)';
-    }
-    line.style.backgroundImage = grad(84);
-
-    // block manual scrolling during the show (programmatic scroll still works)
     function block(e) { e.preventDefault(); }
     function blockKeys(e) { if ([32,33,34,35,36,38,40].indexOf(e.keyCode) >= 0) e.preventDefault(); }
     window.addEventListener('wheel', block, { passive: false });
@@ -111,7 +112,7 @@
     function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
     if (reduce) {
-      line.style.backgroundImage = grad(6);
+      line.style.backgroundImage = grad(ANGLE0 + GOLD, 6);
       setTimeout(go, HOLD + FLOOD_MS);
       return;
     }
@@ -122,12 +123,12 @@
       var el = ts - start;
       if (el < HOLD) { requestAnimationFrame(loop); return; }
       var fe = el - HOLD;
-      if (fe < FLOOD_MS) {                                   // phase 1: flood the text in place
+      if (fe < FLOOD_MS) {                                   // phase 1: flood + rotate by the golden angle
         var tf = fe / FLOOD_MS, ef = tf * tf * (3 - 2 * tf);
-        line.style.backgroundImage = grad(84 - ef * 78);
+        line.style.backgroundImage = grad(ANGLE0 + ef * GOLD, 84 - ef * 78);
         requestAnimationFrame(loop); return;
       }
-      line.style.backgroundImage = grad(6);
+      line.style.backgroundImage = grad(ANGLE0 + GOLD, 6);
       var se = fe - FLOOD_MS;
       if (se < SCROLL_MS) {                                  // phase 2: scroll up to the frosted article
         window.scrollTo(0, Math.round(targetY * easeInOut(se / SCROLL_MS)));
