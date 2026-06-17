@@ -1,4 +1,4 @@
-# AGENTS.md — Portfolio site (public)
+# AGENTS.md - Portfolio site (public)
 
 This is the **public** portfolio site, served from GitHub Pages on every push to `main`.
 `CLAUDE.md` imports this file via `@AGENTS.md`, so the same doc serves every AI assistant.
@@ -44,3 +44,4 @@ The portfolio pages and their assets:
 - Prose: every post is written in one calibrated voice. **Read `VOICE.md` before writing or editing post prose** (the Warm base voice, how to open a post and how to deliver a fact, the LLM-tell kill-list, and the credibility rules that keep posts off the wrong end of a Hacker News thread). It was calibrated with the owner via `voice-lab.html`; the no-em-dash rule below is part of it.
 - Commit and push every change to `main`; GitHub Pages auto-deploys. No manual deploy step.
 - No em dashes in any content or commit messages (use commas, periods, parentheses, or "to").
+- A git pre-commit linter (`tools/voice-lint.sh`, wired via `tools/githooks/`) hard-blocks em dashes and the formulaic LLM tells listed in `VOICE.md` from any staged `.html`/`.md` post content. Enable it once per checkout with `git config core.hooksPath tools/githooks`. It skips the frozen game demo, the throwaway `*-lab.html` choosers, and the meta-docs; bypass in a real exception with `git commit --no-verify`.

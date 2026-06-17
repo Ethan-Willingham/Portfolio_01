@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Voice linter: blocks em dashes and the formulaic LLM tells from VOICE.md out of
+# committed post content. Enabled per checkout with:
+#   git config core.hooksPath tools/githooks
+exec bash "$(git rev-parse --show-toplevel)/tools/voice-lint.sh"
