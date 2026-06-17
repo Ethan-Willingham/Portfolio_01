@@ -72,22 +72,15 @@
        deep-links into the matching section. ---- */
     .home-search { position: relative; display: flex; align-items: center; gap: 1.1rem; margin-top: 1.7rem; }
     .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
-    /* translucent "liquid glass" field (macOS Tahoe x Family): a light frosted
-       layer over the page, not a dark box. backdrop-filter frosts whatever scrolls
-       under it; the inner top highlight is the glass sheen. */
+    /* clean, solid, conventional field (the translucent version was reverted;
+       the final refined treatment is being chosen in search-bar-lab.html). */
     .hs-field {
       display: flex; align-items: center; cursor: text;
-      background: linear-gradient(180deg, rgba(245,241,234,0.10), rgba(245,241,234,0.045));
-      -webkit-backdrop-filter: blur(20px) saturate(165%); backdrop-filter: blur(20px) saturate(165%);
-      border: 1px solid rgba(245,241,234,0.16); border-radius: 999px;
-      box-shadow: inset 0 1px 0 rgba(245,241,234,0.2), inset 0 -1px 1px rgba(8,12,9,0.12), 0 6px 22px -12px rgba(8,12,9,0.5);
-      transition: border-color .25s ease, box-shadow .3s ease, background .25s ease;
+      background: rgba(245,241,234,0.035);
+      border: 1px solid var(--rule); border-radius: 12px;
+      transition: border-color .2s ease, background .2s ease;
     }
-    .hs-field:focus-within {
-      border-color: rgba(212,196,160,0.55);
-      background: linear-gradient(180deg, rgba(245,241,234,0.15), rgba(245,241,234,0.075));
-      box-shadow: inset 0 1px 0 rgba(245,241,234,0.26), 0 0 0 4px rgba(212,196,160,0.12), 0 12px 32px -14px rgba(8,12,9,0.55);
-    }
+    .hs-field:focus-within { border-color: var(--accent); background: rgba(245,241,234,0.05); }
     .hs-mag { flex: none; margin-left: 1.1rem; width: 1.1rem; height: 1.1rem; color: var(--text-faint); transition: color .25s ease; pointer-events: none; }
     .hs-field:focus-within .hs-mag { color: var(--accent); }
     .hs-input {
@@ -98,27 +91,21 @@
     .hs-input::placeholder { color: var(--text-faint); font-style: italic; }
     .hs-input:focus { outline: none; }
     .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-    /* About: a matching glass pill, the same height as the field */
+    /* About: a quiet link off to the side, no pill */
     .hs-about {
-      flex: none; align-self: stretch; display: flex; align-items: center;
-      font-family: var(--font-mono); font-size: 0.66rem; font-weight: 400;
-      letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim);
-      text-decoration: none; white-space: nowrap; padding: 0 1.2rem; border-radius: 999px;
-      background: rgba(245,241,234,0.055);
-      -webkit-backdrop-filter: blur(20px) saturate(165%); backdrop-filter: blur(20px) saturate(165%);
-      border: 1px solid rgba(245,241,234,0.14); box-shadow: inset 0 1px 0 rgba(245,241,234,0.16);
-      transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      flex: none; font-family: var(--font-body); font-size: 0.82rem;
+      color: var(--text-dim); text-decoration: none; white-space: nowrap;
+      transition: color 0.2s ease;
     }
-    .hs-about:hover { color: var(--text-bright); border-color: rgba(212,196,160,0.5); background: rgba(245,241,234,0.1); }
-    .hs-about:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); }
+    .hs-about:hover { color: var(--text-bright); }
+    .hs-about:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
 
     /* the typeahead dropdown */
     .hs-panel {
       position: absolute; z-index: 60; top: calc(100% + 10px); left: 0; right: 0;
-      background: rgba(34,40,35,0.86);
-      -webkit-backdrop-filter: blur(34px) saturate(150%); backdrop-filter: blur(34px) saturate(150%);
-      border: 1px solid rgba(245,241,234,0.14); border-radius: 22px;
-      box-shadow: inset 0 1px 0 rgba(245,241,234,0.1), 0 1px 2px rgba(8,12,9,0.4), 0 28px 64px -18px rgba(8,12,9,0.72);
+      background: var(--bg-raised);
+      border: 1px solid var(--rule); border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(8,12,9,0.4), 0 24px 56px -18px rgba(8,12,9,0.72);
       padding: 6px; overflow-y: auto; max-height: min(64vh, 520px);
       opacity: 0; visibility: hidden; pointer-events: none;
       transform: translateY(-6px) scale(0.985); transform-origin: top center;

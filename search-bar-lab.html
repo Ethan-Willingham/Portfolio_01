@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Search bar lab</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ============================================================
+     SEARCH BAR LAB  (throwaway chooser, noindex, not linked)
+     Five familiar, best-in-class search-bar treatments, each
+     rendered live in the real masthead, on the real palette.
+     All SOLID (no translucency). About is a quiet link, never a
+     pill. Pick one and tell me the number; the working results
+     dropdown (counts + context) attaches to whichever you choose.
+     ============================================================ */
+  body { background: var(--bg); color: var(--text); padding: 0; }
+  .lab-wrap { max-width: 1080px; margin: 0 auto; padding: 2.6rem 1.25rem 9rem; }
+  .lab-head h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3.1rem); color: var(--text-bright); letter-spacing: -0.02em; line-height: 1.05; margin: 0 0 0.5rem; }
+  .lab-head .sub { font-family: var(--font-heading); font-style: italic; font-size: 1.2rem; color: var(--text-dim); max-width: 66ch; margin: 0 0 1.2rem; }
+  .how { border: 1px solid var(--rule); border-radius: 12px; background: rgba(0,0,0,0.14); padding: 1rem 1.2rem; max-width: 80ch; }
+  .how p { font-size: 0.95rem; line-height: 1.6; color: var(--text); margin: 0 0 0.5rem; }
+  .how p:last-child { margin: 0; }
+  .how b { color: var(--text-bright); }
+
+  /* the option card */
+  .opt { margin: 2.6rem 0 0; border: 2px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(0,0,0,0.16); transition: border-color .2s; }
+  .opt.is-picked { border-color: var(--accent); }
+  .opt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.8rem; padding: 0.95rem 1.2rem; border-bottom: 1px solid var(--rule); background: var(--bg-raised); }
+  .opt-n { font-family: var(--font-mono); font-size: 0.74rem; color: #0c0e0b; background: var(--accent); border-radius: 6px; padding: 0.15em 0.55em; font-weight: 600; }
+  .opt-name { font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--text-bright); }
+  .opt-ref { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); }
+  .opt-note { flex: 1 1 100%; font-size: 0.95rem; line-height: 1.5; color: var(--text-dim); margin: 0.1rem 0 0; }
+  .opt-note b { color: var(--text); }
+
+  /* the live stage: the real masthead + the option's search row */
+  .stage { padding: clamp(1.6rem, 4vw, 2.8rem); background: var(--bg); }
+  .stage .site-header { margin: 0; animation: none; }
+  .stage .site-name { margin-bottom: 0.45rem; }
+  .stage .site-name a { font-size: clamp(2.2rem, 5vw, 3rem); letter-spacing: -0.02em; }
+  .stage .site-tagline { margin-top: 0.4rem; font-family: var(--font-heading); font-style: italic; font-size: 1.25rem; line-height: 1.3; color: var(--text-dim); max-width: 44ch; }
+
+  .opt-foot { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1.2rem; border-top: 1px solid var(--rule); background: var(--bg-raised); }
+  .choose { font-family: var(--font-body); font-size: 0.9rem; color: var(--text); background: transparent; border: 1px solid var(--rule-strong, #5a675c); border-radius: 8px; padding: 0.5em 1.2em; cursor: pointer; transition: all .15s; }
+  .choose:hover { border-color: var(--accent); color: var(--text-bright); }
+  .opt.is-picked .choose { background: var(--accent); border-color: var(--accent); color: #0c0e0b; font-weight: 600; }
+  .opt-tip { font-size: 0.85rem; color: var(--text-faint); }
+
+  /* sticky pick banner */
+  .pickbar { position: sticky; top: 0.8rem; z-index: 30; margin: 1.4rem 0 0; display: flex; align-items: center; gap: 0.8rem; background: var(--bg-raised); border: 1px solid var(--accent); border-radius: 999px; padding: 0.6rem 1.2rem; box-shadow: 0 14px 34px -16px rgba(0,0,0,0.7); }
+  .pickbar .dot { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); }
+  .pickbar .txt { font-size: 0.95rem; color: var(--text); }
+  .pickbar .txt b { color: var(--text-bright); }
+
+  /* ============================================================
+     SHARED SEARCH ROW  (.ls-row)
+     ============================================================ */
+  .ls-row { display: flex; align-items: center; gap: 1.2rem; margin-top: 1.7rem; }
+  .ls-fieldwrap { flex: 1 1 auto; min-width: 0; display: flex; }
+  .ls-field { display: flex; align-items: center; gap: 0.65rem; width: 100%; }
+  .ls-mag { flex: none; width: 1.05rem; height: 1.05rem; color: var(--text-faint); transition: color .2s; }
+  .ls-input { flex: 1 1 auto; min-width: 0; background: transparent; border: none; color: var(--text-bright); font-family: var(--font-body); font-size: 1.05rem; line-height: 1.3; outline: none; padding: 0; }
+  .ls-input::placeholder { color: var(--text-faint); }
+  .ls-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+  .ls-about { flex: none; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); text-decoration: none; transition: color .2s; }
+  .ls-about:hover { color: var(--text-bright); }
+  .ls-kbd { flex: none; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 6px; padding: 0.12em 0.5em; line-height: 1; }
+
+  /* ---- 1. Quiet line: a hairline, a magnifier, nothing else ---- */
+  .ls--line .ls-field { border-bottom: 1px solid var(--rule); padding: 0.55rem 0.1rem 0.6rem; transition: border-color .25s; }
+  .ls--line .ls-field:focus-within { border-bottom-color: var(--accent); }
+  .ls--line .ls-field:focus-within .ls-mag { color: var(--accent); }
+
+  /* ---- 2. Classic field: the box you have used a hundred times ---- */
+  .ls--box .ls-fieldwrap { flex: 0 1 440px; }
+  .ls--box .ls-field { background: rgba(245,241,234,0.035); border: 1px solid var(--rule); border-radius: 10px; padding: 0.62rem 0.9rem; transition: border-color .2s, background .2s; }
+  .ls--box .ls-field:focus-within { border-color: var(--accent); background: rgba(245,241,234,0.055); }
+  .ls--box .ls-field:focus-within .ls-mag { color: var(--accent); }
+  .ls--box .ls-about { margin-left: auto; }
+
+  /* ---- 3. Expands on focus: starts compact, opens to full width ---- */
+  .ls--grow .ls-field { width: 264px; background: rgba(245,241,234,0.035); border: 1px solid var(--rule); border-radius: 10px; padding: 0.62rem 0.9rem; overflow: hidden; transition: width .34s cubic-bezier(.2,.7,.2,1), border-color .2s, background .2s; }
+  .ls--grow .ls-field:focus-within { width: 100%; border-color: var(--accent); background: rgba(245,241,234,0.055); }
+  .ls--grow .ls-field:focus-within .ls-mag { color: var(--accent); }
+  .ls--grow .ls-kbd { transition: opacity .2s; }
+  .ls--grow .ls-field:focus-within .ls-kbd { opacity: 0; }
+  .ls--grow .ls-about { margin-left: auto; }
+
+  /* ---- 4. Command (/): the docs standard, a quiet button with a shortcut ---- */
+  .ls--cmd .ls-fieldwrap { flex: 0 1 auto; }
+  .ls--cmd .ls-field { width: auto; background: rgba(245,241,234,0.035); border: 1px solid var(--rule); border-radius: 10px; padding: 0.55rem 0.7rem 0.55rem 0.85rem; cursor: text; transition: border-color .2s, background .2s; }
+  .ls--cmd .ls-field:focus-within { border-color: var(--accent); background: rgba(245,241,234,0.055); }
+  .ls--cmd .ls-field:focus-within .ls-mag { color: var(--accent); }
+  .ls--cmd .ls-input { flex: 0 0 auto; width: 9.5rem; }
+  .ls--cmd .ls-about { margin-left: 1.3rem; }
+
+  /* ---- 5. Icon only, expands on click: the lightest footprint ---- */
+  .ls--icon .ls-fieldwrap { flex: 0 1 auto; }
+  .ls--icon .ls-field { width: auto; border: 1px solid transparent; border-radius: 10px; padding: 0.5rem; cursor: pointer; transition: border-color .25s, background .25s, padding .25s; }
+  .ls--icon .ls-input { width: 0; opacity: 0; padding: 0; transition: width .3s cubic-bezier(.2,.7,.2,1), opacity .2s; }
+  .ls--icon .ls-field.is-open { border-color: var(--rule); background: rgba(245,241,234,0.035); padding: 0.55rem 0.9rem; cursor: text; }
+  .ls--icon .ls-field.is-open .ls-mag { color: var(--accent); }
+  .ls--icon .ls-field.is-open .ls-input { width: 320px; opacity: 1; }
+  .ls--icon .ls-about { margin-left: 1.3rem; }
+  @media (max-width: 560px){ .ls--icon .ls-field.is-open .ls-input { width: 180px; } .ls--box .ls-fieldwrap { flex: 1 1 auto; } }
+</style>
+</head>
+<body>
+<div class="lab-wrap">
+  <header class="lab-head">
+    <h1>Search bar lab</h1>
+    <p class="sub">Five familiar treatments, each shown in the real masthead. All solid (no translucency), About is a quiet link (no pill), and the working results dropdown stays exactly as it is. Pick the one that feels most at home.</p>
+    <div class="how">
+      <p>I studied the best-in-class patterns first: the consensus is <b>restraint</b> (an input, a placeholder, a magnifier, no shouting borders), the <b>"/" shortcut hint</b> the site already supports (Algolia DocSearch, GitHub, Linear), and the <b>compact-that-expands</b> idea you suggested (Trello-style).</p>
+      <p>Click into any field to feel its focus and grow behaviour. When one feels right, hit <b>Choose</b> and tell me the number. Nothing here is live or committed to the site.</p>
+    </div>
+    <div class="pickbar"><span class="dot">&#9679;</span><span class="txt" id="pickTxt">No pick yet. Click <b>Choose</b> under the one you like.</span></div>
+  </header>
+
+  <!-- 1 -->
+  <section class="opt" data-opt="1" data-name="Quiet line">
+    <div class="opt-head"><span class="opt-n">01</span><span class="opt-name">Quiet line</span><span class="opt-ref">editorial minimal &middot; Google-restraint</span>
+      <p class="opt-note">The lightest. A single hairline rule, a magnifier, and the words. Closest to the page's own editorial voice; the name stays the hero.</p></div>
+    <div class="stage">
+      <header class="site-header">
+        <h1 class="site-name"><a href="#">Ethan Willingham</a></h1>
+        <p class="site-tagline">The truth lasts forever; this is a website.</p>
+        <div class="ls-row ls--line">
+          <div class="ls-fieldwrap"><label class="ls-field"><svg class="ls-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg><input class="ls-input" type="search" placeholder="Search the posts" aria-label="Search"></label></div>
+          <a class="ls-about" href="#">About</a>
+        </div>
+      </header>
+    </div>
+    <div class="opt-foot"><button class="choose">Choose</button><span class="opt-tip">Borderless, full width, very light.</span></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="opt" data-opt="2" data-name="Classic field">
+    <div class="opt-head"><span class="opt-n">02</span><span class="opt-name">Classic field</span><span class="opt-ref">the familiar box &middot; GitHub / most sites</span>
+      <p class="opt-note">The search box you have used a hundred times: a soft border, a quiet fill, a magnifier. Held to a comfortable width so it never dominates the name. <b>Maximally familiar.</b></p></div>
+    <div class="stage">
+      <header class="site-header">
+        <h1 class="site-name"><a href="#">Ethan Willingham</a></h1>
+        <p class="site-tagline">The truth lasts forever; this is a website.</p>
+        <div class="ls-row ls--box">
+          <div class="ls-fieldwrap"><label class="ls-field"><svg class="ls-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg><input class="ls-input" type="search" placeholder="Search the posts" aria-label="Search"></label></div>
+          <a class="ls-about" href="#">About</a>
+        </div>
+      </header>
+    </div>
+    <div class="opt-foot"><button class="choose">Choose</button><span class="opt-tip">Bordered, ~440px, left-aligned. About floats right.</span></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="opt" data-opt="3" data-name="Expands on focus">
+    <div class="opt-head"><span class="opt-n">03</span><span class="opt-name">Expands on focus</span><span class="opt-ref">your idea &middot; Trello-style</span>
+      <p class="opt-note">Starts compact, then opens to full width the moment you click in (a smooth width slide). Saves room at rest and signals "type a longer query." The <b>/</b> hint fades as you focus.</p></div>
+    <div class="stage">
+      <header class="site-header">
+        <h1 class="site-name"><a href="#">Ethan Willingham</a></h1>
+        <p class="site-tagline">The truth lasts forever; this is a website.</p>
+        <div class="ls-row ls--grow">
+          <div class="ls-fieldwrap"><label class="ls-field"><svg class="ls-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg><input class="ls-input" type="search" placeholder="Search" aria-label="Search"><span class="ls-kbd">/</span></label></div>
+          <a class="ls-about" href="#">About</a>
+        </div>
+      </header>
+    </div>
+    <div class="opt-foot"><button class="choose">Choose</button><span class="opt-tip">Click the field to watch it grow.</span></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="opt" data-opt="4" data-name="Command bar">
+    <div class="opt-head"><span class="opt-n">04</span><span class="opt-name">Command bar</span><span class="opt-ref">docs standard &middot; DocSearch / Linear / Vercel</span>
+      <p class="opt-note">A quiet, compact button with a <b>/</b> shortcut key shown right in it. The developer-docs convention, and the site already listens for <b>/</b>. Reads as a control, not a big input.</p></div>
+    <div class="stage">
+      <header class="site-header">
+        <h1 class="site-name"><a href="#">Ethan Willingham</a></h1>
+        <p class="site-tagline">The truth lasts forever; this is a website.</p>
+        <div class="ls-row ls--cmd">
+          <div class="ls-fieldwrap"><label class="ls-field"><svg class="ls-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg><input class="ls-input" type="search" placeholder="Search posts" aria-label="Search"><span class="ls-kbd">/</span></label></div>
+          <a class="ls-about" href="#">About</a>
+        </div>
+      </header>
+    </div>
+    <div class="opt-foot"><button class="choose">Choose</button><span class="opt-tip">Compact, left-aligned, with a key hint.</span></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="opt" data-opt="5" data-name="Icon, expands">
+    <div class="opt-head"><span class="opt-n">05</span><span class="opt-name">Icon, expands</span><span class="opt-ref">lightest footprint &middot; Trello / app headers</span>
+      <p class="opt-note">Just a magnifier until you need it; click and it slides open into a field. The most compact of all, so the masthead stays almost entirely the name and tagline.</p></div>
+    <div class="stage">
+      <header class="site-header">
+        <h1 class="site-name"><a href="#">Ethan Willingham</a></h1>
+        <p class="site-tagline">The truth lasts forever; this is a website.</p>
+        <div class="ls-row ls--icon">
+          <div class="ls-fieldwrap"><label class="ls-field" data-icon><svg class="ls-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg><input class="ls-input" type="search" placeholder="Search the posts" aria-label="Search"></label></div>
+          <a class="ls-about" href="#">About</a>
+        </div>
+      </header>
+    </div>
+    <div class="opt-foot"><button class="choose">Choose</button><span class="opt-tip">Click the magnifier to open it.</span></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // option 5: click the icon field to expand
+  document.querySelectorAll('.ls--icon .ls-field[data-icon]').forEach(function (f) {
+    var inp = f.querySelector('.ls-input');
+    f.addEventListener('click', function () { if (!f.classList.contains('is-open')) { f.classList.add('is-open'); setTimeout(function () { inp.focus(); }, 60); } });
+    inp.addEventListener('blur', function () { if (!inp.value) f.classList.remove('is-open'); });
+  });
+
+  // the chooser
+  var picked = localStorage.getItem('searchBarPick');
+  var txt = document.getElementById('pickTxt');
+  function mark(n) {
+    document.querySelectorAll('.opt').forEach(function (o) { o.classList.toggle('is-picked', o.dataset.opt === n); });
+    var o = document.querySelector('.opt[data-opt="' + n + '"]');
+    if (o) txt.innerHTML = 'Your pick: <b>Option ' + n + ' &mdash; ' + o.dataset.name + '</b>. Tell me &ldquo;use option ' + n + '&rdquo;.';
+  }
+  if (picked) mark(picked);
+  document.querySelectorAll('.opt .choose').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var n = btn.closest('.opt').dataset.opt;
+      localStorage.setItem('searchBarPick', n);
+      mark(n);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+})();
+</script>
+</body>
+</html>
