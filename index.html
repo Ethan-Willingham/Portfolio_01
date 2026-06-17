@@ -70,30 +70,29 @@
        a spring-in panel). It runs a full-text search over every post via
        js/search.js + the prebuilt search-index.json, ranks per keystroke, and
        deep-links into the matching section. ---- */
-    .home-search { position: relative; display: flex; align-items: center; gap: 1.1rem; margin-top: 1.7rem; }
-    .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
-    /* clean, solid, conventional field (the translucent version was reverted;
-       the final refined treatment is being chosen in search-bar-lab.html). */
-    .hs-field {
-      display: flex; align-items: center; cursor: text;
-      background: rgba(245,241,234,0.035);
-      border: 1px solid var(--rule); border-radius: 12px;
-      transition: border-color .2s ease, background .2s ease;
-    }
-    .hs-field:focus-within { border-color: var(--accent); background: rgba(245,241,234,0.05); }
-    .hs-mag { flex: none; margin-left: 1.1rem; width: 1.1rem; height: 1.1rem; color: var(--text-faint); transition: color .25s ease; pointer-events: none; }
-    .hs-field:focus-within .hs-mag { color: var(--accent); }
+    /* Home search (balanced icon): a magnifier at the left end and the About
+       link at the right end of one hairline rule. The field is just the icon
+       until you click it (or press /), then it slides open into a full input;
+       the results dropdown is unchanged. Solid, no translucency, no pill. */
+    .home-search { position: relative; display: flex; align-items: center; gap: 1rem; margin-top: 1.7rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--rule); }
+    .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
+    .hs-field { display: flex; align-items: center; gap: 0.55rem; flex: 0 1 auto; min-width: 0; padding: 0.3rem; margin: -0.3rem; border-radius: 8px; cursor: pointer; transition: background .2s ease; }
+    .hs-field:hover { background: rgba(245,241,234,0.035); }
+    .home-search.is-open .hs-field { cursor: text; background: none; }
+    .hs-mag { flex: none; width: 1.15rem; height: 1.15rem; color: var(--text-faint); transition: color .25s ease; }
+    .home-search.is-open .hs-mag { color: var(--accent); }
     .hs-input {
-      width: 100%; background: transparent; border: none; color: var(--text-bright);
-      font-family: var(--font-heading); font-size: 1.2rem; line-height: 1.2;
-      padding: 0.78rem 1.15rem 0.82rem 0.72rem;
+      flex: 1 1 auto; min-width: 0; width: 100%; max-width: 0; opacity: 0;
+      background: transparent; border: none; color: var(--text-bright);
+      font-family: var(--font-body); font-size: 1.1rem; line-height: 1.3; padding: 0; outline: none;
+      transition: max-width .34s cubic-bezier(.2,.7,.2,1), opacity .22s ease;
     }
-    .hs-input::placeholder { color: var(--text-faint); font-style: italic; }
-    .hs-input:focus { outline: none; }
+    .home-search.is-open .hs-input { max-width: 680px; opacity: 1; }
+    .hs-input::placeholder { color: var(--text-faint); }
     .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-    /* About: a quiet link off to the side, no pill */
+    /* About: a quiet link at the right end of the rule, no pill */
     .hs-about {
-      flex: none; font-family: var(--font-body); font-size: 0.82rem;
+      flex: none; margin-left: auto; font-family: var(--font-body); font-size: 0.82rem;
       color: var(--text-dim); text-decoration: none; white-space: nowrap;
       transition: color 0.2s ease;
     }
@@ -503,6 +502,22 @@
   })();
   </script>
   <script src="js/search.js"></script>
+  <script>
+  /* The masthead search is just a magnifier until you open it: focusing the
+     field (a click on the icon, or pressing /) expands it into a full input;
+     it collapses again once it is left empty. */
+  (function () {
+    var root = document.querySelector('.home-search');
+    var input = root && root.querySelector('.hs-input');
+    if (!input) return;
+    input.addEventListener('focus', function () { root.classList.add('is-open'); });
+    input.addEventListener('blur', function () {
+      setTimeout(function () {
+        if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open');
+      }, 160);
+    });
+  })();
+  </script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
