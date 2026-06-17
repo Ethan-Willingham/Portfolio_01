@@ -465,6 +465,15 @@
     // Build a render-only clone: strip scripts, make text editable, add edit CSS.
     const render = doc.cloneNode(true);
     render.querySelectorAll('script').forEach(s => s.remove());
+    // Resolve the page's relative assets (images, css, fonts) against the page's
+    // OWN folder, not the editor's. Root pages -> "/", archive pages ->
+    // "/archive/<slug>/", so photos load whether the post lives at the root or
+    // under archive/. (This <base> is render-only; it never reaches the saved file.)
+    const dir = path.includes('/') ? '/' + path.slice(0, path.lastIndexOf('/') + 1) : '/';
+    const base = render.createElement('base'); base.setAttribute('href', dir);
+    render.head.insertBefore(base, render.head.firstChild);
+    // Show every photo straight away while editing instead of waiting for a scroll.
+    render.querySelectorAll('img[loading="lazy"]').forEach(img => img.setAttribute('loading', 'eager'));
     markEditable(render);
     injectEditChrome(render);
 
