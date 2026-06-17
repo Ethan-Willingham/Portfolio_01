@@ -76,8 +76,11 @@
        the results dropdown is unchanged. Solid, no translucency, no pill. */
     .home-search { position: relative; display: flex; align-items: center; gap: 1rem; margin-top: 1.7rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--rule); }
     .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
-    .hs-field { display: flex; align-items: center; gap: 0.55rem; flex: 0 1 auto; min-width: 0; padding: 0.3rem; margin: -0.3rem; border-radius: 8px; cursor: pointer; transition: background .2s ease; }
-    .hs-field:hover { background: rgba(245,241,234,0.035); }
+    /* the collapsed field is just the icon, but its click/tap zone runs a wide
+       fixed width (never as far as About) so it is easy to hit; a subtle hover
+       wash shows the area on desktop, and touch gets a big target either way. */
+    .hs-field { display: flex; align-items: center; gap: 0.55rem; flex: 0 1 auto; min-width: clamp(220px, 30vw, 300px); padding: 0.5rem 0.55rem; margin: -0.5rem -0.55rem; border-radius: 10px; cursor: pointer; transition: background .2s ease; }
+    .hs-field:hover { background: rgba(245,241,234,0.05); }
     .home-search.is-open .hs-field { cursor: text; background: none; }
     .hs-mag { flex: none; width: 1.15rem; height: 1.15rem; color: var(--text-faint); transition: color .25s ease; }
     .home-search.is-open .hs-mag { color: var(--accent); }
