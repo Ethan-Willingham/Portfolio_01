@@ -15,6 +15,32 @@
   var MID = {};
   MODELS.forEach(function (m) { MID[m.id] = m; });
 
+  // ---------- build-effort per post, derived from the commit log (window.GIT_HISTORY) ----------
+  var EFFORT = {};
+  (function () {
+    var GH = window.GIT_HISTORY;
+    if (!GH || !GH.commits || !GH.topics) return;
+    var keyByIdx = GH.topics.map(function (t) { return t.key; });
+    function dayIdx(ts) { var d = new Date(ts * 1000); return Math.round(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000); }
+    function ymd(ts) { var d = new Date(ts * 1000); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    GH.commits.forEach(function (c) {
+      var key = keyByIdx[c[5]]; if (!key) return;            // [hash, ts, adds, dels, files, topicIdx, subject]
+      var e = EFFORT[key] || (EFFORT[key] = { commits: 0, add: 0, del: 0, biggest: 0, first: Infinity, last: -Infinity, byDay: {} });
+      e.commits++; e.add += c[2]; e.del += c[3];
+      if (c[2] + c[3] > e.biggest) e.biggest = c[2] + c[3];
+      if (c[1] < e.first) e.first = c[1];
+      if (c[1] > e.last) e.last = c[1];
+      var d = dayIdx(c[1]); e.byDay[d] = (e.byDay[d] || 0) + 1;
+    });
+    Object.keys(EFFORT).forEach(function (k) {
+      var e = EFFORT[k], d0 = dayIdx(e.first), d1 = dayIdx(e.last);
+      e.spanDays = d1 - d0 + 1; e.firstYMD = ymd(e.first); e.lastYMD = ymd(e.last); e.spark = [];
+      for (var d = d0; d <= d1; d++) e.spark.push(e.byDay[d] || 0);
+    });
+  })();
+  // prefer the commit log's real first/last dates so header, day-count and sparkline agree
+  function postDates(post) { var e = EFFORT[post.key]; return e ? dateRange(e.firstYMD, e.lastYMD) : dateRange(post.first, post.last); }
+
   var metric = 'edits'; // 'edits' | 'tokens'
 
   // ---------- formatting ----------
@@ -75,6 +101,18 @@
   }
   function barHTML(parts) { return parts.map(function (p) { return '<i style="background:' + p.m.color + '" data-pct="' + p.pct.toFixed(3) + '"></i>'; }).join(''); }
   function growBars(barEl) { if (!barEl) return; var ii = barEl.querySelectorAll('i'); for (var k = 0; k < ii.length; k++) ii[k].style.width = ii[k].getAttribute('data-pct') + '%'; }
+  // a labelled mini-metric, and a commits-per-day sparkline tinted by the lead model
+  function fact(n, label) { return '<div class="ma-fact"><b>' + n + '</b><span>' + label + '</span></div>'; }
+  function sparkHTML(spark, color) {
+    if (!spark || !spark.length) return '';
+    var max = 1; for (var i = 0; i < spark.length; i++) if (spark[i] > max) max = spark[i];
+    var n = spark.length, W = 100, H = 22, gap = n > 1 ? Math.min(0.9, 28 / n) : 0, bw = (W - gap * (n - 1)) / n, bars = '';
+    for (var j = 0; j < n; j++) {
+      var v = spark[j], h = v ? Math.max(2.5, v / max * H) : 1.2, x = j * (bw + gap);
+      bars += '<rect x="' + x.toFixed(2) + '" y="' + (H - h).toFixed(2) + '" width="' + bw.toFixed(2) + '" height="' + h.toFixed(2) + '" rx="0.5" opacity="' + (v ? 1 : 0.2) + '"></rect>';
+    }
+    return '<div class="ma-spark-wrap"><svg class="ma-spark" viewBox="0 0 100 22" preserveAspectRatio="none" style="color:' + color + '">' + bars + '</svg><span class="ma-spark-lbl">commits per day, across ' + n + ' days</span></div>';
+  }
 
   // ---------- animated number (interruptible) ----------
   var easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
@@ -84,7 +122,8 @@
   // ---------- build: model legend ----------
   var legend = document.createElement('div');
   legend.className = 'ma-minds';
-  MODELS.forEach(function (m) {
+  // list the models by how much they were used (most tokens first): 4.8, 4.7, ...
+  MODELS.slice().sort(function (a, b) { return b.tokens - a.tokens; }).forEach(function (m) {
     var built = m.posts > 0;
     var chip = document.createElement('div');
     chip.className = 'ma-mind' + (built ? '' : ' is-minor');
@@ -112,7 +151,7 @@
     var top = parts[0];
     var arch = post.kind === 'archived' ? '<span class="cv-arch">(archived)</span>' : '';
     return '<div class="cv-top"><span class="cv-chip"><i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span></span><span class="cv-val">' + fmtVal(total(post)) + '</span></div>' +
-      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + dateRange(post.first, post.last) + '</div>';
+      '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + postDates(post) + '</div>';
   }
   var grid = document.createElement('div');
   grid.className = 'cv-grid';
@@ -170,7 +209,8 @@
     '</div>' +
     '<div class="ma-tray-bar" aria-hidden="true"></div>' +
     '<div class="ma-tray-rows"></div>' +
-    '<a class="ma-tray-link" target="_self">Open the post <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3h8v8M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
+    '<div class="ma-extra"></div>' +
+    '<a class="ma-tray-link" target="_self">Open the post<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3h8v8M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
 
   var openPost = null;
   function openTray(post, anchorEl) {
@@ -179,7 +219,7 @@
     tray.querySelector('.ma-tray-kind').textContent = post.kind === 'archived' ? 'Archived post' : 'Post';
     tray.querySelector('.ma-tray-kind').className = 'ma-tray-kind' + (post.kind === 'archived' ? ' is-arch' : '');
     tray.querySelector('.ma-tray-title').textContent = post.label;
-    tray.querySelector('.ma-tray-when').textContent = 'Built ' + dateRange(post.first, post.last);
+    tray.querySelector('.ma-tray-when').textContent = 'Built ' + postDates(post);
     var link = tray.querySelector('.ma-tray-link');
     if (post.href) { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
     else link.style.display = 'none';
@@ -231,6 +271,22 @@
       animNum(row.querySelector('.ma-row-val'), p.v, function (x) { return fmtFull(x); });
       animNum(row.querySelector('.ma-row-pct'), p.pct, function (x) { return Math.round(x) + '%'; });
     });
+    // build-effort facts + commits-per-day sparkline + tokens-per-finished-word
+    var ex = tray.querySelector('.ma-extra'), eff = EFFORT[post.key];
+    if (ex && eff) {
+      var wds = post.words || 0, tpw = wds ? post.tokens / wds : 0;
+      var tpwStr = tpw >= 1000 ? '~' + Math.round(tpw / 1000) + 'k' : Math.round(tpw);
+      var lead = (parts[0] && parts[0].m.color) || '#D4C4A0';
+      ex.innerHTML =
+        '<div class="ma-facts">' +
+          fact(eff.commits, eff.commits === 1 ? 'commit' : 'commits') +
+          fact(eff.spanDays, eff.spanDays === 1 ? 'day' : 'days') +
+          fact(wds ? wds.toLocaleString('en-US') : 'n/a', wds === 1 ? 'word' : 'words') +
+          fact(wds ? tpwStr : 'n/a', 'tokens / word') +
+        '</div>' +
+        sparkHTML(eff.spark, lead) +
+        '<p class="ma-extra-note">+' + eff.add.toLocaleString('en-US') + ' / -' + eff.del.toLocaleString('en-US') + ' lines, biggest single change +' + eff.biggest.toLocaleString('en-US') + '</p>';
+    } else if (ex) { ex.innerHTML = ''; }
   }
   function closeTray() {
     openPost = null;

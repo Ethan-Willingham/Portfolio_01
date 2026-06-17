@@ -26,12 +26,14 @@ linked from the homepage with a "coming to Steam" notice.
 
 The portfolio pages and their assets:
 
-- Pages: `index.html`, `gallery.html`, `particle-life.html`, `particles.html`,
+- Pages: `index.html`, `about.html`, `gallery.html`, `particle-life.html`, `particles.html`,
   `daylight-globe.html`, `weather.html`, `optional-body.html`, `random-galaxy.html`,
-  `git-history.html`, and the frozen `grand-motherload.html`
-  game demo.
+  and the frozen `grand-motherload.html`
+  game demo. `about.html` is the site's meta page (how it's made, and what it's
+  made of); it absorbed the former `colophon.html` and `git-history.html` posts
+  and is powered by the `js/git-history*` and `js/git-attribution*` scripts.
 - Shared: `style.css`, the site scripts in `js/` (`main.js`, `globe.js`, `particle-life.js`,
-  `particles.js`, `git-history*.js`, `optional-body.js`, `random-galaxy.js`, `backtotop.js`),
+  `particles.js`, `git-history*.js`, `git-attribution*.js`, `optional-body.js`, `random-galaxy.js`, `backtotop.js`),
   and `assets/` (fonts, images, thumbs, etc.).
 
 ## Conventions

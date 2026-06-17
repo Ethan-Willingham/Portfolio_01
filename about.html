@@ -20,10 +20,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About</title>
-  <meta name="description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. Posts on how it gets made.">
+  <meta name="description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. How it gets made, and what it's made of.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="About">
-  <meta property="og:description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. Posts on how it gets made.">
+  <meta property="og:description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. How it gets made, and what it's made of.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/about.html">
@@ -37,111 +37,384 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-
   <style>
-    html { overflow-x: hidden; overscroll-behavior-x: none; }
+  /* ============================================================
+     ABOUT, the site's meta page. Folds the former Colophon and
+     "Every Push and Every Token" posts into one: how it's made
+     (the live commit river, token stats, and the per-post model
+     attribution) and what it's made of (the palette and the three
+     typefaces). Powered by js/git-history* and js/git-attribution*.
+     ============================================================ */
 
-    /* ---- The masthead: a large italic display "About" set in real Century
-       Supra italic, with the woodshop blurb close beneath as a plain-spoken
-       lead. Bigger and warmer than a standard post title, and left on the same
-       spine as everything below it. ---- */
-    .about-head { margin-bottom: 2.7rem; }
-    .about-title {
-      margin: 0;
-      font-family: var(--font-heading);
-      font-style: italic;
-      font-weight: 400;
-      font-size: clamp(2.9rem, 6.5vw, 4.2rem);
-      line-height: 1.02;
-      letter-spacing: -0.01em;
-      color: var(--text-bright);
-    }
-    .about-lead {
-      margin: 1.15rem 0 0;
-      max-width: 40ch;
-      font-family: var(--font-body);
-      font-size: clamp(1.18rem, 2.2vw, 1.34rem);
-      line-height: 1.56;
-      color: var(--text);
-      text-wrap: pretty;
-    }
+  /* ---- masthead (from about.html) ---- */
+  .about-head { margin-bottom: 2.7rem; }
+  .about-title {
+    margin: 0; font-family: var(--font-heading); font-style: italic; font-weight: 400;
+    font-size: clamp(2.9rem, 6.5vw, 4.2rem); line-height: 1.02; letter-spacing: -0.01em;
+    color: var(--text-bright);
+  }
+  .about-lead {
+    margin: 1.15rem 0 0; max-width: 40ch; font-family: var(--font-body);
+    font-size: clamp(1.18rem, 2.2vw, 1.34rem); line-height: 1.56; color: var(--text); text-wrap: pretty;
+  }
 
-    /* ---- Post list: same editorial cards as the homepage (thumbnail floats
-       right so every title shares the page's left spine). ---- */
-    @media (min-width: 560px) {
-      .article-item-thumb { float: right; width: 188px; margin: 0.4rem 0 0.55rem 1.6rem; }
-    }
-    .article-list { gap: 0; }
-    .article-item { padding: 1.65rem 1rem; }
-    .article-item-date {
-      display: block;
-      font-family: var(--font-body);
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: #c3b589;
-      margin-bottom: 0.5rem;
-    }
-    .article-item-title {
-      font-family: var(--font-heading);
-      font-weight: 400;
-      font-size: 1.65rem;
-      line-height: 1.18;
-      letter-spacing: -0.015em;
-      color: var(--text-bright);
-      margin-bottom: 0.5rem;
-    }
-    .article-item-description {
-      font-family: var(--font-body);
-      font-style: normal;
-      font-size: 1.0rem;
-      line-height: 1.5;
-      color: var(--text-dim);
-    }
-    /* a quiet hairline between the intro and the list */
-    .about-rule { border: none; border-top: 1px solid var(--rule); margin: 0 0 0.4rem; }
-    @media (min-width: 720px) {
-      .article-item { padding: 1.7rem 1rem; }
-      .article-item-title { font-size: 1.85rem; }
-    }
+  /* ---- top utility row: Home (left) + GitHub mark (right) ---- */
+  .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .lab-gh { display: inline-flex; align-items: center; justify-content: center; color: var(--text-dim); transition: color 0.2s ease, transform 0.2s ease; }
+  .lab-gh:hover { color: var(--text-bright); transform: translateY(-1px); }
+  .lab-gh:focus-visible { outline: none; color: var(--text-bright); box-shadow: 0 0 0 2px rgba(212,196,160,0.5); border-radius: 6px; }
+  .lab-gh svg { width: 22px; height: 22px; display: block; }
+
+  /* ---- light section dividers ("What it's made of", etc.) ---- */
+  .lab-seclead {
+    display: flex; align-items: baseline; gap: 0.7rem;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #9ec79a; margin: 3.4rem 0 0; padding-top: 1.4rem; border-top: 1px solid var(--rule);
+  }
+  .lab-seclead .n { color: var(--text-faint); }
+
+  /* ---- the two tags (from colophon) ---- */
+  .co-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.34em 0.72em; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.5em; line-height: 1; }
+  .co-tag::before { content: ""; width: 6px; height: 6px; border-radius: 999px; flex: none; }
+  .co-tag--made     { color: #bcd9b6; background: rgba(158,199,154,0.12); border: 1px solid rgba(158,199,154,0.34); }
+  .co-tag--made::before     { background: #9ec79a; }
+  .co-tag--borrowed { color: var(--text-dim); background: rgba(245,241,234,0.05); border: 1px solid rgba(245,241,234,0.10); }
+  .co-tag--borrowed::before { background: var(--line-mid); }
+
+  /* ---- one labeled spec on its stage (from colophon, no column wrapper) ---- */
+  .lab-spec { margin: 1.8rem 0 0; }
+  .co-spec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem 0.8rem; margin: 0 0 0.7rem; }
+  .co-spec-name { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-bright); }
+  .co-spec-note { flex: 1 1 100%; font-size: 0.96rem; color: var(--text-dim); line-height: 1.5; margin: 0; }
+  .co-spec-note b { color: var(--text); font-weight: 600; }
+  .co-stage { background: rgba(0,0,0,0.13); border: 1px solid var(--rule); border-radius: 14px; padding: clamp(18px, 3.2vw, 28px); }
+  .co-stage > :first-child { margin-top: 0; }
+  .co-stage > :last-child  { margin-bottom: 0; }
+
+  /* color: ramp + swatches */
+  .co-ramp-bar { height: 48px; border-radius: 12px; border: 1px solid var(--rule); margin: 0 0 1.2rem; }
+  .co-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px; }
+  .co-sw { display: flex; flex-direction: column; gap: 0.55rem; }
+  .co-sw-chip { height: 60px; border-radius: 10px; border: 1px solid rgba(245,241,234,0.09); box-shadow: inset 0 1px 0 rgba(245,241,234,0.05); }
+  .co-sw-tok  { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); }
+  .co-sw-hex  { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.04em; }
+  .co-sw-role { font-size: 0.8rem; color: var(--text-dim); line-height: 1.35; margin-top: 0.1rem; }
+
+  /* type: specimens */
+  .co-faces { display: grid; gap: 16px; }
+  .co-face { border: 1px solid var(--rule); border-radius: 16px; padding: clamp(20px, 3.5vw, 30px); background: rgba(0,0,0,0.10); display: grid; grid-template-columns: auto 1fr; column-gap: clamp(1.2rem, 4vw, 2.2rem); row-gap: 0.35rem; align-items: center; }
+  .co-face-aa { grid-row: 1 / 4; font-size: clamp(3.4rem, 11vw, 5.4rem); line-height: 0.9; color: var(--text-bright); align-self: center; }
+  .co-face-name { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .co-face-line { font-size: clamp(1.1rem, 2.6vw, 1.4rem); color: var(--text); line-height: 1.3; }
+  .co-face-role { font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; }
+  @media (max-width: 520px){ .co-face { grid-template-columns: 1fr; } .co-face-aa { grid-row: auto; } }
+
+  /* ============ the commit river + tokens (from git-history.html) ============ */
+  .gh-wrap { margin: 1.6rem 0 2rem; }
+  .gh-stage {
+    position: relative; width: 100%; height: clamp(380px, 64vh, 660px);
+    border-radius: 10px; overflow: hidden; border: 1px solid var(--rule);
+    background:
+      radial-gradient(120% 90% at 78% 108%, rgba(232,149,78,0.10), rgba(232,149,78,0) 55%),
+      radial-gradient(140% 120% at 50% 0%, #12160f 0%, #0c0e0b 60%, #090a08 100%);
+    cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  .gh-stage.is-panning { cursor: grabbing; }
+  .gh-stage:fullscreen { height: 100%; width: 100%; border-radius: 0; border: none; }
+  .gh-stage canvas { display: block; width: 100%; height: 100%; outline: none; }
+  .gh-topright { position: absolute; top: 0.6rem; right: 0.6rem; display: flex; gap: 0.4rem; z-index: 4; }
+  .gh-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; padding: 0; color: var(--text-dim);
+    background: rgba(10, 13, 11, 0.55); border: 1px solid var(--rule); border-radius: 7px;
+    cursor: pointer; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .gh-btn:hover { color: #0c0e0b; background: var(--accent); border-color: var(--accent); }
+  .gh-ic-compress { display: none; }
+  .gh-stage:fullscreen .gh-ic-expand { display: none; }
+  .gh-stage:fullscreen .gh-ic-compress { display: inline; }
+  .gh-readout {
+    position: absolute; top: 0.75rem; left: 0.85rem; z-index: 3; pointer-events: none;
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.5;
+    color: var(--text-dim); text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+  }
+  .gh-readout b { color: var(--text-bright); font-weight: 600; }
+  .gh-readout .gh-r-sub { color: #8d9387; }
+  .gh-hint {
+    position: absolute; left: 50%; bottom: 2.25rem; transform: translateX(-50%);
+    z-index: 3; pointer-events: none;
+    font-family: var(--font-body); font-size: 0.72rem; letter-spacing: 0.03em;
+    color: var(--text-dim); text-align: center; max-width: min(90%, 30rem);
+    background: rgba(10,13,11,0.5); padding: 0.28rem 0.7rem; border-radius: 999px;
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); transition: opacity 0.6s ease;
+  }
+  .gh-hint.is-gone { opacity: 0; }
+  .gh-card {
+    position: absolute; z-index: 6; top: 0; left: 0; width: min(20rem, 76vw);
+    padding: 0.7rem 0.85rem 0.78rem; background: rgba(14, 17, 13, 0.94);
+    border: 1px solid var(--rule); border-radius: 9px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    opacity: 0; transform: translateY(4px); transition: opacity 0.14s ease, transform 0.14s ease; pointer-events: none;
+  }
+  .gh-card.is-on { opacity: 1; transform: none; }
+  .gh-card.is-pinned { pointer-events: auto; }
+  .gh-card-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+  .gh-card-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 7px currentColor; }
+  .gh-card-topic { font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .gh-card-date { margin-left: auto; font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); }
+  .gh-card-msg { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.4; color: var(--text-bright); margin: 0 0 0.5rem; word-break: break-word; }
+  .gh-card-fuel { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.02em; color: var(--accent); margin: 0 0 0.5rem; }
+  .gh-card-fuel.gh-card-byhand { color: var(--text-dim); font-style: italic; }
+  .gh-card-foot { display: flex; align-items: center; gap: 0.7rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
+  .gh-card-add { color: #7dd3a0; }
+  .gh-card-del { color: #e08a7a; }
+  .gh-card-link { margin-left: auto; color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; pointer-events: auto; }
+  .gh-card-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .gh-legend { margin-top: 1rem; }
+  .gh-legend-group { margin-top: 0.95rem; }
+  .gh-legend-group:first-child { margin-top: 0; }
+  .gh-legend-head { font-family: var(--font-body); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #8d9387; margin: 0 0 0.5rem; }
+  .gh-legend-chips { display: flex; flex-wrap: wrap; gap: 0.45rem 0.55rem; }
+  .gh-chip { display: inline-flex; align-items: stretch; user-select: none; background: rgba(255,255,255,0.025); border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; transition: border-color 0.18s; }
+  .gh-chip:hover { border-color: rgba(212,196,160,0.35); }
+  .gh-chip-toggle { display: inline-flex; align-items: center; gap: 0.42rem; margin: 0; padding: 0.3rem 0.55rem 0.3rem 0.5rem; font-family: var(--font-body); font-size: 0.78rem; color: var(--text); background: none; border: 0; cursor: pointer; transition: opacity 0.18s, background 0.18s; }
+  .gh-chip-toggle:hover { background: rgba(255,255,255,0.05); }
+  .gh-chip-toggle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(212,196,160,0.55); }
+  .gh-chip-n { color: var(--text-dim); font-family: var(--font-mono); font-size: 0.7rem; }
+  .gh-chip-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--c); color: var(--c); box-shadow: 0 0 6px currentColor; }
+  .gh-chip[data-kind="archived"] .gh-chip-dot { background: transparent; border: 1.5px solid var(--c); box-shadow: none; }
+  .gh-chip[data-kind="other"] .gh-chip-dot { border-radius: 2px; box-shadow: none; }
+  .gh-chip-toggle[aria-pressed="false"] { opacity: 0.4; }
+  .gh-chip-toggle[aria-pressed="false"] .gh-chip-dot { background: var(--text-dim); border-color: var(--text-dim); color: var(--text-dim); box-shadow: none; }
+  .gh-chip[data-kind="archived"] .gh-chip-label { color: var(--text-dim); font-style: italic; }
+  .gh-chip-go { display: inline-flex; align-items: center; justify-content: center; min-width: 27px; padding: 0 0.42rem; align-self: stretch; color: var(--text-dim); text-decoration: none; border-left: 1px solid var(--rule); transition: color 0.18s, background 0.18s, border-color 0.18s; }
+  .gh-chip-go svg { width: 11px; height: 11px; display: block; }
+  .gh-chip-go:hover, .gh-chip-go:focus-visible { color: #0c0e0b; background: var(--accent); border-left-color: var(--accent); outline: none; }
+  .gh-fuel { display: flex; flex-wrap: wrap; gap: 1.5rem 2.6rem; margin: 2.2em 0; padding: 1.5rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .gh-stat { display: flex; flex-direction: column; gap: 0.3rem; }
+  .gh-stat .n { font-family: var(--font-heading); font-weight: 400; font-size: 2.15rem; line-height: 1; letter-spacing: -0.015em; color: var(--accent); }
+  .gh-stat .l { font-family: var(--font-body); font-size: 0.8rem; line-height: 1.35; color: var(--text-dim); letter-spacing: 0.01em; max-width: 24ch; }
+  @media (max-width: 560px) {
+    .gh-readout { font-size: 0.62rem; }
+    .gh-hint { font-size: 0.64rem; }
+    .gh-stat .n { font-size: 1.7rem; }
+  }
+
+  /* ============ "Which AI built which page" attribution viz (from git-history.html) ============ */
+  /* the tray + scrim mount on <body> (so position:fixed centres on the viewport),
+     so these tokens must live on :root, not #ma-root, or the tray loses its colors. */
+  :root {
+    --ma-card: #333b34; --ma-card-hi: #3a4239;
+    --ma-tray: #1b211c;          /* the donut centre + any solid tray fill */
+    --ma-hair: rgba(245, 241, 234, 0.07); --ma-hair-2: rgba(245, 241, 234, 0.12);
+    --ma-r: 20px; --ma-r-in: 13px;
+    --ma-shadow: 0 1px 2px rgba(0,0,0,0.22), 0 10px 24px -10px rgba(0,0,0,0.55);
+    --ma-shadow-lift: 0 2px 6px rgba(0,0,0,0.28), 0 22px 44px -14px rgba(0,0,0,0.62);
+    --ma-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #ma-root { margin: 1.5rem 0 0; }
+  .ma-minds { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.6rem; }
+  .ma-mind { display: inline-flex; align-items: baseline; gap: 0.5rem; padding: 0.5rem 0.85rem; background: var(--ma-card); border: 1px solid var(--ma-hair); border-radius: 999px; box-shadow: var(--ma-shadow); }
+  .ma-mind.is-minor { opacity: 0.5; }
+  .ma-mind-dot { width: 9px; height: 9px; border-radius: 50%; align-self: center; box-shadow: 0 0 8px currentColor; }
+  .ma-mind-name { font-family: var(--font-heading); font-size: 1.02rem; color: var(--text-bright); font-weight: 700; letter-spacing: -0.01em; }
+  .ma-mind-fuel { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.01em; }
+  .ma-mind-posts { font-family: var(--font-body); font-size: 0.72rem; color: #8d9387; }
+  .ma-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 1rem; margin-bottom: 1.4rem; }
+  .ma-toggle { position: relative; display: inline-flex; padding: 3px; background: #232a24; border: 1px solid var(--ma-hair); border-radius: 999px; }
+  .ma-seg { position: relative; z-index: 2; border: 0; background: none; cursor: pointer; font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: var(--text-dim); padding: 0.4rem 0.95rem; border-radius: 999px; transition: color 0.25s ease; }
+  .ma-seg.is-on { color: #1a1f1a; }
+  .ma-seg:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(232,149,78,0.55); }
+  .ma-seg-glider { position: absolute; z-index: 1; top: 3px; left: 3px; bottom: 3px; width: calc(50% - 3px); border-radius: 999px; background: linear-gradient(180deg, #F4B36B, #E8954E); box-shadow: 0 2px 8px -1px rgba(232,149,78,0.5); transition: transform 0.34s cubic-bezier(0.4, 0, 0.2, 1); }
+  .ma-toggle.is-tokens .ma-seg-glider { transform: translateX(100%); }
+  .ma-controls-note { margin: 0; font-family: var(--font-body); font-size: 0.84rem; color: var(--text-dim); font-style: italic; }
+  .ma-donut { position: relative; width: 66px; height: 66px; border-radius: 50%; background: #3a443b; }
+  .ma-donut-hole { position: absolute; inset: 9px; border-radius: 50%; background: var(--ma-card); display: grid; place-items: center; }
+  .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; }
+  .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; }
+  .cv { position: relative; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.85rem 0.8rem; background: var(--ma-card); border: 1px solid var(--ma-hair); border-radius: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.16), 0 5px 14px -8px rgba(0,0,0,0.4); cursor: pointer; text-align: left; transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, background 0.25s ease, border-color 0.25s ease; will-change: transform; }
+  @media (hover: hover) {
+    /* lift off the page toward the reader: a small rise + grow, with a soft elevation shadow beneath */
+    .cv:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 10px 22px -8px rgba(0,0,0,0.5), 0 2px 6px -2px rgba(0,0,0,0.3); background: var(--ma-card-hi); border-color: var(--ma-hair-2); z-index: 3; }
+    .cv:active { transform: translateY(-1px) scale(1.01); transition-duration: 0.12s; }
+  }
+  .cv-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .cv-chip { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; font-family: var(--font-body); font-size: 0.68rem; font-weight: 600; color: var(--text-dim); }
+  .cv-chip i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 7px currentColor; flex: none; }
+  .cv-chipn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cv-val { flex: none; font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.025em; line-height: 1; }
+  .cv-title { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 700; color: var(--text-bright); line-height: 1.18; }
+  .cv.is-arch .cv-title { color: var(--text); }
+  .cv-arch { margin-left: 0.4em; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; color: #8d9387; white-space: nowrap; letter-spacing: 0.02em; vertical-align: 0.08em; }
+  .cv-bar { height: 5px; border-radius: 999px; overflow: hidden; background: #1c211d; display: flex; margin-top: auto; }
+  .cv-bar i { height: 100%; width: 0; transition: width 0.6s var(--ma-spring); }
+  .cv-date { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; }
+  .ma-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(8, 10, 8, 0.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.32s ease; }
+  .ma-scrim.is-on { opacity: 1; pointer-events: auto; }
+  .ma-tray { position: fixed; z-index: 51; width: min(540px, 92vw); background: rgba(27, 33, 28, 0.9); -webkit-backdrop-filter: blur(20px) saturate(1.3); backdrop-filter: blur(20px) saturate(1.3); border: 1px solid rgba(245, 241, 234, 0.16); border-radius: 26px; padding: 1.4rem 1.5rem 1.5rem; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; max-height: 86vh; overflow-y: auto; }
+  .ma-tray.is-on { opacity: 1; pointer-events: auto; }
+  .ma-tray:not(.is-centered) { left: 50%; bottom: clamp(14px, 4vh, 46px); transform: translateX(-50%) translateY(130%); }
+  .ma-tray:not(.is-centered).is-on { transform: translateX(-50%) translateY(0); }
+  .ma-tray.is-centered { left: 50%; top: 50%; width: min(440px, 92vw); transform: translate(-50%, -46%) scale(0.96); }
+  .ma-tray.is-centered.is-on { transform: translate(-50%, -50%) scale(1); }
+  body.ma-locked { overflow: hidden; }
+  .ma-tray-x { position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; display: grid; place-items: center; color: var(--text-dim); background: rgba(255,255,255,0.04); border: 1px solid var(--ma-hair); border-radius: 50%; cursor: pointer; transition: color 0.2s, background 0.2s; }
+  .ma-tray-x:hover { color: var(--text-bright); background: rgba(255,255,255,0.09); }
+  .ma-tray-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.3rem; }
+  .ma-donut-lg { width: 78px; height: 78px; flex: 0 0 auto; }
+  .ma-donut-lg .ma-donut-hole { inset: 11px; background: var(--ma-tray); }
+  .ma-donut-lg .ma-donut-val { font-size: 1.2rem; }
+  .ma-tray-id { min-width: 0; }
+  .ma-tray-kind { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8d9387; }
+  .ma-tray-kind.is-arch { color: #b39b6a; }
+  .ma-tray-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-bright); margin: 0.15rem 0 0.2rem; line-height: 1.1; letter-spacing: -0.015em; }
+  .ma-tray-when { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+  .ma-tray-bar { display: flex; gap: 2px; height: 14px; border-radius: 999px; overflow: hidden; background: #1c211d; margin-bottom: 1.1rem; }
+  .ma-barseg { width: 0; transition: width 0.7s var(--ma-spring); }
+  .ma-barseg:first-child { border-radius: 999px 0 0 999px; }
+  .ma-barseg:last-child { border-radius: 0 999px 999px 0; }
+  .ma-tray-rows { display: flex; flex-direction: column; gap: 0.1rem; }
+  .ma-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: baseline; gap: 0.7rem; padding: 0.55rem 0; border-bottom: 1px solid var(--ma-hair); animation: ma-row-in 0.5s var(--ma-spring) both; animation-delay: calc(var(--i) * 70ms + 120ms); }
+  .ma-row:last-child { border-bottom: 0; }
+  @keyframes ma-row-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+  .ma-row-dot { width: 11px; height: 11px; border-radius: 50%; align-self: center; box-shadow: 0 0 8px currentColor; }
+  .ma-row-name { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); }
+  .ma-row-val { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); }
+  .ma-row-pct { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-bright); min-width: 2.6em; text-align: right; letter-spacing: -0.02em; }
+  .ma-tray-link { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.2rem; font-family: var(--font-body); font-size: 0.9rem; color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+  .ma-tray-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  /* the per-post stats block: build-effort facts, a commits-per-day sparkline, tokens-per-word */
+  .ma-extra { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--ma-hair); }
+  .ma-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)); gap: 0.7rem 0.9rem; }
+  .ma-fact { display: flex; flex-direction: column; gap: 0.18rem; }
+  .ma-fact b { font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; }
+  .ma-fact span { font-family: var(--font-body); font-size: 0.66rem; color: var(--text-dim); line-height: 1.2; }
+  .ma-spark-wrap { margin-top: 1.1rem; }
+  .ma-spark { display: block; width: 100%; height: 22px; }
+  .ma-spark rect { fill: currentColor; }
+  .ma-spark-lbl { display: block; margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; letter-spacing: 0.02em; }
+  .ma-extra-note { margin: 0.85rem 0 0; font-family: var(--font-mono); font-size: 0.66rem; color: #8d9387; line-height: 1.4; }
+  @media (max-width: 560px) { .ma-donut { width: 58px; height: 58px; } }
+
+  @media print { .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; } }
   </style>
 </head>
 <body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
-    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+    <div class="lab-top">
+      <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+      <a class="lab-gh" href="https://github.com/Ethan-Willingham/Portfolio_01" target="_blank" rel="noopener" aria-label="View this site's source on GitHub" title="Source on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </div>
 
     <header class="about-head fade-in">
       <h1 class="about-title">About</h1>
-      <p class="about-lead">Welcome to my woodshop. I build things for fun and write articles I want to read; it's my reference shelf, fully open on the web.</p>
+      <p class="about-lead">Welcome to my woodshop. I build things for fun and write the articles I want to read; it's my reference shelf, fully open on the web.</p>
     </header>
 
     <main>
-      <hr class="about-rule">
-      <ul class="article-list">
-        <li class="article-list-item fade-in">
-          <a class="article-item" href="colophon.html">
-            <span class="article-item-thumb">
-              <!-- thumbnail: "Weldon Spring letterpress" by Rodney Truitt Jr (Unsplash), CC0 / public domain, via Wikimedia Commons; a tray of metal type, the original meaning of a colophon. -->
-              <img src="assets/thumbs/colophon.jpg" width="600" height="400" loading="eager" decoding="async" alt="A tray of metal letterpress type, the cast sorts clustered in the round wells of a warm cream type case under soft light.">
-            </span>
-            <time class="article-item-date" datetime="2026-06-16">16 Jun 2026</time>
-            <h2 class="article-item-title">Colophon</h2>
-            <p class="article-item-description">a page about the page: every color, font, and component this site is built from, laid out in the open and labeled by who made it, made here, or borrowed.</p>
-          </a>
-        </li>
-        <li class="article-list-item fade-in">
-          <a class="article-item" href="git-history.html">
-            <span class="article-item-thumb">
-              <img src="assets/thumbs/git-history.jpg" width="600" height="400" loading="eager" decoding="async" alt="Three side-by-side columns of the actual source code behind this site, in warm syntax highlighting on a dark background: the game engine, the galaxy visualizer, and the stylesheet.">
-            </span>
-            <time class="article-item-date" datetime="2026-05-24">24 May 2026</time>
-            <h2 class="article-item-title">Every Push and Every Token</h2>
-            <p class="article-item-description">every change i've made to this site, one dot each, and the tokens behind it. i don't write the code anymore; i tell an ai what i want and push every change to production.</p>
-          </a>
-        </li>
-      </ul>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+
+          <!-- ===== HOW IT'S MADE (from Every Push and Every Token) ===== -->
+          <div class="lab-seclead"><span class="n">01</span><span>How it's made</span></div>
+
+          <div class="gh-wrap">
+            <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website">
+              <canvas id="gh-canvas"></canvas>
+              <div class="gh-readout" id="gh-readout"></div>
+              <div class="gh-topright">
+                <button class="gh-btn" id="gh-reset" title="Reset view" aria-label="Reset view">
+                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>
+                </button>
+                <button class="gh-btn" id="gh-fs" title="Fullscreen" aria-label="Toggle fullscreen">
+                  <svg class="gh-ic gh-ic-expand" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 6 V2.5 H6 M10 2.5 H13.5 V6 M13.5 10 V13.5 H10 M6 13.5 H2.5 V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg class="gh-ic gh-ic-compress" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6 2.5 V6 H2.5 M13.5 6 H10 V2.5 M10 13.5 V10 H13.5 M2.5 10 H6 V13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="gh-hint" id="gh-hint">scroll to zoom &middot; drag to move &middot; hover a dot to read it</div>
+              <div class="gh-card" id="gh-card" role="status" aria-live="polite"></div>
+            </div>
+            <div class="gh-legend" id="gh-legend" aria-label="Topics, click to filter"></div>
+          </div>
+
+          <h2 class="u-h2">Tokens</h2>
+
+          <div class="gh-fuel">
+            <div class="gh-stat"><span class="n">18.1B</span><span class="l">tokens spent so far, and counting</span></div>
+            <div class="gh-stat"><span class="n">1.54B</span><span class="l">in a single day, at the peak</span></div>
+            <div class="gh-stat"><span class="n">~$17,000</span><span class="l">at list prices, to date</span></div>
+          </div>
+
+          <p>I play a lot of ping-pong with the AI, and every round it re-reads what it already has, the same files and the whole conversation. That's 95% of the tokens right there, cache reads; new output is under 1%. I know I could be more efficient about it. I'm not really trying to be.</p>
+
+          <h2 class="u-h2">Which AI built which page</h2>
+
+          <p>It was all Claude, but five different versions over a few weeks. Each tile is a page; the ring shows which version did the work.</p>
+
+          <div id="ma-root"></div>
+
+          <!-- ===== WHAT IT'S MADE OF (from Colophon) ===== -->
+          <div class="lab-seclead"><span class="n">02</span><span>What it's made of</span></div>
+
+          <div class="lab-spec">
+            <div class="co-spec-head">
+              <span class="co-spec-name">the palette</span>
+              <span class="co-tag co-tag--made">Made here</span>
+              <p class="co-spec-note">One locked forest-green background, and a warm ramp tuned around it in OKLCH. Nothing is a neutral gray and nothing is pure white. The names in gold are the actual CSS variables a post uses.</p>
+            </div>
+            <div class="co-stage">
+              <div class="co-ramp-bar" style="background: linear-gradient(90deg, #303931, #1e2420 9%, #4a544b 27%, #5a675c 38%, #767d71 50%, #a4a293 64%, #b8b2a2 73%, #d4c4a0 84%, #ede0c0 92%, #e8e2d6 96%, #f5f1ea);"></div>
+              <div class="co-swatches">
+                <div class="co-sw"><div class="co-sw-chip" style="background:#303931"></div><span class="co-sw-tok">--bg</span><span class="co-sw-hex">#303931</span><span class="co-sw-role">the background, locked</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#1e2420"></div><span class="co-sw-tok">--bg-raised</span><span class="co-sw-hex">#1E2420</span><span class="co-sw-role">raised panels</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#4a544b"></div><span class="co-sw-tok">--rule</span><span class="co-sw-hex">#4A544B</span><span class="co-sw-role">faint hairline</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#5a675c"></div><span class="co-sw-tok">--rule-strong</span><span class="co-sw-hex">#5A675C</span><span class="co-sw-role">stronger hairline</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#767d71"></div><span class="co-sw-tok">--line-mid</span><span class="co-sw-hex">#767D71</span><span class="co-sw-role">mid divider, gridline</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#a4a293"></div><span class="co-sw-tok">--text-faint</span><span class="co-sw-hex">#A4A293</span><span class="co-sw-role">dates, captions, footnotes</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#b8b2a2"></div><span class="co-sw-tok">--text-dim</span><span class="co-sw-hex">#B8B2A2</span><span class="co-sw-role">secondary text</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#d4c4a0"></div><span class="co-sw-tok">--accent</span><span class="co-sw-hex">#D4C4A0</span><span class="co-sw-role">the gold, and links</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#ede0c0"></div><span class="co-sw-tok">--accent-hover</span><span class="co-sw-hex">#EDE0C0</span><span class="co-sw-role">link and accent hover</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#e8e2d6"></div><span class="co-sw-tok">--text</span><span class="co-sw-hex">#E8E2D6</span><span class="co-sw-role">body text</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#f5f1ea"></div><span class="co-sw-tok">--text-bright</span><span class="co-sw-hex">#F5F1EA</span><span class="co-sw-role">headings, brightest</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lab-spec">
+            <div class="co-spec-head">
+              <span class="co-spec-name">the three faces</span>
+              <span class="co-tag co-tag--borrowed">Borrowed</span>
+              <p class="co-spec-note">Every word is set in one of three self-hosted typefaces: a serif for display, a familiar sans for body, a mono for anything that reads like data. I did not draw them; what is mine is the casting.</p>
+            </div>
+            <div class="co-faces">
+              <div class="co-face">
+                <div class="co-face-aa" style="font-family:var(--font-heading); font-weight:700;">Aa</div>
+                <div class="co-face-name">Century Supra &middot; serif &middot; --font-heading</div>
+                <div class="co-face-line" style="font-family:var(--font-heading);">Headlines, display, and <em style="font-style:italic">the italic that does the editorial talking.</em></div>
+                <div class="co-face-role">Titles, section heads, pull quotes, big numerals. The voice of the site.</div>
+              </div>
+              <div class="co-face">
+                <div class="co-face-aa" style="font-family:var(--font-body); font-weight:700;">Aa</div>
+                <div class="co-face-name">Segoe UI &middot; sans &middot; --font-body</div>
+                <div class="co-face-line" style="font-family:var(--font-body);">The quick brown fox sets the body text and the interface.</div>
+                <div class="co-face-role">Paragraphs and UI. Plain, legible, and already on most machines.</div>
+              </div>
+              <div class="co-face">
+                <div class="co-face-aa" style="font-family:var(--font-mono);">Aa</div>
+                <div class="co-face-name">Commit Mono &middot; mono &middot; --font-mono</div>
+                <div class="co-face-line" style="font-family:var(--font-mono); font-size:1.1rem;">0123456789 = { labels, gauges, code }</div>
+                <div class="co-face-role">Data, eyebrows, citation chips, code blocks. Anything that reads like a readout.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </article>
     </main>
 
     <footer class="site-footer">
@@ -150,6 +423,12 @@
       </div>
     </footer>
   </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/git-history-data.js"></script>
+  <script src="js/git-history.js"></script>
+  <script src="js/git-attribution-data.js"></script>
+  <script src="js/git-attribution.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
