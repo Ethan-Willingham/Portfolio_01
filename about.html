@@ -41,14 +41,27 @@
   <style>
     html { overflow-x: hidden; overscroll-behavior-x: none; }
 
-    /* ---- The intro: the site's plain-spoken voice, the same treatment the
-       blurb had on the old homepage (roman, brighter than a caption). ---- */
+    /* ---- The masthead: a large italic display "About" set in real Century
+       Supra italic, with the woodshop blurb close beneath as a plain-spoken
+       lead. Bigger and warmer than a standard post title, and left on the same
+       spine as everything below it. ---- */
+    .about-head { margin-bottom: 2.7rem; }
+    .about-title {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(2.9rem, 6.5vw, 4.2rem);
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      color: var(--text-bright);
+    }
     .about-lead {
-      margin-top: 0.3rem;
-      max-width: 48ch;
+      margin: 1.15rem 0 0;
+      max-width: 40ch;
       font-family: var(--font-body);
-      font-size: 1.18rem;
-      line-height: 1.6;
+      font-size: clamp(1.18rem, 2.2vw, 1.34rem);
+      line-height: 1.56;
       color: var(--text);
       text-wrap: pretty;
     }
@@ -87,7 +100,7 @@
       color: var(--text-dim);
     }
     /* a quiet hairline between the intro and the list */
-    .about-rule { border: none; border-top: 1px solid var(--rule); margin: 2.2rem 0 0.6rem; }
+    .about-rule { border: none; border-top: 1px solid var(--rule); margin: 0 0 0.4rem; }
     @media (min-width: 720px) {
       .article-item { padding: 1.7rem 1rem; }
       .article-item-title { font-size: 1.85rem; }
@@ -99,14 +112,25 @@
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
-    <header class="post-header fade-in">
-      <h1 class="post-title">About</h1>
+    <header class="about-head fade-in">
+      <h1 class="about-title">About</h1>
       <p class="about-lead">Welcome to my woodshop. I build things for fun and write articles I want to read; it's my reference shelf, fully open on the web.</p>
     </header>
 
     <main>
       <hr class="about-rule">
       <ul class="article-list">
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="colophon.html">
+            <span class="article-item-thumb">
+              <!-- thumbnail: "Weldon Spring letterpress" by Rodney Truitt Jr (Unsplash), CC0 / public domain, via Wikimedia Commons; a tray of metal type, the original meaning of a colophon. -->
+              <img src="assets/thumbs/colophon.jpg" width="600" height="400" loading="eager" decoding="async" alt="A tray of metal letterpress type, the cast sorts clustered in the round wells of a warm cream type case under soft light.">
+            </span>
+            <time class="article-item-date" datetime="2026-06-16">16 Jun 2026</time>
+            <h2 class="article-item-title">Colophon</h2>
+            <p class="article-item-description">a page about the page: every color, font, and component this site is built from, laid out in the open and labeled by who made it, made here, or borrowed.</p>
+          </a>
+        </li>
         <li class="article-list-item fade-in">
           <a class="article-item" href="git-history.html">
             <span class="article-item-thumb">
