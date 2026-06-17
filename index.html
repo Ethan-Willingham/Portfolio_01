@@ -47,7 +47,10 @@
     /* Keep the page rigid: no sideways scroll, no horizontal rubber-banding. */
     html { overflow-x: hidden; overscroll-behavior-x: none; }
 
-    .site-header { margin-bottom: 2rem; }
+    /* the header carries the search dropdown, which overlays the list below; the
+       header's intro animation makes it a stacking context, so lift it above
+       <main> or the panel paints behind the article cards. */
+    .site-header { margin-bottom: 2rem; position: relative; z-index: 20; }
     .site-name a { font-size: clamp(3rem, 6vw, 3.7rem); letter-spacing: -0.02em; }
     /* ---- Masthead epigraph: a short italic serif line (the voice), between the
        big name and the plain-spoken blurb. Three tiers, bold serif name / italic
@@ -62,50 +65,71 @@
       max-width: 48ch;
     }
 
-    /* ---- Home search: a hairline filter for the shelf below. A borderless
-       field on a single rule that warms to gold on focus, with the About link
-       balanced on the same row. It filters the list live (title, blurb, and a
-       hidden keyword list per card), highlights the hit, and shows a count that
-       appears only while searching. Built from the same hairline idiom as the
-       dek and the date kickers, so it reads as structure, not chrome. ---- */
-    .home-search {
-      display: flex;
-      align-items: flex-end;
-      gap: 1.5rem;
-      margin-top: 1.7rem;
+    /* ---- Home search: a soft rounded PILL + a live typeahead dropdown, in the
+       Family idiom (warm raised surface, full radius, a gentle gold focus ring,
+       a spring-in panel). It runs a full-text search over every post via
+       js/search.js + the prebuilt search-index.json, ranks per keystroke, and
+       deep-links into the matching section. ---- */
+    .home-search { position: relative; display: flex; align-items: center; gap: 1.1rem; margin-top: 1.7rem; }
+    .hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
+    .hs-field {
+      display: flex; align-items: center; cursor: text;
+      background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(245,241,234,0.04), 0 1px 2px rgba(8,12,9,0.35);
+      transition: border-color .25s ease, box-shadow .3s ease, background .25s ease;
     }
-    .hs-field { position: relative; flex: 1 1 auto; display: flex; align-items: center; }
-    .hs-mag {
-      position: absolute; left: 0.15rem; top: 50%; transform: translateY(-50%);
-      width: 1.05rem; height: 1.05rem; color: var(--text-faint);
-      transition: color 0.25s ease; pointer-events: none;
+    .hs-field:focus-within {
+      border-color: var(--accent); background: #232a25;
+      box-shadow: inset 0 1px 0 rgba(245,241,234,0.05), 0 0 0 4px rgba(212,196,160,0.14), 0 10px 30px -12px rgba(8,12,9,0.6);
     }
+    .hs-mag { flex: none; margin-left: 1.1rem; width: 1.1rem; height: 1.1rem; color: var(--text-faint); transition: color .25s ease; pointer-events: none; }
+    .hs-field:focus-within .hs-mag { color: var(--accent); }
     .hs-input {
-      width: 100%; background: transparent; border: none;
-      border-bottom: 1px solid var(--rule);
-      color: var(--text-bright); font-family: var(--font-heading);
-      font-size: 1.35rem; line-height: 1.25; padding: 0.45rem 0.2rem 0.55rem 1.95rem;
-      transition: border-color 0.3s ease;
+      width: 100%; background: transparent; border: none; color: var(--text-bright);
+      font-family: var(--font-heading); font-size: 1.2rem; line-height: 1.2;
+      padding: 0.78rem 1.15rem 0.82rem 0.72rem;
     }
     .hs-input::placeholder { color: var(--text-faint); font-style: italic; }
+    .hs-input:focus { outline: none; }
     .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-    .hs-input:focus { outline: none; border-bottom-color: var(--accent); }
-    .hs-field:focus-within .hs-mag { color: var(--accent); }
     .hs-about {
       flex: none; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600;
       letter-spacing: 0.2em; text-transform: uppercase; color: #c3b589;
-      text-decoration: none; white-space: nowrap; padding-bottom: 0.65rem;
-      transition: color 0.2s ease;
+      text-decoration: none; white-space: nowrap; transition: color 0.2s ease;
     }
     .hs-about:hover { color: var(--accent-hover); }
     .hs-about:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
-    .hs-readout {
-      margin: 0.8rem 0 0; font-family: var(--font-mono); font-size: 0.72rem;
-      letter-spacing: 0.04em; color: var(--text-faint);
+
+    /* the typeahead dropdown */
+    .hs-panel {
+      position: absolute; z-index: 60; top: calc(100% + 10px); left: 0; right: 0;
+      background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 20px;
+      box-shadow: 0 1px 2px rgba(8,12,9,0.4), 0 24px 56px -18px rgba(8,12,9,0.72);
+      padding: 6px; overflow-y: auto; max-height: min(64vh, 520px);
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transform: translateY(-6px) scale(0.985); transform-origin: top center;
+      transition: opacity .18s ease, transform .22s cubic-bezier(0.23,1,0.32,1), visibility .18s;
     }
-    .hs-readout:empty { display: none; }
+    .hs-panel.is-open { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+    .hs-res { display: flex; align-items: center; gap: 0.85rem; padding: 0.6rem 0.7rem; border-radius: 14px; text-decoration: none; color: var(--text); transition: background .12s ease; }
+    .hs-res.is-active { background: var(--s-gold-tint, rgba(212,196,160,0.08)); }
+    .hs-res-thumb { flex: none; width: 56px; height: 40px; border-radius: 9px; overflow: hidden; background: var(--bg); }
+    .hs-res-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hs-res-main { flex: 1 1 auto; min-width: 0; }
+    .hs-res-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.7rem; }
+    .hs-res-title { font-family: var(--font-heading); font-size: 1.06rem; color: var(--text-bright); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hs-res-date { flex: none; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+    .hs-res-snip { display: block; font-size: 0.84rem; line-height: 1.4; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.12rem; }
+    .hs-res-in { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); margin-right: 0.5em; }
+    .hs-res-go { flex: none; color: var(--accent); opacity: 0; transform: translateX(-4px); transition: opacity .15s ease, transform .15s ease; font-size: 1.05rem; }
+    .hs-res.is-active .hs-res-go { opacity: 0.9; transform: none; }
+    .hs-empty { padding: 1.1rem 1rem; font-style: italic; color: var(--text-dim); font-size: 0.96rem; }
+    .hs-foot { display: flex; align-items: center; gap: 1.1rem; padding: 0.55rem 0.85rem 0.4rem; margin-top: 4px; border-top: 1px solid var(--s-divide, rgba(245,241,234,0.06)); font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-faint); }
+    .hs-foot b { display: inline-block; min-width: 1.5em; text-align: center; padding: 0.1em 0.3em; margin: 0 0.04em; border: 1px solid var(--rule); border-radius: 5px; color: var(--text-dim); font-weight: 400; }
+    .hs-foot-count { margin-left: auto; }
+    .hs-readout { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
     mark.hs-hi { background: rgba(212, 196, 160, 0.22); color: var(--text-bright); border-radius: 2px; padding: 0 0.05em; }
-    .article-list-item.is-filtered-out { display: none; }
+    @media (prefers-reduced-motion: reduce) { .hs-panel { transition: opacity .12s ease, visibility .12s; transform: none; } .hs-panel.is-open { transform: none; } }
 
     /* ---- Article cards: thumbnail floats RIGHT so every title shares the name's
        left spine (a title is the article's "name"). Mobile (<560px) stacks the
@@ -185,10 +209,13 @@
       <h1 class="site-name"><a href="/">Ethan Willingham</a></h1>
       <p class="site-tagline">The truth lasts forever; this is a website.</p>
       <div class="home-search">
-        <label class="hs-field">
-          <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-          <input class="hs-input" type="search" placeholder="Search the shelf" aria-label="Search articles" autocomplete="off" spellcheck="false">
-        </label>
+        <div class="hs-field-wrap">
+          <label class="hs-field">
+            <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
+            <input class="hs-input" type="search" placeholder="Search every post" aria-label="Search every post" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+          </label>
+          <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
+        </div>
         <a class="hs-about" href="about.html">About</a>
       </div>
       <p class="hs-readout" role="status" aria-live="polite"></p>
@@ -466,68 +493,7 @@
     }
   })();
   </script>
-  <script>
-  // ---- Home search: filter the shelf live against each card's title, blurb,
-  // and a hidden keyword list; highlight the hit in the title; show a count.
-  // "/" jumps to the field, Esc clears it, no matches shows a quiet line. No
-  // deps, and an empty query restores the full list in its original order. ----
-  (function () {
-    'use strict';
-    var input = document.querySelector('.hs-input');
-    if (!input) return;
-    var readout = document.querySelector('.hs-readout');
-    var cards = Array.prototype.slice.call(document.querySelectorAll('.article-list-item'));
-    cards.forEach(function (li) {
-      var titleEl = li.querySelector('.article-item-title');
-      var descEl = li.querySelector('.article-item-description');
-      li._title = titleEl.textContent;
-      li._titleEl = titleEl;
-      li._hay = (li._title + ' ' + (descEl ? descEl.textContent : '') + ' ' + (li.dataset.keywords || '')).toLowerCase();
-      li._words = li._hay.split(/[^a-z0-9]+/).filter(Boolean);
-    });
-
-    function esc(s) { return s.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
-    function highlight(li, tok) {
-      var o = li._title;
-      li._titleEl.textContent = o;
-      if (!tok) return;
-      var lower = o.toLowerCase(), from = 0, idx = -1, i;
-      while ((i = lower.indexOf(tok, from)) !== -1) {
-        if (i === 0 || /[^a-z0-9]/.test(lower.charAt(i - 1))) { idx = i; break; }
-        from = i + 1;
-      }
-      if (idx < 0) return;
-      li._titleEl.innerHTML = esc(o.slice(0, idx)) + '<mark class="hs-hi">' + esc(o.slice(idx, idx + tok.length)) + '</mark>' + esc(o.slice(idx + tok.length));
-    }
-
-    function apply() {
-      var raw = input.value.trim();
-      var toks = raw.toLowerCase().split(/\s+/).filter(Boolean);
-      var shown = 0;
-      cards.forEach(function (li) {
-        var ok = toks.length === 0 || toks.every(function (t) {
-          return li._words.some(function (w) { return w.indexOf(t) === 0; });
-        });
-        li.classList.toggle('is-filtered-out', !ok);
-        highlight(li, ok && toks.length === 1 ? toks[0] : '');
-        if (ok) shown++;
-      });
-      if (!raw) readout.textContent = '';
-      else if (shown === 0) readout.textContent = 'No posts match “' + raw + '”';
-      else readout.textContent = shown + ' of ' + cards.length + ' posts';
-    }
-
-    input.addEventListener('input', apply);
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { if (input.value) { input.value = ''; apply(); } else { input.blur(); } }
-    });
-    document.addEventListener('keydown', function (e) {
-      var ae = document.activeElement;
-      var typing = ae && /^(input|textarea)$/i.test(ae.tagName);
-      if (e.key === '/' && !typing) { e.preventDefault(); input.focus(); }
-    });
-  })();
-  </script>
+  <script src="js/search.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
