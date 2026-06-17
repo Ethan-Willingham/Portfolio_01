@@ -123,6 +123,12 @@
     .hs-res-in { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); margin-right: 0.5em; }
     .hs-res-go { flex: none; color: var(--accent); opacity: 0; transform: translateX(-4px); transition: opacity .15s ease, transform .15s ease; font-size: 1.05rem; }
     .hs-res.is-active .hs-res-go { opacity: 0.9; transform: none; }
+    /* archived results: clearly amber-flagged, grouped, and (in JS) always after live posts */
+    .hs-group { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: #e6c074; padding: 0.75rem 0.85rem 0.35rem; display: flex; align-items: center; gap: 0.65rem; }
+    .hs-group::after { content: ""; flex: 1 1 auto; height: 1px; background: rgba(230,192,116,0.28); }
+    .hs-res.is-arch { box-shadow: inset 2px 0 0 rgba(230,192,116,0.5); }
+    .hs-res.is-arch .hs-res-thumb img { filter: saturate(0.7) brightness(0.92); }
+    .hs-res-arch { flex: none; font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.12em; text-transform: uppercase; color: #e6c074; background: rgba(230,192,116,0.13); border: 1px solid rgba(230,192,116,0.42); border-radius: 999px; padding: 0.2em 0.62em; white-space: nowrap; }
     .hs-empty { padding: 1.1rem 1rem; font-style: italic; color: var(--text-dim); font-size: 0.96rem; }
     .hs-foot { display: flex; align-items: center; gap: 1.1rem; padding: 0.55rem 0.85rem 0.4rem; margin-top: 4px; border-top: 1px solid var(--s-divide, rgba(245,241,234,0.06)); font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-faint); }
     .hs-foot b { display: inline-block; min-width: 1.5em; text-align: center; padding: 0.1em 0.3em; margin: 0 0.04em; border: 1px solid var(--rule); border-radius: 5px; color: var(--text-dim); font-weight: 400; }

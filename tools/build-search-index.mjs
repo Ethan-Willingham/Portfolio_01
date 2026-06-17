@@ -13,7 +13,7 @@
    No dependencies (vanilla Node, regex extraction; the text only needs to be
    searchable, not perfectly structured). No em dashes in output copy.
    ============================================================================ */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -132,13 +132,38 @@ for (const ex of EXTRAS) {
   posts.push(post);
 }
 
+// Archived posts (archive/<slug>/<slug>.html). They are off the homepage but still
+// live and worth searching; flag them so the UI marks them and ranks them last.
+let archiveDirs = [];
+try { archiveDirs = readdirSync(join(ROOT, 'archive'), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort(); } catch (e) {}
+for (const slug of archiveDirs) {
+  const url = `archive/${slug}/${slug}.html`;
+  const file = join(ROOT, url);
+  if (seen.has(url) || !existsSync(file)) continue;
+  const head = readFileSync(file, 'utf8').slice(0, 4000);
+  const grab = re => { const m = head.match(re); return m ? decode(m[1]).trim() : ''; };
+  const ogimg = grab(/<meta property="og:image" content="([^"]+)"/).replace(/^https?:\/\/[^/]+/, '');
+  const post = {
+    url,
+    title: stripToText(grab(/<meta property="og:title" content="([^"]+)"/) || grab(/<title>([^<]+)<\/title>/) || slug),
+    date: '', dateDisplay: '',
+    desc: stripToText(grab(/<meta name="description" content="([^"]+)"/)),
+    thumb: ogimg, keywords: '', archived: true, sections: [],
+  };
+  buildSections(post, file);
+  posts.push(post);
+  seen.add(url);
+}
+
 const payload = { built: new Date().toISOString().slice(0, 10), count: posts.length, posts };
 const json = JSON.stringify(payload);
 writeFileSync(join(ROOT, 'search-index.json'), json);
 
 const kb = (json.length / 1024).toFixed(0);
 console.log(`search-index.json: ${posts.length} posts, ${json.length} bytes (${kb} KB)`);
+const active = posts.filter(p => !p.archived).length;
+console.log(`  (${active} active, ${posts.length - active} archived)`);
 for (const p of posts) {
   const chars = p.sections.reduce((a, s) => a + s.text.length, 0);
-  console.log(`  ${p.url.padEnd(28)} ${String(p.sections.length).padStart(2)} sec  ${(chars/1024).toFixed(1)}KB  "${p.title}"`);
+  console.log(`  ${(p.archived ? 'A ' : '  ') + p.url.padEnd(52)} ${String(p.sections.length).padStart(2)} sec  ${(chars/1024).toFixed(1).padStart(5)}KB  "${p.title}"`);
 }
