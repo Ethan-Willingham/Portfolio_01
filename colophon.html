@@ -20,9 +20,9 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Colophon</title>
-  <meta name="description" content="A guided tour of every part this site is built from: its one locked color palette, its three typefaces, and every component a post is assembled from, each labeled made here or borrowed.">
+  <meta name="description" content="A short tour of the parts this site is built from: its one locked color palette, its three typefaces, and a few of the components every post is assembled from, each labeled made here or borrowed.">
   <meta property="og:title" content="Colophon">
-  <meta property="og:description" content="A page about the page. Every color, font, and moving part the site is built from, laid out in the open and labeled by who made it: made here, or borrowed.">
+  <meta property="og:description" content="A page about the page. The colors, the fonts, and a few of the parts this site is built from, laid out in the open and labeled by who made it: made here, or borrowed.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/colophon.html">
@@ -39,9 +39,9 @@
   <style>
   /* ============================================================
      COLOPHON
-     A page about the page. A living tour of the site's own parts:
-     the palette, the three fonts, every kit component (rendered
-     live, on the real style.css + kit.css), and the page chrome.
+     A page about the page. A short tour of the site's own parts:
+     the palette, the three fonts, and a few of the simplest kit
+     components (rendered live, on the real style.css + kit.css).
      Sits inside the site shell (forest green, parchment, Century
      Supra / Segoe UI / Commit Mono). This block adds only the
      page's own scaffolding (the column, the spec frames, the
@@ -104,18 +104,12 @@
   .co-legend-item p b { color: var(--text); }
 
   /* ---------- SPEC: one labeled component on its stage ---------- */
-  .co-grouphead { max-width: var(--measure); margin: 2.8rem auto 0; padding: 0 var(--gutter); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
-  .co-grouphead + .co-spec { margin-top: 1.4rem; }
-
   .co-spec { max-width: var(--measure); margin: 2rem auto 0; padding: 0 var(--gutter); }
   .co-spec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem 0.8rem; margin: 0 0 0.7rem; }
   .co-spec-name { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-bright); }
   .co-spec-note { flex: 1 1 100%; font-size: 0.96rem; color: var(--text-dim); line-height: 1.5; margin: 0; }
   .co-spec-note b { color: var(--text); font-weight: 600; }
   .co-stage { background: rgba(0,0,0,0.13); border: 1px solid var(--rule); border-radius: 14px; padding: clamp(18px, 3.2vw, 28px); }
-  .co-stage.is-wide { /* let a wide component breathe a touch */ }
-  /* a stage that should read on the bare page background (chrome bits) */
-  .co-stage.is-bare { background: var(--bg); }
   /* keep the showcased pull-quote / def from running full-bleed inside the stage */
   .co-stage > :first-child { margin-top: 0; }
   .co-stage > :last-child  { margin-bottom: 0; }
@@ -145,9 +139,6 @@
   .co-face-role { font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; }
   @media (max-width: 520px){ .co-face { grid-template-columns: 1fr; } .co-face-aa { grid-row: auto; } }
 
-  /* a sample homepage card, shown in the chrome chapter, kept inside its stage */
-  .co-stage .article-item { margin: 0; }
-
   /* footer matches the posts */
   .co-foot-note { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); }
 
@@ -172,38 +163,30 @@
   <main>
     <!-- ============================ INTRO ============================ -->
     <div class="co-col co-prose">
-      <p class="co-lede">This is the workshop. If you have read a few of these posts and wondered what they are actually made of, here is the whole kit, laid out on the bench and named.</p>
+      <p class="co-lede">This is the workshop. If you have read a few of these posts and wondered what they are actually made of, here is the kit, laid out on the bench and named.</p>
 
-      <p>The site runs on a small, fixed set of parts. One background color that never changes, a warm palette tuned around it, three typefaces and nothing else, and a few dozen building blocks that every post is assembled from. There is no framework here, no design library you could download, no theme. It is a closed set, drawn for this one site, and this page is just an honest inventory of it.</p>
-
-      <p>And honesty is the point of the page, so it keeps one plain distinction. Next to each part is a small tag. One of two:</p>
+      <p>The whole site runs on a small, fixed set of parts: one locked background color, a warm palette tuned around it, three typefaces, and a handful of building blocks. No framework, no theme. Next to each part below is one of two small tags:</p>
     </div>
 
     <div class="co-col">
       <div class="co-legend">
         <div class="co-legend-item">
           <span class="co-tag co-tag--made">Made here</span>
-          <p><b>It exists only on this site.</b> Built for this one job and used nowhere else. Most of what follows is this: the palette, every component, the small machinery around the edges.</p>
+          <p><b>It exists only on this site.</b> Built for this one job and used nowhere else: the palette, and every component below.</p>
         </div>
         <div class="co-legend-item">
           <span class="co-tag co-tag--borrowed">Borrowed</span>
-          <p><b>I did not make the thing itself.</b> I chose it and wired it in: the typefaces, the visit counters, a standard browser trick or two. The few borrowed pieces are the ones worth being upfront about.</p>
+          <p><b>I did not make the thing itself.</b> I chose it and wired it in. Here, that is really just the three typefaces.</p>
         </div>
       </div>
     </div>
 
-    <div class="co-col co-prose">
-      <p>One more thing before the tour. Almost every component below began life as a row of competing options on a throwaway test page, and what you see here is the single version that won. So this is not a catalog of everything that was tried. It is the set of decisions that stuck.</p>
-    </div>
-
     <!-- chapter strip -->
     <nav class="co-chapters" aria-label="Chapters">
-      <span class="lead">Four chapters and a close</span>
+      <span class="lead">Three short chapters</span>
       <a href="#color">Color</a>
       <a href="#type">Type</a>
       <a href="#kit">The kit</a>
-      <a href="#chrome">The chrome</a>
-      <a href="#made">How it is held together</a>
     </nav>
 
     <!-- ============================ 01 COLOR ============================ -->
@@ -212,7 +195,7 @@
 
       <div class="co-col co-prose">
         <p class="co-lede">The background is a single dark forest green, and it is locked. Everything else on the site exists to sit on top of it without ever fighting it.</p>
-        <p>The palette was tuned in OKLCH, a way of describing color that tracks how the eye actually reads lightness, so the steps up the ramp feel even instead of lurching. Nothing is a neutral gray and nothing is pure white. The darks are warm and green, the lights are cream, and the one everyday accent is a dusty gold. There is a rose note held in reserve for the single most important link on a page, and a small set of muted accents that posts reach for when they need to color code something.</p>
+        <p>The palette is tuned in OKLCH, so the steps up the ramp feel even instead of lurching. Nothing is a neutral gray and nothing is pure white: the darks are warm and green, the lights are cream, and the one everyday accent is a dusty gold, with a rose held in reserve for the single most important link on a page.</p>
       </div>
 
       <div class="co-spec">
@@ -268,9 +251,6 @@
         </div>
       </div>
 
-      <div class="co-col">
-        <aside class="u-callout u-move"><p class="u-callout-k">takeaway</p><p class="u-callout-body">Tune one warm green, then never let another color on the page argue with it.</p></aside>
-      </div>
     </section>
 
     <!-- ============================ 02 TYPE ============================ -->
@@ -279,7 +259,7 @@
 
       <div class="co-col co-prose">
         <p class="co-lede">Every word on the site is set in one of three faces. Headlines in a serif, body text in a familiar sans, and anything that behaves like data in a monospace.</p>
-        <p>Here is the borrowed part, said plainly: I did not draw these letters. Century Supra is a serif in the Century family, the kind of face you find set in old books. Segoe UI is Microsoft's interface font, loaded first as the one your own machine probably already has and only downloaded if it does not. Commit Mono is a free monospace built for code. What is mine is the casting, which face does which job, at what size, against this green. The letters are borrowed; the typesetting is made here.</p>
+        <p>Here is the borrowed part, said plainly: I did not draw these letters. Century Supra is an old-book serif, Segoe UI is the interface font your machine probably already has, and Commit Mono is a free face built for code. What is mine is the casting, which face does which job, at what size, against this green.</p>
       </div>
 
       <div class="co-spec">
@@ -310,30 +290,6 @@
         </div>
       </div>
 
-      <div class="co-spec">
-        <div class="co-spec-head">
-          <span class="co-spec-name">the type scale</span>
-          <span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A smooth, gap free ramp of sizes, so a page never has two headings that are almost but not quite the same. Rendered here in the actual <b>.u-table</b> component.</p>
-        </div>
-        <div class="co-stage">
-          <table class="u-table">
-            <thead><tr><th>Element</th><th>Size</th><th>Face</th></tr></thead>
-            <tbody>
-              <tr><td>Body</td><td class="u-num">1.2 to 1.28rem</td><td>Segoe UI</td></tr>
-              <tr><td>Small heading (h3)</td><td class="u-num">~1.45rem</td><td>Century Supra</td></tr>
-              <tr><td>Section heading (h2)</td><td class="u-num">~2rem</td><td>Century Supra</td></tr>
-              <tr class="u-feature"><td>Post title (the hero)</td><td class="u-num">3 to 6rem</td><td>Century Supra</td></tr>
-              <tr><td>Cover title (rare)</td><td class="u-num">up to ~9rem</td><td>Century Supra</td></tr>
-              <tr><td>Eyebrows, labels, data</td><td class="u-num">0.7 to 0.9rem</td><td>Commit Mono</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="co-col">
-        <aside class="u-callout u-move"><p class="u-callout-k">takeaway</p><p class="u-callout-body">Borrow good letters. Spend your own taste on how they are set.</p></aside>
-      </div>
     </section>
 
     <!-- ============================ 03 THE KIT ============================ -->
@@ -341,66 +297,13 @@
       <div class="u-sechead"><p class="u-sechead-k">Chapter three</p><h2 id="kit-h" class="u-sechead-h">The kit every post is built from</h2></div>
 
       <div class="co-col co-prose">
-        <p class="co-lede">This is the bench itself. The components a post is assembled from, each one rendered live below on the real stylesheet, not a picture of it.</p>
-        <p>They all share the same green, the same three fonts, and the same quiet manners. Every piece in this chapter is made here. A handful keep their own names because they were one off designs that earned it; the rest live under a shared <b>.u</b> prefix so they never collide with anything in an older post.</p>
+        <p class="co-lede">A few of the building blocks a post is assembled from, each one rendered live below on the real stylesheet, not a picture of it. Every one is made here.</p>
       </div>
-
-      <!-- group: openers -->
-      <p class="co-grouphead">Openers and headings</p>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-hero</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The field guide title that opens almost every post. The title at the very top of this page is this exact component.</p></div>
-        <div class="co-stage">
-          <header class="u-hero">
-            <p class="u-eyebrow">Field guide</p>
-            <h1 class="u-title" style="font-size:clamp(2.4rem,7vw,3.4rem)">How Long Can You Live?</h1>
-            <p class="u-dek">The italic serif standfirst that sits under the title and sets the tone.</p>
-            <p class="u-meta">An honest field guide <span class="u-sep">/</span> <b>28 sources</b> <span class="u-sep">/</span> 25 min read</p>
-          </header>
-        </div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-sechead</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A chapter kicker over a heading. It opens each numbered section, including the four on this page.</p></div>
-        <div class="co-stage"><div class="u-sechead" style="align-items:flex-start;text-align:left"><p class="u-sechead-k">Chapter two</p><h2 class="u-sechead-h">What moves the needle</h2></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-h2 &middot; .u-eyebrow &middot; .u-lead</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A plainer inline heading with a gold tab, the standalone pill eyebrow, and the larger opening paragraph.</p></div>
-        <div class="co-stage">
-          <p class="u-eyebrow">Still unsettled</p>
-          <h2 class="u-h2" style="margin-top:.4rem">A plainer inline heading</h2>
-          <p class="u-lead" style="margin-top:.9rem">A bigger opening paragraph, with a <a class="u-link" href="#kit">kit link</a> and a run of <strong>bold</strong> inside it.</p>
-        </div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-def</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A dictionary style opener, for an essay that wants to start by defining its one word.</p></div>
-        <div class="co-stage">
-          <dl class="u-def"><dt class="u-def-term"><dfn class="u-def-word">colophon</dfn> <span class="u-def-pos">(n.)</span></dt><dd class="u-def-gloss">a note, traditionally at the end of a book, describing how it was made: the type, the paper, the hands.</dd></dl>
-        </div>
-      </div>
-
-      <!-- group: text & emphasis -->
-      <p class="co-grouphead">Text, asides, and callouts</p>
 
       <div class="co-spec">
         <div class="co-spec-head"><span class="co-spec-name">.u-callout</span><span class="co-tag co-tag--made">Made here</span>
           <p class="co-spec-note">A boxed, labelled highlight. For a one off, meaningfully named point that earns the weight of a box.</p></div>
         <div class="co-stage"><aside class="u-callout"><p class="u-callout-k">The honest goal</p><p class="u-callout-body">Say the true thing simply, then stop. The box is for the points that have earned it.</p></aside></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-callout.u-move &middot; .u-aside</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The same callout with its box dropped: a quiet gold marker line for a recurring takeaway, and a soft left rule for a connective aside. A box repeated a dozen times reads like homework, so these carry the repeats.</p></div>
-        <div class="co-stage">
-          <aside class="u-callout u-move"><p class="u-callout-k">label, hidden</p><p class="u-callout-body">The recurring takeaway, in the essay's own italic voice.</p></aside>
-          <aside class="u-callout u-aside" style="margin-bottom:0"><p class="u-callout-k">label, hidden</p><p class="u-callout-body"><b>Notice the pattern.</b> The connective step back, with its opening run bolded as a lead in.</p></aside>
-        </div>
       </div>
 
       <div class="co-spec">
@@ -415,225 +318,20 @@
         <div class="co-stage"><hr class="u-divider"></div>
       </div>
 
-      <!-- group: numbers -->
-      <p class="co-grouphead">Numbers and data</p>
-
       <div class="co-spec">
         <div class="co-spec-head"><span class="co-spec-name">.u-stats</span><span class="co-tag co-tag--made">Made here</span>
           <p class="co-spec-note">Inline figures, divided by hairlines. For a quick row of numbers inside the flow of reading.</p></div>
         <div class="co-stage"><div class="u-stats"><div class="u-stat"><span class="u-fig">82%</span><span class="u-fig-lbl">of variation is lifestyle</span></div><div class="u-stat"><span class="u-fig">3.4&times;</span><span class="u-fig-lbl">faster than baseline</span></div><div class="u-stat"><span class="u-fig">122</span><span class="u-fig-lbl">oldest verified age</span></div></div></div>
       </div>
 
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-bignum</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">One giant figure, with the caption and source filling the space to its right so the number never floats alone.</p></div>
-        <div class="co-stage"><div class="u-bignum" style="margin:0"><span class="u-bignum-fig">82<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">of how long you live is lifestyle, not the genes you were dealt</span><span class="u-bignum-src">Source, a long twin study</span></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.stat-bartab</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">Neutral stat cards, cream figures on a dim bar. Deliberately not gold: gold is the site's positive accent, and a sobering number should not read as a brag.</p></div>
-        <div class="co-stage"><div class="stat-bartab-row"><div class="stat-bartab"><div class="stat-num">120</div><p class="stat-label">the famous limit</p></div><div class="stat-bartab"><div class="stat-num">38%</div><p class="stat-label">records with paperwork errors</p></div><div class="stat-bartab"><div class="stat-num">5+</div><p class="stat-label">years from connection</p></div></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-kpis</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note"><b>Legacy.</b> A small dashboard, kept alive for the one post that still uses it. Not reached for in anything new; the stat cards above replaced it.</p></div>
-        <div class="co-stage"><div class="u-kpis"><div class="u-kpi"><span class="u-kpi-lbl">median</span><span class="u-kpi-val">38</span><span class="u-kpi-sub">across the cohort</span></div><div class="u-kpi u-kpi-main"><span class="u-kpi-lbl">peak</span><span class="u-kpi-val">122</span><span class="u-kpi-sub">verified record</span></div><div class="u-kpi"><span class="u-kpi-lbl">floor</span><span class="u-kpi-val">71</span><span class="u-kpi-sub">global average</span></div></div></div>
-      </div>
-
-      <!-- group: lists -->
-      <p class="co-grouphead">Lists, steps, and entries</p>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-checks</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A do, maybe, skip checklist. The sharpest edged component in the kit, borrowed in feel from developer tools.</p></div>
-        <div class="co-stage"><ul class="u-checks"><li class="u-check u-use"><strong>Do this.</strong> The thing the evidence actually supports.</li><li class="u-check u-meh"><strong>Maybe.</strong> Fine if you enjoy it, but do not expect much.</li><li class="u-check u-skip"><strong>Skip.</strong> The popular thing that does not hold up.</li></ul></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-steps</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">Numbered steps with big serif numerals. For a process read in order.</p></div>
-        <div class="co-stage"><ol class="u-steps"><li class="u-step"><span class="u-step-h">Lay out the parts.</span><p class="u-step-p">Get everything on the bench where you can see it.</p></li><li class="u-step"><span class="u-step-h">Name each one.</span><p class="u-step-p">Made here, or borrowed. No third option.</p></li><li class="u-step"><span class="u-step-h">Put it back together.</span><p class="u-step-p">Now the reader knows what they are holding.</p></li></ol></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-entries</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A numbered, editorial run of short entries, each with its own headline.</p></div>
-        <div class="co-stage"><div class="u-entries"><article class="u-entry"><span class="u-entry-num">No. 01</span><h3 class="u-entry-h">The first entry's headline.</h3><p class="u-entry-p">A couple of lines of supporting text underneath it.</p></article><article class="u-entry"><span class="u-entry-num">No. 02</span><h3 class="u-entry-h">And the second.</h3><p class="u-entry-p">The numerals run in the monospace, the headings in the serif.</p></article></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.dlnum</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A numbered glossary, for defining several terms in a row. A compact two up variant exists for short lists.</p></div>
-        <div class="co-stage"><div class="dlnum-wrap"><p class="dlnum-head">Define a couple of terms.</p><div class="dlnum-item"><div class="dlnum-numeral">1</div><div class="dlnum-body"><h3 class="dlnum-term">Colophon</h3><p class="dlnum-def">The note on how a thing was made.</p></div></div><div class="dlnum-item"><div class="dlnum-numeral">2</div><div class="dlnum-body"><h3 class="dlnum-term">Kit</h3><p class="dlnum-def">The closed set of parts a page is built from.</p></div></div></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-grid</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A reflowing photo grid, two up to four up as the screen widens. The colored plates below stand in for photographs.</p></div>
-        <div class="co-stage"><div class="u-grid">
-          <figure><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='466' height='591'%3E%3Crect width='466' height='591' fill='%236f9a6c'/%3E%3C/svg%3E"><figcaption><b>Sage</b>A plate, with its caption.</figcaption></figure>
-          <figure><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='466' height='591'%3E%3Crect width='466' height='591' fill='%23b8796d'/%3E%3C/svg%3E"><figcaption><b>Brick</b>A second plate.</figcaption></figure>
-          <figure><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='466' height='591'%3E%3Crect width='466' height='591' fill='%238fb3c7'/%3E%3C/svg%3E"><figcaption><b>Blue</b>A third.</figcaption></figure>
-          <figure><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='466' height='591'%3E%3Crect width='466' height='591' fill='%23b79bc4'/%3E%3C/svg%3E"><figcaption><b>Purple</b>A fourth.</figcaption></figure>
-        </div></div>
-      </div>
-
-      <!-- group: citations -->
-      <p class="co-grouphead">Citations and sources</p>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-src &middot; .u-grade</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A source chip that links out, and the four evidence grades a claim can carry, from solid to weak. The honesty layer of a sourced post.</p></div>
-        <div class="co-stage"><p class="u-citep">A claim worth a citation. <span class="u-src"><a href="#kit">the source roll</a></span> <span class="u-grade u-grade-a">solid</span> <span class="u-grade u-grade-b">good</span> <span class="u-grade u-grade-c">contested</span> <span class="u-grade u-grade-d">weak</span></p></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-fnp &middot; .u-cite</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A classic superscript footnote reference, for a post that prefers numbered notes to chips.</p></div>
-        <div class="co-stage"><p class="u-fnp">A claim that carries a footnote at the end of it.<sup class="u-cite"><a href="#kit">1</a></sup></p></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-collapse</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A collapsible block, for a source list or an appendix that should not crowd the page. Click it.</p></div>
-        <div class="co-stage"><details class="u-collapse"><summary class="u-collapse-s">Sources and notes</summary><ol class="u-collapse-list"><li><b>A source.</b> <a href="#kit">a link to it</a></li><li><b>Another.</b> <a href="#kit">and its link</a></li></ol></details></div>
-      </div>
-
-      <!-- group: navigation & cards -->
-      <p class="co-grouphead">Navigation and cards</p>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-toc</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A boxed table of contents. This page uses the slimmer pill strip instead, but the boxed version is here when a post wants it.</p></div>
-        <div class="co-stage"><nav class="u-toc"><p class="u-toc-k">What is inside</p><ul class="u-toc-list"><li><a class="u-toc-row" href="#kit"><span class="u-toc-name"><span class="u-toc-n">01</span>The first chapter</span><span class="u-toc-m">8 min</span></a></li><li><a class="u-toc-row" href="#kit"><span class="u-toc-name"><span class="u-toc-n">02</span>The second chapter</span><span class="u-toc-m">6 min</span></a></li></ul></nav></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.u-cards</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A grid of soft info cards that lift a little on hover. For a row of small, parallel ideas.</p></div>
-        <div class="co-stage"><div class="u-cards"><div class="u-card"><h4 class="u-card-h">One card</h4><p class="u-card-p">A short body of text inside it.</p></div><div class="u-card"><h4 class="u-card-h">Another</h4><p class="u-card-p">They reflow to fit the width they are given.</p></div><div class="u-card"><h4 class="u-card-h">A third</h4><p class="u-card-p">And lift gently when you point at them.</p></div></div></div>
-      </div>
-
-      <!-- group: the bespoke few -->
-      <p class="co-grouphead">The bespoke few, kept their own names</p>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.debateA</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">Two sides of a question, stacked: the claim in warm coral, the reality in green. For myth versus truth.</p></div>
-        <div class="co-stage"><div class="debateA"><div class="debateA-claim"><span class="debateA-kicker">The claim</span><p class="debateA-text">There is a hard wall on human lifespan at 120.</p></div><div class="debateA-truth"><span class="debateA-kicker">The reality</span><p class="debateA-text">No proven biology puts it there. The ceiling is real, but the number is a story.</p></div></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.pillbar</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The control panel for a post with a live demo: a stage, a readout, a slider, a segmented switch, and buttons. This one is wired up, so try it.</p></div>
-        <div class="co-stage">
-          <div class="pillbar" id="demo-pill">
-            <div class="pillbar-stage"></div>
-            <div class="pillbar-head"><span class="pillbar-title">A live demo</span><span class="pillbar-readout"><b id="pill-fps">58</b><span>FPS</span></span></div>
-            <div class="pillbar-sliderrow"><label>Density</label><input type="range" id="pill-slider" min="0" max="100" value="62"><span class="pillbar-sliderval" id="pill-val">620</span></div>
-            <div class="pillbar-foot">
-              <div class="pillbar-seg" id="pill-seg"><button>Low</button><button class="is-on">Med</button><button>High</button></div>
-              <div class="pillbar-actions"><button class="pillbar-btn pillbar-btn--reset" id="pill-reset"><span class="gl">&#8635;</span> Reset</button><button class="pillbar-btn pillbar-btn--primary">Run</button></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="co-col">
-        <aside class="u-callout u-move"><p class="u-callout-k">takeaway</p><p class="u-callout-body">A small, closed kit, reused everywhere, is what lets every page feel like the same hand made it.</p></aside>
-      </div>
-    </section>
-
-    <!-- ============================ 04 THE CHROME ============================ -->
-    <section id="chrome" class="co-section" aria-labelledby="chrome-h">
-      <div class="u-sechead"><p class="u-sechead-k">Chapter four</p><h2 id="chrome-h" class="u-sechead-h">The parts around the edges</h2></div>
-
-      <div class="co-col co-prose">
-        <p class="co-lede">The small machinery that is not inside any single post, but holds the reading together. The way home, the line tracking your progress, the quiet arrow at the bottom, the copy button on a code block.</p>
-        <p>Every one of these is made here, in plain JavaScript with no libraries. Some of them are running on this very page, so a few of the cards below just point at the real thing rather than showing a copy.</p>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.site-name</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The big serif nameplate that opens the homepage.</p></div>
-        <div class="co-stage is-bare"><div class="site-name" style="margin:0"><a href="/" style="font-size:clamp(2.2rem,7vw,3.2rem)">Ethan Willingham</a></div></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.post-back</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The home link. It sits at the top of every post, scrolls away with the page, and is the one at the very top of this page too.</p></div>
-        <div class="co-stage is-bare"><a href="/" class="post-back" style="padding:0"><span class="pb-label">Home</span></a></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.reading-progress</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">A two pixel gold line across the top of the window that fills as you scroll. It is live right now, up at the top edge of this page. It hides itself on phones.</p></div>
-        <div class="co-stage is-bare"><div style="height:2px;border-radius:2px;background:linear-gradient(90deg,var(--accent) 62%,rgba(212,196,160,0.15) 62%)"></div><p style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-faint);margin:.7rem 0 0">a still frame, caught at 62 percent</p></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.btt-fab</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The back to top button. It stays hidden until you reach the very bottom, then fades in and inks its own arrow with a drawn stroke. Scroll to the foot of this page to meet it.</p></div>
-        <div class="co-stage is-bare"><span style="display:inline-flex;align-items:center;gap:.45em;color:var(--text-dim);font-size:.88rem"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><path d="M10 16 L10 4.5 M4.5 9.5 L10 4.5 L15.5 9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> top</span></div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">code block &middot; .code-copy</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The code block, with syntax colors and a copy button that appears on hover. Here it is showing a real piece of the site: the top of the palette. The button works.</p></div>
-        <div class="co-stage post-body" style="padding-top:6px;padding-bottom:6px">
-<pre><code><span class="tag">:root</span> {
-  <span class="prop">--bg</span>:     <span class="num">#303931</span>;   <span class="cm">/* the locked forest green */</span>
-  <span class="prop">--accent</span>: <span class="num">#D4C4A0</span>;   <span class="cm">/* the dusty gold, and links */</span>
-  <span class="prop">--font-heading</span>: century_supra_a, serif;
-}</code></pre>
-        </div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.post-body</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The base reading styles themselves: a paragraph, a link, bold, <b>inline code</b>, a blockquote, and a list. The actual surface most words on the site land on.</p></div>
-        <div class="co-stage post-body">
-          <p style="margin-top:0">A normal paragraph of body text, the surface most of the site is read on. It carries a <a href="#chrome">link in gold</a>, a run of <strong>bold</strong>, and a bit of <code>inline code</code> without any of them shouting.</p>
-          <blockquote>A blockquote sits indented behind a soft rule, in a quieter italic, for a borrowed voice.</blockquote>
-          <ul><li>A list item.</li><li>And a second, with its marker in the same restrained tone.</li></ul>
-        </div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">.article-item</span><span class="co-tag co-tag--made">Made here</span>
-          <p class="co-spec-note">The homepage card. This is the row that brought you here, with its serif title, quiet date, and italic blurb.</p></div>
-        <div class="co-stage">
-          <a class="article-item" href="#chrome" style="margin:0">
-            <span class="article-item-thumb"><img alt="" width="466" height="320" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='466' height='320'%3E%3Crect width='466' height='320' fill='%231e2420'/%3E%3Cpolygon points='233,150 200,210 266,210' fill='%23d4c4a0'/%3E%3C/svg%3E"></span>
-            <time class="article-item-date">16 Jun 2026</time>
-            <h2 class="article-item-title">A post's title, in the serif</h2>
-            <p class="article-item-description">the one line blurb underneath, in italic, that tells you whether you want to click. space, not rules, separates one card from the next.</p>
-          </a>
-        </div>
-      </div>
-
-      <div class="co-spec">
-        <div class="co-spec-head"><span class="co-spec-name">analytics</span><span class="co-tag co-tag--borrowed">Borrowed</span>
-          <p class="co-spec-note">Two borrowed scripts ride along on every page: Google's tag and Microsoft Clarity. They count visits and draw heatmaps. They are the only things on the site that phone home, and they are named here so that fact is not hidden.</p></div>
-      </div>
     </section>
 
     <!-- ============================ CLOSE ============================ -->
     <section id="made" class="co-section" aria-labelledby="made-h">
-      <div class="u-sechead"><p class="u-sechead-k">And a close</p><h2 id="made-h" class="u-sechead-h">How it is all held together</h2></div>
-
       <div class="co-col co-prose">
-        <p class="co-lede">There is no build step and no server of my own. Every page is a single hand written HTML file that links one stylesheet, loads three fonts, and runs a little plain JavaScript.</p>
-        <p>You can hit View Source on any page and read the entire thing, top to bottom, with nothing minified or hidden. The files are served straight from GitHub's free hosting, and pushing to the main branch is the whole of the deploy. No pipeline, no dashboard, no framework to keep fed.</p>
-        <p>One more honest note, since honesty is the whole frame of this page. I had a great deal of help building all of this. Most of the code was written with an AI coding assistant, working alongside me one small piece at a time, and there is a <a href="git-history.html">whole post that takes that apart</a> commit by commit, including a chart of which model wrote which page, if you want the long version.</p>
-        <p>That is the site, with its back panel off. Thank you for being curious enough to look inside.</p>
+        <p class="co-lede">There is no build step. Every page is a single hand written HTML file you can read top to bottom with View Source, served straight from GitHub. Most of the code was written alongside an AI assistant, one small piece at a time, and a <a href="git-history.html">whole post takes that apart</a>.</p>
       </div>
-
-      <div class="co-col">
-        <hr class="u-divider" style="margin-top:2.4rem">
-      </div>
+      <div class="co-col"><hr class="u-divider" style="margin-top:2.4rem"></div>
     </section>
 
     <p class="co-col co-foot-note" style="margin-top:2.4rem">Set in Century Supra, Segoe UI, and Commit Mono, on a locked forest green. Built in the open.</p>
@@ -647,34 +345,5 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script>
-  /* The one live demo on the page: wire the .pillbar so the slider, the
-     segmented switch, and reset actually do something. No deps. */
-  (function () {
-    'use strict';
-    var slider = document.getElementById('pill-slider');
-    var val    = document.getElementById('pill-val');
-    var fps    = document.getElementById('pill-fps');
-    var seg    = document.getElementById('pill-seg');
-    var reset  = document.getElementById('pill-reset');
-    if (!slider) return;
-    function paint() {
-      val.textContent = Math.round(slider.value * 10);
-      // a believable readout: denser sims run a little slower
-      fps.textContent = Math.max(24, Math.round(60 - slider.value * 0.16));
-    }
-    slider.addEventListener('input', paint);
-    if (seg) seg.addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      Array.prototype.forEach.call(seg.children, function (x) { x.classList.remove('is-on'); });
-      b.classList.add('is-on');
-    });
-    if (reset) reset.addEventListener('click', function () {
-      slider.value = 62; paint();
-      Array.prototype.forEach.call(seg.children, function (x, i) { x.classList.toggle('is-on', i === 1); });
-    });
-    paint();
-  })();
-  </script>
 </body>
 </html>
