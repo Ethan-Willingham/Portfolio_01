@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About</title>
+  <meta name="description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. Posts on how it gets made.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:title" content="About">
+  <meta property="og:description" content="About Ethan Willingham and this site: my woodshop and reference shelf, fully open on the web. Posts on how it gets made.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/about.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/home.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A green triangle on a cream rounded square, the site mark.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/home.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    html { overflow-x: hidden; overscroll-behavior-x: none; }
+
+    /* ---- The intro: the site's plain-spoken voice, the same treatment the
+       blurb had on the old homepage (roman, brighter than a caption). ---- */
+    .about-lead {
+      margin-top: 0.3rem;
+      max-width: 48ch;
+      font-family: var(--font-body);
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: var(--text);
+      text-wrap: pretty;
+    }
+
+    /* ---- Post list: same editorial cards as the homepage (thumbnail floats
+       right so every title shares the page's left spine). ---- */
+    @media (min-width: 560px) {
+      .article-item-thumb { float: right; width: 188px; margin: 0.4rem 0 0.55rem 1.6rem; }
+    }
+    .article-list { gap: 0; }
+    .article-item { padding: 1.65rem 1rem; }
+    .article-item-date {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #c3b589;
+      margin-bottom: 0.5rem;
+    }
+    .article-item-title {
+      font-family: var(--font-heading);
+      font-weight: 400;
+      font-size: 1.65rem;
+      line-height: 1.18;
+      letter-spacing: -0.015em;
+      color: var(--text-bright);
+      margin-bottom: 0.5rem;
+    }
+    .article-item-description {
+      font-family: var(--font-body);
+      font-style: normal;
+      font-size: 1.0rem;
+      line-height: 1.5;
+      color: var(--text-dim);
+    }
+    /* a quiet hairline between the intro and the list */
+    .about-rule { border: none; border-top: 1px solid var(--rule); margin: 2.2rem 0 0.6rem; }
+    @media (min-width: 720px) {
+      .article-item { padding: 1.7rem 1rem; }
+      .article-item-title { font-size: 1.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrapper">
+
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">About</h1>
+      <p class="about-lead">Welcome to my woodshop. I build things for fun and write articles I want to read; it's my reference shelf, fully open on the web.</p>
+    </header>
+
+    <main>
+      <hr class="about-rule">
+      <ul class="article-list">
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="git-history.html">
+            <span class="article-item-thumb">
+              <img src="assets/thumbs/git-history.jpg" width="600" height="400" loading="eager" decoding="async" alt="Three side-by-side columns of the actual source code behind this site, in warm syntax highlighting on a dark background: the game engine, the galaxy visualizer, and the stylesheet.">
+            </span>
+            <time class="article-item-date" datetime="2026-05-24">24 May 2026</time>
+            <h2 class="article-item-title">Every Push and Every Token</h2>
+            <p class="article-item-description">every change i've made to this site, one dot each, and the tokens behind it. i don't write the code anymore; i tell an ai what i want and push every change to production.</p>
+          </a>
+        </li>
+      </ul>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

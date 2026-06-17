@@ -62,56 +62,50 @@
       max-width: 48ch;
     }
 
-    /* ---- Intro blurb: the plain-spoken statement under the epigraph. A touch
-       more size and brighter ink than a caption, so it reads as the site's
-       voice rather than fine print. ---- */
-    .site-intro {
-      margin-top: 0.85rem;
-      max-width: 48ch;
-      font-family: var(--font-body);
-      font-size: 1.18rem;
-      line-height: 1.6;
-      color: var(--text);
-      text-wrap: pretty;
+    /* ---- Home search: a hairline filter for the shelf below. A borderless
+       field on a single rule that warms to gold on focus, with the About link
+       balanced on the same row. It filters the list live (title, blurb, and a
+       hidden keyword list per card), highlights the hit, and shows a count that
+       appears only while searching. Built from the same hairline idiom as the
+       dek and the date kickers, so it reads as structure, not chrome. ---- */
+    .home-search {
+      display: flex;
+      align-items: flex-end;
+      gap: 1.5rem;
+      margin-top: 1.7rem;
     }
-    .site-intro a {
-      color: var(--accent);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(212, 196, 160, 0.35);
-      transition: color 0.2s ease, border-color 0.2s ease;
-      white-space: nowrap;
+    .hs-field { position: relative; flex: 1 1 auto; display: flex; align-items: center; }
+    .hs-mag {
+      position: absolute; left: 0.15rem; top: 50%; transform: translateY(-50%);
+      width: 1.05rem; height: 1.05rem; color: var(--text-faint);
+      transition: color 0.25s ease; pointer-events: none;
     }
-    .site-intro a .arr { font-size: 0.82em; }
-    .site-intro a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
-    .site-intro a:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
-
-    /* ---- Commit sparkline (the signature): a static snapshot of this site's
-       daily commits from Apr 23 to today. The shape is the spring-2026 eruption;
-       it links to the full git-history view.
-       Static inline SVG, no data load, no script. ---- */
-    .commit-spark {
-      --spark-zero: rgba(166, 176, 158, 0.15);
-      --spark-rest: rgba(166, 176, 158, 0.32);
-      --spark-mid: rgba(184, 178, 162, 0.42);
-      --spark-rise: rgba(202, 190, 158, 0.5);
-      --spark-peak: rgba(216, 204, 174, 0.58);
-      --spark-hover: rgba(226, 216, 188, 0.66);
-      display: inline-flex; align-items: center; gap: 0.7rem; margin-top: 1.7rem; text-decoration: none;
+    .hs-input {
+      width: 100%; background: transparent; border: none;
+      border-bottom: 1px solid var(--rule);
+      color: var(--text-bright); font-family: var(--font-heading);
+      font-size: 1.35rem; line-height: 1.25; padding: 0.45rem 0.2rem 0.55rem 1.95rem;
+      transition: border-color 0.3s ease;
     }
-    .commit-spark svg { width: 168px; height: auto; display: block; overflow: visible; }
-    .commit-spark rect { fill: var(--spark-rest); transform-box: fill-box; transform-origin: center; transform: scaleX(0.68); transition: fill 0.2s ease; }
-    .commit-spark .z { fill: var(--spark-zero); }
-    .commit-spark .m { fill: var(--spark-mid); }
-    .commit-spark .r { fill: var(--spark-rise); }
-    .commit-spark .hot { fill: var(--spark-peak); }
-    .cs-cap { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-dim); white-space: nowrap; transition: color 0.2s ease; }
-    .cs-cap .arr { font-size: 0.9em; }
-    .commit-spark:hover .cs-cap { color: var(--accent); }
-    .commit-spark:hover rect { fill: rgba(184, 178, 162, 0.42); }
-    .commit-spark:hover .m { fill: rgba(202, 190, 158, 0.52); }
-    .commit-spark:hover .r { fill: rgba(216, 204, 174, 0.6); }
-    .commit-spark:hover .hot { fill: var(--spark-hover); }
-    .commit-spark:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 4px; }
+    .hs-input::placeholder { color: var(--text-faint); font-style: italic; }
+    .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+    .hs-input:focus { outline: none; border-bottom-color: var(--accent); }
+    .hs-field:focus-within .hs-mag { color: var(--accent); }
+    .hs-about {
+      flex: none; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase; color: #c3b589;
+      text-decoration: none; white-space: nowrap; padding-bottom: 0.65rem;
+      transition: color 0.2s ease;
+    }
+    .hs-about:hover { color: var(--accent-hover); }
+    .hs-about:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
+    .hs-readout {
+      margin: 0.8rem 0 0; font-family: var(--font-mono); font-size: 0.72rem;
+      letter-spacing: 0.04em; color: var(--text-faint);
+    }
+    .hs-readout:empty { display: none; }
+    mark.hs-hi { background: rgba(212, 196, 160, 0.22); color: var(--text-bright); border-radius: 2px; padding: 0 0.05em; }
+    .article-list-item.is-filtered-out { display: none; }
 
     /* ---- Article cards: thumbnail floats RIGHT so every title shares the name's
        left spine (a title is the article's "name"). Mobile (<560px) stacks the
@@ -190,16 +184,19 @@
     <header class="site-header">
       <h1 class="site-name"><a href="/">Ethan Willingham</a></h1>
       <p class="site-tagline">The truth lasts forever; this is a website.</p>
-      <p class="site-intro">Welcome to my woodshop. I build things for fun and write articles I want to read; it's my reference shelf, fully open on the web.</p>
-      <a class="commit-spark" href="git-history.html" aria-label="1,515 commits to this site from April 23 to June 16, 2026. See the full history.">
-        <svg viewBox="0 0 175 26" aria-hidden="true" focusable="false"><rect x="0" y="22.3" width="3" height="1.7"/><rect x="4" y="23.0" width="3" height="1.0"/><rect x="8" y="23.0" width="3" height="1.0"/><rect x="12" y="23.0" width="3" height="1.0"/><rect x="16" y="23.0" width="3" height="1.0"/><rect x="20" y="23.0" width="3" height="1.0"/><rect x="24" y="23.0" width="3" height="1.0"/><rect x="28" y="23.0" width="3" height="1.0"/><rect x="32" y="23.0" width="3" height="1.0"/><rect x="36" y="23" width="3" height="1" class="z"/><rect x="40" y="23.0" width="3" height="1.0"/><rect x="44" y="23" width="3" height="1" class="z"/><rect x="48" y="23" width="3" height="1" class="z"/><rect x="52" y="23" width="3" height="1" class="z"/><rect x="56" y="23.0" width="3" height="1.0"/><rect x="60" y="21.5" width="3" height="2.5"/><rect x="64" y="16.2" width="3" height="7.8" class="m"/><rect x="68" y="17.0" width="3" height="7.0" class="m"/><rect x="72" y="15.9" width="3" height="8.1" class="m"/><rect x="76" y="13.1" width="3" height="10.9" class="r"/><rect x="80" y="15.9" width="3" height="8.1" class="m"/><rect x="84" y="23" width="3" height="1" class="z"/><rect x="88" y="21.1" width="3" height="2.9"/><rect x="92" y="18.0" width="3" height="6.0" class="m"/><rect x="96" y="12.7" width="3" height="11.3" class="r"/><rect x="100" y="19.1" width="3" height="4.9"/><rect x="104" y="17.1" width="3" height="6.9" class="m"/><rect x="108" y="22.0" width="3" height="2.0"/><rect x="112" y="17.6" width="3" height="6.4" class="m"/><rect x="116" y="2.0" width="3" height="22.0" class="hot"/><rect x="120" y="7.4" width="3" height="16.6" class="hot"/><rect x="124" y="5.6" width="3" height="18.4" class="hot"/><rect x="128" y="10.0" width="3" height="14.0" class="hot"/><rect x="132" y="20.4" width="3" height="3.6"/><rect x="136" y="23.0" width="3" height="1.0"/><rect x="140" y="14.2" width="3" height="9.8" class="r"/><rect x="144" y="14.1" width="3" height="9.9" class="r"/><rect x="148" y="20.3" width="3" height="3.7"/><rect x="152" y="13.9" width="3" height="10.1" class="r"/><rect x="156" y="21.4" width="3" height="2.6"/><rect x="160" y="21.8" width="3" height="2.2"/><rect x="164" y="20.4" width="3" height="3.6"/><rect x="168" y="21.4" width="3" height="2.6"/><rect x="172" y="22.4" width="3" height="1.6"/></svg>
-        <span class="cs-cap">1,515 commits <span class="arr">&#8599;</span></span>
-      </a>
+      <div class="home-search">
+        <label class="hs-field">
+          <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
+          <input class="hs-input" type="search" placeholder="Search the shelf" aria-label="Search articles" autocomplete="off" spellcheck="false">
+        </label>
+        <a class="hs-about" href="about.html">About</a>
+      </div>
+      <p class="hs-readout" role="status" aria-live="polite"></p>
     </header>
 
     <main>
       <ul class="article-list">
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="colophon design palette fonts typography components style credits build meta about page parts">
           <a class="article-item" href="colophon.html">
             <span class="article-item-thumb">
               <!-- thumbnail: a title card built from the site's own parts (palette swatches + the three typefaces) on the locked green; rendered, not a photo. -->
@@ -210,7 +207,7 @@
             <p class="article-item-description">a page about the page: every color, font, and component this site is built from, laid out in the open and labeled by who made it, made here, or borrowed.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="longevity aging lifespan death supercentenarian health science records charts oldest">
           <a class="article-item" href="how-long-can-you-live.html">
             <span class="article-item-thumb">
               <!-- thumbnail: "Gnarly Bristlecone Pine" by Rick Goldwaser, CC BY 2.0, via Wikimedia Commons; bristlecones are the oldest living things on Earth, credited in the post. -->
@@ -221,7 +218,7 @@
             <p class="article-item-description">the hard wall at 120 is unproven, the world's oldest-age records are riddled with missing paperwork and pension fraud, and the thing that actually adds years is the one nobody calls a hack. sourced and illustrated, with four charts drawn from the data.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="muscle lifting fitness gym protein training body strength health hypertrophy natural">
           <a class="article-item" href="big-enough.html">
             <span class="article-item-thumb">
               <!-- thumbnail: the top of the post's first image, the Farnese Hercules (head and shoulders), no words. -->
@@ -232,7 +229,7 @@
             <p class="article-item-description">building muscle the natural way, on one supplement, real food, and sunlight, and knowing where to stop. the last 10% can cost twice the work, for muscle almost no one will notice.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="planets age birthday solar system space astronomy calculator mars jupiter saturn">
           <a class="article-item" href="space-age.html">
             <span class="article-item-thumb">
               <!-- thumbnail: the planets composited over the Hubble Ultra Deep Field, all NASA public-domain imagery via Wikimedia Commons:
@@ -246,7 +243,7 @@
             <p class="article-item-description">enter your birthday and see your age on every planet, counted in each world's own years, with a countdown to your next birthday on each.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="baby infant parenting newborn sleep feeding development safety health field guide">
           <a class="article-item" href="the-first-year.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/the-first-year.jpg" width="600" height="400" loading="eager" decoding="async" alt="A field-guide cover on dark forest green reading The First Year, a calm guide to a baby's first year.">
@@ -256,7 +253,7 @@
             <p class="article-item-description">a calm, exhaustively sourced field guide to a baby's first year: feeding, sleep, health, development, safety, and the parent. every claim cited, every chart on real data, and the places the experts disagree shown honestly.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="sea marine deep sea photography fish coral water nature octopus reef">
           <a class="article-item" href="ocean.html">
             <span class="article-item-thumb">
               <!-- thumbnail: "Blue-ringed octopus", Shaymary, CC0, via Wikimedia Commons -->
@@ -267,7 +264,7 @@
             <p class="article-item-description">a mostly wordless dive through the ocean in three dozen high-resolution photographs, from tide pools and coral reefs to the deep sea, hydrothermal vents, and creatures named only last year.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="logistics software supply chain shipping automation factory wms warehouse robots">
           <a class="article-item" href="warehouse.html">
             <span class="article-item-thumb">
               <!-- thumbnail: "Shipping container pattern", Philippe Emond / Guillaume Bolduc, CC0 (public domain), via Wikimedia Commons -->
@@ -278,7 +275,7 @@
             <p class="article-item-description">behind every "your order has shipped" is a building you have probably never seen and a piece of software that knows where every item inside it is. how that software runs the warehouse and the factory beside it, from the dock door to the assembly line.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="management leadership work professionals team career business field guide all in">
           <a class="article-item" href="all-in.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/all-in.jpg" width="600" height="400" loading="eager" decoding="async" alt="The words All In in large serif type over a rising gold curve that climbs above a flat dashed line, on dark green.">
@@ -288,17 +285,7 @@
             <p class="article-item-description">the work that makes people valuable changed; the way we manage them mostly did not. a field guide to managing professionals, and to getting them all in.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
-          <a class="article-item" href="git-history.html">
-            <span class="article-item-thumb">
-              <img src="assets/thumbs/git-history.jpg" width="600" height="400" loading="eager" decoding="async" alt="Three side-by-side columns of the actual source code behind this site, in warm syntax highlighting on a dark background: the game engine, the galaxy visualizer, and the stylesheet.">
-            </span>
-            <time class="article-item-date" datetime="2026-05-24">24 May 2026</time>
-            <h2 class="article-item-title">Every Push and Every Token</h2>
-            <p class="article-item-description">every change i've made to this site, one dot each, and the tokens behind it. i don't write the code anymore; i tell an ai what i want and push every change to production.</p>
-          </a>
-        </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="math 3d gpu attractor visualization algorithm galaxy particles random obi juan">
           <a class="article-item" href="random-galaxy.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/random-galaxy.jpg" width="600" height="389" loading="eager" decoding="async" alt="A glowing vortex of gold and teal points, a strange attractor rendered on the GPU.">
@@ -308,7 +295,7 @@
             <p class="article-item-description">a million points of light you fly through in 3D, some deep structures from math, some algorithms you set running and watch work, all computed live.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="anatomy body organs medical biology health interactive descent">
           <a class="article-item" href="optional-body.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/optional-body.jpg" width="600" height="400" loading="eager" decoding="async" alt="A Gray's Anatomy engraving of the teeth set in the jaw.">
@@ -318,7 +305,7 @@
             <p class="article-item-description">an interactive descent through the parts of the body you can live without, from a spare foot bone to a heart on a machine.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="art painting museum masters classic gallery oil landscape">
           <a class="article-item" href="gallery.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/gallery.jpg" width="600" height="400" loading="lazy" decoding="async" alt="Daubigny's painting The Hamlet of Optevoz: cottages by a stream at dusk.">
@@ -328,7 +315,7 @@
             <p class="article-item-description">a small private gallery. Storms and saints, harvest fields and harbour scenes.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="particles gpu simulation emergence physics swarm life sacred geometry">
           <a class="article-item" href="particle-life.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/particle-life.jpg" width="600" height="376" loading="lazy" decoding="async" alt="The Ghost in the Swarm: teal and gold particles spiraling into concentric bands around a dark vortex eye.">
@@ -338,7 +325,7 @@
             <p class="article-item-description">100,000 particles obey three lines of math on the GPU, while an invisible field steers the swarm through sacred geometry.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="game mining 2d steam drill sluice play">
           <a class="article-item" href="grand-motherload.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/sluice.jpg" width="600" height="393" loading="lazy" decoding="async" alt="Sluice: a jet-powered drill rig flying over the surface, with a freshly dug shaft below.">
@@ -348,7 +335,7 @@
             <p class="article-item-description">my own 2D mining game. This free v15.89 build is the last public version; development is now private, coming to Steam, Summer 2027.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="globe sun daylight webgl map geography sunrise sunset earth">
           <a class="article-item" href="daylight-globe.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/daylight-globe.jpg" width="600" height="400" loading="lazy" decoding="async" alt="Earth from space at the day/night terminator, city lights glowing across nighttime South America.">
@@ -358,7 +345,7 @@
             <p class="article-item-description">a small WebGL globe for the day/night line, daylight hours, and sunrise/set.</p>
           </a>
         </li>
-        <li class="article-list-item fade-in">
+        <li class="article-list-item fade-in" data-keywords="css particles physics box-shadow demo no canvas renderer">
           <a class="article-item" href="particles.html">
             <span class="article-item-thumb">
               <img src="assets/thumbs/particles.jpg" width="600" height="330" loading="lazy" decoding="async" alt="A scatter of colorful dots, particles rendered with nothing but CSS box-shadow.">
@@ -488,6 +475,68 @@
       if (stillMoving) requestAnimationFrame(rafLoop);
       else rafPending = false;
     }
+  })();
+  </script>
+  <script>
+  // ---- Home search: filter the shelf live against each card's title, blurb,
+  // and a hidden keyword list; highlight the hit in the title; show a count.
+  // "/" jumps to the field, Esc clears it, no matches shows a quiet line. No
+  // deps, and an empty query restores the full list in its original order. ----
+  (function () {
+    'use strict';
+    var input = document.querySelector('.hs-input');
+    if (!input) return;
+    var readout = document.querySelector('.hs-readout');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.article-list-item'));
+    cards.forEach(function (li) {
+      var titleEl = li.querySelector('.article-item-title');
+      var descEl = li.querySelector('.article-item-description');
+      li._title = titleEl.textContent;
+      li._titleEl = titleEl;
+      li._hay = (li._title + ' ' + (descEl ? descEl.textContent : '') + ' ' + (li.dataset.keywords || '')).toLowerCase();
+      li._words = li._hay.split(/[^a-z0-9]+/).filter(Boolean);
+    });
+
+    function esc(s) { return s.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+    function highlight(li, tok) {
+      var o = li._title;
+      li._titleEl.textContent = o;
+      if (!tok) return;
+      var lower = o.toLowerCase(), from = 0, idx = -1, i;
+      while ((i = lower.indexOf(tok, from)) !== -1) {
+        if (i === 0 || /[^a-z0-9]/.test(lower.charAt(i - 1))) { idx = i; break; }
+        from = i + 1;
+      }
+      if (idx < 0) return;
+      li._titleEl.innerHTML = esc(o.slice(0, idx)) + '<mark class="hs-hi">' + esc(o.slice(idx, idx + tok.length)) + '</mark>' + esc(o.slice(idx + tok.length));
+    }
+
+    function apply() {
+      var raw = input.value.trim();
+      var toks = raw.toLowerCase().split(/\s+/).filter(Boolean);
+      var shown = 0;
+      cards.forEach(function (li) {
+        var ok = toks.length === 0 || toks.every(function (t) {
+          return li._words.some(function (w) { return w.indexOf(t) === 0; });
+        });
+        li.classList.toggle('is-filtered-out', !ok);
+        highlight(li, ok && toks.length === 1 ? toks[0] : '');
+        if (ok) shown++;
+      });
+      if (!raw) readout.textContent = '';
+      else if (shown === 0) readout.textContent = 'No posts match “' + raw + '”';
+      else readout.textContent = shown + ' of ' + cards.length + ' posts';
+    }
+
+    input.addEventListener('input', apply);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { if (input.value) { input.value = ''; apply(); } else { input.blur(); } }
+    });
+    document.addEventListener('keydown', function (e) {
+      var ae = document.activeElement;
+      var typing = ae && /^(input|textarea)$/i.test(ae.tagName);
+      if (e.key === '/' && !typing) { e.preventDefault(); input.focus(); }
+    });
   })();
   </script>
   <script src="js/backtotop.js"></script>
