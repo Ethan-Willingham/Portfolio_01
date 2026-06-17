@@ -41,5 +41,6 @@ The portfolio pages and their assets:
   keep new text on one of those and avoid font CDNs. (The frozen game demo is historical and
   may reference an old CDN font; leave it as-is.)
 - Color: the whole site runs on one warm, OKLCH-tuned palette on a locked dark-green background (`--bg: #303931`). **Read `STYLE.md` before adding or changing any color, type, or component** (it folds in the old PALETTE.md and documents the component kit in `kit.css`). The source of truth is the `:root` block in `style.css`; prefer `var(--token)` over a raw hex. Never recolor photographs, `--img-bg` mattes, `@media print` blocks, or the `best-photographs` gallery.
-- Commit and push every change to `main`; Amplify auto-deploys. No manual deploy step.
+- Prose: every post is written in one calibrated voice. **Read `VOICE.md` before writing or editing post prose** (the Warm base voice, how to open a post and how to deliver a fact, the LLM-tell kill-list, and the credibility rules that keep posts off the wrong end of a Hacker News thread). It was calibrated with the owner via `voice-lab.html`; the no-em-dash rule below is part of it.
+- Commit and push every change to `main`; GitHub Pages auto-deploys. No manual deploy step.
 - No em dashes in any content or commit messages (use commas, periods, parentheses, or "to").
