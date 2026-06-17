@@ -9,9 +9,8 @@
    - Literal substring match (precise: only posts that actually contain the text).
    - Per result: a "N matches" count + a context snippet (words either side).
    - Deep-links into the section the first hit lives in.
-   - Typo tolerance is a FALLBACK only: if nothing matches literally, it offers
-     the nearest real word (bounded Damerau-Levenshtein), so a misspelling still
-     lands without ever loosening a normal query.
+   - No guessing: if nothing contains the typed text, it shows no results. It
+     never substitutes a near word for what you typed.
    - Archived posts are searchable, amber-flagged, and always after live posts.
 
    Lazy-loaded on first focus. Full keyboard + combobox a11y. No deps. No em dashes.
@@ -26,8 +25,6 @@
 
   var LIMIT = 6;            // results shown (kept tight on purpose)
   var data = null;
-  var vocab = {};           // first-char -> words, for the typo fallback only
-  var vocabSet = new Set();
   var loading = false;
   var results = [];
   var active = -1;
@@ -37,7 +34,6 @@
   function lc(s) { return (s || '').toLowerCase(); }
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function clip(s, n) { return s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s; }
-  function tokens(s) { return lc(s).split(/[^a-z0-9]+/); }
   function countOf(s, q) { if (!s) return 0; var c = 0, i = 0; while ((i = s.indexOf(q, i)) >= 0) { c++; i += q.length; } return c; }
   function anchor(p, s) { return s && s.id ? p.url + '#' + s.id : p.url; }
 
@@ -58,48 +54,12 @@
     return (a > 0 ? '… ' : '') + pre + mid + post + (b < text.length ? ' …' : '');
   }
 
-  // ---- typo fallback machinery (bounded Damerau-Levenshtein) ----------------
-  function dist(a, b, max) {
-    var la = a.length, lb = b.length;
-    if (Math.abs(la - lb) > max) return max + 1;
-    var prev2 = null, prev = [], cur, i, j;
-    for (j = 0; j <= lb; j++) prev[j] = j;
-    for (i = 1; i <= la; i++) {
-      cur = [i]; var rowBest = i;
-      for (j = 1; j <= lb; j++) {
-        var cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
-        var v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
-        if (i > 1 && j > 1 && prev2 && a.charCodeAt(i - 1) === b.charCodeAt(j - 2) && a.charCodeAt(i - 2) === b.charCodeAt(j - 1)) v = Math.min(v, prev2[j - 2] + 1);
-        cur[j] = v; if (v < rowBest) rowBest = v;
-      }
-      if (rowBest > max) return max + 1;
-      prev2 = prev; prev = cur;
-    }
-    return prev[lb];
-  }
-  function maxTypos(len) { return len < 4 ? 0 : len < 8 ? 1 : 2; }
-  function nearestWord(t) {
-    var md = maxTypos(t.length); if (md === 0) return null;
-    var bucket = vocab[t.charAt(0)] || [], best = null, bestD = 99;
-    for (var k = 0; k < bucket.length; k++) {
-      var w = bucket[k];
-      if (w === t || Math.abs(w.length - t.length) > md) continue;
-      var d = dist(t, w, md);
-      if (d <= md && d < bestD) { bestD = d; best = w; }
-    }
-    return best;
-  }
-
   // ---- prepare the index once ----------------------------------------------
   function prepare(payload) {
     var posts = payload.posts || [], n = posts.length;
-    vocab = {}; vocabSet = new Set();
     posts.forEach(function (p, i) {
       p.titleLC = lc(p.title); p.recency = n > 1 ? (n - 1 - i) / (n - 1) : 1;
-      var seen = Object.create(null);
-      function harvest(str) { var ws = tokens(str), j, w; for (j = 0; j < ws.length; j++) { w = ws[j]; if (w.length >= 3 && !seen[w]) { seen[w] = 1; var c = w.charAt(0); (vocab[c] || (vocab[c] = [])).push(w); vocabSet.add(w); } } }
-      harvest(p.title); harvest(p.keywords);
-      (p.sections || []).forEach(function (s) { s.headLC = lc(s.head); s.textLC = lc(s.text); harvest(s.head); harvest(s.text); });
+      (p.sections || []).forEach(function (s) { s.headLC = lc(s.head); s.textLC = lc(s.text); });
     });
     data = posts;
   }
@@ -150,17 +110,12 @@
     if (q.length < 2) { close(); return; }
     if (!data) { load(); return; }
 
-    var corrected = null, hits = literalHits(q), useQ = q;
-    if (!hits.length && q.indexOf(' ') < 0) {     // nothing literal: try a single-word typo fix
-      var w = nearestWord(q);
-      if (w) { corrected = w; useQ = w; hits = literalHits(w); }
-    }
-
+    var hits = literalHits(q);          // literal only; no near-word guessing
     var totalInstances = 0, postCount = hits.length, i;
     for (i = 0; i < hits.length; i++) totalInstances += hits[i].count;
-    results = hits.slice(0, LIMIT).map(function (h) { return buildResult(h, useQ); });
+    results = hits.slice(0, LIMIT).map(function (h) { return buildResult(h, q); });
     active = results.length ? 0 : -1;
-    render(q, corrected, totalInstances, postCount);
+    render(q, totalInstances, postCount);
     open();
   }
 
@@ -176,14 +131,13 @@
     '</a>';
   }
 
-  function render(q, corrected, totalInstances, postCount) {
+  function render(q, totalInstances, postCount) {
     var html;
     if (!results.length) {
-      html = '<div class="hs-empty">No text matching “' + esc(q) + '” in any post</div>';
+      html = '<div class="hs-empty">No matches for “' + esc(q) + '”</div>';
       if (live) live.textContent = 'No matches';
     } else {
       html = '';
-      if (corrected) html += '<div class="hs-corrected">Showing matches for <b>' + esc(corrected) + '</b></div>';
       var archHeader = false;
       for (var i = 0; i < results.length; i++) {
         if (results[i].archived && !archHeader) { archHeader = true; html += '<div class="hs-group">Archived posts</div>'; }
