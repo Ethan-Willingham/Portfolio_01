@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- This page is a private editor. Keep it out of search engines and the
+       homepage search index; the only thing protecting it is the GitHub key
+       locked behind your password, not this tag. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>Edit</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- Pull in the site's fonts + palette tokens so the editor chrome feels native. -->
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* ============================================================
+       blog-edit.html — a private, no-server editor for this site.
+
+       How it works, in one breath: you unlock with a password, which
+       decrypts a GitHub "key" stored (encrypted) in the repo; the page
+       then reads a chosen file straight from GitHub, lets you edit its
+       text (and reorder/hide sections), and writes the file back with a
+       commit. Pushing to main is what deploys, so "Save" == "Publish".
+
+       Nothing here runs on a server. The decrypted key lives only in this
+       tab's memory and is gone when you close it.
+       ============================================================ */
+
+    :root { --be-pad: clamp(1rem, 4vw, 2.5rem); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    #app { min-height: 100%; display: flex; flex-direction: column; }
+    #app > section[hidden] { display: none; }
+
+    /* ---- shared bits ---- */
+    .be-card {
+      background: var(--bg-raised);
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      box-shadow: 0 1px 2px rgba(8,12,9,0.4), 0 24px 56px -22px rgba(8,12,9,0.7);
+    }
+    h1, h2, .be-display { font-family: var(--font-heading); color: var(--text-bright); font-weight: 400; }
+    .be-kicker {
+      font-family: var(--font-body); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
+    }
+    .be-dim { color: var(--text-dim); }
+    .be-faint { color: var(--text-faint); }
+    a { color: var(--emphasis); }
+    a:hover { color: var(--emphasis-hover); }
+
+    label.be-lbl { display: block; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin: 1.1rem 0 0.4rem; }
+    input[type=text], input[type=password], textarea {
+      width: 100%; background: var(--bg); color: var(--text-bright);
+      border: 1px solid var(--rule); border-radius: 11px;
+      font-family: var(--font-mono); font-size: 0.95rem;
+      padding: 0.7rem 0.85rem; transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(212,196,160,0.14); }
+
+    button {
+      font-family: var(--font-body); font-size: 0.95rem; cursor: pointer;
+      border-radius: 999px; border: 1px solid var(--rule);
+      background: var(--bg); color: var(--text-bright);
+      padding: 0.6rem 1.2rem; transition: background .18s, border-color .18s, color .18s, opacity .18s;
+    }
+    button:hover { border-color: var(--accent); }
+    button:disabled { opacity: 0.45; cursor: default; }
+    button.be-primary { background: var(--accent); color: #20271f; border-color: var(--accent); font-weight: 600; }
+    button.be-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    button.be-quiet { background: transparent; border-color: transparent; color: var(--text-dim); padding: 0.5rem 0.8rem; }
+    button.be-quiet:hover { color: var(--text-bright); border-color: var(--rule); }
+
+    .be-msg { margin-top: 1rem; font-size: 0.9rem; min-height: 1.2em; }
+    .be-msg.err { color: var(--emphasis-strong); }
+    .be-msg.ok { color: #9fcf8f; }
+
+    /* ---- lock / setup screen ---- */
+    #view-lock { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--be-pad); }
+    #view-lock .be-card { width: min(460px, 100%); padding: clamp(1.4rem, 4vw, 2.4rem); }
+    #view-lock h1 { font-size: 2rem; margin: 0.3rem 0 0.2rem; }
+    .be-steps { margin: 0.6rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; color: var(--text-dim); }
+    .be-steps li { margin: 0.35rem 0; }
+    .be-steps code { font-family: var(--font-mono); color: var(--accent); font-size: 0.85em; }
+    .be-strength { height: 5px; border-radius: 999px; background: var(--rule); margin-top: 0.5rem; overflow: hidden; }
+    .be-strength > i { display: block; height: 100%; width: 0; transition: width .3s, background .3s; }
+    .be-toggle-setup { margin-top: 1.3rem; font-size: 0.85rem; }
+
+    /* ---- picker screen ---- */
+    #view-picker { flex: 1; display: flex; flex-direction: column; padding: var(--be-pad); max-width: 920px; width: 100%; margin: 0 auto; }
+    .be-top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .be-search { margin: 1.4rem 0 0.4rem; }
+    .be-group-h { margin: 1.8rem 0 0.6rem; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+    .be-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.6rem; }
+    .be-list button {
+      width: 100%; text-align: left; border-radius: 13px; padding: 0.8rem 1rem;
+      display: flex; flex-direction: column; gap: 0.15rem; background: var(--bg-raised);
+    }
+    .be-list .be-name { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.05rem; }
+    .be-list .be-path { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); }
+
+    /* ---- editor screen ---- */
+    #view-editor { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .be-bar {
+      display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;
+      padding: 0.7rem clamp(0.8rem, 3vw, 1.4rem);
+      background: var(--bg-raised); border-bottom: 1px solid var(--rule);
+      position: sticky; top: 0; z-index: 5;
+    }
+    .be-bar .be-where { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-dim); margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .be-bar .be-where b { color: var(--text-bright); font-family: var(--font-heading); font-weight: 400; }
+    .be-status { font-size: 0.8rem; color: var(--text-faint); min-width: 9ch; text-align: right; }
+    .be-status.dirty { color: var(--accent); }
+    .be-status.saved { color: #9fcf8f; }
+    .be-status.err { color: var(--emphasis-strong); }
+    #stage { flex: 1; width: 100%; border: 0; background: var(--bg); min-height: 0; }
+    .be-toggle { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-dim); }
+    .be-hint { font-size: 0.8rem; color: var(--text-faint); }
+
+    .be-spin { display: inline-block; width: 1em; height: 1em; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; animation: be-spin 0.7s linear infinite; vertical-align: -2px; }
+    @keyframes be-spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ========================= LOCK / SETUP ========================= -->
+    <section id="view-lock">
+      <div class="be-card">
+        <p class="be-kicker">ethanwillingham.com</p>
+        <h1 id="lock-title">Sign in to edit</h1>
+        <p class="be-dim" id="lock-sub" style="margin:.2rem 0 1rem">Type your password to unlock the editor.</p>
+
+        <!-- UNLOCK form (shown when a key is already set up) -->
+        <form id="unlock-form">
+          <label class="be-lbl" for="unlock-pass">Password</label>
+          <input id="unlock-pass" type="password" autocomplete="current-password" placeholder="your password">
+          <p class="be-msg" id="unlock-msg"></p>
+          <button class="be-primary" type="submit" style="width:100%;margin-top:.4rem">Unlock</button>
+        </form>
+
+        <!-- SETUP form (shown first time, when no key exists yet) -->
+        <form id="setup-form" hidden>
+          <p class="be-dim" style="font-size:.9rem">First time here. Two one-time steps and you'll never see this again:</p>
+          <ol class="be-steps">
+            <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub's token page</a>. Under <b>Repository access</b> pick <b>Only select repositories</b> &rarr; <code>Portfolio_01</code>. Under <b>Permissions</b> &rarr; <b>Contents</b>, choose <b>Read and write</b>. Set expiry to a year. Click <b>Generate</b> and copy the key.</li>
+            <li>Paste it below and choose a password you'll remember. The key gets locked with your password right here in your browser.</li>
+          </ol>
+          <label class="be-lbl" for="setup-token">GitHub key (starts with github_pat_)</label>
+          <input id="setup-token" type="password" autocomplete="off" placeholder="github_pat_...">
+          <label class="be-lbl" for="setup-pass">Choose a password</label>
+          <input id="setup-pass" type="password" autocomplete="new-password" placeholder="six words is plenty">
+          <div class="be-strength"><i id="setup-strength"></i></div>
+          <button type="button" class="be-quiet" id="suggest-pass" style="margin-top:.4rem;font-size:.8rem">Suggest a strong one</button>
+          <label class="be-lbl" for="setup-pass2">Type it again</label>
+          <input id="setup-pass2" type="password" autocomplete="new-password" placeholder="confirm">
+          <p class="be-msg" id="setup-msg"></p>
+          <button class="be-primary" type="submit" style="width:100%;margin-top:.4rem">Lock the key &amp; start editing</button>
+        </form>
+
+        <div class="be-toggle-setup be-faint" id="lock-foot"></div>
+      </div>
+    </section>
+
+    <!-- ========================= PICKER ========================= -->
+    <section id="view-picker" hidden>
+      <div class="be-top">
+        <div>
+          <p class="be-kicker">Edit a page</p>
+          <h1 style="font-size:1.9rem;margin:.2rem 0 0">What do you want to work on?</h1>
+        </div>
+        <button class="be-quiet" id="picker-logout">Lock &amp; sign out</button>
+      </div>
+      <input id="picker-search" class="be-search" type="text" placeholder="Filter by name, e.g. weather" autocomplete="off">
+      <div id="picker-body"><p class="be-faint"><span class="be-spin"></span> Loading your pages...</p></div>
+    </section>
+
+    <!-- ========================= EDITOR ========================= -->
+    <section id="view-editor" hidden>
+      <div class="be-bar">
+        <button class="be-quiet" id="ed-back">&larr; Pages</button>
+        <span class="be-where"><b id="ed-name">page</b> <span id="ed-path"></span></span>
+        <label class="be-toggle"><input type="checkbox" id="ed-layout"> Move &amp; hide sections</label>
+        <a class="be-hint" id="ed-view" href="#" target="_blank" rel="noopener">View live &#8599;</a>
+        <span class="be-status" id="ed-status">Ready</span>
+        <button class="be-primary" id="ed-save">Save &amp; publish</button>
+      </div>
+      <iframe id="stage" title="page editor"></iframe>
+    </section>
+
+  </div>
+
+  <script type="module">
+  /* ================================================================
+     CONFIG
+     ================================================================ */
+  const REPO = { owner: 'Ethan-Willingham', name: 'Portfolio_01', branch: 'main' };
+  const API  = `https://api.github.com/repos/${REPO.owner}/${REPO.name}`;
+  const AUTH_PATH = 'blog-edit-auth.json';     // where the encrypted key lives (public, but useless without the password)
+  const PBKDF2_ITERS = 600000;                 // makes guessing the password slow
+
+  // Pages that are interactive toys/labs rather than text you'd edit. Shown,
+  // but tucked under "Other" so the everyday list stays clean.
+  const DEMOS = new Set(['particle-life.html','particles.html','daylight-globe.html','random-galaxy.html',
+    'grand-motherload.html','git-history.html','gallery.html','lucky.html','ocean.html','space-age.html',
+    'warehouse.html','all-in.html','style-family.html','style-linear.html','style-press.html','blog-edit.html']);
+
+  // Which elements count as editable text blocks, and what counts as a section.
+  const BLOCK_SEL = 'p,li,h1,h2,h3,h4,h5,h6,blockquote,figcaption,dt,dd,summary,caption,th,td,.dek,.lede,.kicker,.byline';
+
+  /* ================================================================
+     SESSION STATE  (token lives only here, in memory)
+     ================================================================ */
+  let TOKEN = null;
+  let current = null;   // { path, sha, doc, local }
+
+  /* ================================================================
+     tiny helpers
+     ================================================================ */
+  const $  = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+  const showView = (id) => { $$('#app > section').forEach(s => s.hidden = (s.id !== id)); };
+  const enc = new TextEncoder(), dec = new TextDecoder('utf-8');
+
+  function bytesToB64(bytes){ let s=''; const c=0x8000; for(let i=0;i<bytes.length;i+=c) s+=String.fromCharCode.apply(null, bytes.subarray(i,i+c)); return btoa(s); }
+  function b64ToBytes(b64){ const bin=atob(b64); const out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+  const textToB64 = t => bytesToB64(enc.encode(t));
+  const b64ToText = b => dec.decode(b64ToBytes(b));
+
+  /* ================================================================
+     CRYPTO — lock/unlock the GitHub key with a password
+     ================================================================ */
+  async function deriveKey(passphrase, salt, iters){
+    const base = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:iters, hash:'SHA-256' }, base,
+      { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+  }
+  async function encryptToken(token, passphrase){
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const key  = await deriveKey(passphrase, salt, PBKDF2_ITERS);
+    const ct   = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(token)));
+    return { v:1, iters:PBKDF2_ITERS, salt:bytesToB64(salt), iv:bytesToB64(iv), ct:bytesToB64(ct) };
+  }
+  async function decryptToken(blob, passphrase){
+    const key = await deriveKey(passphrase, b64ToBytes(blob.salt), blob.iters || PBKDF2_ITERS);
+    const pt  = await crypto.subtle.decrypt({ name:'AES-GCM', iv:b64ToBytes(blob.iv) }, key, b64ToBytes(blob.ct));
+    return dec.decode(pt);   // throws if the password is wrong (GCM auth failure)
+  }
+
+  /* ================================================================
+     GITHUB
+     ================================================================ */
+  // Read the (public) encrypted-key file without a token. null if not set up yet.
+  async function fetchAuthBlob(){
+    const r = await fetch(`${API}/contents/${AUTH_PATH}?ref=${REPO.branch}`, { cache: 'no-store' });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(`Couldn't reach GitHub (${r.status}). Check your connection.`);
+    const j = await r.json();                       // standard contents response: base64 in .content
+    return JSON.parse(b64ToText(j.content.replace(/\s/g,'')));
+  }
+  async function ghGet(path){
+    const r = await fetch(`${API}/contents/${path}?ref=${REPO.branch}`, {
+      headers: { Authorization:`Bearer ${TOKEN}`, Accept:'application/vnd.github+json' }, cache:'no-store' });
+    if (!r.ok) throw new Error(`Read failed (${r.status}) for ${path}`);
+    const j = await r.json();
+    return { text: b64ToText(j.content.replace(/\s/g,'')), sha: j.sha };
+  }
+  async function ghPut(path, text, sha, message){
+    const body = { message, content: textToB64(text), branch: REPO.branch };
+    if (sha) body.sha = sha;
+    const r = await fetch(`${API}/contents/${path}`, {
+      method:'PUT',
+      headers:{ Authorization:`Bearer ${TOKEN}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
+      body: JSON.stringify(body) });
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || `Save failed (${r.status})`); }
+    return (await r.json()).content.sha;
+  }
+  async function ghTree(){
+    const r = await fetch(`${API}/git/trees/${REPO.branch}?recursive=1`, {
+      headers:{ Authorization:`Bearer ${TOKEN}`, Accept:'application/vnd.github+json' }, cache:'no-store' });
+    if (!r.ok) throw new Error(`Couldn't list your pages (${r.status})`);
+    return (await r.json()).tree.filter(n => n.type==='blob' && n.path.endsWith('.html')).map(n => n.path);
+  }
+
+  /* ================================================================
+     BOOT — decide between unlock and first-time setup
+     ================================================================ */
+  let authBlob = null;
+  async function boot(){
+    try {
+      authBlob = await fetchAuthBlob();
+    } catch (e) {
+      $('#unlock-form').hidden = true; $('#setup-form').hidden = true;
+      $('#lock-title').textContent = 'Connection problem';
+      $('#lock-sub').textContent = e.message + ' Refresh to try again.';
+      return;
+    }
+    if (authBlob) {
+      $('#setup-form').hidden = true; $('#unlock-form').hidden = false;
+      $('#lock-title').textContent = 'Sign in to edit';
+      $('#lock-sub').textContent = 'Type your password to unlock the editor.';
+      $('#lock-foot').innerHTML = '<a href="#" id="goto-setup">Use a different key</a>';
+      $('#goto-setup')?.addEventListener('click', (e)=>{ e.preventDefault(); toSetup(); });
+      $('#unlock-pass').focus();
+    } else {
+      toSetup();
+    }
+  }
+  function toSetup(){
+    $('#unlock-form').hidden = true; $('#setup-form').hidden = false;
+    $('#lock-title').textContent = 'Set up the editor';
+    $('#lock-sub').textContent = 'A quick one-time setup.';
+    $('#lock-foot').innerHTML = authBlob ? '<a href="#" id="goto-unlock">Back to sign in</a>' : '';
+    $('#goto-unlock')?.addEventListener('click', (e)=>{ e.preventDefault(); boot(); });
+  }
+
+  function setMsg(id, text, cls=''){ const el = $('#'+id); el.textContent = text; el.className = 'be-msg ' + cls; }
+
+  /* ---- unlock ---- */
+  $('#unlock-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pass = $('#unlock-pass').value;
+    if (!pass) return;
+    setMsg('unlock-msg', 'Unlocking...');
+    try {
+      TOKEN = await decryptToken(authBlob, pass);
+      $('#unlock-pass').value = '';
+      await openPicker();
+    } catch (_) {
+      setMsg('unlock-msg', 'That password didn’t work. Try again.', 'err');
+    }
+  });
+
+  /* ---- setup ---- */
+  $('#setup-pass').addEventListener('input', () => updateStrength($('#setup-pass').value));
+  function updateStrength(p){
+    const bits = Math.min(p.length * Math.log2(((/[a-z]/.test(p)?26:0)+(/[A-Z]/.test(p)?26:0)+(/[0-9]/.test(p)?10:0)+(/[^a-zA-Z0-9]/.test(p)?20:0))||26), 96);
+    const pct = Math.min(100, Math.round(bits/70*100));
+    const bar = $('#setup-strength');
+    bar.style.width = pct + '%';
+    bar.style.background = bits < 40 ? 'var(--emphasis-strong)' : bits < 60 ? 'var(--accent)' : '#9fcf8f';
+  }
+  const WORDS = ('amber anchor apple arbor autumn basin beacon birch bishop bramble breeze cabin cedar cinder clover comet copper cottage cricket crimson dapple ember fennel ferry fjord garnet ginger granite harbor hazel heron hollow indigo ivory jasper juniper kettle lantern ledger linen lichen marble meadow mellow minnow moss nectar oaken olive opal orchard otter pebble pewter pinecone plum quartz quill raven ridge russet saffron sage sandbar sienna silo sparrow spruce sumac thistle thrush timber tundra umber valley velvet walnut willow wren').split(' ');
+  function suggestPass(){
+    const pick = () => WORDS[crypto.getRandomValues(new Uint32Array(1))[0] % WORDS.length];
+    return [pick(),pick(),pick(),pick(),pick(),pick()].join('-');
+  }
+  $('#suggest-pass').addEventListener('click', () => {
+    const s = suggestPass();
+    $('#setup-pass').value = s; $('#setup-pass2').value = s; updateStrength(s);
+    setMsg('setup-msg', 'Write this down somewhere safe before you continue.', 'ok');
+  });
+  $('#setup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = $('#setup-token').value.trim();
+    const p1 = $('#setup-pass').value, p2 = $('#setup-pass2').value;
+    if (!token) return setMsg('setup-msg', 'Paste your GitHub key first.', 'err');
+    if (p1.length < 12) return setMsg('setup-msg', 'Use at least 12 characters (a few words works great).', 'err');
+    if (p1 !== p2) return setMsg('setup-msg', 'The two passwords don’t match.', 'err');
+    setMsg('setup-msg', 'Checking the key...');
+    try {
+      // Verify the key actually has access to this repo before we commit to it.
+      const test = await fetch(API, { headers:{ Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json' } });
+      if (!test.ok) throw new Error(`That key didn’t work (${test.status}). Re-copy it and make sure it has Contents: Read and write on Portfolio_01.`);
+      TOKEN = token;
+      const blob = await encryptToken(token, p1);
+      setMsg('setup-msg', 'Saving your locked key...');
+      // First setup: file may not exist (no sha). If it somehow does, update it.
+      let sha; try { sha = (await ghGet(AUTH_PATH)).sha; } catch(_) {}
+      await ghPut(AUTH_PATH, JSON.stringify(blob, null, 2), sha, 'blog-edit: store editor key (encrypted)');
+      $('#setup-token').value = $('#setup-pass').value = $('#setup-pass2').value = '';
+      await openPicker();
+    } catch (err) {
+      setMsg('setup-msg', err.message, 'err');
+    }
+  });
+
+  /* ================================================================
+     PICKER
+     ================================================================ */
+  let allPaths = [];
+  function prettyName(path){
+    const file = path.split('/').pop().replace(/\.html$/,'');
+    return file.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+  async function openPicker(){
+    showView('view-picker');
+    try {
+      allPaths = await ghTree();
+      renderPicker('');
+    } catch (e) {
+      $('#picker-body').innerHTML = `<p class="be-msg err">${e.message}</p>`;
+    }
+  }
+  function renderPicker(filter){
+    const f = filter.trim().toLowerCase();
+    const match = p => !f || p.toLowerCase().includes(f) || prettyName(p).toLowerCase().includes(f);
+    const groups = { 'Pages & posts': [], 'Archive': [], 'Labs & demos': [] };
+    for (const p of allPaths) {
+      if (!match(p)) continue;
+      if (p.startsWith('archive/')) groups['Archive'].push(p);
+      else if (p.endsWith('-lab.html') || DEMOS.has(p)) groups['Labs & demos'].push(p);
+      else groups['Pages & posts'].push(p);
+    }
+    const body = $('#picker-body');
+    body.innerHTML = '';
+    let any = false;
+    for (const [name, list] of Object.entries(groups)) {
+      if (!list.length) continue;
+      any = true;
+      const h = document.createElement('p'); h.className = 'be-group-h'; h.textContent = `${name} (${list.length})`;
+      const ul = document.createElement('ul'); ul.className = 'be-list';
+      for (const p of list.sort()) {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.innerHTML = `<span class="be-name">${prettyName(p)}</span><span class="be-path">${p}</span>`;
+        b.addEventListener('click', () => openEditor(p));
+        li.appendChild(b); ul.appendChild(li);
+      }
+      body.appendChild(h); body.appendChild(ul);
+    }
+    if (!any) body.innerHTML = '<p class="be-faint">No pages match that.</p>';
+  }
+  $('#picker-search').addEventListener('input', e => renderPicker(e.target.value));
+  $('#picker-logout').addEventListener('click', () => { TOKEN = null; current = null; location.reload(); });
+
+  /* ================================================================
+     EDITOR
+     ================================================================ */
+  function setStatus(text, cls=''){ const el = $('#ed-status'); el.textContent = text; el.className = 'be-status ' + cls; }
+  let dirty = false;
+  function markDirty(){ if (!dirty) { dirty = true; setStatus('Unsaved changes', 'dirty'); } }
+
+  async function openEditor(path){
+    showView('view-editor');
+    setStatus('Loading...');
+    $('#ed-name').textContent = prettyName(path);
+    $('#ed-path').textContent = path;
+    $('#ed-view').href = '/' + path;
+    $('#ed-layout').checked = false;
+    dirty = false;
+    try {
+      const { text, sha } = await ghGet(path);
+      mountEditor(path, text, sha, false);
+    } catch (e) {
+      setStatus(e.message, 'err');
+    }
+  }
+
+  // Shared mount used by both the live path and the local test hook (__beLocal).
+  function mountEditor(path, text, sha, local){
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    // Tag every element so we can map edits in the iframe back to this master doc.
+    let i = 0; doc.querySelectorAll('*').forEach(el => el.setAttribute('data-be-id', String(i++)));
+    current = { path, sha, doc, local };
+
+    // Build a render-only clone: strip scripts, make text editable, add edit CSS.
+    const render = doc.cloneNode(true);
+    render.querySelectorAll('script').forEach(s => s.remove());
+    markEditable(render);
+    injectEditChrome(render);
+
+    const iframe = $('#stage');
+    iframe.onload = () => { wireIframe(iframe.contentDocument); setStatus('Ready'); };
+    iframe.srcdoc = '<!DOCTYPE html>\n' + render.documentElement.outerHTML;
+  }
+
+  // contentEditable on leaf text blocks only (not wrappers that contain other blocks).
+  function markEditable(render){
+    for (const el of render.querySelectorAll(BLOCK_SEL)) {
+      if (el.querySelector(BLOCK_SEL)) continue;          // edit the leaf, keep structure intact
+      if (el.closest('script, style, code, pre')) continue;
+      el.setAttribute('contenteditable', 'true');
+      el.setAttribute('data-be-edit', '1');
+    }
+    // Mark top-level sections for the optional move/hide mode.
+    const container = render.querySelector('main') || render.querySelector('article') || render.body;
+    if (container) {
+      for (const child of [...container.children]) {
+        if (child.matches('section,article,div,figure,header,footer,aside,table,ul,ol,blockquote,h1,h2,h3,p'))
+          child.setAttribute('data-be-section', '1');
+      }
+    }
+  }
+
+  function injectEditChrome(render){
+    const style = render.createElement('style');
+    style.id = 'be-injected';
+    style.textContent = `
+      [data-be-edit]{ cursor: text; border-radius: 3px; transition: box-shadow .12s, background .12s; }
+      [data-be-edit]:hover{ box-shadow: 0 0 0 2px rgba(212,196,160,.28); }
+      [data-be-edit]:focus{ outline: none; box-shadow: 0 0 0 2px rgba(212,196,160,.7); background: rgba(212,196,160,.06); }
+      body.be-layout [data-be-edit]{ pointer-events: none; }
+      body.be-layout [data-be-section]{ position: relative; outline: 1px dashed rgba(212,196,160,.5); outline-offset: 4px; }
+      body.be-layout [data-be-section][data-be-hidden]{ opacity: .35; }
+      .be-secbar{ position: absolute; top: -14px; right: 6px; z-index: 99999; display: none; gap: 4px; }
+      body.be-layout [data-be-section] > .be-secbar{ display: inline-flex; }
+      .be-secbar button{ font: 600 12px/1 system-ui, sans-serif; cursor: pointer; border: 1px solid rgba(212,196,160,.5); background: #1e2420; color: #EDE0C0; border-radius: 6px; padding: 3px 7px; }
+      .be-secbar button:hover{ background: #2a322b; }
+    `;
+    render.head.appendChild(style);
+  }
+
+  function wireIframe(idoc){
+    if (!idoc) return;
+    idoc.addEventListener('input', markDirty, true);
+    // Paste as plain text so the careful markup never fills with junk.
+    idoc.addEventListener('paste', (e) => {
+      const t = e.target.closest && e.target.closest('[data-be-edit]');
+      if (!t) return;
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      idoc.execCommand('insertText', false, text);
+    }, true);
+    // Add the per-section move/hide controls (only visible in layout mode).
+    for (const sec of idoc.querySelectorAll('[data-be-section]')) {
+      const bar = idoc.createElement('div');
+      bar.className = 'be-secbar';
+      bar.contentEditable = 'false';
+      bar.innerHTML = '<button data-act="up" title="Move up">↑</button>'
+                    + '<button data-act="down" title="Move down">↓</button>'
+                    + '<button data-act="hide" title="Hide / show on the site">Hide</button>';
+      bar.addEventListener('click', (e) => {
+        const act = e.target.getAttribute && e.target.getAttribute('data-act');
+        if (!act) return;
+        if (act === 'up' && sec.previousElementSibling) sec.parentNode.insertBefore(sec, sec.previousElementSibling);
+        else if (act === 'down' && sec.nextElementSibling) sec.parentNode.insertBefore(sec.nextElementSibling, sec);
+        else if (act === 'hide') {
+          const now = sec.hasAttribute('data-be-hidden');
+          sec.toggleAttribute('data-be-hidden', !now);
+          e.target.textContent = now ? 'Hide' : 'Show';
+        }
+        markDirty();
+      });
+      sec.insertBefore(bar, sec.firstChild);
+    }
+  }
+
+  $('#ed-layout').addEventListener('change', (e) => {
+    const idoc = $('#stage').contentDocument;
+    if (idoc) idoc.body.classList.toggle('be-layout', e.target.checked);
+  });
+  $('#ed-back').addEventListener('click', () => {
+    if (dirty && !confirm('You have unsaved changes. Leave without saving?')) return;
+    current = null; openPicker();
+  });
+
+  /* ---- save: fold edits back into the master doc, serialize, commit ---- */
+  async function save(){
+    if (!current) return;
+    const idoc = $('#stage').contentDocument;
+    setStatus('Saving...', 'dirty');
+    $('#ed-save').disabled = true;
+    try {
+      // 1) text edits: copy each editable block's HTML back to the master doc
+      for (const el of idoc.querySelectorAll('[data-be-edit]')) {
+        const id = el.getAttribute('data-be-id');
+        const target = current.doc.querySelector(`[data-be-id="${id}"]`);
+        if (target) target.innerHTML = el.innerHTML;
+      }
+      // 2) layout: reconcile section order + hidden state from the iframe
+      reconcileLayout(idoc);
+
+      // 3) clean a throwaway copy and serialize
+      const out = current.doc.cloneNode(true);
+      out.querySelectorAll('[data-be-id]').forEach(el => {
+        el.removeAttribute('data-be-id'); el.removeAttribute('data-be-edit');
+        el.removeAttribute('data-be-section'); el.removeAttribute('contenteditable');
+      });
+      out.querySelectorAll('.be-secbar, #be-injected').forEach(n => n.remove());
+      const html = '<!DOCTYPE html>\n' + out.documentElement.outerHTML + '\n';
+
+      if (current.local) { window.__beLastOutput = html; console.log('[blog-edit] would commit', current.path, '(' + html.length + ' bytes)'); setStatus('Saved (local test) ✓', 'saved'); dirty = false; return; }
+
+      current.sha = await ghPut(current.path, html, current.sha, `edit ${current.path} (blog-edit)`);
+      dirty = false;
+      setStatus('Published ✓ live in ~15s', 'saved');
+    } catch (e) {
+      setStatus(e.message, 'err');
+    } finally {
+      $('#ed-save').disabled = false;
+    }
+  }
+  function reconcileLayout(idoc){
+    const icont = idoc.querySelector('main') || idoc.querySelector('article') || idoc.body;
+    if (!icont) return;
+    const dcont = current.doc.querySelector(`[data-be-id="${icont.getAttribute('data-be-id')}"]`);
+    if (!dcont) return;
+    // walk the iframe's section order; move matching master nodes into the same order
+    let anchor = null;
+    for (const isec of icont.querySelectorAll(':scope > [data-be-section]')) {
+      const id = isec.getAttribute('data-be-id');
+      const dsec = dcont.querySelector(`:scope > [data-be-id="${id}"]`);
+      if (!dsec) continue;
+      if (anchor) dcont.insertBefore(dsec, anchor.nextSibling); else dcont.insertBefore(dsec, dcont.firstChild);
+      anchor = dsec;
+      if (isec.hasAttribute('data-be-hidden')) dsec.setAttribute('hidden', ''); else dsec.removeAttribute('hidden');
+    }
+  }
+  $('#ed-save').addEventListener('click', save);
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 's' && !$('#view-editor').hidden) { e.preventDefault(); save(); }
+  });
+  window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  // Local test hook (no token, no commits) for verifying the edit pipeline.
+  window.__beLocal = async (path) => {
+    const text = await (await fetch('/' + path, { cache:'no-store' })).text();
+    TOKEN = '__local__';
+    showView('view-editor');
+    $('#ed-name').textContent = prettyName(path); $('#ed-path').textContent = path + ' (local test)';
+    $('#ed-view').href = '/' + path; dirty = false;
+    mountEditor(path, text, null, true);
+  };
+
+  boot();
+  </script>
+</body>
+</html>
