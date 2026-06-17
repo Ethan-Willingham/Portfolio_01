@@ -1,21 +1,20 @@
 /* ============================================================================
-   search.js  -  the homepage full-text search (typeahead).
+   search.js  -  the homepage search (a "find in the posts" typeahead).
 
-   A self-contained, no-dependency search over a prebuilt index
-   (search-index.json, made by tools/build-search-index.mjs). It reads the real
-   text of every post, ranks them per keystroke (title and headings weigh more
-   than body), shows a spring-in dropdown of the best matches with a highlighted
-   snippet, and deep-links to the matching section when it can.
+   A literal CONTAINS search over a prebuilt index (search-index.json, made by
+   tools/build-search-index.mjs). As you type, each result shows how many times
+   the exact string occurs in that post and the FIRST occurrence in context, with
+   the typed characters highlighted, like find-in-page across the whole site.
 
-   World-class touches:
-   - Typo tolerance: a bounded Damerau-Levenshtein over a per-load vocabulary,
-     so "warehosue", "octapus", "supercentenarian" still find the right post.
-   - Archived posts are searchable too, clearly marked, and always ranked AFTER
-     every live post (a hard tier, not just a score nudge).
+   - Literal substring match (precise: only posts that actually contain the text).
+   - Per result: a "N matches" count + a context snippet (words either side).
+   - Deep-links into the section the first hit lives in.
+   - Typo tolerance is a FALLBACK only: if nothing matches literally, it offers
+     the nearest real word (bounded Damerau-Levenshtein), so a misspelling still
+     lands without ever loosening a normal query.
+   - Archived posts are searchable, amber-flagged, and always after live posts.
 
-   The index is fetched lazily on first focus, so the homepage stays light.
-   Full keyboard control (up/down/enter/escape, "/" to focus) + a combobox a11y
-   contract. Honours prefers-reduced-motion via CSS. No em dashes.
+   Lazy-loaded on first focus. Full keyboard + combobox a11y. No deps. No em dashes.
    ============================================================================ */
 (function () {
   'use strict';
@@ -25,88 +24,70 @@
   var live  = document.querySelector('.hs-readout');
   if (!input || !panel) return;
 
-  var LIMIT = 8;             // results shown
-  var data = null;          // prepared index
-  var vocab = {};           // first-char -> array of words, for fuzzy lookup
-  var vocabSet = new Set();  // every indexed word, for "is this a real word?" checks
+  var LIMIT = 6;            // results shown (kept tight on purpose)
+  var data = null;
+  var vocab = {};           // first-char -> words, for the typo fallback only
+  var vocabSet = new Set();
   var loading = false;
   var results = [];
   var active = -1;
   var lastQuery = '';
 
-  // field weights (also used as the per-word weight for fuzzy whole-word hits)
-  var W_TITLE = 1.00, W_KW = 0.62, W_HEAD = 0.55, W_DESC = 0.45, W_BODY = 0.30;
-
   // ---- text helpers ---------------------------------------------------------
   function lc(s) { return (s || '').toLowerCase(); }
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function clip(s, n) { return s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s; }
-  function words(s) { return lc(s).split(/[^a-z0-9]+/); }
+  function tokens(s) { return lc(s).split(/[^a-z0-9]+/); }
+  function countOf(s, q) { if (!s) return 0; var c = 0, i = 0; while ((i = s.indexOf(q, i)) >= 0) { c++; i += q.length; } return c; }
+  function anchor(p, s) { return s && s.id ? p.url + '#' + s.id : p.url; }
 
-  // word-aware substring strength: whole word 1.0, word prefix 0.7, loose 0.4
-  function tier(hay, t) {
-    if (!hay) return 0;
-    var i = hay.indexOf(t);
-    if (i < 0) return 0;
-    var before = i === 0 ? ' ' : hay.charAt(i - 1);
-    var after = hay.charAt(i + t.length) || ' ';
-    var bb = /[^a-z0-9]/.test(before), ba = /[^a-z0-9]/.test(after);
-    if (bb && ba) return 1.0;
-    if (bb) return 0.7;
-    if (t.length < 3) return 0;   // short tokens must sit at a word boundary
-    return 0.4;
+  function hiLiteral(text, q) {
+    var out = esc(text);
+    if (!q) return out;
+    var safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try { return out.replace(new RegExp('(' + safe + ')', 'gi'), '<mark class="hs-hi">$1</mark>'); }
+    catch (e) { return out; }
   }
 
-  // bounded Damerau-Levenshtein (optimal string alignment, with transpositions).
-  // Returns the distance, or max+1 once it is certain to exceed max (early out).
+  // a context window around a hit: a few words either side, trimmed to whole words.
+  function contextWindow(text, pos, qlen) {
+    var a = Math.max(0, pos - 34), b = Math.min(text.length, pos + qlen + 120);
+    var pre = text.slice(a, pos), mid = text.slice(pos, pos + qlen), post = text.slice(pos + qlen, b);
+    if (a > 0) pre = pre.replace(/^\S*\s+/, '');           // drop a clipped leading word
+    if (b < text.length) post = post.replace(/\s+\S*$/, '');// drop a clipped trailing word
+    return (a > 0 ? '… ' : '') + pre + mid + post + (b < text.length ? ' …' : '');
+  }
+
+  // ---- typo fallback machinery (bounded Damerau-Levenshtein) ----------------
   function dist(a, b, max) {
     var la = a.length, lb = b.length;
     if (Math.abs(la - lb) > max) return max + 1;
     var prev2 = null, prev = [], cur, i, j;
     for (j = 0; j <= lb; j++) prev[j] = j;
     for (i = 1; i <= la; i++) {
-      cur = [i];
-      var rowBest = i;
+      cur = [i]; var rowBest = i;
       for (j = 1; j <= lb; j++) {
         var cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
         var v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
-        if (i > 1 && j > 1 && prev2 && a.charCodeAt(i - 1) === b.charCodeAt(j - 2) && a.charCodeAt(i - 2) === b.charCodeAt(j - 1)) {
-          v = Math.min(v, prev2[j - 2] + 1);
-        }
-        cur[j] = v;
-        if (v < rowBest) rowBest = v;
+        if (i > 1 && j > 1 && prev2 && a.charCodeAt(i - 1) === b.charCodeAt(j - 2) && a.charCodeAt(i - 2) === b.charCodeAt(j - 1)) v = Math.min(v, prev2[j - 2] + 1);
+        cur[j] = v; if (v < rowBest) rowBest = v;
       }
       if (rowBest > max) return max + 1;
       prev2 = prev; prev = cur;
     }
     return prev[lb];
   }
-
-  // Algolia-style ramp: no typos under 4 chars, 1 typo to 7, 2 only at 8+. Keeping
-  // distance-2 off shorter words avoids conflating two real words (placebo/placed).
   function maxTypos(len) { return len < 4 ? 0 : len < 8 ? 1 : 2; }
-
-  // typo candidates for a term: vocabulary words within edit distance, sharing
-  // the first letter (real typos almost always keep it). Cached per query.
-  var fcache = {};
-  function fuzzyFor(t) {
-    if (t in fcache) return fcache[t];
-    var md = maxTypos(t.length), res = {}, bucket = vocab[t.charAt(0)] || [], k;
-    // Only spend on fuzzy when the term LOOKS like a typo: it is not itself a real
-    // indexed word and not the start of one (mid-typing). That keeps a correctly
-    // spelled query exact, so "painting" never drifts to "parenting".
-    var skip = md === 0 || vocabSet.has(t);
-    if (!skip) for (k = 0; k < bucket.length; k++) { if (bucket[k].length > t.length && bucket[k].lastIndexOf(t, 0) === 0) { skip = true; break; } }
-    if (!skip) {
-      for (k = 0; k < bucket.length; k++) {
-        var w = bucket[k];
-        if (w === t || Math.abs(w.length - t.length) > md) continue;
-        var d = dist(t, w, md);
-        if (d <= md && (!(w in res) || d < res[w])) res[w] = d;
-      }
+  function nearestWord(t) {
+    var md = maxTypos(t.length); if (md === 0) return null;
+    var bucket = vocab[t.charAt(0)] || [], best = null, bestD = 99;
+    for (var k = 0; k < bucket.length; k++) {
+      var w = bucket[k];
+      if (w === t || Math.abs(w.length - t.length) > md) continue;
+      var d = dist(t, w, md);
+      if (d <= md && d < bestD) { bestD = d; best = w; }
     }
-    fcache[t] = res;
-    return res;
+    return best;
   }
 
   // ---- prepare the index once ----------------------------------------------
@@ -114,19 +95,12 @@
     var posts = payload.posts || [], n = posts.length;
     vocab = {}; vocabSet = new Set();
     posts.forEach(function (p, i) {
-      p.titleLC = lc(p.title); p.descLC = lc(p.desc); p.kwLC = lc(p.keywords);
-      p.recency = n > 1 ? (n - 1 - i) / (n - 1) : 1;
-      p.words = Object.create(null);
-      function add(str, wt) { var ws = words(str), j, w; for (j = 0; j < ws.length; j++) { w = ws[j]; if (w.length < 2) continue; if ((p.words[w] || 0) < wt) p.words[w] = wt; } }
-      add(p.title, W_TITLE); add(p.keywords, W_KW); add(p.desc, W_DESC);
-      (p.sections || []).forEach(function (s) { s.headLC = lc(s.head); s.textLC = lc(s.text); add(s.head, W_HEAD); add(s.text, W_BODY); });
-      for (var w in p.words) { if (w.length >= 3) { var c = w.charAt(0); (vocab[c] || (vocab[c] = [])).push(w); } }
+      p.titleLC = lc(p.title); p.recency = n > 1 ? (n - 1 - i) / (n - 1) : 1;
+      var seen = Object.create(null);
+      function harvest(str) { var ws = tokens(str), j, w; for (j = 0; j < ws.length; j++) { w = ws[j]; if (w.length >= 3 && !seen[w]) { seen[w] = 1; var c = w.charAt(0); (vocab[c] || (vocab[c] = [])).push(w); vocabSet.add(w); } } }
+      harvest(p.title); harvest(p.keywords);
+      (p.sections || []).forEach(function (s) { s.headLC = lc(s.head); s.textLC = lc(s.text); harvest(s.head); harvest(s.text); });
     });
-    // dedupe each vocab bucket and record every word for the real-word check
-    for (var c in vocab) {
-      vocab[c] = Object.keys(vocab[c].reduce(function (m, w) { m[w] = 1; return m; }, Object.create(null)));
-      for (var u = 0; u < vocab[c].length; u++) vocabSet.add(vocab[c][u]);
-    }
     data = posts;
   }
 
@@ -139,130 +113,85 @@
       .catch(function () { loading = false; });
   }
 
-  // ---- scoring --------------------------------------------------------------
-  function termScore(p, t, fz) {
-    var s = W_TITLE * tier(p.titleLC, t);
-    s = Math.max(s, W_KW * tier(p.kwLC, t), W_DESC * tier(p.descLC, t));
-    for (var i = 0; i < p.sections.length; i++) {
-      var sec = p.sections[i];
-      s = Math.max(s, W_HEAD * tier(sec.headLC, t), W_BODY * tier(sec.textLC, t));
-      if (s >= 0.7) break;
+  // ---- the contains search --------------------------------------------------
+  function literalHits(q) {
+    var hits = [];
+    for (var pi = 0; pi < data.length; pi++) {
+      var p = data[pi], titleCount = countOf(p.titleLC, q), count = titleCount, firstSec = -1, firstPos = -1, headHits = 0;
+      for (var si = 0; si < p.sections.length; si++) {
+        var sec = p.sections[si];
+        var hc = countOf(sec.headLC, q); headHits += hc;
+        count += hc + countOf(sec.textLC, q);
+        if (firstSec < 0) { var ph = sec.textLC.indexOf(q); if (ph >= 0) { firstSec = si; firstPos = ph; } }
+      }
+      if (count < 1) continue;
+      var score = (titleCount > 0 ? 10000 : 0) + headHits * 40 + count + p.recency * 3;
+      hits.push({ post: p, count: count, score: score, firstSec: firstSec, firstPos: firstPos });
     }
-    for (var w in fz) { var wt = p.words[w]; if (wt !== undefined) s = Math.max(s, wt * (fz[w] === 1 ? 0.6 : 0.42)); }
-    return s;
+    hits.sort(function (a, b) { return (a.post.archived ? 1 : 0) - (b.post.archived ? 1 : 0) || b.score - a.score; });
+    return hits;
   }
 
-  function scorePost(p, terms, fuzz) {
-    var total = 0, allInTitle = true;
-    for (var k = 0; k < terms.length; k++) {
-      var ts = termScore(p, terms[k], fuzz[k]);
-      if (ts === 0) return -1;                       // AND: every term must land
-      if (tier(p.titleLC, terms[k]) === 0) allInTitle = false;
-      total += ts;
+  function buildResult(h, q) {
+    var p = h.post, url = p.url, label = '', snippet;
+    if (h.firstSec >= 0) {
+      var sec = p.sections[h.firstSec];
+      url = anchor(p, sec); label = sec.head;
+      snippet = contextWindow(sec.text, h.firstPos, q.length);
+    } else {
+      snippet = p.desc || (p.sections[0] ? clip(p.sections[0].text, 150) : '');
     }
-    if (allInTitle) total += 0.6;
-    return total + p.recency * 0.05;
+    return { post: p, url: url, archived: !!p.archived, count: h.count, label: label, titleHTML: hiLiteral(p.title, q), snippetHTML: hiLiteral(snippet, q) };
   }
 
-  // strings actually present in the post that satisfied each term (typed term +
-  // any fuzzy word that hit), used for the snippet + the highlighting.
-  function matchedStrings(p, terms, fuzz) {
-    var out = [];
-    for (var k = 0; k < terms.length; k++) {
-      out.push(terms[k]);
-      var fz = fuzz[k];
-      for (var w in fz) if (p.words[w] !== undefined) out.push(w);
-    }
-    return out;
-  }
-
-  // snippet + deep-link: earliest section whose body holds a match, else a
-  // section whose heading matches, else the blurb.
-  function describe(p, ms) {
-    var i, s, pos, j, t;
-    for (i = 0; i < p.sections.length; i++) {
-      s = p.sections[i]; pos = -1;
-      for (j = 0; j < ms.length; j++) { t = s.textLC.indexOf(ms[j]); if (t >= 0 && (pos < 0 || t < pos)) pos = t; }
-      if (pos >= 0) return { snippet: windowAround(s.text, pos), label: s.head, url: anchor(p, s) };
-    }
-    for (i = 0; i < p.sections.length; i++) {
-      s = p.sections[i];
-      for (j = 0; j < ms.length; j++) if (s.headLC.indexOf(ms[j]) >= 0) return { snippet: clip(s.text, 150) || p.desc, label: s.head, url: anchor(p, s) };
-    }
-    return { snippet: p.desc || (p.sections[0] ? clip(p.sections[0].text, 150) : ''), label: '', url: p.url };
-  }
-  function anchor(p, s) { return s && s.id ? p.url + '#' + s.id : p.url; }
-  function windowAround(text, pos) {
-    var start = Math.max(0, pos - 50), s = text.slice(start, start + 150);
-    if (start > 0) s = '…' + s;
-    if (start + 150 < text.length) s = s + '…';
-    return s;
-  }
-  function hi(text, ms) {
-    var out = esc(text);
-    var safe = ms.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).filter(Boolean);
-    if (!safe.length) return out;
-    safe.sort(function (a, b) { return b.length - a.length; });   // longer first, so words win over their prefixes
-    try { return out.replace(new RegExp('(' + safe.join('|') + ')', 'gi'), '<mark class="hs-hi">$1</mark>'); }
-    catch (e) { return out; }
-  }
-
-  // ---- run a query ----------------------------------------------------------
   function run(raw) {
     lastQuery = raw;
-    var terms = lc(raw).trim().split(/\s+/).filter(Boolean);
-    if (!terms.length) { close(); return; }
+    var q = lc(raw).replace(/\s+/g, ' ').trim();
+    if (q.length < 2) { close(); return; }
     if (!data) { load(); return; }
 
-    var fuzz = terms.map(fuzzyFor);
-    var scored = [];
-    for (var i = 0; i < data.length; i++) {
-      var sc = scorePost(data[i], terms, fuzz);
-      if (sc >= 0) scored.push({ post: data[i], score: sc });
+    var corrected = null, hits = literalHits(q), useQ = q;
+    if (!hits.length && q.indexOf(' ') < 0) {     // nothing literal: try a single-word typo fix
+      var w = nearestWord(q);
+      if (w) { corrected = w; useQ = w; hits = literalHits(w); }
     }
-    // live posts always before archived; then by score
-    scored.sort(function (a, b) { return (a.post.archived ? 1 : 0) - (b.post.archived ? 1 : 0) || b.score - a.score; });
 
-    results = scored.slice(0, LIMIT).map(function (r) {
-      var ms = matchedStrings(r.post, terms, fuzz);
-      var d = describe(r.post, ms);
-      return { post: r.post, url: d.url, label: d.label, archived: !!r.post.archived, snippetHTML: hi(d.snippet, ms), titleHTML: hi(r.post.title, ms) };
-    });
+    var totalInstances = 0, postCount = hits.length, i;
+    for (i = 0; i < hits.length; i++) totalInstances += hits[i].count;
+    results = hits.slice(0, LIMIT).map(function (h) { return buildResult(h, useQ); });
     active = results.length ? 0 : -1;
-    render(scored.length);
+    render(q, corrected, totalInstances, postCount);
     open();
   }
 
   function rowHTML(r, i) {
-    var meta = r.archived
-      ? '<span class="hs-res-arch">Archived</span>'
-      : '<span class="hs-res-date">' + esc(r.post.dateDisplay || '') + '</span>';
-    var label = r.label ? '<span class="hs-res-in">in ' + esc(r.label) + '</span>' : '';
+    var n = r.count, countLbl = n + ' match' + (n === 1 ? '' : 'es');
     return '<a class="hs-res' + (r.archived ? ' is-arch' : '') + '" role="option" id="hs-opt-' + i + '" href="' + r.url + '"' +
       (i === active ? ' aria-selected="true"' : '') + ' data-i="' + i + '" tabindex="-1">' +
       '<span class="hs-res-thumb">' + (r.post.thumb ? '<img src="' + r.post.thumb + '" alt="" loading="lazy" decoding="async">' : '') + '</span>' +
       '<span class="hs-res-main">' +
-        '<span class="hs-res-top"><span class="hs-res-title">' + r.titleHTML + '</span>' + meta + '</span>' +
-        '<span class="hs-res-snip">' + label + r.snippetHTML + '</span>' +
+        '<span class="hs-res-top"><span class="hs-res-title">' + r.titleHTML + '</span><span class="hs-res-count">' + countLbl + '</span></span>' +
+        '<span class="hs-res-snip">' + r.snippetHTML + '</span>' +
       '</span>' +
-      '<span class="hs-res-go" aria-hidden="true">→</span>' +
     '</a>';
   }
 
-  function render(totalMatches) {
+  function render(q, corrected, totalInstances, postCount) {
     var html;
     if (!results.length) {
-      html = '<div class="hs-empty">No posts match “' + esc(lastQuery.trim()) + '”</div>';
-      if (live) live.textContent = 'No posts match';
+      html = '<div class="hs-empty">No text matching “' + esc(q) + '” in any post</div>';
+      if (live) live.textContent = 'No matches';
     } else {
       html = '';
+      if (corrected) html += '<div class="hs-corrected">Showing matches for <b>' + esc(corrected) + '</b></div>';
       var archHeader = false;
       for (var i = 0; i < results.length; i++) {
         if (results[i].archived && !archHeader) { archHeader = true; html += '<div class="hs-group">Archived posts</div>'; }
         html += rowHTML(results[i], i);
       }
-      html += '<div class="hs-foot"><span><b>↑</b><b>↓</b> to move</span><span><b>↵</b> to open</span><span class="hs-foot-count">' + totalMatches + ' match' + (totalMatches === 1 ? '' : 'es') + '</span></div>';
-      if (live) live.textContent = totalMatches + ' match' + (totalMatches === 1 ? '' : 'es');
+      var label = totalInstances + ' match' + (totalInstances === 1 ? '' : 'es') + ' in ' + postCount + ' post' + (postCount === 1 ? '' : 's');
+      html += '<div class="hs-foot"><span><b>↑</b><b>↓</b> move</span><span><b>↵</b> open</span><span class="hs-foot-count">' + label + '</span></div>';
+      if (live) live.textContent = label;
     }
     panel.innerHTML = html;
     paintActive();
