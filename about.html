@@ -101,26 +101,11 @@
   .co-sw-role { font-size: 0.8rem; color: var(--text-dim); line-height: 1.35; margin-top: 0.1rem; }
   .co-palette-lbl { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin: 2rem 0 0.9rem; }
   .co-palette-lbl:first-child { margin-top: 0; }
-  /* ---- palette by role: the surface, the link colors, the data set ---- */
-  .pal-group { margin: 2rem 0 0; }
-  .pal-group > .co-palette-lbl { margin: 0 0 0.85rem; }
-  .pal-surface { background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 12px; padding: 0.35rem 1.15rem; }
-  .pal-tline { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.55rem 0; }
-  .pal-tline + .pal-tline { border-top: 1px solid rgba(245,241,234,0.05); }
-  .pal-tsample { font-family: var(--font-heading); line-height: 1.25; }
-  .pal-tok { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); white-space: nowrap; }
-  .pal-feet { display: flex; flex-wrap: wrap; gap: 1.2rem; margin: 0.95rem 0 0; }
-  .pal-foot { display: flex; align-items: center; gap: 0.55rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-faint); }
-  .pal-foot i { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(245,241,234,0.12); flex: none; }
-  .pal-links { font-family: var(--font-heading); font-size: 1.16rem; line-height: 1.65; color: var(--text); margin: 0; }
-  .pal-links .lk { color: var(--accent); border-bottom: 1px solid var(--accent); }
-  .pal-links .lk-key { color: var(--emphasis); border-bottom: 1px solid var(--emphasis); }
-  .pal-bars { display: flex; flex-direction: column; gap: 8px; }
-  .pal-bar { display: grid; grid-template-columns: 66px 1fr; align-items: center; gap: 12px; }
-  .pal-bar-name { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); text-align: right; }
-  .pal-bar-track i { display: block; height: 15px; border-radius: 4px; background: var(--c); }
-  .pal-cap { font-size: 0.92rem; line-height: 1.5; color: var(--text-dim); margin: 1.05rem 0 0; }
-  .pal-cap b { color: var(--text); font-weight: 600; }
+  /* ---- the accent palette as one flush, hue-ordered band ---- */
+  .pal-band { display: flex; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 28px -14px rgba(0,0,0,0.65); }
+  .pal-band > span { flex: 1; height: clamp(104px, 15vw, 144px); }
+  .pal-names { display: flex; margin: 0.7rem 0 0; }
+  .pal-names > span { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.02em; color: var(--text-dim); padding: 0 2px; }
 
   /* type: specimens */
   .co-faces { display: grid; gap: 16px; }
@@ -387,46 +372,23 @@
             <div class="co-spec-head">
               <span class="co-spec-name">the palette</span>
               <span class="co-tag co-tag--made">Made here</span>
-              <p class="co-spec-note">Color here is a system, not a mood board. Every one has a job: the surface you read on, the gold that marks a link, a rose kept for the single most important one, and a set of accents a post pulls from when it needs to tell things apart.</p>
+              <p class="co-spec-note">The muted accents a post paints with, every one dialed to the same softness so they read as a family.</p>
             </div>
             <div class="co-stage">
-              <div class="pal-group">
-                <p class="co-palette-lbl">The surface you read on</p>
-                <div class="pal-surface">
-                  <div class="pal-tline"><span class="pal-tsample" style="color:#f5f1ea; font-size:1.5rem">Headings, the brightest ink</span><span class="pal-tok">--text-bright</span></div>
-                  <div class="pal-tline"><span class="pal-tsample" style="color:#e8e2d6; font-size:1.1rem">Body text, what you read most of</span><span class="pal-tok">--text</span></div>
-                  <div class="pal-tline"><span class="pal-tsample" style="color:#b8b2a2; font-size:1rem">Quieter notes and captions</span><span class="pal-tok">--text-dim</span></div>
-                  <div class="pal-tline"><span class="pal-tsample" style="color:#a4a293; font-size:0.9rem">Faint dates and footnotes</span><span class="pal-tok">--text-faint</span></div>
-                </div>
-                <div class="pal-feet">
-                  <span class="pal-foot"><i style="background:#303931"></i>--bg, the locked green</span>
-                  <span class="pal-foot"><i style="background:#1e2420"></i>--bg-raised, for panels</span>
-                </div>
+              <div class="pal-band">
+                <span style="background:#8fb3c7"></span>
+                <span style="background:#b79bc4"></span>
+                <span style="background:#deb9cf"></span>
+                <span style="background:#b8796d"></span>
+                <span style="background:#d9978c"></span>
+                <span style="background:#cf9f78"></span>
+                <span style="background:#bc9d65"></span>
+                <span style="background:#dfc288"></span>
+                <span style="background:#9ec79a"></span>
+                <span style="background:#6f9a6c"></span>
               </div>
-
-              <div class="pal-group">
-                <p class="co-palette-lbl">The two that mark a link</p>
-                <p class="pal-links">Most links are a warm <span class="lk">dusty gold</span>. The rose is its exact mirror across the green, the same softness flipped to the opposite hue, and it stays in reserve for the <span class="lk-key">one link that matters most</span> on a page.</p>
-                <div class="pal-feet">
-                  <span class="pal-foot"><i style="background:#d4c4a0"></i>--accent</span>
-                  <span class="pal-foot"><i style="background:#deb9cf"></i>--emphasis</span>
-                </div>
-              </div>
-
-              <div class="pal-group">
-                <p class="co-palette-lbl">What a post tells things apart with</p>
-                <div class="pal-bars">
-                  <div class="pal-bar"><span class="pal-bar-name">sage</span><span class="pal-bar-track"><i style="--c:#9ec79a; width:92%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">coral</span><span class="pal-bar-track"><i style="--c:#d9978c; width:80%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">blue</span><span class="pal-bar-track"><i style="--c:#8fb3c7; width:71%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">pine</span><span class="pal-bar-track"><i style="--c:#6f9a6c; width:63%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">gold</span><span class="pal-bar-track"><i style="--c:#dfc288; width:56%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">clay</span><span class="pal-bar-track"><i style="--c:#cf9f78; width:48%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">purple</span><span class="pal-bar-track"><i style="--c:#b79bc4; width:41%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">brick</span><span class="pal-bar-track"><i style="--c:#b8796d; width:34%"></i></span></div>
-                  <div class="pal-bar"><span class="pal-bar-name">deep gold</span><span class="pal-bar-track"><i style="--c:#bc9d65; width:27%"></i></span></div>
-                </div>
-                <p class="pal-cap">One shared set, every color dialed to the same softness so they read as <b>peers</b>. No series shouts over another.</p>
+              <div class="pal-names">
+                <span>blue</span><span>purple</span><span>rose</span><span>brick</span><span>coral</span><span>clay</span><span>deep gold</span><span>gold</span><span>sage</span><span>pine</span>
               </div>
             </div>
           </div>
