@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Worst Pain in Medicine</title>
+  <meta name="description" content="A ranked countdown of the ten most agonizing medical conditions, from gout to complex regional pain syndrome. The famous numbered pain chart everyone shares is a fake, so this one shows its work, anchors on the one study that ever measured it, and admits where ranking pain stops being possible.">
+  <meta property="og:title" content="The Worst Pain in Medicine">
+  <meta property="og:description" content="The famous chart that ranks the world's worst pains is made up. Here is the honest version: ten conditions counted down, the evidence for each, and the one study where the same patients rated a headache above childbirth, kidney stones, and a self-digesting pancreas.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/the-worst-pain-in-medicine.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/the-worst-pain-in-medicine-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/the-worst-pain-in-medicine-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE WORST PAIN IN MEDICINE
+     A sourced 10-to-1 countdown of the most agonizing conditions.
+     Sits inside the site shell (forest green, parchment, Century
+     Supra / Segoe UI / Commit Mono). This block adds only the
+     post's own parts: hero, the single honest bar chart, the
+     countdown card, type chips, the honorable-mentions list, the
+     graded sources. Coral is the post accent. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 780px;
+    --wide: 1080px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-coral: #d9978c;
+    --c-gold:  #d4c4a0;
+    --c-mute:  #8a978a;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  .hero-figure { margin: 2.4rem 0 0.5rem; }
+  .hero-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
+  .sec .u-sechead-k, .sec .u-eyebrow { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; }
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+  .sec .u-callout:not(.u-move) { padding: 18px 22px; border-radius: 14px; box-shadow: none; margin: 1.6rem 0; }
+  .sec .u-callout:not(.u-move) .u-callout-body { font-size: 1.02rem; line-height: 1.55; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--c-coral); }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .sec .u-divider { margin-top: 3.4rem; }
+
+  /* ---------- FIGURE (the one honest chart) ---------- */
+  .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; line-height: 1.18; letter-spacing: -0.01em; color: var(--text-bright); margin: 0 0 0.25em; }
+  .viz-sub { font-family: var(--font-body); font-size: 0.88rem; line-height: 1.45; color: var(--text-dim); margin: 0 0 1.3em; max-width: 54ch; }
+  .viz-cap { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); margin-top: 0.9rem; line-height: 1.55; max-width: 60ch; }
+  text { font-family: var(--font-mono); }
+  .axs { fill: var(--text-dim); font-size: 13px; opacity: 0.85; }
+  .lbl-name { fill: var(--text); font-size: 15px; font-family: var(--font-body); }
+  .lbl-val { fill: var(--text-bright); font-size: 14px; font-weight: 600; }
+  .gridln { stroke: var(--c-grid); stroke-width: 1; }
+  .axisln { stroke: var(--c-grid-strong); stroke-width: 1; }
+
+  /* ---------- THE COUNTDOWN CARD ---------- */
+  .countdown { counter-reset: none; }
+  .rank { display: grid; grid-template-columns: auto 1fr; gap: 0 clamp(0.9rem, 3vw, 1.6rem); align-items: start; padding: clamp(2.2rem, 4vw, 3rem) 0 0; }
+  .rank + .rank { border-top: 1px solid var(--rule); margin-top: clamp(2.2rem, 4vw, 3rem); }
+  .rank-num { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 11vw, 5rem); line-height: 0.78; color: var(--c-coral); letter-spacing: -0.03em; }
+  .rank-num.is-one { color: var(--c-coral); }
+  .rank-body { min-width: 0; }
+  .rank-name { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2rem); line-height: 1.1; color: var(--text-bright); margin: 0.1em 0 0; letter-spacing: -0.01em; }
+  .rank-tags { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin: 0.85rem 0 1.1rem; }
+  .tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.3em 0.7em; border-radius: 999px; border: 1px solid var(--rule); color: var(--text-dim); }
+  .tag-constant { color: var(--c-coral); border-color: rgba(217,151,140,0.5); }
+  .tag-recurrent { color: var(--c-gold); border-color: rgba(212,196,160,0.45); }
+  .tag-acute { color: var(--text-dim); }
+  .rank-body p { font-size: 1.04rem; line-height: 1.6; }
+  .rank-body p:last-child { margin-bottom: 0; }
+  @media (min-width: 640px) {
+    .rank { grid-template-columns: 5.2rem 1fr; }
+    .rank-num { font-size: clamp(3.4rem, 6vw, 5rem); }
+  }
+
+  /* ---------- HONORABLE MENTIONS ---------- */
+  .mentions { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+  .mentions li { font-size: 1.02rem; line-height: 1.55; padding: 1rem 0; margin: 0; border-top: 1px solid var(--rule); }
+  .mentions li:first-child { border-top: none; }
+  .mentions b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- CITATION GRADE CHIPS not shipped by the kit (-b, -d) ---------- */
+  .u-grade-b { color: #a9cad9; background: rgba(143,179,199,0.16); border: 1px solid rgba(143,179,199,0.4); }
+  .u-grade-d { color: #d9978c; background: rgba(217,151,140,0.14); border: 1px solid rgba(217,151,140,0.42); }
+
+  /* ---------- REFERENCES ---------- */
+  #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
+  #sources .u-sechead-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
+  .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 1.1em; }
+  #sources .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; font-size: 0.78rem; color: var(--text-dim); margin: 0.2rem 0 1.1rem; }
+  #sources .legend span span { margin-right: 0.4em; }
+  #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.4em; margin: 0.2em 0 1em; }
+  #sources li { margin-bottom: 0.3em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 1.4rem 0 0.5rem; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe: only hide under html.js) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+    html.js .grow-b { transform: scaleX(0.001); transform-origin: left; }
+    html.js .grow-b.go { animation: growL 1.05s var(--ease) forwards; }
+    @keyframes growL { to { transform: scaleX(1); } }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .sec li, .lede, .rank-body p { color: #161616; }
+    .rank, .u-callout, figure { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Worst Pain in Medicine</h1>
+    <p class="hero-dek">Ten of the most agonizing conditions people live through, counted down. The famous chart that ranks the world's worst pains is a fake, so this one shows its work, and says where ranking pain stops being possible.</p>
+    <p class="hero-meta">A ranked countdown <span class="sep">/</span> <b>33 sources</b> <span class="sep">/</span> 13 min read</p>
+
+    <figure class="hero-figure reveal" aria-labelledby="hero-fig-cap">
+      <p class="viz-title">The one time anyone measured it</p>
+      <p class="viz-sub">The same 1,604 patients rated pains they had each personally lived through, 0 to 10. A headache won.</p>
+      <svg viewBox="0 0 960 360" role="img" aria-label="Horizontal bar chart from the 2021 cluster headache survey. The same patients rated a cluster headache attack 9.7 out of 10, childbirth 7.2, acute pancreatitis 7.0, and a kidney stone 6.9. Cluster headache is far ahead of the rest.">
+        <!-- value axis (vertical, at 0) -->
+        <line class="axisln" x1="246" y1="44" x2="246" y2="294"/>
+        <!-- gridlines at 2,4,6,8,10 -->
+        <line class="gridln" x1="378" y1="44" x2="378" y2="294"/>
+        <line class="gridln" x1="510" y1="44" x2="510" y2="294"/>
+        <line class="gridln" x1="642" y1="44" x2="642" y2="294"/>
+        <line class="gridln" x1="774" y1="44" x2="774" y2="294"/>
+        <line class="gridln" x1="906" y1="44" x2="906" y2="294"/>
+        <!-- x labels -->
+        <text class="axs" x="246" y="314" text-anchor="middle">0</text>
+        <text class="axs" x="378" y="314" text-anchor="middle">2</text>
+        <text class="axs" x="510" y="314" text-anchor="middle">4</text>
+        <text class="axs" x="642" y="314" text-anchor="middle">6</text>
+        <text class="axs" x="774" y="314" text-anchor="middle">8</text>
+        <text class="axs" x="906" y="314" text-anchor="middle">10</text>
+        <text class="axs" x="576" y="338" text-anchor="middle">pain rated 0 to 10 &#8594;</text>
+
+        <!-- Cluster headache 9.7 -> width 640 -->
+        <text class="lbl-name" x="232" y="79" text-anchor="end">Cluster headache</text>
+        <rect class="grow-b" x="246" y="56" width="640" height="36" rx="4" fill="#d9978c"/>
+        <text class="lbl-val" x="896" y="79" fill="#d9978c">9.7</text>
+        <!-- Childbirth 7.2 -> width 475 -->
+        <text class="lbl-name" x="232" y="139" text-anchor="end">Childbirth</text>
+        <rect class="grow-b" x="246" y="116" width="475" height="36" rx="4" fill="#8a978a"/>
+        <text class="lbl-val" x="731" y="139">7.2</text>
+        <!-- Acute pancreatitis 7.0 -> width 462 -->
+        <text class="lbl-name" x="232" y="199" text-anchor="end">Acute pancreatitis</text>
+        <rect class="grow-b" x="246" y="176" width="462" height="36" rx="4" fill="#8a978a"/>
+        <text class="lbl-val" x="718" y="199">7.0</text>
+        <!-- Kidney stone 6.9 -> width 455 -->
+        <text class="lbl-name" x="232" y="259" text-anchor="end">Kidney stone</text>
+        <rect class="grow-b" x="246" y="236" width="455" height="36" rx="4" fill="#8a978a"/>
+        <text class="lbl-val" x="711" y="259">6.9</text>
+      </svg>
+      <figcaption class="viz-cap" id="hero-fig-cap">The rarest thing in pain research: the same people ranking different agonies they had each actually felt. In a 2021 survey of 1,604 cluster headache patients, they scored an attack 9.7 out of 10, and 72 percent gave it a flat 10, above childbirth, a kidney stone, and a self-digesting pancreas. It is recalled and self-reported, so read it as the best evidence we have, not a verdict. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7898696/">Burish 2021</a></span></figcaption>
+    </figure>
+  </header>
+
+  <main id="guide">
+
+    <nav class="chapters" aria-label="Sections">
+      <span class="lead">Four parts</span>
+      <a href="#chart">The fake chart</a>
+      <a href="#countdown">The ten, worst last</a>
+      <a href="#mentions">Also brutal</a>
+      <a href="#sources">Sources</a>
+    </nav>
+
+    <!-- ============================ THE FAKE CHART ============================ -->
+    <section id="chart" class="sec first" aria-labelledby="chart-h">
+      <div class="u-sechead"><p class="u-sechead-k">Before the list</p><h2 id="chart-h" class="u-sechead-h">The chart you have seen is made up</h2></div>
+      <p class="lede">The most-shared chart of the world's worst pains is made up. You have seen it, or one like it: causalgia 42, amputation 40, childbirth 35, all scored neatly out of 50. It looks like science. It is folklore.</p>
+
+      <p>The graphic borrows the name of a real tool, the <strong>McGill Pain Questionnaire</strong>, which doctors have used since the 1970s. But the real questionnaire scores one person's pain in one moment, on a scale that tops out at <strong>78</strong>, not 50. It was never built to hand each disease a single fixed number. Nobody ever measured "causalgia equals 42." The giveaway is the scoring: every version of the viral chart is marked out of 50, a denominator that appears nowhere in the actual instrument, and the same condition gets quoted as 42, 47, and 48 on different sites. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/1235985/">Melzack 1975</a></span> <span class="u-grade u-grade-b">good</span></p>
+
+      <p>There is a real finding buried under the myth. In 1984 Ronald Melzack, who built the questionnaire, did measure labor pain against a few other conditions and found it sat near the very top, with causalgia. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/6384895/">Melzack 1984</a></span> What got lost is everything around it: a later meta-analysis of 51 studies found that even severe-condition patients average only a quarter to half of the maximum score. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/2136771/">Wilkie 1990</a></span> The honest version of the chart is blurry and full of error bars. The version that spreads is crisp and wrong.</p>
+
+      <p>Here is the uncomfortable part for a ranked list like this one. <strong>You cannot really rank pain across people.</strong> There is no thermometer for it. Pain is intensity and duration and dread and loneliness all at once, and my 8 is not your 8. Any top ten is a judgment call wearing a lab coat. <span class="u-src"><a href="https://www.painscience.com/blog/worst-pain-rankings--seductive-but-misleading.html">PainScience</a></span> So this one shows its work, and tells you where the work runs out.</p>
+
+      <aside class="u-callout"><p class="u-callout-k">How this is ranked</p><p class="u-callout-body">Four ingredients, in order of trust. One, the rare studies that actually compared conditions, above all the cluster headache survey in the chart up top. Two, suicide and suicidal-thought rates, a grim but real proxy for pain people cannot live with. Three, how constant it is, so conditions people live inside rank above one-off agonies that end, even when the one-off peaks just as high. Four, whether anything helps. The top three are close enough that the order is mine, not the data's, and I will say so when we get there.</p></aside>
+
+      <p>One last caveat, because it is the question you actually asked if you came here from a search box. If you wanted the most <em>common</em> pain, this would be a duller list, topped by ordinary low back pain, which afflicts <strong>619 million people</strong> and is the leading cause of disability on Earth. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10234592/">GBD 2021</a></span> Common and worst are not the same thing. This is a list about the worst: the conditions that, when the people who have felt them try to describe them, break the scale.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE COUNTDOWN ============================ -->
+    <section id="countdown" class="sec" aria-labelledby="countdown-h">
+      <div class="u-sechead"><p class="u-sechead-k">The countdown</p><h2 id="countdown-h" class="u-sechead-h">Ten, worst last</h2></div>
+      <p class="lede">Counting down to the one that fits the brief best: not the worst single moment, but the worst pain to be alive inside.</p>
+
+      <div class="countdown">
+
+        <!-- 10 GOUT -->
+        <article class="rank reveal">
+          <div class="rank-num">10</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Gout</h3>
+            <div class="rank-tags"><span class="tag tag-recurrent">Comes in attacks</span><span class="tag">~4% of adults</span></div>
+            <p>Start with the one almost everyone underrates. A gout attack is a genuine 10 out of 10 that you can usually stop with a cheap daily pill, which is the only reason it sits at the bottom of this list instead of higher.</p>
+            <p>Gout is uric acid going solid. When there is too much of it in your blood, it crystallizes into microscopic needles inside a joint, classically the base of the big toe, and your immune system attacks the crystals as if they were a germ, firing the same alarm (the NLRP3 inflammasome) it uses on real infections. The toe goes red, hot, and so tender that the weight of a bedsheet is unbearable, usually starting in the dead of night. It peaks in under 12 hours. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK546606/">StatPearls</a></span></p>
+            <p>It is also the closest thing to solved on this whole list. A urate-lowering drug like allopurinol dissolves the crystal supply, and the attacks simply stop. About 4 percent of American adults, roughly 8 million people, get gout. For most of them it is the worst pain they will ever feel, and it is almost entirely preventable. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11263476/">GBD gout</a></span></p>
+          </div>
+        </article>
+
+        <!-- 9 KIDNEY STONES -->
+        <article class="rank reveal">
+          <div class="rank-num">9</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Kidney stones</h3>
+            <div class="rank-tags"><span class="tag tag-acute">Acute</span><span class="tag">~11% of men, ~7% of women</span></div>
+            <p>The famous one, and it earns it. A stone is a hard pebble that forms in the kidney. The agony, called renal colic, begins when it drops into the ureter, the narrow tube down to the bladder, and plugs it. Urine backs up, pressure climbs, and the stretched nerves in the kidney fire in waves. People in renal colic cannot lie still; they pace and writhe, which is the tell that separates a stone from appendicitis, where you freeze and hold your breath.</p>
+            <p>In the cluster headache survey, kidney stones scored 6.9 out of 10. But a smaller study asked women who had been through both a stone and childbirth which was worse, and <strong>63 percent said the stone</strong>, rating it about 9.8 out of 10. Only 19 women had experienced both, so hold that one loosely, but it is a striking number. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5505545/">2017 study</a></span> <span class="u-grade u-grade-c">small sample</span> The cruel twist: the pain tracks how blocked you are, not how big the stone is, so a tiny moving stone can hurt more than a large still one.</p>
+            <p>The mercy is that it almost always ends, often within a day, and it is very treatable. Agony with a happy ending.</p>
+          </div>
+        </article>
+
+        <!-- 8 PHANTOM LIMB -->
+        <article class="rank reveal">
+          <div class="rank-num">8</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Phantom limb pain</h3>
+            <div class="rank-tags"><span class="tag tag-constant">Constant</span><span class="tag">up to ~8 in 10 amputees</span></div>
+            <p>Pain in a part of your body that is not there anymore. After an amputation, most people, by some counts 8 in 10, feel pain that seems to come from the missing limb: burning, stabbing, or the sense that an absent hand is locked in a cramp that can never be unclenched. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/33052924/">Limakatso 2020</a></span></p>
+            <p>The pain is not in the stump. It is in the brain's map of the body. When a limb is gone, neighboring regions of the cortex creep into its vacated territory, and the more scrambled that map gets, the worse the pain. The proof runs in reverse, too. <strong>Mirror therapy</strong>, putting the intact limb beside a mirror so the brain "sees" two whole limbs moving together, can partly un-scramble the map and take the edge off. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK448188/">StatPearls</a></span></p>
+            <p>For most who get it, it never fully leaves. It resolves on its own in only about one in six.</p>
+          </div>
+        </article>
+
+        <!-- 7 POSTHERPETIC NEURALGIA -->
+        <article class="rank reveal">
+          <div class="rank-num">7</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Postherpetic neuralgia</h3>
+            <div class="rank-tags"><span class="tag tag-constant">Constant</span><span class="tag">~1 in 10 shingles cases</span></div>
+            <p>The reason your doctor keeps nagging you about the shingles shot. Shingles is the chickenpox virus, which never actually leaves your body, waking up decades later to inflame a single nerve. In most people the rash heals and that is the end of it. In some, mostly older, the damaged nerve keeps firing for months or years after the skin clears.</p>
+            <p>That is postherpetic neuralgia: a deep constant burn, plus a vicious trick called allodynia, where the lightest touch turns to pain. A shirt. A breeze. The weight of a bedsheet. Some sufferers cut holes in their clothing to keep fabric off the skin. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5036669/">PHN review</a></span></p>
+            <p>It is one of the very few entries here you can largely prevent. The Shingrix vaccine stops most cases of shingles, and no shingles means no aftermath. The risk climbs steeply with age, which is exactly why the shot is aimed at people over 50. <span class="u-src"><a href="https://www.cdc.gov/shingles/data-research/index.html">CDC</a></span></p>
+          </div>
+        </article>
+
+        <!-- 6 CHRONIC PANCREATITIS -->
+        <article class="rank reveal">
+          <div class="rank-num">6</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Chronic pancreatitis</h3>
+            <div class="rank-tags"><span class="tag tag-constant">Constant or recurrent</span><span class="tag">organ self-digestion</span></div>
+            <p>Your pancreas makes the enzymes that digest your food. In pancreatitis, those enzymes switch on too early and start digesting the pancreas itself. The organ is, in a real sense, eating itself, and that autodigestion is what makes the pain so savage. <span class="u-src"><a href="https://my.clevelandclinic.org/health/diseases/8103-pancreatitis">Cleveland Clinic</a></span></p>
+            <p>The pain is a deep, boring pressure high in the abdomen that drills straight through to the back. In the chronic form it becomes a near-constant companion: about 9 in 10 chronic patients live with pain, and many slide into opioid dependence trying to manage it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11973027/">pancreatitis pain review</a></span> In the cluster survey, acute attacks scored 7.0 out of 10, just behind childbirth.</p>
+            <p>The last-resort cure is as drastic as the disease. Surgeons remove the entire pancreas, harvest its insulin-making cells, and inject them into the liver to keep them alive, trading the pain for a diabetes you run by hand for the rest of your life.</p>
+          </div>
+        </article>
+
+        <!-- 5 SICKLE CELL -->
+        <article class="rank reveal">
+          <div class="rank-num">5</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Sickle cell crisis</h3>
+            <div class="rank-tags"><span class="tag tag-recurrent">Recurrent</span><span class="tag">inherited, lifelong</span></div>
+            <p>An inherited disease whose signature is sudden, crushing pain, and a textbook case of that pain being disbelieved. In sickle cell disease, one tiny change in hemoglobin makes red blood cells stiffen into crescent shapes. The rigid cells jam in small vessels like cars wedged in a tunnel, and the tissue downstream is abruptly starved of oxygen.</p>
+            <p>That is a vaso-occlusive crisis: deep, grinding bone pain, often in the back, chest, and limbs, severe enough that guidelines tell emergency rooms to give strong intravenous pain relief <strong>within 60 minutes</strong> of arrival. <span class="u-src"><a href="https://www.aafp.org/pubs/afp/issues/2000/0301/p1349.html">AAFP</a></span> It is the leading reason people with the disease are hospitalized.</p>
+            <p>They often do not get that 60-minute relief. Sickle cell patients, most of them Black, are routinely undertreated and quietly suspected of drug-seeking while in genuine agony. It is one of the better-documented racial gaps in American medicine, and it belongs on this list as much as the biology does. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8786581/">VOC opioid review</a></span> <span class="u-grade u-grade-b">good</span></p>
+          </div>
+        </article>
+
+        <!-- 4 ERYTHROMELALGIA -->
+        <article class="rank reveal">
+          <div class="rank-num">4</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Erythromelalgia</h3>
+            <div class="rank-tags"><span class="tag tag-constant">Recurrent to constant</span><span class="tag">"man on fire"</span></div>
+            <p>They call it man on fire, and it is exactly what it sounds like. Attacks of burning so intense that patients describe their feet as scalded, packed in hot coals, or sliced with razor blades, while the skin turns visibly red and hot to match. <span class="u-src"><a href="https://my.clevelandclinic.org/health/diseases/22752-erythromelalgia">Cleveland Clinic</a></span></p>
+            <p>The inherited form is one of the cleanest stories in all of pain science. A single misspelled gene, <em>SCN9A</em>, jams open a sodium channel called Nav1.7 in your pain nerves, so the alarm is stuck near "on." The same channel switched fully off produces people who feel no pain at all, which is why that one tiny protein is now a prime target for a new kind of painkiller. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK557787/">StatPearls</a></span> <span class="u-grade u-grade-b">good</span></p>
+            <p>Heat sets it off, so cold brings relief, and that is the trap. Patients plunge their feet into ice water for hours, and the prolonged soaking rots the very tissue it was meant to save, sometimes badly enough to cost the limb. Doctors specifically warn against it. The instinct to stop the pain becomes its own injury.</p>
+          </div>
+        </article>
+
+        <!-- 3 TRIGEMINAL NEURALGIA -->
+        <article class="rank reveal">
+          <div class="rank-num">3</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Trigeminal neuralgia</h3>
+            <div class="rank-tags"><span class="tag tag-recurrent">Comes in attacks, for years</span><span class="tag">the original "suicide disease"</span></div>
+            <p>The cruelty here is in what sets it off. Trigeminal neuralgia is a sudden electric shock through one side of the face, the cheek, jaw, or around the eye, lasting seconds, and it can fire dozens of times a day. What triggers it is the ordinary business of having a face: chewing, talking, shaving, brushing your teeth, a cold breeze. People stop eating and stop speaking to keep the attacks away. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK554486/">StatPearls</a></span></p>
+            <p>The usual cause is a blood vessel pressing on the trigeminal nerve where it leaves the brainstem, slowly wearing away the nerve's insulation until a gentle touch signal crosses into the pain wiring. The tell that this is electrical, not tissue damage, is the treatment: it responds to the anti-seizure drug carbamazepine and barely to ordinary painkillers or opioids.</p>
+            <p>It earned the name "suicide disease" long before anyone measured why. In a 2025 study, <strong>more than a third</strong> of patients had thought about suicide in the previous two weeks, over five times the rate found in ordinary back pain. <span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.2147/JPR.S493649">J Pain Res 2025</a></span> <span class="u-grade u-grade-b">good</span></p>
+          </div>
+        </article>
+
+        <!-- 2 CLUSTER HEADACHE -->
+        <article class="rank reveal">
+          <div class="rank-num">2</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Cluster headache</h3>
+            <div class="rank-tags"><span class="tag tag-recurrent">Comes in bouts</span><span class="tag">~1 in 1,000</span></div>
+            <p>The worst pain anyone has actually measured. The word "headache" undersells it so badly that sufferers resent it. A cluster attack is a hot poker driven through one eye, strictly one-sided, that same eye going red and streaming, for 15 minutes to 3 hours, often at the exact same time each night, in bouts that run for weeks. Where a migraine makes you lie still in the dark, cluster pain makes people pace, rock, and bang their heads against the wall. <span class="u-src"><a href="https://my.clevelandclinic.org/health/diseases/5003-cluster-headaches">Cleveland Clinic</a></span></p>
+            <p>This is the entry with hard numbers, the same ones in the chart at the top. Across 1,604 patients, people rated an attack <strong>9.7 out of 10</strong>, and 72 percent gave it a flat 10, scoring it above their own memories of childbirth, kidney stones, and pancreatitis. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7898696/">Burish 2021</a></span> The nickname "suicide headache" is literal: in one study, 36 percent had active suicidal thoughts during attacks, falling to almost none between them. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/31018651/">Lee 2019</a></span></p>
+            <p>It is about as common as multiple sclerosis, roughly 1 in 1,000, and skews heavily toward men. The strangest mercy on this whole list: breathing pure oxygen through a mask can stop an attack within minutes, a clue that the problem is the brain's wiring, not any wound.</p>
+          </div>
+        </article>
+
+        <!-- 1 CRPS -->
+        <article class="rank reveal">
+          <div class="rank-num is-one">1</div>
+          <div class="rank-body">
+            <h3 class="rank-name">Complex regional pain syndrome</h3>
+            <div class="rank-tags"><span class="tag tag-constant">Constant, often for life</span><span class="tag">starts from a minor injury</span></div>
+            <p>Number one can start with a sprained wrist and never end. Complex regional pain syndrome, once called causalgia, is what happens when the body's pain alarm breaks in the "on" position. After an injury, sometimes a trivial one, a needle stick, a small fracture, the pain does not fade as the injury heals. It grows, spreads, and digs in: a constant burning in one hand or foot, with skin so sensitive that a puff of air or the brush of a sleeve is torture. The limb can swell, change color and temperature, sweat on its own, and grow hair and nails wrong. It can jump to other limbs. <span class="u-src"><a href="https://my.clevelandclinic.org/health/diseases/12085-complex-regional-pain-syndrome-crps">Cleveland Clinic</a></span></p>
+            <p>By definition, the pain is wildly out of proportion to whatever started it. There is no reliable cure, and it carries the bleakest numbers here: in one small study, 46 percent of patients had considered suicide and 20 percent had attempted it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3942549/">Lee 2014</a></span> <span class="u-grade u-grade-d">small sample</span></p>
+            <p>Honesty time, as promised. By the only contest anyone actually ran, the cluster headache one slot down scores higher in the moment. CRPS takes the top for a different reason: it does not come in attacks you can wait out. People live inside it, day and night, sometimes for the rest of their lives. That is the kind of pain this list was really about.</p>
+            <aside class="u-callout u-move"><p class="u-callout-k">The honest ranking</p><p class="u-callout-body">If you ranked by the single worst moment, cluster headache would be number one. I ranked by the worst life, so a disease with no off switch wins. Reasonable people would order the top three differently, and the data does not settle it.</p></aside>
+          </div>
+        </article>
+
+      </div>
+
+      <aside class="u-callout"><p class="u-callout-k">If you are the one in pain</p><p class="u-callout-body">Several conditions here are linked to suicide for a plain reason: unrelenting pain is dangerous on its own, separate from any sadness. If you are struggling, in the US you can call or text 988 for the Suicide and Crisis Lifeline, any hour. Refractory pain is a medical problem with real treatments, and worth pushing a doctor hard about.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ HONORABLE MENTIONS ============================ -->
+    <section id="mentions" class="sec" aria-labelledby="mentions-h">
+      <div class="u-sechead"><p class="u-sechead-k">Also brutal</p><h2 id="mentions-h" class="u-sechead-h">Five that didn't make the cut</h2></div>
+      <p class="lede">A different day, a different ten. These were the closest to the line, each left off for a reason worth naming.</p>
+
+      <ul class="mentions">
+        <li><b>Endometriosis.</b> Tissue like the uterine lining grows where it should not, then bleeds and scars on schedule. Women with it report a physical quality of life on par with cancer patients, and it still takes an average of 7 to 9 years to get diagnosed. Left off only because its pain is harder to compare head to head, not because it is milder. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7370081/">endometriosis QoL</a></span></li>
+        <li><b>Metastatic bone cancer.</b> A tumor tricks the body's own bone-dissolving cells into eating the bone from the inside, and the dissolving bone releases acid straight onto the pain nerves. A single targeted dose of radiation can quiet it within days. Here radiotherapy is a painkiller as much as a cancer treatment. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6359191/">bone cancer pain</a></span></li>
+        <li><b>Fabry disease.</b> An inherited enzyme fault that makes burning hand and foot pain start in childhood, set off by heat, fever, or exercise. Because those are just the ingredients of being a kid, it is often waved off as growing pains while it quietly damages the kidneys and heart. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK1292/">GeneReviews</a></span></li>
+        <li><b>SUNCT.</b> A rare cousin of cluster headache: stabbing jolts around one eye that each last seconds, but can strike <strong>up to 200 times a day</strong>. Each one is brief; together they can swallow a life. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK559088/">StatPearls</a></span></li>
+        <li><b>Necrotizing fasciitis.</b> The "flesh-eating" infection. Its earliest red flag is pain that makes no sense, far worse than the small, almost normal patch of skin above it, because the tissue is dying deep underneath. It can go from first symptom to fatal in under a day and a half. Left off as acute, not a life lived in pain, but few things hurt more while they last. <span class="u-src"><a href="https://www.cdc.gov/group-a-strep/about/necrotizing-fasciitis.html">CDC</a></span></li>
+      </ul>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and how I checked them</h2></div>
+      <p class="src-note">I went in wanting a clean number for each condition. There isn't one, and the most-shared "pain index" turned out to be invented. So the ranking is a declared judgment, not a measurement, and the soft spots are flagged in the text on purpose: the small samples, the one recall-based survey doing a lot of work, and the top three that no data can separate. Every load-bearing claim was run through a fact-check whose job was to refute it.</p>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 33 sources, grouped by entry</summary>
+      <div class="legend">
+        <span><span class="u-grade u-grade-a">strong</span> large study or consensus</span>
+        <span><span class="u-grade u-grade-b">good</span> one solid study</span>
+        <span><span class="u-grade u-grade-c">mixed</span> small or contested</span>
+        <span><span class="u-grade u-grade-d">thin</span> a single small claim</span>
+      </div>
+
+      <h3>How pain is (and is not) ranked</h3>
+      <ol>
+        <li><b>Melzack R (1975).</b> The McGill Pain Questionnaire: major properties and scoring methods. <i>Pain</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/1235985/">pubmed</a></li>
+        <li><b>Melzack R (1984).</b> The myth of painless childbirth (the John J. Bonica Lecture). <i>Pain</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/6384895/">pubmed</a></li>
+        <li><b>Wilkie DJ, et al. (1990).</b> Use of the McGill Pain Questionnaire to measure pain: a meta-analysis. <i>Nursing Research</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/2136771/">pubmed</a></li>
+        <li><b>Ingraham P.</b> Worst-pain rankings are seductive but misleading. <i>PainScience</i>. <a href="https://www.painscience.com/blog/worst-pain-rankings--seductive-but-misleading.html">painscience.com</a></li>
+        <li><b>GBD 2021 Low Back Pain Collaborators (2023).</b> Global, regional, and national burden of low back pain. <i>Lancet Rheumatology</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10234592/">pmc</a></li>
+      </ol>
+
+      <h3>The one measured comparison</h3>
+      <ol start="6">
+        <li><b>Burish MJ, et al. (2021).</b> Cluster headache is one of the most intensely painful human conditions: the International Cluster Headache Questionnaire (n=1,604). <i>Headache</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7898696/">pmc</a></li>
+      </ol>
+
+      <h3>Complex regional pain syndrome (No. 1)</h3>
+      <ol start="7">
+        <li><b>Cleveland Clinic.</b> Complex Regional Pain Syndrome. <a href="https://my.clevelandclinic.org/health/diseases/12085-complex-regional-pain-syndrome-crps">clevelandclinic.org</a></li>
+        <li><b>Lee D-H, et al. (2014).</b> Risk factors for suicidal ideation among patients with CRPS (n=39). <i>Psychiatry Investig</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3942549/">pmc</a></li>
+        <li><b>NINDS.</b> Complex Regional Pain Syndrome. <a href="https://www.ninds.nih.gov/health-information/disorders/complex-regional-pain-syndrome">ninds.nih.gov</a></li>
+      </ol>
+
+      <h3>Cluster headache (No. 2)</h3>
+      <ol start="10">
+        <li><b>Lee MJ, et al. (2019).</b> Increased suicidality in patients with cluster headache. <i>Cephalalgia</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/31018651/">pubmed</a></li>
+        <li><b>Fischera M, et al. (2008).</b> The incidence and prevalence of cluster headache: a meta-analysis. <i>Cephalalgia</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/18422717/">pubmed</a></li>
+        <li><b>Cleveland Clinic.</b> Cluster Headaches. <a href="https://my.clevelandclinic.org/health/diseases/5003-cluster-headaches">clevelandclinic.org</a></li>
+      </ol>
+
+      <h3>Trigeminal neuralgia (No. 3)</h3>
+      <ol start="13">
+        <li><b>Suicidal ideation and self-injury in trigeminal neuralgia (2025).</b> <i>J Pain Research</i> (n=229). <a href="https://www.tandfonline.com/doi/full/10.2147/JPR.S493649">tandfonline</a></li>
+        <li><b>StatPearls.</b> Trigeminal Neuralgia. <a href="https://www.ncbi.nlm.nih.gov/books/NBK554486/">ncbi</a></li>
+        <li><b>Jeong S-Y, et al. (2025).</b> Global incidence and prevalence of trigeminal neuralgia. <i>J Clin Neurol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12802065/">pmc</a></li>
+      </ol>
+
+      <h3>Erythromelalgia (No. 4)</h3>
+      <ol start="16">
+        <li><b>Cleveland Clinic.</b> Erythromelalgia. <a href="https://my.clevelandclinic.org/health/diseases/22752-erythromelalgia">clevelandclinic.org</a></li>
+        <li><b>StatPearls.</b> Erythromelalgia. <a href="https://www.ncbi.nlm.nih.gov/books/NBK557787/">ncbi</a></li>
+        <li><b>Reed KB, Davis MDP (2009).</b> Incidence of erythromelalgia: a population-based study. <i>J Am Acad Dermatol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2771547/">pmc</a></li>
+      </ol>
+
+      <h3>Sickle cell crisis (No. 5)</h3>
+      <ol start="19">
+        <li><b>American Family Physician.</b> Management of sickle cell vaso-occlusive crisis. <a href="https://www.aafp.org/pubs/afp/issues/2000/0301/p1349.html">aafp.org</a></li>
+        <li><b>Opioid use and undertreatment in sickle cell vaso-occlusive episodes.</b> Systematic review. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8786581/">pmc</a></li>
+      </ol>
+
+      <h3>Chronic pancreatitis (No. 6)</h3>
+      <ol start="21">
+        <li><b>Cleveland Clinic.</b> Pancreatitis. <a href="https://my.clevelandclinic.org/health/diseases/8103-pancreatitis">clevelandclinic.org</a></li>
+        <li><b>Pain in chronic pancreatitis.</b> Clinical review. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11973027/">pmc</a></li>
+      </ol>
+
+      <h3>Postherpetic neuralgia (No. 7)</h3>
+      <ol start="23">
+        <li><b>Postherpetic neuralgia: epidemiology, pathophysiology, and management (2016).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5036669/">pmc</a></li>
+        <li><b>CDC.</b> Shingles (herpes zoster): facts and stats. <a href="https://www.cdc.gov/shingles/data-research/index.html">cdc.gov</a></li>
+      </ol>
+
+      <h3>Phantom limb pain (No. 8)</h3>
+      <ol start="25">
+        <li><b>Limakatso K, et al. (2020).</b> Prevalence and risk factors for phantom limb pain (systematic review). <i>PLOS One</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/33052924/">pubmed</a></li>
+        <li><b>StatPearls.</b> Phantom Limb Pain. <a href="https://www.ncbi.nlm.nih.gov/books/NBK448188/">ncbi</a></li>
+      </ol>
+
+      <h3>Kidney stones (No. 9)</h3>
+      <ol start="27">
+        <li><b>Renal colic and childbirth pain: female experience versus perception (2017).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5505545/">pmc</a></li>
+        <li><b>StatPearls.</b> Renal Calculi / Nephrolithiasis. <a href="https://www.ncbi.nlm.nih.gov/books/NBK442014/">ncbi</a></li>
+      </ol>
+
+      <h3>Gout (No. 10)</h3>
+      <ol start="29">
+        <li><b>StatPearls.</b> Gout. <a href="https://www.ncbi.nlm.nih.gov/books/NBK546606/">ncbi</a></li>
+        <li><b>GBD 2021 Gout Collaborators (2024).</b> Global burden of gout. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11263476/">pmc</a></li>
+      </ol>
+
+      <h3>Honorable mentions</h3>
+      <ol start="31">
+        <li><b>Quality of life and psychological burden of endometriosis (2020).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7370081/">pmc</a></li>
+        <li><b>Bone pain in cancer patients: mechanisms and treatment (2019).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6359191/">pmc</a></li>
+        <li><b>GeneReviews / CDC.</b> Fabry Disease; Necrotizing Fasciitis; SUNCT (StatPearls). <a href="https://www.ncbi.nlm.nih.gov/books/NBK1292/">Fabry</a> <span class="u-sep">/</span> <a href="https://www.cdc.gov/group-a-strep/about/necrotizing-fasciitis.html">nec fasc</a> <span class="u-sep">/</span> <a href="https://www.ncbi.nlm.nih.gov/books/NBK559088/">SUNCT</a></li>
+      </ol>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script>
+  /* Per-post: scroll-reveal + the one bar chart's draw-in. No-JS safe (CSS only
+     hides under html.js), reduced-motion handled by the owner's "animate for
+     everyone" choice, and a 4s watchdog guarantees nothing is left hidden. */
+  (function () {
+    'use strict';
+    var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    function fire(el) {
+      el.classList.add('in');
+      Array.prototype.slice.call(el.querySelectorAll('.grow-b')).forEach(function (g, i) {
+        setTimeout(function () { g.classList.add('go'); }, 90 + i * 70);
+      });
+    }
+    if (!('IntersectionObserver' in window)) {
+      reveals.forEach(fire);
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      reveals.forEach(function (el) { io.observe(el); });
+      setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
+    }
+  })();
+  </script>
+</body>
+</html>
