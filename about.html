@@ -99,6 +99,8 @@
   .co-sw-tok  { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); }
   .co-sw-hex  { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.04em; }
   .co-sw-role { font-size: 0.8rem; color: var(--text-dim); line-height: 1.35; margin-top: 0.1rem; }
+  .co-palette-lbl { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin: 2rem 0 0.9rem; }
+  .co-palette-lbl:first-child { margin-top: 0; }
 
   /* type: specimens */
   .co-faces { display: grid; gap: 16px; }
@@ -365,23 +367,24 @@
             <div class="co-spec-head">
               <span class="co-spec-name">the palette</span>
               <span class="co-tag co-tag--made">Made here</span>
-              <p class="co-spec-note">One locked forest-green background, and a warm ramp tuned around it in OKLCH. Nothing is a neutral gray and nothing is pure white. The names in gold are the actual CSS variables a post uses.</p>
+              <p class="co-spec-note">Almost everything you read sits on one quiet ramp of greens and creams. The fun lives in the accents: a small shared set a post draws from, all tuned to the same softness so they read as equals, plus a rose kept in reserve for the single most important link on a page.</p>
             </div>
             <div class="co-stage">
-              <div class="co-ramp-bar" style="background: linear-gradient(90deg, #303931, #1e2420 9%, #4a544b 27%, #5a675c 38%, #767d71 50%, #a4a293 64%, #b8b2a2 73%, #d4c4a0 84%, #ede0c0 92%, #e8e2d6 96%, #f5f1ea);"></div>
+              <p class="co-palette-lbl">The accents a post draws from</p>
               <div class="co-swatches">
-                <div class="co-sw"><div class="co-sw-chip" style="background:#303931"></div><span class="co-sw-tok">--bg</span><span class="co-sw-hex">#303931</span><span class="co-sw-role">the background, locked</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#1e2420"></div><span class="co-sw-tok">--bg-raised</span><span class="co-sw-hex">#1E2420</span><span class="co-sw-role">raised panels</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#4a544b"></div><span class="co-sw-tok">--rule</span><span class="co-sw-hex">#4A544B</span><span class="co-sw-role">faint hairline</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#5a675c"></div><span class="co-sw-tok">--rule-strong</span><span class="co-sw-hex">#5A675C</span><span class="co-sw-role">stronger hairline</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#767d71"></div><span class="co-sw-tok">--line-mid</span><span class="co-sw-hex">#767D71</span><span class="co-sw-role">mid divider, gridline</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#a4a293"></div><span class="co-sw-tok">--text-faint</span><span class="co-sw-hex">#A4A293</span><span class="co-sw-role">dates, captions, footnotes</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#b8b2a2"></div><span class="co-sw-tok">--text-dim</span><span class="co-sw-hex">#B8B2A2</span><span class="co-sw-role">secondary text</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#d4c4a0"></div><span class="co-sw-tok">--accent</span><span class="co-sw-hex">#D4C4A0</span><span class="co-sw-role">the gold, and links</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#ede0c0"></div><span class="co-sw-tok">--accent-hover</span><span class="co-sw-hex">#EDE0C0</span><span class="co-sw-role">link and accent hover</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#e8e2d6"></div><span class="co-sw-tok">--text</span><span class="co-sw-hex">#E8E2D6</span><span class="co-sw-role">body text</span></div>
-                <div class="co-sw"><div class="co-sw-chip" style="background:#f5f1ea"></div><span class="co-sw-tok">--text-bright</span><span class="co-sw-hex">#F5F1EA</span><span class="co-sw-role">headings, brightest</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#9ec79a"></div><span class="co-sw-tok">sage</span><span class="co-sw-hex">#9EC79A</span><span class="co-sw-role">soft green</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#dfc288"></div><span class="co-sw-tok">gold</span><span class="co-sw-hex">#DFC288</span><span class="co-sw-role">the warm one</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#d9978c"></div><span class="co-sw-tok">coral</span><span class="co-sw-hex">#D9978C</span><span class="co-sw-role">soft red</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#cf9f78"></div><span class="co-sw-tok">clay</span><span class="co-sw-hex">#CF9F78</span><span class="co-sw-role">warm tan</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#6f9a6c"></div><span class="co-sw-tok">pine</span><span class="co-sw-hex">#6F9A6C</span><span class="co-sw-role">deep green</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#b8796d"></div><span class="co-sw-tok">brick</span><span class="co-sw-hex">#B8796D</span><span class="co-sw-role">earthen red</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#bc9d65"></div><span class="co-sw-tok">deep gold</span><span class="co-sw-hex">#BC9D65</span><span class="co-sw-role">a darker amber</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#8fb3c7"></div><span class="co-sw-tok">blue</span><span class="co-sw-hex">#8FB3C7</span><span class="co-sw-role">the lone cool note</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#b79bc4"></div><span class="co-sw-tok">purple</span><span class="co-sw-hex">#B79BC4</span><span class="co-sw-role">soft violet</span></div>
+                <div class="co-sw"><div class="co-sw-chip" style="background:#deb9cf"></div><span class="co-sw-tok">rose</span><span class="co-sw-hex">#DEB9CF</span><span class="co-sw-role">in reserve, one key link</span></div>
               </div>
+              <p class="co-palette-lbl">The quiet ramp behind everything</p>
+              <div class="co-ramp-bar" style="background: linear-gradient(90deg, #303931, #1e2420 9%, #4a544b 27%, #5a675c 38%, #767d71 50%, #a4a293 64%, #b8b2a2 73%, #d4c4a0 84%, #ede0c0 92%, #e8e2d6 96%, #f5f1ea);"></div>
             </div>
           </div>
 
