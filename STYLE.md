@@ -73,7 +73,7 @@ Posts pick an accent (or per-section accents) from one shared, muted, chroma-equ
 - Photographs and their `--img-bg` mattes (sampled from the photos).
 - `@media print` blocks (white bg, near-black ink).
 - `archive/best-photographs/` (a photographer's neutral zone-system scale).
-- Olive accents (hue ~110–135) are warm-greens, on-system.
+- Olive accents (hue ~110 to 135) are warm-greens, on-system.
 - A deliberate cool accent a post uses for meaning is character; keep it.
 
 Method: tune in **OKLCH**, verify AA 4.5:1 for normal text on `--bg` before shipping a new color.
@@ -97,7 +97,7 @@ Three faces, nothing else:
 | **default post title** | the **Field guide hero** (`clamp(3rem, 11vw, 6rem)`) | your chosen default |
 | showpiece title | up to ~7rem | rare, one per piece at most |
 
-Body line-height ~1.7; headings ~1.1–1.3. Tight tracking on big serif (`-0.02em`).
+Body line-height ~1.7; headings ~1.1 to 1.3. Tight tracking on big serif (`-0.02em`).
 
 ---
 
@@ -149,10 +149,11 @@ Use at the top of every post. The eyebrow + meta strip are optional.
 ```
 Plain `.u-callout` is a boxed, **labelled** highlight: use it for a one-off, meaningfully-named callout. Add **`.u-move`** for a long essay's *recurring* takeaway after every section: it drops the box and hides the label, leaving a quiet gold marker line in the essay's italic voice (a labelled box repeated a dozen-plus times reads like homework). Keep the label in the markup; `.u-move` just hides it. Add **`.u-aside`** for a *recurring synthesis / connective* beat (the "notice the pattern", "the one catch" step-backs): it drops the box for a quiet gold left-rule line in the essay's voice, with the opening sentence bolded as a run-in lead. Reserve the boxed `.u-callout` for the things that earn weight (titled highlights, myth-busters, disclaimers); if a post leans on the box a dozen-plus times for different jobs, that is the signal to demote the soft ones to `.u-aside`.
 
-### Two sides of a debate - `.debateA` (Stacked tint)
+### Two sides of a debate - `.debateA` (Stacked tint, light)
 ```html
 <div class="debateA"><div class="debateA-claim"><span class="debateA-kicker">The claim</span><p class="debateA-text">…</p></div><div class="debateA-truth"><span class="debateA-kicker">The reality</span><p class="debateA-text">…</p></div></div>
 ```
+A light, quiet treatment: two low-alpha tint blocks stacked directly on the page, no outer card or drop shadow, 1rem serif. Reserve it for a real claim-vs-evidence beat; it stays calm even when the evidence side runs to a full paragraph.
 
 ### Do / skip checklist - `.u-checks` (Sharp)
 ```html
@@ -181,7 +182,7 @@ Default is a single column with hairline rules. For a **short** glossary (roughl
 
 ### Data table - `.u-table` (feature a row with `.u-feature`)
 ```html
-<table class="u-table"><thead><tr><th>Lever</th><th>Years</th><th>Evidence</th></tr></thead><tbody><tr><td>Movement</td><td class="u-num">~3–7</td><td>strong</td></tr><tr class="u-feature"><td>Connection</td><td class="u-num">~5+</td><td>strong</td></tr></tbody></table>
+<table class="u-table"><thead><tr><th>Lever</th><th>Years</th><th>Evidence</th></tr></thead><tbody><tr><td>Movement</td><td class="u-num">~3 to 7</td><td>strong</td></tr><tr class="u-feature"><td>Connection</td><td class="u-num">~5+</td><td>strong</td></tr></tbody></table>
 ```
 
 ### Dashboard readout `.u-kpis` (legacy)
