@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The 7 Habits of Highly Effective People</title>
+  <meta name="description" content="A short, plain summary of Stephen Covey's The 7 Habits of Highly Effective People. What each habit actually says, how the seven fit together, and the one idea underneath all of them.">
+  <meta property="og:title" content="The 7 Habits of Highly Effective People">
+  <meta property="og:description" content="Covey did not invent the seven habits. He read two hundred years of success writing, found the old books were about character and the new ones about image, and bet the whole book on character. Here is the framework in one sitting.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/seven-habits.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/seven-habits-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/seven-habits-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE 7 HABITS OF HIGHLY EFFECTIVE PEOPLE
+     A short, plain summary of Covey's framework. Sits inside the
+     site shell (forest green, parchment, Century Supra / Segoe UI /
+     Commit Mono) and leans on kit.css for the section heads, callouts,
+     debate box, and divider. This block adds only the post's own
+     pieces: hero, sections, the staircase figure, and the numbered
+     habit list grouped by victory. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --wide: 1040px;                   /* breakout width for the staircase */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #dfc288;               /* private victory */
+    --c-sage:  #9ec79a;               /* public victory */
+    --c-blue:  #8fb3c7;               /* renewal */
+    --c-coral: #d9978c;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.8rem, 5vw, 4.2rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.2rem, 4vw, 3rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; color: var(--sec-accent, var(--accent)); }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.2rem 0 0.6rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.26rem; } }
+  .sec .u-divider { margin-top: 3rem; }
+  .sec .u-callout:not(.u-move) { padding: 18px 22px; border-radius: 14px; box-shadow: none; margin: 1.6rem 0; }
+  .sec .u-callout:not(.u-move) .u-callout-body { font-size: 1.02rem; line-height: 1.5; }
+
+  /* per-section accent rhythm */
+  #setup { --sec-accent: var(--c-gold); }
+  #habits { --sec-accent: var(--c-sage); }
+  #use { --sec-accent: var(--c-blue); }
+  #sources { --sec-accent: var(--accent); }
+
+  /* ---------- THE STAIRCASE FIGURE ---------- */
+  .viz { margin: 2em auto 0.5em; }
+  .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; line-height: 1.18; color: var(--text-bright); margin: 0 0 0.25em; }
+  .viz-sub { font-family: var(--font-body); font-size: 0.88rem; line-height: 1.45; color: var(--text-dim); margin: 0 0 1.3em; max-width: 54ch; }
+  .viz-cap { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); margin-top: 0.8rem; line-height: 1.5; max-width: 60ch; }
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1100px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+  text { font-family: var(--font-mono); }
+  .s-zone { fill: var(--text-bright); font-size: 16px; font-family: var(--font-body); font-weight: 600; }
+  .s-zone-i { fill: var(--text-dim); font-size: 13px; font-family: var(--font-body); }
+  .s-num { fill: #1e2420; font-size: 28px; font-weight: 700; font-family: var(--font-heading); }
+  .s-name { fill: #1e2420; font-size: 13px; font-family: var(--font-body); font-weight: 600; }
+  .s-floor { fill: var(--text-dim); font-size: 13px; }
+  .s-band { fill: var(--text-bright); font-size: 14px; font-family: var(--font-body); }
+  .gridln { stroke: var(--c-grid); stroke-width: 1; }
+
+  /* ---------- THE HABIT LIST ---------- */
+  .hb-set { margin: 0; }
+  .hb-group { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--hb-accent, var(--text-dim)); margin: 2.6rem 0 0.4rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.7rem; }
+  .hb-group .n { color: var(--text-dim); }
+  .hb { display: grid; grid-template-columns: 2.8rem 1fr; gap: 0.2rem 1.1rem; padding: 1.15rem 0; border-top: 1px solid var(--rule); }
+  .hb-num { font-family: var(--font-heading); font-weight: 700; font-size: 2.3rem; line-height: 0.82; color: var(--hb-accent, var(--accent)); }
+  .hb-main { grid-column: 2; }
+  .hb-main h3 { margin: 0 0 0.4rem; font-family: var(--font-heading); font-weight: 700; font-size: 1.32rem; color: var(--text-bright); line-height: 1.15; }
+  .hb-main p { margin: 0; font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); text-wrap: pretty; }
+  .hb-main p .term { color: var(--text-bright); font-weight: 600; }
+  @media (max-width: 520px) {
+    .hb { grid-template-columns: 1fr; gap: 0.1rem; }
+    .hb-main { grid-column: 1; }
+    .hb-num { font-size: 1.9rem; }
+  }
+
+  /* ---------- SOURCES ---------- */
+  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.1em; }
+  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.4em; margin: 0.4em 0 0; }
+  #sources li { margin-bottom: 0.5em; }
+  #sources li::marker { color: var(--accent); }
+  #sources a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+    html.js .grow-v { transform: scaleY(0.001); transform-origin: bottom; }
+    html.js .grow-v.go { animation: growV 0.9s var(--ease) forwards; }
+    @keyframes growV { to { transform: scaleY(1); } }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .sec li, .lede, .hb-main p { color: #161616; }
+    .debateA, .u-callout, .viz { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The 7 Habits of Highly Effective People</h1>
+    <p class="hero-dek">Stephen Covey's whole framework, from the character ethic to sharpening the saw, in one sitting. What each habit says, how they stack, and the one idea under all seven.</p>
+    <p class="hero-meta">A field guide <span class="sep">/</span> the book in brief <span class="sep">/</span> <b>8 min read</b></p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ SETUP ============================ -->
+    <section id="setup" class="sec first" aria-labelledby="setup-h">
+      <div class="u-sechead"><p class="u-sechead-k">What the book argues</p><h2 id="setup-h" class="u-sechead-h">A book against shortcuts</h2></div>
+
+      <p class="lede">Stephen Covey did not invent the seven habits. He read two hundred years of American writing about success and found a split down the middle: the first 150 years were about who you are, and the last 50 were about how you come across. He bet the whole book on the first kind mattering more.</p>
+
+      <p>He had names for the two halves. The old books taught the <strong>character ethic</strong>: integrity, humility, courage, patience, doing what you said you would do. The newer ones taught the <strong>personality ethic</strong>: techniques, a positive attitude, the right image, how to get people to like you. Covey's argument is that the personality stuff is real but shallow, a set of tricks laid over nothing. You cannot talk your way out of a problem you behaved your way into.</p>
+
+      <p>So the habits work from the inside out. You fix your own character first, then your closest relationships, in that order, and never the reverse. A habit, the way Covey defines it, is where three things overlap: knowing what to do, knowing how to do it, and actually wanting to. Miss any one and it never becomes a habit.</p>
+
+      <p>The word in the title carries weight too. To Covey, being <strong>effective</strong> is a balance. He borrows Aesop's fable of the goose that laid golden eggs: kill the goose for a quick payout and you get one egg and no more. Effectiveness is taking the eggs without starving the goose, getting results today while protecting your ability to keep getting them. Most of the book is about not killing the goose.</p>
+
+      <p>The seven are arranged as a climb in three parts. The first three move you from leaning on others to standing on your own, what Covey calls the <strong>private victory</strong>. The next three move you from standing alone to working well with others, the <strong>public victory</strong>. The seventh wraps around all six and keeps them sharp.</p>
+
+      <figure class="viz breakout reveal" aria-labelledby="stair-t">
+        <p class="viz-title" id="stair-t">How the seven stack</p>
+        <p class="viz-sub">The habits climb from depending on others, up through self-mastery, to working well with others. The seventh sits under all of it.</p>
+        <svg viewBox="0 0 1000 540" role="img" aria-label="A staircase of six rising blocks. Blocks one to three, in gold, are the private victory and lead up to independence. Blocks four to six, in green, are the public victory and lead up to interdependence. A wide band underneath, habit seven, is renewal that keeps all six sharp.">
+          <!-- faint floor line -->
+          <line class="gridln" x1="60" y1="440" x2="940" y2="440"/>
+
+          <!-- private victory bracket -->
+          <text class="s-zone" x="313" y="252" text-anchor="middle">Independence</text>
+          <text class="s-zone-i" x="313" y="272" text-anchor="middle">private victory, habits 1 to 3</text>
+          <!-- public victory bracket -->
+          <text class="s-zone" x="697" y="120" text-anchor="middle">Interdependence</text>
+          <text class="s-zone-i" x="697" y="140" text-anchor="middle">public victory, habits 4 to 6</text>
+
+          <!-- start label -->
+          <text class="s-floor" x="40" y="452">dependence</text>
+
+          <!-- ascending dashed guide through the block tops -->
+          <polyline points="185,360 313,326 441,292 569,236 697,202 825,168" fill="none" stroke="var(--c-grid-strong)" stroke-width="1.5" stroke-dasharray="2 7" opacity="0.8"/>
+
+          <!-- STEP 1 -->
+          <g class="grow-v">
+            <rect x="130" y="360" width="110" height="80" rx="5" fill="#dfc288"/>
+            <text class="s-num" x="185" y="392" text-anchor="middle">1</text>
+            <text class="s-name" x="185" y="414" text-anchor="middle">Be</text>
+            <text class="s-name" x="185" y="430" text-anchor="middle">proactive</text>
+          </g>
+          <!-- STEP 2 -->
+          <g class="grow-v">
+            <rect x="258" y="326" width="110" height="114" rx="5" fill="#dfc288"/>
+            <text class="s-num" x="313" y="360" text-anchor="middle">2</text>
+            <text class="s-name" x="313" y="382" text-anchor="middle">Begin with</text>
+            <text class="s-name" x="313" y="398" text-anchor="middle">the end</text>
+          </g>
+          <!-- STEP 3 -->
+          <g class="grow-v">
+            <rect x="386" y="292" width="110" height="148" rx="5" fill="#dfc288"/>
+            <text class="s-num" x="441" y="326" text-anchor="middle">3</text>
+            <text class="s-name" x="441" y="348" text-anchor="middle">First things</text>
+            <text class="s-name" x="441" y="364" text-anchor="middle">first</text>
+          </g>
+          <!-- STEP 4 -->
+          <g class="grow-v">
+            <rect x="514" y="236" width="110" height="204" rx="5" fill="#9ec79a"/>
+            <text class="s-num" x="569" y="270" text-anchor="middle">4</text>
+            <text class="s-name" x="569" y="292" text-anchor="middle">Think</text>
+            <text class="s-name" x="569" y="308" text-anchor="middle">win-win</text>
+          </g>
+          <!-- STEP 5 -->
+          <g class="grow-v">
+            <rect x="642" y="202" width="110" height="238" rx="5" fill="#9ec79a"/>
+            <text class="s-num" x="697" y="236" text-anchor="middle">5</text>
+            <text class="s-name" x="697" y="258" text-anchor="middle">Understand</text>
+            <text class="s-name" x="697" y="274" text-anchor="middle">first</text>
+          </g>
+          <!-- STEP 6 -->
+          <g class="grow-v">
+            <rect x="770" y="168" width="110" height="272" rx="5" fill="#9ec79a"/>
+            <text class="s-num" x="825" y="202" text-anchor="middle">6</text>
+            <text class="s-name" x="825" y="224" text-anchor="middle">Synergize</text>
+          </g>
+
+          <!-- HABIT 7 band -->
+          <rect x="60" y="462" width="880" height="48" rx="8" fill="rgba(143,179,199,0.16)" stroke="#8fb3c7" stroke-width="1.2"/>
+          <text class="s-band" x="500" y="491" text-anchor="middle"><tspan fill="#8fb3c7" font-weight="700">Habit 7, sharpen the saw.</tspan> The renewal that keeps the other six working.</text>
+        </svg>
+        <figcaption class="viz-cap">Habits 1 to 3 are about mastering yourself. Habits 4 to 6 are about other people, and they only work once the first three are in place. Habit 7 is the upkeep that keeps the whole thing from going dull.</figcaption>
+      </figure>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE HABITS ============================ -->
+    <section id="habits" class="sec" aria-labelledby="habits-h">
+      <div class="u-sechead"><p class="u-sechead-k">The seven</p><h2 id="habits-h" class="u-sechead-h">The habits, one at a time</h2></div>
+
+      <!-- PRIVATE VICTORY -->
+      <div class="hb-set" style="--hb-accent:#dfc288">
+        <p class="hb-group"><span>Private victory</span><span class="n">/ master yourself / habits 1 to 3</span></p>
+
+        <div class="hb">
+          <div class="hb-num">1</div>
+          <div class="hb-main">
+            <h3>Be proactive</h3>
+            <p>Between what happens to you and what you do about it, there is a gap, and in that gap you are free to choose. Covey calls this being <span class="term">response-able</span>, able to pick your response instead of just reacting. The tool is two circles. Your <span class="term">circle of concern</span> holds everything you care about, most of which you cannot touch. Your <span class="term">circle of influence</span> holds the part you can actually affect. Spend your energy in the inner circle and it grows. Pour it into the outer one, into traffic and politics and other people's faults, and it shrinks.</p>
+          </div>
+        </div>
+
+        <div class="hb">
+          <div class="hb-num">2</div>
+          <div class="hb-main">
+            <h3>Begin with the end in mind</h3>
+            <p>Everything gets made twice, once in your head and once in the world, so decide the ending before you start. Covey's exercise is blunt: picture your own funeral, and what you would want the people there to say about you. Then work backward from that. The thing you write down is a <span class="term">personal mission statement</span>, a short account of what you are for and what you value, and it becomes the ruler you measure decisions against.</p>
+          </div>
+        </div>
+
+        <div class="hb">
+          <div class="hb-num">3</div>
+          <div class="hb-main">
+            <h3>Put first things first</h3>
+            <p>This is where the mission meets your calendar. Sort anything you could do by two questions, is it urgent and is it important, and you get four boxes. Most people live in the urgent: ringing phones, other people's emergencies, the latest fire. The habit is to defend the quiet box that is <span class="term">important but not urgent</span>, the planning, exercise, real relationships, and prevention that never demand attention and quietly decide how your life goes. Nobody schedules a heart attack. They schedule the gym, or they don't.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- the bridge -->
+      <aside class="u-callout"><p class="u-callout-k">One idea under the next three</p><p class="u-callout-body">Before you work with anyone else, picture an <strong>emotional bank account</strong> with each person. Keeping a promise, listening, small kindnesses: those are deposits. Breaking a promise, talking over them, taking them for granted: withdrawals. The next three habits only work when the account is in credit. With most of the people who matter, the balance is the whole relationship.</p></aside>
+
+      <!-- PUBLIC VICTORY -->
+      <div class="hb-set" style="--hb-accent:#9ec79a">
+        <p class="hb-group"><span>Public victory</span><span class="n">/ work with others / habits 4 to 6</span></p>
+
+        <div class="hb">
+          <div class="hb-num">4</div>
+          <div class="hb-main">
+            <h3>Think win-win</h3>
+            <p>Most of us are trained to see life as a contest, where your win is my loss. Covey's alternative rests on an <span class="term">abundance mentality</span>, the belief that there is enough success to go around, instead of the scarcity that treats someone else's slice as stolen from yours. He pairs it with a spine: <span class="term">win-win or no deal</span>. If the two of us cannot find an arrangement that is genuinely good for both, we agree to walk away cleanly, no resentment. That last option is what keeps win-win from rotting into being a pushover.</p>
+          </div>
+        </div>
+
+        <div class="hb">
+          <div class="hb-num">5</div>
+          <div class="hb-main">
+            <h3>Seek first to understand, then to be understood</h3>
+            <p>Most people listen with the intent to reply, not to understand. They are loading their own answer while you are still talking. The habit is to listen until you could argue the other person's side better than they just did, before you say one word about your own. Covey's term is <span class="term">empathic listening</span>. A doctor who writes the prescription before the exam is committing malpractice, and so, he argues, is most of how we talk to each other. This is the habit people skip, and the one that changes the most.</p>
+          </div>
+        </div>
+
+        <div class="hb">
+          <div class="hb-num">6</div>
+          <div class="hb-main">
+            <h3>Synergize</h3>
+            <p>Two people who actually understand each other and both want a good outcome can reach answers neither would have found alone. That is <span class="term">synergy</span>, the plain fact that one plus one can make three. It runs on the thing most teams treat as friction: the differences between people. The point is that you and I see the same thing differently, so put together we can see more of it than either of us could from one chair.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENEWAL -->
+      <div class="hb-set" style="--hb-accent:#8fb3c7">
+        <p class="hb-group"><span>Renewal</span><span class="n">/ keep it sharp / habit 7</span></p>
+
+        <div class="hb">
+          <div class="hb-num">7</div>
+          <div class="hb-main">
+            <h3>Sharpen the saw</h3>
+            <p>A man saws at a tree for hours and gets nowhere. Someone tells him to stop and sharpen the saw. "I can't," he says, "I'm too busy sawing." The seventh habit is the sharpening. You renew yourself in four areas, your <span class="term">body</span> (move, eat, sleep), your <span class="term">mind</span> (read, learn), your <span class="term">heart</span> (relationships and service), and your <span class="term">spirit</span> (whatever gives you meaning), so you can keep doing the other six. Skip it and the other six go dull, slowly enough that you won't notice until you are sawing with a blunt blade.</p>
+          </div>
+        </div>
+      </div>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ HOW TO USE IT ============================ -->
+    <section id="use" class="sec" aria-labelledby="use-h">
+      <div class="u-sechead"><p class="u-sechead-k">The honest version</p><h2 id="use-h" class="u-sechead-h">Is it actually any good?</h2></div>
+
+      <p class="lede">The book sold tens of millions of copies and launched a whole training industry, which is exactly why it is easy to roll your eyes at.</p>
+
+      <p>The fair criticism is that some of it has aged into cliche. "Be proactive" became corporate wallpaper. The mission-statement worksheets and the seminar gloss feel dated, and a cynic can read the whole thing as self-help dressed in a business suit. None of that is wrong.</p>
+
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The eye-roll</span><p class="debateA-text">Corporate self-help, common sense padded out to hundreds of pages and sold back to you as wisdom.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">What survives</span><p class="debateA-text">Strip the seminar off and the spine is unfashionably solid. Work on your character before your tactics. Decide what matters before you fill your calendar. Listen before you argue. It is common sense, but it is the kind almost nobody actually practices, which is the only reason a book about it was needed.</p></div>
+      </div>
+
+      <p>If you take one thing from all seven, take the gap from habit one, that beat between what happens and how you respond, and take the quiet quadrant from habit three, the important-but-not-urgent work that never shouts. Those two are where most of the change actually lives. The rest is good, and those two you can start today.</p>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">The whole book in a line</p><p class="u-callout-body">Fix yourself before you try to fix everyone else, and protect what matters before it becomes urgent.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Source, and a few facts about the book</h2></div>
+      <p class="src-note">This is a summary of one book, told in my own words. Everything in the seven sections above is Covey's idea, not mine. The facts about the book itself are below if you want to check them.</p>
+      <ol>
+        <li><b>Stephen R. Covey (1932 to 2012).</b> <i>The 7 Habits of Highly Effective People: Powerful Lessons in Personal Change.</i> Free Press, 1989. The source for everything above. <a href="https://www.simonandschuster.com/books/The-7-Habits-of-Highly-Effective-People/Stephen-R-Covey/9781982137137">publisher</a></li>
+        <li><b>The book, in numbers.</b> First published in 1989 by Free Press; it had sold more than 20 million copies by the time Covey died in 2012, and tens of millions more since. <i>Wikipedia.</i> <a href="https://en.wikipedia.org/wiki/The_7_Habits_of_Highly_Effective_People">wikipedia.org</a></li>
+        <li><b>The accolade.</b> Time included it on its list of the 25 most influential business management books, where it sits at number 22. <i>Time, August 2011.</i> <a href="https://content.time.com/time/specials/packages/completelist/0,29569,2086680,00.html">time.com</a></li>
+      </ol>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script>
+  /* Per-post: scroll-reveal + the staircase grow-in. No-JS safe (CSS only hides
+     under html.js), and a 4s watchdog guarantees nothing is ever left hidden. */
+  (function () {
+    'use strict';
+    var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+
+    function fire(el) {
+      el.classList.add('in');
+      Array.prototype.slice.call(el.querySelectorAll('.grow-v')).forEach(function (g, i) {
+        setTimeout(function () { g.classList.add('go'); }, 90 + i * 80);
+      });
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      reveals.forEach(fire);
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      reveals.forEach(function (el) { io.observe(el); });
+      setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
+    }
+  })();
+  </script>
+</body>
+</html>
