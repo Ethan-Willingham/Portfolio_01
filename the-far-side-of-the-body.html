@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Far Side of the Body</title>
+  <meta name="description" content="A field guide to the human body at the ends of its range: the conditions that turn pain into ecstasy, sleep into a death sentence, reality inside out, and a single gene into either constant agony or the inability to feel pain at all.">
+  <meta property="og:title" content="The Far Side of the Body">
+  <meta property="og:description" content="One gene turned up makes a person feel permanently on fire. Turned down, it makes a person who has never felt pain. A field guide to the human body at the ends of its range: pain and ecstasy, sleep and fear, reality itself.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/the-far-side-of-the-body.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/the-far-side-of-the-body-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/the-far-side-of-the-body-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE FAR SIDE OF THE BODY
+     A field guide to the human body at the ends of its range:
+     seven wings (agony, ecstasy, no off switch, sleep, the uncanny
+     mind, the body remade, real superpowers), each with its own
+     accent from the site's categorical set. Sits in the site shell
+     (forest green, parchment, Century Supra / Segoe UI / Commit
+     Mono). The spine is the Nav1.7 dial: one gene, two extremes.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 780px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.9rem, 10vw, 6rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.2rem, 6vw, 4.6rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.2rem, 5vw, 3.2rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 0.5rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; color: var(--wa, var(--accent)); border-color: color-mix(in oklab, var(--wa, var(--accent)) 45%, transparent); }
+  .sec .u-sechead-h { color: var(--text-bright); }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec .lede { font-size: 1.16rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .sec .lede { font-size: 1.24rem; } }
+  .sec .u-divider { margin-top: 3.2rem; }
+
+  /* ---------- THE DIAL FIGURE ---------- */
+  .viz { margin: 1.8em auto 0.4em; }
+  .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .sec .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.24rem; line-height: 1.18; letter-spacing: -0.01em; color: var(--text-bright); margin: 0 0 0.2em; }
+  .sec .viz-sub { font-family: var(--font-body); font-size: 0.88rem; line-height: 1.45; color: var(--text-dim); margin: 0 0 1.1em; max-width: 56ch; }
+  .viz-cap { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); margin-top: 0.8rem; line-height: 1.55; max-width: 60ch; }
+  text { font-family: var(--font-mono); }
+  .dl-end { fill: var(--text-bright); font-size: 15px; font-family: var(--font-body); font-weight: 600; }
+  .dl-sub { fill: var(--text-dim); font-size: 12.5px; font-family: var(--font-body); }
+  .dl-mid { fill: var(--text-dim); font-size: 13px; }
+
+  /* ---------- WING + CASE CARDS ---------- */
+  .sec .wing-lede { font-size: 1.16rem; line-height: 1.55; color: var(--text-bright); margin: 0.4rem 0 0.6rem; }
+  @media (min-width: 720px) { .sec .wing-lede { font-size: 1.2rem; } }
+  .cases { margin-top: 0.4rem; }
+  .case { padding-top: 1.5rem; }
+  .case + .case { border-top: 1px solid var(--rule); margin-top: 1.5rem; }
+  .case-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.3rem, 3.4vw, 1.55rem); line-height: 1.14; color: var(--text-bright); margin: 0; letter-spacing: -0.01em; }
+  .sec .case-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wa, var(--accent)); margin: 0.5rem 0 0.7rem; }
+  .case p { font-size: 1.04rem; line-height: 1.6; margin: 0; }
+  .case p + p { margin-top: 0.7em; }
+  .sec .also { font-size: 0.96rem; line-height: 1.55; color: var(--text-dim); margin-top: 1.6rem; padding-top: 1rem; border-top: 1px dashed var(--rule); }
+  .also b { color: var(--text); font-weight: 600; }
+  .also a { color: var(--text-dim); border-bottom: 1px dotted rgba(120,134,120,0.5); }
+  .also a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* citation chips + grade chips not shipped by the kit (-b, -d) */
+  .u-grade-b { color: #a9cad9; background: rgba(143,179,199,0.16); border: 1px solid rgba(143,179,199,0.4); }
+  .u-grade-d { color: #d9978c; background: rgba(217,151,140,0.14); border: 1px solid rgba(217,151,140,0.42); }
+
+  .sec .u-callout:not(.u-move) { padding: 18px 22px; border-radius: 14px; box-shadow: none; margin: 1.6rem 0 0; }
+  .sec .u-callout:not(.u-move) .u-callout-body { font-size: 1.0rem; line-height: 1.55; }
+
+  /* ---------- REFERENCES ---------- */
+  #sources { padding-top: clamp(2.4rem, 4vw, 3.2rem); }
+  #sources .u-sechead-h { font-size: clamp(1.5rem, 3.6vw, 1.85rem); }
+  .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 62ch; margin: 0 0 1.1em; }
+  #sources .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; font-size: 0.78rem; color: var(--text-dim); margin: 0.2rem 0 1.1rem; }
+  #sources .legend span span { margin-right: 0.4em; }
+  #sources ol { font-family: var(--font-body); font-size: 0.68rem; color: var(--text-dim); line-height: 1.4; padding-left: 1.4em; margin: 0.2em 0 1em; }
+  #sources li { margin-bottom: 0.3em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 1.4rem 0 0.5rem; }
+  @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+    html.js .grow-b { transform: scaleX(0.001); transform-origin: left; }
+    html.js .grow-b.go { animation: growL 1.15s var(--ease) forwards; }
+    @keyframes growL { to { transform: scaleX(1); } }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .lede, .case p, .wing-lede { color: #161616; }
+    .case, .u-callout, figure { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Far Side of the Body</h1>
+    <p class="hero-dek">A field guide to the human body at the ends of its range, where the same gene means either a life on fire or a life with no pain at all, and that is only the first of the dials.</p>
+    <p class="hero-meta">A field guide <span class="sep">/</span> <b>34 sources</b> <span class="sep">/</span> 18 min read</p>
+  </header>
+
+  <main id="guide">
+
+    <nav class="chapters" aria-label="The seven wings">
+      <span class="lead">Seven wings</span>
+      <a href="#agony">Agony</a>
+      <a href="#ecstasy">Ecstasy</a>
+      <a href="#stuck">No off switch</a>
+      <a href="#sleep">Sleep</a>
+      <a href="#uncanny">The uncanny mind</a>
+      <a href="#remade">The body remade</a>
+      <a href="#super">Superpowers</a>
+    </nav>
+
+    <!-- ============================ INTRO: THE DIALS ============================ -->
+    <section id="intro" class="sec first" aria-labelledby="intro-h">
+      <div class="u-sechead"><p class="u-sechead-k">The idea</p><h2 id="intro-h" class="u-sechead-h">The body runs on dials</h2></div>
+      <p class="lede">One gene, turned up, makes a person feel like they are permanently on fire. Turned down, the very same gene makes a person who has never once felt pain.</p>
+
+      <p>The gene is <strong>SCN9A</strong>. It builds a tiny channel called Nav1.7 that pain nerves use to fire. Crank it open and the alarm never stops (a condition with the apt nickname "man on fire"). Knock it out and the alarm never sounds at all. Same gene, opposite ends of being human. <span class="u-src"><a href="https://www.nature.com/articles/nature05413">Cox 2006</a></span></p>
+
+      <p>That is the whole idea of this guide. The body is a set of dials, and most of us live near the middle of every one without noticing the dial is even there. Pain. Pleasure. Sleep. Fear. The sense that the world is real. Turn any of them to the end of its range and you get a person whose life is unrecognizable, and a clear view of the machinery the rest of us run on. What follows is a tour of seven of those dials, and the people who live at the far ends.</p>
+
+      <figure class="viz reveal" aria-labelledby="dial-cap">
+        <p class="viz-title">One gene, two extremes</p>
+        <p class="viz-sub">SCN9A builds Nav1.7, the channel that fires pain. The mutation that opens it and the mutation that breaks it sit on the same gene.</p>
+        <svg viewBox="0 0 960 196" role="img" aria-label="A horizontal dial. At the far left, marked in green, the gene turned off: feels no pain. In the middle, normal. At the far right, marked in coral, the gene turned up: constant burning pain, the 'man on fire' syndrome.">
+          <defs>
+            <linearGradient id="dialgrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#9ec79a"/>
+              <stop offset="0.5" stop-color="#8a978a"/>
+              <stop offset="1" stop-color="#d9978c"/>
+            </linearGradient>
+          </defs>
+          <rect class="grow-b" x="80" y="96" width="800" height="20" rx="10" fill="url(#dialgrad)"/>
+          <!-- ticks -->
+          <circle cx="80" cy="106" r="9" fill="#9ec79a"/>
+          <circle cx="480" cy="106" r="5" fill="#8a978a"/>
+          <circle cx="880" cy="106" r="9" fill="#d9978c"/>
+          <!-- left end -->
+          <text class="dl-end" x="80" y="76" text-anchor="start" fill="#9ec79a">Gene off</text>
+          <text class="dl-sub" x="80" y="146" text-anchor="start">feels no pain at all</text>
+          <!-- middle -->
+          <text class="dl-mid" x="480" y="76" text-anchor="middle">normal</text>
+          <text class="dl-sub" x="480" y="146" text-anchor="middle">the rest of us</text>
+          <!-- right end -->
+          <text class="dl-end" x="880" y="76" text-anchor="end" fill="#d9978c">Gene up</text>
+          <text class="dl-sub" x="880" y="146" text-anchor="end">a body on fire</text>
+        </svg>
+        <figcaption class="viz-cap" id="dial-cap">The clearest dial in medicine. We meet the right end (erythromelalgia, the "man on fire") in the first wing, and the left end (people born unable to feel pain) in the last. One gene runs both. <span class="u-src"><a href="https://www.nature.com/articles/nature05413">Cox 2006</a></span></figcaption>
+      </figure>
+
+      <p>Two honest notes before we start. Most of these conditions are rare, and several are known from only a handful of people, so the numbers are soft and I say so when they are. And every person here is a person, not a curiosity. Some were treated as sideshows in their lifetimes. The point is the machinery, and what it tells us about ourselves.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 1. AGONY ============================ -->
+    <section id="agony" class="sec" aria-labelledby="agony-h" style="--wa:#d9978c">
+      <div class="u-sechead"><p class="u-sechead-k">Wing one</p><h2 id="agony-h" class="u-sechead-h">Agony, the dial cranked up</h2></div>
+      <p class="wing-lede">Pain is the body's loudest dial. A few people live with it pinned to the top, day and night.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">Complex regional pain syndrome</h3>
+          <p class="case-tag">The alarm stuck on</p>
+          <p>This is what happens when the pain alarm jams in the on position. After an injury, sometimes nothing worse than a sprain or a needle stick, the pain doesn't fade as the wound heals. It grows, spreads, and digs in: a constant burning where a puff of air or the weight of a sleeve is torture, often with the limb swelling and changing color. By the formal definition, the pain is wildly out of proportion to whatever started it. There is no reliable cure, and it carries the bleakest numbers in this guide. In one small study, 46 percent of patients had considered suicide and 20 percent had attempted it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3942549/">Lee 2014</a></span> <span class="u-grade u-grade-d">small sample</span></p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Cluster headache</h3>
+          <p class="case-tag">The worst pain anyone has measured</p>
+          <p>The word "headache" undersells it so badly that sufferers resent it. A cluster attack is a hot poker driven through one eye, for 15 minutes to 3 hours, often at the same hour each night for weeks. It is the one entry here with hard numbers: across 1,604 patients, people rated an attack 9.7 out of 10, above their own memories of childbirth, kidney stones, and a self-digesting pancreas. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7898696/">Burish 2021</a></span> The nickname "suicide headache" is literal. The strangest mercy in medicine: breathing pure oxygen through a mask can stop an attack within minutes.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Erythromelalgia</h3>
+          <p class="case-tag">The "man on fire" gene</p>
+          <p>They call it man on fire, and that is the literal sensation: feet that feel scalded or packed in coals, the skin gone red and hot. The inherited form is a single gene, <strong>SCN9A</strong>, the one from the chart above. The mutation jams its Nav1.7 channel open, so the pain alarm is stuck near on and the slightest warmth sets it screaming. <span class="u-src"><a href="https://my.clevelandclinic.org/health/diseases/22752-erythromelalgia">Cleveland Clinic</a></span> Hold onto that gene. It returns at the very end of this guide, turned the other way.</p>
+        </article>
+      </div>
+
+      <p class="also"><b>Also in this wing:</b> trigeminal neuralgia, a lightning bolt through one side of the face that ordinary acts (chewing, shaving, a cold breeze) set off, and which responds to anti-seizure drugs rather than painkillers, the tell that the problem is electrical, not a wound. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK554486/">StatPearls</a></span></p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 2. ECSTASY ============================ -->
+    <section id="ecstasy" class="sec" aria-labelledby="ecstasy-h" style="--wa:#dfc288">
+      <div class="u-sechead"><p class="u-sechead-k">Wing two</p><h2 id="ecstasy-h" class="u-sechead-h">Ecstasy, the dial the other way</h2></div>
+      <p class="wing-lede">The same machinery, run the opposite direction, can manufacture bliss so pure that people would trade years of life for seconds of it.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">Ecstatic epilepsy</h3>
+          <p class="case-tag">A seizure of pure bliss</p>
+          <p>Some seizures don't bring fear or a blackout. They bring rapture. In ecstatic epilepsy the opening seconds flood the person with bliss, serenity, and a feeling of perfect certainty. It comes from the anterior insula, the patch of brain that checks how your body feels against what it expects. In 2013 researchers ran a tiny current through that spot in one patient and switched the bliss on deliberately, with a wire. <span class="u-src"><a href="https://www.frontiersin.org/journals/behavioral-neuroscience/articles/10.3389/fnbeh.2016.00021/full">Gschwind 2016</a></span> Dostoevsky had this exact condition, and described it through a friend: for a few seconds of it, he said, "one would give ten years of his life." <span class="u-grade u-grade-c">quote reported</span></p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Gourmand syndrome</h3>
+          <p class="case-tag">A stroke that hands you a passion</p>
+          <p>A stroke usually takes something away. Once in a while it gives something back. Gourmand syndrome is a sudden, happy obsession with fine food after damage to the right front of the brain. In the study that named it, 34 of 36 patients had the lesion in that exact region, and the lead case was a political journalist who had a stroke, quit the news, and became a professional food critic. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/9521298/">Regard 1997</a></span></p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Frisson</h3>
+          <p class="case-tag">Ecstasy on demand</p>
+          <p>You have felt the mildest version. Frisson, the wave of chills at the peak of a song, is the closest most of us get to involuntary ecstasy, and it runs on the same dopamine reward circuit as food and sex. The elegant part: your brain pays out the anticipation and the arrival on two anatomically separate wires, which is why a song can raise the hair on your arms just before the big moment lands. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21217764/">Salimpoor 2011</a></span></p>
+        </article>
+      </div>
+
+      <p class="also"><b>The circuit underneath all of it</b> was found in 1954, when rats given a lever wired to the brain's reward pathway pressed it thousands of times an hour and ignored food until they collapsed. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3008353/">Kringelbach 2010</a></span> When a version was tried on people in the decades after, they behaved the same way, in experiments whose ethics have not aged well.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 3. NO OFF SWITCH ============================ -->
+    <section id="stuck" class="sec" aria-labelledby="stuck-h" style="--wa:#b79bc4">
+      <div class="u-sechead"><p class="u-sechead-k">Wing three</p><h2 id="stuck-h" class="u-sechead-h">No off switch</h2></div>
+      <p class="wing-lede">Every dial so far could move. These are the ones that jam, stuck on, stuck off, or missing the switch entirely.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">Fatal familial insomnia</h3>
+          <p class="case-tag">Sleep, destroyed</p>
+          <p>One inherited mutation kills neurons in the thalamus, the part of the brain that lets you fall asleep. Once it is gone, the person slowly stops sleeping, slides into a state that is neither waking nor rest, and dies, usually within about 18 months. The detail that makes it unbearable: sleeping pills do nothing, because the machinery that makes sleep no longer exists. You cannot drug a brain to sleep when the part that produces sleep is gone. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK482208/">StatPearls</a></span></p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">The woman with no fear</h3>
+          <p class="case-tag">The alarm missing</p>
+          <p>A woman known in the literature as S.M. cannot feel fear. Disease destroyed her amygdala, the brain's threat alarm, on both sides, and snakes, knives, and haunted houses leave her delighted instead of afraid. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3030206/">Feinstein 2011</a></span> Researchers couldn't frighten her from the outside, so they tried from within: one breath of air with extra carbon dioxide, the body's own suffocation signal, and for the first time in her adult life she panicked. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23377128/">Feinstein 2013</a></span> The fear was always possible. It just had to come from inside.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Lesch-Nyhan syndrome</h3>
+          <p class="case-tag">The brake missing, the pain intact</p>
+          <p>This is the hardest entry to read, and it earns its place. A missing enzyme leaves boys with a compulsion to injure themselves, biting their lips and fingers, and their pain sense works perfectly, so they feel every bit of it. The detail from the clinical literature that you don't forget: some of them ask to be restrained when the compulsion rises, are relieved when they are, and apologize afterward. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK556079/">StatPearls</a></span></p>
+        </article>
+      </div>
+
+      <p class="also"><b>Also in this wing:</b> a disorder of relentless, unwanted physical arousal that has nothing to do with desire and that people have taken their lives over, sometimes traced to a cyst pressing on a spinal nerve <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/33612417/">ISSWSH 2021</a></span>; and the man whose hiccup reflex jammed on and ran, by the record, for 68 years.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 4. SLEEP ============================ -->
+    <section id="sleep" class="sec" aria-labelledby="sleep-h" style="--wa:#8fb3c7">
+      <div class="u-sechead"><p class="u-sechead-k">Wing four</p><h2 id="sleep-h" class="u-sechead-h">Sleep gone strange</h2></div>
+      <p class="wing-lede">Sleep is supposed to do two things and keep both walled off from waking: paralyze your body, and flood your mind with dreams. Most of this wing is that wall failing.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">Acting out your dreams</h3>
+          <p class="case-tag">The paralysis fails</p>
+          <p>During dream sleep your body is paralyzed so you can't act out what you're dreaming. In REM sleep behavior disorder that paralysis fails, and people punch, kick, shout, and leap from bed, fighting whatever is chasing them in the dream. The quietly alarming part is what it predicts: in the largest study, 73.5 percent of people with it had developed Parkinson's or a related disease within 12 years. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30789229/">Postuma 2019</a></span> <span class="u-grade u-grade-b">large cohort</span> The body starts acting out nightmares a decade before the hands begin to shake.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Cataplexy</h3>
+          <p class="case-tag">Laughter drops you to the floor</p>
+          <p>In narcolepsy with cataplexy, a good feeling can knock you down. A laugh, a punchline, a jolt of delight, and the muscles go slack while the person stays fully awake and aware, slumping or crumpling for a few seconds. It is the muscle paralysis of dream sleep firing at the wrong moment, because the brain has lost the small cluster of orexin neurons that keep waking and sleeping apart. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8788644/">Dauvilliers 2014</a></span></p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Sleep paralysis</h3>
+          <p class="case-tag">The monster that is really neurology</p>
+          <p>Wake up mid-dream and you can find yourself awake, aware, and unable to move, certain something is in the room, often a weight crushing your chest. It is the dream's paralysis and imagery leaking a few seconds into waking. The striking thing is the agreement: the intruder, the chest-sitting demon, and the floating out of the body are the three documented forms, and they recur across cultures, the Old Hag of folklore, the imp Fuseli painted squatting on a sleeper. About half of regular sufferers reach for the supernatural. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3156892/">Sharpless 2011</a></span></p>
+        </article>
+      </div>
+
+      <p class="also"><b>Also in this wing:</b> Kleine-Levin syndrome, the "Sleeping Beauty" disorder, where people sleep up to 20 hours a day for weeks at a time and are foggy and unlike themselves in between <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3901778/">Miglis 2014</a></span>; and exploding head syndrome, a deafening bang at the edge of sleep that is as harmless as it is terrifying, and far more common than its name suggests. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK560817/">StatPearls</a></span></p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 5. THE UNCANNY MIND ============================ -->
+    <section id="uncanny" class="sec" aria-labelledby="uncanny-h" style="--wa:#b8796d">
+      <div class="u-sechead"><p class="u-sechead-k">Wing five</p><h2 id="uncanny-h" class="u-sechead-h">The uncanny mind</h2></div>
+      <p class="wing-lede">Your sense of reality is something the brain assembles from separate streams: seeing a face, and feeling it is familiar; moving a hand, and owning the move. Cut one stream while the others run, and you get a person who is lucid about everything except one impossible thing.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">Cotard's delusion</h3>
+          <p class="case-tag">The conviction you are dead</p>
+          <p>People with Cotard's are certain they have died. The leading idea is that the wire carrying the felt sense of reality has been cut, so nothing, not the world, not their own body, registers as real, and "I must be dead" becomes the only explanation that fits a world drained of all feeling. One patient who insisted his brain had died was scanned, and the activity across large parts of it was so low it looked closer to an anesthetized brain than a waking one. <span class="u-src"><a href="https://www.sciencedirect.com/science/article/abs/pii/S0010945213000737">Cortex 2013</a></span> His brain was not dead, but on the scan it was not far off.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Capgras delusion</h3>
+          <p class="case-tag">Your family, replaced by impostors</p>
+          <p>Capgras is the mirror image of Cotard's. The patient is sure a loved one has been swapped for an identical impostor. Recognizing a face has two parts, seeing who it is and feeling the warmth of familiarity, and in Capgras the second is severed. You can measure the missing feeling: shown photographs of his own parents, one patient's skin gave the flat response you'd give a stranger, even as he named them correctly. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1688258/">Hirstein 1997</a></span> The face was right. The feeling was gone, so the mind ruled the face a fake.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Alien hand syndrome</h3>
+          <p class="case-tag">A hand with its own agenda</p>
+          <p>One hand acts on its own. It grabs objects, undoes buttons the other hand just fastened, and the person does not feel they are driving it. Moving a hand and feeling that you authored the movement turn out to be separate things in the brain, and when the connection breaks, often after damage to the bridge between the hemispheres, one hand goes freelance. Clinicians call it Dr. Strangelove syndrome, after the film. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4059570/">review</a></span></p>
+        </article>
+      </div>
+
+      <p class="also"><b>Also in this wing:</b> Charles Bonnet syndrome, vivid hallucinations in people losing their sight who know perfectly well the visions aren't real (and it is common, roughly 1 in 5 of the visually impaired) <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK585133/">StatPearls</a></span>; foreign accent syndrome, where no foreign language is learned at all and the "accent" really lives in the listener's ear; and Alice in Wonderland syndrome, where the world, or your own body, seems to change size.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 6. THE BODY REMADE ============================ -->
+    <section id="remade" class="sec" aria-labelledby="remade-h" style="--wa:#cf9f78">
+      <div class="u-sechead"><p class="u-sechead-k">Wing six</p><h2 id="remade-h" class="u-sechead-h">The body remade</h2></div>
+      <p class="wing-lede">Everything so far has been the nervous system. This wing is the flesh itself, rebuilt.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">A second skeleton</h3>
+          <p class="case-tag">Fibrodysplasia ossificans progressiva</p>
+          <p>In FOP, muscle, tendon, and ligament slowly turn to bone. Over a life the body builds a second skeleton that bridges the joints and locks the person in place. The cruelest twist is that injury is the trigger, so cutting the extra bone out only grows more, and doctors are warned away from surgery, biopsies, even some injections. The disease defends itself. The first hint is there at birth, in a malformed big toe, years before any bone appears. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK558090/">GeneReviews</a></span></p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">The blue people of Kentucky</h3>
+          <p class="case-tag">Hereditary methemoglobinemia</p>
+          <p>For generations a family near Troublesome Creek, Kentucky, had genuinely blue skin. From both sides of an isolated family tree they inherited a missing enzyme, so a useless dark form of hemoglobin built up and showed through the skin as blue. The cure is almost a joke: a dose of methylene blue, a blue dye, donates the missing piece and turns the skin pink within minutes. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Blue_Fugates">the Fugates</a></span> <span class="u-grade u-grade-c">family lore</span> The biochemistry is textbook; the colorful family particulars come from oral history and old journalism.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Progeria</h3>
+          <p class="case-tag">Children who age fast</p>
+          <p>A one-letter change in the LMNA gene makes a warped protein called progerin that damages cells each time they divide. By their teens, children with progeria have the stiff joints, hair loss, and heart disease of old age, with completely ordinary minds. The unsettling part: progerin builds up in the rest of us too, slowly, as we age. These children are, at the molecular level, an accelerated version of everyone. <span class="u-src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK1121/">GeneReviews</a></span></p>
+        </article>
+      </div>
+
+      <p class="also"><b>Also in this wing, and a word on dignity:</b> hypertrichosis, hair growing across the whole body and face, was for centuries exhibited as "werewolf" and "ape" acts. Julia Pastrana, a gifted multilingual singer and dancer, was shown as a curiosity in life and, grotesquely, embalmed and displayed for decades after her death in 1860. Mexico finally brought her home to be buried in 2013. The condition was never the story. What was done to her was.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ 7. SUPERPOWERS ============================ -->
+    <section id="super" class="sec" aria-labelledby="super-h" style="--wa:#9ec79a">
+      <div class="u-sechead"><p class="u-sechead-k">Wing seven</p><h2 id="super-h" class="u-sechead-h">Real superpowers</h2></div>
+      <p class="wing-lede">End on the good end of the dials. A few people are built with abilities that sound invented, and the science holds up.</p>
+
+      <div class="cases">
+        <article class="case reveal">
+          <h3 class="case-h">Feeling no pain at all</h3>
+          <p class="case-tag">The man on fire, in reverse</p>
+          <p>Remember the gene jammed open, the man on fire? Turn the same gene off and you get the opposite: people born unable to feel any pain. The Nav1.7 channel never fires, so the "this hurts" message is never sent, while every other sense works normally. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/17167479/">Cox 2006</a></span> It reads like a superpower and is closer to a curse (children bite through their tongues, walk on broken bones, and miss the infections that follow), but it handed medicine something huge: a clean target for a new kind of painkiller, one that finally reached patients in the mid-2020s. The far ends of a dial, it turns out, can light the way to the middle.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Remembering every day</h3>
+          <p class="case-tag">Highly superior autobiographical memory</p>
+          <p>A few dozen people can recall almost every day of their adult lives. Give them a date and they give you the weekday, the weather, the news, and what they personally did, and it checks out. In one test they named the correct weekday for random past dates 97 percent of the time, where the rest of us manage about 15. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3764458/">LePort 2012</a></span> It isn't a photographic trick, and it isn't always a gift. One of the first known cases calls it exhausting, an unstoppable replay of every grief at full strength.</p>
+        </article>
+
+        <article class="case reveal">
+          <h3 class="case-h">Seeing with sound</h3>
+          <p class="case-tag">Human echolocation</p>
+          <p>Some blind people navigate by clicking their tongues and reading the echoes, well enough to ride bikes and hike trails. Brain scans show the echoes lighting up the visual cortex, not just the hearing parts, the brain repurposing its idle vision hardware to see with sound. <span class="u-src"><a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020162">Thaler 2011</a></span> And the best part: it is learnable. In one study, sighted volunteers picked up useful echolocation in about ten weeks.</p>
+        </article>
+      </div>
+
+      <p class="also"><b>Also real:</b> a woman who can smell Parkinson's years before diagnosis (her nose led chemists to the actual molecules behind the scent) <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6487537/">Trivedi 2019</a></span>; rare families who genuinely thrive on four hours of sleep (though if you think that's you, you are almost certainly just under-slept); and "super-recognizers" who never forget a face, one of whom identified about 180 riot suspects from CCTV that the police software flagged as one.</p>
+
+      <aside class="u-callout"><p class="u-callout-k">Mostly hype</p><p class="u-callout-body">Two "superpowers" that don't survive the evidence. Tetrachromacy, a fourth color receptor, is real genetics, but the famous "sees 100 million colors" is a back-of-envelope ceiling no one has measured, and exactly one person has ever passed the test for true four-channel vision. And the Wim Hof method rests on one genuine result, trained people briefly blunting an inflammation response, wrapped in a great deal of overclaim. The real ones above don't need the inflation.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ CLOSER ============================ -->
+    <section id="close" class="sec" aria-labelledby="close-h">
+      <div class="u-sechead"><p class="u-sechead-k">The far side</p><h2 id="close-h" class="u-sechead-h">All the way to the end of the range</h2></div>
+      <p>The thread through all of it is that the body runs on settings, and we live near the middle of every one without noticing the dial is there. Pain that can be switched off or jammed on. Reality assembled from parts that can come apart. Sleep that can be deleted. The same gene that means a life on fire, turned the other way, means a life with no pain at all.</p>
+      <p>None of these people are a different kind of human. They are the rest of us, with one dial turned to the end of its range, which is the only place you can ever really see how the dial works.</p>
+      <aside class="u-callout"><p class="u-callout-k">If you are the one in pain</p><p class="u-callout-body">A few of these conditions are linked to suicide for a plain reason: unrelenting pain or sleeplessness is dangerous on its own, apart from any sadness. If you are struggling, in the US you can call or text 988 for the Suicide and Crisis Lifeline, any hour.</p></aside>
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and how I checked them</h2></div>
+      <p class="src-note">This is a tour of edges, and edges attract hype, so each claim was run through a fact-check whose job was to refute it. Where the famous version is folklore (the numbered pain charts, the "sees 100 million colors" line, the blue-family particulars), the post says so. Many of these conditions are known from a handful of cases, so the rarity numbers are soft on purpose.</p>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 34 sources, grouped by wing</summary>
+      <div class="legend">
+        <span><span class="u-grade u-grade-a">strong</span> large study or consensus</span>
+        <span><span class="u-grade u-grade-b">good</span> one solid study</span>
+        <span><span class="u-grade u-grade-c">mixed</span> small, contested, or lore</span>
+        <span><span class="u-grade u-grade-d">thin</span> a single small claim</span>
+      </div>
+
+      <h3>The dial, and agony</h3>
+      <ol>
+        <li><b>Cox JJ, et al. (2006).</b> An SCN9A channelopathy causes congenital inability to experience pain. <i>Nature</i>. <a href="https://www.nature.com/articles/nature05413">nature.com</a></li>
+        <li><b>Lee D-H, et al. (2014).</b> Risk factors for suicidal ideation among patients with CRPS (n=39). <i>Psychiatry Investig</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3942549/">pmc</a></li>
+        <li><b>Burish MJ, et al. (2021).</b> Cluster headache is one of the most intensely painful human conditions (n=1,604). <i>Headache</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7898696/">pmc</a></li>
+        <li><b>Cleveland Clinic.</b> Erythromelalgia. <a href="https://my.clevelandclinic.org/health/diseases/22752-erythromelalgia">clevelandclinic.org</a></li>
+        <li><b>StatPearls.</b> Trigeminal Neuralgia. <a href="https://www.ncbi.nlm.nih.gov/books/NBK554486/">ncbi</a></li>
+      </ol>
+
+      <h3>Ecstasy</h3>
+      <ol start="6">
+        <li><b>Gschwind M, Picard F (2016).</b> Ecstatic epileptic seizures: a glimpse into the multiple roles of the insula. <i>Front Behav Neurosci</i>. <a href="https://www.frontiersin.org/journals/behavioral-neuroscience/articles/10.3389/fnbeh.2016.00021/full">frontiersin.org</a></li>
+        <li><b>Regard M, Landis T (1997).</b> "Gourmand syndrome": eating passion associated with right anterior lesions. <i>Neurology</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/9521298/">pubmed</a></li>
+        <li><b>Salimpoor VN, et al. (2011).</b> Anatomically distinct dopamine release during anticipation and experience of peak emotion to music. <i>Nat Neurosci</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21217764/">pubmed</a></li>
+        <li><b>Kringelbach ML, Berridge KC (2010).</b> The functional neuroanatomy of pleasure and happiness. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3008353/">pmc</a></li>
+      </ol>
+
+      <h3>No off switch</h3>
+      <ol start="10">
+        <li><b>StatPearls.</b> Fatal Familial Insomnia. <a href="https://www.ncbi.nlm.nih.gov/books/NBK482208/">ncbi</a></li>
+        <li><b>Feinstein JS, et al. (2011).</b> The human amygdala and the induction and experience of fear. <i>Curr Biol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3030206/">pmc</a></li>
+        <li><b>Feinstein JS, et al. (2013).</b> Fear and panic in humans with bilateral amygdala damage. <i>Nat Neurosci</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/23377128/">pubmed</a></li>
+        <li><b>StatPearls.</b> Lesch-Nyhan Syndrome. <a href="https://www.ncbi.nlm.nih.gov/books/NBK556079/">ncbi</a></li>
+        <li><b>Goldstein I, et al. (2021).</b> ISSWSH consensus on persistent genital arousal disorder / genito-pelvic dysesthesia. <a href="https://pubmed.ncbi.nlm.nih.gov/33612417/">pubmed</a></li>
+      </ol>
+
+      <h3>Sleep gone strange</h3>
+      <ol start="15">
+        <li><b>Postuma RB, et al. (2019).</b> Risk and predictors of dementia and parkinsonism in idiopathic REM sleep behaviour disorder (n=1,280). <i>Brain</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30789229/">pubmed</a></li>
+        <li><b>Dauvilliers Y, et al. (2014).</b> Cataplexy: clinical aspects, pathophysiology and management. <i>Nat Rev Neurol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8788644/">pmc</a></li>
+        <li><b>Sharpless BA, Barber JP (2011).</b> Lifetime prevalence rates of sleep paralysis: a systematic review. <i>Sleep Med Rev</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3156892/">pmc</a></li>
+        <li><b>Miglis MG, Guilleminault C (2014).</b> Kleine-Levin syndrome: a review. <i>Nat Sci Sleep</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3901778/">pmc</a></li>
+        <li><b>StatPearls.</b> Exploding Head Syndrome. <a href="https://www.ncbi.nlm.nih.gov/books/NBK560817/">ncbi</a></li>
+      </ol>
+
+      <h3>The uncanny mind</h3>
+      <ol start="20">
+        <li><b>Charland-Verville V, Zeman A, Laureys S, et al. (2013).</b> Brain dead yet mind alive: a PET case study of Cotard's. <i>Cortex</i>. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0010945213000737">sciencedirect</a></li>
+        <li><b>Hirstein W, Ramachandran VS (1997).</b> Capgras syndrome: a novel probe for face recognition and familiarity. <i>Proc R Soc B</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1688258/">pmc</a></li>
+        <li><b>Sarva H, et al. (2014).</b> The alien hand syndrome (review). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4059570/">pmc</a></li>
+        <li><b>StatPearls.</b> Charles Bonnet Syndrome. <a href="https://www.ncbi.nlm.nih.gov/books/NBK585133/">ncbi</a></li>
+        <li><b>Acquired language disorders beyond aphasia (2025).</b> Foreign accent syndrome review. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11936979/">pmc</a></li>
+      </ol>
+
+      <h3>The body remade</h3>
+      <ol start="25">
+        <li><b>GeneReviews.</b> Fibrodysplasia Ossificans Progressiva. <a href="https://www.ncbi.nlm.nih.gov/books/NBK558090/">ncbi</a></li>
+        <li><b>Mütter Museum.</b> FOP and Harry Eastlack. <a href="https://muttermuseum.org/stories/posts/fop-and-harry-eastlack/">muttermuseum.org</a></li>
+        <li><b>Blue Fugates of Kentucky.</b> Family history and Cawein (1964) diagnosis. <a href="https://en.wikipedia.org/wiki/Blue_Fugates">overview</a></li>
+        <li><b>GeneReviews.</b> Hutchinson-Gilford Progeria Syndrome. <a href="https://www.ncbi.nlm.nih.gov/books/NBK1121/">ncbi</a></li>
+        <li><b>Julia Pastrana.</b> Biography and 2013 repatriation. <a href="https://en.wikipedia.org/wiki/Julia_Pastrana">overview</a></li>
+      </ol>
+
+      <h3>Real superpowers</h3>
+      <ol start="30">
+        <li><b>Cox JJ, et al. (2006).</b> SCN9A loss of function and congenital insensitivity to pain. <i>Nature</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/17167479/">pubmed</a></li>
+        <li><b>LePort AKR, et al. (2012).</b> Behavioral and neuroanatomical investigation of highly superior autobiographical memory (HSAM). <i>Neurobiol Learn Mem</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3764458/">pmc</a></li>
+        <li><b>Thaler L, Arnott SR, Goodale MA (2011).</b> Neural correlates of natural human echolocation. <i>PLoS ONE</i>. <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020162">plos</a></li>
+        <li><b>Trivedi DK, et al. (Barran group, 2019).</b> Discovery of volatile biomarkers of Parkinson's from sebum. <i>ACS Cent Sci</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6487537/">pmc</a></li>
+        <li><b>Jordan G, Deeb SS, Bosten JM, Mollon JD (2010).</b> The dimensionality of color vision in carriers of anomalous trichromacy (tetrachromacy, the cDa29 case). <i>J Vis</i>. <a href="https://vision.psychol.cam.ac.uk/jdmollon/papers/JordanDeebBostenMollonOnTetrachromacy.pdf">cambridge</a></li>
+      </ol>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script>
+  /* Per-post: scroll-reveal + the dial figure's draw-in. No-JS safe (CSS only
+     hides under html.js), and a 4s watchdog guarantees nothing is left hidden. */
+  (function () {
+    'use strict';
+    var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    function fire(el) {
+      el.classList.add('in');
+      Array.prototype.slice.call(el.querySelectorAll('.grow-b')).forEach(function (g, i) {
+        setTimeout(function () { g.classList.add('go'); }, 90 + i * 70);
+      });
+    }
+    if (!('IntersectionObserver' in window)) {
+      reveals.forEach(fire);
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      reveals.forEach(function (el) { io.observe(el); });
+      setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
+    }
+  })();
+  </script>
+</body>
+</html>
