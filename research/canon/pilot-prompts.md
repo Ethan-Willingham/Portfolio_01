@@ -33,7 +33,7 @@ Translations to stack (all sources are fair game, name every one): Max Muller (1
 
 Frame: the accessible heart of the older (Theravada) canon. Note where Mahayana would diverge, but anchor on the Pali Dhammapada. Use the Key / Complete / All view toggle like the Tao post; not every verse needs a breakdown, only the keystones.
 
-When it is built and self-edited against VOICE.md, add the homepage card and og:image, then commit and push to main with explicit paths.
+When it is built and self-edited against VOICE.md, add the homepage card and og:image (the thumbnail must be a real sourced image, named, like the Tao card's Zhang Lu painting of Laozi, never generative), then commit and push to main with explicit paths.
 
 ---
 
@@ -64,7 +64,7 @@ For the hybrid sidebars, stack Ziporyn against Burton Watson, A.C. Graham, James
 
 Note the authorship layering (Inner vs Outer vs Miscellaneous chapters) the way CANON.md says to name the contest. Play with the contrast to the Tao Te Ching: if the Tao is the gnomic manual, the Zhuangzi is the laughter.
 
-When built and self-edited against VOICE.md, add the homepage card and og:image, commit and push to main with explicit paths.
+When built and self-edited against VOICE.md, add the homepage card and og:image (the thumbnail must be a real sourced image, named, like the Tao card's Zhang Lu painting of Laozi, never generative), commit and push to main with explicit paths.
 
 ---
 
@@ -90,4 +90,4 @@ The load-bearing ideas (verify and expand):
 
 Use Deutsch's own chapter-end "Summary," "Terminology," and "Meanings of 'the beginning of infinity'" sections as scaffolding; they are his own self-distillations. All quotation is fair game, just locate every quote by page or chapter.
 
-Match his energy: combative, precise, allergic to vagueness. When built and self-edited against VOICE.md, add the homepage card and og:image, commit and push to main with explicit paths.
+Match his energy: combative, precise, allergic to vagueness. When built and self-edited against VOICE.md, add the homepage card and og:image (the thumbnail must be a real sourced image, named, like the Tao card's Zhang Lu painting of Laozi, never generative), commit and push to main with explicit paths.

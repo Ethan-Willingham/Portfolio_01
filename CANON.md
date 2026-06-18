@@ -151,7 +151,10 @@ engine, not across, so the three pilots are independent and can run in parallel.
 3. Build the post on the assigned engine, in the site shell, reusing the Tao
    post's structure and the component kit.
 4. Add the homepage card (follow the Tao card in `index.html`), the og:image
-   block, and a thumbnail.
+   block, and a thumbnail. **The thumbnail must be a real sourced image** (a
+   relevant painting, photograph, or artwork, any license, named), never
+   generative or procedural, the way the Tao card uses Zhang Lu's painting of
+   Laozi. Source it during research and note where it came from.
 5. Self-edit against `VOICE.md` line by line.
 6. Commit and push to `main` with explicit paths (`git add <files>`, never `-A`,
    this is a shared checkout).
