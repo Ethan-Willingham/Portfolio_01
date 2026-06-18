@@ -350,7 +350,7 @@
   <header class="cover">
     <div class="eyebrow">On Warehouses, Factories &amp; the Software That Runs Them</div>
     <h1>The Brain Behind the Warehouse</h1>
-    <p class="dek">Behind every "your order has shipped" is a building you have probably never seen, anywhere from a spare back room to a place the size of a small town, and a piece of software that knows where every item inside it is. This is how that software works, from the receiving dock to the factory line, explained from the ground up, so the next time it comes up you can follow every word.</p>
+    <p class="dek">Behind every "your order has shipped" is a building you have probably never seen, anywhere from a spare back room to a place the size of a small town, and a piece of software that knows where every item inside it is sitting right now, to the shelf. This is how that software works, from the receiving dock to the factory line, explained from the ground up, so the next time it comes up you can follow every word.</p>
     <svg class="cover-motif" viewBox="0 0 200 78" aria-hidden="true">
       <path class="floor" d="M6,68 L194,68"/>
       <path class="route" d="M12,60 L48,60 L70,30 L104,30 L104,60 L150,60 L150,32 L188,32"/>
@@ -370,8 +370,8 @@
 
     <!-- ============ INTRO ============ -->
     <div class="lede first reveal">
-      <p>You tap "buy," and a few hours later a phone buzzes in a building you will never see. Somewhere in a county you have never driven through, in a space that might be a back room behind a shop or might be longer than a runway, a person you will never meet walks to a shelf, scans a barcode, drops your thing in a tote, and a screen somewhere updates by one. That building might hold a few hundred kinds of item or a few million, and it knows, to the shelf, where every single one of them is sitting right now. That knowing is not a binder and it is not a person's memory. It is a piece of software, and this is a tour of how it thinks.</p>
-      <p>The software is a <b>Warehouse Management System</b>, a WMS, and an entire industry of companies sells it, installs it, and keeps it running. If you want to understand the modern economy of stuff, the factory that makes it and the warehouse that ships it, the fastest way in is through the system that runs the floor. By the end of this you should be able to stand in a distribution center, follow a box from the truck to the door, and understand every step, well enough to be the person a warehouse calls when their software starts misbehaving.</p>
+      <p>A single building can hold a few million kinds of thing and know, to the shelf, where every one of them is sitting right now. Not in a binder, and not in a foreman's head. In a piece of software. You tap "buy," and a few hours later a phone buzzes in a county you have never driven through, in a space that might be a back room behind a shop or might be longer than a runway. A person you will never meet walks to a shelf, scans a barcode, drops your thing in a tote, and a screen updates by one. This is a tour of how that software thinks.</p>
+      <p>It is a <b>Warehouse Management System</b>, a WMS, and an entire industry of companies sells it, installs it, and keeps it running. To understand the modern economy of stuff, the factory that makes it and the warehouse that ships it, the fastest way in is the system that runs the floor. By the end of this you should be able to stand in a distribution center, follow a box from the truck to the door, and understand every step, well enough to be the person a warehouse calls when their software starts misbehaving.</p>
     </div>
 
     <div class="dlnum-wrap dlnum-2up reveal">
@@ -605,7 +605,7 @@
         <div class="concept"><div class="ct">Work in process</div><div class="cd">The recipe half-assembled: units on the line that are no longer loose parts and not yet finished goods. Let <b>WIP</b> pile up and it hides problems.</div></div>
       </div>
       <p>When the unit is finished, it is received back into the warehouse as a new item, exactly the handoff in the diagram above. The stakes on the line, though, are different. In distribution a slow pick means a late package. On a car line, a part that arrives late or out of sequence stops the line, and a stopped automotive line is measured in many thousands of dollars per minute. That is why high-end plants run <b>just in sequence</b>, parts arriving in the exact order the line will use them.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">$10&ndash;22<span class="u-bignum-u"> k / min</span></span><span class="u-bignum-cap">What a stopped assembly line can cost at a major automaker. In a plant, the warehouse system is not shipping packages. It is keeping a very expensive machine from going quiet.</span><span class="u-bignum-src">Widely cited industry figure</span></div>
+      <div class="u-bignum reveal"><span class="u-bignum-fig">$10&ndash;22<span class="u-bignum-u"> k / min</span></span><span class="u-bignum-cap">What a stopped assembly line can cost at a major automaker. In a plant, the warehouse system has one job: keep a very expensive machine from going quiet.</span><span class="u-bignum-src">Widely cited industry figure</span></div>
       <aside class="u-callout u-move"><p class="u-callout-k">The WMS pro's read</p><p class="u-callout-body">A manufacturing customer does not care about "orders shipped." They care about the line never starving. Reframe every conversation around feeding production on time, and you are speaking to their actual fear.</p></aside>
     </section>
 
@@ -733,7 +733,7 @@
       <p class="map-note">Below them sit the floor super-users, the lead pickers and supervisors who become your champions. Win them and adoption takes care of itself. Lose one to turnover and you have lost your eyes on the account.</p>
 
       <div class="fyi-col">
-        <p>The hardest stretch is the implementation, and it is famously rough. A WMS go-live can take many months, routinely runs over budget, and culminates in a cutover that is genuinely stressful, the day the old system goes dark and productivity dips before it climbs. The phases are predictable, and two of them are where reputations are made or lost.</p>
+        <p>The hardest stretch is the implementation, and it is famously rough. A WMS go-live can take many months, routinely runs over budget, and ends in a cutover, the day the old system goes dark and productivity drops before it climbs. The phases are predictable, and two of them are where reputations are made or lost.</p>
       </div>
 
       <div class="anat reveal">
@@ -749,7 +749,7 @@
       <div class="fyi-col">
         <p>Once they are live, your job becomes a number. The most important thing you do in the first ninety days is the least glamorous: <b>write down the baseline.</b> Capture their inventory accuracy, their picks per hour, their order accuracy <em>before</em> go-live, because without it you can never prove what you delivered, and memory always edits the past in the customer's favor. From then on every review is a before-and-after with dollar signs, and every dollar you can show is a wall against the competitor whispering in the next building over.</p>
         <p>Churn in this world is rarely about price. It is a failed go-live that never healed, a champion who left, an acquisition that standardizes on someone else, or an ROI nobody ever bothered to measure. And the flip side is the happy truth of this category: a WMS with years of configuration, dozens of integrations, and hundreds of trained users is nearly impossible to tear out. The switching cost is your moat. Expansion, more sites, more modules, labor, slotting, automation, is the easiest motion you have, because the system is already the floor.</p>
-        <p>Which is the quiet point of this whole tour. The credibility that makes a great warehouse CSM is not a personality you are born with. It is this: knowing how the building thinks, well enough to stand on the floor and be useful. And that is learnable. You just did most of it.</p>
+        <p>Which is the quiet point of this whole tour. The credibility that makes a great warehouse CSM is not charm or a born knack for the room. It is knowing how the building thinks, well enough to stand on the floor and be useful. That part is learnable. You just did most of it.</p>
       </div>
     </div>
   </section>
