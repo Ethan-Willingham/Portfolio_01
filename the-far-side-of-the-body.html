@@ -139,6 +139,11 @@
   #sources h3 { font-family: var(--font-mono); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 1.4rem 0 0.5rem; }
   @media (min-width: 700px) { #sources ol { columns: 2; column-gap: 2.2rem; } #sources li { break-inside: avoid; } }
 
+  /* ---------- THUMBNAIL CREDIT ---------- */
+  .thumb-credit { font-family: var(--font-body); font-size: 0.74rem; line-height: 1.5; color: var(--text-faint); max-width: var(--measure); margin: 1.8rem auto 0; padding: 0 var(--gutter); }
+  .thumb-credit a { color: var(--text-faint); border-bottom: 1px dotted rgba(120,134,120,0.5); text-decoration: none; }
+  .thumb-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
   /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
   @media all {
     html.js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
@@ -524,6 +529,8 @@
       </ol>
       </details>
     </section>
+
+    <p class="thumb-credit">Thumbnail and cover image: <a href="https://commons.wikimedia.org/wiki/File:Male_skeleton_with_a_rhinoceros_Wellcome_L0023550.jpg">"Male skeleton with a rhinoceros"</a> from Bernhard Siegfried Albinus and Jan Wandelaar, <i>Tabulae sceleti et musculorum corporis humani</i> (1747). Public domain, via the Wellcome Collection.</p>
 
   </main>
 
