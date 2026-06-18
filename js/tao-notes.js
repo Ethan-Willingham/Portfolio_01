@@ -170,6 +170,208 @@ window.TAO_NOTES = {
       { zh: "信言不美", gloss: "trustworthy words are not beautiful", note: "The last chapter's first line, and a quiet knife aimed at every translator. The pretty renderings of this exact sentence are, by its own rule, the suspect ones. The flat ones are keeping faith with it." }
     ],
     read: "A book that spent eighty chapters in gorgeous paradox ends by telling you not to trust gorgeous writing. It is either the most honest sentence in the text or the most slippery, and it knew that when it wrote it."
+  },
+
+  3: {
+    title: "Empty minds, full bellies",
+    gist: "Stop honoring the clever and people stop competing. Stop prizing rare goods and they stop stealing. The chapter's recipe for a calm society is to empty people's heads and fill their stomachs, weaken their ambition and strengthen their bones. It is the book's most uncomfortable political idea, and it does not flinch.",
+    splits: [
+      { zh: "虛其心，實其腹", gloss: "empty the heart, fill the belly", note: "<em>Xin</em> is heart and mind at once, so 'empty their hearts' and 'empty their minds' are the same line read two ways. Translators who write 'minds' make it sound like crowd control; ones who write 'hearts' make it sound like emptying out craving. The Chinese means both." }
+    ],
+    read: "Read as advice to a ruler it is chilling. Read as advice to yourself, empty the wanting and feed the body, it is almost the opposite. The book lets you take it either way."
+  },
+
+  4: {
+    title: "Empty, and never used up",
+    gist: "The Tao is empty, and you can pour from it forever without filling it. It is older than any god, the chapter says, blunting its own sharpness and settling its own dust until it is barely there at all. This is the first time the book calls the way an emptiness rather than a thing.",
+    splits: [
+      { zh: "象帝之先", gloss: "before the ancestor-god", note: "The Tao is older than <em>Di</em>, the high god or first ancestor. Legge softens it to 'God'; others keep 'the Ancestor' or 'the gods.' Whatever you call it, the claim is bold: the way came before the divine." }
+    ],
+    read: "A bucket with no bottom is the image. You keep drawing and it never runs low, because there was never anything in it to begin with."
+  },
+
+  5: {
+    title: "Heaven is not kind",
+    gist: "Heaven and earth are not benevolent; they treat all things as straw dogs, the ritual figures you burn after the ceremony and forget. The sage treats people the same way. It sounds cruel and is meant to: nature plays no favorites, and the chapter says that even-handed indifference is the higher kindness.",
+    splits: [
+      { zh: "芻狗", gloss: "chu gou: straw dogs", note: "Straw dogs were made for a sacrifice, honored for a day, then thrown out. 'Not benevolent' (不仁) uses Confucius's prize word <em>ren</em> and denies it to heaven itself. Translators who blunt this into 'impartial' lose the deliberate shock." },
+      { zh: "天地之間，其猶橐籥乎", gloss: "the space between is like a bellows", note: "Heaven and earth work like a bellows: empty, yet the more it moves the more it gives. The emptiness is the engine again." }
+    ],
+    read: "The most bracing chapter in the book. It is not saying the universe is hostile. It is saying it does not care about you in particular, and that this is exactly why it can hold everyone."
+  },
+
+  6: {
+    title: "The valley spirit",
+    gist: "The valley spirit never dies; the chapter calls it the mysterious female, the gateway everything is born through. It is the book's image of the source as endlessly generative and never used up, drawn on forever without effort.",
+    splits: [
+      { zh: "谷神", gloss: "gu shen: valley spirit", note: "<em>Valley</em> because it is low, empty, and receptive; <em>spirit</em> because it is alive and inexhaustible. Some keep 'valley spirit,' others reach for 'spirit of the fountain.' The low empty place that gives birth to everything is the recurring shape of the Tao." },
+      { zh: "玄牝", gloss: "xuan pin: mysterious female", note: "The 'dark female' or 'mysterious womb.' This is the book at its most openly feminine about the source, and prim translations that neuter it lose the point." }
+    ],
+    read: "Six lines, almost an incantation. It is one of the oldest pieces of the text, and it reads like something chanted long before it was written down."
+  },
+
+  7: {
+    title: "Why heaven lasts",
+    gist: "Heaven and earth last forever, and the reason is that they do not live for themselves. So the sage puts himself last and ends up first, stays out of it and so is preserved. Selflessness here is not a virtue you practice; it is the mechanism by which things endure.",
+    splits: [
+      { zh: "以其不自生", gloss: "because they do not live for themselves", note: "The claim is causal, not moral: heaven endures <em>because</em> it does not strive to. Translators who phrase it as 'unselfish' make it sound like good behavior; the text means it as physics." }
+    ],
+    read: "Put yourself last and you come out ahead. The book states it flat, as a fact about how the world works, not as a reward for being nice."
+  },
+
+  9: {
+    title: "Know when to stop",
+    gist: "Fill a cup to the brim and it spills. Sharpen a blade to its keenest and it dulls. Pile up gold and you cannot guard it. The chapter's one instruction is to stop in time: do the work, then step back. Holding on past the peak is how you lose it.",
+    splits: [
+      { zh: "功遂身退", gloss: "work done, withdraw yourself", note: "Retire when the job is finished. Some read it as career advice, some as spiritual detachment. The phrase is plain and most translators keep it plain, which is the right call." }
+    ],
+    read: "The whole chapter is the feeling of a glass filled one pour too far. You already know it. The book just names it."
+  },
+
+  13: {
+    title: "Favor is as bad as disgrace",
+    gist: "Favor and disgrace are both alarming, the chapter says, because both put you at the mercy of someone else's opinion. The reason we suffer is that we have a self to protect; lose the obsession with yourself and there is nothing left to threaten. Only then can you be trusted with the world.",
+    splits: [
+      { zh: "寵辱若驚", gloss: "favor and disgrace are both alarms", note: "Being praised should worry you as much as being shamed, because both mean you are hostage to how others see you. Translators who treat favor as good and disgrace as bad miss that the chapter brackets them together." }
+    ],
+    read: "A knotty chapter most translators wrestle with. The core is simple though: the self you are defending is the thing making you afraid."
+  },
+
+  16: {
+    title: "Return to the root",
+    gist: "Empty yourself completely, hold still, and watch all things rise and return. Everything goes back to where it came from, and that going-back is called stillness. Know this pattern and you are steady; miss it and you blunder into trouble.",
+    splits: [
+      { zh: "歸根", gloss: "gui gen: return to the root", note: "Everything returns to its root, and the root is stillness. <em>Return</em> and <em>the constant</em> (常) stack up in these lines, and translators differ on whether this is about death, cycles, or just calm. It is probably all three." }
+    ],
+    read: "The book's clearest meditation instruction. Sit still, stop adding, and watch things come and go. The stillness is not empty; it is where everything is headed."
+  },
+
+  20: {
+    title: "I alone am dull",
+    gist: "Cut off learning and your worries end, the chapter opens, then drops into the most personal passage in the book. Everyone else is bright, busy, sure of themselves; I alone am dull, drifting, like a baby that cannot yet smile. It is whoever wrote this sounding lonely and a little lost, and owning it.",
+    splits: [
+      { zh: "我獨異於人", gloss: "I alone am different", note: "The 'I' here is startling. After nineteen chapters of cool impersonal wisdom, a voice appears and says it feels like a fool among clever people. Translators who keep the bewildered tone land it; ones who smooth it into serene detachment lose the ache." }
+    ],
+    read: "The one chapter where the book stops sounding like an oracle and starts sounding like a person who does not fit in. It is oddly moving, and the easiest chapter to like."
+  },
+
+  22: {
+    title: "Yield and stay whole",
+    gist: "Bend and you stay whole; empty out and you get filled; wear out and you get renewed. The chapter runs a list of these reversals and then names the lesson: the sage does not show off, does not insist he is right, and so nobody can argue with him.",
+    splits: [
+      { zh: "曲則全", gloss: "yield and stay whole", note: "The crooked tree survives the axe; the one that bends does not break. Translators render 曲 as bend, yield, or 'be crooked.' The old saying it quotes is so compressed that the chapter itself stops to explain it, which is unusual." }
+    ],
+    read: "The willow, not the oak, stated centuries before the proverb. Give way on purpose, and you keep what the rigid thing loses."
+  },
+
+  25: {
+    title: "Something formed in the chaos",
+    gist: "Before heaven and earth there was something whole and formless, silent and standing alone. The chapter does not know its name, so it calls it the Way for lack of anything better, then climbs a ladder: man follows earth, earth follows heaven, heaven follows the Way, and the Way follows only itself.",
+    splits: [
+      { zh: "道法自然", gloss: "the Way follows ziran", note: "The famous last line. <em>Ziran</em> means 'self-so,' nature, the way a thing is on its own. So the Way follows nothing outside itself; it follows its own nature. This phrase is one of the most quoted in Chinese thought, and 'follows what is natural' barely contains it." }
+    ],
+    read: "The book naming the unnameable and admitting it is cheating. 'I do not know its name, so I call it the Way' is one of the most honest lines in any scripture."
+  },
+
+  28: {
+    title: "Know the male, keep the female",
+    gist: "Know the masculine but hold to the feminine, the chapter says, and become the valley the whole world flows into. Know the bright but keep to the dark, know honor but hold to disgrace. Each time the move is the same: understand the strong side, choose the soft one, and become a vessel everything returns to.",
+    splits: [
+      { zh: "知其雄，守其雌", gloss: "know the male, keep the female", note: "Not rejecting strength, but knowing it and choosing yielding anyway. Translators differ on 'keep,' 'hold to,' 'cleave to.' The deliberate choice of the lower, softer side is the move the whole book keeps making." }
+    ],
+    read: "Strength is knowing where the power is and standing somewhere else. The chapter is almost a training drill for that instinct."
+  },
+
+  37: {
+    title: "The Way does nothing",
+    gist: "The Way never does anything, and nothing is left undone. The chapter ends the first half of the book by handing this to rulers: govern like that and the people settle on their own; when desire stirs, quiet it with the nameless and the simple, and stillness returns.",
+    splits: [
+      { zh: "道常無為而無不為", gloss: "the Way does nothing, yet nothing is undone", note: "The headline paradox of <em>wu wei</em>, stated as a law. The Mawangdui texts phrase this line differently, and a few scholars think the crisp 'does nothing yet nothing undone' is a later polish. Henricks, working from the silk manuscripts, shows the variant." }
+    ],
+    read: "The hinge between the book's two halves. The Tao does nothing and everything gets done, and the chapter quietly suggests a government could work the same way."
+  },
+
+  40: {
+    title: "Return, and weakness",
+    gist: "Returning is how the Way moves; weakness is how it works. The whole book compresses into those two lines. Then the last one: everything is born from being, and being is born from nothing. A handful of characters hold the book's entire cosmology.",
+    splits: [
+      { zh: "反者道之動", gloss: "reversal is the movement of the Way", note: "<em>Fan</em> means both 'return' and 'reverse.' Things turn into their opposites and circle back; that turning is the Way in motion. The shortest chapter, and one of the densest." },
+      { zh: "有生於無", gloss: "being is born from nothing", note: "Being comes out of non-being. This is the metaphysical claim under the whole text, stated once, flat, and never argued. Translators who keep it bare serve it best." }
+    ],
+    read: "The book's smallest chapter and maybe its biggest. Everything that rises will turn and come back, and it all came from nothing in the first place."
+  },
+
+  43: {
+    title: "The soft rides the hard",
+    gist: "The softest thing in the world rides over the hardest. What has no substance slips into what has no gaps. This, the chapter says, is how it knows the value of doing nothing, the teaching without words that almost no one manages.",
+    splits: [
+      { zh: "無有入無間", gloss: "the formless enters where there is no gap", note: "Water seeping into stone, air filling a sealed room. Translators picture it differently, but the point holds: the thing with no edges goes where the solid thing cannot." }
+    ],
+    read: "Chapter eight's water argument, sharpened to a single image. The soft does not push through the hard; it goes around, under, and into it."
+  },
+
+  44: {
+    title: "Your name or yourself",
+    gist: "Your fame or your body, which is closer to you? Your body or your wealth, which matters more? The chapter asks three blunt questions and answers them: love things too much and you pay dearly, hoard them and you lose big. Know when you have enough and nothing can disgrace you.",
+    splits: [
+      { zh: "知足", gloss: "zhi zu: know enough", note: "'Knowing when you have enough' is one of the book's plainest and most repeated ideas, and it survives every translation intact. Chapters 33, 44, and 46 all turn on it." }
+    ],
+    read: "Three questions you could ask yourself today. The book rarely gets this practical, and never this close to a personal-finance pamphlet."
+  },
+
+  47: {
+    title: "Without going out the door",
+    gist: "Without going out your door you can know the world; without looking out the window you can see the way of heaven. The further you travel, the chapter says, the less you know. So the sage knows without going, sees without looking, and finishes without forcing.",
+    splits: [
+      { zh: "不行而知", gloss: "know without traveling", note: "Read flat it sounds like an argument against curiosity. Read as the book intends, it is about an inner pattern you cannot collect by running around outside. Translators who soften it to 'you need not travel' miss the deliberate provocation." }
+    ],
+    read: "The chapter a frequent flyer will resist hardest. It is not against the world; it is saying the thing worth knowing is not somewhere else."
+  },
+
+  57: {
+    title: "Govern by not governing",
+    gist: "Run a country with straightforwardness, fight a war with surprise, but win the world by leaving it alone. The more rules and weapons and clever schemes, the chapter says, the more thieves and chaos you get. So the sage does nothing and the people transform themselves.",
+    splits: [
+      { zh: "我無為而民自化", gloss: "I do nothing and the people transform themselves", note: "The political payoff of <em>wu wei</em>. <em>Zi hua</em>, self-transforming, is the same self-so root from chapters 17 and 25. The less the ruler does, the more the people become themselves." }
+    ],
+    read: "The book's governing philosophy in one chapter: every law breeds the crime it forbids, so stop adding laws. It is either naive or a couple thousand years early."
+  },
+
+  63: {
+    title: "Do the hard thing while it's small",
+    gist: "Act without acting, taste without tasting, the chapter opens, then turns practical. Handle the difficult while it is still easy; do the great while it is still small. The hardest things in the world began easy, the biggest began tiny. So the sage never tackles anything big, and that is how he gets big things done.",
+    splits: [
+      { zh: "圖難於其易", gloss: "plan the hard while it is easy", note: "Catch the problem while it is small. This is the chapter that turns the book's mysticism into something a manager could pin to a wall, and the translations barely diverge because the advice is so concrete." }
+    ],
+    read: "The most actionable chapter in the book. Deal with things while they are still small and nothing ever becomes a crisis. It pairs straight into the next one."
+  },
+
+  64: {
+    title: "A thousand miles, one step",
+    gist: "What is still is easy to hold; what has not started is easy to plan for. A tree you can barely reach around grew from a sprout; a tower nine stories high rose from a basket of earth; a journey of a thousand miles starts under your feet. Catch things early, the chapter says, and do not wreck them near the finish by grabbing too hard.",
+    splits: [
+      { zh: "千里之行，始於足下", gloss: "a thousand-mile journey starts beneath the feet", note: "The most quoted line in the book, usually clipped to 'a journey of a thousand miles begins with a single step.' The Chinese is more literal: it begins <em>under your foot</em>, where you already stand. The popular version adds a 'step' that is not quite there." },
+      { zh: "常於幾成而敗之", gloss: "they fail just short of finishing", note: "People ruin things right before they are done, by forcing the end. 'Be as careful at the finish as at the start' is the chapter's quiet warning." }
+    ],
+    read: "Everyone knows the thousand-mile line. Almost nobody knows it comes wrapped in a warning about the other end: how people blow it in the last stretch by trying too hard."
+  },
+
+  66: {
+    title: "Why the sea rules the rivers",
+    gist: "The rivers and the sea rule the hundred valley streams because they lie below them. Water runs downhill, so the lowest place collects the most. To lead people, the chapter says, you have to speak beneath them and walk behind them, and then they carry you without feeling the weight.",
+    splits: [
+      { zh: "以其善下之", gloss: "because it is good at being low", note: "The sea is king of the valleys because it puts itself lowest. <em>Xia</em>, below, does the work the whole book gives to water: power through lowness. Translators keep it because the image does the explaining." }
+    ],
+    read: "Leadership as gravity. You do not rise above people to lead them; you get under them, and they flow to you on their own."
+  },
+
+  77: {
+    title: "Heaven draws a bow",
+    gist: "The way of heaven is like stringing a bow: the high gets pulled down, the low gets raised, the long is shortened and the short is lengthened. Heaven takes from those who have too much and gives to those who have too little. People do the opposite, the chapter notes, stripping the poor to serve the rich.",
+    splits: [
+      { zh: "損有餘而補不足", gloss: "take from the excess, fill the lack", note: "Heaven's way is to level; the human way is to pile up. This is the book's sharpest line about inequality, and unusually direct about it. Translators rarely soften this one, because the contrast is the point." }
+    ],
+    read: "The closest the book comes to social criticism. Nature redistributes; people hoard. The chapter sets the two side by side and lets the gap speak."
   }
 
 };
