@@ -237,9 +237,9 @@
   .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; }
   .cv { position: relative; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.85rem 0.8rem; background: var(--ma-card); border: 1px solid var(--ma-hair); border-radius: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.16), 0 5px 14px -8px rgba(0,0,0,0.4); cursor: pointer; text-align: left; transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, background 0.25s ease, border-color 0.25s ease; will-change: transform; }
   @media (hover: hover) {
-    /* lift off the page toward the reader: a small rise + grow, with a soft elevation shadow beneath */
-    .cv:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 10px 22px -8px rgba(0,0,0,0.5), 0 2px 6px -2px rgba(0,0,0,0.3); background: var(--ma-card-hi); border-color: var(--ma-hair-2); z-index: 3; }
-    .cv:active { transform: translateY(-1px) scale(1.01); transition-duration: 0.12s; }
+    /* a gentle hover: a small rise, a whisper of grow, a faint shadow. kept deliberately quiet. */
+    .cv:hover { transform: translateY(-2px) scale(1.012); box-shadow: 0 3px 9px -5px rgba(0,0,0,0.3); background: var(--ma-card-hi); border-color: var(--ma-hair-2); z-index: 2; }
+    .cv:active { transform: translateY(-1px); transition-duration: 0.12s; }
   }
   .cv-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
   .cv-chip { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; font-family: var(--font-body); font-size: 0.68rem; font-weight: 600; color: var(--text-dim); }
