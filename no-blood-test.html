@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Book With No Blood Test</title>
+  <meta name="description" content="A sourced field guide to the DSM, psychiatry's manual of about three hundred disorders. Why not one of them can be proven by a test (ADHD and autism included), what real proof looks like next to a checklist, where addiction sits, and how sure you should be that a diagnosis is yours.">
+  <meta property="og:title" content="The Book With No Blood Test">
+  <meta property="og:description" content="Psychiatry's manual lists about three hundred ways a mind can go wrong, and cannot prove a single one of them with a test. A tour of the catalog, the conditions medicine can prove cold instead, and how sure you should be that a label is you.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/no-blood-test.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/no-blood-test-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="800">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/no-blood-test-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE BOOK WITH NO BLOOD TEST
+     A sourced field guide to the DSM. Spine: nothing in the
+     manual is provable by a test; each wing of conditions is
+     paired with one condition medicine can prove cold. Same site
+     shell (forest green, parchment, Century Supra / Segoe UI /
+     Commit Mono) and the same components as the other field
+     guides, plus two of its own: condition cards (.dxgrid/.dx)
+     and the "what proof looks like" box (.proof). No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 780px;
+    --wide: 1080px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #D4C4A0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
+    --c-clay:  #cf9f78;
+    --c-brick: #b8796d;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+    --panel:   #2a322b;
+    --panel-2: #232a25;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
+  .sec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 1.5rem 0 0.4rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--sec-accent, var(--accent)); }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+
+  /* per-section color rhythm */
+  #restless { --sec-accent:#8fb3c7; } #breaking { --sec-accent:#b79bc4; } #body { --sec-accent:#9ec79a; }
+  #edges { --sec-accent:#cf9f78; } #wanting { --sec-accent:#d9978c; } #sure { --sec-accent:#dfc288; }
+
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- EVIDENCE GRADES ---------- */
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
+  .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
+  .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
+  .g-c { color: #f2d69d; background: rgba(230,192,116,0.20); border-color: rgba(230,192,116,0.55); }
+  .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
+  .src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; }
+  .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); }
+
+  /* ---------- DATA-VIZ FIGURES ---------- */
+  figure.viz { margin: clamp(2.2rem, 5vw, 3rem) 0; padding: 1.1em 1.2em 1.3em; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; }
+  figure.viz.breakout { padding: 1.3em 1.5em 1.5em; }
+  figure.viz > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  figure.viz figcaption { font-family: var(--font-heading); font-size: 1.06rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.3em; line-height: 1.3; }
+  figure.viz .viz-sub { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); margin-bottom: 0.9em; line-height: 1.45; }
+  figure.viz .viz-note { font-family: var(--font-body); font-size: 0.88rem; font-style: italic; color: var(--text-dim); margin-top: 0.85em; line-height: 1.5; }
+  figure.viz .viz-note b { font-style: normal; color: var(--text); }
+  .v-axis { fill: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
+  .v-axis-t { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; }
+  .v-grid { stroke: var(--c-grid); stroke-width: 1; }
+  .v-grid-s { stroke: var(--c-grid-strong); stroke-width: 1; }
+  .v-label { fill: var(--text); font-family: var(--font-body); font-size: 12px; }
+  .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-mono { font-family: var(--font-mono); }
+  @media (max-width: 720px) {
+    figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    figure.viz.scrollx > svg { min-width: 560px; }
+    figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
+  }
+
+  /* ---------- PHOTOGRAPHY (free-license, borderless, filling the frame) ---------- */
+  figure.photo { margin: clamp(2.2rem, 5vw, 3.4rem) 0; }
+  figure.photo img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  figure.photo figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.5; margin-top: 0.75em; text-wrap: pretty; }
+  figure.photo .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
+  figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
+  figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  figure.photo .cred a:hover { color: var(--accent-hover); }
+  figure.photo.inset img { max-width: 520px; margin-left: auto; margin-right: auto; }
+  figure.photo.inset-sm img { max-width: 360px; margin-left: auto; margin-right: auto; }
+  figure.photo.inset figcaption, figure.photo.inset-sm figcaption { max-width: 600px; margin-left: auto; margin-right: auto; }
+
+  /* ---------- CONDITION CARDS (.dxgrid / .dx) ---------- */
+  .dxgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 0.75rem; margin: 1.6em 0; }
+  .dx { padding: 0.9em 1.05em 1em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.14); display: flex; flex-direction: column; }
+  .dx-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6em; margin-bottom: 0.3em; }
+  .dx-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; color: var(--text-bright); line-height: 1.1; }
+  .dx-rate { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.04em; color: var(--sec-accent, var(--text-dim)); white-space: nowrap; text-align: right; }
+  .dx-what { font-family: var(--font-body); font-size: 0.92rem; line-height: 1.46; color: var(--text); margin: 0; }
+  .dx-line { font-family: var(--font-body); font-size: 0.86rem; line-height: 1.45; color: var(--text-dim); margin: 0.55em 0 0; }
+  .dx-line b { color: var(--text); font-weight: 600; }
+
+  /* ---------- WHAT PROOF LOOKS LIKE (.proof) ---------- */
+  .proof { margin: 2.2em 0; padding: 1.15em 1.35em 1.3em; background: var(--panel-2); border: 1px solid var(--rule); border-left: 3px solid var(--c-sky); border-radius: 10px; }
+  .proof-k { font-family: var(--font-mono); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-sky); display: flex; align-items: center; gap: 0.55em; margin-bottom: 0.55em; }
+  .proof-k::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c-sky); box-shadow: 0 0 0 3px rgba(143,179,199,0.18); }
+  .proof-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.32rem; color: var(--text-bright); margin: 0 0 0.15em; line-height: 1.12; }
+  .proof-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em; color: var(--c-sky); margin: 0 0 0.7em; }
+  .proof p { font-size: 0.98rem; line-height: 1.62; color: var(--text); margin: 0 0 0.7em; }
+  .proof p:last-child { margin-bottom: 0; }
+  .proof a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  .proof a:hover { border-bottom-color: var(--accent); }
+  .proof strong { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- HONEST NOTE ---------- */
+  .disclaimer { margin: 1.9em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
+  .disclaimer strong { color: var(--accent-hover); }
+
+  /* ---------- REFERENCES ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.7em; margin: 0.4em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.4em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources li.shead { list-style: none; margin: 1.3em 0 0.4em -1.7em; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  #sources li.shead:first-child { margin-top: 0.2em; }
+  #sources .lede { font-size: 0.98rem; }
+  #sources .legend { font-size: 0.8rem; gap: 0.4rem 1rem; margin: 1em 0 1.1em; }
+
+  /* ---------- ANIMATION ---------- */
+  @media all {
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+    .draw { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); }
+    .draw.go { animation: draw 1.6s var(--ease) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    .fade-el { opacity: 0; }
+    .fade-el.go { animation: fadeEl 0.9s ease forwards; }
+    @keyframes fadeEl { to { opacity: 1; } }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .draw { stroke-dashoffset: 0 !important; animation: none !important; }
+    .fade-el { opacity: 1 !important; animation: none !important; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    figure.viz, .proof, .dx, .disclaimer { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back be-back"><span class="pb-label">Home</span></a>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <h1 class="hero-title">The Book With No Blood Test</h1>
+    <p class="hero-dek">Psychiatry's manual lists about three hundred ways a mind can go wrong, and it cannot prove a single one of them with a test. A tour of the catalog, the conditions medicine can prove cold instead, and how sure you should be that a label is you.</p>
+    <p class="hero-meta">A field guide to the DSM <span class="sep">/</span> <b>26 sources</b> <span class="sep">/</span> 28 min read</p>
+  </header>
+
+  <main id="guide">
+
+  <figure class="photo reveal">
+    <img src="assets/images/no-blood-test/hero.webp" width="1600" height="1011" loading="eager" decoding="async" alt="A 19th-century painting of the neurologist Jean-Martin Charcot presenting a fainting woman to a room of attentive male physicians at the Salpetriere hospital in Paris.">
+    <figcaption>For most of history, this was the whole method. Jean-Martin Charcot presents a patient at the Salpetriere asylum in Paris, 1887: a famous man, a swooning woman, an audience, and a diagnosis resting entirely on what the experts saw and chose to name. A copy of this painting hung in Freud's office.
+      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Une_le%C3%A7on_clinique_%C3%A0_la_Salp%C3%AAtri%C3%A8re.jpg">Andre Brouillet, "Une lecon clinique a la Salpetriere" (1887). Public domain, via Wikimedia Commons.</a></span>
+    </figcaption>
+  </figure>
+
+  <!-- chapter strip -->
+  <nav class="chapters" aria-label="Chapters">
+    <span class="lead">Seven parts</span>
+    <a href="#start">Start here</a>
+    <a href="#restless">The restless mind</a>
+    <a href="#breaking">Breaking from the world</a>
+    <a href="#body">The body</a>
+    <a href="#edges">The self at the edges</a>
+    <a href="#wanting">Addiction</a>
+    <a href="#sure">How sure?</a>
+  </nav>
+
+  <!-- ===================== 1. START HERE ===================== -->
+  <section id="start" class="sec first" aria-labelledby="start-h">
+    <span class="sec-kicker">Start here</span>
+    <h2 id="start-h" class="sec-h">Three hundred names, no test</h2>
+
+    <p class="lede">There is no blood test for depression. No brain scan diagnoses ADHD, no gene confirms autism, and nowhere in psychiatry is there a number you can measure in a person and say, that is the disease. The book that defines all of them lists about three hundred conditions and contains not one lab value.</p>
+
+    <p>The book is the DSM, the Diagnostic and Statistical Manual of Mental Disorders, published by the American Psychiatric Association and now in its fifth edition. It is the field's catalog of what can go wrong with a mind, and the closest thing it has to a dictionary. Every diagnosis in it, the ones you have heard of and the ones you have not, is a checklist: a list of symptoms, a count you have to reach, and a clinician deciding whether you cross the line.</p>
+
+    <p>In the rest of medicine you can usually prove it. A tumor shows up on a biopsy. An infection grows in a dish. Diabetes is a number on a glucose meter, high blood pressure is a number on a cuff. Psychiatry has none of that. It has descriptions, written by committee and revised every couple of decades, of how people behave when they are suffering.</p>
+
+    <p>There is one near-exception, and it makes the rule sharper. In 2013 the FDA cleared a device that reads brain waves to help assess ADHD, but only as an aid to a doctor who has already done the full workup; it is not allowed to make the call on its own. <span class="src"><a href="https://www.accessdata.fda.gov/cdrh_docs/reviews/k112711.pdf">FDA, 2013</a></span> And in 2025 the first blood test for Alzheimer's was approved. <span class="src"><a href="https://www.fda.gov/news-events/press-announcements/fda-clears-first-blood-test-used-diagnosing-alzheimers-disease">FDA, 2025</a></span> Notice what happens at that moment: as soon as a mental condition gets a real biological test, it stops being filed under psychiatry and starts being called neurology. The line holds. No test, on its own, gives anyone a psychiatric diagnosis.</p>
+
+    <p>This is not the claim that mental illness is fake. The suffering is as real as a broken arm, and people die of these conditions. ADHD and autism in particular run hard in families, more than almost anything else in the book: twin studies put both around 74 to 80 percent heritable. <span class="src"><a href="https://www.nature.com/articles/s41380-018-0070-0">Faraone 2019</a></span> But heritable is not the same as testable. Real is not the same as provable. So here is the question this guide keeps circling back to: if the people who wrote the book cannot prove the thing, how sure should you be that it is you?</p>
+
+    <figure class="viz reveal breakout" aria-label="A diagram contrasting conditions medicine can prove with a test against the conditions in the DSM, which are matched to a checklist.">
+      <figcaption>Where proof runs out</figcaption>
+      <p class="viz-sub">Medicine can pin some diseases down to a single letter of DNA or a number in the spinal fluid. The psychiatric manual sits entirely on the other side of the line, where the most you can do is match a person to a list.</p>
+      <svg viewBox="0 0 760 290" role="img" aria-label="Left column, provable conditions: Huntington's, count the gene; narcolepsy type 1, measure the spinal fluid; neurosyphilis, find the germ; Wilson's disease, see the copper. Right column, the DSM, matched to a checklist: depression, ADHD, autism, bipolar, schizophrenia, and about 295 more.">
+        <defs>
+          <linearGradient id="pgfade" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#8fb3c7" stop-opacity="0.5"/>
+            <stop offset="1" stop-color="#d9978c" stop-opacity="0.5"/>
+          </linearGradient>
+        </defs>
+        <!-- dividing line: where proof runs out -->
+        <line x1="380" y1="40" x2="380" y2="270" stroke="#767d71" stroke-width="1.2" stroke-dasharray="3 5"/>
+        <text x="380" y="26" text-anchor="middle" class="v-axis-t" fill="#a4a293">WHERE PROOF RUNS OUT</text>
+
+        <!-- LEFT: provable -->
+        <text x="24" y="58" class="v-cap" font-size="15" fill="#8fb3c7">You can prove it</text>
+        <text x="24" y="76" class="v-axis-t" fill="#a4a293">A measurement settles it</text>
+        <g font-family="var(--font-body)">
+          <g transform="translate(24,96)">
+            <rect width="320" height="38" rx="8" fill="#232a25" stroke="rgba(143,179,199,0.5)"/>
+            <text x="14" y="18" class="v-label-b" font-size="13.5">Huntington's disease</text>
+            <text x="14" y="32" class="v-axis-t" fill="#a4a293">Count the repeats in one gene</text>
+          </g>
+          <g transform="translate(24,140)">
+            <rect width="320" height="38" rx="8" fill="#232a25" stroke="rgba(143,179,199,0.5)"/>
+            <text x="14" y="18" class="v-label-b" font-size="13.5">Narcolepsy type 1</text>
+            <text x="14" y="32" class="v-axis-t" fill="#a4a293">Measure one chemical in the spinal fluid</text>
+          </g>
+          <g transform="translate(24,184)">
+            <rect width="320" height="38" rx="8" fill="#232a25" stroke="rgba(143,179,199,0.5)"/>
+            <text x="14" y="18" class="v-label-b" font-size="13.5">Neurosyphilis</text>
+            <text x="14" y="32" class="v-axis-t" fill="#a4a293">Find the germ in the body</text>
+          </g>
+          <g transform="translate(24,228)">
+            <rect width="320" height="38" rx="8" fill="#232a25" stroke="rgba(143,179,199,0.5)"/>
+            <text x="14" y="18" class="v-label-b" font-size="13.5">Wilson's disease</text>
+            <text x="14" y="32" class="v-axis-t" fill="#a4a293">See the copper ring in the eye</text>
+          </g>
+        </g>
+
+        <!-- RIGHT: the DSM -->
+        <text x="416" y="58" class="v-cap" font-size="15" fill="#d9978c">You describe it</text>
+        <text x="416" y="76" class="v-axis-t" fill="#a4a293">The whole psychiatric manual lives here</text>
+        <g font-family="var(--font-body)">
+          <g transform="translate(416,96)">
+            <rect width="320" height="170" rx="8" fill="rgba(217,151,140,0.06)" stroke="rgba(217,151,140,0.45)"/>
+            <text x="16" y="26" class="v-label" font-size="13.5" fill="#e8e2d6">Depression &#183; ADHD &#183; autism</text>
+            <text x="16" y="50" class="v-label" font-size="13.5" fill="#e8e2d6">Bipolar &#183; schizophrenia &#183; OCD</text>
+            <text x="16" y="74" class="v-label" font-size="13.5" fill="#e8e2d6">PTSD &#183; anxiety &#183; anorexia</text>
+            <text x="16" y="98" class="v-label" font-size="13.5" fill="#e8e2d6">Borderline &#183; addiction &#183; . . .</text>
+            <text x="16" y="132" class="v-cap" font-size="22" fill="#d9978c">+ about 295 more</text>
+            <text x="16" y="154" class="v-axis-t" fill="#a4a293">all matched to a checklist, none to a test</text>
+          </g>
+        </g>
+      </svg>
+      <p class="viz-note"><b>The whole book is on the right.</b> The conditions on the left are the ones medicine can prove, and almost none of them are in the manual. That gap is what this guide is about.</p>
+    </figure>
+
+    <p>What follows is a tour of the catalog, grouped into wings. You will probably find yourself somewhere in it. Almost everyone does, which turns out to be part of the problem. Each wing ends the same way: with one condition medicine can prove cold, usually a strange one, set next to the checklists so you can see the difference between proof and description with your own eyes.</p>
+
+    <div class="disclaimer reveal">
+      <strong>A field guide is not a diagnosis.</strong> Recognizing yourself in a list is not the same as having the thing, and reading symptoms off a page is how a lot of people talk themselves into a label they do not have, or out of help they need. If something here lands hard, take it to a real person, not a checklist.
+    </div>
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== 2. THE RESTLESS MIND ===================== -->
+  <section id="restless" class="sec" aria-labelledby="restless-h">
+    <span class="sec-kicker">Wing one</span>
+    <h2 id="restless-h" class="sec-h">The restless mind</h2>
+
+    <p class="lede">More than one in five American adults meets the criteria for a mental illness in any given year. <span class="src"><a href="https://www.nimh.nih.gov/health/statistics/mental-illness">NIMH</a></span> Most of them land here, in the everyday disorders of attention and mood, the labels people now wear almost like star signs. These are also the ones most likely to fit you a little.</p>
+
+    <p>The trick the whole manual plays is easiest to see here. Every one of these is a line drawn across a trait that everybody has. Everyone loses focus, everyone has bad weeks, everyone worries. The diagnosis is not the trait. It is a judgment that the trait has gotten bad enough, for long enough, in enough corners of your life, to count. Where that line falls is a decision, not a measurement.</p>
+
+    <div class="dxgrid reveal">
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">ADHD</span><span class="dx-rate">~4-5% of adults</span></div>
+        <p class="dx-what">Trouble steering attention and impulse. The focus is there, just aimed at the wrong things, so hours vanish while the task that matters stays untouched.</p>
+        <p class="dx-line"><b>The line:</b> the pattern has to reach back to childhood and cost you in more than one place, home and work both.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Major depression</span><span class="dx-rate">~8% past year</span></div>
+        <p class="dx-what">Less sadness than a flattening. Interest, energy, sleep, and appetite drain away for two weeks or more, and small things stop being worth the effort.</p>
+        <p class="dx-line"><b>The line:</b> grief and a hard month are not it, though as of 2013 the book lets a doctor call grief depression after two weeks.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Generalized anxiety</span><span class="dx-rate">~6% lifetime</span></div>
+        <p class="dx-what">Worry that runs by itself, most days, about most things, for months. The body joins in: tension, broken sleep, a stomach that will not settle.</p>
+        <p class="dx-line"><b>The line:</b> fear is useful and normal. The disorder is the dial stuck on, with nothing in particular to fear.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Bipolar disorder</span><span class="dx-rate">~2.8% of adults</span></div>
+        <p class="dx-what">Mood that swings past circumstance, up into mania (days without sleep, racing plans, no brakes) and down into the same flat depression.</p>
+        <p class="dx-line"><b>The line:</b> a great week is not mania. Real mania is hard to miss and often dangerous.</p>
+      </div>
+    </div>
+
+    <p>Now the first uncomfortable fact. When the authors tested the newest edition of the manual, they had two psychiatrists separately examine the same patients and checked how often they reached the same diagnosis. For major depression, the most common serious label in the book, their agreement (after the math strips out lucky guesses) came out at 0.28, a score the field's own scale rates as "questionable." <span class="src"><a href="https://psychiatryonline.org/doi/10.1176/appi.ajp.2012.12070999">Regier 2013</a></span> <span class="grade g-b">good</span> Two experts, one patient, and the most familiar diagnosis in psychiatry was close to a coin toss. ADHD and autism, oddly, scored better. But agreement is not proof. It only means two people read the same checklist the same way.</p>
+
+    <figure class="viz reveal" aria-label="A number line of CAG repeat counts in the Huntington's gene: 26 or fewer is normal, 27 to 35 intermediate, 36 to 39 maybe, and 40 or more is a certainty of disease.">
+      <figcaption>Count the letters</figcaption>
+      <p class="viz-sub">Huntington's disease is written into one gene, in a tiny sequence (the letters C, A, G) repeated over and over. The number of repeats tells you almost everything, including, roughly, the year it starts.</p>
+      <svg viewBox="0 0 760 200" role="img" aria-label="The Huntington's gene repeat scale, from normal to guaranteed disease.">
+        <rect x="60" y="86" width="211" height="34" rx="4" fill="rgba(158,199,154,0.16)" stroke="rgba(158,199,154,0.5)"/>
+        <rect x="278" y="86" width="112" height="34" rx="4" fill="rgba(223,194,136,0.14)" stroke="rgba(223,194,136,0.5)"/>
+        <rect x="397" y="86" width="46" height="34" rx="4" fill="rgba(207,159,120,0.16)" stroke="rgba(207,159,120,0.55)"/>
+        <rect x="450" y="86" width="270" height="34" rx="4" fill="rgba(217,151,140,0.18)" stroke="rgba(217,151,140,0.6)"/>
+        <text x="165" y="78" text-anchor="middle" class="v-axis-t" fill="#9ec79a">NORMAL</text>
+        <text x="334" y="78" text-anchor="middle" class="v-axis-t" fill="#dfc288">INTERMEDIATE</text>
+        <text x="420" y="78" text-anchor="middle" class="v-axis-t" fill="#cf9f78">MAYBE</text>
+        <text x="585" y="78" text-anchor="middle" class="v-axis-t" fill="#d9978c">YOU WILL GET IT</text>
+        <text x="165" y="108" text-anchor="middle" class="v-label" font-size="12.5" fill="#e8e2d6">26 or fewer</text>
+        <text x="334" y="108" text-anchor="middle" class="v-label" font-size="12.5" fill="#e8e2d6">27 to 35</text>
+        <text x="420" y="107" text-anchor="middle" class="v-label" font-size="11" fill="#e8e2d6">36-39</text>
+        <text x="585" y="108" text-anchor="middle" class="v-label" font-size="12.5" fill="#e8e2d6">40 or more</text>
+        <line x1="60" y1="140" x2="720" y2="140" class="v-grid-s"/>
+        <line x1="450" y1="82" x2="450" y2="126" stroke="#d9978c" stroke-width="2"/>
+        <text x="60" y="160" class="v-axis-t" fill="#a4a293">FEWER REPEATS</text>
+        <text x="720" y="160" text-anchor="end" class="v-axis-t" fill="#a4a293">MORE REPEATS, EARLIER ONSET</text>
+      </svg>
+      <p class="viz-note"><b>The disease is legible decades before it arrives.</b> Forty repeats or more is a certainty, and the higher the count, the younger it strikes. No diagnosis in the psychiatric manual can be read this way, in advance, off the body.</p>
+    </figure>
+
+    <aside class="proof reveal">
+      <p class="proof-k">What proof looks like</p>
+      <p class="proof-name">Huntington's disease</p>
+      <p class="proof-tag">Diagnosis: count the repeats in one gene</p>
+      <p>Huntington's usually arrives in your forties. The body's movements turn jerky and uncontrollable, thinking and mood come apart, and it is always fatal. It is as cruel as anything in psychiatry, and the exact opposite of everything else in this book, because you can prove it down to the letter.</p>
+      <p>It comes from a single gene, <strong>HTT</strong>, carrying that C-A-G sequence repeated over and over. Count the repeats. Twenty-six or fewer, you are clear. Forty or more, you will get the disease, with certainty, no clinical judgment required. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK1305/">GeneReviews</a></span> A doctor can draw your blood at twenty-five, while you feel perfectly well, and tell you the disease is coming and roughly when. That sentence cannot be written about depression, or ADHD, or anything else in the catalog.</p>
+    </aside>
+
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== 3. BREAKING FROM THE WORLD ===================== -->
+  <section id="breaking" class="sec" aria-labelledby="breaking-h">
+    <span class="sec-kicker">Wing two</span>
+    <h2 id="breaking-h" class="sec-h">Breaking from the world</h2>
+
+    <p class="lede">Psychosis is the symptom people fear most and understand least: a break from the reality everyone else is sharing. Voices that are not there, beliefs that cannot be argued down. Schizophrenia, the best known of these, runs about 80 percent in twin studies, as heritable as anything in the book, and there is still no test for it. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/12622659/">Sullivan 2003</a></span></p>
+
+    <p>Calibration matters more here than anywhere. One strange night, one odd hunch, one vivid dream is not this. The diagnoses below describe a reality that has come loose and stayed loose, usually for months, usually wrecking a life on the way. They are also, as a group, the conditions psychiatry has most often gotten spectacularly wrong, because a few of the things that look exactly like madness are not madness at all.</p>
+
+    <div class="dxgrid reveal">
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Schizophrenia</span><span class="dx-rate">~0.5% lifetime</span></div>
+        <p class="dx-what">A lasting break from shared reality: hallucinations (often voices), fixed false beliefs, and a draining away of drive and feeling. The best understood of these, and still diagnosed by interview alone.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Schizoaffective</span><span class="dx-rate">uncommon</span></div>
+        <p class="dx-what">Psychosis and a mood disorder, mania or depression, braided together. The boundary with both of its neighbors is so blurry that clinicians often disagree on which one a person has.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Delusional disorder</span><span class="dx-rate">~0.2%</span></div>
+        <p class="dx-what">One fixed false belief held with total conviction (being followed, poisoned, secretly loved by a stranger) while the rest of the mind runs perfectly well.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Brief psychotic disorder</span><span class="dx-rate">rare</span></div>
+        <p class="dx-what">A sudden short break, often after an overwhelming stressor or childbirth, that clears within a month and may never come back.</p>
+      </div>
+    </div>
+
+    <p>In 2009 a healthy 24-year-old journalist in New York went, over a few weeks, from normal to paranoid to seizing and catatonic. Every assessment pointed at psychiatric illness, and she came close to being committed to a ward. Then a neurologist asked her to draw a clock, and she crowded all twelve numbers onto the right-hand side of the circle. That is not a psychiatric sign. It is a neurological one. Her own immune system was eating her brain.</p>
+
+    <aside class="proof reveal">
+      <p class="proof-k">What proof looks like</p>
+      <p class="proof-name">Anti-NMDA receptor encephalitis</p>
+      <p class="proof-tag">Diagnosis: an antibody in the blood and spinal fluid</p>
+      <p>Her body was making antibodies against the NMDA receptors her brain cells use to talk to each other. In young women the trigger is often a small ovarian tumor called a teratoma, a benign growth that can sprout hair and even a tooth. Find the antibody, remove the tumor, calm the immune system, and the "psychosis" lifts.</p>
+      <p>The journalist was Susannah Cahalan. She recovered, and wrote a book about the month she lost, <em>Brain on Fire</em>. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5584997/">encephalitis review</a></span> The lesson is blunt: she had a provable, curable disease, and the manual had no way at all to tell it apart from the kind it cannot prove.</p>
+    </aside>
+
+    <figure class="photo inset reveal">
+      <img src="assets/images/no-blood-test/teratoma.webp" width="550" height="474" loading="lazy" decoding="async" alt="A surgically removed ovarian teratoma cut open, showing a mass of hair and a single formed tooth.">
+      <figcaption>A mature ovarian teratoma, opened: a benign tumor grown from stray cells, here with hair and a tooth. In a young woman with sudden "psychosis," one of these can be the actual cause, and taking it out can be the cure.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Mature_cystic_teratoma_of_ovary.jpg">Ed Uthman, MD. Public domain, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <p>None of this was new. For a century before penicillin, asylums were full of people with "general paresis of the insane": first grandiosity and delusion, then dementia, then death. In some hospitals it was up to a fifth of the male admissions. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9402216/">asylum records</a></span> In 1913 the cause was found in their brains, the corkscrew germ below. It was late-stage syphilis. A few years later, penicillin emptied those wards for good.</p>
+
+    <figure class="photo inset reveal">
+      <img src="assets/images/no-blood-test/treponema.webp" width="700" height="660" loading="lazy" decoding="async" alt="A photomicrograph of thin corkscrew-shaped Treponema pallidum bacteria stained dark against a pale tissue background.">
+      <figcaption>Treponema pallidum, the corkscrew germ of syphilis, stained in tissue. Left untreated, it reaches the brain and produces the madness and dementia that once filled whole asylum wings. Penicillin cures it.
+        <span class="cred"><a href="https://phil.cdc.gov/Details.aspx?pid=2120">CDC Public Health Image Library #2120. Public domain.</a></span>
+      </figcaption>
+    </figure>
+
+    <p>Notice the pattern, because it runs through the whole book. Each time medicine found the proof, the condition walked out of psychiatry and into neurology or infectious disease. Syphilis left. Pellagra left. The autoimmune cases are leaving now. What stays behind in the manual is, almost by definition, the set of conditions we cannot yet prove. That is not a knock on the people who have them. It is a fact about how much we still do not know.</p>
+
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== 4. THE BODY KEEPS THE SCORE ===================== -->
+  <section id="body" class="sec" aria-labelledby="body-h">
+    <span class="sec-kicker">Wing three</span>
+    <h2 id="body-h" class="sec-h">The body keeps the score</h2>
+
+    <p class="lede">The next wing is where the trouble moves into the body. The past replays in a racing heart, fear hardens into rituals, hunger becomes a weapon, and pain arrives with no scan to explain it. Some of these are the deadliest conditions in the book, and some of the most treatable.</p>
+
+    <p>One thing worth holding onto here: not every diagnosis is a coin toss. When the manual was tested, post-traumatic stress was one of the labels two psychiatrists agreed on well, far better than depression. <span class="src"><a href="https://psychiatryonline.org/doi/10.1176/appi.ajp.2012.12070999">Regier 2013</a></span> Agreement still is not proof, but it is worth saying that the book is not uniformly vague. It is vague in some places and sharp in others, and it rarely tells you which is which.</p>
+
+    <div class="dxgrid reveal">
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">PTSD</span><span class="dx-rate">~6% lifetime</span></div>
+        <p class="dx-what">The past breaking into the present: flashbacks, nightmares, a hair-trigger startle, numbness. The body still fighting a war that, on the calendar, is already over.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">OCD</span><span class="dx-rate">~1-2%</span></div>
+        <p class="dx-what">Intrusive thoughts that spike fear, and rituals to force the fear back down, that swallow hours. Not tidiness. The person usually knows the fear makes no sense and still cannot stop.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Eating disorders</span><span class="dx-rate">anorexia ~0.6%</span></div>
+        <p class="dx-what">Eating turned into a control panel for a body the mind no longer sees straight. Anorexia, bulimia, binge eating. A diet is not this.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Somatic symptom disorder</span><span class="dx-rate">common</span></div>
+        <p class="dx-what">Real, disabling physical symptoms paired with worry out of all proportion. The suffering is genuine whether or not a physical cause is ever found.</p>
+      </div>
+    </div>
+
+    <p>Take the deadliest one seriously: anorexia kills more reliably than any other mental illness, through starvation and through suicide, with a death rate several times what you would expect for young women otherwise. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21727255/">Arcelus 2011</a></span> <span class="grade g-a">solid</span> It is also, like everything around it, diagnosed by talking and watching, never by a test.</p>
+
+    <aside class="proof reveal">
+      <p class="proof-k">What proof looks like</p>
+      <p class="proof-name">Narcolepsy type 1</p>
+      <p class="proof-tag">Diagnosis: measure one chemical in the spinal fluid</p>
+      <p>Narcolepsy is a wiring problem. The brain loses the specific cells that make hypocretin, the chemical that keeps you awake and guards the border between sleeping and waking. Lose them and the border dissolves: people drop into sleep mid-sentence, and dream while half awake.</p>
+      <p>The strangest part is cataplexy. A strong feeling, especially laughter, can switch off muscle tone in an instant, and the person folds to the floor wide awake while the joke is still landing. And here is the proof a checklist can only envy: a spinal tap. Below 110 picograms of hypocretin per milliliter, the diagnosis is settled by the number on the page. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK459236/">StatPearls</a></span> You can measure the thing that is missing.</p>
+    </aside>
+
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== 5. THE SELF AT THE EDGES ===================== -->
+  <section id="edges" class="sec" aria-labelledby="edges-h">
+    <span class="sec-kicker">Wing four</span>
+    <h2 id="edges-h" class="sec-h">The self at the edges</h2>
+
+    <p class="lede">Now the blurriest wing, and the most dangerous to wear as a name. The personality disorders are not about something you have, like an infection or a broken bone. They are judgments about who you are: your lasting pattern of feeling, relating, and seeing yourself. The line between a difficult personality and a disordered one is drawn by a clinician, and reasonable ones disagree.</p>
+
+    <div class="dxgrid reveal">
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Borderline</span><span class="dx-rate">~1.4%</span></div>
+        <p class="dx-what">Emotion without a thermostat: a terror of being left, relationships that flip from idol to enemy, an identity that will not hold still. Often grown from early trauma, and among the most stigmatized labels in medicine.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Narcissistic</span><span class="dx-rate">~1%</span></div>
+        <p class="dx-what">A self-image kept inflated by admiration, with little room for anyone else's inner life. Grandiosity stretched over a surprisingly thin and brittle core.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Antisocial</span><span class="dx-rate">~1-4%</span></div>
+        <p class="dx-what">A long pattern of running over other people's rights without remorse: deceit, aggression, recklessness. The clinical relative of the word "psychopath," and far more common in men.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Dissociative identity</span><span class="dx-rate">rare, disputed</span></div>
+        <p class="dx-what">Identity splitting into separate parts with their own names and memories, usually traced to extreme childhood trauma. One of the most contested entries in the whole book.</p>
+      </div>
+    </div>
+
+    <p>This is where the manual's habit of describing people instead of diseases gets most slippery, and where a label can swallow a person whole. It is one thing to say you have a condition. It is another to be handed a word for the shape of your entire self, especially a word the experts cannot agree on or prove. Hold that thought. It comes back at the end.</p>
+
+    <aside class="proof reveal">
+      <p class="proof-k">What proof looks like</p>
+      <p class="proof-name">Fatal familial insomnia</p>
+      <p class="proof-tag">Diagnosis: one misspelled letter in the gene</p>
+      <p>It runs in a few dozen families in the world, and it is exactly as bad as the name. Usually in middle age, the carrier stops being able to sleep. Not tired-and-restless: the machinery the brain uses to make sleep is being destroyed, by a misfolded protein called a prion. Then the body's automatic controls fail, the mind unravels, and it ends in death, often within a year for the most common form.</p>
+      <p>There is no treatment. But there is total certainty, because it comes from a single swapped letter in one gene, PRNP. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK1366/">GeneReviews</a></span> Read the gene and you have the diagnosis, years ahead, no judgment call. Set that next to "borderline" or "narcissistic," words built entirely out of judgment calls, and you can feel the whole distance this book has to cover.</p>
+    </aside>
+
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== 6. THE WANTING ===================== -->
+  <section id="wanting" class="sec" aria-labelledby="wanting-h">
+    <span class="sec-kicker">Wing five</span>
+    <h2 id="wanting-h" class="sec-h">The wanting</h2>
+
+    <p class="lede">Addiction sits on the fault line that runs under the whole book: the crack between disease and choice, between something that happens to you and something you do. Nobody has settled which side it belongs on, and the manual has spent decades quietly moving the line outward.</p>
+
+    <p>In 2013 the latest edition folded the old split between "abuse" and "dependence" into a single diagnosis, <strong>substance use disorder</strong>, scored mild to severe by how many boxes you tick. <span class="src"><a href="https://www.psychiatry.org/file%20library/psychiatrists/practice/dsm/apa_dsm-5-substance-use-disorder.pdf">DSM-5</a></span> It also did something genuinely new: it admitted the first addiction with no substance in it at all, gambling. Video games sit in the waiting room, listed as a condition "for further study." The edges of addiction are being redrawn in real time, by vote.</p>
+
+    <div class="dxgrid reveal">
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Alcohol use disorder</span><span class="dx-rate">~11% past year</span></div>
+        <p class="dx-what">The most common by a wide margin. Drinking that keeps going past the damage, scored mild to severe by how much of your life it has taken over.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Opioid use disorder</span><span class="dx-rate">~2%</span></div>
+        <p class="dx-what">The engine of the overdose crisis. Tolerance and withdrawal lock in fast, and relapse is the rule rather than the exception.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Stimulant use disorder</span><span class="dx-rate">rising</span></div>
+        <p class="dx-what">Cocaine and methamphetamine, plus misuse of the very drugs prescribed for ADHD. The same reward circuit, pushed hard.</p>
+      </div>
+      <div class="dx">
+        <div class="dx-top"><span class="dx-name">Gambling disorder</span><span class="dx-rate">~1%</span></div>
+        <p class="dx-what">The first addiction the book recognized with no drug attached, added in 2013. The same machinery in the brain, no substance required.</p>
+      </div>
+    </div>
+
+    <p>So where does it lay? One camp, led by the national drug-research institute, calls addiction a chronic brain disease: the drug hijacks the reward circuitry, and a hijacked brain is no longer free to choose. <span class="src"><a href="https://nida.nih.gov/publications/drugs-brains-behavior-science-addiction/preface">NIDA</a></span> The other camp answers that this cannot be the whole story, because most people who get addicted get better, often with no treatment at all, and often when the life around them changes.</p>
+
+    <p>The cleanest evidence is grim and accidental. During the Vietnam War, about one in five American soldiers came home dependent on heroin, and the government braced for an epidemic. It never came. The overwhelming majority simply stopped, and only a small fraction relapsed once they were back in an ordinary life. <span class="src"><a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/add.13584">Robins study</a></span> <span class="grade g-b">good</span> The catchier version of the same idea, the <a href="https://en.wikipedia.org/wiki/Rat_Park">Rat Park</a> experiment with happy social rats that refused the drug, has mostly failed to replicate and should be held loosely. <span class="grade g-d">thin</span> But the soldiers were real. Change the cage, and most of the wanting went with it.</p>
+
+    <p>That is the honest answer to where addiction lays: in both places at once. It is biological enough to light up a brain scan and behavioral enough to bend to your rent, your friends, and your reasons. The book files it as a disease because that framing gets people treated and keeps them out of jail, which are good reasons. It is just worth knowing that the filing is a choice, not a finding.</p>
+
+    <aside class="proof reveal">
+      <p class="proof-k">What proof looks like</p>
+      <p class="proof-name">Wilson's disease</p>
+      <p class="proof-tag">Diagnosis: copper you can measure, and sometimes see</p>
+      <p>A broken gene, ATP7B, leaves the body unable to clear copper, so the metal piles up in the liver and the brain. It can announce itself as exactly what you would call a psychiatric problem: personality change, mood swings, recklessness, sometimes full psychosis. Plenty of Wilson's patients pass through a psychiatrist's office before anyone thinks to check the copper.</p>
+      <p>And the copper is checkable. It is low in one blood protein, high in the urine, and in many patients you can simply look: a golden-brown ring of copper, the Kayser-Fleischer ring, sitting at the edge of the iris. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK441990/">StatPearls</a></span> Better still, it is treatable. Drugs that pull the copper back out can undo the damage. A "psychiatric" patient whose real trouble is a visible metal, reversed by chemistry.</p>
+    </aside>
+
+    <figure class="photo inset-sm reveal">
+      <img src="assets/images/no-blood-test/wilsons-kf-ring.webp" width="288" height="191" loading="lazy" decoding="async" alt="A close-up of a human eye showing a brownish copper-colored ring around the outer edge of the iris.">
+      <figcaption>A Kayser-Fleischer ring: copper laid down in a brown band at the rim of the iris, in Wilson's disease. When the eye looks like this, the diagnosis is sitting on the surface.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Kayser-Fleischer_ring.jpg">Herbert L. Fred &amp; Hendrik van Dijk, CC BY 3.0, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== 7. HOW SURE SHOULD YOU BE ===================== -->
+  <section id="sure" class="sec" aria-labelledby="sure-h">
+    <span class="sec-kicker">The close</span>
+    <h2 id="sure-h" class="sec-h">How sure should you be?</h2>
+
+    <p class="lede">Here is the cleanest sign that this book is something other than a record of facts about nature. Until 1973, being gay was a mental disorder, printed in the manual. It came out because the association's members voted it out, 5,854 to 3,810, with the last traces gone by 1987. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4695779/">APA, 1973</a></span> No new discovery forced the change. People argued, and the line moved.</p>
+
+    <p>A fact does not behave that way. You cannot hold a referendum on whether a tumor is cancer. But this book is debated, amended, and revised like the legal code it half resembles, and it keeps growing. There were about a hundred disorders in it in 1952. There are about three hundred now. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4810039/">Blashfield 2014</a></span> (The counting is genuinely fuzzy, but every way of counting points up.) The bar keeps dropping, too. In 2013 the book removed the rule that ordinary grief did not count as depression, so two weeks of normal heartbreak can now clear the line. <span class="src"><a href="https://www.psychiatry.org/File%20Library/Psychiatrists/Practice/DSM/APA_DSM-5-Depression-Bereavement-Exclusion.pdf">DSM-5</a></span> The psychiatrist who chaired the fourth edition, Allen Frances, has spent his retirement warning that his own field is busy turning the normal troubles of being alive into diagnoses. <span class="src"><a href="https://en.wikipedia.org/wiki/Allen_Frances">Frances</a></span></p>
+
+    <p>The people who built the book know this better than anyone. Weeks before the fifth edition shipped, the head of the national mental-health research agency, Thomas Insel, wrote that the manual was "at best, a dictionary," that its weakness was "its lack of validity," and that, unlike the rest of medicine, its diagnoses rested on "a consensus about clusters of clinical symptoms, not any objective laboratory measure." He said the agency would steer its research money away from the book's categories, because, he wrote, "patients with mental disorders deserve better." <span class="src"><a href="https://psychrights.org/2013/130429NIMHTransformingDiagnosis.htm">Insel, 2013</a></span></p>
+
+    <figure class="viz reveal breakout" aria-label="A bar chart of how often two psychiatrists agreed on the same diagnosis in the DSM-5 field trials: dementia 0.78, autism 0.69, PTSD 0.67, ADHD 0.61, major depression 0.28, generalized anxiety 0.20.">
+      <figcaption>Two experts, one patient, how often they agreed</figcaption>
+      <p class="viz-sub">When the newest edition was tested, two clinicians separately diagnosed the same patients. This is how well they matched, on a scale that strips out lucky guesses (1.0 is perfect, 0 is pure chance). The authors set 0.6 as their bar for "very good." <span class="src"><a href="https://psychiatryonline.org/doi/10.1176/appi.ajp.2012.12070999">Regier 2013</a></span></p>
+      <svg viewBox="0 0 760 300" role="img" aria-label="Inter-rater agreement by diagnosis.">
+        <line x1="210" y1="56" x2="210" y2="262" class="v-grid"/>
+        <line x1="302" y1="56" x2="302" y2="262" class="v-grid"/>
+        <line x1="394" y1="56" x2="394" y2="262" class="v-grid"/>
+        <line x1="486" y1="52" x2="486" y2="270" stroke="#d4c4a0" stroke-width="1" stroke-dasharray="3 4"/>
+        <line x1="578" y1="56" x2="578" y2="262" class="v-grid"/>
+        <line x1="670" y1="56" x2="670" y2="262" class="v-grid"/>
+        <text x="486" y="286" text-anchor="middle" class="v-axis-t" fill="#d4c4a0">0.6 = "VERY GOOD"</text>
+        <text x="210" y="286" text-anchor="middle" class="v-axis-t" fill="#a4a293">0</text>
+        <text x="670" y="286" text-anchor="middle" class="v-axis-t" fill="#a4a293">1.0</text>
+        <g font-family="var(--font-body)">
+          <text x="200" y="78" text-anchor="end" class="v-label" font-size="12.5" fill="#e8e2d6">Dementia</text>
+          <rect x="210" y="64" width="359" height="18" rx="3" fill="rgba(158,199,154,0.55)"/>
+          <text x="577" y="78" class="v-mono" font-size="11" fill="#9ec79a">0.78</text>
+          <text x="200" y="114" text-anchor="end" class="v-label" font-size="12.5" fill="#e8e2d6">Autism</text>
+          <rect x="210" y="100" width="317" height="18" rx="3" fill="rgba(158,199,154,0.55)"/>
+          <text x="535" y="114" class="v-mono" font-size="11" fill="#9ec79a">0.69</text>
+          <text x="200" y="150" text-anchor="end" class="v-label" font-size="12.5" fill="#e8e2d6">PTSD</text>
+          <rect x="210" y="136" width="308" height="18" rx="3" fill="rgba(158,199,154,0.55)"/>
+          <text x="526" y="150" class="v-mono" font-size="11" fill="#9ec79a">0.67</text>
+          <text x="200" y="186" text-anchor="end" class="v-label" font-size="12.5" fill="#e8e2d6">ADHD</text>
+          <rect x="210" y="172" width="281" height="18" rx="3" fill="rgba(158,199,154,0.55)"/>
+          <text x="499" y="186" class="v-mono" font-size="11" fill="#9ec79a">0.61</text>
+          <text x="200" y="222" text-anchor="end" class="v-label" font-size="12.5" fill="#f5b9ac">Major depression</text>
+          <rect x="210" y="208" width="129" height="18" rx="3" fill="rgba(217,151,140,0.6)"/>
+          <text x="347" y="222" class="v-mono" font-size="11" fill="#d9978c">0.28</text>
+          <text x="200" y="258" text-anchor="end" class="v-label" font-size="12.5" fill="#f5b9ac">Generalized anxiety</text>
+          <rect x="210" y="244" width="92" height="18" rx="3" fill="rgba(217,151,140,0.6)"/>
+          <text x="310" y="258" class="v-mono" font-size="11" fill="#d9978c">0.20</text>
+        </g>
+      </svg>
+      <p class="viz-note"><b>The most common serious diagnosis in the book is near the bottom.</b> And this is only reliability, not truth: a label two experts agree on perfectly could still be the wrong way to carve up human suffering. When they cannot even agree, you are owed more humility about the answer, not less.</p>
+    </figure>
+
+    <p>Do not mistake that agreement for proof, either. Where two psychiatrists reliably reach the same label, as with autism or post-traumatic stress, all it shows is that the checklist is clear, not that it cuts nature at a real joint. Where they do not agree, as with the depression that is the most common serious diagnosis in the book, even the checklist is slipping. Either way the certainty has to come from somewhere other than a test, because there is no test.</p>
+
+    <p>So, you. Somewhere in this guide you probably recognized yourself, or someone you love. Almost everyone does. The question is what to do with that recognition, and the honest answer comes in two halves that pull in opposite directions.</p>
+
+    <p>The first half: a diagnosis is a tool, and a good one can change a life. It can take a formless private misery and give it a name, a body of knowledge, a treatment, and a room full of people who have had the same thing. That is not nothing. That is sometimes everything. But a name for what you have is not a name for who you are. Worn as an identity, a diagnosis becomes a ceiling: I can't, because I'm this. The philosopher Ian Hacking called it the looping effect: name a kind of person, and people start to live up to the name, and the name itself bends to match them. <span class="src"><a href="https://en.wikipedia.org/wiki/Ian_Hacking">Hacking</a></span> A label you read off a screen at two in the morning can hand you a permanent reason for something passing, or ordinary, or fixable.</p>
+
+    <p>The second half pulls the other way, and it is just as true. Refusing a label costs every bit as much as over-wearing one. Susannah Cahalan, the journalist whose brain was on fire, came within a day of being filed under madness and left there. The old asylums were full of people whose real disease was a germ or a missing vitamin, ruined for want of a diagnosis nobody had drawn yet. And the tidy story that runs the other way, that psychiatry is a fraud that cannot tell the sane from the insane, deserves the same suspicion. The most famous experiment ever to claim exactly that, Rosenhan's, turns out to have been mostly invented, which the same Cahalan discovered when she went looking for its evidence. <span class="src"><a href="https://www.npr.org/2019/11/04/776036170/the-great-pretender-seeks-the-truth-about-on-being-sane-in-insane-places">The Great Pretender</a></span> The cynic's certainty is no safer than the patient's.</p>
+
+    <figure class="photo inset reveal">
+      <img src="assets/images/no-blood-test/pellagra.webp" width="1000" height="478" loading="lazy" decoding="async" alt="A medical watercolour of reddened, cracked dermatitis across the back of a person's neck, the skin sign of chronic pellagra.">
+      <figcaption>Pellagra: the skin sign of a niacin deficiency that, left alone, also brings diarrhea, dementia, and death. It filled Southern asylums in the early 1900s until a doctor proved the cause was diet, not madness. One more condition that walked out of psychiatry the moment someone found the proof.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Dermatitis_on_the_back_of_a_man%27s_neck_caused_by_chronic_pel_Wellcome_V0022635.jpg">A.J.E. Terzi, ca. 1925. Wellcome Collection, CC BY 4.0.</a></span>
+      </figcaption>
+    </figure>
+
+    <p>So hold your diagnosis the way a careful scientist holds a hypothesis. Firmly enough to act on it: get the help, take the accommodation, name the thing and stop fighting it alone in the dark. Loosely enough to keep checking it: to notice if it stops fitting, to refuse to let it eat the rest of you, to stay the person who has it instead of becoming it. The certainty you feel about the label did not come from a test. There is no test. It came from a description that fit, and a description that fits is worth a great deal. It is just not the same thing as proof.</p>
+
+    <p>The book has no blood test. Neither, in the end, do you. That is not a reason to ignore what it says. It is a reason to hold it the way you would hold any strong claim with no proof behind it: seriously, and lightly, at the same time.</p>
+
+    <hr class="sec-divider">&#160;
+  </section>
+
+  <!-- ===================== SOURCES ===================== -->
+  <section id="sources" class="sec">
+    <span class="sec-kicker">The fine print</span>
+    <h2 class="sec-h">Sources, and how to read them</h2>
+    <p class="lede">Every number in this guide is tied to a real source, cited where it appears. The research was told to refute the thesis rather than flatter it, so the awkward parts were left in: there is one near-exception to the no-test rule, the conditions clinicians agree on most are still not provable, and the famous study that "proved" psychiatry cannot tell sane from insane was probably faked.</p>
+    <details class="u-collapse">
+      <summary class="u-collapse-s">The full list, grouped by topic</summary>
+    <div class="legend">
+      <span><span class="grade g-a">solid</span> textbook fact or strong consensus</span>
+      <span><span class="grade g-b">good</span> one strong source or primary record</span>
+      <span><span class="grade g-c">mixed</span> contested or still moving</span>
+      <span><span class="grade g-d">thin</span> a single study or popular claim</span>
+    </div>
+    <ol>
+      <li class="shead">The book, and how it is made</li>
+      <li value="1"><b>National Institute of Mental Health.</b> Mental Illness (US prevalence statistics). <a href="https://www.nimh.nih.gov/health/statistics/mental-illness">nimh.nih.gov</a></li>
+      <li><b>Regier DA, et al. (2013).</b> DSM-5 field trials in the United States and Canada: test-retest reliability. <i>Am J Psychiatry</i>. (The agreement figures, major depression at 0.28.) <a href="https://psychiatryonline.org/doi/10.1176/appi.ajp.2012.12070999">psychiatryonline.org</a></li>
+      <li><b>Insel T (2013).</b> Transforming Diagnosis. <i>NIMH Director's Blog</i> (archived). <a href="https://psychrights.org/2013/130429NIMHTransformingDiagnosis.htm">archived copy</a></li>
+      <li><b>Blashfield RK, et al. (2014).</b> The cycle of classification: DSM-I through DSM-5. <i>Annu Rev Clin Psychol</i>. (About 100 disorders in 1952 to about 300 today.) <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4810039/">PMC4810039</a></li>
+      <li><b>Drescher J (2015).</b> Out of DSM: depathologizing homosexuality (the 1973 vote, 5,854 to 3,810). <i>Behav Sci</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4695779/">PMC4695779</a></li>
+      <li><b>Frances A (2013).</b> <i>Saving Normal</i>, and his warnings on diagnostic inflation. <a href="https://en.wikipedia.org/wiki/Allen_Frances">overview</a></li>
+      <li><b>American Psychiatric Association (2013).</b> DSM-5 and the bereavement exclusion (fact sheet). <a href="https://www.psychiatry.org/File%20Library/Psychiatrists/Practice/DSM/APA_DSM-5-Depression-Bereavement-Exclusion.pdf">psychiatry.org</a></li>
+      <li><b>FDA (2013).</b> NEBA, an EEG-based aid for ADHD assessment (de novo clearance K112711, an adjunct only, not a stand-alone test). <a href="https://www.accessdata.fda.gov/cdrh_docs/reviews/k112711.pdf">accessdata.fda.gov</a></li>
+      <li><b>FDA (2025).</b> First blood test cleared as a diagnostic aid for Alzheimer's disease. <a href="https://www.fda.gov/news-events/press-announcements/fda-clears-first-blood-test-used-diagnosing-alzheimers-disease">fda.gov</a></li>
+      <li class="shead">How heritable, and still no test</li>
+      <li value="10"><b>Faraone SV, Larsson H (2019).</b> Genetics of attention-deficit hyperactivity disorder. <i>Mol Psychiatry</i>. (ADHD around 74%.) <a href="https://www.nature.com/articles/s41380-018-0070-0">nature.com</a></li>
+      <li><b>Tick B, et al. (2016).</b> Heritability of autism spectrum disorders: twin-study meta-analysis. <i>J Child Psychol Psychiatry</i>. (Around 80%, range 64 to 91%.) <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4996332/">PMC4996332</a></li>
+      <li><b>Sullivan PF, et al. (2003).</b> Schizophrenia as a complex trait: meta-analysis of twin studies. <i>Arch Gen Psychiatry</i>. (About 80%.) <a href="https://pubmed.ncbi.nlm.nih.gov/12622659/">PubMed</a></li>
+      <li class="shead">The conditions medicine can prove</li>
+      <li value="13"><b>GeneReviews.</b> Huntington Disease (CAG repeat thresholds and penetrance). <a href="https://www.ncbi.nlm.nih.gov/books/NBK1305/">ncbi.nlm.nih.gov</a></li>
+      <li><b>Dalmau J, et al.</b> Anti-NMDA receptor encephalitis: the antibody, the teratoma link, and treatment. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5584997/">PMC5584997</a></li>
+      <li><b>Cahalan S (2012).</b> <i>Brain on Fire: My Month of Madness</i> (first-person account of anti-NMDA encephalitis).</li>
+      <li><b>StatPearls.</b> Narcolepsy (CSF hypocretin-1 at or below 110 pg/mL; cataplexy). <a href="https://www.ncbi.nlm.nih.gov/books/NBK459236/">ncbi.nlm.nih.gov</a></li>
+      <li><b>Review (PMC9402216).</b> General paresis of the insane and the asylum era (neurosyphilis). <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9402216/">ncbi.nlm.nih.gov</a></li>
+      <li><b>GeneReviews.</b> Genetic Prion Diseases, including fatal familial insomnia (PRNP D178N-129M). <a href="https://www.ncbi.nlm.nih.gov/books/NBK1366/">ncbi.nlm.nih.gov</a></li>
+      <li><b>StatPearls.</b> Wilson Disease (Kayser-Fleischer rings, low ceruloplasmin, chelation). <a href="https://www.ncbi.nlm.nih.gov/books/NBK441990/">ncbi.nlm.nih.gov</a></li>
+      <li><b>Science History Institute.</b> Joseph Goldberger and the fight against pellagra. <a href="https://www.sciencehistory.org/stories/magazine/joseph-goldbergers-filth-parties/">sciencehistory.org</a></li>
+      <li class="shead">Addiction, on the line</li>
+      <li value="21"><b>American Psychiatric Association (2013).</b> Substance-related and addictive disorders (DSM-5; gambling as the first behavioral addiction). <a href="https://www.psychiatry.org/file%20library/psychiatrists/practice/dsm/apa_dsm-5-substance-use-disorder.pdf">psychiatry.org</a></li>
+      <li><b>NIDA.</b> Drugs, Brains, and Behavior: The Science of Addiction (the brain-disease model). <a href="https://nida.nih.gov/publications/drugs-brains-behavior-science-addiction/preface">nida.nih.gov</a></li>
+      <li><b>Hall W (2017).</b> Lee Robins' studies of heroin use among US Vietnam veterans. <i>Addiction</i>. (About 20% dependent in-country; the great majority did not relapse.) <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/add.13584">onlinelibrary.wiley.com</a></li>
+      <li><b>Alexander BK (Rat Park).</b> Influential but poorly replicated; treat it as a hypothesis, not a finding. <a href="https://en.wikipedia.org/wiki/Rat_Park">overview</a></li>
+      <li class="shead">And the rest</li>
+      <li value="25"><b>Arcelus J, et al. (2011).</b> Mortality rates in patients with eating disorders: meta-analysis. <i>Arch Gen Psychiatry</i>. (Anorexia, the highest mortality of any mental illness.) <a href="https://pubmed.ncbi.nlm.nih.gov/21727255/">PubMed</a></li>
+      <li><b>Cahalan S (2019).</b> <i>The Great Pretender</i>: the Rosenhan pseudopatient study reexamined and largely discredited. <a href="https://www.npr.org/2019/11/04/776036170/the-great-pretender-seeks-the-truth-about-on-being-sane-in-insane-places">NPR</a></li>
+    </ol>
+    </details>
+    <hr class="u-divider">
+  </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/no-blood-test.js"></script>
+</body>
+</html>
