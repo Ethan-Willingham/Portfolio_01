@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bhagavad Gita, Side by Side</title>
+  <meta name="description" content="All 700 verses of the Bhagavad Gita in the original Sanskrit, then every English translation I could gather stacked against each other, with a plain breakdown of the keystone verses and where the translators split.">
+  <meta property="og:title" content="The Bhagavad Gita, Side by Side">
+  <meta property="og:description" content="A warrior freezes before a battle that will kill his own family, and his charioteer, who turns out to be God, talks him through it. All 700 verses, the Sanskrit source, and a stack of English translations, broken apart verse by verse.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/gita.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/gita-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/gita-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE BHAGAVAD GITA, SIDE BY SIDE
+     An interactive reader: 700 verses, the Sanskrit source
+     (Devanagari + transliteration), and every English translation
+     in the corpus, with a plain breakdown of the keystone verses.
+     Sits in the site shell (forest green, parchment, Century Supra
+     / Segoe UI / Commit Mono). The Sanskrit needs a Devanagari
+     system face; the transliteration rides Century Supra A (full
+     diacritics). Everything else stays on the three site fonts.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 840px;                 /* reading column */
+    --sa-font: "Noto Serif Devanagari", "Kohinoor Devanagari", "ITF Devanagari", "Devanagari Sangam MN", "Sanskrit 2003", serif;
+    --iast-font: "Century Supra A", "Gentium Plus", "Noto Serif", "Times New Roman", serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sa-inline { font-family: var(--iast-font); font-style: italic; color: var(--text-bright); }
+  .dev-inline { font-family: var(--sa-font); color: var(--text-bright); }
+
+  /* the six untranslatable terms */
+  .terms { margin: 1.8rem 0 0.5rem; border-top: 1px solid var(--rule); }
+  .terms .term { padding: 0.85rem 0; border-bottom: 1px solid var(--rule); }
+  .terms dt { font-family: var(--iast-font); font-style: italic; font-size: 1.18rem; color: var(--accent); margin: 0 0 0.25rem; letter-spacing: 0.01em; }
+  .terms dd { margin: 0; font-size: 1.0rem; line-height: 1.55; color: var(--text-dim); }
+  .terms dd em { font-style: italic; color: var(--text-bright); }
+  .terms dd span[lang] { font-style: italic; color: var(--text); }
+  @media (min-width: 680px){
+    .terms .term { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0 1.5rem; align-items: baseline; }
+    .terms dt { margin: 0; }
+  }
+
+  /* the opening "fan": one line of Sanskrit, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-dev { font-family: var(--sa-font); font-size: clamp(1.4rem, 4.4vw, 2.1rem); color: var(--text-bright); letter-spacing: 0.005em; padding: 1.3rem 1.5rem 0.2rem; line-height: 1.5; }
+  .fan-iast { font-family: var(--iast-font); font-style: italic; font-size: clamp(0.95rem, 2.4vw, 1.1rem); color: var(--text-dim); padding: 0 1.5rem 0.4rem; line-height: 1.4; }
+  .fan-iast small { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .gita { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .gita-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .gita-step { display: flex; align-items: center; gap: 0.4rem; }
+  .gita-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .gita-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .gita-nav:disabled { opacity: 0.3; cursor: default; }
+  .gita-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; }
+  .gita-jump:hover { background: rgba(255,255,255,0.05); }
+  .gita-jump #gita-ref { font-variant-numeric: tabular-nums; }
+  .gita-jump #gita-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
+  .gita-keys { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+  .gita-keys button { font-family: var(--font-heading); font-size: 1.1rem; line-height: 1; width: 1.5rem; height: 1.5rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.1rem; }
+  .gita-keys button:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .gita-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .gita-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
+  .gita-views button:hover { color: var(--text-bright); }
+  .gita-views button.is-on { background: var(--accent); color: #2a3128; }
+  .gita-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .gita-count b { color: var(--accent); font-weight: 400; }
+
+  /* the verse index, grouped by chapter */
+  .gita-grid { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 60vh; overflow-y: auto; }
+  .gita-grid[hidden] { display: none; }
+  .gita-gridsec { margin-bottom: 0.7rem; }
+  .gita-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 0.35rem; text-transform: uppercase; }
+  .gita-gridlabel span { color: var(--accent); margin-right: 0.5em; text-transform: none; letter-spacing: 0.02em; }
+  .gita-gridrow { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  .gita-grid button { font-family: var(--font-mono); font-size: 0.72rem; aspect-ratio: 1; border: 1px solid transparent; border-radius: 6px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; position: relative; }
+  .gita-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .gita-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+  .gita-grid button.has-note { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .gita-grid button.has-note::after { content: ""; position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+  .gita-grid button.has-note.is-cur::after { background: #2a3128; }
+
+  /* source */
+  .gita-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .gita-sa-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .gita-sa-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
+  .gita-dev { font-family: var(--sa-font); font-size: clamp(1.25rem, 3.2vw, 1.6rem); line-height: 1.95; color: var(--text-bright); letter-spacing: 0.005em; margin: 0; text-wrap: pretty; }
+  .gita-iast { font-family: var(--iast-font); font-style: italic; font-size: clamp(0.98rem, 2.3vw, 1.1rem); line-height: 1.6; color: var(--text-dim); margin: 0.7rem 0 0; text-wrap: pretty; }
+
+  /* commentary */
+  .gita-notes { margin: 1rem 0 0; }
+  .gita-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .gita-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .gita-note-k:first-child { margin-top: 0; }
+  .gita-note-gist, .gita-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .gita-note-gist em, .gita-note-read em, .gita-splits em { font-style: italic; color: var(--text-bright); }
+  .gita-note-gist b, .gita-splits b { font-weight: 600; color: var(--text-bright); }
+  .gita-note-read { color: var(--text-dim); font-style: italic; }
+  .gita-splits { margin: 0; }
+  .gita-splits dt { font-family: var(--iast-font); font-style: italic; font-size: 1.16rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.005em; }
+  .gita-splits dt .gita-gloss { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
+  .gita-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .gita-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
+  .gita-keylink { font-family: inherit; font-style: italic; font-size: inherit; color: var(--accent); background: none; border: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 0; cursor: pointer; }
+  .gita-keylink:hover { color: var(--accent-hover); }
+
+  /* translations */
+  .gita-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .gita-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .gita-v:last-child { border-bottom: 1px solid var(--rule); }
+  .gita-early  { border-left-color: var(--early); }
+  .gita-mid    { border-left-color: var(--mid); }
+  .gita-modern { border-left-color: var(--modern); }
+  .gita-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .gita-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .gita-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .gita-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
+  .gita-vt .gita-br { display: block; height: 0.6em; }
+  .gita-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .gita .gita-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .gita.gita-ready .gita-body { opacity: 1; }
+  .gita-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .gita.gita-ready .gita-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* the section blocks carry their own var(--gutter); zero the body's so the
+       reader is not double-inset (20px gutter on phones, not 40px). */
+    body { padding-left: 0; padding-right: 0; }
+    .fan-dev { font-size: 1.3rem; padding: 1.1rem 1rem 0.2rem; }
+    .fan-iast { padding: 0 1rem 0.4rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .gita-bar { gap: 0.55rem 0.7rem; }
+    .gita-count { margin-left: 0; flex-basis: 100%; }
+    .gita-source, .gita-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .gita-v { padding-left: 0.9rem; }
+    .gita-gridrow { grid-template-columns: repeat(8, 1fr); }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Bhagavad Gita, side by side</h1>
+    <p class="hero-dek">A warrior freezes on the edge of a battle that will kill his own family. His charioteer, who turns out to be God, spends 700 verses talking him through how to act anyway. That conversation is the whole book.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>700 verses</b>, 18 chapters <span class="sep">/</span> <b>Sanskrit source</b> plus stacked translations <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">The most loved book in Hinduism is a soldier's panic attack, and the answer to it. Two armies stand ready to fight. A warrior named Arjuna asks his charioteer to drive him out into the gap between them so he can see who he is about to kill, and there, across the field, he sees his cousins, his teachers, and his childhood friends. His nerve goes. He drops his bow, sits down, and says he would rather die than fight. Everything famous in the Bhagavad Gita is what his charioteer says back.</p>
+
+      <p>The charioteer is Krishna, and partway through the talk he stops being a friend giving a pep talk and reveals that he is God, holding the whole universe inside his body. The Gita, which means "the song of the Lord," is the 700 verses he speaks to get one frightened man back on his feet. It is not a free-standing book. It sits two thirds of the way into the <em>Mahabharata</em>, the enormous Sanskrit war epic, and you do not even hear it firsthand: a blind old king is waiting at home for news of the battle, and his aide, granted long-distance sight by a sage, narrates the whole dialogue back to him as it happens. So a scripture about how to face death without flinching is delivered between two armies, in the last quiet minutes before the killing, by a god disguised as a driver, to a man falling apart, and overheard by a blind king through a clairvoyant. The staging is half the genius.</p>
+
+      <p>It is also the most translated Hindu text in the world, and the translators do not agree. The single most quoted line in the book is verse 2.47, the seed of everything Krishna teaches about action. Here is its first half, the same eight Sanskrit words, rendered by seven different hands.</p>
+
+      <div class="fan">
+        <p class="fan-dev" lang="sa">कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।</p>
+        <p class="fan-iast" lang="sa-Latn">karmaṇy-evādhikāras te mā phaleṣhu kadāchana<small>chapter 2, verse 47 &middot; the line the whole tradition leans on, eight words, no agreement</small></p>
+        <ul class="fan-list">
+          <li><span class="e">Your business is with action alone; not by any means with fruit.</span><span class="who">Telang, 1882</span></li>
+          <li><span class="e">Let right deeds be thy motive, not the fruit which comes from them.</span><span class="who">Arnold, 1885</span></li>
+          <li><span class="e">You have only the right to work, but none to the fruit of it.</span><span class="who">Purohit, 1935</span></li>
+          <li><span class="e">Your right is only to work, but not to its results.</span><span class="who">Sivananda, 1942</span></li>
+          <li><span class="e">You have the right to work alone, but not to the fruits of it.</span><span class="who">Adidevananda, after Ramanuja</span></li>
+          <li><span class="e">Your right is only to act, not to the results.</span><span class="who">Gambhirananda, after Shankara</span></li>
+        </ul>
+      </div>
+
+      <p>Work, business, deeds, action; fruit, results, reward. One translator makes it a clean transaction you have no claim on, another makes it a moral instruction, a third strips it to four flat words. They are reading the same line. Sanskrit packs a lot into a little, and every translator has to decide what Krishna meant before they can write it down, so they decide differently. That spread is the subject of this page.</p>
+
+      <p>Underneath the spread, the argument is simple enough to say in two sentences. Krishna's diagnosis: you suffer because you are hooked on the results of what you do, and because you have mistaken your dying body for your actual self. His prescription is three roads to the same freedom, and you do not have to choose between them. <strong>Act</strong> without clutching at the outcome (this is <em>karma yoga</em>, the path of action). <strong>Love</strong> and hand yourself over to God (<em>bhakti</em>, devotion). <strong>Know</strong> the deathless Self that was never born and will never die (<em>jnana</em>, knowledge). The book braids the three together and calls the braid yoga.</p>
+
+      <p>Six words carry that whole argument, and none of them crosses cleanly into English, which is why you see them left untranslated even in plain renderings. They are worth knowing before you start.</p>
+
+      <dl class="terms">
+        <div class="term"><dt><span lang="sa-Latn">dharma</span></dt><dd>duty, law, righteousness, religion, the order of things, the role you were born into. One word doing the work of six. The book's first word and last word are both forms of it.</dd></div>
+        <div class="term"><dt><span lang="sa-Latn">yoga</span></dt><dd>literally a yoking, as of an ox to a cart. Discipline, method, path, union with the divine. The exercise classes borrowed the word; it always meant much more than the stretching.</dd></div>
+        <div class="term"><dt><span lang="sa-Latn">atman</span></dt><dd>the Self, soul, the deathless witness inside you, as opposed to the body and personality it is wearing. Knowing it is not the body is the move that dissolves Arjuna's grief.</dd></div>
+        <div class="term"><dt><span lang="sa-Latn">karma</span></dt><dd>action, work, deed, and the long tail of consequence an action drags behind it. Not yet the cosmic scoreboard the English word became.</dd></div>
+        <div class="term"><dt><span lang="sa-Latn">guna</span></dt><dd>strand, quality, thread. The three the Gita keeps naming (<span lang="sa-Latn">sattva</span>, clarity; <span lang="sa-Latn">rajas</span>, drive; <span lang="sa-Latn">tamas</span>, inertia) are the raw materials everything in nature is spun from, including you.</dd></div>
+        <div class="term"><dt><span lang="sa-Latn">Brahman</span></dt><dd>the absolute, the ground of everything, the one reality behind the many. The Upanishads, which the Gita is standing on, say in four words that your <span lang="sa-Latn">atman</span> and <span lang="sa-Latn">Brahman</span> are the same thing: <em>tat tvam asi</em>, "that thou art."</dd></div>
+      </dl>
+
+      <p>Below is the whole book, all 700 verses, in the order the tradition fixed them. For each one you get the Sanskrit, in Devanagari and in transliteration, then every English version I could line up, stacked so you can read them against each other. For the keystone verses, the ones the rest of the tradition leans on, there is a plain-language breakdown of what the verse is doing and where the translators part ways. The gold-dotted verses in the index are the ones with a breakdown, and the keystone arrows jump between them. Use the arrows or your keyboard to move through the rest.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="gita" id="gita">
+      <div class="gita-bar">
+        <div class="gita-step">
+          <button class="gita-nav" id="gita-prev" aria-label="Previous verse">&lsaquo;</button>
+          <button class="gita-jump" id="gita-jump" aria-label="Jump to a verse"><span id="gita-ref">1.1</span><span id="gita-title"></span></button>
+          <button class="gita-nav" id="gita-next" aria-label="Next verse">&rsaquo;</button>
+        </div>
+        <div class="gita-keys" aria-label="Jump between keystone verses">
+          <button id="gita-keyprev" aria-label="Previous keystone verse">&lsaquo;</button>
+          keystones
+          <button id="gita-keynext" aria-label="Next keystone verse">&rsaquo;</button>
+        </div>
+        <div class="gita-views" id="gita-views" role="group" aria-label="How many translations to show">
+          <button data-view="key" class="is-on">Key</button>
+          <button data-view="complete">Complete</button>
+          <button data-view="all">All</button>
+        </div>
+        <div class="gita-count" id="gita-count"></div>
+      </div>
+
+      <div class="gita-grid" id="gita-gridpop" hidden aria-label="Verse index, grouped by chapter"></div>
+
+      <div class="gita-body">
+        <div class="gita-source" id="gita-source"></div>
+        <div class="gita-notes" id="gita-notes"></div>
+        <div class="gita-versions" id="gita-versions"></div>
+      </div>
+      <div class="gita-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/gita-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every translation here is reproduced verbatim, not paraphrased. The complete ones were pulled as data and parsed by script, so nothing in them was retyped or reworded by hand or by a model. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
+      <ul class="src-list">
+        <li><b>The Sanskrit</b>, in Devanagari and in transliteration, is from the open <a href="https://bhagavadgita.io">bhagavadgita.io</a> dataset, which prints the standard received text verse by verse.</li>
+        <li><b>The five complete English translations</b> come from the same open dataset: <b>Shri Purohit Swami</b> (1935, the literary version the poet W. B. Yeats helped into print), <b>Swami Sivananda</b> (the practical one the Divine Life Society gives away), <b>Swami Adidevananda</b> (who follows Ramanuja, the devotional reading), <b>Swami Gambhirananda</b> (who follows Shankara, the non-dual reading), and <b>Dr. S. Sankaranarayan</b> (an academic literal rendering).</li>
+        <li><b>Sir Edwin Arnold</b> (<em>The Song Celestial</em>, 1885) and <b>Kashinath Telang</b> (1882, the Sacred Books of the East edition) appear on the keystone verses. Arnold's is the Victorian poem that carried the Gita into English; it is the version a young Gandhi first read, in London, in a translation by an Englishman. Both are public domain, from <a href="https://archive.org">the Internet Archive</a>.</li>
+      </ul>
+      <p>That spans a Victorian scholar, a Victorian poet, and four readers from inside the living tradition, two of whom (Gambhirananda and Adidevananda) deliberately follow rival schools, so on many verses you can watch the old argument between them play out in the English. The other famous moderns the breakdowns name, Annie Besant, Prabhavananda and Isherwood, Eknath Easwaran, Barbara Stoler Miller, Stephen Mitchell, Winthrop Sargeant, Graham Schweig, and Laurie Patton, are still in copyright and printed in books, not posted as clean machine-readable text. Rather than retype them and risk a wrong word, I name them where their choice matters and leave the quoting to the editions I could verify exactly.</p>
+      <p>The breakdowns are mine. They lean on the standard scholarship and on the three great commentators who read the same verses in opposite directions: Shankara (non-dual), Ramanuja (devotional), and Madhva (dualist). Where they split, I have tried to say so rather than smooth it over, because the splitting is the most honest thing about the book.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">A note on the count. By tradition the Gita is exactly 700 verses, which is why it is sometimes just called "the Seven Hundred." The edition here runs to 701, because one stanza in chapter 13 gets split differently; a Kashmiri line of manuscripts runs to 745. Even the number of verses is something the editions disagree about. The blind king Dhritarashtra, for what it is worth, speaks only the opening line; Krishna does almost all the rest of the talking.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The image on the homepage card is an Indian print of Krishna driving Arjuna's four-horse chariot onto the field, catalogued as <em>Arjuna requests instruction from Krishna</em> (Wellcome Collection, CC BY 4.0). That request, in the pause before the fighting, is the door the whole book walks through.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/gita-notes.js" defer></script>
+  <script src="js/gita-data.js" defer></script>
+  <script src="js/gita.js" defer></script>
+</body>
+</html>
