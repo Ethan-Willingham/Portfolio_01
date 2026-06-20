@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aristotle and the Good Life</title>
+  <meta name="description" content="A plain-language walk through Aristotle's Nicomachean Ethics, his answer to what happiness actually is and how a person gets there, in seven stops, featuring W.D. Ross's translation with five modern translations stacked on the lines where they split.">
+  <meta property="og:title" content="Aristotle and the Good Life">
+  <meta property="og:description" content="Everyone wants to be happy, and almost everyone chases the wrong things. Aristotle is the one who sat down and worked out what happiness actually is, and why you build it the way you learn an instrument. A walk through the Ethics in seven stops.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/aristotle.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/aristotle-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/aristotle-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     ARISTOTLE AND THE GOOD LIFE
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: seven stops through the argument of the Nicomachean
+     Ethics, each unpacked in plain language, with collapsible side
+     panels that stack the modern translators on the key lines and
+     the contested technical words. Featured text: W.D. Ross (public
+     domain). Sits in the site shell (forest green, parchment,
+     Century Supra / Segoe UI / Commit Mono). Greek source words
+     need a polytonic fallback face. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --gr-font: "GFS Didot","Noto Serif","Cambria","Times New Roman",serif;
+    --classic: #cf9f78;               /* Ross, the featured public-domain spine */
+    --standard:#bc9d65;               /* the academic-standard moderns */
+    --literal: #9ec79a;               /* the literal / idiosyncratic moderns */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .gr { font-family: var(--gr-font); font-style: normal; }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Ross passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-v { display: block; }                    /* a line break inside the passage */
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION / TERM SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gr { font-family: var(--gr-font); font-size: clamp(1.3rem, 4vw, 1.7rem); line-height: 1.6; color: var(--text-bright); margin: 0 0 0.2rem; letter-spacing: 0.01em; }
+  .stack-translit { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; color: var(--text-dim); font-style: normal; margin: 0 0 0.5rem; line-height: 1.5; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-classic  { border-left-color: var(--classic); }
+  .stack-standard { border-left-color: var(--standard); }
+  .stack-literal  { border-left-color: var(--literal); }
+  .stack-feat { background: rgba(207,159,120,0.07); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--classic); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  /* the term panel: a contested word and the spread of English given for it */
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-gr { font-family: var(--gr-font); font-size: 1.4rem; color: var(--text-bright); }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.05rem; color: var(--accent); }
+  .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- the table of virtues (Stop 4) uses the kit .u-table ---------- */
+  .vtable-wrap { margin: 1.6rem 0 0.4rem; }
+  .vtable-wrap .u-table .vt-v { color: var(--text-bright); font-weight: 600; }
+  .vtable-wrap .u-table td { vertical-align: top; }
+  .vtable-cap { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin: 0.7rem 0 0; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+    /* the virtues table: 4 columns will not fit a phone, so drop the contextual
+       "in the matter of" column (the virtue names carry it) and tighten the rest.
+       overflow-x is a safety net so nothing is ever clipped by overflow:clip. */
+    .vtable-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .u-table { font-size: 0.84rem; }
+    .u-table th, .u-table td { padding: 0.45rem 0.5rem; }
+    .u-table thead th:first-child, .u-table tbody td:first-child { display: none; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Aristotle and the good life</h1>
+    <p class="hero-dek">Everyone wants to be happy, and almost everyone chases the wrong things to get there. Aristotle is the one who sat down and worked out what happiness actually is. Here is how the argument goes.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>7 stops</b> through the Nicomachean Ethics <span class="sep">/</span> featured: <b>W.D. Ross</b> <span class="sep">/</span> ~30 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Ask a friend why they want the promotion. More money, probably. Ask why they want the money: a bigger place, less stress, a trip somewhere warm. Ask why they want those, and keep asking, and something odd happens. The answers get shorter, then they run out. Sooner or later you hit the floor: <em>because it would make me happy.</em> And there is no answer to "why do you want to be happy," because the question stops making sense. Nobody is happy in order to get something else.</p>
+
+      <p>That floor is where Aristotle starts. Everything we chase, we chase for the sake of something else, except for one thing. Happiness is the thing we want only for itself, the bottom of every chain of reasons. So if you want to know how to live, that is the place to aim. Work out what happiness actually is, and you have found the target the rest of your life is pointed at.</p>
+
+      <p>Here is the catch, and it is why the book exists. Everyone agrees they want to be happy. Almost nobody agrees on what it is. Ask around and you get the same three answers. Happiness is feeling good. Happiness is money. Happiness is being admired, having status, winning. Aristotle thought all three were the kind of quiet mistake that wastes a life. The pleasures fade and leave you wanting the next one. Money turned out to be a tool for getting other things, so it was never the point. And status lives inside other people's heads, which means it was never really yours. Three popular answers, three dead ends.</p>
+
+      <p>His own answer takes ten books to lay out, and it is not a feeling at all. Happiness, for Aristotle, is a whole life lived well. Not the mood you are in on a good afternoon, but the quality of a life taken end to end, the way we mean it when we say someone led a good life, usually only once it is over. And the way you get there is almost disappointingly practical. You build it, a little at a time, out of habits, the way you would learn an instrument. That is the argument this page walks through.</p>
+
+      <p>The book is the <strong>Nicomachean Ethics</strong>, set down in Athens around 340 BC and probably named for his son, Nicomachus. It does not read like scripture, and it does not read like self-help. It reads like what it is: the working lecture notes of the most organized mind in the ancient world. Aristotle tried to write down everything, biology, physics, logic, weather, poetry, politics, and here he takes on the one subject everybody cares about and nobody can pin down, which is how to live. He had studied under Plato for twenty years and come away disagreeing with him about most of it. Where Plato pointed up, to a perfect world of ideal Forms behind this one, Aristotle kept looking down here, at actual people and what actually makes them thrive.</p>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/images/aristotle-rembrandt.jpg" width="1137" height="1200" loading="lazy" decoding="async" alt="Rembrandt's painting: a bearded Aristotle in a black hat and white sleeves, lit gold against deep shadow, a heavy gold chain across his chest, resting one hand on a pale marble bust of Homer.">
+        <figcaption class="u-figure-cap">Rembrandt van Rijn, <em>Aristotle with a Bust of Homer</em> (1653). Aristotle wears the gold chain of worldly success and lays a hand on a bust of Homer, the blind poet, the life of fame and the life of the mind in a single frame. When the Met bought it in 1961 the price set a record for any painting at auction.</figcaption>
+      </figure>
+
+      <p>One word will do a lot of work, so it is worth meeting now: <em class="gr">eudaimonia</em>. It almost always gets translated as <strong>happiness</strong>, and that is a small disaster, because in English "happiness" means a feeling, and eudaimonia is not a feeling. It is closer to <em>flourishing</em>, or <em>living well</em>, a life that is going well as a life. Think of a plant that is thriving, getting the light and water it needs and growing the way that kind of plant is meant to grow. Eudaimonia is that, for a person. Translators have argued over the word for a century, and you can watch them do it in the panels below.</p>
+
+      <p>The featured translation throughout is <strong>W.D. Ross's</strong>, the classic English version from the 1920s, now in the public domain, so every line is quoted in full. On the words and sentences where the modern translators split hardest, you can open a panel and line up five more, Irwin, Crisp, Rowe, Bartlett and Collins, and Sachs, against each other and against Ross. Seven stops, following the argument from its first question, what is happiness, to its last, what is the best thing a human being can do.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole book on one page</p>
+        <p class="u-callout-body">The diagnosis: we all want to be happy, and we go looking for it in pleasure, money, and status, none of which can hold the weight. The cure: happiness is not something that happens to you, it is something you <em>do</em>. It is a whole life of acting well, built out of good habits, steered by good judgment, lived among real friends, and crowned by the rare hours when you use the best thing in you for its own sake. Build that, across a lifetime, and you have the one kind of happiness that does not evaporate.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">What happiness is not</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 7</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-happiness" data-label="What happiness is not" data-tag="Book 1">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> Book 1, the highest good</p>
+      <h2 class="station-h">Everyone wants it, nobody agrees what it is</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 1, chapter 4</p>
+        <div class="passage-t">
+          <p>Verbally there is very general agreement; for both the general run of men and people of superior refinement say that it is happiness, and identify living well and doing well with being happy; but with regard to what happiness is they differ, and the many do not give the same account as the wise.</p>
+          <span class="passage-n">Nicomachean Ethics 1095a · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Notice the trick in that sentence. Ask people to name the goal of life and they all say the same word, happiness, and nod at each other like they have agreed on something. They have agreed on nothing. The word is a placeholder, and underneath it everyone has filled in a different thing.</p>
+        <p>So Aristotle does the obvious thing and looks at how people actually live, on the theory that what you really think happiness is shows up in what you spend your days chasing. He finds three answers, the same three you would find today.</p>
+        <p>The first is <strong>pleasure</strong>. Most people, he says, go for enjoyment, and he is blunt about it: a life spent chasing good feelings is "a life suitable to beasts," because it is the one cows would pick too. He is not a prude, and pleasure comes back later as a real part of a good life. But as the <em>whole</em> of it, it fails the simple test of asking for more. The pleasure lands, fades, and leaves you exactly where you started, wanting the next one.</p>
+        <p>The second is <strong>honor</strong>, which is his word for status, reputation, being admired and looked up to. This is the goal of the ambitious, the political type, and it is a better answer than pleasure. But it has a fatal leak. Honor lives in other people. It is handed to you by the crowd, and the crowd can take it back tomorrow, which means it was never really yours. You want it, he notices, mostly as proof that you are good. So the thing you are actually after is the goodness, not the applause for it.</p>
+        <p>The third is <strong>money</strong>, and this one he dismisses fastest. Wealth is "merely useful," a tool for getting other things. Nobody wants a pile of money for its own sake, they want what it buys, which means money is never the destination. Chasing it as the goal is chasing the means and forgetting the end.</p>
+        <p>Three answers, three dead ends, and they fail in an instructive way. Pleasure does not last, honor is not yours, money is not the point. What you want is something that lasts, that belongs to you, and that is wanted for itself and not for what it gets you. That short list is the job description for happiness, and the rest of the book is Aristotle filling the position.</p>
+      </div>
+
+      <details class="stack">
+        <summary>Eudaimonia: happiness, or something better?</summary>
+        <div class="stack-body">
+          <p class="stack-gr" lang="grc">&#949;&#8016;&#948;&#945;&#953;&#956;&#959;&#957;&#943;&#945;</p>
+          <p class="stack-translit">eudaimonia &middot; literally "having a good guardian spirit"</p>
+          <p class="stack-gloss">The most important word in the book, and "happiness" is a shaky translation of it. In English, happiness is a <em>feeling</em>, the good mood you are in this afternoon. Aristotle's word is not a feeling. It is an activity, living and doing well, stretched across an entire life. You can be wrong about whether you have it, the way you can be wrong that a life is going well, and you cannot have it for an afternoon.</p>
+          <p class="stack-gloss">So why not translate it "flourishing," which catches the living-well sense? Here is the surprise. Almost no major translator does. Every one of the six stacked through this page, across a hundred years, prints <strong>happiness</strong>, most of them flagging in a footnote that the word is a poor fit. "Flourishing" is what the commentators reach for; "happiness" is what is on the page, partly because "flourishing" makes a person sound like a houseplant. The honest move, the one this post takes, is to keep "happiness" and just remember it means a life going well, not a mood.</p>
+          <p class="stack-gloss" style="margin-bottom:0">Aristotle's own plain synonyms for it are worth keeping in view: <em class="gr">eu zen</em> and <em class="gr">eu prattein</em>, "living well" and "doing well." That pair is the closest he comes to a definition, and notice it is doing well, not feeling good.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-function" data-label="What is a human for?" data-tag="Book 1">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Book 1, the function argument</p>
+      <h2 class="station-h">What is a human being for?</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 1, chapter 7</p>
+        <div class="passage-t">
+          <p>Now [if] the function of man is an activity of soul which follows or implies a rational principle ... human good turns out to be activity of soul in accordance with virtue, and if there are more than one virtue, in accordance with the best and most complete.</p>
+          <p>But we must add "in a complete life." For one swallow does not make a summer, nor does one day; and so too one day, or a short time, does not make a man blessed and happy.</p>
+          <span class="passage-n">Nicomachean Ethics 1098a · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>To find out what a good human life is, Aristotle reaches for a tool he uses on everything: the idea of a <em>function</em>, the work a thing does that makes it the thing it is. A knife is for cutting, so a good knife is one that cuts well. A flute player's work is playing the flute, and a good flute player plays it well. For anything with a function, "good" is not a mystery. It just means doing that function well.</p>
+        <p>Then he asks the question that sounds almost rude. Does a <em>human being</em> have a function? The parts seem to. The eye is for seeing, the hand for grasping, every organ has its job. It would be strange, he says, if a carpenter and a shoemaker each had a function but a human being, as such, had none. So what is the work that only a human does? Not just being alive, plants manage that. Not just sensing and moving around, every animal does that. Strip away what we share with the broccoli and the dog and one thing is left: reason. Thinking, choosing, being able to ask what you should do. The human function is a life that uses the rational part of us.</p>
+        <p>That gives him the answer, and it is the load-bearing sentence of the whole book. If the human function is to live by reason, then a <em>good</em> human is one who does that distinctively human thing, and does it well. Happiness is activity of the soul in accordance with virtue. The word doing the work there is <em>virtue</em>, and at this stage it does not mean moral goodness, it means <em>excellence</em>, doing your function well. A knife has it when it cuts well. A person has it when they run the life of reason well, in their thinking and in their choosing.</p>
+        <p>And not for an afternoon. He adds "in a complete life," then drops the line everyone remembers: one swallow does not make a summer. A single warm day is not spring, and a single good day, or even a good year, is not a happy life. Happiness is the shape of a life taken whole, which is why he says later that you can hardly call a person happy while the story is still running. It is a verdict on the finished thing, not a reading off the meter right now.</p>
+        <p>That cuts the other way too, and Aristotle is honest about it. Happiness is not fully yours to lock down. His grim example is Priam, the king of Troy, who lived well for a long life and then, in old age, watched his city burn and his sons killed. A big enough disaster, late enough, can spoil even a good life's claim to have gone well. Unlike the Stoics who came after him, Aristotle will not pretend otherwise. The good life needs a floor of plain luck under it, health, enough money, people who are not all taken from you. You build happiness, and the world still gets a vote.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>This is the most argued-over passage in the book,</strong> and the objection is fair: who says a human being has a "function" at all? A knife has one because someone made it to cut. Nobody made us for anything. But notice Aristotle is not smuggling in a maker. He is pointing at what is distinctly human and saying that whatever the best life is, it cannot be the part we share with cattle. You do not need a designer to agree that a person who spends the whole of their one life asleep, or drunk, is missing the point of being a person.</p>
+      </aside>
+
+      <details class="stack">
+        <summary>Two words the argument rests on: virtue and function</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">The conclusion hangs on two Greek words, and the translators split on both. Here is the spread, and what each one is reaching for.</p>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-gr" lang="grc">&#7936;&#961;&#949;&#964;&#942;</span><span class="stack-term-w">arete</span><span class="stack-term-lit">"excellence"</span></div>
+            <p class="stack-term-b">Usually <b>virtue</b>, but that word has gone churchy in English, all duty and restraint. Aristotle's is wider and cooler: the excellence of a thing, whatever makes it good at being what it is. A sharp eye and a fast horse both have <em>arete</em>. Ross, Irwin, Crisp, Bartlett and Collins, and Sachs all keep <b>virtue</b>. Rowe alone breaks ranks and prints <b>excellence</b> the whole way through, which catches the eye-and-horse breadth but loses the moral weight. Read "virtue" here and hear "excellence" underneath it.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-gr" lang="grc">&#7956;&#961;&#947;&#959;&#957;</span><span class="stack-term-w">ergon</span><span class="stack-term-lit">"work, function"</span></div>
+            <p class="stack-term-b">A thing's job, the work only it does. Ross, Rowe, and Irwin call it the <b>function</b> (Irwin coined the phrase "the function argument"). Bartlett and Collins, and Sachs, prefer the plainer <b>work</b>. Crisp goes furthest and unpacks it as the <b>characteristic activity</b>, to stop you hearing "function" as something stamped on us from outside, like a label on a tool. And when Aristotle says happiness is the soul's <em>activity</em>, Sachs writes <b>being-at-work</b>, which he calls the most important idea in all of Aristotle. Happiness is not a thing you have. It is the soul at work.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-habit" data-label="Virtue is a habit" data-tag="Book 2">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Book 2, habituation</p>
+      <h2 class="station-h">You learn it the way you learn an instrument</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 2, chapter 1</p>
+        <div class="passage-t">
+          <p>The virtues we get by first exercising them, as also happens in the case of the arts as well. For the things we have to learn before we can do them, we learn by doing them, e.g. men become builders by building and lyre-players by playing the lyre; so too we become just by doing just acts, temperate by doing temperate acts, brave by doing brave acts.</p>
+          <span class="passage-n">Nicomachean Ethics 1103a · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is the practical heart of the book, and Aristotle's image for it is not a sermon, it is a music lesson. Nobody is born playing the lyre, and nobody learns it from a book. You learn it by playing, badly at first, wrong notes everywhere, until one day your hands know the thing and you stop having to think about it. Virtue, he says, works the exact same way. You become brave by doing brave things. You become honest by telling the truth when a lie would be easier, and generous by actually handing things over. The act comes first. The character is what is left behind once you have done enough of them.</p>
+        <p>That is backwards from how we usually talk, and the reversal is the whole point. We say someone is generous, and so they give. Aristotle says you give, and the giving, repeated, is what makes you generous. Character is not the engine that drives the acts, it is the sediment they leave. He is being almost literal about this. The Greek word for character here is tied to the word for habit, and our word "ethics" comes straight off it. Ethics, for him, is the study of how habits make a person.</p>
+        <p>The instrument keeps teaching. A beginner sounds rough and has to think about every finger; a player who has put in the years sounds easy and is thinking only about the music. Virtue goes the same way. At first the right thing is awkward and takes a clench of willpower. Do it long enough and it gets quiet, almost automatic, even pleasant. That is actually his test for whether you have the virtue yet or are only faking it: the truly brave person does the brave thing and is not secretly miserable about it. When the good act starts to feel like the natural one, the habit has become character.</p>
+        <p>This is also why he says it makes "all the difference" what habits you are raised into. A child taught early to share, to tell the truth, to sit with a little discomfort, has been handed a head start they did not choose, the way a kid put on the piano at five grows an ear they will never have to work for. It is not fair, and Aristotle does not pretend it is. Good upbringing is luck, and it matters enormously.</p>
+        <p>One honest snag, because he saw it too. How do you do a brave act <em>before</em> you are brave? If only brave people can act bravely, the door is locked from the inside. His answer is the music answer one more time. The beginner plays real notes, just not yet the way a musician does. You do the brave thing, in the way a brave person would do it, before the courage is fully in you, and the doing is what puts it there. You practice the form until the substance grows up underneath it. There is no other door in.</p>
+      </div>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The line he never wrote</p>
+        <p class="u-callout-body">"We are what we repeatedly do. Excellence, then, is not an act but a habit." You have seen it on a poster, signed <em>Aristotle</em>. He never wrote it. It is Will Durant, summing Aristotle up in his 1926 bestseller <em>The Story of Philosophy</em>, and it stuck because it is a genuinely good summary of this chapter. Just know that the tidy version is Durant's. Aristotle's own version is the builders and the lyre-players, which is better anyway, because it tells you what to actually do on Monday.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-mean" data-label="The golden mean" data-tag="Book 2">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Book 2, the doctrine of the mean</p>
+      <h2 class="station-h">Courage sits between two fears</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 2, chapter 6</p>
+        <div class="passage-t">
+          <p>Virtue, then, is a state of character concerned with choice, lying in a mean, i.e. the mean relative to us, this being determined by a rational principle, and by that principle by which the man of practical wisdom would determine it.</p>
+          <span class="passage-n">Nicomachean Ethics 1107a · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the famous one, the golden mean, and it is the most misread idea in the book. People hear "the mean" and think it means be moderate, stay lukewarm, never feel anything too strongly. That is the opposite of what he says. The mean is not the wishy-washy middle. It is the <em>right amount</em>, and the right amount can be enormous.</p>
+        <p>Courage is his worked example, and it makes the idea concrete. Stand a person in front of real danger and they can fail in two directions. Feel too little fear and act on it, and you are reckless, throwing your life away on a dare. Feel too much and let it rule you, and you are a coward, running when you should stand. Courage is neither. It is feeling the fear that fits the danger and acting well in spite of it, facing the right things, for the right reason, at the right time. The brave person is not the one who feels no fear. That person is just a reckless fool who hasn't noticed the cliff. The brave one feels it and holds.</p>
+        <p>And the mean is "relative to us," not a fixed midpoint you could look up. Aristotle's own example is food: the right amount for an Olympic wrestler is not the right amount for a beginner. There is no number. The right amount of anything, fear, anger, generosity, depends on who you are, the situation, and the stakes. Which is the whole reason the next idea has to exist, because if there is no formula, somebody still has to judge the right amount in the moment, and that judgment turns out to be a skill of its own.</p>
+        <p>Almost every virtue has this shape, a sweet spot between a too-much and a too-little. He lays out a whole table of them.</p>
+      </div>
+
+      <div class="vtable-wrap">
+        <table class="u-table">
+          <thead><tr><th>In the matter of</th><th>Too little</th><th>The virtue</th><th>Too much</th></tr></thead>
+          <tbody>
+            <tr class="u-feature"><td>facing danger</td><td>cowardice</td><td class="vt-v">courage</td><td>recklessness</td></tr>
+            <tr><td>bodily pleasures</td><td>(almost nobody)</td><td class="vt-v">self-control</td><td>overindulgence</td></tr>
+            <tr><td>giving money</td><td>stinginess</td><td class="vt-v">generosity</td><td>wastefulness</td></tr>
+            <tr><td>anger</td><td>spinelessness</td><td class="vt-v">an even temper</td><td>a short fuse</td></tr>
+            <tr><td>telling the truth about yourself</td><td>false modesty</td><td class="vt-v">honesty</td><td>boastfulness</td></tr>
+            <tr><td>being funny</td><td>being a bore</td><td class="vt-v">wit</td><td>buffoonery</td></tr>
+          </tbody>
+        </table>
+        <p class="vtable-cap">From Aristotle's own list, Book 2.7. Each virtue is the well-judged amount between two ways of missing.</p>
+      </div>
+
+      <div class="prose">
+        <p>The table also explains why being good is hard and going wrong is easy. There is one way to hit the center and a thousand ways to miss it. You can overshoot or undershoot, miss early or late, aim at the wrong person, for the wrong reason. Aristotle's line is that it is easy to miss the mark and hard to hit it, the same reason it is easy to miss a target and hard to land the arrow dead center. Vice has the whole field to land in. Virtue has the bullseye.</p>
+        <p>One guardrail, because the doctrine gets abused. The mean is not "everything in moderation, so anything goes in the right dose." Some things have no good amount. You cannot murder at the right time, or betray a friend to just the proper degree. Aristotle says this flatly: certain acts, like murder, theft, and adultery, are simply wrong, and there is no mean of them, because the badness is already baked into the name. The mean is a tool for the feelings and actions that <em>can</em> go right or wrong by degree. It was never a license.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The mean, the middle, or the intermediate?</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">One sentence, the definition of virtue itself, in six hands. Watch four things move: <em>virtue</em> or <em>excellence</em>, the <em>state</em> it is, the <em>mean</em> it sits in, and the <em>wise</em> person who fixes the amount.</p>
+          <div class="stack-v stack-classic stack-feat">
+            <div class="stack-vh"><span class="stack-vn">W.D. Ross <span class="star">featured</span></span><span class="stack-vy">1908</span></div>
+            <div class="stack-vt">"Virtue, then, is a state of character concerned with choice, lying in a mean, i.e. the mean relative to us, this being determined by a rational principle, and by that principle by which the man of practical wisdom would determine it."</div>
+          </div>
+          <div class="stack-v stack-standard">
+            <div class="stack-vh"><span class="stack-vn">Terence Irwin</span><span class="stack-vy">1999</span></div>
+            <div class="stack-vt">"Virtue, then, is a state that decides, consisting in a mean, the mean relative to us, which is defined by reference to reason, that is to say, to the reason by reference to which the prudent person would define it."</div>
+          </div>
+          <div class="stack-v stack-standard">
+            <div class="stack-vh"><span class="stack-vn">Roger Crisp</span><span class="stack-vy">2000</span></div>
+            <div class="stack-vt">"Virtue, then, is a state involving rational choice, consisting in a mean relative to us and determined by reason ..."</div>
+          </div>
+          <div class="stack-v stack-standard">
+            <div class="stack-vh"><span class="stack-vn">Christopher Rowe</span><span class="stack-vy">2002</span></div>
+            <div class="stack-vt">"Excellence, then, is a disposition issuing in decisions, depending on intermediacy of the kind relative to us, this being determined by rational prescription and in the way in which the wise person would determine it."</div>
+          </div>
+          <div class="stack-v stack-literal">
+            <div class="stack-vh"><span class="stack-vn">Joe Sachs</span><span class="stack-vy">2002</span></div>
+            <div class="stack-vt">"...virtue is an active condition that makes one apt at choosing, consisting in a mean condition in relation to us, which is determined by a proportion and by the means by which a person with practical judgment would determine it."</div>
+          </div>
+          <div class="stack-v stack-literal">
+            <div class="stack-vh"><span class="stack-vn">Bartlett &amp; Collins</span><span class="stack-vy">2011</span></div>
+            <div class="stack-vt">"Virtue, therefore, is a characteristic marked by choice, residing in the mean relative to us, a characteristic defined by reason and as the prudent person would define it."</div>
+          </div>
+          <p class="stack-gloss" style="margin-top:1rem">The bones are identical and the surface agrees on almost nothing. A "state of character," a "disposition," a "characteristic," an "active condition." A "mean," an "intermediacy," a "mean condition." The "man of practical wisdom," the "prudent person," the "wise person," the "person with practical judgment." Same Greek, same idea, not one shared noun. This is exactly why the post leans on one translation and lets you open the rest. Any single English Aristotle is one reading among many.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-phronesis" data-label="Practical wisdom" data-tag="Book 6">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> Book 6, practical wisdom</p>
+      <h2 class="station-h">Knowing the rule is not enough</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 6, chapter 5</p>
+        <div class="passage-t">
+          <p>[Practical wisdom] is a true and reasoned state of capacity to act with regard to the things that are good or bad for man.</p>
+          <span class="passage-n">Nicomachean Ethics 1140b · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The doctrine of the mean left a hole, and Aristotle knew it. Virtue is the right amount, fine, but who decides the right amount? There is no formula. You cannot write down "give exactly this much, and feel exactly this angry, in exactly these cases." The right amount depends on the particulars, and reading the particulars is a skill in its own right. He has a name for that skill: <em>phronesis</em>, practical wisdom. It is the judgment that tells you what <em>this</em> situation actually calls for.</p>
+        <p>Two things it is not. It is not raw cleverness, because you can be clever and aim it at terrible ends. And it is not book learning. You can memorize every rule of good conduct and still fumble the live moment, the way someone aces the written driving test and then panics at the first roundabout. Practical wisdom is the thing that closes that gap. It is what a good doctor has that a medical textbook does not: the read on <em>this</em> patient, in this bed, today. The wise person sees what the situation needs and the merely well-informed person misses it.</p>
+        <p>Aristotle makes a sharp observation about this. You find young geniuses in mathematics all the time, he says, prodigies of sixteen. You do not find young people of practical wisdom. The reason is that practical wisdom is built from experience, and experience only comes with time. There is no shortcut and no skipping ahead. A twenty-two-year-old can out-calculate anyone in the room and still have no idea how to handle a grieving friend, a bad boss, or their own anger, because those are not problems you solve on paper.</p>
+        <p>This is the piece that holds all the others together. Every virtue is, underneath, a judgment call: how much courage here, how much generosity, toward whom, at what moment. Take the judgment away and the virtues fall apart. Courage with no judgment is just recklessness swinging at random. Generosity with no judgment writes a check to a con artist. So Aristotle says something that sounds circular until you sit with it: you cannot really have any of the virtues without practical wisdom, and you cannot have practical wisdom without the virtues. They grow up together, each one needing the other, which is exactly why character takes a whole life and not a weekend.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>It is why we trust grey hair for some jobs and not others.</strong> We are happy to let a twenty-five-year-old run the numbers or write the code. For the call that depends on reading people and weighing a hundred soft particulars at once, we want someone who has been around long enough to have gotten it wrong a few times. That instinct is pure Aristotle. Some things you can only learn by living them.</p>
+      </aside>
+
+      <details class="stack">
+        <summary>Practical wisdom, prudence, or judgment?</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">One Greek word, and the translators cannot agree what to call it. The spread is a fair measure of how slippery the idea is.</p>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-gr" lang="grc">&#966;&#961;&#972;&#957;&#951;&#963;&#953;&#962;</span><span class="stack-term-w">phronesis</span><span class="stack-term-lit">the know-how of living</span></div>
+            <p class="stack-term-b">Ross and Crisp say <b>practical wisdom</b>, now the standard, and it says what it is: wisdom you can act on. Irwin and Bartlett and Collins say <b>prudence</b>, the older Latin-rooted word, though to a modern ear "prudence" sounds like caution and insurance, which is not it at all. Sachs says <b>practical judgment</b>, which may be the truest, because the thing really is judgment, sizing up a particular case on the spot. Rowe just says <b>wisdom</b>, flat. Four English words for one Greek one, because we no longer keep a single word for "the skill of seeing what a situation needs and doing it." Aristotle did.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-friendship" data-label="Friendship" data-tag="Books 8-9">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> Books 8 and 9, friendship</p>
+      <h2 class="station-h">No one would choose to live without friends</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 8, chapter 1</p>
+        <div class="passage-t">
+          <p>For without friends no one would choose to live, though he had all other goods.</p>
+          <span class="passage-n">Nicomachean Ethics 1155a · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Aristotle spends two entire books, more than on any single virtue, on friendship. That throws people who expect a book of ethics to be a list of rules. But it follows straight from everything before it. If happiness is a whole life lived well, and a life is lived among people, then you cannot be happy alone. He says it flatly: nobody would choose to live without friends, even handed every other good thing. A life with no one in it is not a life going well, no matter what else is in it.</p>
+        <p>He sorts friendship into three kinds, and the sorting is the useful part, because most of what we call friendship is the first two.</p>
+        <p>The first is friendship of <strong>utility</strong>: you are useful to each other. The contact who can open a door, the neighbor with the ladder, the colleague you trade favors with. Real and worth having, but it lasts exactly as long as the usefulness does. When the deal closes or the jobs change, the friendship quietly ends, because the use was the point.</p>
+        <p>The second is friendship of <strong>pleasure</strong>: you enjoy each other. The funny one, the friend who is good company at a bar. Also real, also a little fragile. When the fun runs out, or you change and the old jokes stop landing, it fades. Most friendships of our twenties are this kind, which is why so few of them survive our thirties.</p>
+        <p>The third is the rare one, friendship of <strong>character</strong>, or as he says, friendship of the good. Here you love the other person for who they are, not for what they do for you or how they make you feel, and you want their good for their own sake. These take a long time to build, you can only have a few, and they are the ones that last, because the thing you love, the person's character, does not run out the way usefulness and fun do. His phrase for it is unforgettable: a friend is "another self." You have widened the border of yourself to take someone else inside it, so that their good is simply yours, no trade involved.</p>
+        <p>None of this makes the first two kinds bad. Most of your friendships will be utility and pleasure, and that is fine, that is most of life. The point is to know which is which, and to know that the third kind cannot be hurried or bought. It is built out of years and shared trouble, and if you get two or three of them in a life you have done well. This is also where the whole argument has been heading. Virtue was never a solo performance. It is mostly something you do with and for other people, and its highest form is the friend whose good you want as if it were your own, because, by then, it is.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-contemplation" data-label="The highest life" data-tag="Book 10">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> Book 10, the best life</p>
+      <h2 class="station-h">The best thing a human can do</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ross / Book 10, chapter 7</p>
+        <div class="passage-t">
+          <p>We must not follow those who advise us, being men, to think of human things, and, being mortal, of mortal things, but must, so far as we can, make ourselves immortal, and strain every nerve to live in accordance with the best thing in us.</p>
+          <span class="passage-n">Nicomachean Ethics 1177b · W.D. Ross</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The last move surprises almost everyone. After nine books on the active, social virtues, courage and justice and generosity and friendship, the whole busy life of doing well by other people, Aristotle asks which life is the very best, and his answer is not the busy one. It is <em>contemplation</em>. The life of the mind. Understanding the deepest, truest things for no reason beyond the understanding itself.</p>
+        <p>The logic is consistent with everything before it, which is what makes it land. Happiness is the activity of our best part doing its best work. Our best part is reason, we settled that at the function argument. And reason's highest use is not solving today's problem, it is understanding, grasping what is true and does not change, for its own sake. That activity, he argues, is the most self-sufficient (you need the least from anyone else to do it), the most unbroken (you can keep it up longer than any action), and the most completely its own reward. It is the closest a human being ever gets to what a god would do with eternity. Which is why he ends on that startling instruction: do not settle for thinking only mortal thoughts, make yourself immortal as far as you can, and live by the best thing in you.</p>
+        <p>Now, the honest part, because this is where careful readers have argued for a hundred years and it would be cheating to paper over it. The top of the book does not sit cleanly on the rest. For nine books, happiness looked like the full, engaged life: virtue in action, among friends, in a community. Then Book 10 crowns a quieter, more solitary thing, the philosopher's contemplation, which needs friends less and can look a little cold. Scholars split into two camps. One says the best life is the whole package and contemplation is its crown. The other says Aristotle means what he says when he calls contemplation the highest happiness and ranks the moral life as happiness "in a secondary degree." The text genuinely pulls both ways. One of the most careful readers of it, the philosopher John Cooper, argued for one side, then years later published a paper changing his mind to the other. So distrust anyone who tells you it is obvious.</p>
+        <p>The fair reading is the modest one. Aristotle is not telling you to walk out on your friends and obligations to go sit and think. He is saying the single highest thing a human being can do is understand, and a complete life leaves room for it. The contemplative still has to be just, and brave, and a good friend, like everyone else. They simply also get the best hours there are, the ones spent using the mind on what is true, for its own sake.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>There is rot under the marble, and a modern reader should see it.</strong> The life of leisure Aristotle is praising rested, in his Athens, on people who had no leisure at all: enslaved people, and women shut out of the public life he treats as the human standard. In another book, the <em>Politics</em>, he defended it, arguing that some people are slaves "by nature" and that a woman's judgment "lacks authority." It is ugly, it is his, and the excuse that everyone thought so back then is not even true, some of his contemporaries already called slavery unjust, and he wrote to rebut them. The thing worth knowing is that the argument survives losing him. Habit, the mean, practical wisdom, friendship, none of them need the slavery to stand. You can keep the machine and throw out the man's assumptions about whose life counts, and it runs better without them.</p>
+      </aside>
+
+      <div class="prose">
+        <p>So strip it all the way down. What does Aristotle actually leave in your hands? Not a feeling to chase. Not a thing to buy. Not a crowd to win. A whole life, built slowly out of good habits, steered by a judgment you can only earn by living, spent among a few people whose good you want as your own, and lit up here and there by the hours you spend using the best thing in you for no reason except that it is the best thing in you. He thought that was the happiest a person could be.</p>
+        <p>Twenty-three centuries later, after we have tried pleasure and money and status and posted the results, it is still surprisingly hard to do better.</p>
+      </div>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured translation throughout is <strong>W.D. Ross's</strong>, first published in 1908 and long in the public domain, which is why every passage above is quoted in full instead of in snippets. Ross is the version most English readers first meet Aristotle in. It runs a little formal, but it is careful and clear, and it is free for anyone to read end to end. Every quotation is verbatim; I pulled the text and checked it rather than trusting memory.</p>
+      <p>On the words and lines where the modern translators split hardest, the side panels stack five of them against Ross, each one named:</p>
+      <ul class="src-list">
+        <li><b>The featured text</b> is W.D. Ross (Oxford, 1908), via the <a href="http://classics.mit.edu/Aristotle/nicomachaen.html">MIT Internet Classics Archive</a> and Wikisource.</li>
+        <li><b>The comparison panels</b> stack Terence Irwin (Hackett, 1999), Roger Crisp (Cambridge, 2000), Christopher Rowe with Sarah Broadie's commentary (Oxford, 2002), Robert C. Bartlett and Susan D. Collins (Chicago, 2011), and Joe Sachs (Focus, 2002). These are the standard modern English versions, and they disagree in ways that are the whole reason the panels exist.</li>
+        <li><b>The background</b> leans on the <a href="https://plato.stanford.edu/entries/aristotle-ethics/">Stanford Encyclopedia of Philosophy</a> entry on Aristotle's ethics, including its account of the long argument over whether Book 10 fits the rest of the book.</li>
+      </ul>
+      <p>Three honest notes. The <strong>"we are what we repeatedly do"</strong> line is Will Durant's, from <em>The Story of Philosophy</em> (1926), not Aristotle's. It is a fair summary of Book 2, but he never wrote the sentence. The <strong>table of virtues</strong> is Aristotle's own, from Book 2.7, with his names put into plainer English. And the <strong>tension at the top</strong>, between the engaged life of the first nine books and the contemplative life crowned in the tenth, is real and still unsettled among scholars; I have tried to name it rather than smooth it over.</p>
+      <p>The breakdowns are mine. Most of the modern translations are still in copyright; they appear here in short excerpts, for comparison and study, with every translator named.</p>
+      <p class="colo-note">The painting in the opening and on the homepage card is Rembrandt van Rijn's <em>Aristotle with a Bust of Homer</em> (1653), in the public domain via the Metropolitan Museum of Art's open-access program (CC0). Aristotle, draped in the gold chain of worldly success, rests a hand on a bust of Homer, a poet centuries dead. It is hard to picture a better image for a book about what a good life is actually made of.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/aristotle.js" defer></script>
+</body>
+</html>
