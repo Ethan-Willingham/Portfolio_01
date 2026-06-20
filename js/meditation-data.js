@@ -36,7 +36,7 @@ window.MED = {
       one: 'You rest your attention on the breath, and every time it wanders off you notice that and bring it back, on purpose and without scolding yourself.',
       origin: 'The molecular biologist <b>Jon Kabat-Zinn</b> built the 8-week MBSR course in a hospital basement at the University of Massachusetts in 1979. It is Buddhist insight meditation with the religion taken out, so it could be prescribed to patients in pain. His definition: "paying attention in a particular way: on purpose, in the present moment, and nonjudgmentally."',
       claims: 'Not enlightenment, just a better relationship with your own experience: less reactivity to stress, pain, and anxiety. You cannot stop the waves, the line goes, but you can learn to surf.',
-      ev: 'The most-studied kind by far. The best meta-analysis found small but real benefits for anxiety, depression, and pain, about the size of an antidepressant. Its clinical offshoot, MBCT, roughly halves relapse in people with recurring depression.',
+      ev: 'The most-studied kind by far. The best meta-analysis found small but real benefits for anxiety, depression, and pain, about the size of an antidepressant. Its clinical offshoot, MBCT, cuts relapse for recurring depression by about a third versus usual care.',
       grade: 'b',
       how: [
         'Sit in a chair or on a cushion, upright but not stiff, "awake, dignified, and relaxed." Feet flat, hands on your thighs.',
