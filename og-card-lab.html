@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>OG card lab</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* og-card-lab.html - a throwaway chooser for the auto-generated social card
+       (the 1200x630 link preview a post gets when it has no cover photo). Type a
+       title, see four designs drawn live. Design A is what ships in
+       js/post-publish.js right now. No em dashes. */
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); margin: 0; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: clamp(1.4rem,4vw,3rem); }
+    h1 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem,5vw,3rem); color: var(--text-bright); margin: 0 0 .3rem; letter-spacing: -.02em; }
+    .lede { font-size: 1.05rem; color: var(--text-dim); max-width: 64ch; line-height: 1.6; margin: 0 0 1.4rem; }
+    .ctl { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; margin-bottom: 2rem; }
+    .ctl input { flex: 1 1 320px; background: var(--bg-raised); color: var(--text-bright); border: 1px solid var(--rule); border-radius: 11px; font-family: var(--font-heading); font-size: 1.1rem; padding: .7rem .9rem; }
+    .ctl input:focus { outline: none; border-color: var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px,1fr)); gap: 1.6rem; }
+    .opt { }
+    .opt h2 { font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-bright); margin: 0 0 .1rem; }
+    .opt h2 .badge { font-family: var(--font-mono); font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--bg); background: var(--accent); border-radius: 999px; padding: .25em .7em; margin-left: .5em; vertical-align: middle; }
+    .opt p { font-size: .86rem; color: var(--text-dim); margin: .1rem 0 .7rem; }
+    canvas { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--rule); display: block; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>The auto card</h1>
+    <p class="lede">When a post has no cover photo, the builder draws this 1200x630 card for the link preview. Type a real title and pick the look you want; I will set it as the default. Design A is live now.</p>
+    <div class="ctl">
+      <input id="title" type="text" value="How Long Can You Live?" aria-label="Sample title">
+    </div>
+    <div class="grid">
+      <div class="opt"><h2>A. Framed<span class="badge">Live</span></h2><p>Gold hairline frame, mono eyebrow, centered serif title.</p><canvas id="a" width="1200" height="630"></canvas></div>
+      <div class="opt"><h2>B. Lower left</h2><p>Title set to the bottom-left, a small mark up top. No frame.</p><canvas id="b" width="1200" height="630"></canvas></div>
+      <div class="opt"><h2>C. Ruled</h2><p>Centered title over a short gold rule, eyebrow above.</p><canvas id="c" width="1200" height="630"></canvas></div>
+      <div class="opt"><h2>D. Bare</h2><p>Just the title, large, on the green. Nothing else.</p><canvas id="d" width="1200" height="630"></canvas></div>
+    </div>
+  </div>
+  <script type="module">
+    const BG = '#303931', INK = '#f5f1ea', GOLD = '#d4c4a0';
+    let fontReady = (async () => { try { const f = new FontFace('Century Supra Canvas', 'url(/assets/fonts/century_supra_a_regular.woff2)'); await f.load(); document.fonts.add(f); } catch(e){} })();
+    const FAM = '"Century Supra Canvas", Georgia, serif';
+    function wrap(ctx, text, maxW){ const words = String(text||'').split(/\s+/); const lines=[]; let line=''; for (const w of words){ const t = line? line+' '+w : w; if (ctx.measureText(t).width > maxW && line){ lines.push(line); line = w; } else line = t; } if (line) lines.push(line); return lines; }
+    function fitTitle(ctx, title, maxW, maxH, start){ let size = start; ctx.font = `700 ${size}px ${FAM}`; let lines = wrap(ctx, title, maxW); while (lines.length*size*1.1 > maxH && size > 24){ size -= 4; ctx.font = `700 ${size}px ${FAM}`; lines = wrap(ctx, title, maxW); } return { size, lines }; }
+
+    function draw(id, title){
+      const c = document.getElementById(id), ctx = c.getContext('2d'), W = 1200, H = 630;
+      ctx.fillStyle = BG; ctx.fillRect(0,0,W,H);
+      if (id === 'a'){
+        ctx.strokeStyle = 'rgba(212,196,160,0.5)'; ctx.lineWidth = 2; ctx.strokeRect(W*0.05,H*0.05,W*0.9,H*0.9);
+        ctx.fillStyle = GOLD; ctx.textAlign = 'center'; ctx.font = `22px "Commit Mono", monospace`;
+        ctx.fillText('ETHANWILLINGHAM.COM', W/2, H*0.2);
+        const { size, lines } = fitTitle(ctx, title, W*0.82, H*0.5, 90);
+        ctx.fillStyle = INK; const lh = size*1.1; let y = H/2 - (lines.length-1)*lh/2 + size*0.34;
+        for (const ln of lines){ ctx.fillText(ln, W/2, y); y += lh; }
+      } else if (id === 'b'){
+        ctx.fillStyle = GOLD; ctx.textAlign = 'left'; ctx.font = `22px "Commit Mono", monospace`;
+        ctx.fillText('ETHAN WILLINGHAM', W*0.07, H*0.16);
+        const { size, lines } = fitTitle(ctx, title, W*0.86, H*0.45, 96);
+        ctx.fillStyle = INK; const lh = size*1.06; let y = H*0.88 - (lines.length-1)*lh;
+        for (const ln of lines){ ctx.fillText(ln, W*0.07, y); y += lh; }
+      } else if (id === 'c'){
+        ctx.fillStyle = GOLD; ctx.textAlign = 'center'; ctx.font = `20px "Commit Mono", monospace`;
+        ctx.fillText('ETHANWILLINGHAM.COM', W/2, H*0.27);
+        const { size, lines } = fitTitle(ctx, title, W*0.8, H*0.4, 88);
+        ctx.fillStyle = INK; const lh = size*1.08; let y = H/2 - (lines.length-1)*lh/2 + size*0.2;
+        for (const ln of lines){ ctx.fillText(ln, W/2, y); y += lh; }
+        ctx.strokeStyle = GOLD; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W/2-60, y+6); ctx.lineTo(W/2+60, y+6); ctx.stroke();
+      } else {
+        ctx.textAlign = 'center'; const { size, lines } = fitTitle(ctx, title, W*0.84, H*0.62, 120);
+        ctx.fillStyle = INK; const lh = size*1.05; let y = H/2 - (lines.length-1)*lh/2 + size*0.34;
+        for (const ln of lines){ ctx.fillText(ln, W/2, y); y += lh; }
+      }
+    }
+    async function render(){ await fontReady; const t = document.getElementById('title').value || 'Untitled'; ['a','b','c','d'].forEach(id => draw(id, t)); }
+    document.getElementById('title').addEventListener('input', render);
+    render(); setTimeout(render, 300);
+  </script>
+</body>
+</html>
