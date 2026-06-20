@@ -324,6 +324,7 @@
   // the moment the password unlocks. Only acted on after a successful unlock.
   let pendingEdit = new URLSearchParams(location.search).get('edit');
   let liveSet = new Set();          // pages that have a homepage card == the live posts
+  let titleMap = {};                // path -> the post's real title (not the filename)
   async function openPicker(){
     showView('view-picker');
     try {
@@ -334,6 +335,13 @@
         const idx = await fetch('/index.html', { cache: 'no-store' }).then(r => r.text());
         liveSet = new Set([...idx.matchAll(/<a class="article-item" href="([^"]+)"/g)].map(m => m[1]));
       } catch (_) { liveSet = new Set(); }
+      // Real post titles (so the list shows "Obi Juan Algorithm", not the filename
+      // "random-galaxy"). The search index already has decoded titles for every
+      // live and archived post.
+      try {
+        const sj = await fetch('/search-index.json', { cache: 'no-store' }).then(r => r.json());
+        titleMap = {}; (sj.posts || []).forEach(p => { if (p.title) titleMap[p.url] = p.title; });
+      } catch (_) { titleMap = {}; }
       renderPicker('');
       if (pendingEdit && allPaths.includes(pendingEdit)) {
         const p = pendingEdit; pendingEdit = null; openEditor(p);
@@ -366,7 +374,8 @@
       for (const p of list.sort()) {
         const li = document.createElement('li');
         const b = document.createElement('button');
-        b.innerHTML = `<span class="be-name">${prettyName(p)}</span><span class="be-path">${p}</span>`;
+        const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        b.innerHTML = `<span class="be-name">${esc(titleMap[p] || prettyName(p))}</span><span class="be-path">${p}</span>`;
         b.addEventListener('click', () => openEditor(p));
         li.appendChild(b); ul.appendChild(li);
       }
