@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Guru Granth Sahib, Side by Side</title>
+  <meta name="description" content="The Sikh scripture is not read so much as enthroned: when the tenth Guru died in 1708 he named the book itself the eternal Guru. Here are its keystone passages in the original Gurmukhi and in the major English translations, stacked side by side with a plain breakdown of each.">
+  <meta property="og:title" content="The Guru Granth Sahib, Side by Side">
+  <meta property="og:description" content="When the tenth Sikh Guru lay dying in 1708, he did not name a person to succeed him. He named a book. Here is what the living Guru actually says, its keystone passages in Gurmukhi and in seven English translations at once, broken apart line by line.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/guru-granth-sahib.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/guru-granth-sahib-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/guru-granth-sahib-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE GURU GRANTH SAHIB, SIDE BY SIDE
+     An interactive reader for a CURATED set of keystone passages
+     (the full scripture runs 1,430 pages, so this is the
+     load-bearing selection). The Gurmukhi source, a transliteration,
+     a plain breakdown, and the English translations stacked. Sits in
+     the site shell (forest green, parchment, Century Supra / Segoe UI
+     / Commit Mono). The Gurmukhi source needs a Gurmukhi face;
+     everything else stays on the three site fonts. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 840px;                 /* reading column */
+    --gur-font: "Noto Serif Gurmukhi", "Noto Sans Gurmukhi", "Gurmukhi MN", "Mukta Mahee", "Raavi", "Arial Unicode MS", sans-serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  /* this template manages its own gutter via .hero/.sec/.ggs (var(--gutter));
+     zero the global body side-padding so phones get ONE 20px gutter, not two. */
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8.4vw, 5.2rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .gur-inline { font-family: var(--gur-font); font-style: normal; color: var(--text-bright); }
+
+  /* the opening "fan": one glyph, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-gur { font-family: var(--gur-font); font-size: clamp(2.4rem, 8vw, 3.6rem); color: var(--text-bright); letter-spacing: 0.02em; padding: 1.4rem 1.5rem 0.5rem; line-height: 1.2; }
+  .fan-gur small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.8rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .ggs { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .ggs-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .ggs-step { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+  .ggs-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .ggs-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .ggs-nav:disabled { opacity: 0.3; cursor: default; }
+  .ggs-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; text-align: left; }
+  .ggs-jump:hover { background: rgba(255,255,255,0.05); }
+  .ggs-jump #ggs-loc { font-family: var(--font-mono); font-style: normal; font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); font-weight: 400; }
+  .ggs-jump .ggs-caret { font-size: 0.8rem; color: var(--text-faint); }
+  .ggs-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .ggs-count b { color: var(--accent); font-weight: 400; }
+
+  /* the jump menu: keystones grouped by part, as a titled list */
+  .ggs-menu { margin: 0 0 1rem; padding: 0.5rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 64vh; overflow-y: auto; }
+  .ggs-menu[hidden] { display: none; }
+  .ggs-menusec { margin-bottom: 0.4rem; }
+  .ggs-menulabel { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0.6rem 0.6rem 0.3rem; }
+  .ggs-menulabel span { color: var(--text-faint); letter-spacing: 0.04em; }
+  .ggs-menurow { display: flex; flex-direction: column; gap: 0.1rem; width: 100%; text-align: left; padding: 0.5rem 0.6rem; background: transparent; border: none; border-radius: 8px; cursor: pointer; }
+  .ggs-menurow:hover { background: rgba(255,255,255,0.05); }
+  .ggs-menurow.is-cur { background: rgba(212,196,160,0.10); }
+  .ggs-menurow-t { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); line-height: 1.25; }
+  .ggs-menurow.is-cur .ggs-menurow-t { color: var(--accent); }
+  .ggs-menurow-m { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.04em; color: var(--text-faint); }
+
+  /* source: Gurmukhi + transliteration */
+  .ggs-source { position: relative; margin: 0.8rem 0 0; padding: 1.5rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .ggs-gur-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem; }
+  .ggs-gur-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
+  .ggs-gur { font-family: var(--gur-font); font-size: clamp(1.35rem, 3.6vw, 1.7rem); line-height: 2.0; color: var(--text-bright); letter-spacing: 0.01em; margin: 0; text-wrap: pretty; }
+  .ggs-tr { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7; letter-spacing: 0.01em; color: var(--text-dim); margin: 0.9rem 0 0; text-wrap: pretty; }
+
+  /* breakdown */
+  .ggs-notes { margin: 1rem 0 0; }
+  .ggs-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .ggs-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .ggs-note-k:first-child { margin-top: 0; }
+  .ggs-note-gist, .ggs-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .ggs-note-gist em, .ggs-note-read em, .ggs-splits em { font-style: italic; color: var(--text-bright); }
+  .ggs-note-gist b, .ggs-splits b, .ggs-note-read b { font-weight: 600; color: var(--text-bright); }
+  .ggs-note-read { color: var(--text-dim); font-style: italic; }
+  .ggs-splits { margin: 0; }
+  .ggs-splits dt { font-family: var(--gur-font); font-size: 1.2rem; color: var(--text-bright); margin: 0.8rem 0 0.15rem; letter-spacing: 0.01em; }
+  .ggs-splits dt .ggs-gloss { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
+  .ggs-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .ggs-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
+
+  /* translations */
+  .ggs-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .ggs-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .ggs-v:last-child { border-bottom: 1px solid var(--rule); }
+  .ggs-early  { border-left-color: var(--early); }
+  .ggs-mid    { border-left-color: var(--mid); }
+  .ggs-modern { border-left-color: var(--modern); }
+  .ggs-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .ggs-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .ggs-flag { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 999px; padding: 0.1em 0.5em; margin-left: 0.5em; vertical-align: 0.12em; }
+  .ggs-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .ggs-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.62; color: var(--text); white-space: normal; }
+  .ggs-vt .ggs-br { display: block; height: 0.6em; }
+  .ggs-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .ggs .ggs-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .ggs.ggs-ready .ggs-body { opacity: 1; }
+  .ggs-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .ggs.ggs-ready .ggs-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    .fan-gur { font-size: 2.4rem; padding: 1.2rem 1rem 0.4rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .ggs-bar { gap: 0.55rem 0.7rem; }
+    .ggs-count { margin-left: 0; flex-basis: 100%; }
+    .ggs-source, .ggs-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .ggs-gur { font-size: 1.4rem; line-height: 1.95; }
+    .ggs-v { padding-left: 0.9rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Guru Granth Sahib, side by side</h1>
+    <p class="hero-dek">When the tenth Sikh Guru lay dying in 1708, he did not name a person to follow him. He named a book, and the Sikhs have treated it as a living teacher ever since. Here is what it actually says.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>15 keystone passages</b> <span class="sep">/</span> <b>Gurmukhi source</b> plus stacked translations <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Most holy books are read. This one is enthroned. Each morning the Guru Granth Sahib is carried out on someone's head, opened on a low throne under a canopy, and waved with a whisk the way you would attend a king. Each night it is wrapped, carried to its own room, and laid down to rest.</p>
+      <p>The Sikhs had ten human Gurus, a line of teachers running two hundred years from Guru Nanak. When the tenth, Guru Gobind Singh, was dying at Nanded in 1708, he closed the line. He did not appoint an eleventh person. He bowed to the scripture and named the book itself the Guru, for good. That is why it is the <strong>Guru</strong> Granth Sahib, the eleventh and final Guru, and why in the three centuries since, careful hands have never once let it touch the floor.</p>
+      <p>So when you ask what the book says, you are asking what a living teacher says. The answer starts on the very first line, with a single symbol, <span class="gur-inline">ੴ</span>, and even that one mark splits its translators.</p>
+
+      <div class="fan">
+        <p class="fan-gur">ੴ<small>the opening glyph, "ik onkar" &middot; the most translated mark in the book</small></p>
+        <ul class="fan-list">
+          <li><span class="e">OM!</span><span class="who">Trumpp, 1877</span></li>
+          <li><span class="e">There is but one God.</span><span class="who">Macauliffe, 1909</span></li>
+          <li><span class="e">One Universal Creator God.</span><span class="who">Sant Singh Khalsa, 1996</span></li>
+          <li><span class="e">There is one supreme being.</span><span class="who">Pashaura Singh, 2000</span></li>
+          <li><span class="e">This Being is one.</span><span class="who">Eleanor Nesbitt, 2005</span></li>
+          <li><span class="e">There is One Being.</span><span class="who">Nikky-Guninder Kaur Singh, 2019</span></li>
+        </ul>
+      </div>
+
+      <p>One reads the symbol as a number, there is one God. Another reads it as a state, this Being is one, all of it one. A German scholar in 1877 simply misheard it as the Hindu sacred sound <em>Om</em>. The book is written in Gurmukhi, in a deliberately mixed tongue that blends Punjabi, Persian, Sanskrit and more, and it has been carried into English by that German who had no love for it, a sympathetic Victorian, the official Sikh committee, and a few modern poets. They do not agree, and the disagreement starts at the very first character of the book. That spread is the subject of this page.</p>
+      <p>What is the living Guru actually teaching? The diagnosis is blunt: we are walled off from God by <em>haumai</em>, the ego, the hard little sense of "I" and "mine." The way back is to remember the divine Name (<em>naam</em>), to earn an honest living and share it, and to lean on grace, walking in step with the <em>Hukam</em>, the divine order. And it is not a private club. The Gurus put hymns by Hindu and Muslim saints into their own scripture, including a man born untouchable, and sing them as the Guru's own words.</p>
+      <p>Below are fifteen keystone passages, the ones the rest of the tradition leans on, running from the book's opening creed to its closing seal. For each you get the Gurmukhi, a transliteration, a plain-language breakdown of what it says and where the translators part ways, and then the English versions stacked so you can read them against each other. Use the arrows or your keyboard to move between passages, or the menu to jump.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="ggs" id="ggs">
+      <div class="ggs-bar">
+        <div class="ggs-step">
+          <button class="ggs-nav" id="ggs-prev" aria-label="Previous passage">&lsaquo;</button>
+          <button class="ggs-jump" id="ggs-jump" aria-label="Jump to a passage"><span><span id="ggs-pno">Mul Mantar</span> <span class="ggs-caret">&#9662;</span><br><span id="ggs-loc"></span></span></button>
+          <button class="ggs-nav" id="ggs-next" aria-label="Next passage">&rsaquo;</button>
+        </div>
+        <div class="ggs-count" id="ggs-count"></div>
+      </div>
+
+      <div class="ggs-menu" id="ggs-menu" hidden aria-label="Keystone passages"></div>
+
+      <div class="ggs-body">
+        <div class="ggs-source" id="ggs-source"></div>
+        <div class="ggs-notes" id="ggs-notes"></div>
+        <div class="ggs-versions" id="ggs-versions"></div>
+      </div>
+      <div class="ggs-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/ggs-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every translation here is reproduced verbatim, not paraphrased. The Gurmukhi and the transliteration follow the standard 1,430-page printed edition, the same pagination in every copy worldwide. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
+      <ul class="src-list">
+        <li><b>The Gurmukhi source and transliteration</b>, with the <b>Sant Singh Khalsa</b> translation (the one most people read on a screen), are from <a href="https://www.srigranth.org">SriGranth</a> and the open Sikh text databases.</li>
+        <li><b>Max Arthur Macauliffe</b> (1909), the sympathetic six-volume <i>The Sikh Religion</i>, and <b>Ernest Trumpp</b> (1877), the first and notoriously hostile European version, are both public domain, from the <a href="https://archive.org">Internet Archive</a>. Trumpp is here only as a cautionary contrast on the opening passages; the post does not lean on it.</li>
+        <li><b>Manmohan Singh</b> (the eight-volume SGPC edition) and <b>Gopal Singh</b> (1960 to 1962) are the standard mid-century translations.</li>
+        <li><b>Nikky-Guninder Kaur Singh</b> is the contemporary literary translator; her renderings come from her published books. The academic readings of the Mul Mantar are from <b>Eleanor Nesbitt</b> and <b>Pashaura Singh</b>.</li>
+      </ul>
+      <p>The breakdowns are mine. They lean on standard Sikh scholarship and name the contested points rather than smoothing them over. Where a famous line is really a story from the <i>Janamsakhis</i> (the traditional life of Guru Nanak) and not a verse in the scripture, the breakdown says so. The Gurmukhi word glosses are checked against more than one edition.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The image on the homepage card is an illuminated folio of the Mul Mantar in gold, written as Guru Gobind Singh's <i>nishan</i> (his own hand), from an early manuscript of the Guru Granth Sahib (public domain). This reader is offered with respect for a scripture that, to Sikhs, is a living Guru.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/ggs-notes.js" defer></script>
+  <script src="js/ggs-data.js" defer></script>
+  <script src="js/ggs.js" defer></script>
+</body>
+</html>
