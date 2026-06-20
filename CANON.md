@@ -79,9 +79,9 @@ Two tools for finding it:
    because the important parts are the answers. Beautiful passages that serve
    neither question are the popular filler to cut.
 
-## Three approaches
+## Four approaches
 
-Not every book takes the same engine. There are three.
+Not every path takes the same engine. There are four.
 
 ### A. The Translation Stack
 The Tao Te Ching format. For old texts that exist in many translations and break
@@ -110,22 +110,113 @@ explorer). The product is the distillation and the connective tissue.
 Use for: The Beginning of Infinity (Deutsch), The Spirituality of Imperfection
 (Kurtz and Ketcham).
 
-## The books and their engines
+### D. The Practice Mapped
+For a path you do rather than read (a meditation, a technique, a movement). It
+has no canonical text to stack or walk, so the post maps the practice itself:
+what it is, where it came from, what it claims, how you actually do the core of
+it, and what the evidence really shows, with proven benefit separated from hype.
+The commercial and cult end of this world goes in as labeled case studies, never
+endorsements.
+Use for: the Meditation post (the Engine D pilot, with TM folded in), the
+entheogen traditions, the cult and commercial case studies.
 
-| Book | Tradition / author | Engine |
-| --- | --- | --- |
-| Tao Te Ching | Taoism | A (done) |
-| Dhammapada | Buddhism (Pali Canon) | A |
-| The Analects | Confucius | A |
-| Bhagavad Gita | Hinduism | A |
-| Guru Granth Sahib | Sikhism | A |
-| Hebrew Bible / Torah | Judaism | A |
-| The Bible / New Testament | Christianity | A |
-| The Quran | Islam | A |
-| Zhuangzi | Taoism (Ziporyn translation) | B |
-| Mulamadhyamakakarika | Nagarjuna (Garfield translation) | B |
-| The Beginning of Infinity | David Deutsch | C |
-| The Spirituality of Imperfection | Kurtz and Ketcham | C |
+## The map: every major path
+
+The series covers the great paths humans have used to answer what is real, how to
+live, and what matters. Texts and practices both. Each entry shows its engine
+(A/B/C/D) and status: **live** (built), **queued** (prompt written), or **add**
+(planned). Stars mark the essentials, the dozen that touch every pillar at least
+once. Some paths consolidate into one post (the social contract; meditation,
+which folds in TM and every technique); the modern teachers and the chemical-path
+books each get their own post.
+
+**1. Indian / Dharmic**
+- ★ Bhagavad Gita and the Upanishads (A) [queued]
+- ★ Dhammapada (A) [live]
+- Nagarjuna, Mulamadhyamakakarika (B) [queued]
+- Patanjali, Yoga Sutras (A) [add], the meditation manual, pairs with the meditation post
+- Guru Granth Sahib, Sikhism (A) [queued]
+- Jainism, the Tattvartha Sutra (A) [add]
+
+**2. Chinese**
+- ★ Tao Te Ching (A) [live]
+- Zhuangzi, Ziporyn (B) [live]
+- ★ The Analects, Confucius (A) [queued]
+- Mencius, human nature is good (A) [add]
+
+**3. Abrahamic and the monotheist root**
+- ★ Hebrew Bible / Torah (A) [queued]
+- ★ New Testament (A) [queued]
+- ★ The Quran (A) [queued]
+- Zoroastrianism, the Gathas (A) [add], the lost root of the other three
+
+**4. Classical Western philosophy**
+- ★ Plato, the death of Socrates and the cave (B) [add]
+- ★ Aristotle, Nicomachean Ethics (B) [add]
+- Marcus Aurelius, Meditations (A) [add]
+- Epictetus, Enchiridion (A) [add]
+- Lucretius, On the Nature of Things (B) [add]
+
+**5. Modern Western philosophy**
+- ★ Nietzsche, Beyond Good and Evil and the Genealogy (B) [add], the resident dissenter
+- Kant, the categorical imperative (B) [add]
+- Camus, The Myth of Sisyphus, with Kierkegaard (B) [add]
+- Hume and Descartes (B) [add]
+
+**6. Political and social philosophy**
+- ★ The Social Contract: Hobbes, Locke, Rousseau, one comparative post (A) [add]
+- Mill, On Liberty (B) [add]
+- Marx, The Communist Manifesto (B) [add]
+- Adam Smith (C) [add]
+
+**7. The scientific worldview**
+- The Beginning of Infinity, Deutsch (C) [live, needs the voice fix]
+- ★ Darwin, On the Origin of Species (B) [add]
+- Popper, Conjectures and Refutations (C) [add]
+- Euclid, the Elements (B) [add]
+
+**8. Literature as wisdom**
+- ★ Dostoevsky, the Grand Inquisitor from Brothers Karamazov (B) [add]
+- The Epic of Gilgamesh (B) [add]
+- Dante, the Divine Comedy (B) [add]
+- Homer, the Odyssey (B) [add]
+
+**9. Psychology and the inner life**
+- ★ The Spirituality of Imperfection, Kurtz (C) [queued], the capstone
+- Viktor Frankl, Man's Search for Meaning (C) [add]
+- William James, The Varieties of Religious Experience (C) [add]
+- Carl Jung, the shadow and individuation (C) [add]
+
+**10. The contemplative and experiential paths**
+- ★★ Meditation, all kinds: the truth of the benefits and how to get them (D) [add]. The Engine D pilot. Surveys TM, vipassana and insight, mindfulness and MBSR, zazen, mantra, breathwork and pranayama, loving-kindness, body-scan, Christian contemplative prayer, Sufi dhikr, Tibetan tonglen. Separates proven benefit from hype, then teaches the core of how to get it. TM lives inside this post.
+- Aldous Huxley, The Perennial Philosophy (C) [add], the master key, all mystics say one thing
+- Krishnamurti, truth is a pathless land (C) [add]
+- Alan Watts, the bridge west (C) [add]
+- Ram Dass, Be Here Now (C) [add]
+- Eckhart Tolle, The Power of Now (C) [add]
+- Gurdjieff and the Fourth Way, Ouspensky (C) [add]
+- Aldous Huxley, The Doors of Perception (C) [add]
+- Michael Pollan, How to Change Your Mind (C) [add]
+- The entheogen traditions: peyote and the Native American Church, ayahuasca (D) [add]
+- Wisdom without metaphysics: Harris, Batchelor, Wright (C) [add]
+
+**11. The edge, as labeled case studies**
+- Movements that became businesses or cages: Scientology, est and Landmark, A Course in Miracles, Theosophy and the New Age (D, case study) [add]
+
+**12. The honest blind spot**
+- The wisdom never written down: oral and indigenous traditions, Native American, African, Aboriginal (B, essay) [add]
+
+### Scope and the gate
+
+Serious paths go in as paths. Movements that became businesses or cults go in as
+clearly-labeled case studies (how a path becomes a business, or a cage), never as
+endorsed wisdom. That line keeps the series credible instead of credulous. Oral
+and indigenous traditions cannot get a fair text post, so name that limit in one
+honest essay rather than pretending the map is complete.
+
+About fifty paths, consolidating to roughly 35 to 40 posts. A multi-year map, not
+a sprint. Build the starred essentials first; they cover every pillar at least
+once.
 
 ## Sources and licensing: everything is fair game
 
