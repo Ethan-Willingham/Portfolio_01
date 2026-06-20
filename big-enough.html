@@ -266,19 +266,10 @@
   table.prog .swap { display: block; font-size: 0.84em; color: var(--text-dim); }
 
   /* ---------- REFERENCES (fine print: the whole list should fit one screen) ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.52rem; color: var(--text-dim); line-height: 1.3; padding-left: 1.6em; margin: 0.2em 0 0; }
-  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.12em; break-inside: avoid; }
-  #sources li::marker { color: var(--accent); }
-  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
-  #sources li a:hover { border-bottom-color: var(--accent); }
-  #sources b { color: var(--text); font-weight: 600; }
-  #sources i { color: var(--text-dim); }
-  #sources li.shead { list-style: none; margin: 0.9em 0 0.25em -1.6em; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); break-after: avoid; }
-  #sources li.shead:first-child { margin-top: 0; }
-  #sources .lede { font-size: 0.84rem; }
-  #sources .legend { font-size: 0.6rem; gap: 0.3rem 0.8rem; margin: 0.6em 0 0.8em; }
-  #sources .legend .grade { font-size: 0.48rem; padding: 0.16em 0.5em; }
-  @media (min-width: 700px) { #sources ol { columns: 3; column-gap: 1.4rem; } }
+  /* Sources now live in a u-collapse dropdown; the kit styles the list (.u-collapse-list). Keep only the group-header + author-bold styling, #sources-scoped so it beats the kit list rules. */
+  #sources li.shead { list-style: none; margin: 1.15em 0 0.4em -1.4em; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  #sources li.shead:first-child { margin-top: 0.2em; }
+  #sources b { color: var(--text-bright); font-weight: 600; }
 
   .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .disclaimer strong { color: var(--accent-hover); }
@@ -1399,14 +1390,16 @@
   <section id="sources" class="sec">
     <span class="sec-kicker">The fine print</span>
     <h2 class="sec-h">Sources, and how to read them</h2>
-    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. This is the full list, with the strongest evidence first within each topic. Where the research is one study, or mixed, or still moving, the text says so.</p>
+    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. Where the research is one study, or mixed, or still moving, the text says so.</p>
+    <details class="u-collapse">
+      <summary class="u-collapse-s">The full list, 85 sources, grouped by topic, strongest evidence first</summary>
     <div class="legend">
       <span><span class="grade g-a">strong</span> meta-analyses or many trials agreeing</span>
       <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
       <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
       <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
     </div>
-    <ol>
+    <ol class="u-collapse-list">
       <li class="shead">Creatine</li>
       <li value="1"><b>Gordji-Nejad A, et al. (2024).</b> Single dose creatine improves cognition in sleep deprivation. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-024-54249-9">nature.com</a></li>
       <li><b>Kreider RB, et al. (2017).</b> ISSN position stand: safety and efficacy of creatine. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">PMC5469049</a></li>
@@ -1500,6 +1493,7 @@
       <li><b>Nedeltcheva AV, et al. (2010).</b> Sleep curtailment and the muscle-vs-fat partition while dieting. <i>Annals of Internal Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/20921542/">PubMed</a></li>
       <li><b>Nuckols G (2016).</b> On FFMI and the natural muscular ceiling (25 is the edge, not a wall). <a href="https://gregnuckols.com/2016/12/11/ffmi/">gregnuckols.com</a></li>
     </ol>
+    </details>
 
     <hr class="u-divider">
   </section>

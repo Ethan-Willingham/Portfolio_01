@@ -49,10 +49,11 @@
 .u-def-n{ font-style: normal; font-weight: 700; color: var(--accent); margin-right: .4em; }
 .u-figure{ margin: 0; } .u-figure-img{ display:block; width:100%; height:auto; border-radius: 20px; box-shadow: var(--s-shadow-3); background: var(--s-surface-2); }
 .u-figure-cap{ margin: 1em 0 0; font-size: .92rem; font-style: italic; line-height: 1.5; color: var(--text-dim); text-align: center; }
-.u-callout{ background: var(--s-gold-tint); border: 1px solid var(--s-gold-hair); border-radius: 20px; padding: clamp(22px,4vw,32px); box-shadow: var(--s-shadow-gold); margin: 1.7rem 0; }
-.u-callout-k{ display:flex; align-items:center; gap:.5em; font-family: var(--font-heading); font-variant: small-caps; letter-spacing:.06em; color: var(--accent); font-size:.98rem; margin:0 0 .7em; }
+.u-callout{ background: var(--s-gold-tint); border: 1px solid var(--s-gold-hair); border-radius: 14px; padding: clamp(15px,3vw,22px); box-shadow: var(--s-shadow-gold); margin: 1.6rem 0; }
+/* internals scoped under .u-callout so the kit standard beats post section rules (.sec p / .gsec p / .essay p), which are more specific than a bare class and would otherwise inflate callout text + inject a stray bottom margin */
+.u-callout .u-callout-k{ display:flex; align-items:center; gap:.5em; font-family: var(--font-heading); font-variant: small-caps; letter-spacing:.06em; color: var(--accent); font-size:.98rem; margin:0 0 .55em; }
 .u-callout-k::before{ content:""; width:8px; height:8px; border-radius:999px; background: var(--accent); box-shadow: 0 0 0 3px var(--s-gold-tint-2); flex:none; }
-.u-callout-body{ font-size: 1.18rem; line-height: 1.55; color: var(--text-bright); margin: 0; }
+.u-callout .u-callout-body{ font-size: 1.18rem; line-height: 1.55; color: var(--text-bright); margin: 0; }
 /* .u-move - the recurring "essay takeaway" line. Add it to a .u-callout (markup unchanged) when a boxed, labelled callout after every section reads like homework: drops the box + the repeated label for a quiet gold marker line in the essay's own italic voice. Keep plain .u-callout for one-off, meaningfully-labelled highlights. */
 .u-callout.u-move{ background:none; border:none; box-shadow:none; padding:0; border-radius:0; margin:1.7rem 0; }
 .u-move .u-callout-k{ display:none; }
@@ -86,7 +87,7 @@
 .u-collapse{ background: var(--s-surface); border:1px solid rgba(245,241,234,0.09); border-radius:18px; padding:6px clamp(18px,3vw,26px); box-shadow: var(--s-shadow-1); }
 .u-collapse-s{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:.7em; font-family: var(--font-heading); font-size:1.12rem; font-weight:700; color: var(--text-bright); padding:18px 0; } .u-collapse-s::-webkit-details-marker{ display:none; }
 .u-collapse-s::before{ content:"\276F"; color: var(--accent); font-size:.9em; transition: transform .25s ease; } .u-collapse[open] .u-collapse-s::before{ transform: rotate(90deg); }
-.u-collapse-list{ margin:0; padding:16px 0 18px 1.4em; border-top:1px solid var(--s-divide); color: var(--text-dim); font-size:.96rem; line-height:1.65; } .u-collapse-list li{ margin-bottom:.7em; } .u-collapse-list b{ color: var(--text-bright); } .u-collapse-list a{ color: var(--accent); }
+.u-collapse .u-collapse-list{ margin:0; padding:16px 0 18px 1.4em; border-top:1px solid var(--s-divide); color: var(--text-dim); font-size:.96rem; line-height:1.65; } .u-collapse .u-collapse-list li{ margin-bottom:.7em; } .u-collapse .u-collapse-list b{ color: var(--text-bright); } .u-collapse .u-collapse-list a{ color: var(--accent); }
 /* .u-kpis / .u-kpi - dashboard readout. LEGACY: kept for big-enough (its only user); not offered for new posts or the archive migration. */
 .u-kpis{ display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:16px; } .u-kpi{ background: var(--s-surface); border:1px solid var(--s-hair); border-radius:18px; padding:24px 22px; box-shadow: var(--s-shadow-2); display:flex; flex-direction:column; gap:.3em; }
 .u-kpi-lbl{ font-family: var(--font-mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color: var(--text-dim); } .u-kpi-val{ font-family: var(--font-heading); font-size: clamp(2.2rem,5vw,2.8rem); font-weight:700; line-height:1; color: var(--text-bright); margin:.1em 0; } .u-kpi-sub{ font-size:.86rem; line-height:1.4; color: var(--text-dim); }
@@ -96,7 +97,7 @@
    SHARP treatment (Linear DNA) - the do/skip checklist
    ============================================================================ */
 .u-checks{ list-style:none; margin:0; padding:0; border:1px solid rgba(245,241,234,0.08); border-radius:10px; background: var(--bg-raised); overflow:hidden; box-shadow: inset 0 1px 0 rgba(245,241,234,0.05); }
-.u-check{ position:relative; font-size:1rem; line-height:1.5; color: var(--text); padding:14px 18px 14px 46px; border-bottom:1px solid rgba(245,241,234,0.08); } .u-check:last-child{ border-bottom:0; }
+.u-checks .u-check{ position:relative; font-size:1rem; line-height:1.5; color: var(--text); padding:14px 18px 14px 46px; border-bottom:1px solid rgba(245,241,234,0.08); } .u-checks .u-check:last-child{ border-bottom:0; }
 .u-check::before{ position:absolute; left:18px; top:14px; font-family: var(--font-mono); font-size:.95rem; line-height:1.5; font-weight:700; width:16px; text-align:center; } .u-check.u-use::before{ content:"\2713"; color: var(--accent); } .u-check.u-meh::before{ content:"\00b7"; color: var(--text-dim); } .u-check.u-skip::before{ content:"\2717"; color: var(--text-dim); opacity:.6; } .u-check.u-skip{ color: var(--text-dim); }
 
 /* ============================================================================
