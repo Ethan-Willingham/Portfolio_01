@@ -18,6 +18,41 @@ The reader is someone curious and smart who will never read the Quran or five
 hundred pages of Deutsch. The post is not a summary. It is an encounter with the
 actual words, curated down to what matters and unpacked in plain language.
 
+## What the first posts taught us (read before you build)
+
+The pilots surfaced four failure modes. Do not repeat them.
+
+1. **Voice is the bar, and it is where the first post failed.** The Beginning of
+   Infinity post came out formal, educational, and high-flown, the exact opposite
+   of `VOICE.md`. Pointing a window at the doc was not enough. So: write the prose
+   with the **write-post** skill (it forces a line-by-line `VOICE.md` edit), then
+   apply the monotone test from `VOICE.md` section 0, read every paragraph aloud
+   and flat, and if it sounds like a textbook or a lecture, rewrite it in words you
+   would actually say to a friend. Hunt down and kill formal construction:
+   nominalizations ("the cultivation of"), passive voice, "one must," "it is
+   important to," "serves to," throat-clearing, and every tell in `VOICE.md`
+   section 5. Plain, warm, spoken. The writing disappears.
+
+2. **Open concrete, never abstract.** The first post's opener was hard to follow
+   because it led with the abstract idea. The fix that worked was an everyday
+   analogy. Open on a concrete image or an example the reader already knows, then
+   name the idea (`VOICE.md`: earn the abstract claim with a concrete one right
+   after). If a smart friend would not get your first paragraph on one read, it is
+   not done.
+
+3. **Source the best copies yourself, autonomously.** All sources are fair game
+   (see below), and the best translations are often copyrighted and not sitting in
+   one tidy place. Go get them: spawn your own parallel research sub-agents, fetch
+   and parse the editions, build the corpus. Do NOT stop and ask the owner to open
+   another chat or track copies down. That hunt is the job, not a question to
+   escalate.
+
+4. **Match the site gutter on mobile.** The first posts read with a wide side
+   gutter on phones; the site uses 20px. The token `--gutter` is responsive (20px
+   phone, 32px tablet, 40px desktop); use `var(--gutter)` and never hardcode a
+   horizontal padding. Before shipping, view the post at 375px width and confirm
+   the side gutter is 20px, not 40px. Mandatory check.
+
 ## The selection rule: load-bearing, not popular
 
 The hard part of every post is choosing what goes in. The rule is: **the most
@@ -147,15 +182,21 @@ engine, not across, so the three pilots are independent and can run in parallel.
 2. Run the **deep-research** skill on the book. Drop a dossier in
    `research/<book>/`. Find the keystones by the selection rule, the best
    translations or editions, and the contested points. Adversarially fact-check,
-   these texts have experts and adherents in the audience.
+   these texts have experts and adherents in the audience. Source the best
+   translations yourself, including copyrighted ones, spawning parallel sub-agents
+   to hunt them down and parse them. Never ask the owner to fetch copies.
 3. Build the post on the assigned engine, in the site shell, reusing the Tao
    post's structure and the component kit.
 4. Add the homepage card (follow the Tao card in `index.html`), the og:image
    block, and a thumbnail. **The thumbnail must be a real sourced image** (a
    relevant painting, photograph, or artwork, any license, named), never
    generative or procedural, the way the Tao card uses Zhang Lu's painting of
-   Laozi. Source it during research and note where it came from.
-5. Self-edit against `VOICE.md` line by line.
+   Laozi. Source it during research and note where it came from. Then view the
+   post at 375px width and confirm the side gutter is the site's 20px
+   (`var(--gutter)`, never hardcoded).
+5. Write the prose with the **write-post** skill and self-edit against `VOICE.md`
+   line by line, including the monotone read-aloud test. Voice is the bar (see the
+   pilot lessons up top); the first post failed here, so this is not optional.
 6. Commit and push to `main` with explicit paths (`git add <files>`, never `-A`,
    this is a shared checkout).
 
