@@ -124,6 +124,10 @@
     .be-status.saved { color: #9fcf8f; }
     .be-status.err { color: var(--emphasis-strong); }
     #stage { flex: 1; width: 100%; border: 0; background: var(--bg); min-height: 0; }
+    .ed-warn { background: rgba(230,192,116,0.13); border-bottom: 1px solid rgba(230,192,116,0.42); color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; padding: 0.6rem clamp(2rem,5vw,3rem) 0.6rem clamp(0.8rem,3vw,1.4rem); position: relative; }
+    .ed-warn b { color: #e6c074; }
+    .ed-warn-x { position: absolute; top: 0.35rem; right: 0.5rem; background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 0.2rem 0.45rem; font-size: 1rem; border-radius: 6px; }
+    .ed-warn-x:hover { color: var(--text-bright); border-color: var(--rule); }
     .be-toggle { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-dim); }
     .be-hint { font-size: 0.8rem; color: var(--text-faint); }
 
@@ -197,6 +201,10 @@
         <a class="be-hint" id="ed-view" href="#" target="_blank" rel="noopener">View live &#8599;</a>
         <span class="be-status" id="ed-status">Ready</span>
         <button class="be-primary" id="ed-save">Save &amp; publish</button>
+      </div>
+      <div id="ed-warn" class="ed-warn" hidden>
+        <b>Heads up.</b> This page builds most of its content with JavaScript, so the editor only shows and edits the static text. Saving will not touch the generated parts. To change those, edit the page's script in the file (or ask me to).
+        <button class="ed-warn-x" id="ed-warn-x" title="Dismiss">&times;</button>
       </div>
       <iframe id="stage" title="page editor"></iframe>
     </section>
@@ -315,10 +323,17 @@
   // /blog-edit.html?edit=the-far-side-of-the-body.html opens that page's editor
   // the moment the password unlocks. Only acted on after a successful unlock.
   let pendingEdit = new URLSearchParams(location.search).get('edit');
+  let liveSet = new Set();          // pages that have a homepage card == the live posts
   async function openPicker(){
     showView('view-picker');
     try {
       allPaths = await ghTree();
+      // The homepage's article-list is the real source of truth for which pages
+      // are live posts (the old hardcoded list buried real posts under "demos").
+      try {
+        const idx = await fetch('/index.html', { cache: 'no-store' }).then(r => r.text());
+        liveSet = new Set([...idx.matchAll(/<a class="article-item" href="([^"]+)"/g)].map(m => m[1]));
+      } catch (_) { liveSet = new Set(); }
       renderPicker('');
       if (pendingEdit && allPaths.includes(pendingEdit)) {
         const p = pendingEdit; pendingEdit = null; openEditor(p);
@@ -327,16 +342,18 @@
       $('#picker-body').innerHTML = `<p class="be-msg err">${e.message}</p>`;
     }
   }
+  const EDITOR_PAGES = new Set(['blog-edit.html', 'post-builder.html', 'edit.html']);
   function renderPicker(filter){
     const f = filter.trim().toLowerCase();
     const match = p => !f || p.toLowerCase().includes(f) || prettyName(p).toLowerCase().includes(f);
-    const groups = { 'Pages & posts': [], 'Drafts': [], 'Archive': [], 'Labs & demos': [] };
+    const groups = { 'Live posts': [], 'Other pages': [], 'Drafts': [], 'Archive': [], 'Labs & tools': [] };
     for (const p of allPaths) {
       if (!match(p)) continue;
       if (p.startsWith('drafts/')) groups['Drafts'].push(p);
       else if (p.startsWith('archive/')) groups['Archive'].push(p);
-      else if (p.endsWith('-lab.html') || DEMOS.has(p)) groups['Labs & demos'].push(p);
-      else groups['Pages & posts'].push(p);
+      else if (liveSet.has(p)) groups['Live posts'].push(p);
+      else if (p.endsWith('-lab.html') || /^style-/.test(p) || EDITOR_PAGES.has(p)) groups['Labs & tools'].push(p);
+      else groups['Other pages'].push(p);
     }
     const body = $('#picker-body');
     body.innerHTML = '';
@@ -357,6 +374,7 @@
     }
     if (!any) body.innerHTML = '<p class="be-faint">No pages match that.</p>';
   }
+  $('#ed-warn-x').addEventListener('click', () => { $('#ed-warn').hidden = true; });
   $('#picker-search').addEventListener('input', e => renderPicker(e.target.value));
   $('#picker-logout').addEventListener('click', () => { clearToken(); current = null; location.reload(); });
 
@@ -389,6 +407,16 @@
     // Tag every element so we can map edits in the iframe back to this master doc.
     let i = 0; doc.querySelectorAll('*').forEach(el => el.setAttribute('data-be-id', String(i++)));
     current = { path, sha, doc, local };
+
+    // Warn when a page builds its content from JavaScript (the interactive posts +
+    // descent guides): the editor only shows the static text, so it would otherwise
+    // look mysteriously short. Detect a substantial non-analytics inline script.
+    const jsDriven = [...doc.querySelectorAll('script:not([src])')].some(s => {
+      const t = s.textContent || '';
+      if (/gtag|clarity|dataLayer/.test(t)) return false;            // analytics bootstrap, ignore
+      return t.length > 800 && /innerHTML|createElement|appendChild|insertAdjacent|\.map\(/.test(t);
+    });
+    $('#ed-warn').hidden = !jsDriven;
 
     // Build a render-only clone: strip scripts, make text editable, add edit CSS.
     const render = doc.cloneNode(true);
