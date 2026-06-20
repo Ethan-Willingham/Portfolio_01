@@ -149,6 +149,7 @@ books each get their own post.
 - ★ New Testament (A) [queued]
 - ★ The Quran (A) [queued]
 - Zoroastrianism, the Gathas (A) [add], the lost root of the other three
+- Rumi, the Masnavi (A) [add], the ecstatic Sufi heart of Islam, the Barks-versus-Nicholson translation war
 
 **4. Classical Western philosophy**
 - ★ Plato, the death of Socrates and the cave (B) [add]
@@ -186,6 +187,8 @@ books each get their own post.
 - Viktor Frankl, Man's Search for Meaning (C) [add]
 - William James, The Varieties of Religious Experience (C) [add]
 - Carl Jung, the shadow and individuation (C) [add]
+- Augustine, Confessions (B) [add], the first autobiography and the divided will
+- Montaigne, Essays (B) [add], the man who invented the essay to examine himself
 
 **10. The contemplative and experiential paths**
 - ★★ Meditation, all kinds: the truth of the benefits and how to get them (D) [add]. The Engine D pilot. Surveys TM, vipassana and insight, mindfulness and MBSR, zazen, mantra, breathwork and pranayama, loving-kindness, body-scan, Christian contemplative prayer, Sufi dhikr, Tibetan tonglen. Separates proven benefit from hype, then teaches the core of how to get it. TM lives inside this post.
@@ -206,6 +209,29 @@ books each get their own post.
 **12. The honest blind spot**
 - The wisdom never written down: oral and indigenous traditions, Native American, African, Aboriginal (B, essay) [add]
 
+**13. Strategy and power** (the amoral art of winning, distinct from ethics)
+- ★ Sun Tzu, The Art of War (A) [add], short and aphoristic, a dozen translations diverge
+- Machiavelli, The Prince (B) [add], power without the moralizing
+- Musashi, The Book of Five Rings (B) [add], the swordsman's strategy
+- Han Feizi, Chinese Legalism (A) [add], the dark twin of Confucius that unified China
+- Robert Greene, The 48 Laws of Power (C) [add], the modern cynical version, doubles as a case study
+
+**14. The human story (big history)**
+- Yuval Noah Harari, Sapiens (C) [add], treated skeptically, its overreach is the post
+- Jared Diamond, Guns, Germs, and Steel (C) [add], geography as destiny
+
+**15. Beauty and art (aesthetics)**
+- ★ Aristotle, Poetics (B) [add], why stories move us, catharsis
+- Tanizaki, In Praise of Shadows, with Okakura's The Book of Tea (C) [add], wabi-sabi, beauty in imperfection
+- Burke and Kant on the sublime and the beautiful (B) [add]
+- John Berger, Ways of Seeing (C) [add], how we look at what we look at
+
+**16. Love and eros**
+- ★ Plato, the Symposium (B) [add], the ladder of love and Aristophanes' split humans
+- The Song of Songs (A) [add], the erotic poetry hidden inside the Hebrew Bible
+- The Kama Sutra (A) [add], desire and the art of living, far more than the cliche
+- Barthes, A Lover's Discourse, or bell hooks, All About Love (C) [add], the modern read
+
 ### Scope and the gate
 
 Serious paths go in as paths. Movements that became businesses or cults go in as
@@ -214,9 +240,9 @@ endorsed wisdom. That line keeps the series credible instead of credulous. Oral
 and indigenous traditions cannot get a fair text post, so name that limit in one
 honest essay rather than pretending the map is complete.
 
-About fifty paths, consolidating to roughly 35 to 40 posts. A multi-year map, not
-a sprint. Build the starred essentials first; they cover every pillar at least
-once.
+About sixty-five paths across sixteen pillars. A multi-year map, not a sprint.
+Build in the priority batches below; the starred essentials are front-loaded and
+touch every pillar at least once.
 
 ## Sources and licensing: everything is fair game
 
@@ -252,19 +278,44 @@ attributed like scholarship. That attribution is the series' own defense.
   oppositely. Surface the disagreement rather than fake a neutral center. It is
   more honest and more interesting.
 
-## Build order
+## Build order: the batches
 
-The order proves each engine before scaling it. Learning only flows within an
-engine, not across, so the three pilots are independent and can run in parallel.
+Build in priority batches of about a dozen, most important first, each batch
+spanning several pillars so that stopping early still leaves a broad, finished
+series. Write each batch's prompts just before it runs. The pilots (Dhammapada,
+Zhuangzi, Deutsch) are already built.
 
-1. **Pilots (one per engine):** Dhammapada (A), Zhuangzi (B), The Beginning of
-   Infinity (C).
-2. **Regroup,** fold what the pilots taught back into this file.
-3. **Followers, batched within each engine:** Analects, Gita, then the curated
-   libraries. The three Abrahamic texts go foundation-first: Hebrew Bible, then
-   New Testament, then Quran. Nagarjuna follows Zhuangzi.
-4. **Capstone, last:** The Spirituality of Imperfection, which is itself a
-   synthesis of these traditions and ties the series together.
+**Batch 1, how to live and how to bear it (the personal and practical heart).**
+Meditation (D, the flagship), Aristotle's Nicomachean Ethics, Marcus Aurelius,
+Epictetus, Frankl, William James, the Bhagavad Gita, the Analects, Plato (the
+death of Socrates and the cave), Nietzsche, Darwin, Sun Tzu's Art of War. If only
+this batch ever ships, the series is already real. The personal heart (meditation,
+Frankl, James) is here on purpose, so the recovery-and-meaning lane is covered
+even if later batches never come.
+
+**Batch 2, the world's scriptures (the convergence core, mostly prompt-ready).**
+Hebrew Bible, New Testament, Quran, Guru Granth Sahib, Nagarjuna, Huxley's
+Perennial Philosophy, Rumi, Augustine, Mencius, the Zoroastrian Gathas.
+
+**Batch 3, the Western mind (reason, power, politics).** Lucretius, Kant, Camus
+with Kierkegaard, Hume with Descartes, the Social Contract, Mill's On Liberty,
+Marx, Machiavelli, Han Feizi, Popper, Euclid.
+
+**Batch 4, the contemplative and experiential world.** Patanjali's Yoga Sutras,
+Krishnamurti, Alan Watts, Ram Dass, Eckhart Tolle, Gurdjieff, Huxley's Doors of
+Perception, Pollan, the entheogen traditions, secular Buddhism (Harris, Batchelor,
+Wright), the cult and commercial case studies.
+
+**Batch 5, story, beauty, love, and the human arc.** Dostoevsky's Grand
+Inquisitor, Gilgamesh, Dante, Homer, Aristotle's Poetics, In Praise of Shadows
+with The Book of Tea, Burke and Kant on the sublime, Berger's Ways of Seeing,
+Plato's Symposium, the Song of Songs, the Kama Sutra, Barthes or bell hooks on
+love, Sapiens, Guns Germs and Steel.
+
+**Batch 6, the remainder and the capstone.** Jainism, Montaigne, Jung, Adam
+Smith, Musashi, the 48 Laws of Power, the oral and indigenous essay, and last of
+all The Spirituality of Imperfection, the capstone that ties the whole series
+together.
 
 ## The per-book workflow
 
