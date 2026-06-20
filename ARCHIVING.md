@@ -61,13 +61,13 @@ Let `<slug>` be the post's basename (e.g. `seven-habits`).
    `og:image` as the result thumb, so steps 2, 4, and 7 must be done first.
 
 9. **Refresh the About-page attribution tile** (`js/git-attribution-data.js`, the
-   "Which mind built which page" viz). It is a periodically regenerated snapshot
-   from **this machine's** Claude Code transcripts. A post built here appears as a
-   tile with an `(archived)` tag once the data is rebuilt (see
-   `process_model_attribution_viz` in memory for the rebuild recipe). A post built
-   on another machine/account (e.g. `star-signs`, `remote-viewing`) legitimately
-   never appears; the page caption already scopes this, so do **not** fabricate a
-   tile for it.
+   "Which mind built which page" viz). Run `node tools/build-attribution.mjs` (read
+   its header first): add the post to the `NEW` config, run once to validate, then
+   `--write`. It is **add-only** because old transcripts get pruned, so a full
+   re-derive would regress intact tiles. A post built on another machine/account
+   (e.g. `star-signs`, `remote-viewing`, `space-age`) has no local transcripts and
+   legitimately never appears; the page scopes this, so do **not** fabricate a tile.
+   Verify the new tile renders on `about.html` before committing.
 
 10. **Update `AGENTS.md`** only if the post was named in the "Pages" list there
     (rare; `best-photographs` was the precedent).
