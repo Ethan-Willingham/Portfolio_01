@@ -233,6 +233,9 @@
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px) {
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
     .amap, .amap-bar { padding-left: 0.7rem; padding-right: 0.7rem; }
     .amap-canvas { padding: 0.8rem 0.4rem; }
     .amap-panel { padding: 1.2rem 1rem 1.4rem; }

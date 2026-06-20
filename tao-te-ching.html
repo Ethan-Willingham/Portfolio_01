@@ -163,6 +163,9 @@
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
     .fan-zh { font-size: 1.65rem; padding: 1.1rem 1rem 0.4rem; letter-spacing: 0.05em; }
     .fan-list li { padding: 0.65rem 1rem; }
     .fan-list .e { font-size: 1.02rem; }

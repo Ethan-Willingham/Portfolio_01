@@ -156,6 +156,9 @@
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
     .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
     .walk-jump #walk-stlabel { font-size: 0.98rem; }
   }
