@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Social Contract, Side by Side</title>
+  <meta name="description" content="Why should anyone obey the state? Hobbes, Locke, and Rousseau each imagined a world with no government and built three different ones out of it. The three set against each other on five questions, with the exact line from each book.">
+  <meta property="og:title" content="The Social Contract, Side by Side">
+  <meta property="og:description" content="Three philosophers, one question: why obey the state, and what makes power legitimate? Hobbes wants you to hand it all to one ruler, Locke wants it on a short leash, Rousseau wants the people to keep it. Watch them split, line by line.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/social-contract.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/social-contract-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/social-contract-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE SOCIAL CONTRACT, SIDE BY SIDE
+     A comparative reader: Hobbes, Locke and Rousseau answering the
+     same five questions about why anyone should obey the state.
+     Sits in the site shell (forest green, parchment, Century Supra
+     / Segoe UI / Commit Mono). Each thinker carries one accent
+     from the site categorical set. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 820px;                 /* reading column */
+    --hobbes:   #b8796d;              /* brick: war, fear */
+    --locke:    #bc9d65;              /* deep gold: property, law */
+    --rousseau: #8fb3c7;             /* blue: liberty, the idealist */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* the opening "fan": three books, three opening moods */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-head { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding: 1.2rem 1.5rem 0.2rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: 0.9rem 1.5rem; border-top: 1px solid var(--rule); border-left: 3px solid var(--fan-accent, var(--rule-strong)); }
+  .fan-list li.fan-h { --fan-accent: var(--hobbes); }
+  .fan-list li.fan-l { --fan-accent: var(--locke); }
+  .fan-list li.fan-r { --fan-accent: var(--rousseau); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3.4vw, 1.5rem); line-height: 1.34; color: var(--text-bright); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.4rem; }
+    .fan-list .who { text-align: right; white-space: nowrap; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .sc { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .sc-bar { position: sticky; top: 0; z-index: 20; padding: 0.7rem 0 0.6rem; margin-bottom: 0.6rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .sc-step { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
+  .sc-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; flex: none; }
+  .sc-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .sc-nav:disabled { opacity: 0.3; cursor: default; }
+  .sc-now { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); display: flex; align-items: baseline; gap: 0.5rem; min-width: 0; }
+  .sc-now b { color: var(--accent); font-weight: 400; }
+  .sc-now span { color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .sc-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .sc-tabs button { display: inline-flex; align-items: baseline; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em; padding: 0.4em 0.75em; background: rgba(255,255,255,0.03); color: var(--text-dim); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  .sc-tabs button:hover { color: var(--text-bright); border-color: var(--rule-strong); }
+  .sc-tabs button.is-on { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+  .sc-tabs .sc-tab-n { font-size: 0.64rem; opacity: 0.7; }
+  .sc-tabs button.is-on .sc-tab-n { opacity: 0.85; }
+
+  /* the question + island handle */
+  .sc-question { margin: 0.8rem 0 0; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .sc-q-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .sc-q { font-family: var(--font-heading); font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.15; letter-spacing: -0.015em; color: var(--text-bright); margin: 0; text-wrap: balance; }
+  .sc-island { font-family: var(--font-heading); font-style: italic; font-size: 1.06rem; line-height: 1.55; color: var(--text-dim); margin: 1rem 0 0; padding-left: 0.95rem; border-left: 2px solid var(--rule-strong); text-wrap: pretty; }
+  .sc-gist { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.6; color: var(--text); margin: 1rem 0 0; }
+  .sc-gist em { font-style: italic; color: var(--text-bright); }
+
+  /* the three thinkers, stacked and color-coded */
+  .sc-thinkers { margin: 1.3rem 0 0; display: grid; gap: 0.9rem; }
+  .sc-t { padding: 1.15rem 1.3rem; border: 1px solid var(--rule); border-left: 3px solid var(--t, var(--rule-strong)); border-radius: 12px; background: rgba(255,255,255,0.018); }
+  .sc-hobbes   { --t: var(--hobbes); }
+  .sc-locke    { --t: var(--locke); }
+  .sc-rousseau { --t: var(--rousseau); }
+  .sc-th { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .sc-tn { font-family: var(--font-heading); font-size: 1.28rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .sc-tw { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: color-mix(in srgb, var(--t) 78%, var(--text-faint)); text-align: right; }
+  .sc-ty { color: var(--text-faint); }
+  .sc-read { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .sc-read em { font-style: italic; color: var(--text-bright); }
+  .sc-quote { font-family: var(--font-heading); font-style: italic; font-size: 1.04rem; line-height: 1.5; color: var(--text-dim); margin: 0.85rem 0 0; padding: 0.15rem 0 0.15rem 0.95rem; border-left: 2px solid color-mix(in srgb, var(--t) 55%, transparent); }
+  .sc-cite { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.5rem; }
+
+  /* where they split */
+  .sc-split { margin: 1.1rem 0 0; }
+  .sc-split-card { padding: 1.2rem 1.4rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .sc-split-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.45rem; }
+  .sc-split-body { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .sc-split-body em { font-style: italic; color: var(--text-bright); }
+
+  /* fade the explorer in once data lands */
+  .sc .sc-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .sc.sc-ready .sc-body { opacity: 1; }
+  .sc-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .sc.sc-ready .sc-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* full-bleed page: zero the body's side padding so each block's own
+       var(--gutter) is the single 20px gutter, not a doubled 40px one */
+    body { padding-left: 0; padding-right: 0; }
+    .fan-head { padding: 1rem 1rem 0.2rem; }
+    .fan-list li { padding: 0.8rem 1rem; }
+    .sc-question { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .sc-t { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .sc-now { display: none; }
+    .sc-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 0.2rem; }
+    .sc-tabs::-webkit-scrollbar { display: none; }
+    .sc-tabs button { flex: none; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Social Contract, side by side</h1>
+    <p class="hero-dek">Why should anyone obey the state? Three philosophers answered by imagining the same thing, a world with no government at all, and walked away with three completely different governments. Here they are on the same five questions.</p>
+    <p class="hero-meta">A comparative reader <span class="sep">/</span> <b>3 thinkers</b>, <b>5 questions</b> <span class="sep">/</span> every answer quoted from the source</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">A plane goes down and forty strangers wash up on an island. No police, no courts, no government, nobody whose job it is to be in charge. Pretty soon someone says: we need some rules. And the second they say it, you are standing inside the oldest argument in politics.</p>
+      <p>What rules? Who enforces them? How much power do you hand over, and what happens when the person holding it goes bad? Three men wrote the three classic answers, and they could not have disagreed more. Thomas Hobbes (1651) says hand nearly all your power to one ruler and never take it back, because the alternative is everyone at war. John Locke (1689) says keep most of your rights, lend the government a few on strict terms, and fire it if it cheats. Jean-Jacques Rousseau (1762) says give everything to the whole people at once and let them rule themselves in person.</p>
+      <p>Hobbes built the case for absolute power. Locke's argument shows up, almost word for word, in the American Declaration of Independence. Rousseau's became the book the French Revolution swore by.</p>
+
+      <div class="fan">
+        <p class="fan-head">Three books, three opening moods &middot; the whole argument in miniature</p>
+        <ul class="fan-list">
+          <li class="fan-h"><span class="e">The life of man, solitary, poor, nasty, brutish, and short.</span><span class="who">Hobbes &middot; 1651</span></li>
+          <li class="fan-l"><span class="e">No one ought to harm another in his life, health, liberty, or possessions.</span><span class="who">Locke &middot; 1689</span></li>
+          <li class="fan-r"><span class="e">Man is born free; and everywhere he is in chains.</span><span class="who">Rousseau &middot; 1762</span></li>
+        </ul>
+      </div>
+
+      <p>Here is the strange part. They are not really arguing about good and evil, or even much about what a government should do. They are arguing about one factual question, and everything else falls out of it on its own: what are people like when nobody is in charge? Answer <em>a war</em>, and you get Hobbes. Answer <em>mostly fine, just no referee</em>, and you get Locke. Answer <em>free, until society ruined them</em>, and you get Rousseau. The whole disagreement is one assumption deep.</p>
+      <p>Below, the three of them take the same five questions in turn, the ones you would actually have to settle on that island: what people are like alone, what you sign away, who ends up in charge, when you can throw them out, and what each deal quietly costs. For each question you get the plain version of all three answers, then the exact line from the book it came from, so you can check me against them. Their words are verbatim. Rousseau, the one who has to be translated, is quoted in the public-domain Cole translation, named where the wording matters.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="sc" id="sc">
+      <div class="sc-bar">
+        <div class="sc-step">
+          <button class="sc-nav" id="sc-prev" aria-label="Previous question">&lsaquo;</button>
+          <span class="sc-now"><b id="sc-qno">Question 1</b> <span id="sc-qshort"></span></span>
+          <button class="sc-nav" id="sc-next" aria-label="Next question">&rsaquo;</button>
+        </div>
+        <div class="sc-tabs" id="sc-tabs" role="tablist" aria-label="The five questions"></div>
+      </div>
+
+      <div class="sc-body">
+        <div class="sc-question" id="sc-question"></div>
+        <div class="sc-thinkers" id="sc-thinkers"></div>
+        <div class="sc-split" id="sc-split"></div>
+      </div>
+      <div class="sc-loading">loading the three thinkers&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the three thinkers. The questions, the breakdowns, and every quote are plain text in <code>js/social-contract-data.js</code> and <code>js/social-contract-notes.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>All three books are old enough to be public domain, and I pulled every quote from a primary digital edition rather than retyping it from memory.</p>
+      <ul class="src-list">
+        <li><b>Hobbes, <em>Leviathan</em> (1651)</b>, from the original text at <a href="https://www.gutenberg.org/ebooks/3207">Project Gutenberg</a>, quoted in modern spelling and cited by part and chapter.</li>
+        <li><b>Locke, <em>Second Treatise of Government</em> (1689)</b>, cited by Locke's own section numbers (the §), from the standard text mirrored at the <a href="https://www.constitution.org/2-Authors/jl/2ndtreat.htm">Constitution Society</a>.</li>
+        <li><b>Rousseau, <em>The Social Contract</em> (1762)</b>, in the public-domain English of <a href="https://www.gutenberg.org/ebooks/46333">G. D. H. Cole</a> (1913), checked against the French original. Rousseau is the one of the three who has to be translated, so where a line is famous I have named Cole, because other translators word it differently. The opening is the standing example: Cole's <em>Man is born free</em> is Maurice Cranston's <em>Man was born free</em>, and the French will not settle which tense is right.</li>
+      </ul>
+      <p>The breakdowns are mine. Where a thinker's popular image comes from a book other than the one quoted (Rousseau's gentle <em>natural man</em> really lives in his earlier <em>Discourse on Inequality</em>), I have tried to say so rather than smooth it over, and where a system has an ugly side (Hobbes on absolute power, Locke on property and slavery, Rousseau on being forced to be free), I have kept it in the frame instead of cropping it out.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The image on the homepage card is the frontispiece of Hobbes's <em>Leviathan</em>, engraved by Abraham Bosse in 1651: a giant crowned sovereign whose body is made of the hundreds of tiny people who make him up. It is the first and still the best picture of the whole idea. British Library, via Wikimedia Commons, public domain.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/social-contract-notes.js" defer></script>
+  <script src="js/social-contract-data.js" defer></script>
+  <script src="js/social-contract.js" defer></script>
+</body>
+</html>
