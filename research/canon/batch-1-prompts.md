@@ -2,34 +2,23 @@
 
 Twelve posts, one per fresh Claude Code window, independent of each other. Each is
 self-contained; the shared rules and the full map live in CANON.md, which every
-prompt tells the window to read first. The Analects and the Gita also have fuller
-versions in follower-prompts.md; these are tightened and carry the latest rules
-(short homepage card).
+prompt tells the window to read first. Every prompt repeats the same RULES block
+on purpose, because each post is built in its own window with no memory.
 
-Every prompt begins with the same RULES block. It is repeated on purpose, because
-each post is built in its own window with no memory of the others.
+This is the current, authoritative Batch 1 (5-batch plan, see CANON.md). The
+earlier pilot-prompts.md and follower-prompts.md are now historical: every post
+they covered (the four pilots plus the eight scripture/capstone followers) is
+already live. The New Testament, Analects, and Bhagavad Gita prompts that used to
+sit in this file were dropped because those posts shipped; Marx, Mill, and Marcus
+Aurelius took their place.
 
----
-
-## 1. The New Testament (Engine A, Translation Stack)
-
-You're building the New Testament post for my "great books, made learn-from-able" series. Engine A, the translation stack.
-
-RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, and study tao-te-ching.html with js/tao-data.js, js/tao-notes.js, js/tao.js. Follow the hard-won rules: voice is the bar (write the prose with the write-post skill and run its monotone read-aloud test, plain and spoken, never formal or "educational"); open concrete with an everyday analogy, never an abstract claim; source the best copies, including copyrighted ones, yourself via parallel sub-agents, never ask me to fetch them; verify the mobile gutter is 20px at 375px; use a real sourced thumbnail (named, never generative); and keep the homepage card description to ONE short hook line of about 15 words (the cards so far run 50 to 105 words and are far too long).
-
-Spine (diagnosis and prescription): humanity is estranged from God by sin and cannot save itself; the cure is reconciliation by grace through the life, death, and resurrection of Jesus, lived out as love of God and neighbor.
-
-Keystones: the Greatest Commandment, the self-summary (Matt 22:37-40, "on these two hang all the Law and the Prophets"); the Sermon on the Mount (Matt 5-7, the Beatitudes, turn the other cheek, the Lord's Prayer); John 1:1, the Logos; John 3:16; the Passion and Resurrection (the load-bearing event, not a saying); 1 Corinthians 13 (love); Romans and Ephesians 2:8-9 (grace, the Protestant keystone); the Good Samaritan and the Prodigal Son.
-
-Splits to stack: Logos (Word/Reason), agape (love/charity), metanoia (repentance/change of mind), the Lord's Prayer wording (debts/trespasses/sins), and Isaiah 7:14 "virgin/young woman" as quoted in Matthew. Greek source line plus transliteration.
-
-Translations (all fair game, name each): KJV and Tyndale, Douay-Rheims, RSV/NRSV, NIV and ESV, N.T. Wright's Kingdom New Testament, and David Bentley Hart's deliberately strange literal version (feature it). Name the sectarian contest: Catholic, Orthodox, and Protestant canons differ, and faith versus works splits Paul from James 2. Build on the Hebrew Bible post if it exists; focus here on the New Testament and how Christianity re-reads the Hebrew scriptures.
-
-Ship: homepage card (ONE short hook line), og:image, a real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, then commit and push to main with explicit paths.
+Accounting (nothing lost): the map in CANON.md holds 70 posts. 12 are live (4
+pilots + the 8 scripture/capstone). The other 58 are spread across the 5 batches,
+each placed exactly once. Batch 1 below is 12 of those 58.
 
 ---
 
-## 2. Plato, the death of Socrates and the cave (Engine B, One-Reading Walk)
+## 1. Plato, the death of Socrates and the cave (Engine B, One-Reading Walk)
 
 You're building the Plato post for my great-books series. Engine B, the one-reading walk.
 
@@ -47,75 +36,7 @@ Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px
 
 ---
 
-## 3. The Analects (Engine A, Translation Stack)
-
-You're building the Analects of Confucius post for my great-books series. Engine A, the translation stack.
-
-RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js, and clone that architecture (analects.html, js/analects-data.js, js/analects-notes.js). Follow the hard-won rules: voice is the bar (write-post plus monotone test, plain spoken, never formal); concrete analogy opener; source the translations yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words (the current cards are far too long).
-
-Spine: a society falls apart when people abandon virtue and their roles; the repair is self-cultivation that ripples outward, from the person to the family to the state.
-
-Keystones: 15.24 reciprocity, the self-summary ("do not impose on others what you do not want"); 2.4 the arc of a life; 2.3 govern by virtue, not punishment; 12.1 ren as self-mastery; 2.15 learning and thought; 4.8; 13.3 the rectification of names; 1.2 filial piety as the root.
-
-Splits to stack (the words with no English): ren, junzi, li, de, tian. Classical Chinese source line.
-
-Translations (all fair game, name each): Legge, Waley, D.C. Lau, Pound, Slingerland, Ames and Rosemont, Leys, Watson, Chin. Frame it as more philosophical than religious, fragments compiled by disciples, and note that Confucius calls himself a transmitter, not an inventor.
-
-Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
-
----
-
-## 4. The Bhagavad Gita (Engine A, Translation Stack)
-
-You're building the Bhagavad Gita post for my great-books series. Engine A, the translation stack.
-
-RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js, clone that architecture (gita.html, js/gita-data.js, js/gita-notes.js). Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal); concrete analogy opener; source the translations yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
-
-The setup is a story (open on it): Arjuna freezes on the battlefield, unwilling to fight a war that will kill his own family, and his charioteer, who turns out to be God, talks him through how to act. Spine: we are bound by attachment to the results of our actions and by ignorance of the deathless Self; the way out is to act without grasping at outcomes (karma yoga), to love and surrender (bhakti), and to know the Self (jnana).
-
-Keystones: 2.47, the self-summary ("a right to your actions, never to their fruits"); 2.20 and 2.22, the deathless Self (worn-out clothes); 3.35 / 18.47, svadharma; 4.7-8, the avatar; chapter 11, the cosmic theophany (the line Oppenheimer remembered); 18.66, surrender. Weave in the Upanishad great sayings (Tat tvam asi).
-
-Splits to stack: dharma, yoga, atman, karma, guna, Brahman. Sanskrit source line (Devanagari plus transliteration).
-
-Translations (all fair game, name each): Edwin Arnold, Telang, Besant, Prabhavananda and Isherwood, Easwaran, Barbara Stoler Miller, Mitchell, Sargeant, Schweig, Patton. Name the contest: Advaita, Vishishtadvaita, and Dvaita read the same verses oppositely. The war framing needs care (Gandhi read it as the inner battle).
-
-Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
-
----
-
-## 5. Darwin, On the Origin of Species (Engine B, One-Reading Walk)
-
-You're building the Darwin post for my great-books series. Engine B, walk his actual argument.
-
-RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html for the shell. Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal or "educational," and this one is at high risk of going lecture-mode, do not let it); open concrete with an everyday analogy; source the editions and the scholarship yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
-
-Spine: the staggering design and variety of living things looks like it must have a designer; Darwin shows it needs none, only descent with modification under natural selection, given enough time.
-
-Keystones: artificial selection (pigeon breeders) as the on-ramp; the struggle for existence; natural selection; descent with modification; the single diagram in the whole book, the tree of life; the hard cases he faces head-on (the eye); deep time; the closing line, "endless forms most beautiful."
-
-Special: precision matters, his readers are exacting. Work from the first edition (1859), which has the cleanest argument before later editions hedged. Do not conflate him with social Darwinism or treat "survival of the fittest" as a moral claim (that phrase is Spencer's, not Darwin's ethics). Use concrete analogies throughout (breeders shaping pigeons over generations, a slow river carving a canyon). Quote any good modern edition's apparatus with attribution.
-
-Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
-
----
-
-## 6. The Social Contract: Hobbes, Locke, Rousseau (Engine A, comparative)
-
-You're building the Social Contract post for my great-books series. Engine A idiom, but comparative: stack three thinkers against each other on one question, the way the Tao post stacks translations.
-
-RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js. Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal); open concrete with an everyday analogy; source the texts yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
-
-Spine: why should anyone obey the state, and what makes power legitimate? Each thinker starts from a "state of nature" and builds a contract out of it.
-
-Keystones, stacked side by side: Hobbes, Leviathan (life with no state is "solitary, poor, nasty, brutish, and short," so we hand near-absolute power to a sovereign for security); Locke, Second Treatise (we are born free with natural rights to life, liberty, and property, government rules only by consent and may be overthrown, the seed of the American founding); Rousseau, The Social Contract ("man is born free, and everywhere he is in chains," the general will). Set the three against each other on the same three questions: what is the state of nature, what do we give up, and when may we revolt.
-
-Editions all fair game (public-domain translations of Rousseau; Hobbes and Locke in English). Concrete handle: a group stranded on an island, deciding what rules to write and what power to hand over.
-
-Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
-
----
-
-## 7. Aristotle, Nicomachean Ethics (Engine B, One-Reading Walk)
+## 2. Aristotle, Nicomachean Ethics (Engine B, One-Reading Walk)
 
 You're building the Aristotle's Ethics post for my great-books series. Engine B, walk the argument.
 
@@ -133,7 +54,75 @@ Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px
 
 ---
 
-## 8. Nietzsche (Engine B, One-Reading Walk)
+## 3. Darwin, On the Origin of Species (Engine B, One-Reading Walk)
+
+You're building the Darwin post for my great-books series. Engine B, walk his actual argument.
+
+RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html for the shell. Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal or "educational," and this one is at high risk of going lecture-mode, do not let it); open concrete with an everyday analogy; source the editions and the scholarship yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
+
+Spine: the staggering design and variety of living things looks like it must have a designer; Darwin shows it needs none, only descent with modification under natural selection, given enough time.
+
+Keystones: artificial selection (pigeon breeders) as the on-ramp; the struggle for existence; natural selection; descent with modification; the single diagram in the whole book, the tree of life; the hard cases he faces head-on (the eye); deep time; the closing line, "endless forms most beautiful."
+
+Special: precision matters, his readers are exacting. Work from the first edition (1859), which has the cleanest argument before later editions hedged. Do not conflate him with social Darwinism or treat "survival of the fittest" as a moral claim (that phrase is Spencer's, not Darwin's ethics). Use concrete analogies throughout (breeders shaping pigeons over generations, a slow river carving a canyon). Quote any good modern edition's apparatus with attribution.
+
+Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
+
+---
+
+## 4. The Social Contract: Hobbes, Locke, Rousseau (Engine A, comparative)
+
+You're building the Social Contract post for my great-books series. Engine A idiom, but comparative: stack three thinkers against each other on one question, the way the Tao post stacks translations.
+
+RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js. Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal); open concrete with an everyday analogy; source the texts yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
+
+Spine: why should anyone obey the state, and what makes power legitimate? Each thinker starts from a "state of nature" and builds a contract out of it.
+
+Keystones, stacked side by side: Hobbes, Leviathan (life with no state is "solitary, poor, nasty, brutish, and short," so we hand near-absolute power to a sovereign for security); Locke, Second Treatise (we are born free with natural rights to life, liberty, and property, government rules only by consent and may be overthrown, the seed of the American founding); Rousseau, The Social Contract ("man is born free, and everywhere he is in chains," the general will). Set the three against each other on the same three questions: what is the state of nature, what do we give up, and when may we revolt.
+
+Editions all fair game (public-domain translations of Rousseau; Hobbes and Locke in English). Concrete handle: a group stranded on an island, deciding what rules to write and what power to hand over.
+
+Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
+
+---
+
+## 5. Marx, The Communist Manifesto (Engine B, One-Reading Walk)
+
+You're building the Marx post for my great-books series. Engine B, walk the argument of The Communist Manifesto (short and punchy), with a little of Capital. He is a dissenter, like Nietzsche; let his critique stand, and be honest about the catastrophe done in his name.
+
+RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js. Follow the rules: voice is the bar (write-post plus the monotone read-aloud test, plain spoken, never formal); open concrete with an everyday analogy; source the texts yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
+
+Spine: history is driven by class struggle, not ideas or great men; capitalism, for all its dynamism, splits society into owners and workers, alienates the worker from what he makes, and breeds its own gravediggers. The cure he predicts: the workers seize the means of production and abolish private property, ending class itself.
+
+Keystones: "The history of all hitherto existing society is the history of class struggles"; "All that is solid melts into air"; "Workers of the world, unite, you have nothing to lose but your chains"; alienation (the worker makes the thing but cannot afford it); ideology, the ruling ideas are the ideas of the ruling class; and from Capital, briefly, commodity fetishism and surplus value.
+
+Editions all fair game (the Moore 1888 English of the Manifesto is public domain).
+
+Special, truth over narrative: let the analytic power of the critique land, AND keep the twentieth-century record visible, the regimes built in his name and their body count. He is not Stalin, but the disaster is part of the honest story. Concrete: the factory floor, the thing the worker builds and cannot buy.
+
+Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
+
+---
+
+## 6. Mill, On Liberty (Engine B, One-Reading Walk)
+
+You're building the Mill, On Liberty post for my great-books series. Engine B, walk the argument (it is short and one sustained case).
+
+RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js. Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal); open concrete; source the text yourself, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
+
+Spine: the only reason society may rightly coerce an adult against their will is to stop them harming others; over himself, the individual is sovereign. The real danger in a democracy is not a tyrant but the tyranny of the majority, social pressure crushing the odd and the dissenting.
+
+Keystones: the harm principle ("the only purpose for which power can be rightfully exercised over any member of a civilized community, against his will, is to prevent harm to others"); the tyranny of the majority; the case for near-total free speech (we may be silencing the truth; even a false opinion sharpens the true one; and a true opinion never challenged decays into "dead dogma"); individuality and "experiments in living" as part of a good life.
+
+The text is public domain (1859), English original, so no translation stack; this is a one-reading walk.
+
+Special: it is the source code of the modern open society and today's free-speech fights; let the reader feel how downstream we still are. Steelman the hard part (the harm principle's fuzzy edges) before answering. Concrete throughout.
+
+Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
+
+---
+
+## 7. Nietzsche (Engine B, One-Reading Walk)
 
 You're building the Nietzsche post for my great-books series. Engine B. He is the series' designated dissenter, his job is to attack the convergence the other books share (humility, selflessness, pity as virtues). Let him.
 
@@ -146,6 +135,24 @@ Keystones: "God is dead" and what it costs; master morality versus slave moralit
 Translations (all fair game, name each): Kaufmann (the standard), Hollingdale, Clark and Swensen.
 
 Special, do not skip: handle the Nazi misappropriation honestly, his sister edited and distorted him after his collapse; Nietzsche despised antisemitism and German nationalism. Let his attack on the rest of the series stand unanswered here, that is the whole point of including him.
+
+Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
+
+---
+
+## 8. Marcus Aurelius, Meditations (Engine A, Translation Stack)
+
+You're building the Marcus Aurelius, Meditations post for my great-books series. Engine A, the translation stack (short aphoristic entries, many translations, ideal for it).
+
+RULES: First read CANON.md (especially "What the first posts taught us" and "The map"), then VOICE.md and STYLE.md, study tao-te-ching.html with js/tao*.js, clone that architecture. Follow the rules: voice is the bar (write-post plus monotone test, plain spoken, never formal); open concrete; source the translations yourself via sub-agents, never ask me; 20px gutter at 375px; real sourced thumbnail (named); homepage card description ONE short hook line of about 15 words.
+
+The hook: this was the private journal of the most powerful man in the world, the Roman emperor, writing notes to himself he never meant anyone to read, mostly about staying humble, doing his duty, and the fact that he would soon be dead.
+
+Spine: you control almost nothing except your own judgments; peace comes from accepting what you cannot control, doing the work in front of you, and remembering how short life is. We are disturbed not by things but by our opinions about them.
+
+Keystones: "You have power over your mind, not outside events; realize this, and you will find strength"; the dichotomy of control (lived from Epictetus); "The impediment to action advances action; what stands in the way becomes the way"; the view from above (the cosmic zoom-out); memento mori, you could leave life right now; "Waste no more time arguing about what a good man should be; be one."
+
+Splits to stack: the Greek terms behind the calm and how translators render them. Translations (all fair game, name each): George Long (public domain), Gregory Hays (the beloved modern), Robin Hard, Maxwell Staniforth, Martin Hammond, Farquharson.
 
 Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
 
@@ -199,7 +206,7 @@ The how-to: the actual core instruction for the main techniques, posture, what t
 
 Engine D structure per technique: what it is, where it came from, what it claims, what the evidence shows, and how to do the core of it. Consider an interactive technique comparison.
 
-Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push with explicit paths.
+Ship: card (ONE short hook line), og:image, real sourced thumbnail (named), 20px gutter at 375px, write-post self-edit, commit and push to main with explicit paths.
 
 ---
 
