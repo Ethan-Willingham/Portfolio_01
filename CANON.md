@@ -287,43 +287,35 @@ attributed like scholarship. That attribution is the series' own defense.
 
 ## Build order: the batches
 
-Build in priority batches ordered by importance, objective weight in human
-history, not personal taste. Each batch still spans many pillars, so the series is
-broad at every stopping point, and all sixteen pillars are covered by the end of
-Batch 3. The pilots (Dhammapada, Zhuangzi, Deutsch) are already built. Write each
-batch's prompts just before it runs.
+Five batches, ordered by importance, objective weight in human history, not
+personal taste. Each batch spans many pillars, so the series is broad at every
+stopping point, and all sixteen pillars are covered by the end of Batch 3. The
+scripture core and the capstone already shipped (see the map). Write each batch's
+prompts just before it runs.
 
 **Batch 1, the foundations of civilization (the most important, period).** Plato
-(the death of Socrates and the cave), Darwin's Origin of Species, the Social
-Contract (Hobbes, Locke, Rousseau), Aristotle's Nicomachean Ethics, Nietzsche,
-Homer's Odyssey, Sun Tzu's Art of War, the Meditation flagship (the Engine D
-pilot), and Frankl. (The New Testament, the Analects, and the Bhagavad Gita were
-in this batch but already shipped with the rest of the scripture core.)
+(the death of Socrates and the cave), Aristotle's Nicomachean Ethics, Darwin's
+Origin of Species, the Social Contract (Hobbes, Locke, Rousseau), Marx, Mill's On
+Liberty, Nietzsche, Marcus Aurelius, Homer's Odyssey, Sun Tzu's Art of War, the
+Meditation flagship (the Engine D pilot), and Frankl.
 
-**Batch 2, the rest of the giants.** Marx, Marcus Aurelius, William James,
-Aristotle's Poetics (opens beauty), Plato's Symposium (opens love), Sapiens (opens
-the human story), Huxley's Perennial Philosophy, and Euclid. (The Quran, the
-Hebrew Bible, Nagarjuna, and the Guru Granth Sahib already shipped.)
+**Batch 2.** William James, Kant, Lucretius, Epictetus, Machiavelli, Augustine,
+Mencius, Euclid, Aristotle's Poetics (opens beauty), Plato's Symposium (opens
+love), Sapiens (opens the human story), Huxley's Perennial Philosophy.
 
-**Batch 3, completing the map.** The cult and commercial case studies (opens the
-edge), the oral and indigenous essay (opens that blind spot), Kant, Lucretius,
-Mill's On Liberty, Machiavelli, Dostoevsky's Grand Inquisitor, Mencius, Epictetus,
-Augustine. All sixteen pillars are now covered.
+**Batch 3.** The cult and commercial case studies (opens the edge), the oral and
+indigenous essay (opens that blind spot), Dostoevsky's Grand Inquisitor,
+Gilgamesh, Dante, Camus with Kierkegaard, Hume with Descartes, Han Feizi,
+Patanjali's Yoga Sutras, Krishnamurti. All sixteen pillars are now covered.
 
-**Batch 4, the contemplative and experiential world.** Patanjali's Yoga Sutras,
-Krishnamurti, Alan Watts, Ram Dass, Eckhart Tolle, Gurdjieff, Huxley's Doors of
-Perception, Pollan, the entheogen traditions, secular Buddhism (Harris, Batchelor,
-Wright).
+**Batch 4, the contemplative and experiential world.** Alan Watts, Ram Dass,
+Eckhart Tolle, Gurdjieff, Huxley's Doors of Perception, Pollan, the entheogen
+traditions, secular Buddhism (Harris, Batchelor, Wright), In Praise of Shadows
+with The Book of Tea, Burke and Kant on the sublime, Berger's Ways of Seeing.
 
-**Batch 5, story, beauty, love, and the human arc.** Gilgamesh, Dante, Camus with
-Kierkegaard, Hume with Descartes, Han Feizi, In Praise of Shadows with The Book of
-Tea, Burke and Kant on the sublime, Berger's Ways of Seeing, the Song of Songs,
-the Kama Sutra, Barthes or bell hooks on love, Guns Germs and Steel, the
-Zoroastrian Gathas, Rumi.
-
-**Batch 6, the remainder.** Jainism, Adam Smith, Popper, Montaigne, Jung,
-Musashi, and the 48 Laws of Power. (The Spirituality of Imperfection, the capstone
-that ties the series together, already shipped.)
+**Batch 5, the remainder.** The Song of Songs, the Kama Sutra, Barthes or bell
+hooks on love, Guns Germs and Steel, the Zoroastrian Gathas, Rumi, Jainism, Adam
+Smith, Popper, Montaigne, Jung, Musashi, and the 48 Laws of Power.
 
 ## The per-book workflow
 
