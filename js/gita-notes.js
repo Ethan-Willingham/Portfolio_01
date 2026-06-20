@@ -17,7 +17,8 @@ window.GITA_NOTES = {
     title: "The hero sits down",
     gist: "The book opens with its warrior refusing to fight. At the end of the first chapter Arjuna, the greatest archer alive, looks at the cousins and teachers he is supposed to kill, drops his bow in the middle of the battlefield, and sinks down in his chariot. The chapter is named for the feeling: <em>vishada</em>, despair. Everything that follows is Krishna trying to get him back on his feet.",
     splits: [
-      { sa: "vishada", gloss: "despair, dejection, the sinking", note: "The whole first chapter is titled the yoga of Arjuna's <em>vishada</em>. It is grief, panic, and moral paralysis all at once. A scripture that begins by naming its hero's breakdown, and treating that breakdown as the doorway in, is doing something unusual." }
+      { sa: "vishada", gloss: "despair, dejection, the sinking", note: "The whole first chapter is titled the yoga of Arjuna's <em>vishada</em>. It is grief, panic, and moral paralysis all at once. A scripture that begins by naming its hero's breakdown, and treating that breakdown as the doorway in, is doing something unusual." },
+      { sa: "the battle, real or inner", gloss: "how to read the war", note: "Whether this is a real war is itself contested. The text presents one, and most of the tradition reads Krishna as urging Arjuna to fight a just war, violence and all. Gandhi, who carried the Gita everywhere, read the whole battlefield as an allegory: Kurukshetra is the human heart, and the war is the one each of us fights inside, between the right thing and the easy one. He took a scripture set at a slaughter and made it a handbook for nonviolence. Both readings are still live." }
     ],
     read: "Most holy books open with a creation or a commandment. This one opens with a man too sick at heart to do his job."
   },
