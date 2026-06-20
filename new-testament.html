@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The New Testament, Side by Side</title>
+  <meta name="description" content="The keystone passages of the New Testament in the original Greek, then stacked against nine English translations from Tyndale to David Bentley Hart, with a plain breakdown of what each one says and where the translators split.">
+  <meta property="og:title" content="The New Testament, Side by Side">
+  <meta property="og:description" content="A man was burned alive for putting this book into English. Sixteen keystone passages in the original Greek, then nine English translations stacked against each other, from Tyndale to David Bentley Hart, broken down line by line.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/new-testament.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/new-testament-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/new-testament-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE NEW TESTAMENT, SIDE BY SIDE
+     An interactive reader: sixteen keystone passages, the Greek
+     source, and nine English translations, with a plain breakdown
+     of each. Sits in the site shell (forest green, parchment,
+     Century Supra / Segoe UI / Commit Mono). The Greek source needs
+     a polytonic-capable fallback face; everything else stays on the
+     three site fonts. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 820px;                 /* reading column */
+    --gk-font: "GFS Didot","Cardo","New Athena Unicode","Times New Roman",Georgia,serif;
+    --he-font: "Times New Roman","Arial Hebrew","Ezra SIL",serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec h2.sechead { margin-top: 0.4rem; }
+
+  /* the spine capsule: diagnosis and prescription */
+  .spine { margin: 1.8rem 0 0.4rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(255,255,255,0.02); overflow: hidden; }
+  .spine-row { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: 1.05rem 1.4rem; }
+  .spine-row + .spine-row { border-top: 1px solid var(--rule); }
+  .spine-k { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+  .spine-t { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.55; color: var(--text); margin: 0; }
+  @media (min-width: 620px){ .spine-row { grid-template-columns: 8.5rem 1fr; gap: 1.2rem; align-items: baseline; } }
+
+  /* the opening "fan": one Greek line, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-gk { font-family: var(--gk-font); font-size: clamp(1.5rem, 4.4vw, 2.1rem); color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.4rem; line-height: 1.5; }
+  .fan-gk small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .nt { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .nt-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .nt-step { display: flex; align-items: center; gap: 0.4rem; }
+  .nt-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .nt-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .nt-nav:disabled { opacity: 0.3; cursor: default; }
+  .nt-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; text-align: left; }
+  .nt-jump:hover { background: rgba(255,255,255,0.05); }
+  .nt-jump #nt-ref { font-family: var(--font-mono); font-size: 0.92rem; letter-spacing: 0.02em; color: var(--accent); }
+  .nt-jump #nt-title { font-style: italic; font-size: 0.96rem; color: var(--text-dim); font-weight: 400; }
+  .nt-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .nt-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
+  .nt-views button:hover { color: var(--text-bright); }
+  .nt-views button.is-on { background: var(--accent); color: #2a3128; }
+  .nt-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .nt-count b { color: var(--accent); font-weight: 400; }
+
+  /* the jump grid: keystones grouped by section */
+  .nt-grid { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); display: grid; gap: 1rem; }
+  .nt-grid[hidden] { display: none; }
+  .nt-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.5rem; }
+  .nt-gridrow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  @media (min-width: 620px){ .nt-gridrow { grid-template-columns: repeat(3, 1fr); } }
+  .nt-gridrow button { display: flex; flex-direction: column; gap: 0.15rem; text-align: left; padding: 0.5rem 0.6rem; border: 1px solid transparent; border-radius: 8px; background: rgba(255,255,255,0.03); cursor: pointer; transition: background .15s, border-color .15s; }
+  .nt-gridrow button:hover { background: rgba(255,255,255,0.08); }
+  .nt-gridrow button.is-cur { background: var(--accent); border-color: var(--accent); }
+  .nt-gridrow button.is-cur .nt-gridref { color: #2a3128; }
+  .nt-gridrow button.is-cur .nt-gridname { color: #2a3128; }
+  .nt-gridref { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em; color: var(--accent); }
+  .nt-gridname { font-family: var(--font-heading); font-size: 0.92rem; line-height: 1.2; color: var(--text-dim); }
+
+  /* source */
+  .nt-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .nt-gk-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .nt-gk-k span { color: var(--text-faint); letter-spacing: 0.08em; text-transform: none; }
+  .nt-gk { font-family: var(--gk-font); font-size: clamp(1.25rem, 3.4vw, 1.6rem); line-height: 1.75; color: var(--text-bright); letter-spacing: 0.01em; margin: 0; text-wrap: pretty; }
+  .nt-translit { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: var(--text-dim); margin: 0.85rem 0 0; }
+  .nt-translit span { color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.66rem; margin-right: 0.5rem; }
+
+  /* commentary */
+  .nt-notes { margin: 1rem 0 0; }
+  .nt-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .nt-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .nt-note-k:first-child { margin-top: 0; }
+  .nt-note-gist, .nt-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .nt-note-gist em, .nt-note-read em, .nt-splits em { font-style: italic; color: var(--text-bright); }
+  .nt-note-read { color: var(--text-dim); font-style: italic; }
+  .nt-splits { margin: 0; }
+  .nt-splits dt { font-family: var(--gk-font); font-size: 1.2rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.01em; }
+  .nt-splits dt .nt-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
+  .nt-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+
+  /* translations */
+  .nt-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .nt-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .nt-v:last-child { border-bottom: 1px solid var(--rule); }
+  .nt-early  { border-left-color: var(--early); }
+  .nt-mid    { border-left-color: var(--mid); }
+  .nt-modern { border-left-color: var(--modern); }
+  .nt-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .nt-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .nt-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .nt-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
+  .nt-vt .nt-br { display: block; height: 0.6em; }
+  .nt-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .nt .nt-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .nt.nt-ready .nt-body { opacity: 1; }
+  .nt-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .nt.nt-ready .nt-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .sec h3.subhead { font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-bright); margin: 1.8rem 0 0.5rem; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .canon-note { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    body { padding-left: 0; padding-right: 0; }
+    .fan-gk { font-size: 1.3rem; padding: 1.1rem 1rem 0.4rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .nt-bar { gap: 0.55rem 0.7rem; }
+    .nt-count { margin-left: 0; flex-basis: 100%; }
+    .nt-source, .nt-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .nt-gridrow { grid-template-columns: repeat(2, 1fr); }
+    .nt-v { padding-left: 0.9rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The New Testament, side by side</h1>
+    <p class="hero-dek">A man was strangled and burned at the stake for putting this book into plain English. Seventy-five years later, the king's translators copied most of his words and called it their own. Here is what they were fighting over.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>16 keystone passages</b> <span class="sep">/</span> <b>9 English translations</b>, from Tyndale to Hart <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">In this book, the translation is the doctrine. Move one word and a belief held by two billion people stands or falls. The clearest place to watch it happen is the opening sentence of the Gospel of John, in the most-translated book ever written, a line that after two thousand years still cannot quite agree with itself.</p>
+
+      <!-- The opening fan: John 1:1 across the versions. -->
+      <div class="fan">
+        <p class="fan-gk" lang="grc">Ἐν ἀρχῇ ἦν ὁ λόγος, καὶ ὁ λόγος ἦν πρὸς τὸν θεόν, καὶ θεὸς ἦν ὁ λόγος.<small>John 1:1, the opening of the Gospel of John, in the Greek</small></p>
+        <ul class="fan-list" id="fan-list">
+          <li><span class="e">In the beginnynge was the worde, and the worde was with God: and the worde was God.</span><span class="who">Tyndale, 1534</span></li>
+          <li><span class="e">In the beginning was the Word, and the Word was with God, and the Word was God.</span><span class="who">King James, 1611</span></li>
+          <li><span class="e">In the beginning was the Word. The Word was close beside God, and the Word was God.</span><span class="who">N.T. Wright, 2011</span></li>
+          <li><span class="e">In the origin there was the Logos, and the Logos was present with God, and the Logos was god.</span><span class="who">D.B. Hart, 2017</span></li>
+          <li><span class="e">In the beginning was the Word, and the Word was with God, and the Word was a god.</span><span class="who">New World Translation, 1950</span></li>
+        </ul>
+      </div>
+
+      <p>For four hundred years the English barely moves. Then it cracks. Hart leaves the Greek word untranslated, <em>Logos</em>, and lowercases the final <em>god</em>. The New World Translation, the Bible of the Jehovah's Witnesses, adds one English word the Greek does not have, <em>a</em>, and a whole church's picture of Jesus turns on it. The fight is real and it is tiny: in the Greek, that last <em>God</em> has no <em>the</em> in front of it. To almost every scholar that is simply how the grammar works, and the Word is God. To the Witnesses it means the Word was <em>a</em> god, something less. One missing article, two religions.</p>
+
+      <p>This page is the New Testament read at that magnification. Not the whole thing, which runs to nearly 8,000 verses, but sixteen keystone passages, the ones the rest of it leans on, each shown in the original Greek and then stacked against nine English translations from Tyndale to Hart, with a plain breakdown of what it says and where the translators split. It picks the load-bearing passages over the merely famous, and follows a single spine the whole way down. It assumes you have read the <a href="hebrew-bible.html">Hebrew Bible</a> post, because the New Testament reads itself as the second half of that book.</p>
+
+      <!-- the spine: diagnosis and prescription -->
+      <div class="spine">
+        <div class="spine-row"><span class="spine-k">The diagnosis</span><p class="spine-t">People are cut off from God by sin, and cannot close the gap from their own side. Being good enough was never going to be enough.</p></div>
+        <div class="spine-row"><span class="spine-k">The repair</span><p class="spine-t">So God closes it. In the life, death, and resurrection of Jesus, the breach is healed as a gift, taken hold of by trust, not earned by good behavior.</p></div>
+        <div class="spine-row"><span class="spine-k">The practice</span><p class="spine-t">On the ground it comes down to two commandments. Love God, and love your neighbor as yourself. The rest is detail.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="nt" id="nt">
+      <div class="nt-bar">
+        <div class="nt-step">
+          <button class="nt-nav" id="nt-prev" aria-label="Previous passage">&lsaquo;</button>
+          <button class="nt-jump" id="nt-jump" aria-label="Jump to a passage"><span id="nt-ref">Matthew 22</span><span id="nt-title"></span></button>
+          <button class="nt-nav" id="nt-next" aria-label="Next passage">&rsaquo;</button>
+        </div>
+        <div class="nt-views" id="nt-views" role="group" aria-label="How many translations to show">
+          <button data-view="key" class="is-on">Key</button>
+          <button data-view="all">All</button>
+        </div>
+        <div class="nt-count" id="nt-count"></div>
+      </div>
+
+      <div class="nt-grid" id="nt-gridpop" hidden aria-label="Passage index"></div>
+
+      <div class="nt-body">
+        <div class="nt-source" id="nt-source"></div>
+        <div class="nt-notes" id="nt-notes"></div>
+        <div class="nt-versions" id="nt-versions"></div>
+      </div>
+      <div class="nt-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/new-testament-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ THE ENGLISH STORY ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">How this book came into English</h2>
+      <p>No one has the original of a single book of the New Testament. What survives is copies: roughly 5,800 Greek manuscripts, written by hand across fourteen centuries, and no two are exactly alike. Most of the differences are spelling and slips of the pen. A few of them move a doctrine. So before anyone translates a word, someone has to decide which Greek to translate, and that choice already sorts the English versions into two families.</p>
+      <p>Tyndale and the King James men worked from the <em>Textus Receptus</em>, the "received text," a Greek New Testament the Dutch scholar Erasmus rushed into print in 1516 out of a handful of late medieval copies. The modern versions, the RSV through the ESV, work from a critical text rebuilt over the last century and a half from the oldest manuscripts we have, fourth-century codices and papyrus scraps that predate Erasmus's sources by a thousand years. That is why the King James carries lines the modern versions drop to a footnote: the ringing end of the Lord's Prayer, the last twelve verses of Mark, the woman caught in adultery. They are in the later manuscripts and missing from the earliest. The footnote is not the modern translators editing Jesus. It is them showing their work.</p>
+      <p>The English itself runs through one man. John Wycliffe's followers had copied an English Bible by hand in the 1380s, but from the Latin, and the church banned it and dug up his bones to burn them. Tyndale was the first to go back to the Greek and the first to print, in 1526, smuggling New Testaments into England inside bales of cloth. It got him hunted across Europe and, in 1536, strangled and burned near Brussels. His last words, by one account, were a prayer that the king of England's eyes would open. Within seventy-five years they had: when the King James appeared in 1611, an estimated <strong>83 percent of its New Testament was Tyndale, word for word</strong>. The cadence the English-speaking world still calls "biblical," the sound of the thing, is one executed man's ear.</p>
+      <p>After that the translations never stop coming, because every translation is a choice between two losses. Stay close to the Greek word order and you get accuracy that reads like furniture-assembly instructions. Smooth it into real English and you have decided, on the reader's behalf, what the Greek meant. N.T. Wright leans warm and readable. David Bentley Hart leans so literal it goes strange on purpose, scraping four centuries of familiarity off lines you long ago stopped hearing. Both are honest. They just pay the bill on opposite sides, which is the whole reason to read them together.</p>
+    </section>
+
+    <!-- ============================ WHOSE NEW TESTAMENT ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Whose New Testament</h2>
+      <p>There is no such thing as "the Bible," exactly. There are Bibles, and they do not hold the same books.</p>
+      <p>The 27 books of the New Testament were not handed down as a boxed set. For the first few centuries the churches argued over the edges. Some wanted to keep the Shepherd of Hermas or the Apocalypse of Peter; some wanted Revelation, Hebrews, and James thrown out. The first list that matches our 27 exactly is a festal letter from Athanasius of Alexandria in the year 367. The canon was a slow agreement, not a delivery.</p>
+      <p>The wider split is in the Old Testament, and it is the main reason a Catholic Bible is fatter than a Protestant one. Protestant Bibles carry 66 books. Catholic Bibles carry 73, including seven the Protestants leave out: Tobit, Judith, Wisdom, Sirach, Baruch, and First and Second Maccabees, the <em>deuterocanon</em>. The Eastern Orthodox keep more still; the Ethiopian Orthodox canon, the widest in the world, takes in First Enoch and Jubilees. It traces back to which Hebrew Bible the early church grew up on. The Greek translation it used, the Septuagint, included the extra books; the Hebrew canon the rabbis settled did not. Luther, translating in the 1520s, sided with the Hebrew and moved the extras into an appendix he labeled "Apocrypha," worth reading, not Scripture. The Catholic Church, at the Council of Trent in 1546, made them Scripture in reply. Same history, three sizes of Bible.</p>
+      <p>And then there is the argument inside the New Testament, the one that split Western Christianity down the middle. Paul writes that a person is put right with God by faith, as a gift, "not by works, so that no one can boast." James writes, in the same New Testament, that "faith without works is dead," and that "a person is justified by works and not by faith alone." Luther read Paul, built the Reformation on faith alone, and disliked James enough to call it "an epistle of straw" and shove it to the back of his Bible. Trent read both and ruled for faith and works together. In this reader the two sit four passages apart, Romans and Ephesians on one side, James on the other; you can put them side by side and decide for yourself.</p>
+      <p>Most scholars now think the two men were answering different questions: Paul, how a person gets <em>in</em> (a gift, not a wage); James, what a real faith <em>does</em> once it is in (it acts, or it was never alive). A newer reading of Paul argues that "the works of the Law" he attacks were Jewish identity markers, circumcision and food laws, not kindness and charity, which softens the old clash further. But the seam is real, and the churches that grew up along it, Catholic, Orthodox, and Protestant, are still standing on their own sides of it, reading the same Greek.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every English translation here is reproduced exactly, its own punctuation and all, for comparison and study, and every translator is named. Nothing was paraphrased or smoothed by hand.</p>
+      <ul class="src-list" id="src-list">
+        <li><b>The Greek</b> is the SBL Greek New Testament (ed. Michael Holmes, Society of Biblical Literature), an openly licensed critical text, pulled verbatim from <a href="https://www.biblegateway.com/versions/SBL-Greek-New-Testament-SBLGNT/">Bible Gateway</a>.</li>
+        <li><b>Tyndale</b> is his 1534 revision in the original spelling, so "the povre in sprete" really is what he set in type, from <a href="https://www.textusreceptusbibles.com/Tyndale">textusreceptusbibles.com</a>. The <b>King James</b> (1611) and the Catholic <b>Douay-Rheims</b> (translated from the Latin Vulgate) are public domain.</li>
+        <li><b>The Revised Standard</b> (1952), <b>New Revised Standard</b> (the 2021 updated edition), <b>New International</b> (2011), <b>English Standard</b> (2016), and <b>N.T. Wright</b>'s translation (published as the New Testament for Everyone) are quoted from <a href="https://www.biblegateway.com/">Bible Gateway</a>.</li>
+        <li><b>David Bentley Hart</b>'s deliberately strange 2017 translation (Yale) is quoted, where its exact wording could be confirmed, from published reviews and excerpts; it appears on the passages where that was possible and is absent where it was not.</li>
+      </ul>
+      <p>The breakdowns are mine. They lean on standard scholarship for the contested lines, and where the experts genuinely disagree (the grammar of John 1:1, the virgin of Isaiah 7:14, Paul against James) I have tried to show the disagreement rather than pick a side and bury it. This post stays inside the New Testament and the way it re-reads the Hebrew scriptures; the shared ground of Genesis and Exodus is handled in the <a href="hebrew-bible.html">Hebrew Bible</a> post, on its own terms.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The painting on the homepage card is Rembrandt's <em>Return of the Prodigal Son</em> (about 1668, the State Hermitage Museum, St Petersburg), the moment from Luke 15 when the father runs to the son. It is in the public domain.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/new-testament-notes.js" defer></script>
+  <script src="js/new-testament-data.js" defer></script>
+  <script src="js/new-testament.js" defer></script>
+</body>
+</html>
