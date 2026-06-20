@@ -251,7 +251,7 @@
 
   <script type="module">
   import {
-    getToken, setToken, clearToken, fetchAuthBlob, ghGet, ghPut, ghGetSha, ghTree,
+    getToken, setToken, clearToken, fetchAuthBlob, ghGet, ghPut, ghGetSha, ghTree, ghCommit,
     unlock, setupKey, suggestPass, passStrengthBits, forgetOwnerDevice,
   } from './js/blog-edit-core.js';
   import * as T from './js/post-template.js';
@@ -502,23 +502,41 @@
 
   function imageBody(b){
     const wrap = document.createElement('div');
+    const thumbSrc = b._preview || b.src;
     const drop = document.createElement('div'); drop.className = 'pb-drop';
-    drop.innerHTML = b.src ? `<img class="pb-thumb" src="${b.src}" alt=""><div>Replace image</div>` : 'Click or drop an image here. You can also paste an image URL below.';
+    function paintDrop(status){
+      drop.innerHTML = thumbSrc
+        ? `<img class="pb-thumb" src="${thumbSrc}" alt=""><div>${status || (b.upload ? 'Ready to commit on save: ' + b.upload.w + '×' + b.upload.h : 'Replace image')}</div>`
+        : (status || 'Click or drop an image here. It is resized in your browser and committed to assets when you save.');
+    }
+    paintDrop();
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
+    wrap.appendChild(input);
+    async function take(file){
+      if (!file || !/^image\//.test(file.type)){ paintDrop('That is not an image.'); return; }
+      paintDrop('Resizing...');
+      try {
+        const r = await resizeImage(file);
+        b.upload = { b64: r.b64, mime: r.mime, ext: r.ext, w: r.w, h: r.h, name: r.name };
+        b._preview = r.dataUrl; b.w = r.w; b.h = r.h;
+        b.src = '';                          // real path is assigned at save/commit time
+        if (!b.alt) b.alt = '';
+        change(); renderEditor();
+      } catch(e){ paintDrop(e.message); }
+    }
+    drop.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => take(input.files[0]));
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); take(e.dataTransfer.files[0]); });
     wrap.appendChild(drop);
-    // image upload itself is wired in the next build; for now accept a URL + dims
+    // an explicit src field too, for an image already committed to the repo
     const urlRow = document.createElement('div'); urlRow.className = 'pb-row';
-    const url = document.createElement('input'); url.type = 'text'; url.className = 'pb-inline'; url.style.flex = '1 1 100%'; url.placeholder = 'Image src (e.g. assets/images/slug/photo.jpg)'; url.value = b.src || '';
-    url.addEventListener('input', () => { b.src = url.value.trim(); change(); });
+    const url = document.createElement('input'); url.type = 'text'; url.className = 'pb-inline'; url.style.flex = '1 1 100%'; url.placeholder = 'or an existing path, e.g. assets/images/slug/photo.jpg'; url.value = b.src || '';
+    url.addEventListener('input', () => { b.src = url.value.trim(); if (b.src){ b.upload = null; b._preview = ''; } change(); });
     urlRow.innerHTML = '<label>Src</label>'; urlRow.appendChild(url);
     wrap.appendChild(urlRow);
-    const dimRow = document.createElement('div'); dimRow.className = 'pb-row';
-    const w = document.createElement('input'); w.type = 'text'; w.className = 'pb-inline'; w.placeholder = 'width'; w.value = b.w || '';
-    const h = document.createElement('input'); h.type = 'text'; h.className = 'pb-inline'; h.placeholder = 'height'; h.value = b.h || '';
-    w.addEventListener('input', () => { b.w = parseInt(w.value,10) || 0; change(); });
-    h.addEventListener('input', () => { b.h = parseInt(h.value,10) || 0; change(); });
-    dimRow.innerHTML = '<label>Size</label>'; dimRow.appendChild(w); dimRow.appendChild(h);
-    wrap.appendChild(dimRow);
-    wrap.appendChild(labelled('Alt text', field(b, 'alt', { placeholder:'Describe the image for screen readers + search' })));
+    wrap.appendChild(labelled('Alt text (required)', field(b, 'alt', { placeholder:'Describe the image for screen readers + search' })));
     wrap.appendChild(labelled('Caption', field(b, 'caption', { placeholder:'Caption (optional)' })));
     return wrap;
   }
@@ -666,18 +684,53 @@
   }
   function unwrapInlineSpans(root){ root.querySelectorAll('span.tx-lg,span.tx-sm,span.ft-mono,span.ft-head').forEach(s => { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); }); }
 
+  /* ---- image resize + encode (in-browser, no upload of the raw file) ----
+     Cap the longest side at ~1600px (a 2x content width), encode to WebP when the
+     browser will, else JPEG. Returns the bytes (base64), a data URL for the live
+     preview, the extension, and the resized intrinsic dimensions. */
+  function readImage(file){
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Could not read that image.')); };
+      img.src = url;
+    });
+  }
+  async function resizeImage(file, maxSide = 1600, quality = 0.86){
+    const img = await readImage(file);
+    let { naturalWidth: w, naturalHeight: h } = img;
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    w = Math.round(w * scale); h = Math.round(h * scale);
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(img, 0, 0, w, h);
+    // prefer WebP; fall back to JPEG if the encoder refuses
+    let mime = 'image/webp', ext = 'webp';
+    let dataUrl = canvas.toDataURL(mime, quality);
+    if (!dataUrl.startsWith('data:image/webp')){ mime = 'image/jpeg'; ext = 'jpg'; dataUrl = canvas.toDataURL(mime, quality); }
+    const base = (file.name || 'image').replace(/\.[^.]+$/, '');
+    return { b64: dataUrl.split(',')[1], dataUrl, mime, ext, w, h, name: (T.slugify(base) || 'image') };
+  }
+
+  // blocks rewritten so the live preview shows the just-picked image (a data URL)
+  // even before it is committed to assets.
+  function previewBlocks(){
+    return draft.blocks.map(b => (b.type === 'image' && b._preview) ? Object.assign({}, b, { src: b._preview }) : b);
+  }
+  function previewMainHTML(){ return T.serializeMain(previewBlocks()).replace(/loading="lazy"/g,'loading="eager"'); }
+
   /* ---- live preview ---- */
   function initPreview(){
     const iframe = $('#bd-iframe');
     iframe.onload = () => { pvReady = true; };
-    iframe.srcdoc = T.buildPreviewHTML(draft);
+    iframe.srcdoc = T.buildPreviewHTML({ meta: draft.meta, blocks: previewBlocks() });
   }
   let pvReady = false;
   function refreshPreview(){
     const iframe = $('#bd-iframe'); const pv = iframe.contentDocument;
     if (!pv || !pvReady){ return; }
     const heroEl = pv.querySelector('.hero'); if (heroEl) heroEl.outerHTML = T.buildHero(draft.meta);
-    const main = pv.querySelector('#guide'); if (main) main.innerHTML = T.serializeMain(draft.blocks).replace(/loading="lazy"/g,'loading="eager"');
+    const main = pv.querySelector('#guide'); if (main) main.innerHTML = previewMainHTML();
   }
 
   // central change handler: mark dirty, debounce-refresh preview, autosave to memory
@@ -688,6 +741,28 @@
   }
   function autosave(){ try { localStorage.setItem('pb_autosave', JSON.stringify({ meta: draft.meta, blocks: draft.blocks, path: draft.path, t: Date.now() })); } catch(e){} }
 
+  /* ---- images: assign committed paths + a clean model (no base64) ---- */
+  // Give every just-uploaded image a real repo path under assets/images/<slug>/,
+  // dedupe names, and return the binary files to commit. Sets each block's src.
+  function assignImagePaths(slug){
+    const files = []; const used = new Set();
+    for (const b of draft.blocks){
+      if (b.type !== 'image' || !b.upload) continue;
+      let name = b.upload.name, n = 1;
+      while (used.has(name + '.' + b.upload.ext)) name = b.upload.name + '-' + (++n);
+      used.add(name + '.' + b.upload.ext);
+      const path = `assets/images/${slug}/${name}.${b.upload.ext}`;
+      b.src = path; b._committedFrom = b._preview;
+      files.push({ path, b64: b.upload.b64 });
+    }
+    return files;
+  }
+  // a model with the heavy editor-only fields (upload bytes, preview data URLs) stripped
+  function cleanModel(){
+    const blocks = draft.blocks.map(b => { const c = {}; for (const k in b){ if (k === 'upload' || k === '_preview' || k === '_committedFrom') continue; c[k] = b[k]; } return c; });
+    return { meta: draft.meta, blocks };
+  }
+
   /* ---- save draft ---- */
   async function saveDraft(){
     if (!draft) return;
@@ -696,18 +771,22 @@
     const path = 'drafts/' + slug + '.html';
     setStatus('Saving draft...', 'dirty'); $('#bd-save').disabled = true;
     try {
-      let html = T.buildPostHTML({ meta: draft.meta, blocks: draft.blocks, draft: true });
-      html = T.embedDraftModel(html, draft);
+      const imgFiles = assignImagePaths(slug);
+      const model = cleanModel();
+      let html = T.buildPostHTML({ meta: model.meta, blocks: model.blocks, draft: true });
+      html = T.embedDraftModel(html, model);
+      const files = [...imgFiles, { path, text: html }];
       if (isDry()){
-        window.__pbLast = { path, html };
-        console.log('[post-builder] DRY RUN would commit', path, '(' + html.length + ' bytes)');
+        window.__pbLast = { path, html, images: imgFiles.map(f => f.path) };
+        console.log('[post-builder] DRY RUN would commit', files.length, 'file(s):', path, imgFiles.map(f => f.path).join(', '));
         draft.path = path; $('#bd-path').textContent = '(' + path + ', dry run)';
         setStatus('Saved (dry run) ✓', 'saved'); dirty = false; return;
       }
-      const sha = (draft.path === path && draft.sha) ? draft.sha : await ghGetSha(path);
-      draft.sha = await ghPut(path, html, sha, `draft: ${slug} (post-builder)`);
+      await ghCommit(files, `draft: ${slug}${imgFiles.length ? ' + ' + imgFiles.length + ' image(s)' : ''} (post-builder)`);
+      // committed: clear the pending uploads (src now points at the real path)
+      draft.blocks.forEach(b => { if (b.type === 'image' && b.upload) b.upload = null; });
       draft.path = path; $('#bd-path').textContent = '(' + path + ')';
-      setStatus('Draft saved ✓', 'saved'); dirty = false;
+      setStatus('Draft saved ✓', 'saved'); dirty = false; renderEditor();
     } catch (e) { setStatus(e.message, 'err'); }
     finally { $('#bd-save').disabled = false; }
   }
@@ -722,7 +801,7 @@
   window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue = ''; } });
 
   // expose a couple hooks for the publish step (next build) + tests
-  window.__pb = { get draft(){ return draft; }, T, buildPost: () => T.buildPostHTML({ meta: draft.meta, blocks: draft.blocks, draft: false }), saveDraft, openBuilder, refreshPreview, setStatus };
+  window.__pb = { get draft(){ return draft; }, T, buildPost: () => T.buildPostHTML(cleanModel()), saveDraft, openBuilder, refreshPreview, setStatus, resizeImage, cleanModel, assignImagePaths };
 
   // Local dev hook: open the builder with a fresh (or supplied) draft and no real
   // token, so the whole writing + preview + dry-run save pipeline can be exercised
