@@ -55,21 +55,9 @@
       color: var(--text-bright);
     }
     .about-lead {
-      margin: 1.15rem 0 0; max-width: 46ch; font-family: var(--font-body);
+      margin: 1.15rem 0 0; max-width: 48ch; font-family: var(--font-body);
       font-size: clamp(1.18rem, 2.2vw, 1.34rem); line-height: 1.56; color: var(--text); text-wrap: pretty;
     }
-    .about-sublead {
-      margin: 0.9rem 0 0; max-width: 52ch; font-family: var(--font-body);
-      font-size: 1.0rem; line-height: 1.6; color: var(--text-dim); text-wrap: pretty;
-    }
-
-    /* count hinge into the list (homepage's .list-head idiom) */
-    .list-head { display: flex; align-items: center; gap: 1.15rem; margin-bottom: 1.9rem; }
-    .list-head span {
-      font-family: var(--font-body); font-size: 0.7rem; font-weight: 600;
-      letter-spacing: 0.2em; text-transform: uppercase; color: #c3b589; white-space: nowrap;
-    }
-    .list-head::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--rule); }
 
     /* ---- Article cards, matched to the homepage: thumbnail floats RIGHT so every
        title shares the same left spine; the description sits roman, not italic. ---- */
@@ -89,7 +77,6 @@
       .article-item-thumb { float: right; width: 188px; margin: 0.4rem 0 0.55rem 1.6rem; }
     }
     @media (min-width: 720px) {
-      .list-head { margin-bottom: 2.4rem; }
       .article-item { padding: 1.7rem 1rem; }
       .article-item-title { font-size: 1.85rem; }
     }
@@ -115,12 +102,10 @@
 
     <header class="about-head fade-in">
       <h1 class="about-title">Archive</h1>
-      <p class="about-lead">The shelf. I move things here when I lose interest, decide the idea was better in my head than on the page, or just never come back to finish them. More than half of what I start ends up here, so nothing in this list is lonely.</p>
-      <p class="about-sublead">Set your expectations: the design is rough in spots, some of it half-built, and parts read exactly like what they are, a draft an AI and I never came back to polish. It's here for the idea, not the finish.</p>
+      <p class="about-lead">The shelf. I move things here when I lose interest, or the idea turns out better in my head than on the page. They're rough in spots and half-built in others, here for the idea, not the finish.</p>
     </header>
 
     <main>
-      <div class="list-head"><span>Fifteen shelved</span></div>
       <ul class="article-list">
 
         <li class="article-list-item fade-in">
