@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.5';
+  var GAME_VERSION = 'v25.6';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -24890,7 +24890,13 @@
     if (typeof drawTrees === 'function') drawTrees();
 
     // ---- Surface stations (one recoloured store per town) ----
-    for (var _tsi = 0; _tsi < TOWN_DEPTHS.length; _tsi++) drawStation(_tsi);
+    // Only towns that ACTUALLY EXIST in REGIONS (single-town = just town 0). Iterating
+    // TOWN_DEPTHS.length drew all 4 town stations; with single-town, towns 1-3 fall back
+    // to town 0's deck and stack there, so the deepest town's violet palette (TOWN_BLD[3]
+    // "HOLLOW DEEP") ended up painted over town 0's saloon red-brown (TOWN_BLD[0]).
+    for (var _tsi = 0; _tsi < REGIONS.length; _tsi++) {
+      if (REGIONS[_tsi].kind === REGION_TOWN) drawStation(REGIONS[_tsi].townIndex);
+    }
     // v15.1 — warm light spilling from the open shop door onto the deck
     drawShopDoorGlow();
 
