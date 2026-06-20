@@ -56,15 +56,49 @@ python3 research/dhammapada/build_dhp.py && cp /tmp/dhammapada-data.js js/dhamma
   empty falls back to the whole block (never goes missing).
 - Wagiswara is at 420/423 (3 oddly-formatted verses show the other six).
 
-## The long tail (not in the build, deliberately)
-The famous in-copyright moderns (Easwaran, Mascaro, Fronsdal, Wallis, Narada,
-Mya Tin, Maitreya, Carter & Palihawadana, Roebuck, Norman) are printed in books,
-not posted as clean machine-readable text, and the loose blog quotations of them
-do not meet the "locate every quote" bar. They are named in the breakdowns where
-their choice matters rather than quoted from an unverified source. If a verbatim
-source becomes available, add it to a hand-kept `extras.json`
+## The long tail (in-copyright, keystone verses only)
+The famous in-copyright moderns are printed in books, not posted as clean
+machine-readable text, and loose blog quotations of them do not meet the "locate
+every quote" bar. They live in a hand-kept `extras.json`
 (`{ "<verse>": { "<key>": "text" } }`) plus `extras-meta.json`
-(`{ "<key>": {name, year, src} }`); the build merges both if present.
+(`{ "<key>": {name, year, src} }`), merged by the build if present. Add a key
+only when you have a verbatim source you can check against a second copy.
+
+Covered so far (verses 1, 2, 5, 21, 50, 100, 103, 153, 154, 183, 223, 277, 278,
+279, 338, 348, 393, the keystones plus the famous lines):
+
+- **narada**  Narada Thera, 1959, Buddhist Publication Society. Read from the
+  chapter pages at userwebs.hawaiian.net/dsparks/Narada/ (a Times_CSX+ font that
+  encodes diacritics as Latin-1 entities), cross-checked verbatim against the
+  identical home.nethere.net mirror, and v21 against the readingfaithfully.org
+  copy. Decoded from the raw bytes: v153 `sams&agrave;ra` is "samsāra" (the source
+  has a plain ASCII m, no niggahita), v393 `br&agrave;hmaua` is "brāhmaṇa". v5 is
+  "eternal law" (confirmed in the raw source). 153 and 154 are printed as one
+  153-154 block but each verse carries its own label.
+- **myatin**  Daw Mya Tin, 1986, Burma Pitaka Association ("Verses and Stories").
+  Read per verse from tipitaka.net, cross-checked against the budsas.org mirror
+  and the archive.org scan of the printed book. Pali words are plain ASCII in this
+  edition (Nibbana, samsara, brahmana). Two normalizations back to the printed
+  book, where the budsas mirror had transcription quirks: v277 drops a stray comma
+  ("dukkha (i.e., the khandhas)", confirmed clean on tipitaka.net + archive), and
+  v278/279 use "(i.e.," not the mirror's spaced "(i. e.,". Capitalization follows
+  the electronic edition (v5 "ancient law", v154 "the unconditioned"); the
+  archive OCR over-capitalized both, contradicted by tipitaka.net on v5.
+
+Both are in copyright; quoted on these verses for study, named, cross-checked. The
+eight still named-only in the colophon (Fronsdal, Easwaran, Mascaro, Wallis,
+Maitreya, Carter & Palihawadana, Roebuck, Norman) await a verbatim source (a
+physical/PDF copy); add them the same way when one is in hand.
+
+### Regenerating data.js after editing extras
+`build_dhp.py` rebuilds the whole corpus from /tmp/dhp and merges the extras, but
+that needs the seven-translation backbone re-fetched first. To fold a new extras
+batch into the existing committed `js/dhammapada-data.js` without re-fetching, run
+`python3 research/dhammapada/merge_extras.py`. It splices the extras in exactly as
+build_dhp.py would (same year-sorted `order`, same straight() quote normalization),
+so the diff is only the new translators on the verses they cover; every backbone
+verse stays byte-identical. A later from-scratch `build_dhp.py` run reproduces the
+same result.
 
 ## Commentary
 Hand-written in `js/dhammapada-notes.js` (keystones only), shape
