@@ -164,6 +164,19 @@
     .pb-drop:hover, .pb-drop.over { border-color: var(--accent); background: var(--s-gold-tint); color: var(--text-bright); }
     .pb-thumb { display: block; max-width: 100%; max-height: 180px; border-radius: 8px; margin: 0.2rem auto 0.5rem; }
 
+    /* manage list */
+    .pb-manage-group { margin: 1.6rem 0 0.6rem; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+    .pb-manage-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .pb-manage-main { flex: 1 1 240px; min-width: 0; }
+    .pb-manage-name { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.05rem; }
+    .pb-manage-url { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-faint); }
+    .pb-manage-date { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); white-space: nowrap; }
+    .pb-manage-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .pb-manage-actions button { font-size: 0.82rem; padding: 0.4rem 0.85rem; }
+    .pb-manage-actions .arch:hover { border-color: #e6c074; color: #e6c074; }
+    .pb-dateedit { display: flex; gap: 0.4rem; align-items: center; flex-basis: 100%; margin-top: 0.5rem; }
+    .pb-dateedit input { width: auto; }
+
     /* publish modal */
     .pb-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(8,12,9,0.6); backdrop-filter: blur(2px); }
     .pb-modal[hidden] { display: none; }
@@ -233,12 +246,24 @@
           <h1 style="font-size:1.9rem;margin:.2rem 0 0">Posts in progress</h1>
         </div>
         <div class="pb-top-actions">
+          <button class="be-quiet" id="open-manage">Manage published posts</button>
           <a class="be-quiet" href="/blog-edit.html" style="text-decoration:none">Edit existing pages &rarr;</a>
           <button class="be-quiet" id="drafts-logout">Lock &amp; sign out</button>
         </div>
       </div>
       <button class="pb-newcard" id="new-post"><span class="pb-plus">+</span> Start a new post</button>
       <div id="drafts-body"><p class="pb-grouph">Drafts</p><p class="be-faint"><span class="be-spin"></span> Loading...</p></div>
+    </section>
+
+    <!-- ===================== MANAGE PUBLISHED POSTS ===================== -->
+    <section id="view-manage" hidden>
+      <div class="pb-top">
+        <div><p class="be-kicker">Manage</p><h1 style="font-size:1.9rem;margin:.2rem 0 0">Published posts</h1></div>
+        <button class="be-quiet" id="manage-back">&larr; Posts</button>
+      </div>
+      <p class="be-dim" style="font-size:.92rem;margin:.8rem 0 0">Change the date a post shows on the homepage (the list always orders by date), or move a post into the archive and back. Each action is one commit.</p>
+      <p class="pb-pub-progress" id="manage-status"></p>
+      <div id="manage-body" style="margin-top:1rem"><p class="be-faint"><span class="be-spin"></span> Loading...</p></div>
     </section>
 
     <!-- ===================== BUILDER ===================== -->
@@ -281,7 +306,7 @@
 
   <script type="module">
   import {
-    getToken, setToken, clearToken, fetchAuthBlob, ghGet, ghPut, ghGetSha, ghTree, ghCommit,
+    getToken, setToken, clearToken, fetchAuthBlob, ghGet, ghGetB64, ghPut, ghGetSha, ghTree, ghCommit,
     unlock, setupKey, suggestPass, passStrengthBits, forgetOwnerDevice,
   } from './js/blog-edit-core.js';
   import * as T from './js/post-template.js';
@@ -313,7 +338,7 @@
   function setMsg(id, t, cls=''){ const el = $('#'+id); el.textContent = t; el.className = 'be-msg ' + cls; }
   $('#unlock-form').addEventListener('submit', async e => {
     e.preventDefault(); const pass = $('#unlock-pass').value; if (!pass) return; setMsg('unlock-msg', 'Unlocking...');
-    try { await unlock(authBlob, pass); $('#unlock-pass').value = ''; openDrafts(); }
+    try { await unlock(authBlob, pass); $('#unlock-pass').value = ''; route(); }
     catch (_) { setMsg('unlock-msg', 'That password didn’t work. Try again.', 'err'); }
   });
   $('#setup-pass').addEventListener('input', () => { const bits = passStrengthBits($('#setup-pass').value); const pct = Math.min(100, Math.round(bits/70*100)); const bar = $('#setup-strength'); bar.style.width = pct + '%'; bar.style.background = bits < 40 ? 'var(--emphasis-strong)' : bits < 60 ? 'var(--accent)' : '#9fcf8f'; });
@@ -324,7 +349,7 @@
     if (p1.length < 12) return setMsg('setup-msg', 'Use at least 12 characters.', 'err');
     if (p1 !== p2) return setMsg('setup-msg', 'The two passwords don’t match.', 'err');
     setMsg('setup-msg', 'Checking the key...');
-    try { await setupKey(token, p1); $('#setup-token').value = $('#setup-pass').value = $('#setup-pass2').value = ''; openDrafts(); }
+    try { await setupKey(token, p1); $('#setup-token').value = $('#setup-pass').value = $('#setup-pass2').value = ''; route(); }
     catch (err) { setMsg('setup-msg', err.message, 'err'); }
   });
   $('#drafts-logout').addEventListener('click', () => { clearToken(); location.reload(); });
@@ -350,6 +375,7 @@
     } catch (e) { body.innerHTML = `<p class="be-msg err">${e.message}</p>`; }
   }
   $('#new-post').addEventListener('click', newDraft);
+  function route(){ if (location.hash === '#manage') openManage(); else openDrafts(); }
 
   /* ===================== BUILDER STATE ===================== */
   let draft = null;       // { meta, blocks, path, sha }
@@ -931,13 +957,161 @@
   $('#pb-pub-cancel').addEventListener('click', () => { $('#pb-modal').hidden = true; });
   $('#pb-pub-go').addEventListener('click', doPublish);
   $('#pb-modal').addEventListener('click', e => { if (e.target.id === 'pb-modal') $('#pb-modal').hidden = true; });
+
+  /* ===================== MANAGE: date edit + archive / unarchive ===================== */
+  // Read a binary as base64, dry-run aware (local server when offline, else GitHub).
+  async function getBinaryB64(path){
+    if (isDry()){
+      const r = await fetch('/' + path, { cache: 'no-store' }); if (!r.ok) return null;
+      const buf = new Uint8Array(await r.arrayBuffer()); let s = ''; const c = 0x8000;
+      for (let i = 0; i < buf.length; i += c) s += String.fromCharCode.apply(null, buf.subarray(i, i + c));
+      return btoa(s);
+    }
+    try { return (await ghGetB64(path)).b64; } catch (e) { return null; }
+  }
+  function setManageStatus(t, cls=''){ const el = $('#manage-status'); el.innerHTML = `<span class="${cls}">${t}</span>`; }
+
+  async function openManage(){
+    showView('view-manage'); setManageStatus('');
+    const body = $('#manage-body'); body.innerHTML = '<p class="be-faint"><span class="be-spin"></span> Loading...</p>';
+    try {
+      const sj = await getFileText('search-index.json');
+      const posts = JSON.parse(sj.text).posts || [];
+      const live = posts.filter(p => !p.archived && /\.html$/.test(p.url) && !p.url.includes('/'));
+      const arch = posts.filter(p => p.archived);
+      let html = '<p class="pb-manage-group">Live posts (' + live.length + ')</p>';
+      html += live.map(p => {
+        const slug = p.url.replace(/\.html$/, '');
+        return `<div class="pb-manage-row" data-slug="${slug}">
+          <div class="pb-manage-main"><div class="pb-manage-name">${escHtmlJS(p.title || slug)}</div><div class="pb-manage-url">${p.url}</div></div>
+          <span class="pb-manage-date">${p.dateDisplay || p.date || 'no date'}</span>
+          <div class="pb-manage-actions">
+            <button class="be-quiet" data-act="date">Edit date</button>
+            <button class="be-quiet arch" data-act="archive">Archive</button>
+          </div></div>`;
+      }).join('');
+      html += '<p class="pb-manage-group">Archived (' + arch.length + ')</p>';
+      html += arch.length ? arch.map(p => {
+        const slug = (p.url.match(/archive\/([^/]+)\//) || [, ''])[1];
+        return `<div class="pb-manage-row" data-slug="${slug}" data-arch="1">
+          <div class="pb-manage-main"><div class="pb-manage-name">${escHtmlJS(p.title || slug)}</div><div class="pb-manage-url">${p.url}</div></div>
+          <div class="pb-manage-actions"><button class="be-quiet" data-act="unarchive">Unarchive</button></div></div>`;
+      }).join('') : '<p class="be-faint">Nothing archived.</p>';
+      body.innerHTML = html;
+      body.querySelectorAll('button[data-act]').forEach(b => b.addEventListener('click', () => onManageAct(b)));
+    } catch (e) { body.innerHTML = `<p class="be-msg err">${e.message}</p>`; }
+  }
+  function onManageAct(btn){
+    const row = btn.closest('.pb-manage-row'); const slug = row.getAttribute('data-slug'); const act = btn.getAttribute('data-act');
+    if (act === 'date') showDateEditor(row, slug);
+    else if (act === 'archive'){ if (isDry() || confirm(`Archive "${slug}"? It moves into /archive, drops off the homepage, and gains the archived banner.`)) archivePost(slug); }
+    else if (act === 'unarchive'){ if (isDry() || confirm(`Bring "${slug}" back to the homepage? You will want to set its date afterward.`)) unarchivePost(slug); }
+  }
+  function showDateEditor(row, slug){
+    if (row.querySelector('.pb-dateedit')) return;
+    const ed = document.createElement('div'); ed.className = 'pb-dateedit';
+    ed.innerHTML = `<input type="date" value="${todayISO()}"><button class="be-primary" style="padding:.4rem 1rem">Save date</button><button class="be-quiet">Cancel</button>`;
+    row.appendChild(ed);
+    const [input, save, cancel] = [ed.querySelector('input'), ed.querySelectorAll('button')[0], ed.querySelectorAll('button')[1]];
+    cancel.addEventListener('click', () => ed.remove());
+    save.addEventListener('click', () => editDate(slug, input.value));
+  }
+
+  async function editDate(slug, dateISO){
+    if (!dateISO) return;
+    setManageStatus(`Setting ${slug} to ${dateISO}...`);
+    try {
+      const idx = await getFileText('index.html'); const sj = await getFileText('search-index.json');
+      const newIndex = P.setCardDate(idx.text, slug, dateISO);
+      const newSearch = P.setSearchDate(sj.text, slug + '.html', dateISO);
+      const files = [{ path: 'index.html', text: newIndex }, { path: 'search-index.json', text: newSearch }];
+      if (isDry()){ window.__pbLast = { dateEdit: slug, dateISO, files: files.map(f => f.path) }; setManageStatus(`Date set (dry run) ✓`, 'ok'); return; }
+      await ghCommit(files, `date: ${slug} -> ${dateISO}`);
+      setManageStatus('Date updated ✓', 'ok'); openManage();
+    } catch (e) { setManageStatus(e.message, 'err'); }
+  }
+
+  async function archivePost(slug){
+    setManageStatus(`Archiving ${slug}...`);
+    try {
+      const post = await getFileText(slug + '.html');
+      const idx = await getFileText('index.html');
+      const sj = await getFileText('search-index.json');
+      const banner = await getFileText('js/archive-banner.js');
+      // the post's own assets + its two thumbs, moved into archive/<slug>/assets/
+      const assets = [...P.collectOwnAssets(post.text), `assets/thumbs/${slug}.jpg`, `assets/thumbs/${slug}-og.jpg`];
+      const used = new Set(); const renameMap = {}; const files = [];
+      for (const a of assets){
+        if (renameMap[a]) continue;
+        let base = a.split('/').pop();
+        while (used.has(base)){ const d = base.lastIndexOf('.'); base = base.slice(0, d) + '-' + (used.size) + base.slice(d); }
+        used.add(base);
+        renameMap[a] = `assets/${base}`;
+        const b64 = await getBinaryB64(a);
+        if (b64 == null) continue;             // not present (e.g. a post with no inline images)
+        files.push({ path: `archive/${slug}/assets/${base}`, b64 });
+        files.push({ path: a, delete: true });
+      }
+      const archHtml = P.rewriteForArchive(post.text, slug, renameMap);
+      files.push({ path: `archive/${slug}/${slug}.html`, text: archHtml });
+      files.push({ path: `${slug}.html`, delete: true });
+      files.push({ path: 'index.html', text: P.sortHomepage(P.removeCard(idx.text, slug)) });
+      files.push({ path: 'search-index.json', text: P.archiveSearchEntry(sj.text, slug, archHtml) });
+      files.push({ path: 'js/archive-banner.js', text: P.bumpArchiveCounter(banner.text, 1, todayISO()) });
+      if (isDry()){ window.__pbLast = { archive: slug, files: files.map(f => ({ path: f.path, del: !!f.delete, bytes: (f.text || f.b64 || '').length })) }; setManageStatus(`Archived (dry run) ✓ ${files.length} ops`, 'ok'); return; }
+      await ghCommit(files, `archive: ${slug}`);
+      setManageStatus('Archived ✓ live in ~15s', 'ok'); openManage();
+    } catch (e) { setManageStatus(e.message, 'err'); }
+  }
+
+  async function unarchivePost(slug){
+    setManageStatus(`Unarchiving ${slug}...`);
+    try {
+      const archPost = await getFileText(`archive/${slug}/${slug}.html`);
+      const idx = await getFileText('index.html');
+      const sj = await getFileText('search-index.json');
+      const banner = await getFileText('js/archive-banner.js');
+      const own = P.collectOwnAssets(archPost.text);   // relative assets/<base> refs in the archived page
+      const renameMap = {}; const files = []; const handled = new Set();
+      const moveBack = async (rel) => {
+        const base = rel.split('/').pop(); const fromPath = `archive/${slug}/${rel.replace(/^\//,'')}`;
+        if (handled.has(fromPath)) return; handled.add(fromPath);
+        const isThumb = (base === `${slug}.jpg` || base === `${slug}-og.jpg`);
+        const toPath = isThumb ? `assets/thumbs/${base}` : `assets/images/${slug}/${base}`;
+        renameMap[rel] = toPath;
+        const b64 = await getBinaryB64(fromPath); if (b64 == null) return;
+        files.push({ path: toPath, b64 }); files.push({ path: fromPath, delete: true });
+      };
+      for (const rel of own) await moveBack(rel);
+      // the thumbs may not be referenced in the body; move them back explicitly
+      await moveBack(`assets/${slug}.jpg`); await moveBack(`assets/${slug}-og.jpg`);
+      const rootHtml = P.rewriteForUnarchive(archPost.text, slug, renameMap);
+      files.push({ path: `${slug}.html`, text: rootHtml });
+      files.push({ path: `archive/${slug}/${slug}.html`, delete: true });
+      const title = (rootHtml.match(/<meta property="og:title" content="([^"]+)"/) || [, slug])[1];
+      const desc = (rootHtml.match(/<meta name="description" content="([^"]+)"/) || [, ''])[1];
+      const kw = P.autoKeywords(title, []);
+      const card = P.homepageCard({ slug, title, cardDesc: desc, dateISO: todayISO(), keywords: kw, alt: title, eager: true });
+      files.push({ path: 'index.html', text: P.sortHomepage(idx.text, card) });
+      let newSearch = P.removeFromSearchIndex(sj.text, `archive/${slug}/${slug}.html`);
+      newSearch = P.addToSearchIndex(newSearch, P.searchEntry({ url: `${slug}.html`, title, dateISO: todayISO(), desc, thumb: `assets/thumbs/${slug}.jpg`, keywords: kw }, rootHtml));
+      files.push({ path: 'search-index.json', text: newSearch });
+      files.push({ path: 'js/archive-banner.js', text: P.bumpArchiveCounter(banner.text, -1, todayISO()) });
+      if (isDry()){ window.__pbLast = { unarchive: slug, files: files.map(f => ({ path: f.path, del: !!f.delete, bytes: (f.text || f.b64 || '').length })) }; setManageStatus('Unarchived (dry run) ✓, set the date next', 'ok'); return; }
+      await ghCommit(files, `unarchive: ${slug}`);
+      setManageStatus('Unarchived ✓ (set its date next)', 'ok'); openManage();
+    } catch (e) { setManageStatus(e.message, 'err'); }
+  }
+
+  $('#open-manage').addEventListener('click', openManage);
+  $('#manage-back').addEventListener('click', openDrafts);
   $('#bd-back').addEventListener('click', () => { if (dirty && !confirm('Leave without saving this draft?')) return; openDrafts(); });
   $('#bd-seg').addEventListener('click', e => { const pane = e.target.getAttribute('data-pane'); if (!pane) return; document.body.classList.toggle('pb-show-preview', pane === 'preview'); $$('#bd-seg button').forEach(b => b.classList.toggle('on', b.getAttribute('data-pane') === pane)); if (pane === 'preview') refreshPreview(); });
   window.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 's' && !$('#view-builder').hidden){ e.preventDefault(); saveDraft(); } });
   window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue = ''; } });
 
   // expose a couple hooks for the publish step (next build) + tests
-  window.__pb = { get draft(){ return draft; }, T, P, buildPost: () => T.buildPostHTML(cleanModel()), saveDraft, openBuilder, refreshPreview, setStatus, resizeImage, cleanModel, assignImagePaths, openPublishModal, doPublish };
+  window.__pb = { get draft(){ return draft; }, T, P, buildPost: () => T.buildPostHTML(cleanModel()), saveDraft, openBuilder, refreshPreview, setStatus, resizeImage, cleanModel, assignImagePaths, openPublishModal, doPublish, openManage, editDate, archivePost, unarchivePost, getBinaryB64 };
 
   // Local dev hook: open the builder with a fresh (or supplied) draft and no real
   // token, so the whole writing + preview + dry-run save pipeline can be exercised

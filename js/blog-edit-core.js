@@ -133,6 +133,18 @@ export async function ghPutBinaryB64(path, b64, sha, message){
   return (await r.json()).content.sha;
 }
 
+// Read a binary file as base64 (for moving a post's images during archive).
+// Falls back to the Git blobs API when a file is too big for the Contents API.
+export async function ghGetB64(path){
+  const r = await fetch(`${API}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}?ref=${REPO.branch}`, { headers: ghHeaders(), cache:'no-store' });
+  if (!r.ok) throw new Error(`Read failed (${r.status}) for ${path}`);
+  const j = await r.json();
+  if (j.content && j.content.trim()) return { b64: j.content.replace(/\s/g,''), sha: j.sha };
+  const br = await fetch(`${API}/git/blobs/${j.sha}`, { headers: ghHeaders(), cache:'no-store' });
+  if (!br.ok) throw new Error(`Blob read failed (${br.status}) for ${path}`);
+  return { b64: (await br.json()).content.replace(/\s/g,''), sha: j.sha };
+}
+
 // List every .html path in the repo (for the page picker).
 export async function ghTree(){
   const r = await fetch(`${API}/git/trees/${REPO.branch}?recursive=1`, { headers: ghHeaders(), cache:'no-store' });

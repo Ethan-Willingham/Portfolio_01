@@ -66,6 +66,87 @@ export function removeCard(indexHtml, slug){
   return indexHtml.replace(re, '');
 }
 
+/* ---- change a post's homepage date, then re-sort -------------------------- */
+export function setCardDate(indexHtml, slug, dateISO){
+  const re = new RegExp(`(<li class="article-list-item[\\s\\S]*?href="${slug}\\.html"[\\s\\S]*?<time class="article-item-date" datetime=")[^"]*(">)[^<]*(</time>)`);
+  const updated = indexHtml.replace(re, `$1${dateISO}$2${dateDisplay(dateISO)}$3`);
+  return sortHomepage(updated);   // owner wants the homepage ordered by date only
+}
+
+/* ============================================================================
+   ARCHIVE  -  ARCHIVING.md, automated. Moving the page off the homepage into
+   archive/<slug>/ while it stays live behind the amber banner.
+   ============================================================================ */
+
+// Every own-asset path the post references (not the shared fonts), e.g. its
+// inline images. The two thumbs are added by the caller (they are not in the body).
+export function collectOwnAssets(html){
+  const out = new Set();
+  const re = /(?:src|href)="(assets\/(?!fonts\/)[^"]+)"/g; let m;
+  while ((m = re.exec(html))) out.add(m[1]);
+  return [...out];
+}
+
+// Rewrite a root post into its archived form:
+//  - shared resources (style.css, js/*, assets/fonts/*) to absolute paths
+//  - the post's own assets to the relative paths they take inside archive/<slug>/
+//  - og:url / og:image / twitter:image to the archive URLs
+//  - the archive banner script as the first child of <body>
+export function rewriteForArchive(html, slug, renameMap){
+  let out = html;
+  // own assets first (full distinct paths), so the shared rewrite cannot touch them
+  for (const [oldSrc, relSrc] of Object.entries(renameMap)){
+    out = out.split(`"${oldSrc}"`).join(`"${relSrc}"`);
+  }
+  // shared resources to absolute
+  out = out.replace(/(href|src)="(style\.css|js\/[^"]*|assets\/fonts\/[^"]*)"/g, '$1="/$2"');
+  // social tags to the archive URLs
+  out = out.replace(/(<meta property="og:url" content=")[^"]*(">)/, `$1${SITE_ORIGIN}/archive/${slug}/${slug}.html$2`);
+  out = out.replace(/(<meta property="og:image" content=")[^"]*(">)/, `$1${SITE_ORIGIN}/archive/${slug}/assets/${slug}-og.jpg$2`);
+  out = out.replace(/(<meta name="twitter:image" content=")[^"]*(">)/, `$1${SITE_ORIGIN}/archive/${slug}/assets/${slug}-og.jpg$2`);
+  // banner as the first child of <body>
+  if (!out.includes('/js/archive-banner.js')){
+    out = out.replace(/<body([^>]*)>/, '<body$1>\n  <script src="/js/archive-banner.js"></script>');
+  }
+  return out;
+}
+
+// Reverse: archived page back to a root post.
+export function rewriteForUnarchive(html, slug, renameMap){
+  let out = html;
+  out = out.replace(/\s*<script src="\/js\/archive-banner\.js"><\/script>/, '');
+  for (const [archSrc, rootSrc] of Object.entries(renameMap)){
+    out = out.split(`"${archSrc}"`).join(`"${rootSrc}"`);
+  }
+  // shared resources back to relative (root pages link them relatively)
+  out = out.replace(/(href|src)="\/(style\.css|js\/[^"]*|assets\/fonts\/[^"]*)"/g, '$1="$2"');
+  out = out.replace(/(<meta property="og:url" content=")[^"]*(">)/, `$1${SITE_ORIGIN}/${slug}.html$2`);
+  out = out.replace(/(<meta property="og:image" content=")[^"]*(">)/, `$1${SITE_ORIGIN}/assets/thumbs/${slug}-og.jpg$2`);
+  out = out.replace(/(<meta name="twitter:image" content=")[^"]*(">)/, `$1${SITE_ORIGIN}/assets/thumbs/${slug}-og.jpg$2`);
+  return out;
+}
+
+// Bump the ARCHIVED count in js/archive-banner.js (+1 archive, -1 unarchive).
+export function bumpArchiveCounter(bannerJs, delta, dateISO){
+  return bannerJs.replace(/var ARCHIVED = (\d+);[^\n]*/, (_, n) => {
+    const v = Math.max(0, parseInt(n, 10) + delta);
+    return `var ARCHIVED = ${v};` + (dateISO ? `   // updated ${dateISO}` : '');
+  });
+}
+
+// Replace a post's search entry with its archived form (moved to the tail).
+export function archiveSearchEntry(indexJsonText, slug, archivedHtml){
+  const payload = JSON.parse(indexJsonText);
+  const url = `archive/${slug}/${slug}.html`;
+  const old = (payload.posts || []).find(p => p.url === `${slug}.html`) || {};
+  payload.posts = (payload.posts || []).filter(p => p.url !== `${slug}.html` && p.url !== url);
+  payload.posts.push({ url, title: old.title || slug, date: '', dateDisplay: '',
+    desc: old.desc || '', thumb: `archive/${slug}/assets/${slug}-og.jpg`, keywords: '', archived: true,
+    sections: buildSections(archivedHtml) });
+  payload.count = payload.posts.length;
+  return JSON.stringify(payload);
+}
+
 /* ============================================================================
    SEARCH INDEX  -  port of tools/build-search-index.mjs extraction, browser side
    ============================================================================ */
@@ -126,6 +207,13 @@ export function addToSearchIndex(indexJsonText, entry, builtISO){
   payload.posts.unshift(entry);
   payload.count = payload.posts.length;
   if (builtISO) payload.built = builtISO;
+  return JSON.stringify(payload);
+}
+// Update the date shown for one post in the search index.
+export function setSearchDate(indexJsonText, url, dateISO){
+  const payload = JSON.parse(indexJsonText);
+  const p = (payload.posts || []).find(x => x.url === url);
+  if (p){ p.date = dateISO; p.dateDisplay = dateDisplay(dateISO); }
   return JSON.stringify(payload);
 }
 export function removeFromSearchIndex(indexJsonText, url, builtISO){
