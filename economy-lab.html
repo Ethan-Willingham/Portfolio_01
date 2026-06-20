@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice economy lab</title>
+<style>
+  :root { --bg:#100b07; --panel:#1b140d; --ink:#e7d6a4; --dim:#9a8a64; --line:#3a2c1a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#100b07; color:#e7d6a4;
+         font-family: ui-monospace, "Commit Mono", Menlo, Consolas, monospace; font-size:13px; }
+  h1 { font-size:16px; margin:0 0 2px; letter-spacing:1px; }
+  .sub { color:#9a8a64; font-size:11px; margin-bottom:10px; }
+  .wrap { padding:14px 16px 40px; max-width:1180px; margin:0 auto; }
+  .panel { background:#1b140d; border:1px solid #3a2c1a; border-radius:4px; padding:10px 12px; margin-bottom:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px 26px; align-items:flex-end; }
+  .ctl { display:flex; flex-direction:column; gap:3px; min-width:150px; }
+  .ctl label { color:#caa758; font-size:11px; }
+  .ctl .val { color:#e7d6a4; font-size:11px; }
+  input[type=range] { width:170px; accent-color:#d4a838; }
+  select, input[type=number] { background:#0c0905; color:#e7d6a4; border:1px solid #3a2c1a;
+            border-radius:3px; padding:4px 6px; font-family:inherit; font-size:12px; }
+  button { background:#3a2c1a; color:#e7d6a4; border:1px solid #5a4528; border-radius:3px;
+           padding:5px 10px; font-family:inherit; font-size:12px; cursor:pointer; }
+  button:hover { background:#4a3722; }
+  button.on { background:#d4a838; color:#241608; border-color:#ffe79a; }
+  canvas { display:block; width:100%; background:#0c0905; border:1px solid #3a2c1a; border-radius:3px; }
+  table { border-collapse:collapse; width:100%; font-size:11px; }
+  th, td { padding:3px 6px; text-align:right; border-bottom:1px solid #241a10; white-space:nowrap; }
+  th { color:#caa758; text-align:right; position:sticky; top:0; background:#1b140d; }
+  td.name, th.name { text-align:left; color:#e7d6a4; }
+  .buyhi { color:#7be08a; font-weight:bold; }
+  .sellhi { color:#ffd06a; font-weight:bold; }
+  .pos { color:#7be08a; } .neg { color:#e0796a; } .flat { color:#9a8a64; }
+  .townrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  .towncard { background:#0c0905; border:1px solid #3a2c1a; border-radius:3px; padding:6px 8px; min-width:150px; }
+  .towncard h3 { margin:0 0 4px; font-size:12px; }
+  .towncard .qbtns { display:flex; gap:4px; margin-top:5px; }
+  .towncard .qbtns button { padding:3px 7px; font-size:11px; }
+  .tag { display:inline-block; padding:0 5px; border-radius:2px; font-size:10px; color:#241608; }
+  .legend { font-size:11px; color:#9a8a64; margin-top:6px; }
+  .legend b { color:#e7d6a4; font-weight:normal; }
+  code { color:#caa758; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SLUICE ECONOMY LAB</h1>
+  <div class="sub">Throwaway bench for the dynamic trade-board market (see ECONOMY_BIBLE.md). Tune by feel, then port the numbers into js/sluice/265-economy.js. This is not part of the game build.</div>
+
+  <div class="panel">
+    <div class="row">
+      <div class="ctl"><label>REVERSION (pull to baseline / tick)</label><input id="s_rev" type="range" min="0" max="0.30" step="0.005" value="0.06"><span class="val" id="v_rev"></span></div>
+      <div class="ctl"><label>VOLATILITY (wander / tick)</label><input id="s_vol" type="range" min="0" max="0.15" step="0.005" value="0.04"><span class="val" id="v_vol"></span></div>
+      <div class="ctl"><label>IMPACT (one unit traded)</label><input id="s_imp" type="range" min="0" max="2" step="0.05" value="0.5"><span class="val" id="v_imp"></span></div>
+      <div class="ctl"><label>DEPTH scale (x category)</label><input id="s_dep" type="range" min="0.25" max="3" step="0.05" value="1"><span class="val" id="v_dep"></span></div>
+      <div class="ctl"><label>M clamp lo / hi</label><span class="val" id="v_clamp"></span>
+        <div style="display:flex;gap:6px"><input id="s_lo" type="range" min="0.2" max="0.9" step="0.05" value="0.45" style="width:80px"><input id="s_hi" type="range" min="1.2" max="3" step="0.05" value="2.2" style="width:80px"></div></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="ctl"><label>SECONDS_PER_TICK (game meaning)</label><input id="s_spt" type="range" min="5" max="120" step="5" value="30"><span class="val" id="v_spt"></span></div>
+      <div class="ctl"><label>lab speed (steps / sec)</label><input id="s_spd" type="range" min="1" max="30" step="1" value="6"><span class="val" id="v_spd"></span></div>
+      <div class="ctl" style="min-width:auto">
+        <label>&nbsp;</label>
+        <div style="display:flex;gap:6px">
+          <button id="b_run">AUTO-RUN</button>
+          <button id="b_step">STEP</button>
+          <button id="b_jump">+20 TICKS</button>
+          <button id="b_reset">RESET</button>
+        </div>
+      </div>
+      <div class="ctl" style="min-width:auto"><label>tick <span id="tickN">0</span> &nbsp; (<span id="gameT">0</span> game-min equiv)</label><span class="val">&nbsp;</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="align-items:center">
+      <div class="ctl" style="min-width:260px"><label>watch good</label>
+        <select id="goodsel"></select>
+      </div>
+      <div class="ctl" style="min-width:auto"><label>trade qty</label><input id="qty" type="number" value="25" min="1" max="9999" style="width:90px"></div>
+      <div class="legend" id="routehint"></div>
+    </div>
+    <div class="townrow" id="townrow"></div>
+    <canvas id="chart" width="1140" height="300"></canvas>
+    <div class="legend">Lines = each town's SELL price for the watched good over time. Click a town's SELL to dump <b id="ql">25</b> units there and watch the price sag, then recover as reversion pulls it home. Dashed = the good's neutral catalog SELL price.</div>
+  </div>
+
+  <div class="panel">
+    <div class="sub" style="margin:0 0 6px">ARBITRAGE TABLE: per town buy / sell, the best route, and the gross margin. Green = cheapest place to BUY, gold = dearest place to SELL.</div>
+    <div style="max-height:420px; overflow:auto">
+      <table id="tbl"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== goods catalog (mirror of NS_BOARD_GOODS: key, name, buy, sell) ===== */
+var GOODS = [
+  {key:'saltblock',name:'ROCK SALT',buy:18,sell:13},
+  {key:'railspike',name:'RAIL SPIKE',buy:22,sell:16},
+  {key:'coalBrick',name:'COAL BRICKS',buy:26,sell:20},
+  {key:'niter',name:'SALTPETER',buy:30,sell:23},
+  {key:'rope',name:'COIL OF ROPE',buy:33,sell:25},
+  {key:'sulfur',name:'BRIMSTONE',buy:34,sell:26},
+  {key:'horseshoe',name:'LUCKY HORSESHOE',buy:36,sell:27},
+  {key:'leadpig',name:'LEAD PIG',buy:38,sell:29},
+  {key:'tobacco',name:'TWIST OF TOBACCO',buy:39,sell:30},
+  {key:'lampoil',name:'LAMP OIL',buy:40,sell:31},
+  {key:'nailkeg',name:'KEG OF NAILS',buy:44,sell:34},
+  {key:'calico',name:'BOLT OF CALICO',buy:48,sell:37},
+  {key:'ironIngot',name:'REFINED IRON INGOT',buy:50,sell:40},
+  {key:'coffeesack',name:'SACK OF COFFEE',buy:52,sell:40},
+  {key:'pickaxe',name:'PICKAXE',buy:58,sell:45},
+  {key:'whiskey',name:'BOTTLE OF WHISKEY',buy:60,sell:46},
+  {key:'pelt',name:'BEAVER PELT',buy:70,sell:55},
+  {key:'silverore',name:'RAW SILVER ORE',buy:72,sell:56},
+  {key:'quartz',name:'POLISHED QUARTZ',buy:76,sell:60},
+  {key:'copperWire',name:'COPPER WIRE SPOOL',buy:95,sell:76},
+  {key:'dynamite',name:'STICK OF DYNAMITE',buy:98,sell:74},
+  {key:'powderkeg',name:'POWDER KEG',buy:130,sell:100},
+  {key:'turquoise',name:'TURQUOISE',buy:140,sell:110},
+  {key:'lantern',name:"MINER'S LANTERN",buy:150,sell:118},
+  {key:'silverbar',name:'SILVER BAR',buy:165,sell:132},
+  {key:'compass',name:"SURVEYOR'S COMPASS",buy:185,sell:146},
+  {key:'crowfeather',name:'BLACK CROW FEATHER',buy:200,sell:156},
+  {key:'fossil',name:'STRANGE FOSSIL',buy:210,sell:162},
+  {key:'pocketwatch',name:'BRASS POCKET WATCH',buy:220,sell:172},
+  {key:'golddust',name:'GOLD DUST',buy:240,sell:190},
+  {key:'telegraphkey',name:'TELEGRAPH KEY',buy:260,sell:205},
+  {key:'quicksilver',name:'FLASK OF QUICKSILVER',buy:310,sell:245},
+  {key:'cog',name:'ANTIQUE COG',buy:340,sell:270},
+  {key:'glowmilk',name:'JAR OF GLOWMILK',buy:420,sell:330},
+  {key:'opal',name:'FIRE OPAL',buy:480,sell:375},
+  {key:'meteorite',name:'FALLEN-STAR IRON',buy:560,sell:440},
+  {key:'brassfinger',name:'AUTOMATON FINGER',buy:640,sell:500},
+  {key:'goldbar',name:'GOLD BAR',buy:720,sell:560},
+  {key:'geode',name:'SINGING GEODE',buy:780,sell:610},
+  {key:'lightning',name:'BOTTLED LIGHTNING',buy:880,sell:680},
+  {key:'diamond',name:'DIAMOND',buy:950,sell:740},
+  {key:'saltidol',name:'SALT-FLAT IDOL',buy:1100,sell:860},
+  {key:'letter',name:'SEALED LETTER',buy:1500,sell:1180}
+];
+
+/* ===== MARKET config + pure marketModel (this block is destined for 265-economy.js) ===== */
+var MARKET = {
+  SECONDS_PER_TICK: 30,
+  REVERSION: 0.06,
+  VOLATILITY: 0.04,
+  M_MIN: 0.45,
+  M_MAX: 2.20,
+  IMPACT: 0.5,
+  DEPTH: { STAPLE:420, METAL:300, MINING:240, ASSAY:180, INSTRUMENT:140, EXOTIC:110 },
+  TOWNS: ['DRYWELL','IRONHEAD','COLD SPRING','HOLLOW DEEP'],
+  SPEC: [
+    { STAPLE:0.70, METAL:1.00, MINING:1.20, ASSAY:1.30, INSTRUMENT:1.25, EXOTIC:1.45 },
+    { STAPLE:1.05, METAL:0.70, MINING:0.72, ASSAY:1.05, INSTRUMENT:1.00, EXOTIC:1.25 },
+    { STAPLE:1.10, METAL:0.95, MINING:0.85, ASSAY:0.70, INSTRUMENT:1.05, EXOTIC:1.20 },
+    { STAPLE:1.45, METAL:1.10, MINING:1.05, ASSAY:1.00, INSTRUMENT:0.72, EXOTIC:0.72 }
+  ],
+  CAT: {
+    saltblock:'STAPLE', coalBrick:'STAPLE', rope:'STAPLE', tobacco:'STAPLE', lampoil:'STAPLE',
+    calico:'STAPLE', coffeesack:'STAPLE', whiskey:'STAPLE', pelt:'STAPLE',
+    railspike:'METAL', leadpig:'METAL', nailkeg:'METAL', ironIngot:'METAL', copperWire:'METAL', horseshoe:'METAL',
+    niter:'MINING', sulfur:'MINING', pickaxe:'MINING', dynamite:'MINING', powderkeg:'MINING', lantern:'MINING',
+    silverore:'ASSAY', quartz:'ASSAY', turquoise:'ASSAY', silverbar:'ASSAY', golddust:'ASSAY', quicksilver:'ASSAY', goldbar:'ASSAY',
+    compass:'INSTRUMENT', pocketwatch:'INSTRUMENT', telegraphkey:'INSTRUMENT', cog:'INSTRUMENT',
+    crowfeather:'EXOTIC', fossil:'EXOTIC', glowmilk:'EXOTIC', opal:'EXOTIC', meteorite:'EXOTIC',
+    brassfinger:'EXOTIC', geode:'EXOTIC', lightning:'EXOTIC', diamond:'EXOTIC', saltidol:'EXOTIC', letter:'EXOTIC'
+  }
+};
+
+var marketModel = (function () {
+  function catOf(key) { return MARKET.CAT[key] || 'STAPLE'; }
+  function baseFor(t, key) { var row = MARKET.SPEC[t]; return (row && row[catOf(key)]) || 1; }
+  function clampM(m) { return Math.max(MARKET.M_MIN, Math.min(MARKET.M_MAX, m)); }
+  function noise() { return (Math.random() + Math.random() + Math.random() - 1.5) * 0.6667; }
+  function ensure(state, goods) {
+    if (!state.m) state.m = {};
+    for (var t = 0; t < MARKET.SPEC.length; t++) {
+      if (!state.m[t]) state.m[t] = {};
+      for (var i = 0; i < goods.length; i++) {
+        var k = goods[i].key;
+        if (typeof state.m[t][k] !== 'number') state.m[t][k] = baseFor(t, k);
+      }
+    }
+    if (typeof state.t !== 'number') state.t = 0;
+    return state;
+  }
+  function step(state, goods) {
+    for (var t = 0; t < MARKET.SPEC.length; t++) {
+      var row = state.m[t];
+      for (var i = 0; i < goods.length; i++) {
+        var k = goods[i].key, base = baseFor(t, k), m = row[k];
+        m += MARKET.REVERSION * (base - m) + MARKET.VOLATILITY * base * noise();
+        row[k] = clampM(m);
+      }
+    }
+    state.t++;
+  }
+  function advance(state, goods, ticks) { for (var n = 0; n < ticks; n++) step(state, goods); }
+  function mult(state, t, key) { return (state.m[t] && state.m[t][key]) || 1; }
+  function sellPrice(state, t, good) { return Math.round(good.sell * mult(state, t, good.key)); }
+  function buyPrice(state, t, good) { return Math.round(good.buy * mult(state, t, good.key)); }
+  function applySell(state, t, good, qty) {
+    var d = MARKET.IMPACT * qty / (MARKET.DEPTH[catOf(good.key)] || 300);
+    state.m[t][good.key] = clampM(mult(state, t, good.key) - d);
+  }
+  function applyBuy(state, t, good, qty) {
+    var d = MARKET.IMPACT * qty / (MARKET.DEPTH[catOf(good.key)] || 300);
+    state.m[t][good.key] = clampM(mult(state, t, good.key) + d);
+  }
+  function pctDelta(state, t, good) { return Math.round((mult(state, t, good.key) - 1) * 100); }
+  return { ensure:ensure, step:step, advance:advance, sellPrice:sellPrice, buyPrice:buyPrice,
+           applySell:applySell, applyBuy:applyBuy, pctDelta:pctDelta, catOf:catOf, baseFor:baseFor, mult:mult };
+})();
+
+/* ===== lab harness ===== */
+var TOWN_COLORS = ['#d4a838', '#9aa6b0', '#cfe0e8', '#b07cd0'];
+var S = {};
+var hist = [[], [], [], []];
+var selGood = 0;
+var running = false;
+var marks = []; // {tick, town, kind}
+
+function $(id) { return document.getElementById(id); }
+function reset() {
+  S = {}; marketModel.ensure(S, GOODS);
+  hist = [[], [], [], []]; marks = [];
+  pushHist();
+  draw();
+}
+function pushHist() {
+  var g = GOODS[selGood];
+  for (var t = 0; t < 4; t++) {
+    hist[t].push(marketModel.sellPrice(S, t, g));
+    if (hist[t].length > 320) hist[t].shift();
+  }
+  if (marks.length) { for (var i = 0; i < marks.length; i++) marks[i].age = (marks[i].age || 0) + 1; }
+}
+function stepOnce() { marketModel.step(S, GOODS); pushHist(); }
+
+function syncCfg() {
+  MARKET.REVERSION = +$('s_rev').value;
+  MARKET.VOLATILITY = +$('s_vol').value;
+  MARKET.IMPACT = +$('s_imp').value;
+  MARKET.M_MIN = +$('s_lo').value;
+  MARKET.M_MAX = +$('s_hi').value;
+  MARKET.SECONDS_PER_TICK = +$('s_spt').value;
+  var dep = +$('s_dep').value;
+  MARKET._depScale = dep;
+  // rescale depths off a fixed base
+  var BASEDEP = { STAPLE:420, METAL:300, MINING:240, ASSAY:180, INSTRUMENT:140, EXOTIC:110 };
+  for (var c in BASEDEP) MARKET.DEPTH[c] = Math.round(BASEDEP[c] * dep);
+  $('v_rev').textContent = MARKET.REVERSION.toFixed(3);
+  $('v_vol').textContent = MARKET.VOLATILITY.toFixed(3);
+  $('v_imp').textContent = MARKET.IMPACT.toFixed(2);
+  $('v_dep').textContent = dep.toFixed(2) + 'x';
+  $('v_clamp').textContent = MARKET.M_MIN.toFixed(2) + ' .. ' + MARKET.M_MAX.toFixed(2);
+  $('v_spt').textContent = MARKET.SECONDS_PER_TICK + 's';
+  $('v_spd').textContent = $('s_spd').value + '/s';
+}
+
+/* chart */
+function draw() {
+  var c = $('chart'), x = c.getContext('2d');
+  var W = c.width, H = c.height, padL = 52, padR = 14, padT = 14, padB = 22;
+  x.clearRect(0, 0, W, H);
+  var g = GOODS[selGood];
+  // y-range from history + neutral
+  var lo = Infinity, hi = -Infinity;
+  for (var t = 0; t < 4; t++) for (var i = 0; i < hist[t].length; i++) { lo = Math.min(lo, hist[t][i]); hi = Math.max(hi, hist[t][i]); }
+  lo = Math.min(lo, g.sell); hi = Math.max(hi, g.sell);
+  if (!isFinite(lo)) { lo = 0; hi = g.sell * 1.5; }
+  var span = Math.max(1, hi - lo); lo -= span * 0.08; hi += span * 0.08; span = hi - lo;
+  function yOf(v) { return padT + (H - padT - padB) * (1 - (v - lo) / span); }
+  function xOf(i, n) { return padL + (W - padL - padR) * (n <= 1 ? 0 : i / (n - 1)); }
+  // grid
+  x.strokeStyle = '#241a10'; x.lineWidth = 1; x.fillStyle = '#6a5c40'; x.font = '10px monospace'; x.textAlign = 'right';
+  for (var k = 0; k <= 4; k++) {
+    var vy = padT + (H - padT - padB) * k / 4, vv = hi - span * k / 4;
+    x.beginPath(); x.moveTo(padL, vy); x.lineTo(W - padR, vy); x.stroke();
+    x.fillText('$' + Math.round(vv), padL - 6, vy + 3);
+  }
+  // neutral catalog sell (dashed)
+  x.strokeStyle = '#5a4a2a'; x.setLineDash([4, 4]); x.beginPath();
+  x.moveTo(padL, yOf(g.sell)); x.lineTo(W - padR, yOf(g.sell)); x.stroke(); x.setLineDash([]);
+  // town lines
+  var n = hist[0].length;
+  for (var t = 0; t < 4; t++) {
+    x.strokeStyle = TOWN_COLORS[t]; x.lineWidth = 1.6; x.beginPath();
+    for (var i = 0; i < n; i++) { var px = xOf(i, n), py = yOf(hist[t][i]); if (i === 0) x.moveTo(px, py); else x.lineTo(px, py); }
+    x.stroke();
+    // endpoint dot + label
+    if (n) {
+      var ex = xOf(n - 1, n), ey = yOf(hist[t][n - 1]);
+      x.fillStyle = TOWN_COLORS[t]; x.beginPath(); x.arc(ex, ey, 2.5, 0, 7); x.fill();
+    }
+  }
+  // trade marks
+  for (var mi = 0; mi < marks.length; mi++) {
+    var mk = marks[mi]; if (mk.idx == null) continue;
+    var mx = xOf(mk.idx, n); x.strokeStyle = mk.kind === 'sell' ? 'rgba(255,208,106,0.5)' : 'rgba(123,224,138,0.5)';
+    x.beginPath(); x.moveTo(mx, padT); x.lineTo(mx, H - padB); x.stroke();
+  }
+}
+
+/* per-town cards + route hint */
+function renderTowns() {
+  var g = GOODS[selGood], row = $('townrow'); row.innerHTML = '';
+  var bestBuy = Infinity, bestBuyT = 0, bestSell = -Infinity, bestSellT = 0;
+  for (var t = 0; t < 4; t++) {
+    var bp = marketModel.buyPrice(S, t, g), sp = marketModel.sellPrice(S, t, g);
+    if (bp < bestBuy) { bestBuy = bp; bestBuyT = t; }
+    if (sp > bestSell) { bestSell = sp; bestSellT = t; }
+  }
+  for (var t = 0; t < 4; t++) {
+    var bp = marketModel.buyPrice(S, t, g), sp = marketModel.sellPrice(S, t, g), d = marketModel.pctDelta(S, t, g);
+    var card = document.createElement('div'); card.className = 'towncard';
+    var dcls = d > 1 ? 'pos' : (d < -1 ? 'neg' : 'flat');
+    card.innerHTML = '<h3 style="color:' + TOWN_COLORS[t] + '">' + MARKET.TOWNS[t] + '</h3>' +
+      '<div>BUY <span class="' + (t === bestBuyT ? 'buyhi' : '') + '">$' + bp + '</span> &nbsp; SELL <span class="' + (t === bestSellT ? 'sellhi' : '') + '">$' + sp + '</span></div>' +
+      '<div class="' + dcls + '">' + (d >= 0 ? '+' : '') + d + '% vs neutral &nbsp;<span class="flat">[' + marketModel.catOf(g.key) + ']</span></div>';
+    var btns = document.createElement('div'); btns.className = 'qbtns';
+    var bb = document.createElement('button'); bb.textContent = 'BUY'; bb.onclick = (function (tt) { return function () { trade(tt, false); }; })(t);
+    var sb = document.createElement('button'); sb.textContent = 'SELL'; sb.onclick = (function (tt) { return function () { trade(tt, true); }; })(t);
+    btns.appendChild(bb); btns.appendChild(sb); card.appendChild(btns); row.appendChild(card);
+  }
+  var margin = bestBuy > 0 ? Math.round((bestSell - bestBuy) / bestBuy * 100) : 0;
+  $('routehint').innerHTML = 'best route: buy <b>' + MARKET.TOWNS[bestBuyT] + '</b> $' + bestBuy +
+    ' &rarr; sell <b>' + MARKET.TOWNS[bestSellT] + '</b> $' + bestSell +
+    ' &nbsp; <span class="' + (margin > 0 ? 'pos' : 'neg') + '">gross ' + (margin >= 0 ? '+' : '') + margin + '%</span>';
+}
+function trade(t, selling) {
+  var g = GOODS[selGood], q = Math.max(1, +$('qty').value || 1);
+  if (selling) marketModel.applySell(S, t, g, q); else marketModel.applyBuy(S, t, g, q);
+  marks.push({ idx: hist[0].length - 1, kind: selling ? 'sell' : 'buy' });
+  if (marks.length > 30) marks.shift();
+  draw(); renderTowns(); renderTable();
+}
+
+/* full arbitrage table */
+function renderTable() {
+  var thead = $('tbl').tHead || $('tbl').createTHead();
+  thead.innerHTML = '<tr><th class="name">GOOD</th><th class="name">CAT</th>' +
+    MARKET.TOWNS.map(function (t, i) { return '<th style="color:' + TOWN_COLORS[i] + '">' + t.split(' ')[0] + ' b/s</th>'; }).join('') +
+    '<th>BUY@</th><th>SELL@</th><th>GROSS</th></tr>';
+  var tb = $('tbl').tBodies[0] || $('tbl').createTBody(); tb.innerHTML = '';
+  for (var gi = 0; gi < GOODS.length; gi++) {
+    var g = GOODS[gi], tr = document.createElement('tr');
+    var bestBuy = Infinity, bestBuyT = 0, bestSell = -Infinity, bestSellT = 0, cells = '';
+    var bp = [], sp = [];
+    for (var t = 0; t < 4; t++) { bp[t] = marketModel.buyPrice(S, t, g); sp[t] = marketModel.sellPrice(S, t, g);
+      if (bp[t] < bestBuy) { bestBuy = bp[t]; bestBuyT = t; } if (sp[t] > bestSell) { bestSell = sp[t]; bestSellT = t; } }
+    for (var t = 0; t < 4; t++) {
+      cells += '<td><span class="' + (t === bestBuyT ? 'buyhi' : '') + '">' + bp[t] + '</span>/<span class="' + (t === bestSellT ? 'sellhi' : '') + '">' + sp[t] + '</span></td>';
+    }
+    var margin = bestBuy > 0 ? Math.round((bestSell - bestBuy) / bestBuy * 100) : 0;
+    tr.innerHTML = '<td class="name">' + g.name + '</td><td class="name" style="color:#9a8a64">' + marketModel.catOf(g.key) + '</td>' + cells +
+      '<td style="color:' + TOWN_COLORS[bestBuyT] + '">' + MARKET.TOWNS[bestBuyT].split(' ')[0] + '</td>' +
+      '<td style="color:' + TOWN_COLORS[bestSellT] + '">' + MARKET.TOWNS[bestSellT].split(' ')[0] + '</td>' +
+      '<td class="' + (margin > 0 ? 'pos' : 'neg') + '">' + (margin >= 0 ? '+' : '') + margin + '%</td>';
+    if (gi === selGood) tr.style.background = '#241a10';
+    (function (idx) { tr.onclick = function () { selGood = idx; $('goodsel').value = '' + idx; reset(); renderAll(); }; })(gi);
+    tr.style.cursor = 'pointer';
+    tb.appendChild(tr);
+  }
+}
+function renderAll() { renderTowns(); renderTable(); $('ql').textContent = $('qty').value; }
+
+/* wire up */
+(function init() {
+  var sel = $('goodsel');
+  for (var i = 0; i < GOODS.length; i++) { var o = document.createElement('option'); o.value = '' + i; o.textContent = GOODS[i].name; sel.appendChild(o); }
+  sel.value = '12'; selGood = 12; // REFINED IRON INGOT, a metal, shows a clear route
+  sel.onchange = function () { selGood = +sel.value; reset(); renderAll(); };
+  ['s_rev','s_vol','s_imp','s_dep','s_lo','s_hi','s_spt','s_spd'].forEach(function (id) { $(id).oninput = function () { syncCfg(); }; });
+  $('qty').oninput = function () { $('ql').textContent = $('qty').value; };
+  $('b_step').onclick = function () { stepOnce(); draw(); renderAll(); $('tickN').textContent = S.t; $('gameT').textContent = Math.round(S.t * MARKET.SECONDS_PER_TICK / 60); };
+  $('b_jump').onclick = function () { for (var i = 0; i < 20; i++) stepOnce(); draw(); renderAll(); $('tickN').textContent = S.t; $('gameT').textContent = Math.round(S.t * MARKET.SECONDS_PER_TICK / 60); };
+  $('b_reset').onclick = function () { reset(); renderAll(); $('tickN').textContent = 0; $('gameT').textContent = 0; };
+  $('b_run').onclick = function () { running = !running; this.classList.toggle('on', running); };
+  syncCfg(); reset(); renderAll();
+  var acc = 0, last = performance.now();
+  function loop(now) {
+    var dt = (now - last) / 1000; last = now;
+    if (running) {
+      acc += dt * (+$('s_spd').value);
+      var did = false;
+      while (acc >= 1) { stepOnce(); acc -= 1; did = true; }
+      if (did) { draw(); renderAll(); $('tickN').textContent = S.t; $('gameT').textContent = Math.round(S.t * MARKET.SECONDS_PER_TICK / 60); }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

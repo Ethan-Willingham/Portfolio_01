@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice, Console End Caps</title>
+<style>
+  :root { --bg:#0c0f14; --panel:#13181f; --line:#262e39; --ink:#cdd6e0; --dim2:#7c8794; --accent:#e8c14a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; }
+  #wrap { display:flex; height:100vh; width:100vw; }
+  #stage { position:relative; flex:1 1 auto; min-width:0; }
+  canvas { display:block; width:100%; height:100%; }
+  #hud { position:absolute; top:11px; left:14px; font-size:12px; line-height:1.55;
+    color:var(--dim2); pointer-events:none; text-shadow:0 1px 3px #000; }
+  #hud b { color:var(--ink); } #hud .big { color:var(--accent); }
+  #help { display:none; }
+  #panel { flex:0 0 320px; background:var(--panel); border-left:1px solid var(--line);
+    overflow-y:auto; padding:14px 16px 48px; font-size:12px; }
+  #panel h1 { font-size:13px; margin:2px 0 3px; letter-spacing:.03em; }
+  #panel .sub { color:var(--dim2); font-size:11px; line-height:1.5; margin:0 0 14px; }
+  .group { border-top:1px solid var(--line); padding:12px 0 4px; }
+  .group h2 { font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim2); margin:0 0 9px; }
+  .variants { display:flex; flex-direction:column; gap:6px; }
+  .variants button { text-align:left; display:flex; flex-direction:column; gap:2px; }
+  .variants button .vn { font-size:12px; }
+  .variants button .vt { font-size:10px; color:var(--dim2); }
+  .variants button.on .vt { color:#caa94a; }
+  .modes { display:flex; gap:7px; flex-wrap:wrap; }
+  .modes button { flex:1 1 auto; }
+  button { font:inherit; font-size:11px; color:var(--ink); background:#1c232d;
+    border:1px solid var(--line); border-radius:7px; padding:8px 10px; cursor:pointer; }
+  button:hover { border-color:#3a4658; background:#222b36; }
+  button.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  .slider { display:block; margin:11px 0; }
+  .slider .lab { display:flex; justify-content:space-between; color:var(--dim2); margin-bottom:3px; }
+  .slider .lab b { color:var(--ink); font-weight:normal; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .notes { color:var(--dim2); font-size:11px; line-height:1.65; }
+  .notes b { color:var(--ink); font-weight:normal; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="hud"></div>
+    <div id="help">
+      Pick an end-cap treatment on the right. Top = the cap mounted on the real console; bottom strip = compare
+      every option (click a thumbnail to select). Press <b>I</b> or the <b>Inspect</b> button for a huge pixel view.
+      All caps use only the game's locked palette (BLD reds/golds/metals + the console plate-steel tones).
+    </div>
+  </div>
+  <aside id="panel"></aside>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var cv = document.getElementById('c'), g = cv.getContext('2d');
+  var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  var VW = 0, VH = 0;
+  function resize() { var r = cv.getBoundingClientRect(); VW = r.width; VH = r.height;
+    cv.width = Math.round(VW*DPR); cv.height = Math.round(VH*DPR); }
+  window.addEventListener('resize', function(){ resize(); });
+
+  // ---------------------------------------------------------------------------
+  // Palette, faithful to the live game (js/sluice/020-state.js UIMAT_* and
+  // js/sluice/170-render-station-decor.js BLD). Do not introduce new ramps.
+  // ---------------------------------------------------------------------------
+  var P = {
+    // Console plate steel
+    plate:   '#3d3a35', plateHi: '#4f4c46', plateSh: '#2a2724',
+    rivetCore:'#52504a', rivetRim:'#2a2724', weld:'#5a5750',
+    bay:'#2e2c28', bayDark:'#1f1d1a', bayLite:'#3a3833',
+    outline:'#1a0a05',
+    // Brass family (extended from the cap's existing tones, same hues)
+    bDeep:'#3a2912', bDark:'#4f3a1b', bMid:'#7a5a2c', bHi:'#a07c40',
+    bBright:'#c89a50', bShine:'#fff0c0', bSeat:'#5a4220',
+    // Soviet propaganda red (BLD)
+    redDeep:'#5a1108', redDark:'#8a1a10', redBase:'#c8341c', redBright:'#e85c40',
+    // Warm architectural glow (BLD.warmGlow / cream), decorative lamp, kept dim
+    glow:'#fbc55a', cream:'#e6d5a8',
+    // Cold iron (BLD metal) for bracket flanges
+    ironDark:'#1f2933', ironBase:'#4a5560', ironHi:'#7a8590'
+  };
+  function R(x,y,w,h,c){ if(w<=0||h<=0)return; g.fillStyle=c; g.fillRect(x|0,y|0,Math.ceil(w),Math.ceil(h)); }
+
+  // Game primitives (byte-faithful to drawConsoleRivet / drawBrassBolt)
+  function rivet(cx,cy){ R(cx-1,cy-1,4,4,P.rivetRim); R(cx,cy,2,2,P.rivetCore); }
+  function brassBolt(cx,cy){ R(cx-2,cy-2,5,5,P.outline); R(cx-1,cy-1,3,3,P.bSeat);
+    R(cx-1,cy-1,2,1,P.bHi); R(cx-1,cy-1,1,1,P.bShine); }
+  // A small domed brass boss (round-ish) used for medallions
+  function brassBoss(cx,cy,r){
+    for (var dy=-r; dy<=r; dy++) for (var dx=-r; dx<=r; dx++){
+      if (dx*dx+dy*dy > r*r) continue;
+      var c = (dx+dy < -r*0.4) ? P.bBright : (dx+dy > r*0.4 ? P.bDark : P.bMid);
+      R(cx+dx, cy+dy, 1, 1, c);
+    }
+    R(cx-r, cy-r, 1,1, P.outline);
+    R(cx-Math.round(r*0.4), cy-Math.round(r*0.4),1,1,P.bShine);
+  }
+  // A 5-point Soviet star centered at (cx,cy) with outer radius r, on `fill`.
+  function star(cx,cy,r,fill,hi){
+    // rasterize a 5-point star by point-in-polygon
+    var pts=[]; for (var i=0;i<10;i++){ var a=-Math.PI/2 + i*Math.PI/5; var rr=(i%2===0)?r:r*0.42;
+      pts.push([cx+Math.cos(a)*rr, cy+Math.sin(a)*rr]); }
+    function inside(px,py){ var c=false; for(var i=0,j=9;i<10;j=i++){ var xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1];
+      if(((yi>py)!=(yj>py)) && (px < (xj-xi)*(py-yi)/(yj-yi)+xi)) c=!c; } return c; }
+    for (var y=Math.floor(cy-r); y<=Math.ceil(cy+r); y++) for (var x=Math.floor(cx-r); x<=Math.ceil(cx+r); x++){
+      if (inside(x+0.5,y+0.5)) R(x,y,1,1, (x+y<cx+cy-1)?hi:fill);
+    }
+  }
+  // Outer-corner chamfer + outer-edge outline, matching the existing cap.
+  function shell(x,y,w,h){
+    R(x,y,w,h,P.plate);
+    R(x,y,w,1,P.plateHi);
+    R(x,y+h-1,w,1,P.plateSh);
+    R(x,y,1,h,P.outline);                 // outer edge (left, since we draw left orientation)
+    var steps=4;
+    for (var ci=0;ci<steps;ci++){ R(x+ci, y+steps-ci-1,1,1,P.outline); R(x+ci, y+h-steps+ci,1,1,P.outline); }
+    R(x+w-1, y+2, 1, h-4, P.plateSh);     // inner seam toward body
+  }
+  // Filled disc; fn(dx,dy,edge)->color|null
+  function disc(cx,cy,r,fn){ for(var dy=-r;dy<=r;dy++)for(var dx=-r;dx<=r;dx++){
+    var d=dx*dx+dy*dy; if(d<=r*r){ var c=fn(dx,dy, d>=(r-1)*(r-1)); if(c)R(cx+dx,cy+dy,1,1,c); } } }
+  // Filled octagon; fn(dx,dy,edge,bevel)->color|null
+  function octa(cx,cy,r,fn){ var dd=Math.round(r*1.45);
+    for(var dy=-r;dy<=r;dy++)for(var dx=-r;dx<=r;dx++){
+      var cheb=Math.max(Math.abs(dx),Math.abs(dy)), man=Math.abs(dx)+Math.abs(dy);
+      if(cheb<=r && man<=dd){ var edge=(cheb===r)||(man>dd-1); var bevel=(cheb>=r-1)||(man>=dd-1);
+        var c=fn(dx,dy,edge,bevel); if(c)R(cx+dx,cy+dy,1,1,c); } } }
+  // One 2x3 brass bead (for beaded rails)
+  function bead(bx,by){ R(bx,by,2,3,P.bMid); R(bx,by,2,1,P.bHi); R(bx,by+2,2,1,P.bDeep); }
+
+  // ---------------------------------------------------------------------------
+  // The end-cap variants. Each draws the LEFT cap in local space (outer edge at
+  // x, inner edge toward the body at x+w). The right cap is the same art mirrored
+  // by the caller. (w,h) ~ 32x88 (desktop/portrait) or 32x72 (landscape).
+  // ---------------------------------------------------------------------------
+  var VARIANTS = [
+    {
+      key:'old', name:'Current', tag:'today, plain iron + 1 brass strip',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        var brassY = y + (h>>1) - 6;
+        R(x+4,brassY,w-8,12,P.bDark); R(x+5,brassY+1,w-10,10,P.bMid);
+        R(x+5,brassY+1,w-10,1,P.bHi); R(x+5,brassY+10,w-10,1,P.bDark);
+        var bcx=x+(w>>1); brassBolt(bcx,brassY+5); brassBolt(x+7,brassY+5); brassBolt(x+w-8,brassY+5);
+        rivet(bcx,y+5); rivet(bcx,y+h-7);
+        rivet(x+w-7,y+5); rivet(x+w-7,y+h-7);
+      }
+    },
+    {
+      key:'flute', name:'Fluted Pilaster', tag:'deco column, vertical reeding + stepped capital',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        var ft=y+13, fb=y+h-13, il=x+3, ir=x+w-3;
+        // brass back-field for the reeds
+        R(il, ft, ir-il, fb-ft, P.bDark);
+        // fine vertical reeds: 1px lit face, 1px body, 1px groove (lit from outer side)
+        for (var fx=il; fx<ir-1; fx+=3){
+          R(fx,   ft, 1, fb-ft, P.bHi);
+          R(fx+1, ft, 1, fb-ft, P.bMid);
+          R(fx+2, ft, 1, fb-ft, P.bDeep);
+        }
+        // iron rails framing the reeds
+        R(x+2, ft-1, 1, fb-ft+2, P.outline);
+        R(ir,  ft-1, 1, fb-ft+2, P.plateSh);
+        // stepped brass capital (top): three setback ledges
+        R(x+1, y+2,  w-2,  3, P.bMid); R(x+1, y+2,  w-2,  1, P.bHi); R(x+1, y+4,  w-2,  1, P.bDeep);
+        R(x+3, y+5,  w-6,  3, P.bMid); R(x+3, y+5,  w-6,  1, P.bHi); R(x+3, y+7,  w-6,  1, P.bDeep);
+        R(x+5, y+8,  w-10, 3, P.bMid); R(x+5, y+8,  w-10, 1, P.bHi); R(x+5, y+10, w-10, 1, P.outline);
+        // stepped brass base (bottom): mirror
+        R(x+1, y+h-5,  w-2,  3, P.bMid); R(x+1, y+h-5,  w-2,  1, P.bHi); R(x+1, y+h-2,  w-2,  1, P.bDeep);
+        R(x+3, y+h-8,  w-6,  3, P.bMid); R(x+3, y+h-8,  w-6,  1, P.bHi); R(x+3, y+h-6,  w-6,  1, P.bDeep);
+        R(x+5, y+h-11, w-10, 3, P.bMid); R(x+5, y+h-11, w-10, 1, P.bHi); R(x+5, y+h-8,  w-10, 1, P.outline);
+        // central brass medallion boss with a ring + shine
+        var cy=y+(h>>1);
+        disc(x+(w>>1), cy, 5, function(dx,dy,edge){ return edge?P.outline:(dx+dy<0?P.bBright:P.bDark); });
+        disc(x+(w>>1), cy, 2, function(dx,dy,edge){ return edge?P.bDeep:P.bShine; });
+        // corner bolts on the capital + base
+        brassBolt(x+6,y+5); brassBolt(x+w-7,y+5);
+        brassBolt(x+6,y+h-6); brassBolt(x+w-7,y+h-6);
+      }
+    },
+    {
+      key:'star', name:'Star Medallion', tag:'soviet ceremonial, brass octagon + red star',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        var cx=x+(w>>1);
+        // beaded brass rails on both vertical edges
+        for (var by=y+9; by<y+h-8; by+=6){ bead(x+3,by); bead(x+w-5,by); }
+        // brass tick bars top + bottom with a bolt
+        R(x+5,y+6,w-10,3,P.bDark); R(x+6,y+6,w-12,2,P.bMid); R(x+6,y+6,w-12,1,P.bHi); brassBolt(cx,y+7);
+        R(x+5,y+h-9,w-10,3,P.bDark); R(x+6,y+h-9,w-12,2,P.bMid); R(x+6,y+h-9,w-12,1,P.bHi); brassBolt(cx,y+h-8);
+        // octagon medallion: outline + brass bevel + brass field
+        var cy=y+(h>>1), r=Math.min(12,(w>>1)-1);
+        octa(cx,cy,r, function(dx,dy,edge,bevel){ if(edge)return P.outline; if(bevel)return (dx+dy<0)?P.bBright:P.bDark; return P.bMid; });
+        // recessed dark-red field
+        octa(cx,cy,r-3, function(dx,dy,edge){ return edge?P.bDeep:P.redDeep; });
+        // faint sunburst etched behind the star
+        for (var a=0;a<12;a++){ var ang=a*Math.PI/6; for (var rr=2;rr<r-3;rr++){
+          if((rr&1)===0) R(Math.round(cx+Math.cos(ang)*rr), Math.round(cy+Math.sin(ang)*rr),1,1, P.redDark); } }
+        // the red star
+        star(cx,cy,r-4,P.redBase,P.redBright);
+        // brass bolts at the octagon's left + right points
+        brassBolt(cx-r+1, cy); brassBolt(cx+r-1, cy);
+        // corner gusset bolts
+        rivet(x+6,y+5); rivet(x+w-7,y+5); rivet(x+6,y+h-7); rivet(x+w-7,y+h-7);
+      }
+    },
+    {
+      key:'bracket', name:'Hazard Bracket', tag:'heavy rig steel, chevrons + bolt grid',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        var cx=x+(w>>1);
+        // thick iron flange on the outer edge (cold blue-grey BLD metal)
+        R(x+1,y+1,3,h-2,P.ironBase); R(x+1,y+1,1,h-2,P.ironHi); R(x+4,y+1,1,h-2,P.ironDark);
+        // brass nameplate at top stamped with a small red star
+        R(x+7,y+5,w-13,10,P.bDark); R(x+8,y+6,w-15,8,P.bMid); R(x+8,y+6,w-15,1,P.bHi); R(x+8,y+13,w-15,1,P.bDeep);
+        star(cx+1, y+10, 3, P.redBase, P.redBright);
+        // bolt grid: two columns of rivets framing the central band
+        for (var ry=y+22; ry<y+h-18; ry+=12){ rivet(x+8,ry); rivet(x+w-9,ry); }
+        // central caution-chevron band (brass on dark, NOT signal amber)
+        var ct=y+(h>>1)-9, cb=y+(h>>1)+13, cl=x+11, cr=x+w-9;
+        R(cl-1,ct-1,(cr-cl)+2,(cb-ct)+2,P.outline);
+        R(cl,ct,cr-cl,cb-ct,P.bDeep);
+        for (var sx=cl-24; sx<cr; sx+=8){ for (var yy=ct; yy<cb; yy++){ var off=sx+(yy-ct);
+          for (var xx=off; xx<off+4; xx++){ if (xx>=cl && xx<cr) R(xx,yy,1,1,P.bHi); } } }
+        R(cl,ct,cr-cl,1,P.bShine); R(cl,cb-1,cr-cl,1,P.bDeep);
+        // bottom bolted plate
+        R(x+7,y+h-13,w-13,8,P.bDark); R(x+8,y+h-12,w-15,6,P.bMid); R(x+8,y+h-12,w-15,1,P.bHi);
+        rivet(x+10,y+h-9); rivet(x+w-11,y+h-9);
+      }
+    },
+    {
+      key:'glass', name:'Stepped Glass', tag:'streamline moderne, gilded setbacks + lamp strip',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        // mid tier face (brighter steel), stepped in from the outer plate
+        R(x+8, y+4, 7, h-8, P.plateHi);
+        // gilded step 1 (outer to mid)
+        R(x+7, y+3, 1, h-6, P.outline); R(x+8, y+3, 1, h-6, P.bHi);
+        // gilded step 2 (mid to glass channel)
+        R(x+15, y+5, 1, h-10, P.outline); R(x+16, y+5, 1, h-10, P.bHi); R(x+17, y+5, 1, h-10, P.bDark);
+        // recessed glass channel toward the body
+        var gx=x+18, gw=(x+w-3)-gx;
+        R(gx-1, y+6, gw+1, h-12, P.bayDark);
+        // warm lamp glass (dim, slow pulse) + bright filament; kept subtle
+        var pulse=0.5+0.5*Math.sin(t*1.0);
+        g.save(); g.globalAlpha=0.30+0.13*pulse; R(gx, y+8, gw, h-16, P.glow); g.restore();
+        g.save(); g.globalAlpha=0.5+0.2*pulse; R(gx+(gw>>1), y+9, 1, h-18, P.cream); g.restore();
+        // 1px glass top reflection (UI_STYLE 4.4)
+        R(gx, y+8, gw, 1, 'rgba(180,200,220,0.18)');
+        // gilded top + bottom caps with bolts
+        R(x+2,y+2,w-4,3,P.bDark); R(x+3,y+2,w-6,2,P.bMid); R(x+3,y+2,w-6,1,P.bHi);
+        R(x+2,y+h-5,w-4,3,P.bDark); R(x+3,y+h-5,w-6,2,P.bMid); R(x+3,y+h-5,w-6,1,P.bHi);
+        brassBolt(x+5,y+4); brassBolt(x+w-7,y+4); brassBolt(x+5,y+h-5); brassBolt(x+w-7,y+h-5);
+      }
+    },
+    {
+      key:'rosette', name:'Filigree Rosette', tag:'ornate brass, scroll corners + petaled medallion',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        // inset brass border frame
+        R(x+3,y+3,w-6,1,P.bMid); R(x+3,y+h-4,w-6,1,P.bMid);
+        R(x+3,y+3,1,h-6,P.bMid); R(x+w-4,y+3,1,h-6,P.bMid);
+        R(x+3,y+3,1,1,P.bHi); R(x+w-4,y+3,1,1,P.bHi);
+        // corner deco fans
+        function fan(fx,fy,sx,sy){ R(fx,fy,1,1,P.bHi); R(fx+sx,fy,1,1,P.bMid); R(fx,fy+sy,1,1,P.bMid);
+          R(fx+2*sx,fy,1,1,P.bDark); R(fx,fy+2*sy,1,1,P.bDark); R(fx+sx,fy+sy,1,1,P.bDeep); }
+        fan(x+5,y+5,1,1); fan(x+w-6,y+5,-1,1); fan(x+5,y+h-6,1,-1); fan(x+w-6,y+h-6,-1,-1);
+        // egg-and-dart beading down both vertical edges
+        for (var by=y+13; by<y+h-12; by+=8){
+          R(x+4,by,3,3,P.bMid);   R(x+4,by,3,1,P.bHi);   R(x+5,by+4,1,1,P.bDeep);
+          R(x+w-7,by,3,3,P.bMid); R(x+w-7,by,3,1,P.bHi); R(x+w-6,by+4,1,1,P.bDeep);
+        }
+        // central petaled rosette
+        var cx=x+(w>>1), cy=y+(h>>1), r=Math.min(9,(w>>1)-5);
+        for (var a=0;a<8;a++){ var ang=a*Math.PI/4; var px=Math.round(cx+Math.cos(ang)*r), py=Math.round(cy+Math.sin(ang)*r);
+          R(px-1,py-1,2,2,P.bMid); R(px-1,py-1,1,1,P.bHi); }
+        disc(cx,cy,r-2, function(dx,dy,edge){ return edge?P.outline:(dx+dy<-1?P.bBright:(dx+dy>1?P.bDark:P.bMid)); });
+        disc(cx,cy,2, function(dx,dy,edge){ return edge?P.bDeep:P.bShine; });
+      }
+    },
+    {
+      key:'gauges', name:'Gauge Cluster', tag:'functional deco, stacked brass dials + lamp',
+      draw:function(x,y,w,h,t){
+        shell(x,y,w,h);
+        // brass rails
+        R(x+3,y+4,2,h-8,P.bDark); R(x+w-5,y+4,2,h-8,P.bDark);
+        R(x+3,y+4,1,h-8,P.bHi); R(x+w-5,y+4,1,h-8,P.bHi);
+        var cx=x+(w>>1);
+        var slots=[y+Math.round(h*0.22), y+Math.round(h*0.5), y+Math.round(h*0.78)];
+        var pulse=0.5+0.5*Math.sin(t*1.4);
+        for (var i=0;i<slots.length;i++){
+          var cy=slots[i], r=Math.min(8,(w>>1)-4);
+          // brass bezel with a dark glass face
+          disc(cx,cy,r, function(dx,dy,edge){ if(edge)return P.outline; var d=dx*dx+dy*dy;
+            if(d>=(r-2)*(r-2)) return (dx+dy<0)?P.bBright:P.bDark; return P.bayDark; });
+          // 12 o'clock tick
+          R(cx, cy-r+2, 1, 1, P.bHi);
+          if (i===1){
+            // middle dial = a dim lit lamp
+            g.save(); g.globalAlpha=0.5+0.3*pulse; R(cx-1,cy-1,2,2,P.glow); g.restore(); R(cx,cy,1,1,P.cream);
+          } else {
+            // a brass needle to a fixed angle (drawn as a full 1px line)
+            var ang=(i===0)?-2.2:0.7;
+            var nx=Math.round(cx+Math.cos(ang)*(r-3)), ny=Math.round(cy+Math.sin(ang)*(r-3));
+            var steps=Math.max(1, Math.max(Math.abs(nx-cx),Math.abs(ny-cy)));
+            for (var s2=0;s2<=steps;s2++){ R(Math.round(cx+(nx-cx)*s2/steps), Math.round(cy+(ny-cy)*s2/steps),1,1, s2===0?P.bShine:P.bHi); }
+          }
+        }
+        // bolts between dials
+        brassBolt(cx, (slots[0]+slots[1])>>1); brassBolt(cx, (slots[1]+slots[2])>>1);
+      }
+    }
+  ];
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  var sel = 1;                 // selected variant index (default Fluted Pilaster)
+  var capW = 32;               // logical cap width (game default 32)
+  var capH = 88;               // logical cap height (88 desk/portrait, 72 landscape)
+  var bg = 'cave';             // cave | sky
+  var inspect = false;
+  var hitboxes = [];           // contact-sheet click targets
+
+  // ---- draw one cap at screen (sx,sy), integer zoom Z, side 'left'/'right' ----
+  function drawCap(v, sx, sy, Z, side, t){
+    g.save();
+    g.imageSmoothingEnabled=false;
+    if (side==='right') g.setTransform(-Z*DPR,0,0,Z*DPR,(sx+capW*Z)*DPR, sy*DPR);
+    else                g.setTransform( Z*DPR,0,0,Z*DPR, sx*DPR,           sy*DPR);
+    v.draw(0,0,capW,capH,t);
+    g.restore();
+  }
+
+  // ---- the console body (faithful) between the two caps ----
+  function drawBody(sx, sy, Z, bodyW){
+    g.save(); g.imageSmoothingEnabled=false; g.setTransform(Z*DPR,0,0,Z*DPR, sx*DPR, sy*DPR);
+    R(0,0,bodyW,capH,P.plate);
+    R(0,0,bodyW,1,P.weld); R(0,1,bodyW,1,P.plateHi);
+    R(0,capH-2,bodyW,1,P.plateSh); R(0,capH-1,bodyW,1,P.outline);
+    for (var rx=12; rx<bodyW-8; rx+=24){ rivet(rx,5); rivet(rx,capH-6); }
+    // bay recesses with light placeholder instruments
+    var bays=[92,92,92,110,92], pad=8, bx=pad+ (-4);
+    var labels=['FUEL','SPD','HULL','CARGO','DEPTH'];
+    var bayTop=4, bayH=capH-8, ins=6;
+    var totW=0; for (var i=0;i<bays.length;i++) totW+=bays[i];
+    var scaleB=(bodyW-16)/totW; bx=8;
+    for (var b=0;b<bays.length;b++){
+      var bw=Math.round(bays[b]*scaleB);
+      var ibx=bx+ins/2, iby=bayTop+2, ibw=bw-ins, ibh=bayH-4;
+      R(ibx,iby,ibw,ibh,P.bay);
+      R(ibx,iby,ibw,1,P.bayDark); R(ibx,iby,1,ibh,P.bayDark);
+      R(ibx,iby+ibh-1,ibw,1,P.bayLite); R(ibx+ibw-1,iby,1,ibh,P.bayLite);
+      // tiny stand-in gauge: a brass arc + needle, or plates
+      var mcx=ibx+ibw/2, mcy=iby+ibh/2;
+      if (b===2){ // hull plates
+        for (var pl=0;pl<5;pl++){ var c=pl<3?'#40c060':(pl<4?'#ffb030':'#ff4030'); R(ibx+4+pl*4,mcy-3,3,6,c); }
+      } else if (b===3){ R(ibx+3,iby+3,ibw-6,ibh-6,'#0a0a0a'); R(ibx+5,iby+ibh-7,4,4,'#b9794a'); R(ibx+10,iby+ibh-9,4,6,'#e8c14a'); }
+      else { g.fillStyle=P.bHi; g.beginPath(); g.arc(mcx,mcy+3,ibw*0.3,Math.PI,0); g.fill();
+        g.strokeStyle=P.outline; g.lineWidth=0.5; g.beginPath(); g.moveTo(mcx,mcy+3); g.lineTo(mcx+ibw*0.18,mcy-2); g.stroke(); }
+      // weld seam
+      if (b<bays.length-1){ R(bx+bw,4,1,capH-8,P.plateSh); R(bx+bw+1,4,1,capH-8,P.weld); }
+      bx+=bw;
+    }
+    g.restore();
+  }
+
+  function setTransformReset(){ g.setTransform(1,0,0,1,0,0); }
+
+  function drawBackground(){
+    setTransformReset();
+    if (bg==='sky'){
+      var grd=g.createLinearGradient(0,0,0,VH*DPR);
+      grd.addColorStop(0,'#3a5a82'); grd.addColorStop(0.6,'#6a86a4'); grd.addColorStop(1,'#caa46a');
+      g.fillStyle=grd; g.fillRect(0,0,VW*DPR,VH*DPR);
+    } else {
+      var grd2=g.createLinearGradient(0,0,0,VH*DPR);
+      grd2.addColorStop(0,'#161310'); grd2.addColorStop(1,'#0b0908');
+      g.fillStyle=grd2; g.fillRect(0,0,VW*DPR,VH*DPR);
+    }
+  }
+
+  function frame(ts){
+    var t=ts/1000;
+    drawBackground();
+    hitboxes=[];
+
+    if (inspect){
+      // huge pixel view: left + right pair of the selected cap, centered
+      var Z=Math.max(3, Math.min(10, Math.floor((VH*0.7)/capH)));
+      var pairW=capW*Z*2 + 40;
+      var sx=(VW-pairW)/2, sy=(VH-capH*Z)/2;
+      drawCap(VARIANTS[sel], sx, sy, Z, 'left', t);
+      drawCap(VARIANTS[sel], sx+capW*Z+40, sy, Z, 'right', t);
+      setTransformReset();
+      g.fillStyle='#cdd6e0'; g.font=(13*DPR)+"px 'Commit Mono',monospace"; g.textAlign='center';
+      g.fillText(VARIANTS[sel].name+'  ·  '+capW+'×'+capH+' logical  ·  '+Z+'× zoom', VW*DPR/2, (sy-16)*DPR);
+      g.textAlign='left';
+      updateHud();
+      requestAnimationFrame(frame); return;
+    }
+
+    // ---- TOP: the cap mounted on the real console ----
+    var topH=VH*0.52;
+    var Z=Math.max(2, Math.min(5, Math.floor((topH-40)/capH)));
+    var bodyW=520;                                   // representative body
+    var totalW=capW*2 + bodyW;
+    // keep it within the stage width
+    while (totalW*Z > VW-60 && Z>2){ Z--; }
+    if (totalW*Z > VW-40){ bodyW = Math.floor((VW-40)/Z) - capW*2; totalW=capW*2+bodyW; }
+    var sx=(VW-totalW*Z)/2, sy=(topH-capH*Z)/2 + 8;
+    // side-wing stubs (darker) running off both edges
+    g.save(); g.imageSmoothingEnabled=false; g.setTransform(Z*DPR,0,0,Z*DPR,0,sy*DPR);
+    R(0,0,sx/Z,capH,P.plateSh); R(0,0,sx/Z,1,P.weld); R(0,capH-1,sx/Z,1,P.outline);
+    var rightWingX=sx/Z+totalW;
+    R(rightWingX,0,VW/Z-rightWingX,capH,P.plateSh); R(rightWingX,0,VW/Z-rightWingX,1,P.weld); R(rightWingX,capH-1,VW/Z-rightWingX,1,P.outline);
+    g.restore();
+    drawCap(VARIANTS[sel], sx, sy, Z, 'left', t);
+    drawBody(sx+capW*Z, sy, Z, bodyW);
+    drawCap(VARIANTS[sel], sx+capW*Z+bodyW*Z, sy, Z, 'right', t);
+    setTransformReset();
+    g.fillStyle='rgba(205,214,224,0.85)'; g.font='bold '+(12*DPR)+"px 'Commit Mono',monospace"; g.textAlign='center';
+    g.fillText('▲ '+VARIANTS[sel].name+', mounted on the console ('+capW+'px caps, '+capH+'px tall)', VW*DPR/2, (sy-12)*DPR);
+    g.textAlign='left';
+
+    // ---- BOTTOM: contact sheet of every variant ----
+    var by=topH+8, bandH=VH-by-8;
+    var n=VARIANTS.length, colW=VW/n;
+    var labH=26;
+    var Zc=Math.max(1, Math.min(4, Math.floor(Math.min((colW-18)/capW, (bandH-labH-12)/capH))));
+    for (var i=0;i<n;i++){
+      var cxc=i*colW + (colW - capW*Zc)/2;
+      var cyc=by + 6;
+      // selection plate
+      setTransformReset();
+      if (i===sel){ g.fillStyle='rgba(232,193,74,0.10)'; g.fillRect((i*colW+4)*DPR, by*DPR, (colW-8)*DPR, (bandH)*DPR);
+        g.strokeStyle='#e8c14a'; g.lineWidth=1.5*DPR; g.strokeRect((i*colW+4)*DPR, by*DPR, (colW-8)*DPR, (bandH-2)*DPR); }
+      drawCap(VARIANTS[i], cxc, cyc, Zc, 'left', t);
+      setTransformReset();
+      g.fillStyle = i===sel? '#e8c14a':'#aeb6c0'; g.font=(11*DPR)+"px 'Commit Mono',monospace"; g.textAlign='center';
+      var SHORT={old:'Current',flute:'1 Fluted',star:'2 Star',bracket:'3 Hazard',glass:'4 Glass',rosette:'5 Rosette',gauges:'6 Gauges'};
+      g.fillText(SHORT[VARIANTS[i].key]||VARIANTS[i].name, (i*colW+colW/2)*DPR, (by+bandH-8)*DPR);
+      g.textAlign='left';
+      hitboxes.push({i:i, x:i*colW, y:by, w:colW, h:bandH});
+    }
+
+    updateHud();
+    requestAnimationFrame(frame);
+  }
+
+  function updateHud(){
+    document.getElementById('hud').innerHTML =
+      '<span class="big">'+VARIANTS[sel].name+'</span><br>'+
+      VARIANTS[sel].tag+'<br>'+
+      'cap '+capW+'×'+capH+' · bg '+bg+(inspect?' · INSPECT':'');
+  }
+
+  // ---- click the contact sheet to select ----
+  cv.addEventListener('click', function(e){
+    if (inspect){ inspect=false; buildPanel(); return; }
+    var r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+    for (var i=0;i<hitboxes.length;i++){ var hb=hitboxes[i];
+      if (mx>=hb.x&&mx<=hb.x+hb.w&&my>=hb.y&&my<=hb.y+hb.h){ sel=hb.i; buildPanel(); return; } }
+  });
+  window.addEventListener('keydown', function(e){
+    if (e.key==='i'||e.key==='I'){ inspect=!inspect; buildPanel(); }
+    if (e.key==='ArrowRight'){ sel=(sel+1)%VARIANTS.length; buildPanel(); }
+    if (e.key==='ArrowLeft'){ sel=(sel-1+VARIANTS.length)%VARIANTS.length; buildPanel(); }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Control panel
+  // ---------------------------------------------------------------------------
+  function buildPanel(){
+    var p=document.getElementById('panel');
+    var html='';
+    html+='<h1>Console End Caps</h1>';
+    html+='<div class="sub">BioShock-deco × Frontier-Soviet. Locked palette only. '+
+          'These replace <b>drawConsoleCap</b> in js/sluice/300-item-wheel.js.<br><br>'+
+          'Top = the cap mounted on the real console. Bottom strip = compare every option '+
+          '(click a thumbnail to select). <b>I</b> = ×8 inspect · <b>←/→</b> cycle.</div>';
+
+    html+='<div class="group"><h2>Treatment</h2><div class="variants">';
+    for (var i=0;i<VARIANTS.length;i++){
+      html+='<button data-sel="'+i+'" class="'+(i===sel?'on':'')+'">'+
+        '<span class="vn">'+(i===0?'':(i)+'. ')+VARIANTS[i].name+'</span>'+
+        '<span class="vt">'+VARIANTS[i].tag+'</span></button>';
+    }
+    html+='</div></div>';
+
+    html+='<div class="group"><h2>Cap width '+capW+'px <span style="color:#7c8794">(game default 32)</span></h2>'+
+      '<input type="range" id="cw" min="28" max="52" step="2" value="'+capW+'">'+
+      '<div class="notes" style="margin-top:4px">Wider = more room for detail, but narrows the gauges or widens the console.</div></div>';
+
+    html+='<div class="group"><h2>Size</h2><div class="modes">'+
+      '<button data-h="88" class="'+(capH===88?'on':'')+'">Desktop / portrait 88</button>'+
+      '<button data-h="72" class="'+(capH===72?'on':'')+'">Landscape 72</button></div></div>';
+
+    html+='<div class="group"><h2>Backdrop</h2><div class="modes">'+
+      '<button data-bg="cave" class="'+(bg==='cave'?'on':'')+'">Underground</button>'+
+      '<button data-bg="sky" class="'+(bg==='sky'?'on':'')+'">Sky</button></div></div>';
+
+    html+='<div class="group"><div class="modes">'+
+      '<button id="insp" class="'+(inspect?'on':'')+'">'+(inspect?'Exit inspect (I)':'Inspect ×8 (I)')+'</button></div></div>';
+
+    html+='<div class="group"><h2>Notes, '+VARIANTS[sel].name+'</h2><div class="notes">'+noteFor(VARIANTS[sel].key)+'</div></div>';
+
+    p.innerHTML=html;
+    Array.prototype.forEach.call(p.querySelectorAll('[data-sel]'), function(b){ b.onclick=function(){ sel=+b.dataset.sel; buildPanel(); }; });
+    Array.prototype.forEach.call(p.querySelectorAll('[data-h]'), function(b){ b.onclick=function(){ capH=+b.dataset.h; buildPanel(); }; });
+    Array.prototype.forEach.call(p.querySelectorAll('[data-bg]'), function(b){ b.onclick=function(){ bg=b.dataset.bg; buildPanel(); }; });
+    p.querySelector('#cw').oninput=function(){ capW=+this.value; buildPanel(); };
+    p.querySelector('#insp').onclick=function(){ inspect=!inspect; buildPanel(); };
+  }
+  function noteFor(k){
+    var m={
+      old:'The current cap: one flat brass strip across an iron plate with corner bolts. The baseline to beat.',
+      flute:'Vertical reeding (deco fluting) with a stepped brass capital + base, reads as a fluted bronze pilaster bracketing the panel. Strongest, calmest deco read in a narrow column. Light catches the left flute faces.',
+      star:'A brass octagon medallion with the propaganda red star + a faint sunburst, beaded brass rails, tick bars and gussets. The most in-universe / ceremonial option.',
+      bracket:'The least decorative, most "rig": a cold-iron mounting flange, a bolt grid, and gold caution chevrons (brass, not signal-amber, to respect the §6 colour rule). Heavy and industrial.',
+      glass:'Streamline-Moderne setbacks stepping toward the gauges, gilded edges, and a dim warm lamp-glass strip (the BioShock lit-glass signature, kept subtle + on the warm palette). The luxe option.',
+      rosette:'The busiest: brass scroll corners, a petaled rosette medallion, and egg-and-dart beading. Jewelry-box ornate, best if you want maximum richness.',
+      gauges:'Makes the cap itself look instrumented, a stack of little brass dials with needles + one dim lamp. Ties the caps into the gauge cluster rather than being pure trim.'
+    };
+    return m[k]||'';
+  }
+
+  resize(); buildPanel(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

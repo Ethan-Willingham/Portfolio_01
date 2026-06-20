@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sluice SFX Prompts</title>
+<style>
+  :root {
+    --bg: #14161b;
+    --panel: #1d2027;
+    --panel-2: #23272f;
+    --line: #2e333d;
+    --ink: #e7e9ee;
+    --muted: #98a1b0;
+    --faint: #6b7280;
+    --amber: #e0a85e;
+    --amber-dim: #b88947;
+    --el: #8b91ff;      /* ElevenLabs */
+    --sa: #45b8a6;      /* Stable Audio */
+    --code-bg: #0f1116;
+    --ok: #6fcf97;
+    --serif: 'Century Supra', Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, 'Segoe UI', system-ui, Roboto, sans-serif;
+    --mono: 'Commit Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header { padding: 40px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 0; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 34px; margin: 0 0 6px; letter-spacing: 0.2px; }
+  .sub { color: var(--muted); font-size: 15px; max-width: 760px; margin: 0 0 16px; }
+  .how { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 14px; color: var(--muted); max-width: 760px; }
+  .how b { color: var(--ink); font-weight: 600; }
+  .how .step { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%; background: var(--amber); color: #1a1205; font-weight: 700; font-size: 12px; margin-right: 6px; }
+  .how p { margin: 0 0 8px; }
+  .how p:last-child { margin-bottom: 0; }
+
+  /* sticky toolbar */
+  .bar { position: sticky; top: 0; z-index: 20; background: rgba(20,22,27,0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 16px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 26px; }
+  .bar-inner { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  #search { flex: 1 1 280px; min-width: 200px; background: var(--code-bg); border: 1px solid var(--line); color: var(--ink); font-family: var(--sans); font-size: 15px; padding: 10px 14px; border-radius: 9px; outline: none; }
+  #search:focus { border-color: var(--amber-dim); }
+  #search::placeholder { color: var(--faint); }
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .chip { cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--muted); padding: 8px 13px; border-radius: 999px; font-size: 13px; font-weight: 600; user-select: none; transition: all .12s; }
+  .chip:hover { border-color: var(--amber-dim); color: var(--ink); }
+  .chip.active { background: var(--amber); border-color: var(--amber); color: #1a1205; }
+  .count { color: var(--faint); font-size: 13px; margin-left: auto; white-space: nowrap; }
+
+  .group-h { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 30px 0 4px; }
+  .group-d { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 15px 13px; display: flex; flex-direction: column; gap: 10px; }
+  .card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .name { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--amber); }
+  .badges { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: .3px; text-transform: uppercase; }
+  .badge.el { background: rgba(139,145,255,.16); color: var(--el); border: 1px solid rgba(139,145,255,.3); }
+  .badge.sa { background: rgba(69,184,166,.16); color: var(--sa); border: 1px solid rgba(69,184,166,.3); }
+  .badge.pool { background: rgba(224,168,94,.14); color: var(--amber); border: 1px solid rgba(224,168,94,.3); }
+  .badge.loop { background: rgba(111,207,151,.14); color: var(--ok); border: 1px solid rgba(111,207,151,.3); }
+
+  .promptbox { position: relative; }
+  .promptbox .lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--faint); margin-bottom: 4px; font-weight: 700; }
+  .promptbox.neg .lbl { color: var(--sa); }
+  code.prompt { display: block; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; padding-right: 76px; font-family: var(--mono); font-size: 12.8px; line-height: 1.55; color: #d7dbe3; white-space: pre-wrap; word-break: break-word; }
+  .copy { position: absolute; top: 22px; right: 7px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 7px; cursor: pointer; transition: all .12s; }
+  .copy:hover { background: var(--amber); color: #1a1205; border-color: var(--amber); }
+  .copy.done { background: var(--ok); color: #08210f; border-color: var(--ok); }
+
+  .settings { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-size: 11.5px; padding: 4px 9px; border-radius: 6px; font-family: var(--mono); }
+  .note { font-size: 12.5px; color: var(--faint); margin: 0; }
+
+  .fileline { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .fileline .flbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--faint); font-weight: 700; white-space: nowrap; }
+  .fileline code { font-family: var(--mono); font-size: 12px; color: var(--amber); background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fileline .copy2 { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); font-family: var(--sans); font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 6px; cursor: pointer; flex: none; transition: all .12s; }
+  .fileline .copy2:hover { background: var(--amber); color: #1a1205; border-color: var(--amber); }
+  .badge.tba { background: rgba(152,161,176,.12); color: var(--muted); border: 1px solid rgba(152,161,176,.3); }
+
+  .empty { color: var(--faint); text-align: center; padding: 60px 0; font-size: 15px; }
+
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+  footer code { font-family: var(--mono); color: var(--muted); }
+
+  /* toast */
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); background: var(--ok); color: #08210f; font-weight: 700; font-size: 14px; padding: 11px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all .22s; z-index: 100; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+    h1 { font-size: 28px; }
+    .count { width: 100%; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<nav style="background:#16181d;border-bottom:1px solid #2e333d;padding:9px 18px;font:13px -apple-system,'Segoe UI',sans-serif"><a href="audio-lab.html" style="color:#9aa3b0;text-decoration:none">Music lab</a><span style="color:#3a3f48;margin:0 9px">&middot;</span><a href="sfx-prompts.html" style="color:#e0a85e;font-weight:600;text-decoration:none">SFX prompts</a><span style="color:#3a3f48;margin:0 9px">&middot;</span><a href="sfx-test.html" style="color:#9aa3b0;text-decoration:none">SFX test bench</a></nav>
+<div class="wrap">
+  <header>
+    <h1>Sluice SFX Prompts</h1>
+    <p class="sub">Every sound-effect prompt, one tap to copy. Mirrors <code style="font-family:var(--mono);font-size:13px;color:var(--muted)">SFX_PROMPT_SYSTEM.md</code> §5. The companion design doc is <code style="font-family:var(--mono);font-size:13px;color:var(--muted)">SFX_BIBLE.md</code>.</p>
+    <div class="how">
+      <p><span class="step">1</span> Tap <b>Copy</b> on a sound and paste the prompt into the tool shown by its badge: <b style="color:var(--el)">ElevenLabs</b> for one-shots and short loops, <b style="color:var(--sa)">Stable Audio</b> for the ambience beds.</p>
+      <p><span class="step">2</span> Set the <b>Duration / Loop / Influence</b> shown on the card. For Stable Audio beds, also copy the <b style="color:var(--sa)">Negative</b> field into its negative-prompt box.</p>
+      <p><span class="step">3</span> Generate 5 to 8, keep the best (or the best few where it says <b style="color:var(--amber)">pool N</b>). Audition candidates over the real music in the <a href="sfx-test.html" style="color:var(--amber)">SFX test bench</a>; loops get a seamless crossfade + WAV download there.</p>
+      <p><span class="step">4</span> Render mono, convert (<code style="font-family:var(--mono);font-size:12.5px;color:var(--muted)">afconvert -f m4af -d aac in.wav out.m4a</code>), save as the exact <b>Save as</b> filename on the card, drop it in <code style="font-family:var(--mono);font-size:13px;color:var(--muted)">assets/sfx/</code>. Every card's key + call site is wired in-game: each saved file lights up on the next reload.</p>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="bar-inner">
+      <input id="search" type="text" placeholder="Search sounds, e.g. drill, bomb, footstep, cave..." autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>
+    <p>Positive description only for ElevenLabs (it has no negative field); the Negative line is for Stable Audio, which does. Keep everything <b>mono</b> and <b>dry</b> for Effect sounds (the game adds depth filtering and reverb live). Tonal layers (the ore-pickup chime, the discovery chord) live in the music system tuned to D minor, so the SFX here only carry the noise/transient layer.</p>
+    <p>Already synthesized live in <code>js/audio.js</code> (no need to generate): the whole flight pack, that is the wind bed, engine growl, stall horn, vario, ignition, sonic boom, vapor cone and touchdown thumps. The <code>jetpack-*</code> and <code>land-*</code> cards are optional asset upgrades over that synth. The combat, rig-drive, jet-spin and air-pulse keys are wired too (2026-06-10): every card on this page lights up the moment its file lands in <code>assets/sfx/</code>.</p>
+    <p>Verified against the ElevenLabs and Stable Audio docs (v1.1). Full rationale in <code>SFX_BIBLE.md</code> and <code>SFX_PROMPT_SYSTEM.md</code>.</p>
+  </footer>
+</div>
+
+<div id="toast">Copied</div>
+
+<script>
+/* ---- The catalog (mirrors SFX_PROMPT_SYSTEM.md §5) ----
+   t: tool ('EL' ElevenLabs | 'SA' Stable Audio)
+   p: prompt   neg: Stable Audio negative prompt
+   d: duration   loop: true for a looping EL sound   inf: prompt influence
+   pool: round-robin variant count   note: short tip                       */
+var DATA = [
+  /* ===== PRIORITY — build first. Each sound has 3 directions to A/B; pick the one tagged (rec) as default ===== */
+  /* --- driving left/right --- */
+  { g:'Priority', n:'rig-drive · treads (rec)', t:'EL', p:'A heavy tracked mining rig crawling across the ground, close-up, a deep diesel rumble with rhythmic metal track clank and a hydraulic groan, weighty and mechanical, steady and continuous, dry', d:'3 s', loop:true, inf:50, note:'Drive A (CAT dozer / tank tread). Diesel sub + clank gives heft; keep the clank long/randomized so a short loop does not machine-gun.' },
+  { g:'Priority', n:'rig-drive · wheels', t:'EL', p:'A heavy wheeled mining hauler driving over gravel, close-up, a torquey diesel growl with tire and gravel crunch and a faint motor whir, weighty, steady and continuous, dry', d:'3 s', loop:true, inf:50, note:'Drive B (heavy truck / Mars rover). Sample more speed points so it is not a fake 4-note loop.' },
+  { g:'Priority', n:'rig-drive · hover', t:'EL', p:'A hovering mining rig gliding across the ground, close-up, a smooth tonal repulsor hum with a soft airy whoosh underneath, clean and steady, continuous, dry', d:'3 s', loop:true, inf:50, note:'Drive C (sci-fi anti-grav). Add a low growl + slow wobble so a pure tone does not fatigue.' },
+  /* --- drilling dirt --- */
+  { g:'Priority', n:'drill-dirt · auger (rec)', t:'EL', p:'A heavy auger drill boring through soft soil, close-up, a steady granular grinding churn with a low spiraling motor whir, dull and muffled, steady and continuous, dry', d:'3 s', loop:true, inf:55, note:'Dirt A. Notch any 2-5 kHz whine (the fatigue band).' },
+  { g:'Priority', n:'drill-dirt · TBM', t:'EL', p:'A massive tunnel-boring machine grinding through dirt, close-up, a deep low rumble with a soft sandy churn, weighty and felt, steady and continuous, dry', d:'3 s', loop:true, inf:55, note:'Dirt B. Carry a quiet mid so it is not all-sub on laptop speakers.' },
+  { g:'Priority', n:'drill-dirt · pneumatic', t:'EL', p:'A pneumatic drill chewing through soft soil, close-up, a fast muffled rhythmic chugging with soft thuds, steady and continuous, dry', d:'3 s', loop:true, inf:55, note:'Dirt C. Percussive = most fatiguing; low-pass and slow the rate.' },
+  /* --- drilling stone --- */
+  { g:'Priority', n:'drill-stone · auger (rec)', t:'EL', p:'A heavy auger drill grinding into solid rock, close-up, a gritty mid-range grinding churn with a spiraling motor whir, hard and dense, steady and continuous, dry', d:'3 s', loop:true, inf:55, note:'Stone A. Brighter and grittier than the dirt version; same machine, harder body.' },
+  { g:'Priority', n:'drill-stone · TBM', t:'EL', p:'A massive tunnel-boring machine cutting through bedrock, close-up, a deep swelling rumble with a gritty mid bite and rhythmic cutter chatter, weighty, steady and continuous, dry', d:'3 s', loop:true, inf:55, note:'Stone B. Rumble swells into rock vs the softer dirt rumble.' },
+  { g:'Priority', n:'drill-stone · pneumatic', t:'EL', p:'A pneumatic hammer-drill breaking into hard rock, close-up, a fast rhythmic percussive grinding with sharp gritty taps, hard, steady and continuous, dry', d:'3 s', loop:true, inf:55, note:'Stone C. Sharpest and most fatiguing; low-pass the 2-4 kHz ring.' },
+  /* --- idle engine hum --- */
+  { g:'Priority', n:'rig-hum · transformer (rec)', t:'EL', p:'A deep electrical transformer hum, close-up, a low pitched drone with a buzzy harmonic stack, constant and tonal, no airflow, dry', d:'4 s', loop:true, inf:55, note:'Hum B. Safest after the airy rejection: no airflow to turn hissy. Fundamental ~100 Hz.' },
+  { g:'Priority', n:'rig-hum · electric', t:'EL', p:'A steady low electric motor hum, close-up, a single sustained pitched tone with one quiet upper harmonic, smooth and tonal, constant, dry', d:'4 s', loop:true, inf:55, note:'Hum A (EV motor). Most prone to shaver-whine; keep the tone LOW and singular.' },
+  { g:'Priority', n:'rig-hum · diesel idle', t:'EL', p:'A heavy diesel engine idling slowly, close-up, a deep chugging pulse over a low tonal body, warm and mechanical, constant, dry', d:'4 s', loop:true, inf:55, note:'Hum C. Drop any intake-hiss layer at idle so it stays felt, not hissy.' },
+  /* --- jet engines flying --- */
+  { g:'Priority', n:'jet-fly · turbine (rec)', t:'EL', p:'A turbine jet engine in steady flight, close-up, a tonal spooling whine over an airy roar, smooth and powerful, steady and continuous, dry', d:'3 s', loop:true, inf:50, note:'Jet B. The spool pitch-rides throttle (satisfying). Keep the tone low-mid so long holds do not pierce.' },
+  { g:'Priority', n:'jet-fly · rocket', t:'EL', p:'A powerful rocket jetpack thrusting, close-up, a broadband roaring rumble with dense crackle and surging power, weighty, steady and continuous, dry', d:'3 s', loop:true, inf:50, note:'Jet A. Most powerful but most fatiguing; watch the lows in a 2D mix.' },
+  { g:'Priority', n:'jet-fly · repulsor', t:'EL', p:'An air-thruster flight pack, close-up, an airy filtered whoosh with a soft tonal stutter and a gentle hover hum, clean and light, steady and continuous, dry', d:'3 s', loop:true, inf:50, note:'Jet C. Cleanest and airiest; can read thin for a heavy rig.' },
+  /* --- jet during spin/rotation --- */
+  { g:'Priority', n:'jet-spin · doppler (rec)', t:'EL', p:'A jet engine whooshing past while spinning, close-up, an airy turbine roar whose pitch sweeps up then down like a flyby, dynamic, continuous, dry', d:'3 s', loop:true, inf:50, note:'Spin A. Best wired as an engine layer: map pitch to angular velocity. Most legible as rotation.' },
+  { g:'Priority', n:'jet-spin · vector sweep', t:'EL', p:'A jet thruster sweeping and banking through the air, close-up, a broadband thrust roar with a filtered air-rush and a faint servo, swirling, continuous, dry', d:'3 s', loop:true, inf:50, note:'Spin B. Pan + low-pass by heading; keep it subtle and mono-safe.' },
+  { g:'Priority', n:'jet-spin · gyro whine', t:'EL', p:'A spinning gyroscopic whine rising over a jet, close-up, a clean tonal whine with a slight tremolo rising with the spin, layered, continuous, dry', d:'3 s', loop:true, inf:50, note:'Spin C. A faint sweetener under the jet; keep quiet and detuned, gated behind real spin.' },
+  /* --- underground horizontal air pulse --- */
+  { g:'Priority', n:'air-pulse · vent pop (rec)', t:'EL', p:'A clean pulse-thruster vent, close-up, a quick rounded "whoomph" with a soft airy body and a tuned low pop, dry', d:'0.5 s', loop:false, inf:50, pool:6, note:'Pulse C. Survives rapid tapping best; vary pitch +/-10%, pool 6-8.' },
+  { g:'Priority', n:'air-pulse · pssh burst', t:'EL', p:'A sharp burst of compressed air, close-up, a quick bright "ksh" puff with a fast attack and a short tail, dry', d:'0.5 s', loop:false, inf:50, pool:6, note:'Pulse A (Celeste-dash flavor). Band-limit above ~8 kHz + short tails or it grates.' },
+  { g:'Priority', n:'air-pulse · piston', t:'EL', p:'A pneumatic piston firing sideways, close-up, a mechanical "chunk" with a low thump and a short hiss venting off the back, dry', d:'0.5 s', loop:false, inf:50, pool:6, note:'Pulse B (air-brake). Sells the rig; vary the knock pitch so repeats do not lock in.' },
+
+  /* ===== EFFECT ===== */
+  { g:'Effect', n:'drill-spinup', t:'EL', p:'A small electric mining drill motor spinning up to speed, close-up, a quick mechanical whirr that rises in pitch then settles into a steady hum, tight and dry', d:'0.5 s (trim ~0.3 s)', loop:false, inf:55, note:'Add a tiny transient click at the start.' },
+
+  { g:'Effect', n:'drill-grind-ice', t:'EL', p:'A drill cutting through hard ice and permafrost, close-up, a bright brittle glassy grinding churn with fine cracking, steady and continuous, dry', d:'3 s', loop:true, inf:55 },
+  { g:'Effect', n:'drill-grind-crystal', t:'EL', p:'A drill grinding into hard crystal and gemstone, close-up, a resonant ringing grinding churn with a faint shimmer, steady and continuous, dry', d:'3 s', loop:true, inf:55 },
+  { g:'Effect', n:'drill-grind-metal', t:'EL', p:'A drill biting into solid metal ore, close-up, a harsh clanking metallic grinding churn, dense and resistant, steady and continuous, dry', d:'3 s', loop:true, inf:55 },
+  { g:'Effect', n:'drill-grind-obsidian', t:'EL', p:'A drill straining against dense black obsidian, close-up, a hard high-resistance grinding churn with a low strain, steady and continuous, dry', d:'3 s', loop:true, inf:55 },
+
+  { g:'Effect', n:'drill-break-dirt', t:'EL', p:'A clump of dirt breaking and crumbling apart, close-up, a short muffled soft crumble with small falling debris, punchy, dry', d:'0.5 s', loop:false, inf:50, pool:3 },
+  { g:'Effect', n:'drill-break-stone', t:'EL', p:'A rock breaking with a sharp "crack" then a short gritty shatter and small falling stone debris, close-up, punchy, dry', d:'0.7 s', loop:false, inf:50, pool:3, note:'Add a front transient + a 50 Hz sub blip + a debris tail.' },
+  { g:'Effect', n:'drill-break-ice', t:'EL', p:'A block of ice shattering, close-up, a bright tinkling glassy shatter with small ice shards falling, crisp transient, dry', d:'0.7 s', loop:false, inf:50, pool:3 },
+  { g:'Effect', n:'drill-break-crystal', t:'EL', p:'A crystal shattering with a bright ringing "chime", close-up, resonant shards, pretty and sharp, dry', d:'0.8 s', loop:false, inf:50, pool:3 },
+  { g:'Effect', n:'drill-break-metal', t:'EL', p:'A chunk of metal ore breaking free with a heavy metallic "clang" and a low thud, close-up, weighty, dry', d:'0.7 s', loop:false, inf:50, pool:3, note:'Add a sub blip.' },
+  { g:'Effect', n:'drill-break-obsidian', t:'EL', p:'A slab of obsidian breaking with a hard sharp "snap" and a dense crack, close-up, heavy transient, dry', d:'0.7 s', loop:false, inf:50, pool:3, note:'Add a sub blip.' },
+
+  { g:'Effect', n:'drill-bounce', t:'EL', p:'A drill bit bouncing off an impenetrable hard surface, close-up, a dull metallic "clank" with no break, short and blunt, dry', d:'0.5 s (trim ~0.3 s)', loop:false, inf:55, pool:3, note:'Telegraphs: need a better drill or a bomb.' },
+  { g:'Effect', n:'debris', t:'EL', p:'Small pebbles and rock debris scattering and settling on the ground, close-up, a short dry clatter', d:'0.7 s', loop:false, inf:35, pool:4 },
+
+  { g:'Effect', n:'footstep-dirt', t:'EL', p:'A single footstep on soft dirt, close-up, a soft dull thud with faint grit, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:35, pool:4 },
+  { g:'Effect', n:'footstep-grass', t:'EL', p:'A single footstep on grass, close-up, a soft crunchy rustle, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:35, pool:4 },
+  { g:'Effect', n:'footstep-metal', t:'EL', p:'A single footstep on a metal deck, close-up, a light metallic "tap" with a faint ring, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:35, pool:4 },
+
+  { g:'Effect', n:'jetpack-ignite', t:'EL', p:'A small rocket jetpack igniting, close-up, a quick whoosh that ignites and swells into a steady jet, dry', d:'0.6 s', loop:false, inf:55 },
+  { g:'Effect', n:'jetpack-cutoff', t:'EL', p:'A small rocket jetpack cutting out, close-up, a quick decaying whoosh as the jet dies, dry', d:'0.5 s', loop:false, inf:55 },
+
+  { g:'Effect', n:'land-soft', t:'EL', p:'A light landing on the ground, close-up, a soft dull thud, dry', d:'0.5 s (trim ~0.3 s)', loop:false, inf:50, pool:2 },
+  { g:'Effect', n:'land-hard', t:'EL', p:'A heavy landing on the ground, close-up, a solid thud with a short low thump, weighty, dry', d:'0.6 s', loop:false, inf:50, pool:2 },
+  { g:'Effect', n:'land-damage', t:'EL', p:'A hard crashing landing, close-up, a heavy crunching thud with a deep low "boom", painful and weighty, dry', d:'0.8 s', loop:false, inf:50, pool:2, note:'Add a sub blip.' },
+
+  { g:'Effect', n:'fall-wind', t:'EL', p:'Fast wind rushing past while falling quickly, close-up, a continuous airy whoosh, steady and constant, dry', d:'4 s', loop:true, inf:50 },
+
+  { g:'Effect', n:'ore-pickup', t:'EL', p:'A small bright pickup tick, close-up, a short clean sparkle with a tiny atonal shimmer, crisp', d:'0.5 s (trim ~0.2 s)', loop:false, inf:50, pool:4, note:'Noise layer only; the pitched chime is music-side.' },
+  { g:'Effect', n:'cargo-full', t:'EL', p:'A soft negative blip, close-up, a short muted low "buzz" double-tick, gentle, dry', d:'0.5 s (trim ~0.3 s)', loop:false, inf:55 },
+
+  { g:'Effect', n:'bomb-throw', t:'EL', p:'Throwing a small heavy bomb through the air, close-up, a quick whoosh of a tossed object, dry', d:'0.5 s', loop:false, inf:50, pool:2 },
+  { g:'Effect', n:'bomb-fuse', t:'EL', p:'A bomb fuse hissing and sparking, close-up, a steady crackling sizzle, continuous and constant, dry', d:'2 s', loop:true, inf:50 },
+  { g:'Effect', n:'bomb-small', t:'EL', p:'A small explosion, close-up, a sharp punchy blast with a short debris scatter, tight low end, dry', d:'0.9 s', loop:false, inf:50, pool:2, note:'Add a sub blip.' },
+  { g:'Effect', n:'bomb-large', t:'EL', p:'A large powerful explosion, close-up, a sharp crack then a deep booming "whoomph" with a heavy low-frequency punch, then a rumbling tail and falling debris, cinematic, dry', d:'1.8 s', loop:false, inf:50, pool:2, note:'Hero hit: generate transient + body + deep sub + debris tail separately, then combine.' },
+
+  { g:'Effect', n:'rover-deploy', t:'EL', p:'Balloons inflating, close-up, a quick rush of inflation then a soft mechanical release, dry', d:'0.7 s', loop:false, inf:50, pool:2 },
+  { g:'Effect', n:'rover-pop', t:'EL', p:'A balloon popping, close-up, a short sharp "pop" burst, dry', d:'0.5 s (trim ~0.2 s)', loop:false, inf:50, pool:2 },
+
+  { g:'Effect', n:'hull-hit', t:'EL', p:'A metal hull taking a hard impact, close-up, a dull metallic "crunch" with a low thud, dry', d:'0.5 s', loop:false, inf:50, pool:3 },
+  { g:'Effect', n:'teleport', t:'EL', p:'A quick teleport warp, close-up, a rising airy shimmer with a soft electric whoosh that rises then dissolves, clean, dry', d:'0.8 s', loop:false, inf:50 },
+
+  { g:'Effect', n:'liquid-enter', t:'EL', p:'A body entering water with a "splash", close-up, a quick wet splash with bubbles, dry', d:'0.6 s', loop:false, inf:50, pool:2 },
+  { g:'Effect', n:'liquid-exit', t:'EL', p:'Emerging from water, close-up, a wet drip and splash with draining water, dry', d:'0.6 s', loop:false, inf:50, pool:2 },
+  { g:'Effect', n:'lava-sizzle', t:'EL', p:'Molten lava bubbling and sizzling, close-up, a thick continuous bubbling with a faint hot hiss, steady and constant, low, dry', d:'4 s', loop:true, inf:50 },
+
+  { g:'Effect', n:'jello-wobble', t:'EL', p:'A soft jelly blob wobbling, close-up, a short wet bouncy "squelch", playful, dry', d:'0.5 s (trim ~0.3 s)', loop:false, inf:35, pool:3 },
+
+  /* ===== COMBAT + NMZ COURSE — systems are live in-game (085-combat.js / 087-nmz-course.js) but silent; manifest keys land at the next wiring session ===== */
+  { g:'Combat', n:'turret-fire', t:'EL', p:'An automatic defense turret firing a single shot, close-up, a short punchy mechanical "thunk" with a quick muzzle crack, tight and restrained, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:50, pool:3, note:'Auto-fires constantly: keep it small and low-fatigue, never a Hollywood boom. Pitch jitter carries the variety.' },
+  { g:'Combat', n:'enemy-hit', t:'EL', p:'A bullet striking a small metal machine, close-up, a sharp metallic "thwack" with a tiny spark fizz, short, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:50, pool:3, note:'Confirms damage on drones, stingers and turrets.' },
+  { g:'Combat', n:'drone-down', t:'EL', p:'A small hostile drone bursting apart, close-up, a crunchy mechanical "pop" with a brief electrical fizzle and falling parts, dry', d:'0.7 s', loop:false, inf:50, pool:2 },
+  { g:'Combat', n:'stinger-hit', t:'EL', p:'A fast insect-like machine glancing off a metal hull, close-up, a quick sharp scraping "tick" with a light thud, small and mean, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:50, pool:2, note:'The swarm lands many light hits; the heavy receiving hit stays hull-hit.' },
+  { g:'Combat', n:'missile-launch', t:'EL', p:'A small missile launching with a sharp ignition hiss then a rising rocket whoosh trailing away, mid distance, dry', d:'1.2 s', loop:false, inf:50, pool:2, note:'Doubles as the danger telegraph: audible before the hit ever lands.' },
+  { g:'Combat', n:'missile-hit', t:'EL', p:'A missile striking with a hard concussive blast, close-up, a sharp "crack" then a deep punchy "whoomph" with brief falling debris, weighty, dry', d:'1 s', loop:false, inf:50, pool:2, note:'Add a sub blip. Smaller than bomb-large, bigger than bomb-small.' },
+  { g:'Combat', n:'flak-burst', t:'EL', p:'An anti-aircraft flak shell bursting in open air, mid distance, a deep hollow "whump" with a short smoky tail, dry', d:'0.8 s', loop:false, inf:50, pool:3, note:'Vary close to far across the pool.' },
+  { g:'Combat', n:'obstacle-hit', t:'EL', p:'A heavy vehicle slamming into a steel gate, close-up, a deep resonant metal "clang" with a groaning scrape and a low thud, weighty, dry', d:'0.8 s', loop:false, inf:50, pool:2, note:'The world side of a course crash; the rig side fires hull-hit on the same frame.' },
+  { g:'Combat', n:'ring-collect', t:'EL', p:'Flying fast through a hoop of rushing air, close-up, a quick airy "whoosh" with a single bright atonal sparkle rising, clean and satisfying, dry', d:'0.6 s', loop:false, inf:50, pool:2, note:'Boost rings on the NMZ racing line. Atonal framing so it never fights the music key.' },
+
+  /* ===== ZONE (ambience) ===== */
+  { g:'Zone', n:'amb-surface-day', t:'SA', p:'Calm open-air outdoor ambience on a quiet surface, gentle steady wind, faint distant nature, very sparse, seamless', neg:'no music, no melody, no drums, no distortion, no hiss', d:'60 to 90 s', note:'May stay stereo.' },
+  { g:'Zone', n:'amb-surface-night', t:'SA', p:'Quiet cool night-time outdoor ambience, soft low wind, faint crickets and insects, lonely and sparse, seamless', neg:'no music, no melody, no drums, no distortion, no hiss', d:'60 to 90 s', note:'May stay stereo.' },
+  { g:'Zone', n:'amb-shallow', t:'SA', p:'Intimate shallow cave ambience, occasional water drips, faint settling ticks, a low subtle room-tone drone in D minor, very sparse, seamless', neg:'no music, no melody, no drums, no distortion', d:'60 s', note:'Drone keyed to the score.' },
+  { g:'Zone', n:'amb-mid', t:'SA', p:'Deep cave ambience, slow water drips with long tails, distant low rumbles, a low pressure drone in D minor, sparse and tense, seamless', neg:'no music, no melody, no drums, no distortion', d:'60 s' },
+  { g:'Zone', n:'amb-deep', t:'SA', p:'Deep underground cavern ambience, low pressure groans, distant rockfalls, a sustained low drone wash in D minor, lonely and vast, seamless', neg:'no music, no melody, no drums, no distortion', d:'60 s' },
+  { g:'Zone', n:'amb-magma', t:'SA', p:'Deep magma cavern ambience, bubbling lava, a low fire crackle, heat shimmer, an ominous low rumble floor in D minor, hot and dangerous, seamless', neg:'no music, no melody, no drums, no distortion', d:'60 s', note:'The deepest bed; carries the sub.' },
+  { g:'Zone', n:'amb-station', t:'SA', p:'A comforting mechanical station-interior hum, soft machinery, faint electrical buzz, warm and safe, seamless', neg:'no music, no melody, no drums, no distortion', d:'30 to 60 s' },
+  { g:'Zone', n:'amb-rain', t:'SA', p:'Steady rain falling outdoors, even and gentle, soft patter on the ground, calm, seamless', neg:'no music, no melody, no drums, no distortion', d:'60 to 90 s', note:'Surface weather. Needs a weather trigger in-game.' },
+  { g:'Zone', n:'amb-storm', t:'SA', p:'A heavy thunderstorm outdoors, driving rain and gusting wind with distant rolling thunder, dramatic and powerful, seamless', neg:'no music, no melody, no drums, no distortion', d:'60 to 90 s', note:'Surface weather. Needs a weather trigger in-game.' },
+  { g:'Zone', n:'thunder', t:'EL', p:'A clap of thunder, a distant rolling rumble building to a sharp crack, deep and powerful, dry', d:'2 to 3 s', loop:false, inf:40, pool:3, note:'Fired over the storm bed. Vary close to far.' },
+  { g:'Zone', n:'amb-bird', t:'EL', p:'A few birds chirping outdoors, close to mid distance, light natural birdsong, short', d:'1 to 2 s', loop:false, inf:35, pool:5, note:'Daytime surface emitter.' },
+
+  { g:'Zone', n:'amb-oneshot-drip', t:'EL', p:'A single water drop falling and echoing in a cave, mid distance, a wet "plink" with a faint reverberant tail', d:'1 to 2 s', loop:false, inf:35, note:'Sparse emitter pool; fires every 8 to 15 s.' },
+  { g:'Zone', n:'amb-oneshot-settle', t:'EL', p:'Small rocks and dirt settling in a cave, distant, a faint short trickle', d:'1 to 2 s', loop:false, inf:35 },
+  { g:'Zone', n:'amb-oneshot-creak', t:'EL', p:'A low structural creak deep in rock, distant, an ominous groan', d:'1 to 2 s', loop:false, inf:35 },
+  { g:'Zone', n:'amb-oneshot-rockfall', t:'EL', p:'A distant rockfall in a cavern, far away, a muffled tumbling rumble', d:'1 to 2 s', loop:false, inf:35 },
+  { g:'Zone', n:'amb-oneshot-groan', t:'EL', p:'A deep eerie groan echoing through deep rock, distant, a low moaning resonance, unsettling', d:'1 to 2 s', loop:false, inf:35, note:'The eerie-depths one-shot.' },
+  { g:'Zone', n:'amb-oneshot-pebble', t:'EL', p:'A single small pebble dropping and bouncing on cave stone, mid distance, a faint dry "tik" with a tiny echoing tail', d:'1 to 2 s', loop:false, inf:35 },
+  { g:'Zone', n:'amb-oneshot-metal-tick', t:'EL', p:'A faint metallic tick of cooling machinery deep underground, distant, a single soft "tink" with a short tail', d:'1 to 2 s', loop:false, inf:35 },
+  { g:'Zone', n:'amb-oneshot-air-hiss', t:'EL', p:'A faint breath of air hissing through a rock crevice, distant, a soft airy sigh that swells and fades', d:'1 to 2 s', loop:false, inf:35 },
+
+  /* ===== INTERFACE (UI) ===== */
+  { g:'Interface', n:'ui-open', t:'EL', p:'A low mechanical "thunk" of a heavy panel opening, close-up, a single soft dull clunk, clean, dry', d:'0.5 s (trim ~0.25 s)', loop:false, inf:55, note:'Reused, pitched down ~2 semitones, for close.' },
+  { g:'Interface', n:'ui-confirm', t:'EL', p:'A sharp clean confirmation "tink", close-up, a short bright metallic tick, crisp, clean, dry', d:'0.5 s (trim ~0.15 s)', loop:false, inf:55 },
+  { g:'Interface', n:'ui-denied', t:'EL', p:'A soft negative error blip, close-up, a short muted low "buzz" double-tone, gentle, clean', d:'0.5 s (trim ~0.25 s)', loop:false, inf:55 },
+  { g:'Interface', n:'sell-tick', t:'EL', p:'A small bright coin register "tick", close-up, a short clean metallic blip, satisfying, dry', d:'0.5 s (trim ~0.12 s)', loop:false, inf:50, pool:4, note:'Auto-sell count-up; pitch-climbs with the count.' },
+  { g:'Interface', n:'fuel-fill', t:'EL', p:'Fuel pumping and filling a tank, close-up, a steady liquid flow with a soft pump hum, continuous and constant, dry', d:'3 s', loop:true, inf:50, note:'Auto-sell tank fill; runs while the haul sells.' },
+  { g:'Interface', n:'sell-total', t:'EL', p:'A satisfying register chime as a sale completes, close-up, a bright pleasant ding with a soft coin ring, clean, dry', d:'0.8 s', loop:false, inf:50, note:'The final flourish after the per-ore ticks.' },
+
+  /* ===== AFFECT (emotional cues) ===== */
+  { g:'Affect', n:'alert-fuel', t:'EL', p:'A calm low warning tone for low fuel, close-up, a short soft pulsing electronic beep, clear but not alarming, clean', d:'0.6 s', loop:false, inf:55, note:'Always paired with a visual twin.' },
+  { g:'Affect', n:'alert-hull', t:'EL', p:'An urgent warning tone for damage, close-up, a short tense electronic double-beep, clear, clean', d:'0.6 s', loop:false, inf:55, note:'Always paired with a visual twin.' },
+  { g:'Affect', n:'danger-sting', t:'EL', p:'A short tense danger sting, close-up, a low atonal swell with a sharp accent, dissonant and ominous, dry', d:'1 s', loop:false, inf:50, note:'Foley accent; melodic tension is the music combat layer.' },
+  { g:'Affect', n:'depth-record', t:'EL', p:'A subtle low confirming hit marking a new depth, close-up, a soft deep resonant thump with a slow atonal decay, understated, dry', d:'1 s', loop:false, inf:50 },
+  { g:'Affect', n:'discovery', t:'EL', p:'A short reveal shimmer for discovering something rare, close-up, a soft sparkling atonal rise, clean', d:'0.8 s', loop:false, inf:50, note:'Noise layer only; the reveal chord is music-side.' }
+];
+
+var GROUP_DESC = {
+  'Priority':  'Build these first. Each of the most-heard sounds has 3 directions (A/B/C) to generate and compare; the one tagged (rec) is the default. Audition them in-game over the music, fired on repeat at the real cadence, fatigue picks the winner, not the flashiest single play.',
+  'Effect':    'Diegetic player and world actions. The drill is the flagship; everything repeated ships as a pool.',
+  'Combat':    'Combat + the No Man\'s Zone course. The systems are live in-game (turrets, drones, stingers, missiles, flak, gates, boost rings) and every key + call site is wired, panned by screen X. Each file fires in-game the moment it lands.',
+  'Zone':      'The ambience bed. Stable Audio for the long beds (with a Negative field), ElevenLabs for the sparse one-shot emitter.',
+  'Interface': 'UI feedback. Deliberately tiny and restrained.',
+  'Affect':    'Emotional, non-physical cues. Each one also has a visual twin in-game.'
+};
+var GROUPS = ['Priority','Effect','Combat','Zone','Interface','Affect'];
+
+var listEl = document.getElementById('list');
+var searchEl = document.getElementById('search');
+var countEl = document.getElementById('count');
+var chipsEl = document.getElementById('chips');
+var toastEl = document.getElementById('toast');
+var activeGroup = 'All';
+var query = '';
+var toastTimer = null;
+
+/* build filter chips */
+['All'].concat(GROUPS).forEach(function (g) {
+  var c = document.createElement('span');
+  c.className = 'chip' + (g === 'All' ? ' active' : '');
+  c.textContent = g;
+  c.onclick = function () {
+    activeGroup = g;
+    Array.prototype.forEach.call(chipsEl.children, function (x) { x.classList.remove('active'); });
+    c.classList.add('active');
+    render();
+  };
+  chipsEl.appendChild(c);
+});
+
+searchEl.addEventListener('input', function () { query = this.value.trim().toLowerCase(); render(); });
+
+function copyText(text, btn, label) {
+  function ok() {
+    if (btn) { btn.classList.add('done'); btn.textContent = 'Copied'; setTimeout(function () { btn.classList.remove('done'); btn.textContent = btn.dataset.lbl || 'Copy'; }, 1100); }
+    showToast('Copied  ' + label);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok, function () { fallback(text); ok(); });
+  } else { fallback(text); ok(); }
+}
+function fallback(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1400);
+}
+
+/* Save-as filenames. Standard cards are named by their js/audio.js SFX_MANIFEST
+   key (pool N -> key_1.m4a .. key_N.m4a). Priority A/B/C directions share ONE
+   winner file; every key below is live in the engine manifest. */
+var PRIORITY_FILE = {
+  'rig-drive':   { f: 'rig-drive.m4a' },
+  'drill-dirt':  { f: 'drill-grind-dirt.m4a' },
+  'drill-stone': { f: 'drill-grind-stone.m4a' },
+  'rig-hum':     { f: 'rig-hum.m4a' },
+  'jet-fly':     { f: 'jetpack-loop.m4a' },
+  'jet-spin':    { f: 'jet-spin.m4a' },
+  'air-pulse':   { f: 'air-pulse_1.m4a' }
+};
+function fileFor(item) {
+  var base = item.n.split(' · ')[0];
+  if (PRIORITY_FILE[base]) return PRIORITY_FILE[base];
+  return { f: item.n + (item.pool ? '_1.m4a' : '.m4a'), tba: !!item.tba };
+}
+
+function makeCard(item) {
+  var card = document.createElement('div');
+  card.className = 'card';
+  var ff = fileFor(item);
+
+  var head = document.createElement('div');
+  head.className = 'card-head';
+  var name = document.createElement('span');
+  name.className = 'name'; name.textContent = item.n;
+  head.appendChild(name);
+  var badges = document.createElement('span');
+  badges.className = 'badges';
+  var tool = document.createElement('span');
+  tool.className = 'badge ' + (item.t === 'SA' ? 'sa' : 'el');
+  tool.textContent = item.t === 'SA' ? 'Stable Audio' : 'ElevenLabs';
+  badges.appendChild(tool);
+  if (item.loop) { var lb = document.createElement('span'); lb.className = 'badge loop'; lb.textContent = 'Loop'; badges.appendChild(lb); }
+  if (item.pool) { var pb = document.createElement('span'); pb.className = 'badge pool'; pb.textContent = 'pool ' + item.pool; badges.appendChild(pb); }
+  if (ff.tba) { var tb = document.createElement('span'); tb.className = 'badge tba'; tb.textContent = 'key TBA'; badges.appendChild(tb); }
+  head.appendChild(badges);
+  card.appendChild(head);
+
+  card.appendChild(promptBox('Prompt', item.p, false, item.n));
+  if (item.neg) card.appendChild(promptBox('Negative', item.neg, true, item.n + ' negative'));
+
+  var set = document.createElement('div');
+  set.className = 'settings';
+  set.appendChild(pill(item.d));
+  if (item.t === 'EL') { set.appendChild(pill(item.loop ? 'Loop ON' : 'Loop OFF')); if (item.inf != null) set.appendChild(pill('Influence ' + item.inf)); }
+  else { set.appendChild(pill('seamless')); set.appendChild(pill('mono')); }
+  card.appendChild(set);
+
+  if (ff.f) {
+    var fl = document.createElement('div'); fl.className = 'fileline';
+    var flbl = document.createElement('span'); flbl.className = 'flbl';
+    flbl.textContent = (item.g === 'Priority' ? 'Save winner as' : 'Save as');
+    fl.appendChild(flbl);
+    var fc = document.createElement('code');
+    fc.textContent = ff.f + (item.pool && item.pool > 1 ? '  ..  ' + ff.f.replace('_1.m4a', '_' + item.pool + '.m4a') : '');
+    fl.appendChild(fc);
+    var fb = document.createElement('button'); fb.className = 'copy2'; fb.textContent = 'Copy'; fb.dataset.lbl = 'Copy';
+    fb.onclick = function () { copyText(ff.f, fb, ff.f); };
+    fl.appendChild(fb);
+    card.appendChild(fl);
+  }
+
+  if (item.note) { var n = document.createElement('p'); n.className = 'note'; n.textContent = item.note; card.appendChild(n); }
+  return card;
+}
+
+function promptBox(label, text, isNeg, copyLabel) {
+  var box = document.createElement('div');
+  box.className = 'promptbox' + (isNeg ? ' neg' : '');
+  var lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = label; box.appendChild(lbl);
+  var code = document.createElement('code'); code.className = 'prompt'; code.textContent = text; box.appendChild(code);
+  var btn = document.createElement('button');
+  btn.className = 'copy'; btn.textContent = isNeg ? 'Copy' : 'Copy'; btn.dataset.lbl = 'Copy';
+  btn.onclick = function () { copyText(text, btn, copyLabel); };
+  box.appendChild(btn);
+  return box;
+}
+
+function pill(txt) { var s = document.createElement('span'); s.className = 'pill'; s.textContent = txt; return s; }
+
+function render() {
+  listEl.innerHTML = '';
+  var shown = 0;
+  GROUPS.forEach(function (g) {
+    if (activeGroup !== 'All' && activeGroup !== g) return;
+    var items = DATA.filter(function (it) {
+      if (it.g !== g) return false;
+      if (!query) return true;
+      return (it.n + ' ' + it.p + ' ' + (it.neg || '') + ' ' + (it.note || '')).toLowerCase().indexOf(query) !== -1;
+    });
+    if (!items.length) return;
+    var h = document.createElement('div'); h.className = 'group-h'; h.textContent = g + '  (' + items.length + ')';
+    var d = document.createElement('p'); d.className = 'group-d'; d.textContent = GROUP_DESC[g];
+    listEl.appendChild(h); listEl.appendChild(d);
+    var grid = document.createElement('div'); grid.className = 'grid';
+    items.forEach(function (it) { grid.appendChild(makeCard(it)); shown++; });
+    listEl.appendChild(grid);
+  });
+  if (!shown) { var e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No sounds match "' + query + '".'; listEl.appendChild(e); }
+  countEl.textContent = shown + ' of ' + DATA.length + ' sounds';
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No Man's Land — Caution Banner Lab</title>
+<style>
+  :root{
+    --bg:#0e0a07; --ink:#e6d5a8; --dim:#8a7c5e; --line:#2c2014;
+    --mono:'Commit Mono', ui-monospace, Consolas, monospace;
+  }
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--mono)}
+  #wrap{display:flex;flex-direction:column;height:100vh}
+  header{padding:10px 16px 6px;border-bottom:1px solid var(--line)}
+  header h1{margin:0;font-size:15px;letter-spacing:1px;font-weight:700}
+  header p{margin:3px 0 0;font-size:11px;color:var(--dim)}
+  #stage{flex:1;position:relative;min-height:0}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
+  footer{display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--line);font-size:11px}
+  .ctl{display:flex;align-items:center;gap:7px}
+  label{color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+  input[type=range]{width:150px;accent-color:#c8341c}
+  button{font-family:var(--mono);font-size:11px;background:#1a130c;color:var(--ink);border:1px solid var(--line);padding:4px 9px;border-radius:3px;cursor:pointer}
+  button.on{background:#3a1408;border-color:#8a1a10;color:#e9b54a}
+  #read{margin-left:auto;color:var(--dim)}
+  b{color:#e9b54a}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <h1>NO MAN'S LAND — CAUTION BANNER LAB</h1>
+    <p>Four styles of wind-blown warning banner for the No Man's Zone entrances. Pick a vibe; it gets placed at every town&rarr;zone boundary, flapping on the live <b>surfaceWind</b>.</p>
+  </header>
+  <div id="stage"><canvas id="c"></canvas></div>
+  <footer>
+    <div class="ctl"><label>wind</label><input id="wind" type="range" min="-100" max="100" value="35"><span id="windv" style="color:var(--ink);width:34px;display:inline-block"></span></div>
+    <div class="ctl"><button id="gust" class="on">auto-gust</button></div>
+    <div class="ctl"><button id="night">night</button></div>
+    <div class="ctl"><button id="freeze">freeze</button></div>
+    <div id="read">drag the wind slider &middot; auto-gust storms it up</div>
+  </footer>
+</div>
+<script>
+"use strict";
+/* ===================================================================
+   No Man's Land caution-banner chooser. Standalone, no deps.
+   Frontier-Soviet palette (BLD) + the game's surfaceWind model. The
+   fabric is authored at world-pixel resolution then blitted in 1-px
+   slices with smoothing off, so the cloth stays chunky pixel art while
+   it ripples. Owner picks one; the winner ports into js/sluice/.
+   =================================================================== */
+
+/* ---- BLD palette (mirror of the in-game constant) ---- */
+var BLD = {
+  outline:'#1a0a05',
+  woodDeep:'#2c1408', woodDark:'#6e3719', woodBase:'#a0533a', woodMid:'#b96b48', woodLight:'#d68a5a', woodPale:'#e9a87a',
+  stoneDark:'#3a3834', stoneBase:'#5a5854', stoneLight:'#8a8884', stonePale:'#b0aea8',
+  metalDark:'#1f2933', metalBase:'#4a5560', metalLight:'#7a8590', metalPale:'#a4afba',
+  goldDark:'#8a6320', goldBase:'#c98e2a', goldBright:'#e9b54a', goldPale:'#f5d680',
+  redDeep:'#5a1108', redDark:'#8a1a10', redBase:'#c8341c', redBright:'#e85c40',
+  warmGlow:'#fbc55a', cream:'#e6d5a8'
+};
+
+var cv = document.getElementById('c');
+var ctx = cv.getContext('2d');
+var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+var W = 0, H = 0;
+function resize(){
+  var st = document.getElementById('stage');
+  W = st.clientWidth; H = st.clientHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+}
+window.addEventListener('resize', resize);
+
+/* ---- controls ---- */
+var ui = {
+  windSlider: document.getElementById('wind'),
+  windv: document.getElementById('windv'),
+  gust: document.getElementById('gust'),
+  night: document.getElementById('night'),
+  freeze: document.getElementById('freeze')
+};
+var state = { auto:true, night:false, frozen:false };
+ui.gust.onclick = function(){ state.auto = !state.auto; ui.gust.classList.toggle('on', state.auto); };
+ui.night.onclick = function(){ state.night = !state.night; ui.night.classList.toggle('on', state.night); };
+ui.freeze.onclick = function(){ state.frozen = !state.frozen; ui.freeze.classList.toggle('on', state.frozen); };
+
+/* ---- wind model (matches surfaceWind: current lerps to target, flutter accumulates) ---- */
+var wind = { current:0.35, target:0.35, t:2, flutter:0 };
+function updateWind(dt){
+  if (state.auto){
+    wind.t -= dt;
+    if (wind.t <= 0){ wind.target = (Math.random()*1.7 - 0.85); wind.t = 1.4 + Math.random()*3.2; }
+  } else {
+    wind.target = parseFloat(ui.windSlider.value) / 100;
+  }
+  var k = 1 - Math.exp(-0.7 * dt);
+  wind.current += (wind.target - wind.current) * k;
+  wind.flutter += dt * (3 + Math.abs(wind.current) * 3.2);
+  if (state.auto) ui.windSlider.value = Math.round(wind.current * 100);
+  ui.windv.textContent = wind.current.toFixed(2);
+}
+
+/* ================================================================
+   Pixel-art texture helpers (author in world px on an offscreen).
+   ================================================================ */
+function makeTex(w, h){
+  var t = document.createElement('canvas'); t.width = w; t.height = h;
+  var g = t.getContext('2d'); g.imageSmoothingEnabled = false;
+  return { c:t, g:g, w:w, h:h };
+}
+function px(g, x, y, w, h, col){ g.fillStyle = col; g.fillRect(x|0, y|0, w|0, h|0); }
+function outlineRect(g, x, y, w, h, col){
+  g.fillStyle = col || BLD.outline;
+  g.fillRect(x, y, w, 1); g.fillRect(x, y+h-1, w, 1);
+  g.fillRect(x, y, 1, h); g.fillRect(x+w-1, y, 1, h);
+}
+// hazard stripe band (gold / black), like drawHazardStripes
+function hazardBand(g, x, y, w, h){
+  for (var hx = -8; hx < w + 8; hx += 8){
+    px(g, x+hx,   y, 4, h, BLD.goldBase);
+    px(g, x+hx+4, y, 4, h, BLD.outline);
+  }
+}
+// small 5-point star
+function starPath(g, cx, cy, r){
+  g.beginPath();
+  for (var i=0;i<10;i++){
+    var ang = -Math.PI/2 + i*Math.PI/5;
+    var rr = (i%2===0)? r : r*0.42;
+    var xx = cx + Math.cos(ang)*rr, yy = cy + Math.sin(ang)*rr;
+    if (i===0) g.moveTo(xx,yy); else g.lineTo(xx,yy);
+  }
+  g.closePath();
+}
+function star(g, cx, cy, r, fill, edge){
+  starPath(g, cx, cy, r);
+  g.lineJoin='round'; g.lineWidth=1.6; g.strokeStyle = edge||BLD.outline; g.stroke();
+  g.fillStyle = fill||BLD.redBase; g.fill();
+}
+// hazard triangle with exclamation
+function hazTriangle(g, cx, cy, r){
+  g.beginPath();
+  g.moveTo(cx, cy-r); g.lineTo(cx+r*0.92, cy+r*0.72); g.lineTo(cx-r*0.92, cy+r*0.72); g.closePath();
+  g.fillStyle = BLD.goldBase; g.fill();
+  g.lineWidth = Math.max(1.5, r*0.16); g.lineJoin='round'; g.strokeStyle = BLD.outline; g.stroke();
+  // bang
+  px(g, cx-0.5, cy-r*0.38, Math.max(1,r*0.18), r*0.62, BLD.outline);
+  px(g, cx-0.5, cy+r*0.42, Math.max(1,r*0.18), Math.max(1,r*0.18), BLD.outline);
+}
+// blocky skull (cream on dark), reads at small size
+function skull(g, x, y, s){
+  var O=BLD.outline, C=BLD.cream, D='#b9a877';
+  // head
+  px(g, x+s, y, 5*s, s, O); px(g, x, y+s, s, 4*s, O); px(g, x+6*s, y+s, s, 4*s, O);
+  px(g, x+s, y+5*s, s, s, O); px(g, x+5*s, y+5*s, s, s, O);
+  px(g, x+s, y+s, 5*s, 4*s, C);
+  // jaw
+  px(g, x+2*s, y+5*s, 3*s, s, C); px(g, x+2*s, y+6*s, s, s, C); px(g, x+4*s, y+6*s, s, s, C);
+  // eyes + nose
+  px(g, x+2*s, y+2*s, s, s, O); px(g, x+4*s, y+2*s, s, s, O);
+  px(g, x+3*s, y+3*s, s, s, O);
+  px(g, x+1.5*s, y+1.5*s, s, s, D);
+}
+
+/* ----- iron post (rigid support) ----- */
+function drawPost(x, groundY, topY){
+  var w = 8, h = groundY - topY;
+  px(ctx, x, topY, w, h, BLD.metalBase);
+  px(ctx, x, topY, 2, h, BLD.metalLight);
+  px(ctx, x+w-2, topY, 2, h, BLD.metalDark);
+  outlineRect(ctx, x, topY, w, h, BLD.outline);
+  // bolts
+  for (var by = topY+5; by < groundY-3; by += 14){
+    px(ctx, x+3, by, 2, 2, BLD.metalPale);
+  }
+  // base flange
+  px(ctx, x-3, groundY-4, w+6, 4, BLD.metalBase); outlineRect(ctx, x-3, groundY-4, w+6, 4, BLD.outline);
+  // little red-star plaque near top
+  star(ctx, x+w/2, topY+8, 3.4, BLD.redBase, BLD.outline);
+}
+
+/* ================================================================
+   Sliced blitters — keep the texture pixelated while it ripples.
+   blitV: slice along WIDTH, offset each column in Y (strung banner).
+   blitH: slice along HEIGHT, offset each row in X (vertical flags).
+   ================================================================ */
+function blitV(tex, dx, dy, z, opts){
+  var Wt = tex.w, Ht = tex.h;
+  for (var sx=0; sx<Wt; sx++){
+    var u = Wt>1 ? sx/(Wt-1) : 0;
+    var off = opts.yoff(u);
+    var hsc = opts.hscale ? opts.hscale(u) : 1;
+    var sh = Ht*z*hsc;
+    var ddy = Math.round(dy + off - (sh - Ht*z)/2);
+    var ddx = Math.round(dx + sx*z);
+    ctx.drawImage(tex.c, sx,0,1,Ht, ddx, ddy, z, sh);
+    var sh2 = opts.shade ? opts.shade(u) : 0;
+    if (sh2 !== 0){
+      ctx.globalAlpha = Math.min(0.42, Math.abs(sh2));
+      ctx.fillStyle = sh2 > 0 ? BLD.warmGlow : '#000';
+      ctx.fillRect(ddx, ddy, z, sh);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+function blitH(tex, dx, dy, z, opts){
+  var Wt = tex.w, Ht = tex.h;
+  for (var sy=0; sy<Ht; sy++){
+    var f = Ht>1 ? sy/(Ht-1) : 0;
+    var off = opts.xoff(f);
+    var wsc = opts.wscale ? opts.wscale(f) : 1;
+    var sw = Wt*z*wsc;
+    var ddx = Math.round(dx + off - (sw - Wt*z)/2);
+    var ddy = Math.round(dy + sy*z);
+    ctx.drawImage(tex.c, 0,sy,Wt,1, ddx, ddy, sw, z);
+    var sh2 = opts.shade ? opts.shade(f) : 0;
+    if (sh2 !== 0){
+      ctx.globalAlpha = Math.min(0.42, Math.abs(sh2));
+      ctx.fillStyle = sh2 > 0 ? BLD.warmGlow : '#000';
+      ctx.fillRect(ddx, ddy, sw, z);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+/* ================================================================
+   Texture builders (built once).
+   ================================================================ */
+function fitText(g, txt, maxW, base){
+  var s = base;
+  do { g.font = '700 ' + s + 'px ' + "'Commit Mono', monospace"; if (g.measureText(txt).width <= maxW) break; s--; } while (s > 6);
+  return s;
+}
+function stencilText(g, txt, cx, y, size, fill){
+  g.textAlign='center'; g.textBaseline='top';
+  g.font = '700 ' + size + 'px ' + "'Commit Mono', monospace";
+  g.fillStyle = BLD.outline;
+  for (var ox=-1; ox<=1; ox++) for (var oy=-1; oy<=1; oy++) if (ox||oy) g.fillText(txt, cx+ox, y+oy);
+  g.fillStyle = fill; g.fillText(txt, cx, y);
+}
+
+// B — strung horizontal warning banner
+function buildStrung(){
+  var t = makeTex(108, 34), g = t.g;
+  // cloth field
+  var grad = g.createLinearGradient(0,0,0,t.h);
+  grad.addColorStop(0, BLD.redBase); grad.addColorStop(1, BLD.redDark);
+  g.fillStyle = grad; g.fillRect(0,0,t.w,t.h);
+  // hazard bands top + bottom
+  hazardBand(g, 0, 0, t.w, 5);
+  hazardBand(g, 0, t.h-5, t.w, 5);
+  // cream inner keyline
+  g.strokeStyle = BLD.cream; g.lineWidth = 1; g.strokeRect(3.5, 6.5, t.w-7, t.h-13);
+  // text
+  stencilText(g, 'ОПАСНО', t.w/2, 8, fitText(g,'ОПАСНО',t.w-30,11), BLD.cream);
+  stencilText(g, 'НИЧЕЙНАЯ ЗЕМЛЯ', t.w/2, 20, fitText(g,'НИЧЕЙНАЯ ЗЕМЛЯ',t.w-24,9), BLD.goldBright);
+  // flanking skulls
+  skull(g, 6, 12, 1); skull(g, t.w-13, 12, 1);
+  outlineRect(g, 0, 0, t.w, t.h, BLD.outline);
+  return t;
+}
+
+// A — caution blade flag (wide hazard sail)
+function buildFeather(){
+  var t = makeTex(30, 96), g = t.g;
+  // bright caution-yellow field, rounded top
+  g.fillStyle = BLD.goldBright; g.fillRect(0, 6, t.w, t.h-6);
+  g.beginPath(); g.moveTo(0,6); g.quadraticCurveTo(t.w/2,-3, t.w,6); g.closePath(); g.fill();
+  // diagonal black hazard stripes (caution-tape), yellow-dominant
+  g.save(); g.beginPath(); g.rect(0,0,t.w,t.h); g.clip();
+  g.fillStyle = BLD.outline;
+  var period=17, blackW=6;
+  for (var d=-t.h; d<t.w+t.h; d+=period){
+    g.beginPath(); g.moveTo(d,0); g.lineTo(d+blackW,0); g.lineTo(d+blackW-t.h,t.h); g.lineTo(d-t.h,t.h); g.closePath(); g.fill();
+  }
+  g.restore();
+  // shaded leading edge (pole side) + lit trailing
+  g.globalAlpha=0.45; px(g, 0, 6, 3, t.h-6, BLD.goldDark);
+  g.globalAlpha=0.40; px(g, t.w-3, 6, 3, t.h-6, BLD.goldPale);
+  g.globalAlpha=1;
+  // yellow warning-triangle medallion near the top, on a dark disc
+  g.fillStyle = BLD.outline; g.beginPath(); g.arc(t.w/2, 18, 11, 0, Math.PI*2); g.fill();
+  hazTriangle(g, t.w/2, 18, 8);
+  outlineRect(g, 0, 6, t.w, t.h-6, BLD.outline);
+  // top edge outline (curved) approx
+  px(g, 0,5,t.w,1, BLD.outline);
+  return t;
+}
+
+// D — hung military war-drop panel
+function buildWarDrop(seed){
+  var t = makeTex(28, 86), g = t.g;
+  g.fillStyle = BLD.redDark; g.fillRect(0,0,t.w,t.h);
+  // vertical cream borders
+  px(g, 2,0,2,t.h, BLD.cream); px(g, t.w-4,0,2,t.h, BLD.cream);
+  // hazard band under the bar
+  hazardBand(g, 0, 0, t.w, 5);
+  // big hazard triangle mid
+  hazTriangle(g, t.w/2, 30, 9);
+  // star above triangle
+  star(g, t.w/2, 14, 4.5, BLD.redBase, BLD.cream);
+  // stenciled word low
+  stencilText(g, 'ЗОНА', t.w/2, 46, 8, BLD.cream);
+  stencilText(g, 'БОЯ', t.w/2, 56, 8, BLD.goldBright);
+  // tattered bottom — erase a jagged edge
+  g.clearRect(0, t.h-8, t.w, 8);
+  for (var x=0; x<t.w; x+=2){
+    var tear = 8 - ((Math.sin(x*1.7+ (seed||0)) * 0.5 + 0.5) * 7);
+    g.fillStyle = BLD.redDark; g.fillRect(x, t.h-8, 2, tear);
+    g.fillStyle = BLD.redDeep; g.fillRect(x, t.h-8+tear-1, 2, 1);
+  }
+  outlineRect(g, 0, 0, t.w, t.h-7, BLD.outline);
+  return t;
+}
+
+// C — pennant flags (alternating designs), each tiny triangle
+function buildPennant(kind){
+  var t = makeTex(16, 20), g = t.g;
+  g.beginPath(); g.moveTo(0,0); g.lineTo(t.w,0); g.lineTo(t.w/2,t.h); g.closePath();
+  if (kind===0){ g.fillStyle = BLD.redBase; g.fill(); star(g, t.w/2, 7, 4, BLD.cream, BLD.outline); }
+  else if (kind===1){ g.save(); g.clip(); hazardBand(g, 0,0,t.w,t.h); g.restore(); }
+  else { g.fillStyle = BLD.cream; g.fill(); g.fillStyle=BLD.redBase; g.beginPath(); g.moveTo(3,3); g.lineTo(t.w-3,3); g.lineTo(t.w/2,t.h-3); g.closePath(); g.fill(); }
+  g.lineJoin='round'; g.lineWidth=1.4; g.strokeStyle=BLD.outline;
+  g.beginPath(); g.moveTo(0,0); g.lineTo(t.w,0); g.lineTo(t.w/2,t.h); g.closePath(); g.stroke();
+  return t;
+}
+
+var TX = {
+  strung: buildStrung(),
+  feather: buildFeather(),
+  warA: buildWarDrop(0), warB: buildWarDrop(2.3),
+  pen: [buildPennant(0), buildPennant(1), buildPennant(2)]
+};
+
+/* ================================================================
+   The four banner renderers. Each gets (cx, groundY, t). Drama scales
+   with |wind.current|; phase rides wind.flutter so it never resets.
+   ================================================================ */
+function ampFor(){ return 0.45 + Math.abs(wind.current) * 1.35; }
+function leanFor(){ return wind.current; }
+
+// A — a single wide caution blade flag
+function drawFeatherPair(cx, groundY, t){
+  drawOneFeather(cx, groundY, t, 0.3);
+}
+function drawOneFeather(baseX, groundY, t, phase){
+  var z = 2.2, tex = TX.feather;
+  var sailH = tex.h * z;
+  var topY = groundY - sailH - 8;
+  // stronger wind response than the other panels (the chosen banner)
+  var lean = leanFor(), amp = 0.52 + Math.abs(wind.current) * 1.6;
+  // flexible mast: cantilever bend toward tip
+  var ph = wind.flutter + phase;
+  function bendAt(f){ // f: 0 base .. 1 tip
+    return (lean * 28 * f*f) + Math.sin(f*3.0 - ph*1.75) * amp * 7 * f + Math.sin(f*6.1 - ph*2.6)*amp*2.6*f;
+  }
+  // pole following the leading edge
+  ctx.strokeStyle = BLD.metalBase; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (var s=0;s<=1.001;s+=0.05){
+    var yy = groundY - 6 - s*(sailH+2);
+    var xx = baseX + bendAt(s);
+    if (s===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = BLD.metalDark; ctx.lineWidth = 1; ctx.stroke();
+  // finial
+  star(ctx, baseX + bendAt(1), topY-2, 3.5, BLD.redBright, BLD.outline);
+  // base
+  px(ctx, baseX-5, groundY-4, 10, 4, BLD.metalBase); outlineRect(ctx, baseX-5, groundY-4, 10, 4, BLD.outline);
+  // sail: rows along height, X offset = bend; map f(top..bottom) to mast s(1..~0.1)
+  blitH(tex, baseX, topY, z, {
+    xoff: function(f){ var sMast = 1 - f*0.85; return bendAt(sMast); },
+    wscale: function(f){ return 1; },
+    shade: function(f){ var sMast=1-f*0.85; return -Math.max(0,Math.min(0.4, (bendAt(sMast)-bendAt(sMast+0.04))*0.06 )); }
+  });
+}
+
+// B — strung banner billowing across the mouth
+function drawStrung(cx, groundY, t){
+  var z = 2.4, tex = TX.strung;
+  var bw = tex.w * z;
+  var postTop = groundY - 96;
+  var lx = cx - bw/2 - 8, rx = cx + bw/2 + 4;
+  drawPost(lx, groundY, postTop);
+  drawPost(rx, groundY, postTop);
+  var topY = postTop + 6;
+  var lean = leanFor(), amp = ampFor();
+  var ph = wind.flutter;
+  function sagAt(u){
+    var slack = 10 + Math.abs(lean)*4;
+    var base = slack * 4*u*(1-u);                       // catenary droop
+    var wave = Math.sin(u*Math.PI*3 - ph*1.9) * amp * 6 // travelling billow
+             + Math.sin(u*Math.PI*6 - ph*2.7) * amp * 2.2;
+    return base + wave + lean * 3 * Math.sin(u*Math.PI);
+  }
+  // rope from post tops to banner
+  ctx.strokeStyle = BLD.metalDark; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(lx+4, postTop+2); ctx.lineTo(cx-bw/2, topY + sagAt(0));
+  ctx.moveTo(rx+4, postTop+2); ctx.lineTo(cx+bw/2, topY + sagAt(1)); ctx.stroke();
+  blitV(tex, cx - bw/2, topY, z, {
+    yoff: function(u){ return sagAt(u); },
+    hscale: function(u){ var sl = sagAt(u+0.03)-sagAt(u-0.03); return 1 - Math.min(0.22, Math.abs(sl)*0.02); },
+    shade: function(u){ var sl = sagAt(u+0.03)-sagAt(u-0.03); return -sl*0.045; }
+  });
+}
+
+// C — pennant bunting; a wave runs down the line
+function drawPennants(cx, groundY, t){
+  var postTop = groundY - 92;
+  var span = 150;
+  var lx = cx - span/2 - 8, rx = cx + span/2;
+  drawPost(lx, groundY, postTop);
+  drawPost(rx, groundY, postTop);
+  var lean = leanFor(), amp = ampFor(), ph = wind.flutter;
+  var n = 11;
+  var y0 = postTop + 4;
+  function lineY(u){ return y0 + 18 * 4*u*(1-u) + lean*4*Math.sin(u*Math.PI); }
+  // rope
+  ctx.strokeStyle = BLD.metalDark; ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (var s=0;s<=1.001;s+=0.04){ var X=lx+4+(rx+4-(lx+4))*s, Y=lineY(s); if(s===0)ctx.moveTo(X,Y); else ctx.lineTo(X,Y); }
+  ctx.stroke();
+  for (var i=0;i<n;i++){
+    var u = (i+0.5)/n;
+    var x = lx+4 + (rx+4-(lx+4))*u;
+    var y = lineY(u);
+    var ang = lean*0.5 + Math.sin(ph*2.0 + i*0.7) * amp * 0.34; // staggered flutter
+    var tex = TX.pen[i % 3];
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+    ctx.drawImage(tex.c, -tex.w*0.9, 0, tex.w*1.8, tex.h*1.8);
+    ctx.restore();
+  }
+}
+
+// D — hung military war-drop panels
+function drawWarDrops(cx, groundY, t){
+  var postTop = groundY - 100;
+  var span = 132;
+  var lx = cx - span/2 - 8, rx = cx + span/2;
+  drawPost(lx, groundY, postTop);
+  drawPost(rx, groundY, postTop);
+  // iron crossbar
+  var barY = postTop + 5;
+  px(ctx, lx, barY, (rx+8)-lx, 5, BLD.metalBase);
+  px(ctx, lx, barY, (rx+8)-lx, 1, BLD.metalLight);
+  outlineRect(ctx, lx, barY, (rx+8)-lx, 5, BLD.outline);
+  var lean = leanFor(), amp = ampFor(), ph = wind.flutter;
+  var panels = [ {tx:TX.warA, x:cx-44, phase:0}, {tx:TX.warB, x:cx, phase:1.3}, {tx:TX.warA, x:cx+44, phase:2.6} ];
+  for (var p=0;p<panels.length;p++){
+    var pan = panels[p], z = 1.7;
+    var topY = barY + 4;
+    (function(pan, topY){
+      blitH(pan.tx, pan.x - pan.tx.w*z/2, topY, z, {
+        xoff: function(f){ return lean*10*f + Math.sin(f*3.4 - ph*1.7 + pan.phase)*amp*5.5*f + Math.sin(f*6.6 - ph*2.5 + pan.phase)*amp*2*f; },
+        shade: function(f){ var d = (Math.sin((f+0.03)*3.4 - ph*1.7 + pan.phase) - Math.sin((f-0.03)*3.4 - ph*1.7 + pan.phase)); return -d*amp*0.18; }
+      });
+    })(pan, topY);
+  }
+}
+
+/* ================================================================
+   Scene / panels
+   ================================================================ */
+var PANELS = [
+  { key:'A', title:'CAUTION FLAG', sub:'single wide hazard blade — whips in the wind', draw:drawFeatherPair },
+  { key:'B', title:'STRUNG BANNER', sub:'billows across the mouth — you pass under', draw:drawStrung },
+  { key:'C', title:'PENNANT BUNTING', sub:'car-lot string — a wave runs the line', draw:drawPennants },
+  { key:'D', title:'WAR DROPS', sub:'hung military panels — ominous sway', draw:drawWarDrops }
+];
+
+function paintBackdrop(){
+  // sky
+  var top, bot, grnd;
+  if (state.night){ top='#0c1622'; bot='#243246'; grnd='#161a1d'; }
+  else { top='#9fb7c9'; bot='#d9c6a3'; grnd='#3a3834'; }
+  var sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0, top); sky.addColorStop(1, bot);
+  ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+  // a dark "zone mouth" suggestion on the left edge
+  var mouth = ctx.createLinearGradient(0,0,W*0.28,0);
+  mouth.addColorStop(0,'rgba(10,6,4,0.55)'); mouth.addColorStop(1,'rgba(10,6,4,0)');
+  ctx.fillStyle = mouth; ctx.fillRect(0,0,W*0.28,H);
+  return grnd;
+}
+
+function frame(now){
+  var dt = Math.min(0.05, (frame._last ? (now - frame._last)/1000 : 0.016));
+  frame._last = now;
+  if (!state.frozen) updateWind(dt);
+
+  resize();
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.imageSmoothingEnabled = false;
+  var grnd = paintBackdrop();
+
+  var t = now/1000;
+  var pw = W / PANELS.length;
+  var groundY = H - 96;
+  // ground strip
+  ctx.fillStyle = grnd; ctx.fillRect(0, groundY, W, H-groundY);
+  ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(0, groundY, W, 2);
+
+  for (var i=0;i<PANELS.length;i++){
+    var cx = Math.round(pw*i + pw/2);
+    // divider
+    if (i>0){ ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(pw*i, 40, 1, H-40); }
+    // soft ground shadow under banner
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.beginPath(); ctx.ellipse(cx, groundY+4, 60, 7, 0,0,Math.PI*2); ctx.fill();
+    PANELS[i].draw(cx, groundY, t);
+    // label
+    ctx.fillStyle = state.night ? '#e6d5a8' : '#2c2014';
+    ctx.font = '700 13px Commit Mono, monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillText(PANELS[i].key + ' · ' + PANELS[i].title, cx, 30);
+    ctx.fillStyle = state.night ? '#8a9bb0' : '#5a4a30';
+    ctx.font = '10px Commit Mono, monospace';
+    ctx.fillText(PANELS[i].sub, cx, 44);
+  }
+  requestAnimationFrame(frame);
+}
+
+resize();
+// paint one frame immediately so a screenshot works even if RAF is throttled
+ctx.setTransform(DPR,0,0,DPR,0,0); paintBackdrop();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

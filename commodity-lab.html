@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice — Commodity Pixel Art</title>
+<style>
+  :root { --bg:#0c0f14; --panel:#13181f; --line:#262e39; --ink:#cdd6e0; --dim:#8089; --dim2:#7c8794; --accent:#e8c14a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; }
+  header { padding:16px 22px 10px; border-bottom:1px solid var(--line); position:sticky; top:0;
+    background:linear-gradient(#0c0f14,#0c0f14ee); backdrop-filter:blur(2px); z-index:5; }
+  h1 { font-size:15px; margin:0 0 4px; letter-spacing:.03em; }
+  h1 b { color:var(--accent); }
+  .sub { color:var(--dim2); font-size:12px; line-height:1.6; margin:0; }
+  .controls { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  button { font:inherit; font-size:11px; color:var(--ink); background:#1c232d;
+    border:1px solid var(--line); border-radius:7px; padding:6px 11px; cursor:pointer; }
+  button:hover { border-color:#3a4658; background:#222b36; }
+  button.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  .controls span { color:var(--dim2); font-size:11px; margin-left:4px; }
+  #grid { display:flex; flex-wrap:wrap; gap:14px; padding:22px; }
+  .tile { width:148px; border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    background:var(--panel); display:flex; flex-direction:column; }
+  .plate { height:148px; display:flex; align-items:center; justify-content:center;
+    background:#11161d; transition:background .15s; }
+  .plate.board { background:#2a1c10; }
+  .plate.niche { background:#0a0705; }
+  .plate.parch { background:#cdb98a; }
+  .tile canvas { image-rendering:pixelated; image-rendering:crisp-edges; }
+  .cap { padding:7px 9px 9px; border-top:1px solid var(--line); }
+  .cap .nm { font-size:11.5px; color:var(--ink); line-height:1.3; }
+  .cap .kd { font-size:10px; color:var(--dim2); margin-top:2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sluice <b>commodity pixel art</b> &mdash; review gallery</h1>
+  <p class="sub">Every Trade Board good, baked through the 32&times;32 sprite engine (the workshop's technique). <span id="count"></span></p>
+  <div class="controls">
+    <button data-bg="niche" class="on">Board niche</button>
+    <button data-bg="board">Board wood</button>
+    <button data-bg="dark">Neutral dark</button>
+    <button data-bg="parch">Parchment</button>
+    <span>|</span>
+    <button data-zoom="3">3&times;</button>
+    <button data-zoom="4" class="on">4&times;</button>
+    <button data-zoom="6">6&times;</button>
+  </div>
+</header>
+<div id="grid"></div>
+
+<script src="js/sluice/255-commodity-sprites.js"></script>
+<script>
+  // Display names for the lab (the live catalog lives in 260-shop-board.js).
+  var NAMES = {
+    ingot:'Refined Iron Ingot', crystal:'Polished Quartz', brick:'Coal Bricks',
+    spool:'Copper Wire Spool', fossil:'Strange Fossil', cog:'Antique Cog',
+    bottle:'Bottled Lightning', letter:'Sealed Letter',
+    silverbar:'Silver Bar', goldbar:'Gold Bar', whiskey:'Bottle of Whiskey',
+    dynamite:'Stick of Dynamite', lantern:"Miner's Lantern", turquoise:'Turquoise',
+    glowmilk:'Jar of Glowmilk', meteorite:'Fallen-Star Iron',
+    saltblock:'Rock Salt', sulfur:'Brimstone', niter:'Saltpeter',
+    silverore:'Raw Silver Ore', golddust:'Gold Dust', leadpig:'Lead Pig',
+    quicksilver:'Flask of Quicksilver', railspike:'Rail Spike',
+    nailkeg:'Keg of Nails', pickhead:'Pickaxe', horseshoe:'Lucky Horseshoe',
+    lampoil:'Lamp Oil', rope:'Coil of Rope', powderkeg:'Powder Keg',
+    pocketwatch:'Brass Pocket Watch', compass:"Surveyor's Compass", telegraphkey:'Telegraph Key',
+    coffeesack:'Sack of Coffee', tobacco:'Twist of Tobacco', pelt:'Beaver Pelt',
+    calico:'Bolt of Calico', opal:'Fire Opal', diamond:'Diamond',
+    brassfinger:'Automaton Finger', crowfeather:'Black Crow Feather',
+    geode:'Singing Geode', saltidol:'Salt-Flat Idol'
+  };
+  var zoom = 4, plateClass = 'niche';
+  var grid = document.getElementById('grid');
+  var kinds = commoditySprites.kinds();
+  document.getElementById('count').textContent = kinds.length + ' sprites';
+
+  function render() {
+    grid.innerHTML = '';
+    var S = commoditySprites.SIZE;
+    kinds.forEach(function (kind) {
+      var bmp = commoditySprites.bitmap(kind);
+      var tile = document.createElement('div'); tile.className = 'tile';
+      var plate = document.createElement('div'); plate.className = 'plate ' + plateClass;
+      var cv = document.createElement('canvas');
+      var d = S * zoom; cv.width = d; cv.height = d;
+      var cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false;
+      if (bmp) cx.drawImage(bmp, 0, 0, S, S, 0, 0, d, d);
+      plate.appendChild(cv);
+      var cap = document.createElement('div'); cap.className = 'cap';
+      cap.innerHTML = '<div class="nm">' + (NAMES[kind] || kind) + '</div><div class="kd">' + kind + '</div>';
+      tile.appendChild(plate); tile.appendChild(cap); grid.appendChild(tile);
+    });
+  }
+  document.querySelectorAll('button[data-bg]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('button[data-bg]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); plateClass = b.dataset.bg; render();
+    };
+  });
+  document.querySelectorAll('button[data-zoom]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('button[data-zoom]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); zoom = +b.dataset.zoom; render();
+    };
+  });
+  render();
+</script>
+</body>
+</html>

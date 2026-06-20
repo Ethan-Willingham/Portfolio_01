@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sluice Labs</title>
+  <meta name="description" content="The workbenches behind Sluice: the throwaway choosers where the game's audio, art, and feel get tuned.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:title" content="Sluice Labs">
+  <meta property="og:description" content="The workbenches behind Sluice: the choosers where the audio, art, and feel get tuned.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/labs.html">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .labs-intro { max-width: 60ch; color: var(--text-dim, var(--d-text-dim)); margin-bottom: 2rem; }
+    .lab-group-title {
+      font-family: var(--d-mono, monospace);
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--d-accent);
+      margin: 2.2rem 0 0.9rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--d-rule, rgba(255,255,255,0.12));
+    }
+    .lab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.7rem;
+    }
+    .lab-card {
+      display: block;
+      padding: 0.85rem 1rem;
+      background: var(--d-bg-raised, rgba(255,255,255,0.03));
+      border: 1px solid var(--d-rule, rgba(255,255,255,0.12));
+      text-decoration: none;
+      transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+    }
+    .lab-card:hover {
+      border-color: var(--d-accent);
+      background: var(--d-bg-raised, rgba(255,255,255,0.05));
+      transform: translateY(-1px);
+    }
+    .lab-card .lab-name {
+      font-family: var(--d-mono, monospace);
+      font-size: 0.9rem;
+      color: var(--d-text-bright, #fff);
+      letter-spacing: 0.02em;
+    }
+    .lab-card .lab-desc {
+      margin-top: 0.3rem;
+      font-size: 0.84rem;
+      line-height: 1.4;
+      color: var(--d-text-dim, rgba(255,255,255,0.6));
+    }
+    .lab-card .lab-off {
+      color: var(--d-accent);
+      font-style: normal;
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrapper">
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="post-header fade-in">
+      <h1 class="post-title">Sluice Labs</h1>
+    </header>
+
+    <main>
+      <article>
+        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+          <p class="labs-intro">These are the workbenches behind <a href="grand-motherload.html">Sluice</a>. Each one is a throwaway chooser: a focused page for auditioning the game's sound, picking pixel art, or dialing in a feel before it lands in the game. A few drive systems that are turned off in the simple build (marked below); they stay as reference.</p>
+
+          <div class="lab-group-title">Sound</div>
+          <div class="lab-grid">
+            <a class="lab-card" href="sfx-test.html"><span class="lab-name">SFX Test Bench</span><span class="lab-desc">Drop in sound files and audition them through the game's audio engine.</span></a>
+            <a class="lab-card" href="sfx-prompts.html"><span class="lab-name">SFX Prompts</span><span class="lab-desc">The paste-ready prompt system for generating each game sound.</span></a>
+            <a class="lab-card" href="audio-lab.html"><span class="lab-name">Audio Lab</span><span class="lab-desc">Audition and choose the game's music, town by town.</span></a>
+          </div>
+
+          <div class="lab-group-title">Art</div>
+          <div class="lab-grid">
+            <a class="lab-card" href="art-lab.html"><span class="lab-name">Pixel Art Atlas</span><span class="lab-desc">Every ore and tile renderer, drawn side by side.</span></a>
+            <a class="lab-card" href="sunset-lab.html"><span class="lab-name">Sunset Lab</span><span class="lab-desc">The sky and atmosphere across the day-night cycle.</span></a>
+            <a class="lab-card" href="station-lab.html"><span class="lab-name">Station</span><span class="lab-desc">The surface station building, in the Frontier Soviet style.</span></a>
+            <a class="lab-card" href="depot-lab.html"><span class="lab-name">Depot</span><span class="lab-desc">Depot and store building art studies.</span></a>
+            <a class="lab-card" href="endcap-lab.html"><span class="lab-name">Console End Caps</span><span class="lab-desc">The bottom HUD console frame and its end pieces.</span></a>
+            <a class="lab-card" href="commodity-lab.html"><span class="lab-name">Commodity Pixel Art</span><span class="lab-desc">The tradeable-goods icon set. <span class="lab-off">(Trade Board off)</span></span></a>
+          </div>
+
+          <div class="lab-group-title">Feel &amp; UI</div>
+          <div class="lab-grid">
+            <a class="lab-card" href="mine-lab.html"><span class="lab-name">Block Break</span><span class="lab-desc">How a dug block cracks and shatters: three feels with sliders.</span></a>
+            <a class="lab-card" href="autosell-lab.html"><span class="lab-name">Auto-Sell Reveal</span><span class="lab-desc">The dockside "fuel fills while the haul sells, one ore at a time" beat.</span></a>
+            <a class="lab-card" href="death-lab.html"><span class="lab-name">Death Screen</span><span class="lab-desc">Variations of the game-over plate.</span></a>
+            <a class="lab-card" href="item-map-lab.html"><span class="lab-name">Item Map</span><span class="lab-desc">The radial item wheel layout.</span></a>
+          </div>
+
+          <div class="lab-group-title">Systems</div>
+          <div class="lab-grid">
+            <a class="lab-card" href="economy-lab.html"><span class="lab-name">Economy Lab</span><span class="lab-desc">The trade-price model and its drift. <span class="lab-off">(Trade Board off)</span></span></a>
+            <a class="lab-card" href="nmz-banner-lab.html"><span class="lab-name">Caution Banner</span><span class="lab-desc">The No Man's Zone warning flags. <span class="lab-off">(zones off)</span></span></a>
+            <a class="lab-card" href="sluice-lab.html"><span class="lab-name">Sluice Station</span><span class="lab-desc">The refinement-station art prop. <span class="lab-off">(refinement off)</span></span></a>
+          </div>
+
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

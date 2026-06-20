@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sluice — Sunset Lab (chooser)</title>
+<style>
+  :root { --mono: 'Commit Mono', ui-monospace, Consolas, monospace; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #07080c; color: #c8ccd6;
+    font-family: var(--mono); font-size: 12px; overflow: hidden; }
+  #app { display: flex; width: 100vw; height: 100vh; }
+  #stage { position: relative; flex: 1 1 auto; min-width: 0; }
+  #glcanvas, #overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #overlay { pointer-events: none; }
+  #hud { position: absolute; left: 12px; top: 10px; font-size: 12px; line-height: 1.5;
+    text-shadow: 0 1px 3px #000; pointer-events: none; }
+  #hud b { color: #fff; font-weight: 600; }
+  #panel { flex: 0 0 332px; height: 100%; overflow-y: auto; padding: 12px 14px 40px;
+    background: #0c0e14; border-left: 1px solid #1c2030; }
+  h1 { font-size: 13px; margin: 2px 0 2px; color: #e8ebf2; letter-spacing: .02em; }
+  .sub { color: #6b7184; font-size: 11px; margin: 0 0 12px; line-height: 1.4; }
+  .group { border: 1px solid #1c2030; border-radius: 7px; padding: 9px 10px 11px; margin: 0 0 11px; }
+  .group > .gt { color: #8a90a4; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 8px; }
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .presets.five { grid-template-columns: 1fr 1fr 1fr; }
+  button { font-family: var(--mono); font-size: 11px; color: #cdd2de; background: #161a26;
+    border: 1px solid #2a3042; border-radius: 6px; padding: 7px 4px; cursor: pointer; transition: .12s; }
+  button:hover { background: #1e2434; border-color: #3a4256; }
+  .pbtn.active { background: #243524; border-color: #4a7a55; color: #dfffe9; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+  .row label { flex: 0 0 96px; color: #9aa0b2; font-size: 11px; }
+  .row input[type=range] { flex: 1 1 auto; min-width: 0; accent-color: #6aa0ff; }
+  .row .val { flex: 0 0 42px; text-align: right; color: #e2e6ef; font-variant-numeric: tabular-nums; }
+  .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 4px; }
+  .swatches .sw { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .swatches input[type=color] { width: 100%; height: 26px; border: 1px solid #2a3042; border-radius: 5px;
+    background: none; padding: 0; cursor: pointer; }
+  .swatches .lbl { font-size: 9px; color: #6b7184; }
+  .timebtns { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; margin-top: 7px; }
+  .timebtns button { padding: 6px 2px; font-size: 10px; }
+  .playrow { display: flex; gap: 6px; align-items: center; margin-top: 7px; }
+  .playrow button { flex: 0 0 64px; }
+  .ck { display: flex; align-items: center; gap: 7px; margin: 6px 0; color: #9aa0b2; }
+  .ck input { accent-color: #6aa0ff; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="glcanvas"></canvas>
+    <canvas id="overlay"></canvas>
+    <div id="hud"></div>
+  </div>
+  <div id="panel">
+    <h1>Sunset Lab</h1>
+    <p class="sub">Baseline = the real Sluice sky shader (Maxime Heckel scattering). The presets add new pipeline stages on top: ozone, multi-scatter glow, a twilight colour-grade, and a vivid tone-map. Pick a vibe, scrub time, fine-tune, then I wire the winner into the game.</p>
+
+    <div class="group">
+      <div class="gt">Vibe preset</div>
+      <div class="presets five">
+        <button class="pbtn" data-preset="baseline">Baseline</button>
+        <button class="pbtn" data-preset="tropical">Tropical</button>
+        <button class="pbtn" data-preset="painterly">Painterly</button>
+        <button class="pbtn" data-preset="volcanic">Volcanic</button>
+        <button class="pbtn" data-preset="cosmic">Cosmic</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="gt">Time of day</div>
+      <div class="row"><label>t (0–1)</label><input id="time" type="range" min="0" max="1" step="0.001" value="0.75"><span class="val" id="timeval">.750</span></div>
+      <div class="playrow">
+        <button id="play">▶ Play</button>
+        <label style="flex:0 0 auto;color:#9aa0b2;">speed</label>
+        <input id="speed" type="range" min="0.002" max="0.05" step="0.001" value="0.012" style="flex:1 1 auto;accent-color:#6aa0ff;">
+      </div>
+      <div class="timebtns">
+        <button data-t="0.25">Sunrise</button>
+        <button data-t="0.5">Noon</button>
+        <button data-t="0.75">Sunset</button>
+        <button data-t="0.0">Midnight</button>
+      </div>
+      <div class="ck" style="margin-top:8px;"><input type="checkbox" id="sweep"><label for="sweep" style="cursor:pointer;">Slow-sweep dusk (0.62 → 0.90, loop)</label></div>
+      <div class="row" style="margin-top:8px;"><label>Sun-set/rise dwell</label><input id="dwell" type="range" min="0" max="0.9" step="0.01" value="0.65"><span class="val" id="dwellval">0.65</span></div>
+    </div>
+
+    <div class="group">
+      <div class="gt">Drama controls</div>
+      <div class="row"><label>Drama</label><input id="uDrama" type="range" min="0" max="1.5" step="0.01" value="0.9"><span class="val" id="uDramaval">0.90</span></div>
+      <div class="row"><label>Saturation</label><input id="uSat" type="range" min="0.6" max="2" step="0.01" value="1.35"><span class="val" id="uSatval">1.35</span></div>
+      <div class="row"><label>Ozone</label><input id="uOzone" type="range" min="0" max="2.5" step="0.01" value="0.8"><span class="val" id="uOzoneval">0.80</span></div>
+      <div class="row"><label>Multi-scatter</label><input id="uMulti" type="range" min="0" max="1.5" step="0.01" value="0.35"><span class="val" id="uMultival">0.35</span></div>
+    </div>
+
+    <div class="group">
+      <div class="gt">Grade shape</div>
+      <div class="row"><label>Grade gain</label><input id="uGain" type="range" min="0.2" max="3" step="0.01" value="1.6"><span class="val" id="uGainval">1.60</span></div>
+      <div class="row"><label>Grade floor</label><input id="uFloor" type="range" min="0" max="0.5" step="0.005" value="0.12"><span class="val" id="uFloorval">0.12</span></div>
+      <div class="row"><label>Contrast</label><input id="uContrast" type="range" min="0.4" max="2" step="0.01" value="0.8"><span class="val" id="uContrastval">0.80</span></div>
+      <div class="row"><label>Radial ↔ vert</label><input id="uRadial" type="range" min="0" max="1" step="0.01" value="0.6"><span class="val" id="uRadialval">0.60</span></div>
+      <div class="row"><label>Twilight span</label><input id="uTwi" type="range" min="0.06" max="0.7" step="0.01" value="0.32"><span class="val" id="uTwival">0.32</span></div>
+      <div class="row"><label>Twilight shape</label><input id="uTwiShape" type="range" min="1" max="6" step="0.1" value="2.5"><span class="val" id="uTwiShapeval">2.5</span></div>
+    </div>
+
+    <div class="group">
+      <div class="gt">Palette (near-sun → anti-sun)</div>
+      <div class="swatches">
+        <div class="sw"><input type="color" id="g0" value="#ffe39a"><span class="lbl">hot</span></div>
+        <div class="sw"><input type="color" id="g1" value="#ff6fa8"><span class="lbl">1</span></div>
+        <div class="sw"><input type="color" id="g2" value="#c457e0"><span class="lbl">mid</span></div>
+        <div class="sw"><input type="color" id="g3" value="#3fb7c9"><span class="lbl">3</span></div>
+        <div class="sw"><input type="color" id="g4" value="#1b2c7a"><span class="lbl">cool</span></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="gt">Compare / physical base</div>
+      <div class="ck"><input type="checkbox" id="split"><label for="split" style="cursor:pointer;">Split: left = baseline, right = graded</label></div>
+      <div class="row"><label>Sun intensity</label><input id="uSunI" type="range" min="8" max="48" step="0.5" value="26.5"><span class="val" id="uSunIval">26.5</span></div>
+      <div class="row"><label>Mie g</label><input id="uMieG" type="range" min="0.5" max="0.95" step="0.005" value="0.758"><span class="val" id="uMieGval">.758</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---- DOM ----
+  var stage = document.getElementById('stage');
+  var glcanvas = document.getElementById('glcanvas');
+  var overlay = document.getElementById('overlay');
+  var octx = overlay.getContext('2d');
+  var hud = document.getElementById('hud');
+
+  // ---- Real-game constants (from js/sluice/020-state.js SUN + camera) ----
+  var FOVY_DEG = 88, PITCH_DEG = 16, ALT_DEG = 48, AZI_DEG = 46;
+  var HORIZON_FRAC = 0.62; // lab framing: more sky than the game so dusk is judgeable
+
+  // ---- Vertex shader (verbatim SKY_GL_VS) ----
+  var VS = [
+    'attribute vec2 aPos;',
+    'void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }'
+  ].join('\n');
+
+  // ---- Fragment shader: the real SKY_GL_FS + new gated stages ----
+  // With uDrama=0, uOzone=0, uMulti=0, uSat=1 this is byte-faithful to the
+  // game's scatter pass (scatter -> ACES -> gamma). The "graded" path is an
+  // additive set of stages mixed in by the sun-elevation twilight weight.
+  var FS = [
+    'precision highp float;',
+    'uniform vec2  uResolution;',
+    'uniform float uSkyBottomPx;',
+    'uniform vec3  uSunDir;',
+    'uniform vec2  uSunNDC;',
+    'uniform float uSunOnScreen;',
+    'uniform float uFovY;',
+    'uniform float uPitch;',
+    'uniform float uAspect;',
+    'uniform float mieG;',
+    'uniform float sunIntensity;',
+    'uniform float sunDiscSize;',
+    // new drama uniforms
+    'uniform float uDrama;',
+    'uniform float uSat;',
+    'uniform float uOzone;',
+    'uniform float uMulti;',
+    'uniform float uGain;',
+    'uniform float uFloor;',
+    'uniform float uContrast;',
+    'uniform float uRadial;',
+    'uniform float uTwi;',
+    'uniform float uTwiShape;',   // horizon-bias exponent on the twilight gate (>1 concentrates the effect at sunrise/sunset)
+    'uniform vec3  uG0;',
+    'uniform vec3  uG1;',
+    'uniform vec3  uG2;',
+    'uniform vec3  uG3;',
+    'uniform vec3  uG4;',
+    'uniform float uSplitX;',   // -1 = off; else pixels left of it = baseline
+    '',
+    'const float PI = 3.14159265;',
+    'const float observerAltitude    = 10.0;',
+    'const float atmosphereHeight    = 80.0;',
+    'const float rayleighScaleHeight = 8.0;',
+    'const float mieScaleHeight      = 1.2;',
+    'const vec3  rayleighBeta        = vec3(0.0058, 0.0135, 0.0331);',
+    'const float mieBeta             = 0.021;',
+    'const float mieBetaExt          = 0.021;',
+    'const vec3  ozoneBetaAbs        = vec3(0.00065, 0.00188, 0.000085);',
+    '',
+    'float rayleighDensity(float h){ return exp(-max(h,0.0)/max(rayleighScaleHeight,1e-4)); }',
+    'float mieDensity(float h){',
+    '  float a = max(h,0.0);',
+    '  return exp(a / -max(mieScaleHeight,1e-4)) + 0.07*exp(a/-8.0);',
+    '}',
+    // ozone tent (peaks mid-atmosphere ~25km of 80)
+    'float ozoneDensity(float h){',
+    '  float au = clamp(h/atmosphereHeight, 0.0, 1.0);',
+    '  return max(0.0, 1.0 - abs(au - 0.33)/0.35);',
+    '}',
+    'float rayleighPhase(float mu){ return 3.0/(16.0*PI)*(1.0+mu*mu); }',
+    'float miePhase(float mu){',
+    '  float g = mieG; float gg = g*g;',
+    '  float num = 3.0*(1.0-gg)*(1.0+mu*mu);',
+    '  float den = (8.0*PI)*(2.0+gg)*pow(max(1.0+gg-2.0*g*mu,1e-4),1.5);',
+    '  return num/den;',
+    '}',
+    // lightMarch now also returns ozone optical depth (z)
+    'vec3 lightMarch(float startHeight, float muSun){',
+    '  float denom = max(muSun + 0.15, 0.04);',
+    '  float maxDist = (atmosphereHeight - startHeight)/denom;',
+    '  float stepSize = max(maxDist,0.0)/4.0;',
+    '  float odR=0.0, odM=0.0, odO=0.0;',
+    '  for (int i=0;i<4;i++){',
+    '    float t=(float(i)+0.5)*stepSize;',
+    '    float h=startHeight+t*muSun;',
+    '    if (h<0.0||h>atmosphereHeight) continue;',
+    '    odR+=rayleighDensity(h)*stepSize;',
+    '    odM+=mieDensity(h)*stepSize;',
+    '    odO+=ozoneDensity(h)*stepSize;',
+    '  }',
+    '  return vec3(odR,odM,odO);',
+    '}',
+    'vec3 ACESFilm(vec3 x){',
+    '  const float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14;',
+    '  return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);',
+    '}',
+    'float softSunDisc(vec2 fragNDC, vec2 sunNDC, float discScale){',
+    '  const float BASE_RADIUS=0.005;',
+    '  float radius=BASE_RADIUS*max(discScale,0.1);',
+    '  float pxPerRad=uResolution.y/max(uFovY,1e-4);',
+    '  vec2 dpx=(fragNDC-sunNDC)*uResolution*0.5;',
+    '  float distRad=length(dpx)/max(pxPerRad,1e-4);',
+    '  float core=exp(-pow(distRad/max(radius*0.7,1e-5),2.0));',
+    '  float limb=smoothstep(radius*1.3,radius*0.2,distRad);',
+    '  float halo=exp(-distRad/max(radius*18.0,1e-5));',
+    '  return core*limb + 0.25*halo;',
+    '}',
+    'vec3 sampleRamp(float p){',
+    '  p=clamp(p,0.0,1.0)*4.0;',
+    '  if(p<1.0) return mix(uG0,uG1,p);',
+    '  if(p<2.0) return mix(uG1,uG2,p-1.0);',
+    '  if(p<3.0) return mix(uG2,uG3,p-2.0);',
+    '  return mix(uG3,uG4,p-3.0);',
+    '}',
+    '',
+    'void main(){',
+    '  vec2 fc = gl_FragCoord.xy;',
+    '  float yTop = uResolution.y - fc.y;',
+    '  if (yTop > uSkyBottomPx) { gl_FragColor = vec4(0.0); return; }',
+    '  vec2 ndc = (fc/uResolution)*2.0-1.0;',
+    '  float tf = tan(uFovY*0.5);',
+    '  vec3 viewRay = vec3(ndc.x*tf*uAspect, ndc.y*tf, 1.0);',
+    '  float cc = cos(uPitch), ss = sin(uPitch);',
+    '  vec3 rayDir = normalize(vec3(viewRay.x, cc*viewRay.y+ss*viewRay.z, -ss*viewRay.y+cc*viewRay.z));',
+    '',
+    '  vec3 sunDirection = normalize(uSunDir);',
+    '  float sunElevation = sunDirection.y;',
+    '  float skyLightFactor  = smoothstep(-0.16,0.06,sunElevation);',
+    '  float directSunFactor = smoothstep(-0.08,0.03,sunElevation);',
+    '  float skySunIntensity    = sunIntensity*skyLightFactor;',
+    '  float directSunIntensity = sunIntensity*directSunFactor;',
+    '',
+    '  float sceneDepth = atmosphereHeight*8.0;',
+    '  float rayEnd = sceneDepth;',
+    '  if (rayDir.y < -1e-5){ rayEnd = min(rayEnd, observerAltitude/max(-rayDir.y,1e-4)); }',
+    '  float stepSize = rayEnd/float(24);',
+    '',
+    '  float viewODR=0.0, viewODM=0.0, viewODO=0.0;',
+    '  vec3 sumR=vec3(0.0), sumM=vec3(0.0);',
+    '  float mu = dot(rayDir, sunDirection);',
+    '  float phaseR = rayleighPhase(mu);',
+    '  float phaseM = miePhase(mu);',
+    '',
+    '  for (int i=0;i<24;i++){',
+    '    float tt = (float(i)+0.5)*stepSize;',
+    '    float h = observerAltitude + tt*rayDir.y;',
+    '    if (h<0.0) break;',
+    '    if (h>atmosphereHeight) break;',
+    '    float groundFade = smoothstep(0.0,2.0,h);',
+    '    float dR=rayleighDensity(h)*groundFade;',
+    '    float dM=mieDensity(h)*groundFade;',
+    '    float dO=ozoneDensity(h)*groundFade;',
+    '    viewODR+=dR*stepSize; viewODM+=dM*stepSize; viewODO+=dO*stepSize;',
+    '    vec3 sunOD = lightMarch(h, sunDirection.y);',
+    '    vec3 tau = rayleighBeta*(sunOD.x+viewODR)',
+    '             + mieBetaExt*(sunOD.y+viewODM)',
+    '             + ozoneBetaAbs*uOzone*(sunOD.z+viewODO);',
+    '    vec3 transmittance = exp(-tau);',
+    '    float altitude01 = clamp(h/max(atmosphereHeight,1e-4),0.0,1.0);',
+    '    float minSunElev = mix(0.0,-0.16,altitude01);',
+    '    float sunVis = smoothstep(minSunElev-0.02, minSunElev+0.02, sunElevation);',
+    '    sumR += dR*transmittance*sunVis*stepSize;',
+    '    sumM += dM*transmittance*sunVis*stepSize;',
+    '  }',
+    '',
+    '  vec3 scatteredLight = skySunIntensity*(phaseR*rayleighBeta*sumR + phaseM*mieBeta*sumM);',
+    // multiple-scattering: isotropic ambient fill (cheap Hillaire-style approx)
+    '  scatteredLight += uMulti*skySunIntensity*(rayleighBeta*sumR + mieBeta*sumM)*(1.0/(4.0*PI))*9.0;',
+    '  vec3 viewTransmittance = exp(-(rayleighBeta*viewODR + mieBetaExt*viewODM + ozoneBetaAbs*uOzone*viewODO));',
+    '',
+    '  vec3 color = scatteredLight;',
+    '  float sunAboveHorizon = smoothstep(-0.04,0.04,sunDirection.y);',
+    '  vec2 fragNDC = (fc/uResolution)*2.0-1.0;',
+    '  float sunShape = softSunDisc(fragNDC, uSunNDC, sunDiscSize)*uSunOnScreen;',
+    '  vec3 sunTint = vec3(1.0,0.97,0.92);',
+    '  vec3 sunDiscLight = sunTint*directSunIntensity*12.0*sunShape*viewTransmittance*sunAboveHorizon;',
+    '  color += sunDiscLight;',
+    '',
+    // ---- baseline LDR (the exact game look) ----
+    '  vec3 baseLDR = pow(ACESFilm(color), vec3(1.0/2.2));',
+    '',
+    // ---- graded path ----
+    '  float twilight = 1.0 - smoothstep(0.0, uTwi, abs(sunElevation));',
+    '  twilight = pow(twilight, max(uTwiShape, 0.25));',  // bias the gate toward the horizon: blue daytime sky stays untouched
+    '  float dramaW = clamp(uDrama,0.0,2.0)*twilight;',
+    '  vec3 outc = baseLDR;',
+    '  if (dramaW > 0.001) {',
+    '    float ang = acos(clamp(mu,-1.0,1.0))/PI;',           // 0 at sun .. 1 opposite
+    '    float vert = clamp(rayDir.y*1.25 + 0.05, 0.0, 1.0);', // 0 horizon .. 1 up
+    '    float p = mix(vert, ang, uRadial);',
+    '    float lum = max(scatteredLight.r, max(scatteredLight.g, scatteredLight.b));',
+    '    float gl = pow(lum*uGain + uFloor, uContrast);',
+    '    vec3 gradeHDR = sampleRamp(p)*gl;',
+    '    gradeHDR += uG0 * (sunShape*directSunIntensity*5.0) * viewTransmittance * sunAboveHorizon;',
+    '    vec3 gradeLDR = gradeHDR/(1.0+gradeHDR);',            // hue-preserving reinhard
+    '    gradeLDR = pow(gradeLDR, vec3(1.0/2.2));',
+    '    outc = mix(baseLDR, gradeLDR, dramaW);',
+    '    float L = dot(outc, vec3(0.2126,0.7152,0.0722));',
+    '    outc = clamp(mix(vec3(L), outc, mix(1.0, uSat, dramaW)), 0.0, 1.0);',
+    '  }',
+    '',
+    '  if (uSplitX >= 0.0 && fc.x < uSplitX) outc = baseLDR;',
+    '  gl_FragColor = vec4(outc, 1.0);',
+    '}'
+  ].join('\n');
+
+  // ---- GL setup ----
+  var gl = glcanvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
+  if (!gl) { hud.innerHTML = 'WebGL unavailable — this lab needs WebGL.'; return; }
+
+  function compile(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(s)); return null;
+    }
+    return s;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.bindAttribLocation(prog, 0, 'aPos');
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); }
+  gl.useProgram(prog);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  var U = {};
+  ['uResolution','uSkyBottomPx','uSunDir','uSunNDC','uSunOnScreen','uFovY','uPitch','uAspect',
+   'mieG','sunIntensity','sunDiscSize','uDrama','uSat','uOzone','uMulti','uGain','uFloor',
+   'uContrast','uRadial','uTwi','uTwiShape','uG0','uG1','uG2','uG3','uG4','uSplitX'
+  ].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+
+  // ---- Presets ----
+  var PRESETS = {
+    baseline: { drama:0, sat:1, ozone:0, multi:0, gain:1.6, floor:0.12, contrast:0.8, radial:0.6, twi:0.32, twiShape:2.5,
+      stops:['#ffe39a','#ff6fa8','#c457e0','#3fb7c9','#1b2c7a'] },
+    tropical: { drama:0.95, sat:1.38, ozone:0.85, multi:0.38, gain:1.7, floor:0.13, contrast:0.78, radial:0.62, twi:0.32, twiShape:2.5,
+      stops:['#ffe39a','#ff6fa8','#c457e0','#3fb7c9','#1b2c7a'] },
+    painterly:{ drama:0.72, sat:1.16, ozone:0.5, multi:0.52, gain:1.4, floor:0.18, contrast:0.86, radial:0.34, twi:0.40, twiShape:2.0,
+      stops:['#fff1ce','#ffcb85','#ff9e7a','#d98aa6','#8e86c0'] },
+    volcanic: { drama:1.0, sat:1.26, ozone:0.32, multi:0.24, gain:1.8, floor:0.06, contrast:1.02, radial:0.7, twi:0.28, twiShape:2.8,
+      stops:['#ffd27a','#ff7e36','#e63a1e','#8e1e18','#2a1410'] },
+    cosmic:   { drama:1.05, sat:1.44, ozone:1.05, multi:0.62, gain:1.5, floor:0.16, contrast:0.8, radial:0.5, twi:0.34, twiShape:2.3,
+      stops:['#dfffe6','#5fe0b0','#3fb0e0','#8e5fe0','#e04fb0'] }
+  };
+
+  // ---- State ----
+  var state = {
+    t: 0.75, playing: false, speed: 0.012, sweep: false, split: false, dwell: 0.65,
+    drama:0.9, sat:1.35, ozone:0.8, multi:0.35, gain:1.6, floor:0.12, contrast:0.8, radial:0.6, twi:0.32, twiShape:2.5,
+    sunI:26.5, mieG:0.758,
+    stops:['#ffe39a','#ff6fa8','#c457e0','#3fb7c9','#1b2c7a']
+  };
+
+  function hexToRGB(h) {
+    h = h.replace('#','');
+    return [parseInt(h.substr(0,2),16)/255, parseInt(h.substr(2,2),16)/255, parseInt(h.substr(4,2),16)/255];
+  }
+
+  // ---- Controls wiring ----
+  function bindRange(id, key, decimals) {
+    var el = document.getElementById(id), out = document.getElementById(id+'val');
+    el.addEventListener('input', function () {
+      state[key] = parseFloat(el.value);
+      if (out) out.textContent = (decimals===3) ? state[key].toFixed(3).replace(/^0/,'') : (decimals===1 ? state[key].toFixed(1) : state[key].toFixed(2));
+      renderOnce();
+    });
+  }
+  bindRange('uDrama','drama'); bindRange('uSat','sat'); bindRange('uOzone','ozone'); bindRange('uMulti','multi');
+  bindRange('uGain','gain'); bindRange('uFloor','floor',3); bindRange('uContrast','contrast');
+  bindRange('uRadial','radial'); bindRange('uTwi','twi'); bindRange('uTwiShape','twiShape',1);
+  bindRange('uSunI','sunI'); bindRange('uMieG','mieG',3);
+  bindRange('dwell','dwell');  // timing-only; intentionally NOT reset by presets
+
+  var timeEl = document.getElementById('time'), timeOut = document.getElementById('timeval');
+  timeEl.addEventListener('input', function () { state.t = parseFloat(timeEl.value); state.playing=false; state.sweep=false;
+    document.getElementById('sweep').checked=false; document.getElementById('play').textContent='▶ Play'; renderOnce(); });
+  document.getElementById('speed').addEventListener('input', function (e) { state.speed = parseFloat(e.target.value); });
+  document.getElementById('play').addEventListener('click', function () {
+    state.playing = !state.playing; this.textContent = state.playing ? '❚❚ Pause' : '▶ Play';
+  });
+  document.getElementById('sweep').addEventListener('change', function (e) { state.sweep = e.target.checked; if (state.sweep) state.playing=false, document.getElementById('play').textContent='▶ Play'; });
+  Array.prototype.forEach.call(document.querySelectorAll('.timebtns button'), function (b) {
+    b.addEventListener('click', function () { state.t = parseFloat(b.dataset.t); state.playing=false; state.sweep=false;
+      document.getElementById('sweep').checked=false; document.getElementById('play').textContent='▶ Play'; renderOnce(); });
+  });
+  document.getElementById('split').addEventListener('change', function (e) { state.split = e.target.checked; renderOnce(); });
+
+  var swIds = ['g0','g1','g2','g3','g4'];
+  swIds.forEach(function (id, i) {
+    document.getElementById(id).addEventListener('input', function (e) { state.stops[i] = e.target.value; renderOnce(); });
+  });
+
+  function syncUI() {
+    function setR(id,key,dec){ var el=document.getElementById(id), o=document.getElementById(id+'val');
+      el.value=state[key]; if(o) o.textContent=(dec===3)?state[key].toFixed(3).replace(/^0/,''):(dec===1?state[key].toFixed(1):state[key].toFixed(2)); }
+    setR('uDrama','drama'); setR('uSat','sat'); setR('uOzone','ozone'); setR('uMulti','multi');
+    setR('uGain','gain'); setR('uFloor','floor',3); setR('uContrast','contrast'); setR('uRadial','radial'); setR('uTwi','twi'); setR('uTwiShape','twiShape',1);
+    setR('uSunI','sunI'); setR('uMieG','mieG',3);
+    timeEl.value = state.t; timeOut.textContent = state.t.toFixed(3).replace(/^0/,'');
+    swIds.forEach(function (id,i){ document.getElementById(id).value = state.stops[i]; });
+  }
+
+  function applyPreset(name) {
+    var p = PRESETS[name]; if (!p) return;
+    state.drama=p.drama; state.sat=p.sat; state.ozone=p.ozone; state.multi=p.multi;
+    state.gain=p.gain; state.floor=p.floor; state.contrast=p.contrast; state.radial=p.radial; state.twi=p.twi; state.twiShape=p.twiShape;
+    state.stops = p.stops.slice();
+    Array.prototype.forEach.call(document.querySelectorAll('.pbtn'), function (b) {
+      b.classList.toggle('active', b.dataset.preset === name);
+    });
+    syncUI(); renderOnce();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.pbtn'), function (b) {
+    b.addEventListener('click', function () { applyPreset(b.dataset.preset); });
+  });
+
+  // ---- Sun direction + NDC (verbatim renderSkyGL math) ----
+  function sunData(t, aspect) {
+    var fovY = FOVY_DEG*Math.PI/180, pitch = PITCH_DEG*Math.PI/180;
+    var arc = (t - 0.25)*2*Math.PI;
+    // Dwell warp: bend the phase so darc/dt is small at the horizon crossings
+    // (sunrise t=0.25, sunset t=0.75) and large at noon. Keeps crossings + day
+    // length fixed (arcW==arc when sin(2arc)==0); only redistributes time toward
+    // the horizon. A<1 stays monotonic (no sun reversal).
+    var A = Math.min(0.95, Math.max(0, state.dwell));
+    var arcW = arc - 0.5*A*Math.sin(2*arc);
+    var altitude = Math.sin(arcW)*(ALT_DEG*Math.PI/180);
+    var azimuth  = Math.cos(arcW)*(AZI_DEG*Math.PI/180);
+    var dx = Math.cos(altitude)*Math.sin(azimuth);
+    var dy = Math.sin(altitude);
+    var dz = Math.cos(altitude)*Math.cos(azimuth);
+    var cP = Math.cos(pitch), sP = Math.sin(pitch);
+    var vx = dx, vy = cP*dy - sP*dz, vz = sP*dy + cP*dz;
+    var tanHalf = Math.tan(fovY*0.5);
+    var on = vz > 0.0001 ? 1 : 0;
+    return {
+      dir:[dx,dy,dz], elev:dy,
+      ndc:[ on ? vx/(vz*tanHalf*aspect) : 999, on ? vy/(vz*tanHalf) : 999 ],
+      on: on, fovY: fovY, pitch: pitch
+    };
+  }
+
+  // ---- Resize ----
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = stage.clientWidth, h = stage.clientHeight;
+    glcanvas.width = Math.round(w*dpr); glcanvas.height = Math.round(h*dpr);
+    overlay.width = Math.round(w*dpr); overlay.height = Math.round(h*dpr);
+    renderOnce();
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- Overlay: ground silhouette + stars ----
+  var STARS = [];
+  for (var i=0;i<240;i++) STARS.push({ x:Math.random(), y:Math.random()*0.6, r:Math.random()*1.4+0.4, ph:Math.random()*6.28 });
+  function drawOverlay(elev) {
+    var W = overlay.width, H = overlay.height;
+    octx.clearRect(0,0,W,H);
+    var horizonY = H*HORIZON_FRAC;
+    // stars fade in as the sun drops below horizon
+    var night = Math.max(0, Math.min(1, (-elev)/0.35));
+    if (night > 0.01) {
+      var tt = performance.now()/1000;
+      for (var s=0;s<STARS.length;s++){ var st=STARS[s];
+        var a = night * (0.4 + 0.6*Math.abs(Math.sin(tt*0.7 + st.ph)));
+        octx.fillStyle = 'rgba(220,228,245,'+a.toFixed(3)+')';
+        octx.fillRect(st.x*W, st.y*horizonY, st.r*1.2, st.r*1.2);
+      }
+    }
+    // ground silhouette — dark ridge, just a framing device
+    var grad = octx.createLinearGradient(0, horizonY, 0, H);
+    grad.addColorStop(0, '#05060a'); grad.addColorStop(1, '#020308');
+    octx.fillStyle = grad;
+    octx.beginPath();
+    octx.moveTo(0, H);
+    octx.lineTo(0, horizonY);
+    var seg = 22;
+    for (var x=0;x<=seg;x++){
+      var px = x/seg*W;
+      var hump = Math.sin(x*0.7)*0.5 + Math.sin(x*1.9+1.3)*0.28 + Math.sin(x*3.3+2.1)*0.13;
+      octx.lineTo(px, horizonY - hump*H*0.018 - H*0.004);
+    }
+    octx.lineTo(W, H);
+    octx.closePath();
+    octx.fill();
+  }
+
+  // ---- Render ----
+  function setUniforms() {
+    var aspect = glcanvas.width / Math.max(1, glcanvas.height);
+    var sd = sunData(state.t, aspect);
+    gl.uniform2f(U.uResolution, glcanvas.width, glcanvas.height);
+    gl.uniform1f(U.uSkyBottomPx, glcanvas.height); // full canvas is sky; ground overlay covers lower part
+    gl.uniform1f(U.uFovY, sd.fovY);
+    gl.uniform1f(U.uPitch, sd.pitch);
+    gl.uniform1f(U.uAspect, aspect);
+    gl.uniform3f(U.uSunDir, sd.dir[0], sd.dir[1], sd.dir[2]);
+    gl.uniform2f(U.uSunNDC, sd.ndc[0], sd.ndc[1]);
+    gl.uniform1f(U.uSunOnScreen, sd.on);
+    gl.uniform1f(U.sunIntensity, state.sunI);
+    gl.uniform1f(U.sunDiscSize, 0.05);
+    gl.uniform1f(U.mieG, state.mieG);
+    gl.uniform1f(U.uDrama, state.drama);
+    gl.uniform1f(U.uSat, state.sat);
+    gl.uniform1f(U.uOzone, state.ozone);
+    gl.uniform1f(U.uMulti, state.multi);
+    gl.uniform1f(U.uGain, state.gain);
+    gl.uniform1f(U.uFloor, state.floor);
+    gl.uniform1f(U.uContrast, state.contrast);
+    gl.uniform1f(U.uRadial, state.radial);
+    gl.uniform1f(U.uTwi, state.twi);
+    gl.uniform1f(U.uTwiShape, state.twiShape);
+    var r0=hexToRGB(state.stops[0]),r1=hexToRGB(state.stops[1]),r2=hexToRGB(state.stops[2]),r3=hexToRGB(state.stops[3]),r4=hexToRGB(state.stops[4]);
+    gl.uniform3f(U.uG0,r0[0],r0[1],r0[2]); gl.uniform3f(U.uG1,r1[0],r1[1],r1[2]);
+    gl.uniform3f(U.uG2,r2[0],r2[1],r2[2]); gl.uniform3f(U.uG3,r3[0],r3[1],r3[2]);
+    gl.uniform3f(U.uG4,r4[0],r4[1],r4[2]);
+    gl.uniform1f(U.uSplitX, state.split ? glcanvas.width*0.5 : -1.0);
+    return sd;
+  }
+
+  function renderOnce() {
+    gl.viewport(0,0,glcanvas.width,glcanvas.height);
+    var sd = setUniforms();
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    drawOverlay(sd.elev);
+    var elevDeg = (Math.asin(Math.max(-1,Math.min(1,sd.elev)))*180/Math.PI).toFixed(1);
+    var phase = sd.elev > 0.05 ? 'day' : (sd.elev > -0.08 ? 'TWILIGHT' : 'night');
+    // mirror the shader's twilight gate so you can watch the effect stay at 0 through the day
+    var ss = Math.max(0, Math.min(1, Math.abs(sd.elev)/Math.max(1e-4, state.twi)));
+    var tw = 1.0 - (ss*ss*(3.0-2.0*ss));
+    var dramaW = Math.min(2, Math.max(0, state.drama)) * Math.pow(tw, Math.max(state.twiShape, 0.25));
+    var pct = (dramaW*100).toFixed(0);
+    hud.innerHTML = '<b>t '+state.t.toFixed(3)+'</b> &nbsp; sun elev <b>'+elevDeg+'°</b> &nbsp; ['+phase+'] &nbsp; effect <b>'+pct+'%</b>'
+      + (state.split ? ' &nbsp; <b>split:</b> baseline | graded' : '');
+  }
+
+  var last = performance.now();
+  function loop(now) {
+    var dt = (now - last)/1000; last = now;
+    if (state.playing) { state.t = (state.t + state.speed*dt*60/60) % 1; if (state.t<0) state.t+=1;
+      timeEl.value = state.t; timeOut.textContent = state.t.toFixed(3).replace(/^0/,''); renderOnce(); }
+    else if (state.sweep) { state.t += 0.02*dt; if (state.t > 0.90) state.t = 0.62;
+      timeEl.value = state.t; timeOut.textContent = state.t.toFixed(3).replace(/^0/,''); renderOnce(); }
+    else { drawOverlay(sunData(state.t, glcanvas.width/Math.max(1,glcanvas.height)).elev); } // keep stars twinkling
+    requestAnimationFrame(loop);
+  }
+
+  // ---- Boot ----
+  resize();
+  applyPreset('tropical');
+  renderOnce();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice — Block Break</title>
+<style>
+  :root { --bg:#0c0f14; --panel:#13181f; --line:#262e39; --ink:#cdd6e0; --dim:#8089; --dim2:#7c8794; --accent:#e8c14a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; }
+  #wrap { display:flex; height:100vh; width:100vw; }
+  #stage { position:relative; flex:1 1 auto; min-width:0; }
+  canvas { display:block; width:100%; height:100%; }
+  #hud { position:absolute; top:11px; left:13px; font-size:12px; line-height:1.55;
+    color:var(--dim2); pointer-events:none; text-shadow:0 1px 3px #000; }
+  #hud b { color:var(--ink); } #hud .big { color:var(--accent); }
+  #help { position:absolute; bottom:11px; left:13px; font-size:11px; color:var(--dim2);
+    pointer-events:none; text-shadow:0 1px 3px #000; max-width:62%; }
+  #panel { flex:0 0 312px; background:var(--panel); border-left:1px solid var(--line);
+    overflow-y:auto; padding:13px 15px 44px; font-size:12px; }
+  #panel h1 { font-size:13px; margin:2px 0 3px; letter-spacing:.03em; }
+  #panel .sub { color:var(--dim2); font-size:11px; line-height:1.5; margin:0 0 13px; }
+  .group { border-top:1px solid var(--line); padding:11px 0 4px; }
+  .group h2 { font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim2); margin:0 0 9px; }
+  .modes { display:flex; gap:7px; }
+  .modes button { flex:1; }
+  button { font:inherit; font-size:11px; color:var(--ink); background:#1c232d;
+    border:1px solid var(--line); border-radius:7px; padding:7px 9px; cursor:pointer; }
+  button:hover { border-color:#3a4658; background:#222b36; }
+  button.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  .fills { display:flex; flex-wrap:wrap; gap:6px; }
+  .slider { display:block; margin:10px 0; }
+  .slider .lab { display:flex; justify-content:space-between; color:var(--dim2); margin-bottom:3px; }
+  .slider .lab b { color:var(--ink); font-weight:normal; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  select { font:inherit; font-size:11px; background:#1c232d; color:var(--ink);
+    border:1px solid var(--line); border-radius:7px; padding:6px; width:100%; }
+  .notes { color:var(--dim2); font-size:11px; line-height:1.65; }
+  .notes b { color:var(--ink); font-weight:normal; }
+  .beat { display:flex; gap:7px; margin:5px 0; }
+  .beat .t { color:var(--accent); flex:0 0 52px; }
+  .tiles { display:flex; flex-direction:column; gap:4px; margin-top:9px; }
+  .swatch { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--dim2); }
+  .swatch i { width:13px; height:13px; border-radius:3px; display:inline-block; border:1px solid #0007; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="hud"></div>
+    <div id="help">
+      Dig with <b>WASD</b> / <b>arrows</b> (free-fly, hold a direction into rock). Hold to drill the same
+      vein and feel a tier. <b>Fill</b> floods the field with one material. Flip to <b>Old</b> to see the before.
+    </div>
+  </div>
+  <aside id="panel"></aside>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  var VW = 0, VH = 0;
+  function resize() { var r = cv.getBoundingClientRect(); VW = r.width; VH = r.height;
+    cv.width = Math.round(VW*DPR); cv.height = Math.round(VH*DPR); }
+  window.addEventListener('resize', resize);
+
+  // ---- Materials. tier drives the designed feedback ladder. ----
+  var TILES = {
+    dirt:  { color:'#8a5a32', hp:2, value:0,   tier:'soft', label:'dirt'  },
+    stone: { color:'#71777f', hp:4, value:0,   tier:'hard', label:'stone' },
+    iron:  { color:'#b9794a', hp:3, value:14,  tier:'ore',  label:'iron'  },
+    gold:  { color:'#e8c14a', hp:3, value:70,  tier:'ore',  label:'gold'  },
+    gem:   { color:'#67e3ff', hp:5, value:300, tier:'rare', label:'gem'   }
+  };
+  // Designed per-tier composition. Intensity/rareDrama sliders scale these.
+  // Restraint is the design: soft = quiet & dust-forward, drama reserved for rare.
+  var TIER = {
+    // NON-particle punch (hitstop/kick/flash/ring) restored to full; only the particle counts/speed stay subtle
+    soft: { hitstop:2, grid:3, jit:0.30, speed:42,  dust:2, dustR:0.30, grit:6,  kick:14,  flash:0.00, ring:0.0, sparks:0, hold:0 },
+    hard: { hitstop:3, grid:3, jit:0.20, speed:80,  dust:2, dustR:0.28, grit:8,  kick:60,  flash:0.30, ring:0.4, sparks:0, hold:0 },
+    ore:  { hitstop:3, grid:3, jit:0.22, speed:80,  dust:2, dustR:0.30, grit:8,  kick:80,  flash:0.45, ring:0.5, sparks:0, hold:0, glow:1 },
+    rare: { hitstop:5, grid:3, jit:0.20, speed:100, dust:3, dustR:0.36, grit:10, kick:150, flash:0.85, ring:1.0, sparks:3, hold:1, glow:1 }
+  };
+  var BASE_HITSTOP = 0.03;
+
+  var mode = 'designed'; // designed | old
+  var biome = 'none';
+  var CFG = { intensity:1.0, rareDrama:1.0, hitstopMul:1.0, drillTime:0.30, drillPower:1, lifeMul:1.0 };
+
+  // ---- World ----
+  var TILE = 40, COLS = 30, ROWS = 54;
+  var grid = [], crackCache = {}, hpMap = {};
+  function genWorld() {
+    grid = [];
+    for (var r = 0; r < ROWS; r++) {
+      var row = [];
+      for (var c = 0; c < COLS; c++) {
+        if (r < 3) { row.push(null); continue; }
+        var depth = r - 3, t = 'dirt';
+        if (depth > 8 && Math.random() < (depth - 8) / 30) t = 'stone';
+        var rnd = Math.random();
+        if (rnd < 0.05) t = 'iron';
+        else if (rnd < 0.075 && depth > 6) t = 'gold';
+        else if (rnd < 0.085 && depth > 14) t = 'gem';
+        row.push(t);
+      }
+      grid.push(row);
+    }
+    crackCache = {}; hpMap = {};
+  }
+  function fillAll(type) { for (var r=0;r<ROWS;r++) for (var c=0;c<COLS;c++) if (grid[r][c]!==null) grid[r][c]=type; crackCache={}; hpMap={}; }
+  function solid(r,c){ return r>=0 && r<ROWS && c>=0 && c<COLS && grid[r][c]!==null; }
+  function solidAt(wx,wy){ return solid(Math.floor(wy/TILE), Math.floor(wx/TILE)); }
+
+  // ---- Player / drill ----
+  var pl = { cx:5, cy:1, rx:5*TILE+TILE/2, ry:1*TILE+TILE/2, face:'d', squash:0, recoil:0, recoilDir:'d' };
+  var drilling = null, freezeT = 0, cargo = 0, drillChipT = 0;
+
+  // ---- Effect pools (designed) ----
+  var shards=[], dust=[], grit=[], sparks=[], rings=[], blooms=[], shimmers=[], floats=[], embers=[];
+  function clearFX(){ shards.length=0; dust.length=0; grit.length=0; sparks.length=0; rings.length=0; blooms.length=0; shimmers.length=0; floats.length=0; embers.length=0; }
+  // old-mode crude pools
+  var oldBits=[], oldPuffs=[], oldFlash=[], oldPops=[]; var oldShakeT=0, oldShakeA=0;
+  // designed camera settle (spring, not shake)
+  var camKick={x:0,y:0}, camKickV={x:0,y:0};
+
+  // ---- Input ----
+  var keys={}, order=[];
+  var DIRK={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r',W:'u',S:'d',A:'l',D:'r'};
+  window.addEventListener('keydown', function(e){ var k=DIRK[e.key]; if(!k)return; if(!keys[k]){keys[k]=1;order.push(k);} e.preventDefault(); });
+  window.addEventListener('keyup', function(e){ var k=DIRK[e.key]; if(!k)return; keys[k]=0; order=order.filter(function(x){return x!==k;}); });
+  function heldDir(){ return order.length ? order[order.length-1] : null; }
+  function neigh(r,c,d){ return d==='u'?[r-1,c]:d==='d'?[r+1,c]:d==='l'?[r,c-1]:[r,c+1]; }
+
+  // ---- Colour helpers ----
+  function hex2rgb(h){ var n=parseInt(h.slice(1),16); return [n>>16&255,n>>8&255,n&255]; }
+  function parseRGB(c){ if(c[0]==='#')return hex2rgb(c); var m=c.match(/(\d+)\D+(\d+)\D+(\d+)/); return [+m[1],+m[2],+m[3]]; }
+  function shade(h,a){ var c=parseRGB(h),f=a<0?0:255,t=Math.abs(a); return 'rgb('+Math.round(c[0]+(f-c[0])*t)+','+Math.round(c[1]+(f-c[1])*t)+','+Math.round(c[2]+(f-c[2])*t)+')'; }
+  function mix(a,b,t){ var x=parseRGB(a),y=parseRGB(b); return 'rgb('+Math.round(x[0]+(y[0]-x[0])*t)+','+Math.round(x[1]+(y[1]-x[1])*t)+','+Math.round(x[2]+(y[2]-x[2])*t)+')'; }
+  function rgba(c,a){ var x=parseRGB(c); return 'rgba('+x[0]+','+x[1]+','+x[2]+','+a+')'; }
+  function biomeTint(h){ return biome==='permafrost'?mix(h,'#bfe9ff',0.32):biome==='magma'?mix(h,'#ff7a2a',0.26):h; }
+  function rand(a,b){ return a+Math.random()*(b-a); }
+  var easeOutCubic=function(t){return 1-Math.pow(1-t,3);};
+  var easeOutQuart=function(t){return 1-Math.pow(1-t,4);};
+  var easeInOutSine=function(t){return -(Math.cos(Math.PI*t)-1)/2;};
+
+  // ============================================================
+  // THE DESIGNED BREAK — one choreographed moment, staggered beats.
+  // ============================================================
+  function breakDesigned(r, c, type, dir) {
+    var def = TILES[type], P = TIER[def.tier];
+    var I = CFG.intensity, drama = def.tier==='rare' ? CFG.rareDrama : 1;
+    var x0 = c*TILE, y0 = r*TILE, cx = x0+TILE/2, cy = y0+TILE/2;
+    var dvx = dir==='l'?-1:dir==='r'?1:0, dvy = dir==='u'?-1:dir==='d'?1:0;
+    delete crackCache[r+':'+c];
+
+    // payoff
+    if (def.value>0) floats.push({ x:cx, y:cy, vy:-26, text:'+$'+def.value, color:def.color, t:0, maxT:1.2, big:def.tier==='rare' });
+
+    // BEAT 1 — the snap: a crisp hit-stop, scaled by tier (baseline always present)
+    freezeT = Math.max(freezeT, Math.max(BASE_HITSTOP, P.hitstop*CFG.hitstopMul/60 * (def.tier==='rare'?drama:1)));
+
+    // BEAT 1 — shatter the tile into facet-shaded fragments, launched from where they sat
+    var g = P.grid, nChips = Math.round(g*g*1.4);   // a touch fewer, very small chips
+    for (var ci=0; ci<nChips; ci++) {
+      var fx = x0 + rand(0.15,0.85)*TILE, fy = y0 + rand(0.15,0.85)*TILE;
+      var ox = fx-cx, oy = fy-cy;
+      // gentle launch outward with mild spread + soft up-arc (subtle, not a blast)
+      var baseAng = Math.atan2(oy,ox) + rand(-0.8,0.8), sp = P.speed*rand(0.4,1.35)*I;
+      // very small chips, varied size
+      var cr = TILE*rand(0.03,0.10), pn = 6+Math.floor(Math.random()*4), elong = rand(0.7,1.5), outline=[];
+      for (var a2=0; a2<pn; a2++){ var ang=(a2/pn)*6.2832+rand(-0.3,0.3), rr=cr*rand(0.55,1.0); outline.push([Math.cos(ang)*rr*elong, Math.sin(ang)*rr/Math.sqrt(elong)]); }
+      shards.push({
+        x:fx, y:fy, outline:outline, r:cr, rest:false,
+        vx: Math.cos(baseAng)*sp + dvx*rand(20,60)*I + rand(-26,26),
+        vy: Math.sin(baseAng)*sp + dvy*rand(20,60)*I - rand(15,70),
+        rot:rand(0,6.28), vrot:rand(-7,7), t:0, maxT:rand(0.45,0.75)*CFG.lifeMul,
+        base:biomeTint(def.color), hi:shade(def.color,0.36), lo:shade(def.color,-0.28),
+        spec: def.tier==='rare' ? '#ffffff' : def.tier==='ore' ? shade(def.color,0.7) : (Math.random()<0.4?shade(def.color,0.5):null)
+      });
+    }
+    if (shards.length>700) shards.splice(0, shards.length-700);
+    // fine grit for detail frequency
+    var gn = Math.round(P.grit*I);
+    for (var k=0;k<gn;k++){ var a=rand(0,6.28), s=rand(50,210)*I;
+      grit.push({ x:cx+rand(-14,14), y:cy+rand(-14,14), vx:Math.cos(a)*s+dvx*60, vy:Math.sin(a)*s-rand(30,90)+dvy*60,
+        t:0, maxT:rand(0.25,0.5)*CFG.lifeMul, size:rand(1,2.2), color:shade(def.color,-0.2) }); }
+
+    // BEAT 2 — dust blooms a half-beat LATER (follow-through), soft and slow
+    var dn = Math.round(P.dust*I);
+    for (var d2=0; d2<dn; d2++) dust.push({ x:cx+rand(-7,7), y:cy+rand(-5,5), vy:rand(-22,-46),
+      delay:rand(0.03,0.10), t:0, maxT:rand(0.45,0.7)*CFG.lifeMul, r:TILE*0.16, r1:TILE*P.dustR*rand(1.6,2.3),
+      color:biomeTint(shade(def.color,0.26)) });
+
+    // BEAT 1 — material-hued flash core + thin shockwave ring (skipped on soft = restraint)
+    if (P.flash>0) {
+      var hue = def.tier==='rare' ? '#eafcff' : shade(def.color,0.5);
+      blooms.push({ x:cx, y:cy, t:0, maxT:(0.10+P.flash*0.05)*(P.hold?1.7:1), r:TILE*(0.45+P.flash*0.55), color:hue, strength:P.flash*drama });
+    }
+    if (P.ring>0) rings.push({ x:cx, y:cy, t:0, maxT:0.16+P.ring*0.06, r0:TILE*0.25, r1:TILE*(0.8+P.ring*0.7), color:def.tier==='rare'?'#bfefff':shade(def.color,0.45), width:1+P.ring });
+
+    // BEAT 3 — camera settle: a single directional impulse on a spring, eases back (NOT shake)
+    camKickV.x += dvx * P.kick * I; camKickV.y += dvy * P.kick * I;
+
+    // RARE escalation — the reserved moment: held glow, elegant sparkle, a soft shimmer ring
+    if (def.tier==='rare') {
+      for (var s2=0;s2<Math.round(P.sparks*drama);s2++) sparks.push({ x:cx+rand(-TILE*0.4,TILE*0.4), y:cy+rand(-TILE*0.4,TILE*0.4),
+        delay:rand(0,0.06), t:0, maxT:rand(0.4,0.7), size:rand(3,6), rot:rand(0,1.57), color:'#dffaff' });
+      shimmers.push({ x:cx, y:cy, t:0, maxT:0.5, r0:TILE*0.3, r1:TILE*2.4*drama, color:def.color });
+    }
+    if (biome==='magma') for (var e=0;e<4;e++) embers.push({ x:cx+rand(-10,10), y:cy, vx:rand(-12,12), vy:rand(-30,-72), t:0, maxT:rand(0.6,1.1) });
+
+    if (P.kick>40) { pl.recoil = 1; pl.recoilDir = dir; }
+    pl.squash = Math.max(pl.squash, def.tier==='soft'?0.16:0.26);
+  }
+
+  // ---- The OLD break, kept for A/B contrast (square debris, flat dust, white pop, random shake) ----
+  function breakOld(r,c,type,dir){
+    var def=TILES[type], cx=c*TILE+TILE/2, cy=r*TILE+TILE/2;
+    if (def.value>0) floats.push({ x:cx,y:cy,vy:-26,text:'+$'+def.value,color:def.color,t:0,maxT:1.2,big:false });
+    freezeT=Math.max(freezeT,0.05);
+    for (var i=0;i<12;i++){ var a=rand(0,6.28),s=rand(40,200); oldBits.push({x:cx+rand(-12,12),y:cy+rand(-12,12),vx:Math.cos(a)*s,vy:Math.sin(a)*s-rand(20,90),t:0,maxT:rand(0.3,0.6),rot:rand(0,6.28),vrot:rand(-10,10),size:rand(2,5),color:shade(def.color,rand(-0.2,0.2))}); }
+    oldPuffs.push({x:cx,y:cy,r:TILE*0.25,vr:60,t:0,maxT:0.5,color:shade(def.color,0.28)});
+    oldFlash.push({x:cx,y:cy,r:TILE*0.7,t:0,maxT:0.12});
+    oldPops.push({x:cx,y:cy,t:0,maxT:0.22,size:TILE,color:def.color});
+    oldShakeT=0.25; oldShakeA=8;
+    pl.squash=Math.max(pl.squash,0.25); pl.recoil=1; pl.recoilDir=dir;
+  }
+  function doBreak(r,c,type,dir){ cargo += TILES[type].value; (mode==='old'?breakOld:breakDesigned)(r,c,type,dir); }
+
+  // ---- Crack telegraph: chiselled fractures from the contact face, tapered + branching ----
+  function crackFor(r,c,dir){
+    var key=r+':'+c+':'+dir; if(crackCache[key])return crackCache[key];
+    var seed=(r*73856093 ^ c*19349663 ^ (dir.charCodeAt(0)*2654435))>>>0;
+    function rng(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+    var ox=dir==='l'?TILE*0.34:dir==='r'?-TILE*0.34:0, oy=dir==='d'?-TILE*0.34:dir==='u'?TILE*0.34:0;
+    var ix=dir==='l'?-1:dir==='r'?1:0, iy=dir==='d'?1:dir==='u'?-1:0;
+    var baseAng=Math.atan2(iy||0.001, ix||0.001), strokes=[], lim=TILE*0.46;
+    var main=2+Math.floor(rng()*2);
+    for(var m=0;m<main;m++){
+      var ang=baseAng+rand0(rng,-0.95,0.95), segs=4+Math.floor(rng()*3), seglen=(TILE*0.72)/segs, px=ox, py=oy, pts=[[px,py]];
+      for(var s=0;s<segs;s++){ ang+=rand0(rng,-0.5,0.5); px+=Math.cos(ang)*seglen*rand0(rng,0.7,1.2); py+=Math.sin(ang)*seglen*rand0(rng,0.7,1.2);
+        px=Math.max(-lim,Math.min(lim,px)); py=Math.max(-lim,Math.min(lim,py)); pts.push([px,py]); }
+      strokes.push(pts);
+      if(rng()<0.7 && pts.length>3){ var bi=2+Math.floor(rng()*(pts.length-3)), bx=pts[bi][0], by=pts[bi][1], ba=ang+rand0(rng,-1.5,1.5), bsegs=2+Math.floor(rng()*2), bpts=[[bx,by]];
+        for(var b=0;b<bsegs;b++){ ba+=rand0(rng,-0.5,0.5); bx+=Math.cos(ba)*seglen*0.7; by+=Math.sin(ba)*seglen*0.7; bx=Math.max(-lim,Math.min(lim,bx)); by=Math.max(-lim,Math.min(lim,by)); bpts.push([bx,by]); }
+        strokes.push(bpts); }
+    }
+    crackCache[key]={strokes:strokes}; return crackCache[key];
+  }
+  function rand0(rng,a,b){ return a+rng()*(b-a); }
+  // a single tapered crack ribbon: thick at the origin, hairline at the tip, with a chiselled light edge
+  function drawCrackStroke(cxw,cyw,pts,baseW,grow,alpha){
+    var n=pts.length, show=Math.max(2,Math.min(n,Math.ceil(n*grow))), L=[], R=[];
+    for(var i=0;i<show;i++){ var p=pts[i], a=pts[Math.min(i+1,show-1)], b=pts[Math.max(i-1,0)];
+      var dx=a[0]-b[0], dy=a[1]-b[1], dl=Math.hypot(dx,dy)||1, nx=-dy/dl, ny=dx/dl, w=baseW*(1-i/(n-1))*0.5; if(w<0.3)w=0.3;
+      L.push([cxw+p[0]+nx*w, cyw+p[1]+ny*w]); R.push([cxw+p[0]-nx*w, cyw+p[1]-ny*w]); }
+    ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]);
+    for(var i2=1;i2<L.length;i2++)ctx.lineTo(L[i2][0],L[i2][1]);
+    for(var i3=R.length-1;i3>=0;i3--)ctx.lineTo(R[i3][0],R[i3][1]); ctx.closePath();
+    ctx.fillStyle='rgba(8,5,3,'+alpha+')'; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,'+(alpha*0.16)+')'; ctx.lineWidth=0.6; ctx.beginPath();
+    ctx.moveTo(L[0][0]-0.4,L[0][1]-0.5); for(var i4=1;i4<L.length;i4++)ctx.lineTo(L[i4][0]-0.4,L[i4][1]-0.5); ctx.stroke();
+  }
+
+  // ---- Particle physics: swept-ish collision against the tile grid (bounce, slide, settle) ----
+  function collideParticle(s,dt,rest,frict,rad){
+    rad=rad||1; s.vy += 900*dt;
+    var nx=s.x+s.vx*dt, ny=s.y+s.vy*dt, hit=false;
+    if (solidAt(nx,s.y)){ nx = s.vx>0 ? Math.floor(nx/TILE)*TILE-rad : (Math.floor(nx/TILE)+1)*TILE+rad; s.vx=-s.vx*rest; s.vy*=frict; hit=true; }
+    if (solidAt(nx,ny)){ ny = s.vy>0 ? Math.floor(ny/TILE)*TILE-rad : (Math.floor(ny/TILE)+1)*TILE+rad; s.vy=-s.vy*rest; s.vx*=frict; hit=true; }
+    s.x=nx; s.y=ny; return hit;
+  }
+  function stepChip(s,dt){
+    if(s.rest) return;
+    var hit=collideParticle(s,dt,0.4,0.6,s.r);
+    if(hit) s.vrot = s.vrot*0.5 + s.vx*0.03;   // a bounce kicks the tumble
+    s.rot += s.vrot*dt;
+    if(Math.hypot(s.vx,s.vy)<11 && solidAt(s.x, s.y+s.r+2)){ s.rest=true; s.vx=0; s.vy=0; s.vrot=0; }  // come to rest on a surface
+  }
+  // ---- Update ----
+  function update(dt){
+    // designed camera settle spring
+    var st=240, dp=30;
+    camKickV.x += (-st*camKick.x - dp*camKickV.x)*dt; camKickV.y += (-st*camKick.y - dp*camKickV.y)*dt;
+    camKick.x += camKickV.x*dt; camKick.y += camKickV.y*dt;
+    if (oldShakeT>0) oldShakeT-=dt;
+
+    // hit-stop pauses only player control, NOT the break FX, so the explosion never visibly stutters
+    var frozen = freezeT>0; if (frozen) freezeT-=dt;
+
+    if (!frozen) {
+    // movement / drilling
+    var tx=pl.cx*TILE+TILE/2, ty=pl.cy*TILE+TILE/2;
+    if (Math.abs(pl.rx-tx)<0.6 && Math.abs(pl.ry-ty)<0.6){
+      pl.rx=tx; pl.ry=ty; var dir=heldDir();
+      if (dir){ pl.face=dir; var nb=neigh(pl.cy,pl.cx,dir), nr=nb[0], nc=nb[1];
+        if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS){
+          if (grid[nr][nc]!==null){ if(!drilling||drilling.r!==nr||drilling.c!==nc) drilling={r:nr,c:nc,dir:dir,timer:CFG.drillTime}; }
+          else { drilling=null; pl.cx=nc; pl.cy=nr; }
+        } else drilling=null;
+      } else drilling=null;
+    }
+    var lr=Math.min(1,dt*14); pl.rx+=(tx-pl.rx)*lr; pl.ry+=(ty-pl.ry)*lr;
+
+    if (drilling){
+      drilling.timer-=dt;
+      // anticipation: sparse grit flaking off the contact face during the dig
+      drillChipT-=dt;
+      if (mode==='designed' && drillChipT<=0 && progressOf(drilling.r,drilling.c)>0.35){
+        drillChipT=0.07; var t=grid[drilling.r][drilling.c]; if(t){ var dc=TILES[t], gx=drilling.c*TILE+TILE/2, gy=drilling.r*TILE+TILE/2;
+          grit.push({x:gx+rand(-10,10),y:gy+rand(-10,10),vx:rand(-30,30),vy:-rand(20,60),t:0,maxT:rand(0.2,0.4),size:rand(1,1.8),color:shade(dc.color,-0.2)}); }
+      }
+      if (drilling.timer<=0){ var ty2=grid[drilling.r][drilling.c];
+        if (ty2==null) drilling=null;
+        else { stepHp(drilling.r,drilling.c,TILES[ty2]);
+          if (hpOf(drilling.r,drilling.c)<=0){ grid[drilling.r][drilling.c]=null; doBreak(drilling.r,drilling.c,ty2,drilling.dir); drilling=null; }
+          else drilling.timer=CFG.drillTime; }
+      }
+    }
+    } // end !frozen (player control); break FX below run every frame
+
+    pl.squash*=Math.pow(0.0008,dt); if(pl.squash<0.002)pl.squash=0;
+    pl.recoil*=Math.pow(0.002,dt); if(pl.recoil<0.01)pl.recoil=0;
+
+    var i;
+    for(i=shards.length-1;i>=0;i--){ var s=shards[i]; s.t+=dt; if(s.t>=s.maxT){shards.splice(i,1);continue;} stepChip(s,dt); }
+    for(i=dust.length-1;i>=0;i--){ var d=dust[i]; if(d.delay>0){d.delay-=dt;continue;} d.t+=dt; if(d.t>=d.maxT){dust.splice(i,1);continue;} d.y+=d.vy*dt; d.vy*=Math.pow(0.4,dt); d.r+=(d.r1-d.r)*Math.min(1,dt*4); }
+    for(i=grit.length-1;i>=0;i--){ var gr=grit[i]; gr.t+=dt; if(gr.t>=gr.maxT){grit.splice(i,1);continue;} if(!gr.stuck){ collideParticle(gr,dt,0.25,0.5,1); if(Math.abs(gr.vx)+Math.abs(gr.vy)<12 && solidAt(gr.x,gr.y+2)) gr.stuck=true; } }
+    for(i=sparks.length-1;i>=0;i--){ var sp=sparks[i]; if(sp.delay>0){sp.delay-=dt;continue;} sp.t+=dt; if(sp.t>=sp.maxT)sparks.splice(i,1); }
+    for(i=rings.length-1;i>=0;i--){ rings[i].t+=dt; if(rings[i].t>=rings[i].maxT)rings.splice(i,1); }
+    for(i=blooms.length-1;i>=0;i--){ blooms[i].t+=dt; if(blooms[i].t>=blooms[i].maxT)blooms.splice(i,1); }
+    for(i=shimmers.length-1;i>=0;i--){ shimmers[i].t+=dt; if(shimmers[i].t>=shimmers[i].maxT)shimmers.splice(i,1); }
+    for(i=floats.length-1;i>=0;i--){ var fl=floats[i]; fl.t+=dt; if(fl.t>=fl.maxT){floats.splice(i,1);continue;} fl.y+=fl.vy*dt; fl.vy+=16*dt; }
+    for(i=embers.length-1;i>=0;i--){ var em=embers[i]; em.t+=dt; if(em.t>=em.maxT){embers.splice(i,1);continue;} em.x+=em.vx*dt; em.y+=em.vy*dt; }
+    // old pools
+    for(i=oldBits.length-1;i>=0;i--){ var b=oldBits[i]; b.t+=dt; if(b.t>=b.maxT){oldBits.splice(i,1);continue;} b.vy+=520*dt; b.x+=b.vx*dt; b.y+=b.vy*dt; b.rot+=b.vrot*dt; }
+    for(i=oldPuffs.length-1;i>=0;i--){ var op=oldPuffs[i]; op.t+=dt; if(op.t>=op.maxT){oldPuffs.splice(i,1);continue;} op.r+=op.vr*dt; }
+    for(i=oldFlash.length-1;i>=0;i--){ oldFlash[i].t+=dt; if(oldFlash[i].t>=oldFlash[i].maxT)oldFlash.splice(i,1); }
+    for(i=oldPops.length-1;i>=0;i--){ oldPops[i].t+=dt; if(oldPops[i].t>=oldPops[i].maxT)oldPops.splice(i,1); }
+  }
+  function hpOf(r,c){ return hpMap[r+':'+c]; }
+  function stepHp(r,c,def){ var k=r+':'+c; if(hpMap[k]==null)hpMap[k]=def.hp; hpMap[k]-=CFG.drillPower; }
+  function progressOf(r,c){ var t=grid[r][c]; if(!t)return 0; var def=TILES[t],k=r+':'+c, cur=hpMap[k]==null?def.hp:hpMap[k];
+    var within=drilling&&drilling.r===r&&drilling.c===c?(1-drilling.timer/CFG.drillTime):0; return Math.min(1,(def.hp-cur+CFG.drillPower*within)/def.hp); }
+
+  // ---- Camera ----
+  var cam={x:0,y:0};
+  function updateCam(){ var tX=pl.rx-VW/2, tY=pl.ry-VH/2; cam.x+=(tX-cam.x)*0.12; cam.y+=(tY-cam.y)*0.12;
+    cam.x=Math.max(-40,Math.min(COLS*TILE-VW+40,cam.x)); cam.y=Math.max(-40,Math.min(ROWS*TILE-VH+40,cam.y)); }
+
+  // ---- Render ----
+  function draw(){
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    var bg=ctx.createLinearGradient(0,0,0,VH); bg.addColorStop(0,'#11161e'); bg.addColorStop(1,'#090c11');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,VW,VH);
+
+    var ox=camKick.x, oy=camKick.y;
+    if (mode==='old' && oldShakeT>0){ var a=oldShakeA*(oldShakeT/0.25); ox+=rand(-a,a); oy+=rand(-a,a); }
+    ctx.save(); ctx.translate(-cam.x+ox, -cam.y+oy);
+
+    var c0=Math.max(0,Math.floor(cam.x/TILE)-1), c1=Math.min(COLS,Math.ceil((cam.x+VW)/TILE)+1);
+    var r0=Math.max(0,Math.floor(cam.y/TILE)-1), r1=Math.min(ROWS,Math.ceil((cam.y+VH)/TILE)+1);
+
+    // tiles (refined: top-light, grain, seam)
+    for(var r=r0;r<r1;r++)for(var c=c0;c<c1;c++){ var t=grid[r][c]; if(!t)continue; var def=TILES[t], x=c*TILE, y=r*TILE, col=biomeTint(def.color);
+      ctx.fillStyle=col; ctx.fillRect(x,y,TILE,TILE);
+      var lg=ctx.createLinearGradient(x,y,x,y+TILE); lg.addColorStop(0,'rgba(255,255,255,0.10)'); lg.addColorStop(0.5,'rgba(255,255,255,0)'); lg.addColorStop(1,'rgba(0,0,0,0.20)');
+      ctx.fillStyle=lg; ctx.fillRect(x,y,TILE,TILE);
+      ctx.fillStyle=shade(col,-0.18);
+      for(var k=0;k<5;k++){ var hx=((r*7+c*13+k*29)%100)/100, hy=((r*17+c*5+k*11)%100)/100; ctx.globalAlpha=0.5; ctx.fillRect(x+hx*(TILE-5)+2,y+hy*(TILE-5)+2,2,2); }
+      ctx.globalAlpha=1;
+      if(def.value>0){ ctx.fillStyle=shade(def.color,0.42); for(var o=0;o<4;o++){ var ax=((r*11+c*7+o*23)%100)/100, ay=((r*3+c*19+o*13)%100)/100; ctx.fillRect(x+ax*(TILE-7)+3,y+ay*(TILE-7)+3,3,3); } }
+      ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,TILE-1,TILE-1);
+    }
+
+    // crack telegraph: chiselled fractures growing from the contact face, clipped to the tile
+    if (mode==='designed' && drilling){ var p=progressOf(drilling.r,drilling.c);
+      if (p>0.30){ var cr=crackFor(drilling.r,drilling.c,drilling.dir), dx=drilling.c*TILE+TILE/2, dy=drilling.r*TILE+TILE/2, grow=Math.min(1,(p-0.30)/0.70);
+        ctx.save(); ctx.beginPath(); ctx.rect(drilling.c*TILE+1, drilling.r*TILE+1, TILE-2, TILE-2); ctx.clip();
+        var baseW=2.4+grow*1.4;
+        for(var ci=0;ci<cr.strokes.length;ci++){ var sg=Math.min(1, grow*1.25 - ci*0.08); if(sg<=0.05)continue;
+          drawCrackStroke(dx,dy,cr.strokes[ci],baseW,Math.max(0.12,sg),0.34+grow*0.42); }
+        ctx.restore();
+      }
+    }
+
+    // dust (behind player)
+    for(var u=0;u<dust.length;u++){ var d=dust[u]; if(d.delay>0)continue; var da=Math.sin(Math.min(1,d.t/d.maxT)*Math.PI)*0.26;
+      var gd=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r); gd.addColorStop(0,rgba(d.color,da)); gd.addColorStop(1,rgba(d.color,0));
+      ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,6.2832); ctx.fill(); }
+    // old puffs
+    for(var u2=0;u2<oldPuffs.length;u2++){ var op=oldPuffs[u2]; ctx.globalAlpha=(1-op.t/op.maxT)*0.4; ctx.fillStyle=op.color; ctx.beginPath(); ctx.arc(op.x,op.y,op.r,0,6.28); ctx.fill(); }
+    ctx.globalAlpha=1;
+
+    drawPlayer();
+
+    // shards (designed)
+    for(var si=0;si<shards.length;si++){ var s=shards[si], life=s.t/s.maxT, a=life>0.8?1-(life-0.8)/0.2:1, sh=s.rest?1:1-life*0.12;
+      // contact shadow on the nearest surface below — grounds the chip as it falls and rests
+      var scc=Math.floor(s.x/TILE), sr0=Math.floor(s.y/TILE);
+      for(var srr=sr0; srr<=sr0+2; srr++){ if(solid(srr,scc)){ var syy=srr*TILE, prox=1-Math.max(0,(syy-s.y))/(TILE*1.4);
+        if(prox>0){ ctx.globalAlpha=a*0.18*prox; ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(s.x, syy-1.5, s.r*(0.85+prox*0.5), s.r*0.36, 0, 0, 6.2832); ctx.fill(); } break; } }
+      ctx.globalAlpha=a; ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot); ctx.scale(sh,sh);
+      var o=s.outline, m0x=(o[o.length-1][0]+o[0][0])/2, m0y=(o[o.length-1][1]+o[0][1])/2;
+      ctx.beginPath(); ctx.moveTo(m0x,m0y);
+      for(var k=0;k<o.length;k++){ var cu=o[k], nx2=o[(k+1)%o.length]; ctx.quadraticCurveTo(cu[0],cu[1],(cu[0]+nx2[0])/2,(cu[1]+nx2[1])/2); }
+      ctx.closePath();
+      var gg=ctx.createRadialGradient(-s.r*0.4,-s.r*0.45,0, 0,0, s.r*1.35);
+      gg.addColorStop(0,s.hi); gg.addColorStop(0.55,s.base); gg.addColorStop(1,s.lo);
+      ctx.fillStyle=gg; ctx.fill();
+      if(s.spec){ ctx.globalAlpha=a*0.6; ctx.fillStyle=s.spec; ctx.beginPath(); ctx.arc(-s.r*0.33,-s.r*0.4, s.r*0.22, 0, 6.2832); ctx.fill(); }
+      ctx.restore(); }
+    ctx.globalAlpha=1;
+    // old square debris
+    for(var bi=0;bi<oldBits.length;bi++){ var b=oldBits[bi]; ctx.save(); ctx.globalAlpha=b.t>b.maxT*0.7?1-(b.t-b.maxT*0.7)/(b.maxT*0.3):1; ctx.translate(b.x,b.y); ctx.rotate(b.rot); ctx.fillStyle=b.color; ctx.fillRect(-b.size/2,-b.size/2,b.size,b.size); ctx.restore(); }
+    ctx.globalAlpha=1;
+
+    // grit
+    for(var gi=0;gi<grit.length;gi++){ var gr=grit[gi]; ctx.globalAlpha=(1-gr.t/gr.maxT)*0.65; ctx.fillStyle=gr.color; ctx.beginPath(); ctx.arc(gr.x,gr.y,gr.size*0.5,0,6.2832); ctx.fill(); }
+    ctx.globalAlpha=1;
+
+    // embers
+    for(var ei=0;ei<embers.length;ei++){ var em=embers[ei]; ctx.globalAlpha=1-em.t/em.maxT; ctx.fillStyle='#ff9a3c'; ctx.fillRect(em.x-1.5,em.y-1.5,3,3); }
+    ctx.globalAlpha=1;
+
+    // old white pop
+    for(var pi2=0;pi2<oldPops.length;pi2++){ var pop=oldPops[pi2], pr=pop.t/pop.maxT, sc=pr<0.4?1+0.18*(pr/0.4):(1.18)*(1-(pr-0.4)/0.6)+0.1;
+      ctx.globalAlpha=1-pr*pr; ctx.fillStyle=pop.color; var ss=pop.size*sc; ctx.fillRect(pop.x-ss/2,pop.y-ss/2,ss,ss);
+      ctx.globalAlpha=(1-pr*pr)*0.6; ctx.fillStyle='#fff'; ctx.fillRect(pop.x-ss/2,pop.y-ss/2,ss,ss*0.25); }
+    ctx.globalAlpha=1;
+
+    // additive: rings, blooms, shimmers, sparks, old flash
+    ctx.globalCompositeOperation='lighter';
+    for(var ri=0;ri<rings.length;ri++){ var rg=rings[ri], rt=rg.t/rg.maxT, rr=rg.r0+(rg.r1-rg.r0)*easeOutQuart(rt);
+      ctx.globalAlpha=(1-rt)*0.8; ctx.strokeStyle=rg.color; ctx.lineWidth=rg.width*(1-rt*0.6); ctx.beginPath(); ctx.arc(rg.x,rg.y,rr,0,6.2832); ctx.stroke(); }
+    for(var bl=0;bl<blooms.length;bl++){ var bm=blooms[bl], bt=bm.t/bm.maxT, br=bm.r*(0.7+bt*0.5);
+      var bg2=ctx.createRadialGradient(bm.x,bm.y,0,bm.x,bm.y,br); bg2.addColorStop(0,rgba(bm.color,(1-bt)*Math.min(1,bm.strength+0.3))); bg2.addColorStop(1,rgba(bm.color,0));
+      ctx.globalAlpha=1; ctx.fillStyle=bg2; ctx.beginPath(); ctx.arc(bm.x,bm.y,br,0,6.2832); ctx.fill(); }
+    for(var sm=0;sm<shimmers.length;sm++){ var sh2=shimmers[sm], sht=sh2.t/sh2.maxT, sr=sh2.r0+(sh2.r1-sh2.r0)*easeOutQuart(sht);
+      ctx.globalAlpha=(1-sht)*0.35; ctx.strokeStyle=sh2.color; ctx.lineWidth=2*(1-sht); ctx.beginPath(); ctx.arc(sh2.x,sh2.y,sr,0,6.2832); ctx.stroke(); }
+    for(var spi=0;spi<sparks.length;spi++){ var sp=sparks[spi]; if(sp.delay>0)continue; var spt=sp.t/sp.maxT, sa=Math.sin(spt*Math.PI), sz=sp.size*(0.6+sa*0.6);
+      ctx.globalAlpha=sa; ctx.strokeStyle=sp.color; ctx.lineWidth=1.6; ctx.save(); ctx.translate(sp.x,sp.y); ctx.rotate(sp.rot);
+      ctx.beginPath(); ctx.moveTo(-sz,0); ctx.lineTo(sz,0); ctx.moveTo(0,-sz); ctx.lineTo(0,sz); ctx.stroke(); ctx.restore(); }
+    for(var ofl=0;ofl<oldFlash.length;ofl++){ var of=oldFlash[ofl], oa=1-of.t/of.maxT; var og=ctx.createRadialGradient(of.x,of.y,0,of.x,of.y,of.r);
+      og.addColorStop(0,'rgba(255,255,255,'+oa+')'); og.addColorStop(1,'rgba(255,255,255,0)'); ctx.fillStyle=og; ctx.beginPath(); ctx.arc(of.x,of.y,of.r,0,6.28); ctx.fill(); }
+    ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+
+    // value floaters
+    for(var vi2=0;vi2<floats.length;vi2++){ var fl=floats[vi2], va=fl.t<fl.maxT*0.7?1:1-(fl.t-fl.maxT*0.7)/(fl.maxT*0.3);
+      ctx.globalAlpha=va; ctx.fillStyle=fl.color; ctx.font=(fl.big?'bold 18px':'13px')+" 'Commit Mono',monospace"; ctx.textAlign='center';
+      ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=3; ctx.strokeText(fl.text,fl.x,fl.y); ctx.fillText(fl.text,fl.x,fl.y); }
+    ctx.globalAlpha=1; ctx.textAlign='left';
+
+    ctx.restore();
+
+    // subtle vignette (screen space)
+    var vg=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*0.35,VW/2,VH/2,Math.max(VW,VH)*0.75);
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.34)'); ctx.fillStyle=vg; ctx.fillRect(0,0,VW,VH);
+
+    updateHud();
+  }
+
+  function drawPlayer(){
+    var kick=pl.recoil*7, ox=0, oy=0;
+    if(pl.recoilDir==='d')oy=-kick; else if(pl.recoilDir==='u')oy=kick; else if(pl.recoilDir==='l')ox=kick; else ox=-kick;
+    var sx=1+pl.squash*0.45, sy=1-pl.squash*0.45, jit=drilling?rand(-0.5,0.5):0;
+    ctx.save(); ctx.translate(pl.rx+ox+jit, pl.ry+oy+jit); ctx.scale(sx,sy);
+    // hull
+    var hg=ctx.createLinearGradient(0,-15,0,15); hg.addColorStop(0,'#e7b45a'); hg.addColorStop(1,'#b07e34');
+    ctx.fillStyle=hg; roundRect(-14,-14,28,28,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1.5; ctx.stroke();
+    // cockpit
+    ctx.fillStyle='#243040'; roundRect(-9,-9,18,11,4); ctx.fill();
+    var cgr=ctx.createLinearGradient(0,-9,0,2); cgr.addColorStop(0,'#9fdcff'); cgr.addColorStop(1,'#4a86b8');
+    ctx.fillStyle=cgr; roundRect(-7,-7,14,7,3); ctx.fill();
+    ctx.restore();
+    // drill assembly
+    var ang=pl.face==='d'?Math.PI/2:pl.face==='u'?-Math.PI/2:pl.face==='l'?Math.PI:0;
+    ctx.save(); ctx.translate(pl.rx+ox,pl.ry+oy); ctx.rotate(ang);
+    ctx.fillStyle='#8b939d'; roundRect(8,-5,9,10,2); ctx.fill();
+    ctx.save(); ctx.translate(18,0); ctx.rotate((typeof shClock!=='undefined'?shClock:0)*(drilling?26:2.5));
+    var dg=ctx.createLinearGradient(0,-6,10,0); dg.addColorStop(0,'#e8edf2'); dg.addColorStop(1,'#aab2bb');
+    ctx.fillStyle=dg; ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(11,0); ctx.lineTo(0,6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,-2); ctx.lineTo(8,0); ctx.moveTo(0,2); ctx.lineTo(8,0); ctx.stroke();
+    ctx.restore(); ctx.restore();
+  }
+  function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  // ---- HUD ----
+  var hud=document.getElementById('hud');
+  var fps=60, shClock=0;
+  function updateHud(){ hud.innerHTML='<div><b>'+Math.round(fps)+'</b> fps</div><div>$<span class="big">'+cargo+'</span></div><div>mode: <b>'+(mode==='designed'?'Designed v1':'Old (before)')+'</b></div>'; }
+
+  // ---- Panel ----
+  function buildPanel(){
+    var p=document.getElementById('panel'); p.innerHTML='';
+    p.appendChild(el('h1',{},'Sluice — Block Break'));
+    p.appendChild(el('p',{class:'sub'},'A designed break, v1. One choreographed moment: restraint on common rock, drama reserved for rare ore. This is a starting point to refine, not a final.'));
+
+    var mg=el('div',{class:'group'}); mg.appendChild(el('h2',{},'Mode'));
+    var mb=el('div',{class:'modes'});
+    [['designed','Designed v1'],['old','Old (before)']].forEach(function(m){ var b=el('button',{class:mode===m[0]?'on':''},m[1]); b.onclick=function(){ mode=m[0]; buildPanel(); }; mb.appendChild(b); });
+    mg.appendChild(mb); p.appendChild(mg);
+
+    var sg=el('div',{class:'group'}); sg.appendChild(el('h2',{},'Designer dials'));
+    [['intensity','overall intensity',0.4,1.6,0.05],['rareDrama','rare-ore drama',0.5,2.2,0.05],['hitstopMul','hit-stop x',0,2,0.05],['lifeMul','debris lifetime x',0.4,2,0.05],['drillTime','drill time (s)',0.08,0.6,0.01],['drillPower','drill power',1,5,1]].forEach(function(s){
+      var box=el('div',{class:'slider'}), lab=el('div',{class:'lab'}); lab.appendChild(el('span',{},s[1])); var val=el('b',{},fmt(CFG[s[0]])); lab.appendChild(val); box.appendChild(lab);
+      var rng=el('input',{type:'range'}); rng.min=s[2]; rng.max=s[3]; rng.step=s[4]; rng.value=CFG[s[0]]; rng.oninput=function(){ CFG[s[0]]=parseFloat(rng.value); val.textContent=fmt(CFG[s[0]]); }; box.appendChild(rng); sg.appendChild(box);
+    }); p.appendChild(sg);
+
+    var fg=el('div',{class:'group'}); fg.appendChild(el('h2',{},'Field'));
+    var fl=el('div',{class:'fills'}); var rb=el('button',{},'Regenerate'); rb.onclick=function(){ genWorld(); clearFX(); cargo=0; }; fl.appendChild(rb);
+    ['dirt','stone','iron','gold','gem'].forEach(function(t){ var b=el('button',{},'Fill '+t); b.onclick=function(){ fillAll(t); clearFX(); }; fl.appendChild(b); });
+    fg.appendChild(fl);
+    var bl=el('div',{}); bl.style.marginTop='8px'; var sel=el('select',{}); ['none','permafrost','magma'].forEach(function(o){ var op=el('option',{value:o},o); if(o===biome)op.selected=true; sel.appendChild(op); }); sel.onchange=function(){ biome=sel.value; }; bl.appendChild(sel); fg.appendChild(bl);
+    var leg=el('div',{class:'tiles'}); Object.keys(TILES).forEach(function(t){ var sw=el('div',{class:'swatch'}); var sq=el('i',{}); sq.style.background=TILES[t].color; sw.appendChild(sq); sw.appendChild(document.createTextNode(TILES[t].label+'  ('+TILES[t].tier+(TILES[t].value?', $'+TILES[t].value:'')+')')); leg.appendChild(sw); }); fg.appendChild(leg); p.appendChild(fg);
+
+    var ng=el('div',{class:'group'}); ng.appendChild(el('h2',{},"Designer's notes — the beats"));
+    var nn=el('div',{class:'notes'});
+    [['telegraph','chisel cracks spider out + grit flakes off the face as you drill'],
+     ['0 ms','snap: a short hit-stop + tile shatters into facet-shaded fragments from where they sat'],
+     ['+0 ms','a material-hued flash + thin shock ring (skipped on dirt = restraint)'],
+     ['+50 ms','soft dust blooms in a half-beat late, then rises and settles (follow-through)'],
+     ['+0-200 ms','camera nudges once in the dig direction and springs back (a settle, not a shake)'],
+     ['rare','held glow + a few elegant sparkles + a soft shimmer ring; reserved for gems']
+    ].forEach(function(b){ var row=el('div',{class:'beat'}); row.appendChild(el('span',{class:'t'},b[0])); row.appendChild(el('span',{},b[1])); nn.appendChild(row); });
+    ng.appendChild(nn); p.appendChild(ng);
+  }
+  function fmt(v){ return (v%1===0)?v.toString():v.toFixed(2); }
+  function el(tag,attrs,text){ var e=document.createElement(tag); for(var k in attrs)e.setAttribute(k,attrs[k]); if(text!=null)e.textContent=text; return e; }
+
+  // dev test hooks (lab is throwaway): trigger a break, or hold a crack telegraph for inspection
+  window.__lab = {
+    brk:function(t,d){ breakDesigned(pl.cy+1, pl.cx, t||'gem', d||'d'); },
+    crack:function(d,prog){ var r=pl.cy+1, c=pl.cx; d=d||'d'; prog=prog==null?0.85:prog; if(grid[r])grid[r][c]='stone'; pl.face=d;
+      drilling={ r:r, c:c, dir:d, timer:CFG.drillTime*(1-prog) }; hpMap[r+':'+c]=TILES.stone.hp*(1-prog); freezeT=999; },
+    thaw:function(){ freezeT=0; drilling=null; }
+  };
+  function boot(){ resize(); genWorld(); buildPanel(); draw();
+    var last=performance.now(), acc=0, n=0;
+    function loop(now){ var dt=Math.min(0.05,(now-last)/1000); last=now; shClock+=dt; acc+=1/(dt||0.016); n++; if(n>=20){fps=acc/n;acc=0;n=0;}
+      update(dt); updateCam(); draw(); requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

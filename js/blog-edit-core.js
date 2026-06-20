@@ -30,7 +30,10 @@ export const SITE_ORIGIN = 'https://ethanwillingham.com';
 export const DEMOS = new Set(['particle-life.html','particles.html','daylight-globe.html','random-galaxy.html',
   'grand-motherload.html','git-history.html','gallery.html','lucky.html','ocean.html','space-age.html',
   'warehouse.html','all-in.html','style-family.html','style-linear.html','style-press.html',
-  'blog-edit.html','post-builder.html','edit.html']);
+  'blog-edit.html','post-builder.html','edit.html',
+  // Sluice game labs index + the SFX bench/publish tools (the *-lab.html game labs
+  // auto-categorize by their -lab.html suffix, so only the non-lab ones are listed here).
+  'labs.html','sfx-publish.html','sfx-prompts.html','sfx-test.html']);
 
 // Which elements count as editable text blocks in the page-editor (blog-edit.html).
 export const BLOCK_SEL = 'p,li,h1,h2,h3,h4,h5,h6,blockquote,figcaption,dt,dd,summary,caption,th,td,.dek,.lede,.kicker,.byline';

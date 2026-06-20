@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice — Audio Lab</title>
+<style>
+  :root { --bg:#0c0f14; --panel:#13181f; --panel2:#10151b; --line:#262e39; --ink:#cdd6e0;
+    --dim:#8089; --dim2:#7c8794; --accent:#e8c14a; --red:#c8553a; --good:#6fae6a; --blue:#67a8e3; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; font-size:12px; }
+  a { color:var(--accent); text-decoration:none; }
+
+  /* ---- top bar ---- */
+  #top { display:flex; align-items:center; gap:18px; padding:11px 16px; border-bottom:1px solid var(--line);
+    background:var(--panel); position:sticky; top:0; z-index:5; flex-wrap:wrap; }
+  #top h1 { font-size:14px; margin:0; letter-spacing:.04em; }
+  #top .sub { color:var(--dim2); font-size:11px; }
+  #top .spacer { flex:1 1 auto; }
+  .masterbox { display:flex; align-items:center; gap:9px; }
+  .masterbox label { color:var(--dim2); }
+  /* meter */
+  #meter { width:172px; height:30px; background:#0a0d12; border:1px solid var(--line); border-radius:5px; }
+
+  /* ---- 3-column layout ---- */
+  #main { display:flex; align-items:stretch; gap:0; min-height:calc(100vh - 54px); }
+  #tracks { flex:0 0 214px; border-right:1px solid var(--line); background:var(--panel2);
+    padding:11px 10px 40px; overflow-y:auto; }
+  #work { flex:1 1 auto; min-width:0; padding:14px 18px 50px; overflow-y:auto; }
+  #prompt { flex:0 0 360px; border-left:1px solid var(--line); background:var(--panel2);
+    padding:13px 14px 50px; overflow-y:auto; }
+  /* narrow screens: stack the three columns instead of squeezing the center flat */
+  @media (max-width: 980px) {
+    #main { flex-direction:column; }
+    #tracks, #prompt { flex:1 1 auto; border:0; border-top:1px solid var(--line); }
+    #tracks { order:0; } #work { order:1; } #prompt { order:2; }
+  }
+
+  h2 { font-size:11px; text-transform:uppercase; letter-spacing:.10em; color:var(--dim2); margin:0 0 9px; font-weight:normal; }
+  .group { border-top:1px solid var(--line); margin-top:15px; padding-top:13px; }
+  .group:first-child { border-top:0; margin-top:0; padding-top:0; }
+
+  /* track list */
+  .trk { display:block; width:100%; text-align:left; font:inherit; font-size:11px; color:var(--dim);
+    background:transparent; border:1px solid transparent; border-radius:6px; padding:6px 8px; margin:1px 0; cursor:pointer; }
+  .trk:hover { background:#1a212b; color:var(--ink); }
+  .trk.on { background:#221f12; border-color:var(--accent); color:var(--accent); }
+  .trk .k { color:var(--dim2); font-size:10px; }
+  .trk.on .k { color:var(--accent); opacity:.8; }
+
+  /* buttons */
+  button { font:inherit; font-size:11px; color:var(--ink); background:#1c232d; border:1px solid var(--line);
+    border-radius:7px; padding:7px 11px; cursor:pointer; }
+  button:hover { border-color:#3a4658; background:#222b36; }
+  button.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  button.primary { border-color:#3c6b3a; color:#cfe9cd; background:#16241a; }
+  button.primary:hover { background:#1b2e1f; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .row.tight { gap:6px; }
+
+  /* transport */
+  #transport { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+  .trkhead { font-size:13px; color:var(--ink); margin:0 0 2px; letter-spacing:.02em; }
+  .trkmeta { color:var(--dim2); font-size:11px; margin:0 0 13px; line-height:1.5; }
+  .pill { font-size:10px; color:var(--dim2); border:1px solid var(--line); border-radius:20px; padding:2px 9px; }
+  .pill.k { color:var(--accent); border-color:#4a431f; }
+
+  /* slot rack */
+  .slot { display:flex; align-items:center; gap:11px; padding:9px 11px; margin:7px 0;
+    background:#11161d; border:1px solid var(--line); border-radius:9px; }
+  .slot.empty { border-style:dashed; opacity:.82; }
+  .slot.drag { border-color:var(--accent); background:#1b1d14; }
+  .slot .lab { flex:0 0 116px; min-width:0; }
+  .slot .lab .nm { color:var(--ink); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .slot .lab .fn { color:var(--dim2); font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .slot canvas.wf { flex:1 1 auto; height:38px; min-width:80px; background:#0a0d12;
+    border:1px solid #1d242e; border-radius:5px; cursor:pointer; }
+  .slot .ctrls { flex:0 0 auto; display:flex; align-items:center; gap:7px; }
+  .slot .ctrls .fader { width:84px; accent-color:var(--accent); }
+  .sbtn { font-size:10px; padding:4px 7px; border-radius:5px; }
+  .sbtn.solo.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  .sbtn.mute.on { border-color:var(--red); color:#e7a18e; background:#241612; }
+  .dur { color:var(--dim2); font-size:10px; min-width:34px; text-align:right; }
+
+  /* context tests */
+  .slider { margin:9px 0; }
+  .slider .lab { display:flex; justify-content:space-between; color:var(--dim2); margin-bottom:3px; font-size:11px; }
+  .slider .lab b { color:var(--ink); font-weight:normal; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .seg { display:flex; gap:5px; flex-wrap:wrap; }
+  .seg button { padding:5px 9px; font-size:10px; }
+  .hint { color:var(--dim2); font-size:11px; line-height:1.6; margin:7px 0 0; }
+  .hint b { color:var(--ink); font-weight:normal; }
+
+  /* prompt panel */
+  .pfield { margin:0 0 12px; }
+  .pfield .ph { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .pfield .ph span { color:var(--dim2); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+  .pfield .ph button { font-size:10px; padding:3px 8px; }
+  .pfield pre { margin:0; white-space:pre-wrap; word-break:break-word; background:#0c1117; border:1px solid var(--line);
+    border-radius:7px; padding:9px 10px; color:#bcc6d2; font-size:11px; line-height:1.55; }
+  .kv { display:flex; gap:8px; font-size:11px; color:var(--dim2); margin:3px 0; }
+  .kv b { color:var(--ink); font-weight:normal; }
+  .copied { color:var(--good) !important; border-color:#3c6b3a !important; }
+  .foot { color:var(--dim2); font-size:10px; line-height:1.6; margin-top:18px; border-top:1px solid var(--line); padding-top:11px; }
+</style>
+</head>
+<body>
+<nav style="background:#16181d;border-bottom:1px solid #2e333d;padding:9px 18px;font:13px -apple-system,'Segoe UI',sans-serif"><a href="audio-lab.html" style="color:#e0a85e;font-weight:600;text-decoration:none">Music lab</a><span style="color:#3a3f48;margin:0 9px">&middot;</span><a href="sfx-prompts.html" style="color:#9aa3b0;text-decoration:none">SFX prompts</a><span style="color:#3a3f48;margin:0 9px">&middot;</span><a href="sfx-test.html" style="color:#9aa3b0;text-decoration:none">SFX test bench</a></nav>
+<div id="top">
+  <h1>Sluice · Audio Lab</h1>
+  <span class="sub">load takes · A/B · loop · audition through the game chain</span>
+  <span class="spacer"></span>
+  <div class="masterbox">
+    <canvas id="meter" width="344" height="60" title="peak (top) + RMS (bottom), dBFS. Green zone = -18 to -20 target."></canvas>
+    <label>master</label>
+    <input id="masterFader" type="range" min="0" max="1" step="0.01" value="0.6" style="width:110px;accent-color:var(--accent)">
+  </div>
+</div>
+
+<div id="main">
+  <aside id="tracks"></aside>
+  <main id="work"></main>
+  <aside id="prompt"></aside>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // Track catalogue — mirrors MUSIC_PROMPT_SYSTEM.md §5 + MUSIC_BIBLE.md §3.
+  // kind 'candidates' = generate N takes, solo one at a time to A/B.
+  // kind 'stems'      = the named layers; un-solo all and ride faders to mix.
+  // ============================================================
+  var TRACKS = [
+    // ----- TOWNS (warm + full-bodied leads only; thin/metallic timbres cut per owner feedback) -----
+    // Keepers (landed): piano, trombone, violin, organ. Candidates (de-cheesed, pending ear): Rhodes, guitar, sax.
+    // Dropped as too thin / fake / metallic: vibraphone, flute, muted trumpet, clarinet, organ ballad.
+    { id:'town-piano', tag:'PNO', name:'Town — piano · KEEPER', kind:'candidates', n:6,
+      meta:'KEEPER (landed). The spine: title screen + the source motif every other theme quotes. Lock the winner as a Suno Persona and build everything from it. Pick the strongest hummable head.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'D minor · 80 BPM',
+      style:'late-night jazz piano trio, warm and unhurried, instrumental only no vocals,\nlyrical acoustic grand piano melody, impressionistic extended chords,\nupright bass walking quietly, soft brushed drums,\nclean warm 1960s studio recording, natural room reverb, hi-fi and present,\nseamless loop no buildup no drop, 80 BPM, D minor',
+      lyrics:'[Instrumental Intro: solo acoustic piano, sparse, four bars, low register]\n[Main: piano states a slow modal melody, lyrical right hand, sparse left hand, upright bass and brushed drums underneath]\n[Bridge: stripped to solo piano, very quiet, rubato]\n[Outro: piano alone, last chord hangs unresolved, soft reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass' },
+
+    { id:'town-trombone', tag:'TBN', name:'Town — trombone · KEEPER', kind:'candidates', n:6,
+      meta:'KEEPER (landed). Quotes the motif in F minor. The sauntering warmth of Hiroshi Suzuki "Cat". Trombone over Rhodes.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'F minor · 86 BPM',
+      style:'late-night jazz, warm and sauntering, instrumental only no vocals,\nmellow trombone melody, Fender Rhodes comping, upright bass,\nsoft brushed drums with light ride cymbal,\nclean warm 1970s studio recording, natural room reverb, hi-fi and present,\nseamless loop no buildup no drop, 86 BPM, F minor',
+      lyrics:'[Instrumental Intro: Fender Rhodes vamp, four bars]\n[Main: mellow trombone states the melody, sauntering, over Rhodes with upright bass and brushes]\n[Bridge: Rhodes and bass only, quiet]\n[Outro: trombone holds a long note, last chord unresolved, soft reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone' },
+
+    { id:'town-violin', tag:'VLN', name:'Town — violin · KEEPER', kind:'candidates', n:6,
+      meta:'KEEPER (landed). Grappelli / Briscoe color, intimate not orchestral (that is why the string-section excludes matter). Motif in A minor. If it reads classical, add "swung, behind the beat".',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'A minor · 76 BPM',
+      style:'late-night jazz, warm and lyrical, instrumental only no vocals,\nsinging solo jazz violin melody, warm acoustic piano comping,\nupright bass walking quietly, soft brushed drums,\nclean warm studio recording, natural room reverb, hi-fi and present,\nseamless loop no buildup no drop, 76 BPM, A minor',
+      lyrics:'[Instrumental Intro: solo piano, sparse, four bars]\n[Main: jazz violin states the melody, warm and singing, over piano with upright bass and brushes]\n[Bridge: violin and piano only, very quiet]\n[Outro: violin sustains, last chord hangs unresolved, soft reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, orchestral, classical, string section' },
+
+    { id:'town-organ', tag:'ORG', name:'Town — Hammond organ · KEEPER (fire)', kind:'candidates', n:6,
+      meta:'KEEPER (you said fire). Smoky soul-jazz, the warmest social-hub town. Jimmy Smith warmth, gentle Leslie. Bank the WAV.',
+      model:'Suno v4.5', sliders:'Weirdness 35, Style Influence 80', key:'F minor · 92 BPM',
+      style:'warm soul-jazz, smoky and laid-back, instrumental only no vocals,\nHammond organ melody with gentle Leslie, soft clean guitar comping,\nupright bass, brushed drums,\nclean warm 1960s studio recording, natural room reverb,\nseamless loop no buildup no drop, 92 BPM, F minor',
+      lyrics:'[Instrumental Intro: Hammond organ swell, four bars]\n[Main: organ states a smoky melodic theme, gentle Leslie, over soft guitar comping with upright bass and brushes]\n[Bridge: organ and bass only, laid-back]\n[Outro: organ chord holds, last chord unresolved, soft reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, smooth jazz, elevator music, lounge, easy listening' },
+
+    { id:'town-rhodes', tag:'RHD', name:'Town — Fender Rhodes · candidate', kind:'candidates', n:6,
+      meta:'CANDIDATE (de-cheesed). Cool modal, MINOR key (major was the cheese), dark restrained Rhodes, no hi-hat. The "Cat" / "Manha" color cooled down.',
+      model:'Suno v4.5', sliders:'Weirdness 40, Style Influence 80', key:'C minor · 82 BPM',
+      style:'cool modal jazz, spare and late-night, instrumental only no vocals,\ndark warm Fender Rhodes electric piano bell-like and restrained, sparse phrasing that leaves space,\nwarm upright bass, soft brushed drums no hi-hat, relaxed pocket,\nclean warm 1970s studio recording, natural room reverb,\nseamless loop no buildup no drop, 82 BPM, C minor',
+      lyrics:'[Instrumental Intro: dark Rhodes vamp, four bars]\n[Main: dark Fender Rhodes states a spare modal theme, restrained and leaving space, over upright bass and soft brushes, no hi-hat]\n[Bridge: Rhodes and bass only, quiet]\n[Outro: Rhodes chord rings out, last chord unresolved, soft reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, smooth jazz, smooth fusion, Bob James, new age, weather channel, soft rock, sentimental, elevator music, lounge, easy listening, hi-hat, ride cymbal, busy drums, funk drums, shaker' },
+
+    { id:'town-guitar', tag:'GTR', name:'Town — jazz guitar (Joe Pass) · candidate', kind:'candidates', n:6,
+      meta:'CANDIDATE (de-cheesed). Cool, spare, dark archtop, restrained bebop phrasing, leaves space. NOT the smooth Khruangbin glide (that lives in Travel 1).',
+      model:'Suno v4.5', sliders:'Weirdness 40, Style Influence 80', key:'E minor · 74 BPM',
+      style:'cool understated jazz, spare and unhurried, instrumental only no vocals,\ndark-toned hollow-body archtop guitar warm and woody, restrained bebop phrasing behind the beat, leaves space, a few notes not busy,\nsoft rhythm guitar comping, upright bass, brushed drums, chromatic ii-V changes,\nclean warm 1960s studio recording, intimate and close-mic\'d,\nseamless loop no buildup no drop, 74 BPM, E minor',
+      lyrics:'[Instrumental Intro: solo archtop guitar, rubato, a few lyrical phrases]\n[Main: archtop guitar states a spare theme, restrained and behind the beat, leaving space between phrases, soft rhythm guitar and upright bass underneath]\n[Bridge: guitar and bass only, intimate]\n[Outro: a final spare phrase, last chord hangs unresolved, soft reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, orchestral, smooth jazz, smooth jazz guitar, George Benson, Earl Klugh, cocktail jazz, wedding jazz, lounge, elevator music, easy listening, sentimental, romantic, fast runs, noodling, electric piano' },
+
+    { id:'town-sax', tag:'SAX', name:'Town — tenor sax · candidate (riskiest)', kind:'candidates', n:6,
+      meta:'CANDIDATE (de-cheesed, the most at-risk). Cool modal, dark-toned tenor, restrained, minimal vibrato. The Coltrane "Equinox" tone, not a love theme. Sax is the cheesiest instrument for AI; push Weirdness up and pick the take with grit.',
+      model:'Suno v4.5', sliders:'Weirdness 40, Style Influence 80', key:'C minor · 80 BPM',
+      style:'cool modal jazz, hushed and understated, instrumental only no vocals,\ndark-toned tenor saxophone woody and restrained, sparse phrasing behind the beat, minimal vibrato,\nwarm acoustic piano comping, upright bass walking quietly, soft brushed drums,\nclean warm 1960s studio recording, natural room reverb, intimate,\nseamless loop no buildup no drop, 80 BPM, C minor',
+      lyrics:'[Instrumental Intro: solo piano, sparse, four bars]\n[Main: dark-toned tenor saxophone states a restrained modal theme, sparse and behind the beat, leaving space, no wail, over piano with upright bass and brushes]\n[Bridge: sax and piano only, quiet]\n[Outro: a final soft phrase, last chord unresolved, reverb tail]\n[Minimal Variation] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, trombone, smooth jazz, elevator music, lounge, easy listening, Kenny G, soprano saxophone, smooth sax, sultry sax, romantic, sentimental, adult contemporary, soft rock, vibrato wail, saxophone solo, squealing' },
+
+    // ----- ABOVE-GROUND TRAVEL (cycling pool of 6, town-agnostic, Minecraft cadence) -----
+    { id:'travel1', tag:'R1', name:'Travel 1 — lonesome glide', kind:'candidates', n:5,
+      meta:'Flagship open-road cue (Khruangbin). Day or night. Plays then goes silent for minutes, then another cue.',
+      model:'Suno v4.5', sliders:'Weirdness 35, Style Influence 80', key:'E dorian · 88 BPM',
+      style:'spacious lonesome jazz, wide open and gliding, instrumental only no vocals,\nwarm reverbed electric guitar drifting, dark and restrained, Fender Rhodes pads,\nround electric bass, soft brushed drums, deep natural reverb,\nclean warm studio recording, hi-fi and present,\nseamless loop no buildup no drop, 88 BPM, E dorian',
+      lyrics:'[Instrumental] [Sustained] [Minimal Variation]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, orchestral, smooth jazz, elevator music, lounge, easy listening' },
+
+    { id:'travel2', tag:'R2', name:'Travel 2 — easy amble', kind:'candidates', n:5,
+      meta:'Relaxed unhurried amble. Was too fast; slowed via half-time feel + a sparse loping bass, not just the BPM number (Suno barely obeys BPM, felt tempo comes from groove density). Day lean.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'D minor · 76 BPM (half-time feel)',
+      style:'relaxed mid-tempo jazz trio, unhurried and loping, instrumental only no vocals,\nhalf-time feel, acoustic piano comping with sparse phrases,\nslow loping upright bass leaving space, soft brushed drums no busy ride,\nclean warm 1960s studio recording, natural room reverb, hi-fi and present,\nseamless loop no buildup no drop, 76 BPM, D minor',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, smooth jazz, elevator music, lounge, easy listening, uptempo, fast, driving, busy drums, ride cymbal' },
+
+    { id:'travel3', tag:'R3', name:'Travel 3 — bossa daytime', kind:'candidates', n:5,
+      meta:'The brighter daytime cue, cooled off the old Rhodes-major sway (read cheesy). Warm nylon-guitar bossa.',
+      model:'Suno v4.5', sliders:'Weirdness 35, Style Influence 80', key:'A minor · 100 BPM',
+      style:'warm bossa nova jazz, breezy and gentle, instrumental only no vocals,\nsoft nylon-string guitar melody, warm acoustic piano comping,\nupright bass, bossa-brushed drums, light percussion,\nclean warm 1970s studio recording, natural room reverb,\nseamless loop no buildup no drop, 100 BPM, A minor',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, smooth jazz, elevator music, lounge, easy listening' },
+
+    { id:'travel4', tag:'R4', name:'Travel 4 — cinematic lonesome', kind:'candidates', n:5,
+      meta:'The "Big Iron" wide-desert loneliness without going country. Vibraphone was cut (too thin / metallic); now a lonely trombone over a spacious bed. Dusk / night lean.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'A minor · 74 BPM',
+      style:'wide cinematic lonesome jazz, spacious and yearning, instrumental only no vocals,\nlonely mellow trombone holding long tones, warm acoustic piano, upright bass,\nsoft brushed drums, deep spacious reverb,\nclean warm studio recording, hi-fi and present,\nseamless loop no buildup no drop, 74 BPM, A minor',
+      lyrics:'[Instrumental] [Sustained] [Minimal Variation]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, vibraphone, orchestral, string section' },
+
+    { id:'travel5', tag:'R5', name:'Travel 5 — noir organ cruise', kind:'candidates', n:5,
+      meta:'The night drive. Muted trumpet was cut; now the smoky Hammond organ (your fire instrument) on a noir cruise. Night lean.',
+      model:'Suno v4.5', sliders:'Weirdness 35, Style Influence 80', key:'C minor · 92 BPM',
+      style:'cool noir jazz, nocturnal and smoky, instrumental only no vocals,\nHammond organ melody with gentle Leslie, soft clean guitar comping, walking upright bass,\nbrushed drums,\nclean warm 1960s studio recording, natural room reverb, hi-fi and present,\nseamless loop no buildup no drop, 92 BPM, C minor',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, trumpet, saxophone, brass, smooth jazz, elevator music, lounge, easy listening' },
+
+    { id:'travel6', tag:'R6', name:'Travel 6 — hazy drift', kind:'candidates', n:5,
+      meta:'Dreamy floating drift. Flute was cut (too thin); now warm Rhodes with a soft violin pad underneath. Night lean.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'G dorian · 82 BPM',
+      style:'dreamy hazy jazz, floating and gentle, instrumental only no vocals,\ndark warm Fender Rhodes melody, soft sustained violin pad underneath, warm upright bass,\nvery soft brushed drums, deep natural reverb,\nclean warm studio recording, hi-fi and present,\nseamless loop no buildup no drop, 82 BPM, G dorian',
+      lyrics:'[Instrumental] [Sustained] [Minimal Variation]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, flute, trumpet, saxophone, brass, smooth jazz, new age, elevator music' },
+
+    // ----- UNDERGROUND (one shared 4-layer bed, ride faders for the depth crossfade) -----
+    { id:'underground', tag:'UG', name:'Underground bed (4 layers)', kind:'stems',
+      stems:['L1 · pocket','L2 · warmth','L3 · deep','L4 · danger'],
+      meta:'Shared depth bed. Load one take per layer, then un-solo and ride faders: shallow = L1+L2, deep = L1+L3, danger adds L4. Same key/tempo. Prime loop lengths 23/29/37/41s. L3/L4 may come out better from Stable Audio.',
+      model:'Suno v4.5 (L3/L4: Stable Audio)', sliders:'Weirdness 25, Style Influence 80', key:'D minor · slow / free',
+      style:'Four layers, same key/tempo. Generate each separately, then ride faders here.\n\nL1 POCKET (always on, ~23s): sparse jazz rhythm section bed, soft upright bass and gentle brushed drums only, low and slow, no melody, lots of space, clean warm studio recording, natural room reverb, seamless loop, 68 BPM, D minor\n\nL2 WARMTH (shallow, fades out with depth, ~29s): warm and contemplative jazz pad layer, mellow Fender Rhodes and piano in a warm middle register, rich extended chords with gentle color, quietly sophisticated and easygoing, settled not sad and not sweet, no melody, no drums, sustained and slow, clean warm studio recording, seamless loop, 70 BPM, D minor (Weirdness ~32; sits between quaint and somber, warm grown-up cozy; for L2 alone also exclude: somber, mournful, gloomy, dirge, sad)\n\nL3 DEEP (fades in with depth, ~37s): lonely abstract jazz texture, sparse acoustic piano clusters with long pauses, bowed upright bass drone, deep spacious reverb wash, almost no rhythm, clean warm studio recording, seamless loop, free tempo, D minor\n\nL4 DANGER (low fuel/hull, ~41s): tense dark ambient jazz, long and continuous, slowly evolving over several minutes, low dissonant piano cluster sustained, slow bowed-bass swells, unsettling minor seconds, deep reverb, no drums, sustained throughout, clean warm studio recording, 48 BPM, D minor (if Suno makes a too-short clip: add structure tags in the Lyrics and use Extend, then trim ~41s)',
+      lyrics:'[Instrumental] [Sustained] [Minimal Variation]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, bright, smooth jazz, new age, elevator music, twee, naive, childlike, innocent, nursery, lullaby, music box, cheerful, major key, sweet, simple' },
+
+    // ----- COMBAT (reactive layer, on/off hook) -----
+    { id:'combat', tag:'CB1', name:'Combat 1 — noir tension · KEEPER', kind:'candidates', n:4,
+      meta:'KEEPER (landed). Fires over the travel cue on combat start, releases on end. Crime-jazz (Lee Morgan / Coltrane). Jumpy, stab-driven.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 75', key:'D minor · 124 BPM',
+      style:'urgent noir jazz, driving and tense, instrumental only no vocals,\nfast walking upright bass, agitated ride cymbal and brushes,\ntense dissonant piano stabs and trombone stabs,\nclean warm studio recording, natural room reverb,\nseamless loop no buildup no drop, 124 BPM, D minor',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring' },
+
+    { id:'combat2', tag:'CB2', name:'Combat 2 — modal fury', kind:'candidates', n:4,
+      meta:'Second combat flavor, a different KIND of tension: relentless and hypnotic, not jumpy/noir. Late-Coltrane / McCoy Tyner storm. D phrygian (flat-2 menace) relates to the D-minor bed.',
+      model:'Suno v4.5', sliders:'Weirdness 35, Style Influence 80', key:'D phrygian · 132 BPM',
+      style:'churning modal jazz intensity, relentless and hypnotic, instrumental only no vocals,\nhammering quartal piano vamp, deep insistent bass ostinato,\nbusy driving ride cymbal and sticks, building dread,\nclean warm studio recording, natural room reverb,\nseamless loop no buildup no drop, 132 BPM, D phrygian',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, smooth jazz, lounge, relaxed, calm, triumphant, heroic' },
+
+    { id:'threat-approach', tag:'TH0', name:'Threat 0 — approach / dread build · NEW', kind:'candidates', n:5,
+      meta:'NEW. The "something is coming" cue that fires before full combat and crossfades UP into CB1/CB2. Sparser, lower, creeping; the threat-ramp the soundtrack was missing. Loop ON.',
+      model:'Suno v4.5', sliders:'Weirdness 30, Style Influence 78', key:'D minor · 92 BPM',
+      style:'tense dark jazz, creeping and ominous, instrumental only no vocals,\nslow bowed upright bass drone, low dissonant piano clusters,\nsoft agitated brushed cymbal, unsettling minor seconds, building unease,\nclean warm studio recording, natural room reverb,\nseamless loop no buildup no drop, 92 BPM, D minor',
+      lyrics:'[Instrumental] [Sustained] [Minimal Variation]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, bright, triumphant, busy drums, drum kit' },
+
+    { id:'threat', tag:'TH1', name:'Threat 1 — full combat (trumpet noir) · alt to CB1/CB2', kind:'candidates', n:5,
+      meta:'The danger spike at full intensity, a trumpet-led noir flavor alongside CB1 (trombone) and CB2 (modal fury). Loops while a threat is active, releases when clear. Crime-jazz churn (Lee Morgan / Coltrane). Tense but still JAZZ, not orchestral action.',
+      model:'Suno v4.5', sliders:'Weirdness 35, Style Influence 75', key:'D minor · 132 BPM',
+      style:'urgent noir crime-jazz, driving and dangerous, instrumental only no vocals,\nfast agitated walking upright bass, hard churning brushed drums and ride cymbal,\ntense dissonant piano stabs, sharp muted trumpet stabs,\nclean warm studio recording, natural room reverb, hi-fi and present,\nseamless loop no buildup no drop, 132 BPM, D minor',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, orchestral, fanfare, soaring, triumphant' },
+
+    // ----- STINGS + EVENTS (one-shots, loop OFF) -----
+    { id:'death', tag:'DS', name:'Death sting — solo piano lament', kind:'candidates', n:5,
+      meta:'One-shot ~6-8s, loop OFF. Research: restraint (heard often), the main theme reprised solo + exposed, gentle not punishing, and it RESOLVES (a one-shot ending settles; the loop-unresolved rule does not apply here). Rubato with warm left-hand chords, not skeletal. v5.5 for clean piano. Alt: same theme on a lone trombone.',
+      model:'Suno v5.5 (or by hand)', sliders:'Weirdness 30, Style Influence 80', key:'D minor · free / rubato',
+      style:'solo acoustic piano lament, slow and rubato, tender and final, instrumental only no vocals,\nplays the main theme once very slowly in a minor key, simple right-hand line over a few soft warm left-hand chords,\nthe phrase falls and settles, clean warm studio recording, deep natural reverb, free time, D minor',
+      lyrics:'[Intro: one second of silence]\n[Main: solo piano plays the main theme once, very slow and rubato, a simple right-hand line over a few soft left-hand chords]\n[Outro: the line falls to a low note, a single soft minor chord settles and rings out into the reverb]\n[Sustained] [Minimal Variation]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, drums, bass, ensemble, full band, multiple instruments, trumpet, saxophone, brass, smooth jazz, sentimental, new age' },
+
+    { id:'event', tag:'EV', name:'Event stingers (3)', kind:'stems',
+      stems:['big strike','town arrival','UI confirm'],
+      meta:'Short one-shots, loop OFF. Tuned to the trio tonic (the coin trick). Two UI sounds total for the whole game (Elden Ring rule). Easiest built by hand in Reaper.',
+      model:'By hand (Suno v4.5 alt)', sliders:'Weirdness 30, Style Influence 75', key:'D minor tonic',
+      style:'Short one-shots. Build by hand if Suno overshoots the length.\n\nBIG STRIKE / ore record (~3s): single warm piano chord on a D minor tonic, soft and resonant, gentle bloom and slow decay, clean warm studio recording, natural room reverb, no rhythm\n\nTOWN ARRIVAL / safe (~3s): short warm piano cadence, two soft chords resolving gently, clean warm studio recording, natural room reverb, no rhythm, D minor\n\nUI CONFIRM (~1s): single soft piano note, clean warm studio recording, natural room reverb, no rhythm, D',
+      lyrics:'[Instrumental]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, crescendo, drop, fanfare, soaring, drums, melody' },
+
+    // ----- JACKPOT (the big-find reward; one-shots, loop OFF, they RESOLVE) -----
+    { id:'jackpot', tag:'JP1', name:'Jackpot 1 — nice find (short reward) · NEW', kind:'candidates', n:6,
+      meta:'NEW one-shot ~3-5s, loop OFF. Fires on a good find. Lifts to F major (relative major of the D-minor home) so it brightens without leaving the trio. RESOLVES (a reward sting settles, so the loop-killer excludes are dropped). Classy, NOT a slot-machine jingle. Vibraphone deliberately OUT (read cheesy before), warm piano + Rhodes instead. Trim to the cleanest 3-4s.',
+      model:'Suno v5.5 (or by hand)', sliders:'Weirdness 25, Style Influence 80', key:'F major · ~4s',
+      style:'short warm jazz flourish, bright and satisfying, instrumental only no vocals,\na quick ascending acoustic piano run resolving to a warm major sixth chord,\nsoft Fender Rhodes shimmer underneath, gentle bloom and decay,\nclean warm studio recording, natural room reverb, classy not cheesy, 4 seconds, F major',
+      lyrics:'[Instrumental]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, slot machine, casino jingle, chiptune, brass fanfare, orchestral, vibraphone, cheesy, sentimental, smooth jazz' },
+
+    { id:'jackpot2', tag:'JP2', name:'Jackpot 2 — big haul / struck it rich · NEW', kind:'candidates', n:6,
+      meta:'NEW one-shot ~6-10s, loop OFF. The reward for a record haul / big strike, fuller than JP1. Warm and classy, understated triumph, NOT a slot-machine jingle. The engine ducks the bed under it. Try D major if F major feels too soft for a "rich!" moment.',
+      model:'Suno v5.5 (or by hand)', sliders:'Weirdness 25, Style Influence 80', key:'F major · ~8s',
+      style:'warm celebratory jazz flourish, rich and uplifting, instrumental only no vocals,\nan ascending acoustic piano cascade with a lift in the walking upright bass,\nsoft Fender Rhodes and a brushed cymbal swell, resolving to a full warm major ninth chord,\ngentle bloom, clean warm studio recording, natural room reverb, classy and triumphant but understated, 8 seconds, F major',
+      lyrics:'[Instrumental] [Sustained]',
+      exclude:'vocals, humming, choir, scat, vinyl crackle, tape hiss, lo-fi, distortion, fuzz, distorted guitar, rock, EDM, synth lead, modern pop production, slot machine, casino, chiptune, brass fanfare, orchestral, vibraphone, cheesy, big band, sentimental, smooth jazz' }
+  ];
+
+  // depth presets — bible §5.6 (lowpass on the bus tied to depth).
+  var DEPTHS = [
+    { name:'Surface', hz:20000 }, { name:'Shallow', hz:14000 }, { name:'Mid', hz:11000 },
+    { name:'Deep', hz:7000 }, { name:'Deepest', hz:5000 }
+  ];
+  // duck presets — bible §5.5.
+  var DUCKS = [
+    { name:'Standard (-9dB)', amt:0.35, atk:0.06, rel:0.6 },
+    { name:'Hard (-18dB)',    amt:0.12, atk:0.05, rel:1.5 },
+    { name:'Gentle (-3dB)',   amt:0.70, atk:0.10, rel:0.8 }
+  ];
+
+  // ============================================================
+  // Audio graph (bible §5.1) — built lazily on first gesture.
+  // musicBus -> musicDuck -> depthFilter -> master -> analyser -> destination
+  // ============================================================
+  var AC=null, master, musicBus, musicDuck, depthFilter, analyser, meterBuf;
+  function ensureAudio(){
+    if (AC) { if (AC.state==='suspended') AC.resume(); return; }
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    master = AC.createGain();      master.gain.value = parseFloat(masterFader.value);
+    analyser = AC.createAnalyser(); analyser.fftSize = 2048; meterBuf = new Float32Array(analyser.fftSize);
+    depthFilter = AC.createBiquadFilter(); depthFilter.type='lowpass'; depthFilter.frequency.value=20000; depthFilter.Q.value=0.7;
+    musicDuck = AC.createGain();   musicDuck.gain.value = 1;
+    musicBus = AC.createGain();    musicBus.gain.value = 1;
+    musicBus.connect(musicDuck); musicDuck.connect(depthFilter); depthFilter.connect(master);
+    master.connect(analyser); analyser.connect(AC.destination);
+    requestAnimationFrame(meterLoop);
+  }
+
+  // ============================================================
+  // State
+  // ============================================================
+  var curId = TRACKS[0].id;
+  var slots = [];          // { name, buffer, src, gain, gainVal, muted, solo, fileName, peaks, dur }
+  var playing = false, looping = true;
+  var loopStart = 0, loopEnd = 0;   // seconds; 0/0 = full buffer
+
+  function curTrack(){ for (var i=0;i<TRACKS.length;i++) if (TRACKS[i].id===curId) return TRACKS[i]; }
+
+  function slotLabels(t){
+    if (t.kind==='stems') return t.stems.slice();
+    var out=[]; for (var i=0;i<t.n;i++) out.push('Take '+(i+1)); return out;
+  }
+
+  function buildSlots(){
+    stopAll();
+    var t = curTrack(), labs = slotLabels(t);
+    slots = labs.map(function(nm){ return { name:nm, buffer:null, src:null, gain:null,
+      gainVal:1, muted:false, solo:false, fileName:'', peaks:null, dur:0 }; });
+    loopStart = 0; loopEnd = 0;
+    looping = (t.id!=='death' && t.id!=='stinger' && t.id!=='event'); // one-shots default to no loop
+  }
+
+  // ============================================================
+  // File load + decode + waveform peaks
+  // ============================================================
+  function loadFileIntoSlot(slot, file){
+    ensureAudio();
+    slot.fileName = file.name;
+    file.arrayBuffer().then(function(ab){ return AC.decodeAudioData(ab.slice(0)); })
+      .then(function(buf){
+        slot.buffer = buf; slot.dur = buf.duration; slot.peaks = computePeaks(buf, 220);
+        renderRack();
+        if (playing){ startSlot(slot, AC.currentTime+0.03); applyGains(0.04); }
+      })
+      .catch(function(err){ slot.fileName = 'decode failed: '+file.name; slot.buffer=null; renderRack(); });
+  }
+  function computePeaks(buf, cols){
+    var ch = buf.getChannelData(0), n = ch.length, step = Math.max(1, Math.floor(n/cols)), out = [];
+    for (var i=0;i<cols;i++){
+      var s=i*step, e=Math.min(n, s+step), mn=1, mx=-1;
+      for (var j=s;j<e;j++){ var v=ch[j]; if (v<mn)mn=v; if (v>mx)mx=v; }
+      out.push([mn,mx]);
+    }
+    return out;
+  }
+
+  // ============================================================
+  // Transport
+  // ============================================================
+  function anySolo(){ for (var i=0;i<slots.length;i++) if (slots[i].solo) return true; return false; }
+  function effGain(slot){
+    if (anySolo()) return slot.solo ? slot.gainVal : 0;
+    return slot.muted ? 0 : slot.gainVal;
+  }
+  function startSlot(slot, at){
+    if (!slot.buffer) return;
+    if (slot.src) { try { slot.src.stop(); } catch(e){} }
+    var s = AC.createBufferSource(); s.buffer = slot.buffer; s.loop = looping;
+    if (looping && loopEnd > loopStart){ s.loopStart = loopStart; s.loopEnd = loopEnd; }
+    var g = AC.createGain(); g.gain.value = effGain(slot);
+    s.connect(g); g.connect(musicBus);
+    s.start(at, looping ? loopStart : 0);
+    slot.src = s; slot.gain = g;
+  }
+  function playAll(){
+    ensureAudio();
+    var at = AC.currentTime + 0.08; playing = true;
+    slots.forEach(function(s){ startSlot(s, at); });
+    syncTransport();
+  }
+  function stopAll(){
+    playing = false;
+    slots.forEach(function(s){ if (s.src){ try{s.src.stop();}catch(e){} s.src=null; } });
+    syncTransport();
+  }
+  function applyGains(fade){
+    if (!AC) return; var t = AC.currentTime;
+    slots.forEach(function(s){ if (!s.gain) return;
+      var tgt = effGain(s);
+      s.gain.gain.cancelScheduledValues(t);
+      s.gain.gain.setValueAtTime(s.gain.gain.value, t);
+      s.gain.gain.linearRampToValueAtTime(tgt, t + (fade||0.08));
+    });
+  }
+  function jumpToSeam(){            // audition the loop wrap fast (bible §2.4)
+    if (!AC || !playing) return;
+    var end = loopEnd>loopStart ? loopEnd : maxDur();
+    if (!end) return;
+    var off = Math.max(0, end - 1.4), at = AC.currentTime + 0.03;
+    slots.forEach(function(s){
+      if (!s.buffer) return; if (s.src){ try{s.src.stop();}catch(e){} }
+      var ns = AC.createBufferSource(); ns.buffer = s.buffer; ns.loop = looping;
+      if (looping && loopEnd>loopStart){ ns.loopStart=loopStart; ns.loopEnd=loopEnd; }
+      var g = AC.createGain(); g.gain.value = effGain(s);
+      ns.connect(g); g.connect(musicBus); ns.start(at, off); s.src=ns; s.gain=g;
+    });
+  }
+  function maxDur(){ var m=0; slots.forEach(function(s){ if (s.dur>m) m=s.dur; }); return m; }
+
+  // ============================================================
+  // Context processing
+  // ============================================================
+  function setDepth(hz){ if (!AC) return; depthFilter.frequency.linearRampToValueAtTime(hz, AC.currentTime+0.25); }
+  function doDuck(d){
+    if (!AC) return; var t = AC.currentTime;
+    musicDuck.gain.cancelScheduledValues(t);
+    musicDuck.gain.setValueAtTime(musicDuck.gain.value, t);
+    musicDuck.gain.linearRampToValueAtTime(d.amt, t + d.atk);
+    musicDuck.gain.linearRampToValueAtTime(1.0, t + d.atk + d.rel);
+  }
+
+  // ============================================================
+  // Meter (bible §5.11 — eyeball -18 to -20 target, -1 dBTP ceiling)
+  // ============================================================
+  var mc = document.getElementById('meter'), mctx = mc.getContext('2d');
+  var peakHold = -90, peakHoldT = 0;
+  function meterLoop(){
+    requestAnimationFrame(meterLoop);
+    var w=mc.width, h=mc.height; mctx.clearRect(0,0,w,h);
+    mctx.fillStyle='#0a0d12'; mctx.fillRect(0,0,w,h);
+    // target zone -18..-20 and ceiling -1
+    function x(db){ return (1 - (-db)/60) * w; } // 0dB at right, -60 at left
+    mctx.fillStyle='rgba(111,174,106,0.14)'; mctx.fillRect(x(-20),0,x(-18)-x(-20),h);
+    mctx.strokeStyle='rgba(200,85,58,0.5)'; mctx.beginPath(); mctx.moveTo(x(-1),0); mctx.lineTo(x(-1),h); mctx.stroke();
+    var peak=0, sum=0;
+    if (AC && analyser){
+      analyser.getFloatTimeDomainData(meterBuf);
+      for (var i=0;i<meterBuf.length;i++){ var v=meterBuf[i]; var a=Math.abs(v); if (a>peak)peak=a; sum+=v*v; }
+    }
+    var rms = Math.sqrt(sum/(meterBuf?meterBuf.length:1)) || 0;
+    var peakDb = peak>0 ? 20*Math.log10(peak) : -90;
+    var rmsDb  = rms>0  ? 20*Math.log10(rms)  : -90;
+    if (peakDb>peakHold){ peakHold=peakDb; peakHoldT=performance.now(); }
+    else if (performance.now()-peakHoldT>900){ peakHold=Math.max(peakDb, peakHold-0.6); }
+    // bars
+    var ph=Math.round(h*0.46);
+    mctx.fillStyle = peakDb>-1 ? '#c8553a' : '#6fae6a';
+    mctx.fillRect(0,2,Math.max(0,x(peakDb)),ph-3);
+    mctx.fillStyle = '#67a8e3';
+    mctx.fillRect(0,ph+1,Math.max(0,x(rmsDb)),h-ph-3);
+    // peak-hold tick
+    mctx.fillStyle='#e8c14a'; mctx.fillRect(Math.max(0,x(peakHold))-1,2,2,ph-3);
+    // labels
+    mctx.fillStyle='#7c8794'; mctx.font='9px Commit Mono, monospace'; mctx.textAlign='left';
+    mctx.fillText('pk '+(peakDb<=-90?'-inf':peakDb.toFixed(1)), 4, 11);
+    mctx.fillText('rms '+(rmsDb<=-90?'-inf':rmsDb.toFixed(1)), 4, h-4);
+  }
+
+  // ============================================================
+  // Rendering — left track list
+  // ============================================================
+  function renderTrackList(){
+    var host = document.getElementById('tracks'); host.innerHTML='';
+    host.appendChild(el('h2',{},'Tracks · bible §3'));
+    TRACKS.forEach(function(t){
+      var b = el('button',{class:'trk'+(t.id===curId?' on':'')});
+      b.innerHTML = '<span class="k">'+t.tag+'</span> '+t.name;
+      b.onclick = function(){ curId=t.id; buildSlots(); renderAll(); };
+      host.appendChild(b);
+    });
+    var f = el('div',{class:'foot'},
+      'Local-only bench. Files are read in the browser and never uploaded. Workflow: generate 4-6 takes in Suno / Stable Audio (use the prompt on the right), drop them into the slots, then A/B by soloing one at a time. Audition through the depth filter + a duck so you judge in game context, not in isolation. Source docs: MUSIC_BIBLE.md, MUSIC_PROMPT_SYSTEM.md.');
+    host.appendChild(f);
+  }
+
+  // ============================================================
+  // Rendering — center work area
+  // ============================================================
+  function renderWork(){
+    var t = curTrack(), host = document.getElementById('work'); host.innerHTML='';
+    host.appendChild(el('div',{class:'trkhead'}, t.tag+'  '+t.name));
+    var meta = el('div',{class:'trkmeta'}); meta.textContent = t.meta; host.appendChild(meta);
+
+    var pills = el('div',{class:'row tight'}); pills.style.margin='0 0 14px';
+    pills.appendChild(el('span',{class:'pill k'}, t.key));
+    pills.appendChild(el('span',{class:'pill'}, t.kind==='stems'?'stem set · layer + fade':'candidates · solo to A/B'));
+    pills.appendChild(el('span',{class:'pill'}, 'model: '+t.model));
+    host.appendChild(pills);
+
+    // transport
+    var tr = el('div',{id:'transport'});
+    var play = el('button',{class:'primary'}, '▶ Play all');
+    play.onclick = function(){ playing ? stopAll() : playAll(); };
+    play.id='playBtn';
+    var loopB = el('button',{class:looping?'on':''}, '↻ Loop');
+    loopB.onclick = function(){ looping=!looping; renderWork(); if (playing){ playAll(); } };
+    var seam = el('button',{}, '⤵ Jump to seam');
+    seam.onclick = jumpToSeam;
+    tr.appendChild(play); tr.appendChild(loopB); tr.appendChild(seam);
+    var clr = el('button',{}, 'Clear all');
+    clr.onclick = function(){ buildSlots(); renderAll(); };
+    tr.appendChild(clr);
+    host.appendChild(tr);
+
+    // loop trim
+    var lt = el('div',{class:'hint'});
+    lt.innerHTML = 'Loop trim (s): set a clean musical phrase, leave 0/0 for the whole file. ' +
+      '<input id="ls" type="number" min="0" step="0.01" value="'+loopStart+'" style="width:64px"> to ' +
+      '<input id="le" type="number" min="0" step="0.01" value="'+loopEnd+'" style="width:64px"> ' +
+      '<button id="ltApply" class="sbtn">apply</button>';
+    host.appendChild(lt);
+
+    // slot rack
+    var rack = el('div',{id:'rack'}); rack.style.marginTop='12px';
+    host.appendChild(rack);
+
+    // context tests
+    var g1 = el('div',{class:'group'});
+    g1.appendChild(el('h2',{},'Depth filter · bible §5.6'));
+    var dseg = el('div',{class:'seg'});
+    DEPTHS.forEach(function(d){ var b=el('button',{}, d.name); b.onclick=function(){ setDepth(d.hz); markActive(dseg,b); setSlider('depthHz', d.hz); }; dseg.appendChild(b); });
+    g1.appendChild(dseg);
+    var ds = el('div',{class:'slider'});
+    ds.innerHTML='<div class="lab"><span>lowpass cutoff</span><b id="depthVal">20000 Hz</b></div>'+
+      '<input id="depthHz" type="range" min="3000" max="20000" step="100" value="20000">';
+    g1.appendChild(ds);
+    g1.appendChild(el('div',{class:'hint'},'Surface is bright (20 kHz); the mantle is muffled (5 kHz). A free depth-tied atmosphere upgrade.'));
+    host.appendChild(g1);
+
+    var g2 = el('div',{class:'group'});
+    g2.appendChild(el('h2',{},'Duck test · bible §5.5'));
+    var duckseg = el('div',{class:'seg'});
+    DUCKS.forEach(function(d){ var b=el('button',{}, d.name); b.onmousedown=function(){ doDuck(d); }; duckseg.appendChild(b); });
+    g2.appendChild(duckseg);
+    g2.appendChild(el('div',{class:'hint'},'Press to fire a one-shot duck on the music bus, as if a bomb / death / layer-cross SFX hit. Hear whether the bed survives a duck without pumping.'));
+    host.appendChild(g2);
+
+    renderRack();
+    wireWorkControls();
+    syncTransport();
+  }
+
+  function renderRack(){
+    var rack = document.getElementById('rack'); if (!rack) return; rack.innerHTML='';
+    slots.forEach(function(slot, idx){
+      var row = el('div',{class:'slot'+(slot.buffer?'':' empty')});
+      // drag-drop
+      row.ondragover = function(e){ e.preventDefault(); row.classList.add('drag'); };
+      row.ondragleave = function(){ row.classList.remove('drag'); };
+      row.ondrop = function(e){ e.preventDefault(); row.classList.remove('drag');
+        var f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFileIntoSlot(slot, f); };
+
+      var lab = el('div',{class:'lab'});
+      lab.appendChild(el('div',{class:'nm'}, slot.name));
+      lab.appendChild(el('div',{class:'fn'}, slot.fileName || 'drop audio / click wave'));
+      row.appendChild(lab);
+
+      var cv = el('canvas',{class:'wf'}); cv.width=440; cv.height=38;
+      cv.onclick = function(){ pickFile(slot); };
+      row.appendChild(cv);
+      drawWave(cv, slot);
+
+      var ctrls = el('div',{class:'ctrls'});
+      ctrls.appendChild(el('span',{class:'dur'}, slot.dur?fmtDur(slot.dur):'—'));
+      var solo = el('button',{class:'sbtn solo'+(slot.solo?' on':'')}, 'S');
+      solo.title='solo'; solo.onclick=function(){ slot.solo=!slot.solo; applyGains(0.05); renderRack(); };
+      var mute = el('button',{class:'sbtn mute'+(slot.muted?' on':'')}, 'M');
+      mute.title='mute'; mute.onclick=function(){ slot.muted=!slot.muted; applyGains(0.05); renderRack(); };
+      var fader = el('input',{type:'range', class:'fader', min:'0', max:'1', step:'0.01'}); fader.value=slot.gainVal;
+      fader.oninput=function(){ slot.gainVal=parseFloat(fader.value); applyGains(0.03); };
+      ctrls.appendChild(solo); ctrls.appendChild(mute); ctrls.appendChild(fader);
+      row.appendChild(ctrls);
+      rack.appendChild(row);
+    });
+    // animate playheads
+    if (!renderRack._raf){ renderRack._raf = true; requestAnimationFrame(playheadLoop); }
+  }
+
+  function drawWave(cv, slot){
+    var x = cv.getContext('2d'), w=cv.width, h=cv.height, mid=h/2;
+    x.clearRect(0,0,w,h);
+    if (!slot.peaks){ x.fillStyle='#1a212b'; x.fillRect(0,mid,w,1);
+      x.fillStyle='#3a4450'; x.font='10px Commit Mono, monospace'; x.textAlign='center';
+      x.fillText('empty', w/2, mid+3); return; }
+    // loop region shading
+    if (slot.dur){
+      var ls = loopStart, le = loopEnd>loopStart ? loopEnd : slot.dur;
+      var xs = (ls/slot.dur)*w, xe = (le/slot.dur)*w;
+      x.fillStyle='rgba(232,193,74,0.10)'; x.fillRect(xs,0,Math.max(1,xe-xs),h);
+    }
+    x.strokeStyle = slot.solo ? '#e8c14a' : slot.muted ? '#4a4450' : '#5a7fa0';
+    x.beginPath();
+    for (var i=0;i<slot.peaks.length;i++){
+      var px=(i/slot.peaks.length)*w, p=slot.peaks[i];
+      x.moveTo(px, mid - p[1]*mid*0.92); x.lineTo(px, mid - p[0]*mid*0.92);
+    }
+    x.stroke();
+  }
+
+  function playheadLoop(){
+    requestAnimationFrame(playheadLoop);
+    if (!playing || !AC) return;
+    var rack = document.getElementById('rack'); if (!rack) return;
+    var canvases = rack.querySelectorAll('canvas.wf');
+    slots.forEach(function(slot, i){
+      var cv = canvases[i]; if (!cv || !slot.buffer || !slot.src) return;
+      drawWave(cv, slot);
+      // approximate position: time since start modulo loop window
+      var dur = slot.dur, ls = loopStart, le = loopEnd>loopStart?loopEnd:dur, win = le-ls;
+      if (win<=0) return;
+      var x = cv.getContext('2d'), w=cv.width, h=cv.height;
+      var pos = ls + ((AC.currentTime*1) % win); // coarse; visual aid only
+      var px = (pos/dur)*w;
+      x.strokeStyle='rgba(255,255,255,0.5)'; x.beginPath(); x.moveTo(px,0); x.lineTo(px,h); x.stroke();
+    });
+  }
+
+  function wireWorkControls(){
+    var ls = document.getElementById('ls'), le = document.getElementById('le'),
+        apply = document.getElementById('ltApply'), depthHz = document.getElementById('depthHz'),
+        depthVal = document.getElementById('depthVal');
+    if (apply) apply.onclick = function(){
+      loopStart = Math.max(0, parseFloat(ls.value)||0);
+      loopEnd = Math.max(0, parseFloat(le.value)||0);
+      renderRack(); if (playing) playAll();
+    };
+    if (depthHz) depthHz.oninput = function(){ var hz=parseInt(depthHz.value,10); depthVal.textContent=hz+' Hz'; setDepth(hz); };
+  }
+  function setSlider(id, v){ var s=document.getElementById(id); if (s){ s.value=v; var lab=document.getElementById('depthVal'); if (lab) lab.textContent=v+' Hz'; } }
+  function markActive(seg, btn){ seg.querySelectorAll('button').forEach(function(b){ b.classList.remove('on'); }); btn.classList.add('on'); }
+
+  function syncTransport(){
+    var b = document.getElementById('playBtn'); if (b) b.textContent = playing ? '■ Stop' : '▶ Play all';
+  }
+
+  // hidden file input reused for click-to-pick
+  var picker = document.createElement('input'); picker.type='file'; picker.accept='audio/*'; picker.style.display='none';
+  document.body.appendChild(picker);
+  var pickTarget=null;
+  picker.onchange = function(){ var f=picker.files&&picker.files[0]; if (f&&pickTarget) loadFileIntoSlot(pickTarget,f); picker.value=''; };
+  function pickFile(slot){ pickTarget=slot; picker.click(); }
+
+  // ============================================================
+  // Rendering — right prompt panel
+  // ============================================================
+  function renderPrompt(){
+    var t = curTrack(), host = document.getElementById('prompt'); host.innerHTML='';
+    host.appendChild(el('h2',{},'Suno prompt · system §5'));
+    host.appendChild(el('div',{class:'trkhead'}, t.tag+'  '+t.name));
+    var kv = el('div',{}); kv.style.margin='6px 0 14px';
+    kv.appendChild(kvRow('Model', t.model));
+    kv.appendChild(kvRow('Sliders', t.sliders));
+    kv.appendChild(kvRow('Key/tempo', t.key));
+    host.appendChild(kv);
+
+    var useNote = el('div',{class:'hint'},'Into Suno Custom mode: paste the three boxes below that have copy buttons (Style of Music, Lyrics, Exclude Styles), and set the Model + Sliders (above) in Suno too. The Post-process and Export notes at the bottom are Reaper and game-build steps, NOT Suno input.');
+    useNote.style.margin = '0 0 14px'; host.appendChild(useNote);
+
+    host.appendChild(pfield('Style of Music', t.style));
+    host.appendChild(pfield('Lyrics', t.lyrics));
+    host.appendChild(pfield('Exclude Styles', t.exclude));
+
+    var fp = el('div',{class:'group'});
+    fp.appendChild(el('h2',{},'Post-process · system §8'));
+    fp.appendChild(el('div',{class:'hint'},
+      'Reaper steps AFTER you download the take, not Suno input. Trim to a clean musical phrase, '+
+      'crossfade 50 to 100 ms at the seam. Gentle high-shelf above 12 kHz (+1 to 2 dB) for air, do not roll off the top. '+
+      'Light bus-glue compression only, no pumping. Optional very subtle micro-pitch drift (plus or minus 5 cents). '+
+      'For the four town themes, overlay one live Fiverr instrument: the copyrightability lever, and it keeps clean from sounding sterile. '+
+      'No vinyl crackle, no tape hiss, no bitcrush. If a take sounds dusty, re-roll it.'));
+    host.appendChild(fp);
+
+    var ex = el('div',{class:'group'});
+    ex.appendChild(el('h2',{},'Export · system §8.4'));
+    ex.appendChild(el('div',{class:'hint'},
+      '.webm Opus 96 kbps for the web build, mono for vertical-layer stems (half the browser memory), '+
+      '.wav kept locally. Target -18 to -20 LUFS integrated, -1 dBTP ceiling.'));
+    host.appendChild(ex);
+  }
+  function kvRow(k,v){ var d=el('div',{class:'kv'}); d.appendChild(el('span',{},k)); d.appendChild(el('b',{},v)); return d; }
+  function pfield(label, text){
+    var w = el('div',{class:'pfield'});
+    var ph = el('div',{class:'ph'});
+    ph.appendChild(el('span',{},label));
+    var cp = el('button',{}, 'copy');
+    cp.onclick = function(){ navigator.clipboard.writeText(text).then(function(){
+      cp.textContent='copied'; cp.classList.add('copied'); setTimeout(function(){ cp.textContent='copy'; cp.classList.remove('copied'); },1100); }); };
+    ph.appendChild(cp); w.appendChild(ph);
+    var pre = el('pre',{}); pre.textContent = text; w.appendChild(pre);
+    return w;
+  }
+
+  // ============================================================
+  // helpers + boot
+  // ============================================================
+  function el(tag, attrs, text){ var e=document.createElement(tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text!=null) e.textContent=text; return e; }
+  function fmtDur(s){ return s>=10 ? s.toFixed(1)+'s' : s.toFixed(2)+'s'; }
+  function renderAll(){ renderTrackList(); renderWork(); renderPrompt(); }
+
+  document.getElementById('masterFader').oninput = function(){ if (master) master.gain.value=parseFloat(this.value); };
+  // iOS / autoplay unlock
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){ window.addEventListener(ev, ensureAudio, {once:false}); });
+  window.addEventListener('keydown', function(e){ if (e.key===' '){ e.preventDefault(); playing?stopAll():playAll(); } });
+
+  buildSlots(); renderAll();
+})();
+</script>
+</body>
+</html>

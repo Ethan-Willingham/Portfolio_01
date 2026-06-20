@@ -25,7 +25,7 @@ SOFT_PHRASES="it's not just|it is not just|not only|that being said"
 # not site post prose). Owner-authored game docs still avoid em dashes by hand.
 skip_all() {
   case "$1" in
-    grand-motherload.html|*-lab.html) return 0 ;;
+    grand-motherload.html|*-lab.html|sfx-*.html) return 0 ;;
     research/*|node_modules/*|.git/*) return 0 ;;
     docs/game/*) return 0 ;;
   esac

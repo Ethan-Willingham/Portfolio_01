@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice Item Map</title>
+<style>
+  :root{
+    --bg:#0e1116; --bg2:#141925; --line:#222a38; --ink:#e8e6df; --dim:#8893a6;
+    --ore:#cf9b3a; --liquid:#3f8fd0; --slime:#8ec63f; --refined:#e07a2c;
+    --reaction:#d8456f; --component:#2bb6a0; --good:#cbb24b; --gear:#9a78dd;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:ui-monospace,'Commit Mono',Menlo,Consolas,monospace;overflow:hidden}
+  #top{position:fixed;top:0;left:0;right:0;height:54px;display:flex;align-items:center;
+    gap:14px;padding:0 16px;background:linear-gradient(#141925,#0e1116);
+    border-bottom:1px solid var(--line);z-index:30}
+  #top h1{font-size:15px;margin:0;letter-spacing:.5px;font-weight:600}
+  #top h1 small{color:var(--dim);font-weight:400;margin-left:8px;font-size:11px}
+  #search{background:#0b0e13;border:1px solid var(--line);color:var(--ink);
+    border-radius:5px;padding:6px 9px;font:inherit;font-size:12px;width:180px}
+  #chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--line);
+    background:#0b0e13;color:var(--dim);cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+  .chip .sw{width:9px;height:9px;border-radius:50%}
+  .chip.on{color:var(--ink)}
+  .spacer{flex:1}
+  .btn{font-size:11px;padding:5px 10px;border-radius:5px;border:1px solid var(--line);
+    background:#0b0e13;color:var(--dim);cursor:pointer}
+  .btn:hover{color:var(--ink);border-color:#3a465c}
+  #stage{position:fixed;top:54px;left:0;right:0;bottom:0;cursor:grab}
+  #stage.drag{cursor:grabbing}
+  svg{width:100%;height:100%;display:block}
+  text{pointer-events:none;font-family:inherit}
+  .nlabel{font-size:7px;fill:var(--dim)}
+  .tierhdr{font-size:12px;fill:#aeb7c7;letter-spacing:1px;text-transform:uppercase}
+  .tiersub{font-size:8px;fill:#5c6678}
+  .famlbl{font-size:10px;letter-spacing:.5px}
+  .lane{fill:#11151e;stroke:#1b2230}
+  .node{cursor:pointer}
+  .node circle{stroke:#0a0d12;stroke-width:1}
+  .edge{fill:none}
+  #panel{position:fixed;top:66px;right:12px;width:288px;max-height:calc(100% - 80px);
+    overflow:auto;background:rgba(16,20,28,.97);border:1px solid var(--line);border-radius:8px;
+    padding:14px 15px;z-index:25;display:none;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  #panel h2{margin:0 0 2px;font-size:15px}
+  #panel .meta{font-size:11px;color:var(--dim);margin-bottom:10px}
+  #panel .val{font-size:13px;color:#f0d98a;font-weight:600}
+  #panel h3{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;
+    margin:12px 0 5px;border-top:1px solid var(--line);padding-top:9px}
+  #panel ul{margin:0;padding:0;list-style:none}
+  #panel li{font-size:12px;padding:3px 0;display:flex;justify-content:space-between;gap:8px}
+  #panel li .q{color:var(--dim)}
+  #panel .note{font-size:11px;color:#b9c0cc;font-style:italic;line-height:1.4}
+  #panel .x{position:absolute;top:8px;right:11px;color:var(--dim);cursor:pointer;font-size:16px}
+  #tip{position:fixed;pointer-events:none;background:#05070a;border:1px solid #2a3344;
+    border-radius:5px;padding:5px 8px;font-size:11px;z-index:40;display:none;max-width:220px}
+  #tip b{color:#fff}
+  #legend{position:fixed;left:12px;bottom:12px;font-size:10px;color:var(--dim);z-index:20;
+    background:rgba(14,17,22,.8);border:1px solid var(--line);border-radius:6px;padding:8px 10px;line-height:1.6}
+  #legend b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="top">
+  <h1>SLUICE &middot; ITEM MAP <small>every item, by tier and family.</small></h1>
+  <input id="search" placeholder="search items...">
+  <div id="chips"></div>
+  <div class="spacer"></div>
+  <button class="btn" id="fit">fit</button>
+  <button class="btn" id="zin">+</button>
+  <button class="btn" id="zout">&minus;</button>
+</div>
+<div id="stage"><svg id="svg"></svg></div>
+<div id="panel"><span class="x" id="px">&times;</span><div id="pbody"></div></div>
+<div id="tip"></div>
+<div id="legend">
+  <b>read it:</b> columns = depth tier (left shallow, right deep). rows = family.<br>
+  node size = value (log). lines = recipes (input flows to output).<br>
+  hover a node to trace its connections, click for the full recipe.
+</div>
+<script>
+/* ============================================================
+   THE ITEM ECONOMY  (draft, designed from the research pass)
+   fields: id, n=name, f=family, t=tier(0..7), v=value(relative),
+           in=[[inputId, qty], ...]  (empty for raw),  u=use note
+   Values follow a polynomial ~2.3x/tier curve; refine ~2.5x its
+   raw stack; component/good stack their inputs + a margin.
+   ============================================================ */
+var ITEMS = [
+/* ---- RAW ORES (dig) ---- */
+{id:'coal',n:'Coal',f:'ore',t:0,v:5,u:'Fuel. Burns in the Sluice and the forge.'},
+{id:'cu',n:'Copper',f:'ore',t:0,v:7,u:'The first progression metal.'},
+{id:'sn',n:'Tin',f:'ore',t:0,v:9,u:'Pairs with copper for bronze.'},
+{id:'fe',n:'Iron',f:'ore',t:1,v:14,u:'Backbone metal of the whole economy.'},
+{id:'bx',n:'Bauxite',f:'ore',t:1,v:18,u:'Smelts to aluminum.'},
+{id:'s',n:'Sulfur',f:'ore',t:1,v:16,u:'Energetic. Makes acid and powder.'},
+{id:'np',n:'Saltpeter',f:'ore',t:1,v:12,u:'Energetic salt for gunpowder.'},
+{id:'ag',n:'Silver',f:'ore',t:2,v:32,u:'Precious and conductive.'},
+{id:'pb',n:'Galena',f:'ore',t:2,v:38,u:'Lead ore. Shielding and shot.'},
+{id:'py',n:'Pyrite',f:'ore',t:2,v:28,u:'Fool\'s gold. Hides real gold under acid.'},
+{id:'amy',n:'Amethyst',f:'ore',t:2,v:50,u:'Common gem. Cuts to lustre.'},
+{id:'tq',n:'Turquoise',f:'ore',t:2,v:45,u:'Common gem.'},
+{id:'au',n:'Gold',f:'ore',t:3,v:80,u:'Currency metal.'},
+{id:'co',n:'Cobalt',f:'ore',t:3,v:95,u:'Alloying metal, heat-tough.'},
+{id:'mag',n:'Magnetite',f:'ore',t:3,v:70,u:'Iron oxide, thermite input.'},
+{id:'ni',n:'Nickel',f:'ore',t:3,v:85,u:'Alloying metal.'},
+{id:'jd',n:'Jade',f:'ore',t:3,v:115,u:'Mid gem.'},
+{id:'pd',n:'Peridot',f:'ore',t:3,v:100,u:'Mid gem.'},
+{id:'lz',n:'Lapis',f:'ore',t:3,v:105,u:'Mid gem, pigment.'},
+{id:'mal',n:'Malachite',f:'ore',t:3,v:88,u:'Copper gem.'},
+{id:'pt',n:'Platinum',f:'ore',t:4,v:190,u:'Deep precious metal.'},
+{id:'u',n:'Uranium',f:'ore',t:4,v:250,u:'Energetic. Refines to fuel rods.'},
+{id:'w',n:'Tungsten',f:'ore',t:4,v:175,u:'Hard high-melt metal.'},
+{id:'mi',n:'Methane Ice',f:'ore',t:4,v:165,u:'Volatile. Refines to gas.'},
+{id:'rb',n:'Ruby',f:'ore',t:4,v:290,u:'Deep gem.'},
+{id:'em',n:'Emerald',f:'ore',t:4,v:275,u:'Deep gem.'},
+{id:'tz',n:'Tanzanite',f:'ore',t:4,v:310,u:'Deep gem.'},
+{id:'rh',n:'Rhodochrosite',f:'ore',t:4,v:205,u:'Deep gem.'},
+{id:'ti',n:'Titanium',f:'ore',t:5,v:430,u:'Very deep structural metal.'},
+{id:'ir',n:'Iridium',f:'ore',t:5,v:620,u:'Very deep rare metal.'},
+{id:'cn',n:'Cinnabar',f:'ore',t:5,v:390,u:'Refines to quicksilver.'},
+{id:'amb',n:'Amber',f:'ore',t:5,v:365,u:'Organic. Resin and inclusions.'},
+{id:'fo',n:'Fossil',f:'ore',t:5,v:410,u:'Organic. Refines to oil.'},
+{id:'op',n:'Opal',f:'ore',t:5,v:540,u:'Very deep gem.'},
+{id:'gt',n:'Garnet',f:'ore',t:5,v:460,u:'Very deep gem.'},
+{id:'ob',n:'Obsidian',f:'ore',t:6,v:820,u:'Hazardous glassy rock.'},
+{id:'dia',n:'Diamond',f:'ore',t:6,v:1350,u:'Hazard-tier gem.'},
+{id:'os',n:'Osmium',f:'ore',t:6,v:940,u:'Densest metal.'},
+{id:'vr',n:'Voidrock',f:'ore',t:6,v:1150,u:'Exotic. Reacts with magma to void glass.'},
+{id:'aeth',n:'Aetherite',f:'ore',t:6,v:1050,u:'Catalytic exotic ore.'},
+{id:'pn',n:'Painite',f:'ore',t:7,v:1950,u:'Abyssal gem, rarest natural.'},
+{id:'unob',n:'Unobtanium',f:'ore',t:7,v:2700,u:'Endgame structural exotic.'},
+{id:'qn',n:'Quintessite',f:'ore',t:7,v:3300,u:'Catalytic endgame ore.'},
+{id:'sc',n:'Starcore',f:'ore',t:7,v:3700,u:'The deepest find.'},
+
+/* ---- LIQUIDS (pump, extract, carry) ---- */
+{id:'h2o',n:'Water',f:'liquid',t:0,v:2,u:'The default Sluice wash. Standard refine.'},
+{id:'crude',n:'Crude Slick',f:'liquid',t:1,v:8,u:'Oil. Fuel and organics.'},
+{id:'acr',n:'Acidic Runoff',f:'liquid',t:1,v:12,u:'Wild acid pocket. Strips ore.'},
+{id:'slr',n:'Mineral Slurry',f:'liquid',t:2,v:15,u:'Suspended ore. Reaction base.'},
+{id:'brn',n:'Thermal Brine',f:'liquid',t:2,v:18,u:'Hot salt. Quenching and leaching.'},
+{id:'glw',n:'Glowwater',f:'liquid',t:3,v:30,u:'Luminescent. Charges reactions.'},
+{id:'lava',n:'Magma',f:'liquid',t:4,v:60,u:'Molten wash. Smelts and fuses.'},
+{id:'bm',n:'Bloodmoss Extract',f:'liquid',t:5,v:90,u:'Organic deep seep.'},
+{id:'vs',n:'Void Seep',f:'liquid',t:6,v:120,u:'Exotic liquid from the deep dark.'},
+{id:'nul',n:'Null Liquid',f:'liquid',t:7,v:300,u:'Rare. The strangest wash of all.'},
+
+/* ---- SLIMES (jello bodies, extract them) ---- */
+{id:'gel',n:'Common Gel',f:'slime',t:1,v:10,u:'Inert jello. Binder and base.'},
+{id:'csl',n:'Conductive Slime',f:'slime',t:2,v:40,u:'Carries charge.'},
+{id:'xsl',n:'Corrosive Slime',f:'slime',t:3,v:55,u:'Eats rock. Hazard and tool.'},
+{id:'vsl',n:'Volatile Slime',f:'slime',t:4,v:80,u:'Unstable. Energetic reactions.'},
+{id:'asl',n:'Amplifier Slime',f:'slime',t:5,v:150,u:'Buffs ore value in a reaction.'},
+{id:'dsl',n:'Devourer Slime',f:'slime',t:6,v:5,u:'Destroys value. Pure hazard, extract fast.'},
+{id:'lsl',n:'Living Slime',f:'slime',t:7,v:400,u:'Reactive. The key to living metal.'},
+
+/* ---- REFINED (Sluice output, stage 1) ---- */
+{id:'coke',n:'Coke',f:'refined',t:0,v:25,in:[['coal',2]],u:'Refined fuel for hot smelting.'},
+{id:'cui',n:'Copper Ingot',f:'refined',t:0,v:30,in:[['cu',3]],u:'Wire and circuitry base.'},
+{id:'sni',n:'Tin Ingot',f:'refined',t:0,v:38,in:[['sn',3]],u:'Bronze input.'},
+{id:'brz',n:'Bronze',f:'refined',t:1,v:75,in:[['cui',2],['sni',1]],u:'First alloy. Tools and trim.'},
+{id:'fei',n:'Iron Ingot',f:'refined',t:1,v:60,in:[['fe',3]],u:'Feeds nearly everything.'},
+{id:'alu',n:'Aluminum',f:'refined',t:1,v:85,in:[['bx',4]],u:'Light metal. Glass and beams.'},
+{id:'acid',n:'Acid',f:'refined',t:1,v:70,in:[['s',3]],u:'Reagent and alternate Sluice wash.'},
+{id:'stl',n:'Steel',f:'refined',t:2,v:160,in:[['fei',2],['coke',1]],u:'The workhorse alloy.'},
+{id:'agb',n:'Silver Bullion',f:'refined',t:2,v:140,in:[['ag',4]],u:'Currency and contacts.'},
+{id:'pbi',n:'Lead Ingot',f:'refined',t:2,v:150,in:[['pb',4]],u:'Shielding and ammunition.'},
+{id:'clu',n:'Cut Gem (Lustre)',f:'refined',t:2,v:180,in:[['amy',2]],u:'Cut common gems. Jewelry input.'},
+{id:'aub',n:'Gold Bullion',f:'refined',t:3,v:330,in:[['au',4]],u:'High-value currency metal.'},
+{id:'coa',n:'Cobalt Alloy',f:'refined',t:3,v:490,in:[['co',2],['ni',2]],u:'Heat-tough alloy for frames.'},
+{id:'ptb',n:'Platinum Bullion',f:'refined',t:4,v:770,in:[['pt',4]],u:'Precious and catalytic.'},
+{id:'fr',n:'Fuel Rod',f:'refined',t:4,v:1000,in:[['u',4]],u:'Power source.'},
+{id:'vg',n:'Volatile Gas',f:'refined',t:4,v:520,in:[['mi',3]],u:'Bottled fuel and explosive.'},
+{id:'cbr',n:'Cut Gem (Brilliant)',f:'refined',t:4,v:720,in:[['rb',2]],u:'Cut deep gems.'},
+{id:'tip',n:'Titanium Plate',f:'refined',t:5,v:1150,in:[['ti',4]],u:'Hull and frames.'},
+{id:'iri',n:'Iridium Ingot',f:'refined',t:5,v:1650,in:[['ir',3]],u:'Exotic-grade metal.'},
+{id:'qs',n:'Quicksilver',f:'refined',t:5,v:900,in:[['cn',3]],u:'Liquid metal reagent.'},
+{id:'rsn',n:'Resin',f:'refined',t:5,v:800,in:[['amb',3]],u:'Organic extract. Medicine and seal.'},
+{id:'fol',n:'Fossil Oil',f:'refined',t:5,v:950,in:[['fo',3]],u:'Rich organic oil.'},
+{id:'osp',n:'Osmium Plate',f:'refined',t:6,v:2400,in:[['os',4]],u:'Ultra-dense plating.'},
+{id:'cfl',n:'Cut Gem (Flawless)',f:'refined',t:6,v:3400,in:[['dia',2]],u:'The finest cut stones.'},
+{id:'exa',n:'Exotic Alloy',f:'refined',t:7,v:6200,in:[['unob',3],['ir',1]],u:'Endgame structural material.'},
+
+/* ---- REACTION PRODUCTS (liquid x input, in the Sluice or wild) ---- */
+{id:'brs',n:'Brass',f:'reaction',t:1,v:95,in:[['cui',2],['acid',1]],u:'Acid-etched copper alloy.'},
+{id:'gf',n:'Gold Flake',f:'reaction',t:2,v:420,in:[['py',2],['acid',1]],u:'Acid frees real gold from pyrite.'},
+{id:'qst',n:'Quenched Steel',f:'reaction',t:2,v:360,in:[['stl',1],['brn',1]],u:'Brine-hardened steel.'},
+{id:'cj',n:'Crystal Jacket',f:'reaction',t:2,v:210,in:[['slr',1],['brn',1]],u:'Coats ore to buff its value.'},
+{id:'thm',n:'Thermite',f:'reaction',t:3,v:540,in:[['alu',1],['mag',1]],u:'Aluminum plus iron oxide. Burns through anything.'},
+{id:'cg',n:'Charged Gel',f:'reaction',t:3,v:230,in:[['csl',1],['glw',1]],u:'Battery gel.'},
+{id:'elec',n:'Electrum',f:'reaction',t:3,v:640,in:[['aub',1],['agb',1]],u:'Gold-silver alloy.'},
+{id:'flg',n:'Fulgurite',f:'reaction',t:3,v:300,in:[['slr',1],['cg',1]],u:'Glass fused by a charge.'},
+{id:'amg',n:'Amalgam',f:'reaction',t:4,v:700,in:[['qs',1],['aub',1]],u:'Mercury-bound gold.'},
+{id:'cor',n:'Corium',f:'reaction',t:4,v:1450,in:[['u',1],['vsl',1]],u:'Hazardous hot mass. Handle with care.'},
+{id:'pr',n:'Petrified Resin',f:'reaction',t:5,v:480,in:[['rsn',1],['lava',1]],u:'Heat-set amber-stone.'},
+{id:'sp',n:'Sporebloom',f:'reaction',t:5,v:500,in:[['bm',1],['gel',1]],u:'Living organic bloom.'},
+{id:'bc',n:'Blood Crystal',f:'reaction',t:5,v:1100,in:[['bm',1],['rb',1]],u:'Organic-grown gem.'},
+{id:'lm',n:'Living Metal',f:'reaction',t:5,v:920,in:[['lsl',1],['fei',2]],u:'Self-healing metal.'},
+{id:'rad',n:'Radiant Ore',f:'reaction',t:6,v:860,in:[['nul',1],['glw',1]],u:'Glowing collectible reaction.'},
+{id:'vgl',n:'Void Glass',f:'reaction',t:6,v:1300,in:[['vr',1],['lava',1]],u:'Black glass, light-eating.'},
+{id:'nst',n:'Null Steel',f:'reaction',t:6,v:1800,in:[['stl',1],['nul',1]],u:'Steel touched by null liquid.'},
+{id:'aec',n:'Aether Crystal',f:'reaction',t:6,v:2100,in:[['aeth',1],['nul',1]],u:'Resonant catalytic crystal.'},
+{id:'qe',n:'Quintessence',f:'reaction',t:7,v:4200,in:[['qn',1],['vs',1]],u:'Distilled essence of the deep.'},
+{id:'mid',n:'Midas Draught',f:'reaction',t:7,v:5200,in:[['gf',1],['qe',1]],u:'Legendary. Turns what it touches to gold.'},
+
+/* ---- COMPONENTS (intermediate, stage 2) ---- */
+{id:'gls',n:'Glass',f:'component',t:2,v:120,in:[['alu',1],['brn',1]],u:'Lenses and instruments.'},
+{id:'gp',n:'Gunpowder',f:'component',t:2,v:180,in:[['s',1],['coke',1],['np',1]],u:'Explosives base.'},
+{id:'mp',n:'Machine Parts',f:'component',t:3,v:320,in:[['stl',2],['cui',1]],u:'Gears and fittings.'},
+{id:'cir',n:'Circuitry',f:'component',t:3,v:520,in:[['cui',1],['agb',1],['gls',1]],u:'The electronics core.'},
+{id:'lns',n:'Lens',f:'component',t:4,v:300,in:[['gls',1],['clu',1]],u:'Optics and scanners.'},
+{id:'hp',n:'Hull Plate',f:'component',t:5,v:820,in:[['stl',2],['tip',1]],u:'Armor stock.'},
+{id:'af',n:'Alloy Frame',f:'component',t:5,v:1450,in:[['tip',1],['coa',1]],u:'Chassis for machinery and gear.'},
+{id:'pc',n:'Power Cell',f:'component',t:5,v:1650,in:[['fr',1],['cir',1]],u:'Portable power.'},
+{id:'po',n:'Precision Optics',f:'component',t:6,v:1250,in:[['cfl',1],['lns',1]],u:'Top-grade lenses.'},
+
+/* ---- GOODS (towns manufacture these; the demand engine) ---- */
+{id:'beam',n:'Beams',f:'good',t:2,v:420,in:[['stl',1],['alu',1]],u:'Construction. Towns always need them.'},
+{id:'ammo',n:'Ammunition',f:'good',t:3,v:520,in:[['gp',1],['pbi',1]],u:'Frontier and No Man\'s Zone demand.'},
+{id:'tool',n:'Tools',f:'good',t:3,v:620,in:[['mp',1],['fei',1]],u:'Universal town demand.'},
+{id:'med',n:'Medicine',f:'good',t:4,v:720,in:[['fol',1],['brn',1]],u:'Always in demand, spikes in events.'},
+{id:'jwl',n:'Jewelry',f:'good',t:4,v:1600,in:[['cbr',1],['aub',1]],u:'The Cutting town and the Collector.'},
+{id:'elx',n:'Electronics',f:'good',t:4,v:1850,in:[['cir',1],['aub',1]],u:'High-tech town demand.'},
+{id:'fc',n:'Fuel Cells',f:'good',t:5,v:2500,in:[['pc',1],['vg',1]],u:'Power infrastructure.'},
+{id:'art',n:'Artillery',f:'good',t:6,v:3000,in:[['ammo',2],['hp',1]],u:'War economy demand.'},
+{id:'lux',n:'Luxury Goods',f:'good',t:6,v:3200,in:[['jwl',1],['clu',2]],u:'Deep-city demand. High margin.'},
+{id:'mach',n:'Machinery',f:'good',t:6,v:4100,in:[['mp',1],['af',1]],u:'Industrial backbone.'},
+{id:'inst',n:'Instrument',f:'good',t:6,v:5200,in:[['po',1],['cir',1]],u:'Scientific demand, rare buyers.'},
+{id:'rc',n:'Reactor Core',f:'good',t:7,v:8000,in:[['pc',2],['exa',1]],u:'Endgame infrastructure.'},
+{id:'gr',n:'Grand Regalia',f:'good',t:7,v:9000,in:[['lux',1],['cfl',1]],u:'The richest single good. The Deep pays.'},
+
+/* ---- GEAR & CONSUMABLES (you craft these; amplify the mining loop) ---- */
+{id:'bomb',n:'Bomb',f:'gear',t:2,v:300,in:[['gp',1],['fei',1]],u:'Clears rock and barriers.'},
+{id:'rk',n:'Repair Kit',f:'gear',t:3,v:350,in:[['fei',1],['acid',1]],u:'Patch the hull on the move.'},
+{id:'db',n:'Drill Bit',f:'gear',t:3,v:500,in:[['stl',1],['mp',1]],u:'Drill upgrade. Mine harder ore.'},
+{id:'bb',n:'Heavy Bomb',f:'gear',t:3,v:800,in:[['gp',3],['stl',1]],u:'Big clears.'},
+{id:'fcan',n:'Fuel Canister',f:'gear',t:4,v:400,in:[['vg',1]],u:'Extend your range.'},
+{id:'scn',n:'Scanner',f:'gear',t:4,v:1100,in:[['cir',1],['lns',1]],u:'Reveal ore and prices.'},
+{id:'hd',n:'Heated Drill',f:'gear',t:4,v:1400,in:[['db',1],['fr',1]],u:'Break heat-locked deep ore.'},
+{id:'ha',n:'Hull Armor',f:'gear',t:5,v:1200,in:[['hp',1]],u:'Survive the No Man\'s Zone.'},
+{id:'cp',n:'Cargo Pod',f:'gear',t:5,v:1600,in:[['af',1],['alu',2]],u:'Carry more per run.'},
+{id:'slu',n:'Sluice Upgrade',f:'gear',t:5,v:2000,in:[['mp',2],['gls',2]],u:'Better wash, yield, reveal.'},
+{id:'bst',n:'Booster',f:'gear',t:5,v:2600,in:[['pc',1],['af',1]],u:'Faster flight, outrun danger.'},
+{id:'tp',n:'Teleporter Charge',f:'gear',t:7,v:3000,in:[['nul',1],['cir',1]],u:'Escape with the haul.'}
+];
+
+/* ============================================================ */
+var FAM = [
+  {id:'ore',      lbl:'Ore (raw)',     c:'#cf9b3a'},
+  {id:'liquid',   lbl:'Liquid',        c:'#3f8fd0'},
+  {id:'slime',    lbl:'Slime',         c:'#8ec63f'},
+  {id:'refined',  lbl:'Refined',       c:'#e07a2c'},
+  {id:'reaction', lbl:'Reaction',      c:'#d8456f'},
+  {id:'component',lbl:'Component',     c:'#2bb6a0'},
+  {id:'good',     lbl:'Good (town)',   c:'#cbb24b'},
+  {id:'gear',     lbl:'Gear (you)',    c:'#9a78dd'}
+];
+var FAMC={}; FAM.forEach(function(f){FAMC[f.id]=f.c;});
+var TIERS=['Surface','Shallow','Upper','Mid','Deep','Lower','Hazard','Abyss'];
+var TIERDEPTH=['0-30m','30-80m','80-160m','160-300m','300-460m','460-680m','680-920m','920m+'];
+
+var SVGNS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('svg');
+var byId={}; ITEMS.forEach(function(it){byId[it.id]=it;});
+/* outputs map: who uses each item */
+ITEMS.forEach(function(it){it._out=[];});
+ITEMS.forEach(function(it){ (it.in||[]).forEach(function(p){ var s=byId[p[0]]; if(s) s._out.push(it.id); }); });
+
+/* ---- layout: x by tier, lanes by family ---- */
+var COLW=190, COL0=150, ROWPAD=30, NODEGAP=30, LANEGAP=14, LANETOP=70;
+function radius(v){ return Math.max(6, Math.min(26, 5+4.4*Math.log10(v+1))); }
+
+var lanes=[];
+var y=LANETOP;
+FAM.forEach(function(f){
+  var members=ITEMS.filter(function(it){return it.f===f.id;});
+  var buckets={}; var maxStack=1;
+  members.forEach(function(it){ (buckets[it.t]=buckets[it.t]||[]).push(it); });
+  for(var t=0;t<8;t++){ if(buckets[t]){ buckets[t].sort(function(a,b){return a.v-b.v;}); maxStack=Math.max(maxStack,buckets[t].length); } }
+  var laneH=maxStack*NODEGAP+ROWPAD;
+  for(var t2=0;t2<8;t2++){
+    var arr=buckets[t2]||[];
+    arr.forEach(function(it,i){
+      it._x = COL0 + t2*COLW;
+      it._y = y + ROWPAD/2 + i*NODEGAP + NODEGAP/2;
+    });
+  }
+  lanes.push({f:f,top:y,h:laneH,members:members});
+  y += laneH + LANEGAP;
+});
+var TOTALH=y+30, TOTALW=COL0+8*COLW+40;
+
+/* ---- build SVG ---- */
+var vp=document.createElementNS(SVGNS,'g'); vp.setAttribute('id','vp'); svg.appendChild(vp);
+
+var bg=document.createElementNS(SVGNS,'g'); vp.appendChild(bg);
+lanes.forEach(function(L){
+  var r=document.createElementNS(SVGNS,'rect');
+  r.setAttribute('class','lane'); r.setAttribute('x',10); r.setAttribute('y',L.top);
+  r.setAttribute('width',TOTALW-20); r.setAttribute('height',L.h); r.setAttribute('rx',7);
+  bg.appendChild(r);
+  var t=document.createElementNS(SVGNS,'text'); t.setAttribute('class','famlbl');
+  t.setAttribute('x',18); t.setAttribute('y',L.top+15); t.setAttribute('fill',L.f.c);
+  t.textContent=L.f.lbl; bg.appendChild(t);
+});
+for(var t=0;t<8;t++){
+  var hx=COL0+t*COLW;
+  var th=document.createElementNS(SVGNS,'text'); th.setAttribute('class','tierhdr');
+  th.setAttribute('x',hx); th.setAttribute('y',40); th.setAttribute('text-anchor','middle');
+  th.textContent='T'+t+' '+TIERS[t]; bg.appendChild(th);
+  var ts=document.createElementNS(SVGNS,'text'); ts.setAttribute('class','tiersub');
+  ts.setAttribute('x',hx); ts.setAttribute('y',53); ts.setAttribute('text-anchor','middle');
+  ts.textContent=TIERDEPTH[t]; bg.appendChild(ts);
+  var gl=document.createElementNS(SVGNS,'line'); gl.setAttribute('x1',hx); gl.setAttribute('x2',hx);
+  gl.setAttribute('y1',60); gl.setAttribute('y2',TOTALH-10); gl.setAttribute('stroke','#161c28'); gl.setAttribute('stroke-width',1);
+  bg.appendChild(gl);
+}
+
+/* edges */
+var edgeG=document.createElementNS(SVGNS,'g'); vp.appendChild(edgeG);
+var edges=[];
+ITEMS.forEach(function(it){
+  (it.in||[]).forEach(function(p){
+    var s=byId[p[0]]; if(!s) return;
+    var path=document.createElementNS(SVGNS,'path');
+    var x1=s._x, y1=s._y, x2=it._x, y2=it._y, mx=(x1+x2)/2;
+    path.setAttribute('d','M'+x1+','+y1+' C'+mx+','+y1+' '+mx+','+y2+' '+x2+','+y2);
+    path.setAttribute('class','edge');
+    path.setAttribute('stroke',FAMC[s.f]);
+    path.setAttribute('stroke-width',(0.5+0.45*p[1]).toFixed(2));
+    path.setAttribute('stroke-opacity','0.13');
+    edgeG.appendChild(path);
+    edges.push({el:path,a:s.id,b:it.id,w:(0.5+0.45*p[1])});
+  });
+});
+
+/* nodes */
+var nodeG=document.createElementNS(SVGNS,'g'); vp.appendChild(nodeG);
+var nodeEls={};
+ITEMS.forEach(function(it){
+  var g=document.createElementNS(SVGNS,'g'); g.setAttribute('class','node');
+  g.setAttribute('transform','translate('+it._x+','+it._y+')');
+  var c=document.createElementNS(SVGNS,'circle');
+  c.setAttribute('r',radius(it.v)); c.setAttribute('fill',FAMC[it.f]);
+  g.appendChild(c);
+  var lb=document.createElementNS(SVGNS,'text'); lb.setAttribute('class','nlabel');
+  lb.setAttribute('text-anchor','middle'); lb.setAttribute('y',radius(it.v)+9);
+  lb.textContent=it.n; g.appendChild(lb);
+  nodeG.appendChild(g);
+  nodeEls[it.id]={g:g,c:c,lb:lb};
+  g.addEventListener('mouseenter',function(){hover(it.id);});
+  g.addEventListener('mousemove',function(e){moveTip(e,it);});
+  g.addEventListener('mouseleave',function(){if(!selected)clearHi();hideTip();});
+  g.addEventListener('click',function(e){e.stopPropagation();select(it.id);});
+});
+
+/* ---- highlight logic ---- */
+var hidden={};
+function neighborsOf(id){ var s={}; s[id]=1; var it=byId[id];
+  (it.in||[]).forEach(function(p){s[p[0]]=1;}); it._out.forEach(function(o){s[o]=1;}); return s; }
+function applyHi(set){
+  ITEMS.forEach(function(it){ var el=nodeEls[it.id];
+    el.g.style.opacity = set===null ? (hidden[it.f]?0.05:1) : ((set[it.id]&&!hidden[it.f])?1:0.12);
+  });
+  edges.forEach(function(e){
+    var lit = set && set[e.a] && set[e.b] && !hidden[byId[e.a].f] && !hidden[byId[e.b].f];
+    e.el.setAttribute('stroke-opacity', set===null ? (hidden[byId[e.a].f]||hidden[byId[e.b].f]?0.02:0.13) : (lit?0.85:0.04));
+    e.el.setAttribute('stroke-width', lit? (e.w+0.7).toFixed(2) : e.w.toFixed(2));
+  });
+}
+function hover(id){ if(selected)return; applyHi(neighborsOf(id)); }
+function clearHi(){ applyHi(null); }
+
+/* ---- detail panel ---- */
+var selected=null;
+var panel=document.getElementById('panel'), pbody=document.getElementById('pbody');
+function famName(f){ for(var i=0;i<FAM.length;i++) if(FAM[i].id===f) return FAM[i].lbl; return f; }
+function select(id){ selected=id; var it=byId[id]; applyHi(neighborsOf(id));
+  var h='<h2 style="color:'+FAMC[it.f]+'">'+it.n+'</h2>';
+  h+='<div class="meta">'+famName(it.f)+' &middot; Tier '+it.t+' ('+TIERS[it.t]+') &middot; <span class="val">value '+it.v.toLocaleString()+'</span></div>';
+  if(it.u) h+='<div class="note">'+it.u+'</div>';
+  if(it.in&&it.in.length){ h+='<h3>Made from</h3><ul>';
+    it.in.forEach(function(p){ var s=byId[p[0]]; if(s) h+='<li><span style="color:'+FAMC[s.f]+'">'+s.n+'</span><span class="q">x'+p[1]+'</span></li>'; });
+    h+='</ul>'; } else { h+='<h3>Source</h3><div class="note">Raw. Found by mining or extraction at tier '+it.t+'.</div>'; }
+  if(it._out&&it._out.length){ h+='<h3>Used in</h3><ul>';
+    it._out.forEach(function(o){ var d=byId[o]; h+='<li><span style="color:'+FAMC[d.f]+'">'+d.n+'</span><span class="q">'+famName(d.f)+'</span></li>'; });
+    h+='</ul>'; } else { h+='<h3>Used in</h3><div class="note">End product. Sold to towns, or final gear.</div>'; }
+  pbody.innerHTML=h; panel.style.display='block';
+}
+document.getElementById('px').addEventListener('click',function(){deselect();});
+document.getElementById('stage').addEventListener('click',function(){deselect();});
+function deselect(){ selected=null; panel.style.display='none'; clearHi(); }
+
+/* ---- tooltip ---- */
+var tip=document.getElementById('tip');
+function moveTip(e,it){ tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';
+  tip.innerHTML='<b>'+it.n+'</b><br>'+famName(it.f)+' &middot; T'+it.t+' &middot; value '+it.v.toLocaleString(); }
+function hideTip(){ tip.style.display='none'; }
+
+/* ---- family filter chips ---- */
+var chips=document.getElementById('chips');
+FAM.forEach(function(f){
+  var c=document.createElement('div'); c.className='chip on';
+  c.innerHTML='<span class="sw" style="background:'+f.c+'"></span>'+f.lbl;
+  c.addEventListener('click',function(){ hidden[f.id]=!hidden[f.id]; c.classList.toggle('on',!hidden[f.id]);
+    if(selected)applyHi(neighborsOf(selected)); else applyHi(null); });
+  chips.appendChild(c);
+});
+
+/* ---- search ---- */
+document.getElementById('search').addEventListener('input',function(e){
+  var q=e.target.value.trim().toLowerCase();
+  if(!q){ if(selected)applyHi(neighborsOf(selected)); else applyHi(null); return; }
+  var set={}; ITEMS.forEach(function(it){ if(it.n.toLowerCase().indexOf(q)>=0) set[it.id]=1; });
+  ITEMS.forEach(function(it){ nodeEls[it.id].g.style.opacity=(set[it.id]&&!hidden[it.f])?1:0.08; });
+  edges.forEach(function(ed){ ed.el.setAttribute('stroke-opacity',0.02); });
+});
+
+/* ---- zoom + pan ---- */
+var sc=1, tx=0, ty=0, interacted=false;
+function vw(){ return Math.max(320, window.innerWidth||1200); }
+function vh(){ return Math.max(320, (window.innerHeight||800)-54); }
+function apply(){ vp.setAttribute('transform','translate('+tx+','+ty+') scale('+sc+')'); }
+function fit(){ var pad=40, W=vw(), H=vh(); var s=Math.min((W-pad*2)/TOTALW,(H-pad*2)/TOTALH); s=Math.max(0.08,Math.min(s,2)); sc=s; tx=(W-TOTALW*s)/2; ty=(H-TOTALH*s)/2+10; apply(); }
+var stage=document.getElementById('stage');
+stage.addEventListener('wheel',function(e){ e.preventDefault(); interacted=true; var f=e.deltaY<0?1.12:1/1.12;
+  var mx=e.clientX, my=e.clientY-54; tx=mx-(mx-tx)*f; ty=my-(my-ty)*f; sc*=f; apply(); },{passive:false});
+var dragging=false,lx,ly;
+stage.addEventListener('mousedown',function(e){dragging=true;interacted=true;lx=e.clientX;ly=e.clientY;stage.classList.add('drag');});
+window.addEventListener('mousemove',function(e){ if(!dragging)return; tx+=e.clientX-lx; ty+=e.clientY-ly; lx=e.clientX; ly=e.clientY; apply(); });
+window.addEventListener('mouseup',function(){dragging=false;stage.classList.remove('drag');});
+document.getElementById('fit').addEventListener('click',fit);
+document.getElementById('zin').addEventListener('click',function(){ interacted=true; sc*=1.2; apply(); });
+document.getElementById('zout').addEventListener('click',function(){ interacted=true; sc/=1.2; apply(); });
+window.addEventListener('resize',function(){ if(!interacted) fit(); });
+
+document.querySelector('#top h1 small').textContent =
+  ITEMS.length+' items across 8 tiers and 8 families. draft economy, values relative.';
+
+requestAnimationFrame(fit);
+window.addEventListener('load',function(){ if(!interacted) fit(); });
+</script>
+</body>
+</html>

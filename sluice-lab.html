@@ -1,0 +1,456 @@
+<!doctype html><html><head><meta charset="utf-8"><title>sluice-lab</title>
+<style>html,body{margin:0;background:#2a2f36}canvas{display:block;image-rendering:pixelated}</style>
+</head><body><canvas id="c" width="942.5" height="550"></canvas>
+<script>
+var canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+ctx.imageSmoothingEnabled=false;
+var TILE=32,SKY_ROWS=4,DECK_ROW=4;
+var UI_FONT="\u0027Commit Mono\u0027, ui-monospace, Consolas, monospace";
+function stationCenterCol(){return 14;}  // stub: places the Sluice at a framed spot
+/* ---- BLD (from 170) ---- */
+var BLD = {
+    // Wood — saturated saloon-red plank
+    woodDeep:   '#2c1408',   // deepest shadow
+    woodDark:   '#6e3719',   // shadow / batten
+    woodBase:   '#a0533a',   // plank face
+    woodMid:    '#b96b48',   // mid highlight
+    woodLight:  '#d68a5a',   // sun-bleach
+    woodPale:   '#e9a87a',   // sharp highlight
+    // Stone — slate foundation
+    stoneDark:  '#3a3834',
+    stoneBase:  '#5a5854',
+    stoneLight: '#8a8884',
+    stonePale:  '#b0aea8',
+    // Metal — cold blue-grey iron
+    metalDark:  '#1f2933',
+    metalBase:  '#4a5560',
+    metalLight: '#7a8590',
+    metalPale:  '#a4afba',
+    // Gold — sign letters
+    goldDark:   '#8a6320',
+    goldBase:   '#c98e2a',
+    goldBright: '#e9b54a',
+    goldPale:   '#f5d680',
+    // Red — propaganda
+    redDeep:    '#5a1108',
+    redDark:    '#8a1a10',
+    redBase:    '#c8341c',
+    redBright:  '#e85c40',
+    // Outline — near-black silhouette
+    outline:    '#1a0a05',
+    // Atmosphere
+    warmGlow:   '#fbc55a',
+    cream:      '#e6d5a8',
+    // Water — the Sluice wash (3 added colours; the warm + metal palette had no
+    // blue, and flowing water is the literal core of the refinement station, so
+    // this is the BUILDING_STYLE §2 "obvious meaning" exception).
+    waterBase:  '#3a6e88',   // deep wash water in the channel
+    waterLight: '#7db4cc',   // mid shimmer / scrolling highlight
+    waterFoam:  '#cfeef4'    // bright froth + foam crest (near-white cyan)
+  };
+/* ---- material helpers (from 170) ---- */
+function strokeRect1(x, y, w, h, color) {
+    ctx.fillStyle = color || BLD.outline;
+    ctx.fillRect(x, y, w, 1);
+    ctx.fillRect(x, y + h - 1, w, 1);
+    ctx.fillRect(x, y + 1, 1, h - 2);
+    ctx.fillRect(x + w - 1, y + 1, 1, h - 2);
+  }
+
+function drawWoodPlanking(x, y, w, h, plankSpacing) {
+    plankSpacing = plankSpacing || 6;
+    ctx.fillStyle = BLD.woodBase;
+    ctx.fillRect(x, y, w, h);
+    // Vertical plank seams (darker batten lines)
+    ctx.fillStyle = BLD.woodDark;
+    for (var wsx = x + plankSpacing; wsx < x + w; wsx += plankSpacing) {
+      ctx.fillRect(wsx, y, 1, h);
+    }
+    // Per-plank shading: every other plank gets a 1-px highlight stripe
+    // and one mid-tone stripe, suggesting cylindrical board curvature.
+    ctx.fillStyle = BLD.woodMid;
+    for (var wsx2 = x + 1; wsx2 < x + w; wsx2 += plankSpacing) {
+      ctx.fillRect(wsx2, y + 2, 1, h - 4);
+    }
+    ctx.fillStyle = BLD.woodLight;
+    for (var wsx3 = x + 2; wsx3 < x + w; wsx3 += plankSpacing) {
+      ctx.fillRect(wsx3, y + 3, 1, h - 6);
+    }
+    // Top sun-bleach + bottom shadow
+    ctx.fillStyle = BLD.woodPale;
+    ctx.fillRect(x, y, w, 1);
+    ctx.fillStyle = BLD.woodDeep;
+    ctx.fillRect(x, y + h - 1, w, 1);
+    // Subtle nail dots, deterministic positions
+    ctx.fillStyle = BLD.woodDeep;
+    for (var nx = x + 3; nx < x + w; nx += plankSpacing) {
+      ctx.fillRect(nx, y + 2, 1, 1);
+      ctx.fillRect(nx, y + h - 3, 1, 1);
+    }
+  }
+
+function drawStoneFoundation(x, y, w, h) {
+    // Base
+    ctx.fillStyle = BLD.stoneBase;
+    ctx.fillRect(x, y, w, h);
+    // Irregular slab pattern: divide width into 3-4 stones, with vertical
+    // mortar gaps at semi-random positions for that hand-laid look.
+    var seams = [Math.floor(w * 0.27), Math.floor(w * 0.51), Math.floor(w * 0.78)];
+    ctx.fillStyle = BLD.stoneDark;
+    for (var si = 0; si < seams.length; si++) {
+      ctx.fillRect(x + seams[si], y + 1, 1, h - 1);
+    }
+    // Top edge highlight
+    ctx.fillStyle = BLD.stoneLight;
+    ctx.fillRect(x, y, w, 1);
+    // Per-slab face dapple — tiny highlight + shadow pixels per slab
+    ctx.fillStyle = BLD.stonePale;
+    ctx.fillRect(x + 3, y + 2, 1, 1);
+    ctx.fillRect(x + seams[0] + 4, y + 2, 1, 1);
+    ctx.fillRect(x + seams[1] + 5, y + 1, 1, 1);
+    ctx.fillRect(x + seams[2] + 4, y + 2, 1, 1);
+    ctx.fillStyle = BLD.stoneDark;
+    ctx.fillRect(x + 6, y + h - 2, 1, 1);
+    ctx.fillRect(x + seams[1] - 2, y + h - 2, 1, 1);
+    ctx.fillRect(x + w - 5, y + h - 2, 1, 1);
+    // Bottom shadow
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x, y + h - 1, w, 1);
+  }
+
+function drawRivetedPlate(x, y, w, h) {
+    ctx.fillStyle = BLD.metalBase;
+    ctx.fillRect(x, y, w, h);
+    // Vertical seam
+    ctx.fillStyle = BLD.metalDark;
+    ctx.fillRect(x + Math.floor(w / 2), y, 1, h);
+    // Highlight strip down the left of each half
+    ctx.fillStyle = BLD.metalLight;
+    ctx.fillRect(x + 1, y + 1, 1, h - 2);
+    ctx.fillRect(x + Math.floor(w / 2) + 1, y + 1, 1, h - 2);
+    // Rivets at corners — bright dot + dark shadow
+    ctx.fillStyle = BLD.metalPale;
+    ctx.fillRect(x + 1, y + 1, 1, 1);
+    ctx.fillRect(x + w - 2, y + 1, 1, 1);
+    ctx.fillRect(x + 1, y + h - 2, 1, 1);
+    ctx.fillRect(x + w - 2, y + h - 2, 1, 1);
+  }
+
+function drawRedStar(cx, cy, r, tilt) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(tilt || 0);
+    // Outline pass — slightly bigger 5-pt star in outline color
+    ctx.fillStyle = BLD.outline;
+    ctx.beginPath();
+    for (var oi = 0; oi < 10; oi++) {
+      var oang = -Math.PI / 2 + oi * Math.PI / 5;
+      var orr = (oi % 2 === 0) ? r + 0.7 : (r + 0.7) * 0.42;
+      var ox = Math.cos(oang) * orr;
+      var oy = Math.sin(oang) * orr;
+      if (oi === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // Fill pass
+    ctx.fillStyle = BLD.redBase;
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var ang = -Math.PI / 2 + i * Math.PI / 5;
+      var rr = (i % 2 === 0) ? r : r * 0.42;
+      var sx = Math.cos(ang) * rr;
+      var sy = Math.sin(ang) * rr;
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // Highlight wedge — bright triangle on the top-left half
+    ctx.fillStyle = BLD.redBright;
+    ctx.beginPath();
+    ctx.moveTo(0, -r);
+    ctx.lineTo(-r * 0.28, -r * 0.1);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+function drawSignBoard(x, y, w, h, text) {
+    // Outline + dark frame
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.fillStyle = BLD.woodDeep;
+    ctx.fillRect(x, y, w, h);
+    // Gold inner fill with bevel
+    ctx.fillStyle = BLD.goldBase;
+    ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.fillStyle = BLD.goldPale;
+    ctx.fillRect(x + 1, y + 1, w - 2, 1);              // top bevel
+    ctx.fillStyle = BLD.goldDark;
+    ctx.fillRect(x + 1, y + h - 2, w - 2, 1);          // bottom shadow
+    // Text — dark engraved letters
+    ctx.font = 'bold 7px ' + UI_FONT;
+    ctx.fillStyle = BLD.woodDeep;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + w / 2, y + h / 2 + 0.5);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+function drawSupportPost(x, groundY, height) {
+    var topY = groundY - height;
+    // Body (6 wide riveted iron)
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x - 1, topY + 3, 8, height - 6);
+    drawRivetedPlate(x, topY + 3, 6, height - 6);
+    // Bolts down the body (alternating)
+    ctx.fillStyle = BLD.metalPale;
+    for (var by = topY + 9; by < groundY - 6; by += 12) {
+      ctx.fillRect(x + 1, by, 1, 1);
+      ctx.fillRect(x + 4, by, 1, 1);
+    }
+    // Subtle rust streak down one side
+    drawRustStreak(x + 6, topY + 8, groundY - 8, 0.28);
+    // Capital (wider at top) — 10 wide × 3 tall, sits at top of body
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x - 3, topY, 12, 4);
+    drawRivetedPlate(x - 2, topY, 10, 3);
+    ctx.fillStyle = BLD.metalLight;
+    ctx.fillRect(x - 2, topY, 10, 1);                    // top rim highlight
+    // Base flange (wider at bottom) — 10 wide × 3 tall, sits at ground
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x - 3, groundY - 4, 12, 4);
+    drawRivetedPlate(x - 2, groundY - 3, 10, 3);
+    ctx.fillStyle = BLD.metalDark;
+    ctx.fillRect(x - 2, groundY - 1, 10, 1);             // shadow at the foot
+  }
+
+function drawRustStreak(x, y0, y1, intensity) {
+    intensity = intensity || 0.4;
+    ctx.fillStyle = 'rgba(110,53,23,' + intensity.toFixed(2) + ')';
+    ctx.fillRect(x, y0, 1, y1 - y0);
+    ctx.fillStyle = 'rgba(217,125,58,' + (intensity * 0.7).toFixed(2) + ')';
+    ctx.fillRect(x, y0 + (y1 - y0) * 0.3, 1, (y1 - y0) * 0.2);
+  }
+/* ---- Sluice draw code (from 172) ---- */
+function sluiceAnchorX() { return stationCenterCol() * TILE + TILE / 2 - 395; }
+
+function drawSluiceTower(cx, w, topY, groundY) {
+    var x = Math.round(cx - w / 2), h = groundY - topY;
+    ctx.fillStyle = BLD.outline; ctx.fillRect(x - 1, topY - 1, w + 2, h + 2);   // silhouette
+    var lw = Math.max(2, Math.round(w * 0.20)), sw = Math.max(2, Math.round(w * 0.20));
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(x, topY, w, h);                // base
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x + 2, topY, lw, h);           // lit band
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(x, topY, 2, h);                // highlight edge
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(x + w - 2 - sw, topY, sw, h);  // shadow band
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x + w - 2, topY, 2, h);        // reflected rim (rounds it)
+    // Bolted seam bands every 24 px: embossed recess + lit lip + two shaded bolts.
+    for (var sy = topY + 20; sy < groundY - 12; sy += 24) {
+      ctx.fillStyle = BLD.outline;    ctx.fillRect(x + 1, sy, w - 2, 1);
+      ctx.fillStyle = BLD.metalLight; ctx.fillRect(x + 1, sy + 1, w - 2, 1);
+      var b1 = x + 5, b2 = x + w - 7;
+      ctx.fillStyle = BLD.metalDark;  ctx.fillRect(b1, sy - 3, 2, 2); ctx.fillRect(b2, sy - 3, 2, 2);
+      ctx.fillStyle = BLD.metalPale;  ctx.fillRect(b1, sy - 3, 1, 1); ctx.fillRect(b2, sy - 3, 1, 1);
+    }
+    drawRustStreak(x + 5, topY + 24, groundY - 14, 0.30);                       // weathering
+    drawRustStreak(x + w - 7, topY + 52, groundY - 16, 0.22);
+    // Flared base plinth (grounds it) + top cap collar (the platform junction) -
+    // bookends that break the long uniform shaft. Both beveled to the light.
+    var pbW = w + 10, pbx = Math.round(cx - pbW / 2), pbH = 17;
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(pbx - 1, groundY - pbH - 1, pbW + 2, pbH + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(pbx, groundY - pbH, pbW, pbH);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(pbx, groundY - pbH, pbW, 1); ctx.fillRect(pbx, groundY - pbH, 1, pbH);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(pbx + pbW - 1, groundY - pbH, 1, pbH); ctx.fillRect(pbx, groundY - 1, pbW, 1);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(pbx + 1, groundY - pbH + 7, pbW - 2, 1);   // mid seam
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(pbx + 1, groundY - pbH + 8, pbW - 2, 1);
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(pbx + 3, groundY - pbH + 2, 1, 1); ctx.fillRect(pbx + pbW - 4, groundY - pbH + 2, 1, 1);
+    var capW = w + 7, capx = Math.round(cx - capW / 2), capH = 9;
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(capx - 1, topY - 1, capW + 2, capH + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(capx, topY, capW, capH);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(capx, topY, capW, 1); ctx.fillRect(capx, topY, 1, capH);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(capx + capW - 1, topY, 1, capH); ctx.fillRect(capx, topY + capH - 1, capW, 1);
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(capx + 3, topY + 2, 1, 1); ctx.fillRect(capx + capW - 4, topY + 2, 1, 1);
+  }
+
+function drawSluicePlatform(x, topY, w, h) {
+    ctx.fillStyle = BLD.outline; ctx.fillRect(x - 1, topY - 1, w + 2, h + 2);
+    var fy = topY + h - 7;                                                      // iron underframe
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(x, fy, w, 7);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x, fy, w, 1);                  // top lit edge
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(x, fy + 6, w, 1);             // bottom shadow
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(x + 2, fy, 1, 1); ctx.fillRect(x + w - 3, fy, 1, 1);
+    drawWoodPlanking(x, topY, w, h - 6, 7);                                     // wood deck (grained)
+    ctx.fillStyle = BLD.woodPale;   ctx.fillRect(x + 1, topY, w - 2, 1);        // sun-bleached landing top
+    strokeRect1(x, topY, w, h, BLD.outline);
+    // Low iron edge rail along the LEFT (the right stays open for the rig + chute).
+    var railY = topY - 9, railW = Math.floor(w * 0.42);
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(x + 2, railY, 1, 9); ctx.fillRect(x + railW, railY, 1, 9);
+    ctx.fillRect(x + 2, railY, railW - 1, 1);
+    ctx.fillRect(x + 2 + Math.floor(railW / 2), railY + 2, 1, 7);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x + 3, railY, railW - 3, 1);   // rail highlight
+    // Diagonal corner gussets (tower -> deck underside).
+    ctx.fillStyle = BLD.outline;
+    for (var g = 0; g < 8; g++) { ctx.fillRect(x + 7 + g, topY + h + g, 2, 1); ctx.fillRect(x + w - 9 - g, topY + h + g, 2, 1); }
+  }
+
+function drawSluiceHopper(x, y, w, h) {
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y, 1, h);   // top + left lit
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(x, y + h - 1, w, 1); ctx.fillRect(x + w - 1, y, 1, h);
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(x, y, 1, 1);                              // spec corner
+    ctx.fillStyle = BLD.redDark;    ctx.fillRect(x, y + Math.floor(h * 0.45), w, 2);       // regime band
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(x + 2, y + Math.floor(h * 0.45), 1, 1); ctx.fillRect(x + w - 3, y + Math.floor(h * 0.45), 1, 1);
+    var taper = Math.floor(w * 0.32);                                                      // taper to a chute
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(x, y + h - 5, taper, 5); ctx.fillRect(x + w - taper, y + h - 5, taper, 5);
+    ctx.fillStyle = '#1c1c1c';      ctx.fillRect(x + 3, y + 1, w - 6, 4);                  // ore heap
+    ctx.fillStyle = '#3a3a3a';      ctx.fillRect(x + 5, y + 1, 2, 1); ctx.fillRect(x + w - 8, y + 2, 2, 1);
+  }
+
+function drawSluiceBin(x, y, w, h) {
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y, 1, h);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(x, y + h - 1, w, 1); ctx.fillRect(x + w - 1, y, 1, h);
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(x + 1, y + 1, 1, 1); ctx.fillRect(x + w - 2, y + 1, 1, 1);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(x + 1, y + 4, w - 2, 1);                  // lid seam
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(x + 1, y + 5, w - 2, 1);
+    ctx.fillStyle = BLD.redDark;    ctx.fillRect(x + 3, y + Math.floor(h * 0.55), w - 6, 3);  // faded stripe
+    ctx.fillStyle = BLD.redBase;    ctx.fillRect(x + 3, y + Math.floor(h * 0.55), w - 6, 1);
+    drawRedStar(x + w - 8, y + Math.floor(h * 0.55) + 5, 4, 0);
+    ctx.fillStyle = BLD.goldBase;   ctx.fillRect(x + 4, y - 3, w - 8, 5);                  // refined heap
+    ctx.fillStyle = BLD.goldBright; ctx.fillRect(x + 6, y - 3, 3, 2); ctx.fillRect(x + w - 11, y - 2, 3, 2);
+    ctx.fillStyle = BLD.goldPale;   ctx.fillRect(x + 7, y - 3, 1, 1); ctx.fillRect(x + w - 10, y - 2, 1, 1);
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(x + 4, y - 4, w - 8, 1);
+  }
+
+function drawSluiceContent() {
+    var hx = sluiceAnchorX();
+    var groundY = DECK_ROW * TILE;
+    var t = performance.now() / 1000;
+
+    var towerW = 36;
+    var platW = 96, platH = 20;
+    var platX = hx - 48, platTopY = groundY - 177;
+    var platBottomY = platTopY + platH;
+    var hopW = 22, hopH = 18;
+    var hopX = platX + platW - 15, hopY = platTopY - 14;   // over the channel head, feeds the chute
+    var chLeft = platX + platW - 6;
+    var chRun = 200, chRight = chLeft + chRun;        // long + SHALLOW (~28 deg)
+    var chTopY = platBottomY - 2, chBottomY = groundY - 50;
+    var chGirth = 20;                                 // girthy trough: room for water + ore
+    var binW = 52, binH = 32;
+    var binX = chRight - 12, binY = groundY - binH;
+    var mp1 = chLeft + 64, mp2 = chLeft + 138;        // two legs under the long channel
+
+    ctx.fillStyle = 'rgba(0,0,0,0.42)';
+    ctx.fillRect(hx - towerW / 2 - 4, groundY - 2, towerW + 8, 4);
+    ctx.fillRect(binX - 3, groundY - 2, binW + 8, 4);
+
+    drawStoneFoundation(hx - towerW / 2 - 3, groundY - 9, towerW + 6, 9);
+    drawStoneFoundation(binX - 3, groundY - 8, binW + 7, 8);
+    drawStoneFoundation(mp1 - 5, groundY - 7, 14, 7);
+    drawStoneFoundation(mp2 - 5, groundY - 7, 14, 7);
+
+    // Channel underside Y under a given x (surface + girth). The legs' TOPS follow
+    // this slope so they seat FLUSH under the sloped flume (not flat-topped).
+    function chFloorY(cx) { return chTopY + ((cx - chLeft) / chRun) * (chBottomY - chTopY) + chGirth; }
+    function drawLeg(cx) {
+      var w = 12, lx = Math.round(cx - w / 2);
+      for (var i = 0; i < w; i++) {                              // body rises to the SLOPED underside
+        var xx = lx + i, ty = Math.round(chFloorY(xx)) - 1;
+        ctx.fillStyle = (i === 0 || i === w - 1) ? BLD.outline : (i === 1) ? BLD.metalLight : (i === w - 2) ? BLD.metalDark : BLD.metalBase;
+        ctx.fillRect(xx, ty, 1, groundY - ty);
+        ctx.fillStyle = BLD.outline; ctx.fillRect(xx, ty - 1, 1, 1);            // angled top edge
+      }
+      for (var by = Math.round(chFloorY(cx)) + 10; by < groundY - 8; by += 16) { // bolt pairs
+        ctx.fillStyle = BLD.metalPale; ctx.fillRect(lx + 2, by, 1, 1); ctx.fillRect(lx + w - 3, by, 1, 1);
+      }
+      ctx.fillStyle = BLD.outline;    ctx.fillRect(lx - 2, groundY - 4, w + 4, 4);   // base flange
+      ctx.fillStyle = BLD.metalBase;  ctx.fillRect(lx - 1, groundY - 3, w + 2, 3);
+      ctx.fillStyle = BLD.metalLight; ctx.fillRect(lx - 1, groundY - 3, w + 2, 1);
+    }
+    drawLeg(mp1);
+    drawLeg(mp2);
+
+    drawSluiceTower(hx, towerW, platBottomY - 2, groundY);
+    drawSluicePlatform(platX, platTopY, platW, platH);
+
+    drawSignBoard(platX + 5, platTopY + 4, 40, 12, 'ШЛЮЗ');
+    drawRedStar(platX + platW - 40, platTopY + 8, 5, 0.2);
+
+    drawSluiceHopper(hopX, hopY, hopW, hopH);
+    drawSluiceChannel(chLeft, chTopY, chRight, chBottomY, chGirth, t);
+
+    // ----- TOP: the flume sockets into an iron spout housing bolted under the -----
+    // platform, so the head END is fully COVERED + flush (not a square edge hanging
+    // in the air). The hopper chute feeds the housing; water boils out into the flume.
+    var hoX = chLeft - 6, hoY = chTopY - 4, hoW = 15, hoH = chGirth + 7;
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(hoX - 1, hoY - 1, hoW + 2, hoH + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(hoX, hoY, hoW, hoH);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(hoX, hoY, hoW, 1); ctx.fillRect(hoX, hoY, 1, hoH);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(hoX, hoY + hoH - 1, hoW, 1); ctx.fillRect(hoX + hoW - 1, hoY, 1, hoH);
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(hoX + 2, hoY + 2, 1, 1); ctx.fillRect(hoX + 2, hoY + hoH - 3, 1, 1);
+    var hmx = hopX + Math.floor(hopW / 2), hmy = hopY + hopH;                          // chute from the hopper
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(hmx - 3, hmy, 8, hoY - hmy + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(hmx - 2, hmy, 6, hoY - hmy + 2);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(hmx - 2, hmy, 1, hoY - hmy + 2);
+    ctx.fillStyle = BLD.waterFoam;  ctx.fillRect(hoX + hoW - 3, chTopY + 1, 6, 4);     // water boils out the mouth
+    ctx.fillStyle = BLD.waterLight; ctx.fillRect(hoX + hoW - 2, chTopY + 5, 5, 2);
+
+    drawSluiceBin(binX, binY, binW, binH);
+
+    // ----- BOTTOM: an iron receiving spout caps the flume foot + sits on the bin, so -----
+    // the foot END is covered + flush; water cascades out of it down into the bin.
+    var boX = chRight - 5, boTop = chBottomY - 4, boW = 14, boH = chGirth + 7;
+    ctx.fillStyle = BLD.outline;    ctx.fillRect(boX - 1, boTop - 1, boW + 2, boH + 2);
+    ctx.fillStyle = BLD.metalBase;  ctx.fillRect(boX, boTop, boW, boH);
+    ctx.fillStyle = BLD.metalLight; ctx.fillRect(boX, boTop, boW, 1); ctx.fillRect(boX, boTop, 1, boH);
+    ctx.fillStyle = BLD.metalDark;  ctx.fillRect(boX, boTop + boH - 1, boW, 1); ctx.fillRect(boX + boW - 1, boTop, 1, boH);
+    ctx.fillStyle = BLD.metalPale;  ctx.fillRect(boX + 2, boTop + 2, 1, 1); ctx.fillRect(boX + boW - 3, boTop + 2, 1, 1);
+    var spoutY = boTop + boH;                                                          // water out the spout into the bin
+    ctx.fillStyle = BLD.waterFoam;  ctx.fillRect(boX + 3, spoutY - 1, boW - 6, 3);
+    ctx.fillStyle = BLD.waterBase;  ctx.fillRect(boX + 4, spoutY, boW - 8, binY - spoutY + 4);
+    ctx.fillStyle = BLD.waterLight; ctx.fillRect(boX + 5, spoutY + 1, 2, binY - spoutY + 2);
+    ctx.fillStyle = BLD.waterFoam;  ctx.fillRect(boX + 1, binY, boW - 2, 3);           // splash in the bin
+  }
+
+function drawSluiceChannel(x0, y0, x1, y1, girth, t) {
+    var run = x1 - x0; if (run <= 0) return;
+    var scroll = Math.floor((t * 34) % 14);
+    var waterD = Math.max(6, girth - 9);          // water sits in the OPEN TOP of the trough
+    var midD = Math.floor(waterD * 0.6);
+    var faceH = girth - waterD - 5;               // the thick front-WALL face below the water = 3D depth
+    for (var x = x0; x <= x1; x++) {
+      var topY = Math.round(y0 + ((x - x0) / run) * (y1 - y0));
+      ctx.fillStyle = BLD.outline;     ctx.fillRect(x, topY - 1, 1, 1);           // far (back) rim
+      ctx.fillStyle = BLD.waterBase;   ctx.fillRect(x, topY, 1, waterD);          // water in the open top
+      ctx.fillStyle = BLD.waterFoam;   ctx.fillRect(x, topY, 1, 1);               // surface crest
+      ctx.fillStyle = BLD.waterLight;  ctx.fillRect(x, topY + 1, 1, 1);
+      if (((x - scroll) % 14) < 3)     { ctx.fillStyle = BLD.waterFoam;  ctx.fillRect(x, topY + 2, 1, 2); }
+      if (((x - scroll + 7) % 14) < 3) { ctx.fillStyle = BLD.waterLight; ctx.fillRect(x, topY + midD, 1, 2); }
+      var wy = topY + waterD;                                                      // the FRONT WALL (3D thickness)
+      ctx.fillStyle = BLD.metalPale;   ctx.fillRect(x, wy, 1, 1);                 // bright front lip (we look over it)
+      ctx.fillStyle = BLD.metalLight;  ctx.fillRect(x, wy + 1, 1, 1);
+      ctx.fillStyle = BLD.metalBase;   ctx.fillRect(x, wy + 2, 1, faceH);         // wall face
+      ctx.fillStyle = BLD.metalDark;   ctx.fillRect(x, wy + 2 + faceH, 1, 2);     // wall underside shadow
+      ctx.fillStyle = BLD.outline;     ctx.fillRect(x, wy + 4 + faceH, 1, 1);     // wall bottom (silhouette)
+    }
+  }
+/* ---- render once on load ---- */
+function render(){
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,942.5,550);
+  ctx.setTransform(2.5,0,0,2.5,12.5,200);
+  var groundY=DECK_ROW*TILE;
+  var sky=ctx.createLinearGradient(0,-80,0,groundY);
+  sky.addColorStop(0,"#5b7fa6"); sky.addColorStop(1,"#9fb6c9");
+  ctx.fillStyle=sky; ctx.fillRect(-5,-80,377,80+groundY-0);
+  ctx.fillStyle="#5a7d3a"; ctx.fillRect(-5,groundY,377,5);
+  ctx.fillStyle="#6b4a2a"; ctx.fillRect(-5,groundY+5,377,140-groundY-5);
+  drawSluiceContent();
+  window.__rendered=true;
+}
+render();
+</script></body></html>

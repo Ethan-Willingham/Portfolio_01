@@ -1,0 +1,1519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice · Death Screen Lab</title>
+<style>
+  @font-face { font-family:'Commit Mono'; src:url('assets/fonts/commit_mono_regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Commit Mono'; src:url('assets/fonts/commit_mono_bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+  :root { --bg:#0c0f14; --panel:#13181f; --line:#262e39; --ink:#cdd6e0; --dim2:#7c8794; --accent:#e8c14a; --red:#d05040; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; }
+  #wrap { display:flex; height:100vh; width:100vw; }
+  #stage { position:relative; flex:1 1 auto; min-width:0; }
+  canvas { display:block; width:100%; height:100%; image-rendering:pixelated; }
+  #hud { position:absolute; top:11px; left:13px; font-size:12px; line-height:1.55;
+    color:var(--dim2); pointer-events:none; text-shadow:0 1px 3px #000; }
+  #hud b { color:var(--ink); } #hud .big { color:var(--accent); }
+  #help { position:absolute; bottom:108px; left:13px; font-size:11px; color:var(--dim2);
+    pointer-events:none; text-shadow:0 1px 3px #000; max-width:46%; line-height:1.55; }
+  #panel { flex:0 0 330px; background:var(--panel); border-left:1px solid var(--line);
+    overflow-y:auto; padding:13px 15px 50px; font-size:12px; }
+  #panel h1 { font-size:13px; margin:2px 0 3px; letter-spacing:.03em; }
+  #panel .sub { color:var(--dim2); font-size:11px; line-height:1.5; margin:0 0 13px; }
+  .group { border-top:1px solid var(--line); padding:11px 0 6px; }
+  .group h2 { font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim2); margin:0 0 9px; }
+  button { font:inherit; font-size:11px; color:var(--ink); background:#1c232d;
+    border:1px solid var(--line); border-radius:7px; padding:7px 9px; cursor:pointer; text-align:left; }
+  button:hover { border-color:#3a4658; background:#222b36; }
+  button.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  .tr-btn { display:block; width:100%; margin-bottom:7px; }
+  .tr-btn small { display:block; color:var(--dim2); margin-top:2px; line-height:1.45; }
+  .tr-btn.on small { color:#a89868; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chips button { flex:0 0 auto; text-align:center; padding:6px 8px; }
+  .slider { display:block; margin:10px 0; }
+  .slider .lab { display:flex; justify-content:space-between; color:var(--dim2); margin-bottom:3px; }
+  .slider .lab b { color:var(--ink); font-weight:normal; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .notes { color:var(--dim2); font-size:11px; line-height:1.65; }
+  .notes b { color:var(--ink); font-weight:normal; }
+  .notes .pat { color:var(--accent); }
+  .big-btn { width:100%; margin-top:6px; padding:9px; border-color:#3a4658; text-align:center; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="hud"></div>
+  </div>
+  <aside id="panel"></aside>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  // ======================================================================
+  // SLUICE DEATH SCREEN LAB
+  // Four candidate replacements for the v11.33 TERMINATED plate. Shared
+  // four-beat skeleton (hit, wreck, reveal, return); only the REVEAL layer
+  // differs per treatment. Everything is canvas, bitmap stencil type, no
+  // HTML modals, per UI_STYLE.md. Death here is a respawn with a salvage
+  // fee, so the language is incident paperwork, not GAME OVER.
+  // ======================================================================
+
+  var cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  var VW = 0, VH = 0;
+  function resize() {
+    var r = cv.getBoundingClientRect();
+    VW = Math.round(r.width || Math.max(320, window.innerWidth - 330));
+    VH = Math.round(r.height || window.innerHeight);
+    cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- utils ----
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function easeOutCubic(t) { t = clamp(t, 0, 1); return 1 - Math.pow(1 - t, 3); }
+  function easeInCubic(t) { t = clamp(t, 0, 1); return t * t * t; }
+  function smoothstep(a, b, t) { t = clamp((t - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+  function hash01(n) { var s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+  function fmt$(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+  // ======================================================================
+  // PIXEL STENCIL FONT (5x7, integer scales, no AA), mirrors the game's
+  // UI_STYLE.md section 7 font. Glyph rows are 5-bit ints, MSB = left.
+  // ======================================================================
+  var FONT = {
+    'A':[14,17,17,31,17,17,17],'B':[30,17,17,30,17,17,30],'C':[14,17,16,16,16,17,14],
+    'D':[30,17,17,17,17,17,30],'E':[31,16,16,30,16,16,31],'F':[31,16,16,30,16,16,16],
+    'G':[14,17,16,23,17,17,14],'H':[17,17,17,31,17,17,17],'I':[14,4,4,4,4,4,14],
+    'J':[7,2,2,2,2,18,12],'K':[17,18,20,24,20,18,17],'L':[16,16,16,16,16,16,31],
+    'M':[17,27,21,21,17,17,17],'N':[17,25,21,19,17,17,17],'O':[14,17,17,17,17,17,14],
+    'P':[30,17,17,30,16,16,16],'Q':[14,17,17,17,21,18,13],'R':[30,17,17,30,20,18,17],
+    'S':[15,16,16,14,1,1,30],'T':[31,4,4,4,4,4,4],'U':[17,17,17,17,17,17,14],
+    'V':[17,17,17,17,17,10,4],'W':[17,17,17,21,21,27,17],'X':[17,17,10,4,10,17,17],
+    'Y':[17,17,10,4,4,4,4],'Z':[31,1,2,4,8,16,31],
+    '0':[14,17,19,21,25,17,14],'1':[4,12,4,4,4,4,14],'2':[14,17,1,2,4,8,31],
+    '3':[31,2,4,2,1,17,14],'4':[2,6,10,18,31,2,2],'5':[31,16,30,1,1,17,14],
+    '6':[6,8,16,30,17,17,14],'7':[31,1,2,4,8,8,8],'8':[14,17,17,14,17,17,14],
+    '9':[14,17,17,15,1,2,12],
+    ' ':[0,0,0,0,0,0,0],'.':[0,0,0,0,0,12,12],',':[0,0,0,0,12,4,8],
+    ':':[0,12,12,0,12,12,0],'$':[4,15,20,14,5,30,4],'%':[24,25,2,4,8,19,3],
+    '-':[0,0,0,31,0,0,0],'+':[0,4,4,31,4,4,0],'=':[0,31,0,31,0,0,0],
+    "'":[4,4,8,0,0,0,0],'"':[10,10,20,0,0,0,0],'!':[4,4,4,4,4,0,4],
+    '?':[14,17,1,2,4,0,4],'/':[1,1,2,4,8,16,16],'(':[2,4,8,8,8,4,2],
+    ')':[8,4,2,2,2,4,8],'#':[10,10,31,10,31,10,10],'·':[0,0,12,12,0,0,0],
+    '★':[4,4,31,14,14,10,17],'▸':[8,12,14,15,14,12,8],'&':[8,20,8,21,18,18,13]
+  };
+  function drawGlyph(ch, x, y, s) {
+    var g = FONT[ch] || FONT['?'];
+    for (var r = 0; r < 7; r++) {
+      var row = g[r];
+      if (!row) continue;
+      for (var c = 0; c < 5; c++) {
+        if (row & (16 >> c)) ctx.fillRect(x + c * s, y + r * s, s, s);
+      }
+    }
+  }
+  function drawStencil(text, x, y, s, color) {
+    text = String(text).toUpperCase();
+    ctx.fillStyle = color;
+    var cx = Math.round(x), cy = Math.round(y);
+    for (var i = 0; i < text.length; i++) {
+      drawGlyph(text[i], cx, cy, s);
+      cx += 6 * s;
+    }
+  }
+  function stencilW(text, s) { return String(text).length * 6 * s - s; }
+  // Stamped letters: dark offset ghosts then the face coat.
+  function drawStencilBleed(text, x, y, s, color, bleedColor) {
+    var off = Math.max(1, Math.floor(s / 2));
+    ctx.globalAlpha *= 0.55;
+    drawStencil(text, x - off, y, s, bleedColor);
+    drawStencil(text, x + off, y, s, bleedColor);
+    drawStencil(text, x, y + off, s, bleedColor);
+    ctx.globalAlpha /= 0.55;
+    drawStencil(text, x, y, s, color);
+  }
+
+  // ======================================================================
+  // TINY AUDIO SYNTH (typewriter ticks, telegraph bell, stamp slam, boom,
+  // counter ticks). Lazy init on first gesture; the SOUND toggle gates it.
+  // ======================================================================
+  var AC = null, audioOk = false;
+  function audioInit() {
+    if (AC || !L.sound) return;
+    try { AC = new (window.AudioContext || window.webkitAudioContext)(); audioOk = true; } catch (e) { audioOk = false; }
+  }
+  function env(g, t0, a, peak, d) {
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(peak, t0 + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+  }
+  function blip(freq, peak, dur, type) {
+    if (!AC || !L.sound) return;
+    var t0 = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || 'square'; o.frequency.value = freq;
+    env(g, t0, 0.002, peak, dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+  function noiseBurst(peak, dur, filterHz) {
+    if (!AC || !L.sound) return;
+    var t0 = AC.currentTime, len = Math.max(1, Math.floor(AC.sampleRate * dur));
+    var buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filterHz || 800;
+    var g = AC.createGain(); g.gain.value = peak;
+    src.connect(f); f.connect(g); g.connect(AC.destination); src.start(t0);
+  }
+  var sfx = {
+    key:   function () { blip(1400 + Math.random() * 500, 0.05, 0.03); noiseBurst(0.05, 0.02, 4000); },
+    ding:  function () { blip(1760, 0.12, 0.5, 'sine'); blip(3520, 0.04, 0.3, 'sine'); },
+    slam:  function () { noiseBurst(0.5, 0.09, 350); blip(70, 0.4, 0.18, 'sine'); },
+    boom:  function () { blip(48, 0.5, 0.8, 'sine'); noiseBurst(0.3, 0.4, 220); },
+    tick:  function (p) { blip(650 + 450 * (p || 0), 0.04, 0.025); },
+    tickDn:function (p) { blip(900 - 500 * (p || 0), 0.045, 0.03); },
+    thock: function () { blip(220, 0.22, 0.12, 'square'); noiseBurst(0.12, 0.05, 600); },
+    hiss:  function () { noiseBurst(0.2, 0.5, 6000); },
+    crunch:function () { noiseBurst(0.55, 0.18, 500); blip(90, 0.3, 0.25, 'sine'); }
+  };
+
+  // ======================================================================
+  // MOCK GAME DATA, real ore values so the manifest reads true.
+  // ======================================================================
+  var ORES = {
+    coal:   { color:'#3a3a3a', value:5,   label:'COAL' },
+    copper: { color:'#c97534', value:12,  label:'COPPER' },
+    iron:   { color:'#8f9294', value:35,  label:'IRON' },
+    pyrite: { color:'#d4b33a', value:60,  label:'PYRITE' },
+    silver: { color:'#d8d8e8', value:90,  label:'SILVER' },
+    gold:   { color:'#ffd700', value:200, label:'GOLD' },
+    amber:  { color:'#e89a2a', value:350, label:'AMBER' },
+    ruby:   { color:'#e0115f', value:1400,label:'RUBY' }
+  };
+  var HAUL_POOL = ['coal','copper','iron','pyrite','silver','gold','amber','ruby'];
+
+  var CAUSES = ['fall', 'magma', 'drowned', 'fuel', 'bomb', 'hull'];
+  // Per cause: the verdict line, the form's clinical cause field, and a
+  // rotating pool of Ministry advisory lines (deadpan, institutional).
+  var CAUSE_COPY = {
+    fall: {
+      verdict: 'CHASSIS SHATTERED',
+      form: function (d) { return 'IMPACT AT ' + d.mph + ' MPH'; },
+      wire: function (d) { return 'FALL AT ' + d.mph + ' MPH'; },
+      flavors: ['THE FLOOR FILED NO COMPLAINT.',
+                'ALTITUDE IS A PRIVILEGE, NOT A RIGHT.',
+                'GRAVITY PERFORMED TO SPECIFICATION.']
+    },
+    magma: {
+      verdict: 'HULL MELTED',
+      form: function (d) { return 'MAGMA CONTACT, ' + d.heat.toLocaleString('en-US') + ' F'; },
+      wire: function (d) { return 'MAGMA CONTACT'; },
+      flavors: ['MAGMA IS NOT A SHORTCUT.',
+                'THE MANTLE ACCEPTS ALL DONATIONS.',
+                'HEAT SHIELDING: SEE CATALOG, PAGE 7.']
+    },
+    drowned: {
+      verdict: 'ENGINE FLOODED',
+      form: function () { return 'ENGINE FLOODED'; },
+      wire: function () { return 'FLOODING'; },
+      flavors: ['THE RIG DOES NOT SWIM.',
+                'BUOYANCY WAS NOT REQUISITIONED.',
+                'AIR IS ISSUED FOR BREATHING, NOT BALLAST.']
+    },
+    fuel: {
+      verdict: 'STRANDED, DRY TANKS',
+      form: function (d) { return 'DRY TANKS AT ' + d.depth + ' M'; },
+      wire: function () { return 'FUEL EXHAUSTED'; },
+      flavors: ['THE GAUGE FACES THE OPERATOR.',
+                'HOPE IS NOT A PROPELLANT.',
+                'REFUELING WAS AVAILABLE AT TOWN 1.']
+    },
+    bomb: {
+      verdict: 'CAUGHT IN BLAST',
+      form: function () { return 'OWN ORDNANCE'; },
+      wire: function () { return 'OWN ORDNANCE'; },
+      flavors: ['THE SAFETY RADIUS IS PRINTED ON THE CRATE.',
+                'STAND WITH THE CREW, NOT THE CHARGE.',
+                'DEMOLITION REWARDS PATIENCE.']
+    },
+    hull: {
+      verdict: 'HULL INTEGRITY ZERO',
+      form: function () { return 'STRUCTURAL FAILURE'; },
+      wire: function () { return 'STRUCTURAL FAILURE'; },
+      flavors: ['MAINTENANCE WAS AVAILABLE AT EVERY TOWN.',
+                'THE ROCK ALWAYS WINS ON POINTS.',
+                'STEEL FORGIVES NOTHING.']
+    }
+  };
+
+  var incidentCounter = 46;   // lifetime deaths; the game would persist this
+  function makeIncident(cause) {
+    incidentCounter++;
+    var seed = incidentCounter * 7.13;
+    var money = 7800 + Math.floor(hash01(seed) * 2600);
+    var fee = Math.floor(money * 0.10);
+    var n = 3 + Math.floor(hash01(seed + 1) * 3);   // 3 to 5 cargo lines
+    var cargo = [], used = {}, total = 0;
+    for (var i = 0; i < n; i++) {
+      var k = HAUL_POOL[Math.floor(hash01(seed + 2 + i) * HAUL_POOL.length)];
+      if (used[k]) continue;
+      used[k] = true;
+      var count = 1 + Math.floor(hash01(seed + 9 + i) * (k === 'coal' ? 9 : 4));
+      cargo.push({ key: k, count: count, value: ORES[k].value * count });
+      total += ORES[k].value * count;
+    }
+    cargo.sort(function (a, b) { return b.value - a.value; });
+    return {
+      no: incidentCounter,
+      cause: cause,
+      depth: 380 + Math.floor(hash01(seed + 3) * 85),
+      mph: 52 + Math.floor(hash01(seed + 4) * 31),
+      heat: 2100 + Math.floor(hash01(seed + 5) * 500) ,
+      money: money, fee: fee, remitted: money - fee,
+      cargo: cargo, cargoTotal: total,
+      town: 'TOWN 1',
+      flavor: CAUSE_COPY[cause].flavors[incidentCounter % CAUSE_COPY[cause].flavors.length]
+    };
+  }
+
+  // ======================================================================
+  // LEVERS
+  // ======================================================================
+  var L = {
+    treatment: 'form',     // form | heavy | wire | manifest
+    cause: 'magma',
+    cycleCause: true,
+    pace: 1.0,             // master time scale on the whole sequence
+    shake: 1.0,
+    desat: 0.62,
+    flavor: true,
+    sound: true,
+    autoLoop: true
+  };
+
+  // ======================================================================
+  // SCENE: an underground cavern with the rig. Pure backdrop; the point of
+  // every treatment is that the wreck STAYS VISIBLE (research consensus).
+  // ======================================================================
+  var T = 34;                       // scene tile size, css px
+  var rig = { x: 0, y: 0 };         // set in layout()
+  function layout() {
+    rig.x = Math.round(VW * 0.52);
+    rig.y = Math.round(VH * 0.58);
+  }
+  function floorRow() { return Math.floor(rig.y / T) + 1; }
+  function dug(r, c) {
+    var fr = floorRow();
+    var rc = Math.round(rig.x / T);
+    if (r >= fr) return false;                       // floor and below = rock
+    var up = fr - r;                                  // rows above the floor
+    if (up <= 5) {
+      var hw = 10 - up + Math.floor(hash01(c * 3.7 + r * 9.1) * 2);
+      return Math.abs(c - rc) < hw;
+    }
+    if ((c === rc + 4 || c === rc + 5) && up <= 9) return true;   // entry shaft
+    return false;
+  }
+  function drawScene(sceneT, inc, deadT) {
+    // deadT < 0 means still alive (mining); otherwise seconds since the hit.
+    var cause = inc.cause;
+    // rock field
+    var cols = Math.ceil(VW / T) + 1, rows = Math.ceil(VH / T) + 1;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var h = hash01(r * 57.31 + c * 17.77);
+        if (dug(r, c)) {
+          ctx.fillStyle = '#1a140c';
+          ctx.fillRect(c * T, r * T, T, T);
+          if (h > 0.82) { ctx.fillStyle = '#241c11'; ctx.fillRect(c * T + ((h * 13) % T | 0), r * T + ((h * 29) % T | 0), 3, 3); }
+        } else {
+          ctx.fillStyle = h < 0.33 ? '#54422e' : (h < 0.72 ? '#4b3a25' : '#5d4933');
+          ctx.fillRect(c * T, r * T, T - 1, T - 1);
+          ctx.fillStyle = '#352818';
+          ctx.fillRect(c * T + T - 1, r * T, 1, T);
+          ctx.fillRect(c * T, r * T + T - 1, T, 1);
+          if (h > 0.88) { ctx.fillStyle = '#6a543a'; ctx.fillRect(c * T + 6, r * T + 7, 4, 4); }
+        }
+      }
+    }
+    // dark cause props (scorch, rubble); glowing props live in the
+    // emissive pass so desaturation can't drain them.
+    var fy = floorRow() * T;
+    if (cause === 'bomb' && deadT >= 0) {
+      ctx.fillStyle = '#241a10';
+      ctx.fillRect(rig.x - 90, fy - 6, 220, 6);
+      ctx.fillStyle = '#181009';
+      ctx.fillRect(rig.x - 55, fy - 3, 150, 3);
+    } else if (cause === 'fall' && deadT >= 0) {
+      ctx.fillStyle = '#3a2c1a';
+      for (var rb = 0; rb < 10; rb++) {
+        var rx = rig.x - 60 + ((hash01(rb * 7.7) * 170) | 0);
+        ctx.fillRect(rx, fy - 6 - ((hash01(rb * 3.1) * 8) | 0), 9, 8);
+      }
+    }
+    drawRig(sceneT, inc, deadT);
+  }
+
+  // Glowing scenery, drawn AFTER the desaturation veil: hot and wet things
+  // keep their color while the dead world drains around them.
+  function drawSceneEmissive(sceneT, inc) {
+    var cause = inc.cause;
+    var fy = floorRow() * T;
+    if (cause === 'magma') {
+      var mx = rig.x + 70, mw = 230;
+      var mg = ctx.createRadialGradient(mx + mw / 2, fy - 6, 8, mx + mw / 2, fy - 6, 170);
+      mg.addColorStop(0, 'rgba(255,110,30,0.30)');
+      mg.addColorStop(1, 'rgba(255,110,30,0)');
+      ctx.fillStyle = mg;
+      ctx.fillRect(mx - 120, fy - 150, mw + 240, 170);
+      ctx.fillStyle = '#e84a10'; ctx.fillRect(mx, fy - 10, mw, 10);
+      for (var i = 0; i < 18; i++) {
+        var hh = hash01(i * 3.3 + Math.floor(sceneT * 6));
+        ctx.fillStyle = hh > 0.5 ? '#ffb030' : '#ff7020';
+        ctx.fillRect(mx + ((i * 17 + hh * 11) % mw | 0), fy - 10 - (hh > 0.8 ? 4 : 0), 5, 4);
+      }
+    } else if (cause === 'drowned') {
+      var wTop = rig.y - 22;
+      ctx.fillStyle = 'rgba(46,105,160,0.55)';
+      ctx.fillRect(rig.x - 240, wTop, 520, fy - wTop);
+      ctx.fillStyle = 'rgba(170,215,245,0.6)';
+      for (var wv = 0; wv < 16; wv++) {
+        var wx = rig.x - 240 + wv * 33 + Math.sin(sceneT * 2 + wv) * 5;
+        ctx.fillRect(wx | 0, wTop, 16, 2);
+      }
+    }
+  }
+
+  // Rig: compact pixel miner. Alive = drill spin + headlamp; dead = tilt,
+  // lamps flicker out one at a time, smoke from the cracks (UI_STYLE 9.1).
+  function drawRig(sceneT, inc, deadT) {
+    var dead = deadT >= 0;
+    var settle = dead ? easeOutCubic(smoothstep(0.25, 0.6, deadT)) : 0;
+    var tilt = -0.09 * settle;
+    var sink = 3 * settle;
+    if (inc.cause === 'drowned' && dead) sink += 6 * smoothstep(0, 1.5, deadT);
+    ctx.save();
+    ctx.translate(rig.x, rig.y + sink);
+    ctx.rotate(tilt);
+    ctx.scale(2, 2);                  // the wreck is the hero of the shot
+    // treads
+    ctx.fillStyle = '#23211e';
+    ctx.fillRect(-26, -10, 52, 10);
+    ctx.fillStyle = '#3a3631';
+    for (var w = -22; w <= 18; w += 8) ctx.fillRect(w, -7, 4, 4);
+    // hull
+    ctx.fillStyle = '#5a5550'; ctx.fillRect(-22, -30, 40, 20);
+    ctx.fillStyle = '#6a6258'; ctx.fillRect(-22, -30, 40, 4);
+    ctx.fillStyle = '#403c36'; ctx.fillRect(-22, -14, 40, 4);
+    // cab window: lit while any lamp lives, dark + cracked after
+    var lampPhase = dead ? deadT : -1;
+    var lampsLeft = !dead ? 3 : (lampPhase < 0.45 ? 3 : lampPhase < 0.8 ? 2 : lampPhase < 1.15 ? 1 : 0);
+    var flicker = dead && lampsLeft > 0 && hash01(Math.floor(sceneT * 30) * 3.3) > 0.75 ? 0 : 1;
+    ctx.fillStyle = (lampsLeft > 0 && flicker) ? '#7fd4e8' : '#1c2228';
+    ctx.fillRect(-14, -27, 12, 9);
+    if (dead && deadT > 0.1) {           // window crack
+      ctx.fillStyle = '#101418';
+      ctx.fillRect(-11, -26, 1, 7); ctx.fillRect(-12, -23, 6, 1); ctx.fillRect(-8, -27, 1, 4);
+    }
+    // exhaust stack
+    ctx.fillStyle = '#46423c'; ctx.fillRect(8, -38, 6, 8);
+    // drill cone, spins while alive then winds down over 1.2s
+    var spin = dead ? Math.max(0, 1 - deadT / 1.2) : 1;
+    var ph = Math.floor(sceneT * 22 * spin) % 3;
+    ctx.fillStyle = '#8f9294';
+    ctx.fillRect(18, -26, 10, 14);
+    ctx.fillRect(28, -23, 6, 8);
+    ctx.fillStyle = '#5d6163';
+    for (var st = 0; st < 3; st++) {
+      var sy = -25 + ((st * 4 + ph) % 12);
+      ctx.fillRect(18, sy, 10, 2);
+    }
+    // marker lamps on the roof, die one at a time
+    for (var lm = 0; lm < 3; lm++) {
+      var on = lm < lampsLeft && flicker;
+      ctx.fillStyle = on ? '#ffd060' : '#33302a';
+      ctx.fillRect(-18 + lm * 7, -34, 4, 4);
+    }
+    ctx.restore();
+    // headlamp cone while alive
+    if (!dead || lampsLeft > 0) {
+      var hg = ctx.createRadialGradient(rig.x + 60, rig.y - 40, 6, rig.x + 60, rig.y - 40, 210);
+      var hAlpha = dead ? 0.10 * lampsLeft / 3 : 0.16;
+      hg.addColorStop(0, 'rgba(255,220,140,' + hAlpha.toFixed(3) + ')');
+      hg.addColorStop(1, 'rgba(255,220,140,0)');
+      ctx.fillStyle = hg;
+      ctx.fillRect(rig.x - 160, rig.y - 260, 460, 420);
+    }
+    // alive: drill sparks
+    if (!dead && Math.random() < 0.5) {
+      spawnP('spark', rig.x + 68, rig.y - 38 + Math.random() * 12, 1, { vx: 30 + Math.random() * 60, vy: -20 - Math.random() * 60 });
+    }
+  }
+
+  // ---- particles ----
+  var parts = [];
+  function spawnP(type, x, y, n, o) {
+    o = o || {};
+    for (var i = 0; i < n; i++) {
+      var p = { type: type, x: x, y: y, t: 0, ttl: o.ttl || 1, size: o.size || 3,
+                vx: (o.vx != null ? o.vx : (Math.random() - 0.5) * 120),
+                vy: (o.vy != null ? o.vy : (Math.random() - 0.5) * 120),
+                g: 0, color: o.color || '#888' };
+      if (type === 'smoke')  { p.vy = -22 - Math.random() * 26; p.vx = (Math.random() - 0.5) * 16; p.ttl = 2.2 + Math.random() * 1.4; p.size = 4 + Math.random() * 5; }
+      if (type === 'spark')  { p.g = 320; p.ttl = 0.5 + Math.random() * 0.5; p.size = 2; p.color = Math.random() > 0.5 ? '#ffd060' : '#ff8030'; }
+      if (type === 'debris') { p.g = 420; p.vy = -90 - Math.random() * 150; p.vx = (Math.random() - 0.5) * 220; p.ttl = 1.4 + Math.random() * 0.8; p.size = 3 + Math.random() * 4; p.color = '#5a4632'; }
+      if (type === 'flame')  { p.vy = -50 - Math.random() * 80; p.vx = (Math.random() - 0.5) * 40; p.ttl = 0.6 + Math.random() * 0.5; p.size = 3 + Math.random() * 3; p.color = Math.random() > 0.5 ? '#ff7020' : '#ffb030'; }
+      if (type === 'bubble') { p.vy = -40 - Math.random() * 30; p.vx = 0; p.ttl = 1.2 + Math.random() * 0.8; p.size = 2 + Math.random() * 2; p.color = '#bfe6ff'; }
+      if (type === 'dust')   { p.vy = -16 - Math.random() * 30; p.vx = (Math.random() - 0.5) * 90; p.ttl = 1.0 + Math.random() * 0.6; p.size = 3; p.color = '#8a7a62'; }
+      parts.push(p);
+    }
+  }
+  function updateParts(dt) {
+    var fy = floorRow() * T;
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      p.t += dt;
+      if (p.t >= p.ttl) { parts.splice(i, 1); continue; }
+      p.vy += p.g * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.type === 'bubble') p.x += Math.sin(p.t * 9) * 0.6;
+      if (p.type === 'debris' && p.y > fy - 3 && p.vy > 0) { p.y = fy - 3; p.vy *= -0.35; p.vx *= 0.6; }
+      if (p.type === 'smoke') p.size += dt * 3;
+    }
+  }
+  // Emissive particles (hot or glowing) draw after the desat veil so they
+  // keep their color; matte ones (smoke, debris, dust) drain with the world.
+  var EMISSIVE = { spark: true, flame: true, bubble: true };
+  function drawParts(emissiveOnly) {
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (!!EMISSIVE[p.type] !== !!emissiveOnly) continue;
+      var a = 1 - p.t / p.ttl;
+      ctx.globalAlpha = p.type === 'smoke' ? a * 0.4 : a;
+      ctx.fillStyle = p.color;
+      var s = p.size | 0;
+      ctx.fillRect((p.x - s / 2) | 0, (p.y - s / 2) | 0, s, s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ======================================================================
+  // CONSOLE MOCK: stand-in for the game's bottom control panel. The plate
+  // drops the FULL playfield height and lands on this (owner direction).
+  // ======================================================================
+  var CONSOLE_H = 96;
+  function plateH() { return VH - CONSOLE_H; }
+  function drawConsoleMock(now) {
+    var cy = VH - CONSOLE_H;
+    ctx.fillStyle = '#1a0a05'; ctx.fillRect(0, cy - 2, VW, 2);
+    ctx.fillStyle = '#2e2b26'; ctx.fillRect(0, cy, VW, CONSOLE_H);
+    ctx.fillStyle = '#3a362e'; ctx.fillRect(0, cy, VW, 2);
+    ctx.fillStyle = '#23211e'; ctx.fillRect(8, cy + 10, VW - 16, CONSOLE_H - 20);
+    // vent grille left
+    ctx.fillStyle = '#1c1a17';
+    for (var g = 0; g < 4; g++) ctx.fillRect(24, cy + 22 + g * 12, 90, 5);
+    // three square gauge bays
+    for (var b = 0; b < 3; b++) {
+      var bx = Math.floor(VW * 0.5) - 110 + b * 90;
+      ctx.fillStyle = '#4f3a1b'; ctx.fillRect(bx - 3, cy + 16, 62, 62);
+      ctx.fillStyle = '#161612'; ctx.fillRect(bx, cy + 19, 56, 56);
+      ctx.fillStyle = '#7a5a2c';
+      for (var tk = 0; tk < 5; tk++) ctx.fillRect(bx + 6 + tk * 11, cy + 24, 2, 5);
+      // idle needle
+      ctx.fillStyle = '#d8d2c4';
+      ctx.fillRect(bx + 27, cy + 36, 2, 24);
+    }
+    // status lamps right (dim; silence is OK per UI bible)
+    for (var lm = 0; lm < 3; lm++) {
+      ctx.fillStyle = lm === 0 ? '#5a2018' : '#33302a';
+      ctx.fillRect(VW - 60 - lm * 22, cy + 30, 8, 8);
+    }
+    // rivets along the top rail
+    ctx.fillStyle = '#16140f';
+    for (var rv = 26; rv < VW - 16; rv += 64) ctx.fillRect(rv, cy + 4, 3, 3);
+  }
+
+  // ======================================================================
+  // THE PLATE: descends from the top ALL THE WAY to the console, locks with
+  // a kachunk + sparks (the one beat of today's screen worth keeping). All
+  // treatment content lives ON this plate; stencil never floats (UI bible).
+  // ======================================================================
+  var PLATE_SLIDE_S = 0.40, PLATE_BOUNCE_S = 0.55;
+  function plateTop(t) {
+    // returns plate top Y for death-time t, or null if not yet falling
+    if (t < REVEAL_T) return null;
+    var PH = plateH();
+    var slideT = clamp((t - REVEAL_T) / PLATE_SLIDE_S, 0, 1);
+    var eased = 1 - Math.pow(1 - slideT, 3);
+    var y = -PH + Math.floor(PH * eased);
+    if (slideT >= 1) {
+      var bT = (t - (REVEAL_T + PLATE_SLIDE_S)) / PLATE_BOUNCE_S;
+      if (bT < 1) y += Math.floor(18 * Math.exp(-bT * 5) * Math.sin(bT * 18));
+      once('plateland', function () {
+        sfx.crunch(); trauma = Math.max(trauma, 0.65);
+        for (var sp = 0; sp < 34; sp++) {
+          uiSparks.push({
+            x: Math.random() * VW, y: VH - CONSOLE_H - 2,
+            vx: (Math.random() - 0.5) * 240, vy: -40 - Math.random() * 220,
+            t: 0.45 + Math.random() * 0.5,
+            color: Math.random() > 0.5 ? '#ffd060' : '#ff8030',
+            size: 1 + Math.floor(Math.random() * 2)
+          });
+        }
+      });
+    }
+    return y;
+  }
+  // landing sparks live on the TOP layer (over plate + console)
+  var uiSparks = [];
+  function updateUiSparks(dt) {
+    for (var i = uiSparks.length - 1; i >= 0; i--) {
+      var sk = uiSparks[i];
+      sk.t -= dt;
+      if (sk.t <= 0) { uiSparks.splice(i, 1); continue; }
+      sk.x += sk.vx * dt; sk.y += sk.vy * dt; sk.vy += 700 * dt;
+    }
+  }
+  function drawUiSparks() {
+    for (var i = 0; i < uiSparks.length; i++) {
+      var sk = uiSparks[i];
+      ctx.globalAlpha = Math.min(1, sk.t * 2.5);
+      ctx.fillStyle = sk.color;
+      ctx.fillRect(sk.x | 0, sk.y | 0, sk.size + 1, sk.size + 1);
+      ctx.fillStyle = '#fff0c0';
+      ctx.fillRect(sk.x | 0, sk.y | 0, 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawPlate(py) {
+    var PH = plateH();
+    // three sheet-metal panels, weld seams, rivets (faithful to 290's build)
+    var divs = [0, 0.32, 0.62, 1.0];
+    var shades = ['#404038', '#3d3a35', '#363330'];
+    for (var pi = 0; pi < 3; pi++) {
+      var pTop = py + Math.floor(PH * divs[pi]);
+      var pBot = py + Math.floor(PH * divs[pi + 1]);
+      ctx.fillStyle = shades[pi];
+      ctx.fillRect(0, pTop, VW, pBot - pTop);
+      ctx.fillStyle = '#4a463e'; ctx.fillRect(0, pTop, VW, 1);
+      ctx.fillStyle = '#2a2722'; ctx.fillRect(0, pBot - 1, VW, 1);
+      for (var bs = 24; bs < VW - 24; bs += 7) {
+        ctx.fillStyle = 'rgba(64,60,52,' + (0.10 + pi * 0.04).toFixed(2) + ')';
+        ctx.fillRect(bs, pTop + 4, 1, pBot - pTop - 8);
+      }
+      if (pi < 2) {
+        ctx.fillStyle = '#1a0a05'; ctx.fillRect(0, pBot, VW, 2);
+        for (var srx = 28; srx < VW - 16; srx += 48) {
+          ctx.fillStyle = '#16140f'; ctx.fillRect(srx, pBot - 5, 3, 3);
+          ctx.fillStyle = '#55504a'; ctx.fillRect(srx, pBot - 5, 1, 1);
+        }
+      }
+    }
+    // corner L-brackets
+    function bracket(bx, by, flipX, flipY) {
+      ctx.fillStyle = '#2c2925';
+      ctx.fillRect(bx, by, flipX ? -34 : 34, 8 * (flipY ? -1 : 1));
+      ctx.fillRect(bx, by, 8 * (flipX ? -1 : 1), flipY ? -34 : 34);
+      ctx.fillStyle = '#16140f';
+      ctx.fillRect(bx + (flipX ? -26 : 22), by + (flipY ? -6 : 3), 3, 3);
+      ctx.fillRect(bx + (flipX ? -6 : 3), by + (flipY ? -26 : 22), 3, 3);
+    }
+    bracket(8, py + 8, false, false);
+    bracket(VW - 8, py + 8, true, false);
+    bracket(8, py + plateH() - 8, false, true);
+    bracket(VW - 8, py + plateH() - 8, true, true);
+    // chain stubs above the plate (visible during the descent)
+    function chain(cx) {
+      ctx.fillStyle = '#1a0a05'; ctx.fillRect(cx - 2, py - 14, 4, 14);
+      ctx.fillStyle = '#5a5550';
+      ctx.fillRect(cx - 1, py - 12, 2, 2); ctx.fillRect(cx - 1, py - 8, 2, 2); ctx.fillRect(cx - 1, py - 4, 2, 2);
+    }
+    chain(28); chain(VW - 28);
+    // bottom landing edge
+    ctx.fillStyle = '#1a0a05'; ctx.fillRect(0, py + PH - 2, VW, 2);
+  }
+
+  // Cause icons, ported from the game's 290 plate (stencil cream silhouettes)
+  function drawCauseIcon(cx, cy, type) {
+    ctx.fillStyle = '#d8d2c4';
+    if (type === 'fall' || type === 'hull') {            // anvil
+      ctx.fillRect(cx - 26, cy - 14, 52, 8);
+      ctx.fillRect(cx - 34, cy - 12, 8, 4);
+      ctx.fillRect(cx - 38, cy - 10, 4, 2);
+      ctx.fillRect(cx - 20, cy - 6, 40, 4);
+      ctx.fillRect(cx - 14, cy - 2, 28, 6);
+      ctx.fillRect(cx - 8, cy + 4, 16, 6);
+      ctx.fillRect(cx - 26, cy + 10, 52, 10);
+    } else if (type === 'magma') {                       // flame
+      ctx.fillRect(cx - 4, cy - 28, 8, 4);
+      ctx.fillRect(cx - 8, cy - 22, 16, 6);
+      ctx.fillRect(cx - 14, cy - 14, 28, 12);
+      ctx.fillRect(cx - 18, cy - 4, 36, 14);
+      ctx.fillRect(cx - 14, cy + 10, 28, 4);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(cx - 4, cy - 14, 8, 16);
+      ctx.fillRect(cx - 2, cy - 22, 4, 8);
+    } else if (type === 'drowned') {                     // waves
+      for (var row = 0; row < 3; row++) {
+        var wy = cy - 14 + row * 12;
+        ctx.fillRect(cx - 28, wy, 14, 4);
+        ctx.fillRect(cx - 10, wy + 2, 8, 4);
+        ctx.fillRect(cx + 2, wy, 14, 4);
+        ctx.fillRect(cx + 18, wy + 2, 10, 4);
+      }
+    } else if (type === 'fuel') {                        // empty can
+      ctx.fillRect(cx - 18, cy - 24, 36, 48);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(cx - 14, cy - 20, 28, 40);
+      ctx.fillStyle = '#d8d2c4';
+      ctx.fillRect(cx - 6, cy - 28, 12, 6);
+      ctx.fillRect(cx - 22, cy - 16, 4, 8);
+    } else if (type === 'bomb') {                        // mushroom cloud
+      ctx.fillRect(cx - 22, cy - 24, 44, 6);
+      ctx.fillRect(cx - 28, cy - 18, 56, 10);
+      ctx.fillRect(cx - 24, cy - 8, 48, 4);
+      ctx.fillRect(cx - 8, cy - 4, 16, 24);
+      ctx.fillRect(cx - 14, cy + 20, 28, 6);
+    }
+  }
+
+  // ======================================================================
+  // SEQUENCE STATE MACHINE: alive -> death -> return -> alive...
+  // tPlay is the master clock of the death sequence (pure-ish function of
+  // time so SKIP = jump the clock). Audio + particle bursts fire on clock
+  // CROSSINGS so seeking doesn't machine-gun them.
+  // ======================================================================
+  var REVEAL_T = 1.35;                 // when the plate starts falling
+  // content begins typing shortly after the plate locks on the console
+  function contentT0() { return REVEAL_T + PLATE_SLIDE_S + 0.22; }
+  var state = 'alive';                 // alive | death | return
+  var tState = 0;                      // time in current state (paced)
+  var inc = makeIncident(L.cause);
+  var trauma = 0;
+  var flashT = -1;
+  var hitstopLeft = 0;
+  var sceneClock = 0;                  // scene-local time (pauses in hitstop)
+  var fired = {};                      // one-shot event latch, reset per death
+  var typedCount = {};                 // typewriter tick dedupe
+  var causeIdx = 1;                    // magma first (the showiest)
+
+  function startDeath(cause) {
+    inc = makeIncident(cause);
+    state = 'death'; tState = 0;
+    trauma = 1.0; flashT = 0; hitstopLeft = 0.22;
+    fired = {}; typedCount = {};
+    parts.length = 0; uiSparks.length = 0;
+    killFx(cause);
+    sfx.crunch();
+  }
+  function killFx(cause) {
+    var fy = floorRow() * T;
+    if (cause === 'fall')    { spawnP('dust', rig.x, fy - 4, 26); spawnP('debris', rig.x, rig.y - 20, 10); }
+    if (cause === 'magma')   { spawnP('flame', rig.x + 20, rig.y - 12, 26); spawnP('spark', rig.x, rig.y - 24, 18); }
+    if (cause === 'drowned') { spawnP('bubble', rig.x - 12, rig.y - 32, 30); }
+    if (cause === 'fuel')    { spawnP('smoke', rig.x + 22, rig.y - 80, 6); }
+    if (cause === 'bomb')    { spawnP('debris', rig.x, rig.y - 24, 26); spawnP('spark', rig.x, rig.y - 24, 30); spawnP('smoke', rig.x, rig.y - 40, 10); }
+    if (cause === 'hull')    { spawnP('spark', rig.x - 8, rig.y - 28, 30); spawnP('debris', rig.x, rig.y - 20, 8); }
+  }
+  function once(key, fn) { if (!fired[key]) { fired[key] = true; fn(); } }
+
+  function nextCause() {
+    causeIdx = (causeIdx + 1) % CAUSES.length;
+    return CAUSES[causeIdx];
+  }
+  function currentTreatment() { return TREATMENTS[L.treatment]; }
+  function revealEndT() { return contentT0() + currentTreatment().revealDur(inc); }
+
+  // input: first press completes the reveal, second confirms the return
+  function advance() {
+    audioInit();
+    if (state === 'alive') { startDeath(L.cycleCause ? nextCause() : L.cause); return; }
+    if (state === 'death') {
+      if (tState < revealEndT() - 0.05) {
+        tState = revealEndT();         // complete the reveal instantly
+      } else {
+        state = 'return'; tState = 0; sfx.hiss();
+      }
+      return;
+    }
+    if (state === 'return') { state = 'alive'; tState = 0.9; }
+  }
+  function replay() { audioInit(); startDeath(L.cycleCause ? nextCause() : L.cause); }
+
+  // ======================================================================
+  // SHARED FX LAYERS
+  // ======================================================================
+  function desatAmount(t) { return L.desat * smoothstep(0.45, 1.5, t); }
+  function drawVignette(t) {
+    var v = 0.5 * smoothstep(0.3, 1.4, t);
+    if (v > 0.01) {
+      var g = ctx.createRadialGradient(rig.x, rig.y - 40, VW * 0.2, rig.x, rig.y - 40, VW * 0.78);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,' + v.toFixed(3) + ')');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VW, VH);
+    }
+  }
+  function shakeOffset(now) {
+    var s = trauma * trauma * 13 * L.shake;
+    return {
+      x: Math.sin(now * 39.7) * s + Math.sin(now * 13.1) * s * 0.5,
+      y: Math.cos(now * 33.3) * s + Math.cos(now * 17.7) * s * 0.5
+    };
+  }
+  // Prompt is stenciled on the plate's bottom panel, never floating.
+  function drawPrompt(t, endT, py) {
+    if (t < endT + 0.25 || py == null) return;
+    var pulse = 0.62 + 0.38 * Math.sin((t - endT) * 3.2);
+    var msg = 'ANY KEY ▸ RETURN TO TOWN';
+    var s = 2, w = stencilW(msg, s);
+    ctx.globalAlpha = pulse;
+    drawStencil(msg, Math.floor((VW - w) / 2), py + plateH() - 42, s, '#d4a838');
+    ctx.globalAlpha = 1;
+  }
+
+  // Rubber stamp: overshoot slam, slight angle, ink speckle. The ONE big
+  // juice beat of the paperwork treatments (sound must land on the frame).
+  function drawStamp(text, cx, cy, landT, t, color, ringW) {
+    if (t < landT) return;
+    var k = clamp((t - landT) / 0.13, 0, 1);
+    var scale = lerp(1.8, 1.0, easeInCubic(k));
+    var alpha = lerp(0.2, 0.92, easeInCubic(k));
+    once('stamp' + landT, function () { sfx.slam(); trauma = Math.max(trauma, 0.55); });
+    var s = 3;
+    var w = stencilW(text, s) + 26, h = 7 * s + 22;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.075);
+    ctx.scale(scale, scale);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    // double border frame
+    ctx.fillRect(-w / 2, -h / 2, w, 3); ctx.fillRect(-w / 2, h / 2 - 3, w, 3);
+    ctx.fillRect(-w / 2, -h / 2, 3, h); ctx.fillRect(w / 2 - 3, -h / 2, 3, h);
+    if (ringW) {
+      ctx.fillRect(-w / 2 + 5, -h / 2 + 5, w - 10, 1);
+      ctx.fillRect(-w / 2 + 5, h / 2 - 6, w - 10, 1);
+    }
+    drawStencil(text, -stencilW(text, s) / 2, -7 * s / 2, s, color);
+    // ink speckle holes (stamped unevenly)
+    ctx.globalCompositeOperation = 'destination-out';
+    for (var i = 0; i < 26; i++) {
+      var hx = (hash01(i * 7.7 + landT) - 0.5) * w, hy = (hash01(i * 3.3 + landT) - 0.5) * h;
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(hx | 0, hy | 0, 2, 1);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  // typewriter: returns visible substring; ticks on growth
+  function typed(id, text, t, start, cps) {
+    if (t < start) return '';
+    var nVis = clamp(Math.floor((t - start) * cps), 0, text.length);
+    var prev = typedCount[id] || 0;
+    if (nVis > prev) {
+      if (nVis - prev <= 2) sfx.key();          // suppress machine-gun on skip
+      typedCount[id] = nVis;
+    }
+    return text.slice(0, nVis);
+  }
+  function odometer(t, start, dur, from, to) {
+    if (t <= start) return from;
+    return Math.round(lerp(from, to, easeOutCubic((t - start) / dur)));
+  }
+
+  // aged paper block with steel backing
+  function drawPaper(x, y, w, h) {
+    ctx.fillStyle = '#1a0a05'; ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
+    ctx.fillStyle = '#3d3a35'; ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+    ctx.fillStyle = '#c9bfa8'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#b8ae96';
+    ctx.fillRect(x, y + h - 3, w, 3);
+    for (var i = 0; i < 22; i++) {
+      var hx = x + hash01(i * 5.1) * w, hy = y + hash01(i * 9.7) * h;
+      ctx.fillRect(hx | 0, hy | 0, 2, 1);
+    }
+  }
+
+  // ======================================================================
+  // TREATMENT A: FORM 7-K (incident report + red stamp)
+  // Bureaucratic flagship. World stays visible right of the form.
+  // ======================================================================
+  var INK = '#26201a', INKDIM = '#5a5040', RED = '#a8281e';
+  var trForm = {
+    name: 'FORM 7-K',
+    blurb: 'An incident report sheet bolted to the plate types itself in, then the red star stamp slams: RECOVERED. The DRG / Lethal Company register in commissariat voice.',
+    cps: 38, gap: 0.07,
+    revealDur: function (inci) {
+      var lines = this.lines(inci);
+      var t = 0.3;
+      for (var i = 0; i < lines.length; i++) t += lines[i].length / this.cps + this.gap;
+      return t + 0.45 + (L.flavor ? inci.flavor.length / this.cps + 0.35 : 0.2) + 0.4;
+    },
+    lines: function (inci) {
+      return [
+        'INCIDENT NO. ' + String(inci.no).padStart(4, '0'),
+        'UNIT: RIG SL-1',
+        'DEPTH: ' + inci.depth + ' M',
+        'CAUSE: ' + CAUSE_COPY[inci.cause].form(inci),
+        'CARGO: FORFEIT, ' + fmt$(inci.cargoTotal),
+        'SALVAGE LEVY 10%: ' + fmt$(inci.fee),
+        'RECOVERY: ' + inci.town + ' DEPOT'
+      ];
+    },
+    draw: function (t, py) {
+      if (py == null) return;
+      var tc = t - contentT0();
+      if (tc < -0.1) return;
+      // paper sheet bolted to the plate, centered in the playfield
+      var fw = Math.min(430, Math.floor(VW * 0.5));
+      var fh = Math.min(plateH() - 110, 400);
+      var fx = Math.round((VW - fw) / 2);
+      var fy = py + Math.floor((plateH() - fh) / 2) - 14;
+      drawPaper(fx, fy, fw, fh);
+      // corner bolts pinning it to the steel
+      ctx.fillStyle = '#4f3a1b';
+      ctx.fillRect(fx + 5, fy + 5, 5, 5); ctx.fillRect(fx + fw - 10, fy + 5, 5, 5);
+      ctx.fillRect(fx + 5, fy + fh - 10, 5, 5); ctx.fillRect(fx + fw - 10, fy + fh - 10, 5, 5);
+      // header
+      var hx = fx + 26, hy = fy + 22;
+      drawStencil('★', hx, hy, 3, RED);
+      drawStencil('KOMENDATURA', hx + 26, hy + 4, 2, INK);
+      drawStencil('FORM 7-K · SALVAGE & RECOVERY', hx, hy + 30, 1, INKDIM);
+      ctx.fillStyle = INKDIM;
+      ctx.fillRect(hx, hy + 44, fw - 52, 2);
+      // typed fields
+      var lines = this.lines(inc);
+      var ly = hy + 60, start = 0, cps = this.cps;
+      for (var i = 0; i < lines.length; i++) {
+        var s = lines[i].length > 30 ? 1 : 2;
+        var vis = typed('f' + i, lines[i], tc, start, cps);
+        if (vis) drawStencil(vis, hx, ly, s, i >= 4 && i <= 5 ? '#6a1a0e' : INK);
+        // caret
+        if (vis.length > 0 && vis.length < lines[i].length) {
+          ctx.fillStyle = INK;
+          ctx.fillRect(hx + stencilW(vis, s) + 4, ly + 7 * s - 3, 5 * s, 2);
+        }
+        ly += (s === 1 ? 18 : 26);
+        start += lines[i].length / cps + this.gap;
+      }
+      // stamp lands in clear paper below the fields, right side
+      var stampAt = 0.3, li;
+      for (li = 0; li < lines.length; li++) stampAt += lines[li].length / cps + this.gap;
+      stampAt += 0.3;
+      drawStamp('RECOVERED', fx + fw - 124, ly + 44, contentT0() + stampAt, t, RED, true);
+      // advisory flavor line at the paper's foot, left, clear of the stamp
+      if (L.flavor) {
+        var fl = '"' + inc.flavor + '"';
+        var flv = typed('flv', fl, tc, stampAt + 0.3, cps);
+        if (flv) drawStencil(flv, hx, fy + fh - 30, 1, INKDIM);
+      }
+    }
+  };
+
+  // ======================================================================
+  // TREATMENT B: HEAVY TYPE (Souls restraint over the live wreck)
+  // ======================================================================
+  var trHeavy = {
+    name: 'HEAVY TYPE',
+    blurb: 'Everything stenciled straight onto the steel: cause icon, one huge verdict, two quiet lines. The Dark Souls restraint school in plate paint: few words, heavy type, fastest to interactive.',
+    revealDur: function () { return 2.3; },
+    draw: function (t, py) {
+      if (py == null) return;
+      var tc = t - contentT0();
+      if (tc < 0) return;
+      var PH = plateH();
+      var midX = Math.floor(VW / 2);
+      // cause icon stamps in first, with the 290-style tinted backing
+      if (tc > 0) {
+        var k0 = clamp(tc / 0.12, 0, 1);
+        once('hicon', function () { sfx.thock(); });
+        var iconY = py + Math.floor(PH * 0.26);
+        var cc = inc.cause === 'magma' ? 'rgba(255,80,30,' :
+                 inc.cause === 'drowned' ? 'rgba(80,160,220,' :
+                 inc.cause === 'fuel' ? 'rgba(220,180,80,' :
+                 inc.cause === 'bomb' ? 'rgba(255,140,40,' : 'rgba(180,40,30,';
+        var glow = ctx.createRadialGradient(midX, iconY, 4, midX, iconY, 90);
+        glow.addColorStop(0, cc + (0.5 * k0).toFixed(2) + ')');
+        glow.addColorStop(1, cc + '0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(midX - 100, iconY - 80, 200, 160);
+        ctx.globalAlpha = k0;
+        ctx.save();
+        ctx.translate(2, 2); ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        drawCauseIcon(midX, iconY, inc.cause);
+        ctx.restore();
+        drawCauseIcon(midX, iconY, inc.cause);
+        ctx.globalAlpha = 1;
+      }
+      // verdict: RIG LOST fades in big
+      var a1 = smoothstep(0.35, 1.0, tc);
+      if (a1 > 0) {
+        var msg = 'RIG LOST';
+        var s = Math.min(10, Math.floor(VW * 0.55 / (msg.length * 6)));
+        var w = stencilW(msg, s);
+        ctx.globalAlpha = a1;
+        drawStencilBleed(msg, (VW - w) / 2, py + Math.floor(PH * 0.40), s, '#c8c2b4', '#1c1008');
+        ctx.globalAlpha = 1;
+        once('hboom', function () { sfx.boom(); });
+      }
+      // subline slams
+      if (tc > 1.15) {
+        var k = clamp((tc - 1.15) / 0.1, 0, 1);
+        once('hsub', function () { sfx.thock(); trauma = Math.max(trauma, 0.3); });
+        var sub = CAUSE_COPY[inc.cause].verdict + ' · ' + inc.depth + ' M';
+        var s2 = 3, w2 = stencilW(sub, s2);
+        ctx.globalAlpha = k;
+        drawStencil(sub, (VW - w2) / 2, py + Math.floor(PH * 0.40) + 96, s2, '#a8281e');
+        ctx.fillStyle = 'rgba(168,40,30,0.55)';
+        ctx.fillRect(Math.floor((VW - w2) / 2) - 8, py + Math.floor(PH * 0.40) + 96 + 26, w2 + 16, 2);
+        ctx.globalAlpha = 1;
+      }
+      // terms line fades last
+      if (tc > 1.7) {
+        var a3 = smoothstep(1.7, 2.25, tc);
+        var terms = 'CARGO FORFEIT · LEVY ' + fmt$(inc.fee) + ' · RECOVERY: ' + inc.town;
+        var s3 = 2, w3 = stencilW(terms, s3);
+        ctx.globalAlpha = a3 * 0.85;
+        drawStencil(terms, (VW - w3) / 2, py + Math.floor(PH * 0.40) + 152, s3, '#8a8478');
+        ctx.globalAlpha = 1;
+      }
+    }
+  };
+
+  // ======================================================================
+  // TREATMENT C: THE WIRE (telegraph tape from the Komendatura)
+  // ======================================================================
+  var trWire = {
+    name: 'THE WIRE',
+    blurb: 'Telegraph tapes paste themselves across the plate, STOP by STOP, bell dings included. Diegetic kin of the onboarding radio. The terseness IS the deadpan.',
+    cps: 44,
+    revealDur: function (inci) {
+      var tapes = this.tapes(inci);
+      var t = 0.2;
+      for (var i = 0; i < tapes.length; i++) t += tapes[i].length / this.cps + 0.25;
+      return t + 0.35;
+    },
+    tapes: function (inci) {
+      // compose from segments, then pack into strips that FIT the canvas
+      var c = CAUSE_COPY[inci.cause];
+      var segs = [
+        '= KOMENDATURA WIRE =',
+        'MINER DOWN AT ' + inci.depth + ' M STOP',
+        'CAUSE ' + c.wire(inci) + ' STOP',
+        'RIG RECOVERED STOP',
+        'CARGO FORFEIT STOP',
+        'LEVY ' + inci.fee + ' STOP',
+        'REPORT ' + inci.town + ' DEPOT STOP'
+      ];
+      if (L.flavor) {
+        segs.push('ADVISORY STOP');
+        segs.push(inci.flavor.replace(/\./g, '') + ' STOP');
+      }
+      segs.push('END =');
+      var maxChars = Math.max(30, Math.floor((VW - 150) / 12));   // scale-2 glyphs
+      var arr = [], cur = '';
+      for (var i = 0; i < segs.length; i++) {
+        var next = cur ? cur + ' ' + segs[i] : segs[i];
+        if (next.length > maxChars && cur) { arr.push(cur); cur = segs[i]; }
+        else cur = next;
+      }
+      if (cur) arr.push(cur);
+      return arr;
+    },
+    draw: function (t, py) {
+      if (py == null) return;
+      var tc = t - contentT0();
+      if (tc < 0) return;
+      var tapes = this.tapes(inc);
+      // tape block pasted on the plate, roughly vertically centered
+      var y = py + Math.floor((plateH() - tapes.length * 52) * 0.42);
+      var start = 0.1, cps = this.cps;
+      for (var i = 0; i < tapes.length; i++) {
+        var vis = typed('w' + i, tapes[i], tc, start, cps);
+        if (vis.length > 0) this.tape(vis, tapes[i], y, i);
+        // bell on each completed STOP
+        var stops = (vis.match(/STOP/g) || []).length;
+        var key = 'wstop' + i + '_' + stops;
+        if (stops > 0 && !fired[key]) { fired[key] = true; sfx.ding(); }
+        y += 52;
+        start += tapes[i].length / cps + 0.25;
+      }
+    },
+    tape: function (vis, full, y, idx) {
+      var s = 2;
+      var w = stencilW(vis, s) + 30, h = 7 * s + 18;
+      var x = 44 + (idx % 2) * 18;
+      // paper strip with torn ends
+      ctx.fillStyle = '#0d0a07';
+      ctx.fillRect(x + 2, y + 3, w, h);
+      ctx.fillStyle = '#cfc6ae';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#b8ae96';
+      for (var tn = 0; tn < h; tn += 4) {
+        ctx.fillRect(x - (hash01(tn * 3.1 + idx) > 0.5 ? 3 : 0), y + tn, 3, 4);
+        ctx.fillRect(x + w - 3 + (hash01(tn * 7.7 + idx) > 0.5 ? 3 : 0), y + tn, 3, 4);
+      }
+      // perforation dots
+      ctx.fillStyle = '#8a8270';
+      for (var d = x + 6; d < x + w - 4; d += 8) ctx.fillRect(d, y + 3, 2, 2);
+      // characters with per-char jitter; STOP in red
+      var cx = x + 14, cy = y + 10;
+      var redSpans = [];
+      var idx2 = full.indexOf('STOP');
+      while (idx2 !== -1) { redSpans.push(idx2); idx2 = full.indexOf('STOP', idx2 + 1); }
+      for (var i = 0; i < vis.length; i++) {
+        var ch = vis[i].toUpperCase();
+        var inStop = false;
+        for (var rs = 0; rs < redSpans.length; rs++) {
+          if (i >= redSpans[rs] && i < redSpans[rs] + 4) { inStop = true; break; }
+        }
+        var jit = Math.floor(hash01(i * 13.7 + idx * 51) * 3) - 1;
+        ctx.fillStyle = inStop ? '#a8281e' : '#26201a';
+        drawGlyph(ch, cx, cy + jit, s);
+        if (hash01(i * 7.1 + idx * 17) > 0.93) {       // ghost double-strike
+          ctx.globalAlpha = 0.35;
+          drawGlyph(ch, cx + 1, cy + jit, s);
+          ctx.globalAlpha = 1;
+        }
+        cx += 6 * s;
+      }
+    }
+  };
+
+  // ======================================================================
+  // TREATMENT D: SALVAGE MANIFEST (the itemized bill, odometer count-ups)
+  // ======================================================================
+  var trManifest = {
+    name: 'MANIFEST',
+    blurb: 'The financial truth screen: every lost ore prints as a receipt line with a counting value, then the levy ticks your balance DOWN in red. SETTLED stamp. EVE killmail energy, autosell reveal grammar.',
+    revealDur: function (inci) {
+      return 0.35 + inci.cargo.length * 0.42 + 0.75 + 0.4 + 0.85 + 0.45 + 0.45;
+    },
+    draw: function (t, py) {
+      if (py == null) return;
+      var tc = t - contentT0();
+      if (tc < -0.1) return;
+      var fw = Math.min(400, Math.floor(VW * 0.46));
+      var rows = inc.cargo.length;
+      var fh = Math.min(plateH() - 100, 272 + rows * 22 + (L.flavor ? 24 : 0));
+      var fx = Math.round((VW - fw) / 2);
+      var fy = py + Math.floor((plateH() - fh) / 2) - 12;
+      drawPaper(fx, fy, fw, fh);
+      // corner bolts pinning it to the steel
+      ctx.fillStyle = '#4f3a1b';
+      ctx.fillRect(fx + 5, fy + 5, 5, 5); ctx.fillRect(fx + fw - 10, fy + 5, 5, 5);
+      ctx.fillRect(fx + 5, fy + fh - 10, 5, 5); ctx.fillRect(fx + fw - 10, fy + fh - 10, 5, 5);
+      var hx = fx + 24, ly = fy + 18;
+      drawStencil('SALVAGE MANIFEST', hx, ly, 2, INK);
+      drawStencil('RIG SL-1 · ' + inc.depth + ' M · NO. ' + String(inc.no).padStart(4, '0'), hx, ly + 20, 1, INKDIM);
+      ctx.fillStyle = INKDIM; ctx.fillRect(hx, ly + 34, fw - 40, 2);
+      ly += 48;
+      // cargo lines cascade in, values count up
+      var lineStart = 0.35;
+      for (var i = 0; i < rows; i++) {
+        var item = inc.cargo[i];
+        var st = lineStart + i * 0.42;
+        if (tc >= st) {
+          once('mline' + i, function () { sfx.thock(); });
+          var label = ORES[item.key].label + ' X' + item.count;
+          drawStencil(label, hx, ly, 1, INK);
+          // ore chip
+          ctx.fillStyle = ORES[item.key].color;
+          ctx.fillRect(hx - 10, ly, 6, 6);
+          var v = odometer(tc, st, 0.45, 0, item.value);
+          if (v < item.value) { if (!typedCount['mt' + i] || typedCount['mt' + i] < v) { typedCount['mt' + i] = v; if (Math.random() < 0.4) sfx.tick(v / item.value); } }
+          var vs = fmt$(v);
+          drawStencil(vs, fx + fw - 20 - stencilW(vs, 1), ly, 1, INK);
+          // dot leaders
+          ctx.fillStyle = INKDIM;
+          var lx = hx + stencilW(label, 1) + 8, rxx = fx + fw - 28 - stencilW(vs, 1);
+          for (var dd = lx; dd < rxx; dd += 6) ctx.fillRect(dd, ly + 5, 2, 1);
+        }
+        ly += 22;
+      }
+      var afterLines = lineStart + rows * 0.42;
+      // total forfeit
+      if (tc >= afterLines) {
+        ctx.fillStyle = INKDIM; ctx.fillRect(hx, ly - 4, fw - 40, 1);
+        var tv = odometer(tc, afterLines, 0.6, 0, inc.cargoTotal);
+        drawStencil('CARGO FORFEIT', hx, ly + 4, 2, '#6a1a0e');
+        var tvs = fmt$(tv);
+        drawStencil(tvs, fx + fw - 20 - stencilW(tvs, 2), ly + 4, 2, '#6a1a0e');
+      }
+      ly += 30;
+      var levyAt = afterLines + 0.75 + 0.4;
+      if (tc >= afterLines + 0.75) {
+        var bs = 'BALANCE: ' + fmt$(inc.money);
+        drawStencil(bs, hx, ly + 4, 1, INKDIM);
+      }
+      ly += 18;
+      // levy counts DOWN in red
+      if (tc >= levyAt) {
+        once('mlevy', function () {});
+        var lv = odometer(tc, levyAt, 0.8, 0, inc.fee);
+        if (lv < inc.fee) { if (!typedCount.mlt || typedCount.mlt < lv) { typedCount.mlt = lv; if (Math.random() < 0.5) sfx.tickDn(lv / inc.fee); } }
+        drawStencil('SALVAGE LEVY 10%', hx, ly + 4, 2, RED);
+        var lvs = '-' + fmt$(lv);
+        drawStencil(lvs, fx + fw - 20 - stencilW(lvs, 2), ly + 4, 2, RED);
+      }
+      ly += 28;
+      var remitAt = levyAt + 0.85;
+      if (tc >= remitAt) {
+        once('mremit', function () { sfx.thock(); });
+        ctx.fillStyle = INK; ctx.fillRect(hx, ly - 4, fw - 40, 2);
+        drawStencil('REMITTED', hx, ly + 6, 2, INK);
+        var rs2 = fmt$(inc.remitted);
+        drawStencil(rs2, fx + fw - 20 - stencilW(rs2, 2), ly + 6, 2, INK);
+      }
+      // SETTLED stamp in its own clear zone below the totals (no overlap)
+      ly += 36;
+      drawStamp('SETTLED', fx + fw - 118, ly + 26, contentT0() + remitAt + 0.45, t, RED, false);
+      if (L.flavor && tc >= remitAt + 0.5) {
+        drawStencil('"' + inc.flavor + '"', hx, fy + fh - 24, 1, INKDIM);
+      }
+    }
+  };
+
+  var TREATMENTS = { form: trForm, heavy: trHeavy, wire: trWire, manifest: trManifest };
+
+  // ======================================================================
+  // RETURN BEAT: brief town arrival so the loop ends on an up-beat.
+  // ======================================================================
+  function drawReturn(t) {
+    // the plate lifts into the dark on the hydraulic hiss (bible 9.1)
+    if (t < 0.3) {
+      ctx.fillStyle = '#06070a';
+      ctx.fillRect(0, 0, VW, VH);
+      drawPlate(-Math.floor(plateH() * easeInCubic(t / 0.3)));
+      return;
+    }
+    ctx.fillStyle = '#06070a';
+    ctx.fillRect(0, 0, VW, VH);
+    if (t < 0.35) return;
+    var k = smoothstep(0.35, 0.8, t);
+    // night sky + deck line + station silhouette
+    var deckY = Math.floor(VH * 0.62);
+    ctx.globalAlpha = k;
+    ctx.fillStyle = '#0a0d14'; ctx.fillRect(0, 0, VW, deckY);
+    for (var st = 0; st < 40; st++) {
+      var sx = hash01(st * 9.1) * VW, sy = hash01(st * 3.7) * deckY * 0.8;
+      ctx.fillStyle = 'rgba(200,210,230,' + (0.3 + hash01(st) * 0.5).toFixed(2) + ')';
+      ctx.fillRect(sx | 0, sy | 0, 1, 1);
+    }
+    ctx.fillStyle = '#1c1812'; ctx.fillRect(0, deckY, VW, VH - deckY);
+    ctx.fillStyle = '#2a241c'; ctx.fillRect(0, deckY, VW, 4);
+    // station
+    var stx = VW * 0.32, sty = deckY;
+    ctx.fillStyle = '#181512';
+    ctx.fillRect(stx - 60, sty - 92, 120, 92);
+    ctx.fillStyle = '#0d0b09';
+    ctx.fillRect(stx - 66, sty - 100, 132, 10);
+    ctx.fillStyle = '#ffd060';
+    ctx.fillRect(stx - 30, sty - 60, 14, 18);
+    ctx.fillRect(stx + 18, sty - 60, 14, 18);
+    drawStencil('★', stx - 7, sty - 88, 2, '#a8281e');
+    // rig parked on the deck, lamp on
+    ctx.save();
+    ctx.translate(VW * 0.6, deckY);
+    ctx.fillStyle = '#23211e'; ctx.fillRect(-26, -10, 52, 10);
+    ctx.fillStyle = '#5a5550'; ctx.fillRect(-22, -30, 40, 20);
+    ctx.fillStyle = '#7fd4e8'; ctx.fillRect(-14, -27, 12, 9);
+    ctx.fillStyle = '#8f9294'; ctx.fillRect(18, -26, 10, 14);
+    ctx.restore();
+    var msg1 = 'RIG RECOVERED · ' + inc.town;
+    var msg2 = 'SALVAGE FEE ' + fmt$(inc.fee) + ' PAID';
+    drawStencilBleed(msg1, (VW - stencilW(msg1, 3)) / 2, VH * 0.2, 3, '#c8c2b4', '#000');
+    if (t > 1.0) {
+      ctx.globalAlpha = k * smoothstep(1.0, 1.4, t);
+      drawStencil(msg2, (VW - stencilW(msg2, 2)) / 2, VH * 0.2 + 36, 2, '#d4a838');
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ======================================================================
+  // MAIN LOOP
+  // ======================================================================
+  var lastNow = 0;
+  function frame(nowMs) {
+    var now = nowMs / 1000;
+    var dt = Math.min(0.05, now - lastNow || 0.016);
+    lastNow = now;
+    step(dt * L.pace, now);
+    requestAnimationFrame(frame);
+  }
+  function step(dt, now) {
+    if (!VW) { resize(); layout(); }
+    // clocks
+    var sceneDt = dt;
+    if (state === 'death') {
+      if (hitstopLeft > 0) { hitstopLeft -= dt; sceneDt = 0; }
+      else {
+        // slow-mo ramp back to 1 after the hit
+        var slow = lerp(0.3, 1, smoothstep(0.25, 1.4, tState));
+        sceneDt = dt * slow;
+      }
+    }
+    tState += dt;
+    sceneClock += sceneDt;
+    trauma = Math.max(0, trauma - dt * 1.15);
+    if (flashT >= 0) flashT += dt;
+
+    // wreck smoke emitters
+    if (state === 'death' && tState > 0.3 && tState < 30) {
+      if (Math.random() < sceneDt * 16) spawnP('smoke', rig.x - 16 + Math.random() * 44, rig.y - 52, 1);
+      if (inc.cause === 'magma' && Math.random() < sceneDt * 10) spawnP('flame', rig.x + 80 + Math.random() * 180, floorRow() * T - 10, 1);
+      if (inc.cause === 'drowned' && Math.random() < sceneDt * 6) spawnP('bubble', rig.x - 16 + Math.random() * 36, rig.y - 20, 1);
+    }
+    updateParts(sceneDt);
+    updateUiSparks(dt);
+
+    // state transitions
+    if (state === 'alive' && tState > 1.25) startDeath(L.cycleCause ? nextCause() : L.cause);
+    if (state === 'death' && L.autoLoop && tState > revealEndT() + 6.5) { state = 'return'; tState = 0; sfx.hiss(); }
+    if (state === 'return' && tState > 2.5) { state = 'alive'; tState = 0; }
+
+    render(now);
+    updateHud();
+  }
+
+  function render(now) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#0c0f14';
+    ctx.fillRect(0, 0, VW, VH);
+
+    if (state === 'return') {
+      drawReturn(tState);
+      drawConsoleMock(now);
+      drawUiSparks();
+      return;
+    }
+
+    var t = state === 'death' ? tState : -1;
+    var sh = state === 'death' ? shakeOffset(now) : { x: 0, y: 0 };
+    // camera push toward the wreck
+    var push = state === 'death' ? 1 + 0.07 * easeOutCubic(smoothstep(0.4, 2.2, t)) : 1;
+    function applyCam() {
+      ctx.translate(sh.x, sh.y);
+      ctx.translate(rig.x, rig.y - 40);
+      ctx.scale(push, push);
+      ctx.translate(-rig.x, -(rig.y - 40));
+    }
+    ctx.save();
+    applyCam();
+    drawScene(sceneClock, inc, t >= 0 ? t : -1);
+    drawParts(false);
+    ctx.restore();
+
+    if (state !== 'death') {
+      // alive: glowing layers draw directly (no veil to punch through)
+      ctx.save(); applyCam();
+      drawSceneEmissive(sceneClock, inc);
+      drawParts(true);
+      ctx.restore();
+    }
+
+    if (state === 'death') {
+      // veil the dead world, then let the hot things glow through it
+      var d = desatAmount(t);
+      if (d > 0.01) {
+        ctx.globalCompositeOperation = 'saturation';
+        ctx.fillStyle = 'rgba(128,128,128,' + d.toFixed(3) + ')';
+        ctx.fillRect(0, 0, VW, VH);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(30,38,48,' + (0.18 * d).toFixed(3) + ')';
+        ctx.fillRect(0, 0, VW, VH);
+      }
+      ctx.save(); applyCam();
+      drawSceneEmissive(sceneClock, inc);
+      drawParts(true);
+      ctx.restore();
+      drawVignette(t);
+      // the plate + its content ride at half shake so the slam carries
+      var py = plateTop(t);
+      if (py != null) {
+        ctx.save();
+        ctx.translate(Math.round(sh.x * 0.5), Math.round(sh.y * 0.5));
+        drawPlate(py);
+        currentTreatment().draw(t, py);
+        drawPrompt(t, revealEndT(), py);
+        ctx.restore();
+      }
+    }
+
+    // console in front of everything; the plate's bounce dips behind it
+    drawConsoleMock(now);
+    drawUiSparks();
+
+    if (state === 'death') {
+      // kill flash, 2 frames white
+      if (flashT >= 0 && flashT < 0.07) {
+        ctx.fillStyle = 'rgba(255,245,225,' + (0.55 * (1 - flashT / 0.07)).toFixed(3) + ')';
+        ctx.fillRect(0, 0, VW, VH);
+      }
+    }
+  }
+
+  var hud = document.getElementById('hud');
+  function updateHud() {
+    var tr = currentTreatment();
+    hud.innerHTML = '<b class="big">' + tr.name + '</b> · cause: <b>' + inc.cause + '</b>' +
+      ' · t=<b>' + tState.toFixed(1) + 's</b> · ' + state +
+      (state === 'death' && tState < revealEndT() ? ' (click skips)' : '');
+  }
+
+  // ======================================================================
+  // INPUT
+  // ======================================================================
+  cv.addEventListener('mousedown', function (e) { e.preventDefault(); advance(); });
+  window.addEventListener('keydown', function (e) {
+    if (e.repeat) return;
+    if (e.key === ' ') { e.preventDefault(); replay(); return; }
+    if (e.key === '1') setTreatment('form');
+    else if (e.key === '2') setTreatment('heavy');
+    else if (e.key === '3') setTreatment('wire');
+    else if (e.key === '4') setTreatment('manifest');
+    else if (e.key === 'c' || e.key === 'C') { startDeath(nextCause()); }
+    else advance();
+  });
+
+  // ======================================================================
+  // PANEL
+  // ======================================================================
+  var panel = document.getElementById('panel');
+  function setTreatment(key) {
+    L.treatment = key;
+    replay();
+    buildPanel();
+  }
+  function buildPanel() {
+    var h = '';
+    h += '<h1>DEATH SCREEN LAB</h1>';
+    h += '<p class="sub">Four contents for the death plate. Death in Sluice is a respawn with a 10% salvage fee, so every option speaks INCIDENT PAPERWORK, names the killer, and itemizes the bill. The plate drops the FULL playfield and locks onto the console; every word lives ON the plate (nothing floats over the world, nothing overlaps). Pick the register.</p>';
+    h += '<p class="sub">The rig dies on a loop. <b>Click</b> once: finish the reveal instantly. Click again: return to town. <b>Space</b> replays, <b>1 to 4</b> switch treatment, <b>C</b> forces the next cause. Sound unlocks after the first click (browser rule).</p>';
+
+    h += '<div class="group"><h2>Treatment</h2>';
+    var order = ['form', 'heavy', 'wire', 'manifest'];
+    for (var i = 0; i < order.length; i++) {
+      var tr = TREATMENTS[order[i]];
+      h += '<button class="tr-btn' + (L.treatment === order[i] ? ' on' : '') + '" data-tr="' + order[i] + '">' +
+           (i + 1) + '. ' + tr.name + '<small>' + tr.blurb + '</small></button>';
+    }
+    h += '</div>';
+
+    h += '<div class="group"><h2>Cause of loss</h2><div class="chips">';
+    for (var c = 0; c < CAUSES.length; c++) {
+      h += '<button data-cause="' + CAUSES[c] + '"' + (!L.cycleCause && L.cause === CAUSES[c] ? ' class="on"' : '') + '>' + CAUSES[c] + '</button>';
+    }
+    h += '<button data-cycle="1"' + (L.cycleCause ? ' class="on"' : '') + '>CYCLE ALL</button>';
+    h += '</div></div>';
+
+    h += '<div class="group"><h2>Feel</h2>';
+    h += slider('pace', 'Pace', 0.5, 1.5, 0.05, L.pace, 'x');
+    h += slider('shake', 'Shake', 0, 1.5, 0.05, L.shake, 'x');
+    h += slider('desat', 'Desaturation', 0, 1, 0.05, L.desat, '');
+    h += '<div class="chips">';
+    h += '<button data-tog="flavor"' + (L.flavor ? ' class="on"' : '') + '>ADVISORY LINES</button>';
+    h += '<button data-tog="sound"' + (L.sound ? ' class="on"' : '') + '>SOUND</button>';
+    h += '<button data-tog="autoLoop"' + (L.autoLoop ? ' class="on"' : '') + '>AUTO LOOP</button>';
+    h += '</div>';
+    h += '<button class="big-btn" data-replay="1">REPLAY (SPACE)</button>';
+    h += '</div>';
+
+    h += '<div class="group"><h2>Why these four</h2><div class="notes">';
+    h += '<b>The diagnosis:</b> the live plate says TERMINATED + RESTART, run-end language for what is mechanically an insured industrial accident. It hides the wreck behind 60% steel, shows no bill, and is identical every death.<br><br>';
+    h += '<span class="pat">Patterns applied</span> (from a survey of ~20 loved death screens): name the killer precisely (Noita, Hades); itemize the loss (Terraria, EVE, FTL); two-beat timing, skippable everything (Celeste school); deadpan company voice for mining fiction (Deep Rock, Lethal Company); rotate the flavor line so death 30 reads differently than death 3 (Hypnos rule).<br><br>';
+    h += '<b>Owner direction (locked):</b> the plate drops ALL the way to the console (the 60% half-plate is gone), and words never float over the world or overlap each other; all content is bolted to, taped to, or stenciled on the steel. The 1.5s rig-dies-in-place beat before the drop is unchanged.<br><br>';
+    h += '<b>Wiring notes (for the port):</b> deathInfo.type/speed/heat exist; cargo[] has the lost manifest; fee needs computing at death time (today it computes at respawn); incident number = a persisted death counter (new save field); town = lastDockTown. The return beat reuses respawnAtTown.';
+    h += '</div></div>';
+
+    panel.innerHTML = h;
+
+    panel.querySelectorAll('[data-tr]').forEach(function (b) {
+      b.addEventListener('click', function () { setTreatment(b.getAttribute('data-tr')); });
+    });
+    panel.querySelectorAll('[data-cause]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        L.cycleCause = false; L.cause = b.getAttribute('data-cause');
+        startDeath(L.cause); buildPanel();
+      });
+    });
+    var cyc = panel.querySelector('[data-cycle]');
+    if (cyc) cyc.addEventListener('click', function () { L.cycleCause = !L.cycleCause; buildPanel(); });
+    panel.querySelectorAll('[data-tog]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-tog');
+        L[k] = !L[k];
+        if (k === 'sound' && L.sound) audioInit();
+        buildPanel();
+      });
+    });
+    var rp = panel.querySelector('[data-replay]');
+    if (rp) rp.addEventListener('click', replay);
+    panel.querySelectorAll('input[type=range]').forEach(function (r) {
+      r.addEventListener('input', function () {
+        L[r.getAttribute('data-lever')] = parseFloat(r.value);
+        var lab = panel.querySelector('[data-val="' + r.getAttribute('data-lever') + '"]');
+        if (lab) lab.textContent = parseFloat(r.value).toFixed(2);
+      });
+    });
+  }
+  function slider(key, label, min, max, stepV, val, unit) {
+    return '<label class="slider"><span class="lab"><span>' + label + '</span><b data-val="' + key + '">' + val.toFixed(2) + '</b></span>' +
+      '<input type="range" data-lever="' + key + '" min="' + min + '" max="' + max + '" step="' + stepV + '" value="' + val + '"></label>';
+  }
+
+  // ======================================================================
+  // TEST HOOK: lets a headless preview drive the sequence without RAF.
+  // __deathLab.seek(2.5) renders the death sequence at t=2.5s exactly.
+  // ======================================================================
+  window.__deathLab = {
+    play: function (tr, cause) {
+      if (tr) { L.treatment = tr; }
+      L.cycleCause = false;
+      if (cause) L.cause = cause;
+      startDeath(L.cause || 'magma');
+      buildPanel();
+    },
+    seek: function (t) {
+      if (state !== 'death') this.play(L.treatment, L.cause || 'magma');
+      var was = L.sound; L.sound = false;
+      tState = 0; sceneClock = 0; parts.length = 0; fired = {}; typedCount = {};
+      killFx(inc.cause);
+      // advance in fixed steps so particles/smoke land where RAF would put
+      // them. Iteration cap guards against seeking past an auto-loop state
+      // transition (which resets tState and would never converge).
+      var stepS = 1 / 60, guard = 0;
+      while (tState < t && guard++ < 4000) { step(stepS, tState); }
+      L.sound = was;
+      return { state: state, t: tState, revealEnd: revealEndT() };
+    },
+    advance: function () { advance(); return this.state(); },
+    stepN: function (n) {
+      var was = L.sound; L.sound = false;
+      for (var i = 0; i < n; i++) step(1 / 60, i / 60);
+      L.sound = was;
+      return this.state();
+    },
+    state: function () { return { state: state, t: tState, treatment: L.treatment, cause: inc.cause, revealEnd: revealEndT() }; }
+  };
+
+  // boot
+  resize(); layout(); buildPanel();
+  requestAnimationFrame(function (n) { lastNow = n / 1000; requestAnimationFrame(frame); });
+})();
+</script>
+</body>
+</html>

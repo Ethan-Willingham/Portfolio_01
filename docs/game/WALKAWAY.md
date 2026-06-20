@@ -43,7 +43,10 @@ moves with the game into Portfolio_01 in Phase E.
 - (B) PLAYTEST the balance feel: speedrun ~33min / normal ~2-3hr is modeled, not felt. Use dev
   mode (backtick = money 999,999 + free buys). Watch the early bootstrap (could drag) and the
   magma gate (should be tense not lethal). Re-tune levers per BALANCE.md Section 9 if needed.
-- (pending) Items requiring the owner's password or a real prod commit will be logged here as found.
+- (G) CONFIRM SFX PUBLISH with real audio + password: the sfx-publish.html flow is built and the
+  crypto path is self-tested (no real commit was made, by design). To use it, make a sound, name it
+  per SFX_INSTRUCTIONS.md, audition on sfx-test.html, then open sfx-publish.html, unlock with the
+  editor password, drop the file(s), and Send to prod. Needs your password (decrypts blog-edit-auth.json).
 
 ## Done-log
 - (init) Read sluice-alpha AGENTS.md, README, build-sluice.sh, 000-head.js. Mapped 68 fragments,
@@ -68,3 +71,25 @@ moves with the game into Portfolio_01 in Phase E.
 - (D) PHASE D DONE (verify only, no code change): SFX wired END-TO-END in js/audio.js (SFX_DIR
   'assets/sfx/', 82-entry SFX_MANIFEST, sfxFiles/loadAllSfx loader, playSfx, sfxLoopDrive +
   sfxLoopWatchdog, game-side sfxPlay/sfxLoop in 080). assets/sfx/ empty = why it is silent.
+- (E) PHASE E DONE: game consolidated into Portfolio_01 root (js/sluice/ + bundle + wgpu/audio +
+  build-sluice.sh + assets/music,sfx,shop + moon.jpg + docs/game/). Worked in a worktree off
+  origin/main (local main is a stale shared checkout); pushed origin HEAD:main = LIVE on Pages
+  (verified: grand-motherload.html loads js/sluice.js, 2.95MB bundle + music serve 200). Stale
+  v15.89 liquid/smoke-wgpu overwritten; dead 1.4M grand-motherload.js + a junk double-nested
+  assets/shop/shop/ removed. AGENTS.md rewritten (site vs game routing, flag-disabled note);
+  docs/game/GAME.md is the game quick-start; voice-lint exempts docs/game/*. sluice-alpha ARCHIVED
+  (pointer commit f5e8d8e + tag sluice-public-handoff-v25.2; NOT deleted). Memory: new authoritative
+  entry project_sluice_consolidated (full prune of stale game memory is Phase I).
+- (F) PHASE F DONE (folded into the grand-motherload.html rewrite): free-forever copy (no Steam /
+  private / last-build, no em dashes); the old Steam ticker is gone entirely (the message lives in
+  the about copy); responsive embed fills the viewport (height min(88dvh, calc(100dvh - header))).
+  Verified headless desktop 1280 + mobile 380: game fills viewport, NO horizontal scroll, HUD/
+  console/d-pad not clipped, 0 console errors, flight toggle = Rotation+VTOL (no Today).
+- (G) PHASE G DONE: 16 game labs brought into Portfolio_01 root (art/audio/autosell/commodity/
+  death/depot/economy/endcap/item-map/mine/nmz-banner/station/sunset/sluice-lab + sfx-prompts/
+  sfx-test). New labs.html chooser (grouped Sound/Art/Feel/Systems, disabled-system labs flagged,
+  0 errors). "Labs" button added atop grand-motherload.html. SFX send-to-prod: new sfx-publish.html
+  REUSES js/blog-edit-core.js (AES-256-GCM/PBKDF2-600k unlock + ghCommit binary base64 to
+  assets/sfx/). Crypto self-tested PASS in Node AND in-page (encrypt/decrypt roundtrip + wrong-pw
+  reject + binary b64), NO real prod commit. DEMOS updated (labs/sfx pages). SFX_INSTRUCTIONS.md
+  written (root). Reuses the existing editor key (PAT scope: Contents Read+write on Portfolio_01).

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sluice SFX, Send to Prod</title>
+  <meta name="description" content="Owner tool: publish Sluice sound effects into assets/sfx/ on the live site.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .sw { max-width: 720px; }
+    h1.post-title { font-size: min(2.2rem, 6vw); }
+    .sfx-note { max-width: 62ch; color: var(--d-text-dim, rgba(255,255,255,0.6)); font-size: 0.9rem; line-height: 1.5; }
+    .sfx-panel {
+      margin-top: 1.4rem; padding: 1.2rem 1.3rem;
+      background: var(--d-bg-raised, rgba(255,255,255,0.03));
+      border: 1px solid var(--d-rule, rgba(255,255,255,0.12));
+    }
+    .sfx-panel h2 { font-family: var(--d-mono, monospace); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--d-accent); margin: 0 0 0.8rem; }
+    label.fld { display: block; font-size: 0.78rem; color: var(--d-text-dim); margin-bottom: 0.35rem; letter-spacing: 0.06em; }
+    input[type=password], input[type=text] {
+      width: 100%; box-sizing: border-box; padding: 0.6em 0.7em;
+      font-family: var(--d-mono, monospace); font-size: 0.95rem;
+      background: rgba(0,0,0,0.25); border: 1px solid var(--d-rule-strong, rgba(255,255,255,0.2));
+      color: var(--d-text-bright, #fff);
+    }
+    button {
+      font-family: var(--d-mono, monospace); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.65em 1.1em; margin-top: 0.8rem; cursor: pointer;
+      background: transparent; border: 1px solid var(--d-rule-strong, rgba(255,255,255,0.25)); color: var(--d-text-bright, #fff);
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    button:hover:not(:disabled) { background: var(--d-accent); border-color: var(--d-accent); color: #0d0a04; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    button.primary { border-color: var(--d-accent); color: var(--d-accent); }
+    .drop {
+      margin-top: 0.6rem; padding: 1.6rem; text-align: center;
+      border: 1px dashed var(--d-rule-strong, rgba(255,255,255,0.25)); color: var(--d-text-dim);
+      font-size: 0.85rem; cursor: pointer;
+    }
+    .drop.over { border-color: var(--d-accent); color: var(--d-text-bright); background: rgba(255,255,255,0.03); }
+    table.files { width: 100%; border-collapse: collapse; margin-top: 0.9rem; font-size: 0.85rem; }
+    table.files td { padding: 0.4em 0.5em; border-bottom: 1px solid var(--d-rule, rgba(255,255,255,0.1)); vertical-align: middle; }
+    table.files td.path { font-family: var(--d-mono, monospace); color: var(--d-text-dim); }
+    .pill { font-family: var(--d-mono, monospace); font-size: 0.72rem; padding: 0.1em 0.5em; border: 1px solid var(--d-rule); color: var(--d-text-dim); }
+    .msg { margin-top: 0.9rem; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; }
+    .msg.ok { color: #7fc77f; } .msg.err { color: #e07a6a; }
+    .hidden { display: none; }
+    code { font-family: var(--d-mono, monospace); color: var(--d-accent); }
+  </style>
+</head>
+<body>
+  <div class="site-wrapper sw">
+    <nav class="post-topnav" style="display:flex;gap:1.4rem;">
+      <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+      <a href="labs.html" class="post-back"><span class="pb-label">Labs</span></a>
+      <a href="sfx-test.html" class="post-back"><span class="pb-label">Audition bench</span></a>
+    </nav>
+    <header class="post-header fade-in"><h1 class="post-title">SFX, Send to Prod</h1></header>
+    <main><article><div class="post-body fade-in">
+      <p class="sfx-note">Publish sound effects straight into <code>assets/sfx/</code> on the live site. This reuses the
+      same encrypted GitHub key as the post editor (locked behind your password, decrypted only in this tab). Audition
+      your sounds first on the <a href="sfx-test.html">test bench</a>; this page just commits the chosen files. Naming:
+      a single-variant key ships as <code>key.m4a</code>; a multi-variant key as <code>key_1.m4a</code> ..
+      <code>key_N.m4a</code>. See <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/SFX_INSTRUCTIONS.md">SFX_INSTRUCTIONS.md</a>.</p>
+
+      <!-- LOCK -->
+      <div class="sfx-panel" id="lock">
+        <h2>Unlock</h2>
+        <div id="lock-status" class="sfx-note" style="margin-bottom:0.7rem;">Checking for the editor key...</div>
+        <div id="lock-form" class="hidden">
+          <label class="fld" for="pw">Password</label>
+          <input type="password" id="pw" autocomplete="current-password" placeholder="the editor password">
+          <button class="primary" id="unlock-btn">Unlock</button>
+          <button id="selftest-btn" title="Verify the crypto without unlocking">Self-test crypto</button>
+          <div class="msg" id="lock-msg"></div>
+        </div>
+      </div>
+
+      <!-- PUBLISH -->
+      <div class="sfx-panel hidden" id="pub">
+        <h2>Sound files</h2>
+        <div class="drop" id="drop">Drop <code>.m4a</code> / <code>.wav</code> files here, or click to choose.
+          <input type="file" id="file" accept=".m4a,.wav,audio/*" multiple class="hidden"></div>
+        <table class="files"><tbody id="rows"></tbody></table>
+        <button class="primary" id="send-btn" disabled>Send to prod</button>
+        <div class="msg" id="pub-msg"></div>
+      </div>
+    </div></article></main>
+  </div>
+
+  <script type="module">
+    import { fetchAuthBlob, unlock, ghCommit, ghGetSha, bytesToB64,
+             encryptToken, decryptToken } from './js/blog-edit-core.js';
+
+    const $ = id => document.getElementById(id);
+    let files = [];   // { name, b64, bytes, url }
+
+    // ---- lock ----
+    (async function boot(){
+      try {
+        const blob = await fetchAuthBlob();
+        if (!blob) { $('lock-status').textContent = 'No editor key is set up yet. Set one up in blog-edit.html first, then come back.'; return; }
+        window.__authBlob = blob;
+        $('lock-status').textContent = 'Editor key found. Enter your password to unlock publishing.';
+        $('lock-form').classList.remove('hidden');
+      } catch (e) { $('lock-status').textContent = 'Could not reach GitHub: ' + e.message; }
+    })();
+
+    $('unlock-btn').addEventListener('click', async () => {
+      const pw = $('pw').value; const m = $('lock-msg'); m.textContent = ''; m.className = 'msg';
+      try {
+        await unlock(window.__authBlob, pw);
+        $('lock').classList.add('hidden');
+        $('pub').classList.remove('hidden');
+      } catch (e) { m.textContent = 'Wrong password (or corrupt key).'; m.className = 'msg err'; }
+    });
+
+    // Self-test: prove the AES-GCM / PBKDF2 roundtrip the tool relies on, with a
+    // DUMMY token + DUMMY password. No GitHub call, no real key, no commit.
+    $('selftest-btn').addEventListener('click', async () => {
+      const m = $('lock-msg'); m.textContent = 'Running crypto self-test...'; m.className = 'msg';
+      try {
+        const dummyToken = 'ghp_DUMMY_self_test_' + Math.floor(performance.now());
+        const dummyPass = 'correct-horse-battery-staple';
+        const blob = await encryptToken(dummyToken, dummyPass);
+        const back = await decryptToken(blob, dummyPass);
+        let wrong = false;
+        try { await decryptToken(blob, 'wrong-password'); } catch (_) { wrong = true; }
+        if (back === dummyToken && wrong) {
+          m.textContent = 'Self-test PASSED: encrypt -> decrypt roundtrips, and a wrong password fails as expected. The publish path is sound; unlock with your real password to use it.';
+          m.className = 'msg ok';
+        } else { m.textContent = 'Self-test FAILED (roundtrip ' + (back===dummyToken) + ', wrong-pw-rejected ' + wrong + ').'; m.className = 'msg err'; }
+      } catch (e) { m.textContent = 'Self-test error: ' + e.message; m.className = 'msg err'; }
+    });
+
+    // ---- file intake ----
+    const drop = $('drop'), fileInput = $('file');
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); intake(e.dataTransfer.files); });
+    fileInput.addEventListener('change', () => intake(fileInput.files));
+
+    async function intake(list){
+      for (const f of list){
+        const buf = new Uint8Array(await f.arrayBuffer());
+        files.push({ name: f.name, b64: bytesToB64(buf), bytes: buf.length, url: URL.createObjectURL(f) });
+      }
+      render();
+    }
+    function render(){
+      const rows = $('rows'); rows.innerHTML = '';
+      files.forEach((f, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="path">assets/sfx/${f.name}</td>
+          <td><span class="pill">${(f.bytes/1024).toFixed(1)} KB</span></td>
+          <td><button data-play="${i}">Play</button></td>
+          <td><button data-del="${i}">Remove</button></td>`;
+        rows.appendChild(tr);
+      });
+      rows.querySelectorAll('[data-play]').forEach(b => b.onclick = () => new Audio(files[b.dataset.play].url).play());
+      rows.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { files.splice(+b.dataset.del,1); render(); });
+      $('send-btn').disabled = files.length === 0;
+    }
+
+    // ---- publish ----
+    $('send-btn').addEventListener('click', async () => {
+      const m = $('pub-msg'); m.className = 'msg'; m.textContent = 'Publishing ' + files.length + ' file(s)...';
+      $('send-btn').disabled = true;
+      try {
+        const payload = files.map(f => ({ path: 'assets/sfx/' + f.name, b64: f.b64 }));
+        const msg = 'sfx: add ' + files.map(f => f.name).join(', ');
+        const sha = await ghCommit(payload, msg);
+        m.className = 'msg ok';
+        m.textContent = 'Published in commit ' + sha.slice(0,7) + '. The live site redeploys in a few seconds; hard-refresh the game to hear them.';
+        files = []; render();
+      } catch (e) {
+        m.className = 'msg err';
+        m.textContent = 'Publish failed: ' + e.message + (/try again/.test(e.message) ? '\nA parallel push moved main; just press Send again.' : '');
+        $('send-btn').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

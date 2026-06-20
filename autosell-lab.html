@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice — Auto-Sell Reveal</title>
+<style>
+  @font-face { font-family:'Commit Mono'; src:url('assets/fonts/commit_mono_regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Commit Mono'; src:url('assets/fonts/commit_mono_bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+  :root { --bg:#0c0f14; --panel:#13181f; --line:#262e39; --ink:#cdd6e0; --dim2:#7c8794; --accent:#e8c14a; --gold:#ffd24a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; }
+  #wrap { display:flex; height:100vh; width:100vw; }
+  #stage { position:relative; flex:1 1 auto; min-width:0; }
+  canvas { display:block; width:100%; height:100%; }
+  #hud { position:absolute; top:11px; left:13px; font-size:12px; line-height:1.55;
+    color:var(--dim2); pointer-events:none; text-shadow:0 1px 3px #000; }
+  #hud b { color:var(--ink); } #hud .big { color:var(--accent); }
+  #help { position:absolute; bottom:96px; left:13px; font-size:11px; color:var(--dim2);
+    pointer-events:none; text-shadow:0 1px 3px #000; max-width:58%; }
+  #panel { flex:0 0 320px; background:var(--panel); border-left:1px solid var(--line);
+    overflow-y:auto; padding:13px 15px 50px; font-size:12px; }
+  #panel h1 { font-size:13px; margin:2px 0 3px; letter-spacing:.03em; }
+  #panel .sub { color:var(--dim2); font-size:11px; line-height:1.5; margin:0 0 13px; }
+  .group { border-top:1px solid var(--line); padding:11px 0 4px; }
+  .group h2 { font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim2); margin:0 0 9px; }
+  .modes { display:flex; gap:7px; flex-wrap:wrap; }
+  .modes button { flex:1 1 auto; }
+  button { font:inherit; font-size:11px; color:var(--ink); background:#1c232d;
+    border:1px solid var(--line); border-radius:7px; padding:7px 9px; cursor:pointer; }
+  button:hover { border-color:#3a4658; background:#222b36; }
+  button.on { border-color:var(--accent); color:var(--accent); background:#221f12; }
+  .slider { display:block; margin:10px 0; }
+  .slider .lab { display:flex; justify-content:space-between; color:var(--dim2); margin-bottom:3px; }
+  .slider .lab b { color:var(--ink); font-weight:normal; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .notes { color:var(--dim2); font-size:11px; line-height:1.65; }
+  .notes b { color:var(--ink); font-weight:normal; }
+  .big-btn { width:100%; margin-top:10px; padding:9px; border-color:#3a4658; }
+  .seqinfo { color:var(--dim2); font-size:11px; line-height:1.6; }
+  .seqinfo b { color:var(--accent); font-weight:normal; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="hud"></div>
+    <div id="help">
+      You just docked. Fuel fills while the haul sells one ore type at a time, building to the grand total
+      in the brass window. <b>Click</b> the scene to fast-forward (skip), <b>Space</b> to replay. It auto-loops so
+      you can feel each slider as you drag it.
+    </div>
+  </div>
+  <aside id="panel"></aside>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  var DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  var VW = 0, VH = 0;
+  function resize() {
+    var r = cv.getBoundingClientRect();
+    // fall back to the viewport if layout hasn't resolved yet (0-size boot race)
+    VW = r.width || Math.max(320, window.innerWidth - 320);
+    VH = r.height || window.innerHeight;
+    cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- Real Sluice ore data (color / value / label), so the lab reads true ----
+  var ORES = {
+    coal:       { color:'#1c1c1c', value:5,     label:'Coal' },
+    copper:     { color:'#c97534', value:12,    label:'Copper' },
+    bauxite:    { color:'#c85b2e', value:25,    label:'Bauxite' },
+    iron:       { color:'#8f9294', value:35,    label:'Iron' },
+    pyrite:     { color:'#D4B33A', value:60,    label:'Pyrite' },
+    silver:     { color:'#D8D8E8', value:90,    label:'Silver' },
+    cinnabar:   { color:'#c12838', value:140,   label:'Cinnabar' },
+    methaneice: { color:'#bfe6ff', value:180,   label:'Methane Ice' },
+    gold:       { color:'#FFD700', value:200,   label:'Gold' },
+    obsidian:   { color:'#5a4a66', value:280,   label:'Obsidian' },
+    amber:      { color:'#e89a2a', value:350,   label:'Amber' },
+    fossil:     { color:'#7a5436', value:600,   label:'Fossil' },
+    uranium:    { color:'#5fff5a', value:800,   label:'Uranium' },
+    emerald:    { color:'#50C878', value:900,   label:'Emerald' },
+    ruby:       { color:'#E0115F', value:1400,  label:'Ruby' },
+    tanzanite:  { color:'#7a5fff', value:2000,  label:'Tanzanite' },
+    diamond:    { color:'#B9F2FF', value:3000,  label:'Diamond' },
+    painite:    { color:'#d36b8c', value:6000,  label:'Painite' },
+    unobtanium: { color:'#FF00FF', value:12000, label:'Unobtanium' },
+    oil:        { color:'#3a6b3a', value:18,    label:'Crude Oil', unit:'gal' }
+  };
+
+  // ---- Fake hauls (key -> count). Ordered as if freshly mined. ----
+  var HAULS = {
+    light:   [ ['coal',12], ['copper',8], ['bauxite',5], ['iron',3], ['pyrite',2] ],
+    medium:  [ ['coal',9], ['iron',7], ['silver',5], ['gold',4], ['amber',3], ['oil',14], ['ruby',2] ],
+    jackpot: [ ['coal',6], ['iron',5], ['gold',6], ['emerald',4], ['oil',22], ['tanzanite',3], ['diamond',2], ['painite',2], ['unobtanium',1] ]
+  };
+
+  // ---- Levers (defaults = the "Impactful but classy" preset) ----
+  // Cadence is deliberately readable: each ore holds long enough to register
+  // the name + count + payout before the next pops. "Fast but impactful" lives
+  // in the juice (pop, coins, shake, glow), not in a blink-fast reveal.
+  var L = {
+    gapStart: 955,    // ms between the first reveals
+    gapAccel: 0.70,   // each successive gap multiplies by this (cadence tightens)
+    gapFloor: 620,    // ms, fastest the cadence is allowed to get (still readable)
+    popIn: 310,       // ms, card scale-in duration
+    overshoot: 1.11,  // peak of the back-ease pop (1.0 = no overshoot)
+    tau: 105,         // ms, odometer time-constant (lower = snappier count-up)
+    shake: 2,         // px, finale screen-shake amplitude
+    particles: 40,    // base coin/chip burst count per beat
+    dim: 0.00,        // vignette darkness over the rest of the scene
+    finaleHold: 615,  // ms extra anticipation pause before the richest stack
+    finalePunch: 1.25,// scale slam on the finale card
+    floatRise: 98,    // px a floaters card drifts upward after it pops (eases to this)
+    floatLife: 1420,  // ms a floaters card lingers on screen before it has fully faded
+    floatFade: 475,   // ms of fade-out at the end of a card's life
+    stampDelay: 520,  // ms closure pause after the last ore pop before the grand-total stamp commits
+    stampIn: 360      // ms the grand-total finale takes to land (drop / draw / flip)
+  };
+  var PRESETS = {
+    subtle:    { gapStart:800, gapAccel:0.96, gapFloor:620, popIn:270, overshoot:1.05, tau:190, shake:2,  particles:7,  dim:0.34, finaleHold:520, finalePunch:1.08, floatRise:70,  floatLife:1650, floatFade:480, stampDelay:620, stampIn:420 },
+    impactful: { gapStart:955, gapAccel:0.70, gapFloor:620, popIn:310, overshoot:1.11, tau:105, shake:2,  particles:40, dim:0.00, finaleHold:615, finalePunch:1.25, floatRise:98,  floatLife:1420, floatFade:475, stampDelay:520, stampIn:360 },
+    full:      { gapStart:620, gapAccel:0.92, gapFloor:470, popIn:200, overshoot:1.24, tau:110, shake:11, particles:30, dim:0.62, finaleHold:640, finalePunch:1.32, floatRise:112, floatLife:1300, floatFade:360, stampDelay:440, stampIn:300 }
+  };
+
+  // ---- Mode / style state ----
+  var preset = 'impactful';
+  var haulKey = 'medium';
+  var style = 'floaters';   // floaters | ledger
+  var richLast = true;      // order ascending so the biggest stack lands last
+  var accelerate = true;    // tighten the cadence toward the finale
+  var audioOn = false;
+  var finaleStyle = 'flap'; // stamp | ledger | flap — how the grand total punctuates the sequence
+
+  // ================= helpers =================
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function smooth(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function easeOutBack(p, ov) {
+    // s tuned so peak height ~= ov (s=1.70158 overshoots ~10%)
+    var s = Math.max(0.05, 17.0 * (ov - 1));
+    var t = p - 1;
+    return 1 + (s + 1) * t * t * t + s * t * t;
+  }
+  function roundRect(x, y, w, h, r) {
+    r = Math.min(r, w * 0.5, h * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // ---- Pixel stencil font (ported verbatim from the game console, UI_STYLE.md §7) ----
+  // 5×7 bitmap, all-caps, integer-pixel-aligned, no AA. 'X' = on-pixel. This IS the
+  // in-game readout font, so reusing it is the single biggest lever for matching the HUD.
+  var STENCIL_FONT = {
+    'A': ['.XXX.','X...X','X...X','XXXXX','X...X','X...X','X...X'],
+    'B': ['XXXX.','X...X','X...X','XXXX.','X...X','X...X','XXXX.'],
+    'C': ['.XXXX','X....','X....','X....','X....','X....','.XXXX'],
+    'D': ['XXXX.','X...X','X...X','X...X','X...X','X...X','XXXX.'],
+    'E': ['XXXXX','X....','X....','XXXX.','X....','X....','XXXXX'],
+    'F': ['XXXXX','X....','X....','XXXX.','X....','X....','X....'],
+    'G': ['.XXXX','X....','X....','X.XXX','X...X','X...X','.XXXX'],
+    'H': ['X...X','X...X','X...X','XXXXX','X...X','X...X','X...X'],
+    'I': ['XXXXX','..X..','..X..','..X..','..X..','..X..','XXXXX'],
+    'J': ['....X','....X','....X','....X','....X','X...X','.XXX.'],
+    'K': ['X...X','X..X.','X.X..','XX...','X.X..','X..X.','X...X'],
+    'L': ['X....','X....','X....','X....','X....','X....','XXXXX'],
+    'M': ['X...X','XX.XX','X.X.X','X.X.X','X...X','X...X','X...X'],
+    'N': ['X...X','X...X','XX..X','X.X.X','X..XX','X...X','X...X'],
+    'O': ['.XXX.','X...X','X...X','X...X','X...X','X...X','.XXX.'],
+    'P': ['XXXX.','X...X','X...X','XXXX.','X....','X....','X....'],
+    'Q': ['.XXX.','X...X','X...X','X...X','X.X.X','X..X.','.XX.X'],
+    'R': ['XXXX.','X...X','X...X','XXXX.','X.X..','X..X.','X...X'],
+    'S': ['.XXXX','X....','X....','.XXX.','....X','....X','XXXX.'],
+    'T': ['XXXXX','..X..','..X..','..X..','..X..','..X..','..X..'],
+    'U': ['X...X','X...X','X...X','X...X','X...X','X...X','.XXX.'],
+    'V': ['X...X','X...X','X...X','X...X','X...X','.X.X.','..X..'],
+    'W': ['X...X','X...X','X...X','X.X.X','X.X.X','XX.XX','X...X'],
+    'X': ['X...X','X...X','.X.X.','..X..','.X.X.','X...X','X...X'],
+    'Y': ['X...X','X...X','.X.X.','..X..','..X..','..X..','..X..'],
+    'Z': ['XXXXX','....X','...X.','..X..','.X...','X....','XXXXX'],
+    '0': ['.XXX.','X...X','X..XX','X.X.X','XX..X','X...X','.XXX.'],
+    '1': ['..X..','.XX..','..X..','..X..','..X..','..X..','.XXX.'],
+    '2': ['.XXX.','X...X','....X','...X.','..X..','.X...','XXXXX'],
+    '3': ['XXXX.','....X','....X','.XXX.','....X','....X','XXXX.'],
+    '4': ['X...X','X...X','X...X','XXXXX','....X','....X','....X'],
+    '5': ['XXXXX','X....','X....','XXXX.','....X','....X','XXXX.'],
+    '6': ['.XXXX','X....','X....','XXXX.','X...X','X...X','.XXX.'],
+    '7': ['XXXXX','....X','...X.','...X.','..X..','..X..','..X..'],
+    '8': ['.XXX.','X...X','X...X','.XXX.','X...X','X...X','.XXX.'],
+    '9': ['.XXX.','X...X','X...X','.XXXX','....X','....X','XXXX.'],
+    ' ': ['.....','.....','.....','.....','.....','.....','.....'],
+    '.': ['.....','.....','.....','.....','.....','.....','..X..'],
+    ',': ['.....','.....','.....','.....','.....','..X..','.X...'],
+    '-': ['.....','.....','.....','XXXXX','.....','.....','.....'],
+    ':': ['.....','.....','..X..','.....','.....','..X..','.....'],
+    '/': ['....X','...X.','...X.','..X..','..X..','.X...','.X...'],
+    '$': ['..X..','.XXXX','X.X..','.XXX.','..X.X','XXXX.','..X..']
+  };
+  function drawStencilGlyph(ch, x, y, scale, color) {
+    var rows = STENCIL_FONT[ch] || STENCIL_FONT[' '];
+    ctx.fillStyle = color;
+    for (var row = 0; row < 7; row++) {
+      var line = rows[row];
+      for (var col = 0; col < 5; col++) {
+        if (line.charCodeAt(col) === 88) ctx.fillRect(x + col * scale, y + row * scale, scale, scale);
+      }
+    }
+  }
+  function drawStencilText(str, x, y, scale, color) {
+    var s = (str + '').toUpperCase();
+    var advance = 5 * scale + scale;
+    for (var i = 0; i < s.length; i++) drawStencilGlyph(s.charAt(i), x + i * advance, y, scale, color);
+    return s.length * advance - scale;
+  }
+  function stencilTextWidth(str, scale) {
+    var n = (str + '').length;
+    return n === 0 ? 0 : n * (5 * scale + scale) - scale;
+  }
+
+  // tier 0..3 from a line's dollar total -> drives size, particles, shake, color
+  function tierOf(total) {
+    if (total >= 6000) return 3;
+    if (total >= 1500) return 2;
+    if (total >= 150) return 1;
+    return 0;
+  }
+  var TIER_ACCENT = ['#cdd6e0', '#f0b34a', '#ff9a3c', '#ffe27a']; // neutral, amber, hot, white-gold
+  var TIER_PMUL = [0.55, 1.0, 1.7, 2.6];
+  var TIER_SHAKE = [0.0, 0.18, 0.45, 1.0];
+
+  // ================= sequence build =================
+  var items = [];      // [{key,label,color,count,unit,total,tier}]
+  var grand = 0;
+  function buildItems() {
+    items = [];
+    grand = 0;
+    var rows = HAULS[haulKey];
+    for (var i = 0; i < rows.length; i++) {
+      var key = rows[i][0], count = rows[i][1], def = ORES[key];
+      var total = count * def.value;
+      items.push({ key: key, label: def.label, color: def.color, count: count,
+        unit: def.unit || '', total: total, tier: tierOf(total) });
+      grand += total;
+    }
+    if (richLast) items.sort(function (a, b) { return a.total - b.total; });
+  }
+
+  // ================= runtime state =================
+  var beats = [];          // {item, at, tele, fired}
+  var introMs = 260, endMs = 0;
+  var now = 0, state = 'run', settleMs = 0; // run | settle
+  var targetTotal = 0, displayTotal = 0;
+  var startFuel = 0.18, fuelProg = 0;
+  var shakeAmp = 0;
+  var cards = [], parts = [], floats = [];
+  var finaleFiredAt = -1, cashFlash = 0;
+  // grand-total finale: commits one closure-pause after the last ore pop
+  var finaleAt = -1, finaleHitDone = false;
+
+  function startSeq() {
+    buildItems();
+    // timeline
+    beats = [];
+    var t = introMs;
+    for (var i = 0; i < items.length; i++) {
+      var last = (i === items.length - 1);
+      if (i > 0) {
+        var gap = accelerate ? Math.max(L.gapFloor, L.gapStart * Math.pow(L.gapAccel, i - 1)) : L.gapStart;
+        t += gap;
+      }
+      if (last) t += L.finaleHold; // breath before the biggest stack
+      var teleMs = (items[i].tier >= 2 || last) ? 170 : 0;
+      beats.push({ item: items[i], at: t, tele: teleMs, fired: false });
+    }
+    endMs = (beats.length ? beats[beats.length - 1].at : introMs) + 1000;
+    now = 0; state = 'run'; settleMs = 0;
+    targetTotal = 0; displayTotal = 0;
+    startFuel = rand(0.12, 0.28); fuelProg = 0;
+    shakeAmp = 0; cards = []; parts = []; floats = [];
+    finaleFiredAt = -1; cashFlash = 0;
+    finaleAt = -1; finaleHitDone = false;
+  }
+
+  // bottom console band — the real game keeps fuel + cash down here, so the lab does too
+  function consoleRect() {
+    var h = clamp(VH * 0.13, 66, 84);
+    return { x: 0, y: VH - h, w: VW, h: h };
+  }
+  function cashRect() {
+    var c = consoleRect();
+    var w = Math.min(210, Math.max(150, VW * 0.28)), h = 50;
+    return { x: c.x + c.w - w - 16, y: c.y + (c.h - h) / 2, w: w, h: h };
+  }
+  function rigBase() { return { cx: VW * 0.5, gy: VH * 0.74 }; }
+
+  function fireBeat(b, idx) {
+    var it = b.item;
+    var rb = rigBase();
+    var last = (idx === items.length - 1);
+    // spawn point: a floaters card pops above the rig, then drifts up + fades
+    // (older cards keep rising as the next pops, so each gets read time);
+    // or appended to the ledger stack
+    var sx, sy;
+    if (style === 'floaters') {
+      sx = rb.cx; sy = rb.gy - 96;
+      floats.push({ it: it, x: sx, y0: sy, born: now, slam: last ? L.finalePunch : 1.0,
+        slamAt: now, last: last, life: last ? 1e9 : L.floatLife });
+    } else {
+      sx = VW * 0.5;
+      var slot = cards.length;
+      sy = VH * 0.26 + slot * 42;
+      cards.push({ it: it, x: sx, y: sy, born: now, slam: last ? L.finalePunch : 1.0, slamAt: now });
+    }
+    // coin + ore-chip burst — each chip arcs up off the rig, falls under gravity,
+    // lands on the dock floor, rests a beat, then fades. Lifecycle in update/draw.
+    var groundY = rb.gy + 18;
+    var n = Math.round(L.particles * TIER_PMUL[it.tier]);
+    for (var k = 0; k < n; k++) {
+      var gold = Math.random() < 0.62;
+      var sp = rand(40, 150) * (1 + it.tier * 0.22);
+      var ang = rand(-Math.PI, 0); // upward fan
+      parts.push({
+        x: sx + rand(-6, 6), y: sy + 6,
+        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - rand(30, 90),
+        g: rand(700, 1000),
+        sz: gold ? rand(2, 4) : rand(2, 3),
+        col: gold ? '#ffd24a' : it.color, gold: gold,
+        landed: false, restY: groundY + rand(-1, 4),
+        landT: 0, restLife: rand(0.55, 1.25), bounces: gold ? 1 : 0
+      });
+    }
+    // the haul credits the bank as the card pops: the counter flashes + ticks up
+    // (no coin flies across the screen anymore)
+    targetTotal += it.total;
+    cashFlash = Math.max(cashFlash, 0.5 + 0.5 * (it.tier / 3));
+    // sound: the pop blip + the counter tick land together
+    if (audioOn) { blip(idx, it.tier); tick(it.tier); }
+    // shake (scaled by tier; the finale adds the full amplitude)
+    shakeAmp = Math.max(shakeAmp, L.shake * TIER_SHAKE[it.tier]);
+    if (idx === items.length - 1) {
+      shakeAmp = Math.max(shakeAmp, L.shake);
+      finaleFiredAt = now;
+      // the richest stack is the climax: let it FULLY pop in, then hold the closure
+      // beat, before the board clears the floats + commits the grand total. Without the
+      // +popIn the clear-fade started mid-entrance and the last card read as cut off.
+      finaleAt = now + L.popIn + L.stampDelay;
+      if (audioOn) chord();
+    }
+  }
+
+  function skip() {
+    // fast-forward: complete everything, show the richest stack at rest
+    for (var i = 0; i < beats.length; i++) beats[i].fired = true;
+    targetTotal = grand; displayTotal = grand; fuelProg = 1;
+    cashFlash = 1; shakeAmp = Math.max(shakeAmp, L.shake * 0.7);
+    parts = [];
+    var rb = rigBase();
+    if (style === 'floaters') {
+      floats = [];
+      var li = items.length - 1;
+      if (li >= 0) floats.push({ it: items[li], x: rb.cx, y0: rb.gy - 96, born: now - 600,
+        slam: 1.0, slamAt: now - 400, last: true, life: 1e9 });
+    } else {
+      cards = [];
+      for (var c = 0; c < items.length; c++) {
+        cards.push({ it: items[c], x: VW * 0.5, y: VH * 0.26 + c * 42, born: now - L.popIn, slam: 1.0, slamAt: now - 400 });
+      }
+    }
+    state = 'settle'; settleMs = 900;
+    now = Math.max(now, endMs);
+    finaleAt = now - 600; finaleHitDone = true; // show the grand-total stamp at rest
+  }
+
+  // ================= update =================
+  function update(dtRaw) {
+    var dt = Math.min(0.05, dtRaw);
+    now += dt * 1000;
+
+    if (state === 'run') {
+      for (var i = 0; i < beats.length; i++) {
+        if (!beats[i].fired && now >= beats[i].at) { beats[i].fired = true; fireBeat(beats[i], i); }
+      }
+      if (now >= endMs) { state = 'settle'; settleMs = 1100; }
+    } else {
+      settleMs -= dt * 1000;
+      if (settleMs <= 0) startSeq();
+    }
+
+    // fuel fills across the reveal window, finishing with the last beat
+    var fEnd = (beats.length ? beats[beats.length - 1].at : introMs);
+    var fp = smooth((now - introMs) / Math.max(1, fEnd - introMs));
+    fuelProg = Math.max(fuelProg, fp);
+
+    // odometer easing toward target (frame-rate independent)
+    var k = 1 - Math.exp(-dt / (L.tau / 1000));
+    displayTotal += (targetTotal - displayTotal) * k;
+    if (Math.abs(targetTotal - displayTotal) < 0.5) displayTotal = targetTotal;
+
+    cashFlash *= Math.pow(0.0025, dt); // fast decay
+    shakeAmp *= Math.pow(0.0009, dt);  // settle the shake
+
+    // the grand total commits with a low closure hit + a fresh counter flash
+    // (a deliberate register-drop below the per-ore blips)
+    if (finaleAt >= 0 && !finaleHitDone && now >= finaleAt) {
+      finaleHitDone = true;
+      cashFlash = 1;
+      if (finaleStyle !== 'ledger') shakeAmp = Math.max(shakeAmp, L.shake * 0.85); // ledger is the quiet one
+      if (audioOn) stampHit();
+    }
+
+    // payout chips: fly -> land on the dock floor -> rest -> fade
+    for (var p = parts.length - 1; p >= 0; p--) {
+      var pt = parts[p];
+      if (pt.landed) {
+        pt.landT += dt;
+        if (pt.landT >= pt.restLife) parts.splice(p, 1);
+        continue;
+      }
+      pt.vy += pt.g * dt;
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      if (pt.y >= pt.restY) {
+        pt.y = pt.restY;
+        if (pt.bounces > 0 && pt.vy > 90) {
+          pt.bounces--;            // one small metallic bounce for coins
+          pt.vy = -pt.vy * 0.34;
+          pt.vx *= 0.55;
+        } else {
+          pt.landed = true; pt.landT = 0; pt.vx = 0; pt.vy = 0;
+        }
+      }
+    }
+    // floaters drift up (position is a pure function of age, computed at draw),
+    // and each non-finale card is retired once it has fully faded. The finale
+    // card (life = Infinity) stays up and fades only on settle.
+    for (var fi = floats.length - 1; fi >= 0; fi--) {
+      if (!floats[fi].last && (now - floats[fi].born) > floats[fi].life) floats.splice(fi, 1);
+    }
+  }
+
+  // ================= render =================
+  function draw() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    // shake offset
+    var sx = (Math.random() * 2 - 1) * shakeAmp, sy = (Math.random() * 2 - 1) * shakeAmp;
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    drawBackdrop();
+    drawRig();
+
+    // vignette dim spotlight (eases in during the reveal, out as it settles)
+    var dimT = state === 'settle' ? clamp((endMs + 600 - now) / 600, 0, 1) : smooth(now / (introMs + 120));
+    var dim = L.dim * dimT;
+    if (dim > 0.01) {
+      var g = ctx.createRadialGradient(VW * 0.5, VH * 0.48, Math.min(VW, VH) * 0.18, VW * 0.5, VH * 0.5, Math.max(VW, VH) * 0.62);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(2,3,5,' + dim.toFixed(3) + ')');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VW, VH);
+    }
+
+    drawTelegraph();
+    drawParticles();
+    drawCards();
+    drawFinale();
+    drawConsole();
+    drawFuel();
+    drawCash();
+
+    ctx.restore();
+    drawHud();
+
+    // liveness tag: if the number climbs, the RAF loop is running; if it sits at 0, it isn't
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = 'rgba(124,135,148,0.55)'; ctx.font = '400 10px "Commit Mono", monospace';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText('build B · frame ' + frames, VW - 10, 12);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawBackdrop() {
+    var g = ctx.createLinearGradient(0, 0, 0, VH);
+    g.addColorStop(0, '#0a0c11');
+    g.addColorStop(0.62, '#0d1017');
+    g.addColorStop(1, '#15110b');
+    ctx.fillStyle = g; ctx.fillRect(-20, -20, VW + 40, VH + 40);
+    // faint dust motes
+    ctx.fillStyle = 'rgba(120,135,150,0.05)';
+    for (var i = 0; i < 40; i++) {
+      var x = (i * 97.3) % VW, y = (i * 53.7) % (VH * 0.7);
+      ctx.fillRect(x, y, 2, 2);
+    }
+    // ground (sits just under the pump pad, tracks the rig)
+    var gy = rigBase().gy;
+    ctx.fillStyle = '#0a0805';
+    ctx.fillRect(0, gy + 18, VW, VH);
+    ctx.fillStyle = '#1c150c';
+    ctx.fillRect(0, gy + 18, VW, 2);
+  }
+
+  function drawRig() {
+    var rb = rigBase(), cx = rb.cx, gy = rb.gy;
+    // pump pad
+    ctx.fillStyle = '#23262c'; ctx.fillRect(cx - 78, gy + 14, 156, 6);
+    ctx.fillStyle = '#15171b'; ctx.fillRect(cx - 78, gy + 20, 156, 2);
+    for (var s = -70; s < 70; s += 16) { ctx.fillStyle = '#cda23a22'; ctx.fillRect(cx + s, gy + 15, 8, 4); }
+    // little miner rig silhouette
+    ctx.fillStyle = '#2c3138'; roundRect(cx - 26, gy - 26, 52, 40, 5); ctx.fill();
+    ctx.fillStyle = '#373d46'; roundRect(cx - 20, gy - 22, 30, 18, 3); ctx.fill(); // cockpit
+    ctx.fillStyle = '#7fd4ff44'; roundRect(cx - 18, gy - 20, 26, 13, 2); ctx.fill();
+    ctx.fillStyle = '#1b1e23'; ctx.fillRect(cx + 12, gy - 8, 18, 8); // drill mount
+    ctx.fillStyle = '#cdd6e0'; // drill
+    ctx.beginPath(); ctx.moveTo(cx + 30, gy - 7); ctx.lineTo(cx + 44, gy - 4); ctx.lineTo(cx + 30, gy - 1); ctx.fill();
+    // blinking deck lights
+    var bl = (Math.sin(now / 240) > 0.2) ? 1 : 0.25;
+    ctx.fillStyle = 'rgba(255,90,70,' + (0.4 + 0.6 * bl) + ')'; ctx.fillRect(cx - 24, gy - 30, 3, 3);
+    ctx.fillStyle = 'rgba(120,220,255,' + (0.4 + 0.6 * (1 - bl)) + ')'; ctx.fillRect(cx + 22, gy - 30, 3, 3);
+    // refuel hose glow when filling — runs from the console fuel gauge up to the rig
+    if (fuelProg < 1) {
+      var c = consoleRect();
+      var hx = c.x + 70, hy = c.y - 2;
+      ctx.strokeStyle = 'rgba(232,193,74,0.35)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(cx - 130, gy + 46, cx - 26, gy - 2); ctx.stroke();
+    }
+  }
+
+  function drawTelegraph() {
+    // build a warm glow just before a high-tier or finale stack lands
+    for (var i = 0; i < beats.length; i++) {
+      var b = beats[i];
+      if (b.fired || !b.tele) continue;
+      var lead = b.at - now;
+      if (lead > 0 && lead < b.tele) {
+        var p = 1 - lead / b.tele; // 0..1 building
+        var rb = rigBase();
+        var gx = style === 'floaters' ? rb.cx : VW * 0.5;
+        var gyy = style === 'floaters' ? rb.gy - 94 : VH * 0.30 + cards.length * 30;
+        var rad = 30 + p * 60;
+        var gg = ctx.createRadialGradient(gx, gyy, 2, gx, gyy, rad);
+        var a = 0.30 * p;
+        gg.addColorStop(0, 'rgba(255,226,122,' + a.toFixed(3) + ')');
+        gg.addColorStop(1, 'rgba(255,226,122,0)');
+        ctx.fillStyle = gg; ctx.fillRect(gx - rad, gyy - rad, rad * 2, rad * 2);
+      }
+    }
+  }
+
+  function drawParticles() {
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      // alpha: full while airborne + a brief hold on landing, then ease out
+      var a = 1;
+      if (p.landed) {
+        var hold = p.restLife * 0.35;
+        a = p.landT <= hold ? 1 : clamp(1 - (p.landT - hold) / (p.restLife - hold), 0, 1);
+        a = a * a; // ease the tail
+      }
+      if (a <= 0.01) continue;
+      ctx.globalAlpha = a;
+      var z = Math.max(1, p.sz | 0);
+      var px = p.x | 0, py = p.y | 0;
+      if (p.landed) {
+        // lying flat on the deck: a short sliver + a 1px contact shadow beneath it
+        var fh = Math.max(1, (z * 0.5) | 0);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(px - 1, py + fh, z + 2, 1);
+        ctx.fillStyle = p.col; ctx.fillRect(px, py, z + 1, fh);
+        if (p.gold) { ctx.fillStyle = 'rgba(255,240,200,0.5)'; ctx.fillRect(px, py, z + 1, 1); }
+      } else {
+        // airborne chip: solid square, coins catch a shimmer pixel
+        ctx.fillStyle = p.col; ctx.fillRect(px, py, z, z);
+        if (p.gold) { ctx.fillStyle = 'rgba(255,245,210,0.7)'; ctx.fillRect(px, py, 1, 1); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCardPlate(cd, ox, oy, scale) {
+    var it = cd.it;
+    var big = scale;
+    var fontMain = Math.round(12 * big), fontVal = Math.round((it.tier >= 2 ? 17 : 14) * big);
+    var pad = 9 * big;
+    ctx.font = '700 ' + fontVal + 'px "Commit Mono", monospace';
+    var valStr = '+$' + it.total.toLocaleString();
+    var nameStr = it.count + ' x ' + it.label + (it.unit ? ' (' + it.count + ' ' + it.unit + ')' : '');
+    var wVal = ctx.measureText(valStr).width;
+    ctx.font = (it.tier >= 1 ? '700 ' : '400 ') + fontMain + 'px "Commit Mono", monospace';
+    var wName = ctx.measureText(nameStr).width;
+    var sw = 14 * big; // swatch
+    var cw = pad + sw + 8 * big + Math.max(wName, wVal) + pad;
+    var ch = pad * 2 + fontMain + 4 * big + fontVal;
+    var x = ox - cw * 0.5, y = oy - ch * 0.5;
+
+    // steel placard — opaque plate, softly rounded corners, dark outline, integer-snapped.
+    // Gold (#ffd24a) is reserved for the value figure (UI_STYLE.md §6 money code);
+    // tier reads from the bigger value type + the ore-colour chip, not a coloured frame.
+    x = Math.round(x); y = Math.round(y); cw = Math.round(cw); ch = Math.round(ch);
+    var cr = Math.max(3, Math.round(4 * big)); // corner radius scales with the card
+    ctx.fillStyle = '#1c232e'; roundRect(x, y, cw, ch, cr); ctx.fill();
+    // bevel: highlight top/left, shadow bottom/right — inset to meet the rounded corners
+    ctx.fillStyle = '#2b3340'; ctx.fillRect(x + cr, y, cw - cr * 2, 1); ctx.fillRect(x, y + cr, 1, ch - cr * 2);
+    ctx.fillStyle = '#0e1219'; ctx.fillRect(x + cr, y + ch - 1, cw - cr * 2, 1); ctx.fillRect(x + cw - 1, y + cr, 1, ch - cr * 2);
+    // dark rounded outline
+    ctx.strokeStyle = '#070a0e'; ctx.lineWidth = 1; roundRect(x + 0.5, y + 0.5, cw - 1, ch - 1, cr); ctx.stroke();
+    // corner rivets (pulled in to clear the rounding)
+    ctx.fillStyle = '#39424f';
+    ctx.fillRect(x + cr + 1, y + cr + 1, 1, 1); ctx.fillRect(x + cw - cr - 2, y + cr + 1, 1, 1);
+    ctx.fillRect(x + cr + 1, y + ch - cr - 2, 1, 1); ctx.fillRect(x + cw - cr - 2, y + ch - cr - 2, 1, 1);
+
+    // swatch — ore-colour chip with hard highlight/shadow edges
+    sw = Math.round(sw);
+    var sx = Math.round(x + pad), sy = Math.round(y + ch * 0.5 - sw * 0.5);
+    ctx.fillStyle = it.color; ctx.fillRect(sx, sy, sw, sw);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(sx, sy, sw, 1); ctx.fillRect(sx, sy, 1, sw);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(sx, sy + sw - 1, sw, 1); ctx.fillRect(sx + sw - 1, sy, 1, sw);
+
+    var tx = Math.round(sx + sw + 8 * big);
+    // name
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.font = (it.tier >= 1 ? '700 ' : '400 ') + fontMain + 'px "Commit Mono", monospace';
+    ctx.fillStyle = '#cdd6e0';
+    ctx.fillText(nameStr, tx, Math.round(y + pad));
+    // value — money gold, no glow
+    ctx.font = '700 ' + fontVal + 'px "Commit Mono", monospace';
+    ctx.fillStyle = '#ffd24a';
+    ctx.fillText(valStr, tx, Math.round(y + pad + fontMain + 4 * big));
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function cardScale(cd) {
+    var pin = clamp((now - cd.born) / L.popIn, 0, 1);
+    var sc = easeOutBack(pin, L.overshoot);
+    var slam = 1 + (cd.slam - 1) * Math.exp(-(now - cd.slamAt) / 200); // brief finale slam, decays
+    return sc * slam;
+  }
+  // a floaters card eases upward after it pops, asymptoting to L.floatRise px
+  function floatRiseAt(age) { return L.floatRise * (1 - Math.exp(-age / 480)); }
+  // alpha: full while readable, then a tail fade; the finale instead holds and fades on settle
+  function floatAlpha(fc) {
+    // Split-flap finale wants a CLEAN stage: clear EVERY card (hero included) off
+    // the board before the departure board appears, rather than letting them
+    // linger behind it. Cards hold through the first of the closure pause, then
+    // fade out so they're gone exactly as the board commits at finaleAt.
+    if (finaleStyle === 'flap' && finaleAt >= 0) {
+      var clearWin = Math.min(L.stampDelay * 0.55, 300);
+      var clr = clamp((finaleAt - now) / clearWin, 0, 1);
+      var nat;
+      if (fc.last) { nat = 1; }
+      else {
+        var a0 = now - fc.born, fs0 = fc.life - L.floatFade;
+        nat = (a0 <= fs0) ? 1 : clamp(1 - (a0 - fs0) / L.floatFade, 0, 1);
+      }
+      return Math.min(nat, clr);
+    }
+    if (fc.last) {
+      if (state === 'settle') return clamp(settleMs / 700, 0, 1);
+      // hand off to the grand-total stamp: the hero ore card fades as the stamp commits
+      if (finaleAt >= 0 && now >= finaleAt) return clamp(1 - (now - finaleAt) / 280, 0, 1);
+      return 1;
+    }
+    var age = now - fc.born;
+    var fadeStart = fc.life - L.floatFade;
+    if (age <= fadeStart) return 1;
+    return clamp(1 - (age - fadeStart) / L.floatFade, 0, 1);
+  }
+
+  function drawCards() {
+    if (style === 'floaters') {
+      // each card pops at the base, drifts up to make room for the next, then fades
+      for (var i = 0; i < floats.length; i++) {
+        var fc = floats[i];
+        var a = floatAlpha(fc);
+        if (a <= 0.002) continue;
+        ctx.globalAlpha = a;
+        drawCardPlate(fc, fc.x, fc.y0 - floatRiseAt(now - fc.born), cardScale(fc));
+        ctx.globalAlpha = 1;
+      }
+    } else {
+      for (var j = 0; j < cards.length; j++) {
+        var cd = cards[j];
+        drawCardPlate(cd, cd.x, cd.y, cardScale(cd));
+      }
+    }
+  }
+
+  // ---- Grand-total finale: a separate, higher-tier "TOTAL FROM LOAD" beat that
+  // punctuates the per-ore drip. Three switchable treatments share the same
+  // closure logic (a pause, then a framed/ruled restatement of the whole haul). ----
+  function drawFinale() {
+    if (finaleAt < 0 || now < finaleAt) return;
+    var age = now - finaleAt;
+    var fade = state === 'settle' ? clamp(settleMs / 700, 0, 1) : 1;
+    if (fade <= 0.002) return;
+    var fx = VW * 0.5, fy = VH * 0.42;
+    ctx.save();
+    ctx.globalAlpha = fade;
+    if (finaleStyle === 'ledger') drawFinaleLedger(fx, fy, age);
+    else if (finaleStyle === 'flap') drawFinaleFlap(fx, fy, age);
+    else drawFinaleStamp(fx, fy, age);
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.shadowBlur = 0;
+  }
+
+  // 1) ASSAY STAMP — a heavy steel plate falls (accelerating), hits with a squash,
+  // and the figure is struck on it under a gold rule. Reads as a valuation chop.
+  function drawFinaleStamp(fx, fy, age) {
+    var num = '$' + grand.toLocaleString();
+    var inT = clamp(age / L.stampIn, 0, 1);
+    var fall = inT * inT;                 // gravity-like acceleration into the floor
+    var yoff = (1 - fall) * -80;
+    var tdn = L.stampIn;
+    var sq = (age >= tdn && age < tdn + 200) ? Math.sin((age - tdn) / 200 * Math.PI) : 0;
+    ctx.font = '700 40px "Commit Mono", monospace';
+    var wNum = ctx.measureText(num).width;
+    var pw = Math.max(wNum + 70, 240), ph = 112;
+    var px = fx - pw * 0.5, py = fy - ph * 0.5 + yoff, cyc = py + ph * 0.5;
+    ctx.save();
+    ctx.translate(fx, cyc); ctx.scale(1 + 0.12 * sq, 1 - 0.16 * sq); ctx.translate(-fx, -cyc);
+    // drop shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 12;
+    var g = ctx.createLinearGradient(0, py, 0, py + ph);
+    g.addColorStop(0, '#2b323f'); g.addColorStop(0.5, '#1d2531'); g.addColorStop(1, '#12161e');
+    ctx.fillStyle = g; roundRect(px, py, pw, ph, 9); ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    // gold double rule
+    ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 2; roundRect(px + 5, py + 5, pw - 10, ph - 10, 6); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,210,74,0.30)'; ctx.lineWidth = 1; roundRect(px + 9, py + 9, pw - 18, ph - 18, 4); ctx.stroke();
+    // corner rivets
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    [[px + 15, py + 15], [px + pw - 15, py + 15], [px + 15, py + ph - 15], [px + pw - 15, py + ph - 15]]
+      .forEach(function (c) { ctx.beginPath(); ctx.arc(c[0], c[1], 2.2, 0, 7); ctx.fill(); });
+    // label
+    ctx.fillStyle = '#8b97a6'; ctx.font = '700 11px "Commit Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('TOTAL FROM LOAD', fx, py + 30);
+    // figure
+    ctx.font = '700 40px "Commit Mono", monospace';
+    ctx.shadowColor = 'rgba(255,210,74,0.6)'; ctx.shadowBlur = 12 + 16 * cashFlash;
+    ctx.fillStyle = '#ffd24a'; ctx.fillText(num, fx, py + 72);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    // single white impact wash, fading fast right after touchdown
+    var fl = clamp(1 - (age - tdn) / 220, 0, 1) * (age >= tdn ? 1 : 0);
+    if (fl > 0.02) { ctx.fillStyle = 'rgba(255,245,220,' + (0.15 * fl).toFixed(3) + ')'; roundRect(px, py, pw, ph, 9); ctx.fill(); }
+  }
+
+  // 2) LEDGER CLOSE — a double accounting rule draws across, then the total settles
+  // in beneath it, bigger than any line item. Quiet authority, the "this column is final" move.
+  function drawFinaleLedger(fx, fy, age) {
+    var base = ctx.globalAlpha;
+    var num = '$' + grand.toLocaleString();
+    ctx.font = '700 42px "Commit Mono", monospace';
+    var wNum = ctx.measureText(num).width;
+    var halfW = Math.max(wNum * 0.6 + 36, 150);
+    var ry = fy - 26;
+    var r1 = smooth(clamp(age / 200, 0, 1));
+    var r2 = smooth(clamp((age - 90) / 200, 0, 1));
+    ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(fx - halfW, ry); ctx.lineTo(fx - halfW + halfW * 2 * r1, ry); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,210,74,0.5)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(fx - halfW, ry + 5); ctx.lineTo(fx - halfW + halfW * 2 * r2, ry + 5); ctx.stroke();
+    // label rides in with the second rule
+    ctx.globalAlpha = base * clamp((age - 130) / 220, 0, 1);
+    ctx.fillStyle = '#8b97a6'; ctx.font = '700 12px "Commit Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('TOTAL FROM LOAD', fx, ry - 12);
+    // figure fades up into place
+    var na = smooth(clamp((age - 210) / 280, 0, 1));
+    ctx.globalAlpha = base * clamp((age - 210) / 280, 0, 1);
+    ctx.shadowColor = 'rgba(255,210,74,0.5)'; ctx.shadowBlur = 8 + 12 * cashFlash;
+    ctx.fillStyle = '#ffd24a'; ctx.font = '700 42px "Commit Mono", monospace';
+    ctx.fillText(num, fx, fy + 34 + (1 - na) * 8);
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = base;
+  }
+
+  // 3) SPLIT-FLAP — a brass departure board built from the game's own depth-drum
+  // vocabulary (220-rover-console.js drawDepthDisplay): steel bezel -> bronze ring
+  // -> brushed-brass face -> chrome cluster -> recessed slots. Each digit slot
+  // spins through stencil digits and locks gold right->left, the figure committing
+  // one column at a time. The $ and , ride inline as fixed gold marks (no flip).
+  var FLAP_PER = 64, FLAP_SPIN = 130; // ms stagger between locks, ms spent cycling
+  function drawFinaleFlap(fx, fy, age) {
+    var base = ctx.globalAlpha;
+    var num = '$' + grand.toLocaleString();   // e.g. "$5,642"
+    // classify the figure into columns
+    var cols = [], nDig = 0;
+    for (var ci = 0; ci < num.length; ci++) {
+      var c = num.charAt(ci);
+      if (c === '$') cols.push({ t: 'pre' });
+      else if (c === ',') cols.push({ t: 'sep' });
+      else { cols.push({ t: 'dig', ch: c, seq: nDig }); nDig++; }
+    }
+
+    // ---- sizing: shrink the digit scale if the board would run too wide ----
+    var ds = 4, gW, slotW, slotH, gap = 3, sepW, preW, rowW;
+    function measure(s) {
+      gW = 5 * s; slotW = gW + 8; slotH = 7 * s + 12; sepW = 3 * s; preW = gW;
+      var w = 0;
+      for (var i = 0; i < cols.length; i++) {
+        if (i > 0) w += gap;
+        w += cols[i].t === 'pre' ? preW : cols[i].t === 'sep' ? sepW : slotW;
+      }
+      rowW = w;
+    }
+    measure(ds);
+    while (ds > 2 && rowW > VW * 0.78) { ds--; measure(ds); }
+    var glyphH = 7 * ds;
+
+    // ---- header + housing geometry (matches the HUD brass instruments) ----
+    var hScale = ds >= 3 ? 2 : 1;
+    var header = 'TOTAL FROM LOAD', headH = 7 * hScale;
+    var hW = stencilTextWidth(header, hScale);
+    var pad = 9, headGap = 7, contentW = Math.max(rowW, hW);
+    var faceW = contentW + pad * 2;
+    var faceH = pad + headH + headGap + slotH + pad;
+    var hx = Math.round(fx - faceW * 0.5) - 3, hy = Math.round(fy - faceH * 0.5) - 3;
+    var hw = faceW + 6, hh = faceH + 6;
+
+    // a quick opaque fade-in (the cards are already cleared by floatAlpha)
+    ctx.globalAlpha = base * clamp(age / 120, 0, 1);
+
+    // ---- outer dark steel bezel ----
+    ctx.fillStyle = '#1a1410'; ctx.fillRect(hx, hy, hw, hh);
+    ctx.fillStyle = '#332820'; ctx.fillRect(hx, hy, hw, 1); ctx.fillRect(hx, hy, 1, hh);
+    ctx.fillStyle = '#000000'; ctx.fillRect(hx, hy + hh - 1, hw, 1); ctx.fillRect(hx + hw - 1, hy, 1, hh);
+    // ---- bronze inset ring ----
+    var rxi = hx + 2, ryi = hy + 2, rwi = hw - 4, rhi = hh - 4;
+    ctx.fillStyle = '#5a3e1c'; ctx.fillRect(rxi, ryi, rwi, rhi);
+    ctx.fillStyle = '#8a6428'; ctx.fillRect(rxi, ryi, rwi, 1);
+    ctx.fillStyle = '#3a2810'; ctx.fillRect(rxi, ryi + rhi - 1, rwi, 1);
+    // ---- brushed brass face ----
+    var ax = rxi + 1, ay = ryi + 1, aw = rwi - 2, ah = rhi - 2;
+    ctx.fillStyle = '#7a5a2c'; ctx.fillRect(ax, ay, aw, ah);
+    for (var sxl = ax + 1; sxl < ax + aw - 1; sxl += 3) { ctx.fillStyle = 'rgba(160,124,64,0.18)'; ctx.fillRect(sxl, ay + 1, 1, ah - 2); }
+    for (var sx2 = ax + 2; sx2 < ax + aw - 1; sx2 += 5) { ctx.fillStyle = 'rgba(48,32,12,0.22)'; ctx.fillRect(sx2, ay + 1, 1, ah - 2); }
+    ctx.fillStyle = '#a07c40'; ctx.fillRect(ax, ay, aw, 1); ctx.fillRect(ax, ay, 1, ah);
+    ctx.fillStyle = '#4f3a1b'; ctx.fillRect(ax, ay + ah - 1, aw, 1); ctx.fillRect(ax + aw - 1, ay, 1, ah);
+    // corner screws
+    function flapScrew(cx, cy) { ctx.fillStyle = '#1a1006'; ctx.fillRect(cx - 1, cy - 1, 3, 3); ctx.fillStyle = '#9c7a40'; ctx.fillRect(cx, cy, 1, 1); }
+    flapScrew(ax + 2, ay + 2); flapScrew(ax + aw - 3, ay + 2);
+    flapScrew(ax + 2, ay + ah - 3); flapScrew(ax + aw - 3, ay + ah - 3);
+
+    // ---- header: etched stencil on brass (the game's label colour) ----
+    drawStencilText(header, ax + Math.round((aw - hW) / 2), ay + pad, hScale, '#3a2810');
+
+    // ---- chrome cluster bezel around the readout row ----
+    var rowX = ax + Math.round((aw - rowW) / 2);
+    var slotY = ay + pad + headH + headGap;
+    var clX = rowX - 3, clY = slotY - 2, clW = rowW + 6, clH = slotH + 4;
+    ctx.fillStyle = '#0a0604'; ctx.fillRect(clX, clY, clW, clH);
+    ctx.fillStyle = '#3a2e1c'; ctx.fillRect(clX, clY, clW, 1); ctx.fillRect(clX, clY, 1, clH);
+    ctx.fillStyle = '#000000'; ctx.fillRect(clX, clY + clH - 1, clW, 1); ctx.fillRect(clX + clW - 1, clY, 1, clH);
+
+    // ---- columns ----
+    var glyphY = slotY + Math.round((slotH - glyphH) / 2);
+    var cx2 = rowX;
+    for (var k = 0; k < cols.length; k++) {
+      var col = cols[k];
+      if (col.t === 'pre') { drawStencilGlyph('$', cx2, glyphY, ds, '#ffd24a'); cx2 += preW + gap; }
+      else if (col.t === 'sep') { drawStencilGlyph(',', cx2, glyphY, ds, '#ffd24a'); cx2 += sepW + gap; }
+      else {
+        var fromRight = nDig - 1 - col.seq;
+        var lockAt = fromRight * FLAP_PER;
+        drawFlapCell(cx2, slotY, slotW, slotH, ds, col.ch, age >= lockAt + FLAP_SPIN, age, lockAt, col.seq);
+        cx2 += slotW + gap;
+      }
+    }
+    ctx.globalAlpha = base;
+  }
+
+  // one recessed split-flap slot: spins stencil digits while flipping, locks to a
+  // gold figure with a brief 1px rim snap. Pure pixel ops, no shadowBlur glow.
+  function drawFlapCell(x, y, w, h, ds, glyph, locked, age, lockAt, idx) {
+    x = Math.round(x); y = Math.round(y);
+    var gW = 5 * ds, gH = 7 * ds, step = gH + 2 * ds;
+    var gx = Math.round(x + (w - gW) / 2), gy = Math.round(y + (h - gH) / 2);
+    // recessed slot (depth-drum vocabulary)
+    ctx.fillStyle = '#0e0a04'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#000000'; ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y, 1, h);
+    ctx.fillStyle = '#241808'; ctx.fillRect(x, y + h - 1, w, 1); ctx.fillRect(x + w - 1, y, 1, h);
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x + 1, y + 1, w - 2, h - 2); ctx.clip();
+    if (locked) {
+      drawStencilText(glyph, gx, gy, ds, '#ffd24a');
+      var dv = parseInt(glyph, 10);
+      if (!isNaN(dv)) {
+        drawStencilText(String((dv + 9) % 10), gx, gy - step, ds, 'rgba(212,168,56,0.22)');
+        drawStencilText(String((dv + 1) % 10), gx, gy + step, ds, 'rgba(212,168,56,0.22)');
+      }
+    } else {
+      // continuous fast spin; desynced per column so the board doesn't move in lockstep
+      var spinPos = age * 0.06 + idx * 2.3;
+      var di = Math.floor(spinPos) % 10, off = Math.round((spinPos - Math.floor(spinPos)) * step);
+      drawStencilText(String((di + 1) % 10), gx, gy - off + step, ds, 'rgba(232,196,96,0.85)');
+      drawStencilText(String(di), gx, gy - off, ds, 'rgba(232,196,96,0.85)');
+      drawStencilText(String((di + 9) % 10), gx, gy - off - step, ds, 'rgba(232,196,96,0.85)');
+    }
+    ctx.restore();
+
+    // split-flap fold seam across the middle
+    var midY = y + Math.floor(h / 2);
+    ctx.fillStyle = '#000000'; ctx.fillRect(x + 1, midY, w - 2, 1);
+    ctx.fillStyle = 'rgba(160,124,64,0.20)'; ctx.fillRect(x + 1, midY + 1, w - 2, 1);
+    // glass sheen (drum vocabulary)
+    ctx.fillStyle = 'rgba(220,235,255,0.16)'; ctx.fillRect(x + 1, y + 1, w - 2, 1);
+    ctx.fillStyle = 'rgba(220,235,255,0.08)'; ctx.fillRect(x + 1, y + 2, 1, h - 3);
+    // lock-snap: a brief gold rim the instant the digit lands (no glow)
+    if (locked) {
+      var snap = clamp(1 - (age - (lockAt + 150)) / 170, 0, 1);
+      if (snap > 0.02) {
+        ctx.fillStyle = 'rgba(255,210,74,' + (0.6 * snap).toFixed(3) + ')';
+        ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y + h - 1, w, 1);
+        ctx.fillRect(x, y, 1, h); ctx.fillRect(x + w - 1, y, 1, h);
+      }
+    }
+  }
+
+  function drawConsole() {
+    var c = consoleRect();
+    // steel body
+    var g = ctx.createLinearGradient(0, c.y, 0, c.y + c.h);
+    g.addColorStop(0, '#262d3a'); g.addColorStop(0.5, '#1a212b'); g.addColorStop(1, '#10141b');
+    ctx.fillStyle = g; ctx.fillRect(c.x, c.y, c.w, c.h);
+    // top lip: highlight, rail, shadow — defines the console edge against the dark scene
+    ctx.fillStyle = 'rgba(196,214,234,0.20)'; ctx.fillRect(c.x, c.y, c.w, 1);
+    ctx.fillStyle = '#39424f'; ctx.fillRect(c.x, c.y + 1, c.w, 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(c.x, c.y + 3, c.w, 1);
+    // rivets along the rail
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    for (var rx = 16; rx < c.w - 8; rx += 44) ctx.fillRect(rx, c.y + 9, 2, 2);
+  }
+
+  function drawFuel() {
+    var c = consoleRect();
+    var lx = c.x + 14;                                  // label column
+    var x = lx + 38, w = Math.min(280, VW * 0.40), h = 18;
+    var y = c.y + (c.h - h) / 2;
+    // label
+    ctx.fillStyle = '#7c8794'; ctx.font = '700 9px "Commit Mono", monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('FUEL', lx, y + h / 2);
+    // housing
+    ctx.fillStyle = '#0c0e12'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    ctx.strokeStyle = '#3a4350'; ctx.lineWidth = 1; ctx.strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
+    // fill (left to right)
+    var fw = w * clamp(fuelProg, 0, 1);
+    var g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, '#b9791f'); g.addColorStop(1, '#ffd24a');
+    ctx.fillStyle = g; ctx.fillRect(x, y, fw, h);
+    // segment ticks
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    for (var s = 1; s < 8; s++) ctx.fillRect(x + w * (s / 8), y, 1, h);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawCash() {
+    var r = cashRect();
+    // brass frame
+    var g = ctx.createLinearGradient(0, r.y, 0, r.y + r.h);
+    g.addColorStop(0, '#6b5424'); g.addColorStop(0.5, '#caa24a'); g.addColorStop(1, '#5a4420');
+    ctx.fillStyle = g; roundRect(r.x, r.y, r.w, r.h, 5); ctx.fill();
+    ctx.fillStyle = '#3a2c12'; roundRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 4); ctx.fill();
+    // recessed window
+    var wx = r.x + 5, wy = r.y + 16, ww = r.w - 10, wh = r.h - 22;
+    ctx.fillStyle = '#0e0a04'; ctx.fillRect(wx, wy, ww, wh);
+    // flash on arrival
+    if (cashFlash > 0.02) {
+      ctx.fillStyle = 'rgba(255,226,122,' + (0.22 * cashFlash).toFixed(3) + ')';
+      ctx.fillRect(wx, wy, ww, wh);
+    }
+    // glass sheen
+    ctx.fillStyle = 'rgba(220,235,255,0.14)'; ctx.fillRect(wx + 1, wy + 1, ww - 2, 1);
+    // label
+    ctx.fillStyle = '#1a1006'; ctx.font = '700 8px "Commit Mono", monospace';
+    ctx.textAlign = 'left'; ctx.fillText('HAUL', r.x + 6, r.y + 12);
+    // number
+    var str = '$' + Math.floor(displayTotal).toLocaleString();
+    var pun = 1 + 0.10 * cashFlash;
+    ctx.save();
+    ctx.translate(wx + ww - 6, wy + wh * 0.5);
+    ctx.scale(pun, pun);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.font = '700 ' + (wh > 26 ? 20 : 16) + 'px "Commit Mono", monospace';
+    ctx.shadowColor = 'rgba(255,210,74,0.6)'; ctx.shadowBlur = 6 + 10 * cashFlash;
+    ctx.fillStyle = '#ffd24a'; ctx.fillText(str, 0, 1);
+    ctx.restore();
+    ctx.textBaseline = 'alphabetic'; ctx.shadowBlur = 0;
+  }
+
+  function drawHud() {
+    var done = 0; for (var i = 0; i < beats.length; i++) if (beats[i].fired) done++;
+    var hud = document.getElementById('hud');
+    hud.innerHTML =
+      '<span class="big">' + preset.toUpperCase() + '</span> &nbsp; ' + style + ' &nbsp; ' + haulKey + ' haul &nbsp; <b>' + finaleStyle + '</b> total<br>' +
+      'beat <b>' + done + ' / ' + beats.length + '</b> &nbsp; grand <b>$' + grand.toLocaleString() + '</b><br>' +
+      'order: <b>' + (richLast ? 'richest last' : 'as mined') + '</b> &nbsp; cadence: <b>' + (accelerate ? 'accelerating' : 'steady') + '</b>';
+  }
+
+  // ================= audio sketch (clean, pentatonic; coordinate with music workstream) =================
+  var AC = null;
+  function ac() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } }
+    if (AC && AC.state === 'suspended') AC.resume();
+    return AC;
+  }
+  // C major pentatonic ladder (semitones from C4), climbs across the reveal
+  var PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26];
+  function hz(semi) { return 261.63 * Math.pow(2, semi / 12); }
+  function voice(freq, t0a, dur, type, gain) {
+    var a = ac(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'triangle'; o.frequency.value = freq;
+    o.connect(g); g.connect(a.destination);
+    var t = a.currentTime + (t0a || 0);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain || 0.06, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.18));
+    o.start(t); o.stop(t + (dur || 0.18) + 0.02);
+  }
+  function blip(idx, tier) {
+    var step = PENTA[Math.min(idx, PENTA.length - 1)];
+    voice(hz(step), 0, 0.16, 'triangle', 0.06);
+    if (tier >= 2) voice(hz(step + 4), 0.005, 0.20, 'sine', 0.035); // a third above for rich stacks
+  }
+  function tick(tier) { voice(hz(PENTA[2] + 24), 0, 0.07, 'sine', 0.03 + 0.02 * tier); } // soft coin tick
+  function chord() {
+    // warm resolving 6/9: C E G A D
+    [0, 4, 7, 9, 14].forEach(function (s, i) { voice(hz(s), i * 0.03, 0.7, 'sine', 0.05); });
+  }
+  function stampHit() {
+    // grand-total closure: a low thud + fifth, a deliberate register-drop below the blips
+    voice(hz(-24), 0, 0.5, 'sine', 0.09);      // low C2
+    voice(hz(-17), 0.01, 0.45, 'sine', 0.05);  // a fifth above
+    voice(hz(0), 0.02, 0.4, 'triangle', 0.045);// body
+  }
+
+  // ================= loop =================
+  var last = performance.now();
+  var frames = 0;
+  function frame(ts) {
+    var dt = (ts - last) / 1000; last = ts;
+    frames++;
+    try {
+      update(dt);
+      draw();
+    } catch (e) {
+      drawError((e && e.message) ? e.message : String(e));
+    }
+    requestAnimationFrame(frame);
+  }
+  // never fail silently: if a frame throws, paint the reason on the canvas
+  function drawError(msg) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = '#180b0b'; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = '#ff7a7a'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.font = '700 13px "Commit Mono", monospace';
+    ctx.fillText('lab error — tell Claude:', 18, 18);
+    ctx.fillStyle = '#ffd24a'; ctx.font = '400 12px "Commit Mono", monospace';
+    ctx.fillText(msg, 18, 40);
+  }
+  // RAF is paused while the tab is hidden; reset the clock so it resumes cleanly
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { last = performance.now(); draw(); }
+  });
+
+  // ================= input =================
+  cv.addEventListener('pointerdown', function () { if (state === 'run') skip(); else startSeq(); draw(); });
+  window.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' || e.code === 'KeyR') { e.preventDefault(); startSeq(); draw(); }
+  });
+
+  // ================= panel =================
+  function applyPreset(name) {
+    preset = name;
+    var p = PRESETS[name];
+    for (var k in p) L[k] = p[k];
+    syncSliders();
+    refreshButtons();
+    startSeq();
+  }
+  var sliderEls = {};
+  function syncSliders() {
+    for (var k in sliderEls) {
+      sliderEls[k].input.value = L[k];
+      sliderEls[k].val.textContent = sliderEls[k].fmt(L[k]);
+    }
+  }
+  var btnRefreshers = [];
+  function refreshButtons() { btnRefreshers.forEach(function (f) { f(); }); }
+
+  function buildPanel() {
+    var panel = document.getElementById('panel');
+    panel.innerHTML = '';
+    var h1 = document.createElement('h1'); h1.textContent = 'Auto-Sell Reveal'; panel.appendChild(h1);
+    var sub = document.createElement('p'); sub.className = 'sub';
+    sub.textContent = 'Dock the rig and watch the haul sell, one ore type at a time, while fuel fills. Pick the feel, then we port it into the pump-pad sell.';
+    panel.appendChild(sub);
+
+    function group(title) {
+      var g = document.createElement('div'); g.className = 'group';
+      var h = document.createElement('h2'); h.textContent = title; g.appendChild(h);
+      panel.appendChild(g); return g;
+    }
+    function btnRow(parent, opts, getCur, setCur) {
+      var row = document.createElement('div'); row.className = 'modes';
+      var made = [];
+      opts.forEach(function (o) {
+        var b = document.createElement('button'); b.textContent = o.label;
+        b.onclick = function () { setCur(o.val); refreshButtons(); };
+        row.appendChild(b); made.push({ b: b, val: o.val });
+      });
+      parent.appendChild(row);
+      btnRefreshers.push(function () { made.forEach(function (m) { m.b.classList.toggle('on', getCur() === m.val); }); });
+    }
+    function toggle(parent, label, get, set) {
+      var b = document.createElement('button'); b.textContent = label; b.style.width = '100%'; b.style.marginTop = '7px';
+      b.onclick = function () { set(!get()); refreshButtons(); };
+      parent.appendChild(b);
+      btnRefreshers.push(function () { b.classList.toggle('on', get()); });
+    }
+    function slider(parent, key, label, min, max, step, fmt) {
+      var wrap = document.createElement('label'); wrap.className = 'slider';
+      var lab = document.createElement('div'); lab.className = 'lab';
+      var name = document.createElement('span'); name.textContent = label;
+      var val = document.createElement('b'); val.textContent = fmt(L[key]);
+      lab.appendChild(name); lab.appendChild(val);
+      var inp = document.createElement('input'); inp.type = 'range';
+      inp.min = min; inp.max = max; inp.step = step; inp.value = L[key];
+      inp.addEventListener('input', function () { L[key] = parseFloat(inp.value); val.textContent = fmt(L[key]); });
+      inp.addEventListener('change', function () { preset = 'custom'; refreshButtons(); startSeq(); });
+      wrap.appendChild(lab); wrap.appendChild(inp); parent.appendChild(wrap);
+      sliderEls[key] = { input: inp, val: val, fmt: fmt };
+    }
+    var ms = function (v) { return Math.round(v) + ' ms'; };
+    var px = function (v) { return Math.round(v) + ' px'; };
+    var x2 = function (v) { return v.toFixed(2); };
+    var pc = function (v) { return Math.round(v * 100) + '%'; };
+
+    var gP = group('Preset');
+    btnRow(gP, [{ label: 'Subtle', val: 'subtle' }, { label: 'Impactful', val: 'impactful' }, { label: 'Full slot', val: 'full' }],
+      function () { return preset; }, function (v) { applyPreset(v); });
+
+    var gH = group('Haul');
+    btnRow(gH, [{ label: 'Light', val: 'light' }, { label: 'Medium', val: 'medium' }, { label: 'Jackpot', val: 'jackpot' }],
+      function () { return haulKey; }, function (v) { haulKey = v; startSeq(); });
+
+    var gS = group('Style');
+    btnRow(gS, [{ label: 'Floaters', val: 'floaters' }, { label: 'Ledger', val: 'ledger' }],
+      function () { return style; }, function (v) { style = v; startSeq(); });
+    toggle(gS, 'Order: richest last', function () { return richLast; }, function (v) { richLast = v; startSeq(); });
+    toggle(gS, 'Cadence: accelerate', function () { return accelerate; }, function (v) { accelerate = v; startSeq(); });
+    toggle(gS, 'Audio sketch', function () { return audioOn; }, function (v) { audioOn = v; if (v) ac(); });
+
+    var gFin = group('Finale total');
+    btnRow(gFin, [{ label: 'Assay stamp', val: 'stamp' }, { label: 'Ledger rule', val: 'ledger' }, { label: 'Split-flap', val: 'flap' }],
+      function () { return finaleStyle; }, function (v) { finaleStyle = v; startSeq(); });
+
+    var gT = group('Timing');
+    slider(gT, 'gapStart', 'beat gap (start)', 150, 1200, 5, ms);
+    slider(gT, 'gapAccel', 'gap accel', 0.70, 1.00, 0.01, x2);
+    slider(gT, 'gapFloor', 'gap floor', 120, 900, 5, ms);
+    slider(gT, 'popIn', 'card pop-in', 120, 500, 5, ms);
+    slider(gT, 'tau', 'count-up speed', 60, 400, 5, ms);
+    slider(gT, 'finaleHold', 'finale anticipation', 0, 1000, 5, ms);
+    slider(gT, 'stampDelay', 'total: closure pause', 0, 900, 5, ms);
+    slider(gT, 'stampIn', 'total: land time', 150, 700, 5, ms);
+    slider(gT, 'floatLife', 'card linger', 600, 2400, 10, ms);
+    slider(gT, 'floatFade', 'card fade', 150, 900, 5, ms);
+
+    var gF = group('Feel');
+    slider(gF, 'overshoot', 'pop overshoot', 1.00, 1.35, 0.01, x2);
+    slider(gF, 'floatRise', 'float rise', 0, 160, 2, px);
+    slider(gF, 'finalePunch', 'finale slam', 1.00, 1.40, 0.01, x2);
+    slider(gF, 'shake', 'screen shake', 0, 16, 0.5, px);
+    slider(gF, 'particles', 'particle burst', 0, 40, 1, function (v) { return Math.round(v); });
+    slider(gF, 'dim', 'vignette dim', 0, 0.75, 0.01, pc);
+
+    var gR = group('');
+    var rb = document.createElement('button'); rb.className = 'big-btn'; rb.textContent = 'Replay  (Space)';
+    rb.onclick = startSeq; gR.appendChild(rb);
+
+    var gN = group('Legend');
+    var n = document.createElement('div'); n.className = 'notes';
+    n.innerHTML = 'Tiers scale by line value: <b>common</b> &lt;$150, <b>mid</b> $150+, <b>rich</b> $1.5k+, <b>jackpot</b> $6k+. ' +
+      'Richer stacks pop bigger, throw more coins, shake harder, and get a warm pre-glow telegraph. The value flies to the brass window and the total ticks up on arrival.';
+    gN.appendChild(n);
+
+    refreshButtons();
+  }
+
+  // deterministic seek hook: preview RAF is paused when the tab is hidden,
+  // so step the sim by hand to render an arbitrary frame for verification.
+  window.__lab = function (ms) {
+    startSeq();
+    var n = Math.max(1, Math.ceil(ms / 16));
+    for (var i = 0; i < n; i++) update(0.016);
+    draw();
+    return { now: Math.round(now), state: state, settleMs: Math.round(settleMs),
+      displayTotal: Math.round(displayTotal), targetTotal: targetTotal, grand: grand,
+      fuelProg: +fuelProg.toFixed(3), cards: cards.length, floats: floats.length,
+      hero: floats.length ? floats[floats.length - 1].it.label : null, items: items.length,
+      parts: parts.length, partsLanded: parts.filter(function (p) { return p.landed; }).length,
+      finaleStyle: finaleStyle, finaleAge: finaleAt >= 0 ? Math.round(now - finaleAt) : -1 };
+  };
+
+  // ================= boot =================
+  function boot() {
+    resize();
+    buildPanel();
+    startSeq();
+    draw();                       // paint immediately so it's never blank before the first RAF tick
+    requestAnimationFrame(frame);
+  }
+  // run after layout so getBoundingClientRect is non-zero
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
+})();
+</script>
+</body>
+</html>

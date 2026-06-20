@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sluice SFX Test Bench</title>
+<style>
+  :root{
+    --bg:#14161b; --panel:#1d2027; --panel2:#23272f; --line:#2e333d;
+    --ink:#e7e9ee; --muted:#98a1b0; --faint:#6b7280;
+    --amber:#e0a85e; --amber-dim:#b88947; --ok:#6fcf97; --code:#0f1116;
+    --serif:'Century Supra',Georgia,serif; --sans:-apple-system,'Segoe UI',system-ui,sans-serif;
+    --mono:'Commit Mono',ui-monospace,'SF Mono',Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px}
+  header{padding:36px 0 14px;border-bottom:1px solid var(--line)}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14.5px;max-width:680px;margin:0 0 14px}
+  .how{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;color:var(--muted);max-width:680px}
+  .how b{color:var(--ink)} .how .s{display:inline-block;width:19px;height:19px;line-height:19px;text-align:center;border-radius:50%;background:var(--amber);color:#1a1205;font-weight:700;font-size:11px;margin-right:6px}
+  .how p{margin:0 0 7px} .how p:last-child{margin-bottom:0}
+
+  section{margin-top:26px}
+  .sh{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
+  .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  label.lbl{font-size:12px;color:var(--muted);min-width:54px}
+  select,button,input[type=text]{font-family:var(--sans)}
+  select{background:var(--code);border:1px solid var(--line);color:var(--ink);font-size:14px;padding:8px 11px;border-radius:8px;outline:none}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;transition:all .12s}
+  button:hover{border-color:var(--amber-dim)}
+  button.go{background:var(--amber);color:#1a1205;border-color:var(--amber)}
+  button.go.on{background:var(--ok);border-color:var(--ok);color:#08210f}
+  input[type=range]{flex:1 1 120px;min-width:90px;accent-color:var(--amber)}
+  .val{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:42px;text-align:right}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);user-select:none;cursor:pointer}
+  .pill input{accent-color:var(--amber)}
+
+  #drop{margin-top:12px;border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--faint);font-size:14px;transition:all .12s}
+  #drop.hot{border-color:var(--amber);color:var(--amber);background:rgba(224,168,94,.06)}
+  #cands{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+  .cand{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;display:flex;flex-direction:column;gap:9px}
+  .cand.active{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+  .cand .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .cand .nm{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600;word-break:break-all}
+  .cand .meta{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:auto}
+  .cand .x{background:transparent;border:0;color:var(--faint);font-size:16px;padding:2px 6px;cursor:pointer}
+  .cand .x:hover{color:#ff7b7b}
+  .empty{color:var(--faint);font-size:13.5px;text-align:center;padding:8px}
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px}
+  code{font-family:var(--mono);color:var(--muted)}
+</style>
+</head>
+<body>
+<nav style="background:#16181d;border-bottom:1px solid #2e333d;padding:9px 18px;font:13px -apple-system,'Segoe UI',sans-serif"><a href="audio-lab.html" style="color:#9aa3b0;text-decoration:none">Music lab</a><span style="color:#3a3f48;margin:0 9px">&middot;</span><a href="sfx-prompts.html" style="color:#9aa3b0;text-decoration:none">SFX prompts</a><span style="color:#3a3f48;margin:0 9px">&middot;</span><a href="sfx-test.html" style="color:#e0a85e;font-weight:600;text-decoration:none">SFX test bench</a></nav>
+<div class="wrap">
+  <header>
+    <h1>Sluice SFX Test Bench</h1>
+    <p class="sub">Audition your candidate sound effects <b>over the music</b>, the way the player will hear them. Loop one against a bed, A/B between takes, and let fatigue pick the winner (not the flashiest single play).</p>
+    <div class="how">
+      <p><span class="s">1</span> Pick a <b>music bed</b> below (or drop your own) and press play. Set its volume low, it's the background.</p>
+      <p><span class="s">2</span> <b>Drop your candidate WAVs</b> into the box (a few takes of one sound). Each becomes a card.</p>
+      <p><span class="s">3</span> Hit <b>LISTEN</b> on one to loop it over the music; hit LISTEN on another to A/B. Ride the SFX volume to the in-game balance, toggle <b>underground muffle</b>, and nudge <b>pitch</b> to fake the throttle. The take that doesn't tire you out after a minute wins.</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="sh">Music bed (background)</div>
+    <div class="card">
+      <div class="row">
+        <label class="lbl">Bed</label>
+        <select id="bed"></select>
+        <button id="musToggle">Play</button>
+        <span class="pill" id="musDropHint" style="color:var(--faint)">or drop a music file anywhere</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="lbl">Volume</label>
+        <input type="range" id="musVol" min="0" max="1" step="0.01" value="0.4">
+        <span class="val" id="musVolV">40%</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh">Candidates (the sound you're choosing)</div>
+    <div class="card">
+      <div class="row">
+        <label class="lbl">SFX vol</label>
+        <input type="range" id="sfxVol" min="0" max="1.5" step="0.01" value="0.9">
+        <span class="val" id="sfxVolV">90%</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="lbl">Pitch</label>
+        <input type="range" id="pitch" min="0.5" max="2" step="0.01" value="1">
+        <span class="val" id="pitchV">1.00x</span>
+        <span class="pill"><input type="checkbox" id="loopMode" checked> loop (continuous sound)</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span class="pill"><input type="checkbox" id="muffle"> underground muffle (SFX only)</span>
+        <span class="pill"><input type="checkbox" id="jitter"> pitch-jitter repeats (one-shots)</span>
+        <span class="pill" id="repWrap" style="opacity:.5"><input type="checkbox" id="autoRep"> auto-repeat every</span>
+        <input type="range" id="repRate" min="120" max="1200" step="20" value="400" style="max-width:120px">
+        <span class="val" id="repRateV">400ms</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span class="pill"><input type="checkbox" id="xfadeOn" checked> seamless crossfade loop</span>
+        <label class="lbl" style="min-width:auto">fade</label>
+        <input type="range" id="xfade" min="40" max="500" step="10" value="160" style="max-width:140px">
+        <span class="val" id="xfadeV">160ms</span>
+        <button id="dlLoop">&darr; Download seamless loop (.wav)</button>
+      </div>
+      <div id="drop">Drop candidate WAV / MP3 / M4A files here</div>
+      <div id="cands"><div class="empty">No candidates loaded yet.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    Local tool, nothing leaves your machine. Loop sounds (drill, drive, hum, thruster): keep <code>loop</code> on. One-shots (air-pulse, breaks): turn <code>loop</code> off, then <code>Trigger</code> or <code>auto-repeat</code>. The <code>underground muffle</code> + <code>pitch</code> mimic what <code>js/audio.js</code> does live.
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var BEDS = [
+    ['town1','Town 1'],['town2','Town 2'],['town3','Town 3'],['town4','Town 4'],
+    ['town5','Town 5'],['town6','Town 6'],['town7','Town 7'],['town8','Town 8'],
+    ['ug-l1','Underground L1'],['ug-l2','Underground L2'],['ug-l3','Underground L3'],['ug-l4','Underground L4 (danger)'],
+    ['travel1','Travel 1'],['travel2','Travel 2'],['travel3','Travel 3'],['travel6','Travel 6'],
+    ['combat1','Combat 1'],['combat2','Combat 2'],['death','Death sting']
+  ];
+  var DIR='assets/music/';   // the music beds (background) now live in assets/music/
+  var ctx,master,sfxMuffle,musicBus,sfxBus;
+  var musicBuf=null,musicSrc=null,musicPlaying=false;
+  var cands=[],active=null,activeSrc=null,repTimer=null,nextId=1;
+
+  var $=function(id){return document.getElementById(id)};
+  function ensure(){
+    if(ctx) return ctx;
+    var AC=window.AudioContext||window.webkitAudioContext; ctx=new AC();
+    master=ctx.createGain(); master.gain.value=1; master.connect(ctx.destination);
+    musicBus=ctx.createGain(); musicBus.gain.value=parseFloat($('musVol').value); musicBus.connect(master);   // music stays clear
+    sfxMuffle=ctx.createBiquadFilter(); sfxMuffle.type='lowpass'; sfxMuffle.frequency.value=20000; sfxMuffle.Q.value=0.7; sfxMuffle.connect(master);
+    sfxBus=ctx.createGain(); sfxBus.gain.value=parseFloat($('sfxVol').value); sfxBus.connect(sfxMuffle);        // SFX go through the depth muffle (music does not)
+    return ctx;
+  }
+  function decode(arrbuf){return new Promise(function(res,rej){ensure().decodeAudioData(arrbuf,res,rej)});}
+
+  // ---- music bed ----
+  BEDS.forEach(function(b){var o=document.createElement('option');o.value=b[0];o.textContent=b[1];$('bed').appendChild(o)});
+  function loadBed(name){
+    ensure();
+    return fetch(DIR+name+'.m4a').then(function(r){return r.ok?r.arrayBuffer():Promise.reject('404')})
+      .then(decode).then(function(buf){musicBuf=buf; if(musicPlaying){stopMusic();startMusic();}})
+      .catch(function(){musicBuf=null; alert('Could not load '+name+' (file missing). Drop a music file instead.');});
+  }
+  function startMusic(){
+    if(!musicBuf) return;
+    musicSrc=ctx.createBufferSource(); musicSrc.buffer=musicBuf; musicSrc.loop=true;
+    musicSrc.connect(musicBus); try{musicSrc.start();}catch(e){}
+    musicPlaying=true; $('musToggle').textContent='Stop'; $('musToggle').classList.add('go');
+  }
+  function stopMusic(){ if(musicSrc){try{musicSrc.stop();}catch(e){} musicSrc=null;} musicPlaying=false; $('musToggle').textContent='Play'; $('musToggle').classList.remove('go'); }
+  $('bed').addEventListener('change',function(){loadBed(this.value);});
+  $('musToggle').addEventListener('click',function(){ ensure(); if(ctx.state==='suspended')ctx.resume();
+    if(musicPlaying){stopMusic();return;} if(!musicBuf){loadBed($('bed').value).then(startMusic);} else startMusic(); });
+  $('musVol').addEventListener('input',function(){ $('musVolV').textContent=Math.round(this.value*100)+'%'; if(musicBus)musicBus.gain.value=parseFloat(this.value); });
+
+  // ---- sfx candidates ----
+  function addCandidate(name,buf){
+    var c={id:nextId++,name:name,buf:buf};
+    cands.push(c); renderCands();
+  }
+  function renderCands(){
+    var box=$('cands'); box.innerHTML='';
+    if(!cands.length){box.innerHTML='<div class="empty">No candidates loaded yet.</div>';return;}
+    cands.forEach(function(c){
+      var d=document.createElement('div'); d.className='cand'+(active&&active.id===c.id?' active':'');
+      var dur=c.buf?c.buf.duration.toFixed(1)+'s':'';
+      d.innerHTML='<div class="top"><button class="go listen">'+(active&&active.id===c.id?'STOP':'LISTEN')+'</button>'+
+        '<button class="trig">Trigger</button>'+
+        '<span class="nm"></span><span class="meta">'+dur+'</span><button class="x" title="remove">&times;</button></div>';
+      d.querySelector('.nm').textContent=c.name;
+      if(active&&active.id===c.id) d.querySelector('.listen').classList.add('on');
+      d.querySelector('.listen').addEventListener('click',function(){ toggleActive(c); });
+      d.querySelector('.trig').addEventListener('click',function(){ ensure(); if(ctx.state==='suspended')ctx.resume(); triggerOne(c,true); });
+      d.querySelector('.x').addEventListener('click',function(){ if(active&&active.id===c.id)stopActive(); cands=cands.filter(function(x){return x.id!==c.id}); renderCands(); });
+      box.appendChild(d);
+    });
+  }
+  function curRate(){ var p=parseFloat($('pitch').value); if($('jitter').checked) p*= (0.94+Math.random()*0.12); return p; }
+  function stopActiveSrc(){ if(activeSrc){try{activeSrc.stop();}catch(e){} activeSrc=null;} if(repTimer){clearInterval(repTimer);repTimer=null;} }
+  function stopActive(){ stopActiveSrc(); active=null; renderCands(); }
+  function startActiveLoop(){
+    if(!active) return; stopActiveSrc();
+    if($('loopMode').checked){
+      var lb = $('xfadeOn').checked ? makeLoopBuffer(active.buf, parseFloat($('xfade').value)/1000) : active.buf;
+      activeSrc=ctx.createBufferSource(); activeSrc.buffer=lb; activeSrc.loop=true;
+      activeSrc.playbackRate.value=parseFloat($('pitch').value);
+      activeSrc.connect(sfxBus); try{activeSrc.start();}catch(e){}
+    } else if($('autoRep').checked){
+      var fire=function(){ triggerOne(active,false); };
+      fire(); repTimer=setInterval(fire, parseInt($('repRate').value,10));
+    }
+  }
+  function toggleActive(c){
+    ensure(); if(ctx.state==='suspended')ctx.resume();
+    if(active&&active.id===c.id){ stopActive(); return; }
+    active=c; renderCands(); startActiveLoop();
+  }
+  function triggerOne(c,manual){
+    ensure();
+    var s=ctx.createBufferSource(); s.buffer=c.buf; s.loop=false;
+    s.playbackRate.value=curRate(); s.connect(sfxBus); try{s.start();}catch(e){}
+  }
+  // Build a seam-matched loop: crop X samples and equal-power crossfade the head
+  // with the tail-beyond-the-loop so end flows into start with no click.
+  function makeLoopBuffer(buf, xfadeSec){
+    var sr=buf.sampleRate, ch=buf.numberOfChannels;
+    var X=Math.max(1, Math.min(Math.floor(xfadeSec*sr), Math.floor(buf.length/3)));
+    var L=buf.length - X; if(L<=0) return buf;
+    var out=ctx.createBuffer(ch, L, sr);
+    for(var c=0;c<ch;c++){
+      var src=buf.getChannelData(c), dst=out.getChannelData(c);
+      for(var i=0;i<L;i++){
+        if(i<X){ var t=i/X; dst[i]=src[i]*Math.sin(t*Math.PI/2) + src[i+L]*Math.cos(t*Math.PI/2); }
+        else dst[i]=src[i];
+      }
+    }
+    return out;
+  }
+  function audioBufferToWav(buf){
+    var ch=buf.numberOfChannels, sr=buf.sampleRate, len=buf.length, ba=ch*2, dataLen=len*ba;
+    var ab=new ArrayBuffer(44+dataLen), v=new DataView(ab);
+    function ws(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+    ws(0,'RIFF'); v.setUint32(4,36+dataLen,true); ws(8,'WAVE'); ws(12,'fmt ');
+    v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,ch,true);
+    v.setUint32(24,sr,true); v.setUint32(28,sr*ba,true); v.setUint16(32,ba,true); v.setUint16(34,16,true);
+    ws(36,'data'); v.setUint32(40,dataLen,true);
+    var off=44, chans=[]; for(var c=0;c<ch;c++)chans.push(buf.getChannelData(c));
+    for(var i=0;i<len;i++){ for(var c=0;c<ch;c++){ var s=Math.max(-1,Math.min(1,chans[c][i])); v.setInt16(off, s<0?s*0x8000:s*0x7FFF, true); off+=2; } }
+    return new Blob([ab],{type:'audio/wav'});
+  }
+  function downloadLoop(){
+    if(!active){ alert('Pick a candidate first (hit LISTEN).'); return; }
+    var seam=$('loopMode').checked && $('xfadeOn').checked;
+    var lb = seam ? makeLoopBuffer(active.buf, parseFloat($('xfade').value)/1000) : active.buf;
+    var url=URL.createObjectURL(audioBufferToWav(lb));
+    var a=document.createElement('a'); a.href=url; a.download=active.name+(seam?'-loop':'')+'.wav'; a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+  }
+
+  // live controls re-apply to the active loop
+  $('sfxVol').addEventListener('input',function(){ $('sfxVolV').textContent=Math.round(this.value*100)+'%'; if(sfxBus)sfxBus.gain.value=parseFloat(this.value); });
+  $('pitch').addEventListener('input',function(){ $('pitchV').textContent=parseFloat(this.value).toFixed(2)+'x'; if(activeSrc&&$('loopMode').checked) activeSrc.playbackRate.value=parseFloat(this.value); });
+  $('muffle').addEventListener('change',function(){ if(!sfxMuffle)return; var on=this.checked; sfxMuffle.frequency.linearRampToValueAtTime(on?3500:20000, ctx.currentTime+(on?0.4:0.12)); }); // SFX only; eases in over 0.4s, clears fast (0.12s) like bursting up out of the ground
+  $('loopMode').addEventListener('change',function(){ if(active) startActiveLoop(); });
+  $('autoRep').addEventListener('change',function(){ $('repWrap').style.opacity=this.checked?'1':'.5'; if(active&&!$('loopMode').checked) startActiveLoop(); });
+  $('repRate').addEventListener('input',function(){ $('repRateV').textContent=this.value+'ms'; if(repTimer){clearInterval(repTimer); repTimer=setInterval(function(){triggerOne(active,false);},parseInt(this.value,10));} });
+  $('xfade').addEventListener('input',function(){ $('xfadeV').textContent=this.value+'ms'; if(active&&$('loopMode').checked&&$('xfadeOn').checked) startActiveLoop(); });
+  $('xfadeOn').addEventListener('change',function(){ if(active&&$('loopMode').checked) startActiveLoop(); });
+  $('dlLoop').addEventListener('click',downloadLoop);
+
+  // ---- drag & drop (whole window) ----
+  function handleFiles(files){
+    ensure(); if(ctx.state==='suspended')ctx.resume();
+    Array.prototype.forEach.call(files,function(f){
+      if(!/\.(wav|mp3|m4a|ogg|aac|flac)$/i.test(f.name)) return;
+      var rd=new FileReader();
+      rd.onload=function(){ decode(rd.result).then(function(buf){ addCandidate(f.name.replace(/\.[^.]+$/,''),buf); })
+        .catch(function(){ /* if it's a music file the user wanted, offer it as the bed */ }); };
+      rd.readAsArrayBuffer(f);
+    });
+  }
+  var drop=$('drop');
+  ['dragenter','dragover'].forEach(function(ev){ window.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('hot');}); });
+  ['dragleave','drop'].forEach(function(ev){ window.addEventListener(ev,function(e){e.preventDefault(); if(ev==='drop'||e.target===document.documentElement)drop.classList.remove('hot');}); });
+  window.addEventListener('drop',function(e){ e.preventDefault(); drop.classList.remove('hot'); if(e.dataTransfer&&e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+  drop.addEventListener('click',function(){ var i=document.createElement('input'); i.type='file'; i.multiple=true; i.accept='audio/*'; i.onchange=function(){handleFiles(i.files);}; i.click(); });
+})();
+</script>
+</body>
+</html>

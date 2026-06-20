@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sluice, Pixel Art Atlas</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  :root { --bg:#0c0f14; --panel:#13181f; --line:#262e39; --ink:#cdd6e0; --dim2:#7c8794; --accent:#e8c14a; --err:#d05050; --miss:#8a6a3a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Commit Mono', ui-monospace, Consolas, monospace; }
+  /* The hidden game host: the real game boots here so the atlas can borrow
+     its renderers. Parked offscreen, never displayed. Any extra canvases the
+     game appends (WebGL liquid/smoke layers, gm panel) are forced offscreen too. */
+  #game-host { position:fixed; left:-12000px; top:-12000px; width:900px; height:640px; overflow:hidden; }
+  body > canvas:not(.cellcv) { position:fixed !important; left:-12000px !important; top:-12000px !important; }
+  header { padding:22px 26px 6px; }
+  header h1 { font-size:17px; margin:0 0 4px; letter-spacing:.04em; color:var(--accent); }
+  header .sub { color:var(--dim2); font-size:12px; line-height:1.6; max-width:880px; }
+  #counts { margin-top:8px; font-size:12px; color:var(--ink); }
+  #counts b { color:var(--accent); font-weight:normal; }
+  #counts .m { color:var(--miss); }
+  nav { padding:10px 26px 4px; display:flex; flex-wrap:wrap; gap:8px; position:sticky; top:0;
+        background:linear-gradient(var(--bg) 82%, transparent); z-index:5; }
+  nav a { color:var(--dim2); font-size:11px; text-decoration:none; border:1px solid var(--line);
+          border-radius:7px; padding:5px 9px; background:#11151c; }
+  nav a:hover { color:var(--accent); border-color:#3a4658; }
+  section { padding:14px 26px 6px; }
+  section h2 { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--accent);
+               border-bottom:1px solid var(--line); padding-bottom:7px; margin:18px 0 4px; }
+  section h3 { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim2); margin:16px 0 2px; }
+  section .note { color:var(--dim2); font-size:11px; line-height:1.6; margin:4px 0 10px; max-width:880px; }
+  .grid { display:flex; flex-wrap:wrap; gap:12px; padding:8px 0 12px; }
+  .cell { background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:9px;
+          display:flex; flex-direction:column; gap:7px; align-items:center; }
+  .cell .art { background:#080a0e; border-radius:5px; display:flex; align-items:center; justify-content:center;
+               background-image:repeating-conic-gradient(#0d1016 0 25%, #090b10 0 50%); background-size:16px 16px; }
+  .cell canvas { display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
+  .cell .lab { font-size:11px; color:var(--ink); text-align:center; max-width:200px; }
+  .cell .sub { font-size:10px; color:var(--dim2); text-align:center; max-width:200px; line-height:1.45; }
+  .cell.err { border-color:#5a2a2a; }
+  .cell.err .lab { color:var(--err); }
+  .cell.miss { border:1px dashed var(--miss); background:#100e0a; min-width:170px; max-width:230px; }
+  .cell.miss .slot { width:100%; min-height:54px; border:1px dashed #4a3a22; border-radius:5px;
+                     display:flex; align-items:center; justify-content:center; color:#5c4a2c; font-size:18px; }
+  .cell.miss .lab { color:var(--miss); }
+  .cell.live { border-style:solid; border-color:#2a3a4a; }
+  .cell.live .slot { width:100%; min-height:42px; border:1px solid #1f2c3a; border-radius:5px;
+                     display:flex; align-items:center; justify-content:center; color:#3f5a76; font-size:10px; padding:6px; text-align:center; }
+  footer { padding:30px 26px 60px; color:var(--dim2); font-size:11px; line-height:1.7; max-width:880px; }
+  #bootfail { display:none; margin:14px 26px; border:1px solid #5a2a2a; border-radius:8px; padding:12px 14px;
+              color:var(--err); font-size:12px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+
+<!-- Hidden live game: boots the real bundle so the atlas can call its renderers. -->
+<div id="game-host">
+  <canvas id="game-canvas"></canvas>
+  <div id="game-intro" style="display:none"></div>
+  <div id="game-pause" style="display:none"></div>
+</div>
+
+<header>
+  <h1>SLUICE — PIXEL ART ATLAS</h1>
+  <div class="sub">
+    Every piece of pixel art in the game, rendered live by the game's own draw functions
+    (the hidden game boots below this page; nothing is duplicated). Solid cards = drawn art.
+    Blue cards = live full-screen systems best viewed in-game. <span style="color:var(--miss)">Dashed
+    cards = planned, not drawn yet</span> — the build-out worklist.
+  </div>
+  <div id="counts"></div>
+</header>
+<div id="bootfail"></div>
+<nav id="nav"></nav>
+<div id="atlas"></div>
+<footer>
+  Bench page only — not part of the game build. Renderers are reached through
+  <b>window.__sluiceAtlas</b> (js/sluice/378-art-atlas.js). A red card means that renderer
+  threw when called standalone (usually it leans on live game state); open the console for the stack.
+</footer>
+
+<script src="js/sluice.js"></script>
+<script>
+(function () {
+  'use strict';
+  var atlasEl = document.getElementById('atlas');
+  var navEl = document.getElementById('nav');
+  var counts = { ok: 0, err: 0, live: 0, miss: 0 };
+
+  function boot() {
+    var A = window.__sluiceAtlas;
+    if (!A) {
+      var bf = document.getElementById('bootfail');
+      bf.style.display = 'block';
+      bf.textContent = 'Game boot failed — __sluiceAtlas missing.\n' + (window.__bootErr || '(no __bootErr)');
+      return;
+    }
+    A.stop();
+    build(A);
+    document.getElementById('counts').innerHTML =
+      '<b>' + counts.ok + '</b> pieces rendered &nbsp;·&nbsp; <span style="color:#3f5a76">' + counts.live +
+      '</span> live systems &nbsp;·&nbsp; <span class="m">' + counts.miss + '</span> empty slots' +
+      (counts.err ? ' &nbsp;·&nbsp; <span style="color:var(--err)">' + counts.err + ' render errors</span>' : '') +
+      ' &nbsp;·&nbsp; game ' + A.version;
+  }
+
+  // ---------- cell builders ----------
+  function section(id, title, note) {
+    var s = document.createElement('section'); s.id = id;
+    var h = document.createElement('h2'); h.textContent = title; s.appendChild(h);
+    if (note) { var n = document.createElement('div'); n.className = 'note'; n.textContent = note; s.appendChild(n); }
+    atlasEl.appendChild(s);
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = title; navEl.appendChild(a);
+    return s;
+  }
+  function subhead(sec, txt) { var h = document.createElement('h3'); h.textContent = txt; sec.appendChild(h); }
+  function grid(sec) { var g = document.createElement('div'); g.className = 'grid'; sec.appendChild(g); return g; }
+
+  function artCell(g, A, spec) {
+    // spec: { name, sub, w, h, scale, render(ctx2d, A) }
+    var cell = document.createElement('div'); cell.className = 'cell';
+    var art = document.createElement('div'); art.className = 'art';
+    var cv = document.createElement('canvas'); cv.className = 'cellcv';
+    cv.width = spec.w; cv.height = spec.h;
+    var sc = spec.scale || 2;
+    cv.style.width = (spec.w * sc) + 'px'; cv.style.height = (spec.h * sc) + 'px';
+    art.appendChild(cv); cell.appendChild(art);
+    var lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = spec.name; cell.appendChild(lab);
+    if (spec.sub) { var sb = document.createElement('div'); sb.className = 'sub'; sb.textContent = spec.sub; cell.appendChild(sb); }
+    g.appendChild(cell);
+    var c2 = cv.getContext('2d');
+    c2.imageSmoothingEnabled = false;
+    A.setCtx(c2);
+    try {
+      spec.render(c2, A);
+      counts.ok++;
+    } catch (e) {
+      cell.className = 'cell err';
+      lab.textContent = spec.name + ' — ERROR';
+      var em = document.createElement('div'); em.className = 'sub'; em.textContent = String(e).slice(0, 120);
+      cell.appendChild(em);
+      console.warn('[atlas] render failed:', spec.name, e);
+      counts.err++;
+    }
+    A.restoreCtx();
+  }
+
+  function missCell(g, name, sub) {
+    var cell = document.createElement('div'); cell.className = 'cell miss';
+    var slot = document.createElement('div'); slot.className = 'slot'; slot.textContent = '∅'; cell.appendChild(slot);
+    var lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = name; cell.appendChild(lab);
+    if (sub) { var sb = document.createElement('div'); sb.className = 'sub'; sb.textContent = sub; cell.appendChild(sb); }
+    g.appendChild(cell);
+    counts.miss++;
+  }
+
+  function liveCell(g, name, sub, how) {
+    var cell = document.createElement('div'); cell.className = 'cell live';
+    var slot = document.createElement('div'); slot.className = 'slot'; slot.textContent = how || 'live system — view in game'; cell.appendChild(slot);
+    var lab = document.createElement('div'); lab.className = 'lab'; lab.textContent = name; cell.appendChild(lab);
+    if (sub) { var sb = document.createElement('div'); sb.className = 'sub'; sb.textContent = sub; cell.appendChild(sb); }
+    g.appendChild(cell);
+    counts.live++;
+  }
+
+  // ---------- the atlas ----------
+  function build(A) {
+    var TILE = A.data.TILE || 32;
+    var ORES = A.data.ORES || {};
+    var gm = A.game();
+
+    // ===== 1. ORES =====
+    (function () {
+      var sec = section('ores', '1 · Ores & minerals',
+        'Each card shows 4 random variations of the live renderer on a dark dirt host, exactly the game\'s tile path ' +
+        '(drawEarlyOreAtlas → drawEarlyOreBase → flat ORES.color fallback). Sorted by spawn depth.');
+      var g = grid(sec);
+      var skip = { dirt: 1, stone: 1, foundation: 1, barrier: 1, bedrock: 1, voidrock: 1, jello: 1 };
+      var keys = Object.keys(ORES).filter(function (k) { return !skip[k]; });
+      keys.sort(function (a, b) { return (ORES[a].minDepth || 0) - (ORES[b].minDepth || 0); });
+      keys.forEach(function (key) {
+        var o = ORES[key];
+        artCell(g, A, {
+          name: o.label || key,
+          sub: '$' + (o.value || 0) + ' · hp ' + o.hp + ' · depth ' + (o.minDepth || 0) + '–' + (o.maxDepth || '∞'),
+          w: TILE * 2, h: TILE * 2, scale: 2.5,
+          render: function (c2) {
+            for (var i = 0; i < 4; i++) {
+              var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE;
+              var r = 137 + i * 17, c = 251 + i * 29;
+              c2.fillStyle = '#241a12'; c2.fillRect(tx, ty, TILE, TILE);
+              var done = A.fn.drawEarlyOreAtlas && A.fn.drawEarlyOreAtlas(tx, ty, r, c, key);
+              if (!done) {
+                if (!(A.fn.drawEarlyOreBase && A.fn.drawEarlyOreBase(tx, ty, r, c, key))) {
+                  c2.fillStyle = o.color || '#f0f'; c2.fillRect(tx + 6, ty + 6, TILE - 12, TILE - 12);
+                }
+              }
+            }
+          }
+        });
+      });
+      subhead(sec, 'variants');
+      var g2 = grid(sec);
+      artCell(g2, A, {
+        name: 'Shiny variant', sub: 'rare 1-in-100 tile.shiny overlay (invert + sparkles)',
+        w: TILE * 2, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          for (var i = 0; i < 4; i++) {
+            var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE;
+            var r = 31 + i * 11, c = 77 + i * 13;
+            c2.fillStyle = '#241a12'; c2.fillRect(tx, ty, TILE, TILE);
+            var key = ['gold', 'emerald', 'coal', 'ruby'][i];
+            if (!(A.fn.drawEarlyOreAtlas && A.fn.drawEarlyOreAtlas(tx, ty, r, c, key)))
+              A.fn.drawEarlyOreBase && A.fn.drawEarlyOreBase(tx, ty, r, c, key);
+            A.fn.drawShinyTile && A.fn.drawShinyTile(tx, ty, r, c, 1.25 + i * 0.7);
+          }
+        }
+      });
+    })();
+
+    // ===== 2. TERRAIN =====
+    (function () {
+      var sec = section('terrain', '2 · Terrain materials',
+        'Real in-world tiles sampled from the booted world (so neighbor blends + layer washes are authentic). ' +
+        'Bedrock is in-loop art (no function) — replicated here from 140-render-maindraw.');
+      var g = grid(sec);
+      var world = gm.world;
+      function findTiles(type, want) {
+        var found = [];
+        if (!world) return found;
+        for (var r = 0; r < world.length && found.length < want; r += 1) {
+          var row = world[r]; if (!row) continue;
+          for (var c = 0; c < row.length && found.length < want; c += 7) {
+            if (row[c] && row[c].type === type) found.push([r, c]);
+          }
+        }
+        return found;
+      }
+      var SKY_ROWS = A.data.SKY_ROWS || 0;
+      function layerFor(r) {
+        return A.fn.getLayerForCam ? A.fn.getLayerForCam(Math.max(0, r - SKY_ROWS)) : null;
+      }
+      [['dirt', 'Dirt'], ['stone', 'Stone']].forEach(function (m) {
+        artCell(g, A, {
+          name: m[1], sub: 'drawMaterialTile · sampled from live world',
+          w: TILE * 2, h: TILE * 2, scale: 2.5,
+          render: function (c2) {
+            var spots = findTiles(m[0], 4);
+            if (!spots.length) throw new Error('no ' + m[0] + ' tiles found in world');
+            for (var i = 0; i < 4; i++) {
+              var s = spots[Math.min(i, spots.length - 1)];
+              var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE;
+              A.fn.drawMaterialTile(m[0], tx, ty, s[0], s[1], layerFor(s[0]));
+            }
+          }
+        });
+      });
+      // Foundation / barrier / buried jello are in-loop art inside render()
+      // (140-render-maindraw, no callable function) — replicated faithfully
+      // here from the same tileHash01 seeds + BLD palette.
+      var BLD = A.data.BLD || {};
+      var th = A.fn.tileHash01 || function () { return 0.5; };
+      artCell(g, A, {
+        name: 'Foundation', sub: 'in-loop art, 140 (replicated) · poured-concrete panels',
+        w: TILE * 2, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          for (var i = 0; i < 4; i++) {
+            var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE, r = 12, c = 30 + i;
+            c2.fillStyle = BLD.stoneDark || '#2c2a26'; c2.fillRect(tx, ty, TILE, TILE);
+            var fh0 = th(r, c, 0xFA0);
+            c2.fillStyle = fh0 > 0.66 ? '#615d56' : fh0 > 0.33 ? '#5a5650' : '#544f48';
+            c2.fillRect(tx + 1, ty, TILE - 2, TILE);
+            c2.fillStyle = '#6f6c66'; c2.fillRect(tx + 1, ty + 1, TILE - 2, 2);
+            c2.fillStyle = '#797670'; c2.fillRect(tx + 1, ty + 1, TILE - 2, 1);
+            c2.fillStyle = '#8c8a85'; c2.fillRect(tx + 1, ty, TILE - 2, 1);
+            c2.fillStyle = '#403d36'; c2.fillRect(tx + 1, ty + TILE - 3, TILE - 2, 2);
+            c2.fillStyle = '#322f29'; c2.fillRect(tx + 1, ty + TILE - 1, TILE - 2, 1);
+            for (var fh = 0; fh < 5; fh++) {
+              var apX = tx + 2 + Math.floor(th(r, c, 0xFB0 + fh) * (TILE - 4));
+              var apY = ty + 5 + Math.floor(th(r, c, 0xFC0 + fh) * (TILE - 10));
+              c2.fillStyle = ['#9c9994', '#7c7972', '#2a2826', '#666260', '#403d36'][fh];
+              c2.fillRect(apX, apY, 1, 1);
+            }
+          }
+        }
+      });
+      artCell(g, A, {
+        name: 'Barrier band', sub: 'in-loop art, 140 (replicated) · riveted plate + caution top',
+        w: TILE * 2, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          for (var i = 0; i < 4; i++) {
+            var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE;
+            var brGrad = c2.createLinearGradient(0, ty, 0, ty + TILE);
+            brGrad.addColorStop(0, '#3a414c'); brGrad.addColorStop(0.5, '#2a2f38'); brGrad.addColorStop(1, '#1a1d24');
+            c2.fillStyle = brGrad; c2.fillRect(tx, ty, TILE, TILE);
+            c2.strokeStyle = 'rgba(0,0,0,0.4)'; c2.lineWidth = 1;
+            for (var hh2 = -TILE; hh2 < TILE; hh2 += 6) {
+              c2.beginPath(); c2.moveTo(tx + hh2, ty); c2.lineTo(tx + hh2 + TILE, ty + TILE); c2.stroke();
+            }
+            c2.fillStyle = '#0e1014';
+            c2.fillRect(tx + 3, ty + 3, 2, 2); c2.fillRect(tx + TILE - 5, ty + 3, 2, 2);
+            c2.fillRect(tx + 3, ty + TILE - 5, 2, 2); c2.fillRect(tx + TILE - 5, ty + TILE - 5, 2, 2);
+            c2.fillStyle = 'rgba(220,220,230,0.25)';
+            c2.fillRect(tx + 3, ty + 3, 1, 1); c2.fillRect(tx + TILE - 5, ty + 3, 1, 1);
+            if (i < 2) { // topmost barrier row gets caution stripes
+              for (var sx = 0; sx < TILE; sx += 6) {
+                c2.fillStyle = ((sx / 6) | 0) % 2 === 0 ? '#FFD200' : '#1a1208';
+                c2.fillRect(tx + sx, ty, 6, 3);
+              }
+            }
+            c2.strokeStyle = 'rgba(0,0,0,0.55)'; c2.strokeRect(tx + 0.5, ty + 0.5, TILE - 1, TILE - 1);
+          }
+        }
+      });
+      artCell(g, A, {
+        name: 'Jello (buried tile)', sub: 'in-loop art, 140 (replicated) · activates to a live soft body',
+        w: TILE * 2, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          for (var i = 0; i < 4; i++) {
+            var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE, r = 80 + Math.floor(i / 2), c = 60 + (i % 2);
+            var jlUp = i >= 2, jlDn = i < 2, jlLf = (i % 2) === 1, jlRt = (i % 2) === 0;
+            var jlGrad = c2.createLinearGradient(0, ty, 0, ty + TILE);
+            jlGrad.addColorStop(0, '#7bf6d6'); jlGrad.addColorStop(0.5, '#3ce0b8'); jlGrad.addColorStop(1, '#1f9e86');
+            c2.fillStyle = jlGrad; c2.fillRect(tx, ty, TILE, TILE);
+            var jlSheen = c2.createLinearGradient(tx, ty, tx + TILE, ty + TILE);
+            jlSheen.addColorStop(0, 'rgba(255,255,255,0.34)'); jlSheen.addColorStop(0.35, 'rgba(255,255,255,0.05)'); jlSheen.addColorStop(1, 'rgba(0,40,32,0.18)');
+            c2.fillStyle = jlSheen; c2.fillRect(tx, ty, TILE, TILE);
+            var jlSeed = ((r * 73856093) ^ (c * 19349663)) >>> 0;
+            c2.fillStyle = 'rgba(255,255,255,0.5)';
+            for (var jlb = 0; jlb < 3; jlb++) {
+              var jlbx = 5 + ((jlSeed >>> (jlb * 5)) % (TILE - 10));
+              var jlby = 6 + ((jlSeed >>> (jlb * 5 + 3)) % (TILE - 14));
+              var jlbr = 1 + ((jlSeed >>> (jlb * 4 + 2)) & 1);
+              c2.beginPath(); c2.arc(tx + jlbx, ty + jlby, jlbr, 0, Math.PI * 2); c2.fill();
+            }
+            c2.fillStyle = 'rgba(208,255,244,0.70)';
+            if (!jlUp) c2.fillRect(tx, ty, TILE, 2);
+            if (!jlLf) c2.fillRect(tx, ty, 2, TILE);
+            c2.fillStyle = 'rgba(12,70,58,0.45)';
+            if (!jlDn) c2.fillRect(tx, ty + TILE - 2, TILE, 2);
+            if (!jlRt) c2.fillRect(tx + TILE - 2, ty, 2, TILE);
+          }
+        }
+      });
+      artCell(g, A, {
+        name: 'Voidrock (NMZ)', sub: 'flat ORES.color fill + inset rims (the game\'s generic path)',
+        w: TILE * 2, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          for (var i = 0; i < 4; i++) {
+            var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE;
+            c2.fillStyle = (ORES.voidrock && ORES.voidrock.color) || '#15171c';
+            c2.fillRect(tx, ty, TILE, TILE);
+            c2.fillStyle = 'rgba(255,255,255,0.06)'; c2.fillRect(tx, ty, TILE, 2);
+            c2.fillStyle = 'rgba(0,0,0,0.22)';
+            c2.fillRect(tx, ty + TILE - 2, TILE, 2); c2.fillRect(tx + TILE - 2, ty, 2, TILE);
+          }
+        }
+      });
+      artCell(g, A, {
+        name: 'Bedrock', sub: 'in-loop art, 140-render-maindraw (replicated)',
+        w: TILE * 2, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          for (var i = 0; i < 4; i++) {
+            var tx = (i % 2) * TILE, ty = Math.floor(i / 2) * TILE, r = 900 + i, c = 40 + i * 9;
+            var gset = c2.createLinearGradient(0, ty, 0, ty + TILE);
+            gset.addColorStop(0, '#2a201a'); gset.addColorStop(0.5, '#1a120e'); gset.addColorStop(1, '#0e0806');
+            c2.fillStyle = gset; c2.fillRect(tx, ty, TILE, TILE);
+            var bkSeed = ((r * 73856093) ^ (c * 19349663)) >>> 0;
+            c2.fillStyle = 'rgba(0,0,0,0.45)';
+            for (var bp = 0; bp < 4; bp++) c2.fillRect(tx + ((bkSeed >>> (bp * 4)) % TILE), ty + ((bkSeed >>> (bp * 4 + 2)) % TILE), 2, 1);
+            c2.fillStyle = 'rgba(180,40,20,0.25)'; c2.fillRect(tx, ty + TILE - 2, TILE, 2);
+            c2.fillStyle = 'rgba(255,210,140,0.10)'; c2.fillRect(tx, ty, TILE, 1);
+          }
+        }
+      });
+      artCell(g, A, {
+        name: 'Surface grass', sub: 'drawSurfaceGrass over dirt',
+        w: TILE * 3, h: TILE * 2, scale: 2.5,
+        render: function (c2) {
+          var spots = findTiles('dirt', 3);
+          for (var i = 0; i < 3; i++) {
+            var tx = i * TILE, ty = TILE;
+            var s = spots[Math.min(i, spots.length - 1)] || [40, 40];
+            A.fn.drawMaterialTile && A.fn.drawMaterialTile('dirt', tx, ty, s[0], s[1], null);
+            A.fn.drawSurfaceGrass && A.fn.drawSurfaceGrass(tx, ty, 12, 60 + i * 3);
+          }
+        }
+      });
+      var gl = grid(sec);
+      liveCell(gl, 'Jello soft bodies', 'squishy unminable tiles → live PBD blobs (340-jello.js)', 'live physics — dig next to a jello patch in-game');
+      liveCell(gl, 'Underground biome wall patterns', 'parallax CanvasPattern per biome behind the terrain (170)', 'visible in any cave in-game');
+    })();
+
+    // ===== 3. BUILDINGS & SURFACE STRUCTURES =====
+    (function () {
+      var sec = section('buildings', '3 · Buildings & surface structures',
+        'Frontier Soviet set (BUILDING_STYLE.md). Stations render via the real drawStation with each town\'s palette.');
+      var g = grid(sec);
+      var deckRow = gm.deckRow != null ? gm.deckRow : (A.data.DECK_ROW || 0);
+      var groundY = deckRow * TILE;
+      for (var ti = 0; ti < 4; ti++) {
+        (function (ti) {
+          artCell(g, A, {
+            name: 'Town ' + (ti + 1) + ' station (КОМЕНДАТУРА)',
+            sub: ti === 0 ? 'home station, drawStation(0)' : 'palette recolor via TOWN_BLD[' + ti + ']',
+            w: 160, h: 132, scale: 1.6,
+            render: function (c2) {
+              if (!gm.townStationCol) throw new Error('townStationCol unavailable');
+              if (!A.fn.drawStationDirect) throw new Error('drawStationDirect unavailable');
+              var cx = gm.townStationCol(ti) * TILE + TILE / 2;
+              c2.setTransform(1, 0, 0, 1, -(cx - 80), -(groundY - 124));
+              A.fn.drawStationDirect(ti);
+              c2.setTransform(1, 0, 0, 1, 0, 0);
+            }
+          });
+        })(ti);
+      }
+      artCell(g, A, {
+        name: 'The Sluice (refinement station)', sub: 'tower + platform + channel + bin, 172-sluice.js',
+        w: 360, h: 206, scale: 1.3,
+        render: function (c2) {
+          if (!A.fn.drawSluiceDirect || !A.fn.sluiceAnchorX) throw new Error('drawSluiceDirect unavailable');
+          var hx = A.fn.sluiceAnchorX();
+          c2.setTransform(1, 0, 0, 1, -(hx - 58), -(groundY - 202));
+          A.fn.drawSluiceDirect();
+          c2.setTransform(1, 0, 0, 1, 0, 0);
+        }
+      });
+      var gl = grid(sec);
+      liveCell(gl, 'Pump pad + fuel rig', 'drawPumpPad / drawFuelPump cached structure at town 1', 'park on the pad in-game');
+      liveCell(gl, 'Surface fireplace', 'drawSurfaceFireplace cached structure', 'left of home station in-game');
+
+      subhead(sec, 'decor primitives (the Frontier Soviet vocabulary)');
+      var g2 = grid(sec);
+      function prim(name, sub, w, h, scale, fn) { artCell(g2, A, { name: name, sub: sub, w: w, h: h, scale: scale || 3, render: fn }); }
+      prim('Red star', 'drawRedStar', 40, 40, 3, function (c2) { A.fn.drawRedStar(20, 20, 13, 0); });
+      prim('Riveted plate', 'drawRivetedPlate', 56, 36, 3, function () { A.fn.drawRivetedPlate(4, 4, 48, 28); });
+      prim('Wood planking', 'drawWoodPlanking', 56, 36, 3, function () { A.fn.drawWoodPlanking(4, 4, 48, 28, 7); });
+      prim('Stone foundation', 'drawStoneFoundation', 56, 24, 3, function () { A.fn.drawStoneFoundation(4, 4, 48, 16); });
+      prim('Sign board', 'drawSignBoard', 72, 28, 3, function () { A.fn.drawSignBoard(4, 5, 64, 18, 'СЛЮС'); });
+      prim('Propaganda poster', 'drawPropagandaPoster kind 0/1', 76, 44, 3, function () {
+        A.fn.drawPropagandaPoster(4, 4, 30, 36, 0); A.fn.drawPropagandaPoster(40, 4, 30, 36, 1);
+      });
+      prim('Crate', 'drawCrate', 48, 36, 3, function () { A.fn.drawCrate(6, 6, 36, 26); });
+      prim('Oil drum', 'drawOilDrum', 32, 36, 3, function () { A.fn.drawOilDrum(8, 30); });
+      prim('Oil lamp', 'drawOilLamp', 28, 36, 3, function () { A.fn.drawOilLamp(14, 28, 1.0); });
+      prim('Chair', 'drawChair', 28, 36, 3, function () { A.fn.drawChair(6, 34); });
+      prim('Hearth fire', 'drawHearthFire', 44, 36, 3, function () { A.fn.drawHearthFire(8, 12, 28, 20, 1.2); });
+      prim('Smokestack', 'drawSmokestack', 28, 56, 2.5, function () { A.fn.drawSmokestack(8, 4, 12, 48, false); });
+      prim('Antenna', 'drawAntenna', 36, 56, 2.5, function () { A.fn.drawAntenna(18, 52, 44, 1.0); });
+      prim('Support post', 'drawSupportPost', 24, 56, 2.5, function () { A.fn.drawSupportPost(8, 52, 44); });
+      prim('Porch awning', 'drawPorchAwning', 64, 24, 3, function () { A.fn.drawPorchAwning(4, 6, 56, 12); });
+      prim('Canopy', 'drawCanopy', 64, 28, 3, function () { A.fn.drawCanopy(4, 6, 56, 16); });
+      prim('Hazard stripes', 'drawHazardStripes', 64, 16, 3, function () { A.fn.drawHazardStripes(4, 4, 56, 8, 0.5, true); });
+      prim('Fuel tank', 'drawFuelTank', 56, 52, 2.5, function () { A.fn.drawFuelTank(8, 48, 40, 36, 1.0); });
+      prim('Fuel pump', 'drawFuelPump', 36, 52, 2.5, function () { A.fn.drawFuelPump(10, 48, 1.0, false); });
+      prim('Payout terminal', 'drawPayoutTerminal', 36, 52, 2.5, function () { A.fn.drawPayoutTerminal(10, 48, 1.0, false); });
+      prim('NMZ blade flag', 'drawNmzBladeFlag, caution banner', 44, 64, 2.5, function () { A.fn.drawNmzBladeFlag(20, 60, 0.6); });
+    })();
+
+    // ===== 4. PLAYER & COMBAT =====
+    (function () {
+      var sec = section('rig', '4 · The rig & combat entities',
+        'The player rig renders from live boot state (parked at spawn). Combat entities render from fabricated specimens.');
+      var g = grid(sec);
+      artCell(g, A, {
+        name: 'The rig (player)', sub: 'drawPlayerShadow + drawPlayer at spawn',
+        w: 100, h: 100, scale: 2.2,
+        render: function (c2) {
+          var p = gm.player; if (!p) throw new Error('player unavailable');
+          c2.setTransform(1, 0, 0, 1, -(p.x - 50 + (p.w || 0) / 2), -(p.y - 60 + (p.h || 0) / 2));
+          A.fn.drawPlayerShadow && A.fn.drawPlayerShadow();
+          A.fn.drawPlayer();
+          c2.setTransform(1, 0, 0, 1, 0, 0);
+        }
+      });
+      function ent(name, sub, w, h, scale, fn) { artCell(g, A, { name: name, sub: sub, w: w, h: h, scale: scale, render: fn }); }
+      ent('Enemy turret', 'drawEnemyTurret', 72, 64, 2.2, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 36, 56);
+        A.fn.drawEnemyTurret({ x: 0, y: 0, ang: -2.2, hp: 3, maxHp: 3, cool: 0, charge: 0, muzzleT: 0, hitT: 0, seed: 42 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      ent('Chaser drone', 'drawChaser', 72, 56, 2.2, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 36, 28);
+        A.fn.drawChaser({ x: 0, y: 0, vx: 30, vy: 0, ax: 0, ay: 0, hp: 2, maxHp: 2, hitT: 0, contactCd: 0, state: 'patrol', stateT: 0, face: 0, seed: 7 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      ent('Feral stinger', 'drawStinger', 56, 48, 2.4, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 28, 24);
+        A.fn.drawStinger({ x: 0, y: 0, vx: 20, vy: 0, ax: 0, ay: 0, hp: 1, maxHp: 1, hitT: 0, strikeCd: 1, retargetT: 1, target: null, face: 0, flap: 2.1, seed: 3 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      ent('Obstacle — spire', 'drawObstacle kind:spire', 64, 84, 1.8, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 8, 4);
+        A.fn.drawObstacle({ kind: 'spire', x: 0, y: 0, w: 48, h: 76, seed: 11 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      ent('Obstacle — block', 'drawObstacle kind:block', 76, 48, 2, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 8, 8);
+        A.fn.drawObstacle({ kind: 'block', x: 0, y: 0, w: 60, h: 32, seed: 5 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      ent('Bullet tracer', 'drawBullet', 48, 24, 3, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 10, 12);
+        A.fn.drawBullet({ x: 0, y: 0, vx: 300, vy: 0, life: 1, dmg: 1, friendly: false, seed: 9 });
+        A.fn.drawBullet({ x: 22, y: 4, vx: 300, vy: 0, life: 1, dmg: 1, friendly: true, seed: 4 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      ent('Homing missile', 'drawMissile', 64, 32, 3, function (c2) {
+        c2.setTransform(1, 0, 0, 1, 32, 16);
+        A.fn.drawMissile({ x: 0, y: 0, vx: 220, vy: 0, life: 2, armT: 0, seed: 13 });
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+      });
+      var gl = grid(sec);
+      liveCell(gl, 'Rig turret (player weapon)', 'drawRigTurret mounts on the live rig cab', 'enter a No Man\'s Zone in-game');
+      liveCell(gl, 'Rocket plume + diesel smoke', 'jetpack exhaust particles + WebGL smoke fluid', 'fly in-game (Space)');
+      liveCell(gl, 'Mine-break FX', 'crack telegraph + shatter, chunk clouds/clods/chips', 'drill any tile in-game');
+      liveCell(gl, 'Rover balloons', 'drawRoverTrail reentry flame + balloon pop debris', 'press B in-game');
+      liveCell(gl, 'Explosions / bombs', 'blast billows + streaks', 'press 1 / 2 in-game');
+    })();
+
+    // ===== 5. COMMODITY SPRITES =====
+    (function () {
+      var cs = A.data.commoditySprites;
+      var sec = section('commodities', '5 · Trade board commodities',
+        'The full commoditySprites set (255-commodity-sprites.js), blitted from the live builders at 4×.');
+      var g = grid(sec);
+      if (!cs) { liveCell(g, 'commoditySprites', 'module not found', '—'); return; }
+      var kinds = cs.kinds();
+      kinds.forEach(function (k) {
+        artCell(g, A, {
+          name: k, sub: null, w: cs.SIZE, h: cs.SIZE, scale: 3,
+          render: function (c2) {
+            var bmp = cs.bitmap(k); if (!bmp) throw new Error('no bitmap');
+            c2.drawImage(bmp, 0, 0);
+          }
+        });
+      });
+    })();
+
+    // ===== 6. GEAR, ICONS & UI =====
+    (function () {
+      var sec = section('ui', '6 · Gear, icons & console UI');
+      subhead(sec, 'drill tiers (the 7-step ladder)');
+      var g = grid(sec);
+      var tierNames = ['Rusty Auger', 'Workshop Auger', 'Carbide Tooth', 'Tungsten Jaw', 'Diamond Bore', 'Plasma Crown', 'Void Helix'];
+      for (var lv = 1; lv <= 7; lv++) {
+        (function (lv) {
+          artCell(g, A, {
+            name: 'Drill T' + lv, sub: tierNames[lv - 1], w: 64, h: 64, scale: 2,
+            render: function () { A.fn.drawDrillUpgradeSprite(32, 32, 52, lv); }
+          });
+        })(lv);
+      }
+      subhead(sec, 'gear sprites (shopGearSprites)');
+      var g2 = grid(sec);
+      var gs = A.data.shopGearSprites;
+      ['fuel', 'hull', 'cargo', 'heat', 'shield', 'vert', 'pump', 'booster'].forEach(function (k) {
+        artCell(g2, A, {
+          name: k, sub: null, w: gs ? gs.SIZE : 32, h: gs ? gs.SIZE : 32, scale: 3,
+          render: function (c2) {
+            var bmp = gs && gs.bitmap(k); if (!bmp) throw new Error('no bitmap "' + k + '"');
+            c2.drawImage(bmp, 0, 0);
+          }
+        });
+      });
+      subhead(sec, 'consumable + item-wheel icons');
+      var g3 = grid(sec);
+      ['teleporter', 'balloon', 'bombSmall', 'bombLarge', 'reserveFuel'].forEach(function (k) {
+        artCell(g3, A, {
+          name: k, sub: 'drawConsumableIconBig', w: 64, h: 64, scale: 2,
+          render: function () { A.fn.drawConsumableIconBig(k, 32, 34, 46); }
+        });
+      });
+      var ws = A.data.wheelItemSprites;
+      ['tele', 'small', 'large', 'balloon'].forEach(function (k) {
+        artCell(g3, A, {
+          name: 'wheel:' + k, sub: 'wheelItemSprites', w: ws ? ws.SIZE : 24, h: ws ? ws.SIZE : 24, scale: 4,
+          render: function (c2) {
+            var bmp = ws && ws.bitmap(k); if (!bmp) throw new Error('no bitmap "' + k + '"');
+            c2.drawImage(bmp, 0, 0);
+          }
+        });
+      });
+      subhead(sec, 'death-cause icons');
+      var g4 = grid(sec);
+      ['fall', 'magma', 'water', 'fuel', 'bomb'].forEach(function (k) {
+        artCell(g4, A, {
+          name: k, sub: 'drawDeathCauseIcon', w: 56, h: 56, scale: 2,
+          render: function () { A.fn.drawDeathCauseIcon(28, 28, k); }
+        });
+      });
+      subhead(sec, 'console instruments (live readouts from boot state)');
+      var g5 = grid(sec);
+      [['Fuel gauge', 'drawFuelGauge'], ['Speed', 'drawSpeedDisplay'], ['Hull plates', 'drawHullPlates'],
+       ['Cargo bay', 'drawCargoBay'], ['Depth', 'drawDepthDisplay'], ['Cash', 'drawCashDisplay'],
+       ['Reserve fuel', 'drawReserveFuel']].forEach(function (m) {
+        artCell(g5, A, {
+          name: m[0], sub: m[1], w: 132, h: 64, scale: 1.8,
+          render: function () {
+            if (!A.fn[m[1]]) throw new Error(m[1] + ' missing');
+            A.fn[m[1]](6, 6, 120, 52);
+          }
+        });
+      });
+      artCell(g5, A, {
+        name: 'Stencil font', sub: 'drawStencilText pixel stencil', w: 150, h: 30, scale: 2,
+        render: function () { A.fn.drawStencilText('SLUICE 0123456789', 4, 10, 1, '#d4a838'); }
+      });
+      artCell(g5, A, {
+        name: 'Hardware bits', sub: 'hex bolt · warning lamp · fuel canister', w: 96, h: 40, scale: 2.5,
+        render: function () {
+          A.fn.drawHexBolt && A.fn.drawHexBolt(12, 20);
+          A.fn.drawWarningLamp && A.fn.drawWarningLamp(36, 20, true);
+          A.fn.drawFuelCanister && A.fn.drawFuelCanister(56, 8, 18, 26, 0.7);
+        }
+      });
+      var gl = grid(sec);
+      liveCell(gl, 'Console frame + end caps', '6 cap styles, endcap.STYLE lever (endcap-lab.html is the chooser)', 'bottom console in-game / endcap-lab');
+      liveCell(gl, 'Item radial wheel', 'drawItemWheel composite (wedges + icons + stencil labels)', 'tap the wheel button in-game');
+      liveCell(gl, 'Shop room + hub + pages', 'shop room, hub cards, TRADE BOARD / WORKSHOP / SHELF pages', 'press E at the station in-game');
+      liveCell(gl, 'Death screen plate', 'steel-plate game-over sequence', 'die in-game (or grep drawDeathScreen)');
+      liveCell(gl, 'D-pad + flight pad + HUD chips', 'mobile touch controls + status HUD', 'mobile/touch in-game');
+      liveCell(gl, 'Layer banner + NMZ exit arrow', 'depth-layer crossing banner; edge-of-screen waypoint arrow', 'cross a layer / enter a zone in-game');
+    })();
+
+    // ===== 7. BACKGROUND & ATMOSPHERE (live systems) =====
+    (function () {
+      var sec = section('background', '7 · Background & atmosphere',
+        'Screen-space systems with caches + live state — they don\'t reduce to a cell, so they\'re indexed here and reviewed in-game (BACKGROUND_STYLE.md).');
+      var g = grid(sec);
+      liveCell(g, 'Night-sky cosmos', 'procedural pixel starfield + dither LUT + twinklers (150)', 'night time in-game');
+      liveCell(g, 'Atmospheric scattering + celestials', 'day/night sky grade, sun + moon (pinned)', 'watch a sunset in-game / sunset-lab.html');
+      liveCell(g, 'Parallax mountains + distant ridge', '3 strip-cached layers + farLand ridge + outpost lights (160)', 'surface in-game');
+      liveCell(g, 'Weather decks', 'fly-through cloud decks, rain/snow, storm lightning (155)', 'dev N cycles moods in-game');
+      liveCell(g, 'Horizon haze veil', 'aerial-perspective veil on ascent (158)', 'fly high in-game');
+      liveCell(g, 'Lighting / fog of war', 'connectivity-reveal darkness overlay (185)', 'dig deep in-game');
+      liveCell(g, 'Liquids (water + oil)', 'WebGPU MLS-MPM particle sim, surface ponds', 'find a pond in-game');
+      liveCell(g, 'Embers + magma heat gradient', 'underground bg pass for magma/mantle', 'reach magma in-game');
+    })();
+
+    // ===== 8. EMPTY SLOTS — planned, not drawn =====
+    (function () {
+      var sec = section('missing', '8 · Empty slots — planned, not drawn yet',
+        'The build-out worklist, sourced from EXPANSION_PLAN.md, WORLD_DESIGN.md, the style bibles and BACKLOG.md. Together these are what "bring it all together" means.');
+
+      subhead(sec, 'towns & world');
+      var g1 = grid(sec);
+      missCell(g1, 'Town 2–4 distinct architecture', 'stations currently palette recolors of town 1 — each town wants its own building identity (EXPANSION_PLAN)');
+      missCell(g1, 'Per-town pump pad + sell pad', 'fuel + auto-sell pads exist only at town 1');
+      missCell(g1, 'NMZ tier banners 1→3 escalation', 'weathered post → rivet detail → iron gantry, threat-tier signage (EXPANSION_PLAN P1.6)');
+      missCell(g1, 'Fence + gate', 'wood palisade between concrete star-capped pillars, iron sliding gate (BUILDING_STYLE §14)');
+      missCell(g1, 'Covered wagon', 'western leftover with a small red star on the canvas (BUILDING_STYLE §14)');
+      missCell(g1, 'Windsock + tower', 'code drawn + commented out — needs a 22-wide surface slot to re-enable (BUILDING_STYLE §13)');
+      missCell(g1, 'Corrugated-iron wall helper', 'reserved full-height industrial wall vocabulary (BUILDING_STYLE §4)');
+
+      subhead(sec, 'liquids, slimes & reactions (WORLD_DESIGN phase 2/3)');
+      var g2 = grid(sec);
+      missCell(g2, 'Lava', 'emissive orange particle liquid in the WebGPU sim — slow, hot, damaging');
+      missCell(g2, 'Acid', 'mid-flow dissolving liquid, corrodes tiles + hull');
+      missCell(g2, 'Mud / slurry', 'very slow, harmless, slows movement, bakes to stone in lava');
+      missCell(g2, 'Glowmilk', 'emissive cyan liquid, lights caverns, marks rare pockets');
+      missCell(g2, 'Brine + Tar', 'slime-reaction products (salt+water, ash+oil)');
+      missCell(g2, 'Slime blocks (per-reagent hues)', 'pushable tile-sized jello variants for alchemy');
+      missCell(g2, 'Reaction feedback FX', 'steam/fizz/glow-spark burst + first-time recipe label');
+      missCell(g2, 'Recipe book UI', 'diegetic record of discovered slime+liquid reactions');
+
+      subhead(sec, 'shop & economy');
+      var g3 = grid(sec);
+      missCell(g3, 'Per-tier gear sprites (ladders)', 'fuel/hull/cargo/etc. each have ONE sprite — UI_STYLE §16 specs a visible 7-tier physical progression (~70 sprites)');
+      missCell(g3, 'Station hover masks (4 PNGs)', 'silhouette hover masks for shop stations — fallback rect outline in use (assets/shop/soviet/masks)');
+      missCell(g3, 'Western town shop theme', 'plank walls, sheriff star, storekeeper — same mechanics, different chrome (UI_STYLE §15.5)');
+      missCell(g3, 'Oil depot / refinery / space-station interiors', 'location-themed shop variants specced as examples in UI_STYLE §11');
+      missCell(g3, 'Hidden trader vendor', 'rare special vendor room, non-cash currencies (SHOP_PSYCHOLOGY §9.9)');
+
+      subhead(sec, 'sky & ambience (BACKGROUND_STYLE roadmap stage 6)');
+      var g4 = grid(sec);
+      missCell(g4, 'Per-biome drift particles', 'dust motes / drips / refined embers / sparkles / ash per underground biome');
+      missCell(g4, 'Aurora ribbons', 'slow-breathing ribbons, 0.05–0.15 Hz (stage 6b)');
+      missCell(g4, 'Reactive sky touches', 'stars twinkle after explosions, snow kick-up on hard landings');
+
+      subhead(sec, 'special-find verbs (WORLD_DESIGN §2, mechanics + art TBD)');
+      var g5 = grid(sec);
+      missCell(g5, 'Geode cracking', 'town-2 crackable mystery node, Stardew-style');
+      missCell(g5, 'Fossil assembly', 'town-3 multi-piece fossil collection + assembly bonus');
+      missCell(g5, 'Exotic find', 'town-4 one-off volatile find that may react');
+    })();
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') boot();
+  else window.addEventListener('DOMContentLoaded', boot);
+})();
+</script>
+</body>
+</html>
