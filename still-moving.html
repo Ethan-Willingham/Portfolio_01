@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Still Moving</title>
+  <meta name="description" content="A sourced, illustrated field guide to the other two thirds of fitness: cardio and stretching. Why your heart's fitness predicts how long you live, how little it takes, why most stretching is wasted, and where each one stops paying off. Every claim cited.">
+  <meta property="og:title" content="Still Moving">
+  <meta property="og:description" content="The two parts of fitness lifting leaves out. How fit your heart is predicts how long you live more than almost anything, and most of the stretching people do is the kind the evidence likes least. How little it takes, and where to stop. Sourced and illustrated.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/still-moving.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/still-moving-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="800">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/still-moving-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     STILL MOVING
+     A sourced field guide to the other two thirds of fitness:
+     cardio (the heart that decides how long you live) and
+     stretching/mobility (the range that decides how well you move).
+     Companion to "Big Enough" (muscle). Sits inside the site shell
+     (forest green, parchment, Century Supra / Segoe UI / Commit Mono).
+     This block adds the guide's own components: the hero, the section
+     system, the data-viz figures and animations, the evidence-grade
+     citation chips, the two interactive tools, the weekly table, and
+     the references. No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --measure: 780px;                 /* reading column, matched to big-enough */
+    --wide: 1080px;                   /* breakout width for big visuals */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #D4C4A0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+    --panel:   #2a322b;
+    --panel-2: #232a25;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
+  .sec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 1.5rem 0 0.4rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--accent); }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+
+  /* per-section color rhythm: cardio runs warm (heart/blood), stretching runs green (calm) */
+  #heart { --sec-accent:#d9978c; } #dose { --sec-accent:#dfc288; } #engine { --sec-accent:#8fb3c7; }
+  #gains { --sec-accent:#b8796d; } #stretch { --sec-accent:#9ec79a; } #mobility { --sec-accent:#6f9a6c; }
+  #together { --sec-accent:#cf9f78; }
+
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- EVIDENCE GRADES ---------- */
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
+  .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
+  .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
+  .g-c { color: #f2d69d; background: rgba(230,192,116,0.20); border-color: rgba(230,192,116,0.55); }
+  .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
+
+  /* ---------- DATA-VIZ FIGURES ---------- */
+  figure.viz { margin: clamp(2.2rem, 5vw, 3rem) 0; padding: 1.1em 1.2em 1.3em; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; }
+  figure.viz.breakout { padding: 1.3em 1.5em 1.5em; }
+  figure.viz > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  figure.viz figcaption { font-family: var(--font-heading); font-size: 1.06rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.3em; line-height: 1.3; }
+  figure.viz .viz-sub { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); margin-bottom: 0.9em; line-height: 1.45; }
+  figure.viz .viz-note { font-family: var(--font-body); font-size: 0.88rem; font-style: italic; color: var(--text-dim); margin-top: 0.85em; line-height: 1.5; }
+  figure.viz .viz-note b { font-style: normal; color: var(--text); }
+  .v-axis { fill: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
+  .v-axis-t { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; }
+  .v-grid { stroke: var(--c-grid); stroke-width: 1; }
+  .v-grid-s { stroke: var(--c-grid-strong); stroke-width: 1; }
+  .v-label { fill: var(--text); font-family: var(--font-body); font-size: 12px; }
+  .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-mono { font-family: var(--font-mono); }
+  @media (max-width: 720px) {
+    figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    figure.viz.scrollx > svg { min-width: 560px; }
+    figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
+  }
+
+  /* ---------- PHOTOGRAPHY (curated public-domain / CC works: borderless, filling the frame) ---------- */
+  figure.photo { margin: clamp(2.2rem, 5vw, 3.4rem) 0; }
+  figure.photo img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  figure.photo.portrait { max-width: 26rem; margin-left: auto; margin-right: auto; }
+  figure.photo.portrait img { max-width: 100%; }
+  figure.photo figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.5; margin-top: 0.75em; text-wrap: pretty; }
+  figure.photo .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
+  figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
+  figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  figure.photo .cred a:hover { color: var(--accent-hover); }
+
+  /* ---------- INTERACTIVE TOOL PANELS ---------- */
+  .tool { margin: 2.2em 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(12,16,13,0.4), 0 14px 34px -18px rgba(8,12,9,0.5); }
+  .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 0.7rem; padding: 0.75em 1.15em; background: var(--panel-2); border-bottom: 1px solid var(--rule); }
+  .tool-head h4 { margin: 0; font-family: var(--font-heading); font-size: 1.08rem; color: var(--text-bright); }
+  .tool-head .tool-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .tool-body { padding: 1.15em 1.2em 1.3em; }
+  .tool-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-bottom: 0.9rem; }
+  .tool label { font-family: var(--font-body); font-size: 0.92rem; color: var(--text); }
+  .tool input[type=number] { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); background: rgba(0,0,0,0.24); border: 1px solid var(--rule); border-radius: 6px; padding: 0.4em 0.6em; max-width: 7em; }
+  .tool input:focus { outline: none; border-color: var(--accent); }
+  .tool input[type=range] { -webkit-appearance: none; appearance: none; flex: 1 1 180px; height: 20px; background: transparent; cursor: pointer; }
+  .tool input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--c-grid-strong); border-radius: 2px; }
+  .tool input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.3); transition: background 0.15s, transform 0.1s; }
+  .tool input[type=range]:hover::-webkit-slider-thumb, .tool input[type=range]:focus::-webkit-slider-thumb { background: var(--accent-hover); transform: scale(1.08); }
+  .tool input[type=range]::-moz-range-track { height: 3px; background: var(--c-grid-strong); border-radius: 2px; }
+  .tool input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var(--accent); border: none; border-radius: 50%; }
+  .tool-out { margin-top: 1em; padding: 0.9em 1.05em; border-radius: 10px; background: rgba(0,0,0,0.22); border: 1px solid var(--rule); }
+  .tool-out .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.4rem); color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+  .tool-out .lbl { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); }
+  .tool-rail { margin-top: 0.9em; font-family: var(--font-body); font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; }
+  .tool-rail b { color: var(--text-bright); }
+  .tool svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tool .val { font-family: var(--font-mono); color: var(--accent-hover); font-variant-numeric: tabular-nums; }
+  .zgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  @media (max-width: 480px) { .zgrid { grid-template-columns: 1fr; } }
+  .zcell { padding: 0.7em 0.85em; border-radius: 9px; border: 1px solid var(--rule); background: rgba(0,0,0,0.16); }
+  .zcell .zk { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); display: block; margin-bottom: 0.25em; }
+  .zcell .zv { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+  .zcell.hard .zv { color: var(--c-rose); }
+  .zcell .zu { font-family: var(--font-body); font-size: 0.84rem; color: var(--text-dim); }
+
+  /* ---------- WEEKLY PROGRAM TABLE ---------- */
+  .prog-wrap { overflow-x: auto; margin: 1.4em 0; -webkit-overflow-scrolling: touch; }
+  table.prog { border-collapse: collapse; width: 100%; font-family: var(--font-body); font-size: 0.92rem; min-width: 520px; }
+  table.prog th, table.prog td { border: 1px solid var(--rule); padding: 0.5em 0.7em; text-align: left; vertical-align: top; }
+  table.prog thead th { background: var(--panel-2); color: var(--text-bright); font-family: var(--font-heading); }
+  table.prog td.day { font-family: var(--font-mono); color: var(--accent-hover); white-space: nowrap; }
+  table.prog tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+  table.prog .hard { color: var(--c-rose); font-weight: 600; }
+  table.prog .easy { color: var(--c-sky); font-weight: 600; }
+
+  /* ---------- REFERENCES (fine print: the whole list should fit one screen) ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.52rem; color: var(--text-dim); line-height: 1.3; padding-left: 1.6em; margin: 0.2em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.12em; break-inside: avoid; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources li.shead { list-style: none; margin: 0.9em 0 0.25em -1.6em; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); break-after: avoid; }
+  #sources li.shead:first-child { margin-top: 0; }
+  #sources .lede { font-size: 0.84rem; }
+  #sources .legend { font-size: 0.6rem; gap: 0.3rem 0.8rem; margin: 0.6em 0 0.8em; }
+  #sources .legend .grade { font-size: 0.48rem; padding: 0.16em 0.5em; }
+  @media (min-width: 700px) { #sources ol { columns: 3; column-gap: 1.4rem; } }
+
+  .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
+  .disclaimer strong { color: var(--accent-hover); }
+
+  /* ---------- ANIMATION ---------- */
+  @media all {
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+    .draw { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); }
+    .draw.go { animation: draw 1.6s var(--ease) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    .fade-el { opacity: 0; }
+    .fade-el.go { animation: fadeEl 0.9s ease forwards; }
+    @keyframes fadeEl { to { opacity: 1; } }
+    .drift { animation: drift 7s ease-in-out infinite; }
+    @keyframes drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    figure.viz, .tool, .u-callout, .u-stats, .u-pq { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back be-back"><span class="pb-label">Home</span></a>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <h1 class="hero-title">Still Moving</h1>
+    <p class="hero-dek">Lifting builds the engine. This is the rest of fitness: the heart that decides how long you live, and the range that decides how well you move. How little cardio buys most of the years, why most stretching is wasted motion, and where each one stops paying off.</p>
+    <p class="hero-meta">A field guide to cardio and mobility <span class="sep">/</span> <b>40 sources</b> <span class="sep">/</span> 30 min read</p>
+  </header>
+
+  <main id="guide">
+
+  <figure class="photo reveal">
+    <img src="assets/images/still-moving/muybridge.webp" width="1600" height="1297" loading="eager" decoding="async" alt="Eadweard Muybridge's 1887 motion study of a nude man running, two rows of sequential photographs capturing each phase of a stride against a measuring grid.">
+    <figcaption>The first time anyone could see what running actually looks like. Muybridge froze a body in motion frame by frame in the 1880s, and the lesson holds: fitness is not a pose you hold, it is a body that keeps moving.
+      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Nude_man_running_(rbm-QP301M8-1887-066).jpg">Eadweard Muybridge, Animal Locomotion (1887), plate 66, "Running." Public domain, via Wikimedia Commons.</a></span>
+    </figcaption>
+  </figure>
+
+  <!-- chapter strip -->
+  <nav class="chapters" aria-label="Chapters">
+    <span class="lead">Seven parts</span>
+    <a href="#start">Start here</a>
+    <a href="#heart">Your heart</a>
+    <a href="#dose">How little it takes</a>
+    <a href="#engine">The engine</a>
+    <a href="#gains">Cardio and gains</a>
+    <a href="#stretch">Stretching</a>
+    <a href="#together">The plan</a>
+  </nav>
+
+  <!-- ===================== 1. THE SHORT VERSION ===================== -->
+  <section id="start" class="sec first" aria-labelledby="start-h">
+    <span class="sec-kicker">Start here</span>
+    <h2 id="start-h" class="sec-h">The short version</h2>
+
+    <p class="lede">The single number most tightly tied to how long you live is not your weight, your blood pressure, or how much you can lift. It is how fit your heart and lungs are. In a study of 122,000 people, the least fit had roughly five times the death rate of the fittest, a worse statistical risk than smoking, diabetes, or heart disease carried in the same study. And fitter was always better, with no ceiling anyone could find. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+
+    <p>This guide is about the two parts of fitness a barbell leaves out. One is cardio, the work that builds that heart and those lungs and, more than almost anything else you can do, buys you years. The other is stretching, or really mobility, the range your joints can move through and actually control. People get both wrong in the same direction. They skip the cardio that adds years, and grind away at the stretching that adds almost nothing.</p>
+
+    <p>If you read <a href="big-enough.html">Big Enough</a>, the muscle guide this one pairs with, you already know the shape of the argument. Every lever helps up to a point, then quietly stops paying you back. Cardio and stretching are the same story, with higher stakes, because this is the part that decides not just how you look but how long you last and how well you move while you do it.</p>
+
+    <p>And the same trap waits at the end of each. The people doing the most are usually spending it in the wrong place: long static stretches that do not prevent injury, a step count invented by a pedometer company in 1965, hours of joyless cardio when twenty minutes of the right kind would do more. The goal is not the maximum. It is the dose where the line goes flat, almost all of the prize for almost none of the cost.</p>
+
+    <figure class="viz reveal" aria-label="The whole plan for cardio and mobility on a single card.">
+      <figcaption>The whole plan, on one card</figcaption>
+      <p class="viz-sub">If you did only these six things, you would have almost all of the heart health and the range a body needs, for a few hours a week.</p>
+      <svg viewBox="0 0 700 250" role="img" aria-label="Six tiles: keep most cardio easy and conversational; add one short hard session a week; aim for about 7,000 steps a day; warm up by moving not holding; lift through a full range; and stretch only what is genuinely tight.">
+        <g font-family="var(--font-body)">
+          <g transform="translate(10,10)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#8fb3c7"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#8fb3c7">1 &#183; Easy base</text>
+            <text x="18" y="60" class="v-label" font-size="13">Most cardio easy,</text>
+            <text x="18" y="80" class="v-label" font-size="13">conversational pace.</text>
+            <text x="18" y="100" class="v-label" font-size="13">2 to 3 hours a week.</text>
+          </g>
+          <g transform="translate(240,10)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#d9978c"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#d9978c">2 &#183; A little hard</text>
+            <text x="18" y="60" class="v-label" font-size="13">One short session</text>
+            <text x="18" y="80" class="v-label" font-size="13">a week, near all out.</text>
+            <text x="18" y="100" class="v-label" font-size="13">It lifts your ceiling.</text>
+          </g>
+          <g transform="translate(470,10)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#dfc288"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#dfc288">3 &#183; Steps</text>
+            <text x="18" y="60" class="v-label" font-size="13">About 7,000 a day.</text>
+            <text x="18" y="80" class="v-label" font-size="13">10,000 was a 1965</text>
+            <text x="18" y="100" class="v-label" font-size="13">sales pitch.</text>
+          </g>
+          <g transform="translate(10,130)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#9ec79a"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#9ec79a">4 &#183; Warm up moving</text>
+            <text x="18" y="60" class="v-label" font-size="13">Leg swings, ramp-up</text>
+            <text x="18" y="80" class="v-label" font-size="13">sets, 5 to 10 minutes.</text>
+            <text x="18" y="100" class="v-label" font-size="13">Skip the long holds.</text>
+          </g>
+          <g transform="translate(240,130)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#cf9f78"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#cf9f78">5 &#183; Full range</text>
+            <text x="18" y="60" class="v-label" font-size="13">Lift deep, every rep.</text>
+            <text x="18" y="80" class="v-label" font-size="13">The stretch under load</text>
+            <text x="18" y="100" class="v-label" font-size="13">is your mobility work.</text>
+          </g>
+          <g transform="translate(470,130)">
+            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#b79bc4"/>
+            <text x="18" y="34" class="v-cap" font-size="15" fill="#b79bc4">6 &#183; Stretch what's tight</text>
+            <text x="18" y="60" class="v-label" font-size="13">Targeted, loaded,</text>
+            <text x="18" y="80" class="v-label" font-size="13">only where you lack range.</text>
+            <text x="18" y="100" class="v-label" font-size="13">Never before a heavy set.</text>
+          </g>
+        </g>
+      </svg>
+      <p class="viz-note">That is the whole engine and the whole chassis. The chapters that follow are just the manual: what each lever does, how hard to pull it, and the exact point where pulling harder stops paying you back.</p>
+    </figure>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The thread that ties this together.</b> Almost every chapter lands in the same place: a lever that works beautifully up to a point, then quietly goes flat. More minutes, more steps, more stretching, more sheer mileage. The skill this guide is really teaching is the same one Big Enough taught for muscle: find where each lever stops paying, park it there, and go live your life.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 2. YOUR HEART IS THE NUMBER ===================== -->
+  <section id="heart" class="sec" aria-labelledby="heart-h">
+    <span class="sec-kicker">The vital sign</span>
+    <h2 id="heart-h" class="sec-h">Your heart is the number</h2>
+
+    <p class="lede">Of every measurement in medicine, the one most tightly tied to how long you live is one most people have never seen: your cardiorespiratory fitness, how well your heart, lungs, and muscles move oxygen when you push. The fitter you are, the longer you tend to live, and the curve does not bend back down.</p>
+
+    <figure class="photo reveal">
+      <img src="assets/images/still-moving/heart.webp" width="1500" height="1047" loading="lazy" decoding="async" alt="Leonardo da Vinci's anatomical study of the human heart and its coronary vessels, drawn in brown ink around 1511, surrounded by his mirror-writing notes.">
+      <figcaption>Leonardo dissected and drew the heart five centuries before anyone could measure how well it ran. He saw the machine. We can now put a number on the engine, and it turns out to be one of the best predictors of how long you live.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Leonardo_da_Vinci_-_RCIN_919073,_Verso_The_heart_and_coronary_vessels_c.1511-13.jpg">Leonardo da Vinci, study of the heart and coronary vessels (c. 1511 to 1513), Royal Collection Trust. Public domain, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <p>In 2018, cardiologists at the Cleveland Clinic put 122,000 people on a treadmill, measured their fitness, and followed them for years. The least fit quartile died at about five times the rate of the fittest. Laid beside the usual villains in the same study, being unfit carried a larger statistical risk of death than smoking, than diabetes, than coronary artery disease. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal" aria-label="A bar chart of mortality risk for being unfit compared with smoking, diabetes, and heart disease.">
+      <figcaption>What carried the bigger risk of death</figcaption>
+      <p class="viz-sub">Mortality risk relative to the fittest group, from the same study. Being in the least fit group sat above every traditional risk factor it was measured against.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="Horizontal bars: being unfit, about 5 times the risk; kidney failure, about 4 times; smoking, 1.4 times; diabetes, 1.4 times; heart disease, 1.3 times.">
+        <!-- reference line at risk = 1.0 (the fittest) -->
+        <line x1="299" y1="44" x2="299" y2="276" stroke="#8a8a7a" stroke-width="1" stroke-dasharray="3 4"/>
+        <text x="299" y="294" text-anchor="middle" class="v-axis-t">the fittest = 1.0</text>
+        <!-- bars -->
+        <g font-family="var(--font-body)">
+          <!-- unfit 5.04 -->
+          <text x="12" y="71" class="v-label" font-size="13" fill="#F5F1EA">Being unfit</text>
+          <rect x="210" y="52" width="450" height="30" rx="4" fill="#d9978c"/>
+          <text x="650" y="72" text-anchor="end" class="v-label-b" font-size="13" fill="#1e2420">5.0x</text>
+          <!-- kidney 3.96 -->
+          <text x="12" y="117" class="v-label" font-size="13">Kidney failure</text>
+          <rect x="210" y="98" width="354" height="30" rx="4" fill="#5a675c"/>
+          <text x="556" y="118" text-anchor="end" class="v-label" font-size="12" fill="#E8E2D6">4.0x</text>
+          <!-- smoking 1.41 -->
+          <text x="12" y="163" class="v-label" font-size="13">Smoking</text>
+          <rect x="210" y="144" width="126" height="30" rx="4" fill="#5a675c"/>
+          <text x="344" y="164" class="v-label" font-size="12" fill="#B8B2A2">1.4x</text>
+          <!-- diabetes 1.40 -->
+          <text x="12" y="209" class="v-label" font-size="13">Diabetes</text>
+          <rect x="210" y="190" width="125" height="30" rx="4" fill="#5a675c"/>
+          <text x="343" y="210" class="v-label" font-size="12" fill="#B8B2A2">1.4x</text>
+          <!-- heart disease 1.29 -->
+          <text x="12" y="255" class="v-label" font-size="13">Heart disease</text>
+          <rect x="210" y="236" width="115" height="30" rx="4" fill="#5a675c"/>
+          <text x="333" y="256" class="v-label" font-size="12" fill="#B8B2A2">1.3x</text>
+        </g>
+      </svg>
+      <p class="viz-note">Read it as a strong association, not a literal head to head: this was a study of people sent for a stress test, so some of the gap is that sick people are unfit because they are sick. The direction, though, is not subtle. <b>Mandsager 2018.</b></p>
+    </figure>
+
+    <p>And there was no top end. Even the elite, the fittest two percent, outlived the merely very fit. The authors put it plainly: there is no observed level of fitness above which the survival benefit stops.</p>
+
+    <p>Be honest about what this is. It is an observational study, not a clean experiment, so the exact five-times figure is association, not proof that pushing your fitness from good to great causes an 80 percent drop in your odds of dying. But fitness predicting survival is one of the most repeated findings in all of epidemiology. Each one-MET step up in fitness, roughly one extra flight of stairs' worth of capacity, tracks with about 13 percent lower mortality across the studies that have looked. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/183916">Kodama 2009</a></span> <span class="grade g-a">strong</span> The size is fuzzy. The direction is not in doubt.</p>
+
+    <p>Here is the part that should change your week: this is not a fixed trait you were issued at birth. Cardiorespiratory fitness is one of the most trainable numbers in your body. The rest of this guide is how little it takes to move it.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Why this chapter goes first.</b> Of every lever in fitness, the heart is the one with the highest stakes and the best evidence. If you only ever act on one page of this guide, act on this one: do not be unfit.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 3. HOW LITTLE IT TAKES ===================== -->
+  <section id="dose" class="sec" aria-labelledby="dose-h">
+    <span class="sec-kicker">The dose</span>
+    <h2 id="dose-h" class="sec-h">How little it takes</h2>
+
+    <p class="lede">The best news in exercise science is that the first few minutes are worth the most. The jump from doing nothing to doing a little is the single biggest return in preventive medicine, far bigger than the jump from a lot to even more.</p>
+
+    <p>In a pooled study of 661,000 people, simply moving a little, less than the official minimum, already cut the risk of dying by 20 percent. Hitting the standard guideline cut it by about 31 percent. The benefit bottomed out at three to five times the guideline, and then stayed flat: people doing ten times the minimum lived no longer, and crucially, no shorter. <span class="u-src"><a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2212267">Arem 2015</a></span> <span class="grade g-a">strong</span></p>
+
+    <figure class="viz reveal" aria-label="A curve of mortality risk against weekly activity, dropping steeply then flattening.">
+      <figcaption>The curve that should run your week</figcaption>
+      <p class="viz-sub">Risk of death against how much you move. The drop is almost all in the first hour or two a week, and it never bends back up, even at ten times the minimum.</p>
+      <svg viewBox="0 0 700 320" role="img" aria-label="Mortality risk falls from 1.0 at no activity to about 0.61 at three to five times the guideline, then stays flat at higher doses.">
+        <!-- gridlines + y labels -->
+        <g>
+          <line x1="70" y1="60" x2="660" y2="60" class="v-grid"/>
+          <line x1="70" y1="155" x2="660" y2="155" class="v-grid"/>
+          <line x1="70" y1="250" x2="660" y2="250" class="v-grid"/>
+          <text x="60" y="64" text-anchor="end" class="v-axis">1.0</text>
+          <text x="60" y="159" text-anchor="end" class="v-axis">0.8</text>
+          <text x="60" y="254" text-anchor="end" class="v-axis">0.6</text>
+          <text x="22" y="160" class="v-axis-t" transform="rotate(-90 22 160)" text-anchor="middle">risk of death</text>
+        </g>
+        <!-- axis -->
+        <line x1="70" y1="270" x2="660" y2="270" class="v-grid-s"/>
+        <!-- the curve -->
+        <path class="draw" style="--len:760" d="M70,60 C 120,60 160,120 210,155 C 270,196 320,200 350,207 C 420,224 470,243 500,245 C 560,248 610,210 640,207" fill="none" stroke="#dfc288" stroke-width="3" stroke-linecap="round"/>
+        <!-- points -->
+        <circle cx="70" cy="60" r="5" fill="#dfc288"/>
+        <circle cx="210" cy="155" r="5" fill="#dfc288"/>
+        <circle cx="350" cy="207" r="5" fill="#dfc288"/>
+        <circle cx="500" cy="245" r="5" fill="#dfc288"/>
+        <circle cx="640" cy="207" r="5" fill="#dfc288"/>
+        <!-- x labels -->
+        <text x="70" y="288" text-anchor="middle" class="v-axis-t">none</text>
+        <text x="210" y="288" text-anchor="middle" class="v-axis-t">a little</text>
+        <text x="350" y="288" text-anchor="middle" class="v-axis-t">the guideline</text>
+        <text x="500" y="288" text-anchor="middle" class="v-axis-t">3 to 5x</text>
+        <text x="640" y="288" text-anchor="middle" class="v-axis-t">10x</text>
+        <!-- annotations -->
+        <text x="150" y="105" class="v-label-b" font-size="12" fill="#9ec79a">the biggest drop</text>
+        <text x="150" y="121" class="v-label" font-size="11" fill="#B8B2A2">in all of preventive medicine</text>
+        <text x="560" y="190" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">flat: no extra benefit,</text>
+        <text x="560" y="205" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">and no harm</text>
+      </svg>
+      <p class="viz-note">If you do nothing right now, the highest-return change available to you in any corner of your health is a daily walk. <b>Arem 2015.</b></p>
+    </figure>
+
+    <p>The official target behind those numbers is 150 to 300 minutes a week of moderate activity (a brisk walk, easy cycling, anything that warms you up but lets you still talk), or half that if it is vigorous, plus a couple of strength sessions. <span class="u-src"><a href="https://odphp.health.gov/sites/default/files/2019-09/Physical_Activity_Guidelines_2nd_edition.pdf">U.S. Physical Activity Guidelines</a></span> But the shape of the curve matters more than the target. Even 15 minutes a day of moderate movement was tied to about three extra years of life in a study of 416,000 people. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">Wen 2011</a></span> <span class="grade g-b">good</span></p>
+
+    <p>So before you optimize anything, here is a tool to see where you sit on that curve. Drag it.</p>
+
+    <div class="tool" id="dose-tool">
+      <div class="tool-head"><h4>How much cardio buys you</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-body">
+        <div class="tool-row">
+          <label for="d-slider">Moderate activity</label>
+          <input type="range" id="d-slider" min="0" max="600" step="15" value="150">
+          <span class="val" id="d-min">150 min/week</span>
+        </div>
+        <svg id="d-curve" viewBox="0 0 380 150" role="img" aria-label="A small version of the dose-response curve with a marker showing your current spot.">
+          <line x1="30" y1="130" x2="368" y2="130" class="v-grid-s"/>
+          <line x1="30" y1="20" x2="30" y2="130" class="v-grid"/>
+          <polyline points="30,20 71,73 112,98 195,113 277,117 360,117" fill="none" stroke="#dfc288" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+          <line id="d-vline" x1="112" y1="98" x2="112" y2="130" stroke="#8fb3c7" stroke-width="1" stroke-dasharray="3 3"/>
+          <circle id="d-dot" cx="112" cy="98" r="5.5" fill="#8fb3c7"/>
+          <text x="30" y="146" class="v-axis-t" font-size="9">none</text>
+          <text x="360" y="146" text-anchor="end" class="v-axis-t" font-size="9">10x the minimum</text>
+        </svg>
+        <div class="tool-out">
+          <div><span class="big" id="d-pct">79%</span> <span class="lbl">of the longevity benefit captured</span></div>
+          <div class="tool-rail" id="d-verdict">Right at the guideline. You have nearly all of the benefit already.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Steps: 7,000, not 10,000</h3>
+    <p>The 10,000-step goal in your phone is not science. It is a marketing slogan from 1965. A Japanese company sold a pedometer called the <em>manpo-kei</em>, the "10,000-steps meter," and picked the number because it was round, memorable, and the character for 10,000 looks a little like a walking person. There was no study behind it. It got baked into fitness trackers and slowly came to feel official. <span class="u-src"><a href="https://www.news-medical.net/health/Where-did-10000-steps-a-day-come-from.aspx">Tudor-Locke</a></span> <span class="grade g-c">mixed</span></p>
+
+    <p>What the data actually show is the now-familiar shape: the benefit climbs steeply out of the basement, then flattens. In a meta-analysis of 47,000 people, going from about 3,500 steps a day to about 7,800 cut the death rate nearly in half. Past roughly 7,000 to 8,000, the line bends and more steps add little. In older women, the benefit leveled off around 7,500. <span class="u-src"><a href="https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00302-9/fulltext">Paluch 2022</a></span> <span class="u-src"><a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2734709">Lee 2019</a></span> <span class="grade g-a">strong</span> The newest synthesis, 57 studies deep, lands on 7,000 as the realistic target. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40713949/">Ding 2025</a></span></p>
+
+    <figure class="viz reveal" aria-label="A curve of mortality risk against daily step count, dropping then flattening near 7,500 steps.">
+      <figcaption>Where the steps stop mattering</figcaption>
+      <p class="viz-sub">Risk of death against steps per day. Most of the benefit is banked by around 7,000 to 8,000. The famous 10,000 is just further along the flat part.</p>
+      <svg viewBox="0 0 700 290" role="img" aria-label="Mortality risk falls steeply from about 3,500 steps to about 7,800, then flattens; 10,000 sits on the flat section.">
+        <g>
+          <line x1="70" y1="60" x2="660" y2="60" class="v-grid"/>
+          <line x1="70" y1="150" x2="660" y2="150" class="v-grid"/>
+          <line x1="70" y1="240" x2="660" y2="240" class="v-grid"/>
+          <text x="60" y="64" text-anchor="end" class="v-axis">1.0</text>
+          <text x="60" y="154" text-anchor="end" class="v-axis">0.7</text>
+          <text x="60" y="244" text-anchor="end" class="v-axis">0.45</text>
+        </g>
+        <!-- plateau band -->
+        <rect x="436" y="50" width="80" height="210" fill="#9ec79a" opacity="0.10"/>
+        <text x="476" y="44" text-anchor="middle" class="v-label" font-size="11" fill="#9ec79a">most of the benefit</text>
+        <!-- curve -->
+        <path class="draw" style="--len:680" d="M245,60 C 300,110 330,165 355,198 C 400,233 430,238 456,242 C 520,248 575,250 606,250" fill="none" stroke="#dfc288" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="245" cy="60" r="5" fill="#dfc288"/>
+        <circle cx="355" cy="198" r="5" fill="#dfc288"/>
+        <circle cx="456" cy="242" r="5" fill="#dfc288"/>
+        <circle cx="606" cy="250" r="5" fill="#dfc288"/>
+        <!-- 10k marker -->
+        <line x1="562" y1="60" x2="562" y2="250" stroke="#d9978c" stroke-width="1.2" stroke-dasharray="3 4"/>
+        <text x="562" y="52" text-anchor="middle" class="v-axis-t" fill="#d9978c">10,000: a 1965 slogan</text>
+        <!-- x axis -->
+        <line x1="70" y1="260" x2="660" y2="260" class="v-grid-s"/>
+        <text x="245" y="278" text-anchor="middle" class="v-axis-t">3,500</text>
+        <text x="355" y="278" text-anchor="middle" class="v-axis-t">6,000</text>
+        <text x="456" y="278" text-anchor="middle" class="v-axis-t">7,800</text>
+        <text x="606" y="278" text-anchor="middle" class="v-axis-t">11,000</text>
+        <text x="365" y="288" text-anchor="middle" class="v-axis-t" fill="#767d71">steps per day</text>
+      </svg>
+      <p class="viz-note">The gap that matters is between 4,000 and 8,000, not between 8,000 and 12,000. At 3,000 steps, getting to 7,000 is one of the best things you can do for your lifespan. At 9,000, a tenth thousand is a rounding error.</p>
+    </figure>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The dose sweet spot.</b> Most of the benefit lives in the first hour or two a week and the first 7,000 steps a day. Everything past that is for enjoyment or sport, not survival. If you take one thing from this chapter: a little is almost everything, and almost nobody needs the maximum.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 4. THE ENGINE: EASY AND HARD ===================== -->
+  <section id="engine" class="sec" aria-labelledby="engine-h">
+    <span class="sec-kicker">The engine</span>
+    <h2 id="engine-h" class="sec-h">Easy miles and a little hard</h2>
+
+    <p class="lede">Two speeds build almost everything worth having: a lot of easy, and a little genuinely hard. The easy work builds the engine's size. The hard work builds its ceiling. Most people do neither and instead live in a moderate middle that is too hard to recover from and too easy to drive much adaptation.</p>
+
+    <h3>The easy base (zone 2)</h3>
+    <p>Most of your cardio should be easy enough to hold a conversation. Coaches call this zone 2: a steady effort just below the point where your breathing breaks up, roughly 60 to 70 percent of your maximum heart rate, where the burn stays low. At that pace your body spends weeks quietly building more mitochondria (the tiny furnaces in your cells that turn fuel and oxygen into energy) and more of the small blood vessels that feed them, lifting their density by 10 to 20 percent in people new to training. It is the cheap, low-damage volume that everything else rests on.</p>
+
+    <p>This is the right setting for most of your cardio minutes, so it helps to know yours. Put in your age, and your resting heart rate if you know it, for a sharper estimate.</p>
+
+    <div class="tool" id="zone-tool">
+      <div class="tool-head"><h4>Your training heart-rate zones</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-body">
+        <div class="tool-row">
+          <label for="z-age">Age</label>
+          <input type="number" id="z-age" value="35" min="14" max="100" step="1" inputmode="numeric">
+          <label for="z-rest">Resting HR <span style="color:var(--text-faint)">(optional)</span></label>
+          <input type="number" id="z-rest" placeholder="e.g. 60" min="30" max="120" step="1" inputmode="numeric">
+        </div>
+        <div class="tool-out">
+          <div class="zgrid">
+            <div class="zcell"><span class="zk">Easy base, zone 2</span><span class="zv" id="z-z2">122 to 142</span> <span class="zu">bpm</span></div>
+            <div class="zcell hard"><span class="zk">Hard intervals (4x4)</span><span class="zv" id="z-hard">170 to 180</span> <span class="zu">bpm</span></div>
+          </div>
+          <div class="tool-rail" id="z-cue">In zone 2 you can talk in full sentences. In the hard intervals you can manage only a few words at a time. The talk test is more honest than any watch.</div>
+          <div class="tool-rail" id="z-max">Estimated maximum heart rate: <b id="z-mx">185</b> bpm. These are estimates; your real numbers can run 10 to 15 bpm either way.</div>
+        </div>
+      </div>
+    </div>
+
+    <p>Zone 2 has become a wellness buzzword, sold as a magic mitochondrial window, so be a little skeptical. A 2025 review in <em>Sports Medicine</em>, titled, fairly, "Much Ado About Zone 2," concluded the evidence does not support that exact zone as the optimal intensity for building mitochondria, and that minute for minute, harder work does as much or more. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40560504/">Storoschuk 2025</a></span> <span class="grade g-c">mixed</span> The reason elite athletes do so much easy work is that they need enormous volume, and easy is the only pace you can pile up without breaking. For the rest of us the precise heart-rate window matters far less than two simpler things: do a decent amount of easy aerobic work, and include some that is genuinely hard. Walking the dog up a hill counts.</p>
+
+    <h3>The hard part, and why it is not optional</h3>
+    <p>The one number that most resists easy miles is VO2max, the top rate at which your body can take in and use oxygen, and the single fitness measure most tied to survival. Once you have a base, you cannot stroll your way to a higher one. You have to occasionally go hard.</p>
+
+    <p>The classic protocol is the Norwegian 4x4: four minutes at close to your limit (about 90 to 95 percent of max heart rate, hard enough that talking is out of the question), then three minutes easy, repeated four times. In an eight-week trial, the 4x4 group raised VO2max by about 7 percent, while a group doing the same total work at an easy steady pace improved essentially zero. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/17414804/">Helgerud 2007</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal" aria-label="A bar chart comparing VO2max gains from interval training versus steady training at the same total work.">
+      <figcaption>Why you have to go hard sometimes</figcaption>
+      <p class="viz-sub">Change in VO2max over eight weeks. Same total work, split two ways. The intervals moved it; the easy steady pace did not.</p>
+      <svg viewBox="0 0 700 240" role="img" aria-label="A tall bar at plus 7.2 percent for the four by four intervals and a flat near-zero bar for steady training at the same workload.">
+        <line x1="70" y1="190" x2="660" y2="190" class="v-grid-s"/>
+        <text x="22" y="120" class="v-axis-t" transform="rotate(-90 22 120)" text-anchor="middle">VO2max change</text>
+        <!-- 4x4 bar -->
+        <rect x="170" y="60" width="150" height="130" rx="5" fill="#8fb3c7"/>
+        <text x="245" y="50" text-anchor="middle" class="v-label-b" font-size="16" fill="#8fb3c7">+7.2%</text>
+        <text x="245" y="210" text-anchor="middle" class="v-label" font-size="13">Norwegian 4x4</text>
+        <text x="245" y="228" text-anchor="middle" class="v-axis-t">near-max intervals</text>
+        <!-- steady bar -->
+        <rect x="430" y="184" width="150" height="6" rx="2" fill="#5a675c"/>
+        <text x="505" y="174" text-anchor="middle" class="v-label-b" font-size="16" fill="#B8B2A2">~0%</text>
+        <text x="505" y="210" text-anchor="middle" class="v-label" font-size="13">Steady, easy pace</text>
+        <text x="505" y="228" text-anchor="middle" class="v-axis-t">same total work</text>
+      </svg>
+      <p class="viz-note">You do not need much of it. One or two hard sessions a week is the lever; easy volume carries the rest. <b>Helgerud 2007.</b></p>
+    </figure>
+
+    <p>And it does not have to be brutal four-minute blocks. A gentler on-ramp called 10-20-30 (repeated rounds of 30 seconds easy, 20 moderate, then 10 near a sprint) cut runners' training volume in half and still raised their VO2max and lowered their blood pressure and cholesterol. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/22556401/">Gunnarsson 2012</a></span> <span class="grade g-b">good</span> Head to head, hard intervals beat steady cardio for VO2max by a small margin, for a lot less time. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26243014/">Milanovic 2015</a></span> <span class="grade g-a">strong</span></p>
+
+    <p>Endurance athletes have converged on a ratio that works for the rest of us too: about 80 percent easy, 20 percent hard, and very little in the murky middle. Mostly easy, a little brutal. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/16430681/">Seiler 2006</a></span> <span class="grade g-c">mixed</span> One free bonus of doing this for a few months: your resting heart rate drifts down as your heart gets stronger, a quiet, no-cost sign that it is working. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4632887/">Fox 2007</a></span></p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The two-speed rule.</b> Pile up easy work because it is cheap and you recover from it fast. Add one or two hard sessions because nothing else moves the ceiling. Skip the joyless moderate slog in between; it costs more than it pays.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 5. CARDIO AND YOUR GAINS ===================== -->
+  <section id="gains" class="sec" aria-labelledby="gains-h">
+    <span class="sec-kicker">Lifting and cardio</span>
+    <h2 id="gains-h" class="sec-h">Will cardio eat your gains?</h2>
+
+    <p class="lede">The fear that cardio melts away hard-won muscle is mostly a myth, with one real exception. On average, adding endurance work to a lifting program does not meaningfully blunt muscle growth. What it dents is power, the explosive top end, and even that is manageable.</p>
+
+    <p>In the main meta-analysis on training both at once, people who lifted and did cardio grew nearly as much muscle as people who only lifted; the difference was small and not statistically reliable. Strength took a slightly bigger hit. Power, the ability to move fast and explode, was clearly blunted. <span class="u-src"><a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training___a_meta_analysis_examining.35.aspx">Wilson 2012</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal" aria-label="A bar chart showing muscle growth barely affected by added cardio while power is clearly reduced.">
+      <figcaption>What cardio actually dents</figcaption>
+      <p class="viz-sub">Effect sizes for lifting alone versus lifting plus cardio. Size barely moves. Power takes the real hit.</p>
+      <svg viewBox="0 0 700 270" role="img" aria-label="For muscle size, lifting alone scores 1.23 and lifting with cardio 0.85, a small gap. For power, lifting alone 0.91 and with cardio 0.55, a larger gap.">
+        <line x1="70" y1="210" x2="660" y2="210" class="v-grid-s"/>
+        <text x="22" y="120" class="v-axis-t" transform="rotate(-90 22 120)" text-anchor="middle">effect size</text>
+        <!-- group: muscle size -->
+        <rect x="130" y="60" width="80" height="150" rx="4" fill="#9ec79a"/>
+        <text x="170" y="50" text-anchor="middle" class="v-label-b" font-size="13" fill="#9ec79a">1.23</text>
+        <rect x="220" y="106" width="80" height="104" rx="4" fill="#b8796d"/>
+        <text x="260" y="96" text-anchor="middle" class="v-label-b" font-size="13" fill="#b8796d">0.85</text>
+        <text x="215" y="232" text-anchor="middle" class="v-label" font-size="13">Muscle size</text>
+        <text x="215" y="250" text-anchor="middle" class="v-axis-t" fill="#9ec79a">barely a dent</text>
+        <!-- group: power -->
+        <rect x="430" y="99" width="80" height="111" rx="4" fill="#9ec79a"/>
+        <text x="470" y="89" text-anchor="middle" class="v-label-b" font-size="13" fill="#9ec79a">0.91</text>
+        <rect x="520" y="143" width="80" height="67" rx="4" fill="#b8796d"/>
+        <text x="560" y="133" text-anchor="middle" class="v-label-b" font-size="13" fill="#b8796d">0.55</text>
+        <text x="515" y="232" text-anchor="middle" class="v-label" font-size="13">Power</text>
+        <text x="515" y="250" text-anchor="middle" class="v-axis-t" fill="#b8796d">clearly blunted</text>
+        <!-- legend -->
+        <rect x="250" y="14" width="12" height="12" rx="2" fill="#9ec79a"/><text x="268" y="24" class="v-axis-t">lift only</text>
+        <rect x="360" y="14" width="12" height="12" rx="2" fill="#b8796d"/><text x="378" y="24" class="v-axis-t">lift + cardio</text>
+      </svg>
+      <p class="viz-note">The hit to muscle size was not statistically reliable, which is to say it may be nothing. Power is the real casualty, and most people are not chasing power. <b>Wilson 2012; Murach 2016.</b></p>
+    </figure>
+
+    <p>Two things decide how much cardio costs you. The first is the kind. Running interferes the most, because the pounding and the muscle damage overlap with what your legs are already trying to recover from; cycling barely interferes at all. The second is the dose: the more often and the longer you do it, the bigger the bite. Keep both sane and the cost nearly disappears.</p>
+
+    <ul class="u-checks">
+      <li class="u-check u-use"><b>Separate cardio from lifting.</b> Different days, or at least 6 hours apart. The worst case is a hard run right before you squat.</li>
+      <li class="u-check u-use"><b>Pick low-impact while building muscle.</b> Bike, incline walk, rower, elliptical over pavement running. Cycling is the gentlest on your gains.</li>
+      <li class="u-check u-use"><b>Keep hard cardio off leg day, and lift fresh.</b> Do the thing you care most about first, when you are not tired.</li>
+      <li class="u-check u-use"><b>Eat enough.</b> Much of "cardio killed my gains" is really an energy deficit. Fuel both jobs and the conflict mostly evaporates.</li>
+      <li class="u-check u-skip"><b>Do not</b> do a long, hard run immediately before heavy lower-body lifting. That is the one combination the research consistently punishes.</li>
+    </ul>
+
+    <h3>Can you do too much?</h3>
+    <p>At the other extreme sits a worry that gets more headlines than it has earned: that a lot of endurance exercise damages the heart. There is a real signal buried in it, and a lot of overstatement piled on top.</p>
+
+    <p>The real part: lifelong, high-volume endurance athletes, think decades of marathons, show more atrial fibrillation (a heart-rhythm problem), more calcium in their coronary arteries, and small patches of scar more often than non-athletes. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/22677079/">O'Keefe 2012</a></span> <span class="grade g-c">mixed</span></p>
+
+    <p>The overstated part: the famous study suggesting that hard runners die sooner rested on about two deaths, and its result was not statistically significant; the error bars ran from "much safer" all the way to "much more dangerous." <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25660917/">Schnohr 2015</a></span> <span class="grade g-d">thin</span> Bigger datasets find no penalty at all at high volumes, remember Arem's flat line at ten times the minimum. Even the athletes with high coronary calcium do not clearly die sooner; in them it seems to be the stable, less dangerous kind of plaque.</p>
+
+    <p>So the honest verdict, said plainly: for basically everyone reading this, more is better. The plausible harms show up only at the far tail of decades-long, high-mileage sport, and even there they do not clearly shorten life. "Too much cardio" is a real question for the fifty-year-old lining up for their thirtieth marathon. It is not a reason for anyone else to skip the walk.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Two myths, both backwards.</b> Cardio will not erase your muscle if you are sane about how and when you do it, and it will not wreck your heart unless you are a genuine outlier. The real risk, by a wide margin, is doing none of it.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 6. STRETCHING: WHAT IT WON'T DO ===================== -->
+  <section id="stretch" class="sec" aria-labelledby="stretch-h">
+    <span class="sec-kicker">Stretching, part one</span>
+    <h2 id="stretch-h" class="sec-h">What stretching won't do</h2>
+
+    <p class="lede">Start with the thing almost no one is told. When stretching makes you more flexible, your muscle has usually not gotten any longer. You have not stretched the rope. You have turned down the alarm.</p>
+
+    <p>For decades the picture was simple: a tight muscle is a short muscle, and stretching slowly lengthens it. Measure it carefully and that is mostly not what happens, at least over the weeks and months a normal person stretches. The muscle's actual stiffness barely changes. What changes is your tolerance: your nervous system learns the new position is safe and stops pulling the brake so early. The range is real. The mechanism is your brain, not longer tissue. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/20075147/">Weppler 2010</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29150974/">Freitas 2018</a></span> <span class="grade g-b">good</span></p>
+
+    <figure class="viz reveal" aria-label="A diagram showing a leg raised to two angles with the muscle the same length, but the point of discomfort moved further.">
+      <figcaption>You moved the alarm, not the rope</figcaption>
+      <p class="viz-sub">Weeks of stretching let the same leg swing higher. The muscle (the line from hip to heel) is the same length both times. What moved is the point where it complains.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="A hip pivot with two leg positions of equal length, one lower with an early pain marker, one higher with the pain marker moved out, showing increased range from tolerance not muscle length.">
+        <!-- ground -->
+        <line x1="140" y1="250" x2="660" y2="250" class="v-grid-s" stroke-dasharray="4 4"/>
+        <text x="150" y="270" class="v-axis-t">lying flat</text>
+        <!-- hip pivot -->
+        <circle cx="140" cy="250" r="7" fill="#9ec79a"/>
+        <text x="118" y="245" text-anchor="end" class="v-axis-t">hip</text>
+        <!-- arc -->
+        <path d="M320 250 A 180 180 0 0 0 195 80" fill="none" stroke="#5a675c" stroke-width="1.2" stroke-dasharray="3 4"/>
+        <!-- week 1 leg: ~52 deg, length 200 -> end (263, 92)? use 50deg -> (268,97) -->
+        <line x1="140" y1="250" x2="268" y2="97" stroke="#767d71" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="268" cy="97" r="9" fill="#d9978c"/>
+        <text x="284" y="92" class="v-label" font-size="12" fill="#d9978c">week 1: it hurts here</text>
+        <!-- week 8 leg: ~72 deg, length 200 -> (202, 60) -->
+        <line x1="140" y1="250" x2="202" y2="60" stroke="#9ec79a" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="202" cy="60" r="9" fill="#9ec79a"/>
+        <text x="218" y="48" class="v-label" font-size="12" fill="#9ec79a">week 8: now it hurts here</text>
+        <!-- same length note -->
+        <text x="430" y="180" class="v-label-b" font-size="13" fill="#F5F1EA">Same muscle. Same length.</text>
+        <text x="430" y="200" class="v-label" font-size="12" fill="#B8B2A2">You only moved the point</text>
+        <text x="430" y="217" class="v-label" font-size="12" fill="#B8B2A2">where it pushes back.</text>
+      </svg>
+      <p class="viz-note">That reframes what stretching is for, and it explains why the three things people most expect from it do not show up.</p>
+    </figure>
+
+    <h3>It does not prevent injury</h3>
+    <p>Static stretching before exercise, the toe-touch hold everyone was taught, does close to nothing for injury risk. In a review of 26,000 people across dozens of trials, stretching programs barely moved the injury rate. In the very same analysis, strength training cut injuries to about a third. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/24100287/">Lauersen 2014</a></span> <span class="grade g-a">strong</span></p>
+
+    <figure class="viz reveal" aria-label="A bar chart comparing injury risk after stretching programs versus strength training.">
+      <figcaption>What actually prevents injuries</figcaption>
+      <p class="viz-sub">Injury rate compared with doing nothing. Stretching lands right at no change. Strength training cuts it to about a third.</p>
+      <svg viewBox="0 0 700 210" role="img" aria-label="Stretching has a risk ratio of 0.96, essentially no change. Strength training has a risk ratio of 0.32, about a third the injuries.">
+        <!-- reference line at 1.0 -->
+        <line x1="585" y1="40" x2="585" y2="180" stroke="#8a8a7a" stroke-width="1" stroke-dasharray="3 4"/>
+        <text x="585" y="198" text-anchor="middle" class="v-axis-t">no change (1.0)</text>
+        <!-- stretching 0.96 -->
+        <text x="12" y="78" class="v-label" font-size="13">Stretching</text>
+        <rect x="210" y="58" width="360" height="34" rx="4" fill="#5a675c"/>
+        <text x="560" y="80" text-anchor="end" class="v-label" font-size="12" fill="#E8E2D6">0.96</text>
+        <!-- strength 0.315 -->
+        <text x="12" y="146" class="v-label" font-size="13">Strength training</text>
+        <rect x="210" y="126" width="118" height="34" rx="4" fill="#9ec79a"/>
+        <text x="338" y="148" class="v-label-b" font-size="12" fill="#9ec79a">0.32, about a third</text>
+      </svg>
+      <p class="viz-note">If you want to not get hurt, the evidence points at getting stronger, not bendier. <b>Lauersen 2014.</b></p>
+    </figure>
+
+    <h3>It does not prevent soreness</h3>
+    <p>Stretching before or after a workout does not meaningfully reduce next-day muscle soreness either. A Cochrane review of about 2,600 people found it shaved less than one point off a hundred-point soreness scale, which is to say nothing you would actually feel. <span class="u-src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD004577.pub3/abstract">Herbert 2011</a></span> <span class="grade g-a">strong</span></p>
+
+    <h3>And right before lifting, it slightly weakens you</h3>
+    <p>Held just before a hard effort, a long static stretch can leave you a touch weaker for that session. The effect is real but small, and only from long holds. Across more than 100 studies, stretching dropped strength by about 5 percent, and only when a muscle was held 60 seconds or more. Quick stretches followed by a proper warm-up cost nothing measurable, and the newest reviews call the real-world penalty minor. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/22316148/">Simic 2013</a></span> <span class="u-src"><a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">Behm 2016</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38735533/">Warneke 2024</a></span> <span class="grade g-b">good</span> Still, there is no reason to pay even a small tax right before your heaviest set.</p>
+
+    <p>Foam rolling lands in the same place: a real, small, short-lived bump in range, handy as a warm-up, with no evidence it "breaks up" or releases anything structural. Like stretching, the effect is your nervous system, not your tissue. Roll if it feels good and helps you move. Just do not expect it to remodel you. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6465761/">Wiewelhove 2019</a></span> <span class="grade g-c">mixed</span></p>
+
+    <h3>Do flexible people live longer?</h3>
+    <p>You may have seen the headlines: people who can sit down on the floor and stand back up without using their hands, or who score high on a "flexibility index," live longer. Those studies are real, and badly confounded. The sit-and-rise test mostly measures strength, balance, and not being overweight, all of which independently predict survival on their own. One of the flexibility-and-death studies had error bars so wide they were nearly meaningless (a hazard ratio quoted as 4.78, with a range running from 1.2 to 31.7). Nobody has shown that becoming more flexible adds a day to your life. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23242910/">Brito 2014</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39165228/">Araujo 2024</a></span> <span class="grade g-d">thin</span> File it under "flexibility is a sign of fitness," not "stretching is longevity."</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>What stretching is not.</b> Not injury insurance, not a soreness cure, not a longevity hack, not a way to lengthen a muscle. That is most of the reasons people grind at it on the gym floor. The next chapter is what actually keeps you moving.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 7. WHAT ACTUALLY KEEPS YOU MOVING ===================== -->
+  <section id="mobility" class="sec" aria-labelledby="mobility-h">
+    <span class="sec-kicker">Stretching, part two</span>
+    <h2 id="mobility-h" class="sec-h">What actually keeps you moving</h2>
+
+    <p class="lede">If stretching is mostly turning down an alarm, the better goal is mobility: range you can actually control with strength, not just floppy reach. And the best tool for building it is one you may already own.</p>
+
+    <h3>Lift through a full range, and you barely need to stretch</h3>
+    <p>Here is the finding that should save most people a lot of floor time. Strength training through a full range of motion builds about as much flexibility as stretching does, and adds strength on top. A 2021 review comparing the two found no meaningful difference in the range they produced. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8067745/">Afonso 2021</a></span> <span class="grade g-b">good</span> An earlier trial found full-range lifting and static stretching gave the same gains in hip and knee range, except the lifters also got stronger. <span class="u-src"><a href="https://journals.lww.com/nsca-jscr/fulltext/2011/12000/resistance_training_vs__static_stretching__effects.22.aspx">Morton 2011</a></span></p>
+
+    <p>A deep squat trains the same hip and ankle range a stretch would, under load, in a position you can control. Train the bottom of each lift, the lengthened part where the muscle is stretched under tension, and you are getting your mobility work for free. A growing line of research even suggests that lengthened position may be the best part of the rep for growth. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">Kassiano 2023</a></span> <span class="grade g-c">mixed</span> The caveat worth keeping: that "lifting equals stretching" finding rests on a modest pile of trials, so call it strongly suggestive, not settled.</p>
+
+    <figure class="photo portrait reveal">
+      <img src="assets/images/still-moving/gladiator.webp" width="1100" height="1650" loading="lazy" decoding="async" alt="The Borghese Gladiator, an ancient marble statue of a warrior lunging forward with one arm raised and the whole body stretched into a long diagonal of full extension.">
+      <figcaption>The Borghese Gladiator: a body at full reach, every joint loaded near its end range. That is mobility, range you can drive with strength, not the passive bendiness of a stretch.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Borghese_Gladiator,_Louvre,_2_October_2014.jpg">Borghese Gladiator (c. 100 BC), Louvre. Photo by Ryan Baumann, CC BY 2.0, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <h3>Controlled range beats floppy range</h3>
+    <p>More passive flexibility is not automatically better. People who are very loose-jointed, the genuinely hypermobile, actually get hurt somewhat more, because range you cannot control with strength is a liability, not an asset. The aim is not to be bendy. It is to own the range you have, to be strong at the end of it. That is the whole difference between flexibility and mobility.</p>
+
+    <h3>When stretching is worth it</h3>
+    <p>Stretching earns its place in one clear situation: you genuinely cannot get into a position you need, a deep squat, hands fully overhead, and full-range strength work alone is not enough to unlock it. Then it works, and reasonably fast. Flexibility is trainable; meaningful range shows up in about four weeks and keeps accruing over a few months, and a held stretch (around 60 seconds, a few times a week) and the fancier contract-and-relax version produce about the same gains. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/20309785/">Garber 2011</a></span> <span class="grade g-b">good</span> Better still is loaded stretching, taking the muscle into a deep position under a light weight, which builds tolerance and strength at the same time. <span class="u-src"><a href="https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2022.873370/full">eccentric training</a></span></p>
+
+    <p>And before you train, warm up by moving, not holding: leg swings, lunges, a few lighter ramp-up sets. A dynamic warm-up actually nudges performance up a little, where a long static one nudges it down. <span class="u-src"><a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">Behm 2016</a></span> <span class="grade g-b">good</span></p>
+
+    <p>If your real goal is just to stay uninjured, two things have actual evidence behind them. A structured dynamic warm-up program (the soccer world's FIFA 11+ is the famous one) cut injuries by around 30 percent. <span class="u-src"><a href="https://www.bmj.com/content/337/bmj.a2469">Soligard 2008</a></span> <span class="grade g-b">good</span> And specifically strengthening the muscles you tend to tear, the Nordic curl for hamstrings being the standout, roughly halved those injuries across several trials, though a later reanalysis argues the true number is softer and the question is not fully closed. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30808663/">van Dyk 2019</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/34520846/">Impellizzeri 2021</a></span> <span class="grade g-c">mixed</span></p>
+
+    <ul class="u-checks">
+      <li class="u-check u-use"><b>Train every lift through its full range.</b> Deep squats, full pulls, real overhead work. That is most of your mobility work, done.</li>
+      <li class="u-check u-use"><b>Warm up by moving.</b> 5 to 10 minutes of dynamic prep before you train, not long static holds.</li>
+      <li class="u-check u-use"><b>Stretch the joint you actually can't move.</b> Targeted, ideally loaded, about 60 seconds a few times a week, until the range is there.</li>
+      <li class="u-check u-meh"><b>A general flexibility routine, if you enjoy it.</b> Yoga is fine movement and good for balance and calm. <span class="u-src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD010671.pub3/full">Wieland 2022</a></span> Just do not expect injury or longevity payoffs from it.</li>
+      <li class="u-check u-skip"><b>Long static holds right before lifting,</b> stretching to prevent soreness, or stretching to "fix your posture." None of those deliver.</li>
+    </ul>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The mobility sweet spot.</b> Full-range strength buys most of the range most people need. Add targeted stretching only for a specific restriction you actually have. The dose that helps, one more time, sits well below the dose people think they owe.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 8. PUTTING IT TOGETHER ===================== -->
+  <section id="together" class="sec" aria-labelledby="together-h">
+    <span class="sec-kicker">The plan</span>
+    <h2 id="together-h" class="sec-h">Putting it together</h2>
+
+    <p class="lede">Here is the whole thing as a week, sized to sit around lifting rather than fight it. It assumes three or four lifting days, the kind Big Enough lays out, with cardio and mobility tucked into the gaps.</p>
+
+    <div class="prog-wrap">
+      <table class="prog">
+        <thead><tr><th>Day</th><th>Lifting</th><th>Cardio and mobility</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="day">Mon</td><td>Upper body</td><td>5 to 10 min dynamic warm-up</td><td>lift fresh</td></tr>
+          <tr><td class="day">Tue</td><td>&mdash;</td><td><span class="easy">Easy zone 2</span>, 30 to 45 min (bike or incline walk)</td><td>cheap aerobic base</td></tr>
+          <tr><td class="day">Wed</td><td>Lower body</td><td>warm-up, optional easy walk</td><td>keep legs for squats</td></tr>
+          <tr><td class="day">Thu</td><td>Upper body</td><td><span class="hard">Hard intervals</span> after lifting (4x4 or 10-20-30)</td><td>the one truly hard session</td></tr>
+          <tr><td class="day">Fri</td><td>Lower or full</td><td>warm-up</td><td>away from the hard cardio</td></tr>
+          <tr><td class="day">Sat</td><td>&mdash;</td><td><span class="easy">Longer easy zone 2</span>, 45 to 60 min</td><td>the volume day</td></tr>
+          <tr><td class="day">Sun</td><td>rest</td><td>walk, light mobility if tight</td><td>recover</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>It comes out to mostly easy cardio, one hard session, a daily walk toward 7,000 steps, a moving warm-up, and targeted stretching only where you actually need it. Two or three cardio sessions, one of them hard, plus steps. That is the engine maintained and the chassis kept moving, for a few hours a week.</p>
+
+    <p>If even that is too much right now, the floor that still works is small: a 15-minute daily walk and one short hard effort a week. Getting off the bottom of the fitness scale is the single biggest move on this page. Everything after it is optimization.</p>
+
+    <p>And then the same quiet discipline this site keeps circling back to: knowing when to stop. You do not need 10,000 steps, you need 7,000. You do not need an hour of stretching, you need full-range lifts and a few targeted minutes. You do not need to fear cardio, and you do not need to run yourself into the ground; you need two or three honest sessions a week. The maximum is a trap in fitness the same way it is in muscle. The smart target is the flat part of the curve, where you have collected almost all of the years and almost all of the range, and you can go live the life you kept the body for.</p>
+
+    <blockquote class="u-pq">Keep the heart strong, keep the joints moving, and have the sense to call it enough.<cite class="u-pq-cite">Still Moving</cite></blockquote>
+
+    <div class="disclaimer" role="note">
+      <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your history, your heart, or your joints. Talk to a physician before starting hard interval training or a new exercise program, especially if you have any heart condition, chest pain, or have been sedentary for a long time. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
+    </div>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== SOURCES ===================== -->
+  <section id="sources" class="sec">
+    <span class="sec-kicker">The fine print</span>
+    <h2 class="sec-h">Sources, and how to read them</h2>
+    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. This is the full list, strongest evidence first within each topic. Where the research is one study, or mixed, or still moving, the text says so rather than rounding up to false certainty.</p>
+    <div class="legend">
+      <span><span class="grade g-a">strong</span> meta-analyses or many trials agreeing</span>
+      <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
+      <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
+      <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
+    </div>
+    <ol>
+      <li class="shead">Fitness and how long you live</li>
+      <li value="1"><b>Mandsager K, et al. (2018).</b> Cardiorespiratory fitness and long-term mortality. <i>JAMA Network Open</i>. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">jamanetwork.com</a></li>
+      <li><b>Kodama S, et al. (2009).</b> Cardiorespiratory fitness as a predictor of mortality: meta-analysis. <i>JAMA</i>. <a href="https://jamanetwork.com/journals/jama/fullarticle/183916">jamanetwork.com</a></li>
+      <li class="shead">How much, and steps</li>
+      <li value="3"><b>Arem H, et al. (2015).</b> Leisure-time physical activity and mortality: dose-response. <i>JAMA Internal Medicine</i>. <a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2212267">jamanetwork.com</a></li>
+      <li><b>Wen CP, et al. (2011).</b> Minimum activity for reduced mortality and longer life. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">PubMed</a></li>
+      <li><b>U.S. Dept. of Health (2018).</b> Physical Activity Guidelines for Americans, 2nd ed. <a href="https://odphp.health.gov/sites/default/files/2019-09/Physical_Activity_Guidelines_2nd_edition.pdf">PDF</a></li>
+      <li><b>Paluch AE, et al. (2022).</b> Daily steps and all-cause mortality: meta-analysis. <i>Lancet Public Health</i>. <a href="https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00302-9/fulltext">thelancet.com</a></li>
+      <li><b>Lee I-M, et al. (2019).</b> Steps and mortality in older women. <i>JAMA Internal Medicine</i>. <a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2734709">jamanetwork.com</a></li>
+      <li><b>Ding D, Stamatakis E, et al. (2025).</b> Daily steps and health outcomes: dose-response meta-analysis. <i>Lancet Public Health</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/40713949/">PubMed</a></li>
+      <li><b>Tudor-Locke C.</b> Where the 10,000-step target came from (Yamasa manpo-kei, 1965). <a href="https://www.news-medical.net/health/Where-did-10000-steps-a-day-come-from.aspx">news-medical.net</a></li>
+      <li class="shead">Easy and hard: zone 2, intervals, polarized</li>
+      <li value="10"><b>Storoschuk KL, et al. (2025).</b> Much Ado About Zone 2. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/40560504/">PubMed</a></li>
+      <li><b>Helgerud J, et al. (2007).</b> Aerobic high-intensity intervals improve VO2max more than moderate training. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/17414804/">PubMed</a></li>
+      <li><b>Milanovic Z, et al. (2015).</b> HIIT vs continuous endurance for VO2max: meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26243014/">PubMed</a></li>
+      <li><b>Gunnarsson TP, Bangsbo J (2012).</b> The 10-20-30 training concept. <i>J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/22556401/">PubMed</a></li>
+      <li><b>Seiler S, Kjerland GO (2006).</b> Training-intensity distribution in elite endurance athletes (the 80/20 pattern). <i>Scand J Med Sci Sports</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/16430681/">PubMed</a></li>
+      <li class="shead">Cardio and your gains, and the far edge</li>
+      <li value="15"><b>Wilson JM, et al. (2012).</b> Concurrent training interference: meta-analysis. <i>J Strength Cond Res</i>. <a href="https://journals.lww.com/nsca-jscr/fulltext/2012/08000/concurrent_training___a_meta_analysis_examining.35.aspx">journals.lww.com</a></li>
+      <li><b>Murach KA, Bagley JR (2016).</b> Hypertrophy with concurrent training: contrary evidence for interference. <i>Sports Medicine</i>. <a href="https://link.springer.com/article/10.1007/s40279-016-0496-y">Springer</a></li>
+      <li><b>O'Keefe JH, et al. (2012).</b> Potential adverse cardiovascular effects of excessive endurance exercise. <i>Mayo Clin Proc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/22677079/">PubMed</a></li>
+      <li><b>Schnohr P, et al. (2015).</b> Dose of jogging and long-term mortality (Copenhagen). <i>J Am Coll Cardiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/25660917/">PubMed</a></li>
+      <li class="shead">Stretching, and what it does not do</li>
+      <li value="19"><b>Lauersen JB, et al. (2014).</b> Exercise to prevent sports injuries: meta-analysis (stretching vs strength). <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/24100287/">PubMed</a></li>
+      <li><b>Herbert RD, de Noronha M, Kamper SJ (2011).</b> Stretching to prevent or reduce muscle soreness. <i>Cochrane</i>. <a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD004577.pub3/abstract">cochranelibrary.com</a></li>
+      <li><b>Simic L, et al. (2013).</b> Pre-exercise static stretching and performance: meta-analysis. <i>Scand J Med Sci Sports</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/22316148/">PubMed</a></li>
+      <li><b>Behm DG, et al. (2016).</b> Acute effects of stretching on performance, ROM, and injury. <i>Appl Physiol Nutr Metab</i>. <a href="https://cdnsciencepub.com/doi/10.1139/apnm-2015-0235">cdnsciencepub.com</a></li>
+      <li><b>Behm DG, Chaouachi A (2011).</b> Acute effects of static and dynamic stretching on performance. <i>Eur J Appl Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21373870/">PubMed</a></li>
+      <li><b>Warneke K, Lohmann LH (2024).</b> Acute stretching and performance: the real-world deficit is small. <a href="https://pubmed.ncbi.nlm.nih.gov/38735533/">PubMed</a></li>
+      <li><b>Weppler CH, Magnusson SP (2010).</b> Increasing muscle extensibility: length or modifying sensation? <i>Phys Ther</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/20075147/">PubMed</a></li>
+      <li><b>Freitas SR, et al. (2018).</b> Stretching and the passive torque-angle curve. <i>Scand J Med Sci Sports</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/29150974/">PubMed</a></li>
+      <li><b>Wiewelhove T, et al. (2019).</b> Foam rolling on performance and recovery: meta-analysis. <i>Front Physiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6465761/">PMC6465761</a></li>
+      <li><b>Brito LBB, et al. (2014).</b> Sitting-rising test and all-cause mortality. <i>Eur J Prev Cardiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/23242910/">PubMed</a></li>
+      <li><b>Araujo CGS, et al. (2024).</b> Body flexibility and survival (Flexindex). <i>Scand J Med Sci Sports</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/39165228/">PubMed</a></li>
+      <li class="shead">Mobility, range, and preventing injury</li>
+      <li value="30"><b>Afonso J, et al. (2021).</b> Strength training versus stretching for range of motion: meta-analysis. <i>Healthcare</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8067745/">PMC8067745</a></li>
+      <li><b>Morton SK, et al. (2011).</b> Resistance training vs static stretching: flexibility and strength. <i>J Strength Cond Res</i>. <a href="https://journals.lww.com/nsca-jscr/fulltext/2011/12000/resistance_training_vs__static_stretching__effects.22.aspx">journals.lww.com</a></li>
+      <li><b>Kassiano W, et al. (2023).</b> Range of motion, lengthened training, and hypertrophy. <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">PubMed</a></li>
+      <li><b>Pedrosa GF, et al. (2022).</b> Training at long muscle lengths and hypertrophy. <i>Eur J Sport Sci</i>. <a href="https://onlinelibrary.wiley.com/doi/10.1080/17461391.2021.1927199">Wiley</a></li>
+      <li><b>Garber CE, et al. (2011).</b> ACSM position stand: quantity and quality of exercise (flexibility dose). <i>Med Sci Sports Exerc</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/20309785/">PubMed</a></li>
+      <li><b>Afonso J, et al. (2022).</b> Eccentric training for flexibility and strength (loaded stretching). <i>Front Physiol</i>. <a href="https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2022.873370/full">frontiersin.org</a></li>
+      <li><b>Soligard T, et al. (2008).</b> Comprehensive warm-up (FIFA 11+) to prevent injuries. <i>BMJ</i>. <a href="https://www.bmj.com/content/337/bmj.a2469">bmj.com</a></li>
+      <li><b>van Dyk N, Behan FP, Whiteley R (2019).</b> Nordic hamstring exercise and injury: meta-analysis. <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30808663/">PubMed</a></li>
+      <li><b>Impellizzeri FM, et al. (2021).</b> Why methods matter: a reappraisal of the Nordic-curl evidence. <i>J Clin Epidemiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/34520846/">PubMed</a></li>
+      <li><b>Wieland LS, et al. (2022).</b> Yoga for chronic non-specific low back pain. <i>Cochrane</i>. <a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD010671.pub3/full">cochranelibrary.com</a></li>
+      <li class="shead">Tracking it</li>
+      <li value="40"><b>Fox K, et al. (2007).</b> Resting heart rate as a risk factor and fitness marker. <i>J Am Coll Cardiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4632887/">review</a></li>
+    </ol>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== COLOPHON ===================== -->
+  <section id="colophon" class="sec">
+    <span class="sec-kicker">Colophon</span>
+    <h2 class="sec-h">How this was made</h2>
+    <p class="lede">Like everything on this site, this guide was researched, written, fact-checked, and built mostly by AI agents (Anthropic's Claude), working in parallel and steered by one human who trains but is emphatically not a doctor. In the spirit of showing the work, here is what went into it.</p>
+
+    <div class="u-stats">
+      <div class="u-stat"><span class="u-fig">2</span><span class="u-fig-lbl">parallel research agents, one for cardio, one for stretching</span></div>
+      <div class="u-stat"><span class="u-fig">~160</span><span class="u-fig-lbl">studies and sources read</span></div>
+      <div class="u-stat"><span class="u-fig">40</span><span class="u-fig-lbl">cited on this page</span></div>
+      <div class="u-stat"><span class="u-fig">8</span><span class="u-fig-lbl">charts and diagrams, all hand-drawn in code</span></div>
+      <div class="u-stat"><span class="u-fig">2</span><span class="u-fig-lbl">interactive tools you can drive yourself</span></div>
+      <div class="u-stat"><span class="u-fig">0</span><span class="u-fig-lbl">stock photos: the images are public-domain and CC artworks, nothing AI-generated</span></div>
+    </div>
+
+    <p>The method was the one this site uses for everything: split the field into clusters, here just two, cardio and stretching, send a research agent into each with a brief to gather every claim with a primary source, then build the page so the short answer sits in plain view and the studies sit underneath it. The agents were told to pressure-test the assumptions, not flatter them, and the corrections they turned up were kept visible on purpose. The "zone 2 is magic" story is oversold. "Too much cardio" damaging your heart is mostly unproven. The Nordic-curl injury number is softer than the headline. The flexibility-and-longevity link is confounded by general fitness. All of that stayed in.</p>
+
+    <p>Two things worth saying plainly. First, this is an enthusiast writing for the love of getting one thing right, not a clinician, and the page is the visible tip of a much larger pile of reading. Second, AI can be confidently wrong, so every number here is cited and was checked against its source. If you find an error, that is worth more to me than a compliment.</p>
+
+    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Built with Claude (Anthropic). Researched and written June 2026. A companion to <a href="big-enough.html" style="color:var(--accent)">Big Enough</a>. Not medical advice.</p>
+  </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/still-moving.js"></script>
+</body>
+</html>
