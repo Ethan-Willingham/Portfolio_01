@@ -2,11 +2,11 @@
  * liquid-wgpu.js — WebGPU compute port of the APIC/MLS-MPM fluid
  * ------------------------------------------------------------
  * Goal: run the liquid solver that currently lives in
- * grand-motherload.js (the `liquid*` APIC sim — P2G / grid /
+ * sluice.js (the `liquid*` APIC sim — P2G / grid /
  * G2P) as WebGPU compute shaders, with all particle state in
  * GPU storage buffers and zero CPU readback on the hot path.
  *
- * The CPU solver in grand-motherload.js stays as-is and remains
+ * The CPU solver in sluice.js stays as-is and remains
  * the fallback for browsers without WebGPU (or if device init
  * fails) — exactly like the existing liquidGL -> 2d-canvas
  * fallback.
@@ -92,6 +92,25 @@
  *                    GameParams uniform; oil suction stays the CPU hook
  *                    (it owns particle removal + oilGallons).
  *
+ *   STABILITY (v24.169-186) — the giant-particle / runaway fix.
+ *   The clamped weakly-compressible EOS is a limit-cycle oscillator far
+ *   from rest; under hard stress (jetting at terrain, deep columns)
+ *   particles collapse into over-dense knots it turns into a perpetual
+ *   bounce engine ("infinite energetic mass / giants that never shrink").
+ *   Velocity damping/viscosity only MASK it. The cure, layered:
+ *     - LIQUID_DENS_CAP (v24.182, edit2): clamp the density the pressure
+ *       kernel sees, so a knot's impulse is bounded (a jet knot hit dn 406
+ *       = a ~2000 impulse; the cap is invisible to real water at <~4x rest).
+ *     - WGSL_DECLUMP (v24.185): a per-substep PBD/FleX min-separation pass
+ *       (runDeclump, after buildGrid) that pushes over-dense neighbours
+ *       apart so the over-packing can't PERSIST. Gated to over-dense
+ *       particles only; dormant on a calm pond. gm water.DECLUMP.
+ *     - v24.186 TERRAIN CLAMP: the declump push is clamped per-axis at the
+ *       leading edge against the collide kernel's terrainMask, so a
+ *       wall-packed knot spreads ALONG the wall, never INTO it.
+ *   See TUNING.md §2.10. The harness can't reproduce the dug-cavern
+ *   runaway; efficacy is owner-verified via the dev X water overlay.
+ *
  * The GPU path is now LIVE when WebGPU is available.
  * ============================================================ */
 (function () {
@@ -100,7 +119,7 @@
   var STAGE = 8;
 
   /* ---- Stage 4 — fluid-feel constants --------------------------------
-   * Mirror the CPU liquid tunables in grand-motherload.js the pressure +
+   * Mirror the CPU liquid tunables in sluice.js the pressure +
    * grid-update kernels read. Kept here as plain JS numbers so the
    * Stage-4 CPU reference and the WGSL template (which interpolates the
    * literals) draw from one source. Values must track the CPU side; if
@@ -108,10 +127,46 @@
    * -------------------------------------------------------------------- */
   var LIQUID_PDELTA            = 0.5;
   var LIQUID_DENSITY           = 1 / (LIQUID_PDELTA * LIQUID_PDELTA);  // 4
-  var LIQUID_GRAVITY           = 1000;
+  // v24.182 — density blow-up cap (edit2 sluice 010-constants). Clamps the
+  // gathered density the pressure kernel sees so a collapsed knot can't reach
+  // dn=406 and become a perpetual bounce engine. 6x rest is far above any real
+  // water (calm ~1.6, stressed field ~2.3) but well below the runaway. Baked as
+  // a literal into the WGSL pressure kernel + both fr() references below.
+  var LIQUID_DENS_CAP          = 6 * LIQUID_DENSITY;  // = 24
+  // v24.185 — MIN-SEPARATION (anti-clump), the general "particles can't get
+  // stuck over-pressured" fix. A particle can never pack tighter than DECLUMP_DMIN
+  // world px: over-dense particles (a knot) are pushed apart from over-close
+  // neighbours each substep (Jacobi positional separation via the count-sort
+  // grid), so an over-pressured knot physically can't form or persist, no matter
+  // how it got over-pressured (jet, terrain, anything). Only runs for particles
+  // above DECLUMP_OVERDENSE for cost (normal water never enters the loop). edit2
+  // sluice 010-constants (CPU fallback).
+  var LIQUID_DECLUMP_ON        = 1;                    // master on/off (gm water.DECLUMP; skips the dispatch when 0)
+  var LIQUID_DECLUMP_DMIN      = 1.1;                  // world px (rest spacing PDELTA*CELL = 1.25)
+  var LIQUID_DECLUMP_STRENGTH  = 0.4;                  // 0..1 positional relaxation / substep
+  var LIQUID_DECLUMP_OVERDENSE = 1.6 * LIQUID_DENSITY; // only de-clump above ~dn 1.6
+  var LIQUID_GRAVITY = 250;
   var LIQUID_OIL_GRAVITY       = 600;
-  var LIQUID_PRESSURE_STIFF    = 2.9;
+  var LIQUID_PRESSURE_STIFF    = 5;     // v24.10 — saharan's exact EOS stiffness (his is `(d/4-1)*5`). v24.8's 20 splashed; REVERTED. Deep-water "popcorn" is fixed by SUBSTEPPING (below), not stiffness. edit² with 010-constants.js.
   var LIQUID_OIL_PRESSURE_STIFF = 2.5;
+  // Substepping (v24.10) — the deep-water fix, ported from saharan's Water demo.
+  // Equilibrium column compression scales as stepDt² (gravity is dt²-scaled but
+  // the pressure scatter is per-step / dt=1, so at the full frame dt a deep
+  // column over-compresses ~25× and detonates into "popcorn"). Running the
+  // kernel chain N small substeps per frame shrinks stepDt → compression drops
+  // ∝ stepDt² while the real fall speed (ΔV/frame = GRAVITY·dt) is unchanged.
+  // N = clamp(ceil(dt / LIQUID_SUBSTEP_DT), 1, LIQUID_MAX_SUBSTEPS). edit² with 010-constants.js.
+  var LIQUID_SUBSTEP_DT        = 1 / 120;
+  var LIQUID_MAX_SUBSTEPS      = 5;
+  // v24.124 FIXED-QUANTUM SUBSTEPPING — see the rationale at the
+  // 010-constants twin: the old ceil-split put 60/120 Hz exactly on a
+  // substep-count boundary, so frame jitter swung stepDt (rest compression
+  // ∝ stepDt²) and pumped body-wide pressure pops on 120 Hz machines.
+  // Advance in exact LIQUID_SUBSTEP_DT quanta instead, banking the
+  // remainder; stepDt is then a true constant. Live toggle via
+  // setSimParam('FIXED_STEP') (gm lever water.FIXED_STEP; 0 = legacy).
+  var LIQUID_FIXED_STEP = 1;
+  var liquidStepAcc = 0;                // banked sub-quantum remainder, seconds
   var LIQUID_AERATION_BLUR     = 0.01;
   var LIQUID_AERATION_DAMP     = 0.988;
   var LIQUID_OIL_AERATION_BLUR = 0.008;
@@ -136,11 +191,11 @@
 
   /* ---- Stage 5 — G2P feel constants ----------------------------------
    * The grid->particle gather kernel reads these. As with the Stage-4
-   * block they mirror the CPU liquid tunables in grand-motherload.js and
+   * block they mirror the CPU liquid tunables in sluice.js and
    * are interpolated as literals into the WGSL G2P kernel; the self-test
    * diff catches any drift from the CPU side.
    * -------------------------------------------------------------------- */
-  var LIQUID_DAMPING               = 0.992;
+  var LIQUID_DAMPING               = 0.992;  // v24.10 — REVERTED to original 0.992 (v24.8's 0.97 was sluggish). edit² with 010-constants.js.
   var LIQUID_OIL_DAMPING           = 0.97;
   var LIQUID_WATER_MOTION_SCALE    = 0.97;
   var LIQUID_INV_DENSITY           = 1 / LIQUID_DENSITY;   // 0.25
@@ -148,9 +203,77 @@
   var LIQUID_OIL_AERATION_THRESHOLD = 0.5;
   var LIQUID_AERATION_COEFF         = 10.0;
   var LIQUID_OIL_AERATION_COEFF     = 10.0;
-  var LIQUID_SLEEP_FRAMES   = 60;       // consecutive low-KE frames before sleeping
-  var LIQUID_SLEEP_VSQ      = 1.0;      // px/s squared — sleep below this
-  var LIQUID_WAKE_CELL_VSQ  = 0.0005;   // cell-units^2 — wake if a stencil cell exceeds
+  var LIQUID_SLEEP_FRAMES   = 45;       // consecutive low-KE frames before sleeping (v24.112: 60 -> 45)
+  var LIQUID_SLEEP_VSQ      = 9.0;      // px/s squared — sleep below this (v24.112: 1.0 -> 9.0, |v| < 3 px/s;
+                                        // at 1.0 a settled pond's surface simmer kept every particle awake
+                                        // FOREVER — measured awake=9877 flatlined over 45 s)
+  var LIQUID_WAKE_CELL_VSQ  = 0.007;    // cell-units^2 — wake if a stencil cell exceeds
+                                        // (v24.112: 0.0005 -> 0.002 ~27 px/s; v24.125: -> 0.007 ~53 px/s.
+                                        // Measured: an energized pond's ambient ripple peaks 40-90 px/s,
+                                        // so at 27 the soup re-woke sleepers forever; at 53 sleep
+                                        // ratchets up. Real disturbances are hundreds of px/s and the
+                                        // dig wake is explicit. edit2 sluice.js 020-state.)
+  // v24.112 rest brake: extra per-substep velocity damping applied ONLY
+  // below a low speed threshold. The weakly-compressible pressure cycle
+  // keeps a standing pond churning at a measured mean ~20 px/s (spikes to
+  // ~300) forever; plain damping (0.992) never beats it, so nothing ever
+  // passed the sleep gate. The brake decays that noise floor to true rest
+  // while leaving real flows above the threshold untouched. edit2 twins in
+  // sluice.js 020-state (CPU fallback reads those).
+  var LIQUID_REST_BRAKE_VSQ = 625.0;    // px/s squared — gentle brake below |v| = 25 px/s
+  var LIQUID_REST_BRAKE     = 0.92;     // gentle multiplier per substep (splash tails stay natural)
+  // Second, HARD stage: the cancellation residue re-pumps ~1 px/s each
+  // substep, so a gentle brake alone plateaus ~12 px/s (measured). Below
+  // 10 px/s the motion is pure dregs; brake hard enough that the pump
+  // cannot sustain it (equilibrium lands under the 3 px/s sleep gate).
+  var LIQUID_REST_BRAKE_HARD_VSQ = 100.0;  // px/s squared — hard brake below |v| = 10 px/s
+  var LIQUID_REST_BRAKE_HARD     = 0.75;   // hard multiplier per substep
+  // v24.145 WATER STATE MACHINE (game-side liquidStateTick, sluice 070):
+  // calm 0 = stimulated/lively, 1 = settling/settled. Rides SimParams
+  // g2pB.w (the old _pad lane) and scales BOTH brake factors toward 1, so
+  // stimulated water flows undamped and only settling water is ground to
+  // rest. The game fround-quantizes before setSimParam('CALM'), keeping
+  // this f64 mirror == the f32 uniform lane (the stage-5 reference's math
+  // stays in lockstep with the kernel). Default 1 = the exact v24.112
+  // brake at boot, so the numbered self-tests are byte-identical.
+  var LIQUID_CALM = 1;
+  // Awake particles moving faster than this (px/s squared) are tallied by
+  // applyReadback into instance.fastCount — the state machine's "still
+  // really flowing" signal. Measurement only, no sim effect.
+  var LIQUID_FAST_VSQ = 576.0;
+  // v24.115 GRID VISCOSITY: per substep, blend each massy cell's resolved
+  // velocity toward the average of its massy 4-neighbours (momentum
+  // diffusion). The clamped weakly-compressible EOS is a LIMIT-CYCLE
+  // oscillator at rest (gravity compresses, pressure over-corrects, the
+  // p>=0 clamp removes the restoring half-cycle), so a settled pond
+  // breathes standing waves forever that no per-particle damping can beat;
+  // anti-phase neighbour velocities cancel under this blend while uniform
+  // flow passes through untouched. Lives in SimParams coll.z (live via
+  // setSimParam('GRID_VISC') / the gm water lever). edit2: 010-constants.
+  var LIQUID_GRID_VISC = 0.45;  // v24.166 — reverted from the v24.164 0.7 (paired with the now-disabled force-freeze); live value is the calm-blend pushed each frame
+  // v24.120 WATER DEBUG KIT — live diagnostic bitmask from the game's gm
+  // 'water' levers (edit2 twins in sluice.js 020-state). Rides to the
+  // kernels in SimParams coll.w, so flipping a lever needs NO recompile:
+  //   bit 1 = NO_SLEEP (never set the sleep bit; force-wake sleepers at
+  //           the G2P gate instead of scanning)
+  //   bit 2 = NO_BRAKE (skip the v24.112 two-stage rest brake)
+  // 0 = shipping behaviour; the boot self-tests run at 0, so their diffs
+  // do not move. Set via setSimParam('DBG_FLAGS', mask).
+  var LIQUID_DBG_FLAGS = 0;
+  // v24.173 OLD-FAITHFUL FIX — speed-gated burst damp + hard velocity clamp.
+  // Saharan-raw conserves energy, so a stir over-compresses pockets, the
+  // clamped EOS ejects them hard, and the energy never leaves = the owner's
+  // "huge crazy particles / infinite explosion fest". MAX_VEL caps the speed
+  // (CFL backstop, bounds the runaway); BURST_DAMP bleeds energy from FAST
+  // water only (ramped GATE_LO->GATE_HI) so a disturbance settles while
+  // resting water (below GATE_LO) is untouched (no rest-baseline creep). The
+  // G2P kernel reads these LIVE from SimParams g2pC (lanes 28-31), so the gm
+  // levers retune with no recompile. edit2 twins in sluice.js 020-state (the
+  // CPU fallback reads those); the fr() reference below reads these.
+  var LIQUID_MAX_VEL        = 600.0;   // px/s — hard per-particle speed cap (0 = off)
+  var LIQUID_BURST_DAMP     = 0.985;   // per-substep factor for FULLY-fast water (1.0 = off)
+  var LIQUID_BURST_GATE_LO  = 100.0;   // px/s — burst damp starts (above rested ambient peak)
+  var LIQUID_BURST_GATE_HI  = 300.0;   // px/s — burst damp reaches full BURST_DAMP
 
   /* ---- Grid sizing constants ----------------------------------------
    * The count-sort builds a uniform grid over the live particles each
@@ -183,7 +306,7 @@
   var LIQUID_BOUNCE_OIL       = 0.05;
 
   /* ---- Stage 7 — render constants ------------------------------------
-   * Mirror the CPU liquid-renderer colours/sizes in grand-motherload.js
+   * Mirror the CPU liquid-renderer colours/sizes in sluice.js
    * (LIQUID_WATER_R/G/B, LIQUID_WATER_FOAM_R/G/B, LIQUID_OIL_R/G/B, the
    * per-fluid particle sizes + alphas). The WGSL render shaders
    * interpolate these as literals so the WebGPU renderer matches the
@@ -191,25 +314,46 @@
    * LIQUID_CELL_DEFAULT — the point-size base is computed from it (var
    * hoisting would otherwise make LIQUID_RENDER_SIZE_BASE NaN).
    * -------------------------------------------------------------------- */
-  var LIQUID_WATER_R = 0.365, LIQUID_WATER_G = 0.780, LIQUID_WATER_B = 0.933;
-  var LIQUID_WATER_FOAM_R = 1.0, LIQUID_WATER_FOAM_G = 1.0, LIQUID_WATER_FOAM_B = 1.0;
-  var LIQUID_WATER_ALPHA = 0.70;
+  // v24.152 — saharan-reference palette twins (edit2 sluice 010): dark
+  // base, light-BLUE turbulence tint, foam never white.
+  var LIQUID_WATER_R = 0.165, LIQUID_WATER_G = 0.420, LIQUID_WATER_B = 0.780;
+  var LIQUID_WATER_FOAM_R = 0.620, LIQUID_WATER_FOAM_G = 0.840, LIQUID_WATER_FOAM_B = 0.980;
+  var LIQUID_WATER_ALPHA = 0.82;
   var LIQUID_OIL_R = 0.051, LIQUID_OIL_G = 0.039, LIQUID_OIL_B = 0.020;
   var LIQUID_OIL_ALPHA = 0.920;
-  var LIQUID_WATER_PARTICLE_SIZE = 1.8;
+  var LIQUID_WATER_PARTICLE_SIZE = 1.8;   // v24.155 — restored, edit2 sluice 010 (1.15 starved the body field)
   var LIQUID_OIL_PARTICLE_SIZE   = 2.5;
   // Shared point-diameter base — LIQUID_CELL * LIQUID_PDELTA * 0.85 * 2,
   // exactly the `sizeBase` the CPU drawLiquidsWebGL computes (before the
   // per-fluid LIQUID_*_PARTICLE_SIZE multiplier and the density scale).
   var LIQUID_RENDER_SIZE_BASE = LIQUID_CELL_DEFAULT * LIQUID_PDELTA * 0.85 * 2;
+  // v24.113 — SURFACE RENDER (WebGPU only): instead of drawing each
+  // particle as a visible soft disc, splat all particles into an offscreen
+  // density FIELD and composite it through a smoothstep threshold, so
+  // water reads as one continuous body with a clean surface line (and the
+  // per-particle micro-motion stops being visible as "boiling balls").
+  // Live-tunable via setRenderParam / the gm 'water' group; SURFACE_RENDER
+  // 0 falls back to the legacy per-particle discs.
+  var LIQUID_SURFACE_RENDER  = 1;     // 1 = field+threshold compositing, 0 = legacy discs
+  var LIQUID_SURFACE_THRESH  = 1.8;   // v24.162 — raised from 0.85: a lone particle's metaball peak is ~1.0, so THRESH-SOFT=1.0 makes single particles invisible while bodies (field >> 1) stay solid. edit2 sluice 010
+  var LIQUID_SURFACE_SOFT    = 0.8;   // v24.162 — was 0.35 (lower edge = one-particle peak)
+  var LIQUID_SURFACE_RSCALE  = 1.7;   // splat radius multiplier vs the legacy disc size
+  // v24.160 — PARTICLE PROOF overlay. 1 = draw every particle as its own
+  // tiny hard dot (fixed size, NO density scaling, NO threshold merge),
+  // coloured by a per-index hash, ON TOP of the normal water. The owner's
+  // diagnostic: is a "giant particle" one particle rendered huge, or many
+  // particles merged into a circle by the metaball composite? With this on,
+  // a single particle = one lone dot; a cluster = the circle fills with a
+  // speckle of many differently-coloured dots. gm water.DBG_PARTICLES.
+  var LIQUID_DBG_PARTICLES   = 0;
 
   /* ---- Stage 8 — game-coupled-force constants ------------------------
    * The grid-update wake kernels + the collide kernel's miner-silhouette
-   * test mirror the CPU literals in grand-motherload.js: the player-eject
+   * test mirror the CPU literals in sluice.js: the player-eject
    * force (LIQUID_PLAYER_EJECT), the player box (PLAYER_W/H) and the miner
    * hull/track silhouette rects (player-local px — liquidPointInMiner /
    * liquidApplyPlayerGridWake). They are static tuned constants on both
-   * sides; the values below mirror grand-motherload.js exactly and are
+   * sides; the values below mirror sluice.js exactly and are
    * interpolated as literals into the WGSL game-coupled kernels. Keep them
    * in sync if the CPU constants ever change. Stage-8 caps: the wake
    * uniform carries at most GS_MAX_NOZZLES rocket nozzles and
@@ -255,7 +399,7 @@
 
   /* ---- GPU buffer layout — persistent particle state -----------------
    * 4 storage buffers, array-of-structs, indexed by particle slot
-   * [0, count). The 15 persistent CPU arrays in grand-motherload.js
+   * [0, count). The 15 persistent CPU arrays in sluice.js
    * (liquidX/Y/VX/VY, liquidG00..G11, liquidDensity, liquidAeration,
    * liquidType/Origin/Sleeping/Frozen/RestFrames) pack into:
    *
@@ -369,17 +513,19 @@
     });
     instance.gameParamsHost = new Float32Array(60);   // 15 vec4 lanes
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
-    // constants every compute kernel reads. 7 vec4 = 112 bytes (see the
-    // WGSL_SIM_PARAMS banner for the lane layout). simParamsHost is the
-    // f32 staging view; writeSimParams() fills it from the module LIQUID_*
-    // vars and a single writeBuffer pushes it before the per-frame GPU
-    // chain (and before each harness run* call).
+    // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
+    // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
+    // is the f32 staging view; writeSimParams() fills it from the module
+    // LIQUID_* vars and a single writeBuffer pushes it before the per-frame
+    // GPU chain (and before each harness run* call). Bind groups bind the
+    // whole buffer (no explicit size), so the larger buffer needs no other
+    // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 112,
+      size: 128,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(28);   // 7 vec4 lanes
+    instance.simParamsHost = new Float32Array(32);   // 8 vec4 lanes
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -398,7 +544,16 @@
   // writeBuffer them to the GPU. Returns the uploaded particle count.
   // (Pre-Stage-8 this is a seeding/verification path; once the GPU
   // owns the state there is no per-frame upload.)
-  function uploadParticles(instance) {
+  //
+  // stripFrozen (v24.112): the LIVE runFrame path passes true. The frozen
+  // bit is the CPU solver's off-region perf flag; under the GPU the kernels
+  // already cull by the live region box, but a frozen bit seeded from the
+  // CPU-driven boot frames could never be cleared again (the CPU classifier
+  // stops running once simActive flips), leaving a wide pond's far side
+  // permanently skipped AND invisible (the render collapses frozen quads).
+  // The boot self-tests keep packing frozen as-is (their CPU references
+  // snapshot the same arrays, so both sides must agree).
+  function uploadParticles(instance, stripFrozen) {
     var L = instance.liquid;
     if (!L || !instance.buffersReady) return 0;
     var count = L.getCount() | 0;
@@ -415,7 +570,8 @@
       sx[p]     = a.density[i]; sx[p + 1] = a.aeration[i];
       sx[p + 2] = 0; sx[p + 3] = 0;
       sf[i] = (a.type[i] & 3) | ((a.origin[i] & 3) << 2) |
-              ((a.sleeping[i] & 1) << 4) | ((a.frozen[i] & 1) << 5) |
+              ((a.sleeping[i] & 1) << 4) |
+              (stripFrozen ? 0 : ((a.frozen[i] & 1) << 5)) |
               ((a.restFrames[i] & 0xffff) << 8);
     }
     if (count > 0) {
@@ -698,12 +854,49 @@
         gh[28 + e * 4 + 2] = ex[e].r || 0;
         gh[28 + e * 4 + 3] = ex[e].blastScale || 0;
       }
-      // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, _, _).
+      // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, playerVx, playerVy).
       gh[8] = nozN;
       gh[9] = exN;
+      // v24.125 — rig velocity (counts.zw) for the silhouette coupling in
+      // gridWake: the kernel speed-gates the plow eject from it AND pins
+      // in-silhouette cells to the hull velocity when static (rigid
+      // boundary). edit² sluice.js 070 liquidApplyPlayerGridWake.
+      if (pl && pl.active) {
+        gh[10] = pl.vx || 0;
+        gh[11] = pl.vy || 0;
+      }
     }
     instance.queue.writeBuffer(instance.gameParamsBuf, 0, gh);
   }
+
+  /* ---- Per-material property table (material-id generalization) ------
+   * Index = material id: 0 water, 1 oil (lava/acid/mud/glowmilk become rows
+   * 2..5 in the staged refactor). Each row holds the per-material physics
+   * constants that USED to be water/oil scalar pairs; writeSimParams sources
+   * the SimParams lanes from it, so adding a liquid is adding a row instead of
+   * editing the packer. Mirrors sluice.js LIQUID_MATS (the edit² lockstep);
+   * at the default water/oil values the SimParams bytes are unchanged, so the
+   * boot self-tests still pass with the same diffs. The N-material weighted
+   * cell blend that consumes the rest of each row lands in the next step.
+   * -------------------------------------------------------------------- */
+  var LIQUID_MATS = [
+    { name: 'water',
+      gravity: LIQUID_GRAVITY,         pressureStiff: LIQUID_PRESSURE_STIFF,
+      aerBlur: LIQUID_AERATION_BLUR,   aerDamp: LIQUID_AERATION_DAMP,
+      wallBounceIn: LIQUID_WALL_BOUNCE_IN, wallBounceEdge: LIQUID_WALL_BOUNCE_EDGE,
+      floorFriction: LIQUID_FLOOR_FRICTION, wallFriction: LIQUID_WALL_FRICTION,
+      motionScale: LIQUID_WATER_MOTION_SCALE, damping: LIQUID_DAMPING,
+      aerThreshold: LIQUID_AERATION_THRESHOLD, aerCoeff: LIQUID_AERATION_COEFF,
+      bounce: LIQUID_BOUNCE_WATER },
+    { name: 'oil',
+      gravity: LIQUID_OIL_GRAVITY,     pressureStiff: LIQUID_OIL_PRESSURE_STIFF,
+      aerBlur: LIQUID_OIL_AERATION_BLUR, aerDamp: LIQUID_OIL_AERATION_DAMP,
+      wallBounceIn: LIQUID_OIL_WALL_BOUNCE_IN, wallBounceEdge: LIQUID_OIL_WALL_BOUNCE_EDGE,
+      floorFriction: LIQUID_OIL_FLOOR_FRICTION, wallFriction: LIQUID_OIL_WALL_FRICTION,
+      motionScale: LIQUID_WATER_MOTION_SCALE, damping: LIQUID_OIL_DAMPING,
+      aerThreshold: LIQUID_OIL_AERATION_THRESHOLD, aerCoeff: LIQUID_OIL_AERATION_COEFF,
+      bounce: LIQUID_BOUNCE_OIL }
+  ];
 
   /* ---- v14.26 — fill + push the SimParams uniform --------------------
    * Pack the module's live fluid-feel physics vars into the 28-lane f32
@@ -719,8 +912,9 @@
    *   12-15 oilBnd : oilWallBounceIn, oilWallBounceEdge, oilFloorFriction,
    *                  oilWallFriction
    *   16-19 g2pA   : waterMotionScale, damping, oilDamping, aerThreshold
-   *   20-23 g2pB   : oilAerThreshold, aerCoeff, oilAerCoeff, _pad
-   *   24-27 coll   : bounceWater, bounceOil, _pad, _pad
+   *   20-23 g2pB   : oilAerThreshold, aerCoeff, oilAerCoeff, calm (v24.145)
+   *   24-27 coll   : bounceWater, bounceOil, gridVisc, dbgFlags
+   *   28-31 g2pC   : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173)
    * Filled from the same LIQUID_* numbers the WGSL `${...}` literals used
    * before v14.26 — at default values the GPU sees byte-identical input,
    * so the boot self-tests still pass with unchanged diffs.
@@ -728,41 +922,34 @@
   function writeSimParams(instance) {
     var sh = instance.simParamsHost;
     if (!sh) return;
-    // grav
-    sh[0]  = LIQUID_GRAVITY;
-    sh[1]  = LIQUID_OIL_GRAVITY;
-    sh[2]  = LIQUID_PRESSURE_STIFF;
-    sh[3]  = LIQUID_OIL_PRESSURE_STIFF;
-    // aer
-    sh[4]  = LIQUID_AERATION_BLUR;
-    sh[5]  = LIQUID_AERATION_DAMP;
-    sh[6]  = LIQUID_OIL_AERATION_BLUR;
-    sh[7]  = LIQUID_OIL_AERATION_DAMP;
-    // bound (water)
-    sh[8]  = LIQUID_WALL_BOUNCE_IN;
-    sh[9]  = LIQUID_WALL_BOUNCE_EDGE;
-    sh[10] = LIQUID_FLOOR_FRICTION;
-    sh[11] = LIQUID_WALL_FRICTION;
+    // v23.x — sourced from the LIQUID_MATS table (water = row 0, oil = row 1)
+    // instead of scalar pairs. Lane order unchanged, so the bytes are identical
+    // at default values and the self-test diffs do not move.
+    var w = LIQUID_MATS[0], o = LIQUID_MATS[1];
+    // grav : gravity, oilGravity, pressureStiff, oilPressureStiff
+    sh[0]  = w.gravity;        sh[1]  = o.gravity;
+    sh[2]  = w.pressureStiff;  sh[3]  = o.pressureStiff;
+    // aer : aerBlur, aerDamp, oilAerBlur, oilAerDamp
+    sh[4]  = w.aerBlur;        sh[5]  = w.aerDamp;
+    sh[6]  = o.aerBlur;        sh[7]  = o.aerDamp;
+    // bound (water) : wallBounceIn, wallBounceEdge, floorFriction, wallFriction
+    sh[8]  = w.wallBounceIn;   sh[9]  = w.wallBounceEdge;
+    sh[10] = w.floorFriction;  sh[11] = w.wallFriction;
     // oilBnd (oil)
-    sh[12] = LIQUID_OIL_WALL_BOUNCE_IN;
-    sh[13] = LIQUID_OIL_WALL_BOUNCE_EDGE;
-    sh[14] = LIQUID_OIL_FLOOR_FRICTION;
-    sh[15] = LIQUID_OIL_WALL_FRICTION;
-    // g2pA
-    sh[16] = LIQUID_WATER_MOTION_SCALE;
-    sh[17] = LIQUID_DAMPING;
-    sh[18] = LIQUID_OIL_DAMPING;
-    sh[19] = LIQUID_AERATION_THRESHOLD;
-    // g2pB
-    sh[20] = LIQUID_OIL_AERATION_THRESHOLD;
-    sh[21] = LIQUID_AERATION_COEFF;
-    sh[22] = LIQUID_OIL_AERATION_COEFF;
-    sh[23] = 0;
-    // coll
-    sh[24] = LIQUID_BOUNCE_WATER;
-    sh[25] = LIQUID_BOUNCE_OIL;
-    sh[26] = 0;
-    sh[27] = 0;
+    sh[12] = o.wallBounceIn;   sh[13] = o.wallBounceEdge;
+    sh[14] = o.floorFriction;  sh[15] = o.wallFriction;
+    // g2pA : waterMotionScale, damping, oilDamping, aerThreshold
+    sh[16] = w.motionScale;    sh[17] = w.damping;
+    sh[18] = o.damping;        sh[19] = w.aerThreshold;
+    // g2pB : oilAerThreshold, aerCoeff, oilAerCoeff, calm (v24.145)
+    sh[20] = o.aerThreshold;   sh[21] = w.aerCoeff;
+    sh[22] = o.aerCoeff;       sh[23] = LIQUID_CALM;
+    // coll : bounceWater, bounceOil, gridVisc (v24.115), dbgFlags (v24.120)
+    sh[24] = w.bounce;         sh[25] = o.bounce;
+    sh[26] = LIQUID_GRID_VISC; sh[27] = LIQUID_DBG_FLAGS;
+    // g2pC : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173 Old-Faithful)
+    sh[28] = LIQUID_MAX_VEL;        sh[29] = LIQUID_BURST_DAMP;
+    sh[30] = LIQUID_BURST_GATE_LO;  sh[31] = LIQUID_BURST_GATE_HI;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -1478,6 +1665,7 @@
       var stiff   = oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
       var oldAer = fr(snap.aeration[i]);
       var newAer = fr(fr(aerDamp) * fr(oldAer + fr(fr(aeration - oldAer) * fr(aerBlur))));
+      density = Math.min(density, LIQUID_DENS_CAP);   // v24.182 — anti-runaway cap (matches the WGSL min)
       refDensity[i] = density;
       refAerationOut[i] = newAer;
       var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
@@ -1525,6 +1713,37 @@
       } else {
         refVelX[ci] = 0;
         refVelY[ci] = 0;
+      }
+    }
+    // v24.115 — grid viscosity blend (mirrors the kernel's massy-4-neighbour
+    // average; fr() keeps every step f32). Raw values are snapshotted first
+    // so each cell blends against neighbours' UN-blended velocity, exactly
+    // like the kernel's race-free recompute-from-accumulators gather.
+    if (LIQUID_GRID_VISC > 0) {
+      var rawVX = Float64Array.from(refVelX);
+      var rawVY = Float64Array.from(refVelY);
+      var gwV = g.w | 0;
+      for (ci = 0; ci < cells; ci++) {
+        if (fr(fr(refMassFx[ci]) / FX) <= 0) continue;
+        var colV = ci % gwV;
+        var sXV = 0, sYV = 0, sNV = 0;
+        if (colV > 0 && fr(fr(refMassFx[ci - 1]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci - 1]); sYV = fr(sYV + rawVY[ci - 1]); sNV++;
+        }
+        if (colV + 1 < gwV && fr(fr(refMassFx[ci + 1]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci + 1]); sYV = fr(sYV + rawVY[ci + 1]); sNV++;
+        }
+        if (ci >= gwV && fr(fr(refMassFx[ci - gwV]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci - gwV]); sYV = fr(sYV + rawVY[ci - gwV]); sNV++;
+        }
+        if (ci + gwV < cells && fr(fr(refMassFx[ci + gwV]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci + gwV]); sYV = fr(sYV + rawVY[ci + gwV]); sNV++;
+        }
+        if (sNV > 0) {
+          var aXV = fr(sXV / sNV), aYV = fr(sYV / sNV);
+          refVelX[ci] = fr(rawVX[ci] + fr(fr(aXV - rawVX[ci]) * LIQUID_GRID_VISC));
+          refVelY[ci] = fr(rawVY[ci] + fr(fr(aYV - rawVY[ci]) * LIQUID_GRID_VISC));
+        }
       }
     }
 
@@ -1726,6 +1945,7 @@
       var stiff   = oilP ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
       var oldAer = fr(snap.aeration[i]);
       var newAerP = fr(fr(aerDamp) * fr(oldAer + fr(fr(aeration - oldAer) * fr(aerBlur))));
+      density = Math.min(density, LIQUID_DENS_CAP);   // v24.182 — anti-runaway cap (matches the WGSL min)
       refDensity[i] = density;
       refAerationOut[i] = newAerP;
       var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
@@ -1772,6 +1992,37 @@
         refVelY[ci] = 0;
       }
     }
+    // v24.115 — grid viscosity blend (mirrors the kernel's massy-4-neighbour
+    // average; fr() keeps every step f32). Raw values are snapshotted first
+    // so each cell blends against neighbours' UN-blended velocity, exactly
+    // like the kernel's race-free recompute-from-accumulators gather.
+    if (LIQUID_GRID_VISC > 0) {
+      var rawVX = Float64Array.from(refVelX);
+      var rawVY = Float64Array.from(refVelY);
+      var gwV = g.w | 0;
+      for (ci = 0; ci < cells; ci++) {
+        if (fr(fr(refMassFx[ci]) / FX) <= 0) continue;
+        var colV = ci % gwV;
+        var sXV = 0, sYV = 0, sNV = 0;
+        if (colV > 0 && fr(fr(refMassFx[ci - 1]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci - 1]); sYV = fr(sYV + rawVY[ci - 1]); sNV++;
+        }
+        if (colV + 1 < gwV && fr(fr(refMassFx[ci + 1]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci + 1]); sYV = fr(sYV + rawVY[ci + 1]); sNV++;
+        }
+        if (ci >= gwV && fr(fr(refMassFx[ci - gwV]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci - gwV]); sYV = fr(sYV + rawVY[ci - gwV]); sNV++;
+        }
+        if (ci + gwV < cells && fr(fr(refMassFx[ci + gwV]) / FX) > 0) {
+          sXV = fr(sXV + rawVX[ci + gwV]); sYV = fr(sYV + rawVY[ci + gwV]); sNV++;
+        }
+        if (sNV > 0) {
+          var aXV = fr(sXV / sNV), aYV = fr(sYV / sNV);
+          refVelX[ci] = fr(rawVX[ci] + fr(fr(aXV - rawVX[ci]) * LIQUID_GRID_VISC));
+          refVelY[ci] = fr(rawVY[ci] + fr(fr(aYV - rawVY[ci]) * LIQUID_GRID_VISC));
+        }
+      }
+    }
 
     // --- Pass 4: G2P — port of liquidG2P (no terrain collision) ---
     // Per particle, gather the resolved velocity over the 3x3 stencil,
@@ -1784,6 +2035,19 @@
     var minY = fr(fr(-400 * instance.worldTile) / CELL);
     var maxY = fr(fr(fr(instance.worldTotalRows + 1) * instance.worldTile) / CELL);
     var invStep = fr(1 / dt);
+    // v24.174 LOCKSTEP FIX — the G2P kernel reads waterMotionScale + damping
+    // from the SimParams uniform (sp.g2pA.x/.y/.z), and writeSimParams fills
+    // those lanes from LIQUID_MATS (water = row 0, oil = row 1), NOT the live
+    // LIQUID_* scalars. The game's liquidStateTick pushes calm-blended
+    // DAMPING / WATER_MOTION_SCALE every frame (RAW mode pushes 1.0) via
+    // setSimParam, which updates ONLY the scalars — so the kernel keeps running
+    // on the boot-frozen MATS values while the scalars drift away. Mirror the
+    // kernel's ACTUAL source here (fr() == the f32 uniform lane the kernel sees),
+    // exactly as GRAVITY/OIL_GRAVITY already do, or the reference diverges the
+    // instant any of those levers retunes (the Stage-5 velocity FAIL).
+    var refMotion = fr(LIQUID_MATS[0].motionScale);
+    var refDampW  = fr(LIQUID_MATS[0].damping);
+    var refDampO  = fr(LIQUID_MATS[1].damping);
     // Reference particle outputs, seeded from the snapshot — frozen and
     // still-asleep particles stay untouched, exactly like the kernel.
     var refPX = snap.x.slice(0),   refPY = snap.y.slice(0);
@@ -1828,16 +2092,25 @@
 
       // Sleeping particles — scan the 9 stencil cells for a wake.
       if (snap.sleeping[i]) {
-        var wakeMax = 0;
-        for (s = 0; s < 9; s++) {
-          var wc = gnbr[s];
-          var wvx = refVelX[wc], wvy = refVelY[wc];
-          var wmag = fr(fr(wvx * wvx) + fr(wvy * wvy));
-          if (wmag > wakeMax) wakeMax = wmag;
+        if (LIQUID_DBG_FLAGS & 1) {
+          // v24.120 debug kit — no-sleep: force-wake (matches the kernel).
+          refSleep[i] = 0;
+          refRest[i] = 0;
+        } else {
+          var wakeMax = 0;
+          for (s = 0; s < 9; s++) {
+            var wc = gnbr[s];
+            var wvx = refVelX[wc], wvy = refVelY[wc];
+            var wmag = fr(fr(wvx * wvx) + fr(wvy * wvy));
+            if (wmag > wakeMax) wakeMax = wmag;
+          }
+          // v24.150 — lively wake bar drops ~8x (matches the kernel branch).
+          var wakeBarR = LIQUID_WAKE_CELL_VSQ;
+          if (LIQUID_CALM < 0.5) wakeBarR = fr(LIQUID_WAKE_CELL_VSQ * 0.12);
+          if (wakeMax < wakeBarR) continue;   // stays asleep
+          refSleep[i] = 0;
+          refRest[i] = 0;
         }
-        if (wakeMax < LIQUID_WAKE_CELL_VSQ) continue;   // stays asleep
-        refSleep[i] = 0;
-        refRest[i] = 0;
       }
       g2pAwake++;
 
@@ -1888,12 +2161,14 @@
 
       var oilG = snap.type[i] === 1;
       if (!oilG) {
-        vx = fr(vx * LIQUID_WATER_MOTION_SCALE);
-        vy = fr(vy * LIQUID_WATER_MOTION_SCALE);
-        gv00 = fr(gv00 * LIQUID_WATER_MOTION_SCALE);
-        gv01 = fr(gv01 * LIQUID_WATER_MOTION_SCALE);
-        gv10 = fr(gv10 * LIQUID_WATER_MOTION_SCALE);
-        gv11 = fr(gv11 * LIQUID_WATER_MOTION_SCALE);
+        // refMotion = fr(LIQUID_MATS[0].motionScale) — the kernel's sp.g2pA.x,
+        // NOT the live LIQUID_WATER_MOTION_SCALE scalar (see the lockstep note).
+        vx = fr(vx * refMotion);
+        vy = fr(vy * refMotion);
+        gv00 = fr(gv00 * refMotion);
+        gv01 = fr(gv01 * refMotion);
+        gv10 = fr(gv10 * refMotion);
+        gv11 = fr(gv11 * refMotion);
       }
 
       // World-bounds clamp; re-derive vx/vy as the clamped displacement.
@@ -1926,19 +2201,65 @@
       refAerP[i] = aerNow;
 
       // Damped velocity (cell -> world px/s).
-      var dampG = oilG ? LIQUID_OIL_DAMPING : LIQUID_DAMPING;
+      // refDampW/O = fr(LIQUID_MATS[*].damping) — the kernel's sp.g2pA.y/.z,
+      // NOT the live LIQUID_DAMPING scalar (see the lockstep note above).
+      var dampG = oilG ? refDampO : refDampW;
       var newVX = fr(fr(fr(vx * CELL) * invStep) * dampG);
       var newVY = fr(fr(fr(vy * CELL) * invStep) * dampG);
+      // v24.112 rest brake (matches the kernel, two stages).
+      var vBrk = fr(fr(newVX * newVX) + fr(newVY * newVY));
+      if (!(LIQUID_DBG_FLAGS & 2) && vBrk < LIQUID_REST_BRAKE_VSQ) {
+        var bfR = (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) ? LIQUID_REST_BRAKE_HARD : LIQUID_REST_BRAKE;
+        // v24.145 — calm-scaled brake (matches the kernel; LIQUID_CALM is
+        // the fround-quantized mirror of the g2pB.w uniform lane).
+        var bfC = fr(1 + fr(fr(bfR - 1) * LIQUID_CALM));
+        newVX = fr(newVX * bfC);
+        newVY = fr(newVY * bfC);
+      }
+      // v24.173 Old-Faithful — speed-gated burst damp + hard velocity clamp
+      // (water only; bit-faithful twin of the WGSL g2p kernel). The g2pC
+      // lanes are the f32-rounded module consts (writeSimParams assigns into a
+      // Float32Array), so each const read is fr()-wrapped to match the uniform.
+      if (!oilG) {
+        var bdAmp = fr(LIQUID_BURST_DAMP);
+        if (bdAmp < 1) {
+          var bdGLoF = fr(LIQUID_BURST_GATE_LO);
+          var bdLo = fr(bdGLoF * bdGLoF);
+          if (vBrk > bdLo) {
+            var bdGHiF = fr(LIQUID_BURST_GATE_HI);
+            var bdHi = fr(bdGHiF * bdGHiF);
+            var bdT = fr(fr(vBrk - bdLo) / fr(bdHi - bdLo));
+            if (bdT > 1) bdT = 1;
+            var bdF = fr(1 + fr(fr(bdAmp - 1) * bdT));
+            newVX = fr(newVX * bdF);
+            newVY = fr(newVY * bdF);
+          }
+        }
+        var mvMax = fr(LIQUID_MAX_VEL);
+        if (mvMax > 0) {
+          var mvSp2 = fr(fr(newVX * newVX) + fr(newVY * newVY));
+          var mvMx2 = fr(mvMax * mvMax);
+          if (mvSp2 > mvMx2) {
+            var mvSc = fr(mvMax / fr(Math.sqrt(mvSp2)));
+            newVX = fr(newVX * mvSc);
+            newVY = fr(newVY * mvSc);
+          }
+        }
+      }
       refPX[i] = fr(npx * CELL);
       refPY[i] = fr(npy * CELL);
       refVXp[i] = newVX;
       refVYp[i] = newVY;
       refG00[i] = gv00; refG01[i] = gv01; refG10[i] = gv10; refG11[i] = gv11;
 
-      // Sleep tracking.
-      if (fr(fr(newVX * newVX) + fr(newVY * newVY)) < LIQUID_SLEEP_VSQ) {
+      // Sleep tracking. (debug kit: no-sleep routes to the reset branch.)
+      // v24.150 — latch only while SETTLING (matches the kernel calm gate).
+      if (!(LIQUID_DBG_FLAGS & 1) && LIQUID_CALM >= 0.5 && fr(fr(newVX * newVX) + fr(newVY * newVY)) < LIQUID_SLEEP_VSQ) {
         var rf = refRest[i] + 1;
-        if (rf > LIQUID_SLEEP_FRAMES) { refSleep[i] = 1; rf = LIQUID_SLEEP_FRAMES; }
+        if (rf > LIQUID_SLEEP_FRAMES) {
+          refSleep[i] = 1; rf = LIQUID_SLEEP_FRAMES;
+          refAerP[i] = 0;   // v24.112 — foam drops at the sleep transition (matches the kernel)
+        }
         refRest[i] = rf;
       } else {
         refRest[i] = 0;
@@ -2045,6 +2366,7 @@
       var gFlag = new Uint32Array(res[3]);
 
       var maxPosDiff = 0, maxVelDiff = 0, maxAffineDiff = 0, maxAerDiff = 0;
+      var maxRefVelMag = 0;
       var flagFails = 0, worstP = -1, worstWhat = '';
       for (var p = 0; p < count; p++) {
         var q = p * 4;
@@ -2057,6 +2379,8 @@
         if (dPY > maxPosDiff) { maxPosDiff = dPY; worstP = p; worstWhat = 'pos.y'; }
         if (dVX > maxVelDiff) { maxVelDiff = dVX; }
         if (dVY > maxVelDiff) { maxVelDiff = dVY; }
+        var avx = Math.abs(refVXp[p]); if (avx > maxRefVelMag) maxRefVelMag = avx;
+        var avy = Math.abs(refVYp[p]); if (avy > maxRefVelMag) maxRefVelMag = avy;
         var dA0 = Math.abs(gAff[q]     - refG00[p]);
         var dA1 = Math.abs(gAff[q + 1] - refG01[p]);
         var dA2 = Math.abs(gAff[q + 2] - refG10[p]);
@@ -2083,8 +2407,16 @@
 
       // Tolerances — pure f32 / fixed-point round() tie noise, scaled a
       // little by the multi-corner gather + the cell->world unit changes.
+      // v24.10 — the velocity tolerance is RELATIVE. f32 rounding error is
+      // proportional to magnitude, and a DEEP pool that hasn't fully settled at
+      // boot has fast transient particles (hundreds of px/s) whose ~0.1% f32
+      // divergence dwarfs the old 0.05 absolute floor (a false FAIL even though
+      // position barely moves — vel FAILs while pos/affine/aer PASS). A real
+      // code drift is a large FRACTION of the velocity, so 1% of the peak speed
+      // (floored at 0.05) still catches drift while passing benign magnitude
+      // noise. velTol scales with maxRefVelMag, reported below for triage.
       var posTol = 0.02;
-      var velTol = 0.05;
+      var velTol = Math.max(0.05, maxRefVelMag * 0.01);
       var affineTol = 0.05;
       var aerTol = 0.02;
       var fail = '';
@@ -2092,7 +2424,9 @@
         fail = worstWhat + ' diff ' + maxPosDiff.toFixed(5) +
           ' at particle ' + worstP + ' (gpu vs CPU reference)';
       } else if (maxVelDiff >= velTol) {
-        fail = 'velocity diff ' + maxVelDiff.toFixed(5) + ' (gpu vs CPU reference)';
+        fail = 'velocity diff ' + maxVelDiff.toFixed(5) + ' vs tol ' +
+          velTol.toFixed(5) + ' (peak|v|=' + maxRefVelMag.toFixed(1) +
+          ', gpu vs CPU reference)';
       } else if (maxAffineDiff >= affineTol) {
         fail = 'affine diff ' + maxAffineDiff.toFixed(5) + ' (gpu vs CPU reference)';
       } else if (maxAerDiff >= aerTol) {
@@ -2111,10 +2445,10 @@
         try {
           console.log('LiquidWGPU Stage 5: G2P OK — ' + count +
             ' particles, maxPosDiff=' + maxPosDiff.toFixed(6) +
-            ', maxVelDiff=' + maxVelDiff.toFixed(6) +
+            ', maxVelDiff=' + maxVelDiff.toFixed(6) + '/tol' + velTol.toFixed(4) +
             ', maxAffineDiff=' + maxAffineDiff.toFixed(6) +
-            ' (' + g2pAwake + ' awake, maxAerDiff=' + maxAerDiff.toFixed(6) +
-            ', grid ' + g.w + 'x' + g.h + ').');
+            ' (' + g2pAwake + ' awake, peak|v|=' + maxRefVelMag.toFixed(1) +
+            ', maxAerDiff=' + maxAerDiff.toFixed(6) + ', grid ' + g.w + 'x' + g.h + ').');
         } catch (_) {}
       }
     }).catch(function (e) {
@@ -2254,7 +2588,13 @@
     var yReset = fr(fr(instance.worldTotalRows + 1) * TILE);
     var step = fr(rC * 0.9);
 
-    Promise.all([
+    // v24.112 — the continuation below WRITES the live particle buffers (the
+    // post-G2P restore) on a later task. Stage 8 defers the GPU go-live on
+    // this promise so the restore can never land on top of a resident,
+    // already-live sim (it used to clobber the live flag buffer with the
+    // boot CPU classifier's frozen bits a few frames after go-live, leaving
+    // a permanently skipped + invisible slice of the first pond).
+    instance.stage6Done = Promise.all([
       readbackBuffer(instance, instance.buf.pos, count * 16),
       readbackBuffer(instance, instance.buf.aux, count * 16),
       readbackBuffer(instance, instance.buf.flag, count * 4)
@@ -2936,7 +3276,9 @@ fn encodeFx(v : f32) -> i32 {
    * vec4-packed for std140 alignment:
    *   player  : (active, worldX, worldY, dir)        — dir is +1 / -1
    *   rocket  : (active, intensity, exhaustDirX, exhaustDirY)
-   *   counts  : (nozzleCount, explosionCount, _, _)
+   *   counts  : (nozzleCount, explosionCount, playerVx, playerVy)
+   *             playerVx/Vy drive the silhouette coupling (v24.125):
+   *             speed-gated plow eject + static rigid-boundary pin
    *   nozzles : 4 x (worldX, worldY, _, _)            — GS_MAX_NOZZLES
    *   explos  : 8 x (worldCx, worldCy, radius, blastScale)
    *             blastScale is CPU-precomputed (large ? 1050 : 660); only
@@ -2999,7 +3341,7 @@ const CELL : f32 = ${LIQUID_CELL_DEFAULT};
    *   oilBnd  : (oilWallBounceIn, oilWallBounceEdge, oilFloorFriction,
    *              oilWallFriction)
    *   g2pA    : (waterMotionScale, damping, oilDamping, aerThreshold)
-   *   g2pB    : (oilAerThreshold, aerCoeff, oilAerCoeff, _pad)
+   *   g2pB    : (oilAerThreshold, aerCoeff, oilAerCoeff, calm v24.145)
    *   coll    : (bounceWater, bounceOil, _pad, _pad)
    * The struct is shared; the `@binding` line is injected per-pipeline
    * (binding numbers differ per layout), exactly like GameParams.
@@ -3013,6 +3355,7 @@ struct SimParams {
   g2pA   : vec4<f32>,
   g2pB   : vec4<f32>,
   coll   : vec4<f32>,
+  g2pC   : vec4<f32>,
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -3052,7 +3395,14 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
   let wy = (f32(cgy) + 0.5) * CELL;
   let stepDt = gp.stepDt;
 
-  // --- player wake — nearest-face eject out of the miner silhouette ---
+  // --- player wake — miner-silhouette coupling (v24.125) ---
+  // counts.zw carry the rig velocity. Moving: nearest-face eject scaled by
+  // speed (deadzone 8 px/s, full at 60 px/s) clears plowed water. Static:
+  // in-silhouette cells PIN to the hull velocity — they hold splat mass
+  // but contain no particles and sit outside the terrain boundary
+  // handling, so under gravity they free-fall forever and G2P feeds that
+  // back as a perpetual jet at the hull base (the resting-pond
+  // firecracker pump). edit² sluice.js 070 liquidApplyPlayerGridWake.
   if (gameP.player.x > 0.5) {
     let px = gameP.player.y;
     let py = gameP.player.z;
@@ -3066,24 +3416,35 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
     let inTrack = lx >= MINER_TRACK_L && lx <= MINER_TRACK_R
                && ly >= MINER_TRACK_T && ly <= MINER_TRACK_B;
     if (inHull || inTrack) {
-      var rL = MINER_TRACK_L; var rT = MINER_TRACK_T;
-      var rR = MINER_TRACK_R; var rB = MINER_TRACK_B;
-      if (inHull) {
-        rL = MINER_HULL_L; rT = MINER_HULL_T;
-        rR = MINER_HULL_R; rB = MINER_HULL_B;
+      let pvx = gameP.counts.z;
+      let pvy = gameP.counts.w;
+      let ejs = clamp((abs(pvx) + abs(pvy) - 8.0) / 52.0, 0.0, 1.0);
+      if (ejs > 0.0) {
+        var rL = MINER_TRACK_L; var rT = MINER_TRACK_T;
+        var rR = MINER_TRACK_R; var rB = MINER_TRACK_B;
+        if (inHull) {
+          rL = MINER_HULL_L; rT = MINER_HULL_T;
+          rR = MINER_HULL_R; rB = MINER_HULL_B;
+        }
+        let dL = lx - rL;
+        let dR = rR - lx;
+        let dT = ly - rT;
+        let dB = rB - ly;
+        var nx : f32 = -1.0; var ny : f32 = 0.0; var minD = dL;
+        if (dR < minD) { minD = dR; nx =  1.0; ny =  0.0; }
+        if (dT < minD) { minD = dT; nx =  0.0; ny = -1.0; }
+        if (dB < minD) { minD = dB; nx =  0.0; ny =  1.0; }
+        if (mirrored) { nx = -nx; }
+        let eject = PLAYER_EJECT * ejs * stepDt / CELL;
+        cellVelX[c] = cellVelX[c] + nx * eject;
+        cellVelY[c] = cellVelY[c] + ny * eject;
+      } else {
+        // Static rig — rigid-boundary pin to EXACT zero (an idle rig can
+        // carry a small residual contact vx/vy; pinning to it would
+        // re-inject a few px/s forever).
+        cellVelX[c] = 0.0;
+        cellVelY[c] = 0.0;
       }
-      let dL = lx - rL;
-      let dR = rR - lx;
-      let dT = ly - rT;
-      let dB = rB - ly;
-      var nx : f32 = -1.0; var ny : f32 = 0.0; var minD = dL;
-      if (dR < minD) { minD = dR; nx =  1.0; ny =  0.0; }
-      if (dT < minD) { minD = dT; nx =  0.0; ny = -1.0; }
-      if (dB < minD) { minD = dB; nx =  0.0; ny =  1.0; }
-      if (mirrored) { nx = -nx; }
-      let eject = PLAYER_EJECT * stepDt / CELL;
-      cellVelX[c] = cellVelX[c] + nx * eject;
-      cellVelY[c] = cellVelY[c] + ny * eject;
     }
   }
 
@@ -3239,6 +3600,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let aerBlur = select(sp.aer.x, sp.aer.z, oil);
   let stiff   = select(sp.grav.z, sp.grav.w, oil);
 
+  // v24.182 — clamp the density blow-up before it feeds aux.x + the pressure
+  // (anti-runaway cap; LIQUID_DENS_CAP, edit2 sluice 010-constants).
+  density = min(density, f32(${LIQUID_DENS_CAP}));
   // density -> aux.x; advance aeration -> aux.y (damp/blur lerp).
   let oldAer = aux[i].y;
   let newAer = aerDamp * (oldAer + (aeration - oldAer) * aerBlur);
@@ -3306,6 +3670,24 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    *    cell index. v14.3 — the tile-boundary reflection + friction tail is
    *    now ported too, as the separate gridBoundary kernel. */
   var WGSL_GRID_UPDATE = /* wgsl */ `
+// v24.115 — raw resolved velocity of a cell, recomputed from the P2G /
+// pressure accumulators (NOT from cellVelX/Y, so the viscosity gather
+// below is race-free: every thread reads only kernel INPUTS). Returns
+// (vx, vy, 1) for a massy cell, (0, 0, 0) for an empty one.
+fn rawCellVel(n : u32) -> vec3<f32> {
+  let nm = f32(atomicLoad(&cellMass[n])) / FIXED_SCALE;
+  if (nm <= 0.0) { return vec3<f32>(0.0, 0.0, 0.0); }
+  let ninv  = 1.0 / nm;
+  let nOilK = (f32(atomicLoad(&cellOilMass[n])) / FIXED_SCALE) * ninv;
+  let nGrav = (sp.grav.x + (sp.grav.y - sp.grav.x) * nOilK) *
+              (gp.stepDt * gp.stepDt * gp.invCell);
+  let nvx = (f32(atomicLoad(&cellVX[n])) / FIXED_SCALE +
+             f32(atomicLoad(&cellDVX[n])) / FIXED_SCALE) * ninv;
+  let nvy = (f32(atomicLoad(&cellVY[n])) / FIXED_SCALE +
+             f32(atomicLoad(&cellDVY[n])) / FIXED_SCALE) * ninv + nGrav;
+  return vec3<f32>(nvx, nvy, 1.0);
+}
+
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let c = gid.x;
@@ -3324,8 +3706,29 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     let momY = f32(atomicLoad(&cellVY[c]))  / FIXED_SCALE;
     let dvX  = f32(atomicLoad(&cellDVX[c])) / FIXED_SCALE;
     let dvY  = f32(atomicLoad(&cellDVY[c])) / FIXED_SCALE;
-    cellVelX[c] = (momX + dvX) * invm;
-    cellVelY[c] = (momY + dvY) * invm + grav;
+    var velX = (momX + dvX) * invm;
+    var velY = (momY + dvY) * invm + grav;
+    // v24.115 — grid viscosity (sp.coll.z): blend toward the massy
+    // 4-neighbour average. Anti-phase compression oscillation (the
+    // clamped-EOS limit cycle that keeps a settled pond breathing
+    // forever) cancels here; uniform flow is unchanged by averaging.
+    let visc = sp.coll.z;
+    if (visc > 0.0) {
+      let col = c % gp.gridW;
+      var nSum = vec3<f32>(0.0, 0.0, 0.0);
+      if (col > 0u)             { nSum = nSum + rawCellVel(c - 1u); }
+      if (col + 1u < gp.gridW)  { nSum = nSum + rawCellVel(c + 1u); }
+      if (c >= gp.gridW)        { nSum = nSum + rawCellVel(c - gp.gridW); }
+      if (c + gp.gridW < gp.cells) { nSum = nSum + rawCellVel(c + gp.gridW); }
+      if (nSum.z > 0.0) {
+        let nAvgX = nSum.x / nSum.z;
+        let nAvgY = nSum.y / nSum.z;
+        velX = velX + (nAvgX - velX) * visc;
+        velY = velY + (nAvgY - velY) * visc;
+      }
+    }
+    cellVelX[c] = velX;
+    cellVelY[c] = velY;
     // Stage 8 — game-coupled wakes (player eject / rocket plume /
     // explosion blast). The cell's dense grid coords are recovered from
     // the flat index: cgx = c % gridW + originX, cgy = c / gridW + originY.
@@ -3521,6 +3924,10 @@ const LIQUID_INV_DENSITY    : f32 = ${LIQUID_INV_DENSITY};
 const LIQUID_SLEEP_FRAMES   : u32 = ${LIQUID_SLEEP_FRAMES}u;
 const LIQUID_SLEEP_VSQ      : f32 = ${LIQUID_SLEEP_VSQ};
 const LIQUID_WAKE_CELL_VSQ  : f32 = ${LIQUID_WAKE_CELL_VSQ};
+const LIQUID_REST_BRAKE_VSQ : f32 = ${LIQUID_REST_BRAKE_VSQ};
+const LIQUID_REST_BRAKE     : f32 = ${LIQUID_REST_BRAKE};
+const LIQUID_REST_BRAKE_HARD_VSQ : f32 = ${LIQUID_REST_BRAKE_HARD_VSQ};
+const LIQUID_REST_BRAKE_HARD     : f32 = ${LIQUID_REST_BRAKE_HARD};
 
 // v14.31 — active-region cull. A particle outside gp.region is settled
 // off-screen water; the sim skips it (the smaller grid does not enclose
@@ -3611,19 +4018,35 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // woken particle resets it to 0 (the CPU sets liquidRestFrames=0 on wake).
   var restBase : u32 = (fl >> 8u) & 0xffffu;
   let sleeping = (fl >> 4u) & 1u;
+  // v24.120 debug kit — coll.w carries the live debug bitmask (bit 1 =
+  // no-sleep, bit 2 = no-brake); see LIQUID_DBG_FLAGS / writeSimParams.
+  let dbgF = u32(sp.coll.w + 0.5);
   if (sleeping != 0u) {
-    var wakeMax : f32 = 0.0;
-    for (var s : u32 = 0u; s < 9u; s = s + 1u) {
-      let wc  = nbr[s];
-      let wvx = cellVelX[wc];
-      let wvy = cellVelY[wc];
-      let wmag = wvx * wvx + wvy * wvy;
-      if (wmag > wakeMax) { wakeMax = wmag; }
+    if ((dbgF & 1u) != 0u) {
+      // No-sleep — force-wake; skip the scan. The flag rebuild at the
+      // bottom clears the sleep bit (this branch never re-sets it).
+      restBase = 0u;
+    } else {
+      var wakeMax : f32 = 0.0;
+      for (var s : u32 = 0u; s < 9u; s = s + 1u) {
+        let wc  = nbr[s];
+        let wvx = cellVelX[wc];
+        let wvy = cellVelY[wc];
+        let wmag = wvx * wvx + wvy * wvy;
+        if (wmag > wakeMax) { wakeMax = wmag; }
+      }
+      // v24.150 — while the body is LIVELY (calm < 0.5, g2pB.w) the wake
+      // bar drops ~8x so long low-amplitude swells recruit sleepers and a
+      // big wave can cross the whole lake (saharan's tank: nothing sleeps,
+      // everything participates). Settled keeps the strict v24.125 bar.
+      // Branch (not mix) so calm=1 is byte-identical for the self-tests.
+      var wakeBar = LIQUID_WAKE_CELL_VSQ;
+      if (sp.g2pB.w < 0.5) { wakeBar = LIQUID_WAKE_CELL_VSQ * 0.12; }
+      if (wakeMax < wakeBar) { return; }   // stays asleep
+      // Woken — the rest of the gather runs for it this frame; restFrames
+      // starts from 0 (the CPU resets liquidRestFrames to 0 on wake).
+      restBase = 0u;
     }
-    if (wakeMax < LIQUID_WAKE_CELL_VSQ) { return; }   // stays asleep
-    // Woken — the rest of the gather runs for it this frame; restFrames
-    // starts from 0 (the CPU resets liquidRestFrames to 0 on wake).
-    restBase = 0u;
   }
 
   // --- Awake gather — unrolled 9-corner velocity + affine accumulation.
@@ -3730,8 +4153,57 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let invStep = 1.0 / gp.stepDt;
   // v14.26 — per-step velocity damping is live in the SimParams uniform.
   let damp  = select(sp.g2pA.y, sp.g2pA.z, oil);
-  let newVX = vx * CELL * invStep * damp;
-  let newVY = vy * CELL * invStep * damp;
+  var newVX = vx * CELL * invStep * damp;
+  var newVY = vy * CELL * invStep * damp;
+  // v24.112 rest brake — extra low-speed damping so the standing pressure
+  // noise floor decays to true rest and the sleep gate can latch; real
+  // flows above the threshold are untouched. Two stages: gentle under
+  // 25 px/s, hard under 10 px/s (the pressure-cycle pump otherwise
+  // sustains a ~12 px/s shimmer forever).
+  let vBrk = newVX * newVX + newVY * newVY;
+  if ((dbgF & 2u) == 0u && vBrk < LIQUID_REST_BRAKE_VSQ) {
+    var bf = LIQUID_REST_BRAKE;
+    if (vBrk < LIQUID_REST_BRAKE_HARD_VSQ) { bf = LIQUID_REST_BRAKE_HARD; }
+    // v24.145 — the brake is a REST device: scale toward 1 by the calm
+    // ramp (g2pB.w; 0 = stimulated, 1 = settling), so active water flows
+    // undamped. At calm=1 this is exactly bf (Sterbenz: 1+(bf-1) is
+    // lossless in f32), so the self-tests are byte-identical.
+    let bfC = 1.0 + (bf - 1.0) * sp.g2pB.w;
+    newVX = newVX * bfC;
+    newVY = newVY * bfC;
+  }
+  // v24.173 Old-Faithful — speed-gated burst damp + hard velocity clamp
+  // (water only). Bleed energy from FAST water so a stir settles while
+  // resting water (below the gate) is untouched, then cap the speed so an
+  // over-compressed ejection cannot run away into the "explosion fest".
+  // Carried linear velocity only (move + affine stay full = MLS-MPM-
+  // consistent). vBrk is the pre-brake speed^2; the burst gate sits above
+  // the rest-brake band so the two never overlap. g2pC = (maxVel, burstDamp,
+  // gateLo, gateHi). edit2 the CPU fallback (sluice 070) + the fr() reference.
+  if (!oil) {
+    let burstDamp = sp.g2pC.y;
+    if (burstDamp < 1.0) {
+      let gLo = sp.g2pC.z * sp.g2pC.z;
+      if (vBrk > gLo) {
+        let gHi = sp.g2pC.w * sp.g2pC.w;
+        var bT = (vBrk - gLo) / (gHi - gLo);
+        if (bT > 1.0) { bT = 1.0; }
+        let bF = 1.0 + (burstDamp - 1.0) * bT;
+        newVX = newVX * bF;
+        newVY = newVY * bF;
+      }
+    }
+    let maxVel = sp.g2pC.x;
+    if (maxVel > 0.0) {
+      let spd2 = newVX * newVX + newVY * newVY;
+      let mv2 = maxVel * maxVel;
+      if (spd2 > mv2) {
+        let sc = maxVel / sqrt(spd2);
+        newVX = newVX * sc;
+        newVY = newVY * sc;
+      }
+    }
+  }
   pos[i] = vec4<f32>(npx * CELL, npy * CELL, newVX, newVY);
   affine[i] = vec4<f32>(gv00, gv01, gv10, gv11);
   aux[i].y = newAer;
@@ -3741,11 +4213,18 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // restBase is the pre-step restFrames (0 if the particle was just woken).
   var rest : u32 = restBase;
   var sleepBit : u32 = 0u;
-  if (newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
+  // v24.150 — latch only while SETTLING (calm >= 0.5): lively water never
+  // freezes mid-wave, so swells keep their whole body. Settled behaviour
+  // is byte-identical (calm = 1).
+  if ((dbgF & 1u) == 0u && sp.g2pB.w >= 0.5 && newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
     rest = rest + 1u;
     if (rest > LIQUID_SLEEP_FRAMES) {
       sleepBit = 1u;
       rest = LIQUID_SLEEP_FRAMES;
+      // v24.112 — drop any residual foam at the sleep transition. A
+      // sleeping particle skips the passes that decay aeration, so leftover
+      // foam would otherwise freeze on the surface as permanent speckles.
+      aux[i].y = 0.0;
     }
   } else {
     rest = 0u;
@@ -3982,6 +4461,114 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 }
 `;
 
+  /* ---- WGSL — min-separation (anti-clump) pass (v24.185) --------------
+   * Runs once per substep right after buildGrid (fresh count-sort grid). For
+   * each OVER-DENSE particle (a knot), walk its 3x3 grid cells and push it away
+   * from any neighbour closer than DMIN, so particles can never pack tighter
+   * than DMIN — an over-pressured knot physically can't form or persist. Jacobi
+   * positional separation (read neighbours, write own pos); one iteration per
+   * substep, converges over frames. Normal water (below ODEN) returns at once,
+   * so the neighbour walk is paid only by the few knot particles. The in-place
+   * read of neighbour positions can tear by at most one displacement (~1px) and
+   * is benign for a relaxation. Reads the grid built by buildGrid: cellCount /
+   * cellStart / sortedIdx + GridParams. -------------------------------------- */
+  var WGSL_DECLUMP = /* wgsl */ `
+// paramsBuf (binding 0) is the SHARED uniform: computeGridBounds writes the
+// grid lanes (0-10,16-19) and computeTerrainBounds writes the terrain rect
+// (lanes 12-15), both before the substep loop, so the same view the collide
+// kernel uses (P2GParams) gives us grid + terrain here. The terrainMask
+// (binding 7) is the collide kernel's 1-bit-per-tile solidity mask.
+struct DeclumpParams {
+  count:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, cells:u32,
+  stepDt:f32, invCell:f32,
+  worldCols:f32, worldTile:f32, worldRows:f32, _pad0:f32,
+  tileOrigC:u32, tileOrigR:u32, tileW:u32, tileH:u32,
+  region : vec4<f32>,
+};
+@group(0) @binding(0) var<uniform> gp : DeclumpParams;
+@group(0) @binding(1) var<storage, read_write> pos : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> aux : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read> flag : array<u32>;
+@group(0) @binding(4) var<storage, read> cellCount : array<u32>;
+@group(0) @binding(5) var<storage, read> cellStart : array<u32>;
+@group(0) @binding(6) var<storage, read> sortedIdx : array<u32>;
+@group(0) @binding(7) var<storage, read> terrainMask : array<u32>;
+const CELL : f32 = ${LIQUID_CELL_DEFAULT};
+const DMIN : f32 = ${LIQUID_DECLUMP_DMIN};
+const STR  : f32 = ${LIQUID_DECLUMP_STRENGTH};
+const ODEN : f32 = ${LIQUID_DECLUMP_OVERDENSE};
+const RAD  : f32 = ${LIQUID_COLLIDE_RADIUS};
+
+// Same terrain probe the collide kernel uses (1 bit/tile, row-major over the
+// [tileOrigC..+tileW) x [tileOrigR..+tileH) rect; out-of-rect reads non-solid).
+fn declumpSolidAt(px : f32, py : f32) -> bool {
+  let oc = bitcast<i32>(gp.tileOrigC);
+  let orow = bitcast<i32>(gp.tileOrigR);
+  let tc = i32(floor(px / gp.worldTile)) - oc;
+  let tr = i32(floor(py / gp.worldTile)) - orow;
+  if (tc < 0 || tr < 0 || tc >= i32(gp.tileW) || tr >= i32(gp.tileH)) { return false; }
+  let idx = u32(tr) * gp.tileW + u32(tc);
+  let word = terrainMask[idx >> 5u];
+  return ((word >> (idx & 31u)) & 1u) != 0u;
+}
+
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i = gid.x;
+  if (i >= gp.count) { return; }
+  let fl = flag[i];
+  if (((fl >> 5u) & 1u) != 0u) { return; }   // frozen
+  if (aux[i].x < ODEN) { return; }            // only over-dense knots
+  let p = pos[i].xy;
+  let ox = bitcast<i32>(gp.originX);
+  let oy = bitcast<i32>(gp.originY);
+  let cx = i32(floor(p.x / CELL)) - ox;
+  let cy = i32(floor(p.y / CELL)) - oy;
+  let gw = i32(gp.gridW);
+  let gh = i32(gp.gridH);
+  if (cx < 1 || cy < 1 || cx >= gw - 1 || cy >= gh - 1) { return; }
+  var push = vec2<f32>(0.0, 0.0);
+  let dmin2 = DMIN * DMIN;
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      let c = u32((cy + dy) * gw + (cx + dx));
+      let st = cellStart[c];
+      let cn = cellCount[c];
+      for (var k = 0u; k < cn; k = k + 1u) {
+        let j = sortedIdx[st + k];
+        if (j == i) { continue; }
+        let d = p - pos[j].xy;
+        let dd = dot(d, d);
+        if (dd < dmin2 && dd > 1e-8) {
+          let dist = sqrt(dd);
+          push = push + (d / dist) * (DMIN - dist) * 0.5;
+        }
+      }
+    }
+  }
+  // v24.186 — TERRAIN CLAMP. A knot packed against a wall has all its
+  // neighbours on the open side, so "away from neighbours" points INTO the
+  // wall; an unclamped push drove water into the dirt (the owner's bleed).
+  // Move each axis only if the particle's LEADING EDGE (centre +/- radius in
+  // the push direction) stays out of solid, so a wall-packed knot spreads
+  // ALONG / away from the wall into open water but never penetrates it. The
+  // collide pass still resolves the fine radius after.
+  let cand = p + push * STR;
+  var np = p;
+  let dxm = cand.x - p.x;
+  if (dxm != 0.0) {
+    let edge = cand.x + select(-RAD, RAD, dxm > 0.0);
+    if (!declumpSolidAt(edge, p.y)) { np.x = cand.x; }
+  }
+  let dym = cand.y - p.y;
+  if (dym != 0.0) {
+    let edge = cand.y + select(-RAD, RAD, dym > 0.0);
+    if (!declumpSolidAt(np.x, edge)) { np.y = cand.y; }
+  }
+  pos[i] = vec4<f32>(np, pos[i].z, pos[i].w);
+}
+`;
+
   /* ---- WGSL — Stage 7 particle renderer ------------------------------
    * One instanced soft-disc draw per particle: a 6-vertex unit quad, the
    * instance count = particle count. The vertex shader reads buf.pos /
@@ -4104,6 +4691,286 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let alpha = in.color.a * aDisc;
   // Premultiplied-alpha output (the context is configured premultiplied).
   return vec4<f32>(in.color.rgb * alpha, alpha);
+}
+`;
+
+  /* ---- Stage 7b — surface-render shaders (v24.113) --------------------
+   * Two passes replace the visible per-particle discs when
+   * LIQUID_SURFACE_RENDER is on:
+   *   FIELD — the same instanced splat geometry as the legacy renderer
+   *     (radius scaled by rp.surf.z) accumulating ADDITIVELY into an
+   *     offscreen rgba16float density field: R = water weight, G = water
+   *     aeration-weighted, B = oil weight.
+   *   COMPOSITE — a fullscreen triangle thresholds the field
+   *     (smoothstep around rp.surf.x, half-width rp.surf.y) and tints it
+   *     with the live fluid colours; oil composites over water. The
+   *     smoothstep edge doubles as anti-aliasing, so the water reads as
+   *     one continuous body with a clean surface line instead of a pile
+   *     of balls, and per-particle micro-motion mostly disappears.
+   * -------------------------------------------------------------------- */
+  var WGSL_SURFACE_COMMON = /* wgsl */ `
+struct RenderParams {
+  camX          : f32,
+  camY          : f32,
+  dpws          : f32,
+  canvasW       : f32,
+  canvasH       : f32,
+  sizeBaseWater : f32,
+  sizeBaseOil   : f32,
+  _pad          : f32,
+  waterColor    : vec4<f32>,
+  waterFoam     : vec4<f32>,
+  oilColor      : vec4<f32>,
+  surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
+};
+@group(0) @binding(0) var<uniform> rp : RenderParams;
+`;
+
+  var WGSL_SURFACE_FIELD = /* wgsl */ `
+@group(0) @binding(1) var<storage, read> pos  : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> aux  : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read> flag : array<u32>;
+// v24.179 — NEIGHBOUR-COUNT SIZE GATE. The size below is driven by density,
+// but a jet-stranded SINGLE particle reads a high density while being utterly
+// alone, so it draws as a fat disc that never shrinks (the owner's "giant
+// single-particle circles"). Density lies about isolation; the real signal is
+// how many actual water particles are nearby. The count-sort grid already has
+// per-cell particle counts, so gate the splat size by the 3x3 cell count: a
+// lone particle (count ~1) shrinks to a speck, the body interior (count ~36)
+// is untouched. Reads the grid's GridParams (origin/dims) + cellCount; both are
+// fresh from this frame's buildGrid. Off-grid keeps full size.
+struct GParams { c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32, c6:u32, c7:u32 };
+@group(0) @binding(4) var<uniform> gpc : GParams;
+@group(0) @binding(5) var<storage, read> cellCnt : array<u32>;
+const NB_CELL : f32 = ${LIQUID_CELL_DEFAULT};
+const NB_FULL : f32 = 12.0;   // 3x3 neighbour count for full size; below this the splat shrinks (body interior ~36)
+
+const INV_DENSITY : f32 = ${LIQUID_INV_DENSITY};
+
+struct VOut {
+  @builtin(position) pos    : vec4<f32>,
+  @location(0)       uv     : vec2<f32>,
+  @location(1)       weight : vec3<f32>,   // x = water, y = water aeration, z = oil
+};
+
+fn quadCorner(vid : u32) -> vec2<f32> {
+  var c = vec2<f32>(-1.0, -1.0);
+  if (vid == 1u) { c = vec2<f32>( 1.0, -1.0); }
+  else if (vid == 2u) { c = vec2<f32>(-1.0,  1.0); }
+  else if (vid == 3u) { c = vec2<f32>(-1.0,  1.0); }
+  else if (vid == 4u) { c = vec2<f32>( 1.0, -1.0); }
+  else if (vid == 5u) { c = vec2<f32>( 1.0,  1.0); }
+  return c;
+}
+
+@vertex
+fn vs(@builtin(vertex_index)   vid : u32,
+      @builtin(instance_index) iid : u32) -> VOut {
+  var out : VOut;
+  let fl = flag[iid];
+  let frozen = (fl >> 5u) & 1u;
+  if (frozen != 0u) {
+    out.pos    = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+    out.uv     = vec2<f32>(0.0, 0.0);
+    out.weight = vec3<f32>(0.0, 0.0, 0.0);
+    return out;
+  }
+  let p = pos[iid];
+  // v24.155 — density-scaled size RESTORED (v24.154 removed it and the
+  // lake interior went "static TV": the merged body field NEEDS the fat
+  // overlapping splats to stay past threshold between particles). The
+  // actual stray bug was STALENESS: a sleeping particle skips the
+  // pressure pass, so a stray that once slept dense kept its interior
+  // size forever — clamp SLEEPERS to nominal instead. Inside a body the
+  // merged field dwarfs per-splat size, so lakes are unchanged; the
+  // stranded-speck residue itself now EVAPORATES (070 orphan pass).
+  let density = aux[iid].x;
+  let dn = density * INV_DENSITY;
+  // v24.163 — SIZE BY ISOLATION (aggressive). The splat size that merges
+  // the body is the same size that makes a lone SPLASH particle a fat disc;
+  // the only honest cure is to size each particle by how densely surrounded
+  // it is. Body (dn>=1, at/above rest density) keeps the full 1.5 so the
+  // merged surface is unchanged (no static-TV — that came from shrinking the
+  // BODY, not the strays). Below rest density it now falls off as dn^3
+  // (was the gentler dn^2): a surface/splash particle at 0.7 density goes
+  // from a ~2px-radius blob to a speck (0.7^3*1.5 = 0.51 vs the old 0.84),
+  // so as a particle separates from the body and its density drops, it
+  // shrinks toward a droplet within a frame instead of poking out fat.
+  let dnc = clamp(dn, 0.0, 1.0);
+  var d = select(1.5 * dnc * dnc * dnc, 1.5, dn >= 1.0);
+  let sleepBit = (fl >> 4u) & 1u;
+  if (sleepBit != 0u) { d = min(d, 1.0); }
+  let isOil = (fl & 3u) == 1u;
+  // v24.179 — gate the size by REAL neighbour count (water only; oil keeps its
+  // own look). The density-based size above says a jet-stranded single particle
+  // is full size; counting its actual neighbours (the 3x3 grid cell-count)
+  // sizes it down to a speck instead, while the body interior (~36) is
+  // unaffected. The 1-cell in-bounds margin keeps the 3x3 fetch safe; off-grid
+  // keeps full size.
+  if (!isOil) {
+    // v24.180 — look up the cell at the PRE-STEP position (aux.zw), NOT the
+    // post-move render position (p.xy). The grid cell counts were built from
+    // the pre-step positions (buildGrid runs before g2p moves the particle),
+    // so a FAST particle whose render position is >1 cell from where it was
+    // counted would read an empty cell (nb 0) and slip through the gate at full
+    // size — exactly the jet-flung giants. The slow body barely moves, so this
+    // was invisible in the harness. aux.zw is the pre-step world pos g2p stashed.
+    let gpx = aux[iid].z;
+    let gpy = aux[iid].w;
+    let cgx = i32(floor(gpx / NB_CELL)) - bitcast<i32>(gpc.originX);
+    let cgy = i32(floor(gpy / NB_CELL)) - bitcast<i32>(gpc.originY);
+    let gw = i32(gpc.gridW);
+    let gh = i32(gpc.gridH);
+    if (cgx >= 1 && cgy >= 1 && cgx < gw - 1 && cgy < gh - 1) {
+      var nb : u32 = 0u;
+      for (var ddy = -1; ddy <= 1; ddy = ddy + 1) {
+        let rowb = (cgy + ddy) * gw + cgx;
+        nb = nb + cellCnt[u32(rowb - 1)] + cellCnt[u32(rowb)] + cellCnt[u32(rowb + 1)];
+      }
+      // Looked up at the grid-build position, a real particle always counts its
+      // own cell, so nb >= 1; nb 0 means a truly stale grid (boot) — keep full.
+      if (nb >= 1u) { d = d * clamp(f32(nb) / NB_FULL, 0.0, 1.0); }
+    }
+  }
+  let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
+  var pointSize = sizeBase * d * rp.surf.z;
+  pointSize = max(pointSize, 0.8);   // v24.158 — was 1.15; let very-sparse strays be specks (body is far above this)
+  let halfPx = pointSize * 0.5;
+  let scrX = (p.x - rp.camX) * rp.dpws;
+  let scrY = (p.y - rp.camY) * rp.dpws;
+  let corner = quadCorner(vid);
+  let devX = scrX + corner.x * halfPx;
+  let devY = scrY + corner.y * halfPx;
+  out.pos = vec4<f32>(devX / (rp.canvasW * 0.5) - 1.0,
+                      1.0 - devY / (rp.canvasH * 0.5), 0.0, 1.0);
+  out.uv  = corner;
+  let aer = clamp(aux[iid].y, 0.0, 1.0);
+  // v24.153 — foam needs MOTION: weight aeration by current speed so
+  // clusters wedged in block corners (micro-jittering at ~10 px/s, which
+  // regenerates aeration forever) can never glow; real churn at 50-300
+  // px/s foams fully. Kills the owner's "white around corners of blocks"
+  // at the source — static water is always the base colour.
+  let spd = length(p.zw);
+  let aerW = aer * clamp((spd - 12.0) / 68.0, 0.0, 1.0);
+  if (isOil) {
+    out.weight = vec3<f32>(0.0, 0.0, 1.0);
+  } else {
+    out.weight = vec3<f32>(1.0, aerW, 0.0);
+  }
+  return out;
+}
+
+@fragment
+fn fs(in : VOut) -> @location(0) vec4<f32> {
+  let w = clamp(1.0 - dot(in.uv, in.uv), 0.0, 1.0);
+  if (w <= 0.0) { discard; }
+  // Additive accumulation into the field (R water, G aeration, B oil).
+  return vec4<f32>(in.weight * w, 0.0);
+}
+`;
+
+  var WGSL_SURFACE_COMPOSITE = /* wgsl */ `
+@group(0) @binding(1) var fieldTex : texture_2d<f32>;
+
+struct VOut {
+  @builtin(position) pos : vec4<f32>,
+};
+
+@vertex
+fn vs(@builtin(vertex_index) vid : u32) -> VOut {
+  // Fullscreen triangle.
+  var out : VOut;
+  var p = vec2<f32>(-1.0, -1.0);
+  if (vid == 1u) { p = vec2<f32>(3.0, -1.0); }
+  else if (vid == 2u) { p = vec2<f32>(-1.0, 3.0); }
+  out.pos = vec4<f32>(p, 0.0, 1.0);
+  return out;
+}
+
+@fragment
+fn fs(in : VOut) -> @location(0) vec4<f32> {
+  let f = textureLoad(fieldTex, vec2<i32>(in.pos.xy), 0);
+  let t = rp.surf.x;
+  let s = max(rp.surf.y, 0.001);
+  let aWaterEdge = smoothstep(t - s, t + s, f.r);
+  let aOilEdge   = smoothstep(t - s, t + s, f.b);
+  if (aWaterEdge <= 0.001 && aOilEdge <= 0.001) { discard; }
+  // Water tint: foam fraction from the aeration-weighted channel.
+  // v24.150 — foam needs a real BODY behind it; v24.152 softened (0.6t to
+  // 1.6t) now that foam is light BLUE, not white: turbulence tint shows in
+  // wave crests and churn like the reference demo, while lone droplets
+  // still read as plain water.
+  let bodyK = smoothstep(t * 0.6, t * 1.6, f.r);
+  let foam = clamp(f.g / max(f.r, 0.001), 0.0, 1.0) * bodyK;
+  let waterRGB = mix(rp.waterColor.rgb, rp.waterFoam.rgb, foam);
+  var outA = aWaterEdge * rp.waterColor.a;
+  var outRGB = waterRGB * outA;
+  // Oil composites over water.
+  let oilA = aOilEdge * rp.oilColor.a;
+  outRGB = outRGB * (1.0 - oilA) + rp.oilColor.rgb * oilA;
+  outA   = outA   * (1.0 - oilA) + oilA;
+  return vec4<f32>(outRGB, outA);
+}
+`;
+
+  /* ---- WGSL — PARTICLE PROOF dots (v24.160) --------------------------
+   * Draws ONE small hard dot per particle at its true centre — no density
+   * scaling, no metaball merge — coloured by a per-index hash, on top of
+   * the normal water. The owner's diagnostic: a "giant particle" that is
+   * really one particle shows a lone dot; one that is a merged cluster
+   * shows a dense speckle of many differently-coloured dots filling the
+   * circle. Reuses the render bind group (params/pos/aux/flag).
+   * ------------------------------------------------------------------ */
+  var WGSL_DBG_DOTS = WGSL_SURFACE_COMMON + /* wgsl */ `
+@group(0) @binding(1) var<storage, read> dpos  : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> daux  : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read> dflag : array<u32>;
+
+struct DOut {
+  @builtin(position) pos : vec4<f32>,
+  @location(0)       uv  : vec2<f32>,
+  @location(1)       col : vec3<f32>,
+};
+
+fn dcorner(vid : u32) -> vec2<f32> {
+  var c = vec2<f32>(-1.0, -1.0);
+  if (vid == 1u) { c = vec2<f32>( 1.0, -1.0); }
+  else if (vid == 2u) { c = vec2<f32>(-1.0,  1.0); }
+  else if (vid == 3u) { c = vec2<f32>(-1.0,  1.0); }
+  else if (vid == 4u) { c = vec2<f32>( 1.0, -1.0); }
+  else if (vid == 5u) { c = vec2<f32>( 1.0,  1.0); }
+  return c;
+}
+
+@vertex
+fn vs(@builtin(vertex_index) vid : u32, @builtin(instance_index) iid : u32) -> DOut {
+  var o : DOut;
+  let fl = dflag[iid];
+  if (((fl >> 5u) & 1u) != 0u) {              // frozen -> clip offscreen
+    o.pos = vec4<f32>(2.0, 2.0, 2.0, 1.0);
+    o.uv  = vec2<f32>(0.0, 0.0);
+    o.col = vec3<f32>(0.0, 0.0, 0.0);
+    return o;
+  }
+  let p = dpos[iid];
+  let half = 1.8;                              // fixed device px — hard dot, no scaling
+  let scrX = (p.x - rp.camX) * rp.dpws;
+  let scrY = (p.y - rp.camY) * rp.dpws;
+  let cc = dcorner(vid);
+  let dx = scrX + cc.x * half;
+  let dy = scrY + cc.y * half;
+  o.pos = vec4<f32>(dx / (rp.canvasW * 0.5) - 1.0, 1.0 - dy / (rp.canvasH * 0.5), 0.0, 1.0);
+  o.uv  = cc;
+  let h = iid * 2654435761u;                   // distinct bright colour per particle index
+  let hv = vec3<f32>(f32((h >> 16u) & 255u), f32((h >> 8u) & 255u), f32(h & 255u)) / 255.0;
+  o.col = vec3<f32>(0.35, 0.35, 0.35) + 0.65 * hv;
+  return o;
+}
+
+@fragment
+fn fs(i : DOut) -> @location(0) vec4<f32> {
+  if (dot(i.uv, i.uv) > 1.0) { discard; }      // round dot
+  return vec4<f32>(i.col, 1.0);
 }
 `;
 
@@ -4605,6 +5472,49 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       ]
     });
     instance.collideReady = true;
+
+    // v24.185 — min-separation (anti-clump) pipeline. Reuses the count-sort grid
+    // (cellCount/cellStart/sortedIdx) built by buildGrid + pos (rw) + aux/flag.
+    // Wrapped so a build failure leaves declumpReady false and the sim runs
+    // exactly as before (the pass is simply skipped).
+    try {
+      var dclBGL = dev.createBindGroupLayout({
+        label: 'liquid.declumpBGL',
+        entries: [
+          { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+          { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+          { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+          { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+          { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+          { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+          { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+          { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }
+        ]
+      });
+      instance.declumpPipe = dev.createComputePipeline({
+        label: 'liquid.declump',
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [dclBGL] }),
+        compute: { module: dev.createShaderModule({ code: WGSL_DECLUMP }), entryPoint: 'main' }
+      });
+      instance.declumpBG = dev.createBindGroup({
+        label: 'liquid.declumpBG',
+        layout: dclBGL,
+        entries: [
+          { binding: 0, resource: { buffer: instance.paramsBuf } },
+          { binding: 1, resource: { buffer: instance.buf.pos } },
+          { binding: 2, resource: { buffer: instance.buf.aux } },
+          { binding: 3, resource: { buffer: instance.buf.flag } },
+          { binding: 4, resource: { buffer: instance.buf.cellCount } },
+          { binding: 5, resource: { buffer: instance.buf.cellStart } },
+          { binding: 6, resource: { buffer: instance.buf.sortedIdx } },
+          { binding: 7, resource: { buffer: instance.buf.terrainMask } }
+        ]
+      });
+      instance.declumpReady = true;
+    } catch (e) {
+      instance.declumpReady = false;
+      try { console.log('LiquidWGPU declump: pipeline build failed — ' + ((e && e.message) || e)); } catch (_) {}
+    }
   }
 
   /* Run the Stage-5 G2P gather in one command encoder. One kernel — one
@@ -4653,8 +5563,25 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     liquidSubmit(instance, enc);
   }
 
+  // v24.185 — min-separation (anti-clump) dispatch. Runs after buildGrid (fresh
+  // grid) each substep; the kernel itself early-returns for all but over-dense
+  // knot particles, so this is cheap on a calm pond. Skipped entirely when off.
+  function runDeclump(instance) {
+    if (!instance.declumpReady || !LIQUID_DECLUMP_ON) return;
+    var count = instance.uploadedCount | 0;
+    if (count <= 0) return;
+    var dev = instance.device;
+    var enc = dev.createCommandEncoder({ label: 'liquid.runDeclump' });
+    var cp = enc.beginComputePass({ label: 'liquid.declump' });
+    cp.setPipeline(instance.declumpPipe);
+    cp.setBindGroup(0, instance.declumpBG);
+    cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
+    cp.end();
+    liquidSubmit(instance, enc);
+  }
+
   /* ---- Stage 7 — liquidWGPUCanvas + render pipeline ------------------
-   * The CPU liquid renderer (drawLiquidsWebGL in grand-motherload.js)
+   * The CPU liquid renderer (drawLiquidsWebGL in sluice.js)
    * draws particles onto a sibling <canvas> (liquidGLCanvas) layered over
    * the main game canvas at z-index 4 — composited natively by the
    * browser, no cross-context blit. Stage 7's liquidWGPUCanvas is that
@@ -4734,16 +5661,17 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     instance.renderCtx     = ctx;
     instance.renderFormat  = fmt;
 
-    // --- RenderParams uniform — 20 f32 lanes, 80 bytes (v14.25) ---
-    // 8 scalars (32 B) + 3 vec4 colour fields (48 B). The 8 scalars fill
-    // exactly 32 bytes, so the first vec4 starts 16-byte aligned — no
-    // manual padding lane needed.
+    // --- RenderParams uniform — 24 f32 lanes, 96 bytes ---
+    // 8 scalars (32 B) + 3 vec4 colour fields (48 B) + the v24.113 surf
+    // vec4 (16 B: threshold, softness, splat scale, on/off). The legacy
+    // disc shader's struct only declares the first 80 bytes; binding the
+    // larger buffer to it is valid (buffer >= struct).
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 80,
+      size: 96,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(20);
+    instance.renderParamsHost = new Float32Array(24);
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var bgl = dev.createBindGroupLayout({
@@ -4752,7 +5680,12 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
         { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
-        { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } }
+        { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
+        // v24.179 — grid params + per-cell counts for the field pass's
+        // neighbour-count size gate (only WGSL_SURFACE_FIELD reads these; the
+        // legacy-disc + dbg-dots shaders that share this layout ignore them).
+        { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: { type: 'uniform' } },
+        { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } }
       ]
     });
     var mod = dev.createShaderModule({ code: WGSL_RENDER });
@@ -4784,10 +5717,126 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
         { binding: 0, resource: { buffer: instance.renderParamsBuf } },
         { binding: 1, resource: { buffer: instance.buf.pos } },
         { binding: 2, resource: { buffer: instance.buf.aux } },
-        { binding: 3, resource: { buffer: instance.buf.flag } }
+        { binding: 3, resource: { buffer: instance.buf.flag } },
+        // v24.179 — grid params + cell counts for the field-pass size gate.
+        { binding: 4, resource: { buffer: instance.paramsBuf } },
+        { binding: 5, resource: { buffer: instance.buf.cellCount } }
       ]
     });
     instance.renderReady = true;
+
+    // --- v24.160 PARTICLE PROOF dots pipeline (debug overlay) ---
+    // Reuses the render bind group layout (bgl) + swapchain format (fmt).
+    // Wrapped so a build failure never takes down the live renderer.
+    try {
+      var dotMod = dev.createShaderModule({ code: WGSL_DBG_DOTS });
+      instance.dbgDotsPipeline = dev.createRenderPipeline({
+        label: 'liquid.dbgDots',
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+        vertex: { module: dotMod, entryPoint: 'vs' },
+        fragment: {
+          module: dotMod,
+          entryPoint: 'fs',
+          targets: [{
+            format: fmt,
+            blend: {
+              color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' }
+            }
+          }]
+        },
+        primitive: { topology: 'triangle-list' }
+      });
+    } catch (eDot) {
+      instance.dbgDotsPipeline = null;
+      try { console.log('LiquidWGPU: dbg-dots pipeline build failed (' + ((eDot && eDot.message) || eDot) + ')'); } catch (_) {}
+    }
+
+    // --- Stage 7b — surface-render pipelines (v24.113) ---
+    // Optional: any failure here leaves surfReady=false and the legacy
+    // disc renderer keeps drawing; it must never take down Stage 7.
+    try {
+      var fieldMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_FIELD });
+      instance.surfFieldPipeline = dev.createRenderPipeline({
+        label: 'liquid.surfField',
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+        vertex: { module: fieldMod, entryPoint: 'vs' },
+        fragment: {
+          module: fieldMod,
+          entryPoint: 'fs',
+          targets: [{
+            format: 'rgba16float',
+            // Pure additive accumulation of the splat weights.
+            blend: {
+              color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+            }
+          }]
+        },
+        primitive: { topology: 'triangle-list' }
+      });
+      instance.surfCompositeBGL = dev.createBindGroupLayout({
+        label: 'liquid.surfCompositeBGL',
+        entries: [
+          { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+          { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } }
+        ]
+      });
+      var compMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_COMPOSITE });
+      instance.surfCompositePipeline = dev.createRenderPipeline({
+        label: 'liquid.surfComposite',
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfCompositeBGL] }),
+        vertex: { module: compMod, entryPoint: 'vs' },
+        fragment: {
+          module: compMod,
+          entryPoint: 'fs',
+          targets: [{
+            format: fmt,
+            blend: {
+              color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' }
+            }
+          }]
+        },
+        primitive: { topology: 'triangle-list' }
+      });
+      instance.surfReady = true;
+    } catch (eSurf) {
+      instance.surfReady = false;
+      try { console.log('LiquidWGPU Stage 7b: surface-render pipeline build failed (' + ((eSurf && eSurf.message) || eSurf) + '); legacy disc renderer stays.'); } catch (_) {}
+    }
+  }
+
+  // (Re)create the offscreen field texture + the composite bind group when
+  // the canvas size changes. Returns true when the surface path is usable.
+  function ensureSurfaceTargets(instance, cw, ch) {
+    if (!instance.surfReady) return false;
+    if (instance.surfTex && instance.surfTexW === cw && instance.surfTexH === ch) return true;
+    try {
+      if (instance.surfTex) { try { instance.surfTex.destroy(); } catch (_) {} }
+      instance.surfTex = instance.device.createTexture({
+        label: 'liquid.surfField',
+        size: { width: Math.max(1, cw), height: Math.max(1, ch) },
+        format: 'rgba16float',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+      });
+      instance.surfTexView = instance.surfTex.createView();
+      instance.surfTexW = cw;
+      instance.surfTexH = ch;
+      instance.surfCompositeBG = instance.device.createBindGroup({
+        label: 'liquid.surfCompositeBG',
+        layout: instance.surfCompositeBGL,
+        entries: [
+          { binding: 0, resource: { buffer: instance.renderParamsBuf } },
+          { binding: 1, resource: instance.surfTexView }
+        ]
+      });
+      return true;
+    } catch (eTex) {
+      instance.surfReady = false;
+      try { console.log('LiquidWGPU Stage 7b: field texture build failed (' + ((eTex && eTex.message) || eTex) + '); legacy disc renderer stays.'); } catch (_) {}
+      return false;
+    }
   }
 
   /* Render the GPU particle buffer to liquidWGPUCanvas. `view` carries the
@@ -4844,25 +5893,84 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     rh[14] = LIQUID_WATER_FOAM_B; rh[15] = 0;
     rh[16] = LIQUID_OIL_R;       rh[17] = LIQUID_OIL_G;
     rh[18] = LIQUID_OIL_B;       rh[19] = LIQUID_OIL_ALPHA;
+    // v24.113 — surface-render params (threshold, softness, splat scale, on).
+    rh[20] = LIQUID_SURFACE_THRESH;
+    rh[21] = LIQUID_SURFACE_SOFT;
+    rh[22] = LIQUID_SURFACE_RSCALE;
+    rh[23] = LIQUID_SURFACE_RENDER;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
+    // v24.113 — surface render: splat the particles into the offscreen
+    // density field, then composite it through the threshold. Falls back
+    // to the legacy per-particle discs when toggled off or unavailable.
+    var useSurface = LIQUID_SURFACE_RENDER >= 0.5 &&
+      ensureSurfaceTargets(instance, cw, ch);
+
     var enc = dev.createCommandEncoder({ label: 'liquid.runRender' });
-    var pass = enc.beginRenderPass({
-      label: 'liquid.renderPass',
-      colorAttachments: [{
-        view: ctx.getCurrentTexture().createView(),
-        clearValue: { r: 0, g: 0, b: 0, a: 0 },
-        loadOp: 'clear',
-        storeOp: 'store'
-      }]
-    });
-    if (count > 0) {
-      pass.setPipeline(instance.renderPipeline);
-      pass.setBindGroup(0, instance.renderBG);
-      // 6 verts (unit quad) x `count` instances — one soft disc / particle.
-      pass.draw(6, count);
+    if (useSurface) {
+      var fieldPass = enc.beginRenderPass({
+        label: 'liquid.surfFieldPass',
+        colorAttachments: [{
+          view: instance.surfTexView,
+          clearValue: { r: 0, g: 0, b: 0, a: 0 },
+          loadOp: 'clear',
+          storeOp: 'store'
+        }]
+      });
+      if (count > 0) {
+        fieldPass.setPipeline(instance.surfFieldPipeline);
+        fieldPass.setBindGroup(0, instance.renderBG);
+        fieldPass.draw(6, count);
+      }
+      fieldPass.end();
+      var compPass = enc.beginRenderPass({
+        label: 'liquid.surfCompositePass',
+        colorAttachments: [{
+          view: ctx.getCurrentTexture().createView(),
+          clearValue: { r: 0, g: 0, b: 0, a: 0 },
+          loadOp: 'clear',
+          storeOp: 'store'
+        }]
+      });
+      compPass.setPipeline(instance.surfCompositePipeline);
+      compPass.setBindGroup(0, instance.surfCompositeBG);
+      compPass.draw(3);
+      compPass.end();
+    } else {
+      var pass = enc.beginRenderPass({
+        label: 'liquid.renderPass',
+        colorAttachments: [{
+          view: ctx.getCurrentTexture().createView(),
+          clearValue: { r: 0, g: 0, b: 0, a: 0 },
+          loadOp: 'clear',
+          storeOp: 'store'
+        }]
+      });
+      if (count > 0) {
+        pass.setPipeline(instance.renderPipeline);
+        pass.setBindGroup(0, instance.renderBG);
+        // 6 verts (unit quad) x `count` instances — one soft disc / particle.
+        pass.draw(6, count);
+      }
+      pass.end();
     }
-    pass.end();
+    // v24.160 — PARTICLE PROOF overlay: draw each particle as one hard dot
+    // ON TOP of the water (loadOp 'load' preserves the composite). Proof of
+    // whether a "giant particle" is one particle or a merged cluster.
+    if (LIQUID_DBG_PARTICLES >= 0.5 && instance.dbgDotsPipeline && count > 0) {
+      var dotPass = enc.beginRenderPass({
+        label: 'liquid.dbgDotsPass',
+        colorAttachments: [{
+          view: ctx.getCurrentTexture().createView(),
+          loadOp: 'load',
+          storeOp: 'store'
+        }]
+      });
+      dotPass.setPipeline(instance.dbgDotsPipeline);
+      dotPass.setBindGroup(0, instance.renderBG);
+      dotPass.draw(6, count);
+      dotPass.end();
+    }
     instance.queue.submit([enc.finish()]);
     return count;
   }
@@ -4931,6 +6039,11 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     instance.readbackPending = true;
     instance.readbackResolved = false;
     instance.readbackCount = count;
+    // v24.109 — stamp the mutation seq at kick time; applyReadback discards
+    // the map if ANY mutation landed in between (slot indices may have
+    // shuffled even when the count happens to match).
+    instance.readbackSeq = (instance.liquid && typeof instance.liquid.getMutationSeq === 'function')
+      ? instance.liquid.getMutationSeq() : 0;
     Promise.all([
       rb.pos.mapAsync(GPUMapMode.READ,    0, count * 16),
       rb.affine.mapAsync(GPUMapMode.READ, 0, count * 16),
@@ -4961,7 +6074,10 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     var L = instance.liquid;
     try {
       var liveCount = (L && L.getCount) ? (L.getCount() | 0) : count;
-      if (L && L.arrays && count > 0 && liveCount === count) {
+      var liveSeq = (L && typeof L.getMutationSeq === 'function')
+        ? L.getMutationSeq() : instance.readbackSeq;
+      if (L && L.arrays && count > 0 && liveCount === count &&
+          liveSeq === instance.readbackSeq) {
         var a = L.arrays;
         var pos    = new Float32Array(rb.pos.getMappedRange(0, count * 16));
         var affine = new Float32Array(rb.affine.getMappedRange(0, count * 16));
@@ -4970,7 +6086,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
         // v14.4 — tally awake (neither sleeping[4] nor frozen[5]) particles
         // as we copy, so the GPU-path idle-skip in updateLiquids has a fresh
         // "is anything still moving" signal with no extra scan.
-        var awake = 0;
+        var awake = 0, sleeping = 0, frozen = 0, fast = 0;
         for (var i = 0; i < count; i++) {
           var p = i * 4;
           a.x[i]  = pos[p];     a.y[i]  = pos[p + 1];
@@ -4988,9 +6104,23 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
           a.sleeping[i]   = (f >> 4) & 1;
           a.frozen[i]     = (f >> 5) & 1;
           a.restFrames[i] = (f >> 8) & 0xffff;
-          if ((f & 0x30) === 0) awake++;
+          // v17.89 — split the non-awake remainder so the dev panel's
+          // "Liq state" line is accurate under WebGPU: bit5 (frozen/off-screen)
+          // takes precedence over bit4 (sleeping/settled-on-screen).
+          if ((f & 0x30) === 0) {
+            awake++;
+            // v24.145 — fast-mover tally for the game's water state machine
+            // (liquidStateTick): "is anything still really flowing".
+            var fvx = pos[p + 2], fvy = pos[p + 3];
+            if (fvx * fvx + fvy * fvy > LIQUID_FAST_VSQ) fast++;
+          }
+          else if (f & 0x20) frozen++;
+          else sleeping++;
         }
         instance.awakeCount = awake;
+        instance.sleepingCount = sleeping;
+        instance.frozenCount = frozen;
+        instance.fastCount = fast;
       }
     } catch (_) {
       // Ignore — the unmap below still runs so the buffers are reusable.
@@ -5001,6 +6131,211 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     try { rb.flag.unmap(); } catch (_) {}
     instance.readbackPending = false;
     instance.readbackResolved = false;
+  }
+
+  /* ---- Stage 8b — GPU-resident mutation ops (v24.109) ------------------
+   * The fix for "the CPU mirror clobbers live water". Before this, ANY
+   * particle add/remove (pond fill/drain, oil suction) re-uploaded the
+   * whole CPU mirror over the resident GPU buffers. The mirror lags the
+   * GPU by up to LIQUID_READBACK_EVERY frames, and during continuous
+   * suction the in-flight readbacks are discarded as count-misaligned so
+   * it lags far more, which meant every mutation snapped live water
+   * backwards in time (visible stutter/rewind while pumping or crossing
+   * pond streaming edges).
+   *
+   * Now the game logs every mutation as a compact op stream (liquidOps in
+   * sluice.js 020-state, slot layouts documented there) and a single-thread
+   * compute kernel replays it against the resident buffers in exact CPU
+   * order: ADDs append CPU-authored rows, REMOVEs replicate the CPU's
+   * swap-remove by moving the GPU's OWN live tail row (never mirror data),
+   * POKEs/WAKEs write only the lanes the game actually changed. Live rows
+   * are never regressed to mirror state, and the slot layout stays
+   * bit-identical to the CPU arrays so the readback mirror keeps folding
+   * cleanly.
+   *
+   * Fallback: if the ops pipeline is unavailable, the stream overflowed,
+   * or validation fails, applyParticleOps falls back to the old full
+   * re-upload (rare, defensive). Harness/self-test paths still use
+   * uploadParticles directly.
+   * -------------------------------------------------------------------- */
+  var OPS_CAPACITY = 262144;   // f32 slots; a worst-case pond teleport (drain + fill ~21.6k particles) is ~195k
+
+  var WGSL_OPS_REPLAY = /* wgsl */ `
+struct OpsParams {
+  opsLen     : u32,
+  startCount : u32,
+  _pad0      : u32,
+  _pad1      : u32,
+};
+@group(0) @binding(0) var<uniform> op : OpsParams;
+@group(0) @binding(1) var<storage, read_write> pos : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read_write> affine : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read_write> aux : array<vec4<f32>>;
+@group(0) @binding(4) var<storage, read_write> flag : array<u32>;
+@group(0) @binding(5) var<storage, read> ops : array<f32>;
+
+// Single-thread sequential replay: op order IS the CPU mutation order, so
+// the GPU ends the pass with the same slot layout as the CPU arrays.
+// Indices/types ride as f32 (exact for ints below 2^24; counts cap at 40k).
+@compute @workgroup_size(1)
+fn main() {
+  var cnt : u32 = op.startCount;
+  var k : u32 = 0u;
+  loop {
+    if (k >= op.opsLen) { break; }
+    let tag = u32(ops[k]);
+    if (tag == 1u) {            // ADD: append a freshly spawned row
+      pos[cnt] = vec4<f32>(ops[k + 1u], ops[k + 2u], ops[k + 3u], ops[k + 4u]);
+      affine[cnt] = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+      aux[cnt] = vec4<f32>(${LIQUID_DENSITY.toFixed(1)}, 0.0, 0.0, 0.0);
+      flag[cnt] = (u32(ops[k + 5u]) & 3u) | ((u32(ops[k + 6u]) & 3u) << 2u);
+      cnt = cnt + 1u;
+      k = k + 7u;
+    } else if (tag == 2u) {     // REMOVE: swap-remove, moving the LIVE tail row
+      let i = u32(ops[k + 1u]);
+      cnt = cnt - 1u;
+      if (i < cnt) {
+        pos[i] = pos[cnt];
+        affine[i] = affine[cnt];
+        aux[i] = aux[cnt];
+        flag[i] = flag[cnt];
+      }
+      k = k + 2u;
+    } else if (tag == 3u) {     // POKE: suction nudge (vx/vy + aeration + wake)
+      let i = u32(ops[k + 1u]);
+      pos[i] = vec4<f32>(pos[i].x, pos[i].y, ops[k + 2u], ops[k + 3u]);
+      aux[i] = vec4<f32>(aux[i].x, ops[k + 4u], aux[i].z, aux[i].w);
+      flag[i] = (u32(ops[k + 5u]) & 3u) | ((u32(ops[k + 6u]) & 3u) << 2u);
+      k = k + 7u;
+    } else if (tag == 4u) {     // WAKE: clear sleeping + restFrames
+      let i = u32(ops[k + 1u]);
+      flag[i] = (u32(ops[k + 2u]) & 3u) | ((u32(ops[k + 3u]) & 3u) << 2u);
+      k = k + 4u;
+    } else {                    // corrupt tag (CPU validates; never expected)
+      break;
+    }
+  }
+}
+`;
+
+  function buildOpsPipeline(instance) {
+    if (!instance.buffersReady) return;
+    var dev = instance.device;
+    var bgl = dev.createBindGroupLayout({
+      label: 'liquid.opsBGL',
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }
+      ]
+    });
+    instance.opsBuf = dev.createBuffer({
+      label: 'liquid.ops',
+      size: OPS_CAPACITY * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+    });
+    instance.opsParamsBuf = dev.createBuffer({
+      label: 'liquid.opsParams',
+      size: 16,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    instance.opsHost = new Float32Array(OPS_CAPACITY);
+    instance.opsParamsHost = new Uint32Array(4);
+    instance.opsPipe = dev.createComputePipeline({
+      label: 'liquid.opsReplay',
+      layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+      compute: {
+        module: dev.createShaderModule({ code: WGSL_OPS_REPLAY }),
+        entryPoint: 'main'
+      }
+    });
+    instance.opsBG = dev.createBindGroup({
+      label: 'liquid.opsBG',
+      layout: bgl,
+      entries: [
+        { binding: 0, resource: { buffer: instance.opsParamsBuf } },
+        { binding: 1, resource: { buffer: instance.buf.pos } },
+        { binding: 2, resource: { buffer: instance.buf.affine } },
+        { binding: 3, resource: { buffer: instance.buf.aux } },
+        { binding: 4, resource: { buffer: instance.buf.flag } },
+        { binding: 5, resource: { buffer: instance.opsBuf } }
+      ]
+    });
+    instance.opsReady = true;
+  }
+
+  // Drop any pending op stream without applying it. Used right after a
+  // FULL upload, which already pushed the complete CPU truth (replaying
+  // the same ops on top of it would double-apply them).
+  function discardPendingOps(instance) {
+    var L = instance.liquid;
+    if (L && typeof L.takeOps === 'function') {
+      var o = L.takeOps();
+      if (o) o.length = 0;
+    }
+  }
+
+  // Apply the game's pending mutation ops to the resident GPU buffers.
+  // Returns the new live count. Falls back to a full uploadParticles when
+  // the ops path is unavailable or the stream fails validation.
+  function applyParticleOps(instance) {
+    var L = instance.liquid;
+    var target = L.getCount() | 0;
+    if (target > instance.maxParticles) target = instance.maxParticles;
+    var ops = (typeof L.takeOps === 'function') ? L.takeOps() : null;
+    if (!ops || !instance.opsReady) {
+      if (ops) ops.length = 0;
+      return uploadParticles(instance, true);
+    }
+    // CPU dry-walk: validate tags + indices and confirm the stream lands
+    // exactly on the live CPU count. Any surprise means the log is not a
+    // faithful delta (a mutator that bumped the seq without logging, an
+    // overflow, corruption), so fall back to the full re-seed.
+    var cnt = instance.uploadedCount | 0;
+    var n = ops.length | 0;
+    var k = 0, ok = (n <= OPS_CAPACITY);
+    while (ok && k < n) {
+      var tag = ops[k];
+      if (tag === 1) {
+        if (cnt >= instance.maxParticles) { ok = false; break; }
+        cnt++; k += 7;
+      } else if (tag === 2) {
+        if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
+        cnt--; k += 2;
+      } else if (tag === 3) {
+        if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
+        k += 7;
+      } else if (tag === 4) {
+        if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
+        k += 4;
+      } else { ok = false; break; }
+    }
+    if (!ok || k !== n || cnt !== target) {
+      ops.length = 0;
+      return uploadParticles(instance, true);
+    }
+    if (n > 0) {
+      instance.opsHost.set(ops);
+      instance.queue.writeBuffer(instance.opsBuf, 0, instance.opsHost, 0, n);
+      var u = instance.opsParamsHost;
+      u[0] = n >>> 0;
+      u[1] = instance.uploadedCount >>> 0;
+      u[2] = 0; u[3] = 0;
+      instance.queue.writeBuffer(instance.opsParamsBuf, 0, u);
+      var enc = instance.device.createCommandEncoder({ label: 'liquid.opsReplay' });
+      var pass = enc.beginComputePass({ label: 'liquid.opsReplay' });
+      pass.setPipeline(instance.opsPipe);
+      pass.setBindGroup(0, instance.opsBG);
+      pass.dispatchWorkgroups(1);
+      pass.end();
+      instance.queue.submit([enc.finish()]);
+    }
+    ops.length = 0;
+    instance.uploadedCount = target;
+    return target;
   }
 
   /* ---- Stage 8 — the live per-frame GPU sim step ----------------------
@@ -5016,10 +6351,11 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
    *                        CPU arrays + updates oilGallons. Runs CPU-side
    *                        so the agreed particle count stays the CPU
    *                        liquidCount (item 4 — oil suction stays here).
-   *   3. uploadParticles — re-seed the GPU particle buffers from the CPU
-   *                        snapshot, but only when the CPU set actually
-   *                        changed since the last upload (v14.2 residency
-   *                        — see the inline note in runFrame).
+   *   3. applyParticleOps— replay the game's mutation-op stream against
+   *                        the resident GPU buffers when the CPU set
+   *                        changed (v24.109, Stage 8b); a FULL
+   *                        uploadParticles re-seed happens only on first
+   *                        seed or as the defensive fallback.
    *   4. writeGameParams — push the live player / rocket / explosion state
    *                        for the grid-update wakes + collide miner test.
    *   5. computeGridBounds / computeTerrainBounds / uploadTerrainMask.
@@ -5041,7 +6377,31 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     // (its pull is dt-scaled) or the uniform.
     if (!isFinite(dt) || dt <= 0.0005) return;
     if (dt > 0.05) dt = 0.05;
-    instance.stepDt = dt;   // computeGridBounds pushes this into the uniform
+    // v24.10 — substep the sim like saharan's Water demo. Equilibrium column
+    // compression scales as stepDt², so advancing the chain in N small
+    // sub-steps (dt/N each) lets a DEEP pool settle at ~rest density instead
+    // of over-compressing then detonating into "popcorn" over time. The real
+    // fall speed is unchanged (ΔV/frame = GRAVITY·dt is invariant of N) so
+    // splashes feel identical. The uniform carries stepDt = dt/N.
+    var subSteps;
+    if (LIQUID_FIXED_STEP) {
+      // v24.124 — fixed-quantum substepping (mirrors updateLiquids): exact
+      // LIQUID_SUBSTEP_DT chunks, remainder banked, excess shed past a
+      // 2-quantum cap. stepDt is a true constant so the compression
+      // equilibrium never moves with frame jitter.
+      liquidStepAcc += dt;
+      subSteps = Math.floor(liquidStepAcc / LIQUID_SUBSTEP_DT);
+      if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
+      liquidStepAcc -= subSteps * LIQUID_SUBSTEP_DT;
+      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2) liquidStepAcc = LIQUID_SUBSTEP_DT * 2;
+      if (subSteps <= 0) return;        // banked — nothing to advance this frame
+      instance.stepDt = LIQUID_SUBSTEP_DT;   // computeGridBounds pushes this into the uniform
+    } else {
+      subSteps = Math.ceil(dt / LIQUID_SUBSTEP_DT);
+      if (subSteps < 1) subSteps = 1;
+      if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
+      instance.stepDt = dt / subSteps;   // computeGridBounds pushes this into the uniform
+    }
 
     var L = instance.liquid;
     // 2. Oil-suction (CPU game hook) — reads the mirror, mutates the CPU
@@ -5051,27 +6411,31 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       L.updateOilSuction(dt);
     }
 
-    // 3. Re-seed the GPU buffers from the CPU snapshot — but ONLY when the
-    // CPU side actually changed the particle set since the last upload
-    // (a particle added / removed, or oil suction nudged one; the game
-    // bumps liquidMutationSeq for all three). On every other frame we skip
-    // the upload and let the GPU keep simulating its own resident buffers,
-    // so the sim advances exactly one dt-step per frame no matter how many
-    // frames the async readback round-trip takes.
+    // 3. Sync game mutations into the resident GPU buffers. On every
+    // unchanged frame we skip this entirely and let the GPU keep simulating
+    // its own resident state, so the sim advances exactly one dt-step per
+    // frame no matter how many frames the async readback round-trip takes.
     //
-    // Why this matters: the old code re-uploaded the readback-fed CPU
-    // mirror every frame, so the sim could only advance once per COMPLETED
-    // readback round-trip. On a machine where that round-trip needs 2+
-    // frames (a GPU-bound build that misses vsync), the water advanced at a
-    // fraction of real time and never got enough pressure iterations to
-    // settle — it ran in slow motion and stayed collapsed. Decoupling sim
-    // advancement from the readback fixes that; the readback is now purely
-    // the lagging CPU mirror that oil suction + the public liquid API read.
+    // v24.109 — when the particle set DID change (liquidMutationSeq moved:
+    // pond fill/drain, oil suction, dig wake), the change now reaches the
+    // GPU as a replayed op stream (applyParticleOps / Stage 8b above)
+    // instead of a full re-upload of the CPU mirror. The mirror lags the
+    // GPU by up to LIQUID_READBACK_EVERY frames, so the old full re-upload
+    // snapped every live particle backwards in time on each mutation
+    // (stutter/rewind while pumping or crossing pond streaming edges).
+    // A FULL upload now happens only on first seed, after a CPU-solver
+    // handoff, or as the defensive fallback inside applyParticleOps; it
+    // discards the pending ops since it already carries the full truth.
     var count;
     var hasSeq = !!(L && typeof L.getMutationSeq === 'function');
     var seq = hasSeq ? L.getMutationSeq() : 0;
-    if (!hasSeq || seq !== instance.lastUploadSeq || !instance.residentSeeded) {
-      count = uploadParticles(instance);
+    if (!hasSeq || !instance.residentSeeded) {
+      count = uploadParticles(instance, true);
+      discardPendingOps(instance);
+      instance.lastUploadSeq = seq;
+      instance.residentSeeded = count > 0;
+    } else if (seq !== instance.lastUploadSeq) {
+      count = applyParticleOps(instance);
       instance.lastUploadSeq = seq;
       instance.residentSeeded = count > 0;
     } else {
@@ -5103,19 +6467,26 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     computeTerrainBounds(instance, count);
     uploadTerrainMask(instance);
     // 6. The full GPU per-frame chain — batched into one queue.submit
-    // (v14.7). Each stage records its own command buffer and routes it
-    // through liquidSubmit, which collects them while batchCBs is set;
-    // they execute in array order on the queue, same as five submits.
-    instance.batchCBs = [];
-    buildGrid(instance);
-    runP2G(instance);
-    runGrid2(instance);
-    runG2P(instance);
-    runCollide(instance);
-    if (instance.batchCBs.length > 0) {
-      instance.queue.submit(instance.batchCBs);
+    // (v14.7), run subSteps× (v24.10). Each stage records its own command
+    // buffer and routes it through liquidSubmit, which collects them while
+    // batchCBs is set; they execute in array order on the queue, same as five
+    // submits. Each sub-step rebuilds the grid from the resident (GPU-evolved)
+    // particle buffers and advances dt/N — uploadParticles seeded them once
+    // above, so the sub-steps compound on the GPU with no extra upload or
+    // readback. One submit per sub-step.
+    for (var ss = 0; ss < subSteps; ss++) {
+      instance.batchCBs = [];
+      buildGrid(instance);
+      runDeclump(instance);   // v24.185 — min-separation, after the fresh grid
+      runP2G(instance);
+      runGrid2(instance);
+      runG2P(instance);
+      runCollide(instance);
+      if (instance.batchCBs.length > 0) {
+        instance.queue.submit(instance.batchCBs);
+      }
+      instance.batchCBs = null;
     }
-    instance.batchCBs = null;
     // 7. Kick the async copy-back for the CPU mirror — but only every
     // LIQUID_READBACK_EVERY runFrames (v14.5). Per-frame mapAsync serialises
     // the CPU and GPU; kicking it rarely lets them pipeline. The mirror is
@@ -5326,33 +6697,57 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
         // the corresponding flag below stays false — the CPU solver keeps
         // driving. Wrapped so even this last step cannot brick the game.
         try {
-          var simOK = !!(instance.buffersReady && instance.gridReady &&
-            instance.p2gReady && instance.grid2Ready && instance.g2pReady &&
-            instance.collideReady);
           buildReadback(instance);
-          if (simOK && instance.readbackReady) {
-            instance.simActive = true;
-          }
-          // renderActive is GATED on simActive: drawing straight from the
-          // GPU particle buffers only shows live water if the GPU is also
-          // the one advancing it. If the sim stays on the CPU, the render
-          // must too (else draw() would blit a frozen GPU snapshot while
-          // the CPU solver moves the real particles).
-          if (instance.simActive && instance.renderReady) {
-            instance.renderActive = true;
-          }
+          // v24.109 — Stage 8b mutation-op replay. Optional: a build
+          // failure only means mutations fall back to the old full
+          // re-upload, so it must never block the GPU path going live.
           try {
-            console.log('LiquidWGPU Stage 8: GPU path ' +
-              (instance.simActive ? 'LIVE (sim)' : 'sim-disabled') + ' / ' +
-              (instance.renderActive ? 'LIVE (render)' : 'render-disabled') +
-              ' — ' + (instance.simActive ? 'GPU' : 'CPU') + ' solver driving.');
-          } catch (_) {}
+            buildOpsPipeline(instance);
+          } catch (eOps) {
+            try { console.log('LiquidWGPU Stage 8b: ops-replay pipeline build failed (' + ((eOps && eOps.message) || eOps) + '); mutations fall back to full re-upload.'); } catch (_) {}
+          }
         } catch (e) {
-          instance.simActive = false;
-          instance.renderActive = false;
-          try { console.log('LiquidWGPU Stage 8: flip-live failed — ' + ((e && e.message) || e) + ' — CPU fallback.'); } catch (_) {}
+          try { console.log('LiquidWGPU Stage 8: readback build failed (' + ((e && e.message) || e) + '); CPU fallback.'); } catch (_) {}
         }
-        return true;
+        // v24.112 — the go-live flip is DEFERRED until the Stage 6 self-test's
+        // async continuation has settled. That continuation restores its
+        // captured post-G2P snapshot into the LIVE particle buffers (its
+        // collide-isolation trick); before GPU residency (v14.2) the
+        // per-frame re-upload healed that overwrite immediately, but a
+        // resident sim kept it forever — the boot CPU classifier's frozen
+        // bits rode the restore and left a permanently skipped + invisible
+        // slice of the first pond on every boot. The CPU solver simply
+        // drives a moment longer; the build steps above stay synchronous.
+        var goLive = function () {
+          try {
+            var simOK = !!(instance.buffersReady && instance.gridReady &&
+              instance.p2gReady && instance.grid2Ready && instance.g2pReady &&
+              instance.collideReady);
+            if (simOK && instance.readbackReady) {
+              instance.simActive = true;
+            }
+            // renderActive is GATED on simActive: drawing straight from the
+            // GPU particle buffers only shows live water if the GPU is also
+            // the one advancing it. If the sim stays on the CPU, the render
+            // must too (else draw() would blit a frozen GPU snapshot while
+            // the CPU solver moves the real particles).
+            if (instance.simActive && instance.renderReady) {
+              instance.renderActive = true;
+            }
+            try {
+              console.log('LiquidWGPU Stage 8: GPU path ' +
+                (instance.simActive ? 'LIVE (sim)' : 'sim-disabled') + ' / ' +
+                (instance.renderActive ? 'LIVE (render)' : 'render-disabled') +
+                ' — ' + (instance.simActive ? 'GPU' : 'CPU') + ' solver driving.');
+            } catch (_) {}
+          } catch (e) {
+            instance.simActive = false;
+            instance.renderActive = false;
+            try { console.log('LiquidWGPU Stage 8: flip-live failed — ' + ((e && e.message) || e) + ' — CPU fallback.'); } catch (_) {}
+          }
+          return true;
+        };
+        return Promise.resolve(instance.stage6Done).then(goLive, goLive);
       })
       .catch(function (err) {
         instance.failed = true;
@@ -5387,7 +6782,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       // later sim stages will drive this from the real frame timestep.
       stepDt: (liquid && liquid.stepDt) || (1 / 60),
       // World constants for the Stage-5 G2P world-bounds clamp. Defaults
-      // match the game's grand-motherload.js values; carried into the
+      // match the game's sluice.js values; carried into the
       // Params uniform so the WGSL kernel can clamp the new position.
       worldCols:      (liquid && liquid.world && liquid.world.COLS)       || 160,
       worldTile:      (liquid && liquid.world && liquid.world.TILE)       || 32,
@@ -5447,11 +6842,31 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       g2pReady: false,      // G2P pipeline + bind group built
       collideReady: false,  // collide pipeline + bind group built
       renderReady: false,   // render canvas + pipeline built (Stage 7)
+      surfReady: false,         // v24.113 — surface-render pipelines built (Stage 7b)
+      surfFieldPipeline: null,  // v24.113 — particle -> density-field splat pipeline
+      surfCompositePipeline: null, // v24.113 — field -> canvas threshold composite
+      surfCompositeBGL: null,   // v24.113 — composite bind-group layout
+      surfCompositeBG: null,    // v24.113 — composite bind group (rebuilt with the texture)
+      surfTex: null,            // v24.113 — offscreen rgba16float density field
+      surfTexView: null,        // v24.113 — its view
+      surfTexW: 0, surfTexH: 0, // v24.113 — current field texture size
       uploadedCount: 0,
       lastUploadSeq: -1,     // v14.2 — liquidMutationSeq at the last upload
       residentSeeded: false, // v14.2 — GPU buffers hold a live particle set
       awakeCount: -1,        // v14.4 — awake-particle tally from the last readback (-1 = unknown)
+      fastCount: 0,          // v24.145 — awake particles above LIQUID_FAST_VSQ (state machine signal)
+      sleepingCount: -1,     // v17.89 — settled (on-screen) tally from the last readback
+      frozenCount: -1,       // v17.89 — off-screen tally from the last readback
       readbackTick: 0,       // v14.5 — runFrame counter gating the readback cadence
+      readbackSeq: 0,        // v24.109 — mutation seq at the last readback kick (apply discards on mismatch)
+      stage6Done: null,      // v24.112 — Stage 6 self-test continuation promise; Stage 8 go-live waits on it
+      opsBuf: null,          // v24.109 — mutation-op stream buffer (Stage 8b)
+      opsParamsBuf: null,    // v24.109 — {opsLen, startCount} uniform
+      opsHost: null,         // v24.109 — f32 staging for the op stream
+      opsParamsHost: null,   // v24.109 — u32 staging for the ops uniform
+      opsPipe: null,         // v24.109 — single-thread replay pipeline
+      opsBG: null,           // v24.109 — replay bind group
+      opsReady: false,       // v24.109 — ops-replay path available (else full re-upload)
       batchCBs: null,        // v14.7 — per-frame compute command-buffer batch
       deviceReady: false,   // requestDevice resolved
       available: false,     // WebGPU usable
@@ -5461,7 +6876,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
       readyPromise: null,
       // --- methods ---
       // Stage 8 — the live per-frame GPU sim step. updateLiquids() in
-      // grand-motherload.js delegates here when simActive is true. The
+      // sluice.js delegates here when simActive is true. The
       // whole GPU path is wrapped: any runtime error flips simActive +
       // renderActive false so the CPU solver takes over from the next
       // frame — the fallback must always hold; a GPU fault never bricks
@@ -5528,6 +6943,12 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
             case 'OIL_ALPHA':            LIQUID_OIL_ALPHA = v; break;
             case 'WATER_PARTICLE_SIZE':  LIQUID_WATER_PARTICLE_SIZE = v; break;
             case 'OIL_PARTICLE_SIZE':    LIQUID_OIL_PARTICLE_SIZE = v; break;
+            // v24.113 — surface render (field + threshold compositing).
+            case 'SURFACE_RENDER':       LIQUID_SURFACE_RENDER = v; break;
+            case 'SURFACE_THRESH':       LIQUID_SURFACE_THRESH = v; break;
+            case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
+            case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
+            case 'DBG_PARTICLES':        LIQUID_DBG_PARTICLES = v ? 1 : 0; break;   // v24.160 particle-proof overlay
             default: break;  // unknown name — no-op
           }
         } catch (_) {}
@@ -5545,8 +6966,12 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
           if (!isFinite(v)) return;
           switch (name) {
             // grav / pressure
-            case 'GRAVITY':              LIQUID_GRAVITY = v; break;
-            case 'OIL_GRAVITY':          LIQUID_OIL_GRAVITY = v; break;
+            // v24.169 — also update the LIQUID_MATS row so the change reaches
+            // the GPU: writeSimParams() sources MATS[0].gravity each frame, so
+            // setting only LIQUID_GRAVITY left the kernel on the boot value
+            // (the old "gravity is compile-time baked" gotcha). Now live.
+            case 'GRAVITY':              LIQUID_GRAVITY = v; if (LIQUID_MATS && LIQUID_MATS[0]) LIQUID_MATS[0].gravity = v; break;
+            case 'OIL_GRAVITY':          LIQUID_OIL_GRAVITY = v; if (LIQUID_MATS && LIQUID_MATS[1]) LIQUID_MATS[1].gravity = v; break;
             case 'PRESSURE_STIFF':       LIQUID_PRESSURE_STIFF = v; break;
             case 'OIL_PRESSURE_STIFF':   LIQUID_OIL_PRESSURE_STIFF = v; break;
             // aeration (foam) — water + oil
@@ -5561,6 +6986,27 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
             // damping / motion
             case 'DAMPING':              LIQUID_DAMPING = v; break;
             case 'OIL_DAMPING':          LIQUID_OIL_DAMPING = v; break;
+            case 'GRID_VISC':            LIQUID_GRID_VISC = v; break;
+            case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
+            // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
+            case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;
+            case 'BURST_DAMP':           LIQUID_BURST_DAMP = v; break;
+            case 'BURST_GATE_LO':        LIQUID_BURST_GATE_LO = v; break;
+            case 'BURST_GATE_HI':        LIQUID_BURST_GATE_HI = v; break;
+            // v24.145 — calm ramp (g2pB.w): 0 stimulated .. 1 settled; the
+            // game's liquidStateTick pushes this (fround-quantized) per
+            // frame. GRID_VISC above also receives the calm-BLENDED value
+            // per frame from the same tick (the gm lever's pristine target
+            // lives game-side in 020).
+            case 'CALM':                 LIQUID_CALM = v < 0 ? 0 : (v > 1 ? 1 : v); break;
+            // v24.124 — fixed-quantum substepping toggle (runFrame host
+            // partitioning, not a SimParams lane); reset the bank on flip
+            case 'FIXED_STEP':           LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; break;
+            // v24.120 debug kit — bit 1 no-sleep, bit 2 no-brake (coll.w)
+            case 'DBG_FLAGS':            LIQUID_DBG_FLAGS = v & 3; break;
+            // v24.120 debug kit — CPU-mirror refresh cadence in frames (not
+            // a SimParams lane; the DBG_DRAW overlay samples the mirror)
+            case 'DBG_READBACK_EVERY':   LIQUID_READBACK_EVERY = Math.max(2, Math.min(120, v | 0)); break;
             case 'WATER_MOTION_SCALE':   LIQUID_WATER_MOTION_SCALE = v; break;
             // grid-boundary — wall bounce + floor/wall friction (water + oil)
             case 'WALL_BOUNCE_IN':       LIQUID_WALL_BOUNCE_IN = v; break;

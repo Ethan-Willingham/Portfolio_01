@@ -23,13 +23,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <title>Sluice</title>
-  <meta name="description" content="Sluice is my 2D mining game. This free v15.89 browser build is the last public version; development is now private, coming to Steam Summer 2027.">
+  <meta name="description" content="Sluice is my 2D mining game, free forever and playable right here in your browser. Drill deep, collect ore, upgrade your rig, push your luck.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Preload the HUD mono (Commit Mono) so the canvas readouts are crisp from the first frame. -->
+  <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/commit_mono_bold.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="Sluice">
-  <meta property="og:description" content="Sluice is my 2D mining game. This free v15.89 browser build is the last public version; development is now private, coming to Steam Summer 2027.">
+  <meta property="og:description" content="My 2D mining game, free forever and playable right here in your browser. Drill deep, collect ore, upgrade your rig, push your luck.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/grand-motherload.html">
@@ -43,14 +43,30 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Page-specific overrides for the Grand Motherload game.
+    /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
+
+    /* === Compact header so the game is in the viewport on open ===
+       This page leads with the title + the game, with only a short roadmap note below it,
+       so pull everything above the canvas in tight: less page top padding,
+       a smaller Home-link gap, a smaller title, and no title-to-game or
+       wrapper margin. Page-local overrides (source-ordered after style.css)
+       so other article pages keep their airier spacing. */
+    .site-wrapper { padding-top: 1.25rem; }
+    .post-back   { margin-bottom: 0.75rem; }
+    .post-header { margin-bottom: 0.55rem; }
+    .post-title  { font-size: min(2.4rem, 6.5vw); margin-bottom: 0; }
+    .game-wrapper { margin-top: 0; }
 
     /* === Game canvas === */
     .game-canvas-area {
       position: relative;
       width: 100%;
-      height: 520px;
+      /* Phase F: fill as much of the viewport as possible on every screen. dvh
+         tracks the real (mobile-toolbar-aware) viewport; the calc leaves room for
+         the slim header above so the whole game shows without scrolling. */
+      height: min(84dvh, calc(100dvh - 96px));
+      min-height: 360px;
       background: #1a1008;
       overflow: hidden;
       touch-action: none;
@@ -58,7 +74,7 @@
       -webkit-user-select: none;
       user-select: none;
     }
-    .game-canvas-area canvas { display: block; }
+    .game-canvas-area canvas { display: block; outline: none; }
 
     /* === Loading overlay — plain dark fade === */
     #game-intro {
@@ -70,55 +86,181 @@
       transition: opacity 0.5s ease;
       pointer-events: none;
     }
+
+    /* === Pause overlay (v17.82) — covers the canvas while the loop is
+       halted on focus loss. Frontier-Soviet console look, reusing the
+       site's --d-* tokens. === */
+    #game-pause {
+      position: absolute;
+      inset: 0;
+      z-index: 12;                 /* above #game-intro (10) */
+      display: none;               /* JS toggles .is-visible */
+      align-items: center;
+      justify-content: center;
+      background: rgba(13,10,4,0.72);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      font-family: var(--d-mono);
+    }
+    #game-pause.is-visible { display: flex; }
+    #game-pause .pause-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8em;
+      min-width: 210px;
+      padding: 1.6em 1.8em;
+      background: var(--d-bg-raised);
+      border: 1px solid var(--d-rule-strong);
+      box-shadow: 0 10px 44px rgba(0,0,0,0.55);
+    }
+    #game-pause .pause-title {
+      font-size: 0.8rem;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--d-accent);
+    }
+    #game-pause .pause-sub {
+      margin-top: -0.4em;
+      margin-bottom: 0.4em;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--d-text-dim);
+    }
+    #game-pause button {
+      font-family: var(--d-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.7em 1.2em;
+      background: transparent;
+      border: 1px solid var(--d-rule-strong);
+      color: var(--d-text-bright);
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    }
+    #game-pause button:hover {
+      background: var(--d-accent);
+      border-color: var(--d-accent);
+      color: #0d0a04;
+    }
+    #game-pause button.pause-secondary { color: var(--d-text-dim); }
+    /* Autosave status footer on the pause card (filled by showPauseOverlay). */
+    #game-pause .pause-save {
+      margin-top: 0.2em;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--d-text-dim);
+    }
+    #game-pause .pause-save:empty { display: none; }
+    /* Volume control row on the pause card. Drives the SluiceAudio master. */
+    #game-pause .pause-vol {
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      margin-top: 0.5em;
+      padding-top: 0.9em;
+      border-top: 1px solid var(--d-rule);
+    }
+    #game-pause .pause-vol-label {
+      flex: 0 0 auto;
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--d-text-dim);
+    }
+    #game-pause input[type="range"] {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 2px;
+      accent-color: var(--d-accent);
+      cursor: pointer;
+    }
+    /* Flight-mode toggle row — lets touch players choose the flight style (the
+       F dev hotkey + L panel are keyboard-only). Drives window.gm flight.mode.
+       .pause-opt shares the look (the segmented rows on the OPTIONS pane). */
+    #game-pause .pause-flight,
+    #game-pause .pause-opt {
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      margin-top: 0.5em;
+      padding-top: 0.9em;
+      border-top: 1px solid var(--d-rule);
+    }
+    #game-pause .pause-flight button,
+    #game-pause .pause-opt button {
+      flex: 1 1 0;
+      padding: 0.55em 0.4em;
+      font-size: 0.62rem;
+    }
+    #game-pause .pause-flight button.is-active,
+    #game-pause .pause-opt button.is-active {
+      background: var(--d-accent);
+      border-color: var(--d-accent);
+      color: #0d0a04;
+    }
+    /* OPTIONS pane: a second page inside the same pause card. The card swaps
+       pages via the .show-options class; the controls persist to 'sluice.opt.*'
+       through window.SluiceOptions (js/sluice/052-options.js). */
+    #game-pause .pause-page-main,
+    #game-pause .pause-page-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8em;
+    }
+    #game-pause .pause-page-options { display: none; }
+    #game-pause .pause-card.show-options .pause-page-main { display: none; }
+    #game-pause .pause-card.show-options .pause-page-options { display: flex; }
+
+    /* Manual pause button (v17.83) — small + subtle, under the top-left
+       version + FPS readout. Above the canvas but below #game-pause (12) so
+       the overlay covers it while paused. */
+    #gm-pause-btn {
+      position: absolute;
+      top: 28px;
+      left: 6px;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: rgba(15,11,4,0.5);
+      border: 1px solid var(--d-rule-strong);
+      color: var(--d-text-bright);
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.12s ease, background 0.12s ease,
+                  border-color 0.12s ease, color 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #gm-pause-btn:hover,
+    #gm-pause-btn:focus-visible {
+      opacity: 1;
+      background: var(--d-accent);
+      border-color: var(--d-accent);
+      color: #0d0a04;
+      outline: none;
+    }
+    #gm-pause-btn svg { width: 11px; height: 11px; fill: currentColor; display: block; }
+
     @media (min-width: 720px) {
-      .game-canvas-area { height: 580px; }
+      /* Desktop / wide: fill the viewport under the slim header. */
+      .game-canvas-area { height: min(88dvh, calc(100dvh - 92px)); }
     }
 
     /* On portrait devices the stacked 2-row console + d-pad take up the
-       lower part of the canvas. Give the game far more height there so
+       lower part of the canvas. Give the game nearly the whole viewport so
        the world view — which scales off WIDTH, not height — shows many
        more rows. Fullscreen (body.gm-fs) still overrides this. */
     @media (orientation: portrait) {
-      .game-canvas-area { height: 85vh; height: 85dvh; }
-    }
-
-    /* === In-game notice ticker: a dismissible yellow marquee at the top of
-       the game frame (replaces the old fixed page banner). Sits over the
-       canvas, scrolls, and travels into fullscreen with the wrapper. === */
-    #gmTicker {
-      position: absolute; top: 0; left: 0; right: 0;
-      z-index: 11;                       /* above the #game-intro fade (z-index 10) */
-      height: 26px;
-      display: flex; align-items: center;
-      overflow: hidden;
-      background: rgba(16, 16, 18, 0.82);
-      border-bottom: 1px solid rgba(255, 210, 63, 0.40);
-      pointer-events: none;              /* clicks fall through to the game; the X opts back in */
-    }
-    #gmTicker .gm-ticker-track {
-      display: inline-flex; flex: none; white-space: nowrap;
-      will-change: transform;
-      animation: gmTickerScroll 26s linear infinite;
-    }
-    #gmTicker .gm-ticker-track span {
-      font-family: var(--font-mono, ui-monospace, "JetBrains Mono", monospace);
-      font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
-      color: #ffd23f;                    /* yellow */
-    }
-    @keyframes gmTickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-    #gmTicker .gm-ticker-x {
-      position: absolute; right: 0; top: 0; bottom: 0; width: 34px;
-      border: 0; cursor: pointer;
-      background: linear-gradient(to right, rgba(16,16,18,0), rgba(16,16,18,0.96) 45%);
-      color: #ffd23f; font-size: 18px; line-height: 1;
-      pointer-events: auto;              /* the dismiss button stays clickable */
-    }
-    #gmTicker .gm-ticker-x:hover { color: #fff; }
-    @media (prefers-reduced-motion: reduce) {
-      #gmTicker .gm-ticker-track { animation: none; }
+      .game-canvas-area { height: min(88dvh, calc(100dvh - 72px)); }
     }
 
     /* === Controls strip with key hints === */
@@ -158,6 +300,14 @@
       color: var(--d-rule-strong);
       margin: 0 0.25em;
       user-select: none;
+    }
+
+    /* A quiet aside under the about copy: the audio-lab workbench link.
+       Smaller + dimmer so it reads as a behind-the-scenes note, not a feature. */
+    .game-about-aside {
+      font-size: 0.82rem;
+      color: var(--d-text-dim);
+      margin-top: 1.1rem;
     }
 
     /* === Ore tables: spec-sheet aesthetic === */
@@ -256,7 +406,6 @@
        when iOS PWA standalone behaves oddly with fixed positioning. */
     body.gm-fs .reading-progress,
     body.gm-fs .post-back,
-    body.gm-fs .btt-fab,
     body.gm-fs .post-header,
     body.gm-fs .site-footer,
     body.gm-fs .post-body > *:not(.game-wrapper) { display: none !important; }
@@ -331,7 +480,6 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">Sluice</h1>
-      <p class="post-subtitle">My 2D mining game.</p>
     </header>
 
     <main>
@@ -340,7 +488,7 @@
 
           <div class="game-wrapper">
             <div class="game-header">
-              <span class="demo-label">Grand Motherload</span>
+              <span class="demo-label">Sluice</span>
               <div id="gm-header-right">
                 <button id="gm-fullscreen-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
                   <!-- Expand icon (shown when not fullscreen) -->
@@ -361,28 +509,85 @@
               </div>
             </div>
             <div class="game-canvas-area">
-              <canvas id="game-canvas"></canvas>
+              <canvas id="game-canvas" tabindex="-1"></canvas>
+              <!-- Manual pause button (v17.83) — tucked under the top-left
+                   version + FPS readout. Reliable pause that doesn't depend
+                   on focus/visibility events. -->
+              <button id="gm-pause-btn" type="button" title="Pause" aria-label="Pause game">
+                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="4" y="3" width="3" height="10"></rect>
+                  <rect x="9" y="3" width="3" height="10"></rect>
+                </svg>
+              </button>
               <div id="game-intro"></div>
-              <div id="gmTicker" role="note" aria-label="Sluice status">
-                <div class="gm-ticker-track">
-                  <span>Sluice v15.89 &nbsp;&middot;&nbsp; the last free public build &nbsp;&middot;&nbsp; now in private development &nbsp;&middot;&nbsp; coming to Steam, Summer 2027 &nbsp;&middot;&nbsp;</span>
-                  <span aria-hidden="true">Sluice v15.89 &nbsp;&middot;&nbsp; the last free public build &nbsp;&middot;&nbsp; now in private development &nbsp;&middot;&nbsp; coming to Steam, Summer 2027 &nbsp;&middot;&nbsp;</span>
+              <!-- Pause overlay (v17.82). Shown when the window loses focus;
+                   the JS halts the render loop while it's up so the machine
+                   idles instead of cooking. -->
+              <div id="game-pause" aria-hidden="true">
+                <div class="pause-card" id="gm-pause-card">
+                  <div class="pause-page-main">
+                    <div class="pause-title">Paused</div>
+                    <div class="pause-sub" id="gm-pause-sub">press resume to begin</div>
+                    <button id="gm-resume-btn" type="button">Resume</button>
+                    <!-- "New Game" (was "Restart"): this button is the ONLY
+                         full save wipe (047-save.js), so the label has to say
+                         so. Death and R-bailout merely respawn at town. -->
+                    <button id="gm-restart-btn" class="pause-secondary" type="button">New Game</button>
+                    <button id="gm-options-btn" class="pause-secondary" type="button">Options</button>
+                    <div class="pause-flight">
+                      <span class="pause-vol-label">Flight</span>
+                      <button id="gm-flight-rot" type="button">Rotation</button>
+                      <button id="gm-flight-vtol" type="button">VTOL</button>
+                    </div>
+                    <!-- Autosave status footer. Filled by showPauseOverlay
+                         (020-state.js) from saveStatusLine (047-save.js). -->
+                    <div class="pause-save" id="gm-pause-save"></div>
+                  </div>
+                  <!-- OPTIONS pane. Sliders + segmented rows persist to
+                       'sluice.opt.*' via window.SluiceOptions (052-options.js);
+                       the master slider keeps its original gm-vol wiring. -->
+                  <div class="pause-page-options">
+                    <div class="pause-title">Options</div>
+                    <div class="pause-vol">
+                      <span class="pause-vol-label">Master</span>
+                      <input id="gm-vol" type="range" min="0" max="100" value="0" aria-label="Audio volume">
+                    </div>
+                    <div class="pause-vol">
+                      <span class="pause-vol-label">SFX</span>
+                      <input id="gm-sfxvol" type="range" min="0" max="100" value="100" aria-label="Sound effects volume">
+                    </div>
+                    <div class="pause-opt">
+                      <span class="pause-vol-label">Graphics</span>
+                      <button id="gm-gfx-perf" type="button">Perf</button>
+                      <button id="gm-gfx-bal" type="button">Balanced</button>
+                      <button id="gm-gfx-ext" type="button">Extreme</button>
+                    </div>
+                    <div class="pause-vol">
+                      <span class="pause-vol-label">Shake</span>
+                      <input id="gm-shake" type="range" min="0" max="100" value="100" aria-label="Screen shake intensity">
+                    </div>
+                    <div class="pause-opt">
+                      <span class="pause-vol-label">Dmg flash</span>
+                      <button id="gm-dmgflash-on" type="button">On</button>
+                      <button id="gm-dmgflash-off" type="button">Off</button>
+                    </div>
+                    <div class="pause-opt">
+                      <span class="pause-vol-label">Low flash</span>
+                      <button id="gm-lowflash-off" type="button">Off</button>
+                      <button id="gm-lowflash-on" type="button">On</button>
+                    </div>
+                    <button id="gm-opt-back" class="pause-secondary" type="button">Back</button>
+                  </div>
                 </div>
-                <button type="button" class="gm-ticker-x" aria-label="Dismiss notice" onclick="this.closest('#gmTicker').remove()">&times;</button>
               </div>
             </div>
           </div>
 
-          <p>
-            Drill into the earth, fill your hold with ore, fly up and sell
-            it, buy better gear, go deeper. That is the whole loop.
-          </p>
-
-          <p>
-            Public development is over. Sluice is now in private development,
-            coming to Steam in Summer 2027. This free v15.89 browser build is
-            the last public version, playable above.
-          </p>
+          <div class="game-about" style="margin-top: 1.5rem;">
+            <p><strong>Sluice</strong> is my own 2D mining game, and it is free forever. Drill down through the earth, collect ore, sell it at the surface for fuel and upgrades, and go deeper. There is no win screen, just a deeper hole and a heavier haul.</p>
+            <p>It is still in early development, built almost entirely with LLMs and out in the open. Play it right here in the browser, on a laptop or a phone, or press the expand button for fullscreen. Drill deep, strike ore, and push your luck.</p>
+            <p class="game-about-aside">Curious how it is built? There is a write-up of how this whole site is made on the <a href="about.html">about page</a>.</p>
+          </div>
 
         </div>
       </article>
@@ -390,7 +595,7 @@
 
     <footer class="site-footer">
       <div class="site-footer-inner">
-        <span>&copy; 2026 Ethan Willingham</span>
+        <a href="/">&copy; 2026 Ethan Willingham</a>
       </div>
     </footer>
   </div>
@@ -451,12 +656,35 @@
       }
       function isAnyFs() { return !!fsElement() || cssOnlyFs; }
 
+      // Entering/exiting fullscreen briefly blurs the window. The game's
+      // focus-pause (050-input.js) would otherwise read that blur as the user
+      // alt-tabbing away and pop the pause menu. Stamp a short guard window the
+      // blur handler checks, so a fullscreen transition never auto-pauses. Set
+      // at toggle time (before requestFullscreen, so it precedes the blur) and
+      // refreshed on fullscreenchange (covers Esc-exit and transition completion).
+      function markFsTransition() {
+        try { window.__sluiceFsGuardUntil = performance.now() + 1000; } catch (e) {}
+      }
+
+      // Entering/exiting fullscreen re-parents .game-wrapper, which blurs the
+      // focused element (e.g. this button) and drops the document's keyboard
+      // focus — so the game's window-level key handlers stop firing until the
+      // user clicks the canvas. Re-focus the canvas (focusable via tabindex=-1)
+      // so arrow keys / WASD work immediately without a click. preventScroll so
+      // the page doesn't jump to the canvas.
+      function focusGame() {
+        try { var c = document.getElementById('game-canvas'); if (c) c.focus({ preventScroll: true }); } catch (e) {}
+      }
+
       function applyFsState(on) {
         if (on) moveWrapperToBody(); else restoreWrapperLocation();
         document.body.classList.toggle('gm-fs', on);
         expandIcon.style.display  = on ? 'none' : '';
         compressIcon.style.display = on ? '' : 'none';
-        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 150);
+        focusGame();
+        // Re-assert focus after the layout settles (the re-parent + resize can
+        // bounce focus back to the body otherwise).
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); focusGame(); }, 150);
       }
 
       function enterCssFs() {
@@ -469,6 +697,7 @@
       }
 
       function toggleFullscreen() {
+        markFsTransition();
         if (isAnyFs()) {
           if (fsElement()) {
             (document.exitFullscreen || document.webkitExitFullscreen).call(document);
@@ -502,6 +731,7 @@
       function onFsChange() {
         // Real Fullscreen API state changed. If we're exiting it, clear the
         // CSS fallback flag too so isAnyFs() reflects reality.
+        markFsTransition();
         if (!fsElement()) cssOnlyFs = false;
         applyFsState(!!fsElement());
       }
@@ -515,10 +745,139 @@
       });
     })();
   </script>
-  <script src="js/main.js"></script>
   <script src="js/liquid-wgpu.js"></script>
   <script src="js/smoke-wgpu.js"></script>
-  <script src="js/grand-motherload.js"></script>
-  <script src="js/backtotop.js"></script>
+  <script src="js/jello-wgpu.js"></script>
+  <script src="js/audio.js"></script>
+  <script>
+    // Pause-screen volume slider -> SluiceAudio master, persisted across sessions.
+    (function () {
+      var KEY = 'sluice.volume', slider = document.getElementById('gm-vol');
+      if (!slider) return;
+      function apply(v) { if (typeof SluiceAudio !== 'undefined' && SluiceAudio) SluiceAudio.setVolume(v); }
+      var saved = 0;   // muted by default; a returning player's saved level still wins below
+      try { var s = parseFloat(localStorage.getItem(KEY)); if (!isNaN(s)) saved = s; } catch (e) {}
+      saved = Math.max(0, Math.min(1, saved));
+      slider.value = Math.round(saved * 100);
+      apply(saved);
+      slider.addEventListener('input', function () {
+        var v = Math.max(0, Math.min(1, (parseFloat(slider.value) || 0) / 100));
+        apply(v);
+        try { localStorage.setItem(KEY, String(v)); } catch (e) {}
+      });
+    })();
+
+    // Pause-screen OPTIONS pane. The pane swaps in over the main pause page;
+    // every control persists to 'sluice.opt.*' and applies through
+    // window.SluiceOptions (js/sluice/052-options.js). This inline script runs
+    // BEFORE js/sluice.js, so initial control state is read straight from
+    // localStorage and the handlers fall back to bare persistence in the
+    // (unreachable in practice) window before the game boots; 052 re-applies
+    // every persisted key at boot anyway.
+    (function () {
+      var card = document.getElementById('gm-pause-card');
+      var openBtn = document.getElementById('gm-options-btn');
+      var backBtn = document.getElementById('gm-opt-back');
+      if (!card || !openBtn || !backBtn) return;
+      openBtn.addEventListener('click', function () { card.classList.add('show-options'); });
+      backBtn.addEventListener('click', function () { card.classList.remove('show-options'); });
+      // Snap back to the main page whenever the overlay hides, so the next
+      // pause opens on Resume/Restart, not a stale options page.
+      var pauseEl = document.getElementById('game-pause');
+      if (pauseEl && window.MutationObserver) {
+        new MutationObserver(function () {
+          if (!pauseEl.classList.contains('is-visible')) card.classList.remove('show-options');
+        }).observe(pauseEl, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      var PREFIX = 'sluice.opt.';
+      function read(key) { try { return localStorage.getItem(PREFIX + key); } catch (e) { return null; } }
+      function setOpt(key, val) {
+        if (window.SluiceOptions && window.SluiceOptions.set) { window.SluiceOptions.set(key, val); return; }
+        try { localStorage.setItem(PREFIX + key, String(val)); } catch (e) {}
+      }
+
+      // A 0..100 range input persisted as a 0..1 float.
+      function wireSlider(id, key, fallback) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var saved = parseFloat(read(key));
+        if (isNaN(saved)) saved = fallback;
+        el.value = Math.round(Math.max(0, Math.min(1, saved)) * 100);
+        el.addEventListener('input', function () {
+          setOpt(key, Math.max(0, Math.min(1, (parseFloat(el.value) || 0) / 100)));
+        });
+      }
+
+      // A row of buttons acting as a single-choice select (the flight-toggle
+      // pattern): highlight the active one, persist + apply on click.
+      function wireSeg(key, fallback, pairs) {
+        var btns = [];
+        function sync(val) {
+          for (var i = 0; i < btns.length; i++) btns[i].el.classList.toggle('is-active', btns[i].val === val);
+        }
+        for (var i = 0; i < pairs.length; i++) {
+          var el = document.getElementById(pairs[i][0]);
+          if (!el) continue;
+          (function (b) {
+            btns.push(b);
+            b.el.addEventListener('click', function () { setOpt(key, b.val); sync(b.val); });
+          })({ el: el, val: pairs[i][1] });
+        }
+        var saved = read(key);
+        sync(saved === null ? fallback : saved);
+      }
+
+      wireSlider('gm-sfxvol', 'sfxvol', 1);   // SluiceAudio sfxMaster default = 1
+      wireSlider('gm-shake', 'shake', 1);     // full screenshake by default
+      // 'extreme' mirrors the unconditional boot preset in 380-gm-presets-boot.js.
+      wireSeg('gfx', 'extreme', [
+        ['gm-gfx-perf', 'performance'],
+        ['gm-gfx-bal', 'balanced'],
+        ['gm-gfx-ext', 'extreme']
+      ]);
+      wireSeg('dmgflash', '1', [['gm-dmgflash-on', '1'], ['gm-dmgflash-off', '0']]);
+      wireSeg('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
+    })();
+
+    // Pause-screen flight-mode toggle -> window.gm flight.mode. The F dev hotkey
+    // and L panel are keyboard-only, so this is how TOUCH players pick the flight
+    // style (and the only way to reach the mobile split rotate/thrust controls,
+    // which appear when flying in rotation mode; VTOL mode 2 keeps the plain
+    // d-pad everywhere). The highlight reflects the live flight.mode, which
+    // defaults to Rotation (mode 1).
+    (function () {
+      var bRot = document.getElementById('gm-flight-rot');
+      var bVtol = document.getElementById('gm-flight-vtol');
+      var pauseEl = document.getElementById('game-pause');
+      if (!bRot || !bVtol) return;
+      function getMode() { try { return (window.gm && window.gm.get) ? window.gm.get('flight.mode') : 1; } catch (e) { return 1; } }
+      function syncBtns() {
+        // The toggle offers only Rotation + VTOL now. Legacy "Today" (mode 0,
+        // reachable only via the dev F hotkey) coerces to the Rotation highlight.
+        var m = getMode();
+        bRot.classList.toggle('is-active', m !== 2);
+        bVtol.classList.toggle('is-active', m === 2);
+      }
+      function setMode(n) { try { if (window.gm && window.gm.set) window.gm.set('flight.mode', n); } catch (e) {} syncBtns(); }
+      bRot.addEventListener('click', function () { setMode(1); });
+      bVtol.addEventListener('click', function () { setMode(2); });
+      // Re-sync the highlight each time the pause card opens (the mode may have
+      // changed via the F hotkey / L panel meanwhile).
+      if (pauseEl && window.MutationObserver) {
+        new MutationObserver(syncBtns).observe(pauseEl, { attributes: true, attributeFilter: ['class'] });
+      }
+      syncBtns();
+      // js/sluice.js (which creates window.gm) loads AFTER this inline script, so
+      // the syncBtns() above ran before gm existed and used the default (Rotation /
+      // flight.mode 1). Re-sync once the game has booted so the buttons reflect the
+      // live mode.
+      (function resyncWhenReady(tries) {
+        if (window.gm && window.gm.get) { syncBtns(); return; }
+        if (tries > 0) setTimeout(function () { resyncWhenReady(tries - 1); }, 80);
+      })(60);
+    })();
+  </script>
+  <script src="js/sluice.js"></script>
 </body>
 </html>

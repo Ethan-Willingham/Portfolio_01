@@ -20,11 +20,14 @@ HARD_PHRASES="in today's fast-paced world|in today's world|let's dive in|let us 
 SOFT_WORDS="delve|leverage|robust|seamless|pivotal|foster|underscore|nestled|meticulous|tapestry|testament"
 SOFT_PHRASES="it's not just|it is not just|not only|that being said"
 
-# Skip entirely: the frozen game demo, throwaway *-lab choosers, research scratch.
+# Skip entirely: the Sluice game post, throwaway *-lab choosers, research scratch, and the
+# game's imported technical design docs (docs/game/*, written before the no-dash rule and
+# not site post prose). Owner-authored game docs still avoid em dashes by hand.
 skip_all() {
   case "$1" in
     grand-motherload.html|*-lab.html) return 0 ;;
     research/*|node_modules/*|.git/*) return 0 ;;
+    docs/game/*) return 0 ;;
   esac
   return 1
 }

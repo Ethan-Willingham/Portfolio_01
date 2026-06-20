@@ -4,7 +4,7 @@
  * Companion to liquid-wgpu.js. The game's smoke is a Pavel-Dobryakov-style
  * 2D fluid sim (advection / pressure-projection / vorticity confinement),
  * historically run as WebGL fragment-shader passes (the SmokeFluid module
- * inside grand-motherload.js). Running WebGPU (the liquid sim) and WebGL
+ * inside sluice.js). Running WebGPU (the liquid sim) and WebGL
  * (the smoke sim) in the same frame forces the browser to serialise the
  * two graphics backends — that cross-backend friction is what keeps the
  * frame from pipelining. Porting the smoke to WebGPU makes the whole
@@ -168,7 +168,7 @@
 
   /* ==== WGSL shaders — faithful ports of the WebGL SmokeFluid GLSL =====
    * Each fragment shader is a near line-for-line port of its GLSL twin
-   * in grand-motherload.js (CURL_FS, VORTICITY_FS, ...). Differences:
+   * in sluice.js (CURL_FS, VORTICITY_FS, ...). Differences:
    *   - The GLSL vertex shader (BASE_VS) precomputes the 4 neighbour UVs
    *     (vL/vR/vT/vB) as varyings. WGSL recomputes them in the fragment
    *     shader from vUv +/- texelSize — bit-identical, no extra varyings.
