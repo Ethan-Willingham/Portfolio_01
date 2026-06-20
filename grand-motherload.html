@@ -57,6 +57,8 @@
     /* Home + Labs links share one row at the top. */
     .post-topnav { display: flex; gap: 1.4rem; align-items: baseline; }
     .post-topnav .post-back { margin-bottom: 0.75rem; }
+    /* Labs is a forward link, not a back link, so it skips the back-arrow. */
+    .post-topnav .post-fwd .pb-label::before { content: none; }
     .post-header { margin-bottom: 0.55rem; }
     .post-title  { font-size: min(2.4rem, 6.5vw); margin-bottom: 0; }
     /* The game breaks OUT of the narrow article column so it fills the screen
@@ -78,7 +80,7 @@
       /* Fill as much of the viewport as possible on every screen. dvh tracks the
          real (mobile-toolbar-aware) viewport; the calc leaves room for the slim
          header above so the whole game shows without scrolling. */
-      height: min(90dvh, calc(100dvh - 84px));
+      height: min(93dvh, calc(100dvh - 56px));
       min-height: 380px;
       background: #1a1008;
       overflow: hidden;
@@ -265,7 +267,7 @@
 
     @media (min-width: 720px) {
       /* Desktop / wide: fill the viewport under the slim header. */
-      .game-canvas-area { height: min(92dvh, calc(100dvh - 80px)); }
+      .game-canvas-area { height: min(94dvh, calc(100dvh - 52px)); }
     }
 
     /* On portrait devices the stacked 2-row console + d-pad take up the
@@ -273,7 +275,7 @@
        the world view — which scales off WIDTH, not height — shows many
        more rows. Fullscreen (body.gm-fs) still overrides this. */
     @media (orientation: portrait) {
-      .game-canvas-area { height: min(90dvh, calc(100dvh - 64px)); }
+      .game-canvas-area { height: min(92dvh, calc(100dvh - 48px)); }
     }
 
     /* === Controls strip with key hints === */
@@ -492,12 +494,8 @@
 
     <nav class="post-topnav">
       <a href="/" class="post-back"><span class="pb-label">Home</span></a>
-      <a href="labs.html" class="post-back"><span class="pb-label">Labs</span></a>
+      <a href="labs.html" class="post-back post-fwd"><span class="pb-label">Labs</span></a>
     </nav>
-
-    <header class="post-header fade-in">
-      <h1 class="post-title">Sluice</h1>
-    </header>
 
     <main>
       <article>
