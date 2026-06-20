@@ -157,6 +157,22 @@
   .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
   .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
   .v-mono { font-family: var(--font-mono); }
+  /* "whole plan" card: a compact HTML grid (was an oversized SVG with tiny text) */
+  .plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin: 0.15em 0 0; }
+  .plan-tile { background: var(--panel-2); border: 1px solid var(--rule); border-radius: 10px; padding: 0.8em 0.9em 0.85em; }
+  .plan-tile.is-key { border-color: var(--accent); }
+  .plan-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; line-height: 1.1; color: var(--tile, var(--accent)); margin-bottom: 0.35em; }
+  .plan-n { font-variant-numeric: tabular-nums; opacity: 0.85; }
+  .plan-body { font-family: var(--font-body); font-size: 1rem; line-height: 1.42; color: var(--text-dim); }
+  @media (max-width: 600px) { .plan-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 400px) { .plan-grid { grid-template-columns: 1fr; } }
+  /* molecule render: a soft warm spotlight lifts the dark carbon atoms off the dark panel */
+  figure.viz .mol-stage { margin: 0.5em 0 0.2em; padding: 0.4em 0; border-radius: 10px; background: radial-gradient(ellipse 60% 76% at 50% 47%, rgba(224,210,176,0.12), rgba(224,210,176,0.05) 55%, transparent 74%); }
+  figure.viz img.mol { display: block; width: 100%; max-width: 580px; height: auto; margin: 0 auto; }
+  figure.viz .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-faint); display: block; margin-top: 0.55em; }
+  figure.viz .cred::before { content: '\00B7  '; color: var(--accent); }
+  figure.viz .cred a { color: var(--text-faint); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  figure.viz .cred a:hover { color: var(--accent-hover); }
   /* phone: let wide charts scroll at full size, pin the captions */
   @media (max-width: 720px) {
     figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -345,52 +361,14 @@
     <figure class="viz reveal" aria-label="The entire effective protocol on a single card.">
       <figcaption>The whole plan, on one card</figcaption>
       <p class="viz-sub">If you did only these six things, consistently, for two years, you would build most of the muscle you are ever going to build.</p>
-      <svg viewBox="0 0 700 250" role="img" aria-label="Six labeled tiles: lift 3 to 5 times a week near failure; eat about 0.7 grams of protein per pound; sleep 7 to 9 hours; get a little sun; take 3 to 5 grams of creatine a day; and be patient for years not weeks.">
-        <g font-family="var(--font-body)">
-          <g transform="translate(10,10)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#D4C4A0">1 &#183; Lift</text>
-            <text x="18" y="60" class="v-label" font-size="13">3 to 5 times a week,</text>
-            <text x="18" y="80" class="v-label" font-size="13">hard sets near failure,</text>
-            <text x="18" y="100" class="v-label" font-size="13">10 to 20 per muscle group.</text>
-          </g>
-          <g transform="translate(240,10)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#9ec79a">2 &#183; Eat</text>
-            <text x="18" y="60" class="v-label" font-size="13">~0.7 g protein / lb / day,</text>
-            <text x="18" y="80" class="v-label" font-size="13">from real food,</text>
-            <text x="18" y="100" class="v-label" font-size="13">a small calorie surplus.</text>
-          </g>
-          <g transform="translate(470,10)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#8fb3c7">3 &#183; Sleep</text>
-            <text x="18" y="60" class="v-label" font-size="13">7 to 9 hours.</text>
-            <text x="18" y="80" class="v-label" font-size="13">One bad night cuts</text>
-            <text x="18" y="100" class="v-label" font-size="13">muscle-building ~18%.</text>
-          </g>
-          <g transform="translate(10,130)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#dfc288">4 &#183; Sun</text>
-            <text x="18" y="60" class="v-label" font-size="13">10 to 30 min on skin,</text>
-            <text x="18" y="80" class="v-label" font-size="13">most days, no burning.</text>
-            <text x="18" y="100" class="v-label" font-size="13">Free vitamin D.</text>
-          </g>
-          <g transform="translate(240,130)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#D4C4A0"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#D4C4A0">5 &#183; Creatine</text>
-            <text x="18" y="60" class="v-label" font-size="13">3 to 5 g a day, forever.</text>
-            <text x="18" y="80" class="v-label" font-size="13">The only supplement</text>
-            <text x="18" y="100" class="v-label" font-size="13">that earns its place.</text>
-          </g>
-          <g transform="translate(470,130)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#4A544B"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#b79bc4">6 &#183; Wait</text>
-            <text x="18" y="60" class="v-label" font-size="13">Years, not weeks.</text>
-            <text x="18" y="80" class="v-label" font-size="13">The body keeps no</text>
-            <text x="18" y="100" class="v-label" font-size="13">shortcuts in stock.</text>
-          </g>
-        </g>
-      </svg>
+      <div class="plan-grid">
+        <div class="plan-tile" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">1</span> Lift</div><div class="plan-body">3 to 5 times a week, hard sets near failure, 10 to 20 per muscle group.</div></div>
+        <div class="plan-tile" style="--tile:#9ec79a"><div class="plan-name"><span class="plan-n">2</span> Eat</div><div class="plan-body">~0.7 g protein / lb / day, from real food, a small calorie surplus.</div></div>
+        <div class="plan-tile" style="--tile:#8fb3c7"><div class="plan-name"><span class="plan-n">3</span> Sleep</div><div class="plan-body">7 to 9 hours. One bad night cuts muscle-building ~18%.</div></div>
+        <div class="plan-tile" style="--tile:#dfc288"><div class="plan-name"><span class="plan-n">4</span> Sun</div><div class="plan-body">10 to 30 min on skin, most days, no burning. Free vitamin D.</div></div>
+        <div class="plan-tile is-key" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">5</span> Creatine</div><div class="plan-body">3 to 5 g a day, forever. The only supplement that earns its place.</div></div>
+        <div class="plan-tile" style="--tile:#b79bc4"><div class="plan-name"><span class="plan-n">6</span> Wait</div><div class="plan-body">Years, not weeks. The body keeps no shortcuts in stock.</div></div>
+      </div>
       <p class="viz-note">That is the whole engine. The chapters that follow are just the manual: why each lever works, how hard to pull it, and the exact point where pulling harder stops paying you back.</p>
     </figure>
 
@@ -414,10 +392,6 @@
   <section id="creatine" class="sec" aria-labelledby="creatine-h">
     <style>
       @media all {
-        .cr-p1 { animation: crShuttleA 3.6s var(--ease) infinite; }
-        .cr-p2 { animation: crShuttleB 3.6s var(--ease) infinite; }
-        @keyframes crShuttleA { 0%,12% { transform: translate(0,0); opacity:1; } 44%,100% { transform: translate(214px, 0); opacity:1; } }
-        @keyframes crShuttleB { 0%,12% { transform: translate(0,0); opacity:1; } 44%,100% { transform: translate(-214px, 0); opacity:1; } }
         .cr-glow { animation: crGlow 3.6s ease-in-out infinite; }
         @keyframes crGlow { 0%,30% { opacity:0.25; } 48% { opacity:1; } 70%,100% { opacity:0.25; } }
       }
@@ -429,44 +403,16 @@
 
     <p>Creatine is not exotic. It is a small molecule your liver already makes and your muscles already store, and you eat about a gram of it a day if you eat meat or fish. Supplementing simply tops the tank up past what food can manage, and a fuller tank does measurable work.</p>
 
-    <h3>What it actually does, in one diagram</h3>
+    <h3>What it actually does, up close</h3>
     <p>Your muscles run their hardest, fastest efforts on a tiny, instant battery called the <strong>phosphocreatine system</strong>. When a muscle fires, it spends ATP (the cell's energy coin) and is left holding spent change, ADP. Phosphocreatine immediately hands over a phosphate to turn that ADP back into fresh ATP, in a fraction of a second, faster than any other energy pathway in the body. The more phosphocreatine you have banked, the longer you can keep that instant battery topped up. Supplementing raises the muscle's creatine and phosphocreatine stores by <strong>20 to 40 percent</strong>. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
 
-    <figure class="viz reveal" aria-label="A diagram of the phosphocreatine energy shuttle.">
-      <figcaption>The instant battery</figcaption>
-      <p class="viz-sub">Phosphocreatine donates a phosphate to regenerate ATP almost instantly. A bigger phosphocreatine bank means a couple more good reps before the battery runs flat.</p>
-      <svg viewBox="0 0 700 230" role="img" aria-label="Phosphocreatine plus ADP becomes creatine plus ATP, with a phosphate group shuttling between them and an energy burst released to the muscle.">
-        <!-- left node: phosphocreatine -->
-        <g transform="translate(40,55)">
-          <rect width="170" height="120" rx="12" fill="#232a25" stroke="#8fb3c7"/>
-          <text x="85" y="34" text-anchor="middle" class="v-cap" font-size="14" fill="#8fb3c7">phospho-</text>
-          <text x="85" y="52" text-anchor="middle" class="v-cap" font-size="14" fill="#8fb3c7">creatine</text>
-          <text x="85" y="92" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">the charged store</text>
-          <text x="85" y="108" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">(supplementing fills it)</text>
-        </g>
-        <!-- right node: ATP -->
-        <g transform="translate(490,55)">
-          <rect width="170" height="120" rx="12" fill="#232a25" stroke="#9ec79a"/>
-          <text x="85" y="40" text-anchor="middle" class="v-cap" font-size="15" fill="#9ec79a">ATP</text>
-          <text x="85" y="92" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">fresh energy coin,</text>
-          <text x="85" y="108" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">ready to spend again</text>
-        </g>
-        <!-- arrows -->
-        <path d="M218 95 L482 95" stroke="#4A544B" stroke-width="2" marker-end="url(#crArr)"/>
-        <path d="M482 140 L218 140" stroke="#4A544B" stroke-width="2" marker-end="url(#crArr)"/>
-        <defs><marker id="crArr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#4A544B"/></marker></defs>
-        <text x="350" y="86" text-anchor="middle" class="v-label-b" font-size="11" fill="#D4C4A0">donates a phosphate</text>
-        <text x="350" y="158" text-anchor="middle" class="v-label" font-size="11" fill="#8b8675">spent ADP returns</text>
-        <!-- shuttling phosphate -->
-        <g class="cr-p1" transform="translate(232,95)"><circle r="9" fill="#D4C4A0"/><text y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#232a25" font-family="var(--font-mono)">P</text></g>
-        <g class="cr-p2" transform="translate(458,140)"><circle r="7" fill="#4A544B"/></g>
-        <!-- energy burst -->
-        <g class="cr-glow" transform="translate(575,30)">
-          <path d="M0 0 L-10 16 L-1 16 L-8 32 L12 12 L2 12 L9 0 Z" fill="#dfc288"/>
-        </g>
-        <text x="350" y="214" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">creatine kinase runs this swap in well under a second, the fastest energy system you have</text>
-      </svg>
-      <p class="viz-note">This is also why creatine helps short, powerful efforts (a heavy set, a sprint, a jump) and does almost nothing for a long, steady jog. It is a battery for bursts.</p>
+    <figure class="viz reveal" aria-label="A three-dimensional model of the phosphocreatine molecule.">
+      <figcaption>The instant battery, up close</figcaption>
+      <p class="viz-sub">This is phosphocreatine itself: a creatine molecule carrying a charged phosphate group, the orange cluster at left. It hands that phosphate straight to spent ADP to rebuild ATP, the cell's energy coin, faster than any other system in the body. A fuller bank of it means a couple more good reps before the battery runs flat.</p>
+      <div class="mol-stage">
+        <img class="mol" src="assets/images/big-enough/phosphocreatine.webp" width="1600" height="978" loading="lazy" decoding="async" alt="A three-dimensional ball-and-stick model of phosphocreatine: an orange phosphorus atom ringed by red oxygens at the left (the charged phosphate group), linked through blue nitrogen atoms to a dark carbon backbone that ends in a red carboxyl group at the right.">
+      </div>
+      <p class="viz-note">This is also why creatine helps short, powerful efforts (a heavy set, a sprint, a jump) and does almost nothing for a long, steady jog. It is a battery for bursts. <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Phosphocreatine-zwitterion-3D-balls.png">3-D model by Jynto, Wikimedia Commons (CC0)</a></span></p>
     </figure>
 
     <h3>The muscle effect: real, but be honest about the size</h3>
@@ -593,7 +539,7 @@
         <circle cx="245" cy="86" r="4" fill="#9ec79a"/>
         <circle cx="452" cy="58" r="4" fill="#dfc288"/>
       </svg>
-      <p class="viz-note"><b>The practical band is 10 to 20 hard sets per muscle group per week.</b> The range is wide on purpose: it is one answer to three different questions. How long you have trained (a first-year lifter grows fine on 10; by year three the same muscle wants more), how well you recover (sleep, food, stress, age), and how you count (pressing already pays the triceps, rowing already pays the biceps). If you want one sharp number, take <b>12</b>. Start there, and add a couple of sets to a muscle group only after it stops gaining reps for a few weeks while sleep and food are in order. That walks you to your own number, which is the only sharp one there is.</p>
+      <p class="viz-note"><b>The practical band is 10 to 20 hard sets per muscle group per week.</b> If you want one number to start on, take <b>12</b>.</p>
     </figure>
 
     <h3>Lever two: load (lighter than you think)</h3>
