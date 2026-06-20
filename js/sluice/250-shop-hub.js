@@ -8,13 +8,15 @@
     var areaTop = M.headerBottom + Math.round(10 * us);
     var areaH = M.bottom - areaTop - M.pad;
     var gap = Math.round(14 * us);
-    // Trade Board hidden when ENABLE_TRADE_BOARD is off -> two counters fill the row.
-    var n = ENABLE_TRADE_BOARD ? 3 : 2;
+    // Trade Board hidden, but the cards keep the ORIGINAL 3-slot size so dropping it
+    // never stretches Workshop + Shelf (a stretch spreads their gradients and reads
+    // as a colour shift). Workshop + Shelf stay byte-identical to the original; the
+    // Board slot just goes empty.
     var stations;
     if (M.portrait) {
       // Column: stacked station cards filling the content area.
       var colTop = areaTop;
-      var colH = (areaH - gap * (n - 1)) / n;
+      var colH = (areaH - gap * 2) / 3;
       var colW = M.cw;
       stations = [
         { id: 'workshop', x: M.cx, y: colTop, w: colW, h: colH },
@@ -25,7 +27,7 @@
     }
     // Landscape / desktop: side-by-side cards filling the content area.
     var rowH = areaH;
-    var sw = (M.cw - gap * (n - 1)) / n;
+    var sw = (M.cw - gap * 2) / 3;
     stations = [
       { id: 'workshop', x: M.cx, y: areaTop, w: sw, h: rowH },
       { id: 'shelf',    x: M.cx + (sw + gap), y: areaTop, w: sw, h: rowH }
