@@ -3,6 +3,60 @@
 Started 2026-06-19. Owner is away; running autonomously per the brief. This file
 moves with the game into Portfolio_01 in Phase E.
 
+## FINAL REPORT
+
+All 13 brief items addressed across phases A to I. Everything is committed and pushed;
+the game is LIVE and free at https://ethanwillingham.com/grand-motherload.html (v25.2).
+
+**What shipped:**
+1. **Single-town free-forever game** (v25.2). Central feature-flag block (010-constants.js),
+   SINGLE_TOWN worldgen (015), boots clean (headless: 1 town / 0 zones, 0 errors).
+2. **Balanced** for ~33min speedrun / ~2-3hr normal: town deepened to 800, a 6-layer hazard
+   arc, a 19-ore progression. Modeled in docs/game/BALANCE.md (not yet feel-tested).
+3. **Low-end lakes**: pond geometry shrunk (water sim untouched, full density kept).
+4. **SFX wired** end to end (verify-only; assets/sfx is the only thing empty).
+5. **Consolidated** into this repo at root (js/sluice/, js/sluice.js, build-sluice.sh,
+   wgpu/audio engines, assets/music+sfx+shop, docs/game/). sluice-alpha archived (not deleted).
+6. **grand-motherload.html** rewritten: loads js/sluice.js, free-forever copy, og cards,
+   responsive embed that fills the viewport (verified desktop 1280 + mobile 380, no h-scroll).
+7. **labs.html** chooser of all 16 game labs + a Labs button atop the game.
+8. **SFX send-to-prod** (sfx-publish.html) reusing the post-editor crypto + GitHub API; crypto
+   self-tested PASS, no real commit (needs the owner's password). SFX_INSTRUCTIONS.md written.
+9. **About page**: the game's 253 real commits merged into the river (Sluice is now the top
+   topic, 256); token figures are real ccusage that already include the game; honest, no rewrite.
+10. **Docs + memory** updated to the new direction; docs/game/GAME.md is the quick-start.
+
+**Flag-disabled (intentional, NOT bugs):** the multi-town world, combat + the rig auto-turret,
+No Man's Zone obstacle courses, the cross-town Trade Board, jello/slime soft bodies, underground
+oil + the oil pump, ore refinement. Each is one flag (010-constants.js) and a URL param away
+(`?multitown=1`, `?combat=1`, `?nmz=1`, `?board=1`, `?jello=1`, `?oil=1`, `?refine=1`).
+
+**Balance numbers (model, see BALANCE.md):** 800-deep town; layers topsoil/subsoil/deepcrust/
+permafrost(heat gate)/magma+mantle(shield gate); 19 ores coal $5 to unobtanium $12,000, value
+rising with depth; ~$2.14M minable, ~$40-55k to be bottom-ready; no dead upgrade tiers.
+
+## PLAYTEST CHECKLIST (the feel I could not verify)
+
+Use dev mode (backtick = money 999,999 + free purchases) to move fast.
+- [ ] **Boot + look**: open grand-motherload.html. One town, rig on its deck, terrain + station
+      render, no console errors. Resize the window + load on a phone: the game fills the viewport,
+      nothing clipped, no horizontal scroll.
+- [ ] **The loop feel**: play a real run from $0. Does the early bootstrap (coal/copper) drag?
+      Time a rough speedrun and a casual run against the ~33min / ~2-3hr targets. Re-tune via
+      BALANCE.md Section 9 (the cheapest fix is the early ore values / world depth).
+- [ ] **The gates**: confirm the permafrost wall needs Heated Drill ($900) and that magma/mantle
+      are tense-but-survivable with Heat Shield (not instant death). Fly to the bottom (~800m),
+      confirm the 6 layers read distinctly and the deep gems feel weighty + rare.
+- [ ] **Flight**: pause toggle shows only Rotation + VTOL; both feel right; mobile split controls
+      work in Rotation.
+- [ ] **Shop**: exactly two counters (Workshop + Supply Shelf), no Trade Board.
+- [ ] **Audio**: drop a real key.m4a (or key_N.m4a) into assets/sfx, confirm it fires in-game.
+      Then run the publish flow: sfx-test.html to audition, sfx-publish.html to send to prod
+      (needs your password). See SFX_INSTRUCTIONS.md.
+- [ ] **About page**: open about.html, click "Sluice" in the legend, confirm the game's commit
+      arc looks right in the river.
+- [ ] **Labs button** (top of the game) reaches labs.html and every lab opens.
+
 ## Decisions
 - (A) Version jumped v24.191 -> v25.0 to mark the free-forever / single-town relaunch.
 - (A) SAVE_VERSION bumped 1 -> 2: old multi-town saves (grid serialized at 3188 wide) are
@@ -47,6 +101,13 @@ moves with the game into Portfolio_01 in Phase E.
   crypto path is self-tested (no real commit was made, by design). To use it, make a sound, name it
   per SFX_INSTRUCTIONS.md, audition on sfx-test.html, then open sfx-publish.html, unlock with the
   editor password, drop the file(s), and Send to prod. Needs your password (decrypts blog-edit-auth.json).
+- (E, optional) GitHub repo archive: sluice-alpha got a final pointer commit + the tag
+  sluice-public-handoff-v25.2 (it is NOT deleted). If you also want GitHub to mark it read-only,
+  flip "Archive this repository" in its Settings (reversible). I left this to you since it is your
+  account's call, not strictly required by the brief.
+- (B, optional) The about-page river has the 253 post-split game commits. If you want the FULL game
+  history shown (773 more pre-split commits), they are in ~/portfolio-01-full-history.bundle; say the
+  word and a follow-up can extract + merge them too. Sluice is already the top topic without them.
 
 ## Done-log
 - (init) Read sluice-alpha AGENTS.md, README, build-sluice.sh, 000-head.js. Mapped 68 fragments,
@@ -102,3 +163,9 @@ moves with the game into Portfolio_01 in Phase E.
   baked 1.54B exactly); the 18.1B/$17k headline is a real multi-machine blend that ALREADY includes
   the game dev (it was all built with Claude), so the stat label now credits "the site and the game"
   (no fabrication). Verified: about.html river renders, Sluice top of legend (256), 0 console errors.
+- (I) PHASE I DONE: docs/game/GAME.md is the future-session quick-start (ACTIVE vs DISABLED systems
+  map, the fragments that matter, curated gm levers + dev hotkeys, build + verify recipe). Pruned the
+  project memory: deleted 3 now-WRONG game-workflow entries (parallel-workdir / steam-rename / alpha-
+  split, all superseded by the new project_sluice_consolidated entry), fixed the webgpu + site-deploy
+  entries, shortened over-long index hooks; MEMORY.md back UNDER its size limit. This final report +
+  the playtest checklist above are the wrap.

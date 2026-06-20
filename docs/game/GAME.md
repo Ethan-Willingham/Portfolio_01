@@ -93,6 +93,18 @@ Seam endgame chamber, the Mineral Ledger.
 
 ---
 
+## Live tuning + dev hotkeys
+
+Press backtick to toggle **dev mode** (money 999,999, free purchases, the perf overlay).
+Then the useful keys: **L** opens the `window.gm` slider panel (every tunable, grouped);
+**X** cycles the water debug kit; **N** cycles weather moods; **G** the GPU probe; **H** the
+perf-ISO A/B; **Z** zoom; **R** restart. From the console, `gm.get('group.lever')` /
+`gm.set('group.lever', v)` change anything live; the groups you will reach for most are
+`water.*` (the liquid sim, see TUNING.md §2), `light.*` (fog of war), `weather.*`, `flight.*`
+(mode + feel), `trees.*`, `haze.*`. Boot levers: `?nosave=1` (fresh world, no save), `?dev=1`,
+the feature-flag overrides above (`?multitown=1` etc.), and the water harness
+`?pondtest=1..4` + `?wdbg=NAME:V,...`.
+
 ## Audio (drop-in)
 
 `js/audio.js` is wired end to end. Music lives in `assets/music/*.m4a` (DIR + manifest in
