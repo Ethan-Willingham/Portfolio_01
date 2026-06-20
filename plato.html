@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plato's Cave and the Death of Socrates</title>
+  <meta name="description" content="A guided walk through the trial and death of Socrates and the allegory of the cave, in G.M.A. Grube's translation, with the most famous lines stacked across translators. The case that the unexamined life is not worth living, and what it cost the man who said it.">
+  <meta property="og:title" content="Plato's Cave and the Death of Socrates">
+  <meta property="og:description" content="Socrates wrote nothing and was executed for asking too many questions. His student Plato turned the trial into the founding story of the examined life, and the cave into its one unforgettable picture. A plain-language walk through both.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/plato.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/plato-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/plato-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     PLATO'S CAVE AND THE DEATH OF SOCRATES
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: eight stops through the trial and death of Socrates
+     and the allegory of the cave, featured in G.M.A. Grube's
+     translation, each unpacked in plain language, with
+     collapsible side panels that stack the other translators on
+     the few most famous lines. Sits in the site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono).
+     A Greek fallback face is wired for the rare Greek word.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --gr-font: "GFS Didot","Times New Roman",Georgia,serif;
+    --early:  #cf9f78;                 /* Jowett, the Victorian standard */
+    --mid:    #bc9d65;                 /* Fowler / Shorey, the Loeb */
+    --modern: #9ec79a;                 /* Grube, Reeve, Bloom, Tredennick */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8.5vw, 5rem); line-height: 1.03; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .gr { font-family: var(--gr-font); font-style: normal; }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.7rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION / TERM SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-early  { border-left-color: var(--early); }
+  .stack-mid    { border-left-color: var(--mid); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(158,199,154,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--modern); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Plato's cave and the death of Socrates</h1>
+    <p class="hero-dek">Socrates wrote nothing, asked everyone uncomfortable questions, and was executed for it. His student Plato turned the trial into the founding story of the examined life, and the cave into its one unforgettable picture. Here is the whole of it, walked in one reading.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> through the trial, the death, and the cave <span class="sep">/</span> featured: <b>Grube</b> <span class="sep">/</span> ~25 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Picture a dark movie theater. You have been in this seat your whole life, watching shapes cross the screen, with no memory of anything else, so you take the shapes for the world. That, Plato says, is where nearly all of us live.</p>
+
+      <p>He thought the ordinary world, the one you can see and touch, is the screen, and that the work of a human life is to get up, walk out of the theater, and stand blinking in the daylight, which turns out to be real in a way the screen never was. He put the idea in the mouth of his teacher, Socrates, a stonemason's son who spent his days in the Athenian marketplace asking people to explain what they meant by the words they used, words like justice, courage, good. In 399 BC the city tried Socrates, convicted him, and made him drink poison. This is a walk through that story, the trial, the month in prison, the refusal to escape, the cup of hemlock, and through the single image Plato built around it.</p>
+
+      <p>There is a catch, and it is a strange one. Socrates wrote nothing. Not one line. Everything we know about him comes secondhand, and most of it from Plato, who was about twenty-eight when his teacher was killed and who spent the rest of his life writing dialogues with Socrates as the lead character. So the most influential philosopher who ever lived reaches us only as a character on a page, written by his most gifted student. A question runs underneath everything below: how much of this is the real man, and how much is Plato? The honest answer is that nobody is sure, and the last stop comes back to it.</p>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/images/plato-david-death-of-socrates.jpg" width="1400" height="920" loading="lazy" decoding="async" alt="Jacques-Louis David's 1787 painting The Death of Socrates: Socrates sits upright on a prison bed, one hand reaching for the cup of poison, the other raised with a finger pointing up as he keeps teaching, while grieving disciples surround him and a figure sits slumped at the foot of the bed.">
+        <figcaption class="u-figure-cap">Jacques-Louis David, <em>The Death of Socrates</em> (1787). Socrates reaches for the poison with one hand and keeps making his point with the other. The slumped figure at the foot of the bed is Plato, who was a boy at the time and, by his own account, not actually present. The whole scene is his.</figcaption>
+      </figure>
+
+      <p>The featured translation throughout is <strong>G.M.A. Grube's</strong>, the version most American students meet (his <em>Five Dialogues</em> for the trial, and for the Republic his text as revised by C.D.C. Reeve). Each stop gives you the words first, then unpacks them. On the few most famous lines, where the translators split, you can open a panel and see the spread.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole thing on one page</p>
+        <p class="u-callout-body">The diagnosis: we mistake the shadows for the real and spend our lives chasing them, never turning around to check. The cure: examine everything, especially yourself, turn toward what is actually real, and then live by what you find, even when it costs you. The trouble is that the people still facing the wall do not want to be turned around, and they will fight the person who tries. Eight stops, from the question that started it to the death that sealed it.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">A man who only asked questions</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-questions" data-label="A man who only asked questions" data-tag="Apology">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The method</p>
+      <h2 class="station-h">A man who only asked questions</h2>
+
+      <div class="passage">
+        <p class="passage-k">Grube / Apology 21d</p>
+        <div class="passage-t">
+          <p>"I am wiser than this man; it is likely that neither of us knows anything worthwhile, but he thinks he knows something when he does not, whereas when I do not know, neither do I think I know; so I am likely to be wiser than he to this small extent, that I do not think I know what I do not know."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Socrates never lectured. He asked questions. He would find someone confident, a politician sure he understood justice, a poet sure he understood beauty, and ask him to say what the word actually meant. Then he would ask follow-ups, and more follow-ups, until the definition came apart in the man's hands and he could not say the thing he was certain he knew. The technique has a name now, the <em>elenchus</em>, Greek for cross-examination, and it usually ended in what the Greeks called <em>aporia</em>: a dead stop, where the answer you trusted is gone and you have nothing to put in its place.</p>
+        <p>The odd part is why he said he did it. A friend had gone to the oracle at Delphi and asked whether anyone was wiser than Socrates, and the priestess answered no, no one. This baffled him, because he was sure he had no wisdom at all. So he went hunting for a counterexample, one genuinely wise man he could point to and tell the god it had got this wrong. He never found one. He kept finding people who thought they knew and did not. In the end he decided the god meant something narrow and deflating: he was the wisest person around only in that he alone knew how little he knew.</p>
+        <p>That is where the famous line "I know that I know nothing" comes from, except he never quite says it. What he says is more careful, and you can read it above: he does not think he knows what he does not know. That sliver of honesty is the whole of his wisdom, and it is the engine of the method. You cannot start examining a life until you admit you might be wrong about it.</p>
+        <p>It also explains how he ended up on trial. Put yourself on the receiving end. A man stops you in public, in front of your sons and your rivals, and walks you, politely, into admitting you do not understand the thing your whole reputation rests on. Do that to enough important people and they do not call you wise. They call you a menace.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The line he never quite said</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">"I know that I know nothing" fits on a mug, and Socrates is its supposed author, but it is a tidy-up of something he put more carefully. Here is the slogan, then what the text actually gives you.</p>
+
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">The popular version</span><span class="stack-vy">a paraphrase</span></div>
+            <div class="stack-vt">"I know that I know nothing."</div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Grube <span class="star">featured</span></span><span class="stack-vy">Hackett, 1981</span></div>
+            <div class="stack-vt">"...I am likely to be wiser than he to this small extent, that I do not think I know what I do not know."</div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Jowett</span><span class="stack-vy">1871</span></div>
+            <div class="stack-vt">"I neither know nor think that I know."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">The gap matters. "I know nothing" is a claim about the world, and it eats itself, because then you do not know that either. What Socrates claims is smaller and survives: he does not mistake his ignorance for knowledge. It is a claim about being honest, not about being empty.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-trial" data-label="On trial for his life" data-tag="Apology">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> The charges</p>
+      <h2 class="station-h">On trial for his life</h2>
+
+      <div class="passage">
+        <p class="passage-k">Grube / Apology 30e, on what he is to the city</p>
+        <div class="passage-t">
+          <p>"I was attached to this city by the god ... as upon a great and noble horse which was somewhat sluggish because of its size and needed to be stirred up by a kind of gadfly."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>In 399 BC, three citizens charged Socrates with two crimes: not believing in the gods the city believed in, and corrupting the young. The punishment they asked for was death.</p>
+        <p>A jury of 501 Athenian men heard the case. There were no judges as we know them and no lawyers; Socrates spoke for himself, and Plato's record of that speech is the <em>Apology</em>, from <em>apologia</em>, which means defense, not apology. He does not act sorry. He tells the jury he is the best thing that ever happened to them, a gadfly sent by the god to sting a big, sleepy horse of a city awake, and that a gadfly is irritating precisely because it is doing its job.</p>
+        <p>Under the religion charge sat a political grudge that nobody was allowed to say out loud. Athens had just lost a long war and then suffered a savage coup by a junta called the Thirty Tyrants, and two of the most hated men of that period, Critias and Alcibiades, had been in Socrates' circle for years. An amnesty after the coup had made it illegal to prosecute people for their old politics, so the case came dressed as impiety instead. The jury would have heard the real charge underneath anyway: that this man's questions had helped produce a generation of clever, contemptuous young men who tried to burn the city down.</p>
+        <p>They found him guilty, 280 to 221. A swing of thirty votes and he walks free.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-examined" data-label="The unexamined life" data-tag="Apology 38a">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> The keystone</p>
+      <h2 class="station-h">"The unexamined life is not worth living"</h2>
+
+      <div class="passage">
+        <p class="passage-k">Grube / Apology 38a</p>
+        <div class="passage-t">
+          <p>"...the greatest good for a man [is] to discuss virtue every day and those other things about which you hear me conversing and testing myself and others, for the unexamined life is not worth living for men..."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>An Athenian trial had a second act. Once a man was convicted, the jury picked between two punishments, the one the prosecution proposed and the one the defendant proposed for himself. The prosecution said death. All Socrates had to do was counter with exile, or a fine, something a jury could choose instead, and he would almost certainly have lived.</p>
+        <p>Instead he suggested, half seriously, that the city should give him free meals for life, the honor it handed Olympic champions. Then he turned serious and explained why he could not just promise to keep quiet and go home. To stop questioning, to stop examining himself and everyone around him, would be to give up the one thing that made a human life worth living in the first place.</p>
+        <p>That is the sentence the whole post stands on, and it is worth being clear about what it claims. Not that the examined life is richer, or wiser. That the unexamined one is not worth living, full stop. A life spent watching the shadows, never once turning to ask whether they are real, barely counts as a life at all.</p>
+        <p>The jury was not charmed. They voted again, this time for death, and by a wider margin than the one that had convicted him. Some of the men who had wanted to let him off were angry enough at the free-meals stunt to now want him gone. He had made his point, and it had cost him everything, which was more or less the point.</p>
+      </div>
+
+      <details class="stack">
+        <summary>One line, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The most quoted sentence in the <em>Apology</em>, and the translators barely fight over it; the Greek is plain. The interest is in the rhythm each one finds.</p>
+
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Grube <span class="star">featured</span></span><span class="stack-vy">Hackett, 1981</span></div>
+            <div class="stack-vt">"...the unexamined life is not worth living for men."</div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Jowett</span><span class="stack-vy">1871</span></div>
+            <div class="stack-vt">"...the life which is unexamined is not worth living."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Tredennick</span><span class="stack-vy">Penguin, 1954</span></div>
+            <div class="stack-vt">"...life without this sort of examination is not worth living."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">"This sort of examination" is Tredennick keeping the context the others drop: not vague self-reflection, but the specific, public, pestering cross-examination that just got Socrates sentenced to death. He is not recommending journaling. He means the thing that killed him.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-crito" data-label="Why he would not run" data-tag="Crito">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> The escape he refused</p>
+      <h2 class="station-h">Why he would not run</h2>
+
+      <div class="passage">
+        <p class="passage-k">Grube / Crito 49c</p>
+        <div class="passage-t">
+          <p>"One should never do wrong in return, nor mistreat any man, no matter how one has been mistreated by him."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Executions in Athens were usually quick, but Socrates got about a month in prison first. A state ship had sailed on an annual religious errand to the island of Delos, and by custom no one could be put to death until it came home. So his friends had time, and they used it to plan a jailbreak.</p>
+        <p>His oldest friend Crito came before dawn with the whole thing arranged: guards bribed, a refuge waiting, money in hand. Escaping was easy. Socrates said no, and the dialogue named after Crito is the argument for why. It rests on a principle he would not bend: you must never do wrong, not even to someone who has wronged you, not even when paying them back is the easy and natural thing. Breaking out would mean wronging the city and its laws, which had given him his entire life, only because the city had now wronged him. Two wrongs were still two wrongs.</p>
+        <p>He imagines the Laws of Athens themselves walking into the cell to talk him out of it. They argue that he had seventy years to leave if he disliked their terms, and that by staying, marrying, raising children, and taking everything the city offered, he had made a kind of agreement to live under its judgments, including the ones that went against him. By the end, he tells Crito, their voices are humming in his ears "like the sound of the flute in the ears of the mystic," so loud he cannot hear anything else.</p>
+        <p>You can argue with the logic, and people have for twenty-four centuries. But notice what it costs him to mean it. The examined life is more than a way of winning arguments in the marketplace. It is a set of conclusions you then have to live by, even on the morning they come to kill you.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-death" data-label="The calm death" data-tag="Phaedo">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> The last afternoon</p>
+      <h2 class="station-h">The calm death</h2>
+
+      <div class="passage">
+        <p class="passage-k">Grube / Phaedo 118a, his last words</p>
+        <div class="passage-t">
+          <p>"Crito, we owe a cock to Asclepius; make this offering to him and do not forget."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>When the ship returned, they brought the poison, a cup of crushed hemlock. The <em>Phaedo</em> is Plato's account of the last afternoon, and Socrates is calm the entire time. He spends the day arguing, cheerfully, that the soul is immortal and that a philosopher's whole life is really a long rehearsal for death, so the event itself should hold no terror. Then he shows he means it.</p>
+        <p>He had sent the women of his household away, he says, because "a man should die in peace. Be quiet, then, and have patience." When the jailer brings the cup, apologizing as he does it, Socrates takes it "quite readily and cheerfully," without trembling or changing color, asks whether he may pour a little out as an offering, and drinks. His friends break down. He is the one who tells them to pull themselves together.</p>
+        <p>Then he walks until his legs grow heavy, lies down, and the cold creeps up from his feet. The man who gave him the poison pinches his foot and asks if he can feel it. He cannot. When the cold reaches his heart, that will be the end. His last words are a small domestic instruction, the line above, and they have puzzled readers for two thousand years.</p>
+        <p>A cock was the thank-offering you made to Asclepius, the god of healing, after you recovered from an illness. So the most common reading is also the most unsettling: Socrates is saying that life was the sickness and death is the cure. Whether Plato meant it that darkly, no one can prove. What is clear is that he gives the death the shape of an argument. Here is a man who examined his life so thoroughly that he could meet its end without a flinch, and Plato, who notes that he was too ill to be there himself, lets Phaedo close the account by calling Socrates "of all those we have known the best, and also the wisest and the most upright." The calm is not a detail. It is the conclusion.</p>
+      </div>
+
+      <details class="stack">
+        <summary>His last words, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">Eight Greek words, and almost every translator agrees on the cock and the god. They split on the final instruction, which is oddly the human part: how hard does a dying man press the errand on his friend?</p>
+
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Grube <span class="star">featured</span></span><span class="stack-vy">Hackett, 1981</span></div>
+            <div class="stack-vt">"Crito, we owe a cock to Asclepius; make this offering to him and do not forget."</div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Jowett</span><span class="stack-vy">1871</span></div>
+            <div class="stack-vt">"Crito, I owe a cock to Asclepius; will you remember to pay the debt?"</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Tredennick</span><span class="stack-vy">Penguin, 1954</span></div>
+            <div class="stack-vt">"Crito, we ought to offer a cock to Asclepius. See to it, and don't forget."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Jowett turns it into a gentle question, almost a joke between friends. Grube and Tredennick make it a command. The difference is small and it changes the man: a teasing Socrates, or one giving a last clear order on his way out the door.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-cave" data-label="The cave" data-tag="Republic 7">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> The picture of all of it</p>
+      <h2 class="station-h">The cave</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Republic, Book 7, 514a</p>
+        <div class="passage-t">
+          <p>"Human beings living in an underground den ... here they have been from their childhood, and have their legs and necks chained so that they cannot move, and can only see before them, being prevented by the chains from turning round their heads. Above and behind them a fire is blazing at a distance, and between the fire and the prisoners there is a raised way; and you will see, if you look, a low wall built along the way, like the screen which marionette players have in front of them, over which they show the puppets."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Everything so far, the questioning, the trial, the refusal to run, the steady death, comes from the early dialogues, the ones scholars think stay closest to the real Socrates. The cave is different. It is from the <em>Republic</em>, a long middle-period book in which Socrates has plainly become the voice of Plato's own ideas. It is also the most famous picture in philosophy, so read the passage above slowly. It is doing a lot.</p>
+        <p>People are chained in an underground cave, facing a blank wall, and they have been there since birth. Behind them a fire burns, and between the fire and their backs, others carry objects along a low wall, so the shadows of those objects fall on the wall the prisoners face. The prisoners have never seen anything else. To them the shadows are not shadows of anything. They are simply the world, and the echoes off the stone are the things' own voices. They get good at the shadows. They hand out little honors to whoever can name them fastest.</p>
+        <p>Now free one prisoner. Make him stand, turn around, and walk toward the fire. Plato is honest about how this feels: it hurts. The light is blinding, the movement aches, and at first he sees the real objects worse than he saw their tidy shadows, so he wants to turn back to the wall where everything was easy. Drag him all the way up and out of the cave, into the sun, and it is worse before it is better. But his eyes adjust. He sees real things, then the sky, then at last the sun itself, and understands that the sun is the source of all of it, the thing that makes everything else visible and alive.</p>
+        <p>Then comes the part that should give you a chill. The freed man goes back down to tell the others. But his eyes are used to the sun now, and in the dark he can no longer make out the shadows everyone else is expert in, so he looks like the journey ruined him. He fumbles. They laugh. And, Plato writes, if the prisoners could get their hands on whoever was trying to drag them up and out, "they would put him to death."</p>
+        <p>He wrote that, about a man who frees people who kill him for it, a few years after his own teacher was executed by the city he had tried to wake. The cave is more than a theory of knowledge. It is a quiet, furious account of why Socrates had to die. The theater does not thank you for opening the door, and your feed does not want to be called a feed.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The most translated paragraph in philosophy, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The opening of the cave, where the translators set the stage. Watch the one word each picks for the screen the shadows come from: a <em>marionette</em> show, or modern <em>puppeteers</em>.</p>
+
+          <div class="stack-v stack-early stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jowett <span class="star">featured</span></span><span class="stack-vy">1871</span></div>
+            <div class="stack-vt">"...a low wall built along the way, like the screen which marionette players have in front of them, over which they show the puppets."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Grube / Reeve</span><span class="stack-vy">Hackett, 1992</span></div>
+            <div class="stack-vt">"...with their necks and legs fettered, able to see only in front of them ... a low wall has been built, like the screen in front of puppeteers above which they show their puppets."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Bloom</span><span class="stack-vy">Basic Books, 1968</span></div>
+            <div class="stack-vt">"...in an underground cavelike dwelling with its entrance, a long one, open to the light across the whole width of the cave ... their light is from a fire burning far above and behind them."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Jowett's "marionette players" is Victorian and a little quaint, but it gets the key fact the others can blur: the shadows are a deliberate show, staged by people the prisoners cannot see. Somebody is working the puppets. Plato never says who.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-forms" data-label="What is actually real" data-tag="The Forms">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The daylight outside</p>
+      <h2 class="station-h">What is actually real</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Republic, Book 7, 517b, Socrates explaining his own image</p>
+        <div class="passage-t">
+          <p>"...the prison-house is the world of sight, the light of the fire is the sun ... in the world of knowledge the idea of good appears last of all, and is seen only with an effort."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>So what is the daylight outside the cave? This is Plato's biggest and strangest idea, the theory of Forms, and it is easier than its reputation.</p>
+        <p>Think about a circle. Every circle you have ever seen, drawn, printed, traced, is slightly off, a little dented, never quite perfect. Yet you know exactly what a perfect circle is, and you can tell that none of the real ones match it. So where did the perfect one come from? You never saw it. Plato's answer is that there is a perfect Circle, not on any page but real in its own way, outside space and time, and the dented physical ones are imperfect copies of it. He thought the same held for everything that matters. There is Beauty itself, and Justice itself, and Goodness itself, perfect and unchanging, and the beautiful and just and good things down here are flickering copies. Shadows on a wall.</p>
+        <p>The physical world, on this view, is the cave. The Forms are the daylight. And the sun, the thing that makes every other Form knowable, is the Form of the Good, which Plato says is the last thing you see and the hardest, "seen only with an effort." To examine your life, in the end, is to turn away from the copies and toward the originals.</p>
+        <p>It is a beautiful system, and it may be entirely wrong; philosophers have been poking holes in it for two thousand years, starting with Plato's own student Aristotle. But one honest point belongs here. This grand machinery is almost certainly Plato's, not Socrates'. The man in the marketplace claimed to know nothing and only asked questions. The man who has seen the eternal Forms and can describe their hierarchy is a different character, and the seam between them runs right about here.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-man" data-label="The half-invented man" data-tag="Socrates &amp; Plato">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> Where the man ends</p>
+      <h2 class="station-h">The half-invented man</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Apology 42a, Socrates' last words to the jury</p>
+        <div class="passage-t">
+          <p>"...I to die, and you to live. Which is better God only knows."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Which brings us back to the catch. We have been calling all of this "Socrates," but we have really been reading Plato, and the two come apart the moment you look hard.</p>
+        <p>There are other witnesses, and they do not match. Another student, Xenophon, wrote his own Socrates, who is wholesome, practical, and a little dull. A comic playwright, Aristophanes, put Socrates on stage while the man was still alive and made him a babbling fraud running a school for cheats. Plato gives us the luminous one, the gadfly and the martyr. The usual scholarly guess is that the early dialogues, the trial and the prison, stay close to the real man and his method, while the soaring material, the Forms, the immortal soul, the cave, is Plato using his dead teacher as a voice. Where exactly the man ends and the character begins, no one can say for sure.</p>
+        <p>It is a little dizzying: the founding figure of Western philosophy, and we cannot fully pull him loose from his biographer. But maybe that fits a man who wrote nothing and insisted he knew nothing. What survives is not a doctrine with his signature on it. It is a stance, recorded by someone who loved him, that you should question everything, especially yourself, and follow the answers even when they lead somewhere frightening.</p>
+        <p>The line above is what he actually told the jury that condemned him, before any of the rest of it happened. He could not say which of them had the better deal, the ones who got to live or the one about to die. He only claimed to know that the examined life was the one worth having, and he had examined his right up to the edge.</p>
+      </div>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every quotation is verbatim. The featured translation through the trial dialogues is <strong>G.M.A. Grube's</strong> (<em>Plato: Five Dialogues</em>, Hackett, revised by John Cooper), the version most American students read. For the <em>Republic</em>, the modern reference is Grube's translation as revised by C.D.C. Reeve (Hackett). The side panels stack the other major translators on the handful of lines where they most famously diverge, and every translator is named.</p>
+      <ul class="src-list">
+        <li><b>The featured walk</b> is Grube (Apology, Crito, Phaedo) and Grube/Reeve (the cave, from <em>Republic</em> Book 7).</li>
+        <li><b>The cave's opening</b> is shown in <b>Jowett</b> (1871, public domain), the most familiar English version of the most translated paragraph in philosophy, with the modern <b>Grube/Reeve</b> and <b>Allan Bloom</b> (Basic Books, 1968) renderings stacked beside it.</li>
+        <li><b>The comparison panels</b> also use <b>Benjamin Jowett</b> (public domain) and <b>Hugh Tredennick</b> (Penguin's <em>The Last Days of Socrates</em>, 1954).</li>
+        <li><b>On the history</b>, the background draws on the <a href="https://plato.stanford.edu/entries/socrates/">Stanford Encyclopedia of Philosophy</a> entries on Socrates and Plato, the <a href="https://iep.utm.edu/socrates/">Internet Encyclopedia of Philosophy</a>, and Debra Nails's work on the people and dates of the trial.</li>
+      </ul>
+      <p>Three honest notes. The <strong>theory of Forms</strong> in stops 6 and 7 is Plato's own, and most scholars do not credit it to the historical Socrates; the man of the early dialogues disavows that kind of knowledge. <strong>"I know that I know nothing"</strong> is a later compression of a more guarded claim (stop 1). And the serene <strong>death scene</strong> is a literary and philosophical composition by Plato, who tells us he was not present, so we cannot treat its details as a transcript. Where the man ends and the character begins is the post's open question, not a settled fact.</p>
+      <p>The breakdowns are mine. The modern translations are still in copyright; they appear here in short excerpts, for comparison and study, with every translator named.</p>
+      <p class="colo-note">The painting in the opening and on the homepage card is Jacques-Louis David's <em>The Death of Socrates</em> (1787), oil on canvas, in the collection of the Metropolitan Museum of Art (Catharine Lorillard Wolfe Collection, 31.45), released as Open Access and in the public domain. David painted it during the run-up to the French Revolution, when dying nobly for your principles was very much on people's minds.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/plato.js" defer></script>
+</body>
+</html>
