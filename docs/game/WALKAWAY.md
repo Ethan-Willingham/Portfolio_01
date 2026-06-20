@@ -93,3 +93,12 @@ moves with the game into Portfolio_01 in Phase E.
   assets/sfx/). Crypto self-tested PASS in Node AND in-page (encrypt/decrypt roundtrip + wrong-pw
   reject + binary b64), NO real prod commit. DEMOS updated (labs/sfx pages). SFX_INSTRUCTIONS.md
   written (root). Reuses the existing editor key (PAT scope: Contents Read+write on Portfolio_01).
+- (H) PHASE H DONE: merged the game's REAL dev history into the about page. Added the 253 accessible
+  sluice-alpha commits (v24.13->v25.2, real churn +203,837/-46,987) into js/git-history-data.js under
+  topic 'sluice' (now 256 -> the LARGEST topic in the river; total 1120 commits, +336,160 lines).
+  Data-file header note: game commits intentionally re-included, do NOT regenerate, full pre-split
+  history (773 more game commits) is in portfolio-01-archive + ~/portfolio-01-full-history.bundle.
+  Token figures are REAL ccusage (this machine: 15.58B / $15.36k / peak 1.54B which matches the
+  baked 1.54B exactly); the 18.1B/$17k headline is a real multi-machine blend that ALREADY includes
+  the game dev (it was all built with Claude), so the stat label now credits "the site and the game"
+  (no fabrication). Verified: about.html river renders, Sluice top of legend (256), 0 console errors.
