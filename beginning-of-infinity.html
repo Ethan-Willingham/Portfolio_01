@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Beginning of Infinity, Mapped</title>
+  <meta name="description" content="David Deutsch's The Beginning of Infinity in one sitting: the four or five ideas that carry the book, stated plainly, anchored to his own words, and drawn as a map of one connected argument.">
+  <meta property="og:title" content="The Beginning of Infinity, Mapped">
+  <meta property="og:description" content="A good explanation is one that is hard to vary. From that single test David Deutsch builds a case that knowledge has unlimited reach, that all evils are caused by a lack of knowledge, and that people are the most significant things in the universe. The argument, mapped.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/beginning-of-infinity.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/beginning-of-infinity-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="An argument map: connected nodes flowing from a foundation of fallibilism up to the conclusion that people are significant.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/beginning-of-infinity-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE BEGINNING OF INFINITY, MAPPED
+     Approach C, the Idea Distillation. Not a wisdom tradition, so
+     it gets a crisp, modern, argument-mapping treatment, not the
+     reverent scripture look. Sits in the site shell (forest green,
+     parchment, Century Supra / Segoe UI / Commit Mono) and leans
+     on kit.css for callouts, the debate box, and dividers. This
+     block adds the post's own pieces: hero, sections, and the
+     interactive argument map (an SVG flow of the load-bearing
+     ideas, click a node to read the claim, why it holds, the
+     anchoring quote, and what it rests on and leads to).
+     The ideas are authored as plain HTML cards so the page reads
+     without JavaScript; the script enhances them into the map.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                  /* reading column */
+    --wide: 1080px;                    /* breakout width for the map */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-found: #8fb3c7;                /* foundations (epistemology), blue */
+    --c-key:   #dfc288;                /* the keystone criterion, gold */
+    --c-conseq:#9ec79a;                /* consequences, sage */
+    --c-edge:  rgba(143, 179, 199, 0.34);
+    --c-edge-on: var(--c-key);
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 0.98; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.8rem, 5vw, 4.2rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.2rem, 4vw, 3rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; color: var(--sec-accent, var(--accent)); }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.2rem 0 0.6rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.26rem; } }
+  .sec .u-divider { margin-top: 3rem; }
+
+  /* per-section accent rhythm */
+  #intro  { --sec-accent: var(--c-found); }
+  #map    { --sec-accent: var(--c-key); }
+  #spine  { --sec-accent: var(--c-conseq); }
+  #honest { --sec-accent: var(--c-found); }
+  #sources{ --sec-accent: var(--accent); }
+
+  /* ============================================================
+     THE ARGUMENT MAP
+     ============================================================ */
+  .amap { max-width: var(--wide); margin: 1.6rem auto 0; padding: 0 var(--gutter); }
+  .amap-frame { border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); overflow: hidden; }
+
+  /* the SVG flow */
+  .amap-grid { display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 940px) { .amap-grid { grid-template-columns: minmax(280px, 340px) 1fr; } .amap-panel { position: sticky; top: 1rem; align-self: start; } }
+  .amap-canvas { position: relative; padding: 1rem 0.6rem; border-bottom: 1px solid var(--rule); }
+  @media (min-width: 940px) { .amap-canvas { border-bottom: none; border-right: 1px solid var(--rule); } }
+  .amap-canvas svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+  /* nodes (rendered by JS as <g class="amap-node">) */
+  .amap-node { cursor: pointer; }
+  .amap-node .nd-box { fill: rgba(255,255,255,0.035); stroke: var(--rule-strong); stroke-width: 1; transition: fill .18s, stroke .18s; }
+  .amap-node .nd-num { fill: var(--text-faint); font-family: var(--font-mono); font-size: 10px; }
+  .amap-node .nd-label { fill: var(--text-bright); font-family: var(--font-body); font-weight: 600; font-size: 13px; }
+  .amap-node[data-role="foundation"] .nd-accent { fill: var(--c-found); }
+  .amap-node[data-role="keystone"]   .nd-accent { fill: var(--c-key); }
+  .amap-node[data-role="consequence"].nd-accent, .amap-node[data-role="consequence"] .nd-accent { fill: var(--c-conseq); }
+  .amap-node:hover .nd-box { fill: rgba(255,255,255,0.07); stroke: var(--line-mid); }
+  .amap-node.is-on .nd-box { fill: rgba(223, 194, 136, 0.12); stroke: var(--c-key); stroke-width: 1.6; }
+  .amap-node.is-rel .nd-box { stroke: var(--line-mid); }
+  .amap-node.is-dim { opacity: 0.4; transition: opacity .18s; }
+  .amap-node .nd-label.two { font-size: 12px; }
+
+  .amap-edge { fill: none; stroke: var(--c-edge); stroke-width: 1.4; transition: stroke .18s, stroke-width .18s, opacity .18s; }
+  .amap-edge.is-on { stroke: var(--c-edge-on); stroke-width: 2; }
+  .amap-edge.is-dim { opacity: 0.25; }
+
+  .amap-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; padding: 0.7rem 1rem 0.9rem; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+  .amap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .amap-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* the detail panel */
+  .amap-panel { padding: 1.4rem 1.4rem 1.6rem; min-height: 320px; }
+  .amap-panel .pn-kicker { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sec-accent, var(--c-key)); margin: 0 0 0.6rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  .amap-panel .pn-kicker .pn-n { color: var(--text-faint); }
+  .amap-panel .pn-claim { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.4rem, 3.4vw, 1.8rem); line-height: 1.2; color: var(--text-bright); margin: 0 0 0.9rem; letter-spacing: -0.01em; text-wrap: pretty; }
+  .amap-panel .pn-why { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0 0 1.1rem; text-wrap: pretty; }
+  .amap-panel .pn-why p { margin: 0 0 0.8em; }
+  .amap-panel .pn-why p:last-child { margin-bottom: 0; }
+  .amap-panel .pn-why strong { color: var(--text-bright); font-weight: 600; }
+  .amap-panel .pn-why em { font-style: italic; }
+
+  .amap-panel .pn-quote { margin: 1.1rem 0; padding: 0.2rem 0 0.2rem 1.1rem; border-left: 2px solid var(--c-key); }
+  .amap-panel .pn-quote p { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.5; color: var(--text-bright); margin: 0 0 0.5rem; text-wrap: pretty; }
+  .amap-panel .pn-quote cite { font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); }
+
+  .amap-rel { display: flex; flex-wrap: wrap; gap: 1.2rem 2rem; margin-top: 1.3rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
+  .amap-rel-col { flex: 1 1 220px; min-width: 0; }
+  .amap-rel-k { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.5rem; }
+  .amap-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); background: rgba(255,255,255,0.04); border: 1px solid var(--rule); border-radius: 999px; padding: 0.3em 0.8em; margin: 0 0.4rem 0.4rem 0; cursor: pointer; transition: color .15s, border-color .15s, background .15s; text-align: left; }
+  .amap-chip:hover { color: var(--text-bright); border-color: var(--line-mid); background: rgba(255,255,255,0.07); }
+  .amap-chip .ch-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--line-mid); }
+  .amap-chip[data-role="foundation"] .ch-dot { background: var(--c-found); }
+  .amap-chip[data-role="keystone"] .ch-dot { background: var(--c-key); }
+  .amap-chip[data-role="consequence"] .ch-dot { background: var(--c-conseq); }
+  .amap-rel-none { font-family: var(--font-body); font-size: 0.92rem; font-style: italic; color: var(--text-faint); }
+
+  /* the toolbar above the map */
+  .amap-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin: 0 auto 0.6rem; max-width: var(--wide); padding: 0 var(--gutter); }
+  .amap-step { display: flex; align-items: center; gap: 0.4rem; }
+  .amap-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.12rem; transition: border-color .2s, color .2s; }
+  .amap-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-hover); }
+  .amap-nav:disabled { opacity: 0.3; cursor: default; }
+  .amap-pos { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-faint); }
+  .amap-pos b { color: var(--accent); font-weight: 400; }
+  .amap-hint { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+
+  /* the no-JS fallback: the cards read as a plain list */
+  .boi-cards { margin-top: 1.4rem; }
+  .boi-idea { padding: 1.4rem 0; border-top: 1px solid var(--rule); }
+  .boi-idea-kicker { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.4rem; }
+  .boi-idea-claim { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; line-height: 1.22; color: var(--text-bright); margin: 0 0 0.7rem; }
+  .boi-idea-why { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); }
+  .boi-idea-why p { margin: 0 0 0.8em; }
+  .boi-q { margin: 0.9rem 0 0; padding-left: 1.1rem; border-left: 2px solid var(--c-key); font-family: var(--font-heading); font-style: italic; font-size: 1.08rem; line-height: 1.5; color: var(--text-bright); }
+  .boi-q cite { display: block; margin-top: 0.4rem; font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); }
+  /* when JS is on, hide the raw cards (they live in the panel now) and show the map */
+  html.js .boi-cards { display: none; }
+  .amap-wrap[hidden] { display: none; }
+  html:not(.js) .amap-wrap { display: none; }
+  /* break the map out wider than the reading column when there is room */
+  .amap-wrap { max-width: var(--wide); }
+  @media (min-width: 1080px) {
+    .amap-wrap { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- the title-meanings strip ---------- */
+  .meanings { margin: 1.4rem 0 0; display: grid; gap: 0; }
+  .meaning { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 1.1rem; padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .meaning:last-child { border-bottom: 1px solid var(--rule); }
+  .meaning-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--c-key); padding-top: 0.2rem; }
+  .meaning-t { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.5; color: var(--text); }
+  .meaning-t b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- SOURCES ---------- */
+  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.1em; }
+  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.4em; margin: 0.4em 0 0; }
+  #sources li { margin-bottom: 0.5em; }
+  #sources li::marker { color: var(--accent); }
+  #sources a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .amap-node .nd-box, .amap-edge { transition: none !important; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab, .amap-bar { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero, .amap { max-width: none; }
+    .sec p, .sec li, .lede, .boi-idea-why { color: #161616; }
+    html.js .boi-cards { display: block; }   /* print the readable cards, not the app */
+    .amap-wrap { display: none !important; }
+    .debateA, .u-callout { break-inside: avoid; }
+    a { color: #161616; }
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px) {
+    .amap, .amap-bar { padding-left: 0.7rem; padding-right: 0.7rem; }
+    .amap-canvas { padding: 0.8rem 0.4rem; }
+    .amap-panel { padding: 1.2rem 1rem 1.4rem; }
+    .amap-hint { display: none; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Beginning of Infinity, mapped</h1>
+    <p class="hero-dek">David Deutsch's five-hundred-page case for optimism, in one sitting. The four or five ideas that carry the book, in his own words, drawn as a single connected argument.</p>
+    <p class="hero-meta">A distilled reading <span class="sep">/</span> nine ideas, one argument <span class="sep">/</span> <b>12 min read</b></p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ INTRO ============================ -->
+    <section id="intro" class="sec first" aria-labelledby="intro-h">
+      <div class="u-sechead"><p class="u-sechead-k">What the book argues</p><h2 id="intro-h" class="u-sechead-h">One test for a good idea</h2></div>
+
+      <p class="lede">A good explanation is one that is hard to vary. That is the whole hinge of this book, and David Deutsch hangs a startling amount on it: that knowledge has no built-in limit, that every evil is just a problem we do not yet know how to solve, and that people are the most significant things in the universe.</p>
+
+      <p>Deutsch is a physicist at Oxford and one of the founders of quantum computation, the man who first described a universal quantum computer. <em>The Beginning of Infinity</em> is his book about how knowledge grows, and why, once it starts growing the right way, it need never stop. He is combative and exact, allergic to vagueness, and he works in the line of the philosopher Karl Popper: there are no authoritative sources of truth, and we learn only by guessing and then hunting down our own mistakes.</p>
+
+      <blockquote class="u-pq">All progress, both theoretical and practical, has resulted from a single human activity: the quest for what I call good explanations.<cite class="u-pq-cite">The Beginning of Infinity, Introduction</cite></blockquote>
+
+      <p>The argument is long and it branches, but it is one argument, and it is built unusually tight. Below is the whole of it as a map.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE ARGUMENT MAP ============================ -->
+    <section id="map" class="sec" aria-labelledby="map-h">
+      <div class="u-sechead"><p class="u-sechead-k">The argument</p><h2 id="map-h" class="u-sechead-h">The ideas, and how they connect</h2></div>
+      <p>Each box is one of the load-bearing ideas, in plain language and pinned to a line from Deutsch himself. The arrows mean "leads to." The two boxes at the top are the foundations the rest stands on; the gold one is the keystone, the test that holds up everything below it. Tap any box to open it.</p>
+
+      <!-- the interactive map (JS builds it from the cards below) -->
+      <div class="amap-wrap" hidden>
+        <div class="amap-bar">
+          <div class="amap-step">
+            <button class="amap-nav" id="amap-prev" aria-label="Previous idea">&lsaquo;</button>
+            <span class="amap-pos" id="amap-pos"></span>
+            <button class="amap-nav" id="amap-next" aria-label="Next idea">&rsaquo;</button>
+          </div>
+          <span class="amap-hint">tap a box, or use the arrow keys</span>
+        </div>
+        <div class="amap">
+          <div class="amap-frame">
+            <div class="amap-grid">
+              <div class="amap-canvas" id="amap-canvas" aria-hidden="true"></div>
+              <div class="amap-panel" id="amap-panel" aria-live="polite"></div>
+            </div>
+            <div class="amap-legend">
+              <span><i style="background:var(--c-found)"></i> Foundation</span>
+              <span><i style="background:var(--c-key)"></i> The keystone</span>
+              <span><i style="background:var(--c-conseq)"></i> What follows</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- the ideas, authored as plain cards (also the no-JS reading + the panel source) -->
+      <div class="boi-cards" id="boi-cards">
+
+        <article class="boi-idea" id="i-fallibilism" data-num="1" data-short="Fallibilism" data-role="foundation" data-x="90" data-y="54" data-to="i-conjecture">
+          <p class="boi-idea-kicker">Foundation</p>
+          <h3 class="boi-idea-claim">There are no authoritative sources of knowledge, and no way to be certain.</h3>
+          <div class="boi-idea-why">
+            <p>Not the senses, not authority, not gut feeling, not even our most successful theory. Every one of them has been wrong before and could be wrong now, so nothing is ever settled for good. Deutsch takes this from Karl Popper. Since we can never prove an idea true, or even prove it probable, the one useful thing we can do with it is look hard for what is wrong with it. Knowledge grows by guessing and then correcting the guesses, and a science or a society is only ever as good as its appetite for that correction.</p>
+          </div>
+          <blockquote class="boi-q">Theories, according to Popper, are always conjecture, and thinking about theories is always criticism. It's never a justificatory process. It's always a critical process.<cite>Deutsch, interview with Joseph Walker, 2023, on the Popperian view that runs through the book</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-empiricism" data-num="2" data-short="Theories are guessed" data-role="foundation" data-x="250" data-y="54" data-to="i-conjecture">
+          <p class="boi-idea-kicker">Foundation</p>
+          <h3 class="boi-idea-claim">Theories are not read off the world. They are guessed, then tested.</h3>
+          <div class="boi-idea-why">
+            <p>The schoolbook picture of science, gather data, generalize, and a theory falls out, is backwards. You can watch things drop forever and the idea of gravity will not assemble itself in your head. First you guess an explanation, which is an act of invention, and only then do you turn to observation to try to knock it down. That is the mistake in empiricism, the belief that knowledge pours in through the senses, and in its cousin inductivism, the belief that we reach general laws by seeing the same thing happen often enough. The creative leap comes first. Experience only does the filtering.</p>
+          </div>
+          <blockquote class="boi-q">In reality, scientific theories are not "derived" from anything.<cite>Deutsch, ch. 1, "The Reach of Explanations"</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-conjecture" data-num="3" data-short="Conjecture and criticism" data-role="foundation" data-x="170" data-y="146" data-to="i-hardtovary">
+          <p class="boi-idea-kicker">How knowledge grows</p>
+          <h3 class="boi-idea-claim">So knowledge grows one way: guess, then try to destroy the guess.</h3>
+          <div class="boi-idea-why">
+            <p>Put the two foundations together and you get Popper's engine, the thing Deutsch builds everything on. You make a bold conjecture, an explanation you invented rather than one you copied off the data. Then you and everyone else attack it, with argument and with experiment. The conjectures left standing are not proven; their rivals just failed. That is as close to truth as anyone gets, and it turns out to be enough. The same loop runs in physics, in an honest argument, in a single mind chewing on a problem. Where error correction is allowed to run, knowledge grows. Where it is blocked, things quietly rot.</p>
+          </div>
+          <blockquote class="boi-q">Scientific knowledge isn't derived from anything. Like all knowledge, it's conjectural, guess work. Tested by observation, not derived from it.<cite>Deutsch, TED talk, "A New Way to Explain Explanation," 2009</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-hardtovary" data-num="4" data-short="Hard to vary" data-role="keystone" data-x="170" data-y="234" data-to="i-reach">
+          <p class="boi-idea-kicker">The keystone</p>
+          <h3 class="boi-idea-claim">A good explanation is one that is hard to vary while still accounting for what it explains.</h3>
+          <div class="boi-idea-why">
+            <p>If guessing is how we get our ideas, what makes one guess better than another? Deutsch's answer is the most original thing in the book. A good explanation is rigid. Every part is doing real work, so you cannot move or drop a piece without wrecking how it accounts for what we see.</p>
+            <p>Take the old Greek story for the seasons. Persephone is dragged down to the underworld, her mother grieves, and the world goes cold. It does predict that winter comes once a year, but every detail is arbitrary. Swap the grief for rage, or six months for three, and the story fits just as well. Because you can vary it freely, it explains nothing. The real account is the opposite: the Earth's axis is tilted, so each half leans toward the sun for part of the year. That forces opposite seasons in the two hemispheres, and you cannot tweak any part of it to fit a contrary fact without the whole thing collapsing. That rigidity, not the prediction, is the mark of the real thing.</p>
+          </div>
+          <blockquote class="boi-q">Good/bad explanation: an explanation that is hard/easy to vary while still accounting for what it purports to account for.<cite>Deutsch, ch. 1, "The Reach of Explanations," Terminology</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-reach" data-num="5" data-short="Reach" data-role="consequence" data-x="170" data-y="322" data-to="i-universality">
+          <p class="boi-idea-kicker">What follows</p>
+          <h3 class="boi-idea-claim">Good explanations reach far beyond the problem they were built for.</h3>
+          <div class="boi-idea-why">
+            <p>Here is the strange bonus. When you get an explanation right, it keeps solving problems you never had in mind. Newton worked out gravity from falling objects and the orbits of the planets, and the very same theory turns out to govern distant galaxies and the path of a spacecraft built three centuries later. Deutsch calls this reach.</p>
+            <p>He is careful about what it is not. It is not that we assume the explanation will travel, which would be the induction he rejects. It just does travel, because it was about the real thing all along, not about the local case. Reach is why knowledge has no natural stopping point. A good explanation is already pointing past the horizon you found it on.</p>
+          </div>
+          <blockquote class="boi-q">The reach of explanations is another meaning of "the beginning of infinity." It is the ability of some of them to solve problems beyond those that they were created to solve.<cite>Deutsch, ch. 1, "The Reach of Explanations"</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-universality" data-num="6" data-short="The jump to universality" data-role="consequence" data-x="170" data-y="410" data-to="i-soluble">
+          <p class="boi-idea-kicker">What follows</p>
+          <h3 class="boi-idea-claim">People are universal explainers. That is the beginning of infinity.</h3>
+          <div class="boi-idea-why">
+            <p>Some systems improve in small steps and then, with one ordinary-looking change, flip from doing a few specific things to doing everything in their domain. An alphabet is the classic case. Keep adding letters and at some point you can spell every word that exists or ever will, with about two dozen marks. The same jump happened with place-value numerals, with the general-purpose computer, with the genetic code. Deutsch calls it the jump to universality.</p>
+            <p>The deepest instance is us. A human being is a universal explainer, able in principle to understand anything that can be understood, and therefore a universal constructor, able to build anything the laws of physics allow. A person is the point where unlimited reach begins. That is what the title of the book means.</p>
+          </div>
+          <blockquote class="boi-q">The jump to universality: the tendency of gradually improving systems to undergo a sudden large increase in functionality, becoming universal in some domain.<cite>Deutsch, ch. 6, "The Jump to Universality," Terminology</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-soluble" data-num="7" data-short="Problems are soluble" data-role="consequence" data-x="170" data-y="498" data-to="i-optimism">
+          <p class="boi-idea-kicker">The conclusion</p>
+          <h3 class="boi-idea-claim">Problems are inevitable. Problems are soluble.</h3>
+          <div class="boi-idea-why">
+            <p>These two short maxims carry the back half of the book. Problems never run out, because our knowledge will always be infinitely far from complete, so every answer turns up new questions. But every problem the laws of physics do not flatly forbid can be solved, given the right knowledge. The only permanent walls are laws of nature. Everything else that looks like a hard limit, a disease, a shortage, the death of the people we love, is knowledge we do not have yet. It is a deliberately extreme claim, and Deutsch means it at full strength.</p>
+          </div>
+          <blockquote class="boi-q">Everything that is not forbidden by laws of nature is achievable, given the right knowledge.<cite>Deutsch, ch. 3, "The Spark"</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-optimism" data-num="8" data-short="All evils are ignorance" data-role="consequence" data-x="170" data-y="586" data-to="i-significance">
+          <p class="boi-idea-kicker">The conclusion</p>
+          <h3 class="boi-idea-claim">All evils are caused by insufficient knowledge.</h3>
+          <div class="boi-idea-why">
+            <p>This is what Deutsch calls the principle of optimism, and it is a proposition, not a mood. It does not promise that things will turn out well. It says that whenever something goes wrong, the cause is missing knowledge and not a wall built into reality, that we failed because we did not know enough, in time.</p>
+            <p>He fences it off from two errors that often pass for wisdom. Blind optimism is recklessness, acting as if you knew nothing bad could happen. Blind pessimism is the precautionary principle, refusing anything not already known to be safe, which would have forbidden fire. Real optimism is neither nerve nor fear. It is the stance that sends you looking for knowledge instead of gambling or freezing.</p>
+          </div>
+          <blockquote class="boi-q">The principle of optimism: all evils are caused by insufficient knowledge.<cite>Deutsch, ch. 9, "Optimism," Terminology</cite></blockquote>
+        </article>
+
+        <article class="boi-idea" id="i-significance" data-num="9" data-short="People are significant" data-role="consequence" data-x="170" data-y="674" data-to="">
+          <p class="boi-idea-kicker">The conclusion</p>
+          <h3 class="boi-idea-claim">People are significant. Earth is not a kindly spaceship, and we are no cosmic accident.</h3>
+          <div class="boi-idea-why">
+            <p>Deutsch goes after two humble-sounding ideas and calls them both false, and both small-minded. The principle of mediocrity says humans are nothing special, a smudge on an average rock. Spaceship Earth says the biosphere is a life-support system we must take care not to disturb.</p>
+            <p>But the biosphere never supported us. Drop an unprotected human almost anywhere on the primeval Earth and they die fast. Deutsch calls it a death trap, not a life-support system. What actually keeps eight billion people alive is knowledge, farming and medicine and shelter and power, all of it made by us. And because knowledge can reshape anything physics permits, the makers of knowledge are not bit players. We are the most significant kind of thing there is. That is not a license to wreck the planet. It is an argument that the reason to look after it is human, our knowledge and our choices, not a faith that nature is a nurse.</p>
+          </div>
+          <blockquote class="boi-q">From the least parochial perspectives available to us, people are the most significant entities in the cosmic scheme of things. They are not "supported" by their environments, but support themselves by creating knowledge.<cite>Deutsch, ch. 3, "The Spark," Summary</cite></blockquote>
+        </article>
+
+      </div>
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SPINE / SYNTHESIS ============================ -->
+    <section id="spine" class="sec" aria-labelledby="spine-h">
+      <div class="u-sechead"><p class="u-sechead-k">The title</p><h2 id="spine-h" class="u-sechead-h">What "the beginning of infinity" means</h2></div>
+      <p>Deutsch never lets the title mean only one thing. He ends most chapters with a short list of the senses that chapter earned, and they stack up into the argument of the book. Five that matter:</p>
+      <div class="meanings">
+        <div class="meaning"><span class="meaning-n">1</span><p class="meaning-t"><b>The reach of an explanation.</b> Knowledge that goes on solving problems far past the one it was built for, with no line marking where it has to stop.</p></div>
+        <div class="meaning"><span class="meaning-n">2</span><p class="meaning-t"><b>"Problems are soluble."</b> Anything not forbidden by the laws of nature is achievable with the right knowledge, so there is no final problem, only the next one.</p></div>
+        <div class="meaning"><span class="meaning-n">3</span><p class="meaning-t"><b>A person.</b> A universal explainer can in principle understand anything that can be understood, so every one of us is a place where unlimited progress could begin.</p></div>
+        <div class="meaning"><span class="meaning-n">4</span><p class="meaning-t"><b>The jump to universality.</b> The moment a system tips over from doing a few things to doing all of them: letters into every word, a few digits into every number.</p></div>
+        <div class="meaning"><span class="meaning-n">5</span><p class="meaning-t"><b>The Enlightenment.</b> The first civilization built on criticism instead of authority, and so the first that need never stop correcting itself. The beginning, on a human scale, of an unending thing.</p></div>
+      </div>
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ IS HE RIGHT? ============================ -->
+    <section id="honest" class="sec" aria-labelledby="honest-h">
+      <div class="u-sechead"><p class="u-sechead-k">The honest version</p><h2 id="honest-h" class="u-sechead-h">Is he right?</h2></div>
+      <p class="lede">The book is an argument, not a proof, and it draws sharper fire than its fans admit. Three objections are worth putting to it, each with Deutsch's answer.</p>
+
+      <h3>His one tool, turned against him</h3>
+      <p>The cleanest criticism uses Deutsch's own keystone. "Hard to vary" takes a judgment call, not a measurement, and a careful reader can point it back at the book's softer chapters.</p>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The objection</span><p class="debateA-text">The criterion is fuzzier than it sounds, and he breaks it himself. His later argument that a flower's beauty is objective, or that creativity first evolved to copy ideas faithfully, are not hard to vary at all. Rival explanations fit the same facts just as well, which by Deutsch's own test means his are weak.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">The answer</span><p class="debateA-text">It is a criterion, not a formula, and judgment was always going to be part of it. That the same test exposes the weak spots in his own back half is the test working, not failing. The keystone holds even where the book around it sags.</p></div>
+      </div>
+
+      <h3>The Bayesian fight</h3>
+      <p>This is the one his core audience cares about most, and the place it is easiest to get him wrong. Deutsch is a Popperian, and he rejects the whole machinery of updating beliefs on evidence.</p>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The objection</span><p class="debateA-text">In real life we trust a well-tested theory more than a wild guess, and Bayesian reasoning, raising or lowering how much you believe a claim as evidence arrives, is a precise and successful model of exactly that. Saying a surviving theory's rivals "just failed" looks like sneaking that trust back in under a new name. Much of the rationalist world treats his flat rejection of Bayes as the weakest link in his system.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">The answer</span><p class="debateA-text">Deutsch is blunt: pinning a probability on whether a theory is true is a category error, and "belief goes up when evidence confirms" simply is the inductivism Popper buried. We do not adopt the most probable proposition, we adopt the best explanation, the hardest to vary. He grants that Bayes' theorem is true; it is Bayesian epistemology he calls "the name of a mistake." The dispute is genuine and unsettled, and he is in the minority.</p></div>
+      </div>
+
+      <h3>Is the optimism falsifiable?</h3>
+      <p>The boldest line in the book is that anything the laws of physics permit is achievable with the right knowledge. It is also the easiest to read as either untestable or complacent.</p>
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The objection</span><p class="debateA-text">Any failure can be blamed on knowledge we do not have yet, which makes the claim look impossible to disprove. And an optimism that says every problem is soluble can read as waving away real danger, from runaway technology to the climate.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">The answer</span><p class="debateA-text">A real limit, he would say, is either a law of physics, in which case the thing is forbidden and the claim stands, or it is missing knowledge, in which case it is not a wall. And he is not saying do not worry. He calls do-nothing confidence "blind optimism" and treats problems as real, inevitable, sometimes deadly; his point is only that the cure for danger is more knowledge, never prohibition or despair. You can still come away feeling the achievability claim is closer to a faith than a finding. Keep that doubt. He would respect it more than easy agreement.</p></div>
+      </div>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">The whole book in a line</p><p class="u-callout-body">Strip away the cosmic optimism and one tool survives intact, and it is worth the price of the book. When two stories both fit the facts, trust the one you cannot easily change to fit different facts.</p></aside>
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Source, and how to read on</h2></div>
+      <p class="src-note">This is a distillation of one book, told in my own words. The ideas are Deutsch's, not mine. Quotes are located by chapter and by the chapter's own Summary or Terminology section rather than by page, because the hardcover and the paperback paginate differently. A few quotes come from his talks and interviews, where he restates the book's ideas in plainer words, and those are marked.</p>
+      <ol>
+        <li><b>David Deutsch.</b> <i>The Beginning of Infinity: Explanations That Transform the World.</i> Viking / Allen Lane, 2011. The source for everything above, chiefly ch. 1 "The Reach of Explanations" (hard to vary, reach, the critique of empiricism), ch. 3 "The Spark" (problems are soluble, against the principle of mediocrity and Spaceship Earth), ch. 6 "The Jump to Universality," and ch. 9 "Optimism." <a href="https://www.thebeginningofinfinity.com/">author's site</a></li>
+        <li><b>David Deutsch, "A New Way to Explain Explanation."</b> TEDGlobal, 2009. His clearest spoken account of the hard-to-vary criterion and the seasons example. <a href="https://www.ted.com/talks/david_deutsch_a_new_way_to_explain_explanation">ted.com</a></li>
+        <li><b>David Deutsch, "A Simple Refutation of the Bayesian Philosophy of Science."</b> daviddeutsch.org.uk, 2014. Where he lays out, in his own words, why he is a Popperian and not a Bayesian. <a href="https://www.daviddeutsch.org.uk/2014/08/simple-refutation-of-the-bayesian-philosophy-of-science/">daviddeutsch.org.uk</a></li>
+        <li><b>Interviews, used where Deutsch restates the book.</b> With Naval Ravikant (<a href="https://nav.al/david-deutsch">nav.al</a>, 2019); with Joseph Walker, <i>The Jolly Swagman</i> (<a href="https://josephnoelwalker.com/139-david-deutsch/">josephnoelwalker.com</a>, 2023); with Sean Carroll, <i>Mindscape</i> 253 (<a href="https://www.preposterousuniverse.com/podcast/2023/10/16/253-david-deutsch-on-science-complexity-and-explanation/">preposterousuniverse.com</a>, 2023).</li>
+        <li><b>Peter, "The Beginning of Infinity."</b> Bayesian Investor Blog, 2012. The sharpest short critique, including the move of turning "hard to vary" back on Deutsch's own later chapters. <a href="https://bayesianinvestor.com/blog/index.php/2012/04/20/the-beginning-of-infinity/">bayesianinvestor.com</a></li>
+        <li><b>"The Beginning of Infinity."</b> <i>Wikipedia,</i> for the book's reception and a chapter-by-chapter map. <a href="https://en.wikipedia.org/wiki/The_Beginning_of_Infinity">wikipedia.org</a></li>
+      </ol>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/beginning-of-infinity.js" defer></script>
+</body>
+</html>
