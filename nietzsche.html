@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nietzsche and the Case Against Morality</title>
+  <meta name="description" content="A guided walk through Nietzsche's case against morality, in Walter Kaufmann's translation. Eight stops: God is dead, the slave revolt, ressentiment, the will to power, the overman, eternal recurrence, and the honest story of how his sister handed him to the Nazis. The series' dissenter, left unanswered.">
+  <meta property="og:title" content="Nietzsche and the Case Against Morality">
+  <meta property="og:description" content="Every other book in this series tells you, in its own accent, to make yourself smaller. Nietzsche is the one who stands up and says that is the con: your humility, your pity, your selflessness were invented by the weak to disarm the strong. Here is his argument, and we are not going to answer it.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/nietzsche.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/nietzsche-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/nietzsche-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     NIETZSCHE AND THE CASE AGAINST MORALITY
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: eight stops through Nietzsche's attack on morality,
+     featured in Walter Kaufmann's translation, each unpacked in
+     plain language, with collapsible side panels that stack the
+     other translators (Hollingdale, Clark and Swensen) on the
+     famously compressed lines and the loaded German words. Sits
+     in the site shell (forest green, parchment, Century Supra /
+     Segoe UI / Commit Mono). No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --early:  #cf9f78;                 /* early translators (Common, Zimmern, ~1900s) */
+    --mid:    #bc9d65;                 /* mid-century (Kaufmann, Hollingdale) */
+    --modern: #9ec79a;                 /* modern (Clark and Swensen, the Cambridge editions) */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .de { font-style: italic; }                        /* a German word, inline */
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  /* the Munch portrait is vertical; cap and center it so it reads as a plate, not a wall */
+  .sec .u-figure.portrait { max-width: 520px; margin-left: auto; margin-right: auto; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Kaufmann passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-v { display: block; }                    /* a line break inside the passage */
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION / TERM SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0.2rem 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-de { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.4vw, 1.5rem); line-height: 1.4; color: var(--text-bright); margin: 0 0 0.5rem; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-early  { border-left-color: var(--early); }
+  .stack-mid    { border-left-color: var(--mid); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(188,157,101,0.07); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--mid); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  /* the loaded-words panel: term entries */
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.18rem; color: var(--accent); }
+  .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Nietzsche and the case against morality</h1>
+    <p class="hero-dek">Every other book in this series tells you, in its own accent, to make yourself smaller. Nietzsche is the one who stands up and says that is the con. Your humility, your pity, your selflessness were invented by the weak to disarm the strong. Here is his argument, and we are not going to answer it.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> through his attack on morality <span class="sep">/</span> featured: <b>Walter Kaufmann</b> <span class="sep">/</span> ~30 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Run down the list of virtues the wise agree on. Humility. Selflessness. Turning the other cheek. Pity for the weak. Putting yourself last. Almost every book in this series recommends some version of making yourself smaller. Friedrich Nietzsche read the same list and saw a crime scene.</p>
+
+      <p>This is the dissent post. The whole point of a series like this is that the great traditions, walled off from each other by oceans and centuries, keep arriving at the same handful of answers, and that convergence feels like evidence. Lose the self. Yield. Serve. Be meek. When Buddhists and Christians and Taoists and the recovering drunks of AA all independently land on "selfishness is the root of the trouble," it starts to sound like they found something real.</p>
+
+      <p>Nietzsche is the man who looks at that agreement and says: of course they agree. They all lost the same fight, and this is the story the losers tell. He is the most quoted philosopher who ever lived, and the most misquoted, a German classics professor who wrote his hardest books in the 1880s, went incurably insane at forty-four, and never knew that the next century would carve his words onto the wrong monuments. His claim, the one it takes him several books to build, is that the morality you were raised inside is not eternal and not from God. It was made by particular people, for a particular reason, and the reason does not flatter you.</p>
+
+      <figure class="u-figure portrait">
+        <img class="u-figure-img" src="assets/images/nietzsche-portrait.jpg" width="953" height="1200" loading="lazy" decoding="async" alt="Edvard Munch's 1906 portrait of Friedrich Nietzsche: the philosopher stands at a railing against a turbulent yellow and blue sky, heavy mustache, gazing down and away from a small town below.">
+        <figcaption class="u-figure-cap">Edvard Munch, <em>Friedrich Nietzsche</em> (1906), painted six years after Nietzsche's death, for the collector Ernest Thiel. Munch never met him. He built the portrait from photographs and from the books, and put the philosopher at a railing over a churning sky, looking down into something.</figcaption>
+      </figure>
+
+      <p>Two of his books carry the argument, and one carries the famous lines. <strong>Beyond Good and Evil</strong> (1886) and <strong>On the Genealogy of Morals</strong> (1887) are where he makes the case, in something close to ordinary prose. <strong>Thus Spoke Zarathustra</strong> (1883 to 1885) is the strange biblical poem where the slogans live: God is dead, the overman, the eternal return. The featured translation here is <strong>Walter Kaufmann's</strong>, the Princeton scholar who, after the war, rescued Nietzsche from the people who had stolen him (that story is the last stop). On the lines where the translators split hard, and on the German words that lose everything in English, you can open a panel and see Kaufmann set against R. J. Hollingdale and against Maudemarie Clark and Alan Swensen.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole argument on one page</p>
+        <p class="u-callout-body">The diagnosis comes in two parts. First, our morality has a history: it was invented by the weak as a slow revenge on the strong, a "slave revolt" that rebranded their helplessness as virtue and the strength they envied as sin. Second, the thing that held the whole system up, God, is dead, killed by the very civilization that built him, and almost nobody has noticed the floor is gone. That leaves two roads. Sink into nihilism, where nothing means anything, or do the terrifying thing: create new values yourself, on your own authority, with nothing above you to sign off on them. The back half of the walk is his sketch of the person who could do that, and the test of whether your life is worth keeping. Eight stops, diagnosis first, then cure.</p>
+      </aside>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">A note on what this post does not do</p>
+        <p class="u-callout-body">Every other post in this series can be read as a reply to this one. This one is not answered back. Nietzsche's job here is to throw the hardest punch any of these traditions has to take, at the exact place they all agree, and the honest thing is to let it land and leave it landed. If the convergence on humility and selflessness is strong, it survives him on its own. We are not going to hold its coat.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">God is dead, and we killed him</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-god-dead" data-label="God is dead, and we killed him" data-tag="The Gay Science">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The Gay Science, 1882</p>
+      <h2 class="station-h">God is dead, and we are the ones who killed him</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / The Gay Science, section 125, "The madman"</p>
+        <div class="passage-t">
+          <p>"Whither is God?" he cried. "I will tell you. <em>We have killed him</em>, you and I. All of us are his murderers. But how did we do this? How could we drink up the sea? Who gave us the sponge to wipe away the entire horizon? What were we doing when we unchained this earth from its sun?"</p>
+          <p>"God is dead. God remains dead. And we have killed him. How shall we comfort ourselves, the murderers of all murderers?"</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the most famous thing Nietzsche wrote, and almost everyone gets the tone wrong. It is not a triumphant atheist slogan. Read who says it. A madman lights a lantern in the bright morning, runs into the marketplace, and cries that he is looking for God. The crowd standing around does not believe in God anyway, so they laugh at him. And he turns on them and says: you are the ones who killed him. You did it, and you do not even know what you have done.</p>
+        <p>"God is dead" is not a claim about heaven. It is a claim about us, here, on the ground. Nietzsche means that the God who used to anchor everything, who made the moral law binding and the universe meaningful and human life part of a story going somewhere, has quietly stopped being believable to the people who run the modern world. Not refuted in an argument. Just slowly drained of reality by science, by history, by the same restless European mind that had once built the cathedrals. We dissolved our own foundation and kept living in the house.</p>
+        <p>And here is the part the marketplace atheists miss, the reason the messenger is a madman and not a winner. God was load-bearing. He was the reason your values were Values and not just your preferences, the reason "thou shalt not" came with an authority behind it instead of a shrug. Pull him out and the morality is still sitting there, every commandment in place, but nothing holds it up. Most people calmly dropped the believing and kept the morality and never felt the ground go. The madman feels it. He asks where we are moving now, away from all suns, whether we are not straying as through an infinite nothing, whether empty space is not breathing on us, whether it has not gotten colder.</p>
+        <p>That cold is the subject of this whole post. Nietzsche thought the death of God was the largest event in human history and that its light had not yet reached human ears, that it would take a century or two for people to understand what had been done and what it would cost. He was not gloating. He was the first one to take it completely seriously, to see that you do not get to keep the meek-shall-inherit morality once you have quietly buried the one who promised they would.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>An atheist says there is no God and orders lunch. Nietzsche says we have killed God and stares at the bill: every value the West believed was solid was resting on something we no longer believe, and pretending otherwise is the one move he will not let you make.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-two-moralities" data-label="Two moralities: master and slave" data-tag="Beyond Good and Evil">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Beyond Good and Evil, section 260</p>
+      <h2 class="station-h">There was never one morality. There were two.</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / Beyond Good and Evil, section 260</p>
+        <div class="passage-t">
+          <p>There are master morality and slave morality. [...] The noble type of man experiences <em>itself</em> as determining values; it does not need approval; it judges, "what is harmful to me is harmful in itself"; it knows itself to be that which first accords honor to things; it is <em>value-creating</em>.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Nietzsche was a philologist before he was a philosopher, a professor of ancient languages who spent his twenties staring at where words come from. So when he attacks morality, he does not argue about it like an ethicist. He digs it up like an etymologist. Where do "good" and "evil" actually come from? And what he claims to find is that they are not one stable pair handed down from on high. There have been two different moralities, built by two opposite kinds of people, pointing in opposite directions.</p>
+        <p>The first he calls master morality. Picture the people on top in an old warrior world, the strong, the proud, the ones who win. They invent "good" by looking in the mirror. Good is what they are: powerful, confident, truthful, generous out of overflow, able to act. And "bad," in this scheme, is just an afterthought, a word for the opposite kind of person, the low and weak and cowardly. The order matters. The noble says "I am good" first, with relish, and "those others are bad" only as a leftover. The reference point is himself, and he is delighted with it.</p>
+        <p>The second is slave morality, and it is built by exactly the people the masters are stepping on. They cannot win by strength; that game is lost before it starts. So they open a second front, the only one available to the powerless, the field of values itself. And crucially, they build their morality in the opposite order. They start with the enemy. The strong, confident, dangerous master becomes <em>evil</em>, the first idea, the thing to be condemned. And only then, by subtraction, does the slave arrive at "good," which turns out to mean everything the master is not: meek, humble, patient, harmless, self-denying, safe.</p>
+        <p>Hold the two scoreboards next to each other and you see the trick. They rate the same man in opposite directions. The master's "good man," the strong proud one, is precisely the slave's "evil man." Same human being, two verdicts, because the people doing the scoring stand at opposite ends of an old defeat. This is why Nietzsche titled the book <em>Beyond Good and Evil</em>. He is not saying be evil. He is saying "good and evil," that specific pair, is not the eternal axis of the universe. It is one side's weapon, and you have been told it was the sky.</p>
+      </div>
+
+      <details class="stack">
+        <summary>Master and slave, two translations</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">Nietzsche's section 260 is the clearest statement of the two-moralities idea. Watch the two standard English versions handle the catalogue of qualities that slave morality honors. The list is the giveaway: it is, almost exactly, the list of virtues every other book in this series recommends.</p>
+
+          <div class="stack-v stack-mid stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Walter Kaufmann <span class="star">featured</span></span><span class="stack-vy">1966</span></div>
+            <div class="stack-vt">"Here pity, the complaisant and obliging hand, the warm heart, patience, industry, humility, and friendliness are honored, for here these are the most useful qualities and almost the only means for enduring the pressure of existence. Slave morality is essentially a morality of utility."</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">R. J. Hollingdale</span><span class="stack-vy">1973</span></div>
+            <div class="stack-vt">"Here it is that pity, the kind and helping hand, the warm heart, patience, industriousness, humility, friendliness come into honour, for here these are the most useful qualities and virtually the only means of enduring the burden of existence."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Read the list again: pity, humility, patience, the warm heart, the helping hand. Nietzsche's point is not that these are bad things to have around. It is that a whole civilization came to call <em>these</em> "the good," and forgot that the word once meant something nearly opposite, and forgot who did the renaming and why.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-ressentiment" data-label="Ressentiment: how weakness became virtue" data-tag="Genealogy, First Essay">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> On the Genealogy of Morals, First Essay</p>
+      <h2 class="station-h">Ressentiment: how weakness talked itself into a halo</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / On the Genealogy of Morals, First Essay, section 10</p>
+        <div class="passage-t">
+          <p>The slave revolt in morality begins when <em>ressentiment</em> itself becomes creative and gives birth to values: the ressentiment of natures that are denied the true reaction, that of deeds, and compensate themselves with an imaginary revenge. While every noble morality develops from a triumphant affirmation of itself, slave morality from the outset says No to what is "outside," what is "different," what is "not itself"; and <em>this</em> No is its creative deed.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The next year, in the Genealogy, Nietzsche names the engine that drives the slave revolt, and he keeps the name in French because no English word is mean enough: <span class="de">ressentiment</span>. It is not quite resentment. It is the specific chemistry of a person who has been hurt, cannot hit back, and has nowhere to put the injury. The wound cannot discharge outward as an act, so it turns inward and goes rancid, and then it goes <em>creative</em>. Revenge you cannot take in the world, you take in your head, by building a moral universe in which your enemy is damned and you are saved.</p>
+        <p>Look again at the direction of the two moralities, because this is the whole argument in one move. The noble starts with a yes: I am good, and that is the joyful fact, and the rest of you are a footnote. The slave cannot start there, because the honest first fact about the slave is defeat. So slave morality starts with a no, pointed at the enemy: <em>you</em> are evil. And then, only by bouncing off that no, it gets to itself: and therefore I, who am not you, must be good. It is a morality that has to look outside and hate before it can look inside and approve. It needs an enemy the way a fire needs air.</p>
+        <p>Then comes the sharpest thing in the book, the lambs and the birds of prey. Of course the lambs think the great birds of prey are evil, Nietzsche says, and of course they think themselves good for not being birds of prey. But a lamb that does not carry off lambs is not being virtuous. It is being a lamb. It could not do otherwise if it tried. And there is no little neutral lamb-self sitting behind the lamb, freely choosing meekness, who deserves moral credit for the choice. Strength is not free to act weak. Yet slave morality takes exactly this sleight of hand and builds a religion on it: it treats the strong as if they could simply decide to be harmless, calls them wicked for not deciding it, and calls the weak <em>good</em> for a weakness they never chose.</p>
+        <p>That is the con, stated plainly, and it is genuinely clever and genuinely nasty. Weakness gets relabeled as a moral achievement. "I cannot take revenge" becomes "I forgive." "I cannot win" becomes "I am humble." "I am afraid to act" becomes "I am patient." "I am nobody" becomes "I am meek, and the meek shall inherit the earth." Inability, dressed as virtue and handed a crown. Once you have seen the move you cannot unsee it, and Nietzsche means for it to ruin some of your favorite words.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The keystone sentence, two translations, and one French word</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">First Essay, section 10, the load-bearing sentence of the whole book. The newer Clark and Swensen translation was made to be more literal than Kaufmann's, and the split on the second half is worth seeing. Watch the hinge.</p>
+
+          <div class="stack-v stack-mid stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Walter Kaufmann <span class="star">featured</span></span><span class="stack-vy">1967</span></div>
+            <div class="stack-vt">"While every noble morality develops from a triumphant affirmation of itself, slave morality from the outset says No to what is 'outside,' what is 'different,' what is 'not itself'; and this No is its creative deed."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Clark &amp; Swensen</span><span class="stack-vy">1998</span></div>
+            <div class="stack-vt">"Whereas all noble morality grows out of a triumphant yes-saying to oneself, from the outset slave morality says 'no' to an 'outside,' to a 'different,' to a 'not-self': and this 'no' is its creative deed."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Kaufmann's noble morality is a "triumphant affirmation of itself"; Clark and Swensen sharpen it to a "triumphant yes-saying to oneself," which is closer to the point. The noble says Yes to himself first. The slave can only get to himself by first saying No to someone else. Both keep <em>ressentiment</em> in French, as Nietzsche did inside his German, because plain "resentment" lost the festering, never-let-it-go weight of it. It is not a flash of anger. It is anger with nowhere to go, kept warm for years, slowly turning into a morality.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-your-virtues" data-label="What he calls your virtues" data-tag="The attack">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> The attack on everything this series agrees on</p>
+      <h2 class="station-h">What the rest of this series calls wisdom, he calls a wound</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / The Antichrist, section 2</p>
+        <div class="passage-t">
+          <p>What is good? Everything that heightens the feeling of power in man, the will to power, power itself. What is bad? Everything that is born of weakness. What is happiness? The feeling that power is growing, that resistance is overcome.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the stop where it gets personal for anyone who has read the rest of these posts. Line up the convergence again, the thing the series keeps treating as a quiet miracle. The Tao's water, which wins by yielding and taking the low place everyone else avoids. The Buddha, blowing out craving and the self like a candle. The Sermon on the Mount: blessed are the meek, the poor, the mourning, the persecuted. The Gita's surrender of the fruits of action. AA, naming selfishness as the root of all of it. Confucius deferring, the Stoics shrinking the self to a point. Different oceans, different centuries, one recommendation: get smaller, want less, put yourself last.</p>
+        <p>Nietzsche looks straight at that agreement and refuses to be moved by it. To him it is not many independent witnesses converging on a truth. It is one thing wearing many masks. It is slave morality, total and victorious, having so thoroughly won that its values now look like <em>the</em> values, like air, like wisdom itself. The agreement does not impress him. It frightens him. It is the measure of how completely the revolt succeeded, to the point where the strong themselves now kneel and call kneeling good.</p>
+        <p>His prime target, the virtue he goes after hardest, is the one nearly every tradition treats as holiest: pity. Compassion, fellow-feeling, <span class="de">Mitleid</span>, literally "suffering-with." Watch what he does to it, because it is the whole method in miniature. Pity, he says, is a multiplier of suffering: it spreads the misery from the one who has it to the one who feels for them, so now there are two. It preserves what is failing and ought, by life's own honesty, to be allowed to fail. And it quietly flatters the one doing the pitying while keeping the pitied person down in the role of the helped. A civilization that organizes itself around protecting the weakest, he argues, slowly makes the weakest the measure of everyone, and pulls the whole species down toward them.</p>
+        <p>And then he offers his counter-scoreboard, and it is deliberately monstrous: good is what raises power and life, bad is what comes out of weakness, and the warmth you should trust least is the one that asks you to become less. Here is where honesty costs something, so take it straight. This is not a misreading you can sand off. Nietzsche really does want to rank human beings. He really does hold the herd in contempt, really does think equality and pity are forms of decadence, really does mean for the strong to stop apologizing. The gentle, life-affirming Nietzsche of the inspirational posters is a forgery. The man genuinely believed that the morality you think makes you good is a sickness you caught from people who envied the healthy.</p>
+        <p>So this is the stop, by the design of this whole series, where we let the punch land and keep our hands down. Every other post here is in some sense an answer to this one, a case for why the small self is the wise self. This post does not answer. If "blessed are the meek" can take this hit and stay standing, it stays standing on its own legs, which is the only way it was ever worth anything.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>You believe your humility is a virtue. He believes it is an injury you were taught to wear like a halo. Sit in that for a second before you reach for the rebuttal, because the discomfort is the entire reason he is in this series.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-will-to-power" data-label="The will to power" data-tag="Beyond Good and Evil">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> Beyond Good and Evil, section 13</p>
+      <h2 class="station-h">The will to power, and the word everyone gets wrong</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / Beyond Good and Evil, section 13</p>
+        <div class="passage-t">
+          <p>A living thing seeks above all to <em>discharge</em> its strength, life itself is <em>will to power</em>; self-preservation is only one of the indirect and most frequent <em>results</em>.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Tear down God, tear down morality, and you owe the reader a true picture of what is actually under there, what a human being runs on when you strip off the costumes. Nietzsche's answer is the will to power, the single most misunderstood phrase he ever coined. We have to get it right before the comic books and the dictators do.</p>
+        <p>It does not mainly mean wanting to dominate other people. It is bigger and quieter than that. The will to power is the drive in everything alive to discharge its strength, to grow, to overcome resistance, to extend itself and become more. A tree splitting a rock for light. A child learning to walk. An argument trying to win. A craftsman getting better at the craft. Even self-preservation, even survival itself, Nietzsche says, is only a side effect of this, not the goal. Life does not fundamentally want to keep going. It wants to <em>increase</em>. Power here is closer to "the feeling of getting stronger" than to a boot on someone's neck.</p>
+        <p>He needs this idea because it is his replacement floor, the natural fact he wants to put where God used to be. The English utilitarians, he sneers, think people pursue happiness and the avoidance of pain, which to him is shopkeeper philosophy, a theory of life invented by people who have never felt fully alive. No. Underneath the pleasures and the pains, the one drive is the reach for more, for mastery, for the expansion of what you are.</p>
+        <p>And here is where it loops back and bites the whole earlier argument, in the most Nietzschean twist of all. Slave morality is itself a will to power. It is the will to power of people who had no other kind available. If you cannot dominate with muscle or wealth or armies, there is still one lever left: you can invent a system of values that makes the strong feel guilty and the meek feel holy, and you can conquer the world from below, through its conscience. The meek are not the opposite of the will to power. They are some of its most successful agents. They just found the sneakiest weapon ever built, and they called it goodness.</p>
+      </div>
+
+      <details class="stack">
+        <summary>Four German words that lose everything in English</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">More than most thinkers, Nietzsche turns on a handful of words that English mangles. If you only carry four out of this post, carry these.</p>
+
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">Ressentiment</span><span class="stack-term-lit">kept in French</span></div>
+            <p class="stack-term-b">Not "resentment," which is a passing mood. It is an injury you cannot avenge, kept and fed until it curdles into a whole morality. The hidden engine of the slave revolt. Nietzsche wrote it in French inside his German because German had no word bitter enough.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">Wille zur Macht</span><span class="stack-term-lit">"will to power"</span></div>
+            <p class="stack-term-b">The drive of all life to grow and overcome, not (mainly) to boss people around. The mistranslation into a simple lust for domination is most of what went wrong in the twentieth century. Note too: <b>The Will to Power</b>, the "book," is not a book he wrote. It was stitched together from his discarded notes after he was insane (last stop).</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">Übermensch</span><span class="stack-term-lit">"overman," "superman," "over-human"</span></div>
+            <p class="stack-term-b">The person who can create values out of himself after God. <b>Not</b> a master race and <b>not</b> a comic-book strongman, both of which come straight from bad translations of this one word. We give it its own stop next.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">Umwertung aller Werte</span><span class="stack-term-lit">"revaluation of all values"</span></div>
+            <p class="stack-term-b">The task he set himself: not to swap good things for bad ones, but to put the whole scoreboard on trial, to ask the question morality forbids, which is whether our values are themselves any good.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-overman" data-label="The overman, the value-creator" data-tag="Thus Spoke Zarathustra">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> Thus Spoke Zarathustra, the Prologue</p>
+      <h2 class="station-h">The overman: not a master race, a task</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / Thus Spoke Zarathustra, Prologue, sections 3 to 4</p>
+        <div class="passage-t">
+          <p>I teach you the overman. Man is something that shall be overcome. What have you done to overcome him?</p>
+          <p>Man is a rope, tied between beast and overman, a rope over an abyss. [...] What is great in man is that he is a bridge and not an end.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>If the old values are dead and exposed as somebody's old weapon, then who makes the new ones? Nietzsche's name for the answer is the <span class="de">Übermensch</span>, and we have to clear the wreckage off the word before we can use it. Kaufmann translates it "overman." The older translations said "superman," which handed the twentieth century a strongman in a cape and, far worse, a master race. Both readings are the opposite of what the word is doing.</p>
+        <p>The overman is not a kind of person you are born as. It is not a blood type or a nation or a body. It is a <em>task</em>, and the task is this: to be the one who can stand in the empty space the madman described, the cold place with no God and no inherited values, and not freeze, and not crawl back to the old religion for comfort, but instead create values out of his own substance. To say "this shall be good" and mean it on his own authority, with nothing above him co-signing. The whole argument has been heading here. Once you truly see that values were always made by someone, the nobles making "good and bad," the slaves making "good and evil," the only honest question left is who makes them now, and whether anyone can do it on purpose, eyes open, after God.</p>
+        <p>The rope is the image to keep. Man is a rope stretched across an abyss, tied between the animal he came from and the overman he might become. What is worth anything in a human being, Nietzsche says, is not that he is a destination but that he is a bridge, a crossing-over, a thing that exists to be gotten past. You are not the point. The overcoming is the point, starting with overcoming yourself. That is the part the master-race reading has to delete to function, because a master race is a finish line, a people who have arrived and now sit on top. Zarathustra's overman never arrives. He is permanent self-overcoming, which is the most personal and least tribal idea imaginable.</p>
+        <p>Now the weakness, because it is a real one. Nietzsche is far better at the demolition than the rebuild. He can tell you, with terrible clarity, that the old values are a slave's revenge and that you must now make your own, but he is vague and rhapsodic about how, exactly, a person spins real values out of nothing but their own will without simply inventing a private religion or a justification for doing whatever they wanted anyway. The overman is a direction, a high bar held up against the cold, more than a set of instructions. But you can feel the seriousness of the demand. He is asking whether a human being can grow up all the way, past needing the universe to tuck them in.</p>
+      </div>
+
+      <details class="stack">
+        <summary>One word, a century of trouble: Übermensch</summary>
+        <div class="stack-body">
+          <p class="stack-de" lang="de">Ich lehre euch den Übermenschen.</p>
+          <p class="stack-gloss">"I teach you the ____." The most consequential single word in Nietzsche, and the translators have never agreed. Every choice leaks something.</p>
+
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Thomas Common</span><span class="stack-vy">1909</span></div>
+            <div class="stack-vt">"I teach you the Superman. Man is something that is to be surpassed."</div>
+          </div>
+          <div class="stack-v stack-mid stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Walter Kaufmann <span class="star">featured</span></span><span class="stack-vy">1954</span></div>
+            <div class="stack-vt">"I teach you the overman. Man is something that shall be overcome."</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">R. J. Hollingdale</span><span class="stack-vy">1961</span></div>
+            <div class="stack-vt">"I teach you the Superman."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Adrian Del Caro</span><span class="stack-vy">2006</span></div>
+            <div class="stack-vt">"I teach you the overman."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">The two early translators, Common and Hollingdale, both reached for "Superman," and that one word handed the twentieth century a man in a cape and, far worse, a master race. Kaufmann fought for "overman" to kill the "super" reading, and Del Caro's recent Cambridge version keeps it. The German <em>über</em> is the <em>over</em> of "overcome," not the <em>super</em> of "superior." The word is about getting past the human, starting with yourself, not about being a better grade of human than the people next to you. Notice too that Common says man is "to be surpassed," while Kaufmann says "overcome": Kaufmann's choice keeps the link to "over-man" that the whole image depends on.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-recurrence" data-label="Eternal recurrence and amor fati" data-tag="The Gay Science">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The Gay Science, sections 341 and 276</p>
+      <h2 class="station-h">Would you live this exact life again, forever?</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann / The Gay Science, section 341, "The greatest weight"</p>
+        <div class="passage-t">
+          <p>What, if some day or night a demon were to steal after you in your loneliest loneliness and say to you: "This life as you now live it and have lived it, you will have to live once more and innumerable times more; and there will be nothing new in it, but every pain and every joy and every thought and sigh and everything unutterably small or great in your life will have to return to you, all in the same succession and sequence, even this spider and this moonlight between the trees, and even this moment and I myself."</p>
+          <p>Would you not throw yourself down and gnash your teeth and curse the demon who spoke thus? Or have you once experienced a tremendous moment when you would have answered him: "You are a god and never have I heard anything more divine."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is the constructive heart of the whole grim project, and it is the strangest and most beautiful thing Nietzsche wrote. With God gone, there is no final judge to tell you at the end whether your life was good, no heaven to redeem it, no story arc that pays off your suffering later. So how could you ever know if you built a life worth living? Nietzsche's test is a thought experiment he calls the eternal recurrence, and he calls it "the greatest weight."</p>
+        <p>Imagine, he says, that late one night a demon creeps into your loneliest loneliness and tells you this: the life you are living now, you will live again, and again, infinitely. Not an improved version. This exact one, every detail in the same order, every joy and every humiliation and every wasted afternoon, the spider in the moonlight and this very conversation, forever, with nothing ever new. Would you collapse and curse him? Or have you ever had a single moment so full that you would have called him a god for promising it back?</p>
+        <p>Set aside whether it is literally true. Nietzsche flirted with arguing that the cosmos really does repeat, and you can let that go; as a piece of physics it is a curiosity. As a test it is a guillotine. It asks the one question that survives the death of God. Not "would God approve of this life," but "would <em>you</em> take it again, the whole thing, unedited, on a loop, with no promise of anything better waiting." Most people cannot say yes, and the reason they cannot is that most people are not living their life so much as enduring it, leaning on a someday, a heaven, a retirement, a payoff that excuses the present. Take away the payoff and the question lands with its full weight. This is it. Is it enough?</p>
+        <p>His answer, for the one who passes, is two Latin words he loved: <span class="de">amor fati</span>, love of fate. Not gritted-teeth acceptance, not grim resignation, not making peace with your lot. Something much steeper: to want your life, all of it, the necessary and the awful together, so completely that you would clamp it to you and demand it again. The passage that gives the idea its name reads almost like a vow. "I want to learn more and more to see as beautiful what is necessary in things," he wrote. "Amor fati: let that be my love from henceforth! ... some day I wish to be only a Yes-sayer." The same man who wrote the cruelest pages in modern philosophy spent his deepest energy on the hardest possible Yes to being alive. Strip out God, strip out the inherited values, strip out the comfort of pity, and what he is clearing the ground for is a person who can love their one real life without needing anything above it to sign the permission slip.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>"Would God approve?" was the old question, and God is dead, so it is closed. "Would you live it again, exactly, forever?" is the question he puts in its place. It needs no heaven, no judge, and no lie. It only needs you to look honestly at the actual life and say yes or no.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-theft" data-label="The theft: his sister and the Nazis" data-tag="1889 to 1945">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> What was done to him after he could no longer speak</p>
+      <h2 class="station-h">The theft: his sister, the forgery, and the Nazis</h2>
+
+      <div class="passage">
+        <p class="passage-k">Kaufmann's edition / Nietzsche to his sister Elisabeth, around Christmas 1887</p>
+        <div class="passage-t">
+          <p>It is a matter of honor with me to be absolutely clean and unequivocal in relation to anti-Semitism, namely, opposed to it, as I am in my writings.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Now the part you have to tell carefully, because it is the most famous thing "everyone knows" about Nietzsche, and most of what everyone knows is wrong in both directions. Take the facts flat.</p>
+        <p>In January 1889, in a square in Turin, Nietzsche broke down. The story everyone tells, that he saw a cabman beating a horse and threw his arms around its neck to shield it, is a good story and probably not true; it surfaces only years later, from his landlord's family, and the people who came to collect him recorded only that he had collapsed. What is certain is the result. He was forty-four. He never wrote a sane sentence again. He spent his last eleven years as an invalid, tended first by his mother and then by his sister, mostly silent, and died in 1900 without the faintest idea what was coming. Everything done with his name was done while he was insane or dead. He got no vote.</p>
+        <p>His sister got the only vote that counted. Elisabeth Förster-Nietzsche had married Bernhard Förster, one of Germany's loudest antisemitic agitators, a man who helped organize the petition to strip German Jews of their rights, and the two of them had sailed to Paraguay to plant a racially pure "Aryan" colony in the jungle. It collapsed; Förster, broke and exposed as a swindler, killed himself. Elisabeth came home, took legal control of her helpless brother and every page he had ever written, built an archive around him, and crowned herself the keeper of his meaning. Then she went to work on the meaning itself.</p>
+        <p>She gathered up the notes he had written and thrown away and published them as a finished book, <em>The Will to Power</em>, arranged to look like the philosophical system he had never actually built. She decided who saw the manuscripts. She suppressed what embarrassed her, doctored what she kept, and is documented to have faked correspondence, in one notorious case dripping ink over the word "mother" so that a letter written to their mother would read as a letter to her. And she aimed the whole monument at German nationalism and the antisemitism her brother had spent his sane life despising.</p>
+        <p>She lived long enough to make the gift official. She fell for Mussolini first, then for Hitler. Hitler came to the archive in Weimar; there is a photograph of him gazing up at the bust of the philosopher whose words were now being printed on a politics of conquest. She gave him, by most accounts, her brother's walking stick. When she died in 1935, Hitler came to the funeral. The regime took the looted vocabulary, will to power, master morality, blond beast, superman, and stamped it on the Reich.</p>
+        <p>Now the correction, which has to be quoted rather than asserted, because this is the part a hostile reader came for. The real Nietzsche had broken with Wagner, his early idol, as Wagner sank into German-Christian piety and the antisemitic Bayreuth set. In the books he actually published, he called the Jews "the strongest, toughest, and purest race" in Europe and said it would be fair to throw the "anti-Semitic screamers" out of the country. He filed the antisemites of his day under the very diagnosis this post has been building, the resentful sick, taking their revenge on the strong. He mocked German nationalism without mercy: "'Deutschland, Deutschland über alles,'" he wrote, "I fear that was the end of German philosophy." And days into his collapse, scrawling deranged postcards signed "Dionysos," one of the things his breaking mind reached for was the line that he was "just having all anti-Semites shot."</p>
+        <p>But do not over-correct, because the comfortable version is a lie too. The appropriation was a distortion, not an invention from nothing. Nietzsche really did rank human beings and hold the herd in contempt. He really did write "master morality" and "the blond beast" and dream of a higher type bred up out of the mediocre mass. He really did call pity and equality forms of decadence, and really did write, in plain published German, that the weak and the failing should be allowed to perish rather than propped up. The Nazis read him dishonestly, tearing the lines they liked out of the argument and ignoring everything he said about Germany and the Jews. But they were not reading a pacifist, and pretending he was a gentle humanist insults both your intelligence and his. The honest sentence holds both halves: they lied about what he meant, and he had handed them a vocabulary built for the looting.</p>
+        <p>The rescue came after the war. Walter Kaufmann, whose translation runs through this whole post, a German Jew who had fled the Nazis and come back as an American professor, pulled the real Nietzsche out of his sister's wreckage; the Italian editors Giorgio Colli and Mazzino Montinari went to the manuscripts and showed exactly what she had cut, moved, and faked. The letter at the top of this stop is part of that story. The original in Nietzsche's own hand is lost. What survives is a copy his sister kept, and scholars trust it precisely because she had every reason to burn it.</p>
+      </div>
+    </section>
+
+    <!-- ============================ CLOSING ============================ -->
+    <section class="sec">
+      <div class="u-sechead" style="margin-top:clamp(3rem,6vw,4.4rem)"><p class="u-sechead-k">The end of the walk</p><h2 class="u-sechead-h">The one book we leave standing</h2></div>
+      <p>So we leave him there, in the marketplace, lantern lit in the morning, having told the crowd something they were not ready to hear. Every other post in this series is, in its way, a defense of the small self: lose it, yield it, serve through it, spend it on others. Each one can be read as an answer to the man in this post. And a series that only ever introduced you to the books that agree with each other would be a comfort, not an education.</p>
+      <p>He is the stress test. He stands at the exact spot where all the traditions converge, the place where they all say "make yourself less," and he says that agreement is the fingerprint of an ancient revenge, that your humility is inherited helplessness, that your pity is a slow poison, that the meekness you were taught to be proud of is a wound someone talked you into calling a virtue. We have not rebutted a word of it, on purpose. If "blessed are the meek" survives this, it survives because it is true and strong, not because we kept the strongest objection out of the room.</p>
+      <p>And it would be against everything he wrote to end by telling you what to think of him. He did not want disciples; he wanted to be gotten through and left behind, a bridge and not an end. So: decide for yourself. Read the man in the marketplace one more time and ask which one he is. The lunatic raving at dawn, or the only person in the square who is actually awake.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured translation throughout is <strong>Walter Kaufmann's</strong>, the editions that made Nietzsche legible in English after the war: <em>The Gay Science</em> (Vintage, 1974), <em>Beyond Good and Evil</em> (Vintage, 1966), <em>On the Genealogy of Morals</em> (with R. J. Hollingdale, Vintage, 1967), <em>Thus Spoke Zarathustra</em> and <em>The Antichrist</em> (in <em>The Portable Nietzsche</em>, Viking, 1954). Every quotation is verbatim; the side panels stack Kaufmann against the other major translators on the lines where they most famously diverge, and every translator is named.</p>
+      <ul class="src-list">
+        <li><b>The featured walk</b> is Walter Kaufmann (Princeton), whose 1950 book and translations rescued Nietzsche from his sister's distortions and the Nazi reading.</li>
+        <li><b>The comparison panels</b> stack <b>R. J. Hollingdale</b> (the other standard postwar translator, Penguin), <b>Maudemarie Clark and Alan J. Swensen</b> (the more literal <em>Genealogy</em>, Hackett, 1998), and the early <b>Thomas Common</b> (1909) and modern <b>Adrian Del Caro</b> (Cambridge, 2006) renderings of <em>Übermensch</em>.</li>
+        <li><b>The two books that carry the argument</b> are <em>Beyond Good and Evil</em> (1886) and <em>On the Genealogy of Morals</em> (1887); the famous lines come from <em>Thus Spoke Zarathustra</em> (1883 to 1885), <em>The Gay Science</em> (1882, expanded 1887), and <em>The Antichrist</em> (1888).</li>
+        <li><b>On the life and the misappropriation</b>, the account draws on the <a href="https://plato.stanford.edu/entries/nietzsche/">Stanford Encyclopedia of Philosophy</a> entry on Nietzsche, Walter Kaufmann's <em>Nietzsche: Philosopher, Psychologist, Antichrist</em> (1950), and Sue Prideaux's biography <em>I Am Dynamite!</em> (2018).</li>
+      </ul>
+      <p>One honest note about the sources themselves. <em>The Will to Power</em> is quoted nowhere here as if it were a book Nietzsche wrote, because it is not one: it is a selection of his discarded notebooks, arranged after his collapse by his sister and Peter Gast to look like a system. The genuine ideas it contains are also in the books he chose to publish, and those are what this walk uses. The breakdowns are mine. Most of the translations are still in copyright; they appear here in short excerpts, for comparison and study, with every translator named. One mechanical note, since Nietzsche loved the dash: this site sets none, so where a translator used an em dash I have rendered it as a comma or a period and kept every word exact.</p>
+      <p class="colo-note">The portrait in the opening and on the homepage card is Edvard Munch's <em>Friedrich Nietzsche</em> (1906), painted for the Swedish collector Ernest Thiel and now in the Thielska Galleriet, Stockholm. Munch died in 1944; the painting is in the public domain. He never met his subject, and painted him from photographs as a figure at a railing above a burning sky.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/nietzsche.js" defer></script>
+</body>
+</html>
