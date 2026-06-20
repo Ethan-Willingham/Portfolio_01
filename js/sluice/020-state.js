@@ -1364,7 +1364,7 @@
     TURN_OMEGA_MULT: 0.80,  // spin-cap authority while thrusting
     TURN_EASE: 12,          // 1/s ease between coast/thrust turn regimes
     // --- speed envelope: soft cap + dive-earned overshoot ---
-    SOFT_CAP: 400,     // px/s sustained envelope (aero wall, not a clamp)
+    SOFT_CAP: 215,     // px/s sustained envelope (aero wall, not a clamp). ~15 MPH surface cruise (owner 2026-06: left/right should read ~15, was ~28). Underground flight uses UNDERGROUND_AIR_SPEED, unaffected.
     OVER_K: 60,        // steepness of the overspeed drag wall
     DIVE_OVER: 1.45,   // max earned cap multiplier from a committed dive
     OVER_GAIN: 0.28,   // how fast diving earns overshoot budget
@@ -1403,11 +1403,11 @@
     // The shipped default: balanced hero rig (swoop with honest weight).
     'Stock Rig': buildFlight2Preset({}),
     // Draggy workhorse: steeper glides, lower envelope, boom takes real commitment.
-    'Heavy Hauler': buildFlight2Preset({ CD0: 0.16, K_IND: 0.45, AREA_K: 0.0095, LINDAMP_MULT: 0.55, SOFT_CAP: 375, OVER_K: 70, DIVE_OVER: 1.35, OVER_GAIN: 0.24, FALL_CAP: 940, GE_LIFT: 0.12, STIFF_V: 430, BOOM_V: 520 }),
+    'Heavy Hauler': buildFlight2Preset({ CD0: 0.16, K_IND: 0.45, AREA_K: 0.0095, LINDAMP_MULT: 0.55, SOFT_CAP: 200, OVER_K: 70, DIVE_OVER: 1.35, OVER_GAIN: 0.24, FALL_CAP: 940, GE_LIFT: 0.12, STIFF_V: 430, BOOM_V: 520 }),
     // Long floaty glides, generous deck cushion, gentle early stall.
-    'Sailplane': buildFlight2Preset({ CD0: 0.05, K_IND: 0.18, AREA_K: 0.014, LINDAMP_MULT: 0.30, SOFT_CAP: 420, DIVE_OVER: 1.55, OVER_DECAY: 3.0, GE_LIFT: 0.14, GE_SPAN: 100, STALL_A: 0.27, BOOM_V: 590 }),
+    'Sailplane': buildFlight2Preset({ CD0: 0.05, K_IND: 0.18, AREA_K: 0.014, LINDAMP_MULT: 0.30, SOFT_CAP: 225, DIVE_OVER: 1.55, OVER_DECAY: 3.0, GE_LIFT: 0.14, GE_SPAN: 100, STALL_A: 0.27, BOOM_V: 590 }),
     // Loose and fast: big coast-whip contrast, easy boom, weak assists.
-    'Daredevil': buildFlight2Preset({ TURN_THRUST_MULT: 0.52, TURN_OMEGA_MULT: 0.72, DIVE_OVER: 1.65, OVER_GAIN: 0.34, OVER_DECAY: 3.4, SOFT_CAP: 410, BOOM_V: 545, STIFF_MIN: 0.55, WV_TORQUE: 4.0, FALL_CAP: 1060 }),
+    'Daredevil': buildFlight2Preset({ TURN_THRUST_MULT: 0.52, TURN_OMEGA_MULT: 0.72, DIVE_OVER: 1.65, OVER_GAIN: 0.34, OVER_DECAY: 3.4, SOFT_CAP: 220, BOOM_V: 545, STIFF_MIN: 0.55, WV_TORQUE: 4.0, FALL_CAP: 1060 }),
     // The pre-aero v24.64 model: every aero term off, hard caps back.
     'Classic (no aero)': buildFlight2Preset({ ENABLE: 0 })
   };
@@ -1423,7 +1423,7 @@
   // paradigm — never a flip. Registered as the 'vtol' GM group (L panel).
   var vtolTune = {
     acc: 850,         // px/s^2 direct horizontal authority (the "wings" half)
-    speed: 420,       // px/s cruise cap — input stops pushing here (~rotation cruise)
+    speed: 215,       // px/s cruise cap — input stops pushing here. ~15 MPH surface cruise (owner 2026-06: was ~29)
     fric: 240,        // px/s^2 no-input horizontal bleed (a little glide-slide)
     revBoost: 1.9,    // accel multiplier while opposing your own vx (dodge flips)
     climbForce: 1500, // px/s^2 peak upward force
@@ -1437,11 +1437,11 @@
   // owner picks by feel). Full bundles — applying one is deterministic.
   var VTOL_PRESETS = {
     // The shipped default: crisp strafe authority, real fall, dodge-flip bite.
-    Strafe:  { acc: 850, speed: 420, fric: 240, revBoost: 1.9, climbForce: 1500, climbTerm: -380, gravity: 760, gravRelief: 0.30, overBleed: 0.55, tilt: 0.34 },
+    Strafe:  { acc: 850, speed: 215, fric: 240, revBoost: 1.9, climbForce: 1500, climbTerm: -380, gravity: 760, gravRelief: 0.30, overBleed: 0.55, tilt: 0.34 },
     // Light and hangy: softer pull, long slide, gentler climb — the lazy cruiser.
-    Feather: { acc: 700, speed: 400, fric: 140, revBoost: 1.6, climbForce: 1400, climbTerm: -330, gravity: 620, gravRelief: 0.42, overBleed: 0.40, tilt: 0.30 },
+    Feather: { acc: 700, speed: 210, fric: 140, revBoost: 1.6, climbForce: 1400, climbTerm: -330, gravity: 620, gravRelief: 0.42, overBleed: 0.40, tilt: 0.30 },
     // Mass: strong engine, hard fall, deliberate direction changes, keeps speed.
-    Freight: { acc: 600, speed: 440, fric: 320, revBoost: 1.5, climbForce: 1650, climbTerm: -300, gravity: 880, gravRelief: 0.25, overBleed: 0.70, tilt: 0.40 }
+    Freight: { acc: 600, speed: 230, fric: 320, revBoost: 1.5, climbForce: 1650, climbTerm: -300, gravity: 880, gravRelief: 0.25, overBleed: 0.70, tilt: 0.40 }
   };
   var FLIGHT_MODE_NAMES = ['today (legacy)', 'full rotation', 'VTOL hover'];
   var lastTime = 0;
