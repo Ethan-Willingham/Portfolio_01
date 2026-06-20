@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Dhammapada, Side by Side</title>
+  <meta name="description" content="All 423 verses of the Dhammapada in the original Pali, then every English translation I could gather stacked against each other, with a plain breakdown of the keystone verses and where the translators split.">
+  <meta property="og:title" content="The Dhammapada, Side by Side">
+  <meta property="og:description" content="The Buddha's verses open on one word: mind. One translator calls it mind, another the heart, another intention, another 'all that we are.' All 423 verses, the Pali source, and a stack of English translations, broken apart verse by verse.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/dhammapada.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/dhammapada-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/dhammapada-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE DHAMMAPADA, SIDE BY SIDE
+     An interactive reader: 423 verses, the romanized Pali source,
+     and every English translation in the corpus, with a plain
+     breakdown of the keystone verses. Sits in the site shell
+     (forest green, parchment, Century Supra / Segoe UI / Commit
+     Mono). The Pali source needs a face with full diacritics;
+     everything else stays on the three site fonts. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 840px;                 /* reading column */
+    --pali-font: "Century Supra A", "Gentium Plus", "Noto Serif", "Times New Roman", serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .pali-inline { font-family: var(--pali-font); font-style: normal; color: var(--text-bright); }
+
+  /* the opening "fan": one line of Pali, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-pali { font-family: var(--pali-font); font-size: clamp(1.5rem, 4.6vw, 2.2rem); color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.5rem; line-height: 1.3; }
+  .fan-pali small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.8rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .dhp { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .dhp-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .dhp-step { display: flex; align-items: center; gap: 0.4rem; }
+  .dhp-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .dhp-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .dhp-nav:disabled { opacity: 0.3; cursor: default; }
+  .dhp-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; }
+  .dhp-jump:hover { background: rgba(255,255,255,0.05); }
+  .dhp-jump #dhp-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
+  .dhp-keys { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+  .dhp-keys button { font-family: var(--font-heading); font-size: 1.1rem; line-height: 1; width: 1.5rem; height: 1.5rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.1rem; }
+  .dhp-keys button:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .dhp-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .dhp-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
+  .dhp-views button:hover { color: var(--text-bright); }
+  .dhp-views button.is-on { background: var(--accent); color: #2a3128; }
+  .dhp-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .dhp-count b { color: var(--accent); font-weight: 400; }
+
+  /* the verse index, grouped by vagga */
+  .dhp-grid { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 60vh; overflow-y: auto; }
+  .dhp-grid[hidden] { display: none; }
+  .dhp-gridsec { margin-bottom: 0.7rem; }
+  .dhp-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 0.35rem; text-transform: uppercase; }
+  .dhp-gridlabel span { color: var(--accent); margin-right: 0.5em; text-transform: none; letter-spacing: 0.02em; }
+  .dhp-gridrow { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  .dhp-grid button { font-family: var(--font-mono); font-size: 0.72rem; aspect-ratio: 1; border: 1px solid transparent; border-radius: 6px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; position: relative; }
+  .dhp-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .dhp-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+  .dhp-grid button.has-note { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .dhp-grid button.has-note::after { content: ""; position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+  .dhp-grid button.has-note.is-cur::after { background: #2a3128; }
+
+  /* source */
+  .dhp-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .dhp-pali-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .dhp-pali-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
+  .dhp-pali { font-family: var(--pali-font); font-size: clamp(1.2rem, 3.2vw, 1.55rem); line-height: 1.75; color: var(--text-bright); letter-spacing: 0.01em; margin: 0; text-wrap: pretty; }
+
+  /* commentary */
+  .dhp-notes { margin: 1rem 0 0; }
+  .dhp-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .dhp-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .dhp-note-k:first-child { margin-top: 0; }
+  .dhp-note-gist, .dhp-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .dhp-note-gist em, .dhp-note-read em, .dhp-splits em { font-style: italic; color: var(--text-bright); }
+  .dhp-note-gist b, .dhp-splits b { font-weight: 600; color: var(--text-bright); }
+  .dhp-note-read { color: var(--text-dim); font-style: italic; }
+  .dhp-splits { margin: 0; }
+  .dhp-splits dt { font-family: var(--pali-font); font-size: 1.18rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.01em; }
+  .dhp-splits dt .dhp-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
+  .dhp-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .dhp-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
+  .dhp-keylink { font-family: inherit; font-style: italic; font-size: inherit; color: var(--accent); background: none; border: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 0; cursor: pointer; }
+  .dhp-keylink:hover { color: var(--accent-hover); }
+
+  /* translations */
+  .dhp-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .dhp-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .dhp-v:last-child { border-bottom: 1px solid var(--rule); }
+  .dhp-early  { border-left-color: var(--early); }
+  .dhp-mid    { border-left-color: var(--mid); }
+  .dhp-modern { border-left-color: var(--modern); }
+  .dhp-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .dhp-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .dhp-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .dhp-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
+  .dhp-vt .dhp-br { display: block; height: 0.6em; }
+  .dhp-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .dhp .dhp-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .dhp.dhp-ready .dhp-body { opacity: 1; }
+  .dhp-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .dhp.dhp-ready .dhp-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    .fan-pali { font-size: 1.3rem; padding: 1.1rem 1rem 0.4rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .dhp-bar { gap: 0.55rem 0.7rem; }
+    .dhp-count { margin-left: 0; flex-basis: 100%; }
+    .dhp-source, .dhp-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .dhp-v { padding-left: 0.9rem; }
+    .dhp-gridrow { grid-template-columns: repeat(8, 1fr); }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Dhammapada, side by side</h1>
+    <p class="hero-dek">The Buddha's verses open on a single word: <em>mano</em>, mind. One translator calls it mind, another the heart, another intention, another just <em>all that we are</em>. Here is the whole book at once.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>423 verses</b>, 26 chapters <span class="sep">/</span> <b>Pali source</b> plus stacked translations <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">The Dhammapada is the verse most Buddhists can quote from memory, and the most read of all the old Buddhist books. It is short: 423 verses, the length of a long pamphlet. It is also two and a half thousand years old, written in Pali, and the translators do not agree on what its very first line says.</p>
+      <p>The whole of the Buddha's psychology is supposed to sit in that first line, four Pali words: <span class="pali-inline">Manopubbaṅgamā dhammā</span>. Every translator agrees it is the keystone. None of them renders it the same way. The word <span class="pali-inline">mano</span> is mind, or heart, or intention. The word <span class="pali-inline">dhammā</span> is mental states, or experiences, or phenomena, or just everything. Watch seven readers cross the same four words.</p>
+
+      <div class="fan">
+        <p class="fan-pali">Manopubbaṅgamā dhammā<small>verse 1, line 1 &middot; four words said to hold the whole of the teaching</small></p>
+        <ul class="fan-list">
+          <li><span class="e">All that we are is the result of what we have thought.</span><span class="who">Müller, 1881</span></li>
+          <li><span class="e">All states arising have mind for their causing.</span><span class="who">Wagiswara &amp; Saunders, 1912</span></li>
+          <li><span class="e">All the phenomena of existence have mind as their precursor.</span><span class="who">Kaviratna, 1980</span></li>
+          <li><span class="e">Mind precedes all mental states.</span><span class="who">Buddharakkhita, 1985</span></li>
+          <li><span class="e">Phenomena are preceded by the heart.</span><span class="who">Thanissaro, 1997</span></li>
+          <li><span class="e">All things are preceded by the mind.</span><span class="who">Suddhaso, 2016</span></li>
+          <li><span class="e">Intention shapes experiences.</span><span class="who">Sujato, 2021</span></li>
+        </ul>
+      </div>
+
+      <p>Same four words. One reader makes it about thought, one about mind, one about the heart, one about raw intention. None is wrong. Pali has no exact English for <span class="pali-inline">mano</span> or <span class="pali-inline">dhamma</span>, so each translator has to decide what the Buddha meant before they can write the line, and they decide differently. That spread is the subject of this page.</p>
+      <p>Below is the whole book, all 423 verses, in the order the tradition fixed them. For each verse you get the Pali, then every English version I could gather, stacked so you can read them against each other. For the load-bearing verses, the ones the rest of the tradition leans on, there is a plain-language breakdown of what the verse is doing and where the translators part ways. The gold-dotted verses in the index are the ones with a breakdown. Use the arrows or your keyboard to move between verses.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="dhp" id="dhp">
+      <div class="dhp-bar">
+        <div class="dhp-step">
+          <button class="dhp-nav" id="dhp-prev" aria-label="Previous verse">&lsaquo;</button>
+          <button class="dhp-jump" id="dhp-jump" aria-label="Jump to a verse"><span id="dhp-vno">Verse 1</span><span id="dhp-title"></span></button>
+          <button class="dhp-nav" id="dhp-next" aria-label="Next verse">&rsaquo;</button>
+        </div>
+        <div class="dhp-keys" aria-label="Jump between keystone verses">
+          <button id="dhp-keyprev" aria-label="Previous keystone verse">&lsaquo;</button>
+          keystones
+          <button id="dhp-keynext" aria-label="Next keystone verse">&rsaquo;</button>
+        </div>
+        <div class="dhp-views" id="dhp-views" role="group" aria-label="How many translations to show">
+          <button data-view="key" class="is-on">Key</button>
+          <button data-view="complete">Complete</button>
+          <button data-view="all">All</button>
+        </div>
+        <div class="dhp-count" id="dhp-count"></div>
+      </div>
+
+      <div class="dhp-grid" id="dhp-gridpop" hidden aria-label="Verse index, grouped by chapter"></div>
+
+      <div class="dhp-body">
+        <div class="dhp-source" id="dhp-source"></div>
+        <div class="dhp-notes" id="dhp-notes"></div>
+        <div class="dhp-versions" id="dhp-versions"></div>
+      </div>
+      <div class="dhp-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/dhammapada-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every translation here is reproduced verbatim. I pulled each one with scripts and parsed it, so nothing was retyped or rephrased by hand or by a model. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
+      <ul class="src-list">
+        <li><b>The Pali</b> is the romanized Mahasangiti edition, segmented verse by verse, from <a href="https://suttacentral.net/dhp">SuttaCentral</a> (dedicated to the public domain).</li>
+        <li><b>Thanissaro Bhikkhu</b> (1997) and <b>Acharya Buddharakkhita</b> (1985) come from <a href="https://www.accesstoinsight.org/tipitaka/kn/dhp/">Access to Insight</a>, which distributes both for free.</li>
+        <li><b>Bhikkhu Sujato</b> (2021) and <b>Bhikkhu Suddhaso</b> (2016) are from SuttaCentral; Sujato's is a public-domain dedication.</li>
+        <li><b>F. Max Müller</b> (1881), the first scholarly English Dhammapada, and <b>Wagiswara and Saunders</b> (1912), a metrical verse rendering, are both from <a href="https://www.gutenberg.org/ebooks/2017">Project Gutenberg</a> (public domain).</li>
+        <li><b>Harischandra Kaviratna</b> (1980) is the bilingual Theosophical University Press edition, online at <a href="https://www.theosociety.org/pasadena/dhamma/dham-hp.htm">theosociety.org</a>.</li>
+      </ul>
+      <p>Seven complete English translations, then, spanning 140 years, from Müller's Victorian Sanskritist English to the contemporary monastic readings. They are stacked verbatim because each one could be fetched verbatim. The famous modern translations the breakdowns point to, Eknath Easwaran, Juan Mascaró, Gil Fronsdal, Glenn Wallis, Narada Thera, Daw Mya Tin, and others, are still in copyright and printed in books, not posted as clean machine-readable text, so rather than retype them by hand and risk a wrong word, I name them in the breakdowns where their choice matters and leave the verbatim stack to the six I could quote exactly.</p>
+      <p>The breakdowns are mine. They lean on the standard scholarship and on Buddhaghosa's fifth-century commentary, which tells a back-story for every verse. The Pali word glosses are checked against the Pali Text Society edition and the analysis at SuttaCentral.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The painting on the homepage card is a leaf from a 19th-century Thai manuscript of the Phra Malai, a Theravada Buddhist text, with the verses written in the Khom script (LACMA, public domain). This reader follows the Theravada Dhammapada, the older Pali canon. A Mahayana reader would not put the same verses at the center, and where that matters a breakdown says so.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/dhammapada-notes.js" defer></script>
+  <script src="js/dhammapada-data.js" defer></script>
+  <script src="js/dhammapada.js" defer></script>
+</body>
+</html>
