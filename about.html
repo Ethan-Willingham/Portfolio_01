@@ -101,11 +101,29 @@
   .co-sw-role { font-size: 0.8rem; color: var(--text-dim); line-height: 1.35; margin-top: 0.1rem; }
   .co-palette-lbl { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin: 2rem 0 0.9rem; }
   .co-palette-lbl:first-child { margin-top: 0; }
-  /* ---- the accent palette as one flush, hue-ordered band ---- */
-  .pal-band { display: flex; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 28px -14px rgba(0,0,0,0.65); }
-  .pal-band > span { flex: 1; height: clamp(104px, 15vw, 144px); }
+  /* ---- the accent palette: a flush hue-ordered band with a copyable detail popover ---- */
+  .pal-wrap { position: relative; }
+  .pal-band { display: flex; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 28px -14px rgba(0,0,0,0.65); border: 1px solid rgba(245,241,234,0.08); }
+  .pal-seg { flex: 1; height: clamp(104px, 15vw, 144px); margin: 0; padding: 0; border: 0; display: block; background: var(--c); cursor: pointer; transition: box-shadow 0.18s ease; -webkit-tap-highlight-color: transparent; }
+  .pal-seg.is-active { box-shadow: inset 0 0 0 2px rgba(245,241,234,0.62); }
+  .pal-seg:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--text-bright); }
   .pal-names { display: flex; margin: 0.7rem 0 0; }
-  .pal-names > span { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.02em; color: var(--text-dim); padding: 0 2px; }
+  .pal-names > span { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.02em; color: var(--text-dim); padding: 0 2px; transition: color 0.18s ease; }
+  .pal-names > span.is-active { color: var(--text-bright); }
+  .pal-pop { position: absolute; z-index: 20; width: 238px; background: rgba(20, 25, 21, 0.97); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(245,241,234,0.15); border-radius: 14px; padding: 0.85rem 0.9rem 0.6rem; box-shadow: 0 18px 44px -16px rgba(0,0,0,0.85); opacity: 0; transform: translateY(5px); transition: opacity 0.16s ease, transform 0.16s ease; pointer-events: none; }
+  .pal-pop.is-on { opacity: 1; transform: none; pointer-events: auto; }
+  .pal-pop-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
+  .pal-pop-sw { width: 36px; height: 36px; border-radius: 9px; flex: none; border: 1px solid rgba(245,241,234,0.16); }
+  .pal-pop-name { font-family: var(--font-heading); font-size: 1.08rem; color: var(--text-bright); line-height: 1.1; text-transform: capitalize; }
+  .pal-pop-var { display: block; font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-faint); margin-top: 0.12rem; }
+  .pal-pop-row { display: flex; align-items: center; gap: 0.55rem; width: 100%; border: 0; background: none; cursor: pointer; text-align: left; padding: 0.34rem 0.42rem; border-radius: 7px; transition: background 0.15s ease; }
+  .pal-pop-row:hover, .pal-pop-row:focus-visible { background: rgba(245,241,234,0.07); outline: none; }
+  .pal-pop-k { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); width: 44px; flex: none; }
+  .pal-pop-v { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }
+  .pal-pop-cp { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); opacity: 0; transition: opacity 0.15s ease, color 0.15s ease; }
+  .pal-pop-row:hover .pal-pop-cp, .pal-pop-row:focus-visible .pal-pop-cp { opacity: 0.85; }
+  .pal-pop-row.copied .pal-pop-cp { opacity: 1; color: #9ec79a; }
+  @media (hover: none) { .pal-pop-cp { opacity: 0.7; } }
 
   /* type: specimens */
   .co-faces { display: grid; gap: 16px; }
@@ -228,6 +246,18 @@
   .ma-mind-name { font-family: var(--font-heading); font-size: 1.02rem; color: var(--text-bright); font-weight: 700; letter-spacing: -0.01em; }
   .ma-mind-fuel { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.01em; }
   .ma-mind-posts { font-family: var(--font-body); font-size: 0.72rem; color: #8d9387; }
+  /* the model chips double as a single-select filter for the tile grid below */
+  button.ma-mind { font: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: transform 0.22s var(--ma-spring), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease; }
+  @media (hover: hover) { button.ma-mind:hover { transform: translateY(-2px); background: var(--ma-card-hi); border-color: var(--ma-hair-2); } }
+  button.ma-mind:active { transform: translateY(0); }
+  button.ma-mind:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--mc, var(--accent)); }
+  .ma-mind.is-active { background: var(--ma-card-hi); border-color: var(--mc); box-shadow: inset 0 0 0 1px var(--mc), 0 0 20px -5px var(--mc); }
+  .ma-minds.is-filtering button.ma-mind:not(.is-active) { opacity: 0.4; }
+  @media (hover: hover) { .ma-minds.is-filtering button.ma-mind:not(.is-active):hover { opacity: 0.78; } }
+  .ma-filter-hint { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: -0.5rem 0 1.45rem; min-height: 1.25em; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); }
+  .ma-filter-hint b { font-weight: 700; }
+  .ma-filter-clear { font: inherit; font-size: 0.8rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+  .ma-filter-clear:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .ma-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 1rem; margin-bottom: 1.4rem; }
   .ma-toggle { position: relative; display: inline-flex; padding: 3px; background: #232a24; border: 1px solid var(--ma-hair); border-radius: 999px; }
   .ma-seg { position: relative; z-index: 2; border: 0; background: none; cursor: pointer; font-family: var(--font-body); font-size: 0.82rem; font-weight: 600; color: var(--text-dim); padding: 0.4rem 0.95rem; border-radius: 999px; transition: color 0.25s ease; }
@@ -375,20 +405,24 @@
               <p class="co-spec-note">The muted accents a post paints with, every one dialed to the same softness so they read as a family.</p>
             </div>
             <div class="co-stage">
-              <div class="pal-band">
-                <span style="background:#8fb3c7"></span>
-                <span style="background:#b79bc4"></span>
-                <span style="background:#deb9cf"></span>
-                <span style="background:#b8796d"></span>
-                <span style="background:#d9978c"></span>
-                <span style="background:#cf9f78"></span>
-                <span style="background:#bc9d65"></span>
-                <span style="background:#dfc288"></span>
-                <span style="background:#9ec79a"></span>
-                <span style="background:#6f9a6c"></span>
-              </div>
-              <div class="pal-names">
-                <span>blue</span><span>purple</span><span>rose</span><span>brick</span><span>coral</span><span>clay</span><span>deep gold</span><span>gold</span><span>sage</span><span>pine</span>
+              <div class="pal-wrap">
+                <div class="pal-band" id="palBand">
+                  <button class="pal-seg" type="button" style="--c:#8fb3c7" data-name="blue" data-hex="#8FB3C7" aria-label="blue, hex #8FB3C7"></button>
+                  <button class="pal-seg" type="button" style="--c:#b79bc4" data-name="purple" data-hex="#B79BC4" aria-label="purple, hex #B79BC4"></button>
+                  <button class="pal-seg" type="button" style="--c:#deb9cf" data-name="rose" data-hex="#DEB9CF" data-var="--emphasis" aria-label="rose, hex #DEB9CF"></button>
+                  <button class="pal-seg" type="button" style="--c:#b8796d" data-name="brick" data-hex="#B8796D" aria-label="brick, hex #B8796D"></button>
+                  <button class="pal-seg" type="button" style="--c:#d9978c" data-name="coral" data-hex="#D9978C" aria-label="coral, hex #D9978C"></button>
+                  <button class="pal-seg" type="button" style="--c:#cf9f78" data-name="clay" data-hex="#CF9F78" aria-label="clay, hex #CF9F78"></button>
+                  <button class="pal-seg" type="button" style="--c:#bc9d65" data-name="deep gold" data-hex="#BC9D65" aria-label="deep gold, hex #BC9D65"></button>
+                  <button class="pal-seg" type="button" style="--c:#dfc288" data-name="gold" data-hex="#DFC288" aria-label="gold, hex #DFC288"></button>
+                  <button class="pal-seg" type="button" style="--c:#9ec79a" data-name="sage" data-hex="#9EC79A" aria-label="sage, hex #9EC79A"></button>
+                  <button class="pal-seg" type="button" style="--c:#6f9a6c" data-name="pine" data-hex="#6F9A6C" aria-label="pine, hex #6F9A6C"></button>
+                  <button class="pal-seg" type="button" style="--c:#303931" data-name="background" data-hex="#303931" data-var="--bg" aria-label="background, hex #303931"></button>
+                </div>
+                <div class="pal-names">
+                  <span>blue</span><span>purple</span><span>rose</span><span>brick</span><span>coral</span><span>clay</span><span>deep gold</span><span>gold</span><span>sage</span><span>pine</span><span>background</span>
+                </div>
+                <div class="pal-pop" id="palPop" role="dialog" aria-label="Color details" hidden></div>
               </div>
             </div>
           </div>
@@ -438,5 +472,84 @@
   <script src="js/git-attribution-data.js"></script>
   <script src="js/git-attribution.js"></script>
   <script src="js/backtotop.js"></script>
+  <script>
+  /* Palette: a copyable color popover with hover-intent (you can travel onto it),
+     keyboard and touch support. Shows hex, rgb, and oklch for each swatch. */
+  (function () {
+    var band = document.getElementById('palBand'), pop = document.getElementById('palPop');
+    if (!band || !pop) return;
+    var wrap = band.parentNode;
+    var segs = [].slice.call(band.querySelectorAll('.pal-seg'));
+    var names = [].slice.call(wrap.querySelectorAll('.pal-names > span'));
+    var timer = null, active = null;
+
+    function parts(hex) { var h = hex.replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
+    function lin(v) { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+    function toRgb(hex) { var p = parts(hex); return 'rgb(' + p[0] + ', ' + p[1] + ', ' + p[2] + ')'; }
+    function toOklch(hex) {
+      var p = parts(hex), r = lin(p[0]), g = lin(p[1]), b = lin(p[2]);
+      var l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+      var m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+      var s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+      var L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+      var A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+      var B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+      var C = Math.sqrt(A * A + B * B), H = Math.atan2(B, A) * 180 / Math.PI; if (H < 0) H += 360;
+      return 'oklch(' + (L * 100).toFixed(1) + '% ' + C.toFixed(3) + ' ' + H.toFixed(1) + ')';
+    }
+    function rowHtml(k, v) { return '<button class="pal-pop-row" type="button" data-copy="' + v + '"><span class="pal-pop-k">' + k + '</span><span class="pal-pop-v">' + v + '</span><span class="pal-pop-cp">copy</span></button>'; }
+    function fill(seg) {
+      var hex = seg.getAttribute('data-hex'), name = seg.getAttribute('data-name'), vr = seg.getAttribute('data-var');
+      pop.innerHTML = '<div class="pal-pop-head"><span class="pal-pop-sw" style="background:' + hex + '"></span>'
+        + '<div><span class="pal-pop-name">' + name + '</span>' + (vr ? '<span class="pal-pop-var">' + vr + '</span>' : '') + '</div></div>'
+        + rowHtml('Hex', hex) + rowHtml('RGB', toRgb(hex)) + rowHtml('OKLCH', toOklch(hex));
+    }
+    function place(seg) {
+      var w = wrap.clientWidth, pw = pop.offsetWidth, mid = seg.offsetLeft + seg.offsetWidth / 2;
+      pop.style.left = Math.max(0, Math.min(mid - pw / 2, w - pw)) + 'px';
+      pop.style.top = (band.offsetTop + band.offsetHeight + 10) + 'px';
+    }
+    function setActive(seg) {
+      if (active) { var i = segs.indexOf(active); active.classList.remove('is-active'); if (names[i]) names[i].classList.remove('is-active'); }
+      active = seg;
+      if (seg) { var j = segs.indexOf(seg); seg.classList.add('is-active'); if (names[j]) names[j].classList.add('is-active'); }
+    }
+    function show(seg) {
+      clearTimeout(timer); setActive(seg); fill(seg); pop.hidden = false; place(seg);
+      requestAnimationFrame(function () { place(seg); pop.classList.add('is-on'); });
+    }
+    function hide() {
+      pop.classList.remove('is-on'); setActive(null);
+      setTimeout(function () { if (!pop.classList.contains('is-on')) pop.hidden = true; }, 200);
+    }
+    function later() { clearTimeout(timer); timer = setTimeout(hide, 180); }
+
+    segs.forEach(function (seg) {
+      seg.addEventListener('mouseenter', function () { show(seg); });
+      seg.addEventListener('mouseleave', later);
+      seg.addEventListener('focus', function () { show(seg); });
+      seg.addEventListener('blur', later);
+      seg.addEventListener('click', function () { show(seg); });
+    });
+    pop.addEventListener('mouseenter', function () { clearTimeout(timer); });
+    pop.addEventListener('mouseleave', later);
+    pop.addEventListener('focusin', function () { clearTimeout(timer); });
+    pop.addEventListener('focusout', later);
+    pop.addEventListener('click', function (e) {
+      var r = e.target.closest('.pal-pop-row'); if (!r) return;
+      var val = r.getAttribute('data-copy');
+      function done() { r.classList.add('copied'); var cp = r.querySelector('.pal-pop-cp'); cp.textContent = 'copied'; setTimeout(function () { r.classList.remove('copied'); cp.textContent = 'copy'; }, 1100); }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(val).then(done, done); }
+        else { throw 0; }
+      } catch (err) {
+        var ta = document.createElement('textarea'); ta.value = val; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select(); try { document.execCommand('copy'); } catch (e2) {} document.body.removeChild(ta); done();
+      }
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+    document.addEventListener('click', function (e) { if (!band.contains(e.target) && !pop.contains(e.target)) hide(); });
+  })();
+  </script>
 </body>
 </html>

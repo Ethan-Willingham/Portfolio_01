@@ -42,6 +42,7 @@
   function postDates(post) { var e = EFFORT[post.key]; return e ? dateRange(e.firstYMD, e.lastYMD) : dateRange(post.first, post.last); }
 
   var metric = 'edits'; // 'edits' | 'tokens'
+  var activeModel = null; // model id the grid is filtered to, or null for "all"
 
   // ---------- formatting ----------
   function fmtEdits(n) { return Math.round(n).toLocaleString('en-US'); }
@@ -119,21 +120,95 @@
   // numbers are shown static — owner does not want counting/moving numbers
   function animNum(el, to, fmt) { el._v = to; el.textContent = fmt(to); }
 
-  // ---------- build: model legend ----------
+  // ---------- build: model legend (the built chips double as a single-select filter) ----------
   var legend = document.createElement('div');
   legend.className = 'ma-minds';
+  var chipById = {};
   // list the models by how much they were used (most tokens first): 4.8, 4.7, ...
   MODELS.slice().sort(function (a, b) { return b.tokens - a.tokens; }).forEach(function (m) {
     var built = m.posts > 0;
-    var chip = document.createElement('div');
+    var chip = document.createElement(built ? 'button' : 'div');
     chip.className = 'ma-mind' + (built ? '' : ' is-minor');
+    chip.style.setProperty('--mc', m.color);
     chip.innerHTML =
       '<span class="ma-mind-dot" style="background:' + m.color + '"></span>' +
       '<span class="ma-mind-name">' + m.label + '</span>' +
       '<span class="ma-mind-fuel">' + fmtTok(m.tokens) + ' · $' + m.cost.toLocaleString('en-US') + '</span>' +
       '<span class="ma-mind-posts">' + (built ? m.posts + (m.posts === 1 ? ' post' : ' posts') : 'tooling only') + '</span>';
+    if (built) {
+      chip.type = 'button';
+      chip.setAttribute('aria-pressed', 'false');
+      chip.setAttribute('aria-label', 'Show only the ' + m.posts + ' posts ' + m.label + ' helped build');
+      chip.addEventListener('click', function () { setFilter(activeModel === m.id ? null : m.id); });
+      chipById[m.id] = chip;
+    }
     legend.appendChild(chip);
   });
+
+  // ---------- build: filter status line ----------
+  var hint = document.createElement('div');
+  hint.className = 'ma-filter-hint';
+  var hintText = document.createElement('span');
+  var clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'ma-filter-clear';
+  clearBtn.textContent = 'Show all posts';
+  clearBtn.style.display = 'none';
+  clearBtn.addEventListener('click', function () { setFilter(null); });
+  hintText.textContent = 'Pick a model above to see only the posts it helped build.';
+  hint.appendChild(hintText);
+  hint.appendChild(clearBtn);
+
+  // ---------- filtering ----------
+  // a post matches when the active model contributed any change or token to it
+  function matchesFilter(post) {
+    if (!activeModel) return true;
+    var r = post.models[activeModel];
+    return !!(r && ((r.edits || 0) > 0 || (r.tokens || 0) > 0));
+  }
+  // show/hide the tiles for the current filter; re-reveal the surviving tiles with a quick stagger
+  function applyFilter(animate) {
+    var i = 0, shown = 0, go = animate && !REDUCE && !document.hidden;
+    POSTS.forEach(function (post) {
+      var el = post._el, ok = matchesFilter(post);
+      el.style.display = ok ? '' : 'none';
+      if (!ok) return;
+      shown++;
+      if (go) {
+        var d = (i++) * 32;
+        el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(10px)';
+        var bi = el.querySelectorAll('.cv-bar i'); for (var k = 0; k < bi.length; k++) bi[k].style.width = '0';
+        void el.offsetWidth;
+        el.style.transition = 'opacity 0.42s ease ' + d + 'ms, transform 0.5s var(--ma-spring) ' + d + 'ms';
+        el.style.opacity = '1'; el.style.transform = 'none';
+        (function (e2) { setTimeout(function () { growBars(e2.querySelector('.cv-bar')); }, d + 60); })(el);
+      } else {
+        el.style.opacity = '1'; el.style.transform = 'none';
+        growBars(el.querySelector('.cv-bar'));
+      }
+    });
+    revealed = true; // we've driven the reveal ourselves; keep the scroll observer from re-firing
+    return shown;
+  }
+  function setFilter(mid) {
+    activeModel = mid || null;
+    Object.keys(chipById).forEach(function (id) {
+      var on = id === activeModel;
+      chipById[id].classList.toggle('is-active', on);
+      chipById[id].setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    legend.classList.toggle('is-filtering', !!activeModel);
+    var shown = applyFilter(true);
+    if (activeModel) {
+      var m = MID[activeModel];
+      hintText.innerHTML = 'Showing the <b>' + shown + '</b> ' + (shown === 1 ? 'post' : 'posts') +
+        ' <b style="color:' + m.color + '">' + m.label + '</b> helped build.';
+      clearBtn.style.display = '';
+    } else {
+      hintText.textContent = 'Pick a model above to see only the posts it helped build.';
+      clearBtn.style.display = 'none';
+    }
+  }
 
   // ---------- build: metric toggle ----------
   var controls = document.createElement('div');
@@ -325,6 +400,7 @@
 
   // ---------- mount ----------
   root.appendChild(legend);
+  root.appendChild(hint);
   root.appendChild(controls);
   root.appendChild(grid);
   // the tray + scrim are position:fixed; an ancestor of #ma-root carries a transform
