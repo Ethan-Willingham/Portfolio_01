@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On Liberty, and the Only Reason to Stop You</title>
+  <meta name="description" content="A plain-language walk through John Stuart Mill's On Liberty (1859), the book that gave the modern open society its founding argument: society may rightfully coerce you only to prevent harm to others, never for your own good. The harm principle, the tyranny of the majority, and the case for near-total free speech, unpacked one move at a time, with the hard parts steelmanned.">
+  <meta property="og:title" content="On Liberty, and the Only Reason to Stop You">
+  <meta property="og:description" content="In 1859 John Stuart Mill wrote down the rule a free society runs on: you can be stopped from harming other people, and for nothing else, not even your own good. A guided walk through the argument we are all still having.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/mill.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/mill-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/mill-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     ON LIBERTY, AND THE ONLY REASON TO STOP YOU
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: seven stops through the argument of John Stuart
+     Mill's On Liberty (1859), each unpacked in plain language.
+     Mill wrote in English, so there is no translation stack;
+     the collapsible panels instead hold Mill's own exceptions
+     and the modern court cases his argument turned into. Sits
+     in the site shell (forest green, parchment, Century Supra /
+     Segoe UI / Commit Mono). No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured passage: where you meet Mill's actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- COLLAPSIBLE SIDE PANEL ---------- */
+  /* repurposed from the translation-stack idiom: Mill's own exceptions, the modern cases */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.08rem; color: var(--accent); }
+  .stack-term-yr { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-faint); }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.56; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">On Liberty, and the only reason to stop you</h1>
+    <p class="hero-dek">In 1859 John Stuart Mill wrote down the rule a free society runs on: you can be stopped from harming other people, and for nothing else. Not even your own good. Here is the whole argument, walked one move at a time.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>7 stops</b> through On Liberty <span class="sep">/</span> John Stuart Mill, <b>1859</b> <span class="sep">/</span> ~22 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">You are allowed to ruin your own life. You can smoke, drink, gamble away the rent, quit the good job, refuse the surgery, take up base jumping, join a doomsday cult, and marry the person everyone warned you about. A free country lets you do every bit of it. The one move it can rightfully block is the one that harms somebody else.</p>
+
+      <p>That border, between harming yourself and harming other people, is the whole subject of a short book from 1859. John Stuart Mill called the rule behind it "one very simple principle," then spent a hundred pages proving it is anything but. Stripped down, it says this: the only thing that justifies forcing an adult to do or not do something is to prevent harm to others. Not their health. Not their morals. Not their own happiness. Your good is not enough.</p>
+
+      <p>It is hard to overstate how much of the modern world is built on that one sentence. Almost every argument we still have about free speech, censorship, drugs, what you can publish and what you can be silenced for, is a fight over where Mill's line falls. We did not finish with On Liberty. We are mostly still living inside it.</p>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/images/mill-portrait.jpg" width="1274" height="1600" loading="lazy" decoding="async" alt="A c.1870 photograph of John Stuart Mill: a bald, aging man with curling side hair and long sideburns, in a dark coat and silk cravat, looking straight at the camera with a grave, deeply lined face.">
+        <figcaption class="u-figure-cap">John Stuart Mill, photographed by the London Stereoscopic &amp; Photographic Company around 1870, about a decade after On Liberty appeared. Public domain, via Wikimedia Commons.</figcaption>
+      </figure>
+
+      <p>Mill was the most influential liberal thinker of the 1800s, and maybe the most over-schooled child in history. His father started him on Greek at three and political economy not long after, and drove him so hard that he cracked at twenty and spent months convinced he had no feelings left. He worked thirty-five years as an administrator for the East India Company, served a term in Parliament, and argued for women's suffrage decades before it was respectable. He wrote On Liberty with his wife, Harriet Taylor, and finished it alone after she died. More on both of those later, including the part that has aged badly.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The one cut the whole book defends</p>
+        <p class="u-callout-body">Mill splits everything you do into two kinds. <b>Self-regarding</b> acts land mainly on you: what you eat, drink, read, believe, who you sleep with, how you waste a Sunday. <b>Other-regarding</b> acts reach out and hit someone else: fraud, assault, a broken promise, a punch. Over the first kind, he says, you are sovereign and society gets no vote. Over the second, society can step in, because now you are in somebody else's business. The entire book is a defense of that one line, and an honest argument about how blurry it gets.</p>
+      </aside>
+
+      <p>The translation problem that haunts the older books in this series does not arise here. Mill wrote in English, the 1859 text is public domain, and every quote below is verbatim from it, by way of <a href="https://www.gutenberg.org/ebooks/34901">Project Gutenberg</a>. His Victorian spelling is left intact, so you will see "civilised" and "practises" with an s. The breakdowns between the quotes are mine.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole book on one page</p>
+        <p class="u-callout-body">The danger Mill is worried about is not a tyrant. In a democracy, he says, the threat to freedom is the majority itself, the sheer weight of normal opinion pressing everyone to be the same, enforced not by police but by disapproval. The cure is the one principle: society may coerce you only to stop you harming others, never for your own good. From that he derives near-total freedom of speech, and the freedom to live your own odd experiment, on the theory that a society which crushes the dissenting and the strange goes dull and stops improving. Seven stops, following the argument from its first move to its last.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">The harm principle</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 7</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-harm" data-label="The harm principle" data-tag="Chapter 1">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The harm principle</p>
+      <h2 class="station-h">Over yourself, you are sovereign</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill / Chapter 1, Introductory</p>
+        <div class="passage-t">
+          <p>"That the only purpose for which power can be rightfully exercised over any member of a civilised community, against his will, is to prevent harm to others. His own good, either physical or moral, is not a sufficient warrant. [...] Over himself, over his own body and mind, the individual is sovereign."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the sentence the rest of the book exists to defend. It is worth reading slowly, because the radical part is easy to slide past.</p>
+        <p>The radical part is the second line: his own good is not a sufficient warrant. We coerce people for their own good all the time, and mostly feel good about it. Wear the seatbelt. You cannot buy that drug. You cannot sell yourself into slavery even if you want to. Mill's claim is that none of those reasons, on its own, is legitimate. If an act harms only the person doing it, society can argue, warn, plead, and try to talk them out of it, but it cannot compel them. The moment the justification is "for your own good," Mill says you have crossed a line that a free society does not get to cross.</p>
+        <p>Why draw it so hard? Mill was a utilitarian, so his reasons are about consequences, not God-given rights. Two of them carry the weight. First, you are almost always the person who knows your own interests best and cares about them most; a distant majority guessing at what is good for you will usually guess worse than you would. Second, and bigger, the harm of letting society overrule everyone's private life "for their own good" is far larger, across a whole population, than the harm of a few people making bad personal choices. Hand the majority that power and it will not stop at the genuinely self-destructive. It will reach the merely unusual.</p>
+        <p>Then the last word, the one he chose on purpose. <em>Sovereign.</em> Not "mostly free to," not "entitled to some privacy." Sovereign, like a monarch whose territory happens to be one human body and mind. Inside those borders, you rule, and the rule is not up for a vote.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The principle is not "do whatever you want." It is narrower and stranger than that: no one gets to run your life for your own good, including a kind, well-meaning majority that is genuinely sure it knows better than you do.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-majority" data-label="The tyranny of the majority" data-tag="Chapter 1">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> The tyranny of the majority</p>
+      <h2 class="station-h">The danger is not the king. It is your neighbors.</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill / Chapter 1, Introductory</p>
+        <div class="passage-t">
+          <p>"Society can and does execute its own mandates: and if it issues wrong mandates instead of right, or any mandates at all in things with which it ought not to meddle, it practises a social tyranny more formidable than many kinds of political oppression, since, though not usually upheld by such extreme penalties, it leaves fewer means of escape, penetrating much more deeply into the details of life, and enslaving the soul itself."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Democracy was supposed to kill tyranny. If the people rule themselves, who is left to oppress them? Mill's unsettling answer: the people oppress each other. A majority can be a tyrant too, and its weapon is not the dungeon. It is disapproval.</p>
+        <p>He calls it a "social tyranny," and says it can be worse than the political kind. Look at why. A government can punish what you do; it needs a law, a court, a jail, and there is always the chance of exile. The tyranny of opinion has none of those limits. It reaches into how you dress, what you admit to believing, who you marry, what you dare to say at dinner, and it enforces all of it through a thousand small withdrawals of warmth. There is no court to appeal to and nowhere to emigrate, because you carry your society's verdict on how to live around inside your own head. It penetrates "the details of life," Mill says, and ends by "enslaving the soul itself."</p>
+        <p>The phrase "the tyranny of the majority" was not his; he took it from Alexis de Tocqueville, who had watched it working in America. But Mill sharpened it into the book's central fear. His worry is not that the majority is cruel. It is that the majority is <em>average</em>, and that mass society grinds steadily toward that average, smoothing off anyone who sticks out. The dissenter, the eccentric, the person who might happen to be right, gets worn down before they can ever prove it.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>Protection from the government is not enough, Mill says, because the government was never the only thing that could make you unfree. You also need protecting from "the tyranny of the prevailing opinion," the pressure of everyone around you to be like everyone around you.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-fallible" data-label="We might be wrong" data-tag="Chapter 2">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Free speech, the first reason</p>
+      <h2 class="station-h">Silence the lone crank, and you might be silencing the truth</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill / Chapter 2, Of the Liberty of Thought and Discussion</p>
+        <div class="passage-t">
+          <p>"If all mankind minus one, were of one opinion, and only one person were of the contrary opinion, mankind would be no more justified in silencing that one person, than he, if he had the power, would be justified in silencing mankind."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Mill's defense of free speech is the most thorough anyone has ever written, and it rests on four arguments. The first is about being wrong. When you silence an opinion, he says, you are quietly claiming you could not possibly be mistaken about it. You are assuming your own infallibility, and you are not infallible. Nobody is.</p>
+        <p>The line about "all mankind minus one" is the test pushed to its limit. Even the entire human race, unanimous, against a single crank, has no right to shut that crank up, because the entire human race has been confidently, unanimously wrong before. Every belief we are now proud of having dropped, that the sun goes around the earth, that some races are born to be owned, that the earth is six thousand years old, was once the obvious, respectable, majority view, and the person who first doubted it looked exactly like a dangerous fool. Mill's favorite example is the one his readers couldn't dodge: Athens put Socrates to death for impiety and corrupting the youth, by a confident vote of upstanding citizens.</p>
+        <p>The argument is not that the heretic is usually right. He almost never is. The point is that you cannot reliably tell the rare right heretic from the common wrong one ahead of time, so the only way to keep the rare one is to let them all speak. And the cost of getting it wrong is not paid by the heretic alone. When you silence the one who turns out to have been right, everybody loses the truth they would have gotten.</p>
+        <p>Notice this is the opposite of relativism. Mill is not saying every opinion is equally valid and who's to say. He is saying there <em>is</em> a truth, it matters enormously, and free discussion is the only method a fallible animal has ever found for crawling toward it. Censorship doesn't protect the truth. It just protects whatever we currently believe from the test that would prove it.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-dogma" data-label="Dead dogma" data-tag="Chapter 2">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Free speech, the part people forget</p>
+      <h2 class="station-h">Even when you are right, a belief no one fights goes dead</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill / Chapter 2, on a truth that is never contested</p>
+        <div class="passage-t">
+          <p>"However true it may be, if it is not fully, frequently, and fearlessly discussed, it will be held as a dead dogma, not a living truth."</p>
+          <p>"He who knows only his own side of the case, knows little of that."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is the argument that is easy to miss, and the one most worth keeping. Grant Mill everything. Say your belief is flatly, completely true, the strongest hand you could be dealt. He says you <em>still</em> need it attacked, loudly and often, or it rots in your hands.</p>
+        <p>A truth that nobody is allowed to question stops being understood. You go on repeating it, but you lose your grip on why it's true, until it is "a dead dogma, not a living truth," a slogan you can recite and cannot defend. Then a real challenge arrives, and you fold, because you were guarding a password instead of an idea. His test is merciless and fair: "He who knows only his own side of the case, knows little of that." If you can't state the strongest version of the argument against you, the one its smartest believers would actually make, you don't really understand your own position. You've just never been asked.</p>
+        <p>There's a companion argument folded in beside it. A silenced opinion is usually not all wrong; it tends to carry some fragment of truth the majority has lost, and the only way to recover that fragment is to let the wrong-sounding people talk. The heretic is useful even when he is mostly mistaken, because the bit he gets right is exactly the bit you were missing.</p>
+        <p>Mill wrote this a hundred and ten years before the internet, and it reads like a description of the echo chamber. A belief that only ever meets agreement gets weak and brittle. The practice we now call steelmanning, putting the other side's case as well as the other side could, is just Mill's prescription with a new name. Dissent is not a tax that a confident society grudgingly pays. It is the exercise that keeps the society's beliefs strong enough to be worth holding.</p>
+      </div>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The honest doubt about all this</p>
+        <p class="u-callout-body">Mill's whole defense rests on a bet: that in an open contest, truth eventually wins. It is not obvious he was right. Falsehood often travels faster than the truth (one large <a href="https://pubmed.ncbi.nlm.nih.gov/29590045/">2018 study in <em>Science</em></a> found false news online spread "farther, faster, deeper, and more broadly" than true news), and a flood of bad-faith nonsense can bury a true signal without ever arguing with it. Mill's smaller, fairer claim survives the doubt better: open discussion is not guaranteed to reach the truth, it is just the least bad method we have, because every alternative ends in some authority deciding what is true and silencing the rest. That is a weaker promise than "truth wins," and it is the one actually worth defending.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-individuality" data-label="Experiments in living" data-tag="Chapter 3">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> Individuality</p>
+      <h2 class="station-h">A tree, not a machine</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill / Chapter 3, Of Individuality</p>
+        <div class="passage-t">
+          <p>"As it is useful that while mankind are imperfect there should be different opinions, so is it that there should be different experiments of living; that free scope should be given to varieties of character, short of injury to others."</p>
+          <p>"Human nature is not a machine to be built after a model, and set to do exactly the work prescribed for it, but a tree, which requires to grow and develop itself on all sides, according to the tendency of the inward forces which make it a living thing."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Free speech protects what you are allowed to think. This chapter protects what you are allowed to do with your one life. Mill's claim is large and not obvious: the free development of individuality is not a luxury added on top of a good life. It is one of the main things a good life is made of, and a society that suppresses it makes itself poorer as well as duller.</p>
+        <p>His phrase is "experiments of living," and the word experiment is doing real work. Nobody knows in advance the single best way for a human to live, because people differ and circumstances differ. So a society that lets people openly try different lives is running experiments, and it can learn from the results. The person who lives strangely and turns out to live <em>well</em> has just shown everyone a new option that works. Force them into the standard mold and you don't only hurt them. You delete the experiment, and the rest of us never find out what it would have taught.</p>
+        <p>Then he gets cutting. Someone who lets the world, or their corner of it, pick their whole plan of life "has no need of any other faculty than the ape-like one of imitation." Choosing for yourself, even choosing wrong, exercises muscles that copying never touches: judgment, desire, the nerve to want something the people around you don't. A life you merely inherited and never chose is a life run on autopilot, and Mill thinks autopilot is beneath what a person is for.</p>
+        <p>The tree is his answer to the machine. A human being is not hardware built to spec and switched on to do its job. A human being is a living thing that has to grow outward on every side under its own internal push. You can prune a person into the tidy approved shape, the way the majority would prefer, and it works. What you get back is just smaller than what was trying to grow.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The reason to let people be odd is not kindness to the odd. It is that a society of copies stops discovering things, including better ways to live, and every flattened-out person is one more experiment the rest of us never got to watch.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-edges" data-label="Where the line blurs" data-tag="Chapters 4 to 5">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> The hard part</p>
+      <h2 class="station-h">Where does your business end and mine begin?</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill / Chapter 3, drawing the line himself</p>
+        <div class="passage-t">
+          <p>"An opinion that corn-dealers are starvers of the poor, or that private property is robbery, ought to be unmolested when simply circulated through the press, but may justly incur punishment when delivered orally to an excited mob assembled before the house of a corn-dealer."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>That is Mill drawing the line himself, and look how unclean it is. The very same sentence, that corn-dealers starve the poor, is protected in a newspaper and punishable shouted to a mob at the dealer's door. Nothing has changed but whether the words are about to get somebody hurt. This line, between harm to others and everything else, is the weakest joint in the whole book, and Mill knew it. His principle rests on a clean split between acts that land only on you and acts that land on other people. The objection writes itself: almost nothing lands only on you.</p>
+        <p>Drink yourself to death and you are not the only casualty. There is the family that loved you, the job that depended on you, the kids who needed the money, the stranger who has to pull you out of the wreck. James Fitzjames Stephen, a hard-headed judge who attacked the book in 1873, made exactly this case: no man is an island, almost every private vice leaks onto somebody, and so the "self-regarding" zone Mill wanted to wall off shrinks until it protects almost nothing. Push the objection hard enough and the harm principle seems to dissolve.</p>
+        <p>To his credit, Mill saw the edge and tried to mark it himself, and the marks are revealing precisely because they are not clean.</p>
+
+        <details class="stack">
+          <summary>Mill's own fine print</summary>
+          <div class="stack-body">
+            <p class="stack-gloss" style="margin-top:0.2rem">Three places where Mill himself bends or limits the principle. Each one is him admitting the line is harder to draw than "one very simple principle" promised.</p>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">The unsafe bridge</span><span class="stack-term-yr">Chapter 5</span></div>
+              <p class="stack-term-b">You may physically stop a man from stepping onto a bridge you know is about to collapse, if there's no time to warn him. Why isn't that coercion "for his own good"? Because he doesn't <b>want</b> to fall; he just doesn't know. You are serving his actual desire, not overruling it. The carve-out is sensible and it quietly shows how much hangs on reading another person's true wishes.</p>
+            </div>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Poisons and the drunk</span><span class="stack-term-yr">Chapters 4 to 5</span></div>
+              <p class="stack-term-b">Selling poison is allowed; it has honest uses. But Mill will accept a label, a warning, maybe a register of buyers, because the danger to others is real. Plain drunkenness is your own business. Drunk <b>on duty as a soldier or a policeman</b>, where others depend on you, it becomes theirs. The line keeps moving with the spillover.</p>
+            </div>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Harm by doing nothing</span><span class="stack-term-yr">Chapter 1</span></div>
+              <p class="stack-term-b">Mill grants that doing nothing can be a harm in itself. You can be made to answer for refusing to give evidence, for dodging your share of a common defense, for walking past a life you could easily have saved. Harm to others can be a thing you <b>let happen</b>, which widens society's reach well past the simple picture of one person punching another.</p>
+            </div>
+          </div>
+        </details>
+
+        <p style="margin-top:1.6rem">There is a second crack, and it runs under a lot of modern fights: the gap between harm and mere offense. Plenty of things bother people deeply without injuring them at all. Mill's answer is firm. Being disgusted by how your neighbor lives is not the same as being harmed by it, and treating it as harm is precisely the social tyranny he is trying to protect you from. A century later the philosopher Joel Feinberg spent four volumes trying to pin down exactly when an offense is serious and wrongful enough that the law may step in. The fact that it took four volumes tells you the line is genuinely hard, not that Mill was lazy.</p>
+        <p>So here is the honest verdict. The harm principle is not a formula you can feed a case into and read off the answer. It is a direction. It decides which way the burden of proof runs: a free society does not make you justify your freedom, it makes the people who want to use force justify the harm first. That is less than Mill seemed to promise with "one very simple principle." It is also, still, one of the most useful tools anyone has built for thinking about where law and pressure should stop.</p>
+      </div>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The part that aged badly</p>
+        <p class="u-callout-body">Mill's liberty had a border, and not everyone was inside it. The harm principle, he writes, applies only to "civilised" societies; for "those backward states of society in which the race itself may be considered as in its nonage," he says plainly that "despotism is a legitimate mode of government in dealing with barbarians, provided the end be their improvement." He was not writing in the abstract. He spent thirty-five years administering British rule in India for the East India Company. The same book that handed the modern world its argument for leaving people alone also handed nineteenth-century empire a justification for not, and scholars like Uday Singh Mehta read On Liberty as liberalism with an empire-shaped hole cut in it. It is not a footnote you get to skip. The principle is better than the man who wrote it managed to apply it.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-downstream" data-label="We are still arguing Mill" data-tag="The legacy">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> How downstream we still are</p>
+      <h2 class="station-h">We are still arguing Mill</h2>
+
+      <div class="passage">
+        <p class="passage-k">Mill's epigraph, quoting Wilhelm von Humboldt</p>
+        <div class="passage-t">
+          <p>"The grand, leading principle, towards which every argument unfolded in these pages directly converges, is the absolute and essential importance of human development in its richest diversity."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The strange thing about On Liberty is how often you can catch its sentences doing work in rooms Mill never lived to see. He didn't just win an argument. He wrote the source code that a lot of the modern open society still runs on, mostly uncredited.</p>
+        <p>Take the idea we now call the "marketplace of ideas." Justice Oliver Wendell Holmes planted it in American law, dissenting in 1919: the truth, he wrote, is best reached by "free trade in ideas," because "the best test of truth is the power of the thought to get itself accepted in the competition of the market." That is Mill's fallibility argument from Stop 3, promoted to constitutional doctrine. (The tidy phrase "marketplace of ideas" is younger than the dissent; another justice coined it in the 1960s. Holmes said "free trade.") We can't be sure we are right, so let the ideas compete, and may the truest win.</p>
+        <p>Mill's corn-dealer grew up into the modern law of incitement. American speech is protected right up to the edge where it is aimed at producing "imminent lawless action," the standard the Supreme Court settled on in 1969. That is the corn-dealer line almost exactly: the pamphlet is fine, the same words screamed to a mob at the victim's door are not.</p>
+        <p>And the harm principle went on to decide who you are allowed to love. In 1957 a British government committee recommended decriminalizing homosexuality, and to justify it reached straight for Mill: there must remain "a realm of private morality and immorality which is, in brief and crude terms, not the law's business." That set off the sharpest legal argument of the century over whether a society may enforce its morals as such, with serious people lined up on both sides, and every one of them was arguing Mill.</p>
+
+        <details class="stack">
+          <summary>The same argument, in court</summary>
+          <div class="stack-body">
+            <p class="stack-gloss" style="margin-top:0.2rem">Three places where Mill's book stopped being philosophy and started being law.</p>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Abrams v. United States</span><span class="stack-term-yr">1919</span></div>
+              <p class="stack-term-b">Holmes, in dissent, calls for "free trade in ideas" and makes truth-by-competition the test. It loses that day and becomes the most quoted dissent in American free-speech law, the bridge that carried Mill's Stop 3 into the First Amendment.</p>
+            </div>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Brandenburg v. Ohio</span><span class="stack-term-yr">1969</span></div>
+              <p class="stack-term-b">The Court lands on the line that still holds: even hateful advocacy is protected unless it is directed to inciting <b>imminent lawless action</b> and likely to produce it. Mill's corn-dealer, now the law of the land.</p>
+            </div>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">The Wolfenden Report &amp; the Hart-Devlin debate</span><span class="stack-term-yr">1957 to 1965</span></div>
+              <p class="stack-term-b">A government report invokes the harm principle to argue private homosexuality is "not the law's business." The judge Patrick Devlin says society may defend its shared morality; the philosopher H. L. A. Hart answers with Mill. The modern fight over legislating morality, run on Mill's terms.</p>
+            </div>
+          </div>
+        </details>
+
+        <p style="margin-top:1.6rem">And it is not history. Pick almost any live fight over what should be allowed, drug legalization, assisted dying, sex work, hate-speech rules and deplatforming, helmet and seatbelt laws, how far a public-health order can reach, and underneath it is the same question Mill asked in 1859. Is this a harm to other people, which society may step in to stop? Or is it a harm you are mostly doing to yourself, which somebody else wants to ban for your own good? We argue it in his vocabulary whether we have read him or not.</p>
+        <p>That is the thing to take away. The open society, the kind that lets you speak, doubt, offend, and live your own experiment, is not a vague modern mood we drifted into. It is a specific argument that someone actually made, on purpose, and won. It has an address. On Liberty, 1859.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>Mill's wager was simple, and we are all still inside it: that a society which lets people think wrong, say wrong, and live wrong ends up wiser, freer, and better off than one that quietly tidies all of it away. The tidy society feels safer. Mill bet it goes stupid. Look around and check his work.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every quotation is verbatim from <strong>John Stuart Mill, <em>On Liberty</em> (1859)</strong>, which has been in the public domain for over a century. The copy used here is the Walter Scott edition via <a href="https://www.gutenberg.org/ebooks/34901">Project Gutenberg</a> (eBook 34901). Mill's Victorian British spelling is kept as he wrote it, so the quotes read "civilised," "practises," and "recognised" with an s. The breakdowns between the quotes are mine.</p>
+      <ul class="src-list">
+        <li><b>The book's structure</b> is five chapters: an introduction that states the harm principle and the tyranny of the majority (Stops 1 and 2), a long chapter on liberty of thought and discussion (Stops 3 and 4), a chapter on individuality (Stop 5), and two chapters on the limits of society's authority and how to apply the principle (Stop 6).</li>
+        <li><b>The contemporary attack</b> is James Fitzjames Stephen, <em>Liberty, Equality, Fraternity</em> (1873), still the sharpest case against Mill written by someone who knew him.</li>
+        <li><b>Harm versus offense</b> is worked out at length in Joel Feinberg, <em>The Moral Limits of the Criminal Law</em> (four volumes, 1984 to 1988).</li>
+        <li><b>The empire problem</b> is laid out in Uday Singh Mehta, <em>Liberalism and Empire</em> (1999). Mill's own "barbarians" passage is in Chapter 1 of On Liberty.</li>
+        <li><b>The legal afterlife</b>: Holmes's "free trade in ideas" dissent in <em>Abrams v. United States</em> (1919); the incitement standard in <em>Brandenburg v. Ohio</em> (1969); the <em>Wolfenden Report</em> (1957) and H. L. A. Hart, <em>Law, Liberty and Morality</em> (1963).</li>
+        <li><b>On Mill's life and thought</b>, the <a href="https://plato.stanford.edu/entries/mill/">Stanford Encyclopedia of Philosophy</a> entry on Mill and its companion entry on <a href="https://plato.stanford.edu/entries/freedom-speech/">freedom of speech</a>.</li>
+      </ul>
+      <p>One human note worth keeping. Mill dedicated On Liberty to his wife, <strong>Harriet Taylor Mill</strong>, who died in 1858, the year before it came out. He called her "in part the author" of the best of his work, more collaborator than muse, and insisted to anyone who would listen that the book was as much hers as his. Scholars still argue about the exact division. Mill did not think there was much to argue about.</p>
+      <p class="colo-note">The portrait in the opening and on the homepage card is a photograph of Mill by the London Stereoscopic &amp; Photographic Company, around 1870, held by the Hulton Archive and in the public domain via Wikimedia Commons. It was taken near the end of his life, roughly a decade after he published the argument above.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/mill.js" defer></script>
+</body>
+</html>
