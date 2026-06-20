@@ -930,7 +930,7 @@
     if (devMode) gpuProbe('smoke.fire', _gpuFireT, smokeProbeGL());
 
     // ---- The Sluice (refinement station; own render so it survives station cull) ----
-    drawSluice();
+    if (ENABLE_REFINEMENT) drawSluice();   // refinement disabled: do not draw the sluice station prop
 
     // ---- Pump pad ----
     drawPumpPad();

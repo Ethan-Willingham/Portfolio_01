@@ -59,17 +59,27 @@
     .post-topnav .post-back { margin-bottom: 0.75rem; }
     .post-header { margin-bottom: 0.55rem; }
     .post-title  { font-size: min(2.4rem, 6.5vw); margin-bottom: 0; }
-    .game-wrapper { margin-top: 0; }
+    /* The game breaks OUT of the narrow article column so it fills the screen
+       (owner: default to as large as possible). 96vw stays clear of the scrollbar
+       so the body never scrolls horizontally; the min() keeps it centered once the
+       max-width caps it on very wide monitors. Fullscreen (body.gm-fs) overrides this. */
+    .game-wrapper {
+      margin-top: 0;
+      width: 96vw;
+      max-width: 1800px;
+      margin-left: calc(50% - min(48vw, 900px));
+      margin-right: calc(50% - min(48vw, 900px));
+    }
 
     /* === Game canvas === */
     .game-canvas-area {
       position: relative;
       width: 100%;
-      /* Phase F: fill as much of the viewport as possible on every screen. dvh
-         tracks the real (mobile-toolbar-aware) viewport; the calc leaves room for
-         the slim header above so the whole game shows without scrolling. */
-      height: min(84dvh, calc(100dvh - 96px));
-      min-height: 360px;
+      /* Fill as much of the viewport as possible on every screen. dvh tracks the
+         real (mobile-toolbar-aware) viewport; the calc leaves room for the slim
+         header above so the whole game shows without scrolling. */
+      height: min(90dvh, calc(100dvh - 84px));
+      min-height: 380px;
       background: #1a1008;
       overflow: hidden;
       touch-action: none;
@@ -255,7 +265,7 @@
 
     @media (min-width: 720px) {
       /* Desktop / wide: fill the viewport under the slim header. */
-      .game-canvas-area { height: min(88dvh, calc(100dvh - 92px)); }
+      .game-canvas-area { height: min(92dvh, calc(100dvh - 80px)); }
     }
 
     /* On portrait devices the stacked 2-row console + d-pad take up the
@@ -263,7 +273,7 @@
        the world view — which scales off WIDTH, not height — shows many
        more rows. Fullscreen (body.gm-fs) still overrides this. */
     @media (orientation: portrait) {
-      .game-canvas-area { height: min(88dvh, calc(100dvh - 72px)); }
+      .game-canvas-area { height: min(90dvh, calc(100dvh - 64px)); }
     }
 
     /* === Controls strip with key hints === */
@@ -440,6 +450,7 @@
       position: fixed;
       inset: 0;
       margin: 0;
+      width: auto; max-width: none;   /* reset the non-fullscreen breakout so inset:0 fills the screen */
       z-index: 9999; display: flex; flex-direction: column;
       padding: 0; border-radius: 0; box-shadow: none; border: none;
       /* Match the canvas color so any sliver of wrapper background that
@@ -590,9 +601,8 @@
           </div>
 
           <div class="game-about" style="margin-top: 1.5rem;">
-            <p><strong>Sluice</strong> is my own 2D mining game, and it is free forever. Drill down through the earth, collect ore, sell it at the surface for fuel and upgrades, and go deeper. There is no win screen, just a deeper hole and a heavier haul.</p>
-            <p>It is still in early development, built almost entirely with LLMs and out in the open. Play it right here in the browser, on a laptop or a phone, or press the expand button for fullscreen. Drill deep, strike ore, and push your luck.</p>
-            <p class="game-about-aside">Curious how it is built? There is a write-up of how this whole site is made on the <a href="about.html">about page</a>.</p>
+            <p><strong>Sluice</strong> is my 2D mining game, free forever. Dig down, collect ore, sell it for fuel and upgrades, go deeper. No win screen, just a deeper hole and a heavier haul. Built almost entirely with LLMs, and still early.</p>
+            <p class="game-about-aside">Curious how it is built? There is a write-up on the <a href="about.html">about page</a>.</p>
           </div>
 
         </div>

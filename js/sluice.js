@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.3';
+  var GAME_VERSION = 'v25.4';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -24905,7 +24905,7 @@
     if (devMode) gpuProbe('smoke.fire', _gpuFireT, smokeProbeGL());
 
     // ---- The Sluice (refinement station; own render so it survives station cull) ----
-    drawSluice();
+    if (ENABLE_REFINEMENT) drawSluice();   // refinement disabled: do not draw the sluice station prop
 
     // ---- Pump pad ----
     drawPumpPad();
