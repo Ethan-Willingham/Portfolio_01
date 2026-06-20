@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marx and the Gravediggers</title>
+  <meta name="description" content="A guided walk through The Communist Manifesto, Marx's argument one move at a time: history as class struggle, the worker who builds what he cannot buy, and capitalism breeding its own gravediggers. Honest about the power of the critique and the catastrophe done in his name.">
+  <meta property="og:title" content="Marx and the Gravediggers">
+  <meta property="og:description" content="In 1848 two broke young men wrote a thirty-page pamphlet that read capitalism more clearly than almost anyone, predicted a cure that became a catastrophe, and still will not go away. The whole argument, walked one move at a time, with a little of Capital.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/marx.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/marx-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/marx-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     MARX AND THE GRAVEDIGGERS
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: eight stops through the argument of The Communist
+     Manifesto (Samuel Moore's 1888 English), each unpacked in
+     plain language, with a little of Capital and a collapsible
+     panel on the most-fought-over line. Sits in the site shell
+     (forest green, parchment, Century Supra / Segoe UI /
+     Commit Mono). No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --early:  #cf9f78;                 /* the Engels-approved 1888 English */
+    --mid:    #bc9d65;                 /* the popular slogan */
+    --modern: #b8796d;                 /* the literal German (brick, the iron-mill key) */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-v { display: block; }                    /* a line break inside the passage */
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- THE WORDING SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-early  { border-left-color: var(--early); }
+  .stack-mid    { border-left-color: var(--mid); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(207,159,120,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--early); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Marx and the gravediggers</h1>
+    <p class="hero-dek">In 1848 a broke twenty-nine-year-old and the mill owner's son who bankrolled him wrote a short pamphlet that read capitalism more clearly than almost anyone before or since, predicted a cure that became a catastrophe, and still will not go away. Here is the whole argument, one move at a time.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> through The Communist Manifesto <span class="sep">/</span> with a little of <b>Capital</b> <span class="sep">/</span> ~20 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Somewhere right now, a person is building something they will never be able to afford. They are on a line putting together a car, or a phone, or a kitchen full of appliances, and at the end of the shift they will clock out and ride the bus home to none of it. Nobody finds this strange. It is just how the thing works.</p>
+
+      <p>Karl Marx found it strange. He spent thirty years on the question hiding under that assembly line: when work creates wealth, where does the wealth go, and why is it so rarely to the people who did the work?</p>
+
+      <p>His short answer is a pamphlet he wrote in 1848 with Friedrich Engels. Marx was twenty-nine and usually broke. Engels, who put up the money, was the son of a mill owner and was at that moment helping run the family's cotton factory in Manchester, an odd day job for the co-author of the workers' bible. The Communist Manifesto runs about twelve thousand words, shorter than what you are reading now. Outside of national constitutions and holy books, it may be the most widely read political document ever written. And it has two reputations that do not seem to belong to the same text.</p>
+
+      <p>To one set of readers it is the sharpest X-ray anyone ever took of capitalism, a book that saw the global market and the disposable job coming a century early. To another it is the founding document of a movement that, in the hundred years after Marx died, built police states and starved its own people by the tens of millions. Both of those are true at once. This is a walk through the actual argument, so you can see how one short book manages to be both.</p>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/marx/iron-rolling-mill.jpg" width="1600" height="993" loading="lazy" decoding="async" alt="Adolph Menzel's painting of a 19th-century iron mill: a dark factory hall lit by a long bar of white-hot iron at the center, with crowds of workers wrestling it with tongs, a giant flywheel at right, and men resting and washing in the shadows.">
+        <figcaption class="u-figure-cap">Adolph Menzel, <em>The Iron Rolling Mill (Modern Cyclopes)</em>, 1872 to 1875. Painted in Marx's own decade, it is the factory floor he was writing about: the white-hot bar in the middle is the thing the men around it make, and could never buy.</figcaption>
+      </figure>
+
+      <p>You need three plain words before we start, because Marx leans his whole weight on them.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The three words</p>
+        <p class="u-callout-body"><b>The means of production.</b> The stuff you make stuff with: the land, the factory, the machines, the tools, the capital. Whoever owns it does not have to sell their hours to eat.<br><br><b>The bourgeoisie.</b> Engels defined it in a footnote, so we will use his words: "the class of modern capitalists, owners of the means of social production and employers of wage labour." The owners.<br><br><b>The proletariat.</b> His footnote again: "the class of modern wage labourers who, having no means of production of their own, are reduced to selling their labour power in order to live." The workers. The whole argument is about the line between these last two, and it is not about who earns more. It is about who owns the thing that makes the money.</p>
+      </aside>
+
+      <p>We go in eight stops, in Marx's own order: first what he thought was broken, then what he thought would fix it, and at the end, the reckoning the book earned. On the most famous line in it, where the wording has been fought over for a century, you can open a panel and see the versions side by side.</p>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">History is a fight over who owns the work</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-class-struggle" data-label="History is a fight over who owns the work" data-tag="Section I">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The first sentence</p>
+      <h2 class="station-h">History is a fight over who owns the work</h2>
+
+      <div class="passage">
+        <p class="passage-k">The Manifesto, opening of Section I</p>
+        <div class="passage-t">
+          <p>The history of all hitherto existing society is the history of class struggles.</p>
+          <p>Freeman and slave, patrician and plebeian, lord and serf, guild-master and journeyman, in a word, oppressor and oppressed, stood in constant opposition to one another.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Most history is told as a story of ideas and great men. Kings, wars, religions, the clever inventions of clever people. Marx says: stop watching the kings and follow the stuff. In every society there is a small group that owns the means of making things, and a large group that does the making, and the first group lives off the second. Master and slave. Lord and serf. Owner and worker. Whoever owns the way everyone eats sets the terms for everyone else.</p>
+        <p>History, in this telling, is the long fight between those two groups. And it moves not when someone wins an argument but when the way we make things outgrows the way we own them. Feudalism did not end because a philosopher refuted it. It ended because a new method of getting rich, trade, towns, workshops, manufacturing, grew up inside it and burst the old arrangement of lords and land apart. The merchants who would become the new ruling class were nobodies under the old one. The engine of the whole story is not what people believed. It is who owned the work.</p>
+        <p>That is the idea everything else hangs on, and it is worth seeing how much it explains before you decide whether it explains too much. Once you start asking of any era "who owned the means of life, and who had to sell themselves to its owners," a lot of the past stops looking like a pageant of leaders and starts looking like a series of arrangements about property, each one defended as eternal right up until it broke.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>Marx oversold the word "all," and Engels later admitted it. A footnote in the 1888 edition quietly narrows the claim to <em>written</em> history, after anthropologists turned up early societies with no real classes at all. It is a small correction, and an honest one: the iron law of class turns out to have a beginning, which means it might also have an end. That possible end is the whole back half of the book.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-revolutionary" data-label="Capitalism is the most revolutionary force ever" data-tag="Section I">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> The strange praise</p>
+      <h2 class="station-h">Capitalism is the most revolutionary force in history</h2>
+
+      <div class="passage">
+        <p class="passage-k">The Manifesto, Section I</p>
+        <div class="passage-t">
+          <p>All that is solid melts into air, all that is holy is profaned, and man is at last compelled to face with sober senses his real conditions of life, and his relations with his kind.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is the part nobody who skipped the book expects. Before Marx attacks capitalism, he praises it, and not politely. The bourgeoisie, he writes, "has played a most revolutionary part." It tore down the whole frozen feudal world of lords and serfs and guilds and inherited place, and put in its place something that never holds still. It "has accomplished wonders far surpassing Egyptian pyramids, Roman aqueducts, and Gothic cathedrals." In about a hundred years, he says, it built more productive power than every previous century of human beings combined. He means every word of it. The great enemy of capitalism is also its most astonished fan.</p>
+        <p>The line above is his sharpest. Capitalism's genius, he saw, is also a kind of permanent vertigo. The system stays alive by tearing itself up and rebuilding, constantly, on purpose. Tools, trades, skills, whole industries and the towns built around them, all of it gets junked the moment something cheaper comes along. Nothing is allowed to settle into "the way things are." Every few years the ground moves under you again.</p>
+        <p>Read that in 1848 and it is prophecy. The market that, in his words, "must nestle everywhere, settle everywhere," that pulls every country on earth into one web of buying and selling and remakes each one in its image, is the thing we now call globalization, described before the railway map of Europe was even finished. Marx is the man who wrote capitalism's best advertisement. He just thought the machine would eventually run over the people feeding it.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-two-classes" data-label="Everyone ends up on one of two sides" data-tag="Section I">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> The great divide</p>
+      <h2 class="station-h">Everyone ends up on one of two sides</h2>
+
+      <div class="passage">
+        <p class="passage-k">The Manifesto, Section I</p>
+        <div class="passage-t">
+          <p>Society as a whole is more and more splitting up into two great hostile camps, into two great classes directly facing each other: Bourgeoisie and Proletariat.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>As capitalism grows, Marx says, it sorts. The old crowded ladder of ranks, nobles and clergy and guildmasters and journeymen and peasants, collapses into two rungs. On one side, the people who own the means of production and live by employing others. On the other, the people who own none of it, and so have exactly one thing to sell. Their ability to work.</p>
+        <p>That is the line he cares about, and it is not the line we usually draw. It is not income, and it is not lifestyle. A well-paid engineer and a janitor are on the same side of Marx's line, because both of them eat only as long as someone keeps buying their hours. The owner is on the other side, not because he is richer this year, but because he could stop showing up and still get paid, by the work of everyone he employs. The question is never "who has more." It is "who owns the thing that makes the money, and who has to rent themselves to it."</p>
+        <p>There is something genuinely new here, and Marx is careful about it. The worker is free in a way the serf never was. He can quit, move, sell his work to this boss or that one. He just cannot sell it to nobody, because then he starves. It is a real freedom and a real trap at the same time, and that double thing, free to choose your owner, not free to have none, is the knot the rest of the book tries to cut.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-alienation" data-label="The thing you build and cannot buy" data-tag="The 1844 notebooks">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Alienation</p>
+      <h2 class="station-h">The thing you build and can't buy</h2>
+
+      <div class="passage">
+        <p class="passage-k">Economic and Philosophic Manuscripts of 1844</p>
+        <div class="passage-t">
+          <p>The worker becomes all the poorer the more wealth he produces. The worker becomes an ever cheaper commodity the more commodities he creates.</p>
+          <p>The object which labor produces confronts it as something alien, as a power independent of the producer.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Back to the worker on the line, building the car that will never be his. Marx had a word for what is happening to him: alienation. He worked it out in a notebook in 1844, years before the Manifesto, that nobody read until 1932, almost fifty years after he died. It is the most human thing he ever wrote.</p>
+        <p>The idea is this. A person pours their days, their attention, their strength into making something, and the thing comes out the far end belonging to someone else and standing over them like a stranger. The more you make, the bigger and richer the world of products grows, and the smaller and cheaper your slice of it gets. You are not building your own life. You are building someone else's wealth, one identical unit at a time, and the Manifesto's image for you is exact and unkind. You become, it says, "an appendage of the machine."</p>
+        <p>Marx breaks the estrangement into pieces, and they are easy to feel. You are cut off from the thing you make, because it is not yours. From the act of making it, because it is repetitive and someone else set every step. From yourself, because work should be the place a person becomes most fully what they are, and instead it is just the thing you endure to get paid. And from the people around you, because the system has turned them into your competitors for the same job. The heart of the complaint is not really the wages, though Marx thinks those are bad too. It is that the most human act there is, making things, has been turned into something done to you instead of something done by you.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-surplus" data-label="Where the profit actually comes from" data-tag="Capital, 1867">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> A detour into Capital</p>
+      <h2 class="station-h">Where the profit actually comes from</h2>
+
+      <div class="passage">
+        <p class="passage-k">Capital, Volume One</p>
+        <div class="passage-t">
+          <p>He creates surplus-value which, for the capitalist, has all the charms of a creation out of nothing.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Twenty years after the Manifesto, Marx published the brick that was supposed to prove all of it: Capital, three volumes, most of which almost nobody finishes. You need one idea out of it. He asks a flat question: where does profit actually come from? And he refuses the easy answer. Assume no one cheats, he says. Every trade is fair, every worker is paid the full going rate for their labor. There is still profit. Where?</p>
+        <p>His answer is the working day, cut in two. Say it takes you four hours of work to produce enough value to cover your own keep, your wages, the rent, the food, whatever it costs to get you back to the line tomorrow. The owner does not hire you for four hours. He hires you for eight. The first four pay for you. The second four you also work, and the value of everything you make in them belongs to him. Marx called that second stretch surplus value, and for the man who owns the factory it is, in his words, "a creation out of nothing." Profit, in this picture, is not a reward for risk or for genius. It is the part of the day you work for free.</p>
+        <p>Be fair to the other side here, because this is where Marx is weakest. The machinery under that argument, the labor theory of value, the claim that the work hours are what a thing is really worth, lost the argument in mainstream economics in the 1870s. Value, the economists decided, comes from what people will actually pay, not from the labor baked in, and Marx's careful math for turning labor into prices never quite closed. As economics, surplus value is a museum piece. As a suspicion, that the people doing the work get a thinning slice of what the work is worth, it never left, and it is back in fashion now for reasons that have nothing to do with whether his equations balanced.</p>
+        <p>One more idea from the brick, quickly, because it is too good to skip. When you buy a phone you see a price, a logo, a sleek object. What you do not see is the human labor folded inside it, the hands that dug the metal and soldered the board and packed the box. The market, Marx says, performs a quiet magic trick: it hides the relationships between people and shows you instead a relationship between things. So much money for so much phone. He called it the fetishism of commodities, "a definite social relation between men, that assumes, in their eyes, the fantastic form of a relation between things." The price tag is the spell. It makes the worker vanish.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-ideology" data-label="Why the whole thing feels fair" data-tag="The German Ideology">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> Ideology</p>
+      <h2 class="station-h">Why the whole thing feels fair</h2>
+
+      <div class="passage">
+        <p class="passage-k">The German Ideology</p>
+        <div class="passage-t">
+          <p>The ideas of the ruling class are in every epoch the ruling ideas: the class which is the ruling material force of society is at the same time its ruling intellectual force.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>If the deck is stacked this badly, why does almost nobody rise up on a Tuesday? Marx's answer is the idea you can carry out of here even if you leave everything else on the table. The people who own the means of making things also own the means of making ideas. In his day that meant the newspapers, the schools, the churches, the publishers. Whoever runs those gets to teach everyone else what counts as normal, what counts as fair, and what is simply the way of the world.</p>
+        <p>So the ideas drifting around in any era, about who deserves what, about why the people on top are on top, tend to be the ideas that happen to suit the people on top. Not by conspiracy, most of the time. Just because they hold the megaphone, and the megaphone shapes what sounds like common sense. "The ideas of the ruling class are in every epoch the ruling ideas."</p>
+        <p>Take the belief that anyone can make it if they work hard enough. It is comforting, it is sometimes even true, and it is also precisely the belief a lopsided system needs the people at the bottom to hold, because it tells them their position is their own fault and not the arrangement's. Marx's move is to ask, of any popular idea about what is fair: who benefits from everyone believing this? You do not have to be a communist to find that question useful. It is the most durable tool he made, and it outlived his economics by a century.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The tool has a sharp edge that can turn in your hand. Push it too far and every idea you happen to dislike becomes "just propaganda," every disagreement a sign the other person has been duped, and you have talked yourself out of ever being wrong. Marx never did mark where the lens stops working. But as a question rather than a verdict, who does this belief serve, it is permanent.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-gravediggers" data-label="Capitalism digs its own grave" data-tag="Sections I, II, IV">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The cure</p>
+      <h2 class="station-h">Capitalism digs its own grave</h2>
+
+      <div class="passage">
+        <p class="passage-k">The Manifesto, close of Section I</p>
+        <div class="passage-t">
+          <p>What the bourgeoisie therefore produces, above all, are its own grave-diggers. Its fall and the victory of the proletariat are equally inevitable.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>So what is the way out? Here Marx makes his boldest bet, and it is a clever one. Capitalism, he says, manufactures the thing that will destroy it. To make goods cheaply it has to herd workers together, off the scattered farms and into the cities, the mills, the giant shared factory floor. And in doing that it accidentally assembles the one army with the numbers and the reason to overthrow it. A million peasants alone in a million fields can do nothing. A thousand workers under one roof, doing the same job, nursing the same grievance, can talk, and count themselves, and organize. The drive for profit builds the crowd, and the solidarity, that ends the whole system. "What the bourgeoisie therefore produces, above all, are its own grave-diggers."</p>
+        <p>The cure follows from the diagnosis. If the root problem is that a few people privately own the things everyone's life depends on, then you take those things, the factories, the land, the capital, out of private hands and into common ownership. Marx boiled the whole program down to what he called a single sentence: "Abolition of private property." He meant the productive kind, the factory and the field, not your coat and your books, and the Manifesto says so plainly. End private ownership of the means of making wealth, and you end the split into owners and workers. End that split, he believed, and you end class itself, and every war and lie and indignity that class ever caused. What he pictured on the far side was not a grey barracks. It was the opposite: "an association, in which the free development of each is the condition for the free development of all."</p>
+        <p>The strangest thing about the Manifesto today is its to-do list. It ends with ten concrete demands, and reading them now is uncanny, because a pile of them simply came true, under capitalism, without a revolution firing a shot. A heavy progressive income tax. Free public schooling for every child. A national central bank. An end to child labor in factories. In 1848 these were the wild dreams of a hunted radical. Today several of them are just how Tuesday works. Capitalism, it turned out, could swallow a fair amount of Marx and keep going.</p>
+        <p>And then the ending everybody knows. Except the line everybody knows is not quite the line. The version on the posters, "Workers of the world, unite! You have nothing to lose but your chains," is a later popularization. What the 1848 text actually says, in the English translation Engels himself signed off on, is quieter and a little grander.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The most famous last line, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">It is probably the most quoted sentence in political history, and the form nearly everyone quotes is one nobody official ever wrote. Here is what the text actually says, against what the banners say.</p>
+
+          <div class="stack-v stack-early stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Samuel Moore <span class="star">the 1888 text</span></span><span class="stack-vy">English, Engels-approved</span></div>
+            <div class="stack-vt">"The proletarians have nothing to lose but their chains. They have a world to win. Working Men of All Countries, Unite!"</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">The popular slogan</span><span class="stack-vy">on every banner</span></div>
+            <div class="stack-vt">"Workers of the world, unite! You have nothing to lose but your chains." A condensed paraphrase that appears in no official translation, but won anyway, because it is shorter and it scans.</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">The German</span><span class="stack-vy">1848, literal</span></div>
+            <div class="stack-vt">"Proletarier aller Länder, vereinigt euch!" Word for word: "Proletarians of all countries, unite!" Not "workers," and not "of the world." The slogan the whole twentieth century marched under is a translation of a translation.</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">A small thing, and a fitting one. Even the most famous words Marx ever put his name to reach us secondhand, sanded smooth by the people who carried them. Which is, more or less, the story of the man.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-reckoning" data-label="What was done in his name" data-tag="The reckoning">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> The reckoning</p>
+      <h2 class="station-h">What was done in his name</h2>
+
+      <div class="passage">
+        <p class="passage-k">The Manifesto, Section IV</p>
+        <div class="passage-t">
+          <p>They openly declare that their ends can be attained only by the forcible overthrow of all existing social conditions.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Marx died in 1883, at his desk in London, stateless and largely ignored. He never saw a single country try his idea. The first one came thirty-four years later, in 1917, in Russia, which is close to the last place his own theory said it should happen: a backward, barely industrial empire of peasants, not one of the advanced factory democracies he was sure would go first. And then the century happened.</p>
+        <p>Governments flying his flag killed somewhere between sixty and a hundred million of their own people in the twentieth century. The exact figure is genuinely fought over, and the honest reason is ugly: it depends on choices the historians themselves disagree about, mainly whether to count deaths from famine and ruinous policy alongside deliberate executions, and where the hard archival records stop and the estimates begin. The best-known tally, the Black Book of Communism, reached for nearly a hundred million; two of that book's own authors accused their editor in print of padding the number to hit a round figure. What no serious historian disputes is the floor, and the floor is tens of millions. The single largest piece is the famine Mao drove in the Great Leap Forward, with deaths estimated from fifteen to forty-five million, the deadliest famine in recorded history. Add Stalin's terror and his engineered famines, the Gulag, and the Khmer Rouge marching the cities of Cambodia into the fields and killing perhaps a quarter of the country. The list is long, and it is real.</p>
+        <p>So is that Marx's fault? It is the question the whole walk has been heading toward, and the honest answer is that it is genuinely contested, so here are both cases as hard as they go.</p>
+        <p>The case that it lands on him: he called for abolishing private property, for "the forcible overthrow of all existing social conditions," for centralizing all production "in the hands of the State." He wrapped it in a theory of history so sure of its happy ending that a true believer could justify nearly anything as helping the inevitable along a little faster. Give a movement that much certainty and that much license, this argument runs, and the camps are not an accident.</p>
+        <p>The case that it does not: he died decades before any of it, expecting the revolution in free industrial nations, not peasant autocracies. He left almost no instructions for running a state, and mocked the very demand that he write "recipes for the cook-shops of the future." His one real sketch of workers in power was the Paris Commune of 1871, which he praised for being elected and instantly recallable, the opposite of a secret police. His own orthodox followers said at the time that Lenin was betraying him. And the final goal in his own words is "the free development of each." The Gulag is not in there.</p>
+        <p>I am not going to pretend to settle a fight that the historians have not. The fair summary is narrower and stranger than either side wants. Marx wrote a furious, brilliant diagnosis and almost no prescription, and into that empty space, in a country he swore it should not happen in, other men poured a catastrophe. Whether the empty space invited the horror or merely failed to prevent it is the argument that will not end.</p>
+        <p>And yet. Set the prophecy and the body count aside, look at only the diagnosis, and something uncomfortable happens: a lot of it reads like this morning. He got the big predictions wrong, and it is worth saying so flatly. Workers in rich countries got richer, not poorer. The revolutions came in the wrong places. The world did not collapse into two armed camps, and economists threw out his theory of value. But the man who in 1848 described a world being torn up and remade by a global market that melts every solid thing and turns more and more of life into something bought and sold was describing our exact world from a hundred and seventy years off. The concentration of wealth, the booms and the crashes, the slow widening of the gap between what money earns and what work earns, the worry that the stories we are sold about fairness might quietly serve someone. These are live questions, and he asked most of them first.</p>
+        <p>That is what makes Marx so hard to file and be done with. The cure he prescribed was poison, it is right there in the book, and the body count ran to tens of millions. The diagnosis he wrote was, in places, the best anyone has managed. You have to hold both at once, because the regimes that kept only the first dug the real graves, and the boosters who keep only the second are selling you something too. Somewhere a person is still building something they will never own, and still not quite finding it strange enough to stop. Marx's lasting gift was never the answer he gave. It was that he looked at that person and refused to call it normal.</p>
+      </div>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the words come from</h2>
+      <p>The featured text throughout is the <strong>Communist Manifesto</strong> in Samuel Moore's 1888 English translation, the standard one, edited and footnoted by Friedrich Engels, and long in the public domain. Every quotation is verbatim, British spelling and all ("revolutionising," "grave-diggers," "labour"). The bits of <strong>Capital</strong> are from the 1887 Moore and Aveling English edition, also public domain.</p>
+      <ul class="src-list">
+        <li><b>The Manifesto and Capital</b> are quoted from the texts at the <a href="https://www.marxists.org/archive/marx/works/1848/communist-manifesto/">Marxists Internet Archive</a>, checked against the page images.</li>
+        <li><b>The alienation passages</b> (stop 4) are from the <em>Economic and Philosophic Manuscripts of 1844</em>, and <b>the line on ruling ideas</b> (stop 6) is from <em>The German Ideology</em> (1845 to 1846). Both were notebooks Marx never published. Neither saw print until 1932, almost fifty years after he died, which is why the young, more philosophical Marx and the old economist can sound like two different writers.</li>
+        <li><b>The death tolls</b> (stop 8) follow the mainstream demographic scholarship, given as ranges because the specialists give ranges. The Great Leap famine figures are from Yang Jisheng, Frank Dik&ouml;tter, and Judith Banister; the Black Book of Communism is Courtois and others (1997), and the criticism of its headline number comes from two of its own contributors, Nicolas Werth and Jean-Louis Margolin. The Cambodia estimate is Patrick Heuveline's.</li>
+        <li><b>The interpretive fight</b> over whether the regimes followed Marx or betrayed him draws on the <a href="https://plato.stanford.edu/entries/marx/">Stanford Encyclopedia of Philosophy</a> entry on Marx, with the continuity case put most forcefully by Leszek Kolakowski and the betrayal case by Marx's own quarrel with how Lenin read him.</li>
+      </ul>
+      <p>The reading of the argument is mine. I have tried to let the critique land at full strength and to keep the record fully visible, rather than flattening either one to make a cleaner story. Where the famous wording and the actual text part ways, as with the closing slogan, I went with what Marx and Engels actually approved and showed you the popular version beside it.</p>
+      <p class="colo-note">The painting in the opening and on the homepage card is Adolph Menzel's <em>The Iron Rolling Mill (Modern Cyclopes)</em>, painted 1872 to 1875 and held at the Alte Nationalgalerie in Berlin, in the public domain. Menzel went to real mills and drew the workers from life, which is why it is the closest thing we have to a photograph of the world Marx was arguing about.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/marx.js" defer></script>
+</body>
+</html>
