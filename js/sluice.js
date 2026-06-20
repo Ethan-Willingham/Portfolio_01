@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.6';
+  var GAME_VERSION = 'v25.7';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -42272,15 +42272,13 @@
     var areaTop = M.headerBottom + Math.round(10 * us);
     var areaH = M.bottom - areaTop - M.pad;
     var gap = Math.round(14 * us);
-    // Trade Board hidden, but the cards keep the ORIGINAL 3-slot size so dropping it
-    // never stretches Workshop + Shelf (a stretch spreads their gradients and reads
-    // as a colour shift). Workshop + Shelf stay byte-identical to the original; the
-    // Board slot just goes empty.
+    // Trade Board hidden when ENABLE_TRADE_BOARD is off -> two counters fill the row.
+    var n = ENABLE_TRADE_BOARD ? 3 : 2;
     var stations;
     if (M.portrait) {
       // Column: stacked station cards filling the content area.
       var colTop = areaTop;
-      var colH = (areaH - gap * 2) / 3;
+      var colH = (areaH - gap * (n - 1)) / n;
       var colW = M.cw;
       stations = [
         { id: 'workshop', x: M.cx, y: colTop, w: colW, h: colH },
@@ -42291,7 +42289,7 @@
     }
     // Landscape / desktop: side-by-side cards filling the content area.
     var rowH = areaH;
-    var sw = (M.cw - gap * 2) / 3;
+    var sw = (M.cw - gap * (n - 1)) / n;
     stations = [
       { id: 'workshop', x: M.cx, y: areaTop, w: sw, h: rowH },
       { id: 'shelf',    x: M.cx + (sw + gap), y: areaTop, w: sw, h: rowH }
