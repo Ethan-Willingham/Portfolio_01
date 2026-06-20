@@ -53,6 +53,13 @@ The pilots surfaced four failure modes. Do not repeat them.
    horizontal padding. Before shipping, view the post at 375px width and confirm
    the side gutter is 20px, not 40px. Mandatory check.
 
+5. **Keep the homepage card description short.** The cards built so far all run
+   far too long, 43 to 105 words, cramming a summary and a feature list into the
+   index. The card description is ONE sentence, about 15 words, a single concrete
+   hook, not a summary. Write "The Buddha's teaching in 423 verses, seven
+   translations stacked and broken down," not the 54-word version sitting there
+   now. Cut hard; the post does the explaining, the card only earns the click.
+
 ## The selection rule: load-bearing, not popular
 
 The hard part of every post is choosing what goes in. The rule is: **the most
@@ -280,42 +287,43 @@ attributed like scholarship. That attribution is the series' own defense.
 
 ## Build order: the batches
 
-Build in priority batches of about a dozen, most important first, each batch
-spanning several pillars so that stopping early still leaves a broad, finished
-series. Write each batch's prompts just before it runs. The pilots (Dhammapada,
-Zhuangzi, Deutsch) are already built.
+Build in priority batches ordered by importance, objective weight in human
+history, not personal taste. Each batch still spans many pillars, so the series is
+broad at every stopping point, and all sixteen pillars are covered by the end of
+Batch 3. The pilots (Dhammapada, Zhuangzi, Deutsch) are already built. Write each
+batch's prompts just before it runs.
 
-**Batch 1, how to live and how to bear it (the personal and practical heart).**
-Meditation (D, the flagship), Aristotle's Nicomachean Ethics, Marcus Aurelius,
-Epictetus, Frankl, William James, the Bhagavad Gita, the Analects, Plato (the
-death of Socrates and the cave), Nietzsche, Darwin, Sun Tzu's Art of War. If only
-this batch ever ships, the series is already real. The personal heart (meditation,
-Frankl, James) is here on purpose, so the recovery-and-meaning lane is covered
-even if later batches never come.
+**Batch 1, the foundations of civilization (the most important, period).** New
+Testament, Plato (the death of Socrates and the cave), the Analects, the Bhagavad
+Gita, Darwin's Origin of Species, the Social Contract (Hobbes, Locke, Rousseau),
+Aristotle's Nicomachean Ethics, Nietzsche, Homer's Odyssey, Sun Tzu's Art of War,
+the Meditation flagship (the Engine D pilot), and Frankl. Eleven pillars in one
+batch; if only this ships, the series is already broad and deep.
 
-**Batch 2, the world's scriptures (the convergence core, mostly prompt-ready).**
-Hebrew Bible, New Testament, Quran, Guru Granth Sahib, Nagarjuna, Huxley's
-Perennial Philosophy, Rumi, Augustine, Mencius, the Zoroastrian Gathas.
+**Batch 2, the rest of the giants.** The Quran, the Hebrew Bible, Marx, Marcus
+Aurelius, William James, Aristotle's Poetics (opens beauty), Plato's Symposium
+(opens love), Sapiens (opens the human story), Nagarjuna, Huxley's Perennial
+Philosophy, Euclid, Guru Granth Sahib. Fourteen pillars covered by here.
 
-**Batch 3, the Western mind (reason, power, politics).** Lucretius, Kant, Camus
-with Kierkegaard, Hume with Descartes, the Social Contract, Mill's On Liberty,
-Marx, Machiavelli, Han Feizi, Popper, Euclid.
+**Batch 3, completing the map.** The cult and commercial case studies (opens the
+edge), the oral and indigenous essay (opens that blind spot), Kant, Lucretius,
+Mill's On Liberty, Machiavelli, Dostoevsky's Grand Inquisitor, Mencius, Epictetus,
+Augustine. All sixteen pillars are now covered.
 
 **Batch 4, the contemplative and experiential world.** Patanjali's Yoga Sutras,
 Krishnamurti, Alan Watts, Ram Dass, Eckhart Tolle, Gurdjieff, Huxley's Doors of
 Perception, Pollan, the entheogen traditions, secular Buddhism (Harris, Batchelor,
-Wright), the cult and commercial case studies.
+Wright).
 
-**Batch 5, story, beauty, love, and the human arc.** Dostoevsky's Grand
-Inquisitor, Gilgamesh, Dante, Homer, Aristotle's Poetics, In Praise of Shadows
-with The Book of Tea, Burke and Kant on the sublime, Berger's Ways of Seeing,
-Plato's Symposium, the Song of Songs, the Kama Sutra, Barthes or bell hooks on
-love, Sapiens, Guns Germs and Steel.
+**Batch 5, story, beauty, love, and the human arc.** Gilgamesh, Dante, Camus with
+Kierkegaard, Hume with Descartes, Han Feizi, In Praise of Shadows with The Book of
+Tea, Burke and Kant on the sublime, Berger's Ways of Seeing, the Song of Songs,
+the Kama Sutra, Barthes or bell hooks on love, Guns Germs and Steel, the
+Zoroastrian Gathas, Rumi.
 
-**Batch 6, the remainder and the capstone.** Jainism, Montaigne, Jung, Adam
-Smith, Musashi, the 48 Laws of Power, the oral and indigenous essay, and last of
-all The Spirituality of Imperfection, the capstone that ties the whole series
-together.
+**Batch 6, the remainder and the capstone.** Jainism, Adam Smith, Popper,
+Montaigne, Jung, Musashi, the 48 Laws of Power, and last The Spirituality of
+Imperfection, the capstone that ties the whole series together.
 
 ## The per-book workflow
 
