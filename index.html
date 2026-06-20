@@ -93,15 +93,14 @@
     .home-search.is-open .hs-input { max-width: 680px; opacity: 1; }
     .hs-input::placeholder { color: var(--text-faint); }
     .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-    /* About + Archive: quiet links at the right end of the rule, no pill, split
-       by a hairline so they read as a pair. */
-    .hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 0.85rem; }
+    /* About + Archive: quiet links at the right end of the rule, no pill, set
+       side by side with a small gap (no divider). */
+    .hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 1rem; }
     .hs-about {
       flex: none; font-family: var(--font-body); font-size: 0.82rem;
       color: var(--text-dim); text-decoration: none; white-space: nowrap;
       transition: color 0.2s ease;
     }
-    .hs-links .hs-about + .hs-about { padding-left: 0.85rem; border-left: 1px solid var(--rule); }
     .hs-about:hover { color: var(--text-bright); }
     .hs-about:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.5); border-radius: 2px; }
 
