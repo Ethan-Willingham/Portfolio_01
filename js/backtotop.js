@@ -1,5 +1,5 @@
 /* ============================================================
-   backtotop.js — a shared "back to top" affordance for posts.
+   backtotop.js - a shared "back to top" affordance for posts.
    Self-contained: injects its own styles + button, no deps.
 
    Behaviour (chosen from the demo): a borderless arrow centered at the
@@ -135,4 +135,21 @@
   }
   syncViewport();
   evaluate();
+})();
+
+/* Owner-only: this script is on every post and the homepage, so it is the one
+   place to bootstrap the private edit affordances without touching every page.
+   A normal visitor has no `be_owner` flag, so this no-ops and owner-edit.js is
+   never even fetched; the public site is 100% unchanged for them. The flag only
+   says "show my edit controls on this device"; it is not the key and acting on
+   any affordance still requires the password. */
+(function () {
+  "use strict";
+  try {
+    if (localStorage.getItem("be_owner") !== "1") return;
+    var s = document.createElement("script");
+    s.src = "/js/owner-edit.js";
+    s.defer = true;
+    (document.head || document.documentElement).appendChild(s);
+  } catch (e) {}
 })();

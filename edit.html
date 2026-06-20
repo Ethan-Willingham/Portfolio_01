@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A short, quiet bootstrap for a fresh device: type /edit.html and you land
+       on the editor. No login button lives anywhere on the public site; this is
+       just an easy URL to remember. Still password-gated downstream. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>Edit</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <meta http-equiv="refresh" content="0; url=/blog-edit.html">
+  <style>
+    body { background: var(--bg); color: var(--text-dim); font-family: var(--font-body);
+           display: grid; place-items: center; min-height: 100vh; margin: 0; }
+    a { color: var(--accent); }
+  </style>
+  <script>
+    // Carry a ?edit=<path> through to the editor so "Edit this page" deep-links work.
+    (function () {
+      var q = location.search || "";
+      location.replace("/blog-edit.html" + q);
+    })();
+  </script>
+</head>
+<body>
+  <p>Opening the editor&hellip; <a href="/blog-edit.html">continue</a>.</p>
+</body>
+</html>

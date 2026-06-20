@@ -311,11 +311,18 @@
     const file = path.split('/').pop().replace(/\.html$/,'');
     return file.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
   }
+  // A discreet affordance on the live site can deep-link straight to a file:
+  // /blog-edit.html?edit=the-far-side-of-the-body.html opens that page's editor
+  // the moment the password unlocks. Only acted on after a successful unlock.
+  let pendingEdit = new URLSearchParams(location.search).get('edit');
   async function openPicker(){
     showView('view-picker');
     try {
       allPaths = await ghTree();
       renderPicker('');
+      if (pendingEdit && allPaths.includes(pendingEdit)) {
+        const p = pendingEdit; pendingEdit = null; openEditor(p);
+      } else { pendingEdit = null; }
     } catch (e) {
       $('#picker-body').innerHTML = `<p class="be-msg err">${e.message}</p>`;
     }
