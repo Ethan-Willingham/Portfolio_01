@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Quran, Side by Side</title>
+  <meta name="description" content="Fourteen keystone passages of the Quran in the original Arabic, then seven English translations stacked against each other, with a plain breakdown of what each says and where the translators split. Because a Muslim holds the Arabic to be the real thing, every translation is only an interpretation of the meaning.">
+  <meta property="og:title" content="The Quran, Side by Side">
+  <meta property="og:description" content="To a Muslim, the Quran is the Arabic itself, and cannot be translated. So every English version here calls itself only an interpretation of the meaning. Fourteen keystone passages, the Arabic source, and seven translations, broken apart line by line.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/quran.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/quran-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/quran-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE QURAN, SIDE BY SIDE
+     An interactive reader: fourteen curated keystone passages, the
+     Arabic source, and seven English translations, with a plain
+     breakdown of each. Sits in the site shell (forest green,
+     parchment, Century Supra / Segoe UI / Commit Mono). The Arabic
+     source needs a naskh face with full vocalization and runs
+     right-to-left; everything else stays on the three site fonts.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 860px;                 /* reading column */
+    --ar-font: "Geeza Pro","Al Bayan","Baghdad","Damascus","Noto Naskh Arabic","Amiri","Scheherazade New","Times New Roman",serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .ar-inline { font-family: var(--ar-font); color: var(--text-bright); direction: rtl; unicode-bidi: isolate; }
+  .sec h2.sechead { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.6rem,4vw,2rem); color: var(--text-bright); margin: 0 0 0.2em; letter-spacing: -0.01em; line-height: 1.12; }
+  .sec .sechead-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+
+  /* the opening "fan": one line of Arabic, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-ar { font-family: var(--ar-font); font-size: clamp(1.9rem, 6.5vw, 2.9rem); line-height: 1.7; color: var(--text-bright); padding: 1.4rem 1.5rem 0.5rem; direction: rtl; text-align: right; }
+  .fan-tr { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.02em; color: var(--accent); padding: 0 1.5rem 0.5rem; }
+  .fan-cap { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding: 0 1.5rem 0.9rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.2rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .qx { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .qx-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .qx-step { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+  .qx-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .qx-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .qx-nav:disabled { opacity: 0.3; cursor: default; }
+  .qx-jump { font-family: var(--font-heading); color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.05rem; min-width: 0; text-align: left; }
+  .qx-jump:hover { background: rgba(255,255,255,0.05); }
+  .qx-jump #qx-kref { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .qx-jump #qx-title { font-size: 1.2rem; line-height: 1.1; color: var(--text-bright); }
+  .qx-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .qx-count b { color: var(--accent); font-weight: 400; }
+
+  /* the keystone jump list, grouped by the spine */
+  .qx-grid { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 64vh; overflow-y: auto; }
+  .qx-grid[hidden] { display: none; }
+  .qx-gridsec { margin: 0.5rem 0; }
+  .qx-gridlabel { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.3rem; }
+  .qx-gridrow { display: grid; gap: 3px; }
+  .qx-grid button { font-family: var(--font-body); font-size: 0.96rem; text-align: left; border: 1px solid transparent; border-radius: 7px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; padding: 0.5rem 0.7rem; transition: background .15s, color .15s, border-color .15s; display: flex; justify-content: space-between; gap: 0.8rem; align-items: baseline; }
+  .qx-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .qx-grid button .gk { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .qx-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+  .qx-grid button.is-cur .gk { color: #2a3128; }
+
+  /* source: the Arabic, presented with dignity */
+  .qx-source { position: relative; margin: 0.8rem 0 0; padding: 1.5rem 1.6rem 1.3rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012)); }
+  .qx-ar-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 1rem; }
+  .qx-ar-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
+  .qx-ar { font-family: var(--ar-font); font-size: clamp(1.5rem, 4.6vw, 2.15rem); line-height: 2.05; color: var(--text-bright); margin: 0; direction: rtl; text-align: right; text-wrap: pretty; }
+  .qx-ayah { display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.62rem; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 50%; width: 1.5em; height: 1.5em; margin: 0 0.25em; vertical-align: 0.15em; direction: ltr; }
+  .qx-tr { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; letter-spacing: 0.01em; color: var(--accent); margin: 1.1rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--rule); direction: ltr; text-align: left; }
+  .qx-tr b { color: var(--text-faint); font-weight: 400; text-transform: uppercase; font-size: 0.62rem; letter-spacing: 0.14em; }
+
+  /* commentary */
+  .qx-notes { margin: 1rem 0 0; }
+  .qx-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .qx-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .qx-note-k:first-child { margin-top: 0; }
+  .qx-note-gist, .qx-note-read { font-size: 1.05rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .qx-note-gist em, .qx-note-read em, .qx-splits em { font-style: italic; color: var(--text-bright); }
+  .qx-note-gist b, .qx-splits b { font-weight: 600; color: var(--text-bright); }
+  .qx-note-read { color: var(--text-dim); font-style: italic; }
+  .qx-splits { margin: 0; }
+  .qx-splits dt { font-family: var(--ar-font); font-size: 1.4rem; color: var(--text-bright); margin: 0.8rem 0 0.1rem; direction: rtl; text-align: right; }
+  .qx-splits dt .qx-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; display: block; direction: ltr; text-align: left; margin-top: 0.2rem; }
+  .qx-splits dd { margin: 0 0 0.3rem; font-size: 0.99rem; line-height: 1.58; color: var(--text-dim); }
+
+  /* translations */
+  .qx-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .qx-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .qx-v:last-child { border-bottom: 1px solid var(--rule); }
+  .qx-early  { border-left-color: var(--early); }
+  .qx-mid    { border-left-color: var(--mid); }
+  .qx-modern { border-left-color: var(--modern); }
+  .qx-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .qx-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .qx-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .qx-vt { font-family: var(--font-body); font-size: 1.05rem; line-height: 1.62; color: var(--text); white-space: normal; }
+  .qx-vt .qx-br { display: block; height: 0.55em; }
+  .qx-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .qx .qx-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .qx.qx-ready .qx-body { opacity: 1; }
+  .qx-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .qx.qx-ready .qx-loading { display: none; }
+
+  /* ---------- UNTRANSLATABLES ---------- */
+  .unt { display: grid; gap: 0.9rem; margin: 1.8rem 0 0; }
+  .unt-card { border: 1px solid var(--rule); border-radius: 14px; padding: 1.25rem 1.4rem; background: rgba(255,255,255,0.02); }
+  .unt-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .unt-ar { font-family: var(--ar-font); font-size: 2rem; line-height: 1; color: var(--text-bright); direction: rtl; }
+  .unt-tr { font-family: var(--font-heading); font-style: italic; font-size: 1.2rem; color: var(--accent); }
+  .unt-gloss { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+  .unt-body { font-size: 1.02rem; line-height: 1.6; color: var(--text); margin: 0 0 0.7rem; }
+  .unt-body em { font-style: italic; color: var(--text-bright); }
+  .unt-body b { color: var(--text-bright); font-weight: 600; }
+  .unt-renders { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+  .unt-renders li { font-size: 0.96rem; line-height: 1.45; color: var(--text-dim); padding-left: 0; }
+  .unt-renders .who { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: uppercase; margin-right: 0.5em; }
+
+  /* ---------- the seven, the contest ---------- */
+  .who-list { list-style: none; margin: 1.4rem 0 0; padding: 0; display: grid; gap: 0; }
+  .who-row { display: grid; grid-template-columns: 1fr; gap: 0.1rem 1.2rem; padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .who-row:last-child { border-bottom: 1px solid var(--rule); }
+  .who-name { font-family: var(--font-heading); font-size: 1.14rem; color: var(--text-bright); }
+  .who-name .yr { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); margin-left: 0.6em; letter-spacing: 0.04em; }
+  .who-desc { font-size: 1rem; line-height: 1.52; color: var(--text-dim); }
+  @media (min-width: 680px){
+    .who-row { grid-template-columns: 14rem 1fr; align-items: baseline; }
+  }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.4rem auto 0; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .fineprint { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    body { padding-left: 0; padding-right: 0; }
+    .fan-ar { font-size: 1.7rem; padding: 1.1rem 1rem 0.4rem; }
+    .fan-tr, .fan-cap { padding-left: 1rem; padding-right: 1rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .qx-bar { gap: 0.55rem 0.7rem; }
+    .qx-count { margin-left: 0; flex-basis: 100%; }
+    .qx-source, .qx-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .qx-v { padding-left: 0.9rem; }
+    .unt-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Quran, side by side</h1>
+    <p class="hero-dek">Muslims hold that the Quran is the Arabic itself, the exact speech of God, and that it cannot be translated. So every English version here calls itself something humbler: an interpretation of the meaning. Here are seven of them, beside the thing they stand in for.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>14 keystone passages</b> <span class="sep">/</span> <b>Arabic source</b> plus seven English translations <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Strictly speaking, the Quran has never been translated. The book is the Arabic. A Muslim holds that these are the literal words of God, given to Muhammad in Arabic over twenty-three years, and that no other language can carry them. So the English Quran does not exist, exactly. What exists is a translator telling you, in English, what he thinks the Arabic means.</p>
+      <p>The translators say so themselves, right on the cover. Marmaduke Pickthall called his version <em>The Meaning of the Glorious Koran</em>, because, in his own words, the Koran "cannot be translated" and the result "is not the Glorious Koran." The Cambridge Arabist A. J. Arberry called his <em>The Koran Interpreted</em>, for the same reason. The title is an apology. The real book stayed in Arabic.</p>
+      <p>That sounds like a technicality. It is the whole subject of this page. If the original can never be reproduced, then every translator is guessing at the same locked door, and you can watch them choose different keys. Here is the line a Muslim says before nearly every act of the day, the one that opens the book and opens almost every chapter in it.</p>
+
+      <div class="fan">
+        <p class="fan-ar" lang="ar" dir="rtl">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+        <p class="fan-tr">Bismi llahi r-rahmani r-rahim</p>
+        <span class="fan-cap">the basmala &middot; sura 1, verse 1 &middot; spoken before eating, writing, travelling, nearly everything</span>
+        <ul class="fan-list">
+          <li><span class="e">In the name of the most merciful God.</span><span class="who">Sale, 1734</span></li>
+          <li><span class="e">In the name of Allah, the Beneficent, the Merciful.</span><span class="who">Pickthall, 1930</span></li>
+          <li><span class="e">In the name of Allah, Most Gracious, Most Merciful.</span><span class="who">Yusuf Ali, 1934</span></li>
+          <li><span class="e">In the Name of God, the Merciful, the Compassionate.</span><span class="who">Arberry, 1955</span></li>
+          <li><span class="e">In the name of God, the Most Gracious, the Dispenser of Grace.</span><span class="who">Asad, 1980</span></li>
+          <li><span class="e">In the name of Allah, the Entirely Merciful, the Especially Merciful.</span><span class="who">Saheeh Intl, 1997</span></li>
+          <li><span class="e">In the name of God, the Lord of Mercy, the Giver of Mercy.</span><span class="who">Abdel Haleem, 2004</span></li>
+        </ul>
+      </div>
+
+      <p>Seven translators, one short line, and they already disagree about the name of God and about the two words for his mercy that come after it. Three keep <em>Allah</em>; four write <em>God</em>. The two mercy words, <span class="ar-inline" lang="ar">ٱلرَّحْمَـٰن</span> and <span class="ar-inline" lang="ar">ٱلرَّحِيم</span>, both grow from one root that also gives the word for <em>womb</em>, and English has no clean pair for them, so you get Beneficent and Merciful, Gracious and Merciful, Entirely Merciful and Especially Merciful. Sale, in 1734, gave up and folded both into "the most merciful." That small gap, multiplied across the whole book, is what you are about to read.</p>
+      <p>Below are fourteen passages, chosen the way the tradition itself weights them: the prayer recited in every cycle of the daily prayers, the four lines a hadith calls equal to a third of the book, the verse most often hung on a wall for protection. For each one you get the Arabic, a transliteration to sound it out, a plain breakdown of what it says and where the seven part ways, and then all of them stacked. Use the arrows or the list to move between passages.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="qx" id="qx">
+      <div class="qx-bar">
+        <div class="qx-step">
+          <button class="qx-nav" id="qx-prev" aria-label="Previous passage">&lsaquo;</button>
+          <button class="qx-jump" id="qx-jump" aria-label="Jump to a passage"><span id="qx-kref">Sura 1, al-Fatiha</span><span id="qx-title">The Opening</span></button>
+          <button class="qx-nav" id="qx-next" aria-label="Next passage">&rsaquo;</button>
+        </div>
+        <div class="qx-count" id="qx-count"></div>
+      </div>
+
+      <div class="qx-grid" id="qx-gridpop" hidden aria-label="The fourteen keystones"></div>
+
+      <div class="qx-body">
+        <div class="qx-source" id="qx-source"></div>
+        <div class="qx-notes" id="qx-notes"></div>
+        <div class="qx-versions" id="qx-versions"></div>
+      </div>
+      <div class="qx-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The Arabic and the translations are plain text in <code>js/quran-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ UNTRANSLATABLES ============================ -->
+    <section class="sec">
+      <p class="sechead-k">The hard words</p>
+      <h2 class="sechead">Five words that will not cross over</h2>
+      <p>Some of the trouble is just poetry, the kind any translator faces. But a handful of words sit at the center of the religion and have no English equal, so the translators either reach for an approximation or leave the Arabic standing. Watch these five, and most of the disagreements in the stack above start to make sense.</p>
+
+      <div class="unt">
+        <div class="unt-card">
+          <div class="unt-head"><span class="unt-ar" lang="ar">ٱللَّه</span><span class="unt-tr">Allah</span><span class="unt-gloss">the God</span></div>
+          <p class="unt-body"><em>Allah</em> is not a personal name like Zeus. It is a contraction of <em>al-ilah</em>, "the god," the only one. So leaving it as "Allah" can make it sound like a separate, foreign deity, when the word is a claim that this is the same God Jews and Christians worship. Arab Christians say <em>Allah</em> too. The choice is loaded either way: keep it and it feels other, translate it and you assert the identity the verse is asserting.</p>
+          <ul class="unt-renders">
+            <li><span class="who">keep it</span>Allah <span style="color:var(--text-faint)">(Pickthall, Yusuf Ali, Saheeh)</span></li>
+            <li><span class="who">translate</span>God <span style="color:var(--text-faint)">(Sale, Arberry, Asad, Abdel Haleem)</span></li>
+          </ul>
+        </div>
+
+        <div class="unt-card">
+          <div class="unt-head"><span class="unt-ar" lang="ar">إِسْلَام</span><span class="unt-tr">islam</span><span class="unt-gloss">submission / surrender</span></div>
+          <p class="unt-body">The name of the religion is also its whole instruction. <em>Islam</em> means handing yourself over to God, and it comes from the root <em>s-l-m</em>, which also gives <em>salam</em>, peace, and the word for being whole and safe. A <em>muslim</em> is simply one who hands himself over. So "submission" is right but cold; the word carries a sense of coming into peace by stopping the struggle, closer to "surrender" than to "obey."</p>
+          <ul class="unt-renders">
+            <li><span class="who">renderings</span>submission &middot; self-surrender &middot; surrender to God</li>
+          </ul>
+        </div>
+
+        <div class="unt-card">
+          <div class="unt-head"><span class="unt-ar" lang="ar">ٱلرَّحْمَـٰن ٱلرَّحِيم</span><span class="unt-tr">ar-rahman, ar-rahim</span><span class="unt-gloss">the two mercies</span></div>
+          <p class="unt-body">The two words from the basmala, and the hardest pair in the book. Both come from <em>rahma</em>, mercy, from the root for <em>womb</em>, the mercy of a mother for what she carries. The tradition reads <em>ar-Rahman</em> as the vast mercy poured over all creation, believer or not, and <em>ar-Rahim</em> as the close, particular mercy kept for the faithful. English has one word, "merciful," and has to invent a second, so every translator builds a different mismatched pair.</p>
+          <ul class="unt-renders">
+            <li><span class="who">Pickthall</span>the Beneficent, the Merciful</li>
+            <li><span class="who">Saheeh</span>the Entirely Merciful, the Especially Merciful</li>
+            <li><span class="who">Abdel Haleem</span>the Lord of Mercy, the Giver of Mercy</li>
+            <li><span class="who">Asad</span>the Most Gracious, the Dispenser of Grace</li>
+          </ul>
+        </div>
+
+        <div class="unt-card">
+          <div class="unt-head"><span class="unt-ar" lang="ar">تَقْوَىٰ</span><span class="unt-tr">taqwa</span><span class="unt-gloss">God-consciousness</span></div>
+          <p class="unt-body">The quality the Quran asks for more than any other, and the one English keeps fumbling. <em>Taqwa</em> comes from a root meaning to guard or shield yourself. It is the alert awareness of God that keeps you from wrongdoing, less "fear" in the sense of terror than the carefulness of someone who knows they are seen. Translators swing between "fear of God," which sounds harsh, and "piety," which sounds tame, and the newer ones reach for "mindful of God."</p>
+          <ul class="unt-renders">
+            <li><span class="who">renderings</span>fear of God &middot; piety &middot; God-consciousness &middot; mindful of God &middot; guard yourselves</li>
+          </ul>
+        </div>
+
+        <div class="unt-card">
+          <div class="unt-head"><span class="unt-ar" lang="ar">رَبِّ ٱلْعَـٰلَمِين</span><span class="unt-tr">rabb al-alamin</span><span class="unt-gloss">Lord of the worlds</span></div>
+          <p class="unt-body">The second line of the opening prayer. <em>Rabb</em> is "lord," but with a warmth English drops: it means the one who owns a thing and also raises it, sustains it, brings it to its full growth, the way you would a child or a garden. <em>Al-alamin</em> is "the worlds," or every world, or all beings that exist. Put them together and the translators range from the plain "Lord of the Worlds" to Yusuf Ali's unpacked "the Cherisher and Sustainer of the worlds" to Arberry's "Lord of all Being."</p>
+          <ul class="unt-renders">
+            <li><span class="who">Pickthall</span>Lord of the Worlds</li>
+            <li><span class="who">Yusuf Ali</span>the Cherisher and Sustainer of the worlds</li>
+            <li><span class="who">Arberry</span>the Lord of all Being</li>
+            <li><span class="who">Sale</span>the Lord of all creatures</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ THE SEVEN ============================ -->
+    <section class="sec">
+      <p class="sechead-k">The stack</p>
+      <h2 class="sechead">Who the seven are</h2>
+      <p>They span three centuries and almost every angle you can come at the book from: an Enlightenment lawyer, an English novelist who converted, a British-Indian barrister, a Cambridge orientalist, a Jewish-born convert, a team of American women, and an Egyptian who knew the whole Quran by heart. Naming them matters, because the differences below are not random noise. Each translator wanted something different from the Arabic.</p>
+      <ul class="who-list">
+        <li class="who-row"><span class="who-name">George Sale<span class="yr">1734</span></span><span class="who-desc">A London lawyer, largely self-taught in Arabic. The first English Quran rendered straight from the Arabic rather than through Latin or French, and the lens through which the Enlightenment, Voltaire and Gibbon and Jefferson, first met the book. Archaic, lawyerly, oddly beautiful.</span></li>
+        <li class="who-row"><span class="who-name">Marmaduke Pickthall<span class="yr">1930</span></span><span class="who-desc">An English novelist and son of a clergyman who converted to Islam in 1917. The first English Quran by an Englishman who was himself a Muslim. Stately, King-James in cadence, and careful to call itself only "the meaning."</span></li>
+        <li class="who-row"><span class="who-name">Abdullah Yusuf Ali<span class="yr">1934</span></span><span class="who-desc">A British-Indian barrister. For most of the twentieth century the most widely distributed English Quran on earth, handed out by the millions, loved and argued over for its dense, poetic footnotes.</span></li>
+        <li class="who-row"><span class="who-name">A. J. Arberry<span class="yr">1955</span></span><span class="who-desc">Sir Thomas Adams's Professor of Arabic at Cambridge. The version scholars most often call the finest in English, the one that tries hardest to carry the Arabic's rhythm instead of flattening it to prose. A non-Muslim's act of reverence.</span></li>
+        <li class="who-row"><span class="who-name">Muhammad Asad<span class="yr">1980</span></span><span class="who-desc">Born Leopold Weiss, an Austrian Jew, journalist and diplomat, who converted in 1926. A rationalist reading with heavy interpretive notes; admired abroad and banned in Saudi Arabia for straying from the official creed.</span></li>
+        <li class="who-row"><span class="who-name">Saheeh International<span class="yr">1997</span></span><span class="who-desc">A team of three American women converts working in Jeddah. The plain, literal, lightly bracketed version that has become the default English Quran online and in mosque racks today.</span></li>
+        <li class="who-row"><span class="who-name">M. A. S. Abdel Haleem<span class="yr">2004</span></span><span class="who-desc">An Egyptian who learned the whole Quran by heart as a boy, later a professor at SOAS in London. The Oxford World's Classics version, prized for reading like clear, natural, modern English.</span></li>
+      </ul>
+
+      <p style="margin-top:1.8rem">Here is the part that surprises people. With seven translators this far apart, you would expect them to be working from different Arabic texts, the way the King James and a modern Bible descend from competing manuscripts. They are not. The Arabic is essentially one text the world over.</p>
+      <p>That uniformity is real, and it helps to know how it was made. Around the year 650, a generation after Muhammad died, the caliph Uthman had one written version declared standard and the rival copies burned. Almost every Quran printed since follows a single recitation of that text, called Hafs, fixed in an edition published in Cairo in 1924. That is not the same as no variation. A few canonical recitations, like Warsh across North Africa, differ in vowels and a handful of words. The fourth line of the opening is read both as "Master of the Day of Judgment" and "King of the Day of Judgment," the whole difference hanging on one unwritten vowel. The oldest manuscripts, like the burned-and-reused Sana'a parchment, preserve an early version that is plainly the same book with real differences in it. But the differences are small and catalogued, and everything descends from that one archetype, which makes the text far more uniform than, say, the New Testament, whose thousands of Greek copies carry hundreds of thousands of variants. The comparison is fair on the result, though the Quran's uniformity was partly engineered, by one man's edit and a fire.</p>
+      <p>So the real disagreements in Islam are almost never about the words. They are about what the words <em>mean</em>, which is the work of <em>tafsir</em>, the vast science of interpretation, and about who has the standing to say. The original split between Sunni and Shia was a fight over who should lead the community after Muhammad, not over the text; the two read the same Quran. An old accusation that the text was tampered with surfaces in early polemic, and mainstream Shia scholarship rejects it and affirms the same book. The contest, in other words, is exactly the one this page is about: not the source, but the reading. The translators are just the version of it that happens in English.</p>
+      <p class="fineprint" style="margin-top:1.4rem">One more thing worth knowing before you read. The 114 suras are not arranged in the order they were revealed, and not by topic. After the short opening, they run roughly from longest to shortest, and only roughly. The book you can read front to back is not the book in the order it came down, which is part of why a guided path through the keystones, rather than page one to the end, is the honest way in.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <p class="sechead-k">Notes</p>
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every translation here is reproduced verbatim, not paraphrased. The Arabic, the transliteration, and the modern translations were pulled with scripts and parsed, so nothing in them was retyped or reworded by hand or by a model. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
+      <ul class="src-list">
+        <li><b>The Arabic</b> is the Uthmani text in the Hafs reading, and the transliteration, from <a href="https://quran.com">Quran.com</a>. The breakdowns add the standard academic transliteration with its long vowels.</li>
+        <li><b>Pickthall</b> (1930), <b>Yusuf Ali</b> (1934), <b>Saheeh International</b> (1997), and <b>Abdel Haleem</b> (2004) are from the Quran.com text API. <b>Arberry</b> (1955) and <b>Asad</b> (1980) are from <a href="https://alquran.cloud">Al Quran Cloud</a>.</li>
+        <li><b>George Sale</b> (1734) is in the public domain. The short suras here come from the <a href="https://en.wikisource.org/wiki/The_Koran_(1734)">Wikisource transcription</a> of his first edition; the rest from a later reprint scanned at the <a href="https://archive.org/details/korancommonlyc00sale">Internet Archive</a>. Obvious scanning errors are corrected; his archaic spelling, and his "Lokman" and "Tagut," are left as he wrote them.</li>
+        <li><b>The hadith</b> cited in the breakdowns are checked against <a href="https://sunnah.com">sunnah.com</a>: al-Fatiha as the greatest sura (Bukhari 4647), al-Ikhlas as a third of the Quran (Bukhari 5015), Ayat al-Kursi as the greatest verse (Muslim 810).</li>
+      </ul>
+      <p>The breakdowns are mine. They lean on standard scholarship and on the classical commentaries (<em>tafsir</em>) for the contested lines. Four of the seven translations, Arberry, Asad, Saheeh, and Abdel Haleem, are still in copyright; short passages are quoted here for comparison and study, with every translator named, which is the whole point of a page like this. The four in-copyright versions are not reproduced in full anywhere on the site.</p>
+      <p>Where I have had to characterize what Muslims believe, I have tried to give the mainstream view and to flag where the tradition itself disagrees, rather than smooth it over or pick a side. Corrections from people who know the text better than I do are welcome.</p>
+      <p class="fineprint">The image on the homepage card is a folio from the <em>Blue Qur'an</em>, gold Kufic script on indigo-dyed parchment, made in Tunisia (probably Kairouan) sometime between the late ninth and mid tenth century. The Metropolitan Museum of Art, New York (Open Access, public domain), accession 2004.88.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/quran-notes.js" defer></script>
+  <script src="js/quran-data.js" defer></script>
+  <script src="js/quran.js" defer></script>
+</body>
+</html>
