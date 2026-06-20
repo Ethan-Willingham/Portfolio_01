@@ -200,20 +200,18 @@
   table.prog .hard { color: var(--c-rose); font-weight: 600; }
   table.prog .easy { color: var(--c-sky); font-weight: 600; }
 
-  /* ---------- REFERENCES (fine print: the whole list should fit one screen) ---------- */
-  #sources ol { font-family: var(--font-body); font-size: 0.52rem; color: var(--text-dim); line-height: 1.3; padding-left: 1.6em; margin: 0.2em 0 0; }
-  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.12em; break-inside: avoid; }
+  /* ---------- REFERENCES (revealed inside the sources dropdown, readable) ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.7em; margin: 0.4em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.4em; }
   #sources li::marker { color: var(--accent); }
   #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
   #sources li a:hover { border-bottom-color: var(--accent); }
   #sources b { color: var(--text); font-weight: 600; }
   #sources i { color: var(--text-dim); }
-  #sources li.shead { list-style: none; margin: 0.9em 0 0.25em -1.6em; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); break-after: avoid; }
-  #sources li.shead:first-child { margin-top: 0; }
-  #sources .lede { font-size: 0.84rem; }
-  #sources .legend { font-size: 0.6rem; gap: 0.3rem 0.8rem; margin: 0.6em 0 0.8em; }
-  #sources .legend .grade { font-size: 0.48rem; padding: 0.16em 0.5em; }
-  @media (min-width: 700px) { #sources ol { columns: 3; column-gap: 1.4rem; } }
+  #sources li.shead { list-style: none; margin: 1.3em 0 0.4em -1.7em; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  #sources li.shead:first-child { margin-top: 0.2em; }
+  #sources .lede { font-size: 0.98rem; }
+  #sources .legend { font-size: 0.8rem; gap: 0.4rem 1rem; margin: 1em 0 1.1em; }
 
   .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .disclaimer strong { color: var(--accent-hover); }
@@ -258,9 +256,9 @@
   <main id="guide">
 
   <figure class="photo reveal">
-    <img src="assets/images/still-moving/muybridge.webp" width="1600" height="1297" loading="eager" decoding="async" alt="Eadweard Muybridge's 1887 motion study of a nude man running, two rows of sequential photographs capturing each phase of a stride against a measuring grid.">
-    <figcaption>The first time anyone could see what running actually looks like. Muybridge froze a body in motion frame by frame in the 1880s, and the lesson holds: fitness is not a pose you hold, it is a body that keeps moving.
-      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Nude_man_running_(rbm-QP301M8-1887-066).jpg">Eadweard Muybridge, Animal Locomotion (1887), plate 66, "Running." Public domain, via Wikimedia Commons.</a></span>
+    <img src="assets/images/still-moving/runner.webp" width="1600" height="1065" loading="eager" decoding="async" alt="A lone runner in silhouette, mid-stride, against a blue dawn sky and distant desert mountains.">
+    <figcaption>Fitness is not a pose you hold, it is a body that keeps moving. This guide is about the two parts of it that lifting leaves out: the heart that keeps you alive, and the range that keeps you moving.
+      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:US_Navy_111208-F-UI176-619_A_runner_sprints_for_the_finish_line_during_the_29th_annual_Grand_Bara_15K_race_in_the_Grand_Bara_Desert,_Djibouti.jpg">A runner at the Grand Bara 15K, Djibouti, 2011. Photo by Staff Sgt. Jonathan Steffen, U.S. Air Force (public domain), via Wikimedia Commons.</a></span>
     </figcaption>
   </figure>
 
@@ -488,37 +486,32 @@
 
     <p>What the data actually show is the now-familiar shape: the benefit climbs steeply out of the basement, then flattens. In a meta-analysis of 47,000 people, going from about 3,500 steps a day to about 7,800 cut the death rate nearly in half. Past roughly 7,000 to 8,000, the line bends and more steps add little. In older women, the benefit leveled off around 7,500. <span class="u-src"><a href="https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00302-9/fulltext">Paluch 2022</a></span> <span class="u-src"><a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2734709">Lee 2019</a></span> <span class="grade g-a">strong</span> The newest synthesis, 57 studies deep, lands on 7,000 as the realistic target. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40713949/">Ding 2025</a></span></p>
 
-    <figure class="viz reveal" aria-label="A curve of mortality risk against daily step count, dropping then flattening near 7,500 steps.">
+    <figure class="viz reveal" aria-label="A bar chart of mortality risk by daily step count, in quartiles.">
       <figcaption>Where the steps stop mattering</figcaption>
-      <p class="viz-sub">Risk of death against steps per day. Most of the benefit is banked by around 7,000 to 8,000. The famous 10,000 is just further along the flat part.</p>
-      <svg viewBox="0 0 700 290" role="img" aria-label="Mortality risk falls steeply from about 3,500 steps to about 7,800, then flattens; 10,000 sits on the flat section.">
-        <g>
-          <line x1="70" y1="60" x2="660" y2="60" class="v-grid"/>
-          <line x1="70" y1="150" x2="660" y2="150" class="v-grid"/>
-          <line x1="70" y1="240" x2="660" y2="240" class="v-grid"/>
-          <text x="60" y="64" text-anchor="end" class="v-axis">1.0</text>
-          <text x="60" y="154" text-anchor="end" class="v-axis">0.7</text>
-          <text x="60" y="244" text-anchor="end" class="v-axis">0.45</text>
+      <p class="viz-sub">Risk of death by daily step count, split into four equal groups. The drop is steep up to about 7,800 steps, then it nearly stops. A shorter bar is a lower risk of dying.</p>
+      <svg viewBox="0 0 700 250" role="img" aria-label="Mortality risk by step quartile: 3,500 steps is the baseline at 1.0; 5,800 drops to 0.60; 7,800 to 0.55; 10,900 only to 0.47, barely lower than 7,800.">
+        <line x1="160" y1="30" x2="160" y2="224" class="v-grid-s"/>
+        <g font-family="var(--font-body)">
+          <!-- Q1 3,500 baseline -->
+          <text x="148" y="61" text-anchor="end" class="v-axis">3,500</text>
+          <rect x="160" y="40" width="480" height="32" rx="4" fill="#b8796d"/>
+          <text x="630" y="61" text-anchor="end" class="v-label-b" font-size="12" fill="#241a16">1.0, the fewest steps</text>
+          <!-- Q2 5,800 -->
+          <text x="148" y="109" text-anchor="end" class="v-axis">5,800</text>
+          <rect x="160" y="88" width="288" height="32" rx="4" fill="#9ec79a"/>
+          <text x="458" y="109" class="v-label" font-size="12" fill="#E8E2D6">0.60</text>
+          <!-- Q3 7,800 sweet spot -->
+          <text x="148" y="157" text-anchor="end" class="v-axis">7,800</text>
+          <rect x="160" y="136" width="264" height="32" rx="4" fill="#dfc288"/>
+          <text x="434" y="157" class="v-label-b" font-size="12" fill="#dfc288">0.55</text>
+          <text x="486" y="157" class="v-label" font-size="11" fill="#dfc288">most of the benefit, by here</text>
+          <!-- Q4 10,900 -->
+          <text x="148" y="205" text-anchor="end" class="v-axis">10,900</text>
+          <rect x="160" y="184" width="226" height="32" rx="4" fill="#9ec79a"/>
+          <text x="396" y="205" class="v-label" font-size="12" fill="#E8E2D6">0.47</text>
+          <text x="442" y="205" class="v-label" font-size="11" fill="#B8B2A2">10,000 lands about here</text>
         </g>
-        <!-- plateau band -->
-        <rect x="436" y="50" width="80" height="210" fill="#9ec79a" opacity="0.10"/>
-        <text x="476" y="44" text-anchor="middle" class="v-label" font-size="11" fill="#9ec79a">most of the benefit</text>
-        <!-- curve -->
-        <path class="draw" style="--len:680" d="M245,60 C 300,110 330,165 355,198 C 400,233 430,238 456,242 C 520,248 575,250 606,250" fill="none" stroke="#dfc288" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="245" cy="60" r="5" fill="#dfc288"/>
-        <circle cx="355" cy="198" r="5" fill="#dfc288"/>
-        <circle cx="456" cy="242" r="5" fill="#dfc288"/>
-        <circle cx="606" cy="250" r="5" fill="#dfc288"/>
-        <!-- 10k marker -->
-        <line x1="562" y1="60" x2="562" y2="250" stroke="#d9978c" stroke-width="1.2" stroke-dasharray="3 4"/>
-        <text x="562" y="52" text-anchor="middle" class="v-axis-t" fill="#d9978c">10,000: a 1965 slogan</text>
-        <!-- x axis -->
-        <line x1="70" y1="260" x2="660" y2="260" class="v-grid-s"/>
-        <text x="245" y="278" text-anchor="middle" class="v-axis-t">3,500</text>
-        <text x="355" y="278" text-anchor="middle" class="v-axis-t">6,000</text>
-        <text x="456" y="278" text-anchor="middle" class="v-axis-t">7,800</text>
-        <text x="606" y="278" text-anchor="middle" class="v-axis-t">11,000</text>
-        <text x="365" y="288" text-anchor="middle" class="v-axis-t" fill="#767d71">steps per day</text>
+        <text x="160" y="242" class="v-axis-t" fill="#767d71">steps per day, in quartiles</text>
       </svg>
       <p class="viz-note">The gap that matters is between 4,000 and 8,000, not between 8,000 and 12,000. At 3,000 steps, getting to 7,000 is one of the best things you can do for your lifespan. At 9,000, a tenth thousand is a rounding error.</p>
     </figure>
@@ -744,9 +737,9 @@
     <p>A deep squat trains the same hip and ankle range a stretch would, under load, in a position you can control. Train the bottom of each lift, the lengthened part where the muscle is stretched under tension, and you are getting your mobility work for free. A growing line of research even suggests that lengthened position may be the best part of the rep for growth. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/37029912/">Kassiano 2023</a></span> <span class="grade g-c">mixed</span> The caveat worth keeping: that "lifting equals stretching" finding rests on a modest pile of trials, so call it strongly suggestive, not settled.</p>
 
     <figure class="photo portrait reveal">
-      <img src="assets/images/still-moving/gladiator.webp" width="1100" height="1650" loading="lazy" decoding="async" alt="The Borghese Gladiator, an ancient marble statue of a warrior lunging forward with one arm raised and the whole body stretched into a long diagonal of full extension.">
-      <figcaption>The Borghese Gladiator: a body at full reach, every joint loaded near its end range. That is mobility, range you can drive with strength, not the passive bendiness of a stretch.
-        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Borghese_Gladiator,_Louvre,_2_October_2014.jpg">Borghese Gladiator (c. 100 BC), Louvre. Photo by Ryan Baumann, CC BY 2.0, via Wikimedia Commons.</a></span>
+      <img src="assets/images/still-moving/reach.webp" width="1100" height="1653" loading="lazy" decoding="async" alt="Long jumper Mike Powell stretched out at full extension in mid-air over the sand pit, arms thrown overhead, in a near-empty stadium.">
+      <figcaption>A body at full reach: every joint near the end of its range, driven there by strength and control. That is mobility, not the passive bendiness of a stretch.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Mike_Powell_mid-leap_in_long_jump,_1986.jpg">Mike Powell at full extension in the long jump, 1986. Photo by Lori Shepler / Los Angeles Times, CC BY 4.0, via Wikimedia Commons.</a></span>
       </figcaption>
     </figure>
 
@@ -814,7 +807,9 @@
   <section id="sources" class="sec">
     <span class="sec-kicker">The fine print</span>
     <h2 class="sec-h">Sources, and how to read them</h2>
-    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. This is the full list, strongest evidence first within each topic. Where the research is one study, or mixed, or still moving, the text says so rather than rounding up to false certainty.</p>
+    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. The research was told to refute the thesis, not flatter it, so the corrections (zone 2 is oversold, "too much cardio" is mostly unproven, the flexibility-longevity link is confounded) were left visible above.</p>
+    <details class="u-collapse">
+      <summary class="u-collapse-s">The full list, 40 sources, grouped by topic</summary>
     <div class="legend">
       <span><span class="grade g-a">strong</span> meta-analyses or many trials agreeing</span>
       <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
@@ -870,30 +865,9 @@
       <li class="shead">Tracking it</li>
       <li value="40"><b>Fox K, et al. (2007).</b> Resting heart rate as a risk factor and fitness marker. <i>J Am Coll Cardiol</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4632887/">review</a></li>
     </ol>
+    </details>
 
     <hr class="u-divider">
-  </section>
-
-  <!-- ===================== COLOPHON ===================== -->
-  <section id="colophon" class="sec">
-    <span class="sec-kicker">Colophon</span>
-    <h2 class="sec-h">How this was made</h2>
-    <p class="lede">Like everything on this site, this guide was researched, written, fact-checked, and built mostly by AI agents (Anthropic's Claude), working in parallel and steered by one human who trains but is emphatically not a doctor. In the spirit of showing the work, here is what went into it.</p>
-
-    <div class="u-stats">
-      <div class="u-stat"><span class="u-fig">2</span><span class="u-fig-lbl">parallel research agents, one for cardio, one for stretching</span></div>
-      <div class="u-stat"><span class="u-fig">~160</span><span class="u-fig-lbl">studies and sources read</span></div>
-      <div class="u-stat"><span class="u-fig">40</span><span class="u-fig-lbl">cited on this page</span></div>
-      <div class="u-stat"><span class="u-fig">8</span><span class="u-fig-lbl">charts and diagrams, all hand-drawn in code</span></div>
-      <div class="u-stat"><span class="u-fig">2</span><span class="u-fig-lbl">interactive tools you can drive yourself</span></div>
-      <div class="u-stat"><span class="u-fig">0</span><span class="u-fig-lbl">stock photos: the images are public-domain and CC artworks, nothing AI-generated</span></div>
-    </div>
-
-    <p>The method was the one this site uses for everything: split the field into clusters, here just two, cardio and stretching, send a research agent into each with a brief to gather every claim with a primary source, then build the page so the short answer sits in plain view and the studies sit underneath it. The agents were told to pressure-test the assumptions, not flatter them, and the corrections they turned up were kept visible on purpose. The "zone 2 is magic" story is oversold. "Too much cardio" damaging your heart is mostly unproven. The Nordic-curl injury number is softer than the headline. The flexibility-and-longevity link is confounded by general fitness. All of that stayed in.</p>
-
-    <p>Two things worth saying plainly. First, this is an enthusiast writing for the love of getting one thing right, not a clinician, and the page is the visible tip of a much larger pile of reading. Second, AI can be confidently wrong, so every number here is cited and was checked against its source. If you find an error, that is worth more to me than a compliment.</p>
-
-    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Built with Claude (Anthropic). Researched and written June 2026. A companion to <a href="big-enough.html" style="color:var(--accent)">Big Enough</a>. Not medical advice.</p>
   </section>
 
   </main>
