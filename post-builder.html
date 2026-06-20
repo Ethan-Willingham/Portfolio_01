@@ -164,6 +164,21 @@
     .pb-drop:hover, .pb-drop.over { border-color: var(--accent); background: var(--s-gold-tint); color: var(--text-bright); }
     .pb-thumb { display: block; max-width: 100%; max-height: 180px; border-radius: 8px; margin: 0.2rem auto 0.5rem; }
 
+    /* publish modal */
+    .pb-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(8,12,9,0.6); backdrop-filter: blur(2px); }
+    .pb-modal[hidden] { display: none; }
+    .pb-modal-card { width: min(560px, 100%); max-height: 90vh; overflow-y: auto; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 18px; padding: clamp(1.2rem, 4vw, 2rem); box-shadow: 0 1px 2px rgba(8,12,9,.4), 0 30px 70px -20px rgba(8,12,9,.8); }
+    .pb-modal-card h2 { font-size: 1.5rem; margin: 0 0 0.2rem; }
+    .pb-modal-sub { color: var(--text-dim); font-size: 0.92rem; line-height: 1.5; margin: 0 0 1rem; }
+    .pb-modal-card label.be-lbl { margin-top: 0.9rem; }
+    .pb-modal-card textarea { font-family: var(--font-body); min-height: 3.2em; resize: vertical; }
+    .pb-modal-foot { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.4rem; }
+    .pb-pub-progress { margin-top: 1rem; font-size: 0.9rem; color: var(--text-dim); }
+    .pb-pub-progress .ok { color: #9fcf8f; } .pb-pub-progress .err { color: var(--emphasis-strong); }
+    .pb-pub-remind { margin-top: 1rem; background: var(--s-gold-tint); border: 1px solid var(--s-gold-hair); border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.86rem; line-height: 1.5; color: var(--text-dim); }
+    .pb-pub-remind code { font-family: var(--font-mono); color: var(--accent); font-size: 0.85em; background: var(--bg); padding: 0.15em 0.4em; border-radius: 5px; }
+    .pb-cover-preview { display: block; max-width: 100%; border-radius: 8px; margin-top: 0.6rem; border: 1px solid var(--rule); }
+
     @media (max-width: 860px) {
       .pb-work { grid-template-columns: 1fr; }
       .pb-edit { border-right: none; }
@@ -249,12 +264,28 @@
   <div class="pb-palette" id="pb-palette"></div>
   <div class="pb-rtt" id="pb-rtt"></div>
 
+  <!-- publish modal -->
+  <div class="pb-modal" id="pb-modal" hidden>
+    <div class="pb-modal-card">
+      <h2>Publish this post</h2>
+      <p class="pb-modal-sub">One commit makes it live: the page itself, the homepage card (the list re-sorts by date), the search index, and the social + thumbnail images.</p>
+      <div id="pb-pub-fields"></div>
+      <div class="pb-modal-foot">
+        <button class="be-quiet" id="pb-pub-cancel">Cancel</button>
+        <button class="be-primary" id="pb-pub-go">Publish</button>
+      </div>
+      <div class="pb-pub-progress" id="pb-pub-progress"></div>
+      <div id="pb-pub-after"></div>
+    </div>
+  </div>
+
   <script type="module">
   import {
     getToken, setToken, clearToken, fetchAuthBlob, ghGet, ghPut, ghGetSha, ghTree, ghCommit,
     unlock, setupKey, suggestPass, passStrengthBits, forgetOwnerDevice,
   } from './js/blog-edit-core.js';
   import * as T from './js/post-template.js';
+  import * as P from './js/post-publish.js';
 
   const $ = (s, r=document) => r.querySelector(s);
   const $$ = (s, r=document) => [...r.querySelectorAll(s)];
@@ -791,17 +822,122 @@
     finally { $('#bd-save').disabled = false; }
   }
   $('#bd-save').addEventListener('click', saveDraft);
-  $('#bd-publish').addEventListener('click', () => {
-    if (window.__pbPublish) window.__pbPublish();
-    else setStatus('Publish ships in the next build step.', 'err');
-  });
+
+  /* ===================== PUBLISH ===================== */
+  function todayISO(){ return new Date().toISOString().slice(0, 10); }
+  function openPublishModal(){
+    if (!draft || !draft.meta.title || !draft.meta.title.trim()){ setStatus('Give it a title first.', 'err'); return; }
+    if (!draft.blocks.length){ setStatus('Add some content first.', 'err'); return; }
+    const slug = T.slugify(draft.meta.title);
+    const covers = draft.blocks.filter(b => b.type === 'image' && (b._preview || b.src));
+    const firstImg = covers[0];
+    const coverOpts = '<option value="branded">Generate a branded card</option>' +
+      covers.map((b, i) => `<option value="img:${b.id}">Use image ${i + 1}${b.alt ? ' (' + escAttrJS(b.alt.slice(0,30)) + ')' : ''}</option>`).join('');
+    $('#pb-pub-fields').innerHTML =
+      `<label class="be-lbl">Slug (the URL)</label><input type="text" id="pub-slug" value="${slug}">` +
+      `<label class="be-lbl">Homepage card description</label><textarea id="pub-desc">${escHtmlJS(draft.meta.cardDesc || draft.meta.dek || '')}</textarea>` +
+      `<label class="be-lbl">Date shown on the homepage</label><input type="date" id="pub-date" value="${draft.meta.dateISO || todayISO()}">` +
+      `<label class="be-lbl">Search keywords</label><input type="text" id="pub-kw" value="${escAttrJS(draft.meta.keywords || P.autoKeywords(draft.meta.title, draft.blocks))}">` +
+      `<label class="be-lbl">Card thumbnail alt text</label><input type="text" id="pub-alt" value="${escAttrJS(draft.meta.cardAlt || (firstImg && firstImg.alt) || draft.meta.title)}">` +
+      `<label class="be-lbl">Social + thumbnail image</label><select id="pub-cover">${coverOpts}</select>` +
+      `<img class="pb-cover-preview" id="pub-cover-prev" hidden>` +
+      `<label class="be-lbl">Thumbnail credit (optional)</label><input type="text" id="pub-credit" value="${escAttrJS(draft.meta.thumbCredit || '')}" placeholder="e.g. Thumbnail: Title, Author (year). Public domain.">`;
+    const coverSel = $('#pub-cover'), prev = $('#pub-cover-prev');
+    function paintCover(){ const v = coverSel.value; if (v.startsWith('img:')){ const b = draft.blocks.find(x => x.id === v.slice(4)); const s = b && (b._preview || b.src); if (s){ prev.src = s; prev.hidden = false; return; } } prev.hidden = true; }
+    coverSel.value = firstImg ? 'img:' + firstImg.id : 'branded'; paintCover();
+    coverSel.addEventListener('change', paintCover);
+    $('#pb-pub-progress').textContent = ''; $('#pb-pub-after').innerHTML = ''; $('#pb-pub-go').disabled = false;
+    $('#pb-modal').hidden = false;
+  }
+  function escAttrJS(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function escHtmlJS(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function pubProgress(t, cls=''){ const el = $('#pb-pub-progress'); el.innerHTML = `<span class="${cls}">${t}</span>`; }
+
+  // Read a shared file. In dry-run (localhost, no token) read the local server so
+  // the whole publish can be rehearsed offline against the real current files;
+  // otherwise read from GitHub through the token.
+  async function getFileText(path){
+    if (isDry()){ const r = await fetch('/' + path, { cache: 'no-store' }); if (!r.ok) throw new Error(`local read ${r.status} for ${path}`); return { text: await r.text() }; }
+    return ghGet(path);
+  }
+
+  async function doPublish(){
+    $('#pb-pub-go').disabled = true;
+    try {
+      const slug = T.slugify($('#pub-slug').value || draft.meta.title); draft.meta.slug = slug;
+      draft.meta.cardDesc = $('#pub-desc').value.trim();
+      draft.meta.keywords = $('#pub-kw').value.trim();
+      draft.meta.thumbCredit = $('#pub-credit').value.trim();
+      draft.meta.cardAlt = $('#pub-alt').value.trim();
+      const dateISO = $('#pub-date').value || todayISO();
+      const coverVal = $('#pub-cover').value;
+
+      pubProgress('Building the page...');
+      const imgFiles = assignImagePaths(slug);
+      const model = cleanModel();
+      const postHtml = T.buildPostHTML({ meta: model.meta, blocks: model.blocks, draft: false });
+
+      pubProgress('Rendering the social image + thumbnail...');
+      let heroSrc = null;
+      if (coverVal.startsWith('img:')){ const b = draft.blocks.find(x => x.id === coverVal.slice(4)); heroSrc = b && (b._preview || (b.src ? '/' + b.src : null)); }
+      const { ogB64, thumbB64 } = await P.renderSocialImages(draft.meta.title, heroSrc);
+
+      pubProgress('Updating the homepage and search index...');
+      const idx = await getFileText('index.html');
+      const card = P.homepageCard({ slug, title: draft.meta.title, cardDesc: draft.meta.cardDesc, dateISO, keywords: draft.meta.keywords, alt: draft.meta.cardAlt, eager: true });
+      const newIndex = P.sortHomepage(idx.text, card);
+      const sj = await getFileText('search-index.json');
+      const entry = P.searchEntry({ url: slug + '.html', title: draft.meta.title, dateISO, desc: draft.meta.cardDesc, thumb: 'assets/thumbs/' + slug + '.jpg', keywords: draft.meta.keywords }, postHtml);
+      const newSearch = P.addToSearchIndex(sj.text, entry, dateISO);
+
+      const files = [
+        { path: slug + '.html', text: postHtml },
+        { path: 'assets/thumbs/' + slug + '.jpg', b64: thumbB64 },
+        { path: 'assets/thumbs/' + slug + '-og.jpg', b64: ogB64 },
+        { path: 'index.html', text: newIndex },
+        { path: 'search-index.json', text: newSearch },
+        ...imgFiles,
+      ];
+      if (draft.path && draft.path.startsWith('drafts/')) files.push({ path: draft.path, delete: true });
+
+      if (isDry()){
+        window.__pbLast = { publish: true, slug, dateISO,
+          files: files.map(f => ({ path: f.path, bytes: (f.text || f.b64 || '').length, delete: !!f.delete })),
+          postHtml, newIndex, newSearch, ogB64, thumbB64 };
+        console.log('[post-builder] DRY RUN publish', slug, '->', files.map(f => (f.delete ? '- ' : '') + f.path).join(', '));
+        pubProgress('Published (dry run) ✓ ' + files.length + ' files staged', 'ok');
+        afterPublish(slug, true); return;
+      }
+      await ghCommit(files, `publish: ${slug}`);
+      draft.blocks.forEach(b => { if (b.type === 'image' && b.upload) b.upload = null; });
+      draft.path = slug + '.html';
+      pubProgress('Published ✓ live in ~15s', 'ok');
+      afterPublish(slug, false);
+    } catch (e) {
+      pubProgress(e.message, 'err'); $('#pb-pub-go').disabled = false;
+    }
+  }
+  function afterPublish(slug, dry){
+    $('#pb-pub-go').disabled = true;
+    $('#pb-pub-after').innerHTML =
+      `<div class="pb-pub-remind">` +
+      `<b>One step is yours to finish locally.</b> The About-page attribution tile needs your Claude Code transcripts, so it cannot be built in the browser. When you are at your machine, run:<br>` +
+      `<code>node tools/build-attribution.mjs</code> (then add this post to its NEW config and re-run with <code>--write</code>).` +
+      (dry ? `<br><br>This was a <b>dry run</b> (localhost): nothing was committed. The staged files are on <code>window.__pbLast</code>.` :
+        `<br><br><a href="/${slug}.html" target="_blank" rel="noopener">View it live &#8599;</a> &nbsp; <a href="/" target="_blank" rel="noopener">See the homepage &#8599;</a>`) +
+      `</div>`;
+  }
+  $('#bd-publish').addEventListener('click', openPublishModal);
+  $('#pb-pub-cancel').addEventListener('click', () => { $('#pb-modal').hidden = true; });
+  $('#pb-pub-go').addEventListener('click', doPublish);
+  $('#pb-modal').addEventListener('click', e => { if (e.target.id === 'pb-modal') $('#pb-modal').hidden = true; });
   $('#bd-back').addEventListener('click', () => { if (dirty && !confirm('Leave without saving this draft?')) return; openDrafts(); });
   $('#bd-seg').addEventListener('click', e => { const pane = e.target.getAttribute('data-pane'); if (!pane) return; document.body.classList.toggle('pb-show-preview', pane === 'preview'); $$('#bd-seg button').forEach(b => b.classList.toggle('on', b.getAttribute('data-pane') === pane)); if (pane === 'preview') refreshPreview(); });
   window.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 's' && !$('#view-builder').hidden){ e.preventDefault(); saveDraft(); } });
   window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue = ''; } });
 
   // expose a couple hooks for the publish step (next build) + tests
-  window.__pb = { get draft(){ return draft; }, T, buildPost: () => T.buildPostHTML(cleanModel()), saveDraft, openBuilder, refreshPreview, setStatus, resizeImage, cleanModel, assignImagePaths };
+  window.__pb = { get draft(){ return draft; }, T, P, buildPost: () => T.buildPostHTML(cleanModel()), saveDraft, openBuilder, refreshPreview, setStatus, resizeImage, cleanModel, assignImagePaths, openPublishModal, doPublish };
 
   // Local dev hook: open the builder with a fresh (or supplied) draft and no real
   // token, so the whole writing + preview + dry-run save pipeline can be exercised
