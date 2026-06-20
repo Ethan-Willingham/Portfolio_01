@@ -138,23 +138,23 @@ which folds in TM and every technique); the modern teachers and the chemical-pat
 books each get their own post.
 
 **1. Indian / Dharmic**
-- ★ Bhagavad Gita and the Upanishads (A) [queued]
+- ★ Bhagavad Gita and the Upanishads (A) [live]
 - ★ Dhammapada (A) [live]
-- Nagarjuna, Mulamadhyamakakarika (B) [queued]
+- Nagarjuna, Mulamadhyamakakarika (B) [live]
 - Patanjali, Yoga Sutras (A) [add], the meditation manual, pairs with the meditation post
-- Guru Granth Sahib, Sikhism (A) [queued]
+- Guru Granth Sahib, Sikhism (A) [live]
 - Jainism, the Tattvartha Sutra (A) [add]
 
 **2. Chinese**
 - ★ Tao Te Ching (A) [live]
 - Zhuangzi, Ziporyn (B) [live]
-- ★ The Analects, Confucius (A) [queued]
+- ★ The Analects, Confucius (A) [live]
 - Mencius, human nature is good (A) [add]
 
 **3. Abrahamic and the monotheist root**
-- ★ Hebrew Bible / Torah (A) [queued]
-- ★ New Testament (A) [queued]
-- ★ The Quran (A) [queued]
+- ★ Hebrew Bible / Torah (A) [live]
+- ★ New Testament (A) [live]
+- ★ The Quran (A) [live]
 - Zoroastrianism, the Gathas (A) [add], the lost root of the other three
 - Rumi, the Masnavi (A) [add], the ecstatic Sufi heart of Islam, the Barks-versus-Nicholson translation war
 
@@ -190,7 +190,7 @@ books each get their own post.
 - Homer, the Odyssey (B) [add]
 
 **9. Psychology and the inner life**
-- ★ The Spirituality of Imperfection, Kurtz (C) [queued], the capstone
+- ★ The Spirituality of Imperfection, Kurtz (C) [live], the capstone
 - Viktor Frankl, Man's Search for Meaning (C) [add]
 - William James, The Varieties of Religious Experience (C) [add]
 - Carl Jung, the shadow and individuation (C) [add]
@@ -293,17 +293,17 @@ broad at every stopping point, and all sixteen pillars are covered by the end of
 Batch 3. The pilots (Dhammapada, Zhuangzi, Deutsch) are already built. Write each
 batch's prompts just before it runs.
 
-**Batch 1, the foundations of civilization (the most important, period).** New
-Testament, Plato (the death of Socrates and the cave), the Analects, the Bhagavad
-Gita, Darwin's Origin of Species, the Social Contract (Hobbes, Locke, Rousseau),
-Aristotle's Nicomachean Ethics, Nietzsche, Homer's Odyssey, Sun Tzu's Art of War,
-the Meditation flagship (the Engine D pilot), and Frankl. Eleven pillars in one
-batch; if only this ships, the series is already broad and deep.
+**Batch 1, the foundations of civilization (the most important, period).** Plato
+(the death of Socrates and the cave), Darwin's Origin of Species, the Social
+Contract (Hobbes, Locke, Rousseau), Aristotle's Nicomachean Ethics, Nietzsche,
+Homer's Odyssey, Sun Tzu's Art of War, the Meditation flagship (the Engine D
+pilot), and Frankl. (The New Testament, the Analects, and the Bhagavad Gita were
+in this batch but already shipped with the rest of the scripture core.)
 
-**Batch 2, the rest of the giants.** The Quran, the Hebrew Bible, Marx, Marcus
-Aurelius, William James, Aristotle's Poetics (opens beauty), Plato's Symposium
-(opens love), Sapiens (opens the human story), Nagarjuna, Huxley's Perennial
-Philosophy, Euclid, Guru Granth Sahib. Fourteen pillars covered by here.
+**Batch 2, the rest of the giants.** Marx, Marcus Aurelius, William James,
+Aristotle's Poetics (opens beauty), Plato's Symposium (opens love), Sapiens (opens
+the human story), Huxley's Perennial Philosophy, and Euclid. (The Quran, the
+Hebrew Bible, Nagarjuna, and the Guru Granth Sahib already shipped.)
 
 **Batch 3, completing the map.** The cult and commercial case studies (opens the
 edge), the oral and indigenous essay (opens that blind spot), Kant, Lucretius,
@@ -321,9 +321,9 @@ Tea, Burke and Kant on the sublime, Berger's Ways of Seeing, the Song of Songs,
 the Kama Sutra, Barthes or bell hooks on love, Guns Germs and Steel, the
 Zoroastrian Gathas, Rumi.
 
-**Batch 6, the remainder and the capstone.** Jainism, Adam Smith, Popper,
-Montaigne, Jung, Musashi, the 48 Laws of Power, and last The Spirituality of
-Imperfection, the capstone that ties the whole series together.
+**Batch 6, the remainder.** Jainism, Adam Smith, Popper, Montaigne, Jung,
+Musashi, and the 48 Laws of Power. (The Spirituality of Imperfection, the capstone
+that ties the series together, already shipped.)
 
 ## The per-book workflow
 
