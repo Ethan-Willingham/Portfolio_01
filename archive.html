@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archive</title>
+  <meta name="description" content="The shelf. The things I started and never came back to finish, half-built or shelved on purpose, kept here for the idea rather than the finish.">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:title" content="Archive">
+  <meta property="og:description" content="The shelf. The things I started and never came back to finish, half-built or shelved on purpose, kept here for the idea rather than the finish.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/archive.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/home.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A green triangle on a cream rounded square, the site mark.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/home.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* ---- Archive index. Borrows the About page's masthead (an italic serif
+       title over a quiet lead) and the homepage's article cards, so the shelf
+       reads as a sibling of both pages, not a new template. ---- */
+    html { overflow-x: hidden; overscroll-behavior-x: none; }
+
+    /* top utility row (Home back-link), from about.html */
+    .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+    /* masthead: the italic serif title + lead, from about.html */
+    .about-head { margin-bottom: 2.4rem; }
+    .about-title {
+      margin: 0; font-family: var(--font-heading); font-style: italic; font-weight: 400;
+      font-size: clamp(2.9rem, 6.5vw, 4.2rem); line-height: 1.02; letter-spacing: -0.01em;
+      color: var(--text-bright);
+    }
+    .about-lead {
+      margin: 1.15rem 0 0; max-width: 46ch; font-family: var(--font-body);
+      font-size: clamp(1.18rem, 2.2vw, 1.34rem); line-height: 1.56; color: var(--text); text-wrap: pretty;
+    }
+    .about-sublead {
+      margin: 0.9rem 0 0; max-width: 52ch; font-family: var(--font-body);
+      font-size: 1.0rem; line-height: 1.6; color: var(--text-dim); text-wrap: pretty;
+    }
+
+    /* count hinge into the list (homepage's .list-head idiom) */
+    .list-head { display: flex; align-items: center; gap: 1.15rem; margin-bottom: 1.9rem; }
+    .list-head span {
+      font-family: var(--font-body); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase; color: #c3b589; white-space: nowrap;
+    }
+    .list-head::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--rule); }
+
+    /* ---- Article cards, matched to the homepage: thumbnail floats RIGHT so every
+       title shares the same left spine; the description sits roman, not italic. ---- */
+    .article-list { gap: 0; }
+    .article-item { padding: 1.65rem 1rem; }
+    .article-item-title {
+      font-family: var(--font-heading); font-weight: 400; font-size: 1.65rem;
+      line-height: 1.18; letter-spacing: -0.015em; color: var(--text-bright);
+      margin-bottom: 0.5rem;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease-out;
+    }
+    .article-item-description {
+      font-family: var(--font-body); font-style: normal; font-size: 1.0rem;
+      line-height: 1.5; color: var(--text-dim);
+    }
+    @media (min-width: 560px) {
+      .article-item-thumb { float: right; width: 188px; margin: 0.4rem 0 0.55rem 1.6rem; }
+    }
+    @media (min-width: 720px) {
+      .list-head { margin-bottom: 2.4rem; }
+      .article-item { padding: 1.7rem 1rem; }
+      .article-item-title { font-size: 1.85rem; }
+    }
+
+    /* subtle motion (fine pointer only), same as the homepage */
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      .article-item-thumb { overflow: visible; }
+      .article-item-thumb img {
+        border-radius: 4px; will-change: transform, box-shadow;
+        transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease-out;
+      }
+      .article-item:hover .article-item-title { transform: translateY(-1px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrapper">
+
+    <div class="lab-top">
+      <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+    </div>
+
+    <header class="about-head fade-in">
+      <h1 class="about-title">Archive</h1>
+      <p class="about-lead">The shelf. I move things here when I lose interest, decide the idea was better in my head than on the page, or just never come back to finish them. More than half of what I start ends up here, so nothing in this list is lonely.</p>
+      <p class="about-sublead">Set your expectations: the design is rough in spots, some of it half-built, and parts read exactly like what they are, a draft an AI and I never came back to polish. It's here for the idea, not the finish.</p>
+    </header>
+
+    <main>
+      <div class="list-head"><span>Fifteen shelved</span></div>
+      <ul class="article-list">
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/seven-habits/seven-habits.html">
+            <span class="article-item-thumb">
+              <img src="/archive/seven-habits/assets/seven-habits-og.jpg" width="600" height="400" loading="eager" decoding="async" alt="Caspar David Friedrich's Wanderer above the Sea of Fog: a lone figure on a summit looking out over peaks in mist.">
+            </span>
+            <h2 class="article-item-title">The 7 Habits of Highly Effective People</h2>
+            <p class="article-item-description">a short, plain summary of stephen covey's the 7 habits of highly effective people. what each habit actually says, how the seven fit together, and the one idea underneath all of them.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/alcoholics-anonymous/alcoholics-anonymous.html">
+            <span class="article-item-thumb">
+              <img src="/archive/alcoholics-anonymous/assets/og.jpg" width="600" height="400" loading="eager" decoding="async" alt="An archival illustration for the history of Alcoholics Anonymous.">
+            </span>
+            <h2 class="article-item-title">The Strangest Thing That Works</h2>
+            <p class="article-item-description">alcoholics anonymous is the most copied self-help idea in the world, the one thing science now says actually helps drunks, and it was built by a chain of barely sober men on a single bottle of beer. a field guide to the good, the bad, and the very strange.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/first-164/first-164.html">
+            <span class="article-item-thumb">
+              <img src="/archive/first-164/assets/og.jpg" width="600" height="400" loading="eager" decoding="async" alt="An archival image from the early history of the Alcoholics Anonymous Big Book.">
+            </span>
+            <h2 class="article-item-title">The Secret History of the First 164 Pages</h2>
+            <p class="article-item-description">you know the first 164 pages of the alcoholics anonymous big book and the twelve and twelve by heart. almost everything you believe about how they were written is myth. what the archives actually say: the six steps before twelve, the atheist who edited god, the co-author written out of the story, and the prayer that arrived by accident.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/forty-not-a-hundred/forty-not-a-hundred.html">
+            <span class="article-item-thumb">
+              <img src="/archive/forty-not-a-hundred/assets/og.jpg" width="600" height="400" loading="eager" decoding="async" alt="An archival portrait from the founding cast of Alcoholics Anonymous.">
+            </span>
+            <h2 class="article-item-title">Forty, Not a Hundred</h2>
+            <p class="article-item-description">the first edition of the big book claimed more than one hundred recovered members. the real roll was about forty. a field guide to the exact, buried particulars of how alcoholics anonymous actually began, in forty-seven sourced deep cuts.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/nothing-new-under-the-sun/nothing-new-under-the-sun.html">
+            <span class="article-item-thumb">
+              <img src="/archive/nothing-new-under-the-sun/assets/nothing-new-under-the-sun.jpg" width="600" height="400" loading="eager" decoding="async" alt="An old illustration evoking that every age believes it is the strangest one.">
+            </span>
+            <h2 class="article-item-title">There's Nothing New Under the Sun</h2>
+            <p class="article-item-description">every age believes it is the strangest one. none ever is. a sourced, illustrated case that you feel with the same instrument as everyone who ever lived, that circumstance barely moves the inner life, and that the one lever you actually hold is the oldest piece of advice there is.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/five-hundred-children/five-hundred-children.html">
+            <span class="article-item-thumb">
+              <img src="/archive/five-hundred-children/assets/five-hundred-children-og.jpg" width="600" height="400" loading="eager" decoding="async" alt="An ancient temple, standing in for a faith built from scratch.">
+            </span>
+            <h2 class="article-item-title">Five Hundred Children, No Books</h2>
+            <p class="article-item-description">leave 500 children on an island for two hundred years with no religion handed down, no scripture and no holy books, and they will almost certainly build a faith of their own. not the same beliefs, the same underlying structure. laid out with the evidence, from child psychology to real castaways.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/best-photographs/best-photographs.html">
+            <span class="article-item-thumb">
+              <img src="/archive/best-photographs/assets/best-photographs-og.jpg" width="600" height="400" loading="eager" decoding="async" alt="A montage of famous photographs across two centuries.">
+            </span>
+            <h2 class="article-item-title">Photography's Greatest Hits</h2>
+            <p class="article-item-description">a museum-sized tour of photography's greatest pictures: muybridge's flying horse as a working flipbook, migrant mother's erased thumb, the pillars of creation in a before-and-after slider, a mars selfie, the 3,200-megapixel rubin camera, the records, the hoaxes, and what jpeg quietly throws away. every image public domain or creative commons, every story sourced.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/the-number/the-number.html">
+            <span class="article-item-thumb">
+              <img src="/archive/the-number/assets/the-number-og.jpg" width="600" height="400" loading="eager" decoding="async" alt="A chart standing in for the savings threshold where work becomes optional.">
+            </span>
+            <h2 class="article-item-title">The Number</h2>
+            <p class="article-item-description">there is a dollar amount above which your savings out-earn your spending forever and work becomes optional. the math behind the threshold, the climb from ordinary american debt, the tax mechanics on the far side, and every catch the brochure leaves out. sourced throughout.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/sure-things/sure-things.html">
+            <span class="article-item-thumb">
+              <img src="/archive/sure-things/assets/sure-things.jpg" width="600" height="400" loading="eager" decoding="async" alt="A cinematic image for the things we measure precisely yet cannot explain.">
+            </span>
+            <h2 class="article-item-title">Sure Things</h2>
+            <p class="article-item-description">eighteen things we measure to impossible precision, or lean on every day, and still cannot explain or prove. a cinematic, sourced field guide from gravity and time to the placebo effect and the machines we built but do not understand.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/predatory-advertising/predatory-advertising.html">
+            <span class="article-item-thumb">
+              <img src="/archive/predatory-advertising/assets/thumbs/predatory-advertising.jpg" width="600" height="400" loading="eager" decoding="async" alt="A grid of clickbait chum thumbnails from the bottom of a web page.">
+            </span>
+            <h2 class="article-item-title">Predatory Advertising</h2>
+            <p class="article-item-description">a field guide to internet chum: the mesmerizing little images in the 'around the web' grid, the brain machinery they are built to hook, and the money that pays for it.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/mri/mri.html">
+            <span class="article-item-thumb">
+              <img src="/archive/mri/assets/thumbs/mri.jpg" width="600" height="400" loading="eager" decoding="async" alt="An MRI slice of a human head, ready to be stacked into 3D.">
+            </span>
+            <h2 class="article-item-title">What's Actually on an MRI Disc</h2>
+            <p class="article-item-description">i asked for my mri on a disc and got 1,189 raw images. the 2d slices a radiologist scrolls through, then stacked back into a head and spine you can rotate in 3d.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/machine-to-atom/machine-to-atom.html">
+            <span class="article-item-thumb">
+              <img src="/archive/machine-to-atom/assets/thumbs/machine-to-atom.jpg" width="600" height="400" loading="eager" decoding="async" alt="A high-resolution photograph of a silicon computer chip.">
+            </span>
+            <h2 class="article-item-title">From the Machine to the Atom</h2>
+            <p class="article-item-description">a scroll down the whole scale of a computer chip, from the most complicated machine humans build to the single silicon atoms it arranges, in the highest resolution i could find. click any image to zoom.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/the-third-thing/the-third-thing.html">
+            <span class="article-item-thumb">
+              <img src="/archive/the-third-thing/assets/thumbs/third-thing.jpg" width="600" height="400" loading="eager" decoding="async" alt="A service dog, the lens for a piece on nature, nurture, and the self.">
+            </span>
+            <h2 class="article-item-title">The Third Thing</h2>
+            <p class="article-item-description">we argue forever about how much of a person is their genes and how much is how they were raised. both answers leave out the part that is finally yours. a look at nature, nurture, and the self, through the lens of profoundly well trained service dogs.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/remote-viewing/remote-viewing.html">
+            <span class="article-item-thumb">
+              <img src="/assets/thumbs/remote-viewing.jpg" width="600" height="400" loading="eager" decoding="async" alt="A Cold War image for the government's psychic-spy program.">
+            </span>
+            <h2 class="article-item-title">Is Remote Viewing Real?</h2>
+            <p class="article-item-description">for twenty years the cia and the army paid people to spy with their minds, then declassified the whole archive. the evidence for, the evidence against, how it is taught, how you would actually train, and why if it worked you would never hear about it.</p>
+          </a>
+        </li>
+
+        <li class="article-list-item fade-in">
+          <a class="article-item" href="archive/star-signs/star-signs.html">
+            <span class="article-item-thumb">
+              <img src="/assets/thumbs/star-signs.jpg" width="600" height="400" loading="eager" decoding="async" alt="An old star chart of the zodiac, taken apart by real astronomy.">
+            </span>
+            <h2 class="article-item-title">Star Signs, X-Rayed</h2>
+            <p class="article-item-description">a working natal-chart machine that takes itself apart. compute your real chart from real astronomy, then see exactly who decided each meaning, when, and whether any of it points at anything real.</p>
+          </a>
+        </li>
+
+      </ul>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+        <span class="ftr-links">
+          <a href="about.html">About</a>
+        </span>
+      </div>
+    </footer>
+  </div>
+
+  <style>
+    .ftr-links { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+    .ftr-links a { color: var(--text-dim); text-decoration: none; transition: color 0.2s ease; }
+    .ftr-links a:hover { color: var(--text-bright); }
+  </style>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // Touch tap feedback (touch-only): the row presses in while the finger is
+    // down and springs back on lift, releasing the moment a scroll begins.
+    // Same behavior as the homepage list.
+    var TAP_SLOP = 10;
+    Array.prototype.slice.call(document.querySelectorAll('.article-item')).forEach(function (link) {
+      var sx = 0, sy = 0, down = false;
+      function release() { if (down) { down = false; link.classList.remove('is-tapping'); } }
+      link.addEventListener('touchstart', function (e) {
+        var t = e.touches[0]; sx = t.clientX; sy = t.clientY;
+        down = true; link.classList.add('is-tapping');
+      }, { passive: true });
+      link.addEventListener('touchmove', function (e) {
+        if (!down) return;
+        var t = e.touches[0];
+        if (Math.abs(t.clientX - sx) > TAP_SLOP || Math.abs(t.clientY - sy) > TAP_SLOP) release();
+      }, { passive: true });
+      link.addEventListener('touchend', release, { passive: true });
+      link.addEventListener('touchcancel', release, { passive: true });
+    });
+
+    // A barely-there 3D lean on the hovered thumbnail, fine pointer + motion only.
+    var canHover    = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var wantsMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    if (!canHover || !wantsMotion) return;
+
+    var items = Array.prototype.slice.call(document.querySelectorAll('.article-list-item'));
+    var TILT_LERP = 0.12, MAX_TILT_DEG = 2.5, HOVER_SCALE = 1.012;
+    var rafPending = false, tiltItems = [];
+    function scheduleRaf() { if (!rafPending) { rafPending = true; requestAnimationFrame(rafLoop); } }
+
+    items.forEach(function (li) {
+      var link = li.querySelector('.article-item');
+      var thumbEl = li.querySelector('.article-item-thumb');
+      var imgEl = thumbEl ? thumbEl.querySelector('img') : null;
+      if (!link || !imgEl) return;
+      var state = { imgEl: imgEl, active: false, rx: 0, ry: 0, scale: 1, txRx: 0, txRy: 0, txScale: 1, settled: true };
+      tiltItems.push(state);
+
+      link.addEventListener('mouseenter', function () {
+        state.active = true; state.settled = false; state.txScale = HOVER_SCALE;
+        imgEl.style.boxShadow = '0 4px 16px rgba(0,0,0,0.20), 0 0 18px rgba(212,196,160,0.05)';
+        scheduleRaf();
+      }, { passive: true });
+      link.addEventListener('mousemove', function (e) {
+        if (!state.active) return;
+        var rect = imgEl.getBoundingClientRect();
+        var cx = Math.max(rect.left, Math.min(e.clientX, rect.right));
+        var cy = Math.max(rect.top,  Math.min(e.clientY, rect.bottom));
+        var nx = (cx - rect.left) / rect.width  - 0.5;
+        var ny = (cy - rect.top)  / rect.height - 0.5;
+        state.txRy =  nx * MAX_TILT_DEG * 2;
+        state.txRx = -ny * MAX_TILT_DEG;
+        scheduleRaf();
+      }, { passive: true });
+      link.addEventListener('mouseleave', function () {
+        state.active = false; state.txRx = 0; state.txRy = 0; state.txScale = 1; state.settled = false;
+        imgEl.style.boxShadow = '';
+        scheduleRaf();
+      }, { passive: true });
+    });
+
+    function rafLoop() {
+      if (document.hidden) { rafPending = false; return; }
+      var stillMoving = false;
+      tiltItems.forEach(function (s) {
+        if (s.settled) return;
+        s.rx    += (s.txRx    - s.rx)    * TILT_LERP;
+        s.ry    += (s.txRy    - s.ry)    * TILT_LERP;
+        s.scale += (s.txScale - s.scale) * TILT_LERP;
+        s.imgEl.style.transform =
+          'perspective(700px) rotateX(' + s.rx.toFixed(3) + 'deg) rotateY(' + s.ry.toFixed(3) + 'deg) scale(' + s.scale.toFixed(4) + ')';
+        if (Math.abs(s.txRx - s.rx) < 0.04 && Math.abs(s.txRy - s.ry) < 0.04 && Math.abs(s.txScale - s.scale) < 0.0004) {
+          s.rx = s.txRx; s.ry = s.txRy; s.scale = s.txScale;
+          if (!s.active) { s.imgEl.style.transform = ''; }
+          s.settled = true;
+        } else {
+          stillMoving = true;
+        }
+      });
+      if (stillMoving) requestAnimationFrame(rafLoop);
+      else rafPending = false;
+    }
+  })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
