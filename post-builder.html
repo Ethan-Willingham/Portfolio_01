@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Private builder. Keep it out of search + off the public site; the only real
+       protection is the password-locked GitHub key, not this tag. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>New post</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* ============================================================
+       post-builder.html - the block-based new-post builder.
+
+       Unlock with the password (shared engine, js/blog-edit-core.js),
+       then build a post by stacking blocks that map to real kit.css
+       components (js/post-template.js does the serialization). The right
+       pane is a live, on-style preview rendered with the real style.css,
+       so what you see is what ships. Save keeps it as a draft (noindex,
+       off the homepage + search); Publish runs the homepage card, search
+       index, and social images. No em dashes.
+       ============================================================ */
+    :root { --pb-pad: clamp(1rem, 4vw, 2.2rem); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    #app { min-height: 100%; display: flex; flex-direction: column; }
+    #app > section[hidden] { display: none; }
+    h1, h2 { font-family: var(--font-heading); color: var(--text-bright); font-weight: 400; }
+    a { color: var(--emphasis); }
+
+    /* ---- shared form bits (mirror blog-edit) ---- */
+    .be-card { background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 18px; box-shadow: 0 1px 2px rgba(8,12,9,0.4), 0 24px 56px -22px rgba(8,12,9,0.7); }
+    .be-kicker { font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
+    .be-dim { color: var(--text-dim); } .be-faint { color: var(--text-faint); }
+    label.be-lbl { display: block; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin: 1.1rem 0 0.4rem; }
+    input[type=text], input[type=password], textarea, select { width: 100%; background: var(--bg); color: var(--text-bright); border: 1px solid var(--rule); border-radius: 11px; font-family: var(--font-mono); font-size: 0.95rem; padding: 0.7rem 0.85rem; transition: border-color .2s, box-shadow .2s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(212,196,160,0.14); }
+    button { font-family: var(--font-body); font-size: 0.95rem; cursor: pointer; border-radius: 999px; border: 1px solid var(--rule); background: var(--bg); color: var(--text-bright); padding: 0.55rem 1.1rem; transition: background .18s, border-color .18s, color .18s, opacity .18s; }
+    button:hover { border-color: var(--accent); } button:disabled { opacity: 0.45; cursor: default; }
+    button.be-primary { background: var(--accent); color: #20271f; border-color: var(--accent); font-weight: 600; }
+    button.be-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    button.be-quiet { background: transparent; border-color: transparent; color: var(--text-dim); padding: 0.5rem 0.8rem; }
+    button.be-quiet:hover { color: var(--text-bright); border-color: var(--rule); }
+    .be-msg { margin-top: 1rem; font-size: 0.9rem; min-height: 1.2em; } .be-msg.err { color: var(--emphasis-strong); } .be-msg.ok { color: #9fcf8f; }
+    .be-strength { height: 5px; border-radius: 999px; background: var(--rule); margin-top: 0.5rem; overflow: hidden; } .be-strength > i { display: block; height: 100%; width: 0; transition: width .3s, background .3s; }
+    .be-steps { margin: 0.6rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; color: var(--text-dim); } .be-steps li { margin: 0.35rem 0; } .be-steps code { font-family: var(--font-mono); color: var(--accent); font-size: 0.85em; }
+    .be-spin { display: inline-block; width: 1em; height: 1em; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; animation: be-spin 0.7s linear infinite; vertical-align: -2px; } @keyframes be-spin { to { transform: rotate(360deg); } }
+
+    /* ---- lock ---- */
+    #view-lock { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--pb-pad); }
+    #view-lock .be-card { width: min(460px, 100%); padding: clamp(1.4rem, 4vw, 2.4rem); } #view-lock h1 { font-size: 2rem; margin: 0.3rem 0 0.2rem; }
+
+    /* ---- drafts ---- */
+    #view-drafts { flex: 1; padding: var(--pb-pad); max-width: 920px; width: 100%; margin: 0 auto; }
+    .pb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .pb-top-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .pb-grouph { margin: 2rem 0 0.7rem; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+    .pb-draftlist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.6rem; }
+    .pb-draftlist button { width: 100%; text-align: left; border-radius: 13px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; background: var(--bg-raised); }
+    .pb-draftlist .pb-dname { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.08rem; }
+    .pb-draftlist .pb-dpath { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); }
+    .pb-newcard { display: flex; align-items: center; gap: 0.8rem; padding: 1.1rem 1.2rem; border-radius: 14px; border: 1px dashed var(--rule-strong); background: transparent; color: var(--text-bright); cursor: pointer; font-size: 1.05rem; margin-top: 1.2rem; width: 100%; }
+    .pb-newcard:hover { border-color: var(--accent); background: var(--s-gold-tint); }
+    .pb-newcard .pb-plus { font-size: 1.5rem; color: var(--accent); line-height: 1; }
+
+    /* ---- builder shell ---- */
+    #view-builder { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .pb-bar { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; padding: 0.6rem clamp(0.7rem,2vw,1.2rem); background: var(--bg-raised); border-bottom: 1px solid var(--rule); position: sticky; top: 0; z-index: 30; }
+    .pb-bar .pb-where { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pb-bar .pb-where b { color: var(--text-bright); font-family: var(--font-heading); font-weight: 400; }
+    .pb-status { font-size: 0.78rem; color: var(--text-faint); min-width: 8ch; text-align: right; }
+    .pb-status.dirty { color: var(--accent); } .pb-status.saved { color: #9fcf8f; } .pb-status.err { color: var(--emphasis-strong); }
+    .pb-dry { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: #e6c074; background: rgba(230,192,116,0.13); border: 1px solid rgba(230,192,116,0.42); border-radius: 999px; padding: 0.25em 0.7em; }
+    .pb-seg { display: none; background: var(--bg); border: 1px solid var(--rule); border-radius: 999px; padding: 3px; gap: 2px; }
+    .pb-seg button { border: none; background: transparent; color: var(--text-dim); border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.82rem; }
+    .pb-seg button.on { background: var(--accent); color: #20271f; font-weight: 600; }
+
+    .pb-work { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
+    .pb-edit { overflow-y: auto; padding: clamp(1rem,3vw,2rem) clamp(0.9rem,3vw,2rem) 6rem; border-right: 1px solid var(--rule); }
+    .pb-edit-inner { max-width: 720px; margin: 0 auto; }
+    .pb-preview { position: relative; background: var(--bg); }
+    .pb-preview iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+    /* hint */
+    .pb-hint { background: var(--s-gold-tint); border: 1px solid var(--s-gold-hair); border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.86rem; line-height: 1.5; color: var(--text-dim); margin-bottom: 1.2rem; position: relative; }
+    .pb-hint b { color: var(--accent); font-weight: 600; } .pb-hint .x { position: absolute; top: 0.5rem; right: 0.6rem; cursor: pointer; color: var(--text-faint); background: none; border: none; font-size: 1rem; padding: 0.2rem; }
+
+    /* hero editor */
+    .pb-hero-ed { background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 16px; padding: 1rem 1.1rem 1.2rem; margin-bottom: 1.1rem; }
+    .pb-hero-ed .pb-hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem,4vw,2.3rem); line-height: 1.05; color: var(--text-bright); background: transparent; border: none; border-radius: 0; padding: 0.2rem 0; width: 100%; resize: none; overflow: hidden; }
+    .pb-hero-ed .pb-hero-dek { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; line-height: 1.4; color: var(--text-dim); background: transparent; border: none; padding: 0.3rem 0; width: 100%; resize: none; overflow: hidden; }
+    .pb-hero-ed .pb-hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-dim); background: var(--bg); border: 1px solid var(--rule); border-radius: 8px; padding: 0.4rem 0.6rem; width: 100%; margin-top: 0.6rem; }
+    .pb-hero-ed input:focus, .pb-hero-ed textarea:focus { outline: none; box-shadow: none; }
+    .pb-mini { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.2rem; }
+
+    /* block cards */
+    .pb-block { position: relative; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 13px; padding: 0.5rem 0.8rem 0.8rem; margin: 0; }
+    .pb-block.drag-over { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,196,160,0.12); }
+    .pb-block-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0 0.5rem; }
+    .pb-block-type { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-right: auto; display: flex; align-items: center; gap: 0.45rem; }
+    .pb-grip { cursor: grab; color: var(--text-faint); user-select: none; font-size: 0.95rem; } .pb-grip:active { cursor: grabbing; }
+    .pb-block-ctl { display: flex; gap: 0.15rem; opacity: 0; transition: opacity .15s; }
+    .pb-block:hover .pb-block-ctl, .pb-block:focus-within .pb-block-ctl { opacity: 1; }
+    .pb-block-ctl button { border: 1px solid transparent; background: transparent; color: var(--text-dim); padding: 0.25rem 0.45rem; font-size: 0.85rem; border-radius: 7px; }
+    .pb-block-ctl button:hover { border-color: var(--rule); color: var(--text-bright); }
+    .pb-block-ctl button.del:hover { color: var(--warn); border-color: var(--warn); }
+
+    /* editable fields inside blocks */
+    .rte, .pb-field { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); background: var(--bg); border: 1px solid var(--rule); border-radius: 9px; padding: 0.55rem 0.7rem; min-height: 1.5em; outline: none; }
+    .rte:focus, .pb-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,196,160,0.12); }
+    .rte[data-empty]:empty::before, .pb-field[data-empty]:empty::before { content: attr(data-empty); color: var(--text-faint); }
+    .rte.lede { font-size: 1.1rem; color: var(--text-bright); }
+    .rte.head { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; color: var(--text-bright); }
+    .rte a { color: var(--accent); }
+    /* mirror the post's inline overrides so the editor shows them too */
+    .rte .tx-lg { font-size: 1.18em; } .rte .tx-sm { font-size: 0.85em; } .rte .ft-mono { font-family: var(--font-mono); } .rte .ft-head { font-family: var(--font-heading); }
+    .pb-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; }
+    .pb-row > * { flex: 1 1 auto; } .pb-row label { flex: 0 0 auto; font-size: 0.74rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+    select.pb-inline, input.pb-inline { font-family: var(--font-body); font-size: 0.82rem; padding: 0.35rem 0.5rem; border-radius: 8px; width: auto; }
+
+    /* table editor */
+    .pb-tbl { width: 100%; border-collapse: collapse; margin-top: 0.4rem; }
+    .pb-tbl td, .pb-tbl th { border: 1px solid var(--rule); padding: 0; }
+    .pb-tbl .pb-cell { min-width: 60px; padding: 0.4rem 0.5rem; outline: none; font-family: var(--font-body); font-size: 0.9rem; color: var(--text); }
+    .pb-tbl .pb-cell:focus { background: rgba(212,196,160,0.08); }
+    .pb-tbl th .pb-cell { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; color: var(--text-dim); }
+    .pb-tbl-ctl { display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .pb-tbl-ctl button { font-size: 0.78rem; padding: 0.3rem 0.7rem; }
+    .pb-featurerow td { box-shadow: inset 3px 0 0 var(--accent); }
+
+    /* steps/entries/sources item lists */
+    .pb-items { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem; }
+    .pb-item { display: flex; gap: 0.5rem; align-items: flex-start; }
+    .pb-item .pb-item-fields { flex: 1; display: flex; flex-direction: column; gap: 0.35rem; }
+    .pb-item .pb-itemdel { flex: 0 0 auto; }
+    .pb-additem { align-self: flex-start; font-size: 0.8rem; padding: 0.35rem 0.8rem; margin-top: 0.3rem; }
+
+    /* the "+ add block" inserter line */
+    .pb-insert { display: flex; align-items: center; justify-content: center; height: 1.5rem; margin: 0.35rem 0; position: relative; }
+    .pb-insert::before { content: ""; position: absolute; left: 0; right: 0; height: 1px; background: var(--rule); opacity: 0; transition: opacity .15s; }
+    .pb-insert:hover::before { opacity: 0.6; }
+    .pb-insert button { width: 26px; height: 26px; border-radius: 999px; padding: 0; display: grid; place-items: center; color: var(--text-dim); background: var(--bg-raised); border: 1px solid var(--rule); font-size: 1.1rem; line-height: 1; z-index: 1; opacity: 0.5; transition: opacity .15s, color .15s, border-color .15s; }
+    .pb-insert:hover button { opacity: 1; color: var(--accent); border-color: var(--accent); }
+
+    /* palette popover */
+    .pb-palette { position: fixed; z-index: 90; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 14px; padding: 6px; box-shadow: 0 1px 2px rgba(8,12,9,.4), 0 24px 56px -18px rgba(8,12,9,.72); width: 260px; max-height: 70vh; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity .14s, transform .16s, visibility .14s; }
+    .pb-palette.open { opacity: 1; visibility: visible; transform: none; }
+    .pb-palette button { width: 100%; display: flex; align-items: center; gap: 0.7rem; text-align: left; background: transparent; border: none; border-radius: 9px; padding: 0.55rem 0.6rem; color: var(--text); }
+    .pb-palette button:hover { background: var(--s-gold-tint); color: var(--text-bright); }
+    .pb-palette .pb-pi { flex: 0 0 1.5rem; text-align: center; color: var(--accent); font-family: var(--font-mono); }
+    .pb-palette .pb-pl { display: flex; flex-direction: column; } .pb-palette .pb-pl b { font-weight: 600; font-size: 0.92rem; } .pb-palette .pb-pl span { font-size: 0.74rem; color: var(--text-faint); }
+
+    /* inline rich-text toolbar */
+    .pb-rtt { position: fixed; z-index: 95; display: none; gap: 1px; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 9px; padding: 3px; box-shadow: 0 12px 30px -12px rgba(8,12,9,.8); }
+    .pb-rtt.show { display: flex; }
+    .pb-rtt button { border: none; background: transparent; color: var(--text); border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.82rem; min-width: 30px; }
+    .pb-rtt button:hover { background: var(--s-gold-tint); color: var(--text-bright); }
+    .pb-rtt .sep { width: 1px; background: var(--rule); margin: 2px 1px; }
+
+    /* image dropzone */
+    .pb-drop { border: 1px dashed var(--rule-strong); border-radius: 10px; padding: 1.1rem; text-align: center; color: var(--text-dim); font-size: 0.9rem; cursor: pointer; transition: border-color .15s, background .15s; }
+    .pb-drop:hover, .pb-drop.over { border-color: var(--accent); background: var(--s-gold-tint); color: var(--text-bright); }
+    .pb-thumb { display: block; max-width: 100%; max-height: 180px; border-radius: 8px; margin: 0.2rem auto 0.5rem; }
+
+    @media (max-width: 860px) {
+      .pb-work { grid-template-columns: 1fr; }
+      .pb-edit { border-right: none; }
+      .pb-preview { display: none; }
+      body.pb-show-preview .pb-edit { display: none; }
+      body.pb-show-preview .pb-preview { display: block; position: fixed; inset: 49px 0 0; z-index: 20; }
+      .pb-seg { display: inline-flex; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===================== LOCK / SETUP ===================== -->
+    <section id="view-lock">
+      <div class="be-card">
+        <p class="be-kicker">ethanwillingham.com</p>
+        <h1 id="lock-title">Sign in to write</h1>
+        <p class="be-dim" id="lock-sub" style="margin:.2rem 0 1rem">Type your password to unlock the builder.</p>
+        <form id="unlock-form">
+          <label class="be-lbl" for="unlock-pass">Password</label>
+          <input id="unlock-pass" type="password" autocomplete="current-password" placeholder="your password">
+          <p class="be-msg" id="unlock-msg"></p>
+          <button class="be-primary" type="submit" style="width:100%;margin-top:.4rem">Unlock</button>
+        </form>
+        <form id="setup-form" hidden>
+          <p class="be-dim" style="font-size:.9rem">First time here. Two one-time steps and you'll never see this again:</p>
+          <ol class="be-steps">
+            <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub's token page</a>. Under <b>Repository access</b> pick <b>Only select repositories</b> &rarr; <code>Portfolio_01</code>. Under <b>Permissions</b> &rarr; <b>Contents</b>, choose <b>Read and write</b>. Click <b>Generate</b> and copy the key.</li>
+            <li>Paste it below and choose a password. The key is locked with your password right here in your browser.</li>
+          </ol>
+          <label class="be-lbl" for="setup-token">GitHub key (starts with github_pat_)</label>
+          <input id="setup-token" type="password" autocomplete="off" placeholder="github_pat_...">
+          <label class="be-lbl" for="setup-pass">Choose a password</label>
+          <input id="setup-pass" type="password" autocomplete="new-password" placeholder="six words is plenty">
+          <div class="be-strength"><i id="setup-strength"></i></div>
+          <button type="button" class="be-quiet" id="suggest-pass" style="margin-top:.4rem;font-size:.8rem">Suggest a strong one</button>
+          <label class="be-lbl" for="setup-pass2">Type it again</label>
+          <input id="setup-pass2" type="password" autocomplete="new-password" placeholder="confirm">
+          <p class="be-msg" id="setup-msg"></p>
+          <button class="be-primary" type="submit" style="width:100%;margin-top:.4rem">Lock the key &amp; start writing</button>
+        </form>
+        <div class="be-faint" id="lock-foot" style="margin-top:1.3rem;font-size:.85rem"></div>
+      </div>
+    </section>
+
+    <!-- ===================== DRAFTS ===================== -->
+    <section id="view-drafts" hidden>
+      <div class="pb-top">
+        <div>
+          <p class="be-kicker">Write</p>
+          <h1 style="font-size:1.9rem;margin:.2rem 0 0">Posts in progress</h1>
+        </div>
+        <div class="pb-top-actions">
+          <a class="be-quiet" href="/blog-edit.html" style="text-decoration:none">Edit existing pages &rarr;</a>
+          <button class="be-quiet" id="drafts-logout">Lock &amp; sign out</button>
+        </div>
+      </div>
+      <button class="pb-newcard" id="new-post"><span class="pb-plus">+</span> Start a new post</button>
+      <div id="drafts-body"><p class="pb-grouph">Drafts</p><p class="be-faint"><span class="be-spin"></span> Loading...</p></div>
+    </section>
+
+    <!-- ===================== BUILDER ===================== -->
+    <section id="view-builder" hidden>
+      <div class="pb-bar">
+        <button class="be-quiet" id="bd-back">&larr; Posts</button>
+        <span class="pb-where"><b id="bd-title">Untitled</b> <span id="bd-path"></span></span>
+        <div class="pb-seg" id="bd-seg"><button data-pane="write" class="on">Write</button><button data-pane="preview">Preview</button></div>
+        <span class="pb-dry" id="bd-dry" hidden>Dry run</span>
+        <span class="pb-status" id="bd-status">Ready</span>
+        <button class="be-quiet" id="bd-save">Save draft</button>
+        <button class="be-primary" id="bd-publish">Publish</button>
+      </div>
+      <div class="pb-work">
+        <div class="pb-edit"><div class="pb-edit-inner" id="bd-editor"></div></div>
+        <div class="pb-preview"><iframe id="bd-iframe" title="Live preview"></iframe></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- floating UI: palette + inline toolbar -->
+  <div class="pb-palette" id="pb-palette"></div>
+  <div class="pb-rtt" id="pb-rtt"></div>
+
+  <script type="module">
+  import {
+    getToken, setToken, clearToken, fetchAuthBlob, ghGet, ghPut, ghGetSha, ghTree,
+    unlock, setupKey, suggestPass, passStrengthBits, forgetOwnerDevice,
+  } from './js/blog-edit-core.js';
+  import * as T from './js/post-template.js';
+
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+  const showView = (id) => { $$('#app > section').forEach(s => s.hidden = (s.id !== id)); };
+
+  // Dry-run by default on localhost so development never writes to the live site.
+  // Toggle with window.__pbDry = true/false in the console.
+  const DRY = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  function isDry(){ return (typeof window.__pbDry === 'boolean') ? window.__pbDry : DRY; }
+
+  /* ===================== LOCK (same engine as blog-edit) ===================== */
+  let authBlob = null;
+  async function boot(){
+    try { authBlob = await fetchAuthBlob(); }
+    catch (e) { $('#unlock-form').hidden = true; $('#setup-form').hidden = true; $('#lock-title').textContent = 'Connection problem'; $('#lock-sub').textContent = e.message + ' Refresh to try again.'; return; }
+    if (authBlob) {
+      $('#setup-form').hidden = true; $('#unlock-form').hidden = false;
+      $('#lock-title').textContent = 'Sign in to write'; $('#lock-sub').textContent = 'Type your password to unlock the builder.';
+      $('#lock-foot').innerHTML = '<a href="#" id="goto-setup">Use a different key</a>';
+      $('#goto-setup')?.addEventListener('click', e => { e.preventDefault(); toSetup(); });
+      $('#unlock-pass').focus();
+    } else { toSetup(); }
+  }
+  function toSetup(){ $('#unlock-form').hidden = true; $('#setup-form').hidden = false; $('#lock-title').textContent = 'Set up the builder'; $('#lock-sub').textContent = 'A quick one-time setup.'; $('#lock-foot').innerHTML = authBlob ? '<a href="#" id="goto-unlock">Back to sign in</a>' : ''; $('#goto-unlock')?.addEventListener('click', e => { e.preventDefault(); boot(); }); }
+  function setMsg(id, t, cls=''){ const el = $('#'+id); el.textContent = t; el.className = 'be-msg ' + cls; }
+  $('#unlock-form').addEventListener('submit', async e => {
+    e.preventDefault(); const pass = $('#unlock-pass').value; if (!pass) return; setMsg('unlock-msg', 'Unlocking...');
+    try { await unlock(authBlob, pass); $('#unlock-pass').value = ''; openDrafts(); }
+    catch (_) { setMsg('unlock-msg', 'That password didn’t work. Try again.', 'err'); }
+  });
+  $('#setup-pass').addEventListener('input', () => { const bits = passStrengthBits($('#setup-pass').value); const pct = Math.min(100, Math.round(bits/70*100)); const bar = $('#setup-strength'); bar.style.width = pct + '%'; bar.style.background = bits < 40 ? 'var(--emphasis-strong)' : bits < 60 ? 'var(--accent)' : '#9fcf8f'; });
+  $('#suggest-pass').addEventListener('click', () => { const s = suggestPass(); $('#setup-pass').value = s; $('#setup-pass2').value = s; $('#setup-pass').dispatchEvent(new Event('input')); setMsg('setup-msg', 'Write this down somewhere safe.', 'ok'); });
+  $('#setup-form').addEventListener('submit', async e => {
+    e.preventDefault(); const token = $('#setup-token').value.trim(); const p1 = $('#setup-pass').value, p2 = $('#setup-pass2').value;
+    if (!token) return setMsg('setup-msg', 'Paste your GitHub key first.', 'err');
+    if (p1.length < 12) return setMsg('setup-msg', 'Use at least 12 characters.', 'err');
+    if (p1 !== p2) return setMsg('setup-msg', 'The two passwords don’t match.', 'err');
+    setMsg('setup-msg', 'Checking the key...');
+    try { await setupKey(token, p1); $('#setup-token').value = $('#setup-pass').value = $('#setup-pass2').value = ''; openDrafts(); }
+    catch (err) { setMsg('setup-msg', err.message, 'err'); }
+  });
+  $('#drafts-logout').addEventListener('click', () => { clearToken(); location.reload(); });
+
+  /* ===================== DRAFTS ===================== */
+  function prettyName(slug){ return slug.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
+  async function openDrafts(){
+    showView('view-drafts');
+    const body = $('#drafts-body');
+    try {
+      const paths = await ghTree();
+      const drafts = paths.filter(p => /^drafts\/[^/]+\.html$/.test(p)).sort();
+      let html = '<p class="pb-grouph">Drafts</p>';
+      if (!drafts.length) html += '<p class="be-faint">No drafts yet. Start one above.</p>';
+      else {
+        html += '<ul class="pb-draftlist">' + drafts.map(p => {
+          const slug = p.replace(/^drafts\//,'').replace(/\.html$/,'');
+          return `<li><button data-path="${p}"><span class="pb-dname">${prettyName(slug)}</span><span class="pb-dpath">${p}</span></button></li>`;
+        }).join('') + '</ul>';
+      }
+      body.innerHTML = html;
+      $$('#drafts-body button[data-path]').forEach(b => b.addEventListener('click', () => openDraftFile(b.getAttribute('data-path'))));
+    } catch (e) { body.innerHTML = `<p class="be-msg err">${e.message}</p>`; }
+  }
+  $('#new-post').addEventListener('click', newDraft);
+
+  /* ===================== BUILDER STATE ===================== */
+  let draft = null;       // { meta, blocks, path, sha }
+  let dirty = false;
+  let refreshTimer = null;
+
+  function newDraft(){
+    draft = {
+      meta: { title:'', dek:'', desc:'', ogDesc:'', metaLine:'A field guide', slug:'', thumbCredit:'' },
+      blocks: [ T.makeBlock('lede') ],
+      path: null, sha: null,
+    };
+    dirty = false;
+    openBuilder();
+  }
+  async function openDraftFile(path){
+    showView('view-builder'); setStatus('Loading...');
+    try {
+      const { text, sha } = await ghGet(path);
+      const model = T.extractDraftModel(text);
+      if (!model) { setStatus('Could not read that draft model.', 'err'); return; }
+      draft = { meta: model.meta || {}, blocks: model.blocks || [], path, sha };
+      dirty = false; openBuilder();
+    } catch (e) { setStatus(e.message, 'err'); }
+  }
+
+  function setStatus(t, cls=''){ const el = $('#bd-status'); el.textContent = t; el.className = 'pb-status ' + cls; }
+  function markDirty(){ if (!dirty){ dirty = true; setStatus('Unsaved', 'dirty'); } }
+
+  function openBuilder(){
+    showView('view-builder');
+    $('#bd-dry').hidden = !isDry();
+    $('#bd-title').textContent = draft.meta.title || 'Untitled';
+    $('#bd-path').textContent = draft.path ? '(' + draft.path + ')' : '(new, unsaved)';
+    renderEditor();
+    $$('.pb-hero-title, .pb-hero-dek').forEach(autoGrow);   // size now that they are in the DOM
+    initPreview();
+    setStatus(draft.path ? 'Draft loaded' : 'New post');
+  }
+
+  /* ---- the editor pane: hero + block cards + inserters ---- */
+  function renderEditor(){
+    const root = $('#bd-editor');
+    root.innerHTML = '';
+
+    // dismissible house-style hint
+    if (localStorage.getItem('pb_hint') !== 'off'){
+      const hint = document.createElement('div');
+      hint.className = 'pb-hint';
+      hint.innerHTML = '<button class="x" title="Dismiss">&times;</button>' +
+        'Everything is <b>on the house style</b> by default. Add blocks with the <b>+</b> lines. Select text to make it bold, italic, a link, or to nudge its size and font. The right pane is exactly what ships.';
+      hint.querySelector('.x').addEventListener('click', () => { localStorage.setItem('pb_hint','off'); hint.remove(); });
+      root.appendChild(hint);
+    }
+
+    root.appendChild(heroEditor());
+    root.appendChild(inserter(0));
+    draft.blocks.forEach((b, i) => {
+      root.appendChild(blockCard(b, i));
+      root.appendChild(inserter(i + 1));
+    });
+  }
+
+  function heroEditor(){
+    const wrap = document.createElement('div');
+    wrap.className = 'pb-hero-ed';
+    wrap.innerHTML = '<p class="pb-mini">The opening (title, dek, meta line)</p>';
+    const title = document.createElement('textarea');
+    title.className = 'pb-hero-title'; title.rows = 1; title.placeholder = 'Post title'; title.value = draft.meta.title || '';
+    title.addEventListener('input', () => { draft.meta.title = title.value; $('#bd-title').textContent = title.value || 'Untitled'; autoGrow(title); change(); });
+    const dek = document.createElement('textarea');
+    dek.className = 'pb-hero-dek'; dek.rows = 1; dek.placeholder = 'The italic dek under the title'; dek.value = draft.meta.dek || '';
+    dek.addEventListener('input', () => { draft.meta.dek = dek.value; autoGrow(dek); change(); });
+    // size both to their content once they are in the DOM (scrollHeight is 0 before)
+    requestAnimationFrame(() => { autoGrow(title); autoGrow(dek); });
+    const meta = document.createElement('input');
+    meta.className = 'pb-hero-meta'; meta.type = 'text'; meta.placeholder = 'A field guide / 12 sources / 9 min read'; meta.value = draft.meta.metaLine || '';
+    meta.addEventListener('input', () => { draft.meta.metaLine = meta.value; change(); });
+    wrap.appendChild(title); wrap.appendChild(dek); wrap.appendChild(meta);
+    return wrap;
+  }
+  function autoGrow(ta){ ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+
+  /* ---- one block card ---- */
+  function blockCard(b, idx){
+    const card = document.createElement('div');
+    card.className = 'pb-block'; card.dataset.id = b.id; card.draggable = false;
+    const meta = T.PALETTE.find(p => p.type === b.type) || { label: b.type };
+    const head = document.createElement('div');
+    head.className = 'pb-block-head';
+    head.innerHTML = `<span class="pb-block-type"><span class="pb-grip" title="Drag to reorder" draggable="true">⠿</span>${meta.label}</span>`;
+    const ctl = document.createElement('div'); ctl.className = 'pb-block-ctl';
+    ctl.innerHTML = '<button data-act="up" title="Move up">↑</button><button data-act="down" title="Move down">↓</button><button data-act="dup" title="Duplicate">⎘</button><button class="del" data-act="del" title="Delete">✕</button>';
+    head.appendChild(ctl);
+    card.appendChild(head);
+    ctl.addEventListener('click', e => {
+      const act = e.target.getAttribute('data-act'); if (!act) return;
+      if (act === 'up' && idx > 0){ [draft.blocks[idx-1], draft.blocks[idx]] = [draft.blocks[idx], draft.blocks[idx-1]]; }
+      else if (act === 'down' && idx < draft.blocks.length-1){ [draft.blocks[idx+1], draft.blocks[idx]] = [draft.blocks[idx], draft.blocks[idx+1]]; }
+      else if (act === 'del'){ draft.blocks.splice(idx, 1); }
+      else if (act === 'dup'){ const copy = JSON.parse(JSON.stringify(b)); copy.id = T.newId(); draft.blocks.splice(idx+1, 0, copy); }
+      else return;
+      change(); renderEditor();
+    });
+
+    // drag to reorder (via the grip)
+    const grip = head.querySelector('.pb-grip');
+    grip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', String(idx)); e.dataTransfer.effectAllowed = 'move'; card.style.opacity = '0.5'; });
+    grip.addEventListener('dragend', () => { card.style.opacity = ''; });
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault(); card.classList.remove('drag-over');
+      const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (isNaN(from) || from === idx) return;
+      const [moved] = draft.blocks.splice(from, 1); draft.blocks.splice(idx, 0, moved);
+      change(); renderEditor();
+    });
+
+    card.appendChild(blockBody(b));
+    return card;
+  }
+
+  // rich-text editable bound to a model field
+  function rte(b, field, { cls='', placeholder='' } = {}){
+    const d = document.createElement('div');
+    d.className = 'rte ' + cls; d.contentEditable = 'true'; d.innerHTML = b[field] || '';
+    if (placeholder){ d.dataset.empty = placeholder; }
+    d.addEventListener('input', () => { b[field] = d.innerHTML; change(); });
+    d.addEventListener('paste', e => { e.preventDefault(); const t = (e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
+    d.addEventListener('mouseup', updateToolbar); d.addEventListener('keyup', updateToolbar);
+    return d;
+  }
+  // plain single-line field bound to a model field
+  function field(obj, key, { placeholder='', mono=false } = {}){
+    const d = document.createElement('div');
+    d.className = 'pb-field'; d.contentEditable = 'true'; d.textContent = obj[key] || '';
+    if (placeholder) d.dataset.empty = placeholder; if (mono) d.style.fontFamily = 'var(--font-mono)';
+    d.addEventListener('input', () => { obj[key] = d.textContent; change(); });
+    d.addEventListener('paste', e => { e.preventDefault(); const t = (e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
+    return d;
+  }
+
+  function blockBody(b){
+    const wrap = document.createElement('div');
+    switch(b.type){
+      case 'heading': {
+        const k = field(b, 'kicker', { placeholder:'Kicker (optional, e.g. Wing one)', mono:true });
+        const h = rte(b, 'text', { cls:'head', placeholder:'Section heading' });
+        wrap.appendChild(k); const sp = document.createElement('div'); sp.style.height = '0.4rem'; wrap.appendChild(sp); wrap.appendChild(h);
+        break;
+      }
+      case 'text': wrap.appendChild(rte(b, 'html', { placeholder:'Write the paragraph here.' })); break;
+      case 'lede': wrap.appendChild(rte(b, 'html', { cls:'lede', placeholder:'A bigger opening line.' })); break;
+      case 'quote': {
+        wrap.appendChild(rte(b, 'html', { placeholder:'A line worth dwelling on.' }));
+        wrap.appendChild(field(b, 'cite', { placeholder:'Attribution (optional)', mono:true }));
+        break;
+      }
+      case 'callout': {
+        const row = document.createElement('div'); row.className = 'pb-row';
+        const sel = document.createElement('select'); sel.className = 'pb-inline';
+        sel.innerHTML = '<option value="callout">Boxed callout</option><option value="move">Quiet takeaway (u-move)</option><option value="aside">Synthesis aside (u-aside)</option>';
+        sel.value = b.variant || 'callout';
+        sel.addEventListener('change', () => { b.variant = sel.value; change(); });
+        row.innerHTML = '<label>Style</label>'; row.appendChild(sel);
+        wrap.appendChild(row);
+        wrap.appendChild(field(b, 'kicker', { placeholder:'Label (hidden for takeaway / aside)' }));
+        wrap.appendChild(rte(b, 'html', { placeholder:'The point.' }));
+        break;
+      }
+      case 'image': wrap.appendChild(imageBody(b)); break;
+      case 'table': wrap.appendChild(tableBody(b)); break;
+      case 'steps': wrap.appendChild(itemsBody(b, ['h','p'], ['Step','Detail'], 'Add step')); break;
+      case 'entries': wrap.appendChild(itemsBody(b, ['num','h','p'], ['No. 01','Headline','Body'], 'Add entry')); break;
+      case 'divider': { const p = document.createElement('p'); p.className = 'be-faint'; p.style.fontSize='0.85rem'; p.style.margin='0.2rem 0'; p.textContent = 'A centered divider.'; wrap.appendChild(p); break; }
+      case 'sources': wrap.appendChild(sourcesBody(b)); break;
+    }
+    return wrap;
+  }
+
+  function imageBody(b){
+    const wrap = document.createElement('div');
+    const drop = document.createElement('div'); drop.className = 'pb-drop';
+    drop.innerHTML = b.src ? `<img class="pb-thumb" src="${b.src}" alt=""><div>Replace image</div>` : 'Click or drop an image here. You can also paste an image URL below.';
+    wrap.appendChild(drop);
+    // image upload itself is wired in the next build; for now accept a URL + dims
+    const urlRow = document.createElement('div'); urlRow.className = 'pb-row';
+    const url = document.createElement('input'); url.type = 'text'; url.className = 'pb-inline'; url.style.flex = '1 1 100%'; url.placeholder = 'Image src (e.g. assets/images/slug/photo.jpg)'; url.value = b.src || '';
+    url.addEventListener('input', () => { b.src = url.value.trim(); change(); });
+    urlRow.innerHTML = '<label>Src</label>'; urlRow.appendChild(url);
+    wrap.appendChild(urlRow);
+    const dimRow = document.createElement('div'); dimRow.className = 'pb-row';
+    const w = document.createElement('input'); w.type = 'text'; w.className = 'pb-inline'; w.placeholder = 'width'; w.value = b.w || '';
+    const h = document.createElement('input'); h.type = 'text'; h.className = 'pb-inline'; h.placeholder = 'height'; h.value = b.h || '';
+    w.addEventListener('input', () => { b.w = parseInt(w.value,10) || 0; change(); });
+    h.addEventListener('input', () => { b.h = parseInt(h.value,10) || 0; change(); });
+    dimRow.innerHTML = '<label>Size</label>'; dimRow.appendChild(w); dimRow.appendChild(h);
+    wrap.appendChild(dimRow);
+    wrap.appendChild(labelled('Alt text', field(b, 'alt', { placeholder:'Describe the image for screen readers + search' })));
+    wrap.appendChild(labelled('Caption', field(b, 'caption', { placeholder:'Caption (optional)' })));
+    return wrap;
+  }
+  function labelled(text, node){ const w = document.createElement('div'); const l = document.createElement('p'); l.className = 'pb-mini'; l.style.margin = '0.6rem 0 0.2rem'; l.textContent = text; w.appendChild(l); w.appendChild(node); return w; }
+
+  function tableBody(b){
+    const wrap = document.createElement('div');
+    const tbl = document.createElement('table'); tbl.className = 'pb-tbl';
+    const thead = document.createElement('thead'); const htr = document.createElement('tr');
+    b.headers.forEach((h, ci) => { const th = document.createElement('th'); const c = cell(h, v => { b.headers[ci] = v; change(); }); th.appendChild(c); htr.appendChild(th); });
+    thead.appendChild(htr); tbl.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    b.rows.forEach((row, ri) => {
+      const tr = document.createElement('tr'); if (ri === b.feature) tr.className = 'pb-featurerow';
+      row.forEach((cv, ci) => { const td = document.createElement('td'); const c = cell(cv, v => { b.rows[ri][ci] = v; change(); }); td.appendChild(c); tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody); wrap.appendChild(tbl);
+    const ctl = document.createElement('div'); ctl.className = 'pb-tbl-ctl';
+    const addRow = mkBtn('+ Row', () => { b.rows.push(b.headers.map(()=>'' )); change(); renderEditor(); });
+    const addCol = mkBtn('+ Column', () => { b.headers.push('Column'); b.rows.forEach(r => r.push('')); change(); renderEditor(); });
+    const delRow = mkBtn('- Row', () => { if (b.rows.length>1){ b.rows.pop(); change(); renderEditor(); } });
+    const delCol = mkBtn('- Column', () => { if (b.headers.length>1){ b.headers.pop(); b.rows.forEach(r=>r.pop()); change(); renderEditor(); } });
+    const feat = document.createElement('select'); feat.className = 'pb-inline';
+    feat.innerHTML = '<option value="-1">No featured row</option>' + b.rows.map((_,i)=>`<option value="${i}">Feature row ${i+1}</option>`).join('');
+    feat.value = String(b.feature); feat.addEventListener('change', () => { b.feature = parseInt(feat.value,10); change(); renderEditor(); });
+    ctl.append(addRow, delRow, addCol, delCol, feat); wrap.appendChild(ctl);
+    return wrap;
+  }
+  function cell(val, on){ const d = document.createElement('div'); d.className = 'pb-cell'; d.contentEditable = 'true'; d.innerHTML = val || ''; d.addEventListener('input', () => on(d.innerHTML)); d.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData||window.clipboardData).getData('text/plain')); }); return d; }
+  function mkBtn(label, on){ const b = document.createElement('button'); b.type='button'; b.textContent = label; b.addEventListener('click', on); return b; }
+
+  function itemsBody(b, keys, placeholders, addLabel){
+    const wrap = document.createElement('div'); const list = document.createElement('div'); list.className = 'pb-items';
+    b.items.forEach((it, ii) => {
+      const row = document.createElement('div'); row.className = 'pb-item';
+      const fields = document.createElement('div'); fields.className = 'pb-item-fields';
+      keys.forEach((k, ki) => {
+        const isBody = (k === 'p' || k === 'html');
+        const node = isBody ? rte(it, k, { placeholder: placeholders[ki] }) : field(it, k, { placeholder: placeholders[ki], mono: (k==='num') });
+        fields.appendChild(node);
+      });
+      row.appendChild(fields);
+      const del = mkBtn('✕', () => { b.items.splice(ii,1); change(); renderEditor(); }); del.className = 'pb-itemdel be-quiet';
+      row.appendChild(del); list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    const add = mkBtn('+ ' + addLabel, () => { const it = {}; keys.forEach(k => it[k] = ''); if (keys.includes('num')) it.num = 'No. ' + String(b.items.length+1).padStart(2,'0'); b.items.push(it); change(); renderEditor(); });
+    add.className = 'pb-additem'; wrap.appendChild(add);
+    return wrap;
+  }
+
+  function sourcesBody(b){
+    const wrap = document.createElement('div');
+    wrap.appendChild(labelled('Note above the list', field(b, 'note', { placeholder:'How the sources were checked (optional)' })));
+    const list = document.createElement('div'); list.className = 'pb-items';
+    b.items.forEach((it, ii) => {
+      const row = document.createElement('div'); row.className = 'pb-item';
+      const fields = document.createElement('div'); fields.className = 'pb-item-fields';
+      fields.appendChild(rte(it, 'html', { placeholder:'<b>Author (year).</b> Title. <a href="#">link</a>' }));
+      const gr = document.createElement('div'); gr.className = 'pb-row';
+      const sel = document.createElement('select'); sel.className = 'pb-inline';
+      sel.innerHTML = '<option value="">No grade</option><option value="a">A solid</option><option value="b">B good</option><option value="c">C contested</option><option value="d">D weak</option>';
+      sel.value = it.grade || ''; sel.addEventListener('change', () => { it.grade = sel.value; change(); });
+      gr.innerHTML = '<label>Grade</label>'; gr.appendChild(sel); fields.appendChild(gr);
+      row.appendChild(fields);
+      const del = mkBtn('✕', () => { b.items.splice(ii,1); change(); renderEditor(); }); del.className = 'be-quiet';
+      row.appendChild(del); list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    const add = mkBtn('+ Add source', () => { b.items.push({ html:'', grade:'' }); change(); renderEditor(); }); add.className = 'pb-additem';
+    wrap.appendChild(add);
+    return wrap;
+  }
+
+  /* ---- the "+" inserter + palette ---- */
+  function inserter(index){
+    const ins = document.createElement('div'); ins.className = 'pb-insert';
+    const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = '+'; btn.title = 'Add a block here';
+    btn.addEventListener('click', e => { e.stopPropagation(); openPalette(btn, index); });
+    ins.appendChild(btn); return ins;
+  }
+  const palette = $('#pb-palette');
+  let paletteIndex = -1;
+  function openPalette(anchor, index){
+    paletteIndex = index;
+    palette.innerHTML = T.PALETTE.map(p => `<button data-type="${p.type}"><span class="pb-pi">${p.icon}</span><span class="pb-pl"><b>${p.label}</b><span>${p.hint}</span></span></button>`).join('');
+    palette.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { addBlock(b.getAttribute('data-type'), paletteIndex); closePalette(); }));
+    const r = anchor.getBoundingClientRect();
+    palette.style.left = Math.min(r.left, window.innerWidth - 280) + 'px';
+    palette.style.top = Math.min(r.bottom + 6, window.innerHeight - 360) + 'px';
+    palette.classList.add('open');
+    setTimeout(() => document.addEventListener('click', closePaletteOnOutside), 0);
+  }
+  function closePalette(){ palette.classList.remove('open'); document.removeEventListener('click', closePaletteOnOutside); }
+  function closePaletteOnOutside(e){ if (!palette.contains(e.target)) closePalette(); }
+  function addBlock(type, index){ const b = T.makeBlock(type); draft.blocks.splice(index, 0, b); change(); renderEditor(); }
+
+  /* ---- inline rich-text toolbar ---- */
+  const rtt = $('#pb-rtt');
+  rtt.innerHTML =
+    '<button data-cmd="bold" title="Bold"><b>B</b></button>' +
+    '<button data-cmd="italic" title="Italic"><i>I</i></button>' +
+    '<button data-cmd="link" title="Link">&#128279;</button>' +
+    '<span class="sep"></span>' +
+    '<button data-cmd="tx-lg" title="Larger">A+</button>' +
+    '<button data-cmd="tx-sm" title="Smaller">A-</button>' +
+    '<button data-cmd="ft-head" title="Heading font">Aa</button>' +
+    '<button data-cmd="ft-mono" title="Mono font">M</button>' +
+    '<span class="sep"></span>' +
+    '<button data-cmd="clear" title="Clear formatting">⌫</button>';
+  rtt.addEventListener('mousedown', e => e.preventDefault());   // keep the selection
+  rtt.addEventListener('click', e => {
+    const cmd = e.target.closest('button')?.getAttribute('data-cmd'); if (!cmd) return;
+    applyFormat(cmd);
+  });
+  function currentRte(){ const a = document.activeElement; return a && a.classList && a.classList.contains('rte') ? a : null; }
+  function updateToolbar(){
+    const sel = window.getSelection();
+    const rteEl = currentRte();
+    if (!rteEl || !sel.rangeCount || sel.isCollapsed){ rtt.classList.remove('show'); return; }
+    const r = sel.getRangeAt(0).getBoundingClientRect();
+    if (!r.width && !r.height){ rtt.classList.remove('show'); return; }
+    rtt.classList.add('show');
+    rtt.style.left = Math.max(8, Math.min(r.left + r.width/2 - rtt.offsetWidth/2, window.innerWidth - rtt.offsetWidth - 8)) + 'px';
+    rtt.style.top = Math.max(8, r.top - rtt.offsetHeight - 8) + 'px';
+  }
+  document.addEventListener('selectionchange', () => { if (currentRte()) updateToolbar(); else rtt.classList.remove('show'); });
+  function applyFormat(cmd){
+    const rteEl = currentRte(); if (!rteEl) return;
+    if (cmd === 'bold' || cmd === 'italic'){ document.execCommand(cmd); }
+    else if (cmd === 'link'){ const url = prompt('Link URL:'); if (url) document.execCommand('createLink', false, url); }
+    else if (cmd === 'clear'){ document.execCommand('removeFormat'); unwrapInlineSpans(rteEl); }
+    else if (cmd.startsWith('tx-') || cmd.startsWith('ft-')){ wrapSelection(cmd); }
+    rteEl.dispatchEvent(new Event('input'));
+    setTimeout(updateToolbar, 0);
+  }
+  function wrapSelection(cls){
+    const sel = window.getSelection(); if (!sel.rangeCount || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span'); span.className = cls;
+    try { range.surroundContents(span); }
+    catch(_){ span.appendChild(range.extractContents()); range.insertNode(span); }
+    sel.removeAllRanges();
+  }
+  function unwrapInlineSpans(root){ root.querySelectorAll('span.tx-lg,span.tx-sm,span.ft-mono,span.ft-head').forEach(s => { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); }); }
+
+  /* ---- live preview ---- */
+  function initPreview(){
+    const iframe = $('#bd-iframe');
+    iframe.onload = () => { pvReady = true; };
+    iframe.srcdoc = T.buildPreviewHTML(draft);
+  }
+  let pvReady = false;
+  function refreshPreview(){
+    const iframe = $('#bd-iframe'); const pv = iframe.contentDocument;
+    if (!pv || !pvReady){ return; }
+    const heroEl = pv.querySelector('.hero'); if (heroEl) heroEl.outerHTML = T.buildHero(draft.meta);
+    const main = pv.querySelector('#guide'); if (main) main.innerHTML = T.serializeMain(draft.blocks).replace(/loading="lazy"/g,'loading="eager"');
+  }
+
+  // central change handler: mark dirty, debounce-refresh preview, autosave to memory
+  function change(){
+    markDirty();
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => { refreshPreview(); autosave(); }, 180);
+  }
+  function autosave(){ try { localStorage.setItem('pb_autosave', JSON.stringify({ meta: draft.meta, blocks: draft.blocks, path: draft.path, t: Date.now() })); } catch(e){} }
+
+  /* ---- save draft ---- */
+  async function saveDraft(){
+    if (!draft) return;
+    if (!draft.meta.title || !draft.meta.title.trim()){ setStatus('Give it a title first.', 'err'); return; }
+    const slug = T.slugify(draft.meta.title); draft.meta.slug = slug;
+    const path = 'drafts/' + slug + '.html';
+    setStatus('Saving draft...', 'dirty'); $('#bd-save').disabled = true;
+    try {
+      let html = T.buildPostHTML({ meta: draft.meta, blocks: draft.blocks, draft: true });
+      html = T.embedDraftModel(html, draft);
+      if (isDry()){
+        window.__pbLast = { path, html };
+        console.log('[post-builder] DRY RUN would commit', path, '(' + html.length + ' bytes)');
+        draft.path = path; $('#bd-path').textContent = '(' + path + ', dry run)';
+        setStatus('Saved (dry run) ✓', 'saved'); dirty = false; return;
+      }
+      const sha = (draft.path === path && draft.sha) ? draft.sha : await ghGetSha(path);
+      draft.sha = await ghPut(path, html, sha, `draft: ${slug} (post-builder)`);
+      draft.path = path; $('#bd-path').textContent = '(' + path + ')';
+      setStatus('Draft saved ✓', 'saved'); dirty = false;
+    } catch (e) { setStatus(e.message, 'err'); }
+    finally { $('#bd-save').disabled = false; }
+  }
+  $('#bd-save').addEventListener('click', saveDraft);
+  $('#bd-publish').addEventListener('click', () => {
+    if (window.__pbPublish) window.__pbPublish();
+    else setStatus('Publish ships in the next build step.', 'err');
+  });
+  $('#bd-back').addEventListener('click', () => { if (dirty && !confirm('Leave without saving this draft?')) return; openDrafts(); });
+  $('#bd-seg').addEventListener('click', e => { const pane = e.target.getAttribute('data-pane'); if (!pane) return; document.body.classList.toggle('pb-show-preview', pane === 'preview'); $$('#bd-seg button').forEach(b => b.classList.toggle('on', b.getAttribute('data-pane') === pane)); if (pane === 'preview') refreshPreview(); });
+  window.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 's' && !$('#view-builder').hidden){ e.preventDefault(); saveDraft(); } });
+  window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue = ''; } });
+
+  // expose a couple hooks for the publish step (next build) + tests
+  window.__pb = { get draft(){ return draft; }, T, buildPost: () => T.buildPostHTML({ meta: draft.meta, blocks: draft.blocks, draft: false }), saveDraft, openBuilder, refreshPreview, setStatus };
+
+  // Local dev hook: open the builder with a fresh (or supplied) draft and no real
+  // token, so the whole writing + preview + dry-run save pipeline can be exercised
+  // offline. Never commits (dry-run is on for localhost). Mirrors blog-edit's __beLocal.
+  window.__pbLocal = (model) => {
+    setToken('__local__');
+    if (model && model.blocks){ draft = Object.assign({ path:null, sha:null }, model); dirty = false; openBuilder(); }
+    else newDraft();
+  };
+  window.__pbLocalDraft = async (path) => {
+    setToken('__local__');
+    const text = await (await fetch('/' + path, { cache:'no-store' })).text();
+    const m = T.extractDraftModel(text);
+    if (!m){ console.warn('no draft model in', path); return; }
+    draft = { meta: m.meta||{}, blocks: m.blocks||[], path, sha:null }; dirty = false; openBuilder();
+  };
+
+  boot();
+  </script>
+</body>
+</html>
