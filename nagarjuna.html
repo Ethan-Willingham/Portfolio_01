@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nagarjuna and the Emptiness of Everything</title>
+  <meta name="description" content="A guided walk through Nagarjuna's Mulamadhyamakakarika, the founding text of Madhyamaka Buddhism, in Jay Garfield's translation. The argument that nothing exists on its own, unpacked one move at a time, with the key verses stacked across six translators.">
+  <meta property="og:title" content="Nagarjuna and the Emptiness of Everything">
+  <meta property="og:description" content="Eighteen centuries ago a Buddhist monk set out to show that nothing exists on its own, including you, and that this is the best news a person could hear. A plain-language walk through his argument, in Jay Garfield's translation.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/nagarjuna.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/nagarjuna-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/nagarjuna-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     NAGARJUNA AND THE EMPTINESS OF EVERYTHING
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: eight stops through the argument of the
+     Mulamadhyamakakarika in Jay Garfield's translation, each
+     unpacked in plain language, with collapsible side panels that
+     stack the other translators on the key verses and the
+     contested technical words. Sits in the site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono).
+     Source lines need a Devanagari fallback face. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --sa-font: "Noto Serif Devanagari","Kohinoor Devanagari","Devanagari MT","ITF Devanagari","Nirmala UI",serif;
+    --early:  #cf9f78;                 /* early academic translators */
+    --mid:    #bc9d65;                 /* mid */
+    --modern: #9ec79a;                 /* modern, and Garfield the spine */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sa { font-family: var(--sa-font); font-style: normal; }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Garfield passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-v { display: block; }                    /* a verse line break inside the passage */
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION / TERM SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-sa { font-family: var(--sa-font); font-size: clamp(1.15rem, 3.4vw, 1.45rem); line-height: 1.85; color: var(--text-bright); margin: 0 0 0.2rem; }
+  .stack-translit { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; color: var(--text-dim); font-style: normal; margin: 0 0 0.5rem; line-height: 1.5; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-early  { border-left-color: var(--early); }
+  .stack-mid    { border-left-color: var(--mid); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(158,199,154,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--modern); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  /* the three-words panel: term entries */
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-sa { font-family: var(--sa-font); font-size: 1.3rem; color: var(--text-bright); }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.05rem; color: var(--accent); }
+  .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Nagarjuna and the emptiness of everything</h1>
+    <p class="hero-dek">Eighteen centuries ago, a Buddhist monk in India set out to show that nothing exists on its own, including you, and that this is the best news a person could hear. Here is how the argument goes.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> through the Mulamadhyamakakarika <span class="sep">/</span> featured: <b>Jay Garfield</b> <span class="sep">/</span> ~25 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Take a chariot apart and lay the pieces in a row. Two wheels, an axle, a frame, a yoke, a long pole, a handful of pegs. Now point to the chariot. It is not the axle. It is not the wheels, or the pole, or the heap of all of them together. Put it back, and it carries you to town. Somewhere between the parts you can name and the cart that plainly works, the chariot itself has gone missing.</p>
+
+      <p>That missing chariot is the subject of the hardest book in Buddhist philosophy. Its author, an Indian monk named Nagarjuna, would say the chariot is <em>empty</em>. Not unreal, not a trick of the eye, but empty of being a chariot on its own, a thing that holds itself up and owes nothing to anything else. And his claim, the one it takes him a whole book to argue, is that everything is like the chariot. Every object, every person, every atom, you, and emptiness itself. Nothing in the universe stands alone.</p>
+
+      <p>Nagarjuna lived in southern India around 150 to 250 CE. For much of the Buddhist world he is the most important thinker after the Buddha himself, sometimes called the second Buddha. He founded the school called Madhyamaka, the Middle Way, and his one undisputed book is the <em>Mulamadhyamakakarika</em>, the "root verses of the middle way." People call it the MMK, because almost nobody can say the rest. It is about 450 short, dense verses, and it is not a story or a scripture to chant. It is a philosophical argument, closer to Euclid than to a hymn. It is tight and technical, and it mostly says no.</p>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/images/nagarjuna-roerich.jpg" width="1400" height="864" loading="lazy" decoding="async" alt="A 1925 tempera painting by Nicholas Roerich: a small red-robed monk sits at the edge of a still violet lake, facing a towering golden serpent that coils up out of the water against pink clouds and pale, layered mountains.">
+        <figcaption class="u-figure-cap">Nicholas Roerich, <em>Nagarjuna, Conqueror of the Serpent</em> (1925). The small red figure at the lakeside is Nagarjuna. The giant coiled serpent is the legend his name carries: <em>naga</em> means serpent, and the story is that the nagas kept the deepest scriptures safe until a teacher came who could understand them.</figcaption>
+      </figure>
+
+      <p>You need two words before you start, and the book lives or dies on getting them right. The first is the disease. The second is the cure.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The two words</p>
+        <p class="u-callout-body"><b>Svabhava</b> (the disease). Literally "own-being." It means an essence a thing has all by itself, built in, owing nothing to its parts, its causes, or the words we use for it. A solid independent core that makes a thing what it is. Nagarjuna's entire project is to show that nothing, anywhere, has it.<br><br><b>Sunyata</b> (the cure). "Emptiness," the absence of svabhava. Be careful with the word from the start: empty does not mean nonexistent. It means empty <em>of svabhava</em>, the way a glass is empty of water and still a perfectly real glass. The same Sanskrit root, <em>sunya</em>, is also the word for the number zero. Emptiness is not nothing. It is a placeholder where you expected a self-standing thing and found only relationships.</p>
+      </aside>
+
+      <p>If you have ever heard the line "form is emptiness, emptiness is form," chanted in temples or printed on a tote bag, this is where it gets its teeth. That line is from a short scripture, the Heart Sutra, and the Heart Sutra only asserts it. Nagarjuna is the one who sat down and argued it, move by move, until it held. The MMK is the engine under the poetry.</p>
+
+      <p>The featured translation throughout is <strong>Jay Garfield's</strong> (<em>The Fundamental Wisdom of the Middle Way</em>, Oxford, 1995), the edition that became standard because he pairs every verse with a plain-language commentary that tells you what the argument is actually doing. Each stop below gives you his words first, then unpacks them. On a few famous verses, where the translators split hard, you can open a panel and see the spread.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole book on one page</p>
+        <p class="u-callout-body">The diagnosis: we suffer because we grasp things, and ourselves, as though they had svabhava, a solid independent core. We read a flowing, dependent world as a set of fixed, self-standing objects, then clutch at them and grieve when they slip. That grasping is the root mistake. The cure: see that everything is empty, dependent all the way down, and the grasping has nothing left to hold. Eight stops, following the argument from its first move to its last. Where a verse has been translated a dozen ways, open the panel to see them stacked.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">The book opens by saying no</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-eight-noes" data-label="The book opens by saying no" data-tag="Dedication">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The dedicatory verses</p>
+      <h2 class="station-h">The book opens by saying no, eight times</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / the dedication, before Chapter 1</p>
+        <div class="passage-t">
+          <p>I prostrate to the Perfect Buddha,<span class="passage-v">The best of teachers, who taught that</span><span class="passage-v">Whatever is dependently arisen is</span><span class="passage-v">Unceasing, unborn,</span></p>
+          <p>Unannihilated, not permanent,<span class="passage-v">Not coming, not going,</span><span class="passage-v">Without distinction, without identity,</span><span class="passage-v">And free from conceptual construction.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Most books open by telling you what they are about. This one opens with a wall of denials. Before the first argument, Nagarjuna lists eight things the world does not do: it does not arise, does not cease, does not last, does not vanish, does not come, does not go, is not a single thing, is not many things. Eight noes, in four pairs.</p>
+        <p>They are all aimed at one target, svabhava. If a thing had a fixed, independent core, then it would have to really arise, pop into being as that core, and really cease, and really stay the same or really get destroyed. Nagarjuna's wager is that none of those solid events survives a close look. Take any of them and try to find the self-standing thing it is supposed to happen to, and your hand closes on nothing.</p>
+        <p>But watch what he salutes in the same breath. The Buddha, he says, taught all of this as <em>dependent arising</em>. That is the quiet yes hiding behind the eight noes. The world is not a collection of self-standing things that pop in and out of being. It is a web of things that lean on each other, each one showing up only because others did. Empty of standing alone, and full of leaning. The eight noes clear the ground. Dependent arising is what is left standing on it.</p>
+        <p>The last phrase, "free from conceptual construction," names the villain of the entire book: <em>prapanca</em>, the mind's habit of spinning bare experience into a sprawl of fixed, named, separate things. We will come back to it. For now, notice the move. A book that opens by denying eight things is telling you its method up front. It will not hand you a doctrine to hold. It will take things away until only the dependent world is left.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The eight negations, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-sa" lang="sa">अनिरोधम् अनुत्पादम् अनुच्छेदम् अशाश्वतम् । अनेकार्थम् अनानार्थम् अनागमम् अनिर्गमम् ॥</p>
+          <p class="stack-translit">anirodham anutpadam anucchedam asasvatam / anekartham ananartham anagamam anirgamam</p>
+          <p class="stack-gloss">Eight negative prefixes in a row, like a drumbeat: <em>an-, an-, an-, a-</em>. The Sanskrit hammers the "no" into the sound of the line itself. Watch how a careful scholar and a secular translator handle the same eight denials.</p>
+
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jay Garfield <span class="star">featured</span></span><span class="stack-vy">1995</span></div>
+            <div class="stack-vt">"Whatever is dependently arisen is unceasing, unborn, unannihilated, not permanent, not coming, not going, without distinction, without identity, and free from conceptual construction."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Stephen Batchelor</span><span class="stack-vy">2000</span></div>
+            <div class="stack-vt">"...who taught contingency (no cessation, no birth, no annihilation, no permanence, no coming, no going, no difference, no identity) to ease fixations."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Batchelor, a secular Buddhist, dissolves the jargon completely. "Dependent arising" becomes <em>contingency</em>, which is exactly what it means: things being contingent on one another. The pacification of prapanca becomes <em>to ease fixations</em>. Same eight noes, two thousand years apart, and the distance between "free from conceptual construction" and "to ease fixations" is the distance you cross on every line of this book.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-motion" data-label="Can you find the going in a walk?" data-tag="Chapter 2">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Examination of motion</p>
+      <h2 class="station-h">Can you find the going in a walk?</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 2, verse 1</p>
+        <div class="passage-t">
+          <p>What has been moved is not moving.<span class="passage-v">What has not been moved is not moving.</span><span class="passage-v">Apart from what has been moved and what has not been moved,</span><span class="passage-v">Movement cannot be conceived.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is the method in miniature, run on something that seems too obvious to argue about. Motion. Watch someone walk across a room. Clearly they are moving. Nagarjuna asks a strange question: where, exactly, is the going? Point to it.</p>
+        <p>Try the floor already crossed. That part is done, no going is happening there. Try the floor not yet reached. Nothing is happening there either, it has not been walked. So the going must be in the stretch being crossed right now. But look closely at "right now" and it is just more floor, instantly sorting itself into already-crossed and not-yet. The going keeps sliding into the gone or the not-yet-gone. You never catch it sitting still as a thing of its own.</p>
+        <p>This looks like a cheap trick, and it is worth saying so out loud, because the same objection will come up for 27 chapters. Of course people walk. Nagarjuna is not denying that. (Garfield, flatly: "Nobody thinks Nagarjuna is denying that anything ever moves.") What he denies is that <em>motion</em> is a thing with svabhava, a self-standing something that exists on its own, apart from a mover, a path, and a clock. Pull those away and hunt for pure motion underneath, and there is nothing there to find. Motion is real the way the chariot is real. It works. It just does not exist on its own.</p>
+        <p>And notice the shape of the argument, because he keeps it for the whole book. He never says "here is what motion really is." He takes your assumption, that motion is a findable thing, splits it into every possible case, and shows each case fall apart. Then he walks on. He builds nothing. He only dismantles. He says as much elsewhere: if I had a position of my own, I would be open to the same attack, but I have none, so I am not.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>That pure-demolition style started a family argument that outlived him by centuries. One camp, later called Svatantrika, said a real philosopher has to build something, state a thesis and defend it. The other, Prasangika, said no: the whole power of the method is that it asserts nothing and just walks each opponent into the absurd ending of their own premises. Nagarjuna wrote too early to have taken a side, but the book reads like the second one. All teeth, no thesis.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-keystone" data-label="The verse the tradition leans on" data-tag="Chapter 24">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Examination of the four noble truths</p>
+      <h2 class="station-h">The four lines the whole tradition leans on</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 24, verses 18 and 19</p>
+        <div class="passage-t">
+          <p>Whatever is dependently co-arisen<span class="passage-v">That is explained to be emptiness.</span><span class="passage-v">That, being a dependent designation,</span><span class="passage-v">Is itself the middle way.</span></p>
+          <p>Something that is not dependently arisen,<span class="passage-v">Such a thing does not exist.</span><span class="passage-v">Therefore a nonempty thing</span><span class="passage-v">Does not exist.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>If you keep one verse from the book, keep this one. It is the hinge the rest of the tradition hangs on, and it does three things in four lines.</p>
+        <p>First, it welds together the two ideas we have been circling. Dependent arising (things leaning on each other) and emptiness (things lacking svabhava) are not two separate facts. They are one fact, said twice. A thing is empty <em>because</em> it is dependent: if it needs parts and causes and conditions in order to be what it is, then it has no independent core, and "no independent core" is just what empty means. Dependent equals empty. That is the equation the book was built to reach.</p>
+        <p>It helps to have a picture. A forest is empty, in exactly this sense. There is no extra thing, Forest, hovering over and above the trees, the soil, the light, the line somebody drew on a map. "Forest" is a handy word for all of that, leaning together. So the forest is empty of being one self-standing thing, and at the same time it is completely full of trees. Empty and full are not opposites here. The emptiness <em>is</em> the fullness, once you look honestly at what is holding it up, which is everything except itself.</p>
+        <p>Second, the next verse snaps the loop shut into a clean argument. Everything that exists arises dependently. Whatever arises dependently is empty. Therefore everything that exists is empty. There is no leftover object hiding somewhere with a solid private core. Not one.</p>
+        <p>Third, that phrase "a dependent designation" does something quiet and crucial. Even emptiness, Nagarjuna says, is only a designation, a useful label that depends on the things it describes. It is not a deeper substance the world is secretly made of. Hold onto that, because mistaking emptiness for a thing is the one error he will call incurable. And all of it together, not solidly existing and not nonexistent either, is what he means by the middle way.</p>
+      </div>
+
+      <details class="stack">
+        <summary>One verse, six translators</summary>
+        <div class="stack-body">
+          <p class="stack-sa" lang="sa">यः प्रतीत्यसमुत्पादः शून्यतां तां प्रचक्ष्महे । सा प्रज्ञप्तिर् उपादाय प्रतिपत् सैव मध्यमा ॥</p>
+          <p class="stack-translit">yah pratityasamutpadah sunyatam tam pracaksmahe / sa prajnaptir upadaya pratipat saiva madhyama</p>
+          <p class="stack-gloss">The whole verse turns on three words in the third line, <em>prajnaptir upadaya</em>, which Garfield gives as "a dependent designation." It is the answer to the question, what kind of thing is emptiness? Six translators, six tries at the same careful idea.</p>
+
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Richard Robinson</span><span class="stack-vy">1967</span></div>
+            <div class="stack-vt">"It is dependent arising that we term emptiness; this is a designation overlaid (on emptiness); it alone is the middle path."</div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Kenneth Inada</span><span class="stack-vy">1970</span></div>
+            <div class="stack-vt">"We declare that whatever is relational origination is sunyata. It is a provisional name (i.e. thought construction for the mutuality of being), and indeed, it is the middle path."</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">Mervyn Sprung</span><span class="stack-vy">1979</span></div>
+            <div class="stack-vt">"We interpret the dependent arising of all things as the absence of being in them. Absence of being is a guiding, not a cognitive notion, presupposing the everyday. It is itself the middle way."</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">David Kalupahana</span><span class="stack-vy">1986</span></div>
+            <div class="stack-vt">"We state that whatever is dependent arising, that is emptiness. That is dependent upon convention. That itself is the middle path."</div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jay Garfield <span class="star">featured</span></span><span class="stack-vy">1995</span></div>
+            <div class="stack-vt">"Whatever is dependently co-arisen, that is explained to be emptiness. That, being a dependent designation, is itself the middle way."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Siderits &amp; Katsura</span><span class="stack-vy">2013</span></div>
+            <div class="stack-vt">"Dependent origination we declare to be emptiness. It (emptiness) is a dependent concept; just that is the middle path."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">A designation overlaid, a provisional name, a guiding notion, a convention, a dependent concept. Every one is straining to say the same fragile thing: emptiness is a way of speaking, not a kind of stuff. The translators sweat this line because getting it wrong turns Nagarjuna into the nihilist he spent the whole book refuting.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-two-truths" data-label="Two kinds of true" data-tag="Chapter 24">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Examination of the four noble truths</p>
+      <h2 class="station-h">Two kinds of true</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 24, verses 8 to 10</p>
+        <div class="passage-t">
+          <p>The Buddha's teaching of the Dharma<span class="passage-v">Is based on two truths:</span><span class="passage-v">A truth of worldly convention</span><span class="passage-v">And an ultimate truth. [...]</span></p>
+          <p>Without a foundation in the conventional truth,<span class="passage-v">The significance of the ultimate cannot be taught.</span><span class="passage-v">Without understanding the significance of the ultimate,</span><span class="passage-v">Liberation is not achieved.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>A fair objection has been building this whole time. If nothing really exists on its own, if even emptiness is just a label, then isn't everything false? Why get out of bed? Nagarjuna's answer is that there are two kinds of true, and you need both.</p>
+        <p>Conventional truth is the everyday kind. The chariot carries you. The forest has trees. Water is wet, fire burns, you owe your friend twenty dollars. All of this is true, at the level where we live and talk and act, and Nagarjuna never denies a word of it. Ultimate truth is the other kind: that none of those things has svabhava, that all of it is empty, dependent, leaning. The chariot is real (conventionally) and has no independent existence (ultimately). Both at once. The skill is not to pick one. It is to stop confusing them, to stop reading the solid-looking everyday world as if it were the self-standing kind.</p>
+        <p>Then comes the part that surprises people. You might assume the ultimate truth is the good one and the conventional is the junk you throw out once you have "seen through" it. Nagarjuna says the reverse. You cannot reach the ultimate <em>except</em> through the conventional. Emptiness can only be pointed at with ordinary words, taught with ordinary examples, in an ordinary room. There is no secret wordless channel that skips the chariots. The ladder is built of convention, and you do not get to kick it away, because the moment you do there is nowhere left to stand.</p>
+        <p>His word for conventional truth, <em>samvrti</em>, also means "concealing." The everyday world is the only thing that can show you the truth, and it is also the screen that hides it. Same surface. It depends on how you look.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>Emptiness is not an upgrade you install by deleting ordinary life. It is ordinary life, seen without the illusion that any of it stands alone.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-empty-emptiness" data-label="Do not make emptiness a thing" data-tag="Chapter 13">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> Examination of the conditioned</p>
+      <h2 class="station-h">Do not make emptiness a thing</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 13, verse 8</p>
+        <div class="passage-t">
+          <p>The victorious ones have said<span class="passage-v">That emptiness is the relinquishing of all views.</span><span class="passage-v">For whomever emptiness is a view,</span><span class="passage-v">That one will accomplish nothing.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is the trap, and Nagarjuna walks you straight up to it. You have followed the argument. Everything is empty. So you reach, almost reflexively, for the next thought: <em>emptiness is the truth, the real nature of things, the one solid fact under the shifting world.</em> And in that instant you have wrecked it.</p>
+        <p>Because that move turns emptiness into a svabhava, a fixed independent essence, the very thing the whole book denies. If emptiness were the secret material reality is made of, then reality would have a self-standing core after all, and Nagarjuna would have spent 450 verses swapping one fixed thing for another. He saw it coming. Emptiness, he says, is itself empty. It is a tool, "a dependent designation," a finger pointing at the moon, not the moon.</p>
+        <p>His image for getting it wrong is blunt. Emptiness misunderstood, he warns in a later chapter, is like a snake picked up by the wrong end. Handled right, it frees you. Grabbed as a new absolute to believe in, it turns and bites. The people who make emptiness into a view, a doctrine, a possession to defend, he calls incurable, not because they are dim but because they have taken the one medicine that dissolves clinging and found a way to cling to it.</p>
+        <p>So emptiness is not a belief the book is selling you. It is the act of putting beliefs down, including the belief in emptiness. The cure works, and then the cure dissolves itself.</p>
+      </div>
+
+      <details class="stack">
+        <summary>Three words the translators fight over</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">Almost all the trouble in reading Nagarjuna comes down to three Sanskrit words. Here is the spread of English each one has been given, and what it actually points at.</p>
+
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-sa" lang="sa">स्वभाव</span><span class="stack-term-w">svabhava</span><span class="stack-term-lit">"own-being"</span></div>
+            <p class="stack-term-b">The disease. Garfield says <b>essence</b> (and, in his notes, "inherent existence"); Streng says <b>self-existence</b>; Inada says <b>self-nature</b>; Siderits and Katsura say <b>intrinsic nature</b>. What every one of them is denying: an independent, built-in being that a thing has on its own and owes to nothing else.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-sa" lang="sa">शून्यता</span><span class="stack-term-w">sunyata</span><span class="stack-term-lit">"empty-ness"</span></div>
+            <p class="stack-term-b">The cure. Nearly everyone now says <b>emptiness</b>. Older translators reached for <b>the Void</b> or <b>voidness</b>, which made it sound like a cosmic nothing you fall into, and pointed a generation of readers straight at the nihilism Nagarjuna was arguing against. "Emptiness" is better because it lets you ask the next question: empty of <em>what</em>? (Of svabhava.) The same word, <em>sunya</em>, is the Sanskrit for zero.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-sa" lang="sa">प्रपञ्च</span><span class="stack-term-w">prapanca</span><span class="stack-term-lit">"spreading-out"</span></div>
+            <p class="stack-term-b">The engine. The widest spread of all: Garfield uses <b>conceptual construction</b>, <b>fabrication</b>, and <b>objectification</b> in different places; Streng says <b>phenomenal extension</b>; Batchelor says <b>fixations</b>. It is the mind's habit of spreading a sprawl of fixed, named, separate things over a world that is actually undivided and dependent. It is the factory that manufactures svabhava in the first place.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-suffering" data-label="Why an argument about essences frees you" data-tag="Chapter 18">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> Examination of the self</p>
+      <h2 class="station-h">Why an argument about essences ends suffering</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 18, verse 5</p>
+        <div class="passage-t">
+          <p>Action and misery having ceased, there is nirvana.<span class="passage-v">Action and misery come from conceptual thought.</span><span class="passage-v">This comes from mental fabrication.</span><span class="passage-v">Fabrication ceases through emptiness.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>It would be fair to ask, around now, what any of this has to do with suffering. Nagarjuna is a Buddhist, and the point of Buddhism is the end of suffering, not winning metaphysics debates. This verse is where the whole austere argument turns out to have been about your life the entire time. Read it from the bottom up, because that is how it is built.</p>
+        <p>Start at the last line. Fabrication, prapanca, that engine from the last stop, ceases through emptiness. When you actually see that things are empty, the mind's machine for cranking out fixed, separate, self-standing objects winds down. Next line up: that fabrication is what produces conceptual thought, the constant carving of the world into me and not-me, mine and not-mine, want and don't-want. Next: that carving is what drives action and misery, the grasping and the shoving-away that runs an ordinary human life. And when the grasping stops, that, he says, is nirvana.</p>
+        <p>Here is the chain in plain order. We take a flowing, dependent world and paint solid little essences onto it. We do it hardest to ourselves: we treat "me" as a fixed thing that has to be guarded, fed, and made permanent. Out of that single error grows all the clutching and the dread. See through the error, see that there was never a fixed self or a fixed world to grip in the first place, and the clutching has nothing left to hold. Not because you have gritted your teeth and quit wanting, but because you have noticed the things you were gripping were like the chariot all along.</p>
+        <p>That is why a dry book about whether motion exists is, underneath, a book about how to stop suffering. The fixed self was the heaviest thing you were carrying. It was empty the whole time.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The disease was never wanting, by itself. It was gripping a dependent world as if it were solid. Emptiness is not a sad fact to make peace with. It is the floor dropping out from under the fear.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-samsara-nirvana" data-label="Nowhere else to go" data-tag="Chapter 25">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> Examination of nirvana</p>
+      <h2 class="station-h">Nowhere else to go</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 25, verses 19 and 20</p>
+        <div class="passage-t">
+          <p>There is not the slightest difference<span class="passage-v">Between cyclic existence and nirvana.</span><span class="passage-v">There is not the slightest difference</span><span class="passage-v">Between nirvana and cyclic existence.</span></p>
+          <p>Whatever is the limit of nirvana,<span class="passage-v">That is the limit of cyclic existence.</span><span class="passage-v">There is not even the slightest difference between them,</span><span class="passage-v">Or even the subtlest thing.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the line that makes people stop reading and look up. Samsara is the ordinary world of suffering and rebirth, the wheel everyone is trying to get off. Nirvana is the goal, the release, the way out. And Nagarjuna says there is not the slightest difference between them. The exit and the trap are the same place.</p>
+        <p>He does not mean that suffering is secretly wonderful, or that there is nothing to wake up from. He means there is no second world. Nirvana is not a heaven you travel to once you have finally understood emptiness. It is this exact world, the chariots and the forests and the friend you owe twenty dollars, seen without the delusion of svabhava. Samsara is the empty world grasped as if it were solid. Nirvana is the same empty world, no longer grasped. Same trees. Different eyes.</p>
+        <p>Now the careful part, the part a hostile reader will pounce on, so let us be exact. He is not saying the two are one identical thing. He is saying there is no <em>inherent</em> difference between them, because both are empty, and you cannot have an absolute gap between two things when neither of them has a solid core to anchor the gap. The wall between ordinary life and liberation, the wall you have spent your life trying to climb, was painted on. There was never anywhere to go. There was only a way to see.</p>
+        <p>It is fitting that this is the one famous verse in the book where almost every translator lands on the same words. After 27 chapters of splitting hairs, total agreement: not the slightest difference.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-silence" data-label="No teaching was ever taught" data-tag="Chapter 25">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> The last move</p>
+      <h2 class="station-h">No teaching was ever taught</h2>
+
+      <div class="passage">
+        <p class="passage-k">Garfield / Chapter 25, verse 24</p>
+        <div class="passage-t">
+          <p>The pacification of all objectification<span class="passage-v">And the pacification of illusion:</span><span class="passage-v">No Dharma was taught by the Buddha</span><span class="passage-v">At any time, in any place, to any person.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The book ends by erasing itself. After all those arguments, Nagarjuna writes that the Buddha never taught anything, anywhere, to anyone. It sounds like a paradox, or a flourish to go out on. It is the last and most consistent move in the entire project.</p>
+        <p>Remember what every stop has been doing. Take some solid-looking thing, motion, the self, causation, even emptiness, and show that it does not stand on its own. The teaching itself is the last thing left on the table. If you walk away from this book holding "emptiness" as a doctrine the Buddha handed down, a thing you now own, you have quietly rebuilt exactly the kind of fixed object the book spent itself dissolving. So Nagarjuna kicks the last leg out. There was no fixed teaching, no teacher looming over you, no doctrine to clutch. Only a finger, pointing, and now even the finger is lowered.</p>
+        <p>"The pacification of all objectification": the quieting of the mind's compulsion to turn everything, including its own best insight, into a thing. That quiet is the real destination. Not a new belief. The end of needing one.</p>
+        <p>It is a strange feeling, reaching the end of the hardest book in Buddhist philosophy and finding that it has, very deliberately, left your hands empty. That was the gift. You came in gripping a world full of solid things, yourself first among them. You leave having watched each one turn out to be like the chariot: real, working, and empty of standing alone.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The chariot still rolls. The forest still has its trees. You still owe your friend twenty dollars. None of it was ever solid, and none of it was ever nothing. That in-between, where everything leans on everything else and nothing has to hold itself up, is the middle way the title was pointing at the whole time.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured translation throughout is <strong>Jay L. Garfield's</strong> <em>The Fundamental Wisdom of the Middle Way: Nagarjuna's Mulamadhyamakakarika</em> (Oxford University Press, 1995), which became the standard English edition because it sets a plain-language commentary beside every verse. Each quotation is verbatim; the side panels stack his rendering against the other major translators on the lines where they most famously diverge, and every translator is named.</p>
+      <ul class="src-list">
+        <li><b>The featured walk</b> is Jay Garfield (1995), translated from the Tibetan with reference to the Sanskrit.</li>
+        <li><b>The comparison panels</b> stack Richard Robinson (1967), Kenneth Inada (1970), Mervyn Sprung (1979), David Kalupahana (1986), and Mark Siderits and Shoryu Katsura (2013), with the secular rendering by Stephen Batchelor (2000). Frederick Streng (1967), the translator who helped make "emptiness" the standard English for <em>sunyata</em> over the older "the Void," is quoted for his word choices.</li>
+        <li><b>The Sanskrit</b> is the de Jong critical edition, via the <a href="https://gretil.sub.uni-goettingen.de/gretil/1_sanskr/6_sastra/3_phil/buddh/nagmmk_u.htm">GRETIL</a> digital text. The MMK survives complete in Sanskrit only because the later commentator Candrakirti quoted every verse of it inside his own <em>Prasannapada</em>.</li>
+        <li><b>On the philosophy</b>, the background draws on the <a href="https://plato.stanford.edu/entries/madhyamaka/">Stanford Encyclopedia of Philosophy</a> entry on Madhyamaka and the <a href="https://iep.utm.edu/nagarjun/">Internet Encyclopedia of Philosophy</a> entry on Nagarjuna.</li>
+      </ul>
+      <p>Two honest notes. The <strong>chariot</strong> in the opening is not Nagarjuna's own. It belongs to the monk Nagasena, answering King Milinda in the <em>Milindapanha</em>, and was elaborated centuries later by Candrakirti; Nagarjuna's own version of the same argument uses fire and its fuel (Chapter 10). And the <strong>Svatantrika and Prasangika</strong> labels are a later, mostly Tibetan classification from the sixth and seventh centuries, read back onto a text that predates them by some four hundred years. The MMK itself takes no side; it just proceeds by demolition.</p>
+      <p>The breakdowns are mine. Most of the modern translations are still in copyright; they appear here in short excerpts, for comparison and study, with every translator named.</p>
+      <p class="colo-note">The painting in the opening and on the homepage card is Nicholas Roerich's <em>Nagarjuna, Conqueror of the Serpent</em> (1925), from his Banners of the East series, in the public domain. The "Perfection of Wisdom" scriptures the nagas were said to guard are the same Prajnaparamita texts whose slogan, "form is emptiness," Nagarjuna spent the MMK arguing.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/nagarjuna.js" defer></script>
+</body>
+</html>
