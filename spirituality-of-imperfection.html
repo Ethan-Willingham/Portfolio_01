@@ -170,15 +170,13 @@
   /* ---------- qualities (kit dlnum-2up tweaks) ---------- */
   #grows .dlnum-term { letter-spacing: -0.01em; }
 
-  /* ---------- SOURCES ---------- */
-  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.1em; }
-  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.4em; margin: 0.4em 0 0; }
-  #sources li { margin-bottom: 0.5em; }
-  #sources li::marker { color: var(--accent); }
-  #sources a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
-  #sources a:hover { border-bottom-color: var(--accent); }
-  #sources b { color: var(--text); font-weight: 600; }
-  #sources i { color: var(--text-dim); }
+  /* ---------- SOURCES (kit u-collapse dropdown styles the list) ---------- */
+  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.3em; }
+  #sources .u-collapse { margin-top: 0.4rem; }
+  #sources .u-collapse-list li::marker { color: var(--accent); }
+  #sources .u-collapse-list i { color: var(--text-dim); }
+  #sources .u-collapse-list a { border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources .u-collapse-list a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
 
   /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
   @media all {
@@ -444,7 +442,9 @@
     <section id="sources" class="sec" aria-labelledby="sources-h">
       <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and how to read on</h2></div>
       <p class="src-note">This is a distillation of one book, told in my own words. The ideas are Kurtz and Ketcham's. Quotes from the book are kept short and are reproduced for study and comment, with the chapter named where it matters. The seven tales are retold in my own words from each tradition's own source, not from the book's wording, since most of them are old folklore the book gathered rather than invented. No em dashes, anywhere.</p>
-      <ol>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 12 sources</summary>
+        <ol class="u-collapse-list">
         <li><b>Ernest Kurtz and Katherine Ketcham.</b> <i>The Spirituality of Imperfection: Storytelling and the Search for Meaning.</i> Bantam, 1992. The source for the thesis, the six qualities (Part Three: Release, Gratitude, Humility, Tolerance, Forgiveness, Being-at-Home), and the storytelling method. <a href="https://www.penguinrandomhouse.com/books/96307/the-spirituality-of-imperfection-by-ernest-kurtz-and-katherine-ketcham/">publisher</a></li>
         <li><b>Ernest Kurtz.</b> <i>Not-God: A History of Alcoholics Anonymous.</i> Hazelden, 1979. Kurtz's Harvard history of AA, and the origin of the "not-God" idea (you are "not infinite, not absolute, not God") and his one-word reduction of it, "finitude." <a href="https://archive.org/details/notgodhistoryofa00kurt">archive.org</a></li>
         <li><b>Alcoholics Anonymous.</b> <i>Alcoholics Anonymous</i> ("the Big Book"), ch. 5, "How It Works," 1st ed. 1939. The "selfishness, self-centeredness" diagnosis, Step One, the "progress, not perfection" line, and "we are not saints." <a href="https://anonpress.org/manu/05.htm">full text</a></li>
@@ -457,7 +457,8 @@
         <li><b>The fire in the forest</b> (the storytelling frame) is a Hasidic tale of the Baal Shem Tov's lineage; the literary version is the opening of Elie Wiesel, <i>The Gates of the Forest</i> (1966). The "where does God dwell? wherever we let him in" line is the Kotzker Rebbe, in Martin Buber, <i>Tales of the Hasidim.</i></li>
         <li><b>The convergence.</b> <i>haumai</i> as the core malady: Guru Granth Sahib, Ang 466 (Guru Nanak). Pride: Augustine, and James 4:6 / 1 Peter 5:5 (quoting Proverbs 3:34), "God opposes the proud but gives grace to the humble." The counter-case that the religions are <i>not</i> one: <b>Stephen Prothero,</b> <i>God Is Not One</i> (HarperOne, 2010).</li>
         <li><b>On the cracks and the gold.</b> The image is kintsugi, the Japanese art of mending pottery with gold. The bowl shown is a 16th-century Joseon tea bowl in the Ethnologisches Museum, Berlin (photo public domain, <a href="https://commons.wikimedia.org/wiki/Category:Kintsugi">Wikimedia Commons</a>). Leonard Cohen built one of his best-known lines, in the song "Anthem" (1992), on the same image: that what is broken in us is the very place light enters.</li>
-      </ol>
+        </ol>
+      </details>
     </section>
 
   </main>
