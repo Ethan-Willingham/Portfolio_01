@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Hebrew Bible, Side by Side</title>
+  <meta name="description" content="The keystone passages of the Tanakh, the Jewish Bible, in the pointed Hebrew and stacked across the best English translations, with a plain breakdown of what each one says and where the translators split. Read the Jewish way: through the argument, never alone.">
+  <meta property="og:title" content="The Hebrew Bible, Side by Side">
+  <meta property="og:description" content="Genesis opens on three words every translator thinks they know. One says 'In the beginning God created.' The modern ones say the sentence does not start there at all. The Tanakh read the Jewish way, keystone by keystone, in the Hebrew and a stack of English translations.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/hebrew-bible.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hebrew-bible-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hebrew-bible-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE HEBREW BIBLE, SIDE BY SIDE
+     An interactive reader: the keystone passages of the Tanakh,
+     the pointed Hebrew source, a transliteration, a plain
+     breakdown of each, and the best English translations stacked.
+     Sits in the site shell (forest green, parchment, Century
+     Supra / Segoe UI / Commit Mono). The Hebrew source needs a
+     face with full nikkud; it is set right-to-left. Everything
+     else stays on the three site fonts. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 840px;                 /* reading column */
+    --he-font: "Taamey Frank CLM","Frank Ruhl Libre","SBL Hebrew","Ezra SIL","Times New Roman","David","Arial Hebrew",serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .he-inline { font-family: var(--he-font); font-style: normal; color: var(--text-bright); }
+  .tl-inline { font-style: italic; color: var(--text-dim); }
+
+  /* the opening "fan": one line of Hebrew, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-he { font-family: var(--he-font); font-size: clamp(1.7rem, 5.4vw, 2.6rem); color: var(--text-bright); line-height: 1.7; padding: 1.3rem 1.5rem 0.3rem; direction: rtl; text-align: right; }
+  .fan-tl { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--accent); padding: 0 1.5rem 0.2rem; }
+  .fan-he small, .fan-cap { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
+  .fan-cap { padding: 0 1.5rem 0.7rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .hb { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .hb-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .hb-step { display: flex; align-items: center; gap: 0.4rem; }
+  .hb-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .hb-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .hb-nav:disabled { opacity: 0.3; cursor: default; }
+  .hb-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; text-align: left; }
+  .hb-jump:hover { background: rgba(255,255,255,0.05); }
+  .hb-jump #hb-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
+  .hb-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .hb-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
+  .hb-views button:hover { color: var(--text-bright); }
+  .hb-views button.is-on { background: var(--accent); color: #2a3128; }
+  .hb-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .hb-count b { color: var(--accent); font-weight: 400; }
+
+  /* the keystone index, grouped by section of the Tanakh */
+  .hb-grid { margin: 0 0 1rem; padding: 0.9rem 1rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 62vh; overflow-y: auto; }
+  .hb-grid[hidden] { display: none; }
+  .hb-gridsec { margin-bottom: 0.85rem; }
+  .hb-gridsec:last-child { margin-bottom: 0; }
+  .hb-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; color: var(--text-faint); margin: 0 0 0.45rem; text-transform: uppercase; }
+  .hb-gridlabel span { font-family: var(--he-font); color: var(--accent); margin-right: 0.55em; letter-spacing: 0; font-size: 0.95rem; }
+  .hb-gridlabel em { font-style: italic; text-transform: none; letter-spacing: 0.02em; opacity: 0.8; }
+  .hb-gridrow { display: flex; flex-wrap: wrap; gap: 5px; }
+  .hb-grid button { font-family: var(--font-body); font-size: 0.82rem; padding: 0.42em 0.8em; border: 1px solid var(--rule-strong); border-radius: 999px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  .hb-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .hb-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+
+  /* source */
+  .hb-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .hb-he-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem; }
+  .hb-he-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; margin-left: 0.4em; }
+  .hb-he { font-family: var(--he-font); font-size: clamp(1.35rem, 4vw, 1.9rem); line-height: 1.95; color: var(--text-bright); margin: 0; direction: rtl; text-align: right; text-wrap: pretty; }
+  .hb-translit { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; letter-spacing: 0.01em; color: var(--text-dim); font-style: normal; margin: 0.85rem 0 0; padding-top: 0.7rem; border-top: 1px solid var(--rule); }
+
+  /* commentary */
+  .hb-notes { margin: 1rem 0 0; }
+  .hb-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .hb-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .hb-note-k:first-child { margin-top: 0; }
+  .hb-note-gist, .hb-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .hb-note-gist em, .hb-note-read em, .hb-splits em { font-style: italic; color: var(--text-bright); }
+  .hb-note-gist b, .hb-splits b, .hb-note-read b { font-weight: 600; color: var(--text-bright); }
+  .hb-note-read { color: var(--text-dim); font-style: italic; }
+  .hb-splits { margin: 0; }
+  .hb-splits dt { margin: 0.7rem 0 0.15rem; line-height: 1.5; }
+  .hb-splits dt .hb-dt-he { font-family: var(--he-font); font-size: 1.2rem; color: var(--text-bright); }
+  .hb-splits dt .hb-dt-tl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); letter-spacing: 0.01em; }
+  .hb-splits dt .hb-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; }
+  .hb-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .hb-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
+
+  /* translations */
+  .hb-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .hb-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .hb-v:last-child { border-bottom: 1px solid var(--rule); }
+  .hb-early  { border-left-color: var(--early); }
+  .hb-mid    { border-left-color: var(--mid); }
+  .hb-modern { border-left-color: var(--modern); }
+  .hb-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .hb-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .hb-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .hb-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.62; color: var(--text); white-space: normal; }
+  .hb-vt .hb-br { display: block; height: 0.6em; }
+  .hb-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .hb .hb-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .hb.hb-ready .hb-body { opacity: 1; }
+  .hb-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .hb.hb-ready .hb-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    body { padding-left: 0; padding-right: 0; }
+    .fan-he { font-size: 1.5rem; padding: 1.1rem 1rem 0.3rem; }
+    .fan-tl, .fan-cap { padding-left: 1rem; padding-right: 1rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .hb-bar { gap: 0.55rem 0.7rem; }
+    .hb-count { margin-left: 0; flex-basis: 100%; }
+    .hb-source, .hb-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .hb-v { padding-left: 0.9rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Hebrew Bible, side by side</h1>
+    <p class="hero-dek">Genesis opens on three words every translator thinks they know. One says <em>In the beginning God created</em>. The modern ones say the sentence does not start there at all. Here is the Tanakh, the Jewish Bible, read the Jewish way: through the argument, never alone.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>17 keystones</b> of the Tanakh <span class="sep">/</span> <b>seven translations</b> stacked verbatim <span class="sep">/</span> Hebrew, transliteration, breakdown</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <!-- PROSE: first draft, to be run through the write-post VOICE.md self-edit pass before shipping -->
+      <p class="lede">A man comes to the sage Hillel and offers to convert to Judaism on one condition: teach him the whole Torah while he stands on one foot. Hillel does it in a breath. <em>What is hateful to you, do not do to your neighbor. That is the whole Torah. The rest is commentary. Now go and learn.</em></p>
+      <p>The line everyone quotes is the golden rule in the middle. The line that tells you how Jews actually read this book is the one at the end: <em>go and learn</em>. The whole Torah fits on one foot, and it also takes a lifetime, because the summary comes with homework attached. The Hebrew Bible is not a book you read alone. For two thousand years it has been read the way Hillel read it, inside an argument about what it means, the written text and the spoken tradition that unfolds it treated as one thing.</p>
+      <p>You can see why the argument never settles in the very first sentence. Three words open the book.</p>
+
+      <div class="fan">
+        <p class="fan-he" lang="he" dir="rtl">בְּרֵאשִׁית בָּרָא אֱלֹהִים</p>
+        <p class="fan-tl">b&rsquo;reshit bara Elohim</p>
+        <p class="fan-cap">Genesis 1:1, the first three words &middot; a finished act, or the start of a sentence still in motion</p>
+        <ul class="fan-list">
+          <li><span class="e">In the beginning God created the heaven and the earth.</span><span class="who">KJV, 1611</span></li>
+          <li><span class="e">In the beginning God created the heaven and the earth.</span><span class="who">JPS, 1917</span></li>
+          <li><span class="e">When God began to create heaven and earth&hellip;</span><span class="who">NJPS, 1985</span></li>
+          <li><span class="e">When God began to create heaven and earth&hellip;</span><span class="who">Alter, 2018</span></li>
+          <li><span class="e">At the beginning of God&rsquo;s creating of the heavens and the earth&hellip;</span><span class="who">Fox, 1995</span></li>
+          <li><span class="e">In the beginning of God&rsquo;s preparing the heavens and the earth&hellip;</span><span class="who">Young, 1898</span></li>
+        </ul>
+      </div>
+
+      <p>Same three words. Two of these translators give you a finished act: in the beginning, God created, full stop, the universe made from nothing in a single clean instant. The others say the Hebrew will not sit still like that. The first word, <span class="he-inline">בְּרֵאשִׁית</span>, is not quite <em>in the beginning</em>; it is closer to <em>in the beginning of</em>, the start of a longer clause, so the sentence really opens <em>when God began to create</em>, and drops you into a world already half-made, with a wind over dark water. Rashi, the great medieval commentator, said as much a thousand years ago. The first three words, and the translators are already a whole theology apart. That spread is the subject of this page.</p>
+      <p>Below are the keystones of the Tanakh, the Jewish name for the Bible: an acronym for its three parts, <em>Torah</em> (the teaching, the five books of Moses), <em>Nevi&rsquo;im</em> (the prophets), and <em>Ketuvim</em> (the writings). These are not the most quoted verses. They are the load-bearing ones, the passages the rest of the tradition leans on, plus the one Talmud story that frames the whole thing. For each you get the pointed Hebrew, a transliteration so you can hear it, a plain breakdown of what it is doing and where the translators part ways, and then the English versions stacked. Use the arrows or your keyboard to move between them.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="hb" id="hb">
+      <div class="hb-bar">
+        <div class="hb-step">
+          <button class="hb-nav" id="hb-prev" aria-label="Previous passage">&lsaquo;</button>
+          <button class="hb-jump" id="hb-jump" aria-label="Jump to a passage"><span id="hb-ref">Genesis 1:1</span><span id="hb-title"></span></button>
+          <button class="hb-nav" id="hb-next" aria-label="Next passage">&rsaquo;</button>
+        </div>
+        <div class="hb-views" id="hb-views" role="group" aria-label="How many translations to show">
+          <button data-view="key" class="is-on">Key</button>
+          <button data-view="all">All</button>
+        </div>
+        <div class="hb-count" id="hb-count"></div>
+      </div>
+
+      <div class="hb-grid" id="hb-gridpop" hidden aria-label="Keystone index, grouped by section of the Tanakh"></div>
+
+      <div class="hb-body">
+        <div class="hb-source" id="hb-source"></div>
+        <div class="hb-notes" id="hb-notes"></div>
+        <div class="hb-versions" id="hb-versions"></div>
+      </div>
+      <div class="hb-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The Hebrew and the translations are plain text in <code>js/hebrew-bible-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every translation here is reproduced verbatim, not paraphrased. The Hebrew and most of the English I pulled with scripts from clean digital editions and checked line by line. Robert Alter, whose translation is not posted online as one clean text, I quote only where I could verify his exact wording against a published source, on the passages where his rendering most earns a place. The one change to any quotation is curly quotation marks turned straight, to match the rest of the site. Where a translator uses a dash, it is theirs, not mine.</p>
+      <ul class="src-list">
+        <li><b>The Hebrew</b> is the vocalized Masoretic text, with vowel points but without the cantillation marks, served by <a href="https://www.sefaria.org">Sefaria</a>. The Talmud passage is in its original Aramaic.</li>
+        <li><b>JPS 1917</b>, the first English Tanakh by a Jewish committee, with the <b>King James Version</b> (1611) and <b>Young&rsquo;s Literal Translation</b> (1898), are in the public domain.</li>
+        <li><b>NJPS</b> (the 1985 Jewish Publication Society <em>Tanakh</em>), the <b>Koren Jerusalem Bible</b> (1962), <b>Everett Fox</b>&rsquo;s <em>The Five Books of Moses</em> (1995, the Torah only), and <b>Robert Alter</b>&rsquo;s <em>The Hebrew Bible</em> (2018) are in copyright, quoted here for comparison and study with every translator named.</li>
+        <li><b>The Hillel story</b> is the Babylonian Talmud, <em>Shabbat</em> 31a, in the Koren-Steinsaltz English (Sefaria) and the older Soncino, with the Aramaic alongside.</li>
+      </ul>
+      <p>The breakdowns are mine. They lean on the standard scholarship and the classical Jewish commentators, Rashi and Ibn Ezra and the rabbis of the Talmud and the Midrash, and where the Jewish reading of a verse parts from the familiar Christian one, I have tried to lay both out plainly and fairly rather than smooth the difference over.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The photograph on the homepage card is an open Torah scroll, the handwritten parchment from which the Five Books are chanted aloud in synagogue, with a silver pointer (a <em>yad</em>) resting in front so no finger touches the text. Jewish Museum and Tolerance Center, Moscow; public domain (CC0), via Wikimedia Commons.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/hebrew-bible-notes.js" defer></script>
+  <script src="js/hebrew-bible-data.js" defer></script>
+  <script src="js/hebrew-bible.js" defer></script>
+</body>
+</html>
