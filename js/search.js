@@ -157,7 +157,7 @@
         html += rowHTML(results[i], i);
       }
       var label = totalInstances + ' match' + (totalInstances === 1 ? '' : 'es') + ' in ' + postCount + ' post' + (postCount === 1 ? '' : 's');
-      html += '<div class="hs-foot"><span><b>↑</b><b>↓</b> move</span><span><b>↵</b> open</span><span class="hs-foot-count">' + label + '</span></div>';
+      html += '<div class="hs-foot"><span class="hs-foot-count">' + label + '</span></div>';
       if (live) live.textContent = label;
     }
     panel.innerHTML = html;
