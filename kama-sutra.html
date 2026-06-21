@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Kama Sutra, Side by Side</title>
+  <meta name="description" content="The most famous sex manual in the world is barely about sex. Thirteen keystone passages of the Kamasutra in the original Sanskrit, then the 1883 Burton translation set against the accurate modern one by Wendy Doniger and Sudhir Kakar, broken down line by line.">
+  <meta property="og:title" content="The Kama Sutra, Side by Side">
+  <meta property="og:description" content="The most famous sex manual in the world is barely about sex. It is a guide to the whole art of living, and a good deal of what you think is in it was added by a Victorian translator. The keystone passages in Sanskrit, Burton 1883 against Doniger and Kakar 2002.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/kama-sutra.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/kama-sutra-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/kama-sutra-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE KAMA SUTRA, SIDE BY SIDE
+     An interactive reader: Vatsyayana's keystone passages, the
+     Sanskrit source, and two English translations stacked (Burton
+     1883 against Doniger and Kakar 2002), with a plain breakdown
+     of each. Sits in the site shell (forest green, parchment,
+     Century Supra / Segoe UI / Commit Mono). The Sanskrit is
+     romanized, so it stays on the three site fonts. No em dashes
+     (in my prose).
+     ============================================================ */
+  :root {
+    --measure: 820px;                 /* reading column */
+    --early:  #cf9f78;                 /* Burton 1883, the lone Victorian */
+    --modern: #9ec79a;                 /* Doniger and Kakar 2002 */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  /* Full-bleed post: zero the body's side padding so the sections (which each
+     inset themselves by var(--gutter)) own the gutter. Without this the body
+     gutter and the section gutter stack to 40px on mobile; the site needs 20px. */
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sa-inline { font-family: var(--font-heading); font-style: italic; letter-spacing: 0.01em; }
+
+  /* the opening "fan": one Sanskrit line, two Englishes that split on it */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-sa { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.3rem, 3.4vw, 1.7rem); line-height: 1.5; color: var(--text-bright); padding: 1.3rem 1.5rem 0.5rem; text-wrap: pretty; }
+  .fan-sa small { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; line-height: 1.5; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .kama { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .kama-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .kama-step { display: flex; align-items: center; gap: 0.4rem; }
+  .kama-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .kama-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .kama-nav:disabled { opacity: 0.3; cursor: default; }
+  .kama-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; text-align: left; }
+  .kama-jump:hover { background: rgba(255,255,255,0.05); }
+  .kama-jump #kama-pno { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .kama-jump #kama-title { font-style: italic; font-size: 1.02rem; color: var(--text-bright); font-weight: 400; }
+  .kama-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .kama-count b { color: var(--accent); font-weight: 400; }
+
+  /* the jump list: one row per keystone passage */
+  .kama-gridpop { display: grid; grid-template-columns: 1fr; gap: 3px; margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); }
+  .kama-gridpop[hidden] { display: none; }
+  .kama-gridpop button { display: flex; align-items: baseline; gap: 0.7rem; text-align: left; border: 1px solid transparent; border-radius: 7px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; padding: 0.5rem 0.7rem; transition: background .15s, color .15s, border-color .15s; }
+  .kama-gridpop button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .kama-gridpop button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+  .kama-gridpop button.is-cur .kama-jrow-ch { color: #2a3128; }
+  .kama-jrow-ch { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; width: 2.4rem; }
+  .kama-jrow-t { font-family: var(--font-heading); font-size: 1.02rem; line-height: 1.25; }
+  @media (min-width: 680px){ .kama-gridpop { grid-template-columns: 1fr 1fr; } }
+
+  /* source */
+  .kama-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .kama-sa-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .kama-sa-k span { color: var(--text-faint); letter-spacing: 0.1em; }
+  .kama-sa { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.3rem, 3.6vw, 1.75rem); line-height: 1.6; color: var(--text-bright); margin: 0; text-wrap: pretty; }
+  .kama-gloss-cap { font-family: var(--font-body); font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); margin: 0.7rem 0 0; }
+
+  /* commentary */
+  .kama-notes { margin: 1rem 0 0; }
+  .kama-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .kama-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .kama-note-k:first-child { margin-top: 0; }
+  .kama-note-gist, .kama-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .kama-note-gist em, .kama-note-read em, .kama-splits em { font-style: italic; color: var(--text-bright); }
+  .kama-note-gist b, .kama-splits b { color: var(--text-bright); font-weight: 600; }
+  .kama-note-read { color: var(--text-dim); font-style: italic; }
+  .kama-splits { margin: 0; }
+  .kama-splits dt { font-family: var(--font-heading); font-style: italic; font-size: 1.18rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.01em; }
+  .kama-splits dt .kama-gloss { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.06em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
+  .kama-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .kama-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
+
+  /* translations */
+  .kama-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .kama-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .kama-v:last-child { border-bottom: 1px solid var(--rule); }
+  .kama-early  { border-left-color: var(--early); }
+  .kama-modern { border-left-color: var(--modern); }
+  .kama-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .kama-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .kama-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .kama-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
+  .kama-vt .kama-br { display: block; height: 0.6em; }
+
+  /* fade the explorer in once data lands */
+  .kama .kama-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .kama.kama-ready .kama-body { opacity: 1; }
+  .kama-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .kama.kama-ready .kama-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    .fan-sa { font-size: 1.2rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .kama-bar { gap: 0.55rem 0.7rem; }
+    .kama-count { margin-left: 0; flex-basis: 100%; }
+    .kama-source, .kama-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .kama-gridpop { grid-template-columns: 1fr; }
+    .kama-v { padding-left: 0.9rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Kama Sutra, side by side</h1>
+    <p class="hero-dek">The most famous sex manual in the world is barely about sex. It is a guide to the whole art of living, and a good deal of what you think is in it was added by a Victorian translator.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>13 keystone passages</b> <span class="sep">/</span> <span>Burton <b>1883</b> against Doniger and Kakar <b>2002</b></span> <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Six of the Kamasutra's seven parts are not about sex at all. They are about how to choose a partner, how to court one, how to run a marriage, how to be the kind of cultivated person worth loving. The positions everyone pictures take up a single chapter of a single part.</p>
+      <p>The Kamasutra was put together in Sanskrit, in northern India, around the third century, by a man named Vatsyayana, who tells us almost nothing about himself except that he wrote it in a spirit of study, not appetite. He was not writing pornography. He was writing about <em>kama</em>, pleasure, which his tradition counts as one of the legitimate aims of a human life, set beside <em>dharma</em> (duty, the moral order) and <em>artha</em> (wealth and worldly success), with spiritual release, <em>moksha</em>, standing above all three. Pleasure was a thing a civilized person was meant to study and do well, the way you would study law or business. That is the frame the whole book hangs on, and it is the first thing the cliche throws away.</p>
+      <p>So why does almost everyone picture temple carvings and exotic acrobatics? In large part because of one man. In 1883 the Victorian adventurer Richard Burton issued the first English Kamasutra, though most of the actual translating was done by two Indian scholars he worked with, Bhagavanlal Indraji and Shivaram Bhide. To slip it past Britain's obscenity laws, Burton published it through a society that did not exist, the "Kama Shastra Society of London and Benares," for private subscribers only. It could not be sold openly in Britain or America until 1962. And to make it palatable, Burton dressed it up, reaching for Sanskrit-flavored words and a faraway, anthropological tone that the plain original simply does not have.</p>
+      <p>Take the most famous detail in the book, the one everyone half-remembers. The text sorts lovers by size, the men into hares, bulls, and horses. Here is that line, in the Sanskrit and in the two translations.</p>
+
+      <div class="fan">
+        <p class="fan-sa" lang="sa">śaśo vṛṣo 'śva iti liṅgato nāyaka-viśeṣāḥ. nāyikā punar mṛgī baḍavā hastinī ceti.<small>Kamasutra 2.1.1 &middot; the man is graded by his liṅga; the woman is named only by type, with no organ-word at all</small></p>
+        <ul class="fan-list">
+          <li><span class="e">The hare man, the bull man, and the horse man, according to the size of his <strong>lingam</strong>. Woman also, according to the depth of her <strong>yoni</strong>, is either a female deer, a mare, or a female elephant.</span><span class="who">Burton, 1883</span></li>
+          <li><span class="e">The man is called a "hare", "bull", or "stallion", according to the size of his <strong>sexual organ</strong>; a woman, however, is called a "doe", "mare", or "elephant cow".</span><span class="who">Doniger and Kakar, 2002</span></li>
+        </ul>
+      </div>
+
+      <p>Watch the woman. The Sanskrit grades the man by his <span class="sa-inline">liṅga</span> and then just names her by animal, doe, mare, elephant, with no word for her anatomy at all. Burton's <em>yoni</em> is not a translation. It is something he added, to build a tidy, exotic-sounding pair. As the Sanskrit scholar Wendy Doniger puts it, the original <em>"only rarely uses the word lingam, and never yoni."</em> Those two borrowed words, she writes, <em>"anthropologized sex, distanced it, made it safe for English readers"</em> by turning it into the business of people far away. A good part of what feels exotic about this book was added on the way into English.</p>
+      <p>Below are thirteen passages, the load-bearing ones, the claims the rest of the book leans on. For each you get the Sanskrit, then Burton's 1883 version set against the accurate 2002 translation by Wendy Doniger and Sudhir Kakar, and a plain breakdown of what the passage is doing and where the two part ways. The gap between those two columns is the real subject of this page. Use the arrows or your keyboard to move between them.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="kama" id="kama">
+      <div class="kama-bar">
+        <div class="kama-step">
+          <button class="kama-nav" id="kama-prev" aria-label="Previous passage">&lsaquo;</button>
+          <button class="kama-jump" id="kama-jump" aria-label="Jump to a passage"><span id="kama-pno">Passage 1 / 13</span><span id="kama-title"></span></button>
+          <button class="kama-nav" id="kama-next" aria-label="Next passage">&rsaquo;</button>
+        </div>
+        <div class="kama-count" id="kama-count"></div>
+      </div>
+
+      <div class="kama-gridpop" id="kama-gridpop" hidden aria-label="Passage index"></div>
+
+      <div class="kama-body">
+        <div class="kama-source" id="kama-source"></div>
+        <div class="kama-notes" id="kama-notes"></div>
+        <div class="kama-versions" id="kama-versions"></div>
+      </div>
+      <div class="kama-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The Sanskrit and the translations are plain text in <code>js/kama-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ THE CLICHE ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">How a guide to living became a sex manual</h2>
+      <p>For most of its life the Kamasutra was a Sanskrit classic that almost nobody in the West had read. Then Burton's smuggled translation seeped out, and the twentieth century did the rest. The chapter on positions got pulled out, illustrated, and reprinted on its own, again and again, until "Kama Sutra" became a brand name for exotic sex, stamped on perfumes, hotel packages, condoms, and a thousand listicles. The erotic temple carvings at Khajuraho, which have nothing to do with the text, got folded in for atmosphere. What fell away was the other six-sevenths of the book, the part about how to actually live alongside another person.</p>
+      <p>None of which makes it a sweet book, and an honest reading keeps the hard parts in view. A whole part (Book 5) is a manual for seducing other men's wives. The chapter on slapping is real. So is the assumption, running underneath, that a man of means is the one calling the shots. Doniger, who has spent a career defending the text, does not pretend otherwise. Her claim is narrower and more interesting: that the Kamasutra is far smarter about women, their pleasure, and their consent than either its ancient neighbors or its Victorian translator let on, and that a lot of its bad reputation belongs to Burton, not to Vatsyayana. The passages below are where you can check that for yourself.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every quotation here is reproduced verbatim, quoted for comparison and study with each translator named, and checked line by line against the source editions. The Sanskrit and the two translations were chosen to stage one specific contrast: the loose, exoticizing Victorian version against the careful modern one.</p>
+      <ul class="src-list">
+        <li><b>The Sanskrit</b> is the root text (the <em>mula</em>), romanized, from the Jean Fezas critical edition by way of <a href="https://gretil.sub.uni-goettingen.de/gretil/corpustei/transformations/html/sa_vAtsyAyana-kAmasUtra.htm">GRETIL</a>. Sutra numbers follow that edition. The Kamasutra is written in <em>sutras</em>, terse aphorisms meant to be unpacked by a teacher, which is part of why it bends so easily under translation.</li>
+        <li><b>Richard Burton</b> (1883) is the public-domain standard, the version nearly every free Kama Sutra online still reproduces. The translating was largely the work of <b>Bhagavanlal Indraji</b> and <b>Shivaram Bhide</b>, organized with Forster Fitzgerald Arbuthnot and edited by Burton, who put his own name on it. From <a href="https://www.gutenberg.org/ebooks/27827">Project Gutenberg</a>.</li>
+        <li><b>Wendy Doniger and Sudhir Kakar</b> (2002, Oxford World's Classics), the accurate modern translation, the Sanskritist and the psychoanalyst working together. Quoted here for comparison and study. Doniger's running argument with Burton, in her introduction and in her book <em>Redeeming the Kamasutra</em>, is the backbone of several of the breakdowns.</li>
+      </ul>
+      <p>The breakdowns are mine. They lean on Doniger's scholarship for the contested lines, especially the places where she shows Burton quietly stripping women of their voices, turning their direct speech into reported speech and, in one Book 4 passage, adding a single "not" that reverses the meaning. Where the two translations name the characters differently (the king and his victim in passage nine), it is because Burton worked from a different manuscript than the modern critical edition, and I have left the disagreement visible rather than smoothing it over.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The painting on the homepage card is <em>Radha's Confidante Brings Her to Krishna</em>, a Rajput miniature from the Jaipur kingdom, about 1790, illustrating the love poetry of Bihari. Radha is led by her friend through a moonlit garden to where Krishna waits in a flowering bower. From the Cleveland Museum of Art, accession 2018.172, in the public domain (CC0). A scene of courtship, which is what most of this book is actually about.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/kama-notes.js" defer></script>
+  <script src="js/kama-data.js" defer></script>
+  <script src="js/kama.js" defer></script>
+</body>
+</html>
