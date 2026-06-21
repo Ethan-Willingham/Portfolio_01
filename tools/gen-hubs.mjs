@@ -68,6 +68,7 @@ const HUBS = [
     lead: 'Meaning, the mind, and how to bear a life, laid out oldest first: the practices, the great consolations, the psychology of contentment, and the honest cases of a search gone wrong.',
     members: [
       live('meditation.html', 'Meditation, Honestly', 'meditation.jpg', 'ancient', -500, "Every kind of meditation in one place, with the hype stripped off: what TM, mindfulness, Zen, and the rest actually are, what the evidence really shows they do and do not do, and how to actually begin, today."),
+      live('chemical-path.html', 'The Chemical Path', 'chemical-path.jpg', 'ancient + now', "The oldest shortcut to the mystical experience is a drug, and science is rediscovering it. The old traditions, Huxley's Doors of Perception, the new psilocybin research, and the real risks, all in one place."),
       live('fox.html', 'Emmet Fox', 'fox.jpg', '1934', 1934, "A 1934 reading of the Sermon on the Mount as practical mind-power, not a moral scolding: change your thinking and you change your life. The book early AA passed hand to hand before it had one of its own."),
       live('frankl.html', 'Viktor Frankl', 'frankl.jpg', '1946', 1946, "A psychiatrist who came through the Nazi camps with one lesson: the men who held on were the ones who kept a reason to live. Meaning, not pleasure or power, is what we are really after, and it stays within reach even in suffering."),
       live('cults-the-cage.html', 'When a Path Becomes a Cage', 'cults-the-cage.jpg', 'modern', 1978, "How a search for meaning hardens into a cult: first the thought-reform playbook, then the cases, from Scientology to Jonestown. A clearly labeled case study, not an endorsement."),
@@ -76,7 +77,6 @@ const HUBS = [
       live('get-used-to-everything.html', 'Getting Used to Everything', 'get-used-to-everything.jpg', 'modern', 2026, "Why the new car stops thrilling you and grief slowly lifts, while a loud commute never stops grating. A field guide to habituation: what you adapt to, what you never do, and the one lever you really get, choosing what to get used to."),
       soon('William James', '1902', 1902, "The 1902 book behind Alcoholics Anonymous. A scientist takes religious experience seriously as evidence, studying conversions and mystical states by what they actually do in a person's life, not by whether their creeds are true."),
       soon('The Perennial Philosophy', '1945', 1945, "Aldous Huxley's claim that underneath every religion lies one shared truth, assembled from the mystics of every tradition. Almost the secret thesis of this whole shelf, pressure-tested for where it overreaches."),
-      soon('The Chemical Path', 'ancient + now', 1954, "The oldest shortcut to the mystical experience is a drug, and science is rediscovering it. The old traditions, Huxley's Doors of Perception, the new psilocybin research, and the real risks, all in one place."),
       soon('The Modern Teachers', '20th c.', 1965, "How the East got sold to the West in the 20th century, by Alan Watts, Krishnamurti, Ram Dass, and Eckhart Tolle, each with one big idea, plus the honest problem of the guru who turns out to be a fraud."),
     ],
   },
