@@ -50,7 +50,10 @@ const ATTR = JSON.parse(readFileSync(join(REPO, 'js/git-attribution-data.js'), '
 // router catches every edit) and its tile metadata (label = the post's <h1>).
 // Re-add the same entry on the next run is harmless: present tiles are skipped.
 // ============================================================================
-const NEW = {
+// tools/update-about.mjs feeds the new-post set in via ATTR_NEW_JSON so it does
+// not have to duplicate the attribution algorithm. Hand-edit the literal below
+// only when running this script standalone.
+const NEW = process.env.ATTR_NEW_JSON ? JSON.parse(process.env.ATTR_NEW_JSON) : {
   // 'my-post': { files: ['my-post.html', 'js/my-post.js'],
   //              label: 'My Post Title', href: 'my-post.html', kind: 'post' },
   // archived: href: 'archive/my-post/my-post.html', kind: 'archived'
