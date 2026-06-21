@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Can You Argue Your Way to God?</title>
+  <meta name="description" content="The two most famous arguments that you should believe in God, built at full strength and then left honest: Pascal's Wager (bet on God, the math says so) and C.S. Lewis's case from Mere Christianity (the moral law, and the liar-lunatic-lord trilemma). Both are sharper than their critics admit. Both have a famous hole, the many-gods problem and the missing fourth option, legend. What the arguments actually do, and what they cannot.">
+  <meta property="og:title" content="Can You Argue Your Way to God?">
+  <meta property="og:description" content="Two famous arguments say yes: Pascal's bet that you should wager on God because the math favors it, and C.S. Lewis's claim that you can't call Jesus 'just a great teacher.' Built at full strength, with the famous hole in each left in plain view: the many-gods problem, and the door Lewis left shut.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/case-for-god.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/case-for-god-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Georges de La Tour's painting The Cheat with the Ace of Diamonds: card players at a table, gold coins between them, a man palming a hidden ace.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/case-for-god-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     CAN YOU ARGUE YOUR WAY TO GOD?
+     Approach C (Idea Distillation): two single-author arguments,
+     no translations to stack, so the load-bearing moves are stated
+     plainly in the site voice and anchored to short verbatim quotes
+     located by fragment / chapter. Clone of the Frankl build (same
+     shell, same story-gallery), with two argument maps: a static
+     payoff matrix for Pascal's bet, and the liar/lunatic/lord/legend
+     gallery for Lewis's trilemma. Sits in the site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono).
+     No em dashes; quoted em dashes are rendered as commas / ellipses.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    /* one muted accent per door of the trilemma, from the categorical set */
+    --d-liar:    #d9978c;   /* coral */
+    --d-lunatic: #cf9f78;   /* clay  */
+    --d-lord:    var(--accent);
+    --d-legend:  #8fb3c7;   /* blue  */
+    --wgr-loss:  #cf8a82;   /* muted red, the loss column */
+  }
+  html { overflow-x: hidden; }
+  /* body carries a global side gutter; zero it here so each block owns a
+     single var(--gutter), never doubling it on phones (20px at 375px). */
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; scroll-margin-top: 1.2rem; }
+  .sec.first { padding-top: clamp(2rem, 4vw, 2.6rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; color: var(--sec-accent, var(--accent)); }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.2rem 0 0.6rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.22rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.3rem; } }
+  .sec .u-divider { margin-top: 3rem; }
+  .sec .u-pq { margin-top: 1.6rem; }
+
+  /* per-section accent rhythm (kept close to gold; gold is the seam) */
+  #intro    { --sec-accent: var(--accent); }
+  #pascal   { --sec-accent: #cf9f78; }       /* clay, the gambler */
+  #cracks   { --sec-accent: #d9978c; }       /* coral, the holes */
+  #lewis    { --sec-accent: #9ec79a; }       /* sage */
+  #trilemma { --sec-accent: #8fb3c7; }       /* blue */
+  #close    { --sec-accent: var(--accent); }
+  #sources  { --sec-accent: var(--accent); }
+
+  /* ---------- the portrait figure ---------- */
+  .pfig { margin: 1.9rem auto 0.4rem; max-width: 360px; }
+  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+
+  /* ============================================================
+     THE WAGER: payoff matrix (static, no JS, reads on its own)
+     ============================================================ */
+  .wager { margin: 1.9rem 0 0.4rem; }
+  .wgr { display: grid; grid-template-columns: minmax(58px, 0.7fr) 1fr 1fr; gap: 0.4rem; }
+  .wgr-c { border: 1px solid var(--rule); border-radius: 10px; padding: 0.85rem 0.8rem; background: rgba(255,255,255,0.018); }
+  .wgr-corner { border: none; background: none; }
+  .wgr-colh, .wgr-rowh { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); display: flex; align-items: center; }
+  .wgr-colh { justify-content: center; text-align: center; border-style: dashed; }
+  .wgr-rowh { background: none; border: none; padding-left: 0; padding-right: 0.5rem; }
+  .wgr-big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.05rem, 3.4vw, 1.3rem); line-height: 1.1; color: var(--text-bright); letter-spacing: -0.01em; }
+  .wgr-sub { font-family: var(--font-mono); font-size: 0.64rem; line-height: 1.45; color: var(--text-faint); margin-top: 0.4rem; }
+  .wgr-win  { border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .wgr-win .wgr-big  { color: var(--accent); }
+  .wgr-loss { border-color: color-mix(in srgb, var(--wgr-loss) 55%, transparent); background: color-mix(in srgb, var(--wgr-loss) 11%, transparent); }
+  .wgr-loss .wgr-big { color: var(--wgr-loss); }
+  .wager-cap { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 0.9rem 0 0; }
+  @media (max-width: 460px) {
+    .wgr-c { padding: 0.6rem 0.55rem; }
+    .wgr-colh, .wgr-rowh { font-size: 0.58rem; letter-spacing: 0.04em; }
+  }
+
+  /* ============================================================
+     THE TRILEMMA (story-gallery pattern, cloned from Frankl)
+     ============================================================ */
+  .gal-wrap { margin: 1.8rem 0 0; }
+  .gal-wrap[hidden] { display: none; }
+  html:not(.js) .gal-wrap { display: none; }
+
+  .gal-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 0.9rem; }
+  .gal-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid var(--rule); border-radius: 999px; padding: 0.38em 0.8em; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+  .gal-chip:hover { color: var(--text-bright); border-color: var(--line-mid); }
+  .gal-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ta, var(--line-mid)); }
+  .gal-chip.is-on { color: var(--text-bright); border-color: var(--ta, var(--accent)); background: color-mix(in srgb, var(--ta, var(--accent)) 14%, transparent); }
+
+  .gal-frame { border: 1px solid var(--rule); border-left: 3px solid var(--ta, var(--accent)); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); padding: 1.5rem 1.6rem 1.6rem; transition: border-color .25s; }
+  .gal-card-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .gal-card-k .place { color: var(--text-faint); letter-spacing: 0.06em; }
+  .gal-card-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4vw, 1.95rem); line-height: 1.18; color: var(--text-bright); margin: 0 0 0.9rem; letter-spacing: -0.01em; text-wrap: pretty; }
+  .gal-card-body p { font-family: var(--font-body); font-size: 1.08rem; line-height: 1.62; color: var(--text); margin: 0 0 0.85em; text-wrap: pretty; }
+  .gal-card-body p:last-child { margin-bottom: 0; }
+  .gal-lesson { margin: 1.2rem 0 0; padding: 0.9rem 0 0.1rem; border-top: 1px solid var(--rule); font-family: var(--font-heading); font-style: italic; font-size: 1.16rem; line-height: 1.45; color: var(--text-bright); text-wrap: pretty; }
+  .gal-lesson .lk { font-family: var(--font-mono); font-style: normal; font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ta, var(--accent)); display: block; margin-bottom: 0.45rem; }
+  .gal-src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 1rem 0 0; }
+
+  .gal-bar { display: flex; align-items: center; gap: 0.7rem; margin: 1rem 0 0; }
+  .gal-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.14rem; transition: border-color .2s, color .2s; }
+  .gal-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-hover); }
+  .gal-nav:disabled { opacity: 0.3; cursor: default; }
+  .gal-pos { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-faint); }
+  .gal-pos b { color: var(--accent); font-weight: 400; }
+  .gal-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+
+  /* the no-JS fallback: the doors read as a plain stacked list */
+  .tales { margin-top: 1.6rem; }
+  html.js .tales { display: none; }
+  .tale { padding: 1.5rem 0 0; border-top: 1px solid var(--rule); margin-top: 1.5rem; }
+  .tale:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.4rem; }
+  .tale-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 0.7rem; }
+  .tale-body p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 0.8em; }
+  .tale-lesson { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; color: var(--text-bright); margin: 0.4rem 0 0; }
+  .tale-src { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); margin: 0.7rem 0 0; }
+
+  /* ---------- SOURCES (kit u-collapse dropdown styles the list) ---------- */
+  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.3em; }
+  #sources .u-collapse { margin-top: 0.4rem; }
+  #sources .u-collapse-list li::marker { color: var(--accent); }
+  #sources .u-collapse-list i { color: var(--text-dim); }
+  #sources .u-collapse-list a { border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources .u-collapse-list a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .gal-frame { transition: none !important; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab, .gal-bar, .gal-chips { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .lede, .tale-body p, .gal-card-body p { color: #161616; }
+    html.js .tales { display: block; }   /* print the readable doors, not the app */
+    .gal-wrap { display: none !important; }
+    .debateA, .u-callout, .tale { break-inside: avoid; }
+    a { color: #161616; }
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px) {
+    .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
+    .gal-hint { display: none; }
+    .pfig { max-width: 280px; }
+    .pfig img { border-radius: 10px; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Can You Argue Your Way to God?</h1>
+    <p class="hero-dek">Two arguments say yes, and they are the most famous ones there are: Pascal's bet, and C.S. Lewis on the radio. Each is sharper than its critics admit, and each has a hole its fans never mention. Here they are at full strength, holes and all.</p>
+    <p class="hero-meta">A distillation <span class="sep">/</span> <b>two arguments, both holed</b> <span class="sep">/</span> <b>20 sources</b> <span class="sep">/</span> 20 min read</p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ INTRO ============================ -->
+    <section id="intro" class="sec first" aria-labelledby="intro-h">
+      <p class="lede">A coin is spinning in the air. Heads, God exists. Tails, he doesn't. You would love to wait and see how it lands before you commit to anything, but you are not allowed to. The coin never comes down in your lifetime, and you have to live your one life now, betting your days on the heads world or the tails world. There is no third life where you stand by the table with your hands in your pockets, waiting politely for the universe to show its work.</p>
+
+      <p>That trap is the work of a French mathematician named Blaise Pascal, scribbled in notes he never finished, around 1660. It is one of the two most famous attempts to reason a person all the way to God. The other came three hundred years later, in the voice of an Oxford professor talking into a BBC microphone while German bombs fell on London. His name was C.S. Lewis.</p>
+
+      <p>This post builds both arguments at full strength, the way their smartest defenders mean them, so that a believer would nod along. Then it leaves the strongest objection to each one sitting in the room, because each has one, it is famous, and pretending otherwise is how you end up believing something for a bad reason. By the end you should understand these two arguments better than most of the people who quote them, on either side.</p>
+
+      <p>One thing up front, because it saves a lot of arguing. Neither of these is a proof. Neither one has ever turned a committed atheist into a believer, and that was never the job. They are something stranger and more useful: one is an argument about how to bet when you cannot know, and the other is an argument about what you are actually saying when you call Jesus a nice moral teacher. Both land a real punch. Both miss in a way you can see if you look. Watch for the miss.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ PASCAL ============================ -->
+    <section id="pascal" class="sec" aria-labelledby="pascal-h">
+      <div class="u-sechead"><p class="u-sechead-k">The bet</p><h2 id="pascal-h" class="u-sechead-h">The man who turned God into a wager</h2></div>
+
+      <p>Pascal had the kind of resume that makes you a little annoyed. As a teenager, to save his father (a tax official) from drowning in arithmetic, he built one of the first mechanical calculators, a brass box of gears that could carry the tens for you. In his early thirties, trading letters with another mathematician, Pierre de Fermat, about how to fairly split the pot in a gambling game cut short, he more or less invented the mathematics of probability. He understood odds better than almost anyone alive.</p>
+
+      <p>Then, on the night of November 23, 1654, something happened to him that he never fully explained. He wrote a few burning lines about fire and certainty and joy on a scrap of parchment, sewed the scrap into the lining of his coat, and wore it, hidden, for the rest of his life. A servant found it after he died. Whatever it was, it turned the odds-maker's mind toward God.</p>
+
+      <p>He set out to write a great defense of the Christian faith and never finished it; he died at 39, his body worn out. What survived were hundreds of notes, scribbled and half-sorted, found in bundles. Published after his death, they are called the <em>Pensées</em>, French for "thoughts." One of them, known by its first two words, <em>Infini rien</em> ("Infinity, nothing"), holds the most famous bet in the history of religion.</p>
+
+      <p>Pascal opens by giving away something most believers will not. He says reason cannot settle the question at all.</p>
+
+      <blockquote class="u-pq">Reason can decide nothing here ... A game is being played at the extremity of this infinite distance where heads or tails will turn up. What will you wager?<cite class="u-pq-cite">Pensées, fragment 233</cite></blockquote>
+
+      <p>Fine, you say, then I will not bet. I will suspend judgment and wait for better evidence. Pascal slams that exit shut.</p>
+
+      <blockquote class="u-pq">You must wager. It is not optional. You are embarked.<cite class="u-pq-cite">Pensées, fragment 233</cite></blockquote>
+
+      <p>You are already on the ship, already at sea. Living as though there is no God is itself a bet on tails; you have just placed it without noticing. There is no neutral seat. Refusing to choose is a way of choosing. So if you have to bet, says the man who helped invent probability itself, let us at least do the math.</p>
+
+      <p>Here is the math, and this is the part that was genuinely new. Lay out the four ways the bet can go.</p>
+
+      <!-- the payoff matrix (static; reads on its own, no JS) -->
+      <figure class="wager reveal" aria-label="Pascal's payoff matrix">
+        <div class="wgr">
+          <div class="wgr-c wgr-corner"></div>
+          <div class="wgr-c wgr-colh">God exists</div>
+          <div class="wgr-c wgr-colh">God does not</div>
+
+          <div class="wgr-c wgr-rowh">You bet on God</div>
+          <div class="wgr-c wgr-win"><span class="wgr-big">Infinite gain</span><span class="wgr-sub">an eternity of happiness</span></div>
+          <div class="wgr-c"><span class="wgr-big">A small loss</span><span class="wgr-sub">some pleasures, a few Sundays</span></div>
+
+          <div class="wgr-c wgr-rowh">You bet against</div>
+          <div class="wgr-c wgr-loss"><span class="wgr-big">Infinite loss</span><span class="wgr-sub">you gambled away everything</span></div>
+          <div class="wgr-c"><span class="wgr-big">A small gain</span><span class="wgr-sub">those same pleasures, kept</span></div>
+        </div>
+        <figcaption class="wager-cap">The one thing you can never see is which column is real. Pascal's claim: you do not need to. Weigh each outcome by how good it is, and one square is so much bigger than the others that it decides the bet by itself.</figcaption>
+      </figure>
+
+      <p>Bet on God and he is real, and you win what Pascal calls "an infinitely happy life." Bet on God and he is not, and you have lost what, a few Sunday mornings and some pleasures you would have had anyway. Bet against God and he is real, and you have lost everything. Bet against and you are right, and you have gained those same small pleasures. Line the payoffs up and one of them is not like the others.</p>
+
+      <blockquote class="u-pq">If you gain, you gain all; if you lose, you lose nothing. Wager, then, without hesitation that He is.<cite class="u-pq-cite">Pensées, fragment 233</cite></blockquote>
+
+      <p>What Pascal is doing here, weighing each outcome by how likely and how good it is and then picking the best average bet, is now a standard tool taught to every economist and card player. It is called expected value, and this scribbled religious note is roughly where it begins. The historian Ian Hacking called the wager "the first well-understood contribution to decision theory." Pascal worked out a piece of math partly to argue you into church.</p>
+
+      <p>There is an obvious objection, and Pascal, to his credit, goes digging at it himself. Say the math convinces you. You still cannot just decide to believe in God the way you decide to raise your hand. Belief is not a lever you pull. His imagined skeptic says exactly this:</p>
+
+      <blockquote class="u-pq">I am so made that I cannot believe. What, then, would you have me do?<cite class="u-pq-cite">Pensées, fragment 233</cite></blockquote>
+
+      <p>Pascal's answer is the strangest and most modern part of the whole thing: stop trying to think your way in, and start acting your way in. Go through the motions. Kneel down with the people who already believe, and do what they do.</p>
+
+      <blockquote class="u-pq">Follow the way by which they began; by acting as if they believed, taking the holy water, having masses said ... Even this will naturally make you believe, and deaden your acuteness.<cite class="u-pq-cite">Pensées, fragment 233</cite></blockquote>
+
+      <p>Fake it, in other words, and the belief will grow in behind the habit. He is betting that faith is more like a skill you practice than a conclusion you reach, and that the body can lead the mind. Modern psychology, for what it is worth, half agrees: act a certain way long enough and your attitudes tend to drift to match. Pascal got there three centuries early and used it to sell holy water.</p>
+
+      <figure class="pfig reveal">
+        <img src="assets/case-for-god/pascal-portrait.jpg" width="760" height="836" loading="lazy" decoding="async" alt="A 17th-century oil portrait of Blaise Pascal: a pale, long-faced young man with shoulder-length hair and a plain white collar, looking slightly aside.">
+        <figcaption>Blaise Pascal (1623 to 1662). He co-founded probability theory, built an early calculating machine, and died at 39 with his great defense of Christianity still in pieces. (Portrait after François II Quesnel, Palace of Versailles; public domain, via Wikimedia Commons.)</figcaption>
+      </figure>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE CRACKS ============================ -->
+    <section id="cracks" class="sec" aria-labelledby="cracks-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print on the bet</p><h2 id="cracks-h" class="u-sechead-h">Where the wager falls apart</h2></div>
+
+      <p>It is a beautiful argument, and serious people have spent 350 years trying to climb out of it. Three holes actually hold.</p>
+
+      <h3>The bet has a blank where the name goes</h3>
+      <p>The wager tells you to bet on God. It does not tell you which one. Pascal, a Catholic in Catholic France, quietly fills in his own. But the same math runs for any god who offers an infinite payoff: bet on Allah, bet on a jealous Zeus, bet on some god nobody has thought of yet. Worse, picture a god who sends devout Christians to hell and rewards honest doubters, the exact opposite of Pascal's. Now betting on the Christian God carries an infinite downside, and the wager points the other way. It tells you to bet on infinity but cannot tell you which infinity, and the infinities cancel. The philosopher Denis Diderot made the point a century later: an imam could reason exactly this way, and does.</p>
+
+      <h3>The infinity jams its own math</h3>
+      <p>Pascal's whole engine runs on one number being infinite: the payoff of heaven. That number turns out to be poison to the very math he invented. If the prize is genuinely infinite, then any bet with even a sliver of a chance at it also has infinite value. Believe with your whole heart: infinite payoff. Believe lazily, on alternate Tuesdays: smaller chance, but a smaller slice of infinity is still infinity. Flip a coin and convert only if it lands heads: still infinite. Once infinity is on the table, every strategy that gives God any chance at all ties for first place, and the math can no longer tell you to actually believe rather than flip a coin. The philosopher Alan Hájek, the wager's sharpest modern critic, laid this out in detail. In his words, "all hell breaks loose." The infinite prize does not strengthen the bet. It breaks it.</p>
+
+      <h3>God can probably see you doing this</h3>
+      <p>Then there is the small matter of what God makes of the whole scheme. The wager asks you to believe as a hedge, the way you buy insurance, eyeing the payout. But the God of Christianity is supposed to see straight through you, all the way to the motive. Would such a God be fooled by, or pleased with, a person whose "belief" is really a bet on a reward? William James, the philosopher and psychologist, doubted it. A God worth the name might well prefer the honest atheist to the calculating believer. Pascal's holy-water routine is meant to ripen that cold calculation into something sincere, and maybe it does. But you have to begin by trying to manufacture a belief for a prize, and there is something self-defeating in that, like trying to fall asleep by concentrating very hard on falling asleep.</p>
+
+      <aside class="u-callout"><p class="u-callout-k">the fair verdict on Pascal</p><p class="u-callout-body">The wager is not, and never was, evidence that God exists. Notice that it never once argues that he does; it grants from the very start that reason cannot get there. It is an argument about how to bet under uncertainty, and as that, its core is hard to shake: you are in the game whether you like it or not, and how you spend your one life is a bet on what is true, placed in the only currency you have, your actual days. That part is real. The jump from there to "so, specifically, become a Catholic" is the part that does not hold.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ LEWIS ============================ -->
+    <section id="lewis" class="sec" aria-labelledby="lewis-h">
+      <div class="u-sechead"><p class="u-sechead-k">The radio talks</p><h2 id="lewis-h" class="u-sechead-h">The professor on the air</h2></div>
+
+      <p>The second argument arrives by radio. In 1941, with Britain in the war and London under the Blitz, the BBC went looking for someone who could talk about Christianity to a frightened country without sounding like a vicar. They found an Oxford professor of medieval literature named C.S. Lewis, a former atheist who had argued his own way back to belief in his thirties. He gave a run of fifteen-minute wartime talks, plainspoken and a little gruff, and millions tuned in. Cleaned up and collected, they became one of the most read works of popular Christianity of the century, a book called <em>Mere Christianity</em>.</p>
+
+      <p>That word "mere" is doing real work. Lewis is not defending Catholicism, or his own Anglican church, or any one denomination. He is after the common core they all share, the plain claims a Baptist and a Greek Orthodox and a Quaker would all sign. He had a famous picture for it. Christianity is a house, and "mere" Christianity is the entrance hall.</p>
+
+      <blockquote class="u-pq">It is more like a hall out of which doors open into several rooms ... it is in the rooms, not in the hall, that there are fires and chairs and meals. The hall is a place to wait in, a place from which to try the various doors, not a place to live in.<cite class="u-pq-cite">Mere Christianity, preface</cite></blockquote>
+
+      <p>Get someone into the hall, Lewis figured, and they can find a room later. His two most famous moves are both attempts to walk you in out of the cold. The first is about right and wrong. The second is about who Jesus was.</p>
+
+      <h3>Move one: the argument from right and wrong</h3>
+      <p>Lewis starts where everybody has stood: in the middle of an argument.</p>
+
+      <blockquote class="u-pq">Every one has heard people quarreling ... "How'd you like it if anyone did the same to you?" ... "That's my seat, I was there first" ... "Come on, you promised."<cite class="u-pq-cite">Mere Christianity, Book I, "The Law of Human Nature"</cite></blockquote>
+
+      <p>Listen to how people fight, Lewis says, and you notice something odd. The man who says "that's my seat" is doing more than reporting that he is annoyed. He is appealing to a rule he expects the other guy to already know and to feel the pull of. And the other guy almost never says "what rule? I recognize no rule." He says he got there first, or he was saving it. He argues that he is not really breaking the standard. Both men are bowing to the same invisible referee even as they fight in front of it. Lewis thought that referee was a clue, maybe the biggest one we have, about what kind of universe this is. He boils it down to two stubborn facts: people everywhere feel they ought to behave a certain way, and people everywhere fall short of it.</p>
+
+      <blockquote class="u-pq">Human beings, all over the earth, have this curious idea that they ought to behave in a certain way, and cannot really get rid of it ... they do not in fact behave in that way.<cite class="u-pq-cite">Mere Christianity, Book I, "The Law of Human Nature"</cite></blockquote>
+
+      <p>He heads off the obvious objection, that this is just herd instinct, evolution wiring us to cooperate. Lewis says look closer:</p>
+
+      <blockquote class="u-pq">Feeling a desire to help is quite different from feeling that you ought to help whether you want to or not.<cite class="u-pq-cite">Mere Christianity, Book I, "Some Objections"</cite></blockquote>
+
+      <p>When you hear someone in danger, he says, you feel two tugs at once: the urge to help, and the urge to stay safe. The thing that steps in and says "help, even though you are scared" is a third thing, judging between the two instincts. It cannot itself be just another instinct; it is the rule that ranks them. And a rule like that, a real "ought" pressing on every human everywhere, points past the physical world to something mind-like behind it. Push the argument as far as it goes and here is where it lands:</p>
+
+      <blockquote class="u-pq">All I have got to is a Something which is directing the universe, and which appears in me as a law urging me to do right and making me feel responsible and uncomfortable when I do wrong.<cite class="u-pq-cite">Mere Christianity, Book I, "What Lies Behind the Law"</cite></blockquote>
+
+      <p>This is where an honest reader has to push back, and the hardest push comes from biology. We have a good, evidence-backed story now for where the moral sense comes from, and it needs no lawgiver. Creatures that cooperate, that feel guilt, that punish cheats and protect their kin, tend to out-survive and out-breed the ones that do not. Conscience looks a great deal like a very old, very effective piece of social wiring, built by evolution and then sharpened by culture. That everyone has some version of it is exactly what you would expect from shared ancestry and shared problems, not a fingerprint of heaven.</p>
+
+      <p>There is a deeper problem too, old enough that the philosopher David Hume named it before Lewis was born: you cannot get from an "is" to an "ought." List every fact about how humans evolved, what brains do, what societies need, and you still have not shown that anyone truly <em>ought</em> to do anything. A real obligation, if there is one, does not simply drop out of the facts. That blade cuts both ways, which is why some thoughtful people still find Lewis's clue suggestive. The sheer felt weight of "ought," the sense that cruelty is genuinely wrong and not merely unpopular, is honestly hard to explain away as leftover ape behavior.</p>
+
+      <p>But here is the part most people who swing this argument around leave out, and Lewis did not. Even if it works perfectly, it does not get you to God. It gets you to a vague something behind the moral law. Lewis says so himself, in nearly the same breath:</p>
+
+      <blockquote class="u-pq">We have not yet got as far as the God of any actual religion, still less the God of that particular religion called Christianity. We have only got as far as a Somebody or Something behind the Moral Law.<cite class="u-pq-cite">Mere Christianity, Book I, "We Have Cause to Be Uneasy"</cite></blockquote>
+
+      <p>That is an honest man arguing. The moral law, at its absolute strongest, delivers a cosmic lawgiver of some kind, not the Father, Son, and Holy Spirit. To get the rest of the way, Lewis needs his second move.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE TRILEMMA ============================ -->
+    <section id="trilemma" class="sec" aria-labelledby="trilemma-h">
+      <div class="u-sechead"><p class="u-sechead-k">The famous one</p><h2 id="trilemma-h" class="u-sechead-h">Liar, lunatic, lord, and the door he left shut</h2></div>
+
+      <p>The second move is the one Lewis is famous for, and it is aimed at a specific, very common thing people say: that Jesus was a great moral teacher, full stop. A wise man, like the Buddha or Socrates, minus the supernatural baggage. Lewis thinks that is the one thing you are not allowed to say, and he shuts the door on it with a hard little piece of logic.</p>
+
+      <p>Start with what Jesus actually claimed, Lewis says, and it ran well past wise sayings. He went around forgiving people their sins, all of them, including sins committed against other people.</p>
+
+      <blockquote class="u-pq">Unless the speaker is God, this is really so preposterous as to be comic.<cite class="u-pq-cite">Mere Christianity, Book II, "The Shocking Alternative"</cite></blockquote>
+
+      <p>A man who forgives you for what you did to someone else is either speaking for God or talking nonsense, and Jesus said a great many things in that key. So the "great moral teacher" option is off the table, Lewis argues, because no merely great moral teacher talks like that. Which leaves a much harder set of choices:</p>
+
+      <blockquote class="u-pq">A man who was merely a man and said the sort of things Jesus said would not be a great moral teacher. He would either be a lunatic, on a level with the man who says he is a poached egg, or else he would be the Devil of Hell ... Either this man was, and is, the Son of God: or else a madman or something worse ... let us not come with any patronising nonsense about His being a great human teacher.<cite class="u-pq-cite">Mere Christianity, Book II, "The Shocking Alternative"</cite></blockquote>
+
+      <p>You have probably met this boiled down to three words: liar, lunatic, or lord. If Jesus claimed to be God knowing it was false, he is a liar. If he believed it and it was false, he is a lunatic, the poached-egg man. If it was true, he is lord. The first two are absurd, the argument runs, so the third one stands. Walk the doors yourself:</p>
+
+      <!-- the interactive trilemma gallery (JS builds it from the cards below) -->
+      <div class="gal-wrap" hidden>
+        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a door"></div>
+        <div class="gal-frame" id="gal-frame" aria-live="polite"></div>
+        <div class="gal-bar">
+          <button class="gal-nav" id="gal-prev" aria-label="Previous door">&lsaquo;</button>
+          <span class="gal-pos" id="gal-pos"></span>
+          <button class="gal-nav" id="gal-next" aria-label="Next door">&rsaquo;</button>
+          <span class="gal-hint">tap a door, or use the arrow keys</span>
+        </div>
+      </div>
+
+      <!-- the four doors, authored as plain cards (no-JS reading + the gallery source).
+           data-ta is the door's accent color; data-llabel sets the verdict label. -->
+      <div class="tales" id="tales-data">
+
+        <article class="tale" data-tradition="Liar" data-place="Lewis knocks this down" data-llabel="the verdict" style="--ta: var(--d-liar)">
+          <p class="tale-k">Door one</p>
+          <h3 class="tale-h">He was lying</h3>
+          <div class="tale-body">
+            <p>If Jesus claimed to be God while knowing the claim was false, he was running the longest con in history, and then dying for it. Lewis's own word for this one was blunter than "liar." He called it the Devil of Hell.</p>
+            <p>The trouble is the teaching. The Sermon on the Mount is not the work of a sneering fraud, and a con man does not usually let himself be tortured to death rather than take the lie back.</p>
+          </div>
+          <p class="tale-lesson">Lewis wins this one. Frauds do not preach like that.</p>
+        </article>
+
+        <article class="tale" data-tradition="Lunatic" data-place="Lewis knocks this down" data-llabel="the verdict" style="--ta: var(--d-lunatic)">
+          <p class="tale-k">Door two</p>
+          <h3 class="tale-h">He was insane</h3>
+          <div class="tale-body">
+            <p>If he sincerely believed he was God and was not, he was deluded, "on a level," Lewis says, "with the man who says he is a poached egg." A sad case, not a teacher to take seriously.</p>
+            <p>But the deluded do not usually speak with the steadiness and the shrewdness the Gospels keep showing. The man who tells the parable of the prodigal son does not read like a psychiatric ward.</p>
+          </div>
+          <p class="tale-lesson">Lewis wins this one too. Madmen do not argue like that.</p>
+        </article>
+
+        <article class="tale" data-tradition="Lord" data-place="the exit Lewis wants" data-llabel="the verdict" style="--ta: var(--d-lord)">
+          <p class="tale-k">Door three</p>
+          <h3 class="tale-h">He was telling the truth</h3>
+          <div class="tale-body">
+            <p>If the claim was true, then he was exactly who he said he was: God. With liar and lunatic ruled out, Lewis says this is the only door left standing, and the tame "great teacher" was never really on offer.</p>
+            <p>It is a clean piece of logic, and if you grant the setup it holds. The whole weight of it rests on the setup.</p>
+          </div>
+          <p class="tale-lesson">Sound, but only as sound as the premises underneath it.</p>
+        </article>
+
+        <article class="tale" data-tradition="Legend" data-place="the door Lewis left shut" data-llabel="the catch" style="--ta: var(--d-legend)">
+          <p class="tale-k">Door four</p>
+          <h3 class="tale-h">He never said it</h3>
+          <div class="tale-body">
+            <p>Here is the option Lewis never sets on the table. Maybe Jesus did not make the bold claim at all, and it grew into the story afterward. The clearest "I and the Father are one" lines come from the Gospel of John, the latest of the four, written two to three generations after the crucifixion. The earliest, Mark, is far more reserved about Jesus calling himself God outright.</p>
+            <p>If the divine claim is a later development of the tradition and not a transcript of what a man said, the whole choice dissolves. There is nothing yet to be a liar, lunatic, or lord about. (A close cousin Lewis also skips: a person can be sincere, perfectly sane, and simply wrong. People are, all the time.)</p>
+          </div>
+          <p class="tale-lesson">The hole in the argument, and the reason scholars rate the trilemma the weakest thing Lewis built.</p>
+        </article>
+
+      </div>
+
+      <aside class="u-callout"><p class="u-callout-k">one honest aside on the slogan</p><p class="u-callout-body">Lewis's real words were wilder than the bumper sticker. He wrote "the Devil of Hell" and "a madman or something worse," not the neat "liar, lunatic, or lord," which an evangelist named Josh McDowell popularized two decades later. The argument is also older than Lewis: a Scottish theologian, John Duncan, framed the same fork in 1859 as fraud, delusion, or divinity. Lewis is the famous middle of a long chain, not the inventor.</p></aside>
+
+      <p>So the argument is real, and against its actual target, the person who wants a tame teacher-only Jesus while still keeping the Gospels, it bites hard. But it has a hole you can walk straight through, the one you just met behind door four. The three options are not the only three. There is a fourth, legend, and a fifth, honest error, and the argument pretends neither exists.</p>
+
+      <p>What is really holding the whole thing up is a hidden premise: that the Gospels report Jesus accurately, divine claims and all. Grant that, and the logic mostly works. But that premise is the entire question. It is exactly what a skeptic does not grant, and Lewis smuggles it in as an assumption instead of arguing for it. This is why philosophers, including plenty of Christian ones, tend to rate the trilemma the weakest of his moves. It is a strong answer to a lazy churchgoer and a weak one to a serious historian.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE CLOSE ============================ -->
+    <section id="close" class="sec" aria-labelledby="close-h">
+      <div class="u-sechead"><p class="u-sechead-k">So, can you?</p><h2 id="close-h" class="u-sechead-h">What the arguments actually do</h2></div>
+
+      <p>Back to the question on the cover. Can you argue your way to God? On the evidence of the two best arguments ever built for it: no, not all the way, and yes, partway, and the space between those two is the whole interesting part.</p>
+
+      <p>Strip the marketing off and look at what each one really is. Pascal's wager is not a reason to think God exists. It is a reason it might be rational to bet on him anyway, and under the dated business about holy water sits something plainly true: you are spending your one life on some assumption about what is real, you cannot opt out, and that is a wager whether you ever name it or not. Lewis's arguments do not prove Christianity either. What they do is make it intellectually respectable for a person already leaning in, and they land one clean hit a skeptic should actually feel. "Just a great moral teacher" really is a dodge. The texts do not offer you that tame Jesus; you have to deal with what they actually say, and then decide whether you believe it.</p>
+
+      <p>Both arguments are clever. Both have a hole. But watch what happens when you try to live inside the holes. The many-gods problem sinks the wager as a proof, and you still have to bet. The legend problem sinks the trilemma as a proof, and you still have to decide what you make of the texts. The arguments fail as proofs and survive as something humbler and more honest: ways of sharpening a choice that nobody actually gets to skip.</p>
+
+      <p>Maybe that is the real tell. Look at what these two brilliant defenders of the faith reach for at the decisive moment, and neither of them reaches for a proof. Pascal, the man who could calculate almost anything, ends not with a flourish of logic but with an instruction to go kneel down and take the holy water until the belief comes. Lewis, having walked you to the edge of his argument, admits the moral law only gets you to "a Somebody or Something," and that the last stretch is a leap. The smartest people who ever tried to argue their way to God seem to have known, somewhere, that the final step was never an argument at all.</p>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">the shelf this sits on</p><p class="u-callout-body">On this same shelf, <a href="nietzsche.html">Nietzsche</a> is busy announcing that God is dead and good riddance, and <a href="frankl.html">Viktor Frankl</a> goes looking for meaning without needing the metaphysics at all. Pascal and Lewis are the case for the defense, the two sharpest swings anyone has taken at reasoning a person toward belief. Read them at full strength, holes and all, and you are better armed than almost anyone who fights about this, on either side.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and a note on the quotes</h2></div>
+      <p class="src-note">This distills two books in my own words; the arguments are Pascal's and Lewis's. Quotes are kept short and reproduced for study and comment. The Pascal lines are from W.F. Trotter's public-domain English translation, all from one fragment (numbered 233 by Brunschvicg, 418 by Lafuma, 680 by Sellier; the <em>Pensées</em> survive as loose, unordered paper slips, so every editor numbers them differently). The Lewis lines were checked word for word against full-text editions of <em>Mere Christianity</em> and are cited by book and chapter. Where an original uses a dash, the site renders it as a comma or an ellipsis, with no change to the words. No em dashes, anywhere.</p>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 20 sources</summary>
+        <ol class="u-collapse-list">
+        <li><b>Blaise Pascal.</b> <i>Pensées.</i> Trans. W.F. Trotter (the public-domain English text). Every Pascal quote here is from the single "wager" fragment, <i>Infini rien</i>, no. 233 in Trotter's numbering. <a href="https://www.gutenberg.org/ebooks/18269">Project Gutenberg</a></li>
+        <li><b>The wager, set up.</b> "Reason can decide nothing here ... heads or tails will turn up. What will you wager?" and "You must wager. It is not optional. You are embarked." Both Pensées 233.</li>
+        <li><b>The payoff.</b> "If you gain, you gain all; if you lose, you lose nothing. Wager, then, without hesitation that He is," and the prize as "an infinitely happy life." Pensées 233.</li>
+        <li><b>Belief by habit.</b> "I am so made that I cannot believe," answered by "acting as if they believed, taking the holy water, having masses said ... Even this will naturally make you believe, and deaden your acuteness." Pensées 233.</li>
+        <li><b>The fragment numbers.</b> Why the same passage is 233, 418, and 680: the loose-slip ordering problem, and "Infini rien" as the fragment's opening words. <a href="https://plato.stanford.edu/entries/pascal-wager/">Stanford Encyclopedia of Philosophy, "Pascal's Wager"</a></li>
+        <li><b>Pascal's life.</b> Born 1623, died 1662 at 39; the calculating machine (begun 1642) for his father's tax work; the "Night of Fire," 23 November 1654, and the memorial sewn into his coat; the Jansenists of Port-Royal; the unfinished <i>Apology for the Christian Religion</i> published as the <i>Pensées</i> in 1670. <a href="https://mathshistory.st-andrews.ac.uk/Biographies/Pascal/">MacTutor</a></li>
+        <li><b>Probability's birth.</b> The 1654 Pascal to Fermat letters on the "problem of points," generally credited as the start of mathematical probability and the groundwork under the wager. <a href="https://en.wikipedia.org/wiki/Problem_of_points">overview</a></li>
+        <li><b>"First well-understood contribution to decision theory."</b> Ian Hacking, <i>The Emergence of Probability</i> (1975), p. viii, quoted in the SEP entry above. The wager contains the first clear use of expected-value reasoning. <a href="https://plato.stanford.edu/entries/pascal-wager/">SEP</a></li>
+        <li><b>The many-gods objection.</b> The wager cannot say which god to bet on, and a rival god could reward disbelief; Denis Diderot's version, that an imam could argue the same way. <a href="https://plato.stanford.edu/entries/pascal-wager/#ManGodObj">SEP, "the many Gods objection"</a></li>
+        <li><b>The math breaks.</b> Alan Hájek, "Waging War on Pascal's Wager," <i>The Philosophical Review</i> 112 (2003): infinite utility lets mixed strategies (even a coin flip) also score infinity, so the wager no longer favors belief. "All hell breaks loose." <a href="https://philpapers.org/rec/HJEWWO">paper</a></li>
+        <li><b>The mercenary objection.</b> A God who reads the heart might not reward belief adopted as a hedge; noted by William James. <a href="https://plato.stanford.edu/entries/pascal-wager/">SEP</a></li>
+        <li><b>C.S. Lewis.</b> <i>Mere Christianity</i> (1952), assembled and revised from BBC wartime radio talks given 1941 to 1944. Quotes cross-checked against full-text editions. <a href="https://en.wikipedia.org/wiki/Mere_Christianity">overview</a></li>
+        <li><b>"Mere" Christianity, the hall.</b> "It is more like a hall out of which doors open into several rooms ... The hall is a place to wait in ... not a place to live in." <i>Mere Christianity</i>, preface.</li>
+        <li><b>The moral argument.</b> The quarrelling opener and the two points ("this curious idea that they ought to behave in a certain way"). <i>Mere Christianity</i>, Book I, ch. 1, "The Law of Human Nature."</li>
+        <li><b>Not herd instinct.</b> "Feeling a desire to help is quite different from feeling that you ought to help whether you want to or not." <i>Mere Christianity</i>, Book I, ch. 2, "Some Objections."</li>
+        <li><b>Where the moral argument lands.</b> "A Something which is directing the universe" (Book I, ch. 4, "What Lies Behind the Law") and his caution, "We have only got as far as a Somebody or Something behind the Moral Law," not yet the God of Christianity (Book I, ch. 5, "We Have Cause to Be Uneasy").</li>
+        <li><b>The trilemma.</b> The forgiveness-of-sins setup ("so preposterous as to be comic") and the full "poached egg / Devil of Hell / Son of God: or else a madman or something worse" passage. <i>Mere Christianity</i>, Book II, ch. 3, "The Shocking Alternative."</li>
+        <li><b>The slogan and its history.</b> Lewis did not write "liar, lunatic, or lord"; that phrasing was popularized by Josh McDowell (<i>Evidence That Demands a Verdict</i>, 1972), and the fork itself predates Lewis (John Duncan, 1859). <a href="https://en.wikipedia.org/wiki/Lewis%27s_trilemma">Lewis's trilemma</a></li>
+        <li><b>The legend objection.</b> The Gospel of John (the highest, clearest divinity claims) is dated c. 90 to 110 CE, latest of the four; Mark (c. 70 CE) is earliest and more reserved, so the explicit claim may be a later development. <a href="https://en.wikipedia.org/wiki/Gospel_of_John">on John</a>; the is/ought gap is David Hume's, from <i>A Treatise of Human Nature</i> (1739).</li>
+        <li><b>The painting and the portrait.</b> Thumbnail: Georges de La Tour, <i>The Cheat with the Ace of Diamonds</i> (c. 1636, Louvre). In-text: a 17th-century portrait of Pascal (after François II Quesnel, Versailles). Both public domain, via <a href="https://commons.wikimedia.org/wiki/File:Le_Tricheur_%C3%A0_l%27as_de_carreau_-_Georges_de_La_Tour_-_Mus%C3%A9e_du_Louvre_Peintures_RF_1972_8.jpg">Wikimedia Commons</a>.</li>
+        </ol>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/case-for-god.js" defer></script>
+</body>
+</html>
