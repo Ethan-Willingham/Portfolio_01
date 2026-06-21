@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Darwin and the Watchmaker</title>
+  <meta name="description" content="A guided walk through On the Origin of Species, Darwin's argument one move at a time: pigeon breeders, the struggle for existence, natural selection, the tree of life, the eye, deep time, and endless forms most beautiful. From the clean 1859 first edition.">
+  <meta property="og:title" content="Darwin and the Watchmaker">
+  <meta property="og:description" content="A watch in the dirt has to have a maker. So does an eye, surely, and a hummingbird, and you. Here is the one idea that took the maker away and left the watch, walked one move at a time from the 1859 first edition.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/darwin.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/darwin-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/darwin-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     DARWIN AND THE WATCHMAKER
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: eight stops through the argument of On the Origin of
+     Species, walked in the clean 1859 first edition, each unpacked
+     in plain language. A collapsible panel on the few lines Darwin
+     softened in later editions. Sits in the site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono).
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --early:  #dfc288;                 /* the clean 1859 first edition (gold) */
+    --mid:    #cf9f78;                 /* the popular misquote (clay) */
+    --modern: #b8796d;                 /* the later, hedged editions (brick) */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-v { display: block; }                    /* a line break inside the passage */
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- THE WORDING SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-early  { border-left-color: var(--early); }
+  .stack-mid    { border-left-color: var(--mid); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(223,194,136,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--early); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Darwin and the watchmaker</h1>
+    <p class="hero-dek">A watch in the dirt has to have a maker. So does an eye, surely, and a hummingbird, and you. For two thousand years that was the best argument anyone had for God. Here is the one idea that took the maker away and left the watch.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> through the Origin of Species <span class="sep">/</span> the <b>1859</b> first edition <span class="sep">/</span> ~22 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Find a watch lying in the dirt and you know, without being told, that someone made it. The hands sweep, the gears mesh, the whole thing is built to keep time. Wind and rain do not assemble watches. A person did.</p>
+
+      <p>Now look at an eye. It focuses itself for near and far, it opens and closes to the light, it even corrects the color fringe that ruins a cheap camera lens, and it does all of this in wet tissue you grew without thinking about it. A pocket watch is a child's toy next to it. So if a watch needs a watchmaker, an eye needs an eye-maker, and a hummingbird needs a hummingbird-maker, and you need one too. The living world is stuffed with parts that fit their jobs so well they look made on purpose, because surely nothing else could fit that well by accident.</p>
+
+      <p>That intuition is ancient, and it is the most powerful argument anyone ever made for God. It even has a name, the argument from design, and in 1802 an English clergyman named William Paley wrote it down so cleanly that it became required reading at Cambridge. Find a watch on a heath, Paley said, and you infer a watchmaker. Look at the eye, far finer than any watch, and infer its Maker. A young divinity student named Charles Darwin read Paley, loved him, and could practically recite him.</p>
+
+      <p>Then the same man spent the next thirty years quietly dismantling the argument he had loved. In 1859 Darwin published a single idea that leaves the watch lying right there on the ground, every gear as exquisite as before, and gently removes the watchmaker. He never denied the design. He thought the eye was a wonder to his last day. He just worked out how the wonder could build itself, with nobody steering, out of three cheap ingredients and one expensive one.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole idea, in one breath</p>
+        <p class="u-callout-body">Three plain facts about living things, and a law that falls out of them. One: no two offspring come out exactly alike. Two: those small differences get passed down to their young. Three: far more are born than the world can feed, so most die before they breed. Put the three together and something follows on its own. In every generation, the few whose differences happen to help them survive leave a few more young, who inherit the helpful difference, and it piles up. Nobody is choosing. The dying does the choosing. Run that for a million years and you can build an eye. The expensive ingredient is the time.</p>
+      </aside>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/darwin/darwin-1854-maull.jpg" width="1647" height="1907" loading="lazy" decoding="async" alt="A black-and-white 1855 photograph of Charles Darwin at age 46: dark hair, clean-shaven but for sideburns, in a dark coat and waistcoat, looking directly and a little wearily at the camera, years before the famous white beard.">
+        <figcaption class="u-figure-cap">Charles Darwin in 1855, four years before the book and long before the beard everyone pictures. Photograph by Maull &amp; Polyblank for the Literary and Scientific Portrait Club. He was a careful, frequently ill country gentleman who bred pigeons in his garden and turned this idea over for twenty years before he let it out.</figcaption>
+      </figure>
+
+      <p>What follows is a walk through the actual argument, in Darwin's own order, the order of the book. We start where he starts, with a man in his backyard breeding pigeons. We end on the most quoted last sentence in the history of science. Eight stops. The text is the clean first edition of 1859, before Darwin, under fire, softened a few of his own lines; on the two or three places where the later wording flinched, you can open a panel and see exactly what changed.</p>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">He starts with pigeons, not apes</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-pigeons" data-label="He starts with pigeons, not apes" data-tag="Chapter I">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The on-ramp</p>
+      <h2 class="station-h">He starts with pigeons, not apes</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter I, Variation under Domestication</p>
+        <div class="passage-t">
+          <p>Altogether at least a score of pigeons might be chosen, which if shown to an ornithologist, and he were told that they were wild birds, would certainly, I think, be ranked by him as well-defined species.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Darwin opens the most disruptive book in the history of biology not with fossils, or apes, or God, but with a man in his garden breeding pigeons. The choice is deliberate and a little sly. He wants to show you a thing you already believe, and get you to agree to it, before he turns it on something you don't.</p>
+        <p>Fancy pigeons were a Victorian craze, and Darwin threw himself in: he kept the breeds, joined the London pigeon clubs, killed and measured the birds at the kitchen table. And the breeds are ridiculous. The pouter puffs its chest into a balloon. The fantail fans thirty-odd tail feathers like a turkey. The short-faced tumbler has a face squashed down to a finch's. Show those to a bird expert as wild specimens, Darwin says, and he would sort them into different species, maybe even different genera, the next rank up.</p>
+        <p>Every one of them came from the same drab bird: the common rock-pigeon, <em>Columba livia</em>, the gray thing on the window ledge. Nobody argued with that, because it happened in plain sight, in recorded time, by a method anyone could watch. Breeders did it. They picked the birds with a bit more tail or a puffier chest, bred those together, picked again from the young, and again, and again, and the small differences piled up into a fantail.</p>
+        <p>That is the whole move, and it is worth slowing down on, because the entire book is a bet that this one move explains everything alive. Choose which individuals breed, keep at it long enough, and you can reshape a living thing past the point of recognition. Darwin called it artificial selection, artificial because a human hand does the choosing. He has just shown you a force that builds new kinds of creature. Now he only has to find that force running loose in the wild, with the hand taken away.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-struggle" data-label="Far more are born than can live" data-tag="Chapter III">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> The pressure</p>
+      <h2 class="station-h">Far more are born than can ever live</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter III, the Struggle for Existence</p>
+        <div class="passage-t">
+          <p>I use the term Struggle for Existence in a large and metaphorical sense, including dependence of one being on another, and including (which is more important) not only the life of the individual, but success in leaving progeny.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The backyard breeder picks his pigeons by hand. For the idea to work in the wild, something has to do the picking with no hands at all. Darwin's second move finds that something, and it is not gentle.</p>
+        <p>Start with a fact so ordinary it is easy to walk past: living things make far more young than can ever survive. One poppy drops thousands of seeds. A cod lays millions of eggs. If even most of them lived to breed, and their young did the same, the world would be wall-to-wall poppies or cod inside a few generations.</p>
+        <p>Darwin did the arithmetic on the least likely animal he could pick, the elephant, the slowest breeder alive. Assume a pair starts at thirty, quits at ninety, and has six young in between. Run it out, and "at the end of the fifth century there would be alive fifteen million elephants, descended from the first pair." Fifteen million, from the slowest breeder on earth, in five centuries. The world is plainly not buried in elephants. So nearly all of them die before they ever breed.</p>
+        <p>He got the engine from an economist. Thomas Malthus had argued that human numbers always grow faster than the food supply, so scarcity and hunger never go away. Darwin took that bleak little law and turned it loose on all of life, "the doctrine of Malthus applied with manifold force to the whole animal and vegetable kingdoms." Always more mouths than there is food.</p>
+        <p>The word he reached for was struggle, and he is careful to say he means it broadly. Not mostly animals fighting. The seedling at the edge of the desert struggles against the drought. The robin struggles to get the worm before the next robin does. Most of the dying is quiet, the seed on bare rock, the chick that hatched a day late. The only point that matters is this: in every generation most do not make it, and which ones make it is not random.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-selection" data-label="Selection with no one selecting" data-tag="Chapter IV">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> The engine</p>
+      <h2 class="station-h">Selection with nobody doing the selecting</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter IV, Natural Selection</p>
+        <div class="passage-t">
+          <p>This preservation of favourable variations and the rejection of injurious variations, I call Natural Selection.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Now set the two halves next to each other, and the watchmaker quietly walks off the page.</p>
+        <p>Half one, from the pigeons: no two individuals are exactly alike, and a lot of the difference is heritable, handed down to the young. Half two, from the struggle: far more are born than can live, so most die before breeding. Stack them. If some of those small inherited differences happen to help an animal survive and breed even a little more often, then that animal leaves a few more young, who carry the helpful difference, and across generations it spreads. The differences that hurt die out with the animals that had them. Nobody chose. The dying did the sorting.</p>
+        <p>That is the hinge of the whole book, and the trick is in who took over the breeder's job. With the pigeons, a person decided which birds bred. In the wild, the surroundings decide, automatically, just by which animals live long enough to breed and which don't. A hard winter "selects" the thicker coat. A quicker hawk "selects" the quicker mouse. No chooser, no goal, no plan, only the patient bookkeeping of who left more young. Darwin named it in one flat sentence: "This preservation of favourable variations and the rejection of injurious variations, I call Natural Selection."</p>
+        <p>The thing to feel is how slow and how blind it is. It is not trying to build anything. It cannot look ahead or aim at a result. It just keeps the slightly better and drops the slightly worse, every generation, for as long as there have been generations. Darwin's own image is almost unsettling: natural selection is "daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good." Add up enough tiny improvements, each kept only because it happened to work, and you end with an animal that looks built for its life, because everything about it that didn't work is already dead.</p>
+      </div>
+
+      <details class="stack">
+        <summary>A phrase Darwin did not write</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">The line nearly everyone hangs on Darwin, <em>survival of the fittest</em>, is not in this book, and was not even his to begin with.</p>
+
+          <div class="stack-v stack-early stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Darwin <span class="star">the 1859 text</span></span><span class="stack-vy">natural selection</span></div>
+            <div class="stack-vt">The first edition says "natural selection," and only that. The words "survival of the fittest" appear nowhere in it.</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">Herbert Spencer</span><span class="stack-vy">1864</span></div>
+            <div class="stack-vt">The philosopher Herbert Spencer coined "survival of the fittest" five years later, reaching for something that sounded like an iron law of nature.</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Darwin, fifth edition</span><span class="stack-vy">1869</span></div>
+            <div class="stack-vt">Darwin only let the phrase into the book ten years on, as a synonym he hoped would stop a misreading. "Fittest" meant best-matched to a particular place, the warmer coat, the better-hidden moth, not the strongest or the most deserving. The slogan got away from him regardless.</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">A small swap with a very long shadow. Most of what people resent about "Darwinism" rides on three borrowed words he was talked into adding.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-tree" data-label="One tree, from a few forms or one" data-tag="Chapter IV">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> The shape of it</p>
+      <h2 class="station-h">One tree, from a few forms or one</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter IV, the close</p>
+        <div class="passage-t">
+          <p>As buds give rise by growth to fresh buds, and these, if vigorous, branch out and overtop on all sides many a feebler branch, so by generation I believe it has been with the great Tree of Life, which fills with its dead and broken branches the crust of the earth, and covers the surface with its ever branching and beautiful ramifications.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Run natural selection long enough and it does more than tune one animal. It splits one kind into two.</p>
+        <p>Picture a single species spread across a patchy range. On the dry edge, the ones with deeper roots do better; on the wet edge, the ones that grow fastest. Each side gets nudged its own way, generation after generation, until one day the two ends can no longer breed together. One species has become two. Do that again and again, all the way down the ages, and the branches keep dividing. Darwin's name for the whole business was descent with modification: every species is just an older one, changed. (He almost never used the word we use; the noun "evolution" does not appear anywhere in the book.)</p>
+        <p>Follow that backward and you reach the most dizzying idea Darwin ever had. If species keep branching off from earlier species, then take any two living things, trace them back far enough, and the branches must meet. You and the oak in the yard share an ancestor, a long way down. So do you and the gut bacterium and the blue whale. All of life is a single family tree, grown, he says, from "a few forms or into one." Not thousands of separate creations. One trunk.</p>
+        <p>He believed that so concretely that he drew it, and the drawing is the only picture in the entire five hundred pages.</p>
+      </div>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/darwin/tree-of-life-diagram-1859.jpg" width="1600" height="1247" loading="lazy" decoding="async" alt="Darwin's tree-of-life diagram from the 1859 first edition: faint dotted lines rise from species labelled A to L along the bottom and repeatedly fork as they climb fourteen numbered horizontal levels marked I to XIV. Many lines stop partway up; only a few reach the top.">
+        <figcaption class="u-figure-cap">The only illustration in the whole book. The letters along the bottom are species; the stacked horizontal lines are generations, thousands of them, climbing the page. Follow any line up and it keeps forking, and notice how many simply stop partway: those are the branches that died. The one diagram Darwin put in five hundred pages is, more than anything, a picture of extinction.</figcaption>
+      </figure>
+
+      <div class="prose">
+        <p>The drawing is abstract on purpose, only letters and lines, but the paragraph it goes with is some of the best prose he ever wrote. The living species are "the green and budding twigs." The extinct ones are the "dead and broken branches" buried in the rock. Whole limbs of the tree (the trilobites, later the dinosaurs) grew, took over the world, and snapped off. We are one small green twig near the top. Not the crown the tree was growing toward, not the point of it. Just the part that has not died yet.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-eye" data-label="The hardest case: the eye" data-tag="Chapter VI">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> The hard case</p>
+      <h2 class="station-h">He picks the hardest case himself: the eye</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter VI, Difficulties on Theory</p>
+        <div class="passage-t">
+          <p>To suppose that the eye, with all its inimitable contrivances for adjusting the focus to different distances, for admitting different amounts of light, and for the correction of spherical and chromatic aberration, could have been formed by natural selection, seems, I freely confess, absurd in the highest possible degree.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The honest test of an idea is whether its author goes hunting for the thing that would break it. Darwin does. He gives a whole chapter to "Difficulties on Theory," and he leads with the worst one there is, the very thing Paley built his watch out of: the eye.</p>
+        <p>He does not soften how bad it looks. He states the objection better than any opponent could, that an eye, with its self-adjusting focus and its aperture and its built-in fix for the color fringing that ruins a cheap lens, could be put together by a blind, step-by-step process "seems, I freely confess, absurd in the highest possible degree." Read that sentence on its own and it sounds like the author folding. It is the most quote-mined line Darwin ever wrote; to this day you can find it pulled out by itself and waved around as Darwin doubting Darwin.</p>
+        <p>But it is the windup, not the pitch, and the answer comes in the very next breath. The eye looks impossible only if it had to arrive all at once, finished. It didn't. Look around the living world and every half-step is still in use somewhere: a patch of light-sensitive cells on a flatworm; that patch dished into a cup that tells which way the light comes from; the cup narrowed to a pinhole that throws a crude image; the pinhole capped with a clear cover; the cover thickened into a lens. Each of those is a real, working eye in some animal alive right now, and each one beats the stage before it for a creature that needs to see.</p>
+        <p>So Darwin's reply is calm and total: if a smooth series of slightly better eyes can exist, each one useful enough to keep, then "the difficulty of believing that a perfect and complex eye could be formed by natural selection, though insuperable by our imagination, can hardly be considered real." The whole objection rests on assuming half an eye is worth nothing. Ask anyone with poor sight whether it beats going blind.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The eye is not even a freak one-off. Eyes have been built from scratch, independently, dozens of times in different branches of the tree, in octopuses and flies and us. A miracle does not happen dozens of times over. A cheap and useful trick, found again and again by the same blind process, does exactly that.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-time" data-label="The one thing it needs: time" data-tag="Chapter IX">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> The expensive ingredient</p>
+      <h2 class="station-h">The one thing it can't do without: time</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter IX, On the Imperfection of the Geological Record</p>
+        <div class="passage-t">
+          <p>He who can read Sir Charles Lyell's grand work on the Principles of Geology, which the future historian will recognise as having produced a revolution in natural science, yet does not admit how incomprehensibly vast have been the past periods of time, may at once close this volume.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Natural selection is slow, which makes it expensive, and it pays in a single currency: time. Enormous amounts of it. More than a human head can really hold.</p>
+        <p>A river is the honest picture. Stand at the rim of the Grand Canyon and the gut feeling is that something violent did this, because the thing that actually did it, the thin river at the bottom, looks nowhere near up to the job. But the river did not cut a mile of rock in a flood. It cut it one grain of sand at a time, for millions of years, and millions of years was enough. Natural selection runs the same way: invisible in any one step, unstoppable across an eon.</p>
+        <p>The problem in 1859 was that hardly anyone believed the earth was old enough to bankroll it. So Darwin tried to make deep time concrete. He picked a valley in the south of England, the Weald, whose chalk ridges the sea had plainly worn back over the ages, estimated how long that one slow erosion must have taken, and printed the figure down to the year: "the denudation of the Weald must have required 306,662,400 years."</p>
+        <p>It was a blunder, and a telling one. The number was a back-of-an-envelope guess dressed up as a measurement, the critics fell on it, and Darwin, who hated a fight, quietly cut it from later editions. But he was right in the direction that counted, in a way his own century could not stomach: life needed hundreds of millions of years, and it turned out to have far more. The earth is about four and a half billion years old, a figure nobody could even reach until radioactivity was discovered, decades after Darwin was dead. His instinct was sound. His arithmetic just ran out ahead of the evidence, the same way it had with the elephants.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-gaps" data-label="What he couldn't know, and never said" data-tag="The honest gaps">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The reckoning</p>
+      <h2 class="station-h">What he couldn't know, and what he never said</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter XIV, the one line about us</p>
+        <div class="passage-t">
+          <p>Light will be thrown on the origin of man and his history.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>A walk that showed only the strong parts would be a sales pitch, not the book. So here is what Darwin got wrong, what he could not have known, and the ugly thing later done in his name.</p>
+        <p>The biggest hole is heredity. His whole machine runs on small differences being passed down and added up, and he had no real idea how that worked. The common assumption of his day was blending: a mother's and father's traits mixed in the child like two cans of paint, an even gray. In 1867 an engineer named Fleeming Jenkin laid the problem out sharply. One animal born with a useful new trait would mate with an ordinary one, the child would have half as much of it, the grandchild a quarter, and the advantage would wash out to gray long before selection could fix it. On paper it was a real threat to the whole idea, and Darwin had no clean answer. The answer was already sitting unread in a journal: a monk named Gregor Mendel had shown, in the same decade, that traits pass down as separate particles (we call them genes) that don't blend or fade but stay whole and surface again intact. Darwin died never knowing about the one experiment that rescued his idea.</p>
+        <p>The second hole was time, and it came with a famous accuser. The physicist Lord Kelvin calculated, from how fast a molten earth would have cooled, that the planet was far too young, a few tens of millions of years, nothing like enough for slow selection to do the work. Kelvin was the most respected scientist in Britain, and he was wrong, because he had no way of knowing the earth runs its own furnace: radioactivity, undiscovered until the 1900s, keeps it hot and makes it billions of years old. Darwin had no answer at the time, and it shadowed the later editions.</p>
+        <p>And then the part that is not a scientific gap at all. This book is almost wholly silent about us. In five hundred pages Darwin allows himself exactly one careful sentence, near the very end: "Light will be thrown on the origin of man and his history." That is all of it. Our own story he saved for a separate book, <em>The Descent of Man</em>, twelve years later.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p><strong>The coldest thing attached to his name came after he was dead, and it was not his.</strong> "Survival of the fittest" got lifted out of biology and pressed into politics: if nature lets the weak die, the argument ran, then so should we, and the poor and the sick and the colonized had it coming, as a law of nature. That is social Darwinism, and Darwin's own half-cousin helped grow the eugenics that came out of it. But it is a smuggled conclusion, not a finding. Natural selection describes what does happen; it issues no orders about what ought to. "Fittest" in the book never means best or most deserving, only best-matched to a particular place, and a place can just as easily reward the small, the cooperative, the drab. The jump from "this is how species change" to "so be cruel to the weak" is one the argument simply does not contain. People made it anyway, and then hung it on him.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-grandeur" data-label="Endless forms most beautiful" data-tag="Chapter XIV">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> The last sentence</p>
+      <h2 class="station-h">Endless forms most beautiful</h2>
+
+      <div class="passage">
+        <p class="passage-k">Chapter XIV, the final lines</p>
+        <div class="passage-t">
+          <p>It is interesting to contemplate an entangled bank, clothed with many plants of many kinds, with birds singing on the bushes, with various insects flitting about, and with worms crawling through the damp earth, and to reflect that these elaborately constructed forms, so different from each other, and dependent on each other in so complex a manner, have all been produced by laws acting around us.</p>
+          <p>There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one ... from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Darwin ends not on a fanfare but on a hedge by a footpath, the kind of weedy tangle you would walk past without a second look. That is the whole point.</p>
+        <p>Look at it the way the book has taught you to look. Every plant and bird and insect and worm on that bank is the tip of a branch millions of years long. They are all cousins, all shaped by the same blind process, all wired into each other (the worm feeds the bird, the bird carries the seed) in a web that nobody drew up. "Elaborately constructed forms, so different from each other ... have all been produced by laws acting around us." Not by a maker reaching in from outside. By laws, grinding away on their own, in the open, the entire time.</p>
+        <p>Which brings us back to the watch in the dirt. Darwin never broke Paley's logic that the eye looks designed. He agreed with it to the end. What he did was hand us the missing third choice between dumb luck and a conscious designer, and that third choice, natural selection working through deep time, is the one that turns out to fit the evidence. The design is real. The designer is the part you can drop. The watch on the path made itself, slowly, and is making itself still.</p>
+        <p>And then the last word, literally. The book closes on a sentence so good it has outlasted every argument inside it. Notice what it does not contain: in this first edition of 1859, life's powers were "originally breathed into a few forms or into one," with no Creator anywhere in the line. Those two words came a year later. What Darwin wrote first, and meant, was barer and larger, and it ends on the only form of the word he would use, the verb, as the final word of the book: that from so simple a beginning, endless forms most beautiful "have been, and are being, evolved."</p>
+      </div>
+
+      <details class="stack">
+        <summary>The four words he added a year later</summary>
+        <div class="stack-body">
+          <p class="stack-gloss" style="margin-top:0.2rem">The most famous sentence in science survives in two forms: the line Darwin set down in 1859, and the version almost everyone quotes, with four words slipped in under pressure for the 1860 edition.</p>
+
+          <div class="stack-v stack-early stack-feat">
+            <div class="stack-vh"><span class="stack-vn">First edition <span class="star">1859</span></span><span class="stack-vy">as written</span></div>
+            <div class="stack-vt">"... having been originally breathed <em>into a few forms or into one</em> ..."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Second edition</span><span class="stack-vy">1860</span></div>
+            <div class="stack-vt">"... having been originally breathed <em>by the Creator</em> into a few forms or into one ..." Darwin slipped the words in the next year. In 1863 he wrote to his friend Joseph Hooker that he had "long regretted that I truckled to public opinion," and had only ever meant that life first "appeared by some wholly unknown process."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">The first-edition line is the one he wrote before he lost his nerve. It is the one on this page.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the words come from</h2>
+      <p>The featured text throughout is the <strong>first edition</strong> of <em>On the Origin of Species by Means of Natural Selection</em>, published by John Murray on 24 November 1859. Every quotation is verbatim from that edition, Victorian spelling and all, and is checked against the page images. The first edition matters: it carries the argument at its cleanest, before five later editions of replies to critics piled on the hedges. Where a famous line was softened later, the panel shows you both.</p>
+      <ul class="src-list">
+        <li><b>The Origin</b> is quoted from the 1859 first edition (F373) at <a href="https://darwin-online.org.uk/">Darwin Online</a>, the complete scholarly archive edited by John van Wyhe, checked against the original page scans.</li>
+        <li><b>The changes between editions</b> follow Morse Peckham's variorum text, <em>The Origin of Species: A Variorum Text</em> (1959), which collates every word Darwin altered across all six editions.</li>
+        <li><b>The reading of the argument</b> leans on Ernst Mayr's introduction to the 1964 Harvard facsimile of the first edition, James Costa's <em>The Annotated Origin</em> (2009), Gillian Beer's <em>Darwin's Plots</em>, and Janet Browne's two-volume biography. Where I say what Darwin could not yet know, the history is theirs.</li>
+        <li><b>On what Darwin did and did not say about people</b>, the source is Darwin himself: the 1859 Origin keeps almost entirely to plants and animals, and the human argument waited for <em>The Descent of Man</em> (1871). "Survival of the fittest" is Herbert Spencer's phrase, which Darwin only let into the fifth edition in 1869.</li>
+      </ul>
+      <p>The walk is mine. I have tried to let the argument land at full strength, to quote the holes Darwin himself worried about rather than paper over them, and to keep the famous misreadings (the cold social-Darwinist one most of all) clearly labelled as not his.</p>
+      <p class="colo-note">The diagram on the homepage card and below is the only illustration in the entire first edition: Darwin's branching "tree of life," a fold-out plate between pages 116 and 117, in the public domain. The 1855 portrait is by Maull &amp; Polyblank, also public domain. Both are reproduced from the scans at Darwin Online and Wikimedia Commons.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/darwin.js" defer></script>
+</body>
+</html>
