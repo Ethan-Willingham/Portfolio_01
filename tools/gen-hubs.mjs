@@ -77,7 +77,7 @@ const HUBS = [
       live('get-used-to-everything.html', 'Getting Used to Everything', 'get-used-to-everything.jpg', 'modern', 2026, "Why the new car stops thrilling you and grief slowly lifts, while a loud commute never stops grating. A field guide to habituation: what you adapt to, what you never do, and the one lever you really get, choosing what to get used to."),
       soon('William James', '1902', 1902, "The 1902 book behind Alcoholics Anonymous. A scientist takes religious experience seriously as evidence, studying conversions and mystical states by what they actually do in a person's life, not by whether their creeds are true."),
       soon('The Perennial Philosophy', '1945', 1945, "Aldous Huxley's claim that underneath every religion lies one shared truth, assembled from the mystics of every tradition. Almost the secret thesis of this whole shelf, pressure-tested for where it overreaches."),
-      soon('The Modern Teachers', '20th c.', 1965, "How the East got sold to the West in the 20th century, by Alan Watts, Krishnamurti, Ram Dass, and Eckhart Tolle, each with one big idea, plus the honest problem of the guru who turns out to be a fraud."),
+      live('modern-teachers.html', 'The Modern Teachers', 'modern-teachers.jpg', '20th c.', 1965, "How the East got sold to the West in the twentieth century, by five charismatic teachers from Alan Watts to Eckhart Tolle, each keeping one big idea: you are it, be here now, wake up. Plus the honest problem of the guru who turns out to be a fraud, and how to keep the teaching without the teacher."),
     ],
   },
   {

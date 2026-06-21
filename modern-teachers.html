@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Modern Teachers</title>
+  <meta name="description" content="How a handful of charismatic people carried Eastern thought to the West and made it land: Alan Watts, Krishnamurti, Ram Dass, Eckhart Tolle, and Gurdjieff. Each kept one idea and dropped the rest. The five ideas, the actual words, the one thing underneath them all, and an honest reckoning with teachers who were sometimes frauds or abusers.">
+  <meta property="og:title" content="The Modern Teachers">
+  <meta property="og:description" content="Five charismatic teachers sold the East to the West, each keeping one idea: you are it, be here now, you are not your mind, follow no one, wake up. The actual words, the one idea underneath all five, and the honest problem that some of the messengers were frauds.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/modern-teachers.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/modern-teachers-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Jiddu Krishnamurti as a young man, a Bain News Service studio portrait from the 1920s.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/modern-teachers-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE MODERN TEACHERS
+     Approach C (Idea Distillation): no source text to stack, so
+     five load-bearing ideas are stated plainly in the site voice
+     and anchored to short verbatim quotes. The shell, the gallery,
+     and the no-JS fallback are the Frankl build; the gallery card
+     gains a "catch" line, the honest note about each teacher. One
+     muted accent per teacher, from the site's categorical set
+     (color = meaning, per STYLE.md). Site shell (forest green,
+     parchment, Century Supra / Segoe UI / Commit Mono). No em
+     dashes; quoted em dashes are rendered as commas.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    /* one muted accent per teacher, from the categorical set */
+    --t-watts:     #9ec79a;   /* sage   */
+    --t-ramdass:   #cf9f78;   /* clay   */
+    --t-tolle:     #8fb3c7;   /* blue   */
+    --t-krishna:   #b79bc4;   /* purple */
+    --t-gurdjieff: #b8796d;   /* brick  */
+  }
+  html { overflow-x: hidden; }
+  /* body carries a global side gutter; zero it here so each block owns a
+     single var(--gutter), never doubling it on phones (20px at 375px). */
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; scroll-margin-top: 1.2rem; }
+  .sec.first { padding-top: clamp(2rem, 4vw, 2.6rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; color: var(--sec-accent, var(--accent)); }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.2rem 0 0.6rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.22rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.3rem; } }
+  .sec .u-divider { margin-top: 3rem; }
+  .sec .u-pq { margin-top: 1.6rem; }
+
+  /* per-section accent rhythm (kept close to gold; gold is the seam) */
+  #intro       { --sec-accent: var(--accent); }
+  #teachers    { --sec-accent: var(--accent); }
+  #throughline { --sec-accent: #9ec79a; }       /* sage */
+  #honest      { --sec-accent: #b79bc4; }       /* purple, the Krishnamurti seam */
+  #sources     { --sec-accent: var(--accent); }
+
+  /* ---------- the portrait figure ---------- */
+  .pfig { margin: 1.9rem auto 0.4rem; max-width: 360px; }
+  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+
+  /* ============================================================
+     THE FIVE TEACHERS (story-gallery pattern)
+     ============================================================ */
+  .gal-wrap { margin: 1.8rem 0 0; }
+  .gal-wrap[hidden] { display: none; }
+  html:not(.js) .gal-wrap { display: none; }
+
+  .gal-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 0.9rem; }
+  .gal-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid var(--rule); border-radius: 999px; padding: 0.38em 0.8em; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+  .gal-chip:hover { color: var(--text-bright); border-color: var(--line-mid); }
+  .gal-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ta, var(--line-mid)); }
+  .gal-chip.is-on { color: var(--text-bright); border-color: var(--ta, var(--accent)); background: color-mix(in srgb, var(--ta, var(--accent)) 14%, transparent); }
+
+  .gal-frame { border: 1px solid var(--rule); border-left: 3px solid var(--ta, var(--accent)); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); padding: 1.5rem 1.6rem 1.6rem; transition: border-color .25s; }
+  .gal-card-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .gal-card-k .place { color: var(--text-faint); letter-spacing: 0.06em; }
+  .gal-card-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4vw, 1.95rem); line-height: 1.18; color: var(--text-bright); margin: 0 0 0.9rem; letter-spacing: -0.01em; text-wrap: pretty; }
+  .gal-card-body p { font-family: var(--font-body); font-size: 1.08rem; line-height: 1.62; color: var(--text); margin: 0 0 0.85em; text-wrap: pretty; }
+  .gal-card-body p:last-child { margin-bottom: 0; }
+  .gal-lesson { margin: 1.2rem 0 0; padding: 0.9rem 0 0.1rem; border-top: 1px solid var(--rule); font-family: var(--font-heading); font-style: italic; font-size: 1.16rem; line-height: 1.45; color: var(--text-bright); text-wrap: pretty; }
+  .gal-lesson .lk { font-family: var(--font-mono); font-style: normal; font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ta, var(--accent)); display: block; margin-bottom: 0.45rem; }
+  /* the catch: the honest note about the teacher */
+  .gal-catch { margin: 1rem 0 0; font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text-dim); text-wrap: pretty; }
+  .gal-catch .ck, .tale-catch .ck { font-family: var(--font-mono); font-style: normal; font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ta, var(--accent)); display: block; margin-bottom: 0.4rem; }
+  .gal-src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 1rem 0 0; }
+
+  .gal-bar { display: flex; align-items: center; gap: 0.7rem; margin: 1rem 0 0; }
+  .gal-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.14rem; transition: border-color .2s, color .2s; }
+  .gal-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-hover); }
+  .gal-nav:disabled { opacity: 0.3; cursor: default; }
+  .gal-pos { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-faint); }
+  .gal-pos b { color: var(--accent); font-weight: 400; }
+  .gal-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+
+  /* the no-JS fallback: the teachers read as a plain stacked list */
+  .tales { margin-top: 1.6rem; }
+  html.js .tales { display: none; }
+  .tale { padding: 1.6rem 0 0; border-top: 1px solid var(--rule); margin-top: 1.6rem; }
+  .tale:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.3rem; }
+  .tale-place { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 0.4rem; }
+  .tale-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 0.7rem; }
+  .tale-body p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 0.8em; }
+  .tale-lesson { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; color: var(--text-bright); margin: 0.4rem 0 0; }
+  .tale-catch { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text-dim); margin: 0.7rem 0 0; }
+  .tale-src { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); margin: 0.7rem 0 0; }
+
+  /* ---------- SOURCES (kit u-collapse dropdown styles the list) ---------- */
+  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.3em; }
+  #sources .u-collapse { margin-top: 0.4rem; }
+  #sources .u-collapse-list li::marker { color: var(--accent); }
+  #sources .u-collapse-list i { color: var(--text-dim); }
+  #sources .u-collapse-list a { border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources .u-collapse-list a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .gal-frame { transition: none !important; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab, .gal-bar, .gal-chips { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .lede, .tale-body p, .gal-card-body p { color: #161616; }
+    html.js .tales { display: block; }   /* print the readable list, not the app */
+    .gal-wrap { display: none !important; }
+    .debateA, .u-callout, .tale { break-inside: avoid; }
+    a { color: #161616; }
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px) {
+    .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
+    .gal-hint { display: none; }
+    .pfig { max-width: 280px; }
+    .pfig img { border-radius: 10px; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Modern Teachers</h1>
+    <p class="hero-dek">How a handful of charismatic people carried the East to the West and made it land. Five of them, one idea each, and the awkward fact that some of the teachers were a mess.</p>
+    <p class="hero-meta">A distillation <span class="sep">/</span> <b>five teachers, one idea</b> <span class="sep">/</span> <b>21 sources</b> <span class="sep">/</span> 15 min read</p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ INTRO ============================ -->
+    <section id="intro" class="sec first" aria-labelledby="intro-h">
+      <p class="lede">In August 1929, a thirty-four-year-old man stood up in front of three thousand people who believed he was the messiah, and quit. They had spent twenty years getting ready for him. He told them to go home.</p>
+
+      <p>The man was Jiddu Krishnamurti, and the people were the Order of the Star in the East, an organization built around a single prediction: that the next great spiritual teacher of humanity was coming, and that he would speak through this particular Indian boy. The Theosophical Society had found Krishnamurti on a beach as a teenager, decided he was the chosen vehicle, and raised him for the role. By 1929 the Order had tens of thousands of members, land, and money. On the opening day of its annual camp in Holland, with his patrons in the audience, Krishnamurti dissolved the whole thing.</p>
+
+      <blockquote class="u-pq">I maintain that Truth is a pathless land, and you cannot approach it by any path whatsoever, by any religion, by any sect.<cite class="u-pq-cite">Krishnamurti, dissolving the Order of the Star, 3 August 1929</cite></blockquote>
+
+      <p>Truth was not a thing he could hand anyone, he told them, so there was nothing to belong to and no one to follow, himself included. Then he gave the land back, walked away from the most enviable job in the spiritual world, and spent the next fifty-seven years telling audiences not to make him their teacher either.</p>
+
+      <figure class="pfig reveal">
+        <picture><source type="image/webp" srcset="assets/modern-teachers/krishnamurti-portrait.webp"><img src="assets/modern-teachers/krishnamurti-portrait.jpg" width="780" height="858" loading="eager" decoding="async" alt="Jiddu Krishnamurti as a young man, a 1920s studio portrait: dark wavy hair, a quiet steady gaze, suit and tie."></picture>
+        <figcaption>Krishnamurti as a young man, around the time the Theosophists were grooming him to be the World Teacher. (Bain News Service, Library of Congress, public domain.)</figcaption>
+      </figure>
+
+      <p>Krishnamurti was one of a small number of people who, across the twentieth century, did what the careful scholars mostly had not: they took the spiritual traditions of the East, Zen and Taoism and the Hindu paths, and got them through to ordinary Western people. The East had been arriving in pieces for a long time. A Hindu monk named Vivekananda had stunned a Chicago audience in 1893; a Japanese scholar named D.T. Suzuki had been putting Zen into careful English for years; the Theosophists had been stirring all of it together since the 1870s. But careful is not the same as contagious. What these teachers had was the second thing.</p>
+
+      <p>Each of them took something enormous and kept one piece of it. One idea, said so well that millions of people who would never open a sutra felt it anyway. Watts kept "you are it." Ram Dass kept "be here now." Tolle kept "you are not your mind." Krishnamurti kept "follow no one." Gurdjieff, the strange root under a lot of it, kept "wake up." They dropped almost everything else, and the dropping is part of why it worked.</p>
+
+      <p>There is a catch, and you have to hold it the entire time. Some of these men were a mess, and a couple were worse than that. One drank himself to death. One preached non-attachment while keeping a secret affair going for twenty-five years. One spent his whole life dogged by the charge that he was a con man, and the record does not really clear him. The teaching and the teacher are not the same thing, and the whole skill of reading these five is learning to pull the two apart. Here they are: the one idea each, the actual words, and the catch.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE FIVE ============================ -->
+    <section id="teachers" class="sec" aria-labelledby="teachers-h">
+      <div class="u-sechead"><p class="u-sechead-k">The five</p><h2 id="teachers-h" class="u-sechead-h">One idea each, kept and polished</h2></div>
+
+      <p>Take them one at a time. Each card is one teacher: the single idea they carried, a line in their own words, and the honest catch about the person who said it. Different vocabularies, and, as you will see by the end, pretty much the same idea.</p>
+
+      <!-- the interactive gallery (JS builds it from the cards below) -->
+      <div class="gal-wrap" hidden>
+        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a teacher"></div>
+        <div class="gal-frame" id="gal-frame" aria-live="polite"></div>
+        <div class="gal-bar">
+          <button class="gal-nav" id="gal-prev" aria-label="Previous teacher">&lsaquo;</button>
+          <span class="gal-pos" id="gal-pos"></span>
+          <button class="gal-nav" id="gal-next" aria-label="Next teacher">&rsaquo;</button>
+          <span class="gal-hint">tap a name, or use the arrow keys</span>
+        </div>
+      </div>
+
+      <!-- the five teachers, authored as plain cards (no-JS reading + the gallery source).
+           data-ta is the teacher's accent color. -->
+      <div class="tales" id="tales-data">
+
+        <article class="tale" data-tradition="Alan Watts" data-place="1915 to 1973 / the bridge" style="--ta: var(--t-watts)">
+          <p class="tale-k">You are it</p>
+          <h3 class="tale-h">The universe is doing you</h3>
+          <div class="tale-body">
+            <p>Watts's one idea: you are not a separate little self, sealed inside a bag of skin, looking out at a universe that is not you. You <em>are</em> the universe, doing the temporary thing it is doing right here as you, the way the ocean does a wave. The feeling of being a lonely ego walled off from everything else is a kind of optical illusion, and seeing through it is the whole game.</p>
+            <p>He was the great translator of the bunch. An Englishman who had read his way deep into Zen and Taoism and could explain them in a warm, funny voice that made you feel the point instead of just filing it. His book <em>The Way of Zen</em> and a shelf of recorded talks put Zen into more American heads than any monastery did.</p>
+          </div>
+          <p class="tale-lesson">We do not "come into" this world; we come out of it, as leaves from a tree.</p>
+          <p class="tale-catch"><span class="ck">The catch</span>He never trained as a Zen monk and never claimed to. He called himself "a philosophical entertainer, a genuine fake," drank heavily for years, and died of it at 58.</p>
+          <p class="tale-src">Alan Watts, <i>The Book: On the Taboo Against Knowing Who You Are</i> (1966).</p>
+        </article>
+
+        <article class="tale" data-tradition="Ram Dass" data-place="1931 to 2019 / the convert" style="--ta: var(--t-ramdass)">
+          <p class="tale-k">Be here now</p>
+          <h3 class="tale-h">The only place you can be</h3>
+          <div class="tale-body">
+            <p>Ram Dass's one idea fits on a bumper sticker, which is the point: be here now. Not in the past, which is memory. Not in the future, which is worry. The present moment is the only place anything is actually happening, and almost none of us spend any time there. He learned it in India and spent the rest of his life pointing at it.</p>
+            <p>He got there by the strangest road of the five. He was Richard Alpert, a Harvard psychologist running the early experiments that fed people psilocybin and LSD, until Harvard fired him in 1963. He went to India chasing something the drugs kept showing him but could not make stick, found a guru in the Himalayan foothills, and came home as Ram Dass, "servant of God." His 1971 book <em>Be Here Now</em> became the handbook for a generation's turn from getting high to waking up.</p>
+          </div>
+          <p class="tale-lesson">We're all just walking each other home.</p>
+          <p class="tale-catch"><span class="ck">The catch</span>The most honest of the five about his own ego and appetites. He came out as bisexual in 1994, kept owning his failures in public, and after a stroke left him half-paralyzed he called the wreckage "fierce grace."</p>
+          <p class="tale-src">Ram Dass (Richard Alpert), <i>Be Here Now</i> (1971); the line titles his last book (2018).</p>
+        </article>
+
+        <article class="tale" data-tradition="Eckhart Tolle" data-place="b. 1948 / the blockbuster" style="--ta: var(--t-tolle)">
+          <p class="tale-k">You are not your mind</p>
+          <h3 class="tale-h">The voice in your head is not you</h3>
+          <div class="tale-body">
+            <p>Tolle's one idea: the nonstop voice in your head, the one narrating and rating and worrying, is not you. You are the awareness underneath it, the thing that can notice the voice running. Most suffering is just getting fused with that voice and dragged around by it. Step back into the awareness, which only ever exists right now, and the grip loosens.</p>
+            <p>His origin story is the teaching. At 29, deep in depression, he was lying awake thinking "I cannot live with myself," when the sentence turned on him. If I cannot live with myself, there must be two of me, the "I" and the "self" it cannot stand, and maybe only one is real. Something let go. He spent about two years more or less blissed out on park benches, then wrote <em>The Power of Now</em>, which sold slowly until Oprah put her weight behind it, and then sold by the millions.</p>
+          </div>
+          <p class="tale-lesson">If I cannot live with myself, there must be two of me.</p>
+          <p class="tale-catch"><span class="ck">The catch</span>The ideas are old (Zen, Advaita, the present moment) and mostly sound. The business around them is new: thousand-dollar retreats and a subscription channel, from a man who says he never meant to build any of it.</p>
+          <p class="tale-src">Eckhart Tolle, <i>The Power of Now</i> (1997), introduction.</p>
+        </article>
+
+        <article class="tale" data-tradition="Krishnamurti" data-place="1895 to 1986 / the refuser" style="--ta: var(--t-krishna)">
+          <p class="tale-k">Truth is a pathless land</p>
+          <h3 class="tale-h">Follow no one, starting with me</h3>
+          <div class="tale-body">
+            <p>Krishnamurti's one idea is the most radical, because it eats the others: there is no path to truth. No method, no system, no teacher who can take you there. The moment you start following someone, you have stopped looking for yourself and started copying them. So he refused to be followed. No technique to sell, no steps, no authority, including his own.</p>
+            <p>He had more reason than anyone to distrust the role, because he had been handed it. The Theosophists raised him from boyhood to be the messiah, and at 34 he gave the whole thing back (the story at the top of this page) and told them truth was not something he or anyone could pass to them. For the next half-century he just talked, all over the world, circling one instruction: look at your own mind directly, without a system and without the "you" that wants a comfortable answer.</p>
+          </div>
+          <p class="tale-lesson">The moment you follow someone you cease to follow Truth.</p>
+          <p class="tale-catch"><span class="ck">The catch</span>And then he let people follow him for fifty years: foundations, schools, devoted crowds. He also kept a sexual relationship with a married colleague's wife secret for roughly twenty-five years, which came out only after he died.</p>
+          <p class="tale-src">J. Krishnamurti, dissolution of the Order of the Star, 3 August 1929. The affair: Radha Rajagopal Sloss, <i>Lives in the Shadow with J. Krishnamurti</i> (1991).</p>
+        </article>
+
+        <article class="tale" data-tradition="Gurdjieff &amp; Ouspensky" data-place="early 1900s / the source" style="--ta: var(--t-gurdjieff)">
+          <p class="tale-k">Wake up</p>
+          <h3 class="tale-h">Most people are asleep machines</h3>
+          <div class="tale-body">
+            <p>The oldest and strangest of the five, and the root a lot of the others quietly tap. Gurdjieff's claim: you are not awake. You think you are conscious and choosing and doing, but you are mostly a machine on autopilot, reacting to whatever lands on you, asleep with your eyes open. There is no single "you" in there running the show, just a crowd of reflexes taking turns and calling itself a person. Real life only starts when you wake up, and waking up is work that almost nobody does.</p>
+            <p>The work he taught was "self-remembering," the hard trick of staying aware of yourself and the world at the same time instead of vanishing into whatever you are doing. Gurdjieff was a magnetic, slippery Greek-Armenian who said he had pieced the system together from years among Sufi orders and remote monasteries. We have it in plain, teachable form mostly because his student P.D. Ouspensky wrote it all down.</p>
+          </div>
+          <p class="tale-lesson">Man is a machine. All his deeds, actions, words, thoughts, feelings, convictions, opinions, and habits are the results of external influences.</p>
+          <p class="tale-catch"><span class="ck">The catch</span>Gurdjieff is the cautionary case. Authoritarian, manipulative on purpose, accused of being a con man; he slept with students and fathered children by them. Ouspensky eventually decided he could not trust the man, and broke with him while keeping the ideas.</p>
+          <p class="tale-src">P.D. Ouspensky, <i>In Search of the Miraculous</i> (1949), recording Gurdjieff's teaching.</p>
+        </article>
+
+      </div>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE THROUGH-LINE ============================ -->
+    <section id="throughline" class="sec" aria-labelledby="throughline-h">
+      <div class="u-sechead"><p class="u-sechead-k">The through-line</p><h2 id="throughline-h" class="u-sechead-h">It is the same idea five times</h2></div>
+
+      <p>Line the cards up and they start to rhyme. Watts says you are not a separate self. Tolle says you are not the voice in your head. Gurdjieff says you are not even awake. Ram Dass says you are not here, you are off in memory and worry. Krishnamurti says you will not find your way out by following anyone. Five different vocabularies, one move underneath all of them: the everyday "you," the anxious narrator running your day, is not the whole of you, and there is something wider and more present underneath that you can step into.</p>
+
+      <p>That move is not theirs, and none of them pretended it was. It is the oldest claim in <a href="meditation.html">the contemplative traditions</a>: the <em>anatta</em>, the "no-self," at the center of <a href="dhammapada.html">the Buddha's teaching</a>; the dissolving boundaries of <a href="tao-te-ching.html">the Tao</a>; the "you are already that" of Advaita Vedanta behind <a href="gita.html">the Gita</a>. What these five did was strip the Sanskrit and the metaphysics off it and hand a Western reader the part you can actually use today: pay attention, right now, and notice you are bigger than the chatter.</p>
+
+      <p>Watts, who spent his whole life looking for the cleanest way to say it, maybe got closest:</p>
+
+      <blockquote class="u-pq">You are an aperture through which the universe is looking at and exploring itself.<cite class="u-pq-cite">Alan Watts, Still the Mind (a posthumous collection of his talks)</cite></blockquote>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">why it traveled</p><p class="u-callout-body">The originals ask a lot: a language, a cosmology, often a lifetime of practice. These five asked almost nothing. That is the trade they made, and it is both why the idea finally reached people who needed it and why the version that reached them was thinner than the thing it came from. You got the insight without the discipline that was supposed to earn it.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE HONEST PART ============================ -->
+    <section id="honest" class="sec" aria-labelledby="honest-h">
+      <div class="u-sechead"><p class="u-sechead-k">The teacher problem</p><h2 id="honest-h" class="u-sechead-h">What to do with a flawed messenger</h2></div>
+
+      <p>So here is the question you cannot skip. Why take spiritual advice from a man who drank himself to death, or one who quietly betrayed his closest colleague for decades, or one that careful biographers still argue may have been a fraud? It is a fair objection, and it has sunk a lot of teachers for a lot of people.</p>
+
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The objection</span><p class="debateA-text">A teaching about how to live should come from someone who can live. If the man who tells you to drop your ego is secretly run by his, the experiment is failing in public. You are being asked to take the cure from people it did not cure. At best they were hypocrites; at worst they used the teaching as cover to take what they wanted from the people who trusted them.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">The honest version</span><p class="debateA-text">Both can be true at once: the idea is worth having, and the man was not to be trusted. "You are not the voice in your head" is true or false on its own, no matter who says it; you can test it in your own experience in about a minute, which is the whole point. The flawed teacher is a real warning, but the warning is about following him, not about the idea. And the best of these five told you that directly. Krishnamurti's entire teaching was: do not trust me, check it yourself.</p></div>
+      </div>
+
+      <p>The sharpest version of the problem is Krishnamurti himself. He built a life on "follow no one," and then thousands of people followed him, and he let them, and he kept a long secret that made a liar of the openness he preached. It is easy to read that as the idea refuting itself. It might be the opposite. The man who saw the trap of authority more clearly than anyone alive still could not fully climb out of it. The ego he kept warning you about was running him too. That is not proof he was wrong. It is the strongest evidence he was right about how hard it is.</p>
+
+      <p>One small honesty, while we are here. The quote the internet loves to put under Krishnamurti's face, "it is no measure of health to be well adjusted to a profoundly sick society," has never been found in anything he actually wrote or said. It sounds like him. That is exactly why it is worth not trusting. Even here, the instruction holds: check the source, do not take the teacher's word, or the meme's.</p>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">how to read them</p><p class="u-callout-body">Take the one true thing. Drop the man. Do not sign up for anything. These five are an on-ramp, not a destination: the place to go next is the older traditions they borrowed from, which are scattered through the rest of this series, and where the same ideas come with the practice that was meant to keep you honest. And the moment an on-ramp starts asking for your money, your obedience, or your silence, you have left the teaching and walked into cult territory, which this series keeps a separate shelf for.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and a note on the quotes</h2></div>
+      <p class="src-note">This is a distillation of five bodies of work, told in my own words; the ideas belong to the teachers. Quotes are kept short and are reproduced for study and comment, checked against a primary or authoritative source and cited below. A couple of the originals use an em dash; the site does not, so those are shown with a comma, with no change to the words. No em dashes, anywhere.</p>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 21 sources</summary>
+        <ol class="u-collapse-list">
+        <li><b>Krishnamurti, the dissolution speech.</b> "Truth is a pathless land," delivered at Ommen, Holland, 3 August 1929, dissolving the Order of the Star. Full text via the Krishnamurti Foundation. <a href="https://kfoundation.org/dissolution-speech/">the speech</a></li>
+        <li><b>Krishnamurti and Theosophy.</b> Discovered by Charles Leadbeater, raised by Annie Besant as the intended vehicle for the "World Teacher"; the Order of the Star in the East. <a href="https://en.wikipedia.org/wiki/Jiddu_Krishnamurti">overview</a></li>
+        <li><b>The affair.</b> Krishnamurti's roughly 25-year relationship with Rosalind Rajagopal, wife of his associate D. Rajagopal, was made public by her daughter Radha Rajagopal Sloss in <i>Lives in the Shadow with J. Krishnamurti</i> (Bloomsbury, 1991). <a href="https://en.wikipedia.org/wiki/Lives_in_the_Shadow_with_J._Krishnamurti">on the book</a></li>
+        <li><b>The misattributed line.</b> "It is no measure of health to be well adjusted to a profoundly sick society" is widely credited to Krishnamurti with no located primary source. <a href="https://quoteinvestigator.com/2018/07/27/sick-society/">the trail</a></li>
+        <li><b>Krishnamurti and David Bohm.</b> His long dialogues with the physicist, on thought, time, and the observer. <a href="https://en.wikipedia.org/wiki/David_Bohm#Krishnamurti">the dialogues</a></li>
+        <li><b>Alan Watts, the bridge.</b> Episcopal priest turned populariser of Zen and Taoism; <i>The Way of Zen</i> (1957), the KPFA talks, Esalen. <a href="https://en.wikipedia.org/wiki/Alan_Watts">biography</a></li>
+        <li><b>Watts, "leaves from a tree."</b> "We do not 'come into' this world; we come out of it, as leaves from a tree." <i>The Book: On the Taboo Against Knowing Who You Are</i> (Pantheon, 1966). <a href="https://archive.org/details/bookontabooagain00watt">the text</a></li>
+        <li><b>Watts, "an aperture."</b> "You are an aperture through which the universe is looking at and exploring itself," printed in <i>Still the Mind: An Introduction to Meditation</i> (New World Library, 2010), p. 90, a posthumous collection of his talks. <a href="https://www.goodreads.com/quotes/20100-you-are-an-aperture-through-which-the-universe-is-looking">the quote</a></li>
+        <li><b>Watts on himself.</b> "A philosophical entertainer, a genuine fake, an irreducible rascal," his standing line from the early 1960s; the title of Monica Furlong's biography is <i>Genuine Fake</i>. <a href="https://en.wikipedia.org/wiki/Alan_Watts">source</a></li>
+        <li><b>Watts, the drinking and the death.</b> Heavy alcoholism, an "open secret"; died 16 November 1973, age 58. <a href="https://en.wikipedia.org/wiki/Alan_Watts#Death">on his death</a></li>
+        <li><b>Ram Dass, the turn.</b> Richard Alpert, Harvard psychologist; the Harvard Psilocybin Project with Timothy Leary; dismissed in 1963; India, Neem Karoli Baba, the name Ram Dass. <a href="https://en.wikipedia.org/wiki/Ram_Dass">biography</a></li>
+        <li><b><i>Be Here Now.</i></b> Ram Dass, <i>Be Here Now</i> (Lama Foundation, 1971), the book that carried the message into the counterculture. <a href="https://www.ramdass.org/about-ram-dass/">about</a></li>
+        <li><b>Ram Dass, "walking each other home."</b> The line titles <i>Walking Each Other Home</i> (with Mirabai Bush, Sounds True, 2018). <a href="https://www.ramdass.org/">his foundation</a></li>
+        <li><b>Ram Dass, candor and "fierce grace."</b> Came out publicly in 1994; the 1997 stroke and his response, in the documentary <i>Fierce Grace</i> (2001). <a href="https://www.pbs.org/independentlens/documentaries/ramdass/">the film</a></li>
+        <li><b>Eckhart Tolle, the awakening.</b> The "I cannot live with myself / there must be two of me" passage, <i>The Power of Now</i> (Namaste, 1997), introduction. <a href="https://en.wikipedia.org/wiki/Eckhart_Tolle">biography</a></li>
+        <li><b>"You are not your mind."</b> The first teaching chapter of <i>The Power of Now</i>; the awareness beneath thought, and the pain-body. <a href="https://www.newworldlibrary.com/Books/ProductDetails/tabid/64/ProductID/254/The-Power-of-Now.aspx">the book</a></li>
+        <li><b>Tolle and Oprah.</b> <i>A New Earth</i> (2005) chosen for Oprah's Book Club in January 2008; the ten-week webinar drew tens of millions. <a href="https://en.wikipedia.org/wiki/A_New_Earth">overview</a></li>
+        <li><b>Tolle, the commercial critique.</b> High-priced retreats and a subscription channel; his own statement that he never intended "a heavy commercial structure." <a href="https://en.wikipedia.org/wiki/Eckhart_Tolle#Reception">reception</a></li>
+        <li><b>Gurdjieff and the Fourth Way.</b> "Man is a machine"; self-remembering; the way of the "sly man," working on body, heart, and mind at once. P.D. Ouspensky, <i>In Search of the Miraculous</i> (Harcourt, 1949). <a href="https://gurdjieff.work/texts/isotm.pdf">the text</a></li>
+        <li><b>Gurdjieff, the man.</b> The Institute at Fontainebleau; the charlatan accusations; Katherine Mansfield's death there of tuberculosis in January 1923; the 1924 car crash. <a href="https://en.wikipedia.org/wiki/George_Gurdjieff">biography</a></li>
+        <li><b>Ouspensky's break.</b> Ouspensky separated from Gurdjieff in 1924, came to distrust him, and kept teaching the system on his own. <a href="https://en.wikipedia.org/wiki/P._D._Ouspensky">biography</a></li>
+        </ol>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/modern-teachers.js" defer></script>
+</body>
+</html>
