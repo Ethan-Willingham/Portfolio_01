@@ -1015,6 +1015,8 @@ body:where(:not(:has(.site-wrapper))) { padding-left: 0; padding-right: 0; }
 body:not(:has(.site-wrapper)) .site-footer-inner { padding-left: var(--gutter); padding-right: var(--gutter); }
 .site-footer a { color: var(--text-dim); text-decoration: none; transition: color 0.25s; }
 .site-footer a:hover { color: var(--text-bright); }
+.site-footer .ftr-links { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.site-footer .arr { font-size: 0.82em; }
 .footer-links { display: flex; gap: 1rem; }
 
 /* Fade-in */
