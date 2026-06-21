@@ -9,8 +9,8 @@
 /* ---- header: big serif title, italic lead, the search rule beneath ---- */
 .site-header { margin-bottom: 2rem; position: relative; z-index: 20; }
 .site-name {
-  font-family: var(--font-heading); font-weight: 700; line-height: 1.04;
-  letter-spacing: -0.02em; color: var(--text-bright); margin: 0;
+  font-family: var(--font-heading); font-weight: 700; font-style: italic;
+  line-height: 1.04; letter-spacing: -0.02em; color: var(--text-bright); margin: 0;
   font-size: clamp(2.3rem, 5.2vw, 3.35rem); text-wrap: balance;
 }
 .site-name a { color: inherit; text-decoration: none; }

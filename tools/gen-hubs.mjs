@@ -1,14 +1,16 @@
 /* gen-hubs.mjs  -  generate the four series hub index pages and rewrite the
    homepage's card list (lift the series posts into hubs, drop in four hub cards).
-   Run from the repo root: node tools/gen-hubs.mjs   No em dashes. */
+   Idempotent: safe to re-run any time, e.g. after flipping a member from soon to
+   live. Run from the repo root: node tools/gen-hubs.mjs   No em dashes. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/* ---- the four hubs ---------------------------------------------------------
-   Each member is {href,title,thumb,desc} for a live post, or {title,desc,soon}
-   for a planned one (greyed, no link). */
+/* Members are ordered deliberately (see each hub's lead). A live member is
+   {href,title,thumb,desc}; a planned one is {title,desc,soon} (greyed, no link).
+   Titles are kept short and parallel so the list reads as a set; descriptions are
+   written for a reader who has never heard of the book. */
 const live = (href, title, thumb, desc) => ({ href, title, thumb, desc });
 const soon = (title, desc) => ({ title, desc, soon: true });
 
@@ -17,74 +19,75 @@ const HUBS = [
     slug: 'religion', title: 'Religion, the Sacred Books',
     card: { thumb: 'hebrew-bible.jpg', alt: 'An open Torah scroll on velvet with a silver pointer resting in front.',
       desc: 'The ten books billions live by, each in its own language against the great English translations, with the keystones broken down where the translators split.' },
-    lead: 'The books billions live by, side by side. Each scripture in its own language against the great English translations, with the keystone passages broken down where the translators split.',
+    lead: 'The books billions live by, grouped by tradition from China across India to the Middle East. Each scripture in its own language against the great English translations.',
     members: [
-      live('tao-te-ching.html', 'The Tao Te Ching, Side by Side', 'tao-te-ching.jpg', 'Every chapter in the original Chinese against two dozen complete English translations.'),
-      live('zhuangzi.html', 'The Zhuangzi, the Book That Laughs', 'zhuangzi.jpg', "Nine of the wildest Taoist stories, walked in Brook Ziporyn's translation."),
-      live('analects.html', 'The Analects of Confucius, Side by Side', 'analects.jpg', 'All twenty books of Confucius, the great translations stacked and broken down.'),
-      live('dhammapada.html', 'The Dhammapada, Side by Side', 'dhammapada.jpg', "All 423 verses of the Buddha's teaching across seven English translations."),
-      live('gita.html', 'The Bhagavad Gita, Side by Side', 'gita.jpg', 'A warrior freezes before a battle, and his charioteer, who is God, talks him through it.'),
-      live('nagarjuna.html', 'Nagarjuna and the Emptiness of Everything', 'nagarjuna.jpg', 'Nothing exists on its own, including you, and that emptiness is the best news there is.'),
-      live('hebrew-bible.html', 'The Hebrew Bible, Side by Side', 'hebrew-bible.jpg', 'The Tanakh read the way Judaism reads it, the keystones across seven translations.'),
-      live('new-testament.html', 'The New Testament, Side by Side', 'new-testament.jpg', 'Sixteen keystone passages in the original Greek against nine translations, Tyndale to Hart.'),
-      live('quran.html', 'The Quran, Side by Side', 'quran.jpg', 'The Arabic that cannot be translated, against seven English interpretations of the meaning.'),
-      live('guru-granth-sahib.html', 'The Guru Granth Sahib, Side by Side', 'guru-granth-sahib.jpg', 'The book Sikhs enthrone as a living teacher, its keystones across the major translations.'),
-      soon('Rumi, the Masnavi', 'The ecstatic Sufi heart of Islam, and the great translation war.'),
-      soon('The wisdom never written down', 'The oral and indigenous traditions a books series structurally misses.'),
+      live('tao-te-ching.html', 'The Tao Te Ching', 'tao-te-ching.jpg', "Taoism's founding book, written in China about 2,500 years ago: 81 short, riddling poems on living in harmony with the Tao, the nameless way behind all things. The most translated book after the Bible, here in two dozen English versions at once."),
+      live('zhuangzi.html', 'The Zhuangzi', 'zhuangzi.jpg', "The other great Taoist classic, and the funny one. Wild little stories that puncture our certainty, like the man who dreams he is a butterfly and wakes unsure which he is, walked in Brook Ziporyn's translation."),
+      live('analects.html', 'The Analects of Confucius', 'analects.jpg', "The sayings Confucius's students wrote down, the book that shaped Chinese, Korean, and Japanese life for two thousand years. Less about gods than about how to be a decent person: family, learning, and treating others as you would want to be treated."),
+      live('dhammapada.html', 'The Dhammapada', 'dhammapada.jpg', "Buddhism's most loved little book, 423 verses of the Buddha's teaching in its plainest form: the mind makes the world, hatred is never ended by hatred, and the way out of suffering is to want less. Seven English translations side by side."),
+      live('nagarjuna.html', "Nagarjuna's Middle Way", 'nagarjuna.jpg', "The deepest book in Buddhist philosophy, from about 150 CE. Its argument is that nothing, including you, exists on its own, and that this emptiness is not bleak but the very thing that lets anything change or ever be set free."),
+      live('gita.html', 'The Bhagavad Gita', 'gita.jpg', "Hinduism's best-known scripture. On the edge of a battle, a warrior loses his nerve, and his charioteer, who turns out to be God, talks him through how to act in a world of duty and loss. All 700 verses, including the line Oppenheimer quoted at the first atomic test."),
+      live('guru-granth-sahib.html', 'The Guru Granth Sahib', 'guru-granth-sahib.jpg', "The scripture of Sikhism, and the strangest case here: Sikhs treat the book itself as their living teacher, enthroned rather than merely read. One God, honest work, and the radical welcome of Hindu and Muslim saints into its own pages."),
+      live('hebrew-bible.html', 'The Hebrew Bible', 'hebrew-bible.jpg', "The Jewish scriptures, and the root of all three Western religions: creation, the exodus from Egypt, the law, and the prophets' demand for justice. Read here the way Judaism reads it, through argument and never alone."),
+      live('new-testament.html', 'The New Testament', 'new-testament.jpg', "The Christian scriptures: the life and teaching of Jesus, his death and resurrection, and the letters of Paul that built a religion. Sixteen keystone passages in the Greek against nine English translations, from the one Tyndale was burned at the stake for to today."),
+      live('quran.html', 'The Quran', 'quran.jpg', "Islam's holy book, believed to be the literal words of God given to Muhammad in Arabic, which Muslims hold cannot truly be translated. Fourteen keystone passages in the Arabic against seven English versions, each only an interpretation of the meaning."),
+      soon('Rumi, the Masnavi', "The ecstatic Sufi heart of Islam, beloved the world over and famously fought over in translation: the loose, popular versions against the literal scholarly one."),
+      soon('The Wisdom Never Written Down', "The blind spot of any books series: the songlines, oral traditions, and proverbs of the peoples who never wrote a scripture, and what we can still learn from them."),
     ],
   },
   {
     slug: 'philosophy', title: 'Philosophy and Science',
     card: { thumb: 'aristotle.jpg', alt: "Rembrandt's painting of Aristotle resting a hand on a bust of Homer.",
       desc: 'How to think and what is real, from Plato and Aristotle to Darwin and Deutsch, each argument walked one move at a time, the dissenters kept in.' },
-    lead: 'How to think, and what is real. From the Greeks to the moderns, each argument walked one move at a time, with the dissenters kept in the room.',
+    lead: 'How to think, and what is real. The story of Western thought in order, from the ancient Greeks through the Enlightenment to modern science, with the dissenters kept in the room.',
     members: [
-      live('plato.html', "Plato's Cave and the Death of Socrates", 'plato.jpg', 'Executed for asking too many questions: the examined life, the cave, the calm death of Socrates.'),
-      live('aristotle.html', 'Aristotle and the Good Life', 'aristotle.jpg', 'Everyone wants to be happy and mostly chases the wrong things. Here is Aristotle’s answer.'),
-      live('meditations.html', 'The Meditations of Marcus Aurelius', 'marcus-aurelius.jpg', 'The private notebook a Roman emperor wrote to himself, mostly about humility and death.'),
-      live('nietzsche.html', 'Nietzsche and the Case Against Morality', 'nietzsche.jpg', "God is dead, and your humility is a weapon the weak invented. The series' dissenter."),
-      live('mill.html', 'On Liberty, and the Only Reason to Stop You', 'mill.jpg', "Mill's 1859 case for leaving people alone, unless they harm someone else."),
-      live('social-contract.html', 'The Social Contract, Side by Side', 'social-contract.jpg', 'Why should anyone obey the state? Hobbes, Locke, and Rousseau, set against each other.'),
-      live('marx.html', 'Marx and the Gravediggers', 'marx.jpg', "Capitalism's sharpest critic, and the catastrophe in his name, walked one move at a time."),
-      live('darwin.html', 'Darwin and the Watchmaker', 'darwin.jpg', 'A watch in the dirt needs a watchmaker. An eye, Darwin shows, does not.'),
-      live('beginning-of-infinity.html', 'The Beginning of Infinity, Mapped', 'beginning-of-infinity.jpg', "Deutsch's case for optimism: a good explanation is one that is hard to vary."),
-      soon('Camus, The Myth of Sisyphus', 'If life has no built-in meaning, why not quit? The existential keystone.'),
-      soon('Kant and the categorical imperative', 'The other giant of modern philosophy, and the rule he built morality on.'),
-      soon('Sapiens', 'How shared fictions let strangers cooperate, handled skeptically.'),
-      soon('Euclid, and where proof begins', 'Two thousand years of deductive reasoning, from one little book.'),
+      live('plato.html', 'Plato', 'plato.jpg', "Western philosophy starts here, in ancient Athens. Socrates is put to death for asking too many questions, and his student Plato leaves us the most famous image in all of philosophy: prisoners in a cave who mistake shadows on the wall for the real world."),
+      live('aristotle.html', 'Aristotle', 'aristotle.jpg', "Plato's student, and maybe the most influential thinker who ever lived. His Ethics takes up the oldest question, what makes a good life, and answers that happiness is not a feeling but a whole life lived well, built one good habit at a time."),
+      live('meditations.html', 'Marcus Aurelius', 'marcus-aurelius.jpg', "The private journal of a Roman emperor, written to himself and never meant for anyone to read. The most powerful man alive, reminding himself to stay humble, to control only what he can, and to remember he will soon be dead. Stoicism, lived."),
+      live('social-contract.html', 'Hobbes, Locke, and Rousseau', 'social-contract.jpg', "The question that built the modern world: why should anyone obey the government at all? Three thinkers imagine life with no state, then argue their way to very different answers, the seeds of the dictator, of human rights, and of democracy."),
+      live('mill.html', 'John Stuart Mill', 'mill.jpg', "The 1859 case for freedom that still shapes how we argue about it: the only reason to stop an adult from doing something is to keep them from harming someone else. With the strongest defense of free speech ever written."),
+      live('marx.html', 'Karl Marx', 'marx.jpg', "Whatever you make of him, one of the most world-changing books ever written. Marx's argument that history runs on class struggle and that capitalism breeds its own gravediggers, walked honestly, next to the catastrophe carried out in his name."),
+      live('nietzsche.html', 'Nietzsche', 'nietzsche.jpg', "The great wrecking ball. God is dead, he announced, and our morals are not eternal truth but a clever revolt of the weak against the strong. The shelf's resident dissenter, here to attack what all the other books quietly agree on."),
+      live('darwin.html', 'Charles Darwin', 'darwin.jpg', "The most important science book of the modern age. A pocket watch found in the dirt needs a watchmaker; an eye, Darwin shows, does not. How the endless design of living things builds itself, with no designer at all, given enough time."),
+      live('beginning-of-infinity.html', 'David Deutsch', 'beginning-of-infinity.jpg', "A living physicist's case for radical optimism. A good explanation is one that is hard to vary, and from that single test he argues that human knowledge has no built-in limit and that people are the most significant things in the universe."),
+      soon('Camus', "If life has no built-in meaning, the absurdist asks, why not just quit? The answer is not despair but revolt: picture Sisyphus, pushing his rock uphill forever, happy."),
+      soon('Kant', "The other giant of modern philosophy, and the single rule he tried to build all of morality on: act only as you could wish everyone would act."),
+      soon('Sapiens', "How a weak ape took over the planet by believing in shared fictions, money, nations, gods, that let total strangers cooperate. Gripping, and handled skeptically."),
+      soon('Euclid', "Two thousand years of certainty from one little book: where the idea of proving something true, step by airtight step, was born."),
     ],
   },
   {
     slug: 'inner-life', title: 'The Inner Life',
     card: { thumb: 'meditation.jpg', alt: 'A Chola-period granite statue of the Buddha seated in meditation.',
       desc: 'Meaning, the mind, and how to bear a life: Frankl, the spirituality of imperfection, and the truth about every kind of meditation.' },
-    lead: 'Meaning, the mind, and how to bear a life. The great consolations, the recovery literature, and the honest truth about every kind of meditation.',
+    lead: 'Meaning, the mind, and how to bear a life. The great consolations first, then the practices, then the daily psychology of contentment, ending with the seekers who went wrong.',
     members: [
-      live('meditation.html', 'Meditation, Mapped', 'meditation.jpg', 'The truth about every kind of meditation, and how to actually do each one.'),
-      live('frankl.html', "Man's Search for Meaning", 'frankl.jpg', 'A psychiatrist in the Nazi camps on the one thing that kept men alive: a reason.'),
-      live('spirituality-of-imperfection.html', 'The Spirituality of Imperfection', 'spirituality-of-imperfection.jpg', 'To be human is to be imperfect, and the cracks are where the spiritual life starts.'),
-      live('get-used-to-everything.html', 'Do You Get Used to Everything?', 'get-used-to-everything.jpg', 'What fades, what never does (commuting, grief), and the one move you actually get.'),
-      soon('William James, The Varieties of Religious Experience', "Religion as experience, not doctrine. The book behind AA's spiritual language."),
-      soon('Emmet Fox, The Sermon on the Mount', "New Thought, and early AA's textbook before the Big Book existed."),
-      soon('Huxley, The Perennial Philosophy', 'The claim that, underneath, all the mystics are saying one thing.'),
-      soon('The Modern Teachers', 'Watts, Krishnamurti, Ram Dass, Tolle, and the East sold to the West.'),
-      soon('The Chemical Path', 'Psychedelics and the mystical state, from Huxley to the new science.'),
-      soon('Cults: the cage and the business', 'How a path to meaning becomes a prison, or a cash register.'),
+      live('frankl.html', 'Viktor Frankl', 'frankl.jpg', "A psychiatrist who came through the Nazi camps with one lesson: the men who held on were the ones who kept a reason to live. Meaning, not pleasure or power, is what we are really after, and it stays within reach even in suffering."),
+      live('spirituality-of-imperfection.html', 'The Spirituality of Imperfection', 'spirituality-of-imperfection.jpg', "A quiet modern classic stitched together from stories across every tradition. To be human is to be imperfect, and the cracks are where the spiritual life actually starts, not a flaw to fix first. The book that ties this whole shelf together."),
+      live('meditation.html', 'Meditation, Honestly', 'meditation.jpg', "Every kind of meditation in one place, with the hype stripped off: what TM, mindfulness, Zen, and the rest actually are, what the evidence really shows they do and do not do, and how to actually begin, today."),
+      live('get-used-to-everything.html', 'Getting Used to Everything', 'get-used-to-everything.jpg', "Why the new car stops thrilling you and grief slowly lifts, while a loud commute never stops grating. A field guide to habituation: what you adapt to, what you never do, and the one lever you really get, choosing what to get used to."),
+      soon('William James', "The 1902 book behind Alcoholics Anonymous. A scientist takes religious experience seriously as evidence, studying conversions and mystical states by what they actually do in a person's life, not by whether their creeds are true."),
+      soon('Emmet Fox', "A 1934 reading of the Sermon on the Mount as practical mind-power, not a moral scolding. Passed hand to hand in early AA before its Big Book existed, and a root of its idea of a God you understand for yourself."),
+      soon('The Perennial Philosophy', "Aldous Huxley's claim that underneath every religion lies one shared truth, assembled from the mystics of every tradition. Almost the secret thesis of this whole shelf, pressure-tested for where it overreaches."),
+      soon('The Modern Teachers', "How the East got sold to the West in the 20th century, by Alan Watts, Krishnamurti, Ram Dass, and Eckhart Tolle, each with one big idea, plus the honest problem of the guru who turns out to be a fraud."),
+      soon('The Chemical Path', "The oldest shortcut to the mystical experience is a drug, and science is rediscovering it. The old traditions, Huxley's Doors of Perception, the new psilocybin research, and the real risks, all in one place."),
+      soon('When a Path Becomes a Cage', "How a search for meaning hardens into a cult: first the thought-reform playbook, then the cases, from Scientology to Jonestown. A clearly labeled case study, not an endorsement."),
+      soon('When a Path Becomes a Business', "The other failure mode, spirituality with a price tag: est and Landmark, A Course in Miracles, the prosperity gospel, and the line where teaching ends and selling begins."),
     ],
   },
   {
     slug: 'power-story-love', title: 'Power, Story, and Love',
     card: { thumb: 'odyssey.jpg', alt: 'The Siren Vase: Odysseus lashed to the mast as bird-bodied Sirens fly around his ship.',
       desc: 'The human dramas: the Art of War on winning without fighting, the Odyssey on getting home, with power, story, and love still to come.' },
-    lead: 'The human dramas. How we fight, how we get home, and how we love: power without illusions, the oldest stories, and the art of desire.',
+    lead: 'The human dramas, in four movements: how we fight, how we tell our oldest stories, how we love, and what we find beautiful.',
     members: [
-      live('art-of-war.html', 'The Art of War, Side by Side', 'art-of-war.jpg', 'The most famous war book says the best way to win is to never fight.'),
-      live('odyssey.html', 'The Odyssey, the Long Way Home', 'odyssey.jpg', 'The long way home, and what it costs, walked one monster at a time.'),
-      soon('Machiavelli, The Prince', 'Power as it actually is, stripped of the moralizing.'),
-      soon('Dostoevsky, the Grand Inquisitor', 'The sharpest argument against God ever written, in the mouth of a believer.'),
-      soon("Plato's Symposium", 'The foundational Western text on love, and the ladder from desire to the divine.'),
-      soon('The Kama Sutra', 'The art of living well, of which erotic love is one civilized part.'),
-      soon('In Praise of Shadows', 'A Japanese aesthetic: beauty in shadow, imperfection, and the worn.'),
+      live('art-of-war.html', 'The Art of War', 'art-of-war.jpg', "The oldest and most famous book on strategy, from China 2,500 years ago, and its central lesson is a twist: the best way to win is never to fight at all. Read everywhere now, from boardrooms to ballfields. Seven translations side by side."),
+      live('odyssey.html', 'The Odyssey', 'odyssey.jpg', "The founding adventure story of the West. A soldier spends ten years trying to get home from a war, through monsters, witches, and the sea, winning by cunning more than force. Walked one monster at a time in Emily Wilson's translation."),
+      soon('The Prince', "Machiavelli's blunt 1532 manual on power as it really is, not as it ought to be: a ruler who insists on staying good among the wicked will be destroyed. The book that turned a man's name into an insult."),
+      soon('The Grand Inquisitor', "The most powerful argument against God ever written, buried inside a Russian novel. Christ returns to earth, and the Church arrests him, for the crime of handing people a freedom they cannot bear."),
+      soon('The Symposium', "Plato's dinner party on love, climbing from drunken jokes to the sublime, and the source of Platonic love, which almost nobody has right. Where the idea that you have an other half comes from."),
+      soon('The Kama Sutra', "The most misunderstood book in the world: not a sex manual but a guide to living well, of which desire is one civilized art. The prudish Victorian translation that made it a scandal, set against an honest modern one."),
+      soon('In Praise of Shadows', "A Japanese reply to Western taste: beauty lives in shadow, age, and imperfection, not in bright light and the brand new. Wabi-sabi, explained through a dim room and a cup of tea."),
     ],
   },
 ];
@@ -141,7 +144,6 @@ const hubPage = (h) => `<!DOCTYPE html>
         <span class="hs-links">
           <a class="hs-about" href="/">Home</a>
           <a class="hs-about" href="about.html">About</a>
-          <a class="hs-about" href="archive.html">Archive</a>
         </span>
       </div>
       <p class="hs-readout" role="status" aria-live="polite"></p>
@@ -166,8 +168,12 @@ ${h.members.map(memberCard).join('\n')}
 
 HUBS.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + h.members.filter((m) => !m.soon).length + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
 
-/* ---- homepage surgery: drop the series cards, drop in four hub cards -------- */
-const REMOVE = new Set(HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)));
+/* ---- homepage surgery: drop series + old hub cards, drop in four hub cards.
+   REMOVE includes the hub slugs so re-running never doubles the hub cards. ----- */
+const REMOVE = new Set([
+  ...HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)),
+  ...HUBS.map((h) => h.slug + '.html'),
+]);
 const hubHomeCard = (h) => `        <li class="article-list-item fade-in">
           <a class="article-item" href="${h.slug}.html">
             <span class="article-item-thumb"><img src="assets/thumbs/${h.card.thumb}" width="600" height="400" loading="eager" decoding="async" alt="${h.card.alt}"></span>
@@ -178,8 +184,7 @@ const hubHomeCard = (h) => `        <li class="article-list-item fade-in">
         </li>`;
 
 let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
-const liRe = /<li class="article-list-item[\s\S]*?<\/li>/g;
-const allLis = idx.match(liRe) || [];
+const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
 let removed = 0;
 const keptLis = allLis.filter((li) => {
   const href = (li.match(/href="([^"]+)"/) || [])[1];
@@ -189,4 +194,4 @@ const keptLis = allLis.filter((li) => {
 const newList = HUBS.map(hubHomeCard).join('\n') + '\n' + keptLis.join('\n');
 idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
 writeFileSync(join(ROOT, 'index.html'), idx);
-console.log('homepage: removed ' + removed + ' series cards, kept ' + keptLis.length + ', added ' + HUBS.length + ' hub cards');
+console.log('homepage: removed ' + removed + ' series/old-hub cards, kept ' + keptLis.length + ', added ' + HUBS.length + ' hub cards');
