@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Body Rhymes</title>
+  <meta name="description" content="A sourced field guide to the strange, normal things the body does at the very start and the very end of life, from a newborn leaking milk and a newborn girl's first 'period' to the reflex you are born with, lose as a toddler, and only get back if your brain fails. Why the far end of life keeps echoing the near one.">
+  <meta property="og:title" content="The Body Rhymes">
+  <meta property="og:description" content="For its first week a newborn runs on its mother's hormones, which is why a baby of either sex can leak milk and a newborn girl can have a small period. A field guide to the normal-but-startling things the body does at both ends of life, and why the two ends rhyme.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/the-body-rhymes.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/the-body-rhymes-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="800">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/the-body-rhymes-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE BODY RHYMES
+     A sourced field guide to the normal-but-startling things the
+     body does at the very start and the very end of life, built
+     as mirror pairs (each young fact set next to its old-age
+     rhyme), climbing to the reflexes that literally return at the
+     end, and closing on the reader. Same site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono) and
+     the same field-guide components as the other posts, plus one
+     of its own: the .echo "notice the pattern" line. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 780px;
+    --wide: 1080px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #d4c4a0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
+    --c-clay:  #cf9f78;
+    --c-brick: #b8796d;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+
+  /* per-section color rhythm */
+  #tide   { --sec-accent:#d9978c; }
+  #dimming{ --sec-accent:#dfc288; }
+  #tears  { --sec-accent:#8fb3c7; }
+  #frame  { --sec-accent:#cf9f78; }
+  #memory { --sec-accent:#b79bc4; }
+  #loop   { --sec-accent:#9ec79a; }
+  #farend { --sec-accent:#d4c4a0; }
+
+  /* ---------- THE "NOTICE THE PATTERN" LINE (.echo) ---------- */
+  .echo { margin: 1.7em 0 0; padding: 0.15em 0 0.15em 1.15em; border-left: 2px solid var(--sec-accent, var(--accent)); font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.5; color: var(--text-dim); text-wrap: pretty; }
+  .echo b { font-style: normal; font-weight: 600; color: var(--text); }
+
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- EVIDENCE GRADES + INLINE CITES ---------- */
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
+  .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
+  .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
+  .g-c { color: #f2d69d; background: rgba(230,192,116,0.20); border-color: rgba(230,192,116,0.55); }
+  .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
+  .src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; }
+  .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); }
+
+  /* ---------- PHOTOGRAPHY (free-license, borderless, filling the frame) ---------- */
+  figure.photo { margin: clamp(2.2rem, 5vw, 3.4rem) 0; }
+  figure.photo img { display: block; width: 100%; height: auto; border-radius: 10px; background: var(--img-bg, #232a25); }
+  figure.photo figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.5; margin-top: 0.75em; text-wrap: pretty; }
+  figure.photo .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
+  figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
+  figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  figure.photo .cred a:hover { color: var(--accent-hover); }
+  figure.photo.inset img { max-width: 460px; margin-left: auto; margin-right: auto; }
+  figure.photo.inset figcaption { max-width: 560px; margin-left: auto; margin-right: auto; }
+
+  /* ---------- HONEST NOTE ---------- */
+  .disclaimer { margin: 1.9em 0 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
+  .disclaimer strong { color: var(--accent-hover); }
+
+  /* ---------- REFERENCES ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.7em; margin: 0.4em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.4em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources li.shead { list-style: none; margin: 1.3em 0 0.4em -1.7em; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  #sources li.shead:first-child { margin-top: 0.2em; }
+  #sources .lede { font-size: 0.98rem; }
+  #sources .legend { font-size: 0.8rem; gap: 0.4rem 1rem; margin: 1em 0 1.1em; }
+
+  /* ---------- ANIMATION ---------- */
+  @media all {
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    .disclaimer, figure.photo { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back be-back"><span class="pb-label">Home</span></a>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <h1 class="hero-title">The Body Rhymes</h1>
+    <p class="hero-dek">The strange, normal things the body does at the very start and the very end of life, and why the far end keeps echoing the near one.</p>
+    <p class="hero-meta">A field guide to both ends of the body <span class="sep">/</span> <b>30 sources</b> <span class="sep">/</span> 16 min read</p>
+  </header>
+
+  <main id="guide">
+
+  <figure class="photo reveal">
+    <picture>
+      <source type="image/webp" srcset="assets/images/the-body-rhymes/newborn.webp">
+      <img src="assets/images/the-body-rhymes/newborn.jpg" width="1600" height="1035" loading="eager" decoding="async" alt="A sleeping newborn on its first day, wrapped in a pale star-print blanket, both tiny fists curled up beside its face.">
+    </picture>
+    <figcaption>The first day. For about a week this baby will run partly on hormones that crossed the placenta from its mother, and they leave in ways you can see.
+      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Born_baby,_first_day.jpg">Jegadeeswaran Natarajan, "Born baby, first day" (2019). CC BY-SA 4.0, via Wikimedia Commons.</a></span>
+    </figcaption>
+  </figure>
+
+  <!-- chapter strip -->
+  <nav class="chapters" aria-label="Chapters">
+    <span class="lead">Both ends</span>
+    <a href="#start">Start here</a>
+    <a href="#tide">The hormone tide</a>
+    <a href="#dimming">The light</a>
+    <a href="#tears">Tears</a>
+    <a href="#frame">The frame</a>
+    <a href="#memory">Memory</a>
+    <a href="#loop">The reflex back</a>
+    <a href="#farend">Your end of it</a>
+  </nav>
+
+  <!-- ===================== 1. START HERE ===================== -->
+  <section id="start" class="sec first" aria-labelledby="start-h">
+    <span class="sec-kicker">Start here</span>
+    <h2 id="start-h" class="sec-h">Normal is the middle</h2>
+
+    <p class="lede">A newborn boy can leak milk from his nipples. So can a newborn girl, and around her third day she may pass a few drops of blood, a real period in miniature. Nobody did anything wrong. It is her mother's hormones leaving her body, about as normal as the yellow that will tint her skin by the end of the week.</p>
+
+    <p>We think of the body as a steady thing. The one you have right now mostly just works. It holds its temperature, clears its own waste, keeps its shape, files the day's memories without being asked. That version, the one you call your body, is a narrow setting it holds for a few decades in the middle. At both ends of life it does things that would send a healthy 35-year-old to an emergency room, and at those ends they are routine.</p>
+
+    <p>The strangest part is that the two ends rhyme. The body comes apart in roughly the order it came together, and a handful of the newborn's odd tricks return at the very end, sometimes the exact same reflex. It is closer to a loop than a line.</p>
+
+    <p>You can see the narrow middle in the raw numbers. Plot the odds of dying against age and you get a U: high in the first year, falling to the lowest it will ever be at around age ten, then climbing for the rest of your life. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5498292/">Engelman 2017</a></span> The body that simply works is the bottom of that curve. Most of a life is spent climbing back out of it.</p>
+
+    <p>What follows is a tour of the two ends, paired. Each entry sets one strange thing the body does at the start next to the strange thing it does at the finish that rhymes with it. All of it is normal. That is the part that gets under your skin.</p>
+
+    <div class="disclaimer reveal">
+      <strong>A few of these have evil twins.</strong> Jaundice in the first day, a soft spot that bulges, a baby's breathing pause past 20 seconds, an old person whose height is dropping fast: those are a doctor's business, not this page's. This is a field guide to the normal versions, the ones nobody warns you are coming.
+    </div>
+  </section>
+
+  <!-- ===================== 2. THE HORMONE TIDE ===================== -->
+  <section id="tide" class="sec" aria-labelledby="tide-h">
+    <span class="sec-kicker">The hormone tide</span>
+    <h2 id="tide-h" class="sec-h">You ran on her hormones, then ran out</h2>
+
+    <p>For the first days of your life you were not running on your own chemistry. In the last weeks of pregnancy a mother's estrogen crosses the placenta and switches on tissue all over the body of the child. Then the baby is born, the supply is cut, and the hormone drains away over a few days. The drain is the part you can see.</p>
+
+    <p>About 1 in 20 newborns, boys and girls alike, leak actual milk from the breast. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4422278/">Khan 2015</a></span> The old word for it is witch's milk, from a time when people thought a spirit was stealing it in the night. Most newborns, around 70 percent, have breast buds you can feel. And somewhere between 3 and 10 percent of newborn girls have a small vaginal bleed in the first week, the lining their mother's estrogen built up, shedding now that the estrogen is gone. <span class="src"><a href="https://en.wikipedia.org/wiki/Neonatal_uterine_bleeding">Ogawa 2024</a></span> None of it means anything is wrong. It is a hormone withdrawal, the first of the millions she will run on her own later.</p>
+
+    <p>Now skip to the far end, where the same tide turns and runs the other way. After menopause a woman's estrogen falls while her body keeps making a little testosterone, and the ratio tips. Follicles that sat quiet for sixty years read the new signal and wake up: roughly 4 in 10 women past menopause grow new facial hair, most often on the chin. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21128905/">Ali 2011</a></span> Men get the mirror image of the same chemistry. The androgens that thin the hair on top of a man's head turn the fine hairs inside his ears and nose into coarse ones, a switch that can take thirty years of exposure to throw, which is why it belongs to old men and not young ones. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/18844710/">Randall 2008</a></span></p>
+
+    <p class="echo"><b>You arrive on a flood of someone else's hormones and leave on the slow reversal of your own.</b> Both times the body grows hair and tissue it has no use for, and both times it is chemistry running with nobody at the wheel.</p>
+  </section>
+
+  <!-- ===================== 3. THE LIGHT ===================== -->
+  <section id="dimming" class="sec" aria-labelledby="dimming-h">
+    <span class="sec-kicker">The light</span>
+    <h2 id="dimming-h" class="sec-h">The light comes up slowly, and goes down the same way</h2>
+
+    <p>A newborn can see, but barely, and only up close. Its sharpest focus falls at about 8 to 12 inches, which happens to be the distance from a feeding baby's eyes to its mother's face. <span class="src"><a href="https://www.healthychildren.org/English/ages-stages/baby/Pages/Babys-Vision-Development.aspx">AAP</a></span> Color arrives over months. At first only big, saturated, mostly red things register at all, and the world comes in dim and soft and partial.</p>
+
+    <p>It leaves the same way. The lens of the eye yellows and stiffens over the decades, and the pupil shrinks by about 0.4 mm every ten years. Put those together and the retina of a 60-year-old takes in roughly a third of the light a 20-year-old's does in the same room. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK218971/">Weale 1961</a></span> The yellowing lens absorbs blue first, so blues go muddy and dark while the reds and yellows hold on. <span class="src"><a href="https://opg.optica.org/ao/abstract.cfm?uri=ao-26-8-1437">Pokorny 1987</a></span></p>
+
+    <p>You can watch this happen to a painter. Claude Monet's cataracts browned the lenses of his eyes in his seventies. By 1922 his water-lily canvases had gone red and muddy, and he had taken to sorting his paint tubes by the printed labels because he could no longer trust the colors to his eye. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4408507/">Gruener 2015</a></span> Then surgeons removed the clouded lens in 1923, and the opposite happened. With nothing left to filter it, blue and even ultraviolet light came flooding in, and he complained that everything now looked too blue. He went back and repainted some of the muddy canvases once he could see them again.</p>
+
+    <figure class="photo reveal">
+      <picture>
+        <source type="image/webp" srcset="assets/images/the-body-rhymes/monet-footbridge.webp">
+        <img src="assets/images/the-body-rhymes/monet-footbridge.jpg" width="1500" height="1143" loading="lazy" decoding="async" alt="Monet's late painting of the Japanese footbridge over his lily pond, dissolved into thick swirls of maroon, rust, and orange, with almost no blue or green left.">
+      </picture>
+      <figcaption>The footbridge Monet had painted for thirty years, seen through cataract-browned eyes around 1920 to 1922. The greens and blues have burned down to rust and maroon. This is close to what his world looked like from the inside, before surgery let the blue back in.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:1920-22_Claude_Monet_The_Japanese_Footbridge_MOMA_NY_anagoria.JPG">Claude Monet, "The Japanese Footbridge" (c. 1920-22). Public domain, via Wikimedia Commons (Museum of Modern Art, New York).</a></span>
+      </figcaption>
+    </figure>
+
+    <p class="echo"><b>The world dims and yellows on the way out</b> in nearly the same way it was dim and colorless on the way in. The first clear thing a baby sees is a face a foot away. The eyes meet in the middle, at a world of accurate color most people never think to be grateful for.</p>
+  </section>
+
+  <!-- ===================== 4. TEARS ===================== -->
+  <section id="tears" class="sec" aria-labelledby="tears-h">
+    <span class="sec-kicker">Tears</span>
+    <h2 id="tears-h" class="sec-h">You come in and go out without them</h2>
+
+    <p>A crying newborn usually makes no tears. The plumbing is there from birth, but for the first few weeks, sometimes a couple of months, it does not produce enough to spill, so the cry is loud and dry. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9639446/">Isenberg 1998</a></span> Tears that actually fall are a skill the body switches on a little after it first needs to cry.</p>
+
+    <p>It switches them off again at the other end. Tear production drops with age until dry eye is common enough that more than one in five women over 75 has it. <span class="src"><a href="https://www.tfosdewsreport.org/report-epidemiology_report/71_36/en/">TFOS DEWS II</a></span> The eyes that could not yet cry at the start become eyes that can no longer quite manage it. In between sits a whole life of working tears the body never once mentions.</p>
+  </section>
+
+  <!-- ===================== 5. THE FRAME ===================== -->
+  <section id="frame" class="sec" aria-labelledby="frame-h">
+    <span class="sec-kicker">The frame</span>
+    <h2 id="frame-h" class="sec-h">Unfinished at the start, undone at the end</h2>
+
+    <p>A newborn skeleton is a kit that has not been fully assembled. A baby has around 270 separate bones, many still soft cartilage, that will knit over the next twenty-odd years into the roughly 206 of an adult. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK537199/">StatPearls</a></span> (You will see 300 quoted a lot. It is a rounded guess, because the true count depends on when you decide to count the pieces that have not fused yet.) The skull is the clearest case. It ships in plates with gaps between them, the soft spots, so the head can fold to clear the birth canal and then keep pace with a fast-growing brain. You can feel a pulse through the largest gap. It does not close over until sometime after the first birthday. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK542197/">Fontanelles</a></span></p>
+
+    <p>At the far end the frame comes apart. The obvious part is height: you lose an inch or two, more in women, as the cushioning discs between the vertebrae dry out and the spine settles and curves. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/10547143/">Sorkin 1999</a></span> The stranger part is the face. The bones themselves shrink and tilt, so the eye sockets widen by something like a sixth, the angle of the jaw opens out, and the middle of the face pulls back and down. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/20871486/">Shaw 2011</a></span> The skull's own openings, sealed in childhood, slowly widen again. The frame that took twenty years to put together spends its last years quietly taking itself apart.</p>
+
+    <figure class="photo reveal inset">
+      <picture>
+        <source type="image/webp" srcset="assets/images/the-body-rhymes/rembrandt-63.webp">
+        <img src="assets/images/the-body-rhymes/rembrandt-63.jpg" width="789" height="1000" loading="lazy" decoding="async" alt="Rembrandt's self-portrait at 63: an old man in a dark fur-collared coat, face lined and jowled, eyes steady and tired.">
+      </picture>
+      <figcaption>Rembrandt painted himself at 63, the year he died, and left the aging in. The eye sockets have widened, the jaw has softened, the middle of the face has settled. He noticed all of it.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Self_Portrait_at_the_Age_of_63.jpg">Rembrandt van Rijn, "Self-Portrait at the Age of 63" (1669). Public domain, National Gallery, London, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <p>The body also stops holding its own heat at both ends, for matching reasons. A newborn has too little fat to insulate it and cannot shiver well yet. An old body has lost the fat and the muscle and the quick blood-vessel reflexes, and often does not feel the cold coming on at all. <span class="src"><a href="https://journals.physiology.org/doi/full/10.1152/japplphysiol.00202.2003">Kenney 2003</a></span> We put hats on babies for the same reason we worry about an old man in a cold house. Neither end can keep itself warm.</p>
+
+    <p class="echo"><b>You are built up and taken down in the same direction.</b> Soft, unfinished, and unable to hold your own heat at one end. Softening, unsettling, and unable to hold it again at the other.</p>
+  </section>
+
+  <!-- ===================== 6. MEMORY ===================== -->
+  <section id="memory" class="sec" aria-labelledby="memory-h">
+    <span class="sec-kicker">Memory</span>
+    <h2 id="memory-h" class="sec-h">A hole at the start, a hole at the end</h2>
+
+    <p>You cannot remember being a baby. Almost no one's memories reach back before about age three, and the earliest ones are thin and few. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/25844874/">Bauer 2015</a></span> The old assumption was that an infant brain simply could not record yet. Newer work points the other way: babies do form memories, but the hippocampus, the brain's filing clerk, is rewiring itself so fast in the first years that the early files get overwritten or lost track of. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/24812394/">Akers 2014</a></span> The memories may be made and then buried. Either way, the start of your life is a room you cannot get back into.</p>
+
+    <p>The other hole opens at the end, and it fills from the wrong side. In ordinary aging it is recent memory that thins first, what you did this morning, while the deep past stays sharp. Ask a very old person for their most vivid memories and a strange share of them cluster in one window, roughly ages 10 to 30, the years that built who they are. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/9421572/">Rubin 1997</a></span> The newest memories will not stick and the oldest will not leave. A life that opened behind a wall you cannot see over closes with the recent years dissolving while the early ones stay lit.</p>
+  </section>
+
+  <!-- ===================== 7. THE REFLEX BACK ===================== -->
+  <section id="loop" class="sec" aria-labelledby="loop-h">
+    <span class="sec-kicker">The loop</span>
+    <h2 id="loop-h" class="sec-h">The same reflex at both ends</h2>
+
+    <p>Stroke the sole of a newborn's foot and the big toe curls up while the others fan out. It is called the Babinski response, and in a baby it is exactly right. Around the first or second birthday it disappears, because the long nerves running from brain to spinal cord finish wrapping themselves in insulation and the matured brain takes over and quiets the reflex. From then on, stroke a healthy sole and the toes curl down. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK519009/">StatPearls</a></span></p>
+
+    <p>The up-going toe comes back exactly once more, when those same nerves are damaged. A Babinski sign in an adult is one of the oldest tells in neurology that something has broken in the wiring between brain and cord. It is the reflex you were born with, lost as a toddler, and will only ever show again if the wiring fails. The newborn grasp runs the same arc. A baby's grip is strong enough that it can briefly hang from a bar by its own hands, <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3384944/">Futagi 2012</a></span> the reflex fades in infancy, and it reappears in some dementias, when the front of the brain wears down and stops holding it in check. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK395/">Clinical Methods</a></span></p>
+
+    <p>This is not a metaphor, it has a clinical name. In Alzheimer's disease, abilities tend to fall away in close to the reverse of the order a child gains them. The neurologist Barry Reisberg built a standard staging scale on exactly that pattern: a person who can no longer pick out their own clothes is functioning at about the level of a five-to-seven-year-old, and by the last stage the losses run backward through the first year of life, speech down to a few words and then one and then none, the ability to walk, then to sit up, and finally, the way it came first in the baby, the ability to hold up the head. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/3249767/">Reisberg 1988</a></span></p>
+
+    <p>It is easy to make this prettier and falser than it is, so here is the careful version. This is the brain failing, in a disease, not a feature of growing old. Most people reach the end without their toes ever turning back up. The order is rough, not a law, and a great deal survives it. People deep in dementia still laugh at a joke, which no neat reversal of childhood would predict. <span class="src"><a href="https://www.cambridge.org/core/journals/ageing-and-society/article/humour-irony-and-sarcasm-in-severe-alzheimers-dementia-a-corrective-to-retrogenesis/C121ED0BA30FF7D0D13D82431A8FDE7A">Ageing &amp; Society 2024</a></span> What is left when you strip out the overreach is still strange enough. The body keeps a few of its very first reflexes in a back room for ninety years, and the only key that opens that room again is damage.</p>
+  </section>
+
+  <!-- ===================== 8. YOUR END OF IT ===================== -->
+  <section id="farend" class="sec" aria-labelledby="farend-h">
+    <span class="sec-kicker">Your end of it</span>
+    <h2 id="farend-h" class="sec-h">You are already in it</h2>
+
+    <p>If you are in your thirties or forties with no baby and no aging parent in the house, both ends of this are easy to file as other people's news. They are not. The far end has already started in you. It just starts so quietly that it reads as nothing at all.</p>
+
+    <p>The first move is usually the eyes. Somewhere around 42 the lens stiffens enough that you can no longer pull focus up close, and you start holding the menu a little farther from your face. <span class="src"><a href="https://www.ncbi.nlm.nih.gov/books/NBK560568/">Presbyopia</a></span> It is called presbyopia, it is universal, and it is the same lens that will keep yellowing and dimming for the rest of your life. The highest sounds began slipping out of range even earlier, in your twenties. <span class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7496655/">Cochlear aging</a></span> Your hair has been graying since your thirties. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/22716034/">Panhard 2012</a></span> You passed peak bone around thirty and have given a little back every year since. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/21520276/">Baxter-Jones 2011</a></span> The retina is already letting in less light than it did when you were twenty.</p>
+
+    <p>None of that is a countdown, and the countdown is not the point. The shape is the point. You spent the first years of your life unfinished, running on borrowed chemistry, unable to hold your own heat or your tears or your memories or the curl of your own toes. You will spend the last ones handing those same things back, roughly in reverse. The long, steady stretch between, the body you think of as simply and permanently yours, is the smallest part of the loop and the only part that holds still.</p>
+
+    <p>You were yellow once. You ran on someone else's hormones, and you could not yet cry. Some of that is waiting for you again at the far end, and that is less a thing to dread than a thing to notice. You are not an object slowly wearing out. You are a process the universe is briefly running, and for a few decades in the middle it runs so smoothly you can forget it is running at all.</p>
+  </section>
+
+  <!-- ===================== SOURCES ===================== -->
+  <section id="sources" class="sec">
+    <span class="sec-kicker">The fine print</span>
+    <h2 class="sec-h">Sources, and how to read them</h2>
+    <p class="lede">Every number here is tied to a real source, cited where it appears. The research behind it was told to attack the claims rather than flatter them, which is why the awkward facts are left in: the famous "300 bones" is a rounded guess, the line that "ears never stop growing" is mostly gravity and not growth, and the reflexes that come back at the end come back as the brain fails, not as a normal part of getting old.</p>
+    <details class="u-collapse">
+      <summary class="u-collapse-s">The full list, grouped by topic</summary>
+    <div class="legend">
+      <span><span class="grade g-a">solid</span> textbook fact or strong consensus</span>
+      <span><span class="grade g-b">good</span> one strong source or primary record</span>
+      <span><span class="grade g-c">mixed</span> contested or still moving</span>
+      <span><span class="grade g-d">thin</span> a single study or popular claim</span>
+    </div>
+    <ol>
+      <li class="shead">The beginning</li>
+      <li value="1"><b>Khan SA, et al. (2015).</b> Neonatal mastauxe (newborn breast enlargement), including witch's milk and breast buds (~70%). <i>PMC4422278.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4422278/">ncbi.nlm.nih.gov</a> <span class="grade g-b">good</span></li>
+      <li><b>MedlinePlus.</b> Hormonal effects in newborns (the one mechanism behind the milk, the bleed, and the swelling). <a href="https://medlineplus.gov/ency/article/001911.htm">medlineplus.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>Ogawa, et al. (2024); Dekker, et al. (2021).</b> Neonatal uterine bleeding (overt bleeding in about 3 to 10% of newborn girls). <a href="https://en.wikipedia.org/wiki/Neonatal_uterine_bleeding">overview + citations</a> <span class="grade g-c">mixed</span></li>
+      <li><b>StatPearls.</b> Neonatal Jaundice (about 60% of term newborns; the infant liver conjugates at roughly 1% of the adult rate). <a href="https://www.ncbi.nlm.nih.gov/books/NBK532930/">ncbi.nlm.nih.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>AAP / HealthyChildren.</b> Baby's vision development (sharpest focus at about 8 to 12 inches; color builds over months). <a href="https://www.healthychildren.org/English/ages-stages/baby/Pages/Babys-Vision-Development.aspx">healthychildren.org</a> <span class="grade g-a">solid</span></li>
+      <li><b>Isenberg SJ, et al. (1998).</b> Tear production in the newborn. <i>Arch Ophthalmol.</i> The plumbing works at birth; the overflow that spills lags by weeks to months. <a href="https://pubmed.ncbi.nlm.nih.gov/9639446/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>StatPearls.</b> Anatomy, Bones (about 270 bones at birth fusing toward 206; the 300 figure is rounded and soft). <a href="https://www.ncbi.nlm.nih.gov/books/NBK537199/">ncbi.nlm.nih.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>StatPearls.</b> Fontanelles (the palpable pulse at the soft spot; the anterior one closes well after the first birthday). <a href="https://www.ncbi.nlm.nih.gov/books/NBK542197/">ncbi.nlm.nih.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>StatPearls.</b> Babinski Reflex (up-going toe normal to ~1 to 2 years, then a sign of corticospinal-tract damage). <a href="https://www.ncbi.nlm.nih.gov/books/NBK519009/">ncbi.nlm.nih.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>Futagi Y, Toribe Y, Suzuki Y (2012).</b> The grasp reflex in infancy (and Robinson's 1891 hanging-infant study). <i>Int J Pediatr.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3384944/">PMC3384944</a> <span class="grade g-b">good</span></li>
+      <li><b>Bauer PJ (2015).</b> A complementary process account of infantile amnesia (earliest memories from about age 3). <i>Psychological Review.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/25844874/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>Akers KG, et al. (2014); Yates &amp; Turk-Browne (2025).</b> Infant forgetting: hippocampal overwriting in mice, and 2025 fMRI evidence that infants do encode memories (so it may be a retrieval problem). <i>Science.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/24812394/">Akers</a> / <a href="https://pubmed.ncbi.nlm.nih.gov/40112047/">Yates</a> <span class="grade g-c">mixed</span></li>
+
+      <li class="shead">The end</li>
+      <li value="13"><b>Ali I, Wojnarowska F (2011).</b> Physiological changes in skin and hair after menopause (~39% report new facial hair, the chin most common). <i>Br J Dermatol.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/21128905/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>Randall VA (2008).</b> Androgens and hair growth (the paradox: the same hormone thins the scalp and coarsens the ears and nose). <i>Dermatologic Therapy.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/18844710/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>Weale RA (1961); NIOSH, The Aging Eye.</b> A 60-year-old retina receives about one-third the light of a 20-year-old's (smaller pupil plus a yellower lens). <a href="https://www.ncbi.nlm.nih.gov/books/NBK218971/">ncbi.nlm.nih.gov</a> <span class="grade g-b">good</span></li>
+      <li><b>Pokorny J, Smith VC, Lutze M (1987).</b> Aging of the human lens (it absorbs short, blue wavelengths first). <i>Applied Optics.</i> <a href="https://opg.optica.org/ao/abstract.cfm?uri=ao-26-8-1437">optica.org</a> <span class="grade g-b">good</span></li>
+      <li><b>Gruener A (2015).</b> The effect of cataracts and cataract surgery on Claude Monet. <i>Br J Gen Pract.</i> (Marmor (2016) explains why the same story does <i>not</i> hold for Turner.) <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4408507/">PMC4408507</a> <span class="grade g-b">good</span></li>
+      <li><b>Stapleton F, et al. (2017).</b> TFOS DEWS II Epidemiology Report (dry eye climbs with age; more than 1 in 5 women over 75). <i>The Ocular Surface.</i> <a href="https://www.tfosdewsreport.org/report-epidemiology_report/71_36/en/">tfosdewsreport.org</a> <span class="grade g-a">solid</span></li>
+      <li><b>Sorkin JD, Muller D, Andres R (1999).</b> Longitudinal change in height (the Baltimore study; loss accelerates with age, more in women). <i>Am J Epidemiol.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/10547143/">PubMed</a> <span class="grade g-a">solid</span></li>
+      <li><b>Shaw RB, et al. (2011); Mendelson &amp; Wong (2012).</b> Aging of the facial skeleton (it resorbs and tilts; the eye socket widens, the jaw angle opens, the midface retrudes). <i>Plast Reconstr Surg.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/20871486/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>Kenney WL, Munce TA (2003).</b> Invited review: aging and human temperature regulation. <i>J Appl Physiol.</i> (Plus CDC MMWR on hypothermia deaths skewing old.) <a href="https://journals.physiology.org/doi/full/10.1152/japplphysiol.00202.2003">physiology.org</a> <span class="grade g-b">good</span></li>
+      <li><b>Rubin DC, Schulkind MD (1997).</b> The distribution of autobiographical memories across the lifespan (the reminiscence bump, ~ages 10 to 30). <i>Mem Cognit.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/9421572/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>Reisberg B (1988); Reisberg B, et al. (2002).</b> The FAST staging scale, and retrogenesis in Alzheimer's (loss in roughly the reverse order of childhood gains; head control goes last). <i>Psychopharmacol Bull / Am J Alzheimers Dis.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/3249767/">FAST</a> / <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10833976/">retrogenesis</a> <span class="grade g-b">good</span></li>
+      <li><b>Clinical Methods (NCBI).</b> The suck, snout, palmomental, and grasp reflexes (frontal release signs: infant reflexes disinhibited when the frontal lobes fail). <a href="https://www.ncbi.nlm.nih.gov/books/NBK395/">ncbi.nlm.nih.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>Schweda, et al. (2024).</b> Humour, irony and sarcasm in severe Alzheimer's: a corrective to retrogenesis (not everything reverses; humor survives). <i>Ageing &amp; Society.</i> <a href="https://www.cambridge.org/core/journals/ageing-and-society/article/humour-irony-and-sarcasm-in-severe-alzheimers-dementia-a-corrective-to-retrogenesis/C121ED0BA30FF7D0D13D82431A8FDE7A">cambridge.org</a> <span class="grade g-c">mixed</span></li>
+
+      <li class="shead">Normal is the middle, and your end of it</li>
+      <li value="26"><b>Engelman M, Seplaki CL, Varadhan R (2017).</b> A quiescent phase in human mortality (the low-risk window of late childhood), after Medawar (1952). <i>Demography.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5498292/">PMC5498292</a> <span class="grade g-b">good</span></li>
+      <li><b>StatPearls.</b> Presbyopia (near focus fails in the early 40s as the lens stiffens; effectively universal). <a href="https://www.ncbi.nlm.nih.gov/books/NBK560568/">ncbi.nlm.nih.gov</a> <span class="grade g-a">solid</span></li>
+      <li><b>Pathology and mechanisms of cochlear aging.</b> Age-related hearing loss starts at the highest frequencies, from early adulthood (multifactorial: aging plus a lifetime of noise). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7496655/">PMC7496655</a> <span class="grade g-b">good</span></li>
+      <li><b>Panhard S, Lozano I, Loussouarn G (2012).</b> Greying of the human hair: a worldwide survey (graying typically starts in the 30s; the "50/50/50" rule is a myth). <i>Br J Dermatol.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/22716034/">PubMed</a> <span class="grade g-b">good</span></li>
+      <li><b>Baxter-Jones ADG, et al. (2011).</b> Bone mineral accrual from 8 to 30 years of age (peak bone mass is reached by about 30). <i>J Bone Miner Res.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/21520276/">PubMed</a> <span class="grade g-b">good</span></li>
+    </ol>
+    </details>
+    <hr class="u-divider">
+  </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/the-body-rhymes.js"></script>
+</body>
+</html>
