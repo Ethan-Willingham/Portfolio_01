@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emmet Fox and the Sermon on the Mount</title>
+  <meta name="description" content="Emmet Fox's 1934 book read the Sermon on the Mount not as moral demands but as a practical manual for changing your life through your own thinking, the core claim of the New Thought movement. It became early Alcoholics Anonymous's textbook before the Big Book existed. The Beatitudes as states of mind, 'resist not evil' as non-resistance, the Lord's Prayer as a mental treatment, the Golden Key method, the line that runs to 'The Secret,' and an honest accounting of what holds up and what doesn't.">
+  <meta property="og:title" content="Emmet Fox and the Sermon on the Mount">
+  <meta property="og:description" content="Before Alcoholics Anonymous had a book of its own, it handed out this one: Emmet Fox's 1934 guide to the Sermon on the Mount, read not as a moral scolding but as a how-to for changing your life by changing your thoughts. The New Thought core, the Golden Key, the line to 'The Secret,' and what's real in it and what isn't.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/fox.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/fox-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Carl Bloch's 1877 painting of the Sermon on the Mount: Jesus seated on a rock on a hillside, one hand raised, teaching a crowd.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/fox-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     EMMET FOX, THE SERMON ON THE MOUNT
+     Approach C (Idea Distillation): one modern book, no
+     translations to stack, so the load-bearing ideas are stated
+     plainly in the site voice and anchored to short verbatim
+     quotes and to where they sit in the argument. Sibling of the
+     Frankl build (same shell, same one-at-a-time gallery). The
+     interactive piece is "three verses, re-read," the book's own
+     argument map, authored as plain cards so the page reads
+     without JS. One muted accent per section from the site's
+     categorical set (STYLE.md). Forest green, parchment, Century
+     Supra / Segoe UI / Commit Mono. No em dashes; any em dash in
+     a quoted original is rendered as a comma.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  /* body carries a global side gutter; zero it here so each block owns a
+     single var(--gutter), never doubling it on phones (20px at 375px). */
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8.4vw, 5.1rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; scroll-margin-top: 1.2rem; }
+  .sec.first { padding-top: clamp(2rem, 4vw, 2.6rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.2rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.12em; padding: 0.26em 0.72em; color: var(--sec-accent, var(--accent)); }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.2rem 0 0.6rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .lede { font-size: 1.22rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.3rem; } }
+  .sec .u-divider { margin-top: 3rem; }
+  .sec .u-pq { margin-top: 1.6rem; }
+
+  /* per-section accent rhythm (gold is the seam) */
+  #intro     { --sec-accent: var(--accent); }
+  #idea      { --sec-accent: #b79bc4; }      /* purple, the mind */
+  #reread    { --sec-accent: #9ec79a; }      /* sage */
+  #goldenkey { --sec-accent: #bc9d65; }      /* deep gold */
+  #honest    { --sec-accent: #8fb3c7; }      /* blue, the fine print */
+  #aa        { --sec-accent: #d9978c; }      /* coral, the recovery seam */
+  #sources   { --sec-accent: var(--accent); }
+
+  /* ---------- the painting / portrait figure ---------- */
+  .pfig { margin: 1.9rem auto 0.4rem; max-width: 620px; }
+  .pfig.narrow { max-width: 380px; }
+  .pfig.port { max-width: 210px; }
+  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+
+  /* ---------- the Golden Key method card ---------- */
+  .gk { margin: 1.8rem 0 0; border: 1px solid var(--rule); border-left: 3px solid #bc9d65; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); padding: 1.5rem 1.6rem; }
+  .gk-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: #bc9d65; margin: 0 0 0.9rem; }
+  .gk ol { margin: 0; padding: 0; list-style: none; counter-reset: gk; }
+  .gk li { position: relative; padding: 0 0 1.05rem 2.5rem; }
+  .gk li:last-child { padding-bottom: 0; }
+  .gk li::before { counter-increment: gk; content: counter(gk); position: absolute; left: 0; top: -0.1rem; font-family: var(--font-mono); font-size: 0.85rem; color: #bc9d65; border: 1px solid var(--rule-strong); border-radius: 50%; width: 1.7rem; height: 1.7rem; display: grid; place-items: center; }
+  .gk li b { color: var(--text-bright); font-weight: 600; }
+  .gk li p { font-size: 1.02rem; line-height: 1.55; color: var(--text); margin: 0.25rem 0 0; }
+
+  /* ============================================================
+     THREE VERSES, RE-READ (story-gallery pattern, from Frankl)
+     ============================================================ */
+  .gal-wrap { margin: 1.8rem 0 0; }
+  .gal-wrap[hidden] { display: none; }
+  html:not(.js) .gal-wrap { display: none; }
+
+  .gal-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 0.9rem; }
+  .gal-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid var(--rule); border-radius: 999px; padding: 0.38em 0.8em; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+  .gal-chip:hover { color: var(--text-bright); border-color: var(--line-mid); }
+  .gal-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ta, var(--line-mid)); }
+  .gal-chip.is-on { color: var(--text-bright); border-color: var(--ta, var(--accent)); background: color-mix(in srgb, var(--ta, var(--accent)) 14%, transparent); }
+
+  .gal-frame { border: 1px solid var(--rule); border-left: 3px solid var(--ta, var(--accent)); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); padding: 1.5rem 1.6rem 1.6rem; transition: border-color .25s; }
+  .gal-card-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .gal-card-k .place { color: var(--text-faint); letter-spacing: 0.06em; }
+  .gal-card-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4vw, 1.95rem); line-height: 1.18; color: var(--text-bright); margin: 0 0 0.9rem; letter-spacing: -0.01em; text-wrap: pretty; }
+  .gal-card-body p { font-family: var(--font-body); font-size: 1.08rem; line-height: 1.62; color: var(--text); margin: 0 0 0.85em; text-wrap: pretty; }
+  .gal-card-body p:last-child { margin-bottom: 0; }
+  .gal-lesson { margin: 1.2rem 0 0; padding: 0.9rem 0 0.1rem; border-top: 1px solid var(--rule); font-family: var(--font-heading); font-style: italic; font-size: 1.16rem; line-height: 1.45; color: var(--text-bright); text-wrap: pretty; }
+  .gal-lesson .lk { font-family: var(--font-mono); font-style: normal; font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ta, var(--accent)); display: block; margin-bottom: 0.45rem; }
+  .gal-src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 1rem 0 0; }
+
+  .gal-bar { display: flex; align-items: center; gap: 0.7rem; margin: 1rem 0 0; }
+  .gal-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.14rem; transition: border-color .2s, color .2s; }
+  .gal-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-hover); }
+  .gal-nav:disabled { opacity: 0.3; cursor: default; }
+  .gal-pos { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-faint); }
+  .gal-pos b { color: var(--accent); font-weight: 400; }
+  .gal-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+
+  /* the no-JS fallback: the cards read as a plain stacked list */
+  .tales { margin-top: 1.6rem; }
+  html.js .tales { display: none; }
+  .tale { padding: 1.5rem 0 0; border-top: 1px solid var(--rule); margin-top: 1.5rem; }
+  .tale:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.4rem; }
+  .tale-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 0.7rem; }
+  .tale-body p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 0.8em; }
+  .tale-lesson { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; color: var(--text-bright); margin: 0.4rem 0 0; }
+  .tale-src { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); margin: 0.7rem 0 0; }
+
+  /* ---------- SOURCES (kit u-collapse dropdown styles the list) ---------- */
+  #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.3em; }
+  #sources .u-collapse { margin-top: 0.4rem; }
+  #sources .u-collapse-list li::marker { color: var(--accent); }
+  #sources .u-collapse-list i { color: var(--text-dim); }
+  #sources .u-collapse-list a { border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources .u-collapse-list a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
+  @media all {
+    html.js .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.in { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .gal-frame { transition: none !important; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab, .gal-bar, .gal-chips { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .lede, .tale-body p, .gal-card-body p { color: #161616; }
+    html.js .tales { display: block; }
+    .gal-wrap { display: none !important; }
+    .debateA, .u-callout, .tale, .gk { break-inside: avoid; }
+    a { color: #161616; }
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px) {
+    .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
+    .gk { padding: 1.2rem 1.1rem; }
+    .gal-hint { display: none; }
+    .pfig.narrow { max-width: 300px; }
+    .pfig img { border-radius: 10px; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Emmet Fox and the Sermon on the Mount</h1>
+    <p class="hero-dek">The most famous sermon ever preached, read in 1934 not as a list of moral demands but as a how-to: change what you think, and you change your life. It became the textbook early Alcoholics Anonymous handed out before it had one of its own.</p>
+    <p class="hero-meta">A distillation <span class="sep">/</span> <b>the Sermon, re-read</b> <span class="sep">/</span> <b>11 sources</b> <span class="sep">/</span> 16 min read</p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ INTRO ============================ -->
+    <section id="intro" class="sec first" aria-labelledby="intro-h">
+      <p class="lede">In the years before Alcoholics Anonymous had a book of its own, the book it pressed on new members was about the Sermon on the Mount. In Akron, a man fresh off a drunk would get handed a copy almost before he could sit up. One old-timer remembered it as required reading for everybody: as soon as the men in the hospital "could begin to focus their eyes, they got a copy."</p>
+
+      <p>It was not a Bible, and it was not really about being good. It was a 1934 self-help book by a former electrical engineer named Emmet Fox, and its claim was a strange one. The most famous sermon ever preached, the one with the meek and the salt of the earth and turning the other cheek, is not a list of moral demands at all. It is a practical manual for changing your life, and the change happens in your head.</p>
+
+      <p>Fox read the whole thing as instructions. Not "here is how a good person behaves," but "here is how thought works, and here is how to use it." Get your thinking right, he said, and the rest of your life reorganizes itself to match. He meant that literally.</p>
+
+      <figure class="pfig reveal" style="max-width:560px">
+        <img src="assets/fox/sermon-on-the-mount.jpg" width="980" height="1100" loading="eager" decoding="async" alt="Carl Bloch's 1877 painting: Jesus seated on a rock on a hillside, one hand raised in teaching, a crowd of listeners banked below him against a luminous sky.">
+        <figcaption>The sermon Fox was talking about, in Carl Bloch's painting of it, 1877. A man on a rock, one hand up, a few hundred people listening. Fox's book is a line-by-line rereading of what was said there.</figcaption>
+      </figure>
+
+      <p>Fox himself was an unlikely preacher. Born in Ireland in 1886 and trained as an electrical engineer, he fell in with a movement called New Thought and turned out to have a gift for filling rooms. By the 1930s he was the most popular spiritual speaker in America, drawing as many as 5,500 people a week to the New York Hippodrome, then moving the whole crowd to Carnegie Hall when he outgrew it. He never had a church building. He had an auditorium.</p>
+
+      <figure class="pfig port reveal">
+        <img src="assets/fox/emmet-fox.jpg" width="213" height="300" loading="lazy" decoding="async" alt="A 1944 newspaper portrait of Emmet Fox, a balding, bespectacled man in a suit and tie.">
+        <figcaption>Emmet Fox, 1944. (Divine Science News, public domain.)</figcaption>
+      </figure>
+
+      <p>What follows is his reading, distilled: the one idea underneath all of it, the three famous passages he turned inside out, the one-line method he is still known for, and then the harder part, where this kind of thinking goes when you push it too far, and what is left standing when you do.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE ONE IDEA ============================ -->
+    <section id="idea" class="sec" aria-labelledby="idea-h">
+      <div class="u-sechead"><p class="u-sechead-k">The one idea</p><h2 id="idea-h" class="u-sechead-h">Change your thinking, change your life</h2></div>
+
+      <p>Fox belonged to New Thought, an American movement built on one load-bearing claim: your thoughts cause your life, not the other way around. It began in the 1860s with a Maine clockmaker named Phineas Quimby, who decided that illness starts in the mind, and by Fox's day it had grown into a loose family of churches all teaching some version of one slogan. Change your thinking and you change your life.</p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">one thing to keep straight</p><p class="u-callout-body">New Thought is not Christian Science. Mary Baker Eddy came out of the same Quimby roots, but she built a closed church around a final, exclusive revelation. New Thought stayed loose, sunny, and happy to borrow from anyone. Fox was a minister in one of its smaller branches, called Divine Science.</p></aside>
+
+      <p>Set that idea against the Sermon on the Mount and the famous lines start to move. "The kingdom of heaven is within you" stops being a promise about the afterlife. Fox reads it as a flat description of where your life is actually decided.</p>
+
+      <blockquote class="u-pq">Man is the ruler of a kingdom ... That kingdom is nothing less than the world of his own life and experience.<cite class="u-pq-cite">The Sermon on the Mount, ch. 5</cite></blockquote>
+
+      <p>Your circumstances, in this reading, are the printout of your habitual thinking. Fox does not hedge it.</p>
+
+      <blockquote class="u-pq">the whole of our life's experience is but the outer expression of inner thought.<cite class="u-pq-cite">ch. 1</cite></blockquote>
+
+      <p>Which lands him on a line that reads as either liberating or unhinged, depending on the morning. You do not get to choose your circumstances, he says, but you do get to choose your thoughts, and that turns out to be the only choice that finally matters.</p>
+
+      <blockquote class="u-pq">We have free will, but our free will lies in our choice of thought.<cite class="u-pq-cite">ch. 1</cite></blockquote>
+
+      <p>To Fox this was not a clever angle on the sermon. He thought it was the actual subject of the whole Bible, hiding in plain sight. People read it as a record of other men's lives. He read it as the operating manual for your own.</p>
+
+      <blockquote class="u-pq">The Bible is really a textbook of metaphysics, a manual for the growth of the soul.<cite class="u-pq-cite">ch. 2</cite></blockquote>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE RE-READING ============================ -->
+    <section id="reread" class="sec" aria-labelledby="reread-h">
+      <div class="u-sechead"><p class="u-sechead-k">The re-reading</p><h2 id="reread-h" class="u-sechead-h">Three famous lines, turned inside out</h2></div>
+
+      <p>This is where the book earns its keep. Take the most quoted parts of the sermon, the ones that have hardened into Sunday-school furniture, and Fox pries each one open as a piece of practical psychology. Three of them carry the whole method. Flip through them.</p>
+
+      <!-- the interactive gallery (JS builds it from the cards below) -->
+      <div class="gal-wrap" hidden>
+        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a passage"></div>
+        <div class="gal-frame" id="gal-frame" aria-live="polite"></div>
+        <div class="gal-bar">
+          <button class="gal-nav" id="gal-prev" aria-label="Previous passage">&lsaquo;</button>
+          <span class="gal-pos" id="gal-pos"></span>
+          <button class="gal-nav" id="gal-next" aria-label="Next passage">&rsaquo;</button>
+          <span class="gal-hint">tap a passage, or use the arrow keys</span>
+        </div>
+      </div>
+
+      <!-- the three re-readings, authored as plain cards (no-JS reading + the gallery source) -->
+      <div class="tales" id="tales-data">
+
+        <article class="tale" data-tradition="The Beatitudes" data-place="Matthew 5" style="--ta: #9ec79a">
+          <p class="tale-k">Re-reading one</p>
+          <h3 class="tale-h">The Beatitudes are not rewards. They are states of mind.</h3>
+          <div class="tale-body">
+            <p>Read straight, the Beatitudes ("Blessed are the poor in spirit," "Blessed are the meek") sound like a list of nice-guy virtues that pay out later, in heaven. Fox says they are not promises about the future. Each one names a state of mind you can be in right now, and the "blessing" is just what that state does for you.</p>
+            <p>"Poor in spirit" has nothing to do with being timid or broke. It means emptied out: free of your fixed opinions and your need to run everything, so something new can actually get in. "Meek" is his favorite catch. It is not the doormat the word suggests today; it is his word for being teachable, open, willing to be surprised by your own life. And "inherit the earth" is not real estate. "Earth," he says, means your outer circumstances, so the teachable person is the one who ends up with command of their own experience.</p>
+          </div>
+          <p class="tale-lesson">To be poor in spirit means to have emptied yourself of all desire to exercise personal self-will, and ... to have renounced all preconceived opinions in the wholehearted search for God.</p>
+          <p class="tale-src">The Sermon on the Mount (1934), ch. 2, "The Beatitudes."</p>
+        </article>
+
+        <article class="tale" data-tradition="Resist not evil" data-place="Matthew 5:39" style="--ta: #cf9f78">
+          <p class="tale-k">Re-reading two</p>
+          <h3 class="tale-h">"Resist not evil" is not weakness. It is strategy.</h3>
+          <div class="tale-body">
+            <p>"Resist not evil ... whosoever shall smite thee on thy right cheek, turn to him the other also." On its face this is the most self-defeating line in the sermon: lie down, let the world roll over you. Fox calls it instead "the great metaphysical secret," and reads it as a rule about attention.</p>
+            <p>Whatever you fight, you feed. Argue with a problem, brood on it, brace against it, and you have handed it your time and your fear, which is to say your power. Stop resisting it in your mind, stop giving it the spotlight, and it begins to lose its grip. "Turning the other cheek," in this reading, is the inner move of dropping the angry thought and putting the one you would rather live from in its place.</p>
+          </div>
+          <p class="tale-lesson">Antagonize any situation, and you give it power against yourself; offer mental nonresistance, and it crumbles away in front of you.</p>
+          <p class="tale-src">ch. 4, "Resist Not Evil."</p>
+        </article>
+
+        <article class="tale" data-tradition="The Lord's Prayer" data-place="Matthew 6" style="--ta: #8fb3c7">
+          <p class="tale-k">Re-reading three</p>
+          <h3 class="tale-h">The Lord's Prayer is a machine, built to be run.</h3>
+          <div class="tale-body">
+            <p>Almost everyone treats the Lord's Prayer as words you recite. Fox treats it as a device you operate. Jesus, he argues, engineered it on purpose: seven short clauses in a deliberate order, a "compact formula" that works on the person praying it the way a course of treatment works on a patient.</p>
+            <p>So "Our Father" is not a greeting; it is a setting that fixes who you are, a child of God rather than a subject of one. "Give us this day our daily bread" is not about food; "bread," he says, is the felt presence of God, an actual experience in your consciousness and not a theory about it. Say it by rote and you get nothing. Work it as a procedure, he promises, and it reliably changes you.</p>
+          </div>
+          <p class="tale-lesson">The Great Prayer is a compact formula for the development of the soul ... those who use it regularly, with understanding, will experience a real change of soul.</p>
+          <p class="tale-src">the appended section, "The Lord's Prayer."</p>
+        </article>
+
+      </div>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">notice the move</p><p class="u-callout-body">All three do the same thing. Fox keeps dragging the action from the outside world into the inside of your skull. A reward becomes a state of mind. A rule about enemies becomes a rule about attention. A prayer becomes a procedure. Whether or not you buy it, it is a consistent and weirdly modern way to read a two-thousand-year-old text.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE GOLDEN KEY ============================ -->
+    <section id="goldenkey" class="sec" aria-labelledby="goldenkey-h">
+      <div class="u-sechead"><p class="u-sechead-k">The method</p><h2 id="goldenkey-h" class="u-sechead-h">The Golden Key</h2></div>
+
+      <p>Three years before the book, Fox had already boiled the whole thing down to a single move and printed it as a six-page pamphlet. It is the most famous thing he ever wrote, and people still pass it around. He called it the Golden Key, and he opened with a promise that should have gotten him laughed out of the room.</p>
+
+      <blockquote class="u-pq">Scientific Prayer will enable you, sooner or later, to get yourself, or anyone else, out of any difficulty on the face of the earth. It is the Golden Key to harmony and happiness.<cite class="u-pq-cite">The Golden Key, 1931</cite></blockquote>
+
+      <p>He knew how it sounded. To anyone new to what he called "the mightiest power in existence," he admitted, the promise "may appear to be a rash claim," but he was sure it needed "only a fair trial" to prove out. The method itself he promised was "simplicity itself." It is.</p>
+
+      <blockquote class="u-pq">Stop thinking about the difficulty, whatever it is, and think about God instead. ... This is the complete rule, and if only you will do this, the trouble, whatever it is, will presently disappear.<cite class="u-pq-cite">The Golden Key</cite></blockquote>
+
+      <div class="gk">
+        <p class="gk-k">The Golden Key, in four moves</p>
+        <ol>
+          <li><b>Stop thinking about the problem.</b><p>The instant you catch your mind circling the difficulty, drop it. That is the whole hard part.</p></li>
+          <li><b>Think about God instead.</b><p>Fill the space with anything you can hold onto about God: life, love, goodness. The content matters less than the swap.</p></li>
+          <li><b>Do not peek.</b><p>"To be continually glancing over your shoulder ... is fatal, because that is thinking of the trouble, and you must think of God, and of nothing else."</p></li>
+          <li><b>Do not script the ending.</b><p>"Do not try to think out in advance what the solution of your difficulty will probably turn out to be." Wanting out is enough.</p></li>
+        </ol>
+      </div>
+
+      <p>Strip the theology out and there is a real technique in here. Deliberately dropping a worry and steering your attention somewhere else is something therapists actually teach now, under duller names. And Fox pitched it as an experiment, not a creed, which is exactly why it traveled so well.</p>
+
+      <blockquote class="u-pq">all that is absolutely essential is to have an open mind, and sufficient Faith to try the experiment. Apart from that, you may hold any views on religion, or none.<cite class="u-pq-cite">The Golden Key</cite></blockquote>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">the move</p><p class="u-callout-body">Whatever you make of the God part, the mechanism is sound. You cannot think about two things at once, so the surest way to stop feeding a worry is to hand the spotlight to something else, on purpose.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ WHERE IT GOES WRONG ============================ -->
+    <section id="honest" class="sec" aria-labelledby="honest-h">
+      <div class="u-sechead"><p class="u-sechead-k">The honest part</p><h2 id="honest-h" class="u-sechead-h">Where this goes wrong</h2></div>
+
+      <p>A claim this big does not stay politely inside a 1934 self-help book. Follow "your thoughts make your reality" forward a few decades and you arrive somewhere a lot of people will recognize.</p>
+
+      <div class="debateA">
+        <div class="debateA-claim"><span class="debateA-kicker">The thesis, pushed all the way</span><p class="debateA-text">If thought is the cause of everything, you can think your way to anything: health, money, a parking space. That exact promise became one of the best-selling books of the century. Rhonda Byrne's <em>The Secret</em> (2006) sold around 30 million copies on the "law of attraction," the idea that picturing what you want pulls it toward you. Byrne has said the book that set her off was Wallace Wattles's 1910 New Thought tract, <em>The Science of Getting Rich</em>. It is the same engine as Fox, with the brakes taken off.</p></div>
+        <div class="debateA-truth"><span class="debateA-kicker">The bill it runs up</span><p class="debateA-text">There is no evidence that thoughts move matter, and carried to the end the idea turns cruel. If your mind makes your world, then your illness, your poverty, and your grief are things you did to yourself by thinking wrong. Barbara Ehrenreich, after a breast-cancer diagnosis, wrote a whole book (<em>Bright-Sided</em> in the US, <em>Smile or Die</em> in Britain) tracing that guilt machine straight back to New Thought. The death rate from breast cancer barely moved for decades, she noted, yet the culture still orders the sick to stay upbeat, and quietly blames them when it does not save them.</p></div>
+      </div>
+
+      <p>So is it all nonsense? No, and this is the part worth slowing down for. Buried inside the overreach is something real, and it is not woo.</p>
+
+      <p>The kernel that survives is this: your thoughts genuinely shape your feelings and a good deal of your behavior. Catch a downward spiral, change what you are paying attention to, and the day really does go differently. That is the premise underneath cognitive behavioral therapy, the most evidence-backed talk therapy there is.</p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">give the credit accurately</p><p class="u-callout-body">Fox did not invent this, and CBT did not come from him. The shared ancestor of both is the Stoic philosopher Epictetus, who said two thousand years ago that people are disturbed not by things but by their views of things. Fox is a parallel branch off that old root, running on intuition. CBT is the branch that went and got the evidence.</p></aside>
+
+      <ul class="u-checks">
+        <li class="u-check u-use"><strong>Keep: your thoughts shape your mood and your actions.</strong> Notice a spiral, change the channel, and you change the day. This is the spine of modern therapy, and it works.</li>
+        <li class="u-check u-use"><strong>Keep: the Golden Key as an attention tool.</strong> Dropping a worry and deliberately filling the gap is a real, usable move, God optional.</li>
+        <li class="u-check u-skip"><strong>Drop: the idea that thought moves matter.</strong> You cannot picture a tumor away or a paycheck in, and a book that says you can is just arranging the blame for when it fails.</li>
+      </ul>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ THE AA THREAD ============================ -->
+    <section id="aa" class="sec" aria-labelledby="aa-h">
+      <div class="u-sechead"><p class="u-sechead-k">The thread</p><h2 id="aa-h" class="u-sechead-h">How it became AA's first textbook</h2></div>
+
+      <p>Which brings us back to the drunks. Before Alcoholics Anonymous wrote its own book in 1939, it needed something to put in people's hands, and for the Akron group the main thing it reached for was Fox.</p>
+
+      <p>Dr. Bob, AA's co-founder, kept the book close and handed it out as fast as new men could read it. It sat alongside two other small books as the unofficial curriculum of early sobriety. In New York, members would file out of a meeting and walk over to Steinway Hall to catch Fox lecture in person. Mel B., the AA historian who studied this most carefully, called <em>The Sermon on the Mount</em> "one of the society's most useful guides until the publication of Alcoholics Anonymous in 1939."</p>
+
+      <p>It is not hard to see why it fit. AA had to build a spiritual program for people who had been burned by religion, or who wanted nothing to do with it. Fox's God was already the broad, no-creed-required kind. In the Golden Key he had told readers they could hold "any views on religion, or none" and simply run the experiment. That is nearly the same door AA would open with its most quoted phrase, "God as we understood Him."</p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">resist the tidy version</p><p class="u-callout-body">It is tempting, and a lot of people online do it, to say Fox handed AA that line. He did not, at least not on the record. "God as we understood Him" has a paper trail, and it runs through the Oxford Group preacher Sam Shoemaker and a late-night compromise that AA's own resident atheist, Jim Burwell, pushed into the wording of the steps. Fox is not in those rooms. By every careful account of AA's history, he had no direct hand in the program beyond his books.</p></aside>
+
+      <p>The truer story is less tidy and more interesting. Fox, New Thought, and AA were all drinking from the same stream: a hopeful, do-it-yourself, experience-over-doctrine strain of American spirituality that was simply in the air in the 1930s. Fox did not father AA. He wrote the clearest paperback version of the mood AA was already in, so his was the book that happened to be lying around when the drunks needed one.</p>
+
+      <p>That is the company this book keeps on the shelf. Viktor Frankl, working alone in a camp, decided the one freedom nobody can take from you is how you meet what happens (see <a href="frankl.html">Man's Search for Meaning</a>). <a href="spirituality-of-imperfection.html">The Spirituality of Imperfection</a> finds the same turn across a dozen traditions. Fox is the mind-power edition, louder where they are careful and sometimes wrong where they are honest, but pointing at the same small, durable fact. If you want the full story of the drunks themselves, it is <a href="/archive/alcoholics-anonymous/alcoholics-anonymous.html">here</a>.</p>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">the whole thing in a line</p><p class="u-callout-body">Believe whatever you like about God. Fox's one durable instruction needs none of it: mind what you put in your mind, because more of your life than you think is built out of it.</p></aside>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and a note on the quotes</h2></div>
+      <p class="src-note">This is a distillation of one book, told in my own words; the ideas and the quoted lines are Fox's. <em>The Sermon on the Mount</em> is still in copyright, so quotes are kept short and reproduced for study and comment, located by chapter (page numbers drift between the dozens of reprints). A couple of the quoted lines use an em dash in the original; the site does not, so they appear here with a comma instead, with no change to the words. Where a famous Fox phrase actually comes from a different one of his books, I have said so rather than put it in the wrong mouth.</p>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 11 sources</summary>
+        <ol class="u-collapse-list">
+        <li><b>Emmet Fox.</b> <i>The Sermon on the Mount: The Key to Success in Life.</i> Harper &amp; Brothers, 1934 (quoted here from the Grosset &amp; Dunlap reprint, which appends his section on the Lord's Prayer). The source for the thesis (ch. 1, "What Did Jesus Teach?"), the Beatitudes (ch. 2), thought as cause (ch. 3, "As a Man Thinketh"), non-resistance (ch. 4, "Resist Not Evil"), the kingdom (ch. 5, "Treasure in Heaven"), and the Lord's Prayer section. <a href="https://archive.org/details/sermononmountkey00foxe">archive.org</a></li>
+        <li><b>Emmet Fox.</b> <i>The Golden Key</i> (pamphlet, 1931). The method, the "rash claim," and the "any views on religion, or none" line. The original opens "Scientific Prayer"; some web reprints drop the first word. <a href="https://www.emmetfox.org/booklets/the-golden-key">emmetfox.org</a></li>
+        <li><b>A note on misattribution.</b> Two phrases everyone hangs on Fox, "Life is consciousness" and "thoughts are things," are genuinely his but come from <i>Power Through Constructive Thinking</i> (1932), not this book, so they are not quoted above. The popular "heaven and hell are states of mind" line is from that book too; in its place I used the Sermon's own wording, "ruler of a kingdom ... the world of his own life and experience."</li>
+        <li><b>New Thought, and the lineage.</b> Quimby as the 1860s root, Emma Curtis Hopkins as the teacher of teachers, Unity and Divine Science as branches, and why Christian Science is the walled-off cousin rather than a member. <a href="https://en.wikipedia.org/wiki/New_Thought">New Thought</a> &middot; <a href="https://en.wikipedia.org/wiki/Church_of_Divine_Science">Divine Science</a></li>
+        <li><b>Fox, the man.</b> Born 1886 in Cobh, Ireland; electrical engineer; up to 5,500 a week at the New York Hippodrome until 1938, then Carnegie Hall; minister of the Divine Science Church of the Healing Christ; died 1951 in Paris. (The "largest congregation in America" superlative is a traditional claim, not an audited count, so I have given the sourced figure instead.) <a href="https://en.wikipedia.org/wiki/Emmet_Fox">Emmet Fox</a></li>
+        <li><b>The line to <i>The Secret</i>.</b> Wallace Wattles, <i>The Science of Getting Rich</i> (1910); Rhonda Byrne, <i>The Secret</i> (2006), which credits Wattles and has sold roughly 30 million copies. (Napoleon Hill and Norman Vincent Peale sit in the same lineage by theme, not by a documented handoff.) <a href="https://en.wikipedia.org/wiki/The_Secret_(Byrne_book)">The Secret</a> &middot; <a href="https://en.wikipedia.org/wiki/The_Science_of_Getting_Rich">Wattles</a></li>
+        <li><b>The critique.</b> Barbara Ehrenreich, <i>Bright-Sided</i> (US) / <i>Smile or Die</i> (UK), 2009, which traces compulsory positivity to New Thought and grew out of her own breast-cancer diagnosis. <a href="https://www.npr.org/transcripts/113758696">interview</a></li>
+        <li><b>The real kernel.</b> The "thoughts shape feelings" idea is the premise of cognitive behavioral therapy: Albert Ellis (REBT, 1955) and Aaron Beck (cognitive therapy, 1960s). Its true ancestor is the Stoic Epictetus, not Fox; CBT and New Thought are parallel branches off that root, and CBT is the one with the evidence. <a href="https://en.wikipedia.org/wiki/Cognitive_behavioral_therapy">CBT</a></li>
+        <li><b>Fox in early AA.</b> "Required reading for everybody ... as soon as the men in the hospital could begin to focus their eyes, they got a copy": <i>Dr. Bob and the Good Oldtimers</i> (AA World Services, 1980), pp. 150 to 151.</li>
+        <li><b>The historian's verdict.</b> The Steinway Hall detail and the "one of the society's most useful guides until the publication of Alcoholics Anonymous in 1939" line: Mel B., <i>New Wine: The Spiritual Roots of the Twelve Step Miracle</i> (Hazelden, 1991), the standard study of New Thought's influence on AA.</li>
+        <li><b>The images.</b> Carl Heinrich Bloch, <i>The Sermon on the Mount</i>, 1877 (Frederiksborg Palace), public domain, via <a href="https://commons.wikimedia.org/wiki/File:Bloch-SermonOnTheMount.jpg">Wikimedia Commons</a>, cropped for the card. Portrait of Emmet Fox, <i>Divine Science News</i>, 1944, public domain (US copyright not renewed), via <a href="https://commons.wikimedia.org/wiki/File:Emmet_Fox_1944.png">Wikimedia Commons</a>.</li>
+        </ol>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/fox.js" defer></script>
+</body>
+</html>
