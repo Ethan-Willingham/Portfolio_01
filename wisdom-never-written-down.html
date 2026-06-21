@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Wisdom Never Written Down</title>
+  <meta name="description" content="A great books series can only hold what was written down, and that leaves out most of human history. Here is the wisdom that survived in other forms: a law sung across Australia, a constitution kept in beads, a library that walks and sings in West Africa.">
+  <meta property="og:title" content="The Wisdom Never Written Down">
+  <meta property="og:description" content="Homer never wrote the Odyssey. Writing is a young technology, and for almost all of human history every law, map, and story lived in voices. An honest essay about the wisdom this series cannot put on a page, and what we can still learn from it.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/wisdom-never-written-down.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/wisdom-never-written-down-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/wisdom-never-written-down-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE WISDOM NEVER WRITTEN DOWN
+     A straight essay, not a translation stack: the series being
+     honest about its own blind spot, every tradition that never
+     wrote a book. Read top to bottom. Sits in the site shell
+     (forest green, parchment, Century Supra / Segoe UI / Commit
+     Mono). One warm clay accent for kickers and quoted passages.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --accent2: #cf9f78;               /* warm clay, from the site categorical set */
+  }
+  html, body { overflow-x: clip; }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-k { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin: 0 0 1.1rem; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* section heading: mono kicker + serif head */
+  .sec-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent2); margin: 0 0 0.5rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* a quoted passage: where you meet the actual words */
+  .pq { margin: 1.7rem 0; padding: 1.25rem 1.5rem; border-left: 3px solid var(--accent2); background: linear-gradient(180deg, rgba(207,159,120,0.07), rgba(207,159,120,0.02)); border-radius: 0 12px 12px 0; }
+  .pq-t { font-family: var(--font-heading); font-style: italic; font-size: 1.22rem; line-height: 1.5; color: var(--text-bright); margin: 0; text-wrap: pretty; }
+  .pq-c { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.85rem; }
+  @media (min-width: 720px){ .pq-t { font-size: 1.3rem; } }
+
+  /* a quiet recurring step-back line (no box), opening clause bolded */
+  .aside { margin: 1.6rem 0; padding-left: 1.1rem; border-left: 2px solid var(--accent); color: var(--text-dim); font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.5; text-wrap: pretty; }
+  .aside b { color: var(--text-bright); font-style: normal; font-weight: 600; }
+
+  /* a clean borderless figure */
+  .fig { margin: 2.4rem 0 0.5rem; }
+  .fig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .fig figcaption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; line-height: 1.6; color: var(--text-faint); margin-top: 0.7rem; text-transform: none; }
+  .fig figcaption b { color: var(--text-dim); font-weight: 400; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); width: calc(100% - 2 * var(--gutter)); margin: 3.8rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.62; color: var(--text-dim); margin: 1.2rem 0 0; padding-left: 1.1rem; }
+  .src-list li { margin-bottom: 0.6em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .src-list a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .src-list a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); margin-top: 1.4rem; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    .pq { padding-left: 1.05rem; padding-right: 1.05rem; }
+  }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <p class="hero-k">The honest blind spot</p>
+    <h1 class="hero-title">The Wisdom Never Written Down</h1>
+    <p class="hero-dek">Every other post in this series begins with a book. This one begins with everything the books left out: a law sung across a desert, a constitution kept in beads, a history carried whole inside one living person.</p>
+    <p class="hero-meta"><span>Essay</span> <span class="sep">/</span> <b>20 sources</b> <span class="sep">/</span> <span>17 min read</span></p>
+  </header>
+
+  <main>
+
+    <!-- ============================ 1. THE LIMIT ============================ -->
+    <section class="sec">
+      <p class="sec-k">The blind spot</p>
+      <h2 class="sec-h">The crack in the shelf</h2>
+
+      <p class="lede">Homer never wrote the Odyssey. As far as anyone can tell, he could not write at all.</p>
+
+      <p>For a long time that sounded like heresy. Then in the 1930s a Harvard scholar named Milman Parry, with his student Albert Lord, went looking for living poets who worked the way they suspected Homer had. They found them in the mountains of what was then Yugoslavia: singers who could not read, performing epics of many thousands of lines from memory, building them on the spot out of stock phrases and stock scenes. One of them, an illiterate butcher named Avdo Međedović, heard a song he had never met before, once, and sang it back almost three times longer. His own epics ran to the length of the Odyssey itself.</p>
+
+      <p>That settled an old argument. The two poems at the foundation of Western literature were not composed by a man at a desk. They came out of a singing tradition, were carried in performance for generations, and were only written down later, by someone, once the technology to do it arrived. Whoever Homer was, he was closer to those Balkan singers than to a novelist.</p>
+
+      <p>That is the crack running under this whole series.</p>
+
+      <p>Writing is a technology, and a young one. Our species is a few hundred thousand years old. Full writing, the kind that can record anything you can say out loud, shows up about 5,400 years ago in Sumer, and it was invented from scratch maybe three or four times in all of history. For almost the entire human story, every law, every genealogy, every map, every theory of how the world works and how to live in it was carried in voices. Sung, spoken, danced, carved into rock. Never written, because there was nothing to write it with and no reason to think there should be.</p>
+
+      <p>So a great books series has a blind spot built into it. It can only see the wisdom that got written down. It is a technology of writing pointed back at writing, and what it cannot pick up is not a footnote. Whole civilizations worked out deep answers to the same questions every scripture on this shelf is asking, and left no book, because a book was never how they kept what they knew.</p>
+
+      <p>This post is about them. I cannot do for them what the other posts do, and saying why turns out to be the most honest thing it can show you. So this one is a straight essay. Name the limit, then go and look at a little of the wisdom that lived, and still lives, with no page underneath it.</p>
+
+      <p>Start with an irony, because the man at the root of Western philosophy did not trust writing either. Socrates wrote nothing; everything we have from him was written down by other people. In one of those write-ups, Plato's <em>Phaedrus</em>, Socrates tells a story aimed at the very thing Plato is doing as he records it. An Egyptian god offers the gift of writing to a king, as a cure for forgetting. The king turns it down. Writing will plant forgetfulness in people, he says, because they will stop exercising memory and lean on marks made by others; it offers them "the appearance of wisdom, not true wisdom." A written sentence just keeps repeating itself, Socrates adds, and if you ask it a question it cannot answer.</p>
+
+      <p>So the founding text of Western thought is a written argument against writing, by a man who never wrote, copied down by his student. Even our side of the line opens with a warning about the page. Hold onto it. We will come back to whether the warning was right.</p>
+    </section>
+
+    <!-- ============================ 2. SONGLINES ============================ -->
+    <section class="sec">
+      <p class="sec-k">Australia</p>
+      <h2 class="sec-h">A map you can sing</h2>
+
+      <p>In the deserts of central Australia you can cross hundreds of miles of country with no road, no map, and no compass, by singing.</p>
+
+      <p>The song is the map. Aboriginal songlines, also called Dreaming tracks, are long sung cycles that follow the paths the ancestral beings walked in the Dreaming, the creation. Each verse, in order, names what comes next on the ground: this waterhole, that ridge, the soak beyond it, the place where something happened. Sing the song in sequence and it walks you through real country, water to water, across distances that would kill an unprepared traveler. The same song is also the title to that country, its law, its ceremony, and its history. One thing does the work that a map, a deed, a constitution, and a chronicle do for us separately.</p>
+
+      <p>The tracks run for enormous distances and pass between peoples who do not share a language, handed from one group's country to the next, so a single songline can cross half the continent through a dozen tongues. The best known, the Seven Sisters, runs thousands of miles across the Western and Central deserts, and was the subject of a major exhibition at the National Museum of Australia in 2017, built with the knowledge-holders themselves.</p>
+
+      <p>Here is the part that should stop you. Up and down the Australian coast, separate peoples tell stories about a time when the shoreline stood farther out, before the sea came in and drowned the old land. In 2016 a linguist and a geographer, Nicholas Reid and Patrick Nunn, lined up twenty-one of these stories against what we know about sea level. They fit. The sea did rise to roughly its present mark around Australia about 7,000 years ago, and the stories describe exactly that. If the match holds, a piece of real history has been carried by mouth, accurately, for something like three hundred generations.</p>
+
+      <p>I am not going to pretend to explain a songline to you, because you cannot get one off a page, and that is the whole point. Much of the knowledge is restricted: some belongs to men and some to women, some is only for the initiated, and a great deal of it is simply not mine or yours to repeat. There was never one "Aboriginal culture" to sum up, either. There were hundreds of distinct languages here, and there still are many. The famous outsider book, Bruce Chatwin's <em>The Songlines</em>, is a lovely piece of romance that the people it describes have spent decades correcting.</p>
+
+      <p class="aside"><b>The thing to take is smaller, and harder.</b> The knowledge, the land, the law, and the song are a single object. Pull them apart onto paper and you do not get a shorter version. You get nothing.</p>
+    </section>
+
+    <!-- ============================ 3. NATIVE AMERICA ============================ -->
+    <section class="sec">
+      <p class="sec-k">North America</p>
+      <h2 class="sec-h">The constitution in beads</h2>
+
+      <p>The oldest constitution in North America was never printed. It was memorized, and woven into belts of shell.</p>
+
+      <p>The Haudenosaunee, the people the French called the Iroquois, bound five nations (later six) into a confederacy under a body of law they call the Great Law of Peace. It sets out how the grand council works, how leaders are chosen and removed, how peace holds between nations that used to fight. It was kept two ways at once: in the trained memory of leaders who could recite the whole thing over days, and in wampum, belts of white and purple shell beads whose patterns fix the terms. A wampum belt is not decoration, and not quite writing. It is a record, read by someone who knows how, far more exact than a knot tied to jog the memory. The Two Row Wampum, made to mark an agreement with Dutch newcomers, shows two parallel lines on a field of white: two boats going down the same river, the Haudenosaunee in one and the newcomers in the other, neither one steering the other's vessel. A whole theory of how to share a country, in two rows of beads.</p>
+
+      <p>You will sometimes read that this system shaped the United States Constitution, that Franklin borrowed from it. Be careful here. Some historians argue for real influence, and in 1988 Congress passed a resolution thanking the Confederacy for its contribution to the Constitution. Most historians think the strong version is overstated, and the details cut against it: the Haudenosaunee council was a body of chiefs chosen by clan mothers, deciding by consensus, which is not much like the document signed in Philadelphia. The honest claim is not that they wrote our founding text. It is the thing the overreach is grabbing for. A large, durable, federal union ran for centuries on memory and shell, which ought to retire the assumption that serious law needs a printing press.</p>
+
+      <p>Story did the teaching. Across the continent, nations passed down tales of a trickster: Coyote on the plains, Raven on the northwest coast, Iktomi the spider among the Lakota, Nanabozho among the Anishinaabe. The trickster lies, steals, overreaches, and gets humiliated, and the listener learns where the lines are by watching him cross them. In many places these stories can only be told in winter. The lesson rides inside the entertainment, which is a better delivery system for a child, and for the rest of us, than a list of rules.</p>
+
+      <p>And the stories held records. The Klamath of Oregon tell of a war between the chief of the world below and the chief of the world above that ended with a mountain torn down and its pit filled with water. Mount Mazama did collapse, into what is now Crater Lake, about 7,700 years ago, and there were people there to see it. Along the same coast, a cluster of native accounts describe a winter night when the ground shook hard and a great wave swept the villages away. For a long time that was just a story. Then geologists tied it to a massive earthquake on the Cascadia fault, dated by a matching "orphan tsunami," a wave with no local quake behind it, that came ashore in Japan on the night of January 26, 1700. The stories had the event, and nearly the date.</p>
+
+      <p>This is close to what the writer Thomas King means in the line that opens his lectures on Native storytelling: "The truth about stories is that that's all we are." Not a slogan. A description of how a people can carry their law, their history, and their hard-won natural science with no filing cabinet but the story, and have it come out right three hundred years later.</p>
+
+      <p>None of this is one tradition. There were hundreds of nations here, with hundreds of languages, sharing no more a single culture than Sweden shares one with Greece. And for a century the United States and Canada ran boarding schools built to break exactly this: take the children, ban the language, cut the line of telling. That the songs and the law and the stories came through at all is not a quaint survival. It is a win against a deliberate effort to end them.</p>
+    </section>
+
+    <!-- ============================ 4. THE GRIOT ============================ -->
+    <section class="sec">
+      <p class="sec-k">West Africa</p>
+      <h2 class="sec-h">The library that walks</h2>
+
+      <p>In West Africa the library is a person, and when one dies, it burns.</p>
+
+      <p>That image is not mine. The Malian writer Amadou Hampâté Bâ said it at UNESCO in 1960, and it has been worn down since to "in Africa, when an old man dies, a library burns." What he actually said was sharper. When a <em>traditionalist</em> elder dies, an <em>untapped</em> library burns. He meant a particular person, trained for years to hold what the community knows, and a particular waste: knowledge lost not because it was forgotten but because no one had drawn on it before the holder was gone.</p>
+
+      <p>That trained holder has a name. In the Mande world, across Mali, Senegal, Guinea, and the Gambia, he is a <em>jeli</em>, or in French a <em>griot</em>: a hereditary oral historian, genealogist, praise-singer, and diplomat, usually with an instrument in his hands, most famously the kora, a harp with twenty-one strings and a gourd for a body. Griot families have served noble families for many centuries, and the great kora lineages, Diabaté, Kouyaté, Cissoko, pass the craft from parent to child. A griot can recite the descent of a family back hundreds of years, and settle a present quarrel by reciting the precedent. He is a working archive who walks and sings.</p>
+
+      <figure class="fig">
+        <img src="assets/thumbs/wisdom-never-written-down-og.jpg" width="1200" height="630" loading="lazy" decoding="async" alt="The Malian kora master Toumani Diabaté seated in profile, playing the kora, a tall harp with a large gourd body, against a dark stage.">
+        <figcaption><b>Toumani Diabaté, a hereditary jeli of the Diabaté line, at the kora.</b> His family counts dozens of generations of kora players before him. Photograph by Michael Coghlan, CC BY-SA 2.0.</figcaption>
+      </figure>
+
+      <p>The Mande empire's founding epic belongs to the griots. The story of Sundiata Keita, who built the Mali empire in the 1200s, was carried by mouth for roughly seven hundred years before it was widely written down. When the historian Djibril Tamsir Niane recorded it in 1960 from the griot Mamadou Kouyate, this is how the griot introduced himself.</p>
+
+      <blockquote class="pq">
+        <p class="pq-t">"We are vessels of speech, we are the repositories which harbour secrets many centuries old. Without us the names of kings would vanish into oblivion, we are the memory of mankind."</p>
+        <cite class="pq-c">Mamadou Kouyate, griot, opening the Epic of Sundiata (recorded by D. T. Niane, 1960)</cite>
+      </blockquote>
+
+      <p>He was not boasting. He was stating his job.</p>
+
+      <p>The smaller unit of this wisdom is the proverb, a whole argument folded into a sentence you cannot forget. In an oral world a proverb is portable law and portable philosophy, used to settle a dispute, to teach a child, to win a point in front of elders. Chinua Achebe put it best in <em>Things Fall Apart</em>: among his people "proverbs are the palm-oil with which words are eaten." The Yoruba have a proverb about proverbs: a proverb is the horse of speech, and when speech is lost, the proverb is the horse we ride to go and find it. And the one that has traveled furthest, from the Nguni languages of southern Africa, is <em>ubuntu</em>: <em>umuntu ngumuntu ngabantu</em>, a person is a person through other persons. You become fully human through other people, not alone. It has been flattened into a corporate slogan and a software logo, which is worth saying out loud, but underneath the marketing it is a real and demanding idea about where a self comes from.</p>
+
+      <p>Now the necessary correction, because the easy version of this section is a lie. None of it means Africa could not write, or did not. That is a colonial story, and it is false. Africa wrote, abundantly. The Ge'ez script has been in literary use in Ethiopia for around 1,700 years. Timbuktu held hundreds of thousands of manuscripts on law, astronomy, and medicine. Across the Sahel people wrote their own languages in Arabic script, and in the Cross River region of Nigeria they used an indigenous script of their own, nsibidi. Among the Akan of Ghana, adinkra symbols stamp proverbs into cloth, so that the spoken saying and the written sign are the very same object. The point of the griot is not that these were people without writing. It is that they chose the living, performed, remembered word for the knowledge that mattered most, and built strict human institutions to keep it exact across centuries.</p>
+    </section>
+
+    <!-- ============================ 5. WHY IT BREAKS THE FORMAT ============================ -->
+    <section class="sec">
+      <p class="sec-k">The method</p>
+      <h2 class="sec-h">Why this one breaks the format</h2>
+
+      <p>Every other post in this series works the same way. Take a fixed text, line up the great translations of it, and break down the lines where they split. That method needs one thing above all: words that sit still. A sentence you can hold next to another sentence and compare.</p>
+
+      <p>Oral wisdom does not sit still, because there is no original. There is no true text of the Sundiata, only the night Mamadou Kouyate sang it for Niane, and a different night when another griot sang a different version for someone else. Both are real. Neither is the master copy, because there is no master copy. A songline is sung a little differently each time it is walked. A transcript freezes one performance and calls it the work, the way a death mask is accurate about a face and tells you nothing about the person. It loses the voice, the timing, the music, the answer the singer gave to a heckler, the choices made for the particular people in the room that night. The words were never the whole thing. They were the part that survives the trip to paper worst.</p>
+
+      <p>And a good deal of it is not for print at all. The series' method is to reproduce the words and cite them. A great deal of this material is restricted by who you are, or sacred, or owned outright by one family or clan, and to reproduce it freely is not scholarship but theft. The format that serves the Tao Te Ching honestly cannot be aimed at a songline without breaking something. So this post points, and declines to reproduce.</p>
+
+      <p class="aside"><b>That is not the post failing.</b> That is the post telling the truth about what it is looking at.</p>
+    </section>
+
+    <!-- ============================ 6. WHAT WE LEARN ============================ -->
+    <section class="sec">
+      <p class="sec-k">The lesson</p>
+      <h2 class="sec-h">What is still here for us</h2>
+
+      <p>So what do you take from a body of wisdom you have just admitted you cannot put on the page?</p>
+
+      <p>Start with memory, because Plato turns out to have been half right. We did hand our memories to the page, and then to the search bar, and we are worse at remembering than people who had no choice. Oral cultures built astonishing systems to carry what they could not write. The land itself worked as a memory palace, each place pinned to a piece of knowledge; song and rhythm and story were shaped to be unforgettable on purpose. The researcher Lynne Kelly argues that a trained elder in a non-literate culture could carry the working equivalent of an encyclopedia, the stars and the seasons, the animals, the law, the genealogies, the map, and that monuments like Stonehenge were partly machines for holding all of it in place. We can admire that without wanting to give our books back. The skill was real, and we let it go.</p>
+
+      <p>Then there is the shape of the knowledge. A songline ties a fact to a place, to a law, to a song, to a story, so you cannot learn the fact without learning where it lives and what it asks of you. Ubuntu ties a person to other persons. The written word is brilliant at the opposite move, lifting an idea clean out of its body and its community and handing it to one silent reader, anywhere, any century. That is the superpower of the page, and it has a cost. Something leaks out of wisdom when you strip it from relationship and place and turn it into pure information, and these traditions are a standing reminder of what.</p>
+
+      <p>And stories do work that arguments cannot. You can tell a child the rules, or you can tell her about Coyote, and the second one teaches more and lasts longer. The trickster and the epic and the creation story are not rough drafts of the philosophy paper. They are a different and in some ways better technology for getting a hard truth to lodge in a person and stay there.</p>
+
+      <p>None of which means the page was a mistake. It would be a cheat to end there, and untrue. Writing is one of the best things our species ever did. It let knowledge pile up past the limit of any one memory, let a claim sit still long enough to be checked and proven wrong, and gave us mathematics and science and the slow correction of error. It gave us, for that matter, this series. Orality carries a brutal cost the romantics skip over: the holder dies and the library burns. Hampâté Bâ, who coined that line, spent his own life writing the oral tradition down, precisely because he knew it. The page is not the enemy. It just has an edge, and over the edge lies most of the human story, full of people who were not sitting around waiting to be written down.</p>
+
+      <p>The honest version of a great books shelf has a gap on it. Not a missing book. A space, with a note that reads: here is everything that would not fit, the sung law and the danced history and the libraries that walk and burn. It was most of us, for most of the time we have been here.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where this comes from</h2>
+      <p>This is an essay, not a translation, so it leans on the scholars and, wherever possible, the indigenous voices who know this ground. Every quotation below is named and located. I have tried to point at these traditions with respect, to reproduce only what is freely shared, and to keep the romance and the overclaims out.</p>
+      <ul class="src-list">
+        <li><b>Homer was oral.</b> Milman Parry and Albert Lord, <em>The Singer of Tales</em> (1960); the recordings of the singer Avdo Međedović survive in the <a href="https://mpc.chs.harvard.edu/">Milman Parry Collection of Oral Literature</a> at Harvard. The broader argument is Walter Ong, <em>Orality and Literacy</em> (1982).</li>
+        <li><b>The age of writing.</b> Full writing first appears as Sumerian cuneiform around 3400 to 3200 BCE and was independently invented only a handful of times; see Ong above and the standard histories of the script.</li>
+        <li><b>Plato on writing.</b> The myth of Theuth and Thamus, <em>Phaedrus</em> 274 to 275, here in Harold N. Fowler's Loeb translation (the "appearance of wisdom, not true wisdom" line is at 275b), read at the <a href="https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0174:text=Phaedrus:page=274">Perseus Digital Library</a>.</li>
+        <li><b>Songlines.</b> Margo Neale (a Kamilaroi and Gumbaynggirr curator) and Lynne Kelly, <em>Songlines: The Power and Promise</em> (First Knowledges, 2020), and the National Museum of Australia exhibition <a href="https://www.nma.gov.au/exhibitions/songlines">Songlines: Tracking the Seven Sisters</a> (2017), made with the knowledge-holders.</li>
+        <li><b>The sea-level memories.</b> Patrick Nunn and Nicholas Reid, "Aboriginal Memories of Inundation of the Australian Coast Dating from More than 7000 Years Ago," <em><a href="https://www.tandfonline.com/doi/abs/10.1080/00049182.2015.1077539">Australian Geographer</a></em> 47:1 (2016).</li>
+        <li><b>Memory as a technology.</b> Lynne Kelly, <em>The Memory Code</em> (2016) and <em>Knowledge and Power in Prehistoric Societies</em> (2015).</li>
+        <li><b>The Great Law of Peace and wampum.</b> The <a href="https://www.haudenosauneeconfederacy.com/">Haudenosaunee Confederacy</a>'s own account of the Great Law, the grand council, and the Two Row Wampum.</li>
+        <li><b>The Constitution debate, both sides.</b> The influence case is made by Donald Grinde and Bruce Johansen; Congress acknowledged it in <a href="https://www.congress.gov/bill/100th-congress/senate-concurrent-resolution/76">S. Con. Res. 76</a> (1988). The skeptical case is Elisabeth Tooker, "The United States Constitution and the Iroquois League," <em>Ethnohistory</em> 35:4 (1988), who calls the strong claim a "scholarly misapprehension." Most historians side with Tooker.</li>
+        <li><b>Stories that kept records.</b> On Crater Lake, the Mount Mazama eruption is dated to about 7,700 years ago (USGS) and remembered in the Klamath account of Llao and Skell. On the 1700 Cascadia earthquake, see Brian Atwater and others, <em><a href="https://pubs.usgs.gov/pp/pp1707/">The Orphan Tsunami of 1700</a></em> (USGS Professional Paper 1707), and Kenji Satake's 1996 dating of the Japanese tsunami to the night of 26 January 1700.</li>
+        <li><b>Native voices.</b> Thomas King, <em>The Truth About Stories: A Native Narrative</em> (2003 CBC Massey Lectures); see also Vine Deloria Jr., <em>God Is Red</em>; N. Scott Momaday, "The Man Made of Words"; and Robin Wall Kimmerer, <em>Braiding Sweetgrass</em>.</li>
+        <li><b>The griot and Sundiata.</b> D. T. Niane, <em>Sundiata: An Epic of Old Mali</em>, recorded from the griot Mamadou Kouyate, translated by G. D. Pickett (1965). The quoted lines are from the opening, "The Words of the Griot Mamadou Kouyate."</li>
+        <li><b>"A library burns."</b> Amadou Hampâté Bâ, to UNESCO in 1960; his fuller wording specifies a "traditionalist" elder and an "untapped" (<em>inexploitée</em>) library.</li>
+        <li><b>Proverbs.</b> Chinua Achebe, <em>Things Fall Apart</em> (1958), chapter 1; the Yoruba "horse of speech" proverb titles I. O. Delano's collection <em>Owe L'esin Oro</em> (1966); on <em>ubuntu</em> and its commodification, see the critiques by Michael Onyebuchi Eze and others.</li>
+        <li><b>Africa wrote, too.</b> The Ge'ez script, the Timbuktu manuscripts, Ajami (African languages in Arabic script), nsibidi (Cross River, Nigeria), and Akan adinkra symbols are all well documented; they are the standing rebuttal to "Africa was oral."</li>
+        <li><b>The cover image</b> is Toumani Diabaté performing, photographed by Michael Coghlan in 2015, licensed <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a> via Wikimedia Commons.</li>
+      </ul>
+      <p class="colo-note">The reading of all this is mine, and the mistakes with it. I am an outsider to every tradition here, working from the scholarship and from what the knowledge-holders have chosen to make public. Where I have had to choose between a good line and an accurate one, I have tried to choose the accurate one.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
