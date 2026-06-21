@@ -46,19 +46,26 @@
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
 
-    /* === Compact header so the game is in the viewport on open ===
-       This page leads with the title + the game, with only a short roadmap note below it,
-       so pull everything above the canvas in tight: less page top padding,
-       a smaller Home-link gap, a smaller title, and no title-to-game or
-       wrapper margin. Page-local overrides (source-ordered after style.css)
-       so other article pages keep their airier spacing. */
-    .site-wrapper { padding-top: 1.25rem; }
-    .post-back   { margin-bottom: 0.75rem; }
-    /* Home + Labs links share one row at the top. */
-    .post-topnav { display: flex; gap: 1.4rem; align-items: baseline; }
-    .post-topnav .post-back { margin-bottom: 0.75rem; }
+    /* === Game leads, flush to the top ===
+       The game is the hero: it sits at the very top of the page and fills the
+       viewport on open. The Home / Labs nav and the short about note live BELOW
+       the game (.post-bottomnav), so nothing pushes the canvas down and the
+       game's own bottom console stays on screen without scrolling. Page-local
+       overrides (source-ordered after style.css) so other article pages keep
+       their airier spacing. */
+    .site-wrapper { padding-top: 0.55rem; }
+    /* Home + Labs links share one row at the foot of the page, set off by a rule. */
+    .post-bottomnav {
+      display: flex;
+      gap: 1.4rem;
+      align-items: baseline;
+      margin-top: 1.6rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid var(--d-rule);
+    }
+    .post-bottomnav .post-back { margin-bottom: 0; }
     /* Labs is a forward link, not a back link, so it skips the back-arrow. */
-    .post-topnav .post-fwd .pb-label::before { content: none; }
+    .post-bottomnav .post-fwd .pb-label::before { content: none; }
     .post-header { margin-bottom: 0.55rem; }
     .post-title  { font-size: min(2.4rem, 6.5vw); margin-bottom: 0; }
     /* The game breaks OUT of the narrow article column so it fills the screen
@@ -78,9 +85,10 @@
       position: relative;
       width: 100%;
       /* Fill as much of the viewport as possible on every screen. dvh tracks the
-         real (mobile-toolbar-aware) viewport; the calc leaves room for the slim
-         header above so the whole game shows without scrolling. */
-      height: min(93dvh, calc(100dvh - 56px));
+         real (mobile-toolbar-aware) viewport; with the nav moved below the game,
+         the small subtraction is just the page's top padding, so the whole game
+         shows from the top without scrolling. */
+      height: min(96dvh, calc(100dvh - 20px));
       min-height: 380px;
       background: #1a1008;
       overflow: hidden;
@@ -266,8 +274,8 @@
     #gm-pause-btn svg { width: 11px; height: 11px; fill: currentColor; display: block; }
 
     @media (min-width: 720px) {
-      /* Desktop / wide: fill the viewport under the slim header. */
-      .game-canvas-area { height: min(94dvh, calc(100dvh - 52px)); }
+      /* Desktop / wide: fill the viewport, game flush to the top. */
+      .game-canvas-area { height: min(97dvh, calc(100dvh - 18px)); }
     }
 
     /* On portrait devices the stacked 2-row console + d-pad take up the
@@ -275,7 +283,7 @@
        the world view — which scales off WIDTH, not height — shows many
        more rows. Fullscreen (body.gm-fs) still overrides this. */
     @media (orientation: portrait) {
-      .game-canvas-area { height: min(92dvh, calc(100dvh - 48px)); }
+      .game-canvas-area { height: min(95dvh, calc(100dvh - 18px)); }
     }
 
     /* === Controls strip with key hints === */
@@ -492,11 +500,6 @@
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
-    <nav class="post-topnav">
-      <a href="/" class="post-back"><span class="pb-label">Home</span></a>
-      <a href="labs.html" class="post-back post-fwd"><span class="pb-label">Labs</span></a>
-    </nav>
-
     <main>
       <article>
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
@@ -602,6 +605,11 @@
             <p><strong>Sluice</strong> is my 2D mining game, free forever. Dig down, collect ore, sell it for fuel and upgrades, go deeper. No win screen, just a deeper hole and a heavier haul. Built almost entirely with LLMs, and still early.</p>
             <p class="game-about-aside">Curious how it is built? There is a write-up on the <a href="about.html">about page</a>.</p>
           </div>
+
+          <nav class="post-bottomnav">
+            <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+            <a href="labs.html" class="post-back post-fwd"><span class="pb-label">Labs</span></a>
+          </nav>
 
         </div>
       </article>

@@ -16,50 +16,101 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-    .labs-intro { max-width: 60ch; color: var(--text-dim, var(--d-text-dim)); margin-bottom: 2rem; }
+    .labs-intro {
+      max-width: 60ch;
+      color: var(--d-text-dim);
+      line-height: 1.6;
+      margin-bottom: 2.4rem;
+    }
+    .labs-intro a { color: var(--d-accent-strong); }
+
+    /* Section label: a short mono tag with a hairline running out to the right,
+       the same treatment the homepage and hub indexes use for their list heads. */
     .lab-group-title {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
       font-family: var(--d-mono, monospace);
-      font-size: 0.68rem;
-      letter-spacing: 0.2em;
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--d-accent);
-      margin: 2.2rem 0 0.9rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 1px solid var(--d-rule, rgba(255,255,255,0.12));
+      margin: 2.7rem 0 1.1rem;
+    }
+    .lab-group-title::after {
+      content: "";
+      flex: 1 1 auto;
+      height: 1px;
+      background: var(--d-rule);
     }
     .lab-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 0.7rem;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 0.85rem;
     }
     .lab-card {
+      position: relative;
       display: block;
-      padding: 0.85rem 1rem;
-      background: var(--d-bg-raised, rgba(255,255,255,0.03));
-      border: 1px solid var(--d-rule, rgba(255,255,255,0.12));
+      padding: 1rem 1.15rem 1.1rem;
+      background: var(--d-bg-raised);
+      border: 1px solid var(--d-rule);
       text-decoration: none;
-      transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+      overflow: hidden;
+      transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+    }
+    /* A thin accent rail on the left edge that wipes in on hover. */
+    .lab-card::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--d-accent);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.16s ease;
     }
     .lab-card:hover {
-      border-color: var(--d-accent);
-      background: var(--d-bg-raised, rgba(255,255,255,0.05));
-      transform: translateY(-1px);
+      border-color: var(--d-rule-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px -10px rgba(0,0,0,0.55);
     }
+    .lab-card:hover::before { transform: scaleY(1); }
     .lab-card .lab-name {
+      display: block;
       font-family: var(--d-mono, monospace);
-      font-size: 0.9rem;
-      color: var(--d-text-bright, #fff);
-      letter-spacing: 0.02em;
+      font-size: 0.92rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--d-text-bright);
+      transition: color 0.16s ease;
     }
+    .lab-card:hover .lab-name { color: var(--d-accent-strong); }
     .lab-card .lab-desc {
-      margin-top: 0.3rem;
-      font-size: 0.84rem;
-      line-height: 1.4;
-      color: var(--d-text-dim, rgba(255,255,255,0.6));
+      display: block;
+      margin-top: 0.42rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--d-text-dim);
     }
+    /* "system off" marker: a small muted pill, not inline accent text. */
     .lab-card .lab-off {
-      color: var(--d-accent);
-      font-style: normal;
+      display: inline-block;
+      margin-left: 0.45em;
+      padding: 0.08em 0.55em;
+      font-family: var(--d-mono, monospace);
+      font-size: 0.6rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      vertical-align: 0.08em;
+      color: var(--d-text-faint);
+      border: 1px solid var(--d-rule);
+      border-radius: 999px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lab-card, .lab-card::before, .lab-card .lab-name { transition: none; }
+      .lab-card:hover { transform: none; }
     }
   </style>
 </head>
@@ -90,7 +141,7 @@
             <a class="lab-card" href="station-lab.html"><span class="lab-name">Station</span><span class="lab-desc">The surface station building, in the Frontier Soviet style.</span></a>
             <a class="lab-card" href="depot-lab.html"><span class="lab-name">Depot</span><span class="lab-desc">Depot and store building art studies.</span></a>
             <a class="lab-card" href="endcap-lab.html"><span class="lab-name">Console End Caps</span><span class="lab-desc">The bottom HUD console frame and its end pieces.</span></a>
-            <a class="lab-card" href="commodity-lab.html"><span class="lab-name">Commodity Pixel Art</span><span class="lab-desc">The tradeable-goods icon set. <span class="lab-off">(Trade Board off)</span></span></a>
+            <a class="lab-card" href="commodity-lab.html"><span class="lab-name">Commodity Pixel Art</span><span class="lab-desc">The tradeable-goods icon set. <span class="lab-off">Trade Board off</span></span></a>
           </div>
 
           <div class="lab-group-title">Feel &amp; UI</div>
@@ -103,9 +154,9 @@
 
           <div class="lab-group-title">Systems</div>
           <div class="lab-grid">
-            <a class="lab-card" href="economy-lab.html"><span class="lab-name">Economy Lab</span><span class="lab-desc">The trade-price model and its drift. <span class="lab-off">(Trade Board off)</span></span></a>
-            <a class="lab-card" href="nmz-banner-lab.html"><span class="lab-name">Caution Banner</span><span class="lab-desc">The No Man's Zone warning flags. <span class="lab-off">(zones off)</span></span></a>
-            <a class="lab-card" href="sluice-lab.html"><span class="lab-name">Sluice Station</span><span class="lab-desc">The refinement-station art prop. <span class="lab-off">(refinement off)</span></span></a>
+            <a class="lab-card" href="economy-lab.html"><span class="lab-name">Economy Lab</span><span class="lab-desc">The trade-price model and its drift. <span class="lab-off">Trade Board off</span></span></a>
+            <a class="lab-card" href="nmz-banner-lab.html"><span class="lab-name">Caution Banner</span><span class="lab-desc">The No Man's Zone warning flags. <span class="lab-off">zones off</span></span></a>
+            <a class="lab-card" href="sluice-lab.html"><span class="lab-name">Sluice Station</span><span class="lab-desc">The refinement-station art prop. <span class="lab-off">refinement off</span></span></a>
           </div>
 
         </div>
