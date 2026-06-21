@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Meditations of Marcus Aurelius, Side by Side</title>
+  <meta name="description" content="The private journal of a Roman emperor, written in Greek and never meant to be read. The load-bearing passages in eight English translations stacked side by side, with a plain breakdown of each and where the translators split.">
+  <meta property="og:title" content="The Meditations of Marcus Aurelius, Side by Side">
+  <meta property="og:description" content="The most powerful man in the world kept a private notebook, in Greek, that he never meant anyone to read. Here are its load-bearing passages in eight English translations at once, from the 1634 first edition to 2011, broken down line by line.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/meditations.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/marcus-aurelius-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/marcus-aurelius-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE MEDITATIONS OF MARCUS AURELIUS, SIDE BY SIDE
+     An interactive reader: the load-bearing passages, the Koine
+     Greek source, and the English translations in the corpus, with
+     a plain breakdown of each. Sits in the site shell (forest
+     green, parchment, Century Supra / Segoe UI / Commit Mono).
+     The Greek source needs a polytonic-Greek fallback face;
+     everything else stays on the three site fonts. No em dashes in
+     my own text; the translations are quoted verbatim.
+     ============================================================ */
+  :root {
+    --measure: 820px;                 /* reading column */
+    --gk-font: "GFS Didot","Old Standard TT","Palatino Linotype",Palatino,"Times New Roman",Georgia,serif;
+    --early:  #cf9f78;                 /* era accents, from the site categorical set */
+    --mid:    #bc9d65;
+    --modern: #9ec79a;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- INTRO ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* the opening "fan": one line of Marcus, many Englishes */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-zh { font-family: var(--gk-font); font-size: clamp(1.4rem, 4.2vw, 1.95rem); color: var(--text-bright); letter-spacing: 0.01em; line-height: 1.5; padding: 1.3rem 1.5rem 0.5rem; }
+  .fan-zh small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- THE EXPLORER ---------- */
+  .marc { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
+  .marc-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .marc-step { display: flex; align-items: center; gap: 0.4rem; }
+  .marc-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
+  .marc-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .marc-nav:disabled { opacity: 0.3; cursor: default; }
+  .marc-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; text-align: left; }
+  .marc-jump:hover { background: rgba(255,255,255,0.05); }
+  .marc-jump #marc-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
+  .marc-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .marc-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
+  .marc-views button:hover { color: var(--text-bright); }
+  .marc-views button.is-on { background: var(--accent); color: #2a3128; }
+  .marc-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  .marc-count b { color: var(--accent); font-weight: 400; }
+
+  /* the jump index, grouped by book */
+  .marc-grid { margin: 0 0 1rem; padding: 0.9rem 1rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); }
+  .marc-grid[hidden] { display: none; }
+  .marc-grp { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem; padding: 0.4rem 0; border-top: 1px solid var(--rule); }
+  .marc-grp:first-child { border-top: none; }
+  .marc-grp-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); width: 4.2rem; flex: none; }
+  .marc-grp button { font-family: var(--font-mono); font-size: 0.8rem; min-width: 2rem; padding: 0.3rem 0.5rem; border: 1px solid transparent; border-radius: 7px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  .marc-grp button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .marc-grp button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
+
+  /* source */
+  .marc-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .marc-zh-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .marc-zh-k span { color: var(--text-faint); letter-spacing: 0.08em; text-transform: none; }
+  .marc-zh { font-family: var(--gk-font); font-size: clamp(1.25rem, 3.4vw, 1.6rem); line-height: 1.75; color: var(--text-bright); margin: 0; text-wrap: pretty; }
+
+  /* commentary */
+  .marc-notes { margin: 1rem 0 0; }
+  .marc-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
+  .marc-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+  .marc-note-k:first-child { margin-top: 0; }
+  .marc-note-gist, .marc-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .marc-note-gist em, .marc-note-read em, .marc-splits em { font-style: italic; color: var(--text-bright); }
+  .marc-note-read { color: var(--text-dim); font-style: italic; }
+  .marc-splits { margin: 0; }
+  .marc-splits dt { font-family: var(--gk-font); font-size: 1.2rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; }
+  .marc-splits dt .marc-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
+  .marc-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .marc-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
+
+  /* translations */
+  .marc-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  .marc-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .marc-v:last-child { border-bottom: 1px solid var(--rule); }
+  .marc-early  { border-left-color: var(--early); }
+  .marc-mid    { border-left-color: var(--mid); }
+  .marc-modern { border-left-color: var(--modern); }
+  .marc-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+  .marc-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
+  .marc-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .marc-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
+  .marc-vt .marc-br { display: block; height: 0.6em; }
+  .marc-empty { color: var(--text-faint); font-style: italic; }
+
+  /* fade the explorer in once data lands */
+  .marc .marc-body { opacity: 0; transition: opacity .4s var(--ease); }
+  .marc.marc-ready .marc-body { opacity: 1; }
+  .marc-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .marc.marc-ready .marc-loading { display: none; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.2rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    .fan-zh { font-size: 1.2rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1.02rem; }
+    .marc-bar { gap: 0.55rem 0.7rem; }
+    .marc-count { margin-left: 0; flex-basis: 100%; }
+    .marc-source, .marc-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .marc-grp-k { width: 100%; }
+    .marc-v { padding-left: 0.9rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Meditations of Marcus Aurelius, side by side</h1>
+    <p class="hero-dek">The most powerful man in the world kept a private notebook, in Greek, that he never meant anyone to read. Mostly he reminded himself to stay humble, do the work in front of him, and remember he would soon be dead.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>28 passages</b> <span class="sep">/</span> <span><b>8 translations</b>, 1634 to 2011</span> <span class="sep">/</span> verbatim, not paraphrased</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Marcus Aurelius ran the Roman Empire for nineteen years, fought two long wars on its frontier, and outlived most of his children. He also kept a private notebook. One of the first things in it is a note reminding himself, at dawn, to get out of bed.</p>
+      <p>He never meant anyone to read it. There is no title, no audience, no argument to win. He wrote it to himself, in Greek, the language philosophy was done in, while he was the most powerful man alive and Latin was the language of his state. Much of it was written in an army camp on the Danube, between campaigns against the tribes across the river. There is almost nothing else like it from the ancient world: the inside of a powerful man's head, talking to itself.</p>
+      <p>What he tells himself, over and over, comes down to a few things. You control almost nothing except your own judgments. Peace comes from accepting what you cannot change, doing the work in front of you, and remembering how short the whole thing is. We are upset not by what happens to us but by our opinions about what happens. The book is one man drilling those ideas into himself, in the dark, with death close.</p>
+      <p>He wrote in Greek, and the English translators do not agree on how to carry it across. Here is one sentence, Book 7, six ways:</p>
+
+      <div class="fan">
+        <p class="fan-zh">Ἔνδον σκάπτε, ἔνδον ἡ πηγὴ τοῦ ἀγαθοῦ καὶ ἀεὶ ἀναβλύειν δυναμένη, ἐὰν ἀεὶ σκάπτῃς.<small>Book 7, section 59 &middot; one sentence, four centuries of English</small></p>
+        <ul class="fan-list">
+          <li><span class="e">Look within; within is the fountain of all good. Such a fountain, where springing waters can never fail, so thou dig still deeper and deeper.</span><span class="who">Casaubon, 1634</span></li>
+          <li><span class="e">Look within. Within is the fountain of good, and it will ever bubble up, if thou wilt ever dig.</span><span class="who">Long, 1862</span></li>
+          <li><span class="e">Look within. Within is the fountain of Good, ready always to well forth if thou wilt alway delve.</span><span class="who">Haines, 1916</span></li>
+          <li><span class="e">Dig within. There lies the well-spring of good: ever dig, and it will ever flow.</span><span class="who">Staniforth, 1964</span></li>
+          <li><span class="e">Dig inside yourself. Inside there is a spring of goodness ready to gush at any moment, if you keep digging.</span><span class="who">Hammond, 2006</span></li>
+          <li><span class="e">Dig within; for within you lies the fountain of good, and it can always be gushing forth if only you always dig.</span><span class="who">Hard, 2011</span></li>
+        </ul>
+      </div>
+
+      <p>Same sentence. The early translators tell you to look within; the modern ones hand you a shovel. The Greek verb is <em>skapte</em>, to dig, so the moderns are the more faithful ones, but you would never guess that from the Victorians. That spread, multiplied across the whole book, is the subject of this page.</p>
+      <p>Below are the passages that carry the book, the load-bearing ones rather than the most-posted ones. For each you get the Greek, a plain breakdown of what it is doing and where the translators part ways, and then the English versions stacked so you can read them against each other. Three run the entire book: Meric Casaubon's 1634 first English, George Long's Victorian standard, and the literal 1916 Loeb. Five modern translations join in on the famous lines. Use the arrows or your keyboard to move between passages.</p>
+    </section>
+
+    <!-- ============================ EXPLORER ============================ -->
+    <section class="marc" id="marc">
+      <div class="marc-bar">
+        <div class="marc-step">
+          <button class="marc-nav" id="marc-prev" aria-label="Previous passage">&lsaquo;</button>
+          <button class="marc-jump" id="marc-jump" aria-label="Jump to a passage"><span id="marc-ref">Book 1, 17</span><span id="marc-title"></span></button>
+          <button class="marc-nav" id="marc-next" aria-label="Next passage">&rsaquo;</button>
+        </div>
+        <div class="marc-views" id="marc-views" role="group" aria-label="How many translations to show">
+          <button data-view="key" class="is-on">Key</button>
+          <button data-view="all">All</button>
+        </div>
+        <div class="marc-count" id="marc-count"></div>
+      </div>
+
+      <div class="marc-grid" id="marc-gridpop" hidden aria-label="Passage index"></div>
+
+      <div class="marc-body">
+        <div class="marc-source" id="marc-source"></div>
+        <div class="marc-notes" id="marc-notes"></div>
+        <div class="marc-versions" id="marc-versions"></div>
+      </div>
+      <div class="marc-loading">loading the translations&hellip;</div>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The Greek source and every translation are plain text in <code>js/marcus-data.js</code>.</p></noscript>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every translation here is reproduced verbatim. I pulled the texts with scripts and parsed them, so nothing was retyped or paraphrased by hand or by a model, and every line is attached to the translator who wrote it.</p>
+      <ul class="src-list">
+        <li><b>The Greek</b> is the received text of the <em>Ta eis heauton</em> (<em>To Himself</em>), from <a href="https://el.wikisource.org/wiki/%CE%A4%CE%B1_%CE%B5%CE%B9%CF%82_%CE%B5%CE%B1%CF%85%CF%84%CF%8C%CE%BD">Greek Wikisource</a>, cross-checked against the Koine text at <a href="https://maurelius.app/original-text">maurelius.app</a>.</li>
+        <li><b>The three complete translations</b> are public domain and reproduced in full: Meric Casaubon's 1634 first English version (from the 1900 Rouse edition), <a href="https://www.gutenberg.org/ebooks/2680">George Long's</a> 1862 standard, and C. R. Haines's literal 1916 Loeb, both via Project Gutenberg and Wikisource.</li>
+        <li><b>The five modern translations</b> (A. S. L. Farquharson 1944, Maxwell Staniforth 1964, Gregory Hays 2002, Martin Hammond 2006, Robin Hard 2011) are still in copyright. They appear only on the keystone passages, one short attributed line each, quoted for comparison and study. If you want to read one straight through, Hays is the one people press into your hands.</li>
+      </ul>
+      <p>The breakdowns are mine. A couple of warnings for anyone who has met Marcus mostly through quote images. The single most famous "Marcus" line, <em>we are disturbed not by things but by our opinions about them</em>, is not his; it is his teacher Epictetus (his own version is at 8.47). And two of the most-shared quotes attributed to him, <em>you have power over your mind, not outside events</em> and <em>everything we hear is an opinion, not a fact</em>, appear in no translation of the <em>Meditations</em> at all. They are modern inventions. Where the oldest editions and the moderns disagree, or where a beloved line turns out to belong to a different translator (the popular wording of 10.16 is Staniforth's), I have tried to say so rather than smooth it over.</p>
+      <p style="font-size:0.92rem; color:var(--text-faint);">The portrait on the homepage card is a marble bust of Marcus Aurelius (c. 161 to 180 CE) in the Capitoline Museums, Rome; photo by Jean-Pol Grandmont, <a href="https://commons.wikimedia.org/wiki/File:0_Marcus_Aurelius_-_Palazzo_Nuovo_-_Musei_Capitolini_(1).JPG">CC BY-SA 3.0, via Wikimedia Commons</a>. The bronze equestrian statue of him survived the Middle Ages only because people mistook it for the Christian emperor Constantine, so it was never melted down like the other imperial bronzes.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/marcus-notes.js" defer></script>
+  <script src="js/marcus-data.js" defer></script>
+  <script src="js/marcus.js" defer></script>
+</body>
+</html>
