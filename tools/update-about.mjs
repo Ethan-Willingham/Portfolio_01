@@ -279,6 +279,35 @@ if (!cc) {
   }
 }
 
+// ---- FUEL LINE: the orange tokens-per-day band on the commit river ----------
+// A frozen hand-built baseline (the array in js/git-history.js, May 1 - Jun 16)
+// plus a tail rebuilt from ccusage each run, written as GIT_HISTORY.daily. A day
+// ccusage has since pruned keeps its last computed value, so the line never loses
+// history. git-history.js reads GIT_HISTORY.daily (falling back to its baseline).
+let fuelLine = null, fuelMax = null;
+if (cc) {
+  if (!stats.daily) {
+    const code = readFileSync(join(REPO, 'js/git-history.js'), 'utf8');
+    const base = (code.match(/var DAILY\s*=\s*(?:\([^)]*\)\s*\|\|\s*)?\[([\s\S]*?)\]/) || [, ''])[1]
+      .split(',').map(x => parseInt(x.trim(), 10)).filter(Number.isFinite);
+    stats.daily = { t0: '2026-05-01', frozenLen: base.length, baseline: base };
+    log(dim(`  (seeded fuel-line baseline: ${base.length} days from js/git-history.js)`));
+  }
+  const t0d = stats.daily.t0, prev = hist.obj.daily || [];
+  const ccMap = {};
+  for (const d of (cc.daily || [])) ccMap[d.period] = d.totalTokens || 0;
+  const addDays = (iso, n) => { const dt = new Date(iso + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + n); return dt.toISOString().slice(0, 10); };
+  const idxOf = iso => Math.round((Date.parse(iso + 'T00:00:00Z') - Date.parse(t0d + 'T00:00:00Z')) / 86400000);
+  const todayIdx = idxOf(today());
+  fuelLine = stats.daily.baseline.slice();                 // frozen baseline, never mutated
+  for (let i = stats.daily.frozenLen; i <= todayIdx; i++) {
+    const iso = addDays(t0d, i);
+    fuelLine[i] = (iso in ccMap) ? ccMap[iso] : (prev[i] || 0);
+  }
+  fuelMax = Math.max(1.6e9, ...fuelLine);
+  log(`  fuel line  ${dim(stats.daily.frozenLen + 'd')} -> ${ok(fuelLine.length + 'd')}   ${dim('latest ' + addDays(t0d, todayIdx) + ' = ' + ((fuelLine[todayIdx] || 0) / 1e9).toFixed(2) + 'B')}`);
+}
+
 // ============================================================================
 // Apply writes in dependency order: river -> tiles -> token numbers -> search.
 // ============================================================================
@@ -302,6 +331,7 @@ if (!WRITE) {
 
 // 1. river
 hist.obj.generated = nowSec();
+if (fuelLine) { hist.obj.daily = fuelLine; hist.obj.dailyMax = fuelMax; }
 hist.banner = hist.banner.replace(/last refreshed \d{4}-\d{2}-\d{2}/, 'last refreshed ' + today());
 saveData(F_HIST, hist.banner, hist.varName, hist.obj);
 log(ok(`  wrote js/git-history-data.js`) + dim(`  (${topics.length} topics, ${commits.length} commits)`));

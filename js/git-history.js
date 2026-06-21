@@ -23,9 +23,11 @@
 
   // ----- the fuel: tokens spent per day, drawn as a glow band on the shared
   // time axis behind the dots (folded in from the old standalone usage chart).
-  // Index 0 = May 1 2026; one entry per day through Jun 16. Before May 1 the
+  // Index 0 = May 1 2026; one entry per day. The hardcoded array is the frozen
+  // baseline through Jun 16; tools/update-about.mjs appends the tail from ccusage
+  // (served via window.GIT_HISTORY.daily). Before May 1 the
   // site was built by hand, so there is no band there — that absence is the point. -----
-  var DAILY = [16607317, 36137104, 69177645, 42724566, 39884750, 410619, 81899196,
+  var DAILY = (window.GIT_HISTORY && window.GIT_HISTORY.daily) || [16607317, 36137104, 69177645, 42724566, 39884750, 410619, 81899196,
     71871667, 113285745, 159976758, 329253840, 295195507, 457538327, 127231443, 0,
     285454643, 309323557, 623423505, 271215837, 66298045, 290609738, 1197709924,
     1543803732, 1320336965, 702974597, 285643166, 67725588, 507072587, 829700193,
@@ -33,7 +35,7 @@
     49406229, 0, 437292700, 97568887, 927412697, 737451722, 441003124, 189071669, 957780846,
     828288732, 65467268, 18225562];
   var DAILY_T0 = new Date(2026, 4, 1).getTime() / 1000; // May 1 2026, local midnight
-  var DAILY_MAX = 1.6e9;                                 // scale ceiling (peak day ≈ 1.54B)
+  var DAILY_MAX = (window.GIT_HISTORY && window.GIT_HISTORY.dailyMax) || 1.6e9; // scale ceiling, grows if a day exceeds it
   function tokensOnDay(sec) {
     var idx = Math.floor((sec - DAILY_T0) / 86400);
     return (idx >= 0 && idx < DAILY.length) ? DAILY[idx] : -1;
@@ -44,7 +46,7 @@
   var span0 = tMax - tMin;
   // default focus window: the recent month (scroll/pinch out to reveal the full history)
   var defT0 = new Date(2026, 4, 20).getTime() / 1000;  // May 20, 2026
-  var defT1 = new Date(2026, 5, 17).getTime() / 1000;  // Jun 17, 2026 (covers through Jun 16)
+  var defT1 = Math.floor(Date.now() / 1000);           // right edge tracks now, so the default view always ends today
   var fullT0 = tMin - Math.max(86400, span0 * 0.015);
   var fullT1 = Math.max(tMax + 86400 * 7, defT1);       // zoom-out bound; always covers the default window
   var fullSpan = fullT1 - fullT0;
