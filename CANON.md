@@ -53,12 +53,13 @@ The pilots surfaced four failure modes. Do not repeat them.
    horizontal padding. Before shipping, view the post at 375px width and confirm
    the side gutter is 20px, not 40px. Mandatory check.
 
-5. **Keep the homepage card description short.** The cards built so far all run
-   far too long, 43 to 105 words, cramming a summary and a feature list into the
-   index. The card description is ONE sentence, about 15 words, a single concrete
-   hook, not a summary. Write "The Buddha's teaching in 423 verses, seven
-   translations stacked and broken down," not the 54-word version sitting there
-   now. Cut hard; the post does the explaining, the card only earns the click.
+5. **Homepage card description: two short sentences, not a tease, not an essay.**
+   Aim for about 25 to 30 words: a hook, plus one concrete, specific detail that
+   earns the click. The first pass overcorrected to ~15 words (clipped, like "here
+   is Aristotle's answer"), and the original cards ran 50 to 105 (a full summary).
+   Land between. Example: "Everyone wants to be happy and mostly chases the wrong
+   things, money, status, pleasure. Here is Aristotle's answer, that happiness is a
+   whole life of good habits, walked stop by stop." (~30 words.)
 
 ## The selection rule: load-bearing, not popular
 
