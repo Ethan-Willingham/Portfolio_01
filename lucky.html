@@ -13,16 +13,16 @@
   /* ============================================================
      The "Feeling lucky?" send-off (linked from the homepage footer).
 
-     - big BOLD ALL-CAPS Century Supra "RANDOM WIKIPEDIA PAGE"
-     - OKLCH fill: vibrant azure -> green -> golden-yellow (a "golden
-       lagoon" - blue-green foundation + golden pop), swept through green
-       via "decreasing hue", 200deg base; the gold end ties to the site
-     - a sleek (family.co-ish) gradient-filled DOWN ARROW invites it; the
-       USER scrolls/swipes down. The words go up, the destination article
-       comes up behind FROSTED GLASS, and the colour rides the scroll: it
-       floods + rotates by the GOLDEN ANGLE (137.508deg), finishing at the
-       golden point (61.8%) of the roll
-     - reaching the bottom resolves onto the REAL wikipedia.org page
+     - Century Supra "random wikipedia page", bold all-caps, sitting LOW
+       on the page; a sleek DOWN ARROW hovers just ABOVE the words,
+       pointing at them.
+     - At rest the words (and arrow) are WHITE (warm --text-bright). As
+       the USER scrolls/swipes down, the colour FLOODS in: a white veil
+       lifts while an OKLCH azure -> green -> golden-yellow gradient rises
+       underneath, rotating by the GOLDEN ANGLE (137.508deg) and reaching
+       full saturation at the golden point (61.8%) of the roll.
+     - meanwhile the destination article comes up behind FROSTED GLASS;
+       reaching the bottom resolves onto the REAL wikipedia.org page.
 
      Font: site Century Supra (three-font rule holds).
      ============================================================ */
@@ -30,7 +30,9 @@
   html, body { margin: 0; padding: 0; background: var(--bg, #303931); }
 
   .send { position: relative; height: 100vh; height: 100svh;
-          display: grid; place-items: center; padding: 9vh 5vw 16vh; box-sizing: border-box;
+          display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+          gap: clamp(1.2rem, 3.5vh, 3rem);
+          padding: 9vh 5vw clamp(2rem, 8vh, 6rem); box-sizing: border-box;
           background: var(--bg, #303931); }
   .line {
     margin: 0; max-width: 11ch; text-align: center; text-wrap: balance;
@@ -39,14 +41,14 @@
     font-size: clamp(1.56rem, 7.8vw, 6.9rem); line-height: 0.9; letter-spacing: -0.005em;
     color: transparent; -webkit-text-fill-color: transparent;
     -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
-    background-image: linear-gradient(200deg, #3a6fb5 0%, #e6cf66 100%); /* no-oklch fallback */
+    background-image: linear-gradient(#F5F1EA, #F5F1EA); /* rest = warm white; JS floods colour on scroll */
   }
 
-  /* a sleek down arrow, filled with the SAME gradient as the words (CSS mask) */
-  .arrow-wrap { position: absolute; left: 50%; bottom: 5.5vh; transform: translateX(-50%); }
+  /* a sleek down arrow, hovering just above the words, filled like them (CSS mask) */
+  .arrow-wrap { line-height: 0; }
   .arrow {
-    width: clamp(34px, 5vw, 56px); aspect-ratio: 40 / 72;
-    background-image: linear-gradient(200deg, #3a6fb5 0%, #e6cf66 100%);
+    width: clamp(28px, 4vw, 46px); aspect-ratio: 40 / 72;
+    background-image: linear-gradient(#F5F1EA, #F5F1EA);
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 72'%3E%3Cpath d='M20 5 V57 M8 44 L20 57 L32 44' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 72'%3E%3Cpath d='M20 5 V57 M8 44 L20 57 L32 44' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
     animation: bob 2s ease-in-out infinite;
@@ -68,8 +70,8 @@
 <body>
 
   <section class="send">
-    <h1 class="line">random wikipedia page</h1>
     <div class="arrow-wrap" aria-hidden="true"><div class="arrow"></div></div>
+    <h1 class="line">random wikipedia page</h1>
   </section>
 
   <section class="wikiwrap">
@@ -92,14 +94,20 @@
     var ANGLE0 = 200;                 // base angle
     var FLOOD_AT = 1 / PHI;           // colour fully floods at 61.8% of the scroll
 
-    // ---- vibrant azure -> green -> golden-yellow (a "golden lagoon": blue-green
-    //      foundation + golden pop, premium saturation), swept through green via
-    //      "decreasing hue"; the gold end ties back to the site accent ----
+    // ---- the rest colour is warm white; on scroll a veil lifts to reveal a
+    //      vibrant azure -> green -> golden-yellow "golden lagoon" gradient,
+    //      swept through green via "decreasing hue"; the gold end ties to the site ----
+    var WHITE = '245, 241, 234';      // --text-bright
     function grad(angle, S) {
       return 'linear-gradient(' + angle.toFixed(2) + 'deg in oklch decreasing hue, '
            + 'oklch(56% 0.13 245) 0% 0%, ' + S.toFixed(1) + '%, oklch(86% 0.14 95) 92% 100%)';
     }
-    function paint(S, angle) { var g = grad(angle, S); line.style.backgroundImage = g; arrow.style.backgroundImage = g; }
+    // white veil (alpha w) sits ON TOP of the colour; as w drops, the colour floods in
+    function paint(S, angle, w) {
+      var veil = 'linear-gradient(rgba(' + WHITE + ',' + w.toFixed(3) + '),rgba(' + WHITE + ',' + w.toFixed(3) + '))';
+      var g = veil + ', ' + grad(angle, S);
+      line.style.backgroundImage = g; arrow.style.backgroundImage = g;
+    }
 
     // destination + frosted preview (direct article; Special:Random's 302 aborts in a frame)
     var DEST = 'https://en.wikipedia.org/wiki/Special:Random';
@@ -117,7 +125,7 @@
       var max = document.documentElement.scrollHeight - window.innerHeight;
       var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;   // 0..1 scroll progress
       var cp = Math.min(1, p / FLOOD_AT);                                     // colour flood, tied to scroll
-      paint(84 - cp * 78, ANGLE0 + cp * GOLD);
+      paint(84 - cp * 78, ANGLE0 + cp * GOLD, 1 - cp);                        // white veil lifts as colour floods
       if (arrowWrap) arrowWrap.style.opacity = Math.max(0, 1 - p * 2.4).toFixed(2);
       if (p >= 0.92 && !navigated) {                                          // reached the article -> the real page
         navigated = true;
