@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Other Hours</title>
+  <meta name="description" content="A sourced, illustrated field guide to the parts of health that aren't exercise or diet: sleep, the people around you, what you breathe and drink, the medical numbers worth knowing, sun, sauna, cold, and the long aisle of hype. Ranked by what the evidence actually supports, biggest lever first. Every claim cited.">
+  <meta property="og:title" content="The Other Hours">
+  <meta property="og:description" content="You train a few hours a week. Your health is decided in all the other ones. A ranked, sourced field guide to the rest of it: sleep, the people you love, the air you breathe, the numbers that save lives, and the pile of recovery rituals that mostly don't. The cold plunge gets the headlines; sleep and friendship move the needle many times more.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/the-other-hours.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/the-other-hours-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="800">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/the-other-hours-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE OTHER HOURS
+     A sourced field guide to the rest of health: everything that
+     isn't lifting, cardio, or food. Ranked by the honest hierarchy,
+     biggest lever first. Companion to Big Enough (muscle), Still
+     Moving (cardio + mobility), and What You're Supposed to Eat
+     (diet). Sits inside the site shell (forest green, parchment,
+     Century Supra / Segoe UI / Commit Mono). This block adds the
+     guide's own components: the hero, the section system, the
+     data-viz figures, the ranked hierarchy card, the evidence
+     meters, the verdict table, the two interactive tools, the
+     evidence-grade chips, and the references. No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --measure: 780px;                 /* reading column, matched to the fitness set */
+    --wide: 1080px;                   /* breakout width for big visuals */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --c-gold:  #D4C4A0;
+    --c-sky:   #8fb3c7;
+    --c-plum:  #b79bc4;
+    --c-green: #9ec79a;
+    --c-amber: #dfc288;
+    --c-rose:  #d9978c;
+    --c-brick: #b8796d;
+    --c-ice:   #93b6c9;
+    --c-dim:   #7e8a78;
+    --c-grid:  rgba(120, 134, 120, 0.22);
+    --c-grid-strong: rgba(120, 134, 120, 0.4);
+    --panel:   #2a322b;
+    --panel-2: #232a25;
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
+  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
+  .sec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 1.5rem 0 0.4rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--accent); }
+  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
+
+  /* per-section color rhythm: tier 1 levers run warm and bright, the hype runs dim */
+  #sleep    { --sec-accent:#b79bc4; } #people { --sec-accent:#d9978c; } #subtract { --sec-accent:#b8796d; }
+  #numbers  { --sec-accent:#8fb3c7; } #light  { --sec-accent:#dfc288; } #heat     { --sec-accent:#cf9f78; }
+  #breath   { --sec-accent:#9ec79a; } #cold   { --sec-accent:#93b6c9; } #hype     { --sec-accent:#7e8a78; }
+  #plan     { --sec-accent:#D4C4A0; }
+
+  .breakout { max-width: var(--wide); }
+  @media (min-width: 1140px) {
+    .breakout { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+  }
+
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 1.9rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.4rem; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.85em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- EVIDENCE GRADES ---------- */
+  .grade { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2em 0.62em; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; vertical-align: 0.12em; }
+  .g-a { color: #d4eecb; background: rgba(122,178,112,0.24); border-color: rgba(122,178,112,0.55); }
+  .g-b { color: #ede1be; background: rgba(212,196,160,0.22); border-color: rgba(212,196,160,0.55); }
+  .g-c { color: #f2d69d; background: rgba(230,192,116,0.20); border-color: rgba(230,192,116,0.55); }
+  .g-d { color: #f5b9ac; background: rgba(233,142,127,0.20); border-color: rgba(233,142,127,0.6); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin: 1em 0 1.4em; font-size: 0.92rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-dim); }
+
+  /* ---------- DATA-VIZ FIGURES ---------- */
+  figure.viz { margin: clamp(2.2rem, 5vw, 3rem) 0; padding: 1.1em 1.2em 1.3em; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; }
+  figure.viz.breakout { padding: 1.3em 1.5em 1.5em; }
+  figure.viz > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  figure.viz figcaption { font-family: var(--font-heading); font-size: 1.06rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.3em; line-height: 1.3; }
+  figure.viz .viz-sub { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-dim); margin-bottom: 0.9em; line-height: 1.45; }
+  figure.viz .viz-note { font-family: var(--font-body); font-size: 0.88rem; font-style: italic; color: var(--text-dim); margin-top: 0.85em; line-height: 1.5; }
+  figure.viz .viz-note b { font-style: normal; color: var(--text); }
+  .v-axis { fill: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
+  .v-axis-t { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; }
+  .v-grid { stroke: var(--c-grid); stroke-width: 1; }
+  .v-grid-s { stroke: var(--c-grid-strong); stroke-width: 1; }
+  .v-label { fill: var(--text); font-family: var(--font-body); font-size: 12px; }
+  .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  .v-mono { font-family: var(--font-mono); }
+  @media (max-width: 720px) {
+    figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    figure.viz.scrollx > svg { min-width: 560px; }
+    figure.viz.scrollx > figcaption, figure.viz.scrollx > .viz-sub, figure.viz.scrollx > .viz-note { position: sticky; left: 0; max-width: calc(100vw - 3.2rem); }
+  }
+
+  /* ---------- THE HIERARCHY CARD (ranked levers) ---------- */
+  .rank { list-style: none; margin: 0.4em 0 0; padding: 0; }
+  .rank li { display: grid; grid-template-columns: 1.4em 1fr; gap: 0.6em; align-items: center; margin: 0 0 0.5em; }
+  .rank .rk { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); text-align: right; }
+  .rank .bar-wrap { position: relative; background: rgba(0,0,0,0.22); border-radius: 6px; overflow: hidden; height: 2.1em; }
+  .rank .bar { position: absolute; inset: 0 auto 0 0; border-radius: 6px; opacity: 0.9; }
+  .rank .bar-lab { position: relative; z-index: 2; display: flex; align-items: center; height: 100%; padding: 0 0.7em; font-family: var(--font-body); font-size: 0.9rem; color: var(--text-bright); }
+  .rank .bar-lab .tier { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-left: auto; padding-left: 0.8em; }
+
+  /* ---------- EVIDENCE METERS (claims vs evidence) ---------- */
+  .meters { margin: 0.4em 0 0; }
+  .meter { display: grid; grid-template-columns: 1fr; gap: 0.15em; margin-bottom: 0.85em; }
+  .meter .m-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6em; }
+  .meter .m-claim { font-family: var(--font-body); font-size: 0.95rem; color: var(--text-bright); }
+  .meter .m-verdict { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+  .meter .m-track { height: 8px; border-radius: 5px; background: rgba(0,0,0,0.26); overflow: hidden; }
+  .meter .m-fill { height: 100%; border-radius: 5px; }
+  .meter .m-note { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.4; }
+
+  /* ---------- INTERACTIVE TOOL PANELS ---------- */
+  .tool { margin: 2.2em 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(12,16,13,0.4), 0 14px 34px -18px rgba(8,12,9,0.5); }
+  .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 0.7rem; padding: 0.75em 1.15em; background: var(--panel-2); border-bottom: 1px solid var(--rule); }
+  .tool-head h4 { margin: 0; font-family: var(--font-heading); font-size: 1.08rem; color: var(--text-bright); }
+  .tool-head .tool-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .tool-body { padding: 1.15em 1.2em 1.3em; }
+  .tool-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-bottom: 0.9rem; }
+  .tool label { font-family: var(--font-body); font-size: 0.92rem; color: var(--text); }
+  .tool input[type=number], .tool input[type=time], .tool select { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); background: rgba(0,0,0,0.24); border: 1px solid var(--rule); border-radius: 6px; padding: 0.4em 0.6em; }
+  .tool select { font-family: var(--font-body); }
+  .tool input:focus, .tool select:focus { outline: none; border-color: var(--accent); }
+  .tool-out { margin-top: 1em; padding: 0.9em 1.05em; border-radius: 10px; background: rgba(0,0,0,0.22); border: 1px solid var(--rule); }
+  .tool-out .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.6rem, 4.6vw, 2.1rem); color: var(--accent); line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .tool-out .lbl { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); }
+  .tool-rail { margin-top: 0.9em; font-family: var(--font-body); font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; }
+  .tool-rail b { color: var(--text-bright); }
+
+  /* the audit grid */
+  .audit { display: grid; grid-template-columns: 1fr; gap: 0.55rem; }
+  .audit-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem 0.9rem; align-items: center; padding: 0.55em 0.75em; border: 1px solid var(--rule); border-radius: 9px; background: rgba(0,0,0,0.14); }
+  .audit-row .a-lab { font-family: var(--font-body); font-size: 0.92rem; color: var(--text); }
+  .audit-row .a-lab small { display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 0.1em; }
+  .audit-row select { min-width: 11.5em; }
+  .audit-out .big { font-size: clamp(1.25rem, 3.6vw, 1.7rem); }
+
+  /* ---------- VERDICT TABLE (the hype pile) ---------- */
+  .vtable-wrap { overflow-x: auto; margin: 1.4em 0; -webkit-overflow-scrolling: touch; }
+  table.vtable { border-collapse: collapse; width: 100%; font-family: var(--font-body); font-size: 0.9rem; min-width: 560px; }
+  table.vtable th, table.vtable td { border: 1px solid var(--rule); padding: 0.55em 0.7em; text-align: left; vertical-align: top; }
+  table.vtable thead th { background: var(--panel-2); color: var(--text-bright); font-family: var(--font-heading); position: sticky; top: 0; }
+  table.vtable td.item { font-weight: 600; color: var(--text-bright); white-space: nowrap; }
+  table.vtable td.verdict { color: var(--text-dim); }
+  table.vtable tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+
+  /* ---------- THE RANKED PLAN ---------- */
+  ol.plan { list-style: none; counter-reset: plan; margin: 1.2em 0; padding: 0; }
+  ol.plan li { counter-increment: plan; position: relative; padding: 0.85em 0.9em 0.85em 3.1em; margin: 0 0 0.6em; border: 1px solid var(--rule); border-radius: 10px; background: var(--panel); }
+  ol.plan li::before { content: counter(plan); position: absolute; left: 0.7em; top: 0.7em; width: 1.7em; height: 1.7em; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(212,196,160,0.16); border: 1px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; }
+  ol.plan li b { color: var(--text-bright); }
+  ol.plan li .why { display: block; color: var(--text-dim); font-size: 0.92rem; margin-top: 0.2em; }
+
+  /* ---------- PHOTOGRAPHY (curated public-domain works: borderless, filling the frame) ---------- */
+  figure.photo { margin: clamp(2.2rem, 5vw, 3.4rem) 0; }
+  figure.photo img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  figure.photo.portrait { max-width: 27rem; margin-left: auto; margin-right: auto; }
+  figure.photo.portrait img { max-width: 100%; }
+  @media (min-width: 700px) {
+    main > figure.photo.portrait { margin-left: max(var(--gutter), calc((100% - var(--measure)) / 2 + var(--gutter))); margin-right: 0; }
+  }
+  figure.photo figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.5; margin-top: 0.75em; text-wrap: pretty; }
+  figure.photo .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
+  figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
+  figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
+  figure.photo .cred a:hover { color: var(--accent-hover); }
+
+  /* ---------- REFERENCES ---------- */
+  #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.7em; margin: 0.4em 0 0; }
+  #sources li { font-size: inherit; line-height: inherit; margin-bottom: 0.4em; }
+  #sources li::marker { color: var(--accent); }
+  #sources li a { color: var(--accent); border-bottom: 1px solid transparent; text-decoration: none; }
+  #sources li a:hover { border-bottom-color: var(--accent); }
+  #sources b { color: var(--text); font-weight: 600; }
+  #sources i { color: var(--text-dim); }
+  #sources li.shead { list-style: none; margin: 1.3em 0 0.4em -1.7em; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  #sources li.shead:first-child { margin-top: 0.2em; }
+  #sources .lede { font-size: 0.98rem; }
+  #sources .legend { font-size: 0.8rem; gap: 0.4rem 1rem; margin: 1em 0 1.1em; }
+
+  .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
+  .disclaimer strong { color: var(--accent-hover); }
+
+  /* ---------- ANIMATION ---------- */
+  @media all {
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+    .draw { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); }
+    .draw.go { animation: draw 1.6s var(--ease) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    .grow { transform-origin: left center; }
+    .js .grow:not(.go) { transform: scaleX(0); }
+    .grow.go { animation: grow 1.1s var(--ease) forwards; }
+    @keyframes grow { to { transform: scaleX(1); } }
+    .fade-el { opacity: 0; }
+    .fade-el.go { animation: fadeEl 0.9s ease forwards; }
+    @keyframes fadeEl { to { opacity: 1; } }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    figure.viz, .tool, .u-callout, .u-stats, .u-pq { break-inside: avoid; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back be-back"><span class="pb-label">Home</span></a>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <h1 class="hero-title">The Other Hours</h1>
+    <p class="hero-dek">You train a few hours a week. Your health is decided in all the other ones. This is a field guide to the rest of it, the part that isn't lifting, cardio, or food: how you sleep, who you're close to, what you breathe and drink, the handful of medical numbers that quietly save lives, and the long aisle of recovery rituals that mostly don't do what they promise. Ranked by what the evidence actually supports, biggest lever first.</p>
+    <p class="hero-meta">A field guide to the rest of health <span class="sep">/</span> <b>64 sources</b> <span class="sep">/</span> 35 min read</p>
+  </header>
+
+  <main id="guide">
+
+  <figure class="photo portrait reveal">
+    <img src="assets/images/the-other-hours/hero.webp" width="1000" height="1174" loading="eager" decoding="async" alt="A quiet, empty room with sunlight falling through a window onto a bare floor and pale wall, dust drifting in the beam. Vilhelm Hammershoi, Dust Motes Dancing in the Sunlight, 1900.">
+    <figcaption>Health is mostly made here, in the ordinary hours: a quiet room, the morning light, the night's sleep, the people who come through the door. Almost none of it happens in a gym.
+      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Hammersh%C3%B8i_Dust_motes_dancing.jpg">Vilhelm Hammershoi, "Dust Motes Dancing in the Sunlight" (1900), Ordrupgaard, Copenhagen. Public domain, via Wikimedia Commons.</a></span>
+    </figcaption>
+  </figure>
+
+  <!-- chapter strip -->
+  <nav class="chapters" aria-label="Chapters">
+    <span class="lead">Ten parts</span>
+    <a href="#short">The honest hierarchy</a>
+    <a href="#sleep">Sleep</a>
+    <a href="#people">The people</a>
+    <a href="#subtract">What to subtract</a>
+    <a href="#numbers">The numbers</a>
+    <a href="#light">Light and sun</a>
+    <a href="#heat">The sauna</a>
+    <a href="#breath">Breath and stress</a>
+    <a href="#cold">The cold plunge</a>
+    <a href="#hype">The hype pile</a>
+  </nav>
+
+  <!-- ===================== 0. THE HONEST HIERARCHY ===================== -->
+  <section id="short" class="sec first" aria-labelledby="short-h">
+    <span class="sec-kicker">Start here</span>
+    <h2 id="short-h" class="sec-h">The internet's health hierarchy is upside down</h2>
+
+    <p class="lede">The things with the strongest evidence and the biggest effect on how long you live are the cheapest, oldest, and least exciting: sleep, the people you love, not smoking, and a blood-pressure number you can read in thirty seconds. The things with the loudest marketing, the cold plunge and the shelf of supplements, are mostly at the bottom. This whole guide is that list, put back in order.</p>
+
+    <p>If you have read the three fitness guides this one finishes, <a href="big-enough.html">Big Enough</a> on muscle, <a href="still-moving.html">Still Moving</a> on cardio, and <a href="what-to-eat.html">What You're Supposed to Eat</a> on food, you have the gym and the kitchen covered. Add them up and they are maybe five or six hours of your week. The other hundred and sixty are where the rest of your health is won and lost, and almost nobody ranks them honestly.</p>
+
+    <p>So here is the ranking, the one idea this guide is really built around. Read it as rough, not exact: the bars below mix how strong the evidence is with how big the effect tends to be, and reasonable people would shuffle the middle. But the top and the bottom are not close calls.</p>
+
+    <figure class="viz reveal breakout" aria-label="A ranked bar chart of health levers outside diet and exercise, sorted by evidence and effect size.">
+      <figcaption>What actually moves the needle</figcaption>
+      <p class="viz-sub">The parts of health that aren't training or food, ranked by a rough blend of how good the evidence is and how big the effect is. The cheap, quiet ones win. The ones with the influencers lose.</p>
+      <ol class="rank">
+        <li><span class="rk">1</span><span class="bar-wrap"><span class="bar grow" style="width:97%;background:#b79bc4"></span><span class="bar-lab">Sleep, enough and regular<span class="tier">biggest lever</span></span></span></li>
+        <li><span class="rk">2</span><span class="bar-wrap"><span class="bar grow" style="width:92%;background:#d9978c"></span><span class="bar-lab">The people you're close to<span class="tier">biggest lever</span></span></span></li>
+        <li><span class="rk">3</span><span class="bar-wrap"><span class="bar grow" style="width:90%;background:#b8796d"></span><span class="bar-lab">Not smoking<span class="tier">biggest lever</span></span></span></li>
+        <li><span class="rk">4</span><span class="bar-wrap"><span class="bar grow" style="width:86%;background:#8fb3c7"></span><span class="bar-lab">Knowing and treating your blood pressure<span class="tier">biggest lever</span></span></span></li>
+        <li><span class="rk">5</span><span class="bar-wrap"><span class="bar grow" style="width:74%;background:#b8796d"></span><span class="bar-lab">Drinking little or no alcohol<span class="tier">big lever</span></span></span></li>
+        <li><span class="rk">6</span><span class="bar-wrap"><span class="bar grow" style="width:68%;background:#8fb3c7"></span><span class="bar-lab">The cancer screens and shots that work<span class="tier">big lever</span></span></span></li>
+        <li><span class="rk">7</span><span class="bar-wrap"><span class="bar grow" style="width:60%;background:#b8796d"></span><span class="bar-lab">Clean air to breathe<span class="tier">real, often invisible</span></span></span></li>
+        <li><span class="rk">8</span><span class="bar-wrap"><span class="bar grow" style="width:50%;background:#dfc288"></span><span class="bar-lab">Morning light and sensible sun<span class="tier">real, smaller</span></span></span></li>
+        <li><span class="rk">9</span><span class="bar-wrap"><span class="bar grow" style="width:44%;background:#cf9f78"></span><span class="bar-lab">The sauna<span class="tier">promising, unproven</span></span></span></li>
+        <li><span class="rk">10</span><span class="bar-wrap"><span class="bar grow" style="width:30%;background:#9ec79a"></span><span class="bar-lab">Breathwork and stress rituals<span class="tier">modest</span></span></span></li>
+        <li><span class="rk">11</span><span class="bar-wrap"><span class="bar grow" style="width:18%;background:#93b6c9"></span><span class="bar-lab">The cold plunge<span class="tier">feels great, thin evidence</span></span></span></li>
+        <li><span class="rk">12</span><span class="bar-wrap"><span class="bar grow" style="width:9%;background:#7e8a78"></span><span class="bar-lab">Most supplements and biohacks<span class="tier">save your money</span></span></span></li>
+      </ol>
+      <p class="viz-note">Notice what is loud and what is quiet. The cold plunge and the supplement aisle, the two with the biggest social-media footprint, sit at the bottom. Sleep and the people in your life, the two nobody tries to sell you, sit at the top.</p>
+    </figure>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The thread that ties this together.</b> When something works in health, the evidence is usually boring and decades old. When something is exciting and new and sold by a man with a podcast, the right default is patience. This guide walks the list from the top, where the proof is strongest and the cost is lowest, down to the bottom, where the marketing is loudest and the file is thinnest.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 1. SLEEP ===================== -->
+  <section id="sleep" class="sec" aria-labelledby="sleep-h">
+    <span class="sec-kicker">The master lever</span>
+    <h2 id="sleep-h" class="sec-h">Sleep, the third of your life that runs the other two</h2>
+
+    <p class="lede">You will spend about a third of your life asleep, and it may be the most important third. Sleep is upstream of nearly everything else in this guide: how hungry you are, how steady your mood is, how well your heart and immune system run, how clearly you think. Get it wrong for long enough and no supplement, plunge, or breathing drill will buy it back.</p>
+
+    <figure class="photo reveal">
+      <img src="assets/images/the-other-hours/sleep.webp" width="1500" height="1182" loading="lazy" decoding="async" alt="A Van Gogh painting of two peasants asleep on their backs in golden hay at midday, boots off, a pair of sickles beside them, under a blue sky.">
+      <figcaption>Van Gogh painted rest as something earned and total. We treat it as the thing to cut when the day runs short, which is exactly backwards.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Vincent_van_Gogh_-_The_siesta_(after_Millet)_-_Google_Art_Project.jpg">Vincent van Gogh, "The Siesta" (after Millet), 1890, Musee d'Orsay. Public domain, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <h3>How much: the curve bottoms out at seven</h3>
+    <p>Pool the big studies and the relationship between sleep and dying is a gentle U. Risk is lowest at about seven hours and climbs as you move away in either direction. The largest meta-analysis, 1.3 million people across sixteen cohorts, put short sleep at about a 12 percent higher death rate and long sleep at about 30 percent. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2864873/">Cappuccio 2010</a></span> <span class="grade g-a">strong</span> A later dose-response meta found the same bottom at seven hours. <span class="u-src"><a href="https://www.ahajournals.org/doi/10.1161/JAHA.117.005947">Yin 2017</a></span> <span class="grade g-a">strong</span></p>
+
+    <p>One honest catch, because the first commenter will raise it. The long-sleep side of that U is mostly not sleep doing harm. It is harm causing sleep: undiagnosed illness, depression, and inflammation make people sleep more, so "sleeps nine hours" is often a symptom, not a cause. The short-sleep side is the one you can actually act on, and the place most people live.</p>
+
+    <figure class="viz reveal" aria-label="A U-shaped curve of mortality risk against nightly sleep duration, lowest at about seven hours.">
+      <figcaption>The seven-hour floor</figcaption>
+      <p class="viz-sub">Relative risk of dying against how long you sleep. Lowest around seven hours, rising on both sides. Remember that the right-hand climb is partly sickness causing long sleep, not the reverse.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="A U-shaped curve: risk is high at four hours, falls to a minimum near seven hours, and rises again past nine hours.">
+        <g>
+          <line x1="70" y1="70" x2="660" y2="70" class="v-grid"/>
+          <line x1="70" y1="150" x2="660" y2="150" class="v-grid"/>
+          <line x1="70" y1="230" x2="660" y2="230" class="v-grid"/>
+          <text x="60" y="74" text-anchor="end" class="v-axis">high</text>
+          <text x="60" y="234" text-anchor="end" class="v-axis">low</text>
+          <text x="22" y="150" class="v-axis-t" transform="rotate(-90 22 150)" text-anchor="middle">risk of death</text>
+        </g>
+        <line x1="70" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <path class="draw" style="--len:760" d="M90,95 C 160,150 210,212 320,228 C 360,233 400,232 430,224 C 520,200 560,120 640,86" fill="none" stroke="#b79bc4" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="320" cy="228" r="5.5" fill="#b79bc4"/>
+        <circle cx="430" cy="224" r="5.5" fill="#b79bc4"/>
+        <text x="375" y="218" text-anchor="middle" class="v-label-b" font-size="12" fill="#9ec79a">7 to 8 hours</text>
+        <text x="375" y="200" text-anchor="middle" class="v-label" font-size="11" fill="#B8B2A2">the bottom of the curve</text>
+        <text x="90" y="284" text-anchor="middle" class="v-axis-t">4 hrs</text>
+        <text x="230" y="284" text-anchor="middle" class="v-axis-t">5 to 6</text>
+        <text x="375" y="284" text-anchor="middle" class="v-axis-t">7 to 8</text>
+        <text x="520" y="284" text-anchor="middle" class="v-axis-t">9</text>
+        <text x="640" y="284" text-anchor="middle" class="v-axis-t">10 hrs</text>
+      </svg>
+      <p class="viz-note">More than one in three American adults sleeps under seven hours on a regular basis. <b>Cappuccio 2010; Yin 2017; CDC.</b></p>
+    </figure>
+
+    <h3>When may matter as much as how long</h3>
+    <p>Here is the newer and more surprising finding: how consistent your schedule is may matter as much as how many hours you log. Using wrist trackers on nearly 61,000 people, the most regular sleepers, same bedtime and wake time night after night, had a 20 to 48 percent lower death rate than the most irregular ones, and regularity predicted survival better than duration did. <span class="u-src"><a href="https://academic.oup.com/sleep/article/47/1/zsad253/7280269">Windred 2024</a></span> <span class="grade g-b">good</span> That is one large study, not the last word, but it points at the cheapest sleep upgrade there is: pick a wake-up time and hold it, including weekends.</p>
+
+    <h3>The disorder you might have and not know</h3>
+    <p>Obstructive sleep apnea, where your airway collapses dozens of times a night and your sleep shatters without fully waking you, may affect close to a billion adults worldwide. <span class="u-src"><a href="https://www.thelancet.com/journals/lanres/article/PIIS2213-2600(19)30198-5/abstract">Benjafield 2019</a></span> <span class="grade g-b">good</span> Most of them have no idea. It tracks with high blood pressure, heart disease, and daytime wreckage, and the tells are loud snoring, gasping awake, and being exhausted after a full night. If that is you, ask for a sleep study. (Honest footnote: the big trial of CPAP machines did not cut heart attacks and strokes, partly because people wore the mask only about three hours a night, so treat it as relief for brutal sleep, not a proven heart drug. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27571048/">McEvoy 2016</a></span>)</p>
+
+    <h3>What actually works, and what's sold to you</h3>
+    <p>For ongoing insomnia, the first-line treatment in the medical guidelines is not a pill. It is CBT-I, a short structured therapy for sleep, which beats sleeping pills over the long run and is what both the American College of Physicians and the sleep-medicine society recommend you try first. <span class="u-src"><a href="https://www.acpjournals.org/doi/10.7326/M15-2175">Qaseem 2016</a></span> <span class="grade g-a">strong</span> Around that, the boring basics are the ones that pay: a consistent wake time, a cool dark room (around 65F), morning daylight to set your clock, and protecting the back half of the night.</p>
+
+    <p>That last one is where the nightcap and the late coffee do their damage. Alcohol helps you fall asleep and then fragments the second half of the night and suppresses REM, which is why you wake at 4 a.m. after drinking. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23347102/">Ebrahim 2013</a></span> <span class="grade g-b">good</span> And caffeine has a long tail: a meta-analysis found it costs about 45 minutes of sleep, and a 2023 review suggests cutting it off roughly 8 to 9 hours before bed, more if you are sensitive. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/36870101/">Gardiner 2023</a></span> <span class="grade g-a">strong</span></p>
+
+    <div class="tool" id="caf-tool">
+      <div class="tool-head"><h4>Your caffeine curfew</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-body">
+        <div class="tool-row">
+          <label for="c-bed">Target bedtime</label>
+          <input type="time" id="c-bed" value="22:30">
+          <label for="c-sens">How sensitive are you?</label>
+          <select id="c-sens">
+            <option value="8">Average</option>
+            <option value="10" selected>Somewhat sensitive</option>
+            <option value="13">Very sensitive</option>
+          </select>
+        </div>
+        <div class="tool-out">
+          <div><span class="lbl">Last coffee no later than</span><br><span class="big" id="c-out">12:30 pm</span></div>
+          <div class="tool-rail" id="c-note">Caffeine has a half-life of about 5 hours, but it runs from 2 to 10 depending on your genes, so this is a guide, not a law. If you sleep badly, push it earlier before you blame anything else.</div>
+        </div>
+      </div>
+    </div>
+
+    <p>As for the sleep economy: most of it is weak. Blue-light-blocking glasses have thin evidence, consumer sleep trackers are mostly unvalidated against real sleep labs, and melatonin is widely misunderstood. It is a low-dose timing signal, not a sedative, and the pills are alarmingly mislabeled: one analysis found actual content running from 83 percent below the label to 478 percent above it, and a 2023 study found 22 of 25 gummy products off, one containing no melatonin at all. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27855744/">Erland 2017</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/37097362/">Cohen 2023</a></span> <span class="grade g-a">strong</span></p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Why sleep goes first.</b> It is the one lever in this guide that, done badly, quietly degrades every other one. Fix your wake time, get morning light, protect the second half of the night, and get checked if you snore like a chainsaw. Almost everything below matters less than this.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 2. THE PEOPLE AROUND YOU ===================== -->
+  <section id="people" class="sec" aria-labelledby="people-h">
+    <span class="sec-kicker">The lever nobody calls health</span>
+    <h2 id="people-h" class="sec-h">The people around you</h2>
+
+    <p class="lede">The best-evidenced thing on this page that isn't sleep is also the one least likely to be filed under health: the people you are close to. Loneliness does more than feel bad. Measured across millions of lives, it carries a risk of early death in the same range as the classic killers, and almost nobody treats fixing it as a health priority.</p>
+
+    <p>The landmark here is a 2010 meta-analysis of 148 studies and 300,000 people: those with stronger social ties had about 50 percent better odds of surviving a study's follow-up than those with weaker ones. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2910600/">Holt-Lunstad 2010</a></span> <span class="grade g-a">strong</span> A second analysis, 3.4 million people, isolated the lonely end: social isolation raised mortality risk about 29 percent, loneliness about 26, and living alone about 32, even after adjusting for other risks. <span class="u-src"><a href="https://journals.sagepub.com/doi/full/10.1177/1745691614568352">Holt-Lunstad 2015</a></span> <span class="grade g-a">strong</span></p>
+
+    <figure class="viz reveal" aria-label="A bar chart of the increase in mortality risk from social isolation, loneliness, and living alone.">
+      <figcaption>What being disconnected costs</figcaption>
+      <p class="viz-sub">Increase in the risk of dying tied to each measure, after adjusting for other factors. These sit alongside well-known risks like obesity, which is the company they keep.</p>
+      <svg viewBox="0 0 700 230" role="img" aria-label="Living alone raises mortality risk about 32 percent, social isolation about 29 percent, and loneliness about 26 percent.">
+        <line x1="200" y1="20" x2="200" y2="190" class="v-grid-s"/>
+        <text x="200" y="208" text-anchor="middle" class="v-axis-t">no extra risk</text>
+        <g font-family="var(--font-body)">
+          <text x="188" y="51" text-anchor="end" class="v-label" font-size="13">Living alone</text>
+          <rect x="200" y="32" width="320" height="30" rx="4" fill="#d9978c"/>
+          <text x="528" y="52" class="v-label-b" font-size="12" fill="#d9978c">+32%</text>
+          <text x="188" y="101" text-anchor="end" class="v-label" font-size="13">Social isolation</text>
+          <rect x="200" y="82" width="290" height="30" rx="4" fill="#cf9f78"/>
+          <text x="498" y="102" class="v-label-b" font-size="12" fill="#cf9f78">+29%</text>
+          <text x="188" y="151" text-anchor="end" class="v-label" font-size="13">Loneliness</text>
+          <rect x="200" y="132" width="260" height="30" rx="4" fill="#dfc288"/>
+          <text x="468" y="152" class="v-label-b" font-size="12" fill="#dfc288">+26%</text>
+        </g>
+      </svg>
+      <p class="viz-note">The 2023 US Surgeon General's advisory put the effect of disconnection in the range of smoking up to 15 cigarettes a day. That line gets overquoted, it comes from the broad social-connection figure, not loneliness alone, so read it as an analogy, not a measurement. <b>Holt-Lunstad 2010, 2015.</b></p>
+    </figure>
+
+    <figure class="photo reveal">
+      <img src="assets/images/the-other-hours/people.webp" width="1500" height="1111" loading="lazy" decoding="async" alt="Renoir's painting of a relaxed lunch party on a balcony by the river, friends talking, laughing, and drinking around a table with wine bottles and fruit.">
+      <figcaption>Renoir's boating party is a picture of the thing the data keeps pointing at: ordinary, unhurried time with people who know you. It is not a luxury on top of health. It is close to the center of it.
+        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Pierre-Auguste_Renoir_-_Luncheon_of_the_Boating_Party_-_Google_Art_Project.jpg">Pierre-Auguste Renoir, "Luncheon of the Boating Party" (1880 to 1881), The Phillips Collection. Public domain, via Wikimedia Commons.</a></span>
+      </figcaption>
+    </figure>
+
+    <p>The steelman, because this is observational: maybe sick and dying people just withdraw, so thin networks are a symptom, not a cause. That is real, and it is partly true. But these are mostly prospective studies that start with healthy people and watch the lonely ones fall behind, the effect survives adjustment for baseline health, and the size is too large and too consistent to be only reverse causation. The honest read is that connection is causal and confounded at once, and you lose nothing by acting as if it matters.</p>
+
+    <p>The longest-running evidence agrees. The Harvard Study of Adult Development has followed the same men, and later their families, for over 80 years, and its blunt summary is that the quality of your relationships is the strongest predictor of how healthy and happy you are in old age, better than cholesterol. How satisfied people were with their relationships at 50 predicted their physical health at 80. <span class="u-src"><a href="https://news.harvard.edu/gazette/story/2017/04/over-nearly-80-years-harvard-study-has-been-showing-how-to-live-a-healthy-and-happy-life/">Waldinger, the Harvard Study</a></span> <span class="grade g-b">good</span></p>
+
+    <p>One more thing belongs here, because it tracks closely: a sense of purpose, a reason to get up. Older adults with the weakest sense of purpose were about two and a half times as likely to die over the next four years as those with the strongest, <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6632139/">Alimujiang 2019</a></span> and people high in purpose were roughly half as likely to develop Alzheimer's. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2897172/">Boyle 2010</a></span> <span class="grade g-b">good</span> The mechanism is murky and reverse causation lurks again, but the direction is steady across studies.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The unsold lever.</b> No one runs ads for calling your brother or keeping the standing dinner. There is no product. That is exactly why it is underrated, and why it sits second only to sleep. Tend your close relationships on purpose, the way you would train a muscle. The evidence says it is health, not leisure.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 3. WHAT TO SUBTRACT ===================== -->
+  <section id="subtract" class="sec" aria-labelledby="subtract-h">
+    <span class="sec-kicker">What to subtract</span>
+    <h2 id="subtract-h" class="sec-h">The air, the drink, the smoke</h2>
+
+    <p class="lede">Some of the biggest wins in health are not things you add. They are things you stop, or never start. Three of them, smoke, alcohol, and bad air, are doing more quiet damage than any supplement could ever undo, and two of the three are invisible.</p>
+
+    <h3>Alcohol: the protective glass of wine was a measurement error</h3>
+    <p>For decades the data seemed to show that moderate drinkers outlived teetotalers, the famous J-shaped curve. The curve was largely an artifact. The "non-drinker" group was quietly stuffed with people who had quit because they were already sick, the so-called sick-quitter bias, which made drinkers look healthy by comparison. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4803651/">Stockwell 2016</a></span> <span class="grade g-a">strong</span> Correct for it, as a 2023 analysis of 4.8 million people did, and the protection vanishes: light drinkers have no lower death rate than lifelong abstainers. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10066463/">Zhao 2023</a></span> <span class="grade g-a">strong</span></p>
+
+    <figure class="viz reveal" aria-label="Two curves of mortality risk against alcohol intake: an apparent J-shape, and the corrected line with no protective dip.">
+      <figcaption>The curve that wasn't there</figcaption>
+      <p class="viz-sub">The old story (dotted) showed a dip below the no-drinking line, the protective glass of wine. Once you stop counting sick ex-drinkers as abstainers, the dip flattens and the line just climbs.</p>
+      <svg viewBox="0 0 700 290" role="img" aria-label="A dotted curve dips below baseline at low alcohol intake then rises; a solid corrected curve rises steadily from zero with no dip.">
+        <g>
+          <line x1="80" y1="60" x2="660" y2="60" class="v-grid"/>
+          <line x1="80" y1="150" x2="660" y2="150" class="v-grid-s"/>
+          <line x1="80" y1="230" x2="660" y2="230" class="v-grid"/>
+          <text x="70" y="154" text-anchor="end" class="v-axis">no extra risk</text>
+          <text x="22" y="150" class="v-axis-t" transform="rotate(-90 22 150)" text-anchor="middle">risk of death</text>
+        </g>
+        <!-- the old apparent J -->
+        <path d="M90,150 C 150,178 200,182 260,170 C 360,150 470,110 640,70" fill="none" stroke="#7e8a78" stroke-width="2" stroke-dasharray="4 5"/>
+        <text x="250" y="200" class="v-label" font-size="11" fill="#7e8a78">the old "J-curve"</text>
+        <!-- corrected -->
+        <path class="draw" style="--len:760" d="M90,150 C 180,138 240,126 320,110 C 430,88 520,80 640,58" fill="none" stroke="#b8796d" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="90" cy="150" r="5" fill="#b8796d"/>
+        <text x="100" y="138" class="v-label-b" font-size="12" fill="#b8796d">corrected: it just goes up</text>
+        <line x1="80" y1="250" x2="660" y2="250" class="v-grid-s"/>
+        <text x="90" y="270" text-anchor="middle" class="v-axis-t">none</text>
+        <text x="370" y="270" text-anchor="middle" class="v-axis-t">moderate</text>
+        <text x="650" y="270" text-anchor="end" class="v-axis-t">heavy</text>
+      </svg>
+      <p class="viz-note">Genetic studies back this up: where genes raise alcohol intake, blood pressure and stroke rise right along with it, with no protective floor. <b>Stockwell 2016; Zhao 2023; Millwood 2019.</b></p>
+    </figure>
+
+    <p>It gets firmer. Mendelian randomization, which uses gene variants as a natural experiment to dodge the confounders, shows alcohol raising blood pressure and stroke roughly in a straight line from zero. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30955975/">Millwood 2019</a></span> <span class="grade g-a">strong</span> And alcohol is a Group 1 carcinogen, the top tier, alongside tobacco; even a drink a day measurably raises breast-cancer risk. <span class="u-src"><a href="https://www.cancer.gov/about-cancer/causes-prevention/risk/alcohol/alcohol-fact-sheet">IARC, via NCI</a></span> <span class="grade g-a">strong</span> The global analysis that weighed every harm against every supposed benefit landed on a blunt number for the amount that minimizes total damage: zero. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30146330/">GBD Alcohol 2018</a></span> None of this means one drink will hurt you in a way you can feel. It means the health column has nothing in it, so drink for pleasure if you drink, not for your heart.</p>
+
+    <h3>Smoking: still the single worst thing, and the one with the cleanest exit</h3>
+    <p>Nothing else on this page is close. Smoking is the leading cause of preventable death, around 480,000 Americans a year. <span class="u-src"><a href="https://www.cdc.gov/tobacco/about/index.html">CDC</a></span> The 50-year British Doctors Study put the cost at about a decade of life. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC437109/">Doll 2004</a></span> <span class="grade g-a">strong</span> The hopeful part is how much of that decade you can take back: quit by about 40 and you avoid roughly 90 percent of the excess risk, quit earlier and you reclaim nearly all of it. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMsa1211128">Jha 2013</a></span> <span class="grade g-a">strong</span> On vaping: for a smoker trying to switch, e-cigarettes are substantially less harmful than cigarettes and beat patches and gum for quitting. <span class="u-src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD010216.pub8/full">Cochrane 2024</a></span> <span class="grade g-b">good</span> Not harmless, and not a thing a non-smoker should ever start, but a real ladder down for someone already on cigarettes.</p>
+
+    <h3>The air you don't think about</h3>
+    <p>The exposure almost nobody manages is the one they are doing every minute. Fine-particulate air pollution, the PM2.5 that comes off traffic, wildfires, and combustion, raises death rates measurably, and in a study of 60 million Americans the harm showed up even below the legal limit. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28657878/">Di 2017</a></span> <span class="grade g-a">strong</span> It runs the other way too: as US cities cleaned their air, life expectancy rose about 0.6 years for every 10 micrograms of particulate removed. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/19164188/">Pope 2009</a></span> <span class="grade g-b">good</span> Globally, air pollution is now tied to about 8.1 million deaths a year, second only to high blood pressure among risk factors. <span class="u-src"><a href="https://www.healtheffects.org/announcements/new-state-global-air-report-finds-air-pollution-second-leading-risk-factor-death">State of Global Air 2024</a></span> <span class="grade g-a">strong</span></p>
+
+    <p>Two cheap moves follow. First, radon: an odorless radioactive gas that seeps from soil into homes, it is the second leading cause of lung cancer and the first among people who never smoked, around 21,000 US deaths a year, and a test kit costs about $15. <span class="u-src"><a href="https://www.epa.gov/radon/health-risk-radon">EPA</a></span> <span class="grade g-a">strong</span> Second, indoor air: a HEPA purifier reliably cuts indoor particulates and nudges blood pressure down in controlled trials, useful if you live near traffic or through wildfire season. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7611692/">Walzer 2020</a></span> <span class="grade g-b">good</span></p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Subtraction beats addition.</b> Not smoking, drinking little or nothing, testing your home for radon, and not breathing traffic all day will do more for you than any pill, powder, or plunge in the back half of this guide. The biggest health upgrades are often things you remove.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 4. THE NUMBERS ===================== -->
+  <section id="numbers" class="sec" aria-labelledby="numbers-h">
+    <span class="sec-kicker">The unglamorous maintenance</span>
+    <h2 id="numbers-h" class="sec-h">The boring numbers that save lives</h2>
+
+    <p class="lede">The most cost-effective intervention in all of medicine is something you can measure in thirty seconds, treat with a generic pill, and most people ignore until it has already done its damage: your blood pressure. This chapter is the unsexy maintenance, the checks and numbers that quietly prevent the things that kill people.</p>
+
+    <h3>Blood pressure: the silent number one</h3>
+    <p>High blood pressure is the single largest risk factor for death on Earth, tied to about one in five deaths worldwide. <span class="u-src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(20)30752-2/fulltext">GBD 2019</a></span> <span class="grade g-a">strong</span> It has no symptoms, which is why nearly half of US adults have it and only about one in five has it controlled to target. <span class="u-src"><a href="https://www.cdc.gov/high-blood-pressure/data-research/facts-stats/index.html">CDC NHANES</a></span> And treating it works: the SPRINT trial found that pushing high-risk patients to a tight target cut serious cardiovascular events by 25 percent and all-cause death by 27. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26551272/">SPRINT 2015</a></span> <span class="grade g-a">strong</span> (Two caveats: SPRINT measured pressure with a careful automated cuff that reads lower than a rushed clinic check, and the aggressive target caused more side effects. The lesson is "know it and treat it," not "chase 120 at any cost.") A $30 home cuff is one of the best health buys there is.</p>
+
+    <figure class="viz reveal" aria-label="A funnel chart showing how few people with high blood pressure have it controlled.">
+      <figcaption>The leak in the most treatable risk there is</figcaption>
+      <p class="viz-sub">Among US adults, of those who have high blood pressure, how many know it, and how many have it controlled to target. Most of the benefit is lost not because we lack the drugs, but because the number goes unwatched.</p>
+      <svg viewBox="0 0 700 210" role="img" aria-label="Nearly half of adults have high blood pressure; about 59 percent of them are aware; only about 21 percent are controlled to target.">
+        <g font-family="var(--font-body)">
+          <rect x="60" y="40" width="560" height="34" rx="4" fill="#8fb3c7"/>
+          <text x="80" y="62" class="v-label-b" font-size="13" fill="#16201f">Have high blood pressure (about 48% of adults)</text>
+          <rect x="120" y="92" width="440" height="34" rx="4" fill="#6f9aab"/>
+          <text x="140" y="114" class="v-label-b" font-size="13" fill="#16201f">Are even aware of it (about 59% of them)</text>
+          <rect x="200" y="144" width="200" height="34" rx="4" fill="#b8796d"/>
+          <text x="220" y="166" class="v-label-b" font-size="13" fill="#1d1512">Controlled (about 21%)</text>
+        </g>
+      </svg>
+      <p class="viz-note">The drug is cheap and the measurement is free. The thing that fails is attention. <b>CDC NHANES.</b></p>
+    </figure>
+
+    <h3>The handful of numbers worth knowing</h3>
+    <p>Beyond blood pressure, two more numbers earn their place. ApoB, or its rough stand-in LDL cholesterol, does not merely track with heart disease, it causes it, in a dose-and-time way: every long-term drop is paid back in less disease, which is why "lower and earlier" wins. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5837225/">Ference 2017</a></span> <span class="grade g-a">strong</span> And A1c or fasting glucose, because prediabetes is common and quiet: about 38 percent of US adults have it and more than 80 percent do not know. <span class="u-src"><a href="https://www.cdc.gov/diabetes/php/data-research/index.html">CDC</a></span> Three numbers, one blood draw and one cuff, and you have caught the things that do the most damage before they announce themselves.</p>
+
+    <h3>The screens and shots that actually pay</h3>
+    <p>Not every screening test earns its hype, but a few clearly save lives. For heavy smokers, a yearly low-dose CT scan cut lung-cancer deaths by about 20 percent in one large trial and 24 percent in another. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4356534/">NLST 2011</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/31995683/">NELSON 2020</a></span> <span class="grade g-a">strong</span> Colorectal screening from age 45 is strongly recommended, though honesty compels a footnote: the one big randomized trial of colonoscopy found a clear drop in cancer cases but a death reduction that missed significance, dragged down because fewer than half the invited people actually went. <span class="u-src"><a href="https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/colorectal-cancer-screening">USPSTF</a></span> <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10643301/">NordICC 2022</a></span> <span class="grade g-b">good</span> Mammography is real but more modest than the posters suggest, a roughly 20 percent cut in breast-cancer death paired with meaningful overdiagnosis of cancers that would never have harmed you. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4415291/">Marmot 2012</a></span> <span class="grade g-b">good</span></p>
+
+    <p>Two vaccines belong here for less obvious reasons. The flu shot is associated with fewer heart attacks in people at cardiac risk, behaving a little like a cardiovascular drug. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/24150467/">Udell 2013</a></span> <span class="grade g-b">good</span> And in a striking natural experiment using an age cutoff in Wales, people who got the shingles vaccine were about 20 percent less likely to be diagnosed with dementia over the next seven years. <span class="u-src"><a href="https://www.nature.com/articles/s41586-025-08800-x">Eyting 2025</a></span> <span class="grade g-b">good</span> That second one is observational, even if unusually well-designed, so hold it as a strong hint rather than settled fact.</p>
+
+    <h3>Teeth and ears, the two everyone forgets</h3>
+    <p>Gum disease travels with heart disease and diabetes, and it is worth treating, but be honest about what is proven: the link is an association tangled with shared risks like smoking, and the trial of a drug built on the gum-bacteria-cause-Alzheimer's theory failed. <span class="u-src"><a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD012018.pub2/full">Cochrane 2019</a></span> <span class="grade g-c">mixed</span> Keep your teeth because losing them is miserable, not because floss is proven to save your heart. Hearing is the sleeper: untreated hearing loss is the largest potentially modifiable risk factor for dementia in midlife, and a 2023 trial found hearing aids slowed cognitive decline in older adults already at high risk. <span class="u-src"><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(24)01296-0/fulltext">Lancet Commission 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/37478886/">ACHIEVE 2023</a></span> <span class="grade g-b">good</span> Protect your ears from loud noise now, and treat hearing loss when it comes.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Boring is the point.</b> None of this is exciting. A cuff, a blood draw, a couple of screenings, two shots, and your dentist. It is also, dollar for dollar and hour for hour, some of the highest-return health work you will ever do, precisely because it catches the silent things while they are still cheap to fix.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 5. LIGHT AND SUN ===================== -->
+  <section id="light" class="sec" aria-labelledby="light-h">
+    <span class="sec-kicker">The free input</span>
+    <h2 id="light-h" class="sec-h">Light and the sun</h2>
+
+    <p class="lede">Step outside in the morning and you do more for your sleep than any pill in the last chapter. Your body clock is set by light, and the gap between indoors and outdoors is enormous: a lit room is a few hundred lux, an overcast morning is 10,000, full sun is 100,000. Your brain reads that difference, and most of us spend the day in the dim end.</p>
+
+    <p>Morning light, gotten early and outside, anchors your circadian clock, which downstream means falling asleep more easily and a steadier mood. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8929548/">Brown 2022</a></span> <span class="grade g-b">good</span> It is the single cheapest sleep and mood intervention there is, and it costs ten minutes and a coat. This is the part of the sun story with almost no downside.</p>
+
+    <figure class="viz reveal" aria-label="A bar chart comparing light intensity indoors and outdoors on a logarithmic scale.">
+      <figcaption>How dim your day really is</figcaption>
+      <p class="viz-sub">Light intensity in lux, on a scale where each step is ten times brighter. The light your body clock wants is outside, and indoor lighting barely registers next to it.</p>
+      <svg viewBox="0 0 700 220" role="img" aria-label="A living room is about 100 lux, an office about 400, an overcast day about 10,000, and full daylight about 100,000, each far brighter than the last.">
+        <line x1="170" y1="20" x2="170" y2="180" class="v-grid-s"/>
+        <g font-family="var(--font-body)">
+          <text x="158" y="44" text-anchor="end" class="v-label" font-size="12">Living room</text>
+          <rect x="170" y="28" width="70" height="24" rx="3" fill="#5a675c"/>
+          <text x="248" y="45" class="v-axis-t">~100 lux</text>
+          <text x="158" y="82" text-anchor="end" class="v-label" font-size="12">Bright office</text>
+          <rect x="170" y="66" width="120" height="24" rx="3" fill="#7e8a78"/>
+          <text x="298" y="83" class="v-axis-t">~400 lux</text>
+          <text x="158" y="120" text-anchor="end" class="v-label" font-size="12">Overcast day, outside</text>
+          <rect x="170" y="104" width="300" height="24" rx="3" fill="#dfc288"/>
+          <text x="478" y="121" class="v-axis-t">~10,000 lux</text>
+          <text x="158" y="158" text-anchor="end" class="v-label" font-size="12">Full daylight</text>
+          <rect x="170" y="142" width="460" height="24" rx="3" fill="#f0d68a"/>
+          <text x="638" y="159" text-anchor="end" class="v-label-b" font-size="12" fill="#1d1c14">~100,000 lux</text>
+        </g>
+        <text x="170" y="200" class="v-axis-t">each bar is roughly 10x the one above it</text>
+      </svg>
+      <p class="viz-note">You cannot get this dose from a window or a lamp. The instruction is almost comically simple: go outside, early, most days. <b>Brown 2022.</b></p>
+    </figure>
+
+    <h3>Vitamin D: the pill is not the sunshine</h3>
+    <p>Here the popular story oversells. Vitamin D supplements, tested in the 26,000-person VITAL trial, did not lower the risk of heart attack, stroke, or getting cancer, and a separate trial found no drop in fractures. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1809944">Manson 2019</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/35939583/">LeBoff 2022</a></span> <span class="grade g-a">strong</span> The honest exceptions are modest: a roughly 22 percent drop in new autoimmune disease, and a secondary hint of fewer cancer deaths. <span class="u-src"><a href="https://www.bmj.com/content/376/bmj-2021-066452">Hahn 2022</a></span> <span class="grade g-b">good</span> If you are genuinely deficient, supplement. But a daily D pill is not the life-extender it is sold as, and it is not a substitute for actual sunlight.</p>
+
+    <h3>The sun's two faces</h3>
+    <p>Sunlight itself is genuinely double-edged, and the grown-up move is to hold both halves at once. On one side, a long Swedish study found that women who avoided the sun died sooner, with the authors comparing the size of the risk to smoking. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26992108/">Lindqvist 2016</a></span> <span class="grade g-c">mixed</span> That finding is provocative and badly confounded, sun exposure tracks with wealth, exercise, and vacations, so do not take "as deadly as smoking" literally. There is even a plausible mechanism, sunlight on skin releases nitric oxide that lowers blood pressure, but it rests on small studies. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/24445737/">Weller 2014</a></span></p>
+
+    <p>On the other side, the harm is not contested at all: UV is the main cause of skin cancer and skin aging, and in the one long randomized trial, daily sunscreen cut invasive melanoma to a quarter of the rate. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21135266/">Green 2011</a></span> <span class="grade g-b">good</span> So the sensible position is not "more sun" or "no sun." It is get your morning light, enjoy moderate sun without burning, and never bake. Burns are the part that clearly hurts you.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The sunlight summary.</b> Morning light, daily and outside, is one of the best free things in this guide. Vitamin D pills are oversold; deficiency aside, skip them. Sun in moderation is fine and maybe good, sunburn is not, and the cleanest win of all needs no UV at all: it is just being outside early.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 6. THE SAUNA ===================== -->
+  <section id="heat" class="sec" aria-labelledby="heat-h">
+    <span class="sec-kicker">The promising one</span>
+    <h2 id="heat-h" class="sec-h">Heat: the sauna</h2>
+
+    <p class="lede">Of all the trendy recovery rituals, the sauna has the best numbers, and they come with the biggest asterisk. The numbers are genuinely striking. The asterisk is that nearly all of them come from one group of Finnish men, watched rather than tested.</p>
+
+    <p>In a cohort of about 2,300 middle-aged Finnish men followed for two decades, those who used a sauna four to seven times a week, against once a week, had about 63 percent fewer sudden cardiac deaths and 40 percent lower all-cause mortality. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25705824/">Laukkanen 2015</a></span> <span class="grade g-c">mixed</span> The same cohort showed lower rates of dementia, stroke, and high blood pressure. <span class="u-src"><a href="https://academic.oup.com/ageing/article/46/2/245/2654230">Laukkanen 2017</a></span> <span class="grade g-c">mixed</span> Those are big effects, in exercise-drug territory.</p>
+
+    <figure class="viz reveal" aria-label="A bar chart of all-cause mortality risk by weekly sauna frequency, falling as frequency rises.">
+      <figcaption>The sauna numbers, and the asterisk</figcaption>
+      <p class="viz-sub">All-cause death rate by how often these Finnish men used a sauna, relative to once a week. The trend is real and large. Whether the sauna caused it is the open question.</p>
+      <svg viewBox="0 0 700 240" role="img" aria-label="Once a week is the baseline at 1.0; two to three times a week about 0.78; four to seven times a week about 0.60.">
+        <line x1="70" y1="30" x2="70" y2="195" class="v-grid-s"/>
+        <line x1="70" y1="195" x2="660" y2="195" class="v-grid-s"/>
+        <g font-family="var(--font-body)">
+          <rect x="120" y="50" width="110" height="145" rx="4" fill="#5a675c"/>
+          <text x="175" y="40" text-anchor="middle" class="v-label-b" font-size="13" fill="#B8B2A2">1.0</text>
+          <text x="175" y="214" text-anchor="middle" class="v-axis-t">1x / week</text>
+          <rect x="290" y="82" width="110" height="113" rx="4" fill="#cf9f78"/>
+          <text x="345" y="72" text-anchor="middle" class="v-label-b" font-size="13" fill="#cf9f78">0.78</text>
+          <text x="345" y="214" text-anchor="middle" class="v-axis-t">2 to 3x / week</text>
+          <rect x="460" y="108" width="110" height="87" rx="4" fill="#cf9f78"/>
+          <text x="515" y="98" text-anchor="middle" class="v-label-b" font-size="13" fill="#cf9f78">0.60</text>
+          <text x="515" y="214" text-anchor="middle" class="v-axis-t">4 to 7x / week</text>
+        </g>
+      </svg>
+      <p class="viz-note">The healthy-user problem: a man who saunas five times a week is probably retired-comfortable, relaxed, and well enough to sit in heat. Some of this gap is the sauna, and some is the kind of life that includes a lot of sauna. <b>Laukkanen 2015.</b></p>
+    </figure>
+
+    <p>So why believe any of it? Because the mechanism is real. A sauna session pushes your heart rate up to levels you would see in moderate exercise and improves how your blood vessels respond, which is plausibly why it tracks with heart health. <span class="u-src"><a href="https://www.mayoclinicproceedings.org/article/s0025-6196(18)30275-1/fulltext">Laukkanen 2018</a></span> And when researchers finally ran an actual randomized trial, using hot-water immersion rather than a sauna, eight weeks of heat improved blood-vessel function and lowered blood pressure against a control. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27270841/">Brunt 2016</a></span> <span class="grade g-b">good</span> That is the strongest evidence here precisely because it is an experiment, though it measured vessels and pressure, not lifespan.</p>
+
+    <p>The honest verdict: promising and biologically plausible, but the lifespan numbers are one observational cohort with a real healthy-user confound, and no trial has shown a sauna makes you live longer. If you enjoy it, use it freely. It is pleasant, it is probably good for your heart, and unlike most of what is left, it has actual numbers behind it. Just hold it as a likely-good bet, not a proven one.</p>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 7. BREATH AND STRESS ===================== -->
+  <section id="breath" class="sec" aria-labelledby="breath-h">
+    <span class="sec-kicker">Calm, honestly</span>
+    <h2 id="breath-h" class="sec-h">Breath and the nervous system</h2>
+
+    <p class="lede">Chronic stress is genuinely bad for your heart. The gap between that fact and the breathwork-and-mindfulness industry built on top of it is where you should keep your skepticism. The disease is real. Most of the cures are oversold, and a couple are honestly useful.</p>
+
+    <p>The damage first. Workers with high job strain, demanding jobs they cannot control, had about a 20 percent higher risk of heart disease across a 200,000-person analysis. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3486012/">Kivimaki 2012</a></span> <span class="grade g-a">strong</span> Real, but note the size: about 20 percent, not "stress gives you heart attacks." It is a smaller lever than smoking or inactivity, which is the honest framing the headlines skip.</p>
+
+    <p>Then the famous one, the stress-mindset study: people under heavy stress who also believed that stress was harming their health had a higher death rate, while equally stressed people who did not hold that belief did not. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3374921/">Keller 2012</a></span> <span class="grade g-c">mixed</span> It is a TED-talk favorite and worth deflating slightly: it is one observational study with single-question measures, so it shows a correlation, not proof that changing your mind changes your lifespan. Suggestive, not a prescription.</p>
+
+    <p>What actually helps? Slow breathing, around six breaths a minute, reliably raises heart-rate variability and can calm you in the moment, though its effect on blood pressure is modest and the trials disagree. <span class="u-src"><a href="https://onlinelibrary.wiley.com/doi/full/10.1002/hsr2.636">Goncalves 2022</a></span> <span class="grade g-c">mixed</span> Mindfulness meditation produces small but real improvements in anxiety and depression, on the order of what a medication might add, but in the rigorous review it did not beat active alternatives and did nothing measurable for mood, attention, or sleep. <span class="u-src"><a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/1809754">Goyal 2014</a></span> <span class="grade g-a">strong</span> Real tool, oversold as a panacea.</p>
+
+    <p>And the Wim Hof method, the breathing-plus-cold routine: in a small trial, trained people really could summon an adrenaline surge and blunt their inflammatory response to an injected toxin. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4034215/">Kox 2014</a></span> <span class="grade g-c">mixed</span> That is a genuine, short-lived physiological effect in 24 healthy young men. It is not evidence of better long-term immunity or a longer life, and the breath-holds are dangerous in or near water. Impressive party trick, thin health claim.</p>
+
+    <p>So the useful core is small and unglamorous. If you want to lower your stress load, the things with the best evidence are not breathing apps. They are the levers already in this guide: sleep, the people in your life, time outside, and exercise. Slow breathing is a fine in-the-moment tool. Just do not expect an app to undo a life you need to change.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The honest calm.</b> Chronic stress is worth taking seriously, but the fix is mostly the rest of this guide, not a special technique. Use slow breathing when you are wound up, treat meditation as a modest real benefit and not a miracle, and spend your effort upstream, on sleep and people, where the leverage actually is.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 8. THE COLD PLUNGE ===================== -->
+  <section id="cold" class="sec" aria-labelledby="cold-h">
+    <span class="sec-kicker">The loud one</span>
+    <h2 id="cold-h" class="sec-h">Cold: the plunge</h2>
+
+    <p class="lede">The cold plunge is the most-marketed item in this entire guide and one of the least-supported. It feels incredible, it genuinely lifts your mood for an hour, and almost everything else claimed for it, the fat loss, the immune boost, the dopamine that supposedly carries your whole day, rests on a few tiny studies stretched far past what they showed. And done at the wrong time, it quietly eats the muscle you went to the gym to build.</p>
+
+    <p>Start with the best-established finding, because it is the one the plunge crowd never mentions. If you ice down right after lifting, you blunt the gains. In a controlled 12-week trial, men who took a cold-water bath after strength training built clearly less muscle and strength than men who did an easy cool-down instead. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26174323/">Roberts 2015</a></span> <span class="grade g-b">good</span> The cold dampens the very inflammation that signals your muscles to grow. If you read <a href="big-enough.html">Big Enough</a>, this is the direct sequel: do not plunge in the hours after a workout you lifted to grow from.</p>
+
+    <figure class="viz reveal" aria-label="An evidence scorecard for popular cold-plunge claims, each rated from thin to strong.">
+      <figcaption>Cold plunge claims, against the evidence</figcaption>
+      <p class="viz-sub">How much real support each popular claim actually has. Longer bars mean better evidence. The famous benefits are at the thin end; the honest ones are narrower than the marketing.</p>
+      <div class="meters">
+        <div class="meter">
+          <div class="m-top"><span class="m-claim">Eases muscle soreness, aids same-day recovery</span><span class="m-verdict">real</span></div>
+          <div class="m-track"><div class="m-fill grow" style="width:88%;background:#9ec79a"></div></div>
+          <div class="m-note">A meta-analysis of 27 studies finds a clear effect on soreness. This one holds up.</div>
+        </div>
+        <div class="meter">
+          <div class="m-top"><span class="m-claim">Lifts mood and alertness right after</span><span class="m-verdict">real, brief</span></div>
+          <div class="m-track"><div class="m-fill grow" style="width:62%;background:#9ec79a"></div></div>
+          <div class="m-note">The cold-shock adrenaline jolt is genuine. It is also short-lived.</div>
+        </div>
+        <div class="meter">
+          <div class="m-top"><span class="m-claim">Fewer sick days</span><span class="m-verdict">felt, not measured</span></div>
+          <div class="m-track"><div class="m-fill grow" style="width:38%;background:#dfc288"></div></div>
+          <div class="m-note">A cold-shower trial found fewer reported sick days but no change in actual illness.</div>
+        </div>
+        <div class="meter">
+          <div class="m-top"><span class="m-claim">Burns fat through brown fat</span><span class="m-verdict">trivial</span></div>
+          <div class="m-track"><div class="m-fill grow" style="width:20%;background:#cf9f78"></div></div>
+          <div class="m-note">Brown fat does switch on in the cold. The calories are too few to matter for weight.</div>
+        </div>
+        <div class="meter">
+          <div class="m-top"><span class="m-claim">A huge, lasting dopamine high</span><span class="m-verdict">over-cited</span></div>
+          <div class="m-track"><div class="m-fill grow" style="width:16%;background:#b8796d"></div></div>
+          <div class="m-note">The "250% dopamine" stat is from ten people in 57F water for an hour, measured in blood, not a 2-minute home plunge.</div>
+        </div>
+        <div class="meter">
+          <div class="m-top"><span class="m-claim">Makes you live longer or prevents disease</span><span class="m-verdict">no evidence</span></div>
+          <div class="m-track"><div class="m-fill grow" style="width:6%;background:#7e8a78"></div></div>
+          <div class="m-note">There is simply no good evidence for this. None.</div>
+        </div>
+      </div>
+      <p class="viz-note">The soreness benefit is real, and it is the same mechanism that blunts your gains: cold buys short-term recovery by suppressing the adaptation signal. <b>Hohenauer 2015; Sramek 2000; Buijze 2016; Roberts 2015.</b></p>
+    </figure>
+
+    <p>Walk through the famous claims. The "cold boosts dopamine 250 percent for hours" line traces to a single study of ten people sitting in 57F water for an hour, measuring blood chemistry, not a two-minute tub plunge, and not brain mood. <span class="u-src"><a href="https://link.springer.com/article/10.1007/s004210050065">Sramek 2000</a></span> <span class="grade g-c">mixed</span> The immune claim comes from a cold-shower trial where people reported 29 percent fewer sick days but were not actually ill any less, they just pushed through. <span class="u-src"><a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0161749">Buijze 2016</a></span> <span class="grade g-b">good</span> Brown fat does activate in the cold, but it burns too few calories to matter for your weight. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa0808718">van Marken Lichtenbelt 2009</a></span></p>
+
+    <p>Where cold genuinely earns its place is short-term recovery: a meta-analysis confirms it reliably reduces muscle soreness. <span class="u-src"><a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0139028">Hohenauer 2015</a></span> <span class="grade g-a">strong</span> Which is exactly the catch, it is the same dampening that costs you the muscle gain. Useful between two efforts on the same day, like a tournament. Counterproductive the evening after leg day. (A small safety note: the cold-shock response can trigger dangerous heart rhythms in vulnerable people, so it is not for everyone with a heart condition. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/22547634/">Tipton 2012</a></span>)</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The plunge, honestly.</b> If cold water makes you feel alive and clear, do it, that part is real, and discipline you enjoy is its own reward. Just buy it for the feeling, not the health halo. It will not extend your life, it has no business in your post-workout routine if you lift to grow, and it is near the bottom of this list for a reason.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 9. THE HYPE PILE ===================== -->
+  <section id="hype" class="sec" aria-labelledby="hype-h">
+    <span class="sec-kicker">Save your money</span>
+    <h2 id="hype-h" class="sec-h">The hype pile</h2>
+
+    <p class="lede">Everything left is the loud aisle: the products with the biggest claims and the thinnest files. Here is a fast, fair verdict on each, with the real-but-narrow use case noted where one exists. The honest split is between things proven not to work, and things simply never shown to, which deserve "no good evidence yet," not a sneer.</p>
+
+    <div class="vtable-wrap">
+      <table class="vtable">
+        <thead><tr><th>The thing</th><th>The pitch</th><th>The honest verdict</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="item">Red light panels</td><td>Cellular energy, fat loss, anti-aging</td><td class="verdict">Real for skin, hair, and wound healing. The whole-body "energy and longevity" claims are unproven.</td><td><span class="grade g-c">mixed</span></td></tr>
+          <tr><td class="item">Grounding / earthing</td><td>Reconnect to the Earth's charge</td><td class="verdict">No credible evidence, and the mechanism is implausible. Walk barefoot because it's nice, not medicine.</td><td><span class="grade g-d">thin</span></td></tr>
+          <tr><td class="item">NAD+ boosters (NMN, NR)</td><td>Reverse aging at the cellular level</td><td class="verdict">They do raise NAD+ in your blood, but no human trial shows longer life or better health outcomes. The hype is mostly mouse studies.</td><td><span class="grade g-c">mixed</span></td></tr>
+          <tr><td class="item">Glucose monitors for the healthy</td><td>See your "spikes," eat optimally</td><td class="verdict">No evidence it helps people without diabetes, and it can breed anxiety over normal post-meal rises. Great for diabetics, pointless for you.</td><td><span class="grade g-c">mixed</span></td></tr>
+          <tr><td class="item">Mouth taping</td><td>Forced nasal breathing for better sleep</td><td class="verdict">Very weak evidence and a real risk if you have undiagnosed sleep apnea. Not for the general public.</td><td><span class="grade g-d">thin</span></td></tr>
+          <tr><td class="item">Posture "correction"</td><td>Fix your text neck or pay in pain</td><td class="verdict">The posture-to-pain link is weak. Varying your position and moving beats chasing one "correct" posture.</td><td><span class="grade g-b">good</span></td></tr>
+          <tr><td class="item">Detoxes and cleanses</td><td>Flush out the toxins</td><td class="verdict">No evidence. Your liver and kidneys already do this, continuously, for free.</td><td><span class="grade g-a">strong</span></td></tr>
+          <tr><td class="item">Alkaline water</td><td>De-acidify your body</td><td class="verdict">You cannot change your blood's pH by drinking, and you wouldn't want to. It's just water.</td><td><span class="grade g-a">strong</span></td></tr>
+          <tr><td class="item">Multivitamins for longevity</td><td>Insurance in a pill</td><td class="verdict">In 390,000 adults, no lower death rate. Worth it only to correct a real deficiency.</td><td><span class="grade g-a">strong</span></td></tr>
+          <tr><td class="item">Fish oil for prevention</td><td>Protect your heart</td><td class="verdict">The big trials missed their main heart target in the general population. A prescription form helps a specific high-triglyceride group.</td><td><span class="grade g-b">good</span></td></tr>
+          <tr><td class="item">High-dose antioxidant pills</td><td>Fight aging and cancer</td><td class="verdict">The biohack that backfired: high-dose beta-carotene raised lung cancer in smokers. Get antioxidants from food.</td><td><span class="grade g-a">strong</span></td></tr>
+          <tr><td class="item">"Adrenal fatigue" cures</td><td>Fix your burned-out adrenals</td><td class="verdict">Not a real diagnosis. A review of 58 studies found no such condition; the label can hide a treatable illness.</td><td><span class="grade g-a">strong</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The pattern is the lesson. The items graded "strong" are mostly strong evidence that something does <em>not</em> work, the cleanses, the alkaline water, the longevity multivitamin. The ones graded "mixed" are usually not disproven, just unproven: NAD+ boosters and red light panels might do something someday, but the marketing has sprinted miles ahead of the data. When a product can raise a number in your blood, that number gets sold to you long before anyone shows it changes your life.</p>
+
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The supplement test.</b> Before you buy the next thing: is there a human trial showing it changes an outcome you actually care about, like living longer or getting sick less, or only that it moves a marker? Almost the entire wellness aisle fails that one question. Spend the money on better sleep, better food, and seeing people instead.</p></aside>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== 10. PUTTING IT TOGETHER ===================== -->
+  <section id="plan" class="sec" aria-labelledby="plan-h">
+    <span class="sec-kicker">The plan</span>
+    <h2 id="plan-h" class="sec-h">Putting it together</h2>
+
+    <p class="lede">Here is the whole guide as one ordered list, biggest lever first. You do not need all of it at once. You need to know which rung you are standing on, and reach for the next one up.</p>
+
+    <ol class="plan">
+      <li><b>Sleep like it's the foundation, because it is.</b><span class="why">Pick a wake time and hold it, get morning light, protect the back half of the night from alcohol and late caffeine, and get checked if you snore and wake up wrecked.</span></li>
+      <li><b>Tend your close relationships on purpose.</b><span class="why">Keep the standing dinner, make the call, do not let the people who know you drift. Treat it as health, not as the thing you get to after the real work.</span></li>
+      <li><b>Don't smoke, and if you do, quitting is the highest-value move you have.</b><span class="why">Quitting by 40 buys back most of the lost decade. There is no close second.</span></li>
+      <li><b>Know your blood pressure, and treat it.</b><span class="why">A $30 cuff and a generic pill prevent more death than almost anything in medicine. Add a blood panel: ApoB or LDL, and A1c.</span></li>
+      <li><b>Drink little or none, and get the screens and shots that work.</b><span class="why">There's no health case for alcohol. Get the cancer screenings for your age, the flu shot, and shingles when you're eligible.</span></li>
+      <li><b>Get outside in the morning, breathe clean air, protect your hearing.</b><span class="why">Daily daylight, a radon test, a HEPA filter near traffic or smoke, and earplugs at loud shows. Cheap, quiet, real.</span></li>
+      <li><b>Then, if you enjoy them, the nice-to-haves.</b><span class="why">Sauna (likely good), a sane stress practice, a cold plunge for the feeling (just not after lifting). Pleasures with a possible bonus, not the main event.</span></li>
+      <li><b>Skip the supplement aisle and the biohacks.</b><span class="why">Correct a real deficiency, otherwise save the money. Almost none of it changes an outcome you care about.</span></li>
+    </ol>
+
+    <p>To find your own next rung, do not start at the top by reflex. Start where you are weakest. The tool below asks you to be honest across the big levers and tells you where your next hour is best spent. It is leverage-weighted, so a smoking habit or a wrecked sleep schedule will outrank a missed cold plunge by a mile, which is the entire point.</p>
+
+    <div class="tool" id="audit-tool">
+      <div class="tool-head"><h4>Where your next hour goes</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-body">
+        <div class="audit" id="audit-grid">
+          <div class="audit-row"><span class="a-lab">Sleep <small>7 hours, regular schedule, not waking up wrecked</small></span><select data-w="10"><option value="0">Solid</option><option value="1" selected>Could be better</option><option value="2">A known problem</option></select></div>
+          <div class="audit-row"><span class="a-lab">Close relationships <small>People you see and talk to often</small></span><select data-w="9"><option value="0">Solid</option><option value="1" selected>Could be better</option><option value="2">I'm pretty isolated</option></select></div>
+          <div class="audit-row"><span class="a-lab">Smoking / nicotine <small>Cigarettes or vaping</small></span><select data-w="12"><option value="0" selected>Don't smoke</option><option value="2">I smoke or vape</option></select></div>
+          <div class="audit-row"><span class="a-lab">Blood pressure <small>You know it, and it's in range</small></span><select data-w="8"><option value="0">Known and fine</option><option value="1" selected>Haven't checked lately</option><option value="2">High, or no idea</option></select></div>
+          <div class="audit-row"><span class="a-lab">Alcohol <small>How much you drink</small></span><select data-w="6"><option value="0">Little or none</option><option value="1" selected>A few times a week</option><option value="2">Most days / heavily</option></select></div>
+          <div class="audit-row"><span class="a-lab">Movement <small>Strength and cardio, per the fitness guides</small></span><select data-w="9"><option value="0">Active most days</option><option value="1" selected>Some, not enough</option><option value="2">Basically sedentary</option></select></div>
+          <div class="audit-row"><span class="a-lab">Daylight <small>Time outside, especially mornings</small></span><select data-w="4"><option value="0">Outside daily</option><option value="1" selected>Rarely</option><option value="2">Almost never</option></select></div>
+        </div>
+        <div class="tool-out audit-out">
+          <div><span class="lbl">Your highest-leverage move right now</span><br><span class="big" id="audit-head">Check your sleep</span></div>
+          <div class="tool-rail" id="audit-note">Adjust the rows above to match your real life. This isn't a health score, it's a pointer at the one change that would do you the most good next.</div>
+        </div>
+      </div>
+    </div>
+
+    <p>And then the discipline this whole site keeps circling back to: knowing what actually matters and ignoring the noise. The noise in health is loud, well-funded, and pointed at the bottom of that list, the plunge, the powder, the panel. The signal is quiet and almost free, and it has been sitting at the top the whole time. Sleep. The people you love. Clean air, a known blood pressure, a morning walk in real light. Get those, and you have most of the prize, for almost none of the cost, with hours left over to go live the life you kept the body for.</p>
+
+    <blockquote class="u-pq">The things that work are quiet and old. The things that are loud and new can wait for the evidence.<cite class="u-pq-cite">The Other Hours</cite></blockquote>
+
+    <div class="disclaimer" role="note">
+      <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your history, your heart, or your medications. Talk to a physician before changing how you treat blood pressure, before a new supplement if you take prescriptions, and about which screenings and vaccines are right for your age and risk. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
+    </div>
+
+    <hr class="u-divider">
+  </section>
+
+  <!-- ===================== SOURCES ===================== -->
+  <section id="sources" class="sec">
+    <span class="sec-kicker">The fine print</span>
+    <h2 class="sec-h">Sources, and how to read them</h2>
+    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. The research was told to refute the claims, not flatter them, so the corrections (the long-sleep U is partly reverse causation, the sauna data is one confounded cohort, the cold-plunge dopamine stat is ten people, vitamin D pills mostly failed their trials) were left visible above.</p>
+    <details class="u-collapse">
+      <summary class="u-collapse-s">The full list, 64 sources, grouped by chapter</summary>
+    <div class="legend">
+      <span><span class="grade g-a">strong</span> meta-analyses, large RCTs, or genetic evidence</span>
+      <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
+      <span><span class="grade g-c">mixed</span> observational, small, or contested</span>
+      <span><span class="grade g-d">thin</span> a single weak study or popular claim</span>
+    </div>
+    <ol>
+      <li class="shead">Sleep</li>
+      <li value="1"><b>Cappuccio FP, et al. (2010).</b> Sleep duration and all-cause mortality: a meta-analysis. <i>Sleep</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2864873/">PMC</a></li>
+      <li><b>Yin J, et al. (2017).</b> Sleep duration and all-cause mortality: dose-response meta-analysis. <i>J Am Heart Assoc</i>. <a href="https://www.ahajournals.org/doi/10.1161/JAHA.117.005947">ahajournals.org</a></li>
+      <li><b>Windred DP, et al. (2024).</b> Sleep regularity is a stronger predictor of mortality than sleep duration. <i>Sleep</i>. <a href="https://academic.oup.com/sleep/article/47/1/zsad253/7280269">academic.oup.com</a></li>
+      <li><b>Benjafield AV, et al. (2019).</b> Global prevalence of obstructive sleep apnea. <i>Lancet Respir Med</i>. <a href="https://www.thelancet.com/journals/lanres/article/PIIS2213-2600(19)30198-5/abstract">thelancet.com</a></li>
+      <li><b>McEvoy RD, et al. (2016).</b> CPAP for prevention of cardiovascular events in OSA (SAVE). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27571048/">PubMed</a></li>
+      <li><b>Qaseem A, et al. (2016).</b> Management of chronic insomnia disorder: ACP guideline (CBT-I first-line). <i>Ann Intern Med</i>. <a href="https://www.acpjournals.org/doi/10.7326/M15-2175">acpjournals.org</a></li>
+      <li><b>Ebrahim IO, et al. (2013).</b> Alcohol and sleep: effects on normal sleep. <i>Alcohol Clin Exp Res</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/23347102/">PubMed</a></li>
+      <li><b>Gardiner C, et al. (2023).</b> The effect of caffeine on subsequent sleep: meta-analysis. <i>Sleep Med Rev</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/36870101/">PubMed</a></li>
+      <li><b>Erland LAE, Saxena PK (2017).</b> Melatonin supplements: wide variability in content. <i>J Clin Sleep Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27855744/">PubMed</a></li>
+      <li><b>Cohen PA, et al. (2023).</b> Quantity of melatonin in marketed gummies. <i>JAMA</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/37097362/">PubMed</a></li>
+      <li class="shead">The people around you</li>
+      <li value="11"><b>Holt-Lunstad J, Smith TB, Layton JB (2010).</b> Social relationships and mortality risk: meta-analysis. <i>PLoS Medicine</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2910600/">PMC</a></li>
+      <li><b>Holt-Lunstad J, et al. (2015).</b> Loneliness and social isolation as mortality risk factors: meta-analysis. <i>Perspect Psychol Sci</i>. <a href="https://journals.sagepub.com/doi/full/10.1177/1745691614568352">sagepub.com</a></li>
+      <li><b>Waldinger RJ, Schulz MS.</b> The Harvard Study of Adult Development (relationships and late-life health). <i>Harvard Gazette summary</i>. <a href="https://news.harvard.edu/gazette/story/2017/04/over-nearly-80-years-harvard-study-has-been-showing-how-to-live-a-healthy-and-happy-life/">harvard.edu</a></li>
+      <li><b>Alimujiang A, et al. (2019).</b> Purpose in life and mortality among older adults. <i>JAMA Netw Open</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6632139/">PMC</a></li>
+      <li><b>Boyle PA, et al. (2010).</b> Purpose in life and risk of Alzheimer's disease and MCI. <i>Arch Gen Psychiatry</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2897172/">PMC</a></li>
+      <li class="shead">The air, the drink, the smoke</li>
+      <li value="16"><b>GBD 2016 Alcohol Collaborators (2018).</b> Alcohol use and burden: the level minimizing harm is zero. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30146330/">PubMed</a></li>
+      <li><b>Stockwell T, et al. (2016).</b> Do "moderate" drinkers have reduced mortality? Abstainer-bias meta-analysis. <i>J Stud Alcohol Drugs</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4803651/">PMC</a></li>
+      <li><b>Zhao J, et al. (2023).</b> Alcohol and all-cause mortality, bias-corrected meta-analysis. <i>JAMA Netw Open</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10066463/">PMC</a></li>
+      <li><b>Millwood IY, et al. (2019).</b> Alcohol and cardiovascular disease: Mendelian randomization (China Kadoorie). <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30955975/">PubMed</a></li>
+      <li><b>IARC / NCI.</b> Alcohol and cancer risk (Group 1 carcinogen). <i>NCI fact sheet</i>. <a href="https://www.cancer.gov/about-cancer/causes-prevention/risk/alcohol/alcohol-fact-sheet">cancer.gov</a></li>
+      <li><b>CDC.</b> Cigarette smoking and the leading cause of preventable death. <a href="https://www.cdc.gov/tobacco/about/index.html">cdc.gov</a></li>
+      <li><b>Doll R, et al. (2004).</b> Mortality in relation to smoking: 50 years' observations on British doctors. <i>BMJ</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC437109/">PMC</a></li>
+      <li><b>Jha P, et al. (2013).</b> 21st-century hazards of smoking and benefits of cessation. <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMsa1211128">nejm.org</a></li>
+      <li><b>Lindson N, et al. (2024).</b> Electronic cigarettes for smoking cessation. <i>Cochrane</i>. <a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD010216.pub8/full">cochranelibrary.com</a></li>
+      <li><b>Di Q, et al. (2017).</b> Air pollution and mortality in the Medicare population (effects below the standard). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28657878/">PubMed</a></li>
+      <li><b>Pope CA, Ezzati M, Dockery DW (2009).</b> Fine-particulate air pollution and life expectancy. <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/19164188/">PubMed</a></li>
+      <li><b>Health Effects Institute (2024).</b> State of Global Air 2024 (air pollution, 2nd leading risk factor). <a href="https://www.healtheffects.org/announcements/new-state-global-air-report-finds-air-pollution-second-leading-risk-factor-death">healtheffects.org</a></li>
+      <li><b>US EPA.</b> Health risk of radon. <a href="https://www.epa.gov/radon/health-risk-radon">epa.gov</a></li>
+      <li><b>Walzer D, et al. (2020).</b> HEPA air purification and cardiovascular markers: RCT meta-analysis. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7611692/">PMC</a></li>
+      <li class="shead">The boring numbers</li>
+      <li value="30"><b>GBD 2019 Risk Factors Collaborators (2020).</b> High systolic blood pressure as the leading risk factor for death. <i>The Lancet</i>. <a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(20)30752-2/fulltext">thelancet.com</a></li>
+      <li><b>SPRINT Research Group (2015).</b> Intensive vs standard blood-pressure control. <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26551272/">PubMed</a></li>
+      <li><b>CDC NHANES.</b> Hypertension prevalence, awareness, and control. <a href="https://www.cdc.gov/high-blood-pressure/data-research/facts-stats/index.html">cdc.gov</a></li>
+      <li><b>Ference BA, et al. (2017).</b> LDL causes atherosclerotic cardiovascular disease (EAS consensus). <i>Eur Heart J</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5837225/">PMC</a></li>
+      <li><b>National Lung Screening Trial (2011).</b> Reduced lung-cancer mortality with low-dose CT. <i>NEJM</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4356534/">PMC</a></li>
+      <li><b>de Koning HJ, et al. (2020).</b> Lung-cancer screening (NELSON trial). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/31995683/">PubMed</a></li>
+      <li><b>Bretthauer M, et al. (2022).</b> Colonoscopy screening and colorectal-cancer risk (NordICC). <i>NEJM</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10643301/">PMC</a></li>
+      <li><b>Marmot MG, et al. (2012).</b> The benefits and harms of breast cancer screening. <i>The Lancet</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4415291/">PMC</a></li>
+      <li><b>Udell JA, et al. (2013).</b> Influenza vaccination and cardiovascular events: meta-analysis. <i>JAMA</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/24150467/">PubMed</a></li>
+      <li><b>Eyting M, Geldsetzer P, et al. (2025).</b> Shingles vaccination and dementia: a natural experiment. <i>Nature</i>. <a href="https://www.nature.com/articles/s41586-025-08800-x">nature.com</a></li>
+      <li><b>Worthington HV, et al. (2019).</b> Interdental cleaning (flossing) for gum disease. <i>Cochrane</i>. <a href="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD012018.pub2/full">cochranelibrary.com</a></li>
+      <li><b>Livingston G, et al. (2024).</b> Dementia prevention, intervention, and care: Lancet Commission (hearing loss). <i>The Lancet</i>. <a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(24)01296-0/fulltext">thelancet.com</a></li>
+      <li><b>Lin FR, et al. (2023).</b> Hearing intervention and cognitive decline (ACHIEVE). <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/37478886/">PubMed</a></li>
+      <li class="shead">Light and the sun</li>
+      <li value="43"><b>Brown TM, et al. (2022).</b> Recommendations for daytime, evening, and night-time light exposure. <i>PLOS Biology</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8929548/">PMC</a></li>
+      <li><b>Manson JE, et al. (2019).</b> Vitamin D supplements and prevention of cancer and cardiovascular disease (VITAL). <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1809944">nejm.org</a></li>
+      <li><b>LeBoff MS, et al. (2022).</b> Vitamin D supplementation and fractures (VITAL). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/35939583/">PubMed</a></li>
+      <li><b>Hahn J, et al. (2022).</b> Vitamin D and marine omega-3 for autoimmune disease prevention (VITAL). <i>BMJ</i>. <a href="https://www.bmj.com/content/376/bmj-2021-066452">bmj.com</a></li>
+      <li><b>Lindqvist PG, et al. (2016).</b> Avoidance of sun exposure and mortality (MISS cohort). <i>J Intern Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26992108/">PubMed</a></li>
+      <li><b>Liu D, Weller RB, et al. (2014).</b> UVA, nitric oxide, and blood pressure. <i>J Invest Dermatol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/24445737/">PubMed</a></li>
+      <li><b>Green AC, et al. (2011).</b> Daily sunscreen use and melanoma (Nambour trial). <i>J Clin Oncol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21135266/">PubMed</a></li>
+      <li class="shead">Heat, breath, and cold</li>
+      <li value="50"><b>Laukkanen T, et al. (2015).</b> Sauna bathing and cardiovascular and all-cause mortality. <i>JAMA Intern Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/25705824/">PubMed</a></li>
+      <li><b>Laukkanen T, et al. (2017).</b> Sauna bathing and risk of dementia. <i>Age and Ageing</i>. <a href="https://academic.oup.com/ageing/article/46/2/245/2654230">academic.oup.com</a></li>
+      <li><b>Laukkanen J, Laukkanen T, Kunutsor SK (2018).</b> Cardiovascular and other health benefits of sauna bathing: a review. <i>Mayo Clin Proc</i>. <a href="https://www.mayoclinicproceedings.org/article/s0025-6196(18)30275-1/fulltext">mayoclinicproceedings.org</a></li>
+      <li><b>Brunt VE, et al. (2016).</b> Passive heat therapy improves endothelial function and blood pressure. <i>J Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27270841/">PubMed</a></li>
+      <li><b>Kivimaki M, et al. (2012).</b> Job strain and coronary heart disease: meta-analysis. <i>The Lancet</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3486012/">PMC</a></li>
+      <li><b>Keller A, et al. (2012).</b> Does the perception that stress affects health matter? <i>Health Psychology</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3374921/">PMC</a></li>
+      <li><b>Goncalves de Freitas L, et al. (2022).</b> Slow breathing and blood pressure: meta-analysis. <i>Health Sci Rep</i>. <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/hsr2.636">wiley.com</a></li>
+      <li><b>Goyal M, et al. (2014).</b> Meditation programs for psychological stress: meta-analysis. <i>JAMA Intern Med</i>. <a href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/1809754">jamanetwork.com</a></li>
+      <li><b>Kox M, et al. (2014).</b> Voluntary activation of the sympathetic nervous system and immune response (Wim Hof). <i>PNAS</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4034215/">PMC</a></li>
+      <li><b>Roberts LA, et al. (2015).</b> Cold-water immersion attenuates strength-training adaptations. <i>J Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26174323/">PubMed</a></li>
+      <li><b>Sramek P, et al. (2000).</b> Human physiological responses to immersion in water of different temperatures. <i>Eur J Appl Physiol</i>. <a href="https://link.springer.com/article/10.1007/s004210050065">Springer</a></li>
+      <li><b>Buijze GA, et al. (2016).</b> Cold showers and sickness absence: a randomized trial. <i>PLOS ONE</i>. <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0161749">plos.org</a></li>
+      <li><b>van Marken Lichtenbelt WD, et al. (2009).</b> Cold-activated brown adipose tissue in adults. <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa0808718">nejm.org</a></li>
+      <li><b>Hohenauer E, et al. (2015).</b> Cold-water immersion for recovery: meta-analysis. <i>PLOS ONE</i>. <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0139028">plos.org</a></li>
+      <li><b>Shattock MJ, Tipton MJ (2012).</b> "Autonomic conflict": arrhythmias during cold-water immersion. <i>J Physiol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/22547634/">PubMed</a></li>
+    </ol>
+    </details>
+
+    <hr class="u-divider">
+  </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/the-other-hours.js"></script>
+</body>
+</html>
