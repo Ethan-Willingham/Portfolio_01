@@ -36,7 +36,6 @@ const HUBS = [
       live('nagarjuna.html', "Nagarjuna's Middle Way", 'nagarjuna.jpg', 'c. 150 CE', 150, "The deepest book in Buddhist philosophy, from about 150 CE. Its argument is that nothing, including you, exists on its own, and that this emptiness is not bleak but the very thing that lets anything change or ever be set free."),
       live('quran.html', 'The Quran', 'quran.jpg', '632 CE', 632, "Islam's holy book, believed to be the literal words of God given to Muhammad in Arabic, which Muslims hold cannot truly be translated. Fourteen keystone passages in the Arabic against seven English versions, each only an interpretation of the meaning."),
       live('guru-granth-sahib.html', 'The Guru Granth Sahib', 'guru-granth-sahib.jpg', '1604', 1604, "The scripture of Sikhism, and the strangest case here: Sikhs treat the book itself as their living teacher, enthroned rather than merely read. One God, honest work, and the radical welcome of Hindu and Muslim saints into its own pages."),
-      soon('Rumi, the Masnavi', 'c. 1260', 1260, "The ecstatic Sufi heart of Islam, beloved the world over and famously fought over in translation: the loose, popular versions against the literal scholarly one."),
       live('wisdom-never-written-down.html', 'The Wisdom Never Written Down', 'wisdom-never-written-down.jpg', 'oral, ancient', -3000, "A books series can only hold what was written. Here is the wisdom that was sung, spoken, and carved instead."),
     ],
   },
