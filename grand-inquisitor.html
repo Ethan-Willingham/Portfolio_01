@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Grand Inquisitor</title>
+  <meta name="description" content="Dostoevsky was a devout Christian who wrote the most powerful argument against God ever put on paper, and put it in the mouth of one of his own characters. A guided walk through the Rebellion and Grand Inquisitor chapters of The Brothers Karamazov, in Constance Garnett's translation.">
+  <meta property="og:title" content="The Grand Inquisitor">
+  <meta property="og:description" content="A believer wrote the best case against God ever made and feared he had done it too well. Christ comes back during the Inquisition, and the Church arrests him, for the crime of leaving people free. Walked start to finish through The Brothers Karamazov.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/grand-inquisitor.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/grand-inquisitor-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/grand-inquisitor-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE GRAND INQUISITOR
+     Approach B, the One-Reading Walk. Read top to bottom: seven
+     stops through Ivan Karamazov's "Rebellion" and "The Grand
+     Inquisitor" (Book V of The Brothers Karamazov), in Constance
+     Garnett's public-domain translation, each unpacked in plain
+     language, with collapsible side panels on the famous lines
+     (the three temptations, the kiss, "everything is permitted").
+     Sits in the site shell (forest green, parchment, Century
+     Supra / Segoe UI / Commit Mono). One reserved brick accent
+     marks the Inquisitor's own voice. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --ru-font: "Century Supra","Cambria","Times New Roman",serif;
+    --ivan:   #d4c4a0;                 /* Ivan, the narrator: the gold accent */
+    --inq:    #c2897b;                 /* the Inquisitor's voice: a muted brick-rose */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Garnett passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--ivan); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the Inquisitor speaks: a second tint, brick-rose, so you can hear whose voice it is */
+  .passage.passage-inq { border-left-color: var(--inq); background: linear-gradient(180deg, rgba(194,137,123,0.08), rgba(194,137,123,0.02)); }
+  .passage.passage-inq .passage-k { color: var(--inq); }
+  /* a quieter second passage in the same station */
+  .passage.passage-2 { background: rgba(255,255,255,0.018); border-left-color: var(--rule-strong); }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- SIDEBAR (translation stack / decode panel) ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  /* a translation row */
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-classic { border-left-color: var(--ivan); }
+  .stack-modern  { border-left-color: #9ec79a; }
+  .stack-ru      { border-left-color: var(--inq); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .stack-vt.ru { font-family: var(--ru-font); font-size: 1.15rem; color: var(--text-bright); }
+  /* a decode row: a Gospel temptation mapped to a power */
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.05rem; color: var(--accent); }
+  .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); text-transform: uppercase; }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Grand Inquisitor</h1>
+    <p class="hero-dek">A devout Christian wrote the most powerful argument against God ever put on paper, handed it to one of his own characters, and then worried he had made it too convincing. He was probably right to worry.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>7 stops</b> through The Brothers Karamazov <span class="sep">/</span> featured: <b>Constance Garnett</b> <span class="sep">/</span> ~22 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">Jesus comes back. Not at the end of the world, just for an afternoon, to a city in southern Spain in the worst year of the Inquisition. People know him at once. He heals a blind man and raises a dead child on the cathedral steps. And the old cardinal who runs the place, who burned a hundred heretics in the square the day before, watches the whole thing, points one finger, and has him arrested.</p>
+
+      <p>That is the setup of the most famous chapter Dostoevsky ever wrote, and maybe the most famous argument against God in any novel. It is called "The Grand Inquisitor." It is not really a chapter about Jesus, or even about the Inquisition. It is a story one brother tells another in a tavern, and the man telling it is trying to explain why he cannot accept the world God made, no matter how the story ends.</p>
+
+      <p>Here is the strange part. <strong>Fyodor Dostoevsky was a serious Christian.</strong> He had stood in front of a firing squad, been reprieved at the last second, done four years of hard labor in Siberia, and come out of it holding onto faith with both hands. He wrote this chapter to set up its own refutation. And he was good enough, and honest enough, that the attack came out stronger than the defense. He knew it. "Even in Europe," he wrote to his editor, "there is no such powerful expression of atheism, and there never has been." He meant it as a warning about his own book.</p>
+
+      <figure class="u-figure">
+        <picture><source type="image/webp" srcset="assets/images/grand-inquisitor-dostoevsky.webp"><img class="u-figure-img" src="assets/images/grand-inquisitor-dostoevsky.jpg" width="1200" height="1500" loading="lazy" decoding="async" alt="Vasily Perov's 1872 portrait of Fyodor Dostoevsky: the writer sits hunched in a dark coat against a brown background, hands clasped around one knee, looking down and inward."></picture>
+        <figcaption class="u-figure-cap">Vasily Perov, <em>Portrait of Fyodor Dostoevsky</em> (1872). Painted eight years before the novel, this is the face most people picture: the believer who spent his last book building the best case against his own faith he could write, on purpose, to see if faith could survive it.</figcaption>
+      </figure>
+
+      <p>The two brothers are Ivan and Alyosha Karamazov. Alyosha is the gentle one, a novice in a monastery, in love with God and with a wise old monk named Zosima. Ivan is the clever one, an intellectual, the kind of man who has read everything and believes almost none of it. They have never really talked. Now they get one long evening together, and Ivan, who is about to leave, finally says what he actually thinks.</p>
+
+      <p>He does it in two moves. First a chapter called "Rebellion," where he explains why he wants nothing to do with God's deal even if every word of it is true. Then "The Grand Inquisitor," the story, where he turns the same knife on the Church. We are going to walk both, in Constance Garnett's 1912 translation, the one that first carried this book into English. Seven stops. Ivan's words come first at each one. Then we take them apart.</p>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">Loving people up close</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 7</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-neighbor" data-label="Loving people up close" data-tag="Rebellion">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> Rebellion</p>
+      <h2 class="station-h">Why he can't love his neighbor</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ivan, in the tavern</p>
+        <div class="passage-t">
+          <p>"I could never understand how one can love one's neighbors. It's just one's neighbors, to my mind, that one can't love, though one might love those at a distance.... For any one to love a man, he must be hidden, for as soon as he shows his face, love is gone."</p>
+        </div>
+        <span class="passage-n">Book V, "Rebellion"</span>
+      </div>
+
+      <div class="prose">
+        <p>Ivan opens with a confession that sounds like a joke and isn't. He cannot love the people right in front of him. Humanity in the abstract, sure. The actual man at the next table, with his smell and his stupid face, no. He says it to clear the ground, because he is about to make an argument that runs entirely on other people's pain, and he wants you to know he is not pretending to be a saint about it.</p>
+        <p>Then he narrows the subject, hard, on purpose. He is not going to talk about all human suffering. He is going to talk about one kind only: the suffering of children. His reasoning is cold and airtight. Grown-ups, he says, "have eaten the apple." They know good and evil, they have done their share of harm, so when something terrible happens to them you can always tell yourself some story about deserving. Children have not eaten anything. They are innocent in the plain, literal sense, and that makes them the one case where the usual excuses fail.</p>
+        <p>This is the move that makes the whole chapter work, so it is worth seeing clearly. Ivan is not going to argue about whether God exists. He grants God. He grants heaven. He is building something narrower and much harder to answer: that a certain kind of innocent suffering cannot be squared with a good God no matter what reward comes later. To prove it he needs evidence, not theology. So he has been collecting it.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>He concedes the whole argument for God in advance. That is what makes what comes next so hard to wave off.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-children" data-label="The evidence" data-tag="Rebellion">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Rebellion</p>
+      <h2 class="station-h">The case he builds out of children</h2>
+
+      <div class="prose">
+        <p>Ivan keeps a file. He clips true stories out of newspapers and court records, the way some people keep recipes, and now he reads them to his brother one after another. They are real cases, the kind Russia and Europe actually printed in the 1870s. I am going to do what the chapter does not, and not repeat them in full. The flat fact is enough.</p>
+        <p>A small girl, five years old, is beaten and tormented by her own educated, respectable parents. For a finish, on cold nights, they lock her in an outhouse. Ivan stays on one detail: the child does not understand what she has done wrong, so in the dark she beats her chest with her tiny fist and prays to "dear, kind God" to make it stop. That is the image he will not let go of.</p>
+
+        <div class="passage">
+          <p class="passage-k">Ivan, in the tavern</p>
+          <div class="passage-t">
+            <p>"Why, the whole world of knowledge is not worth that child's prayer to 'dear, kind God'! I say nothing of the sufferings of grown-up people, they have eaten the apple... But these little ones!"</p>
+          </div>
+          <span class="passage-n">Book V, "Rebellion"</span>
+        </div>
+
+        <p>The second story is the one everyone remembers. A general, a rich landowner with his own pack of hunting dogs, has a serf boy of eight, who threw a stone in play and hurt the paw of the general's favorite hound. The next morning the general has the child stripped in front of his mother and the whole household, tells him to run, and sets the dogs on him. They catch him.</p>
+        <p>Ivan stops there and turns to Alyosha, who is a monk, who has given his whole life to a God of mercy, and asks him point blank: what does the general deserve? And Alyosha, after a pause, says it.</p>
+
+        <div class="passage passage-2">
+          <p class="passage-k">The monk's answer</p>
+          <div class="passage-t">
+            <p>"To be shot," murmured Alyosha, lifting his eyes to Ivan with a pale, twisted smile.</p>
+          </div>
+        </div>
+
+        <p>That two-word answer is the trap closing. Ivan grins, "Bravo," because he has just gotten the gentlest, most devout person he knows to admit that some acts do not want forgiveness, they want a bullet. The believer's own heart just voted against the believer's own creed. Ivan did not have to argue him there. He just had to read the file out loud.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-ticket" data-label="Returning the ticket" data-tag="Rebellion">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Rebellion</p>
+      <h2 class="station-h">He gives the ticket back</h2>
+
+      <div class="passage">
+        <p class="passage-k">Ivan, the climax of "Rebellion"</p>
+        <div class="passage-t">
+          <p>"I don't want harmony. From love for humanity I don't want it.... too high a price is asked for harmony; it's beyond our means to pay so much to enter on it. And so I hasten to give back my entrance ticket.... It's not God that I don't accept, Alyosha, only I most respectfully return Him the ticket."</p>
+        </div>
+        <span class="passage-n">Book V, "Rebellion"</span>
+      </div>
+
+      <div class="prose">
+        <p>Here is the famous move, and it is more interesting than plain atheism. Ivan grants the entire Christian promise for the sake of argument. Say it is all true. Say that at the end of time everything is reconciled, every wound healed, and the mother of the boy stands in heaven and embraces the man who set the dogs on her son, and everyone sings that God was just after all. Ivan says: fine. Maybe that day comes. I want no part of it.</p>
+        <p>Because the price of that final harmony was the child in the outhouse and the boy in the yard, and Ivan refuses to let their suffering be the down payment on anyone's paradise. He calls it returning the ticket. Heaven might be real and worth every star in it, and he is handing back his admission slip at the door, because of what the ticket cost. It is not a claim that God is fake. It is a claim that even a real God's deal is one a decent person can turn down.</p>
+        <p>He puts it to Alyosha as a direct question, and it is the sharpest sentence in the chapter. Imagine you could build a perfect and happy world for everyone forever, on one condition: you have to torture one small child to death to lay the foundation, and the whole thing rests on its "unavenged tears." Would you agree to be the architect? Alyosha, very quietly, says no. He wouldn't. Neither, I suspect, would you, and Ivan knows it.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>"That's rebellion," Alyosha says. It is the title of the chapter, and the only argument he has left.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-seville" data-label="Christ on trial" data-tag="The Grand Inquisitor">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> The Grand Inquisitor</p>
+      <h2 class="station-h">Christ comes back, and the Church arrests him</h2>
+
+      <div class="prose">
+        <p>Alyosha, cornered, plays his last card. You have forgotten someone, he tells Ivan. There is one Being who has the right to forgive everything, because he gave his own innocent blood for everyone. He means Christ. And Ivan smiles, because he has been waiting for exactly this, and says: funny you should mention him. I wrote a poem about that. He never wrote it down, he says, he just made it up in his head. It goes like this.</p>
+
+        <div class="passage passage-inq">
+          <p class="passage-k">Ivan's "poem," the scene</p>
+          <div class="passage-t">
+            <p>"My story is laid in Spain, in Seville, in the most terrible time of the Inquisition, when fires were lighted every day to the glory of God, and 'in the splendid <em>auto da fé</em> the wicked heretics were burnt.'"</p>
+          </div>
+          <span class="passage-n">Book V, "The Grand Inquisitor"</span>
+        </div>
+
+        <p>Christ returns. Not in glory at the end of days, just quietly, for one day, fifteen centuries after the first time, to the worst possible place: Seville, where the day before the cardinal had burned nearly a hundred people in the square in front of the king and the court. The crowd recognizes him instantly. He heals, he blesses, and on the cathedral steps he stops a child's funeral and raises the little girl out of her coffin. The people weep.</p>
+        <p>And the Grand Inquisitor, ninety years old, sees it. He has the guards take Christ on the spot, and the same crowd that was kissing Christ's feet a second ago bows down to the old man instead and lets it happen. That night the Inquisitor comes down to the prison cell, alone, with a lamp. He knows exactly who his prisoner is. And he has come to explain why, in the morning, he is going to burn him.</p>
+      </div>
+
+      <figure class="u-figure">
+        <picture><source type="image/webp" srcset="assets/images/grand-inquisitor-autodafe.webp"><img class="u-figure-img" src="assets/images/grand-inquisitor-autodafe.jpg" width="960" height="1562" loading="lazy" decoding="async" alt="Pedro Berruguete's painting of an auto-da-fe, around 1495: Saint Dominic sits enthroned on a high platform with churchmen, presiding over a public sentencing, while below, condemned heretics in pointed hats are bound to stakes and burned."></picture>
+        <figcaption class="u-figure-cap">Pedro Berruguete, <em>Saint Dominic Presiding over an Auto-da-fé</em> (about 1495). The machine Ivan is describing, painted by someone who lived near it: the inquisitor enthroned above, the condemned in their pointed hats burning below. This is the city Christ walks back into.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-freedom" data-label="Freedom is too heavy" data-tag="The Grand Inquisitor">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> The Grand Inquisitor</p>
+      <h2 class="station-h">The charge: you gave them too much freedom</h2>
+
+      <div class="passage passage-inq">
+        <p class="passage-k">The Inquisitor, to his prisoner</p>
+        <div class="passage-t">
+          <p>"Thou wouldst go into the world... with some promise of freedom which men in their simplicity and their natural unruliness cannot even understand, which they fear and dread, for nothing has ever been more insupportable for a man and a human society than freedom."</p>
+        </div>
+        <span class="passage-n">Book V, "The Grand Inquisitor"</span>
+      </div>
+
+      <div class="prose">
+        <p>The old man does almost all the talking. Christ never says a word. And the accusation, once you strip away the robes and the candle, is shockingly modern. It is this: you loved people too much, and you respected them way too much, and it ruined their lives.</p>
+        <p>What Christ offered, the Inquisitor says, was freedom. The freedom to choose good over evil with no proof, no guarantee, nothing to lean on but your own heart. To Christ that freedom was the whole point, the only kind of love worth having, love freely given by someone who could have walked away. But look at what it does to ordinary people, the old man says. Most of them cannot bear it. Free choice, with eternity riding on it and no one to tell you the answer, is not a gift to the average frightened human being. It is a weight that crushes them.</p>
+
+        <div class="passage passage-inq">
+          <p class="passage-k">The Inquisitor</p>
+          <div class="passage-t">
+            <p>"I tell Thee that man is tormented by no greater anxiety than to find some one quickly to whom he can hand over that gift of freedom with which the ill-fated creature is born."</p>
+          </div>
+        </div>
+
+        <p>Read that twice, because it is the engine of the whole speech and it is not stupid. People say they want to be free. What they mostly want, the Inquisitor claims, is for someone to take the freedom off their hands. Someone to tell them what is true, what to eat, what to worship, what is forgiven. The deepest human craving is not liberty. It is relief from liberty. And Christ, by refusing to provide that relief, left billions of weak people alone in the dark with a burden built for giants.</p>
+      </div>
+
+      <figure class="u-figure">
+        <picture><source type="image/webp" srcset="assets/images/grand-inquisitor-cardinal.webp"><img class="u-figure-img" src="assets/images/grand-inquisitor-cardinal.jpg" width="1200" height="1500" loading="lazy" decoding="async" alt="El Greco's portrait of Cardinal Fernando Nino de Guevara, around 1600: an old cardinal in red robes sits rigidly in a chair, gripping the armrest, staring through round spectacles with a hard, searching expression."></picture>
+        <figcaption class="u-figure-cap">El Greco, <em>Cardinal Fernando Niño de Guevara</em> (about 1600). Niño de Guevara really was a Grand Inquisitor of Spain. El Greco painted him from life, around the years Ivan's story is set: the withered face, the sunken eyes, "still a gleam of light" in them. This is as close to a portrait of Ivan's old man as exists.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-three" data-label="Miracle, mystery, authority" data-tag="The Grand Inquisitor">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> The Grand Inquisitor</p>
+      <h2 class="station-h">What the Church gave them instead</h2>
+
+      <div class="prose">
+        <p>So the Inquisitor explains what he and the Church have done about it. They fixed Christ's mistake. They took the unbearable freedom away from people, gently, and gave them what they actually wanted. He even tells Christ where the better plan came from, and this is the part that should make your neck prickle: it came from the devil.</p>
+        <p>Remember the three temptations in the desert, he says, the ones Christ turned down. Turn these stones to bread. Throw yourself from the temple and let the angels catch you. Bow to me and I will give you all the kingdoms of the world. Christ said no to all three, to keep people free. The Inquisitor says that was the blunder, and that those three questions, asked by "the wise and dread spirit," contained the entire secret of how to run human beings. So the Church said yes to what Christ refused.</p>
+
+        <details class="stack">
+          <summary>The three temptations, decoded</summary>
+          <div class="stack-body">
+            <p class="stack-gloss">The Inquisitor reads the desert temptations (Matthew 4) as a blueprint. Each thing Christ rejected to protect human freedom is, he says, exactly the thing people most need handed to them. He sums the three up in one phrase: <em>miracle, mystery, and authority</em>.</p>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Bread</span><span class="stack-term-lit">turn stones to bread</span></div>
+              <p class="stack-term-b">Feed people first and they will follow. "No science will give them bread so long as they remain free," the Inquisitor says. In the end they bring their freedom and lay it at the Church's feet: <b>"Make us your slaves, but feed us."</b> Free and fed, he insists, cannot both be had.</p>
+            </div>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Miracle</span><span class="stack-term-lit">cast yourself down</span></div>
+              <p class="stack-term-b">People do not really want God, the old man says, they want <b>the miraculous</b>, something to stun them into belief so they don't have to choose it. Christ refused to be a magic act. The Church gave the miracle back.</p>
+            </div>
+            <div class="stack-term">
+              <div class="stack-term-h"><span class="stack-term-w">Mystery &amp; Authority</span><span class="stack-term-lit">all the kingdoms</span></div>
+              <p class="stack-term-b">Give them <b>someone to obey</b> and one thing to all believe together, and the loneliness of choosing ends. Christ wanted free love; the Church took "the sword of Caesar" and gave the comfort of a crowd that kneels in the same direction.</p>
+            </div>
+          </div>
+        </details>
+
+        <div class="passage passage-inq">
+          <p class="passage-k">The Inquisitor's confession</p>
+          <div class="passage-t">
+            <p>"We have corrected Thy work and have founded it upon miracle, mystery and authority.... We are not working with Thee, but with <em>him</em>, that is our mystery."</p>
+          </div>
+          <span class="passage-n">Book V, "The Grand Inquisitor"</span>
+        </div>
+
+        <p>There it is, said out loud. We are not on your side, the old man tells Christ. We switched eight centuries ago. We took the devil's offer of earthly power, the sword and the crown, and we used it to build something that actually makes people happy, by lying to them. We let them sin and we forgive it. We carry the unbearable freedom for them so they can live like children, fed and obedient and calm. And we tell them it is all in your name.</p>
+        <p>This is the dark genius of Ivan's poem. The Inquisitor is not a villain twirling a mustache. By his own account he is a man who loves humanity so much that he is willing to damn himself to spare them a freedom they never wanted. He has looked at people clearly, decided Christ asked too much of them, and quietly taken the burden onto his own back. He thinks he is the only real Christian in the room.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-kiss" data-label="The only answer" data-tag="The Grand Inquisitor">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The Grand Inquisitor</p>
+      <h2 class="station-h">The only answer is a kiss</h2>
+
+      <div class="prose">
+        <p>The Inquisitor finishes. He has talked all night, laid out the whole indictment, and told his prisoner that tomorrow he will burn him. Now he waits. He wants an answer. He half wants to be cursed, argued with, anything. And here is what Christ does, the silent prisoner who has not said one word the entire chapter.</p>
+
+        <div class="passage">
+          <p class="passage-k">The end of the poem</p>
+          <div class="passage-t">
+            <p>"But He suddenly approached the old man in silence and softly kissed him on his bloodless aged lips. That was all His answer. The old man shuddered.... 'Go, and come no more... come not at all, never, never!' And he let Him out into the dark alleys of the town. The Prisoner went away."</p>
+          </div>
+          <span class="passage-n">Book V, "The Grand Inquisitor"</span>
+        </div>
+
+        <p>That is the whole reply. No counter-argument, because there is no counter-argument that beats the Inquisitor on his own terms. Just a kiss, on the mouth of a ninety-year-old man who has just promised to kill him. And the old man, who wanted to be answered, lets him go instead of burning him, and keeps his idea anyway. Ivan adds one last line, the one that tells you he knows what he just did: "The kiss glows in his heart, but the old man adheres to his idea."</p>
+
+        <details class="stack">
+          <summary>One line, two translations: the kiss</summary>
+          <div class="stack-body">
+            <p class="stack-gloss">The most-quoted sentence in the chapter, and the two great English versions split on a single verb. The Russian is the same; the temperature is not.</p>
+            <div class="stack-v stack-classic">
+              <div class="stack-vh"><span class="stack-vn">Constance Garnett</span><span class="stack-vy">1912</span></div>
+              <div class="stack-vt">"The kiss <em>glows</em> in his heart, but the old man adheres to his idea."</div>
+            </div>
+            <div class="stack-v stack-modern">
+              <div class="stack-vh"><span class="stack-vn">Pevear &amp; Volokhonsky</span><span class="stack-vy">1990</span></div>
+              <div class="stack-vt">"The kiss <em>burns</em> in his heart, but the old man adheres to his former idea."</div>
+            </div>
+            <p class="stack-gloss" style="margin-top:1rem">Garnett's "glows" is warm, a coal that keeps him company. The newer "burns" is a wound that won't close. Same kiss, and you get to decide whether it comforted the old man or ruined him. Dostoevsky leaves it exactly that open.</p>
+          </div>
+        </details>
+
+        <p>Then the frame breaks, and the move repeats in the real world. Alyosha has sat through the whole thing, and his answer to his brother is not a rebuttal either. He gets up, leans over, and kisses Ivan on the lips. "That's plagiarism," Ivan says, delighted. "You stole that from my poem." It is the warmest moment between them in the book, and it is Dostoevsky showing his hand. The reply to the Grand Inquisitor is not a better speech. It is the kiss. Whether that is an answer or a dodge is the question the rest of the novel spends six hundred pages on.</p>
+
+        <p>And there is a twist in the old man you should not miss. Late in the poem Alyosha guesses the Inquisitor's secret, and Ivan confirms it: the Inquisitor does not believe in God. He was a faithful man once, fasted in the desert, loved Christ, and somewhere along the way lost it, decided heaven was empty and people were doomed either way, and chose to spend his life making their short doomed lives bearable with a kindly lie. He is not faith's enemy. He is what a saint looks like after his faith dies and his love doesn't.</p>
+      </div>
+    </section>
+
+    <!-- ============================ CLOSE 1 ============================ -->
+    <section class="sec">
+      <h2 class="sechead">The sentence Ivan never quite says</h2>
+      <p>There is a line everyone attaches to Ivan Karamazov, usually like this: "If God does not exist, everything is permitted." It is one of the most quoted sentences in modern thought. Sartre built a lecture around it in 1946 and called it the starting point of existentialism. The strange thing is that Ivan never actually says it, not in those words, not in these chapters.</p>
+      <p>What happens is subtler and more like life. The idea gets attributed to him. Early in the novel other characters report that Ivan has been arguing that without immortality there is no virtue, and so "everything is lawful." It gets thrown back at him by a sneering acquaintance. His brother repeats it. And by the time someone asks him to his face whether he really believes it, Ivan, pale, will only say he won't renounce the formula. He never proudly declares it. It hangs over him like a thing he set loose and can't call back.</p>
+
+      <details class="stack">
+        <summary>"Everything is permitted": one phrase, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The Russian is two words. The English you have heard depends entirely on who translated it, and the choice of word quietly changes the crime.</p>
+          <div class="stack-v stack-ru">
+            <div class="stack-vh"><span class="stack-vn">Dostoevsky</span><span class="stack-vy">Russian</span></div>
+            <div class="stack-vt ru">&laquo;&#1042;&#1089;&#1105; &#1087;&#1086;&#1079;&#1074;&#1086;&#1083;&#1077;&#1085;&#1086;&raquo;<span style="font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.04em;color:var(--text-faint);display:block;margin-top:0.3rem">vsyo pozvoleno &middot; "all is allowed"</span></div>
+          </div>
+          <div class="stack-v stack-classic">
+            <div class="stack-vh"><span class="stack-vn">Constance Garnett</span><span class="stack-vy">1912</span></div>
+            <div class="stack-vt">"everything is <em>lawful</em>," as if the only question were what the rules forbid.</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">The modern standard</span><span class="stack-vy">1990s</span></div>
+            <div class="stack-vt">"everything is <em>permitted</em>," the version Sartre made famous, wider and colder: nothing is off limits at all.</div>
+          </div>
+        </div>
+      </details>
+
+      <p>Why it matters: this loose formula is the fuse that runs through the rest of the book. Ivan thinks he is doing philosophy in a tavern. But the family's servant, a sour, clever man named Smerdyakov, is listening, and he takes "everything is lawful" at face value. If there is no God and no judgment, why not kill the old man we all hate? He does it, and then tells Ivan, calmly, that he only did what Ivan taught. Ivan's clean abstract idea comes back to him with a corpse attached. Dostoevsky's point is not subtle: ideas about God are not free. Somebody downstream always pays the bill.</p>
+    </section>
+
+    <!-- ============================ CLOSE 2 ============================ -->
+    <section class="sec">
+      <h2 class="sechead">Dostoevsky's answer, and whether it wins</h2>
+      <p>So what did the believer say back? Almost nothing, directly, and that was on purpose. Dostoevsky did not write a chapter where someone refutes Ivan point by point. He thought that would be cheap, and that an argument this strong could not be beaten by a better argument. Instead he answered it the way the poem answers it, with a kiss, spread across the next six hundred pages.</p>
+      <p>His reply is the old monk Zosima, and the book he gets right after this one. Where Ivan reasons, Zosima lives. His teaching is almost embarrassingly plain, and it is a practice more than a proof. Love people in the actual, close-up, unbearable way Ivan said he couldn't. And take on a strange, total responsibility: each of us, Zosima says, is answerable for all of us.</p>
+
+      <blockquote class="u-pq">Every one is really responsible to all men for all men and for everything.<cite class="u-pq-cite">Father Zosima, Book VI</cite></blockquote>
+
+      <p>That is the counter to "everything is permitted." Not "no, here is why God exists," but "you have it backwards: you are responsible for everything." Zosima's brother, dying young, decides that "life is paradise, and we are all in paradise, but we won't see it." Alyosha goes out and tries to live it. The answer to Ivan is not a sentence. It is whether a life like that one looks truer to you than the Inquisitor's clear-eyed despair. Dostoevsky bet that it does, and that active love outlasts a perfect argument.</p>
+      <p>Did he win? Honestly, a lot of readers think Ivan got the better lines, and Dostoevsky may have feared the same. The Inquisitor is unforgettable. Zosima can read like a sermon. The novelist D. H. Lawrence flatly took the Inquisitor's side, calling the old man's bleak realism the truth that Christ's beautiful demand ignores. That reading is alive and well. What you cannot do is pretend the contest was rigged. Dostoevsky handed his unbeliever the strongest case he could build, the case against a God who allows the outhouse and the dogs, and let it stand at full strength. Then he answered it with a man kissing his enemy and a monk saying you are responsible for all of it. He left the verdict to you. After a hundred and fifty years it is still out.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured walk is <strong>Constance Garnett's</strong> translation of <em>The Brothers Karamazov</em> (1912), the version that first carried Dostoevsky into English and is now in the public domain. Every quotation is reproduced for study and comparison, from Book V, "Pro and Contra," chapters 4 ("Rebellion") and 5 ("The Grand Inquisitor"), with the closing notes drawn from Book VI, "The Russian Monk." The breakdowns are mine.</p>
+      <ul class="src-list">
+        <li><b>The featured text</b> is Constance Garnett (1912), quoted from <a href="https://www.gutenberg.org/ebooks/28054">Project Gutenberg</a>. Garnett translated some seventy volumes of Russian literature and made Dostoevsky an English author; her prose is graceful and a little Victorian, and later translators fault her for smoothing his deliberate roughness.</li>
+        <li><b>The comparison panels</b> set Garnett against <b>Richard Pevear and Larissa Volokhonsky</b> (1990), the acclaimed modern version, praised for fidelity to Dostoevsky's texture (and where the kiss "burns" rather than "glows"). Two more standard English editions are <b>David McDuff's</b> (Penguin, 1993) and <b>Ignat Avsey's</b> (Oxford, 1994), the most idiomatic of the four, who went so far as to retitle the book <em>The Karamazov Brothers</em> because that is how the name would fall in natural English.</li>
+        <li><b>The Russian</b> phrase <span class="ru" style="font-family:var(--ru-font)">&laquo;&#1074;&#1089;&#1105; &#1087;&#1086;&#1079;&#1074;&#1086;&#1083;&#1077;&#1085;&#1086;&raquo;</span> ("everything is permitted") appears, word for word, late in the novel (Book XI). On the attribution of the idea to Ivan, I follow the standard scholarly reading and the text itself: it is a formula others pin on him and he declines to disown, not a slogan he proclaims.</li>
+        <li><b>Dostoevsky's own view</b> of the chapter comes from his 1879 letters to his editor Nikolai Lyubimov, where he frets that the "blasphemy" of his hero is so powerful ("even in Europe there is no such powerful expression of atheism") that the whole rest of the book must answer it. The reading of Book VI and Zosima as that answer is the standard one.</li>
+      </ul>
+      <p>A few honest notes. Ivan's "poem" is prose, and he insists he never wrote it down, so the Grand Inquisitor exists only as something one brother recites to another. Dostoevsky's target in the poem is specifically Roman Catholicism and, behind it, the socialism of his own century, both of which he accuses of trading freedom for bread; the chapter has since been read just as often as a prophecy of the secular dictatorships that came after him. And the claim that this is "the most powerful argument against God ever written" is a common one, not a measured one. It is an argument from one character, inside a story, built to be answered. That it still reads like it might have won is the whole point.</p>
+      <p class="colo-note">The image on the card is El Greco's <em>Cardinal Fernando Niño de Guevara</em> (about 1600, Metropolitan Museum of Art, public domain): Niño de Guevara served as Grand Inquisitor of Spain, so the painting is a portrait of a real holder of Ivan's old man's office, made in the very years the story is set. The auto-da-fé is Pedro Berruguete's <em>Saint Dominic Presiding over an Auto-da-fé</em> (about 1495, Museo del Prado), and the portrait of Dostoevsky is Vasily Perov's (1872, Tretyakov Gallery). All three are in the public domain.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/grand-inquisitor.js" defer></script>
+</body>
+</html>
