@@ -194,17 +194,8 @@
       line-height: 1.5;
       color: var(--text-dim);
     }
-    /* Hub cards are collections (posts within a post): the thumbnail reads as a
-       small stack of pages, and the meta line shows a count instead of a date. */
-    .article-item.is-collection .article-item-thumb { position: relative; }
-    .article-item.is-collection .article-item-thumb img { position: relative; z-index: 2; }
-    .article-item.is-collection .article-item-thumb::before,
-    .article-item.is-collection .article-item-thumb::after {
-      content: ""; position: absolute; inset: 0; border-radius: 4px;
-      background: var(--bg-raised, #2b332a); border: 1px solid var(--rule);
-    }
-    .article-item.is-collection .article-item-thumb::before { transform: translate(-5px, -5px); z-index: 1; }
-    .article-item.is-collection .article-item-thumb::after  { transform: translate(-10px, -10px); z-index: 0; }
+    /* Hub cards are collections (posts within a post). The signal is the meta
+       line, which reads "Collection . N posts" in place of a date. */
     @media (min-width: 720px) {
       .site-header { margin-bottom: 2.6rem; }
       .list-head { margin-bottom: 2.4rem; }
@@ -270,7 +261,7 @@
         <li class="article-list-item fade-in">
           <a class="article-item is-collection" href="inner-life.html">
             <span class="article-item-thumb"><picture><source type="image/webp" srcset="assets/thumbs/meditation.webp"><img src="assets/thumbs/meditation.jpg" width="600" height="400" loading="eager" decoding="async" alt="A Chola-period granite statue of the Buddha seated in meditation."></picture></span>
-            <span class="article-item-date">Collection &middot; 6 posts</span>
+            <span class="article-item-date">Collection &middot; 7 posts</span>
             <h2 class="article-item-title">The Inner Life</h2>
             <p class="article-item-description">Meaning, the mind, and how to bear a life: Frankl, the spirituality of imperfection, and the truth about every kind of meditation.</p>
           </a>
