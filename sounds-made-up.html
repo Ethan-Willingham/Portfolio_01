@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Physics That Sounds Made Up</title>
+  <meta name="description" content="A beginner's field guide to the two theories that broke common sense: relativity and quantum mechanics. Why time runs slow on a fast clock, why one particle goes through two slits at once, why two specks of matter share a fate across a galaxy, and why none of it lets you send a message faster than light. Sourced and illustrated.">
+  <meta property="og:title" content="The Physics That Sounds Made Up">
+  <meta property="og:description" content="Time runs slow on a moving clock. One particle goes through two slits at once. Two specks share a fate across a galaxy. None of it sounds real, and it is the most tested science we have. A field guide to relativity and quantum mechanics, one impossible idea at a time.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/sounds-made-up.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/sounds-made-up-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/sounds-made-up-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE PHYSICS THAT SOUNDS MADE UP
+     A beginner's field guide to relativity and quantum mechanics.
+     Sits inside the site shell (forest green, parchment, Century
+     Supra / Segoe UI / Commit Mono). Two accent zones: relativity
+     runs warm gold, quantum runs cool blue. Real public-domain /
+     CC photographs plus code-drawn SVG figures. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;
+    --wide: 1080px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --rel:   #dfc288;   /* relativity accent (warm gold)   */
+    --rel-2: #d4c4a0;
+    --q:     #8fb3c7;   /* quantum accent (cool blue)      */
+    --q-2:   #b79bc4;   /* quantum secondary (muted purple)*/
+    --grid:  rgba(120, 134, 120, 0.22);
+    --grid-strong: rgba(120, 134, 120, 0.42);
+    --panel:   #2a322b;
+    --panel-2: #232a25;
+    --sec-accent: var(--accent);
+  }
+
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 10vw, 5.7rem); line-height: 0.99; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3.1vw, 1.55rem); line-height: 1.48; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.2rem, 6vw, 4.8rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(2rem, 4vw, 3rem); }
+  .sec > :last-child { margin-bottom: 0; }
+  .sec .u-sechead { align-items: flex-start; text-align: left; margin: 0 0 1.15rem; }
+  .sec .u-sechead-k { font-size: 0.66rem; letter-spacing: 0.13em; padding: 0.26em 0.74em; color: var(--sec-accent); border-color: color-mix(in oklab, var(--sec-accent) 42%, transparent); }
+  .sec p { font-size: var(--body-size, 1.22rem); line-height: var(--body-leading, 1.7); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; color: var(--text-bright); line-height: 1.22; margin: 2.4rem 0 0.6rem; scroll-margin-top: 1.5rem; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
+  .sec li { font-size: var(--body-size, 1.22rem); line-height: 1.62; margin-bottom: 0.5em; }
+  .sec li::marker { color: var(--sec-accent); }
+  .lede { font-size: 1.22rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px) { .lede { font-size: 1.3rem; } }
+
+  /* accent zones */
+  .zone-rel { --sec-accent: var(--rel); }
+  .zone-q   { --sec-accent: var(--q); }
+
+  /* ---------- CHAPTER STRIP ---------- */
+  .chapters { max-width: var(--measure); margin: 2rem auto 0; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.55rem; }
+  .chapters .lead { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); width: 100%; margin: 0.6rem 0 0.1rem; }
+  .chapters .lead:first-child { margin-top: 0; }
+  .chapters a { font-family: var(--font-mono); font-size: 0.73rem; color: var(--text-dim); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.32em 0.82em; transition: color 0.2s, border-color 0.2s; }
+  .chapters a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- PART INTRO BANDS ---------- */
+  .partintro { max-width: var(--measure); margin: clamp(3.2rem, 7vw, 5.2rem) auto 0; padding: clamp(2rem, 4vw, 3rem) var(--gutter) 0; border-top: 1px solid var(--rule); }
+  .part-k { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sec-accent); margin: 0; }
+  .part-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.04; color: var(--text-bright); margin: 0.35rem 0 0; letter-spacing: -0.02em; }
+  .part-d { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.1rem, 2.6vw, 1.32rem); color: var(--text-dim); margin: 0.95rem 0 0; max-width: 48ch; line-height: 1.5; }
+
+  /* ---------- PHOTO FIGURES (clean, borderless, fill the frame) ---------- */
+  .fig { margin: 2.2rem auto; }
+  .fig.wide { max-width: var(--wide); }
+  .fig.narrow { max-width: 520px; margin-left: auto; margin-right: auto; }
+  .fig picture, .fig img { display: block; width: 100%; height: auto; }
+  .fig figcaption, .figcap { font-family: var(--font-body); font-style: italic; font-size: 0.9rem; color: var(--text-dim); margin-top: 0.75rem; line-height: 1.5; max-width: 66ch; }
+  .figcap b, .fig figcaption b { font-style: normal; color: var(--text); font-weight: 600; }
+  .figcap .cred, .fig figcaption .cred { font-style: normal; color: var(--text-faint); }
+
+  /* floated portrait */
+  .portrait { float: right; width: min(40%, 290px); margin: 0.4rem 0 1.1rem 1.7rem; }
+  .portrait img { display: block; width: 100%; height: auto; }
+  .portrait figcaption { font-family: var(--font-body); font-style: italic; font-size: 0.8rem; color: var(--text-faint); margin-top: 0.5rem; line-height: 1.45; }
+  @media (max-width: 620px) { .portrait { float: none; width: 100%; margin: 1.4rem auto; } }
+
+  /* ---------- CODE-DRAWN FIGURES ---------- */
+  .viz { max-width: var(--wide); margin: 2.5rem auto; }
+  .viz.tight { max-width: 860px; }
+  /* break wide visuals out of the reading column on big screens (margin-based,
+     so it never fights the transform used by .reveal) */
+  @media (min-width: 1140px) {
+    .fig.wide, .viz { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
+    .viz.tight { margin-left: calc((var(--measure) - 860px) / 2); margin-right: calc((var(--measure) - 860px) / 2); }
+  }
+  .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.18rem; color: var(--text-bright); margin: 0 0 0.15rem; }
+  .viz-sub { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 1.1rem; }
+  .viz-cap { font-family: var(--font-body); font-style: italic; font-size: 0.9rem; color: var(--text-dim); margin-top: 0.95rem; line-height: 1.5; max-width: 66ch; }
+  .viz-cap b { font-style: normal; color: var(--text); font-weight: 600; }
+
+  /* SVG helpers */
+  .axisln { stroke: var(--grid-strong); stroke-width: 1.5; }
+  .gridln { stroke: var(--grid); stroke-width: 1; }
+  .axs   { font-family: var(--font-mono); font-size: 13px; fill: var(--text-faint); }
+  .anno  { font-family: var(--font-mono); font-size: 13.5px; fill: var(--text-dim); }
+  .anno-b{ font-family: var(--font-heading); font-weight: 700; font-size: 17px; fill: var(--text-bright); }
+  .mirror{ stroke: var(--text-dim); stroke-width: 5; stroke-linecap: round; }
+  .mirror-ghost{ stroke: var(--rule-strong); stroke-width: 4; stroke-linecap: round; opacity: 0.5; }
+  .draw  { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); }
+  .draw.go { transition: stroke-dashoffset 1.5s var(--ease); stroke-dashoffset: 0; }
+
+  /* ---------- CALLOUTS (tighten the kit box) ---------- */
+  .sec .u-callout:not(.u-move):not(.u-aside) { padding: 18px 22px; border-radius: 14px; box-shadow: none; margin: 1.6rem 0; }
+  .sec .u-callout:not(.u-move):not(.u-aside) .u-callout-body { font-size: 1.02rem; line-height: 1.55; }
+
+  /* ---------- SOURCES ---------- */
+  .src-note { color: var(--text-dim); font-size: 1.02rem; max-width: 64ch; }
+  #sources h3 { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); margin: 1.5rem 0 0.5rem; }
+  #sources ol { padding-left: 1.4em; }
+  #sources li { font-size: 0.92rem; line-height: 1.5; margin-bottom: 0.55em; color: var(--text-dim); }
+  #sources li b { color: var(--text); font-weight: 600; }
+  #sources li i { color: var(--text-dim); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; margin: 0.4rem 0 1rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); }
+  .img-credit { max-width: var(--measure); margin: 2.6rem auto 0; padding: 1.4rem var(--gutter) 0; border-top: 1px solid var(--rule); font-size: 0.82rem; color: var(--text-faint); line-height: 1.55; }
+  .img-credit a { color: var(--text-dim); }
+
+  /* ---------- REVEAL ---------- */
+  html.js .reveal { opacity: 0; transform: translateY(16px); }
+  html.js .reveal.in { opacity: 1; transform: none; transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+
+  @media print {
+    .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
+    body { background: #fff; color: #161616; }
+    .sec, .hero, .partintro, .fig, .viz { max-width: none; }
+    .sec p, .sec li, .lede { color: #161616; }
+    a { color: #161616; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Physics That Sounds Made Up</h1>
+    <p class="hero-dek">Time runs slow on a moving clock. One particle goes through two doors at once. Two specks of matter share a single fate across the width of a galaxy. None of it sounds real, and all of it is the most carefully tested science we have.</p>
+    <p class="hero-meta">A field guide <span class="sep">/</span> <b>30 sources</b> <span class="sep">/</span> 28 min read</p>
+  </header>
+
+  <main id="guide">
+
+    <!-- ============================ OPENING ============================ -->
+    <section id="open" class="sec first" aria-label="Introduction">
+      <p class="lede">Your phone finds itself on a map by trusting that time runs at slightly different speeds for the satellites overhead and for you down on the ground. Turn that correction off, and your blue dot drifts about six miles off course by the end of the day. <span class="u-src"><a href="https://www.astronomy.ohio-state.edu/pogge.1/Ast162/Unit5/gps.html">GPS &amp; relativity</a></span></p>
+
+      <p>That is not a figure of speech. The atomic clocks aboard GPS satellites tick faster than the ones on Earth, by about 38 millionths of a second every day, and the whole system works only because engineers built the difference in before launch. The reason traces back to a paper Einstein published in 1905, and the paper says something your gut will refuse to accept: there is no universal clock. Time is not a fixed backdrop ticking the same for everyone. It bends.</p>
+
+      <p>That is the thing about modern physics. The headlines sound like nonsense and are true anyway, confirmed to more decimal places than almost anything else in science. The catch is that your common sense was trained on medium-sized things moving at ordinary speeds: a rock, a thrown ball, a car. Step outside that range, to the very fast, the very heavy, or the very small, and the rules you grew up with quietly stop applying.</p>
+
+      <p>It turns out reality runs on two rulebooks. One governs the big and the fast: stars, planets, light, anything moving near the speed limit. That is relativity, and it is mostly one man. The other governs the very small: atoms, electrons, single grains of light. That is quantum mechanics, and it took a dozen people arguing for thirty years. Both are spectacularly well tested. Both are deeply strange. And here is the part nobody has cracked: the two rulebooks contradict each other, and no one knows how to fit them together.</p>
+
+      <p>This is a tour of the strangest ideas in both books, one at a time, with the clearest plain-language picture I could find for each. I am going to keep the analogies honest, which means telling you where each one breaks, because the broken edge is usually where the real strangeness lives.</p>
+
+      <figure class="fig wide reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/solvay.webp"><img src="assets/images/physics/solvay.jpg" width="1600" height="1132" loading="lazy" decoding="async" alt="The 1927 Solvay Conference group photograph: 29 physicists in formal dress arranged in three rows, including Einstein seated front-center, with Marie Curie, Niels Bohr, Max Planck, Erwin Schrodinger, Werner Heisenberg and Paul Dirac."></picture>
+        <figcaption>Most of the people who wrote both rulebooks, in one room. The 1927 Solvay Conference in Brussels, called to argue about the new quantum physics. Seventeen of the twenty-nine people in this photo won a Nobel Prize. Einstein is front and center; he spent the week arguing that the quantum picture could not be the final word, and mostly losing. <span class="cred">Photo by Benjamin Couprie, Institut International de Physique Solvay (public domain).</span></figcaption>
+      </figure>
+    </section>
+
+    <!-- chapter strip -->
+    <nav class="chapters" aria-label="Chapters">
+      <span class="lead">Rulebook one, the big and the fast</span>
+      <a href="#light">a speed limit that cheats</a>
+      <a href="#time">moving clocks run slow</a>
+      <a href="#mass">mass is frozen energy</a>
+      <a href="#gravity">gravity is a shape</a>
+      <span class="lead">Rulebook two, the very small</span>
+      <a href="#wave">everything is a wave</a>
+      <a href="#measure">nothing is decided yet</a>
+      <a href="#uncertain">you cannot know it all</a>
+      <a href="#entangle">two particles, one fate</a>
+    </nav>
+
+    <!-- ============================ PART ONE ============================ -->
+    <div class="partintro zone-rel reveal">
+      <p class="part-k">Rulebook one</p>
+      <h2 class="part-h">The big and the fast</h2>
+      <p class="part-d">Everything in this half comes from relativity, two theories Einstein published ten years apart. The whole thing falls out of one stubborn fact about light.</p>
+    </div>
+
+    <!-- 01 LIGHT -->
+    <section id="light" class="sec zone-rel" aria-labelledby="light-h">
+      <div class="u-sechead"><p class="u-sechead-k">A speed limit that cheats</p><h2 id="light-h" class="u-sechead-h">Light has a speed limit, and it cheats</h2></div>
+
+      <figure class="portrait reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/einstein.webp"><img src="assets/images/physics/einstein.jpg" width="820" height="1003" loading="lazy" decoding="async" alt="Black-and-white portrait of an older Albert Einstein in 1947, looking into the camera."></picture>
+        <figcaption>Albert Einstein, 1947. He wrote most of rulebook one almost single-handedly. Photo by Orren Jack Turner (public domain).</figcaption>
+      </figure>
+
+      <p class="lede">Light travels at about 670 million miles per hour, the same speed for everyone, no matter how fast they are moving toward it or away from it. That second part is the one that breaks things.</p>
+
+      <p>Speeds normally add up. Throw a baseball at 20 mph from a truck doing 60, and someone on the roadside clocks it at 80. Walk toward the front of a moving train and the ground sees the train's speed plus yours. This is so obvious it feels like arithmetic.</p>
+
+      <p>Light refuses to play. Switch on a flashlight and the beam leaves you at the speed of light. Now chase that beam at 99 percent of its speed. Common sense says it should crawl away from you at the leftover one percent. Instead it races off at the full speed of light, exactly as if you had never moved, and a bystander watching the chase measures that same speed too. Run as hard as you like; light always pulls away from you at the one fixed speed, and nobody can ever agree to disagree about what that speed is.</p>
+
+      <p>That nearly broke physics. In 1887, Albert Michelson and Edward Morley built an instrument delicate enough to detect the Earth's motion through space by racing light beams in different directions. They found nothing. The light came back at the same speed every way they pointed it, in every season. <span class="u-src"><a href="https://www.aps.org/apsnews/2007/11/november-1887-michelson-uminiferous-ether">Michelson-Morley</a></span></p>
+
+      <p>Einstein took the strange result at face value and asked what would have to be true for it to make sense. The answer: if everyone measures light at the same speed regardless of how they move, then the things we thought were fixed, the length of a second and the length of a yard, cannot be. They have to stretch and shrink from one observer to the next, by exactly the amount needed to keep light's speed the same for everybody. Speed is distance divided by time. If the speed will not move, distance and time must.</p>
+
+      <p>So the speed limit is real, no object and no signal can reach it, let alone pass it, and the price of that limit is that space and time themselves are up for negotiation. The next three ideas are the bill coming due.</p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">one catch</p><p class="u-callout-body"><b>"Nothing travels faster than light" is about things moving through space.</b> Space itself can do as it likes. The expansion of the universe carries distant galaxies away from us faster than light, and that breaks no rule, because they are not racing through space; the space between us is stretching. The unbreakable law is narrower: no object, no signal, no cause and effect can outrun light. <span class="u-src"><a href="https://arxiv.org/abs/astro-ph/0310808">expanding space</a></span></p></aside>
+    </section>
+
+    <!-- 02 TIME -->
+    <section id="time" class="sec zone-rel" aria-labelledby="time-h">
+      <div class="u-sechead"><p class="u-sechead-k">Moving clocks run slow</p><h2 id="time-h" class="u-sechead-h">A moving clock runs slow, for real</h2></div>
+
+      <p class="lede">A clock in motion ticks slower than a clock at rest, and the faster it moves the slower it ticks. This is not an illusion or a glitch in the instrument. Time itself runs slow for the thing that is moving.</p>
+
+      <p>Here is the cleanest way to see why, and it uses nothing but the one fact from the last chapter. Build a clock out of light. Two mirrors face each other, and a pulse of light bounces straight up and down between them; each round trip is one tick. Simple, and its speed is set by the speed of light.</p>
+
+      <figure class="viz reveal" aria-labelledby="clock-t">
+        <p class="viz-title" id="clock-t">The light clock</p>
+        <p class="viz-sub">Why moving makes a clock tick slowly</p>
+        <svg viewBox="0 0 960 400" role="img" aria-label="A light clock at rest, where light bounces straight up and down a short distance, beside the same clock moving fast, where from outside the light traces a longer diagonal zigzag and so takes longer per tick.">
+          <!-- AT REST -->
+          <text class="anno-b" x="170" y="44" text-anchor="middle">At rest</text>
+          <line class="mirror" x1="100" y1="90" x2="240" y2="90"/>
+          <line class="mirror" x1="100" y1="320" x2="240" y2="320"/>
+          <line class="draw" style="--len:460" x1="170" y1="320" x2="170" y2="90" stroke="var(--rel)" stroke-width="3"/>
+          <line class="draw" style="--len:460" x1="170" y1="90" x2="170" y2="320" stroke="var(--rel)" stroke-width="3" opacity="0.55"/>
+          <circle cx="170" cy="90" r="6" fill="var(--rel)"/>
+          <text class="anno" x="170" y="356" text-anchor="middle">one tick</text>
+          <text class="anno" x="170" y="378" text-anchor="middle" fill="var(--text-faint)">short path</text>
+
+          <!-- divider -->
+          <line x1="350" y1="70" x2="350" y2="340" stroke="var(--rule)" stroke-width="1"/>
+
+          <!-- MOVING -->
+          <text class="anno-b" x="650" y="44" text-anchor="middle">Moving fast</text>
+          <!-- ghost mirror positions sliding right -->
+          <line class="mirror-ghost" x1="450" y1="90" x2="530" y2="90"/>
+          <line class="mirror-ghost" x1="450" y1="320" x2="530" y2="320"/>
+          <line class="mirror-ghost" x1="610" y1="90" x2="690" y2="90"/>
+          <line class="mirror-ghost" x1="610" y1="320" x2="690" y2="320"/>
+          <line class="mirror" x1="770" y1="90" x2="850" y2="90"/>
+          <line class="mirror" x1="770" y1="320" x2="850" y2="320"/>
+          <!-- diagonal light path: up then down while sliding right -->
+          <path class="draw" style="--len:760" d="M490,320 L650,90 L810,320" fill="none" stroke="var(--rel)" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="650" cy="90" r="6" fill="var(--rel)"/>
+          <!-- motion arrow -->
+          <line x1="470" y1="360" x2="810" y2="360" stroke="var(--text-faint)" stroke-width="1.5"/>
+          <path d="M810,360 l-10,-5 l0,10 z" fill="var(--text-faint)"/>
+          <text class="anno" x="640" y="382" text-anchor="middle" fill="var(--text-faint)">the whole clock slides this way &#8594;</text>
+          <text class="anno" x="650" y="356" text-anchor="middle">one tick, longer path</text>
+        </svg>
+        <figcaption class="viz-cap"><b>Same clock, same light, same speed.</b> When the clock moves, the light has to travel a longer diagonal to make the same trip, because the mirrors slide sideways underneath it. Light cannot speed up to cover the extra distance, so each tick simply takes longer. The faster the clock goes, the longer the diagonal, the slower it ticks.</figcaption>
+      </figure>
+
+      <p>Now put that clock on a fast rocket and watch it fly past. From your seat on the ground, the light no longer goes straight up and down, because between leaving the bottom mirror and reaching the top one, the whole clock has slid sideways. So you see the light travel a longer, slanted path. But light cannot speed up to cover the extra ground. It is stuck at the one speed. A longer path at the same speed takes more time, so each tick of the passing clock takes longer. The moving clock runs slow.</p>
+
+      <p>And the light clock is nothing special. Every clock on that rocket runs slow by the same amount: the atomic vibrations, the chemistry, the heartbeat of the astronaut inside. If only the light clock slowed, you could hold it next to a wristwatch and catch the mismatch, and the whole idea would fall apart. What slowed was time itself.</p>
+
+      <figure class="portrait reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/gps.webp"><img src="assets/images/physics/gps.jpg" width="1006" height="806" loading="lazy" decoding="async" alt="NASA illustration of a GPS satellite in orbit above Earth, with solar panels extended."></picture>
+        <figcaption>A GPS satellite. Its clock runs fast by about 38 microseconds a day, and the system corrects for it. Illustration: NASA (public domain).</figcaption>
+      </figure>
+
+      <p>You can measure this on an ordinary Tuesday. The atomic clocks in GPS satellites move fast enough, around 8,700 mph, that this effect slows them by about 7 microseconds a day. A second effect from gravity, coming up shortly, pushes the other way and wins, but the motion part is real, predicted, and built into your phone. <span class="u-src"><a href="https://www.nist.gov/news-events/news/2022/05/einsteins-relativity-makes-gps-work">NIST</a></span></p>
+
+      <p>Nature ran the experiment long before we did. The upper atmosphere is constantly making particles called muons, heavy cousins of the electron, when cosmic rays slam into the air about nine miles up. A muon falls apart in about 2.2 millionths of a second on average. Even at nearly the speed of light, that is only enough time to cross a few hundred yards before it disintegrates, so almost none should reach the ground. They reach the ground in floods. From our point of view their internal clock is running slow, stretched by a factor of ten or more, so they live long enough to finish the trip. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Experimental_testing_of_time_dilation">muon survival</a></span> <span class="u-grade u-grade-a">solid</span></p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">the other side of the same coin</p><p class="u-callout-body"><b>From the muon's own point of view, its life is as short as ever.</b> What saves it is that the nine miles of atmosphere ahead are squashed down to a few hundred yards. Time stretching for one observer and distance shrinking for the other are the same fact, seen from two seats. A second is not a fixed amount the universe hands out equally. It is a local measurement, and motion changes it.</p></aside>
+    </section>
+
+    <!-- 03 MASS -->
+    <section id="mass" class="sec zone-rel" aria-labelledby="mass-h">
+      <div class="u-sechead"><p class="u-sechead-k">Mass is frozen energy</p><h2 id="mass-h" class="u-sechead-h">Mass is just energy, sitting still</h2></div>
+
+      <p class="lede">E = mc squared. The most famous equation in the world says mass and energy are the same thing in different clothes, and the exchange rate between them is the speed of light, squared.</p>
+
+      <p>Because the speed of light is an enormous number, and squaring it makes it absurd, a tiny amount of mass is worth a staggering amount of energy. The energy locked inside a single gram of anything, a paperclip, a raisin, is about 21 kilotons of TNT, the scale of the bombs that ended the Second World War. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence">mass-energy</a></span> You cannot easily pry it loose; that is a separate and difficult problem. But it is in there.</p>
+
+      <p>The Sun pries it loose. Deep in its core it fuses hydrogen into helium, and the helium comes out weighing a hair less than the hydrogen that went in. That missing mass leaves as light and heat, exactly as E = mc squared demands. The bookkeeping: the Sun turns about 4 million tons of its own mass into pure energy every second. <span class="u-src"><a href="http://solar-center.stanford.edu/FAQ/Qshrink.html">Stanford Solar Center</a></span> <span class="u-grade u-grade-b">good</span> It has been doing this for four and a half billion years and is barely middle-aged.</p>
+
+      <figure class="fig wide reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/sun.webp"><img src="assets/images/physics/sun.jpg" width="1400" height="1400" loading="lazy" decoding="async" alt="The Sun photographed in extreme ultraviolet light by NASA's Solar Dynamics Observatory, a glowing gold disk with bright active regions and looping arcs of plasma along the edge."></picture>
+        <figcaption>The Sun in extreme ultraviolet light. Every second, about 4 million tons of it stops being matter and leaves as light. The sunlight on your skin is, very literally, a piece of the Sun that used to have weight. <span class="cred">Credit: NASA / SDO and the AIA science team (public domain).</span></figcaption>
+      </figure>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">the small print</p><p class="u-callout-body"><b>E = mc squared is the headline, not the whole sentence.</b> It is the simple case, for an object sitting still. The fuller equation carries an extra term for motion. Beginners can ignore it; pedants cannot, so now you know it is there.</p></aside>
+    </section>
+
+    <!-- 04 GRAVITY -->
+    <section id="gravity" class="sec zone-rel" aria-labelledby="gravity-h">
+      <div class="u-sechead"><p class="u-sechead-k">Gravity is a shape</p><h2 id="gravity-h" class="u-sechead-h">Gravity is the shape of space and time</h2></div>
+
+      <p class="lede">Gravity is not a force tugging objects together. It is the bending of space and time around anything with mass, and things fall because they are coasting along the straightest path through a shape that happens to be curved.</p>
+
+      <p>This is general relativity, Einstein's 1915 sequel, and it is the strangest idea in the first rulebook. Start with the picture you have probably seen: a bowling ball on a stretched rubber sheet, sagging into a dip, with marbles circling the dip like little planets. It is a nice image. It is also wrong in a way worth understanding, because the broken edge is the whole point.</p>
+
+      <p>The rubber-sheet picture cheats twice. First, it explains gravity using gravity: the marbles roll into the dip only because real, ordinary, downward gravity is pulling them onto the sheet. Take that away and nothing rolls anywhere. <span class="u-src"><a href="https://www.askamathematician.com/2010/07/q-whats-up-with-that-bowling-ball-creates-a-dip-in-a-sheet-analogy-of-spacetime-isnt-it-gravity-that-makes-the-dip-in-the-first-place/">why the sheet cheats</a></span> Second, and bigger, it shows space bending but quietly drops time, and for everyday falling it is mostly the bending of time that matters.</p>
+
+      <p>Here is a cleaner picture. Forget the sheet. Imagine two friends standing a few feet apart on the equator, each told to walk due north in a perfectly straight line. Neither ever steers toward the other. Yet as they walk, they drift closer and closer, and at the North Pole they collide. Nothing pulled them together. They walked dead straight the whole way. The surface under them was curved, and on a curved surface, straight paths converge.</p>
+
+      <figure class="viz tight reveal" aria-labelledby="geo-t">
+        <p class="viz-title" id="geo-t">Two straight paths that meet</p>
+        <p class="viz-sub">Why "straight" can still bring you together</p>
+        <svg viewBox="0 0 720 430" role="img" aria-label="A globe with two travelers starting apart on the equator, each walking a straight line due north, their paths curving together until they meet at the north pole.">
+          <!-- globe -->
+          <circle cx="360" cy="215" r="155" fill="none" stroke="var(--grid-strong)" stroke-width="1.5"/>
+          <ellipse cx="360" cy="215" rx="155" ry="44" fill="none" stroke="var(--grid)" stroke-width="1" stroke-dasharray="4 6"/>
+          <text class="axs" x="528" y="219" text-anchor="start">equator</text>
+          <!-- pole -->
+          <circle cx="360" cy="60" r="5.5" fill="var(--rel)"/>
+          <text class="anno" x="360" y="46" text-anchor="middle" fill="var(--rel)">they meet here</text>
+          <!-- two meridian paths from equator-front up to pole -->
+          <path class="draw" style="--len:360" d="M280,247 C268,180 300,110 360,60" fill="none" stroke="var(--rel)" stroke-width="3"/>
+          <path class="draw" style="--len:360" d="M440,247 C452,180 420,110 360,60" fill="none" stroke="var(--rel)" stroke-width="3"/>
+          <!-- start dots + straight-ahead arrows -->
+          <circle cx="280" cy="247" r="6" fill="var(--text-bright)"/>
+          <circle cx="440" cy="247" r="6" fill="var(--text-bright)"/>
+          <text class="anno" x="250" y="285" text-anchor="middle">start</text>
+          <text class="anno" x="470" y="285" text-anchor="middle">start</text>
+          <text class="anno" x="360" y="400" text-anchor="middle" fill="var(--text-faint)">both walk perfectly straight, never turning toward each other</text>
+        </svg>
+        <figcaption class="viz-cap"><b>No force is pulling the two travelers together.</b> Each walks a straight line. The curve of the globe does the rest. Gravity works the same way, except the thing that is curved is four-dimensional spacetime, and the part that bends hardest, for slow everyday objects, is time.</figcaption>
+      </figure>
+
+      <p>Gravity is that, in four dimensions. The Earth bends the spacetime around it. You, and a dropped apple, and the Moon overhead are all just coasting along the straightest available path through that curved spacetime, and the paths lean toward the Earth. No force required. The apple is not yanked down; it is following a straight line through a shape that tips toward the ground.</p>
+
+      <p>And the part the trampoline leaves out: the strongest bending, for slow everyday things, is in time, not space. Clocks run slower the deeper they sit in gravity, and an object's natural path through spacetime tips toward wherever time runs slowest. You are being pressed into your chair right now because the floor sits where time runs a hair slower than it does at your head.</p>
+
+      <p>That last sentence is measurable. In 2010, physicists at the US National Institute of Standards and Technology compared two of the best atomic clocks ever built after raising one of them by about a foot. The higher clock, sitting where Earth's gravity is a sliver weaker, ran faster. The gap adds up to roughly 90 billionths of a second over a lifetime, and they measured it across one foot of height. <span class="u-src"><a href="https://www.nist.gov/news-events/news/2010/09/nist-clock-experiment-demonstrates-your-head-older-your-feet">NIST clocks</a></span> <span class="u-grade u-grade-a">solid</span> Your head really does age faster than your feet.</p>
+
+      <p>Point general relativity at something heavy and the predictions turn spectacular, and they keep coming true.</p>
+
+      <h3>The bent starlight</h3>
+      <p>Einstein's theory said the Sun's gravity should bend starlight skimming past it, nudging the stars' apparent positions by 1.75 arcseconds, twice what the old physics allowed. In 1919, an expedition photographed stars near the Sun during a total eclipse and found the shift. It made Einstein famous overnight.</p>
+
+      <figure class="fig narrow reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/eclipse.webp"><img src="assets/images/physics/eclipse.jpg" width="700" height="899" loading="lazy" decoding="async" alt="The 1919 total solar eclipse photographic negative, a dark disk of the eclipsed Sun ringed by faint corona, with short horizontal marks identifying the positions of stars near the Sun."></picture>
+        <figcaption>The actual 1919 eclipse negative. The marked stars sat slightly out of place, shoved aside by the Sun's gravity, just as predicted. <span class="cred">Dyson, Eddington &amp; Davidson, 1919 (public domain).</span></figcaption>
+      </figure>
+
+      <p>The 1919 photographs were noisy, and there is a long argument about whether Eddington nudged his data toward the answer he was hoping for. Later experiments pinned the bending down to far better precision, so the conclusion stands even though the original plates were rough. <span class="u-src"><a href="https://www.mpg.de/9244824/solar-eclipse-1919">Max Planck Society</a></span> <span class="u-grade u-grade-b">good</span></p>
+
+      <h3>The ring of a galaxy</h3>
+      <p>Bend starlight hard enough and a whole galaxy becomes a lens. Light from something directly behind it gets smeared into a ring. We find them through the telescope, exactly where the theory says they should be.</p>
+
+      <figure class="fig wide reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/einstein-ring.webp"><img src="assets/images/physics/einstein-ring.jpg" width="1014" height="670" loading="lazy" decoding="async" alt="A Hubble image of the Cosmic Horseshoe: a bright blue near-complete ring of light wrapped around a glowing red galaxy at its center."></picture>
+        <figcaption>The Cosmic Horseshoe. That blue ring is a single distant galaxy, its light bent almost all the way around a massive red galaxy sitting between it and us. A lens made of gravity. <span class="cred">Credit: ESA / Hubble &amp; NASA.</span></figcaption>
+      </figure>
+
+      <h3>The hole you can photograph</h3>
+      <p>Pack enough mass into a small enough space and spacetime curves so steeply that not even light, moving at the universe's top speed, can climb back out. That is a black hole, and the boundary of no return is the event horizon. For decades they were just a solution to Einstein's equations that seemed too strange to be real. In April 2019, a network of radio telescopes released the first image of one: the giant black hole at the heart of the galaxy M87, 55 million light-years away and as heavy as six and a half billion Suns. <span class="u-src"><a href="https://www.eso.org/public/news/eso1907/">EHT image</a></span></p>
+
+      <figure class="fig wide reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/m87.webp"><img src="assets/images/physics/m87.jpg" width="1600" height="1600" loading="lazy" decoding="async" alt="The 2019 Event Horizon Telescope image of the M87 black hole: a fuzzy bright orange ring of glowing gas surrounding a dark central shadow."></picture>
+        <figcaption>The first image of a black hole, 2019. The bright ring is superheated gas; the dark center is the hole's shadow. <span class="cred">Credit: Event Horizon Telescope Collaboration (CC BY 4.0).</span></figcaption>
+      </figure>
+
+      <p>Two honest caveats, because this image gets oversold. What you are looking at is the shadow, not the horizon itself; the bending of light makes the dark patch larger than the true edge of no return. And it is a radio image stitched together by algorithms, not a snapshot through a lens. It is still, unmistakably, a picture of a black hole.</p>
+
+      <p>One last prediction, because it may be the most absurd of all. When two black holes crash into each other, they shake spacetime hard enough to send ripples spreading outward at the speed of light. In 2015 an instrument called LIGO felt one wash over the Earth: two black holes, about 36 and 29 times the mass of the Sun, that had merged 1.3 billion years ago. The ripple stretched LIGO's two-and-a-half-mile arms by less than one ten-thousandth the width of a proton, and we caught it. <span class="u-src"><a href="https://www.ligo.caltech.edu/page/press-release-gw150914">LIGO</a></span> <span class="u-grade u-grade-a">solid</span></p>
+
+      <aside class="u-callout u-move"><p class="u-callout-k">my read</p><p class="u-callout-body">Mass tells spacetime how to curve; curved spacetime tells matter how to move. That one sentence, from the physicist John Wheeler, is general relativity in fourteen words.</p></aside>
+    </section>
+
+    <!-- ============================ PART TWO ============================ -->
+    <div class="partintro zone-q reveal">
+      <p class="part-k">Rulebook two</p>
+      <h2 class="part-h">The very small</h2>
+      <p class="part-d">Everything so far has still been a world of definite things: the clock ticks slow, but it ticks; the apple falls, but it is somewhere. Shrink down to single particles and even that goes away.</p>
+    </div>
+
+    <section id="q-open" class="sec zone-q" aria-label="Quantum introduction">
+      <p>Down at the scale of atoms and electrons, the strangeness changes character. In the big world, things have definite properties and relativity just bends how different observers measure them. In the small world, things stop having definite properties at all until you look, and the act of looking changes the answer. This is quantum mechanics, and it is the best-tested theory in the history of science. It is also the one that makes working physicists shrug and say nobody really understands why it works, only that it does.</p>
+
+      <figure class="fig narrow reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/bubblechamber.webp"><img src="assets/images/physics/bubblechamber.jpg" width="1500" height="2118" loading="lazy" decoding="async" alt="A bubble chamber photograph showing curling and spiraling white tracks left by subatomic particles moving through liquid in a magnetic field."></picture>
+        <figcaption>The small world, caught in the act. Spiraling tracks left by subatomic particles in a bubble chamber, curled by a magnetic field. Each curl is a particle too small to see, betraying itself by the trail it leaves. <span class="cred">Credit: CERN (CC BY 4.0).</span></figcaption>
+      </figure>
+    </section>
+
+    <!-- 05 WAVE -->
+    <section id="wave" class="sec zone-q" aria-labelledby="wave-h">
+      <div class="u-sechead"><p class="u-sechead-k">Everything is a wave</p><h2 id="wave-h" class="u-sechead-h">Everything is a wave until you check</h2></div>
+
+      <p class="lede">Fire single particles, one at a time, at a barrier with two narrow slits in it, and they slowly build up a striped pattern that only waves can make, as if each particle went through both slits at once and rippled into itself on the far side. This is the double-slit experiment, and it is the beating heart of the whole strange business.</p>
+
+      <p>Walk through it slowly, starting with water. Drop two stones in a still pond and the ripples spread and overlap. Where two crests meet, they pile into a bigger crest; where a crest meets a trough, they flatten to nothing. The result is a fixed pattern of busy stripes and calm bands. That adding and cancelling is called interference, and it is the unmistakable signature of waves.</p>
+
+      <figure class="fig wide reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/ripple.webp"><img src="assets/images/physics/ripple.jpg" width="1600" height="1022" loading="lazy" decoding="async" alt="A ripple tank photograph: two sets of circular water waves spreading from two points and overlapping into a pattern of bright and dark fan-shaped bands."></picture>
+        <figcaption>Two sources of ripples in a water tank. Where the waves overlap they add and cancel into fixed fan-shaped bands. This is interference, the fingerprint of a wave. <span class="cred">Photo: Wikimedia Commons (CC0 / public domain).</span></figcaption>
+      </figure>
+
+      <p>Now do it with light through two slits and you get the same stripes on the far wall: bright bands where the light waves add, dark bands where they cancel. Fine. Light is a wave; that was settled two hundred years ago.</p>
+
+      <p>Here is where it goes wrong. Turn the source down so low that it releases one particle of light at a time, a single photon, with long gaps between them. Each one lands on the far wall as a single dot, one tiny hit, exactly like a particle. So far so sensible. But let the dots pile up over hours, and they slowly assemble themselves into the same striped interference pattern.</p>
+
+      <figure class="viz reveal" aria-labelledby="slit-t">
+        <p class="viz-title" id="slit-t">One dot at a time, into stripes</p>
+        <p class="viz-sub">Single particles fired one by one, where they land on the screen</p>
+        <svg viewBox="0 0 960 360" role="img" aria-label="Three panels showing particle hits on a screen accumulating: with 20 hits the dots look random, with 95 they begin to band, with 420 they form clear vertical interference stripes.">
+          <g fill="var(--q)">
+            <!-- panel 1 -->
+            <rect x="70" y="30" width="240" height="300" fill="none" stroke="var(--rule)" stroke-width="1"/>
+            <g transform="translate(70,30)"><circle cx="208.8" cy="259.6" r="2.4"/><circle cx="158.1" cy="119.1" r="2.4"/><circle cx="70.8" cy="137.3" r="2.4"/><circle cx="185.1" cy="71.4" r="2.4"/><circle cx="94.4" cy="184.7" r="2.4"/><circle cx="122.2" cy="85.0" r="2.4"/><circle cx="185.9" cy="114.1" r="2.4"/><circle cx="94.6" cy="225.6" r="2.4"/><circle cx="58.8" cy="197.8" r="2.4"/><circle cx="107.9" cy="277.4" r="2.4"/><circle cx="140.3" cy="189.7" r="2.4"/><circle cx="145.9" cy="220.4" r="2.4"/><circle cx="23.4" cy="75.8" r="2.4"/><circle cx="33.6" cy="86.2" r="2.4"/><circle cx="7.6" cy="34.1" r="2.4"/><circle cx="28.9" cy="148.1" r="2.4"/><circle cx="123.2" cy="276.8" r="2.4"/><circle cx="143.3" cy="59.7" r="2.4"/><circle cx="206.5" cy="152.0" r="2.4"/><circle cx="154.6" cy="153.4" r="2.4"/></g>
+            <text class="anno" x="190" y="352" text-anchor="middle" fill="var(--text-dim)">20 hits: looks random</text>
+            <!-- panel 2 -->
+            <rect x="360" y="30" width="240" height="300" fill="none" stroke="var(--rule)" stroke-width="1"/>
+            <g transform="translate(360,30)"><circle cx="125.1" cy="58.1" r="2.1"/><circle cx="67.5" cy="240.2" r="2.1"/><circle cx="203.1" cy="94.5" r="2.1"/><circle cx="117.3" cy="24.8" r="2.1"/><circle cx="147.4" cy="211.5" r="2.1"/><circle cx="151.1" cy="127.7" r="2.1"/><circle cx="100.2" cy="79.9" r="2.1"/><circle cx="142.9" cy="50.9" r="2.1"/><circle cx="169.9" cy="152.1" r="2.1"/><circle cx="125.7" cy="139.6" r="2.1"/><circle cx="55.6" cy="75.9" r="2.1"/><circle cx="55.5" cy="203.3" r="2.1"/><circle cx="57.9" cy="221.2" r="2.1"/><circle cx="10.6" cy="234.0" r="2.1"/><circle cx="91.0" cy="163.1" r="2.1"/><circle cx="147.3" cy="240.6" r="2.1"/><circle cx="179.4" cy="110.2" r="2.1"/><circle cx="1.2" cy="29.9" r="2.1"/><circle cx="84.9" cy="155.3" r="2.1"/><circle cx="179.1" cy="199.8" r="2.1"/><circle cx="30.0" cy="202.5" r="2.1"/><circle cx="127.7" cy="97.5" r="2.1"/><circle cx="63.0" cy="169.8" r="2.1"/><circle cx="150.0" cy="275.3" r="2.1"/><circle cx="153.5" cy="273.7" r="2.1"/><circle cx="37.1" cy="185.0" r="2.1"/><circle cx="95.0" cy="84.4" r="2.1"/><circle cx="99.4" cy="99.4" r="2.1"/><circle cx="183.7" cy="256.6" r="2.1"/><circle cx="142.2" cy="269.4" r="2.1"/><circle cx="118.7" cy="251.9" r="2.1"/><circle cx="189.6" cy="250.7" r="2.1"/><circle cx="109.8" cy="128.3" r="2.1"/><circle cx="154.8" cy="207.2" r="2.1"/><circle cx="209.5" cy="96.1" r="2.1"/><circle cx="59.2" cy="107.7" r="2.1"/><circle cx="121.3" cy="65.6" r="2.1"/><circle cx="125.7" cy="242.1" r="2.1"/><circle cx="111.5" cy="132.6" r="2.1"/><circle cx="56.8" cy="43.3" r="2.1"/><circle cx="184.5" cy="204.3" r="2.1"/><circle cx="85.1" cy="267.8" r="2.1"/><circle cx="154.5" cy="24.6" r="2.1"/><circle cx="147.9" cy="76.1" r="2.1"/><circle cx="146.4" cy="251.3" r="2.1"/><circle cx="148.9" cy="209.4" r="2.1"/><circle cx="88.1" cy="93.5" r="2.1"/><circle cx="114.8" cy="90.9" r="2.1"/><circle cx="112.5" cy="39.6" r="2.1"/><circle cx="88.1" cy="51.3" r="2.1"/><circle cx="127.5" cy="253.4" r="2.1"/><circle cx="63.4" cy="154.5" r="2.1"/><circle cx="155.7" cy="227.1" r="2.1"/><circle cx="178.6" cy="147.9" r="2.1"/><circle cx="66.7" cy="133.8" r="2.1"/><circle cx="211.9" cy="61.9" r="2.1"/><circle cx="148.0" cy="19.8" r="2.1"/><circle cx="123.0" cy="211.0" r="2.1"/><circle cx="97.4" cy="112.4" r="2.1"/><circle cx="37.9" cy="245.9" r="2.1"/><circle cx="151.3" cy="66.8" r="2.1"/><circle cx="32.5" cy="49.7" r="2.1"/><circle cx="126.7" cy="89.5" r="2.1"/><circle cx="116.7" cy="115.1" r="2.1"/><circle cx="158.0" cy="187.3" r="2.1"/><circle cx="35.5" cy="126.6" r="2.1"/><circle cx="117.8" cy="233.6" r="2.1"/><circle cx="53.0" cy="71.2" r="2.1"/><circle cx="84.5" cy="236.3" r="2.1"/><circle cx="86.7" cy="215.1" r="2.1"/><circle cx="65.3" cy="174.0" r="2.1"/><circle cx="139.7" cy="173.9" r="2.1"/><circle cx="69.3" cy="162.7" r="2.1"/><circle cx="172.0" cy="246.2" r="2.1"/><circle cx="59.9" cy="100.4" r="2.1"/><circle cx="55.6" cy="253.9" r="2.1"/><circle cx="151.2" cy="236.8" r="2.1"/><circle cx="116.3" cy="182.7" r="2.1"/><circle cx="112.0" cy="200.6" r="2.1"/><circle cx="157.2" cy="53.7" r="2.1"/><circle cx="147.3" cy="72.1" r="2.1"/><circle cx="125.6" cy="230.2" r="2.1"/><circle cx="92.9" cy="25.3" r="2.1"/><circle cx="140.0" cy="108.0" r="2.1"/><circle cx="156.0" cy="98.9" r="2.1"/><circle cx="116.5" cy="202.2" r="2.1"/><circle cx="177.1" cy="29.8" r="2.1"/><circle cx="154.4" cy="241.7" r="2.1"/><circle cx="163.1" cy="266.9" r="2.1"/><circle cx="183.3" cy="173.7" r="2.1"/><circle cx="63.9" cy="81.7" r="2.1"/><circle cx="91.0" cy="53.3" r="2.1"/><circle cx="77.7" cy="130.1" r="2.1"/><circle cx="181.7" cy="70.3" r="2.1"/><circle cx="179.8" cy="62.4" r="2.1"/></g>
+            <text class="anno" x="480" y="352" text-anchor="middle" fill="var(--text-dim)">95 hits: a hint of bands</text>
+            <!-- panel 3 -->
+            <rect x="650" y="30" width="240" height="300" fill="none" stroke="var(--rule)" stroke-width="1"/>
+            <g transform="translate(650,30)"><circle cx="5.7" cy="274.5" r="1.9"/><circle cx="60.0" cy="54.1" r="1.9"/><circle cx="213.1" cy="259.7" r="1.9"/><circle cx="93.7" cy="227.5" r="1.9"/><circle cx="28.7" cy="262.2" r="1.9"/><circle cx="97.2" cy="111.1" r="1.9"/><circle cx="145.5" cy="238.6" r="1.9"/><circle cx="123.6" cy="247.2" r="1.9"/><circle cx="53.5" cy="101.8" r="1.9"/><circle cx="228.8" cy="83.9" r="1.9"/><circle cx="204.7" cy="272.1" r="1.9"/><circle cx="208.5" cy="180.4" r="1.9"/><circle cx="115.6" cy="163.3" r="1.9"/><circle cx="115.7" cy="227.7" r="1.9"/><circle cx="51.7" cy="109.1" r="1.9"/><circle cx="96.6" cy="122.3" r="1.9"/><circle cx="203.4" cy="202.2" r="1.9"/><circle cx="108.9" cy="224.5" r="1.9"/><circle cx="143.5" cy="259.9" r="1.9"/><circle cx="121.1" cy="279.9" r="1.9"/><circle cx="88.1" cy="160.1" r="1.9"/><circle cx="157.6" cy="226.1" r="1.9"/><circle cx="146.4" cy="220.9" r="1.9"/><circle cx="116.9" cy="122.4" r="1.9"/><circle cx="213.2" cy="252.5" r="1.9"/><circle cx="147.5" cy="197.8" r="1.9"/><circle cx="25.4" cy="49.1" r="1.9"/><circle cx="153.5" cy="26.0" r="1.9"/><circle cx="133.1" cy="108.5" r="1.9"/><circle cx="81.8" cy="31.6" r="1.9"/><circle cx="62.3" cy="220.2" r="1.9"/><circle cx="147.8" cy="57.0" r="1.9"/><circle cx="176.0" cy="135.8" r="1.9"/><circle cx="93.0" cy="254.9" r="1.9"/><circle cx="114.6" cy="69.9" r="1.9"/><circle cx="189.0" cy="47.6" r="1.9"/><circle cx="201.3" cy="236.9" r="1.9"/><circle cx="156.2" cy="118.2" r="1.9"/><circle cx="152.9" cy="137.7" r="1.9"/><circle cx="148.6" cy="212.0" r="1.9"/><circle cx="55.5" cy="35.1" r="1.9"/><circle cx="32.0" cy="118.4" r="1.9"/><circle cx="90.6" cy="279.4" r="1.9"/><circle cx="93.7" cy="36.2" r="1.9"/><circle cx="148.8" cy="130.8" r="1.9"/><circle cx="128.2" cy="29.5" r="1.9"/><circle cx="157.1" cy="124.8" r="1.9"/><circle cx="65.6" cy="171.3" r="1.9"/><circle cx="156.6" cy="23.4" r="1.9"/><circle cx="169.6" cy="222.7" r="1.9"/><circle cx="148.0" cy="239.2" r="1.9"/><circle cx="82.9" cy="142.4" r="1.9"/><circle cx="91.0" cy="280.6" r="1.9"/><circle cx="123.9" cy="67.8" r="1.9"/><circle cx="205.2" cy="19.0" r="1.9"/><circle cx="182.8" cy="217.3" r="1.9"/><circle cx="108.5" cy="48.7" r="1.9"/><circle cx="80.9" cy="47.5" r="1.9"/><circle cx="92.7" cy="206.5" r="1.9"/><circle cx="80.3" cy="174.0" r="1.9"/><circle cx="87.1" cy="279.5" r="1.9"/><circle cx="100.3" cy="31.0" r="1.9"/><circle cx="82.3" cy="65.6" r="1.9"/><circle cx="129.3" cy="249.2" r="1.9"/><circle cx="146.2" cy="209.4" r="1.9"/><circle cx="61.3" cy="248.7" r="1.9"/><circle cx="154.5" cy="52.0" r="1.9"/><circle cx="91.1" cy="88.2" r="1.9"/><circle cx="122.7" cy="92.6" r="1.9"/><circle cx="87.9" cy="41.4" r="1.9"/><circle cx="99.9" cy="57.3" r="1.9"/><circle cx="114.6" cy="41.3" r="1.9"/><circle cx="54.7" cy="280.8" r="1.9"/><circle cx="123.5" cy="31.9" r="1.9"/><circle cx="155.5" cy="84.9" r="1.9"/><circle cx="153.4" cy="239.5" r="1.9"/><circle cx="116.6" cy="176.8" r="1.9"/><circle cx="125.5" cy="113.0" r="1.9"/><circle cx="147.6" cy="180.0" r="1.9"/><circle cx="148.4" cy="211.9" r="1.9"/><circle cx="91.4" cy="109.1" r="1.9"/><circle cx="88.0" cy="30.3" r="1.9"/><circle cx="56.1" cy="179.5" r="1.9"/><circle cx="154.6" cy="89.9" r="1.9"/><circle cx="88.6" cy="228.8" r="1.9"/><circle cx="57.8" cy="278.3" r="1.9"/><circle cx="119.0" cy="117.4" r="1.9"/><circle cx="86.4" cy="19.6" r="1.9"/><circle cx="189.6" cy="144.1" r="1.9"/><circle cx="5.3" cy="273.2" r="1.9"/><circle cx="52.6" cy="195.9" r="1.9"/><circle cx="212.0" cy="85.2" r="1.9"/><circle cx="151.4" cy="62.5" r="1.9"/><circle cx="121.6" cy="168.3" r="1.9"/><circle cx="128.5" cy="227.8" r="1.9"/><circle cx="122.9" cy="271.9" r="1.9"/><circle cx="120.5" cy="253.3" r="1.9"/><circle cx="69.6" cy="220.9" r="1.9"/><circle cx="122.5" cy="269.4" r="1.9"/><circle cx="91.2" cy="168.4" r="1.9"/><circle cx="67.2" cy="244.9" r="1.9"/><circle cx="87.4" cy="157.1" r="1.9"/><circle cx="148.2" cy="70.8" r="1.9"/><circle cx="88.3" cy="280.9" r="1.9"/><circle cx="106.4" cy="103.6" r="1.9"/><circle cx="145.8" cy="202.2" r="1.9"/><circle cx="114.4" cy="32.4" r="1.9"/><circle cx="82.4" cy="37.4" r="1.9"/><circle cx="91.9" cy="245.4" r="1.9"/><circle cx="94.2" cy="197.5" r="1.9"/><circle cx="80.3" cy="275.8" r="1.9"/><circle cx="125.2" cy="94.2" r="1.9"/><circle cx="143.6" cy="177.2" r="1.9"/><circle cx="90.4" cy="119.7" r="1.9"/><circle cx="148.6" cy="63.7" r="1.9"/><circle cx="58.8" cy="260.7" r="1.9"/><circle cx="158.6" cy="183.2" r="1.9"/><circle cx="59.2" cy="197.5" r="1.9"/><circle cx="114.2" cy="46.2" r="1.9"/><circle cx="150.1" cy="246.0" r="1.9"/><circle cx="27.8" cy="236.6" r="1.9"/><circle cx="126.2" cy="231.3" r="1.9"/><circle cx="120.9" cy="83.9" r="1.9"/><circle cx="151.2" cy="229.8" r="1.9"/><circle cx="129.5" cy="155.8" r="1.9"/><circle cx="126.6" cy="132.5" r="1.9"/><circle cx="120.0" cy="210.5" r="1.9"/><circle cx="127.8" cy="133.8" r="1.9"/><circle cx="96.1" cy="185.4" r="1.9"/><circle cx="145.4" cy="132.2" r="1.9"/><circle cx="37.0" cy="259.8" r="1.9"/><circle cx="88.0" cy="267.0" r="1.9"/><circle cx="86.5" cy="163.8" r="1.9"/><circle cx="120.6" cy="134.2" r="1.9"/><circle cx="55.0" cy="166.4" r="1.9"/><circle cx="92.4" cy="239.8" r="1.9"/><circle cx="148.7" cy="261.8" r="1.9"/><circle cx="88.1" cy="38.9" r="1.9"/><circle cx="85.3" cy="189.5" r="1.9"/><circle cx="90.3" cy="230.2" r="1.9"/><circle cx="54.9" cy="126.2" r="1.9"/><circle cx="57.2" cy="242.6" r="1.9"/><circle cx="61.0" cy="50.7" r="1.9"/><circle cx="33.5" cy="123.8" r="1.9"/><circle cx="143.0" cy="257.8" r="1.9"/><circle cx="123.5" cy="186.8" r="1.9"/><circle cx="25.5" cy="74.9" r="1.9"/><circle cx="66.6" cy="66.0" r="1.9"/><circle cx="199.5" cy="236.2" r="1.9"/><circle cx="114.1" cy="260.9" r="1.9"/><circle cx="122.3" cy="279.5" r="1.9"/><circle cx="152.9" cy="221.1" r="1.9"/><circle cx="151.7" cy="74.5" r="1.9"/><circle cx="158.0" cy="45.3" r="1.9"/><circle cx="121.9" cy="196.6" r="1.9"/><circle cx="155.8" cy="87.3" r="1.9"/><circle cx="115.8" cy="239.9" r="1.9"/><circle cx="88.0" cy="20.7" r="1.9"/><circle cx="173.0" cy="190.2" r="1.9"/><circle cx="116.4" cy="128.4" r="1.9"/><circle cx="120.0" cy="239.4" r="1.9"/><circle cx="54.8" cy="29.3" r="1.9"/><circle cx="175.7" cy="281.9" r="1.9"/><circle cx="57.2" cy="45.1" r="1.9"/><circle cx="156.6" cy="195.7" r="1.9"/><circle cx="177.1" cy="50.2" r="1.9"/><circle cx="213.6" cy="204.1" r="1.9"/><circle cx="129.5" cy="209.9" r="1.9"/><circle cx="141.0" cy="111.7" r="1.9"/><circle cx="151.2" cy="132.8" r="1.9"/><circle cx="92.4" cy="86.9" r="1.9"/><circle cx="48.0" cy="252.9" r="1.9"/><circle cx="174.4" cy="225.4" r="1.9"/><circle cx="147.1" cy="63.7" r="1.9"/><circle cx="108.7" cy="268.7" r="1.9"/><circle cx="88.7" cy="139.4" r="1.9"/><circle cx="116.9" cy="202.2" r="1.9"/><circle cx="154.3" cy="135.7" r="1.9"/><circle cx="176.3" cy="160.4" r="1.9"/><circle cx="60.0" cy="68.3" r="1.9"/><circle cx="90.3" cy="30.0" r="1.9"/><circle cx="63.0" cy="70.0" r="1.9"/><circle cx="151.2" cy="226.7" r="1.9"/><circle cx="125.8" cy="151.7" r="1.9"/><circle cx="120.7" cy="109.0" r="1.9"/><circle cx="144.1" cy="115.1" r="1.9"/><circle cx="70.0" cy="107.2" r="1.9"/><circle cx="118.8" cy="238.2" r="1.9"/><circle cx="117.4" cy="35.2" r="1.9"/><circle cx="94.0" cy="232.9" r="1.9"/><circle cx="185.6" cy="179.0" r="1.9"/><circle cx="108.3" cy="178.6" r="1.9"/><circle cx="116.3" cy="134.0" r="1.9"/><circle cx="96.1" cy="78.4" r="1.9"/><circle cx="178.2" cy="198.3" r="1.9"/><circle cx="183.2" cy="27.9" r="1.9"/><circle cx="116.8" cy="164.4" r="1.9"/><circle cx="25.4" cy="164.2" r="1.9"/><circle cx="83.1" cy="254.6" r="1.9"/><circle cx="148.2" cy="43.6" r="1.9"/><circle cx="141.8" cy="92.9" r="1.9"/><circle cx="87.4" cy="122.0" r="1.9"/><circle cx="121.4" cy="276.6" r="1.9"/><circle cx="212.1" cy="104.7" r="1.9"/><circle cx="125.9" cy="88.0" r="1.9"/><circle cx="144.2" cy="199.8" r="1.9"/><circle cx="147.4" cy="46.9" r="1.9"/><circle cx="148.3" cy="172.5" r="1.9"/><circle cx="125.0" cy="83.3" r="1.9"/><circle cx="89.8" cy="217.0" r="1.9"/><circle cx="144.2" cy="35.3" r="1.9"/><circle cx="125.1" cy="150.4" r="1.9"/><circle cx="218.8" cy="62.4" r="1.9"/><circle cx="148.6" cy="245.0" r="1.9"/><circle cx="113.0" cy="24.0" r="1.9"/><circle cx="70.4" cy="221.2" r="1.9"/><circle cx="172.0" cy="211.0" r="1.9"/><circle cx="85.7" cy="82.1" r="1.9"/><circle cx="155.1" cy="112.9" r="1.9"/><circle cx="149.0" cy="210.3" r="1.9"/><circle cx="143.8" cy="238.5" r="1.9"/><circle cx="32.9" cy="281.0" r="1.9"/><circle cx="84.2" cy="46.9" r="1.9"/><circle cx="155.7" cy="19.8" r="1.9"/><circle cx="54.8" cy="84.4" r="1.9"/><circle cx="160.4" cy="255.5" r="1.9"/><circle cx="198.1" cy="101.2" r="1.9"/><circle cx="96.9" cy="44.7" r="1.9"/><circle cx="51.0" cy="112.1" r="1.9"/><circle cx="67.8" cy="39.8" r="1.9"/><circle cx="122.0" cy="152.7" r="1.9"/><circle cx="123.4" cy="49.8" r="1.9"/><circle cx="126.5" cy="211.0" r="1.9"/><circle cx="64.1" cy="102.3" r="1.9"/><circle cx="85.0" cy="136.2" r="1.9"/><circle cx="71.9" cy="177.9" r="1.9"/><circle cx="151.1" cy="121.5" r="1.9"/><circle cx="120.7" cy="47.7" r="1.9"/><circle cx="81.8" cy="123.7" r="1.9"/><circle cx="89.7" cy="210.1" r="1.9"/><circle cx="158.2" cy="193.0" r="1.9"/><circle cx="66.2" cy="120.8" r="1.9"/><circle cx="111.4" cy="267.4" r="1.9"/><circle cx="62.8" cy="277.3" r="1.9"/><circle cx="28.7" cy="204.3" r="1.9"/><circle cx="124.8" cy="131.8" r="1.9"/><circle cx="95.4" cy="281.7" r="1.9"/><circle cx="118.4" cy="112.2" r="1.9"/><circle cx="124.0" cy="73.1" r="1.9"/><circle cx="189.6" cy="240.2" r="1.9"/><circle cx="130.0" cy="266.8" r="1.9"/><circle cx="99.9" cy="104.1" r="1.9"/><circle cx="123.5" cy="61.6" r="1.9"/><circle cx="112.1" cy="262.9" r="1.9"/><circle cx="118.2" cy="264.0" r="1.9"/><circle cx="177.7" cy="192.8" r="1.9"/><circle cx="91.7" cy="228.2" r="1.9"/><circle cx="101.8" cy="81.7" r="1.9"/><circle cx="124.7" cy="105.8" r="1.9"/><circle cx="146.8" cy="204.2" r="1.9"/><circle cx="109.1" cy="196.9" r="1.9"/><circle cx="120.6" cy="273.0" r="1.9"/><circle cx="119.3" cy="217.5" r="1.9"/><circle cx="147.5" cy="280.1" r="1.9"/><circle cx="108.3" cy="226.1" r="1.9"/><circle cx="121.2" cy="72.8" r="1.9"/><circle cx="155.2" cy="73.8" r="1.9"/><circle cx="151.5" cy="76.3" r="1.9"/><circle cx="144.5" cy="27.5" r="1.9"/><circle cx="94.6" cy="199.4" r="1.9"/><circle cx="158.0" cy="102.9" r="1.9"/><circle cx="121.2" cy="124.8" r="1.9"/><circle cx="173.9" cy="19.2" r="1.9"/><circle cx="87.9" cy="82.3" r="1.9"/><circle cx="124.1" cy="137.9" r="1.9"/><circle cx="40.1" cy="68.0" r="1.9"/><circle cx="94.3" cy="107.2" r="1.9"/><circle cx="147.2" cy="260.6" r="1.9"/><circle cx="130.0" cy="278.7" r="1.9"/><circle cx="65.0" cy="167.5" r="1.9"/><circle cx="130.8" cy="241.9" r="1.9"/><circle cx="204.4" cy="60.4" r="1.9"/><circle cx="94.7" cy="58.6" r="1.9"/><circle cx="58.3" cy="206.2" r="1.9"/><circle cx="122.9" cy="51.8" r="1.9"/><circle cx="177.4" cy="165.9" r="1.9"/><circle cx="77.5" cy="38.3" r="1.9"/><circle cx="61.5" cy="193.7" r="1.9"/><circle cx="86.0" cy="124.0" r="1.9"/><circle cx="148.8" cy="86.9" r="1.9"/><circle cx="186.0" cy="182.0" r="1.9"/><circle cx="116.4" cy="143.7" r="1.9"/><circle cx="109.6" cy="275.0" r="1.9"/><circle cx="146.3" cy="61.9" r="1.9"/><circle cx="117.7" cy="200.3" r="1.9"/><circle cx="117.1" cy="103.8" r="1.9"/><circle cx="131.3" cy="156.5" r="1.9"/><circle cx="217.4" cy="122.1" r="1.9"/><circle cx="109.1" cy="138.6" r="1.9"/><circle cx="122.2" cy="159.8" r="1.9"/><circle cx="58.3" cy="79.5" r="1.9"/><circle cx="131.9" cy="73.9" r="1.9"/><circle cx="178.6" cy="28.4" r="1.9"/><circle cx="190.1" cy="244.9" r="1.9"/><circle cx="120.4" cy="112.0" r="1.9"/><circle cx="88.7" cy="201.6" r="1.9"/><circle cx="117.4" cy="19.0" r="1.9"/><circle cx="26.6" cy="66.1" r="1.9"/><circle cx="151.0" cy="23.0" r="1.9"/><circle cx="157.4" cy="35.0" r="1.9"/><circle cx="203.3" cy="69.5" r="1.9"/><circle cx="132.7" cy="145.0" r="1.9"/><circle cx="85.3" cy="241.9" r="1.9"/><circle cx="82.1" cy="175.0" r="1.9"/><circle cx="145.4" cy="203.3" r="1.9"/><circle cx="117.4" cy="144.9" r="1.9"/><circle cx="144.2" cy="210.4" r="1.9"/><circle cx="86.1" cy="232.5" r="1.9"/><circle cx="110.4" cy="185.3" r="1.9"/><circle cx="123.3" cy="251.9" r="1.9"/><circle cx="82.6" cy="143.9" r="1.9"/><circle cx="91.6" cy="168.9" r="1.9"/><circle cx="113.3" cy="231.8" r="1.9"/><circle cx="55.6" cy="39.9" r="1.9"/><circle cx="150.6" cy="253.1" r="1.9"/><circle cx="96.7" cy="190.3" r="1.9"/><circle cx="125.7" cy="57.5" r="1.9"/><circle cx="115.6" cy="113.6" r="1.9"/><circle cx="93.8" cy="102.0" r="1.9"/><circle cx="110.9" cy="168.1" r="1.9"/><circle cx="88.9" cy="72.9" r="1.9"/><circle cx="53.6" cy="149.5" r="1.9"/><circle cx="86.6" cy="221.4" r="1.9"/><circle cx="158.9" cy="125.2" r="1.9"/><circle cx="175.4" cy="93.9" r="1.9"/><circle cx="30.2" cy="251.4" r="1.9"/><circle cx="122.4" cy="221.4" r="1.9"/><circle cx="5.0" cy="99.4" r="1.9"/><circle cx="59.1" cy="21.6" r="1.9"/><circle cx="203.7" cy="174.9" r="1.9"/><circle cx="72.7" cy="78.8" r="1.9"/><circle cx="91.2" cy="203.4" r="1.9"/><circle cx="141.5" cy="59.8" r="1.9"/><circle cx="54.4" cy="44.5" r="1.9"/><circle cx="56.0" cy="50.8" r="1.9"/><circle cx="170.2" cy="268.6" r="1.9"/><circle cx="120.3" cy="241.2" r="1.9"/><circle cx="4.4" cy="107.2" r="1.9"/><circle cx="57.7" cy="111.3" r="1.9"/><circle cx="82.6" cy="109.2" r="1.9"/><circle cx="147.2" cy="222.7" r="1.9"/><circle cx="121.8" cy="175.4" r="1.9"/><circle cx="120.8" cy="219.0" r="1.9"/><circle cx="60.8" cy="112.4" r="1.9"/><circle cx="122.9" cy="211.8" r="1.9"/><circle cx="94.1" cy="49.3" r="1.9"/><circle cx="90.1" cy="263.7" r="1.9"/><circle cx="160.3" cy="224.2" r="1.9"/><circle cx="171.2" cy="136.7" r="1.9"/><circle cx="172.3" cy="235.6" r="1.9"/><circle cx="149.4" cy="220.6" r="1.9"/><circle cx="115.8" cy="185.6" r="1.9"/><circle cx="121.1" cy="65.7" r="1.9"/><circle cx="117.2" cy="163.8" r="1.9"/><circle cx="124.6" cy="30.7" r="1.9"/><circle cx="126.3" cy="94.2" r="1.9"/><circle cx="116.5" cy="23.3" r="1.9"/><circle cx="130.8" cy="35.3" r="1.9"/><circle cx="86.1" cy="276.5" r="1.9"/><circle cx="80.9" cy="270.5" r="1.9"/><circle cx="171.7" cy="251.5" r="1.9"/><circle cx="83.7" cy="233.4" r="1.9"/><circle cx="57.7" cy="268.1" r="1.9"/><circle cx="122.3" cy="141.0" r="1.9"/><circle cx="154.6" cy="165.1" r="1.9"/><circle cx="94.7" cy="252.1" r="1.9"/><circle cx="178.0" cy="217.4" r="1.9"/><circle cx="156.2" cy="107.2" r="1.9"/><circle cx="126.9" cy="112.9" r="1.9"/><circle cx="111.7" cy="65.6" r="1.9"/><circle cx="173.5" cy="230.2" r="1.9"/><circle cx="209.4" cy="210.1" r="1.9"/><circle cx="60.0" cy="87.3" r="1.9"/><circle cx="119.4" cy="219.4" r="1.9"/><circle cx="151.2" cy="28.1" r="1.9"/><circle cx="129.3" cy="260.5" r="1.9"/><circle cx="114.2" cy="211.8" r="1.9"/><circle cx="116.7" cy="122.2" r="1.9"/><circle cx="84.8" cy="205.0" r="1.9"/><circle cx="88.7" cy="105.6" r="1.9"/><circle cx="60.7" cy="130.2" r="1.9"/><circle cx="113.8" cy="56.3" r="1.9"/><circle cx="151.6" cy="243.9" r="1.9"/><circle cx="180.5" cy="86.3" r="1.9"/><circle cx="52.3" cy="279.1" r="1.9"/><circle cx="176.0" cy="102.2" r="1.9"/><circle cx="150.2" cy="42.9" r="1.9"/><circle cx="42.0" cy="93.1" r="1.9"/><circle cx="67.5" cy="150.0" r="1.9"/><circle cx="151.4" cy="233.5" r="1.9"/><circle cx="142.3" cy="64.2" r="1.9"/><circle cx="124.4" cy="19.9" r="1.9"/><circle cx="139.8" cy="23.9" r="1.9"/><circle cx="152.2" cy="140.8" r="1.9"/><circle cx="153.6" cy="203.6" r="1.9"/><circle cx="162.7" cy="193.8" r="1.9"/><circle cx="116.3" cy="215.8" r="1.9"/><circle cx="146.3" cy="152.0" r="1.9"/><circle cx="122.1" cy="224.4" r="1.9"/><circle cx="120.6" cy="87.4" r="1.9"/><circle cx="173.2" cy="59.2" r="1.9"/><circle cx="124.7" cy="29.2" r="1.9"/><circle cx="173.5" cy="116.5" r="1.9"/><circle cx="117.4" cy="64.1" r="1.9"/><circle cx="92.1" cy="80.1" r="1.9"/><circle cx="68.3" cy="173.8" r="1.9"/><circle cx="79.4" cy="41.8" r="1.9"/><circle cx="81.0" cy="246.6" r="1.9"/><circle cx="119.3" cy="88.5" r="1.9"/><circle cx="61.0" cy="156.0" r="1.9"/></g>
+            <text class="anno" x="770" y="352" text-anchor="middle" fill="var(--text-dim)">420 hits: clear stripes</text>
+          </g>
+        </svg>
+        <figcaption class="viz-cap"><b>Each dot is one particle, arriving alone.</b> The first few look scattered. As they accumulate, an interference pattern appears, the same one you would get from overlapping waves. Every lonely particle, with nothing else around to interfere with, lands in a way that respects the stripes. The only thing it has to interfere with is itself.</figcaption>
+      </figure>
+
+      <p>Each lonely photon, with no other photon anywhere near it, lands in a way that obeys the stripes. The only thing it has to interfere with is itself. A single, indivisible particle somehow went through both slits, overlapped with itself like a wave, and then arrived as one dot. Electrons do it too. So do whole atoms, and even molecules built from hundreds of atoms. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/III_01.html">Feynman</a></span> It is not a quirk of light. It is how matter behaves once you get small enough.</p>
+
+      <p>Now the part that should bother you. Put a tiny detector at the slits to catch which one each particle actually goes through. Do that, and the stripes vanish. The particles fall into two plain clumps, one behind each slit, like ordinary pellets. The instant you force the particle to commit to a single path, it stops behaving like a wave. Look, and it is a particle. Do not look, and it is a wave trying every route at once.</p>
+
+      <p>I have to be careful with the word "look," because this is exactly where physics gets hijacked into mysticism. Looking does not mean a conscious human watching. It means any physical interaction that records which way the particle went: a detector, a stray air molecule, a single bounced photon. No mind is required. The universe does not care whether you, personally, were paying attention. It cares only whether the which-way information leaked out into the world. <span class="u-src"><a href="https://plato.stanford.edu/entries/qm-decoherence/">decoherence</a></span></p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">why this is the whole game</p><p class="u-callout-body"><b>A quantum particle is not secretly a tiny pellet on one path you happen not to know.</b> Until something pins it down, it genuinely has no single path, and the proof is sitting on the screen: the routes it did not "choose" interfere with the ones it did. You cannot interfere with a road you never traveled.</p></aside>
+
+      <p>One consequence is worth a short detour. If a particle is really a spread-out wave, then part of that wave can sit on the far side of a wall the particle does not have the energy to climb. Every so often the particle simply turns up over there, having crossed a barrier it had no business crossing. This is quantum tunneling, and it is not a loophole, it is load-bearing. The Sun runs on it: the protons in its core do not actually have enough energy to fuse, and never would, except that they tunnel through the wall between them. The Sun shines because the rules are slightly fuzzy. <span class="u-src"><a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">fusion by tunneling</a></span></p>
+    </section>
+
+    <!-- 06 MEASURE -->
+    <section id="measure" class="sec zone-q" aria-labelledby="measure-h">
+      <div class="u-sechead"><p class="u-sechead-k">Nothing is decided yet</p><h2 id="measure-h" class="u-sechead-h">Nothing is decided until you measure it</h2></div>
+
+      <figure class="portrait reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/schrodinger.webp"><img src="assets/images/physics/schrodinger.jpg" width="280" height="396" loading="lazy" decoding="async" alt="Black-and-white portrait of Erwin Schrodinger in 1933, wearing round glasses and a bow tie."></picture>
+        <figcaption>Erwin Schrodinger, 1933. He invented the famous cat to mock the theory, not to celebrate it. Photo: Nobel Foundation (public domain).</figcaption>
+      </figure>
+
+      <p class="lede">Before you measure it, a quantum particle is not in one state or another. It is in a blend of all its possible states at once, called a superposition, and measuring it forces it to pick one. The blend is not a gap in your knowledge. It is the particle's actual condition.</p>
+
+      <p>The double-slit already showed you this. "Went through both slits" is a superposition of left-slit and right-slit, held at the same time. But the idea deserves its own name, because it leads to the most famous thought experiment in physics, and nearly everyone gets its point backwards.</p>
+
+      <p>In 1935, Erwin Schrodinger described a cat in a sealed box. Inside is a trace of radioactive material that, over the next hour, has a fifty-fifty chance of decaying. If it decays, it trips a hammer that shatters a vial of poison and kills the cat. Radioactive decay is a quantum event, so until it is measured, the atom sits in a superposition: decayed and not-decayed at once. And here is the trap. The cat's life is wired straight to that atom. So by the rules, before you open the box, the cat is in a superposition too: alive and dead at the same time. <span class="u-src"><a href="https://plato.stanford.edu/entries/qt-issues/">Schrodinger's cat</a></span></p>
+
+      <p>Here is what nearly everyone gets wrong. Schrodinger was not delighted by this. He invented the cat to ridicule the idea. He thought a half-alive, half-dead cat was plainly absurd, and he was pointing at it to say look how ridiculous your theory gets when you scale it up. The cat was a complaint, not a celebration.</p>
+
+      <p>The complaint is fair, and it has a name: the measurement problem. Why do we never see a superposed cat, or a superposed anything bigger than a molecule? The leading answer is decoherence. A single electron can hold a clean blend because it is isolated. A cat is enormous and constantly touching its surroundings: air, light, its own warmth. Every one of those touches is a tiny measurement, leaking out which-way information, and they happen so fast and so relentlessly that any blend collapses to a single outcome almost instantly. The cat is alive or dead within a sliver of a second, long before you open the box, because the universe is already measuring it. The smaller and more isolated a thing is, the longer it can hold the blur. A cat does not stand a chance. <span class="u-src"><a href="https://plato.stanford.edu/entries/qm-decoherence/">decoherence</a></span></p>
+
+      <aside class="u-callout"><p class="u-callout-k">one honest note</p><p class="u-callout-body">Decoherence explains why we never catch the world mid-blend. It does not fully settle the deeper puzzle of why one particular outcome happens instead of the other, and physicists still genuinely disagree about what is going on underneath. The "consciousness collapses reality" version you may have heard is a fringe minority view, not the mainstream one. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Von_Neumann%E2%80%93Wigner_interpretation">on the woo</a></span> Anyone who tells you the measurement problem is solved is picking a side in an argument that is still live.</p></aside>
+    </section>
+
+    <!-- 07 UNCERTAINTY -->
+    <section id="uncertain" class="sec zone-q" aria-labelledby="uncertain-h">
+      <div class="u-sechead"><p class="u-sechead-k">You cannot know it all</p><h2 id="uncertain-h" class="u-sechead-h">You cannot know everything at once</h2></div>
+
+      <figure class="portrait reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/heisenberg.webp"><img src="assets/images/physics/heisenberg.jpg" width="497" height="789" loading="lazy" decoding="async" alt="Black-and-white portrait of a young Werner Heisenberg in 1933, in a suit and tie."></picture>
+        <figcaption>Werner Heisenberg, 1933. His uncertainty principle is routinely explained wrong, even in textbooks. <span class="cred">Bundesarchiv, Bild 183-R57262 / CC BY-SA 3.0.</span></figcaption>
+      </figure>
+
+      <p class="lede">There is a hard limit on how much you can know about a particle at one time. The more precisely you pin down where it is, the more hopelessly fuzzy its speed becomes, and the other way around. This is Heisenberg's uncertainty principle, and the limit is not about clumsy instruments. It is built into what a particle is.</p>
+
+      <p>The usual explanation is wrong, so let me hand you the wrong one first, because you will meet it everywhere. The wrong version says: to see a particle you have to bounce something off it, like light, and the bounce knocks it off course, so measuring its position disturbs its speed. True as far as it goes, but it makes the limit sound like a practical nuisance, as if a gentler instrument could beat it. Nothing can. The limit holds even in principle, even for a perfectly prepared particle that nobody has touched.</p>
+
+      <p>The honest version comes straight out of the last two chapters: a particle is a wave. And here is a fact about every wave, one you can hear.</p>
+
+      <figure class="viz reveal" aria-labelledby="unc-t">
+        <p class="viz-title" id="unc-t">Sharp in one means smeared in the other</p>
+        <p class="viz-sub">The same trade-off you can hear in any sound</p>
+        <svg viewBox="0 0 960 430" role="img" aria-label="Top row, a long pure musical note: spread out in time but a single sharp spike in pitch. Bottom row, a short clap: a sharp spike in time but smeared across all pitches.">
+          <!-- column headers -->
+          <text class="anno-b" x="270" y="34" text-anchor="middle">in time</text>
+          <text class="anno-b" x="710" y="34" text-anchor="middle">in pitch</text>
+          <line x1="480" y1="20" x2="480" y2="410" stroke="var(--rule)" stroke-width="1"/>
+          <line x1="60" y1="220" x2="900" y2="220" stroke="var(--rule)" stroke-width="1"/>
+
+          <!-- ROW 1: pure tone -->
+          <text class="anno" x="70" y="120" fill="var(--text-dim)">a long,</text>
+          <text class="anno" x="70" y="138" fill="var(--text-dim)">pure note</text>
+          <!-- long sine across time -->
+          <path d="M120,130 Q140,90 160,130 T200,130 T240,130 T280,130 T320,130 T360,130 T400,130 T440,130" fill="none" stroke="var(--q)" stroke-width="2.5"/>
+          <line x1="120" y1="190" x2="450" y2="190" stroke="var(--text-faint)" stroke-width="1"/>
+          <text class="axs" x="285" y="208" text-anchor="middle">spread over time</text>
+          <!-- single sharp spike in pitch -->
+          <line x1="700" y1="190" x2="700" y2="70" stroke="var(--q-2)" stroke-width="3"/>
+          <line x1="560" y1="190" x2="880" y2="190" stroke="var(--text-faint)" stroke-width="1"/>
+          <text class="axs" x="720" y="208" text-anchor="middle">one sharp pitch</text>
+
+          <!-- ROW 2: clap -->
+          <text class="anno" x="70" y="320" fill="var(--text-dim)">a sharp</text>
+          <text class="anno" x="70" y="338" fill="var(--text-dim)">clap</text>
+          <!-- narrow spike in time -->
+          <path d="M120,390 L280,390 Q283,300 286,390 L450,390" fill="none" stroke="var(--q)" stroke-width="2.5"/>
+          <line x1="120" y1="390" x2="450" y2="390" stroke="var(--text-faint)" stroke-width="1"/>
+          <text class="axs" x="285" y="408" text-anchor="middle">one sharp instant</text>
+          <!-- broad hump across pitch -->
+          <path d="M560,390 C640,392 660,300 700,300 C740,300 760,392 840,390" fill="none" stroke="var(--q-2)" stroke-width="2.5"/>
+          <line x1="560" y1="390" x2="880" y2="390" stroke="var(--text-faint)" stroke-width="1"/>
+          <text class="axs" x="720" y="408" text-anchor="middle">smeared across all pitches</text>
+        </svg>
+        <figcaption class="viz-cap"><b>A long flute note has a definite pitch but no definite moment.</b> A clap happens at a definite instant but has no pitch, it is a smear of every frequency at once. You cannot make a sound that is sharp in both. That is not a flaw in your ears. It is what waves are, and a particle is a wave.</figcaption>
+      </figure>
+
+      <p>A long, pure flute note has a definite pitch. But ask exactly when it happens and there is no answer; it is smeared across its whole duration. Now clap your hands. The clap happens at a definite instant, but it has no pitch at all, it is a sharp click, a smear of every frequency at once. You cannot have both. A sound that is sharp in time is fuzzy in pitch, and a sound that is sharp in pitch is spread out in time. This is not a limitation of your ears. It is what waves are.</p>
+
+      <p>For a quantum particle, position is like the timing and speed is like the pitch, and they trade off in precisely the same way, for precisely the same reason. A particle with a razor-sharp position is a tiny spike of a wave, and a spike, like a clap, is built from a huge spread of speeds. A particle with a razor-sharp speed is a long, even ripple stretched across all of space, with no location to call its own. Pin down one and the other smears. Not from any clumsy nudge; a wave simply cannot be sharp in both at once. <span class="u-src"><a href="https://plato.stanford.edu/entries/qt-uncertainty/">uncertainty principle</a></span></p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">the real point</p><p class="u-callout-body"><b>Uncertainty is not the universe hiding the numbers from you.</b> The numbers do not exist to be hidden. A particle does not possess a sharp position and a sharp speed at the same instant, any more than a clap possesses a pitch.</p></aside>
+    </section>
+
+    <!-- 08 ENTANGLE -->
+    <section id="entangle" class="sec zone-q" aria-labelledby="entangle-h">
+      <div class="u-sechead"><p class="u-sechead-k">Two particles, one fate</p><h2 id="entangle-h" class="u-sechead-h">Two particles can share a single fate</h2></div>
+
+      <figure class="portrait reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/bohr.webp"><img src="assets/images/physics/bohr.jpg" width="760" height="1069" loading="lazy" decoding="async" alt="Black-and-white portrait of Niels Bohr around 1922."></picture>
+        <figcaption>Niels Bohr, around 1922. He spent decades arguing with Einstein about exactly this, and on the physics, he turned out to be right. Photo: public domain.</figcaption>
+      </figure>
+
+      <p class="lede">Two particles can be linked so tightly that they no longer have their own separate properties, only a shared one. Measure one and you instantly know the matching result for the other, even if it has drifted to the far side of the galaxy. Einstein hated this so much he called it "spooky action at a distance." He was right that it is spooky, and wrong that it meant the theory was broken.</p>
+
+      <p>The link is called entanglement, and it is the strangest entry in either rulebook, so let me build it carefully, including the analogy everyone reaches for and exactly why it is not enough.</p>
+
+      <p>The tempting picture is a pair of gloves. I take a pair, drop the left one in a box and the right one in another, mail one to Tokyo and keep one here, without peeking. When I open mine and see the right glove, I know on the spot that the Tokyo box holds the left one. No magic, no signal. The gloves were always a left and a right; I simply did not know which was where. Knowledge traveled. Nothing else did.</p>
+
+      <p>If entanglement were only that, nobody would care. The reason it shook physics is that it is provably not that, and pinning down the difference took the single most important piece of reasoning in the field.</p>
+
+      <p>In 1964 a physicist named John Bell found a way to tell the two stories apart with an actual experiment. The idea: take many entangled pairs and measure them, but not always the same way, randomly varying the angle of each measurement. If the particles are like gloves, each carrying a secret answer fixed in advance, and neither can signal the other faster than light, then their results, averaged over many tries and many angles, can only agree up to a certain ceiling. Bell worked out that ceiling exactly. Then he showed that quantum mechanics predicts the particles will sail past it. <span class="u-src"><a href="https://plato.stanford.edu/entries/bell-theorem/">Bell's theorem</a></span></p>
+
+      <figure class="viz tight reveal" aria-labelledby="bell-t">
+        <p class="viz-title" id="bell-t">More agreement than any "decided in advance" can buy</p>
+        <p class="viz-sub">How often the two particles match, as the detectors are turned apart</p>
+        <svg viewBox="0 0 760 470" role="img" aria-label="A chart of how often two particles agree versus the angle between the detectors. The quantum curve bulges above the straight line that is the best any pre-arranged-answer theory can reach.">
+          <!-- axes -->
+          <line class="axisln" x1="90" y1="40" x2="90" y2="400"/>
+          <line class="axisln" x1="90" y1="400" x2="710" y2="400"/>
+          <text class="axs" x="80" y="46"  text-anchor="end">100%</text>
+          <text class="axs" x="80" y="224" text-anchor="end">50%</text>
+          <text class="axs" x="80" y="404" text-anchor="end">0</text>
+          <text class="axs" x="90"  y="424" text-anchor="middle">0&#176;</text>
+          <text class="axs" x="395" y="424" text-anchor="middle">45&#176;</text>
+          <text class="axs" x="700" y="424" text-anchor="middle">90&#176;</text>
+          <text class="axs" x="400" y="452" text-anchor="middle">angle between the two detectors</text>
+          <!-- shaded gap where quantum beats classical -->
+          <path d="M90,40 L140.8,46.2 L191.7,64.1 L242.5,92.7 L293.3,130 L344.2,173.4 L395,220 Z" fill="var(--q)" opacity="0.16"/>
+          <!-- classical straight line -->
+          <line class="draw" style="--len:720" x1="90" y1="40" x2="700" y2="400" stroke="var(--q-2)" stroke-width="2.5" stroke-dasharray="6 5"/>
+          <!-- quantum curve (cos^2) -->
+          <polyline class="draw" style="--len:760" points="90,40 140.8,46.2 191.7,64.1 242.5,92.7 293.3,130 344.2,173.4 395,220 445.8,266.6 496.7,310 547.5,347.3 598.3,375.9 649.2,393.9 700,400" fill="none" stroke="var(--q)" stroke-width="3.5"/>
+          <!-- labels -->
+          <text class="anno" x="150" y="120" fill="var(--q)">what entangled</text>
+          <text class="anno" x="150" y="138" fill="var(--q)">particles do</text>
+          <text class="anno" x="470" y="300" fill="var(--q-2)">best any "answer</text>
+          <text class="anno" x="470" y="318" fill="var(--q-2)">fixed in advance" can do</text>
+        </svg>
+        <figcaption class="viz-cap"><b>The gap is the whole story.</b> Any theory where the answers were set in advance, with no faster-than-light coordination, is stuck at or below the straight line. Quantum particles ride the curve above it. That gap is a real, measurable number, and in the lab, quantum wins every single time. The real proof combines several angles at once; this is the shape of it.</figcaption>
+      </figure>
+
+      <p>So you run it. And nature beats the ceiling, every time, exactly as quantum mechanics says it will. The particles were not gloves with secret answers. They genuinely had no answer until the instant one was measured, and yet when measured, even light-years apart, even with the measurement angles chosen at the last possible moment, their results agree more tightly than any answer-fixed-in-advance story could ever produce. The first careful versions were done by John Clauser in 1972 and Alain Aspect in 1982; by the 2010s the last loopholes were sealed. The three physicists who led that work, Aspect, Clauser, and Anton Zeilinger, shared the 2022 Nobel Prize in Physics. <span class="u-src"><a href="https://www.nobelprize.org/prizes/physics/2022/summary/">2022 Nobel</a></span> <span class="u-grade u-grade-a">solid</span></p>
+
+      <p>Now the discipline this demands, because here is the other thing everyone gets wrong. "Instantly know the result on the far side of the galaxy" sounds like a faster-than-light telephone. It is not, and it provably cannot be. The catch: each measurement, taken on its own, is pure random noise. When I measure my particle I get a random answer; when you measure yours, you get a random answer. Neither of us, staring only at our own stream of results, sees anything but coin flips. The eerie agreement only shows up afterward, when we lay our two lists side by side, and that comparison has to travel between us the slow way, by phone, by email, by something that obeys the speed limit. Entanglement gives you correlation without communication. Spooky, yes. A usable signal, no. The cosmic speed limit holds. <span class="u-src"><a href="https://en.wikipedia.org/wiki/No-communication_theorem">no-communication theorem</a></span></p>
+
+      <aside class="u-callout u-aside"><p class="u-callout-k">the gap in one line</p><p class="u-callout-body"><b>The gloves were decided before they were mailed.</b> The particles decide at the instant you look, and somehow agree anyway. That gap, between "decided in advance" and "decided on measurement," is the whole of what makes the quantum world quantum.</p></aside>
+    </section>
+
+    <!-- ============================ CLOSE ============================ -->
+    <section id="close" class="sec" aria-labelledby="close-h">
+      <div class="u-sechead"><p class="u-sechead-k">The unfinished part</p><h2 id="close-h" class="u-sechead-h">Two rulebooks, no master key</h2></div>
+
+      <p class="lede">Both rulebooks are right. Relativity has never failed a test. Quantum mechanics has never failed a test. And the two of them flatly contradict each other.</p>
+
+      <p>Relativity describes a smooth, continuous spacetime, a stage that bends but never jumps. Quantum mechanics describes a jittery world of discrete jumps, blurs, and chance, where nothing is settled until it is measured. For almost everything, this never matters, because the two books govern different sizes. Relativity runs the big stuff; quantum runs the small stuff; the two rarely have to stand in the same room.</p>
+
+      <p>But there are places where something is both very heavy and very small, so both books apply at once, and they hand back nonsense. The center of a black hole. The first instant of the Big Bang. Ask the equations a question about those, and they answer "infinity," which is physics for "I do not know." Stitching the two into a single theory of quantum gravity is the biggest unsolved problem in physics, and it has been open for most of a century. String theory and loop quantum gravity are the best-known attempts. Neither has been confirmed. <span class="u-src"><a href="https://plato.stanford.edu/entries/quantum-gravity/">quantum gravity</a></span></p>
+
+      <p>So that is honestly where we stand. We have two of the most precisely tested theories ever written, they describe a reality that breaks nearly every intuition you were born with, and they do not fit together. Somewhere beneath both of them there is presumably a single, deeper rulebook that would explain why the universe insisted on being this strange. Nobody has read it yet.</p>
+
+      <figure class="fig wide reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/jwst.webp"><img src="assets/images/physics/jwst.jpg" width="1600" height="1633" loading="lazy" decoding="async" alt="The James Webb Space Telescope's First Deep Field: thousands of galaxies of every shape and color scattered across a black sky, some smeared into curved arcs by gravitational lensing."></picture>
+        <figcaption>Webb's First Deep Field. Almost every speck here is an entire galaxy; the curved smears are background galaxies lensed by gravity, relativity and the deep field in one frame. We worked out most of how this picture behaves, and still cannot say what happens at the center of one of its black holes. <span class="cred">Credit: NASA, ESA, CSA, and STScI (public domain).</span></figcaption>
+      </figure>
+
+      <p>Your common sense is not wrong, exactly. It is just local, finely tuned for a creature of a certain size, moving at a certain speed, who never had to deal with the very fast, the very heavy, or the very small. The universe was under no obligation to make sense at scales you would never visit. The astonishing thing is not that it turned out strange out there. It is that, with enough patient experiments, we figured out the strangeness anyway.</p>
+
+      <hr class="u-divider">
+    </section>
+
+    <!-- ============================ SOURCES ============================ -->
+    <section id="sources" class="sec" aria-labelledby="sources-h">
+      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and how I kept it honest</h2></div>
+      <p class="src-note">Physics is the friendliest possible subject to fact-check, because the numbers are pinned to primary sources and the experiments are public. Every figure here was checked against the source listed below, and the few places where a popular claim is shaky (the noisy 1919 eclipse data, the rounded "4 million tons," the misread of the uncertainty principle) are flagged in the text rather than smoothed over.</p>
+      <details class="u-collapse">
+        <summary class="u-collapse-s">The full list, 30 sources, grouped by chapter</summary>
+        <div class="legend">
+          <span><span class="u-grade u-grade-a">solid</span> settled / many confirmations</span>
+          <span><span class="u-grade u-grade-b">good</span> well-measured</span>
+          <span><span class="u-grade u-grade-c">rounded</span> illustrative figure</span>
+        </div>
+
+        <h3>Light, time, and motion</h3>
+        <ol>
+          <li><b>NIST / CODATA.</b> Speed of light in vacuum (exact, 299,792,458 m/s). <a href="https://physics.nist.gov/cgi-bin/cuu/Value?c">physics.nist.gov</a></li>
+          <li><b>American Physical Society (2007).</b> November 1887: Michelson and Morley report their failure to detect the ether. <a href="https://www.aps.org/apsnews/2007/11/november-1887-michelson-uminiferous-ether">aps.org</a></li>
+          <li><b>Pogge RW, Ohio State University.</b> Real-World Relativity: the GPS Navigation System (the 45, 7, and 38 microsecond figures). <a href="https://www.astronomy.ohio-state.edu/pogge.1/Ast162/Unit5/gps.html">astronomy.ohio-state.edu</a></li>
+          <li><b>NIST (2022).</b> Einstein's Relativity Makes GPS Work. <a href="https://www.nist.gov/news-events/news/2022/05/einsteins-relativity-makes-gps-work">nist.gov</a></li>
+          <li><b>Particle Data Group.</b> Muon mean lifetime (2.197 microseconds). <a href="https://pdg.lbl.gov/2024/listings/rpp2024-list-muon.pdf">pdg.lbl.gov</a></li>
+          <li><b>Experimental testing of time dilation (Rossi-Hall, Frisch-Smith).</b> <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Experimental_testing_of_time_dilation">wikipedia.org</a></li>
+          <li><b>Scientific American.</b> How can galaxies recede faster than light? (expansion of space). <a href="https://www.scientificamerican.com/article/how-can-galaxies-recede-from-us-faster-than-the-speed-of-light/">scientificamerican.com</a></li>
+          <li><b>Davis TM, Lineweaver CH (2004).</b> Expanding Confusion: misconceptions of cosmological horizons. <i>PASA</i>. <a href="https://arxiv.org/abs/astro-ph/0310808">arxiv.org</a></li>
+        </ol>
+
+        <h3>E = mc squared</h3>
+        <ol start="9">
+          <li><b>Mass-energy equivalence.</b> <i>Wikipedia</i> (the energy in one gram). <a href="https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence">wikipedia.org</a></li>
+          <li><b>Stanford Solar Center.</b> How much mass does the Sun lose? <a href="http://solar-center.stanford.edu/FAQ/Qshrink.html">solar-center.stanford.edu</a></li>
+          <li><b>International Astronomical Union (2015).</b> Resolution B3, nominal solar luminosity. <a href="https://www.iau.org/static/resolutions/IAU2015_English.pdf">iau.org</a></li>
+        </ol>
+
+        <h3>General relativity</h3>
+        <ol start="12">
+          <li><b>Max Planck Society.</b> A solar eclipse sheds light on physics (the 1.75-arcsecond prediction; 1919). <a href="https://www.mpg.de/9244824/solar-eclipse-1919">mpg.de</a></li>
+          <li><b>NIST (2010).</b> Clock experiment demonstrates that your head is older than your feet. <a href="https://www.nist.gov/news-events/news/2010/09/nist-clock-experiment-demonstrates-your-head-older-your-feet">nist.gov</a></li>
+          <li><b>The Bowling Ball and the Trampoline.</b> Why the rubber-sheet analogy misleads (Ask a Physicist). <a href="https://www.askamathematician.com/2010/07/q-whats-up-with-that-bowling-ball-creates-a-dip-in-a-sheet-analogy-of-spacetime-isnt-it-gravity-that-makes-the-dip-in-the-first-place/">askamathematician.com</a></li>
+          <li><b>European Southern Observatory (2019).</b> Astronomers capture first image of a black hole (M87, 6.5 billion solar masses). <a href="https://www.eso.org/public/news/eso1907/">eso.org</a></li>
+          <li><b>LIGO / Caltech (2016).</b> Gravitational waves detected 100 years after Einstein's prediction (GW150914). <a href="https://www.ligo.caltech.edu/page/press-release-gw150914">ligo.caltech.edu</a></li>
+          <li><b>Wheeler JA, Ford K (1998).</b> Geons, Black Holes, and Quantum Foam (the "matter tells spacetime how to curve" line).</li>
+        </ol>
+
+        <h3>The quantum world</h3>
+        <ol start="18">
+          <li><b>Feynman RP.</b> The Feynman Lectures on Physics, Vol. III, Ch. 1 (the double-slit and complementarity). <a href="https://www.feynmanlectures.caltech.edu/III_01.html">feynmanlectures.caltech.edu</a></li>
+          <li><b>Tonomura A, et al. (1989).</b> Demonstration of single-electron buildup of an interference pattern. <i>Am. J. Phys.</i> <a href="https://pubs.aip.org/aapt/ajp/article/57/2/117/1040594">pubs.aip.org</a></li>
+          <li><b>Physics World (2002).</b> The most beautiful experiment in physics (reader poll). <a href="https://physicsworld.com/a/the-most-beautiful-experiments-in-physics-as-chosen-by-real-physicists/">physicsworld.com</a></li>
+          <li><b>Davisson C, Germer L (1927).</b> Diffraction of electrons by a crystal of nickel. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Davisson%E2%80%93Germer_experiment">wikipedia.org</a></li>
+          <li><b>Stanford Encyclopedia of Philosophy.</b> Measurement in quantum theory (Schrodinger's cat). <a href="https://plato.stanford.edu/entries/qt-issues/">plato.stanford.edu</a></li>
+          <li><b>Stanford Encyclopedia of Philosophy.</b> The role of decoherence in quantum mechanics. <a href="https://plato.stanford.edu/entries/qm-decoherence/">plato.stanford.edu</a></li>
+          <li><b>Von Neumann-Wigner interpretation</b> (the "consciousness causes collapse" fringe view). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Von_Neumann%E2%80%93Wigner_interpretation">wikipedia.org</a></li>
+          <li><b>Stanford Encyclopedia of Philosophy.</b> The uncertainty principle (Kennard inequality, not measurement disturbance). <a href="https://plato.stanford.edu/entries/qt-uncertainty/">plato.stanford.edu</a></li>
+          <li><b>Astrophysics notes, Princeton.</b> Stellar fusion and quantum tunneling. <a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">astro.princeton.edu</a></li>
+        </ol>
+
+        <h3>Entanglement</h3>
+        <ol start="27">
+          <li><b>Einstein A, Podolsky B, Rosen N (1935).</b> Can quantum-mechanical description of physical reality be considered complete? <i>Phys. Rev.</i> 47, 777. <a href="https://link.aps.org/doi/10.1103/PhysRev.47.777">link.aps.org</a></li>
+          <li><b>Stanford Encyclopedia of Philosophy.</b> Bell's theorem (and Bell's own "Bertlmann's socks"). <a href="https://plato.stanford.edu/entries/bell-theorem/">plato.stanford.edu</a></li>
+          <li><b>Nobel Prize in Physics 2022.</b> Aspect, Clauser, and Zeilinger, for experiments with entangled photons. <a href="https://www.nobelprize.org/prizes/physics/2022/summary/">nobelprize.org</a></li>
+          <li><b>No-communication theorem</b> (entanglement cannot transmit information). <i>Wikipedia</i>; Peres &amp; Terno, <i>Rev. Mod. Phys.</i> 76 (2004). <a href="https://en.wikipedia.org/wiki/No-communication_theorem">wikipedia.org</a></li>
+        </ol>
+      </details>
+    </section>
+
+    <p class="img-credit">Cover image: the <a href="https://commons.wikimedia.org/wiki/File:Black_hole_-_Messier_87_crop_max_res.jpg">first image of a black hole (M87)</a>, Event Horizon Telescope Collaboration, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Portraits, telescope images, and experiment photographs are individually credited in their captions; all are public domain or Creative Commons. Figures are drawn in code for this post.</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script>
+  /* Per-post: scroll-reveal + figure draw-ins. No-JS safe (CSS only hides under
+     html.js), and a 4s watchdog guarantees nothing is ever left hidden. */
+  (function () {
+    'use strict';
+    var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    function fire(el) {
+      el.classList.add('in');
+      Array.prototype.slice.call(el.querySelectorAll('.draw')).forEach(function (g, i) {
+        setTimeout(function () { g.classList.add('go'); }, 110 + i * 70);
+      });
+    }
+    if (!('IntersectionObserver' in window)) {
+      reveals.forEach(fire);
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      reveals.forEach(function (el) { io.observe(el); });
+      setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
+    }
+  })();
+  </script>
+</body>
+</html>
