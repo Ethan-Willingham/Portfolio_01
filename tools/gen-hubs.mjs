@@ -58,7 +58,7 @@ const HUBS = [
       live('beginning-of-infinity.html', 'David Deutsch', 'beginning-of-infinity.jpg', '2011', 2011, "A living physicist's case for radical optimism. A good explanation is one that is hard to vary, and from that single test he argues that human knowledge has no built-in limit and that people are the most significant things in the universe."),
       soon('Euclid', 'c. 300 BCE', -300, "Two thousand years of certainty from one little book: where the idea of proving something true, step by airtight step, was born."),
       soon('Kant', '1785', 1785, "The other giant of modern philosophy, and the single rule he tried to build all of morality on: act only as you could wish everyone would act."),
-      soon('Camus', '1942', 1942, "If life has no built-in meaning, the absurdist asks, why not just quit? The answer is not despair but revolt: picture Sisyphus, pushing his rock uphill forever, happy."),
+      live('camus.html', 'Albert Camus', 'camus.jpg', '1942', 1942, "The one question he thought serious is whether life is worth living. If the universe hands us no built-in meaning, Camus says, the honest answer is revolt: refuse the exit of suicide and the comfort of faith alike, and live fully anyway, eyes open, picturing Sisyphus happy at the foot of his hill. The companion piece to Frankl, arguing the other way."),
       live('sapiens.html', 'Sapiens', 'sapiens.jpg', '2011', 2011, "A weak ape took over the planet, Yuval Noah Harari argues, by believing in shared fictions, money, gods, nations, that let total strangers cooperate. The decade's most gripping history, handled with a skeptic's eye."),
     ],
   },
