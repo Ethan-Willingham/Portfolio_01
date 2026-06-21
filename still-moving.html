@@ -153,15 +153,15 @@
   figure.photo img { display: block; width: 100%; height: auto; border-radius: 10px; }
   figure.photo.portrait { max-width: 26rem; margin-left: auto; margin-right: auto; }
   figure.photo.portrait img { max-width: 100%; }
-  /* the opening hero portrait is a direct child of main (in-chapter portraits live inside sections, so this never touches them); hug the reading column's left edge instead of spanning full width */
-  @media (min-width: 700px) {
-    main > figure.photo.portrait { margin-left: max(var(--gutter), calc((100% - var(--measure)) / 2 + var(--gutter))); margin-right: 0; }
-  }
   figure.photo figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.5; margin-top: 0.75em; text-wrap: pretty; }
   figure.photo .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.02em; color: var(--text-dim); display: block; margin-top: 0.35em; }
   figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
   figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
   figure.photo .cred a:hover { color: var(--accent-hover); }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- INTERACTIVE TOOL PANELS ---------- */
   .tool { margin: 2.2em 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(12,16,13,0.4), 0 14px 34px -18px rgba(8,12,9,0.5); }
@@ -259,11 +259,9 @@
 
   <main id="guide">
 
-  <figure class="photo portrait reveal">
-    <img src="assets/images/still-moving/runner.webp" width="900" height="1200" loading="eager" decoding="async" alt="A lone runner in silhouette, mid-stride, against a vast blue dawn sky and distant desert mountains.">
-    <figcaption>Fitness is not a pose you hold, it is a body that keeps moving. This guide is about the two parts of it that lifting leaves out: the heart that keeps you alive, and the range that keeps you moving.
-      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:US_Navy_111208-F-UI176-619_A_runner_sprints_for_the_finish_line_during_the_29th_annual_Grand_Bara_15K_race_in_the_Grand_Bara_Desert,_Djibouti.jpg">A runner at the Grand Bara 15K, Djibouti, 2011. Photo by Staff Sgt. Jonathan Steffen, U.S. Air Force (public domain), via Wikimedia Commons.</a></span>
-    </figcaption>
+  <figure class="pfig reveal">
+    <picture><img src="assets/images/still-moving/runner.webp" width="900" height="1200" loading="eager" decoding="async" alt="A lone runner in silhouette, mid-stride, against a vast blue dawn sky and distant desert mountains."></picture>
+    <figcaption>Grand Bara 15K, Djibouti, 2011. U.S. Air Force, public domain.</figcaption>
   </figure>
 
   <!-- chapter strip -->

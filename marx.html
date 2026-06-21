@@ -77,6 +77,10 @@
   .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -184,9 +188,9 @@
 
       <p>To one set of readers it is the sharpest X-ray anyone ever took of capitalism, a book that saw the global market and the disposable job coming a century early. To another it is the founding document of a movement that, in the hundred years after Marx died, built police states and starved its own people by the tens of millions. Both of those are true at once. This is a walk through the actual argument, so you can see how one short book manages to be both.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/marx/iron-rolling-mill.webp"><img class="u-figure-img" src="assets/marx/iron-rolling-mill.jpg" width="1600" height="993" loading="lazy" decoding="async" alt="Adolph Menzel's painting of a 19th-century iron mill: a dark factory hall lit by a long bar of white-hot iron at the center, with crowds of workers wrestling it with tongs, a giant flywheel at right, and men resting and washing in the shadows."></picture>
-        <figcaption class="u-figure-cap">Adolph Menzel, <em>The Iron Rolling Mill (Modern Cyclopes)</em>, 1872 to 1875. Painted in Marx's own decade, it is the factory floor he was writing about: the white-hot bar in the middle is the thing the men around it make, and could never buy.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/marx/iron-rolling-mill.webp"><img src="assets/marx/iron-rolling-mill.jpg" width="1600" height="993" loading="eager" decoding="async" alt="Adolph Menzel's painting of a 19th-century iron mill: a dark factory hall lit by a long bar of white-hot iron at the center, with crowds of workers wrestling it with tongs, a giant flywheel at right, and men resting and washing in the shadows."></picture>
+        <figcaption>Adolph Menzel, <em>The Iron Rolling Mill</em> (1872 to 1875). Public domain.</figcaption>
       </figure>
 
       <p>You need three plain words before we start, because Marx leans his whole weight on them.</p>

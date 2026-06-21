@@ -106,9 +106,9 @@
   #sources  { --sec-accent: var(--accent); }
 
   /* ---------- the painting figure ---------- */
-  .pfig { margin: 1.9rem auto 0.4rem; max-width: 360px; }
-  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
-  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
 
   /* ============================================================
      THE THREE RESPONSES (story-gallery pattern)
@@ -186,7 +186,7 @@
   @media (max-width: 560px) {
     .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
     .gal-hint { display: none; }
-    .pfig { max-width: 280px; }
+    .pfig { max-width: 300px; }
     .pfig img { border-radius: 10px; }
   }
   </style>
@@ -219,7 +219,7 @@
 
       <figure class="pfig reveal">
         <picture><source type="image/webp" srcset="assets/camus/sisyphus.webp"><img src="assets/camus/sisyphus.jpg" width="863" height="1000" loading="eager" decoding="async" alt="Titian's Sisyphus: a straining nude man bent under a huge dark boulder, climbing through a smoky underworld."></picture>
-        <figcaption>Titian, <em>Sisyphus</em> (about 1548), one of four paintings of the damned he made for the Habsburgs. Museo del Prado, Madrid; public domain.</figcaption>
+        <figcaption>Titian, <em>Sisyphus</em>, about 1548. Museo del Prado. Public domain.</figcaption>
       </figure>
 
       <p>Camus wrote the book young, in his twenties, in Paris under German occupation, the same years the camps were running across the border. It is short, and it is really one argument. The universe has no meaning built into it. We spend our whole lives demanding one anyway. That mismatch, he says, between an animal that needs reasons and a world that does not hand them out, is the basic fact of being human. He called it the absurd.</p>

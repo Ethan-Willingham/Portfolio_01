@@ -103,9 +103,9 @@
   #sources  { --sec-accent: var(--accent); }
 
   /* ---------- the portrait figure ---------- */
-  .pfig { margin: 1.9rem auto 0.4rem; max-width: 360px; }
-  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
-  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
 
   /* ============================================================
      THE WAGER: payoff matrix (static, no JS, reads on its own)
@@ -205,7 +205,7 @@
   @media (max-width: 560px) {
     .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
     .gal-hint { display: none; }
-    .pfig { max-width: 280px; }
+    .pfig { max-width: 300px; }
     .pfig img { border-radius: 10px; }
   }
   </style>
@@ -294,8 +294,8 @@
       <p>Fake it, in other words, and the belief will grow in behind the habit. He is betting that faith is more like a skill you practice than a conclusion you reach, and that the body can lead the mind. Modern psychology, for what it is worth, half agrees: act a certain way long enough and your attitudes tend to drift to match. Pascal got there three centuries early and used it to sell holy water.</p>
 
       <figure class="pfig reveal">
-        <img src="assets/case-for-god/pascal-portrait.jpg" width="760" height="836" loading="lazy" decoding="async" alt="A 17th-century oil portrait of Blaise Pascal: a pale, long-faced young man with shoulder-length hair and a plain white collar, looking slightly aside.">
-        <figcaption>Blaise Pascal (1623 to 1662). He co-founded probability theory, built an early calculating machine, and died at 39 with his great defense of Christianity still in pieces. (Portrait after François II Quesnel, Palace of Versailles; public domain, via Wikimedia Commons.)</figcaption>
+        <img src="assets/case-for-god/pascal-portrait.jpg" width="760" height="836" loading="eager" decoding="async" alt="A 17th-century oil portrait of Blaise Pascal: a pale, long-faced young man with shoulder-length hair and a plain white collar, looking slightly aside.">
+        <figcaption>Blaise Pascal, after François II Quesnel. Palace of Versailles. Public domain.</figcaption>
       </figure>
 
       <hr class="u-divider">

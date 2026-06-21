@@ -75,6 +75,10 @@
   .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -175,9 +179,9 @@
 
       <p>It is hard to overstate how much of the modern world is built on that one sentence. Almost every argument we still have about free speech, censorship, drugs, what you can publish and what you can be silenced for, is a fight over where Mill's line falls. We did not finish with On Liberty. We are mostly still living inside it.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/images/mill-portrait.webp"><img class="u-figure-img" src="assets/images/mill-portrait.jpg" width="1274" height="1600" loading="lazy" decoding="async" alt="A c.1870 photograph of John Stuart Mill: a bald, aging man with curling side hair and long sideburns, in a dark coat and silk cravat, looking straight at the camera with a grave, deeply lined face."></picture>
-        <figcaption class="u-figure-cap">John Stuart Mill, photographed by the London Stereoscopic &amp; Photographic Company around 1870, about a decade after On Liberty appeared. Public domain, via Wikimedia Commons.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/mill-portrait.webp"><img src="assets/images/mill-portrait.jpg" width="1274" height="1600" loading="eager" decoding="async" alt="A c.1870 photograph of John Stuart Mill: a bald, aging man with curling side hair and long sideburns, in a dark coat and silk cravat, looking straight at the camera with a grave, deeply lined face."></picture>
+        <figcaption>John Stuart Mill, London Stereoscopic &amp; Photographic Company (c.1870). Public domain.</figcaption>
       </figure>
 
       <p>Mill was the most influential liberal thinker of the 1800s, and maybe the most over-schooled child in history. His father started him on Greek at three and political economy not long after, and drove him so hard that he cracked at twenty and spent months convinced he had no feelings left. He worked thirty-five years as an administrator for the East India Company, served a term in Parliament, and argued for women's suffrage decades before it was respectable. He wrote On Liberty with his wife, Harriet Taylor, and finished it alone after she died. More on both of those later, including the part that has aged badly.</p>

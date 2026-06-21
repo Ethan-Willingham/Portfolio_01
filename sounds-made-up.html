@@ -117,6 +117,10 @@
   .fig figcaption, .figcap { font-family: var(--font-body); font-style: italic; font-size: 0.9rem; color: var(--text-dim); margin-top: 0.75rem; line-height: 1.5; max-width: 66ch; }
   .figcap b, .fig figcaption b { font-style: normal; color: var(--text); font-weight: 600; }
   .figcap .cred, .fig figcaption .cred { font-style: normal; color: var(--text-faint); }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* floated portrait */
   .portrait { float: right; width: min(40%, 290px); margin: 0.4rem 0 1.1rem 1.7rem; }
@@ -204,9 +208,9 @@
 
       <p>This is a tour of the strangest ideas in both books, one at a time, with the clearest plain-language picture I could find for each. I am going to keep the analogies honest, which means telling you where each one breaks, because the broken edge is usually where the real strangeness lives.</p>
 
-      <figure class="fig wide reveal">
-        <picture><source type="image/webp" srcset="assets/images/physics/solvay.webp"><img src="assets/images/physics/solvay.jpg" width="1600" height="1132" loading="lazy" decoding="async" alt="The 1927 Solvay Conference group photograph: 29 physicists in formal dress arranged in three rows, including Einstein seated front-center, with Marie Curie, Niels Bohr, Max Planck, Erwin Schrodinger, Werner Heisenberg and Paul Dirac."></picture>
-        <figcaption>Most of the people who wrote both rulebooks, in one room. The 1927 Solvay Conference in Brussels, called to argue about the new quantum physics. Seventeen of the twenty-nine people in this photo won a Nobel Prize. Einstein is front and center; he spent the week arguing that the quantum picture could not be the final word, and mostly losing. <span class="cred">Photo by Benjamin Couprie, Institut International de Physique Solvay (public domain).</span></figcaption>
+      <figure class="pfig reveal">
+        <picture><source type="image/webp" srcset="assets/images/physics/solvay.webp"><img src="assets/images/physics/solvay.jpg" width="1600" height="1132" loading="eager" decoding="async" alt="The 1927 Solvay Conference group photograph: 29 physicists in formal dress arranged in three rows, including Einstein seated front-center, with Marie Curie, Niels Bohr, Max Planck, Erwin Schrodinger, Werner Heisenberg and Paul Dirac."></picture>
+        <figcaption>The 1927 Solvay Conference. Photo: Benjamin Couprie. Public domain.</figcaption>
       </figure>
     </section>
 

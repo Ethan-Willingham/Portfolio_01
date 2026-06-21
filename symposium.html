@@ -81,6 +81,10 @@
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .gr { font-family: var(--gr-font); font-style: normal; }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -185,9 +189,9 @@
 
       <p>Two warnings before the door opens. The first is that we get all of this thirdhand. The narrator, a man named Apollodorus, was a child when the party happened; he is repeating it years later to a friend, having heard it from someone who was actually there and checked a few details with Socrates. So this is a story, beautifully shaped, not a transcript. The second is that the love these men are mostly talking about is the Athenian kind: an older man and a younger one, the <em>erastes</em> and the <em>eromenos</em>. That convention is the water they swim in, and the speeches assume it the way we assume two people meet on an app. State it plainly and the book stops being strange.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/symposium/feuerbach-das-gastmahl-1869.webp"><img class="u-figure-img" src="assets/symposium/feuerbach-das-gastmahl-1869.jpg" width="1600" height="776" loading="lazy" decoding="async" alt="Anselm Feuerbach's painting Das Gastmahl: a Greek banquet hall, with a torch-lit procession of garlanded revelers and a flute-girl entering from the left, the laurel-crowned host standing at center holding a cup, and a row of men reclining on couches at right."></picture>
-        <figcaption class="u-figure-cap">Anselm Feuerbach, <em>Das Gastmahl des Plato</em> (Plato's Symposium), 1869. The whole dialogue in one frame: the banqueters reclining at right, and the drunken Alcibiades arriving at the left with his torchbearers and a flute-girl, the crash that ends the book.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/symposium/feuerbach-das-gastmahl-1869.webp"><img src="assets/symposium/feuerbach-das-gastmahl-1869.jpg" width="1600" height="776" loading="eager" decoding="async" alt="Anselm Feuerbach's painting Das Gastmahl: a Greek banquet hall, with a torch-lit procession of garlanded revelers and a flute-girl entering from the left, the laurel-crowned host standing at center holding a cup, and a row of men reclining on couches at right."></picture>
+        <figcaption>Anselm Feuerbach, <em>Das Gastmahl des Plato</em> (1869). Public domain.</figcaption>
       </figure>
 
       <p>The featured translation throughout is <strong>Benjamin Jowett's</strong>, the great Victorian version, which is out of copyright and is the one most people have actually read. Each stop gives you Jowett's words first, then unpacks them in plain language. On the handful of most famous lines, where the modern translators are worth hearing, you can open a panel and see Jowett against <strong>Nehamas and Woodruff</strong> (1989) and <strong>Christopher Gill</strong> (1999).</p>

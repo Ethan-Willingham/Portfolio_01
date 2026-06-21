@@ -113,6 +113,10 @@
   .afig picture, .afig img { display: block; width: 100%; height: auto; border-radius: 10px; }
   .afig.narrow { max-width: 430px; }
   .afig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ============================================================
      THE FIVE WORDS (story-gallery pattern)
@@ -219,9 +223,9 @@
 
       <p>The Western eye, roughly, loves light, symmetry, and permanence. The floodlit gallery, the matched pair, the marble built to outlast everyone who sees it. This other eye loves the reverse. It finds beauty in shadow, in things that are imperfect and plain and worn with age, in empty space left deliberately empty, and in the plain fact that nothing lasts. Not as a quirk or a mood, but as a worked-out way of seeing with its own logic. This is that way of seeing, pulled out of the two short books that say it best.</p>
 
-      <figure class="afig reveal">
+      <figure class="pfig reveal">
         <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/pines.webp"><img src="assets/in-praise-of-shadows/pines.jpg" width="1520" height="711" loading="eager" decoding="async" alt="A 16th-century Japanese ink-on-paper screen: a few pine trees half-dissolved in mist, with most of the surface left as empty paper."></picture>
-        <figcaption>Hasegawa Tohaku, <em>Pine Trees</em> (Shorin-zu byobu), about 1595. Most of it is empty paper. The empty paper is the point. (Tokyo National Museum, public domain.)</figcaption>
+        <figcaption>Hasegawa Tohaku, <em>Pine Trees</em>, about 1595. Tokyo National Museum. Public domain.</figcaption>
       </figure>
 
       <p>Hold that screen in mind while you read. A Western painting that left two-thirds of the canvas blank would look unfinished. Here the blank is doing most of the work, and a viewer raised on this aesthetic would call it the best part. By the end you should have a word for why.</p>

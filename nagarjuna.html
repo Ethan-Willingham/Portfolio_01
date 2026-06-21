@@ -80,6 +80,10 @@
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .sa { font-family: var(--sa-font); font-style: normal; }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -196,9 +200,9 @@
 
       <p>Nagarjuna lived in southern India around 150 to 250 CE. For much of the Buddhist world he is the most important thinker after the Buddha himself, sometimes called the second Buddha. He founded the school called Madhyamaka, the Middle Way, and his one undisputed book is the <em>Mulamadhyamakakarika</em>, the "root verses of the middle way." People call it the MMK, because almost nobody can say the rest. It is about 450 short, dense verses, and it is not a story or a scripture to chant. It is a philosophical argument, closer to Euclid than to a hymn. It is tight and technical, and it mostly says no.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/images/nagarjuna-roerich.webp"><img class="u-figure-img" src="assets/images/nagarjuna-roerich.jpg" width="1400" height="864" loading="lazy" decoding="async" alt="A 1925 tempera painting by Nicholas Roerich: a small red-robed monk sits at the edge of a still violet lake, facing a towering golden serpent that coils up out of the water against pink clouds and pale, layered mountains."></picture>
-        <figcaption class="u-figure-cap">Nicholas Roerich, <em>Nagarjuna, Conqueror of the Serpent</em> (1925). The small red figure at the lakeside is Nagarjuna. The giant coiled serpent is the legend his name carries: <em>naga</em> means serpent, and the story is that the nagas kept the deepest scriptures safe until a teacher came who could understand them.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/nagarjuna-roerich.webp"><img src="assets/images/nagarjuna-roerich.jpg" width="1400" height="864" loading="eager" decoding="async" alt="A 1925 tempera painting by Nicholas Roerich: a small red-robed monk sits at the edge of a still violet lake, facing a towering golden serpent that coils up out of the water against pink clouds and pale, layered mountains."></picture>
+        <figcaption>Nicholas Roerich, <em>Nagarjuna, Conqueror of the Serpent</em> (1925). Public domain.</figcaption>
       </figure>
 
       <p>You need two words before you start, and the book lives or dies on getting them right. The first is the disease. The second is the cure.</p>

@@ -92,6 +92,10 @@
   .fig img { display: block; width: 100%; height: auto; border-radius: 12px; }
   .fig figcaption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; line-height: 1.6; color: var(--text-faint); margin-top: 0.7rem; text-transform: none; }
   .fig figcaption b { color: var(--text-dim); font-weight: 400; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- closing / colophon ---------- */
   .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); width: calc(100% - 2 * var(--gutter)); margin: 3.8rem auto 0; }
@@ -196,9 +200,9 @@
 
       <p>That trained holder has a name. In the Mande world, across Mali, Senegal, Guinea, and the Gambia, he is a <em>jeli</em>, or in French a <em>griot</em>: a hereditary oral historian, genealogist, praise-singer, and diplomat, usually with an instrument in his hands, most famously the kora, a harp with twenty-one strings and a gourd for a body. Griot families have served noble families for many centuries, and the great kora lineages, Diabaté, Kouyaté, Cissoko, pass the craft from parent to child. A griot can recite the descent of a family back hundreds of years, and settle a present quarrel by reciting the precedent. He is a working archive who walks and sings.</p>
 
-      <figure class="fig">
-        <img src="assets/thumbs/wisdom-never-written-down-og.jpg" width="1200" height="630" loading="lazy" decoding="async" alt="The Malian kora master Toumani Diabaté seated in profile, playing the kora, a tall harp with a large gourd body, against a dark stage.">
-        <figcaption><b>Toumani Diabaté, a hereditary jeli of the Diabaté line, at the kora.</b> His family counts dozens of generations of kora players before him. Photograph by Michael Coghlan, CC BY-SA 2.0.</figcaption>
+      <figure class="pfig">
+        <img src="assets/thumbs/wisdom-never-written-down-og.jpg" width="1200" height="630" loading="eager" decoding="async" alt="The Malian kora master Toumani Diabaté seated in profile, playing the kora, a tall harp with a large gourd body, against a dark stage.">
+        <figcaption>Toumani Diabaté at the kora. Photo: Michael Coghlan. CC BY-SA 2.0.</figcaption>
       </figure>
 
       <p>The Mande empire's founding epic belongs to the griots. The story of Sundiata Keita, who built the Mali empire in the 1200s, was carried by mouth for roughly seven hundred years before it was widely written down. When the historian Djibril Tamsir Niane recorded it in 1960 from the griot Mamadou Kouyate, this is how the griot introduced himself.</p>

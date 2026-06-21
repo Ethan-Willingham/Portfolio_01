@@ -226,6 +226,10 @@
   figure.photo .cred::before { content: '\00B7  '; color: var(--accent); }
   figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
   figure.photo .cred a:hover { color: var(--accent-hover); }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- REFERENCES ---------- */
   #sources ol { font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; padding-left: 1.7em; margin: 0.4em 0 0; }
@@ -284,11 +288,9 @@
 
   <main id="guide">
 
-  <figure class="photo portrait reveal">
-    <img src="assets/images/the-other-hours/hero.webp" width="1000" height="1174" loading="eager" decoding="async" alt="A quiet, empty room with sunlight falling through a window onto a bare floor and pale wall, dust drifting in the beam. Vilhelm Hammershoi, Dust Motes Dancing in the Sunlight, 1900.">
-    <figcaption>Health is mostly made here, in the ordinary hours: a quiet room, the morning light, the night's sleep, the people who come through the door. Almost none of it happens in a gym.
-      <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Hammersh%C3%B8i_Dust_motes_dancing.jpg">Vilhelm Hammershoi, "Dust Motes Dancing in the Sunlight" (1900), Ordrupgaard, Copenhagen. Public domain, via Wikimedia Commons.</a></span>
-    </figcaption>
+  <figure class="pfig reveal">
+    <picture><img src="assets/images/the-other-hours/hero.webp" width="1000" height="1174" loading="eager" decoding="async" alt="A quiet, empty room with sunlight falling through a window onto a bare floor and pale wall, dust drifting in the beam. Vilhelm Hammershoi, Dust Motes Dancing in the Sunlight, 1900."></picture>
+    <figcaption>Vilhelm Hammershoi, <em>Dust Motes Dancing in the Sunlight</em>, 1900. Public domain.</figcaption>
   </figure>
 
   <!-- chapter strip -->

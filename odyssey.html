@@ -80,6 +80,10 @@
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .gk { font-family: var(--gk-font); }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* the opening "fan": one Greek line, many Englishes (after the Tao post) */
   .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
@@ -236,9 +240,9 @@
 
       <p>We are going to walk the whole poem in Wilson's translation. There are dozens of good ones, and the famous older versions show up all the way through, but hers is the one to read first. It was the first English Odyssey published by a woman, in 2017, more than four hundred years after the first English one. She wrote it in plain, quick iambic pentameter, the natural meter of English, and held herself to exactly as many lines as the Greek, so it moves at Homer's speed instead of swelling up the way translations usually do. Nothing in it hides behind grandeur. You always know exactly what is happening.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/images/odyssey-bocklin-calypso.webp"><img class="u-figure-img" src="assets/images/odyssey-bocklin-calypso.jpg" width="1500" height="1040" loading="lazy" decoding="async" alt="Arnold Bocklin's 1882 painting: a dark cloaked figure of Odysseus stands on a rock with his back turned, gazing out over a pale sea, while the goddess Calypso reclines on a red cloth at the mouth of a cave to the right, holding a lyre."></picture>
-        <figcaption class="u-figure-cap">Arnold Böcklin, <em>Odysseus and Calypso</em> (1882). The goddess Calypso kept Odysseus on her island for seven years and offered him a thing no other hero is offered: immortality, youth that never ends, if only he would stay. He turned it down. He wanted to grow old at home with his wife more than he wanted to be a god in paradise with the wrong person. That refusal is the engine of the whole poem.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/odyssey-bocklin-calypso.webp"><img src="assets/images/odyssey-bocklin-calypso.jpg" width="1500" height="1040" loading="eager" decoding="async" alt="Arnold Bocklin's 1882 painting: a dark cloaked figure of Odysseus stands on a rock with his back turned, gazing out over a pale sea, while the goddess Calypso reclines on a red cloth at the mouth of a cave to the right, holding a lyre."></picture>
+        <figcaption>Arnold Böcklin, <em>Odysseus and Calypso</em> (1882). Public domain.</figcaption>
       </figure>
 
       <p>One thing to know before we start, because you will feel it on every page. The same phrases keep coming back. Dawn is forever "rosy-fingered," the sea is "wine-dark," Odysseus is "much-enduring." These are not a tic. They are tools.</p>

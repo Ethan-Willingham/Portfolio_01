@@ -314,6 +314,10 @@
   figure.img figcaption { font-family: var(--font-body); font-size: 0.9rem; font-style: italic; color: var(--text-dim); line-height: 1.45; margin-top: 0.7em; }
   figure.img .cred { font-family: var(--font-mono); font-style: normal; font-size: 0.72rem; letter-spacing: 0.02em; color: var(--text-dim); }
   figure.img .cred::before { content: '\00B7  '; color: var(--accent); }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
   /* a side-by-side comparison pair (e.g. two thermometer types) */
   .img-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin: clamp(2.4rem, 5vw, 3.4rem) 0; }
   .img-duo figure.img { margin: 0; }
@@ -495,11 +499,9 @@
     </div>
   </aside>
 
-  <figure class="img portrait">
-    <div class="img-frame" style="--img-bg:#cdb89a">
-      <picture><source type="image/webp" srcset="assets/images/first-year/opener.webp"><img src="assets/images/first-year/opener.jpg?v=2" width="1440" height="1800" loading="eager" decoding="async" alt="A peaceful sleeping newborn resting against a parent's shoulder in soft, warm light."></picture>
-    </div>
-    <figcaption><span class="cred">Photo: Bello Olamide / Pexels</span></figcaption>
+  <figure class="pfig">
+    <picture><source type="image/webp" srcset="assets/images/first-year/opener.webp"><img src="assets/images/first-year/opener.jpg?v=2" width="1440" height="1800" loading="eager" decoding="async" alt="A peaceful sleeping newborn resting against a parent's shoulder in soft, warm light."></picture>
+    <figcaption>Photo: Bello Olamide / Pexels.</figcaption>
   </figure>
 
   <aside class="u-callout" role="note" aria-label="Important medical disclaimer">

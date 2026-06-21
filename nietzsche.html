@@ -81,6 +81,10 @@
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
   /* the Munch portrait is vertical; cap and center it so it reads as a plate, not a wall */
   .sec .u-figure.portrait { max-width: 520px; margin-left: auto; margin-right: auto; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -195,9 +199,9 @@
 
       <p>Nietzsche is the man who looks at that agreement and says: of course they agree. They all lost the same fight, and this is the story the losers tell. He is the most quoted philosopher who ever lived, and the most misquoted, a German classics professor who wrote his hardest books in the 1880s, went incurably insane at forty-four, and never knew that the next century would carve his words onto the wrong monuments. His claim, the one it takes him several books to build, is that the morality you were raised inside is not eternal and not from God. It was made by particular people, for a particular reason, and the reason does not flatter you.</p>
 
-      <figure class="u-figure portrait">
-        <picture><source type="image/webp" srcset="assets/images/nietzsche-portrait.webp"><img class="u-figure-img" src="assets/images/nietzsche-portrait.jpg" width="953" height="1200" loading="lazy" decoding="async" alt="Edvard Munch's 1906 portrait of Friedrich Nietzsche: the philosopher stands at a railing against a turbulent yellow and blue sky, heavy mustache, gazing down and away from a small town below."></picture>
-        <figcaption class="u-figure-cap">Edvard Munch, <em>Friedrich Nietzsche</em> (1906), painted six years after Nietzsche's death, for the collector Ernest Thiel. Munch never met him. He built the portrait from photographs and from the books, and put the philosopher at a railing over a churning sky, looking down into something.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/nietzsche-portrait.webp"><img src="assets/images/nietzsche-portrait.jpg" width="953" height="1200" loading="eager" decoding="async" alt="Edvard Munch's 1906 portrait of Friedrich Nietzsche: the philosopher stands at a railing against a turbulent yellow and blue sky, heavy mustache, gazing down and away from a small town below."></picture>
+        <figcaption>Edvard Munch, <em>Friedrich Nietzsche</em> (1906). Public domain.</figcaption>
       </figure>
 
       <p>Two of his books carry the argument, and one carries the famous lines. <strong>Beyond Good and Evil</strong> (1886) and <strong>On the Genealogy of Morals</strong> (1887) are where he makes the case, in something close to ordinary prose. <strong>Thus Spoke Zarathustra</strong> (1883 to 1885) is the strange biblical poem where the slogans live: God is dead, the overman, the eternal return. The featured translation here is <strong>Walter Kaufmann's</strong>, the Princeton scholar who, after the war, rescued Nietzsche from the people who had stolen him (that story is the last stop). On the lines where the translators split hard, and on the German words that lose everything in English, you can open a panel and see Kaufmann set against R. J. Hollingdale and against Maudemarie Clark and Alan Swensen.</p>

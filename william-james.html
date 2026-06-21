@@ -105,9 +105,9 @@
   #sources    { --sec-accent: var(--accent); }
 
   /* ---------- the portrait figure ---------- */
-  .pfig { margin: 1.9rem auto 0.4rem; max-width: 360px; }
-  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
-  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
 
   /* ============================================================
      THE FOUR MARKS (story-gallery pattern, cloned from frankl)
@@ -185,7 +185,7 @@
   @media (max-width: 560px) {
     .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
     .gal-hint { display: none; }
-    .pfig { max-width: 290px; }
+    .pfig { max-width: 300px; }
     .pfig img { border-radius: 10px; }
   }
   </style>
@@ -214,7 +214,7 @@
 
       <figure class="pfig reveal">
         <picture><source type="image/webp" srcset="assets/james/william-james-portrait.webp"><img src="assets/james/william-james-portrait.jpg" width="760" height="1013" loading="eager" decoding="async" alt="William James in 1903, a man with a high balding forehead and a full grey beard, in a dark coat, looking steadily and a little warmly at the camera."></picture>
-        <figcaption>William James in 1903, the year after the lectures became the book. (Photo: Notman Studios, Boston; Houghton Library, Harvard, public domain.)</figcaption>
+        <figcaption>William James, 1903. Notman Studios. Public domain.</figcaption>
       </figure>
 
       <p>What follows is that book, distilled. The single test James judges everything by, the two kinds of religious temperament he sorts people into, what he decided conversion actually is, the four fingerprints of a mystical state, and the unlikely afterlife the book had thirty years later, in a drunk's room at a New York hospital.</p>

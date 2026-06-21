@@ -77,6 +77,10 @@
   .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -189,9 +193,9 @@
         <p class="u-callout-body">Three plain facts about living things, and a law that falls out of them. One: no two offspring come out exactly alike. Two: those small differences get passed down to their young. Three: far more are born than the world can feed, so most die before they breed. Put the three together and something follows on its own. In every generation, the few whose differences happen to help them survive leave a few more young, who inherit the helpful difference, and it piles up. Nobody is choosing. The dying does the choosing. Run that for a million years and you can build an eye. The expensive ingredient is the time.</p>
       </aside>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/darwin/darwin-1854-maull.webp"><img class="u-figure-img" src="assets/darwin/darwin-1854-maull.jpg" width="1647" height="1907" loading="lazy" decoding="async" alt="A black-and-white 1855 photograph of Charles Darwin at age 46: dark hair, clean-shaven but for sideburns, in a dark coat and waistcoat, looking directly and a little wearily at the camera, years before the famous white beard."></picture>
-        <figcaption class="u-figure-cap">Charles Darwin in 1855, four years before the book and long before the beard everyone pictures. Photograph by Maull &amp; Polyblank for the Literary and Scientific Portrait Club. He was a careful, frequently ill country gentleman who bred pigeons in his garden and turned this idea over for twenty years before he let it out.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/darwin/darwin-1854-maull.webp"><img src="assets/darwin/darwin-1854-maull.jpg" width="1647" height="1907" loading="eager" decoding="async" alt="A black-and-white 1855 photograph of Charles Darwin at age 46: dark hair, clean-shaven but for sideburns, in a dark coat and waistcoat, looking directly and a little wearily at the camera, years before the famous white beard."></picture>
+        <figcaption>Charles Darwin, photographed by Maull &amp; Polyblank (1855). Public domain.</figcaption>
       </figure>
 
       <p>What follows is a walk through the actual argument, in Darwin's own order, the order of the book. We start where he starts, with a man in his backyard breeding pigeons. We end on the most quoted last sentence in the history of science. Eight stops. The text is the clean first edition of 1859, before Darwin, under fire, softened a few of his own lines; on the two or three places where the later wording flinched, you can open a panel and see exactly what changed.</p>

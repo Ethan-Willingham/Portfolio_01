@@ -79,6 +79,10 @@
   .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -197,9 +201,9 @@
 
       <p>Here is the strange part. <strong>Fyodor Dostoevsky was a serious Christian.</strong> He had stood in front of a firing squad, been reprieved at the last second, done four years of hard labor in Siberia, and come out of it holding onto faith with both hands. He wrote this chapter to set up its own refutation. And he was good enough, and honest enough, that the attack came out stronger than the defense. He knew it. "Even in Europe," he wrote to his editor, "there is no such powerful expression of atheism, and there never has been." He meant it as a warning about his own book.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/images/grand-inquisitor-dostoevsky.webp"><img class="u-figure-img" src="assets/images/grand-inquisitor-dostoevsky.jpg" width="1200" height="1500" loading="lazy" decoding="async" alt="Vasily Perov's 1872 portrait of Fyodor Dostoevsky: the writer sits hunched in a dark coat against a brown background, hands clasped around one knee, looking down and inward."></picture>
-        <figcaption class="u-figure-cap">Vasily Perov, <em>Portrait of Fyodor Dostoevsky</em> (1872). Painted eight years before the novel, this is the face most people picture: the believer who spent his last book building the best case against his own faith he could write, on purpose, to see if faith could survive it.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/grand-inquisitor-dostoevsky.webp"><img src="assets/images/grand-inquisitor-dostoevsky.jpg" width="1200" height="1500" loading="eager" decoding="async" alt="Vasily Perov's 1872 portrait of Fyodor Dostoevsky: the writer sits hunched in a dark coat against a brown background, hands clasped around one knee, looking down and inward."></picture>
+        <figcaption>Vasily Perov, <em>Portrait of Fyodor Dostoevsky</em> (1872). Public domain.</figcaption>
       </figure>
 
       <p>The two brothers are Ivan and Alyosha Karamazov. Alyosha is the gentle one, a novice in a monastery, in love with God and with a wise old monk named Zosima. Ivan is the clever one, an intellectual, the kind of man who has read everything and believes almost none of it. They have never really talked. Now they get one long evening together, and Ivan, who is about to leave, finally says what he actually thinks.</p>

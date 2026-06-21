@@ -81,6 +81,10 @@
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .gr { font-family: var(--gr-font); font-style: normal; }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- STICKY STATION RAIL ---------- */
   .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -185,9 +189,9 @@
 
       <p>There is a catch, and it is a strange one. Socrates wrote nothing. Not one line. Everything we know about him comes secondhand, and most of it from Plato, who was about twenty-eight when his teacher was killed and who spent the rest of his life writing dialogues with Socrates as the lead character. So the most influential philosopher who ever lived reaches us only as a character on a page, written by his most gifted student. A question runs underneath everything below: how much of this is the real man, and how much is Plato? The honest answer is that nobody is sure, and the last stop comes back to it.</p>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/images/plato-david-death-of-socrates.webp"><img class="u-figure-img" src="assets/images/plato-david-death-of-socrates.jpg" width="1400" height="920" loading="lazy" decoding="async" alt="Jacques-Louis David's 1787 painting The Death of Socrates: Socrates sits upright on a prison bed, one hand reaching for the cup of poison, the other raised with a finger pointing up as he keeps teaching, while grieving disciples surround him and a figure sits slumped at the foot of the bed."></picture>
-        <figcaption class="u-figure-cap">Jacques-Louis David, <em>The Death of Socrates</em> (1787). Socrates reaches for the poison with one hand and keeps making his point with the other. The slumped figure at the foot of the bed is Plato, who was a boy at the time and, by his own account, not actually present. The whole scene is his.</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/plato-david-death-of-socrates.webp"><img src="assets/images/plato-david-death-of-socrates.jpg" width="1400" height="920" loading="eager" decoding="async" alt="Jacques-Louis David's 1787 painting The Death of Socrates: Socrates sits upright on a prison bed, one hand reaching for the cup of poison, the other raised with a finger pointing up as he keeps teaching, while grieving disciples surround him and a figure sits slumped at the foot of the bed."></picture>
+        <figcaption>Jacques-Louis David, <em>The Death of Socrates</em> (1787). Public domain.</figcaption>
       </figure>
 
       <p>The featured translation throughout is <strong>G.M.A. Grube's</strong>, the version most American students meet (his <em>Five Dialogues</em> for the trial, and for the Republic his text as revised by C.D.C. Reeve). Each stop gives you the words first, then unpacks them. On the few most famous lines, where the translators split, you can open a panel and see the spread.</p>

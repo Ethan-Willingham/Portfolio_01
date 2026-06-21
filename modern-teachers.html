@@ -101,9 +101,9 @@
   #sources     { --sec-accent: var(--accent); }
 
   /* ---------- the portrait figure ---------- */
-  .pfig { margin: 1.9rem auto 0.4rem; max-width: 360px; }
-  .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
-  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint); margin-top: 0.7rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
 
   /* ============================================================
      THE FIVE TEACHERS (story-gallery pattern)
@@ -186,7 +186,7 @@
   @media (max-width: 560px) {
     .gal-frame { padding: 1.2rem 1.1rem 1.3rem; }
     .gal-hint { display: none; }
-    .pfig { max-width: 280px; }
+    .pfig { max-width: 300px; }
     .pfig img { border-radius: 10px; }
   }
   </style>
@@ -217,7 +217,7 @@
 
       <figure class="pfig reveal">
         <picture><source type="image/webp" srcset="assets/modern-teachers/krishnamurti-portrait.webp"><img src="assets/modern-teachers/krishnamurti-portrait.jpg" width="780" height="858" loading="eager" decoding="async" alt="Jiddu Krishnamurti as a young man, a 1920s studio portrait: dark wavy hair, a quiet steady gaze, suit and tie."></picture>
-        <figcaption>Krishnamurti as a young man, around the time the Theosophists were grooming him to be the World Teacher. (Bain News Service, Library of Congress, public domain.)</figcaption>
+        <figcaption>Jiddu Krishnamurti as a young man. Bain News Service. Public domain.</figcaption>
       </figure>
 
       <p>Krishnamurti was one of a small number of people who, across the twentieth century, did what the careful scholars mostly had not: they took the spiritual traditions of the East, Zen and Taoism and the Hindu paths, and got them through to ordinary Western people. The East had been arriving in pieces for a long time. A Hindu monk named Vivekananda had stunned a Chicago audience in 1893; a Japanese scholar named D.T. Suzuki had been putting Zen into careful English for years; the Theosophists had been stirring all of it together since the 1870s. But careful is not the same as contagious. What these teachers had was the second thing.</p>

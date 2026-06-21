@@ -145,6 +145,10 @@
 
   /* ---------- the figure (Lu Zhi painting) ---------- */
   .station .u-figure { margin-top: 0.4rem; }
+  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
+  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ---------- closing / colophon ---------- */
   .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.6rem auto 0; }
@@ -281,9 +285,9 @@
       <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> the end of Chapter 2</p>
       <h2 class="station-h">The butterfly dream</h2>
 
-      <figure class="u-figure">
-        <picture><source type="image/webp" srcset="assets/images/zhuangzi-butterfly-luzhi.webp"><img class="u-figure-img" src="assets/images/zhuangzi-butterfly-luzhi.jpg" width="1478" height="1500" loading="lazy" decoding="async" alt="A Ming-dynasty ink painting on tan silk: a robed man sleeps on a rock by a low riverbank, head on his hand, while two butterflies flutter above him under a drooping willow, a distant mountain at left."></picture>
-        <figcaption class="u-figure-cap">Lu Zhi (1496 to 1576), <em>Zhuangzi Dreaming of a Butterfly</em>, ink on silk, Ming dynasty. Asian Art Museum of San Francisco. The cartouche at upper left reads <span lang="zh">夢蝶</span>, "dreaming of a butterfly."</figcaption>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/zhuangzi-butterfly-luzhi.webp"><img src="assets/images/zhuangzi-butterfly-luzhi.jpg" width="1478" height="1500" loading="eager" decoding="async" alt="A Ming-dynasty ink painting on tan silk: a robed man sleeps on a rock by a low riverbank, head on his hand, while two butterflies flutter above him under a drooping willow, a distant mountain at left."></picture>
+        <figcaption>Lu Zhi, <em>Zhuangzi Dreaming of a Butterfly</em> (Ming dynasty). Public domain.</figcaption>
       </figure>
 
       <div class="passage">
