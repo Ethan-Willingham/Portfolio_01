@@ -342,23 +342,13 @@
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
-    <header class="site-header">
-      <h1 class="site-name">About</h1>
-      <p class="site-tagline">Welcome to my woodshop. I build things for fun and write the articles I want to read; it's my reference shelf, fully open on the web.</p>
-      <div class="home-search">
-        <div class="hs-field-wrap">
-          <label class="hs-field">
-            <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-            <input class="hs-input" type="search" placeholder="Search every post" aria-label="Search every post" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
-          </label>
-          <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
-        </div>
-        <span class="hs-links">
-          <a class="hs-about" href="/">Home</a>
-          <a class="hs-about" href="archive.html">Archive</a>
-        </span>
-      </div>
-      <p class="hs-readout" role="status" aria-live="polite"></p>
+    <div class="lab-top">
+      <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+    </div>
+
+    <header class="about-head fade-in">
+      <h1 class="about-title">About</h1>
+      <p class="about-lead">Welcome to my woodshop. I build things for fun and write the articles I want to read; it's my reference shelf, fully open on the web.</p>
     </header>
 
     <main>
@@ -479,10 +469,6 @@
   <script src="js/git-history.js"></script>
   <script src="js/git-attribution-data.js"></script>
   <script src="js/git-attribution.js"></script>
-  <script src="js/search.js"></script>
-  <script>
-  (function () { var root = document.querySelector('.home-search'); var input = root && root.querySelector('.hs-input'); if (!input) return; input.addEventListener('focus', function () { root.classList.add('is-open'); }); input.addEventListener('blur', function () { setTimeout(function () { if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open'); }, 160); }); })();
-  </script>
   <script src="js/backtotop.js"></script>
   <script>
   /* Palette: a copyable color popover with hover-intent (you can travel onto it),
