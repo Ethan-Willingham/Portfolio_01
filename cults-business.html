@@ -113,14 +113,14 @@
   .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; margin: 1.8rem 0; }
   .fig { border: 1px solid var(--rule); border-top: 2px solid var(--sec-accent, var(--line-mid)); border-radius: 10px; background: rgba(255,255,255,0.018); padding: 1rem 1.1rem; }
   .fig-n { font-family: var(--font-heading); font-weight: 700; font-size: 2rem; line-height: 1; color: var(--text-bright); letter-spacing: -0.01em; }
-  .fig-l { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.4; color: var(--text-dim); margin: 0.5rem 0 0; }
+  .fig-l.fig-l { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.4; color: var(--text-dim); margin: 0.5rem 0 0; }
 
   /* ---------- THE FOUR TELLS CARD ---------- */
   .tells { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.9rem; margin: 1.8rem 0; }
   .tell { border: 1px solid var(--rule); border-left: 3px solid var(--sec-accent, var(--accent)); border-radius: 12px; background: var(--panel); padding: 1.15rem 1.25rem; }
-  .tell-n { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); margin: 0 0 0.45rem; }
-  .tell-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.18rem; line-height: 1.15; color: var(--text-bright); margin: 0 0 0.4rem; }
-  .tell-p { font-family: var(--font-body); font-size: 0.97rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
+  .tell-n.tell-n { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); margin: 0 0 0.45rem; }
+  .tell-h.tell-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.18rem; line-height: 1.15; color: var(--text-bright); margin: 0 0 0.4rem; }
+  .tell-p.tell-p { font-family: var(--font-body); font-size: 0.97rem; line-height: 1.5; color: var(--text-dim); margin: 0; }
 
   /* ---------- THE SCORECARD ---------- */
   .scorewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.6rem 0 0.6rem; }
@@ -133,7 +133,7 @@
   table.score .yes { color: #e6b8ac; font-size: 1.2rem; }
   table.score .par { color: var(--accent); font-size: 1.2rem; }
   table.score .no  { color: var(--line-mid); font-size: 1.2rem; }
-  .score-leg { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin: 0.2rem 0 0; }
+  .score-leg.score-leg { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin: 0.2rem 0 0; }
 
   /* ---------- A LABELLED NOTE BOX ---------- */
   .note { margin: 1.7em 0; padding: 1.05em 1.25em; border: 1px solid var(--rule-strong); border-left: 3px solid var(--accent); border-radius: 10px; background: rgba(255,255,255,0.02); font-size: 1.0rem; line-height: 1.6; color: var(--text-dim); }

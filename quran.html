@@ -84,7 +84,7 @@
   /* the opening "fan": one line of Arabic, many Englishes */
   .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
   .fan-ar { font-family: var(--ar-font); font-size: clamp(1.9rem, 6.5vw, 2.9rem); line-height: 1.7; color: var(--text-bright); padding: 1.4rem 1.5rem 0.5rem; direction: rtl; text-align: right; }
-  .fan-tr { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.02em; color: var(--accent); padding: 0 1.5rem 0.5rem; }
+  .fan-tr.fan-tr { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.02em; color: var(--accent); padding: 0 1.5rem 0.5rem; }
   .fan-cap { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding: 0 1.5rem 0.9rem; }
   .fan-list { list-style: none; margin: 0; padding: 0.2rem 0 0.6rem; }
   .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
@@ -171,7 +171,7 @@
   .unt-ar { font-family: var(--ar-font); font-size: 2rem; line-height: 1; color: var(--text-bright); direction: rtl; }
   .unt-tr { font-family: var(--font-heading); font-style: italic; font-size: 1.2rem; color: var(--accent); }
   .unt-gloss { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
-  .unt-body { font-size: 1.02rem; line-height: 1.6; color: var(--text); margin: 0 0 0.7rem; }
+  .unt-body.unt-body { font-size: 1.02rem; line-height: 1.6; color: var(--text); margin: 0 0 0.7rem; }
   .unt-body em { font-style: italic; color: var(--text-bright); }
   .unt-body b { color: var(--text-bright); font-weight: 600; }
   .unt-renders { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
@@ -194,13 +194,13 @@
   .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
   .src-list li { margin-bottom: 0.5em; }
   .src-list b { color: var(--text); font-weight: 600; }
-  .fineprint { font-size: 0.92rem; color: var(--text-faint); }
+  .fineprint.fineprint { font-size: 0.92rem; color: var(--text-faint); }
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
     body { padding-left: 0; padding-right: 0; }
     .fan-ar { font-size: 1.7rem; padding: 1.1rem 1rem 0.4rem; }
-    .fan-tr, .fan-cap { padding-left: 1rem; padding-right: 1rem; }
+    .fan-tr.fan-tr, .fan-cap { padding-left: 1rem; padding-right: 1rem; }
     .fan-list li { padding: 0.65rem 1rem; }
     .fan-list .e { font-size: 1.02rem; }
     .qx-bar { gap: 0.55rem 0.7rem; }

@@ -112,7 +112,7 @@
 
   /* the featured Garnett passage: where you meet the actual words */
   .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--ivan); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
-  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-k.passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
   .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
   .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
   .passage-t p:last-child { margin-bottom: 0; }
@@ -136,7 +136,7 @@
   .stack[open] > summary::before { content: "\2212"; }
   .stack > summary:hover { color: var(--accent-hover); }
   .stack-body { padding: 0 1.1rem 1.1rem; }
-  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss.stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
   .stack-gloss em { color: var(--text-dim); font-style: italic; }
   /* a translation row */
   .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
@@ -155,7 +155,7 @@
   .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
   .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.05rem; color: var(--accent); }
   .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); text-transform: uppercase; }
-  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b.stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
   .stack-term-b b { color: var(--text-bright); font-weight: 600; }
 
   /* ---------- closing / colophon ---------- */
@@ -164,7 +164,7 @@
   .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
   .src-list li { margin-bottom: 0.5em; }
   .src-list b { color: var(--text); font-weight: 600; }
-  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); }
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){

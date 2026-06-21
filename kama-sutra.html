@@ -83,7 +83,7 @@
 
   /* the opening "fan": one Sanskrit line, two Englishes that split on it */
   .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-sa { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.3rem, 3.4vw, 1.7rem); line-height: 1.5; color: var(--text-bright); padding: 1.3rem 1.5rem 0.5rem; text-wrap: pretty; }
+  .fan-sa.fan-sa { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.3rem, 3.4vw, 1.7rem); line-height: 1.5; color: var(--text-bright); padding: 1.3rem 1.5rem 0.5rem; text-wrap: pretty; }
   .fan-sa small { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; line-height: 1.5; }
   .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
   .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
@@ -168,7 +168,7 @@
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
-    .fan-sa { font-size: 1.2rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-sa.fan-sa { font-size: 1.2rem; padding: 1.1rem 1rem 0.5rem; }
     .fan-list li { padding: 0.65rem 1rem; }
     .fan-list .e { font-size: 1.02rem; }
     .kama-bar { gap: 0.55rem 0.7rem; }

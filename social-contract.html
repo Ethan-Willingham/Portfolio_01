@@ -78,7 +78,7 @@
 
   /* the opening "fan": three books, three opening moods */
   .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-head { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding: 1.2rem 1.5rem 0.2rem; }
+  .fan-head.fan-head { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); padding: 1.2rem 1.5rem 0.2rem; }
   .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
   .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: 0.9rem 1.5rem; border-top: 1px solid var(--rule); border-left: 3px solid var(--fan-accent, var(--rule-strong)); }
   .fan-list li.fan-h { --fan-accent: var(--hobbes); }
@@ -157,7 +157,7 @@
     /* full-bleed page: zero the body's side padding so each block's own
        var(--gutter) is the single 20px gutter, not a doubled 40px one */
     body { padding-left: 0; padding-right: 0; }
-    .fan-head { padding: 1rem 1rem 0.2rem; }
+    .fan-head.fan-head { padding: 1rem 1rem 0.2rem; }
     .fan-list li { padding: 0.8rem 1rem; }
     .sc-question { padding-left: 1.05rem; padding-right: 1.05rem; }
     .sc-t { padding-left: 1.05rem; padding-right: 1.05rem; }

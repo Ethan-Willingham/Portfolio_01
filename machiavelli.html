@@ -82,7 +82,7 @@
 
   /* the opening "fan": one Italian line, the translators underneath (after the Tao post) */
   .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-src { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.16rem, 3.4vw, 1.5rem); line-height: 1.5; color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.5rem; }
+  .fan-src.fan-src { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.16rem, 3.4vw, 1.5rem); line-height: 1.5; color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.5rem; }
   .fan-src small { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
   .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
   .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
@@ -127,7 +127,7 @@
 
   /* the featured passage: where you meet the actual words (Marriott) */
   .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
-  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-k.passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
   .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
   .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
   .passage-t p:last-child { margin-bottom: 0; }
@@ -169,12 +169,12 @@
   .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
   .src-list li { margin-bottom: 0.5em; }
   .src-list b { color: var(--text); font-weight: 600; }
-  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); }
 
   /* the three readings, in the close */
   .reads { display: grid; gap: 0.9rem; margin: 1.6rem 0 0.5rem; }
   .read { border: 1px solid var(--rule); border-left: 3px solid var(--line-mid); border-radius: 12px; padding: 1.1rem 1.3rem; background: rgba(255,255,255,0.015); }
-  .read-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .read-k.read-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
   .read p { margin: 0; font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .read p + p { margin-top: 0.6em; }
 
@@ -183,7 +183,7 @@
     /* phones: the body already supplies the side gutter, so drop the duplicate
        column padding here (it was doubling up to ~40px of dead space). */
     body { padding-left: 0; padding-right: 0; }
-    .fan-src { font-size: 1.1rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-src.fan-src { font-size: 1.1rem; padding: 1.1rem 1rem 0.5rem; }
     .fan-list li { padding: 0.65rem 1rem; }
     .fan-list .e { font-size: 1rem; }
     .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }

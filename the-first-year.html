@@ -166,7 +166,7 @@
   .gsec > :last-child { margin-bottom: 0; }
   .gsec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.7rem; }
   .gsec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.9rem, 5.2vw, 2.5rem); line-height: 1.12; letter-spacing: -0.015em; color: var(--text-bright); margin: 0 0 0.45rem; text-wrap: balance; }
-  .gsec-age { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.04em; margin-bottom: 1rem; }
+  .gsec-age.gsec-age { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.04em; margin-bottom: 1rem; }
   .gsec > p, .gsec li, .gsec h3, .gsec h4 { font-family: var(--font-body); }
   .gsec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; color: var(--text-bright); line-height: 1.25; margin: 2.9rem 0 0.6rem; scroll-margin-top: 4rem; }
   .gsec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.08rem; color: var(--text-bright); margin: 1.4rem 0 0.4rem; }
@@ -256,7 +256,7 @@
   .nvw ul { margin: 0.6em 0 0; padding-left: 1.2em; }
   .nvw li { font-size: 1rem; line-height: 1.5; color: var(--text); }
   .nvw li + li { margin-top: 0.3em; }
-  .nvw-flip { grid-column: 1 / -1; margin: 0.15em 0 0; padding: 0; font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); }
+  .nvw-flip.nvw-flip { grid-column: 1 / -1; margin: 0.15em 0 0; padding: 0; font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); }
   .nvw-flip b { color: var(--call); }
   /* the left panel's header becomes a real toggle button when JS runs; without JS it simply stays open */
   .nvw-toggle { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.45em; margin: 0; padding: 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
@@ -269,16 +269,16 @@
   .offramp::before { content: '\260E'; color: var(--emerg); margin-right: 0.5em; }
 
   /* threaded edge note */
-  .edge { margin: 1.2em 0; padding: 0.8em 1em; border-left: 3px solid var(--accent); background: rgba(212,196,160,0.07); border-radius: 0 8px 8px 0; font-size: 0.98rem; color: var(--text); }
+  .edge.edge { margin: 1.2em 0; padding: 0.8em 1em; border-left: 3px solid var(--accent); background: rgba(212,196,160,0.07); border-radius: 0 8px 8px 0; font-size: 0.98rem; color: var(--text); }
   .edge b { color: var(--accent-hover); }
 
   /* ---------- CONTROVERSY BOX ---------- */
   .fork { margin: 1.6em 0; padding: 1.1em 1.2em; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.12); }
   .fork-q { margin: 0 0 0.7em; font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); }
   .fork-q::before { content: 'What experts argue about'; display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4em; font-weight: 400; }
-  .fork-a { margin: 0 0 0.55em; font-size: 1rem; line-height: 1.55; color: var(--text); }
-  .fork-ev { margin: 0.7em 0; font-size: 0.96rem; color: var(--text-dim); }
-  .fork-take { margin: 0.7em 0 0; padding: 0.7em 0.9em; background: var(--ok-bg); border-radius: 8px; font-size: 1rem; color: var(--text); }
+  .fork-a.fork-a { margin: 0 0 0.55em; font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .fork-ev.fork-ev { margin: 0.7em 0; font-size: 0.96rem; color: var(--text-dim); }
+  .fork-take.fork-take { margin: 0.7em 0 0; padding: 0.7em 0.9em; background: var(--ok-bg); border-radius: 8px; font-size: 1rem; color: var(--text); }
   .fork-take b { color: var(--ok); }
 
   /* ---------- EDITORIAL TEXTURE (variety to break the block monotony) ---------- */
@@ -293,17 +293,17 @@
   .choice .thumb { flex: none; width: 3.2rem; height: 3.2rem; border-radius: 6px; object-fit: cover; filter: saturate(0.9) brightness(0.94); align-self: center; }
 
   /* ---------- CITATIONS + EVIDENCE GRADES + FRESHNESS ---------- */
-  .src { font-family: var(--font-body); font-size: 0.82em; color: var(--text-dim); white-space: nowrap; }
+  .src.src { font-family: var(--font-body); font-size: 0.82em; color: var(--text-dim); white-space: nowrap; }
   .src a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.25); }
   .src a:hover { color: var(--accent-hover); }
-  .src::before { content: '\2009'; }
+  .src.src::before { content: '\2009'; }
   .grade { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12em 0.5em; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; vertical-align: 0.1em; }
   .g-a { color: var(--ok); }
   .g-b { color: var(--accent); }
   .g-c { color: var(--call); }
   .g-d { color: var(--emerg); }
-  .asof { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.02em; margin: 0.2em 0 1em; }
-  .asof::before { content: '\21BB  '; color: var(--accent); }
+  .asof.asof { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.02em; margin: 0.2em 0 1em; }
+  .asof.asof::before { content: '\21BB  '; color: var(--accent); }
 
   /* ---------- PHOTOGRAPHY (real, relevant images, contained in the column) ---------- */
   figure.img { margin: clamp(2.4rem, 5vw, 3.4rem) 0; }
@@ -387,7 +387,7 @@
     .gsec p, .gsec li, .lede { color: #1a1a1a; }
     details.deeper > *:not(summary) { display: block !important; }
     details.deeper { border-color: #ccc; background: #fff; }
-    .nvw, .fork, .tool, figure.viz, .etier, .reassure, .edge { break-inside: avoid; }
+    .nvw, .fork, .tool, figure.viz, .etier, .reassure, .edge.edge { break-inside: avoid; }
     a { color: #1a1a1a; }
     .src a { color: #555; }
   }

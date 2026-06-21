@@ -81,7 +81,7 @@
 
   /* the opening "fan": one line of Marcus, many Englishes */
   .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-zh { font-family: var(--gk-font); font-size: clamp(1.4rem, 4.2vw, 1.95rem); color: var(--text-bright); letter-spacing: 0.01em; line-height: 1.5; padding: 1.3rem 1.5rem 0.5rem; }
+  .fan-zh.fan-zh { font-family: var(--gk-font); font-size: clamp(1.4rem, 4.2vw, 1.95rem); color: var(--text-bright); letter-spacing: 0.01em; line-height: 1.5; padding: 1.3rem 1.5rem 0.5rem; }
   .fan-zh small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
   .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
   .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
@@ -168,7 +168,7 @@
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
-    .fan-zh { font-size: 1.2rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-zh.fan-zh { font-size: 1.2rem; padding: 1.1rem 1rem 0.5rem; }
     .fan-list li { padding: 0.65rem 1rem; }
     .fan-list .e { font-size: 1.02rem; }
     .marc-bar { gap: 0.55rem 0.7rem; }

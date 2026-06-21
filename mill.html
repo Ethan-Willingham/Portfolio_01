@@ -126,14 +126,14 @@
   .stack[open] > summary::before { content: "\2212"; }
   .stack > summary:hover { color: var(--accent-hover); }
   .stack-body { padding: 0 1.1rem 1.1rem; }
-  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss.stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
   .stack-gloss em { color: var(--text-dim); font-style: italic; }
   .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
   .stack-term:first-of-type { border-top: none; }
   .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
   .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.08rem; color: var(--accent); }
   .stack-term-yr { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; color: var(--text-faint); }
-  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.56; color: var(--text); margin: 0; }
+  .stack-term-b.stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.56; color: var(--text); margin: 0; }
   .stack-term-b b { color: var(--text-bright); font-weight: 600; }
 
   /* ---------- closing / colophon ---------- */
@@ -142,7 +142,7 @@
   .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
   .src-list li { margin-bottom: 0.5em; }
   .src-list b { color: var(--text); font-weight: 600; }
-  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); }
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
