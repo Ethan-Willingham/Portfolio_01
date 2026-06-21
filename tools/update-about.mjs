@@ -123,7 +123,7 @@ const newTopics = [];
 for (const p of POSTS) {
   if (topicHrefs.has(p.href)) continue;
   const color = PALETTE[(topics.length + newTopics.length) % PALETTE.length];
-  const label = p.title.split(/[,:]/)[0].trim() || p.key;       // short label for the legend
+  const label = p.title || p.key;                               // full post title (relabel pass below keeps it exact)
   const topic = { key: p.key, label, color, kind: p.kind, href: p.href };
   topics.push(topic);
   topicIndexByKey.set(p.key, topics.length - 1);
@@ -131,6 +131,27 @@ for (const p of POSTS) {
   newTopics.push(topic);
 }
 log(newTopics.length ? `  + ${newTopics.length} new topics: ` + newTopics.map(t => t.key).join(', ') : dim('  no new posts'));
+
+// relabel every post topic from its own og:title, so the legend buttons read as
+// the actual blog-post titles (not the short hand-picked labels). Works for posts
+// that have since left the homepage too (e.g. weather). The frozen game demo
+// (grand-motherload.html under the "sluice" topic) keeps its label.
+const ENT2 = { amp: '&', quot: '"', apos: "'", rsquo: '’', lsquo: '‘', ldquo: '“', rdquo: '”', mdash: '—', ndash: '–', hellip: '…', nbsp: ' ' };
+const titleFromFile = href => {
+  if (!href || href === 'grand-motherload.html' || !existsSync(join(REPO, href))) return null;
+  const head = readFileSync(join(REPO, href), 'utf8').slice(0, 6000);
+  const m = head.match(/<meta property="og:title" content="([^"]+)"/) || head.match(/<title>([^<]+)<\/title>/);
+  if (!m) return null;
+  return m[1].replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d)).replace(/&([a-z0-9]+);/gi, (x, n) => ENT2[n.toLowerCase()] || x).replace(/\s+/g, ' ').trim();
+};
+const titleByHref = new Map(POSTS.map(p => [p.href, p.title]));   // homepage-card titles (what a visitor sees)
+let relabeled = 0;
+for (const t of topics) {
+  if (t.kind !== 'post' && t.kind !== 'archived') continue;
+  const title = titleByHref.get(t.href) || titleFromFile(t.href); // card title first, else the post's own og:title
+  if (title && title !== t.label) { t.label = title; relabeled++; }
+}
+log(relabeled ? `  relabeled ${relabeled} button(s) to their actual post titles` : dim('  topic labels already match'));
 
 // file -> topic-key router (mirrors build-attribution.mjs, plus the new topics)
 const route = new Map();
