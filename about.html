@@ -37,6 +37,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="collection.css">
   <style>
   /* ============================================================
      ABOUT, the site's meta page. Folds the former Colophon and
@@ -341,16 +342,23 @@
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
-    <div class="lab-top">
-      <a href="/" class="post-back"><span class="pb-label">Home</span></a>
-      <a class="lab-gh" href="https://github.com/Ethan-Willingham/Portfolio_01" target="_blank" rel="noopener" aria-label="View this site's source on GitHub" title="Source on GitHub">
-        <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-      </a>
-    </div>
-
-    <header class="about-head fade-in">
-      <h1 class="about-title">About</h1>
-      <p class="about-lead">Welcome to my woodshop. I build things for fun and write the articles I want to read; it's my reference shelf, fully open on the web.</p>
+    <header class="site-header">
+      <h1 class="site-name">About</h1>
+      <p class="site-tagline">Welcome to my woodshop. I build things for fun and write the articles I want to read; it's my reference shelf, fully open on the web.</p>
+      <div class="home-search">
+        <div class="hs-field-wrap">
+          <label class="hs-field">
+            <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
+            <input class="hs-input" type="search" placeholder="Search every post" aria-label="Search every post" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+          </label>
+          <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
+        </div>
+        <span class="hs-links">
+          <a class="hs-about" href="/">Home</a>
+          <a class="hs-about" href="archive.html">Archive</a>
+        </span>
+      </div>
+      <p class="hs-readout" role="status" aria-live="polite"></p>
     </header>
 
     <main>
@@ -471,6 +479,10 @@
   <script src="js/git-history.js"></script>
   <script src="js/git-attribution-data.js"></script>
   <script src="js/git-attribution.js"></script>
+  <script src="js/search.js"></script>
+  <script>
+  (function () { var root = document.querySelector('.home-search'); var input = root && root.querySelector('.hs-input'); if (!input) return; input.addEventListener('focus', function () { root.classList.add('is-open'); }); input.addEventListener('blur', function () { setTimeout(function () { if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open'); }, 160); }); })();
+  </script>
   <script src="js/backtotop.js"></script>
   <script>
   /* Palette: a copyable color popover with hover-intent (you can travel onto it),

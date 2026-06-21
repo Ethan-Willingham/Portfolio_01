@@ -1,0 +1,76 @@
+/* ============================================================================
+   collection.css  -  shared styling for the index-style pages that are not the
+   homepage: the four series hubs, the Archive, and About. It mirrors the
+   homepage's inline header + search + article-card styles so every index page
+   reads identically, plus the "coming soon" treatment for unbuilt hub entries.
+   Loaded AFTER style.css so it wins. No em dashes.
+   ============================================================================ */
+
+/* ---- header: big serif title, italic lead, the search rule beneath ---- */
+.site-header { margin-bottom: 2rem; position: relative; z-index: 20; }
+.site-name {
+  font-family: var(--font-heading); font-weight: 700; line-height: 1.04;
+  letter-spacing: -0.02em; color: var(--text-bright); margin: 0;
+  font-size: clamp(2.3rem, 5.2vw, 3.35rem); text-wrap: balance;
+}
+.site-name a { color: inherit; text-decoration: none; }
+.site-tagline {
+  margin-top: 0.6rem; font-family: var(--font-heading); font-style: italic;
+  font-size: clamp(1.12rem, 2.6vw, 1.4rem); line-height: 1.36;
+  color: var(--text-dim); max-width: 56ch; text-wrap: pretty;
+}
+@media (min-width: 720px) { .site-header { margin-bottom: 2.6rem; } }
+
+/* ---- search: magnifier that slides open into a full input, the same as home ---- */
+.home-search { position: relative; display: flex; align-items: center; gap: 1rem; margin-top: 1.6rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--rule); }
+.hs-field-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
+.hs-field { display: flex; align-items: center; gap: 0.55rem; flex: 0 1 auto; min-width: clamp(220px, 30vw, 300px); padding: 0.5rem 0.55rem; margin: -0.5rem -0.55rem; border-radius: 10px; cursor: pointer; transition: background .2s ease; }
+.hs-field:hover { background: rgba(245,241,234,0.05); }
+.home-search.is-open .hs-field { cursor: text; background: none; }
+.hs-mag { flex: none; width: 1.15rem; height: 1.15rem; color: var(--text-faint); transition: color .25s ease; }
+.home-search.is-open .hs-mag { color: var(--accent); }
+.hs-input { flex: 1 1 auto; min-width: 0; width: 100%; max-width: 0; opacity: 0; background: transparent; border: none; color: var(--text-bright); font-family: var(--font-body); font-size: 1.1rem; line-height: 1.3; padding: 0; outline: none; transition: max-width .34s cubic-bezier(.2,.7,.2,1), opacity .22s ease; }
+.home-search.is-open .hs-input { max-width: 680px; opacity: 1; }
+.hs-input::placeholder { color: var(--text-faint); }
+.hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 0.85rem; }
+.hs-about { flex: none; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); text-decoration: none; white-space: nowrap; transition: color 0.2s ease; }
+.hs-links .hs-about + .hs-about { padding-left: 0.85rem; border-left: 1px solid var(--rule); }
+.hs-about:hover { color: var(--text-bright); }
+.hs-readout { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---- the typeahead dropdown (identical to the homepage) ---- */
+.hs-panel { position: absolute; z-index: 60; top: calc(100% + 10px); left: 0; right: 0; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 1px 2px rgba(8,12,9,0.4), 0 24px 56px -18px rgba(8,12,9,0.72); padding: 6px; overflow-y: auto; max-height: min(64vh, 520px); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-6px) scale(0.985); transform-origin: top center; transition: opacity .18s ease, transform .22s cubic-bezier(0.23,1,0.32,1), visibility .18s; }
+.hs-panel.is-open { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+.hs-res { display: flex; align-items: center; gap: 0.85rem; padding: 0.6rem 0.7rem; border-radius: 14px; text-decoration: none; color: var(--text); transition: background .12s ease; }
+.hs-res.is-active { background: var(--s-gold-tint, rgba(212,196,160,0.08)); }
+.hs-res-thumb { flex: none; width: 56px; height: 40px; border-radius: 9px; overflow: hidden; background: var(--bg); }
+.hs-res-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hs-res-main { flex: 1 1 auto; min-width: 0; }
+.hs-res-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.7rem; }
+.hs-res-title { font-family: var(--font-heading); font-size: 1.06rem; color: var(--text-bright); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hs-res-count { flex: none; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.02em; color: var(--accent); white-space: nowrap; }
+.hs-res-snip { display: block; font-size: 0.84rem; line-height: 1.4; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.12rem; }
+.hs-empty { padding: 1.1rem 1rem; font-style: italic; color: var(--text-dim); font-size: 0.96rem; }
+.hs-foot { display: flex; align-items: center; gap: 1.1rem; padding: 0.55rem 0.85rem 0.4rem; margin-top: 4px; border-top: 1px solid var(--s-divide, rgba(245,241,234,0.06)); font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-faint); }
+.hs-foot b { display: inline-block; min-width: 1.5em; text-align: center; padding: 0.1em 0.3em; margin: 0 0.04em; border: 1px solid var(--rule); border-radius: 5px; color: var(--text-dim); font-weight: 400; }
+.hs-foot-count { margin-left: auto; }
+mark.hs-hi { background: rgba(212, 196, 160, 0.22); color: var(--text-bright); border-radius: 2px; padding: 0 0.05em; }
+@media (prefers-reduced-motion: reduce) { .hs-panel { transition: opacity .12s ease, visibility .12s; transform: none; } .hs-panel.is-open { transform: none; } }
+
+/* ---- article cards (identical to the homepage) ---- */
+@media (min-width: 560px) { .article-item-thumb { float: right; width: 188px; margin: 0.4rem 0 0.55rem 1.6rem; } }
+.list-head { display: flex; align-items: center; gap: 1.15rem; margin-bottom: 1.9rem; }
+.list-head span { font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #c3b589; white-space: nowrap; }
+.list-head::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--rule); }
+.article-list { gap: 0; }
+.article-item { padding: 1.65rem 1rem; }
+.article-item-date { display: block; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #c3b589; margin-bottom: 0.5rem; }
+.article-item-title { font-family: var(--font-heading); font-weight: 400; font-size: 1.65rem; line-height: 1.18; letter-spacing: -0.015em; color: var(--text-bright); margin-bottom: 0.5rem; }
+.article-item-description { font-family: var(--font-body); font-size: 1.0rem; line-height: 1.5; color: var(--text-dim); }
+@media (min-width: 720px) { .list-head { margin-bottom: 2.4rem; } .article-item { padding: 1.7rem 1rem; } .article-item-title { font-size: 1.85rem; } }
+
+/* ---- "coming soon": a built-but-not-yet entry, greyed and not a link ---- */
+.article-item.is-soon { opacity: 0.52; }
+.article-item.is-soon .article-item-title { color: var(--text-dim); }
+.soon-tag { display: inline-block; font-family: var(--font-mono); font-size: 0.58rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 999px; padding: 0.18em 0.62em; margin-left: 0.7rem; vertical-align: middle; }

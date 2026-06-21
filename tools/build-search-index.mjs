@@ -112,6 +112,33 @@ for (const block of cardBlocks) {
   seen.add(href);
 }
 
+// Hub child posts: the series posts now live inside the four hub index pages
+// instead of on the homepage. Pull each hub's member links, tag them with the
+// hub slug (so a hub page's own search scopes to its posts, and the homepage
+// search still finds them as non-archived), and index their real text.
+const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love'];
+for (const slug of HUB_SLUGS) {
+  const hubFile = join(ROOT, slug + '.html');
+  if (!existsSync(hubFile)) continue;
+  const hubHtml = readFileSync(hubFile, 'utf8');
+  const inner = (hubHtml.match(/<ul class="article-list">([\s\S]*?)<\/ul>/) || [, ''])[1];
+  for (const block of inner.split(/<li class="article-list-item/).slice(1)) {
+    const href = attr(block, /<a class="article-item" href="([^"]+)"/);
+    if (!href || !/\.html$/.test(href) || seen.has(href)) continue;
+    const post = {
+      url: href,
+      title: stripToText(attr(block, /<h2 class="article-item-title">([\s\S]*?)<\/h2>/)),
+      date: '', dateDisplay: '',
+      desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
+      thumb: attr(block, /<img[^>]*src="([^"]+)"/),
+      keywords: '', hub: slug, sections: [],
+    };
+    buildSections(post, join(ROOT, href));
+    posts.push(post);
+    seen.add(href);
+  }
+}
+
 // Content pages worth searching that are not in the homepage list (the colophon
 // now lives behind the About page, but it is still real, searchable content).
 const EXTRAS = [

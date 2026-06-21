@@ -23,6 +23,17 @@
   var live  = document.querySelector('.hs-readout');
   if (!input || !panel) return;
 
+  // scope: 'home' (every non-archived post, the default), 'archive' (archived
+  // posts only), or a hub slug (only that hub's posts). Set via the input's
+  // data-search-scope attribute. The home scope includes the hub child posts,
+  // so searching the homepage still finds a post that now lives inside a hub.
+  var scope = input.getAttribute('data-search-scope') || 'home';
+  function inScope(p) {
+    if (scope === 'home') return !p.archived;
+    if (scope === 'archive') return !!p.archived;
+    return p.hub === scope;
+  }
+
   var LIMIT = 6;            // results shown (kept tight on purpose)
   var data = null;
   var loading = false;
@@ -77,7 +88,9 @@
   function literalHits(q) {
     var hits = [];
     for (var pi = 0; pi < data.length; pi++) {
-      var p = data[pi], titleCount = countOf(p.titleLC, q), count = titleCount, firstSec = -1, firstPos = -1, headHits = 0;
+      var p = data[pi];
+      if (!inScope(p)) continue;
+      var titleCount = countOf(p.titleLC, q), count = titleCount, firstSec = -1, firstPos = -1, headHits = 0;
       for (var si = 0; si < p.sections.length; si++) {
         var sec = p.sections[si];
         var hc = countOf(sec.headLC, q); headHits += hc;
@@ -140,7 +153,7 @@
       html = '';
       var archHeader = false;
       for (var i = 0; i < results.length; i++) {
-        if (results[i].archived && !archHeader) { archHeader = true; html += '<div class="hs-group">Archived posts</div>'; }
+        if (scope !== 'archive' && results[i].archived && !archHeader) { archHeader = true; html += '<div class="hs-group">Archived posts</div>'; }
         html += rowHTML(results[i], i);
       }
       var label = totalInstances + ' match' + (totalInstances === 1 ? '' : 'es') + ' in ' + postCount + ' post' + (postCount === 1 ? '' : 's');
