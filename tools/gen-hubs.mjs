@@ -59,7 +59,7 @@ const HUBS = [
       soon('Euclid', 'c. 300 BCE', -300, "Two thousand years of certainty from one little book: where the idea of proving something true, step by airtight step, was born."),
       soon('Kant', '1785', 1785, "The other giant of modern philosophy, and the single rule he tried to build all of morality on: act only as you could wish everyone would act."),
       soon('Camus', '1942', 1942, "If life has no built-in meaning, the absurdist asks, why not just quit? The answer is not despair but revolt: picture Sisyphus, pushing his rock uphill forever, happy."),
-      soon('Sapiens', '2011', 2011, "How a weak ape took over the planet by believing in shared fictions, money, nations, gods, that let total strangers cooperate. Gripping, and handled skeptically."),
+      live('sapiens.html', 'Sapiens', 'sapiens.jpg', '2011', 2011, "A weak ape took over the planet, Yuval Noah Harari argues, by believing in shared fictions, money, gods, nations, that let total strangers cooperate. The decade's most gripping history, handled with a skeptic's eye."),
     ],
   },
   {
