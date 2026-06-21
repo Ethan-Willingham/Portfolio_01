@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plato's Symposium, the Ladder of Love</title>
+  <meta name="description" content="A guided walk through Plato's Symposium in Benjamin Jowett's translation, with the famous lines stacked across translators. A drinking party in Athens where seven men praise love and climb from the body to Beauty itself, Aristophanes' split humans, Diotima's ladder, and the truth about Platonic love.">
+  <meta property="og:title" content="Plato's Symposium, the Ladder of Love">
+  <meta property="og:description" content="One night in Athens, a roomful of hungover men take turns praising love, and the speeches climb from the body to the soul to Beauty itself, until the most famous drunk in the city kicks the door in. The source of Platonic love, walked in one reading.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/symposium.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/symposium-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/symposium-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     PLATO'S SYMPOSIUM, THE LADDER OF LOVE
+     Approach B, the One-Reading Walk. The page is read top to
+     bottom: eight stops through the dialogue, featured in
+     Benjamin Jowett's public-domain translation, each unpacked in
+     plain language, with collapsible side panels that stack the
+     modern translators (Nehamas and Woodruff, Gill) on the few
+     most famous lines. Sits in the site shell (forest green,
+     parchment, Century Supra / Segoe UI / Commit Mono).
+     A Greek fallback face is wired for the rare Greek word.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --gr-font: "GFS Didot","Times New Roman",Georgia,serif;
+    --gill:   #cf9f78;                 /* Gill, Penguin 1999 */
+    --nw:     #bc9d65;                 /* Nehamas and Woodruff, Hackett 1989 */
+    --jowett: #9ec79a;                 /* Jowett 1892, the featured walk */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8.5vw, 5rem); line-height: 1.03; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .gr { font-family: var(--gr-font); font-style: normal; }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.7rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-gill   { border-left-color: var(--gill); }
+  .stack-nw     { border-left-color: var(--nw); }
+  .stack-jowett { border-left-color: var(--jowett); }
+  .stack-feat { background: rgba(158,199,154,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--jowett); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">Plato's Symposium, the ladder of love</h1>
+    <p class="hero-dek">One night in Athens, a roomful of hungover men agree to take turns making a speech in praise of love. The speeches climb from the body to the soul to Beauty itself, until the most famous drunk in the city kicks the door in. Here is the whole party, walked in one reading.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> from the first speech to the last drunk <span class="sep">/</span> featured: <b>Jowett</b> <span class="sep">/</span> ~24 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">You have probably called something "Platonic love," and you probably meant a friendship with the sex left out. This is the book the phrase comes from, and that is close to the opposite of what it says.</p>
+
+      <p>The <em>Symposium</em> is a short dialogue Plato wrote around 380 BC, and it is a record (or an invention) of a dinner party from years earlier, in 416 BC, at the house of a playwright named Agathon. Agathon had just won the city's top prize for tragedy, the men are badly hungover from celebrating, and so when they gather the next night the doctor in the group suggests they go easy on the wine, send the hired flute-girl away, and entertain themselves a different way: each man, around the room, will give a speech in praise of Eros, the god of love and desire. Seven speeches follow. The point of the book is that they climb, from the crude to the sublime, one rung at a time, until the last speaker arrives at something that does not sound like a party trick at all.</p>
+
+      <p>Two warnings before the door opens. The first is that we get all of this thirdhand. The narrator, a man named Apollodorus, was a child when the party happened; he is repeating it years later to a friend, having heard it from someone who was actually there and checked a few details with Socrates. So this is a story, beautifully shaped, not a transcript. The second is that the love these men are mostly talking about is the Athenian kind: an older man and a younger one, the <em>erastes</em> and the <em>eromenos</em>. That convention is the water they swim in, and the speeches assume it the way we assume two people meet on an app. State it plainly and the book stops being strange.</p>
+
+      <figure class="u-figure">
+        <picture><source type="image/webp" srcset="assets/symposium/feuerbach-das-gastmahl-1869.webp"><img class="u-figure-img" src="assets/symposium/feuerbach-das-gastmahl-1869.jpg" width="1600" height="776" loading="lazy" decoding="async" alt="Anselm Feuerbach's painting Das Gastmahl: a Greek banquet hall, with a torch-lit procession of garlanded revelers and a flute-girl entering from the left, the laurel-crowned host standing at center holding a cup, and a row of men reclining on couches at right."></picture>
+        <figcaption class="u-figure-cap">Anselm Feuerbach, <em>Das Gastmahl des Plato</em> (Plato's Symposium), 1869. The whole dialogue in one frame: the banqueters reclining at right, and the drunken Alcibiades arriving at the left with his torchbearers and a flute-girl, the crash that ends the book.</figcaption>
+      </figure>
+
+      <p>The featured translation throughout is <strong>Benjamin Jowett's</strong>, the great Victorian version, which is out of copyright and is the one most people have actually read. Each stop gives you Jowett's words first, then unpacks them in plain language. On the handful of most famous lines, where the modern translators are worth hearing, you can open a panel and see Jowett against <strong>Nehamas and Woodruff</strong> (1989) and <strong>Christopher Gill</strong> (1999).</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">The whole book on one page</p>
+        <p class="u-callout-body">Every speech is trying to answer one question: what is love, and what is it for? The low answers come first. Love is an ancient god; love is a noble feeling; love is the force holding the cosmos together. Then Aristophanes gives the romantic answer everyone still repeats, that you are half of something and love is the search for your missing half. Then Socrates, quoting a priestess named Diotima, says love is simpler and stranger than any of that. Love is wanting. You only love what you do not already have, and what you are really after, underneath the wanting for a particular body, is beauty itself, which never dies. Follow desire honestly all the way up and it stops being about a person at all. That ladder is what the phrase "Platonic love" is actually pointing at.</p>
+      </aside>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">A party with a rule</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-party" data-label="A party with a rule" data-tag="The setup">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The setup</p>
+      <h2 class="station-h">A party with a rule</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 177d-e, Socrates speaking</p>
+        <div class="passage-t">
+          <p>"How can I oppose your motion, who profess to understand nothing but matters of love..."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>A <em>symposion</em> was not a seminar. It was a drinking party: men reclining two to a couch, wine mixed with water in a big bowl, music, games, and fewer rules as the night wore on. This one opens the morning after Agathon's victory blowout, with everyone hungover, which is why the doctor, Eryximachus, talks them into speeches instead of another round. His pitch for the topic: Love is a great god, and strangely, nobody ever thinks to praise him. So tonight they will.</p>
+        <p>They agree, and they go around the couches in order. There is one small, perfect interruption. When it is the comic playwright Aristophanes' turn, he has the hiccups from eating too much and cannot speak, so he has to swap his place with the doctor while he holds his breath, gargles, and makes himself sneeze them away. Plato put a hiccup fit directly in front of one of the most beautiful speeches in the book. He is telling you, early, not to take the solemnity too straight.</p>
+        <p>Notice the line above, because it is doing quiet work. Socrates says the only thing he understands is <span class="gr">ta erotika</span>, matters of love. This is the man who built a career on claiming he knew nothing. Love is the single subject Plato ever lets him claim as his own, and the whole book is the cash-out of that claim.</p>
+      </div>
+
+      <figure class="u-figure">
+        <picture><source type="image/webp" srcset="assets/symposium/symposium-kylix-attic.webp"><img class="u-figure-img" src="assets/symposium/symposium-kylix-attic.jpg" width="1100" height="1100" loading="lazy" decoding="async" alt="The painted interior of an ancient Greek red-figure drinking cup: a bearded man reclines on a couch raising a shallow wine cup while a youth beside him plays the double pipes, all framed by a Greek-key border."></picture>
+        <figcaption class="u-figure-cap">An Attic red-figure cup, around 480 BC, painted with the very thing it was used for: a man reclining at a symposion, raising a cup like this one, a youth beside him playing the pipes. The setting of the dialogue, and the older-man-and-younger-man bond most of its speeches take for granted. (Museum of Fine Arts, Boston.)</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-warmup" data-label="Three warm-up speeches" data-tag="Warm-up">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> The lower rungs</p>
+      <h2 class="station-h">Three warm-up speeches</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 180d-e, Pausanias speaking</p>
+        <div class="passage-t">
+          <p>"...if there were only one Aphrodite there would be only one Love; but as there are two goddesses there must be two Loves."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The first three speakers are the warm-up act, and they go by quickly, because Plato put the weak speeches first on purpose. Each one gets something a little less wrong than the last.</p>
+        <p><strong>Phaedrus</strong> goes first and keeps it simple: Love is one of the oldest gods, and the best thing about him is that he makes you brave. Nobody wants to look like a coward in front of the person they love, so an army of lovers would be unbeatable. (Thebes actually tried this; their Sacred Band was a unit of paired lovers.) <strong>Pausanias</strong> goes next and adds the first real idea, the one in the panel above. There is not one Love but two, because there are two Aphrodites. There is a common, bodily love that just wants a body, and a heavenly love aimed at a person's mind and character, the kind that makes both people better. The crude and the fine are already pulling apart. <strong>Eryximachus</strong>, the doctor, then blows the idea up to cosmic size: love is not just a thing between people, it is the principle of balance in everything, in medicine, in music, in the weather, the pull that brings opposites into harmony.</p>
+        <p>None of this is wrong, exactly. It is just early. Each speaker has grabbed one true piece of love (it makes you brave, it comes in a high and a low form, it is a kind of harmony) and mistaken his piece for the whole. Then the comedian clears his throat.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-aristophanes" data-label="We were round, and we were cut in half" data-tag="Aristophanes">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> The famous myth</p>
+      <h2 class="station-h">We were round, and we were cut in half</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 189e-190a, Aristophanes speaking</p>
+        <div class="passage-t">
+          <p>"The primeval man was round, his back and sides forming a circle; and he had four hands and four feet, one head with two faces, looking opposite ways, set on a round neck and precisely alike; also four ears, two privy members, and the remainder to correspond."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Aristophanes, the comic playwright, gives the speech everybody remembers, and it is a myth he makes up on the spot. Long ago, he says, people came in three sexes, not two: all-male, all-female, and a combined male-female. And every person was double, a single round body with four arms, four legs, two faces on one head, who could walk forwards or backwards or cartwheel along at high speed. They were strong and pleased with themselves, and they made a run at the gods.</p>
+        <p>Zeus could not just kill them, because then who would make offerings, so he cut each one in half, "as you might divide an egg with a hair," and had Apollo turn the faces around and tie off the loose skin at the navel. Each half, suddenly weak and alone, spent its days searching for its other half so it could wrap around it and be one thing again. They were dying of it, refusing to eat or do anything apart, until Zeus took pity and moved their private parts around to the front, so that two halves could at least find a little satisfaction in each other and then get back to their lives.</p>
+        <p>This is where "you complete me" comes from. The missing half, the soulmate, the one person you were split from at the start of the world: a comedian invented it at a drinking party twenty-four centuries ago, for a laugh, and it is still the most popular theory of love we have. Aristophanes' point is genuinely moving. Love is the name for how badly you want to stop being a half. It is the longing to be whole.</p>
+        <p>Hold onto it, because Plato is going to take it apart. He gave the most romantic idea in the book to the funny man, and a few speeches later he has Diotima quietly point out the problem: people do not actually love whatever is "theirs." You will let a doctor cut off your own hand if it turns gangrenous. What you love is not your other half. What you love is the good, even when the good is not the thing you started attached to. But that is the next room. For now the myth just sits there, perfect and a little sad, ending on the line in the panel.</p>
+      </div>
+
+      <details class="stack">
+        <summary>One famous line, three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The sentence the whole speech is built to land on, at 192e to 193a. The translators agree on the idea and split on how personal to make it.</p>
+
+          <div class="stack-v stack-jowett stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jowett <span class="star">featured</span></span><span class="stack-vy">1892</span></div>
+            <div class="stack-vt">"...human nature was originally one and we were a whole, and the desire and pursuit of the whole is called love."</div>
+          </div>
+          <div class="stack-v stack-nw">
+            <div class="stack-vh"><span class="stack-vn">Nehamas &amp; Woodruff</span><span class="stack-vy">Hackett, 1989</span></div>
+            <div class="stack-vt">"...we used to be complete wholes in our original nature, and now 'Love' is the name for our pursuit of wholeness, for our desire to be complete."</div>
+          </div>
+          <div class="stack-v stack-gill">
+            <div class="stack-vh"><span class="stack-vn">Gill</span><span class="stack-vy">Penguin, 1999</span></div>
+            <div class="stack-vt">"this is our original natural state and we used to be whole creatures: 'love' is the name for the desire and pursuit of wholeness."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Jowett's "the whole" is grand and a little abstract. The moderns make it about you: "our desire to be complete." Same claim either way, that love is the ache to be one thing again instead of two.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-agathon" data-label="Socrates springs a trap" data-tag="Agathon">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> The turn</p>
+      <h2 class="station-h">Socrates springs a trap</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 201a-b, Socrates and Agathon</p>
+        <div class="passage-t">
+          <p>"And if this is true, Love is the love of beauty and not of deformity? ... And the admission has been already made that Love is of something which a man wants and has not?"</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Agathon, the host, gives the last of the regular speeches, and it is the prettiest and the emptiest. Love, he says, is the youngest and most beautiful of the gods, soft, delicate, the source of every good thing, and he says it in such polished, perfumed phrases that the room bursts into applause. Then Socrates, instead of giving a speech of his own, asks to ask Agathon a few questions, and over about a page the whole evening turns over.</p>
+        <p>The questions are simple, and that is the trap. Does Love have to be love <em>of</em> something? Yes. And does anyone want what he already has, or what he lacks? What he lacks; nobody who is already tall wishes to be tall. So put it together. Love is love of beauty. And you only love what you do not have. Therefore Love does not have beauty. The thing five straight speakers have been crowning as a beautiful god turns out, by its own definition, to be the one thing that is missing beauty and reaching for it.</p>
+        <p>This is the hinge of the book. Everyone built Love up; Socrates, with a few yes-or-no questions, shows that love is by its nature a lack. It is not the beautiful beloved sitting on the couch. It is the wanting that points at them. Whatever else gets said tonight has to start from there: love is need, not having.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-diotima" data-label="The child of Poverty and Resource" data-tag="Diotima">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> What love is</p>
+      <h2 class="station-h">The child of Poverty and Resource</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 203b-c, Diotima's story (as Socrates relays it)</p>
+        <div class="passage-t">
+          <p>"On the birthday of Aphrodite there was a feast of the gods, at which the god Poros or Plenty, who is the son of Metis or Discretion, was one of the guests. When the feast was over, Penia or Poverty, as the manner is on such occasions, came about the doors to beg ... and accordingly she lay down at his side and conceived Love..."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Now Socrates does something odd. He says he did not work any of this out himself. He learned it, when he was young, from a woman: Diotima, a priestess from Mantinea, who taught him about love and once, he says, postponed a plague. Pause on her for a second. The highest teaching on love in the Western canon is put in the mouth of a woman who almost certainly never existed; most scholars read Diotima as Plato's invention. A man, writing another man, who quotes a woman who is not real, at a party full of men, to deliver the truth about desire. Plato knew exactly what he was doing; he just won't tell you what.</p>
+        <p>Diotima explains where Love came from with a story. At the feast for Aphrodite's birth, a god named Poros, whose name means Resource, or a way through, got drunk on nectar and passed out in the garden. Penia, whose name means Poverty, was outside begging, as she always is, and seeing her chance she lay down beside him and conceived a child. The child was Eros, Love, and he takes after both parents, which is the entire point.</p>
+        <p>From his mother he is poor: barefoot, homeless, sleeping in doorways and on the bare ground, always in want. From his father he is a schemer: bold, tough, a hunter, forever plotting to get his hands on the beautiful things he lacks. So Love is not the pampered, beautiful god Agathon described. Love is a barefoot operator on the make. And he sits, permanently, in the gap between not having and having, which is also the gap between ignorance and wisdom. The truly wise do not love wisdom; they already have it. The truly ignorant do not either; they don't know they're missing it. Only the in-between creature, who knows he lacks something good and goes hunting for it, loves it. The Greek for that creature is <span class="gr">philosophos</span>, lover of wisdom. Diotima's quiet bombshell: love and philosophy are the same motion. Both are wanting what you don't have badly enough to chase it.</p>
+      </div>
+
+      <details class="stack">
+        <summary>What Love is made of, two ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">Diotima's portrait of Love at 203c to 203d, the barefoot schemer. Jowett's Victorian diction against the modern Hackett version.</p>
+
+          <div class="stack-v stack-jowett stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jowett <span class="star">featured</span></span><span class="stack-vy">1892</span></div>
+            <div class="stack-vt">"...always poor... rough and squalid, and has no shoes, nor a house to dwell in... but he is bold, enterprising, strong, a mighty hunter, always weaving some intrigue or other..."</div>
+          </div>
+          <div class="stack-v stack-nw">
+            <div class="stack-vh"><span class="stack-vn">Nehamas &amp; Woodruff</span><span class="stack-vy">Hackett, 1989</span></div>
+            <div class="stack-vt">"...he is tough and shriveled and shoeless and homeless, always lying on the dirt without a bed... a schemer after the beautiful and the good; he is brave, impetuous, and intense, an awesome hunter, always weaving snares..."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">"A mighty hunter, always weaving some intrigue" (Jowett), "an awesome hunter, always weaving snares" (the moderns). Either way, not a chubby cherub with a bow. Love is a hungry predator, because love is lack on the prowl.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-ladder" data-label="The ladder to Beauty itself" data-tag="The ladder">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> The climb</p>
+      <h2 class="station-h">The ladder to Beauty itself</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 211b-c, Diotima's ladder</p>
+        <div class="passage-t">
+          <p>"...to begin from the beauties of earth and mount upwards for the sake of that other beauty, using these as steps only, and from one going on to two, and from two to all fair forms, and from fair forms to fair practices, and from fair practices to fair notions, until from fair notions he arrives at the notion of absolute beauty..."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Here is what "Platonic love" actually means, and it is a staircase. Diotima lays out the climb step by step. You start where everyone starts, by falling for one beautiful body. Fine, she says, but notice something while you are there: the beauty in that body is the same beauty that is in every other beautiful body. Once you really see that, you start to love beautiful bodies as a kind, and your grip on the one particular body loosens.</p>
+        <p>Then you climb. You notice a beautiful mind is worth more than a beautiful face, and you start caring more about who a person is than how they look. From there you rise to the beauty in laws and customs, the way a well-run society is beautiful; then to the beauty in knowledge, in whole fields of understanding; until you reach what Diotima calls a great sea of beauty, and finally the thing every step was a shadow of. She calls it <strong>beauty absolute, separate, simple, and everlasting</strong>. Not a beautiful body or a beautiful law or a beautiful idea: Beauty itself, the source all of those borrow from and then lose, that never changes and never dies. (Readers of the other Plato post will recognize this. It is the daylight outside the cave, told in the language of love.)</p>
+        <p>That climb is the ladder of love, and it is the real meaning of the phrase. Not a relationship with the desire switched off. A desire kept fully on and aimed upward: the same wanting that starts at a particular face, followed honestly until it walks you off the face entirely and into the love of something perfect. The sex isn't denied. It is the first rung.</p>
+        <p>And there is a bill. The higher you climb, the less the particular person matters, because you have learned to find their beauty everywhere and then past everyone. The philosopher Gregory Vlastos pressed exactly this, in a famous 1973 essay: Plato teaches us to love the beautiful <em>qualities</em> in a person, not the person, so people become interchangeable, rungs you are meant to step off. You do not get long to sit with the objection. It is about to walk through the door, very drunk, with its name on it.</p>
+      </div>
+
+      <details class="stack">
+        <summary>Steps, or stairs? The climb in two translators</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The ladder image itself, at 211c. Watch how literal each translator makes the staircase.</p>
+
+          <div class="stack-v stack-jowett stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jowett <span class="star">featured</span></span><span class="stack-vy">1892</span></div>
+            <div class="stack-vt">"...using these as steps only, and from one going on to two, and from two to all fair forms, and from fair forms to fair practices, and from fair practices to fair notions..."</div>
+          </div>
+          <div class="stack-v stack-nw">
+            <div class="stack-vh"><span class="stack-vn">Nehamas &amp; Woodruff</span><span class="stack-vy">Hackett, 1989</span></div>
+            <div class="stack-vt">"...using them like rising stairs: from one body to two and from two to all beautiful bodies, then from beautiful bodies to beautiful customs, and from customs to learning beautiful things..."</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Jowett climbs through abstractions ("fair forms... fair practices... fair notions"). The moderns keep it physical, "from one body to two," which is closer to the Greek and makes the staircase you can actually feel under your feet: it starts on a body and ends nowhere near one.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-alcibiades" data-label="Alcibiades praises the man who turned him down" data-tag="Alcibiades">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The drunk at the door</p>
+      <h2 class="station-h">Alcibiades praises the man who turned him down</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 219c-d, Alcibiades speaking</p>
+        <div class="passage-t">
+          <p>"...he was so superior to my solicitations, so contemptuous and derisive and disdainful of my beauty ... in the morning when I awoke ... I arose as from the couch of a father or an elder brother."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The door bangs open. Alcibiades, falling-down drunk, crowned with ivy and violets, leaning on a flute-girl, the most beautiful and most dangerous man in Athens, pours into the room. He is told the rule, give a speech about Love, and refuses. He will praise Socrates instead, and he will tell the truth, because he is too drunk to manage anything else.</p>
+        <p>What follows is the only speech that is not about Love the god. It is about loving one specific, infuriating person, and it is a confession. Socrates, Alcibiades says, is like those little carved figures of Silenus you see in shops, ugly and comic on the outside, that "open in the middle, and have images of gods inside them." He is the one person alive who can make Alcibiades feel ashamed of himself. And then, in front of everyone, Alcibiades tells the story of how he tried to seduce him.</p>
+        <p>He was young, gorgeous, and used to getting whatever he wanted, and what he wanted was Socrates' wisdom, so he offered the obvious deal: his looks for the older man's mind. He arranged the private dinners, the late training sessions, and finally got Socrates under a single cloak for an entire night. And nothing happened. Socrates lay beside the most desired body in Athens, treated it (in Alcibiades' own bitter words) with contempt, and went to sleep. Alcibiades got up, he says, as if he had spent the night with his father.</p>
+        <p>Read it right after the ladder and it cuts two ways at once. One: here is the ladder vindicated. Socrates has climbed so high that the one body half of Athens was in love with, laid in his bed on purpose, is just a rung he passed long ago; he is not being heroic, he is simply no longer interested in the bottom step. Two: here is the ladder's bill arriving. Alcibiades does not love Beauty itself. He loves Socrates, this exact maddening man, and it has half-destroyed him, and from where he is lying Socrates' great serenity looks an awful lot like indifference to an actual human being. Plato puts the strongest objection to his own theory in the mouth of a drunk, lets it land, and then lets the drunk pass out.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The morning after, two ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The most quietly devastating line in the speech, at 219c to 219d: the beautiful man explaining that he got nowhere.</p>
+
+          <div class="stack-v stack-jowett stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Jowett <span class="star">featured</span></span><span class="stack-vy">1892</span></div>
+            <div class="stack-vt">"...so contemptuous and derisive and disdainful of my beauty ... I arose as from the couch of a father or an elder brother."</div>
+          </div>
+          <div class="stack-v stack-nw">
+            <div class="stack-vh"><span class="stack-vn">Nehamas &amp; Woodruff</span><span class="stack-vy">Hackett, 1989</span></div>
+            <div class="stack-vt">"...my night with Socrates went no further than if I had spent it with my own father or older brother!"</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Jowett leans on the insult ("derisive and disdainful of my beauty"). The moderns make it flat and almost comic ("went no further than..."). Both land the same humiliation: in this story it is the irresistible one who gets turned down.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-meaning" data-label="What 'Platonic love' really means" data-tag="Platonic love">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> What it leaves you</p>
+      <h2 class="station-h">What "Platonic love" really means</h2>
+
+      <div class="passage">
+        <p class="passage-k">Jowett / Symposium 212a, the reward at the top of the ladder</p>
+        <div class="passage-t">
+          <p>"...beholding beauty with the eye of the mind, he will be enabled to bring forth, not images of beauty, but realities ... and bringing forth and nourishing true virtue to become the friend of God and be immortal, if mortal man may."</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>So put the misunderstanding to bed. "Platonic love" does not even come from Plato; a Renaissance scholar named Marsilio Ficino coined the phrase more than eighteen hundred years later, reading this book. And it does not mean a warm friendship with the desire turned off. It means desire kept on and aimed up: the same wanting that begins at a beautiful face, followed all the way to the love of what is beautiful and good and permanent in everything. The chaste, sexless meaning is a cooler thing later English speakers did to the word. Plato's version is hotter and far more demanding. It asks you to want, and then to keep wanting, past every single particular thing you wanted.</p>
+        <p>Whether that is the highest picture of love or a quietly heartless one is the argument the book refuses to settle, and Plato built the argument into the furniture. Diotima hands you the ladder, perfect and rising. Alcibiades, fifteen minutes later, hands you a wrecked man weeping over one person who climbed straight past him. The book gives you both and declines to choose. That is not a failure of the book. It is the book.</p>
+        <p>And it really does just walk off. The party falls apart, fresh revelers crash in, everyone drinks too much, people drift home. Toward dawn only three men are still awake, and Socrates is patiently wearing the other two down into agreeing that the same writer ought to be able to compose both comedy and tragedy, which is a strange and perfect last note, given that one of the two is a comedian and the other a tragedian, and given that the book you just read is plainly both. Then they nod off. Socrates gets up, washes, and spends the rest of the day exactly as usual, because for him a night like this is just a day.</p>
+        <p>One last thing, the kind the first Athenian readers would have felt in their chests. The party is set in 416 BC, the high-water mark, with Athens rich and sure of itself. Within a year, Alcibiades, the beautiful drunk at the door, would talk the city into a catastrophic invasion of Sicily, be accused of mutilating the sacred statues, defect to Sparta, and become the most spectacular traitor in Greek history; Athens would lose the war and never fully recover. Plato wrote all this down decades after, knowing every bit of what came next. He set the most beautiful conversation about love on the last good night, and let the man who would help end the city kick the door in. The original readers felt the whole grim future sitting in that bright room. We mostly just get the love, which may be the better deal.</p>
+      </div>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>Every quotation is verbatim. The featured walk is <strong>Benjamin Jowett's</strong> translation (3rd edition, 1892), which is in the public domain and is the version most readers have met; it is quoted from the <a href="https://www.gutenberg.org/files/1600/1600-h/1600-h.htm">Project Gutenberg</a> text. The comparison panels add the two standard modern translations, <strong>Alexander Nehamas and Paul Woodruff</strong> (Hackett, 1989, also in the Cooper <em>Complete Works</em>) and <strong>Christopher Gill</strong> (Penguin Classics, 1999), on the handful of lines where hearing them is worth it. Every translator is named and every line is located by its Stephanus number (the standard page reference, like 192e, that is the same in every edition).</p>
+      <ul class="src-list">
+        <li><b>The walk</b> is Jowett throughout: the setup (177d, 180d), Aristophanes' myth (189e to 193a), Socrates' turn on Agathon (201a), Diotima on the birth and nature of Love (203b to 203d) and the ladder (211b to 212a), and Alcibiades (215a, 219c).</li>
+        <li><b>The panels</b> stack Jowett against <b>Nehamas and Woodruff</b> and, on Aristophanes' line, <b>Gill</b>. The modern translations are still in copyright and appear here in short excerpts, for comparison and study, with each translator named.</li>
+        <li><b>On the history and the readings</b>, the background draws on the <a href="https://plato.stanford.edu/entries/plato-friendship/">Stanford Encyclopedia of Philosophy</a> (on Plato's ethics of love and friendship), the <a href="https://iep.utm.edu/plato/">Internet Encyclopedia of Philosophy</a>, and the Greek text on <a href="https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0173">Perseus</a>. The objection in stop 6 is Gregory Vlastos, "The Individual as Object of Love in Plato," in his <em>Platonic Studies</em> (Princeton, 1973).</li>
+      </ul>
+      <p>Four honest notes. <strong>Diotima</strong> (stop 5) is most likely a character Plato invented; she appears in no independent source, and the wisest words in the dialogue are deliberately put at two removes from him, in a woman's voice inside Socrates' memory. The <strong>frame</strong> is thirdhand and set about fifteen years after the party, so its polish is Plato's, not a recording. <strong>"Platonic love"</strong> is Ficino's Renaissance phrase, not Plato's, and the sexless modern sense drifts from what the ladder actually describes. And the <strong>love</strong> assumed by most of the speeches is the Athenian convention between an older and a younger man, stated here plainly rather than smoothed over or pretended away.</p>
+      <p>The breakdowns are mine.</p>
+      <p class="colo-note">The painting in the opening and on the card is Anselm Feuerbach's <em>Das Gastmahl des Plato</em> (Plato's Symposium), first version, 1869, oil on canvas, in the Staatliche Kunsthalle Karlsruhe, public domain. The drinking cup is an Attic red-figure kylix with a symposium scene, around 480 BC, in the Museum of Fine Arts, Boston (01.8034); photograph by Mark Landon, used under CC BY 4.0.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/symposium.js" defer></script>
+</body>
+</html>
