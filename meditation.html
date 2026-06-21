@@ -182,14 +182,14 @@
 
   /* the single-technique card */
   .mx-card { border: 1px solid var(--rule); border-left: 3px solid var(--fam, var(--accent)); border-radius: 14px; background: rgba(255,255,255,0.018); padding: 1.5rem 1.6rem; }
-  .mx-fam { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fam, var(--accent)); margin: 0 0 0.5rem; }
-  .mx-name { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.2rem); line-height: 1.05; color: var(--text-bright); margin: 0 0 0.2rem; letter-spacing: -0.01em; }
-  .mx-also { font-family: var(--font-body); font-style: italic; font-size: 0.95rem; color: var(--text-dim); margin: 0 0 1rem; }
-  .mx-one { font-family: var(--font-heading); font-style: italic; font-size: 1.18rem; line-height: 1.5; color: var(--text); margin: 0 0 1.2rem; text-wrap: pretty; }
+  .mx .mx-fam { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fam, var(--accent)); margin: 0 0 0.5rem; }
+  .mx .mx-name { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.35rem, 3vw, 1.6rem); line-height: 1.12; color: var(--text-bright); margin: 0 0 0.2rem; letter-spacing: -0.01em; }
+  .mx .mx-also { font-family: var(--font-body); font-style: italic; font-size: 0.95rem; color: var(--text-dim); margin: 0 0 1rem; }
+  .mx .mx-one { font-family: var(--font-heading); font-style: italic; font-size: 1.15rem; line-height: 1.5; color: var(--text); margin: 0 0 1.2rem; text-wrap: pretty; }
   .mx-row { border-top: 1px solid var(--rule); padding: 0.95rem 0 0; margin: 0.95rem 0 0; }
-  .mx-k { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.6rem; }
+  .mx .mx-k { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.6rem; }
   .mx-k .grade { margin-left: auto; }
-  .mx-v { font-family: var(--font-body); font-size: 1rem; line-height: 1.6; color: var(--text-dim); margin: 0; }
+  .mx .mx-v { font-family: var(--font-body); font-size: 1rem; line-height: 1.6; color: var(--text-dim); margin: 0; }
   .mx-v b { color: var(--text); font-weight: 600; }
   .mx-how { margin: 0; padding: 0; list-style: none; counter-reset: how; }
   .mx-how li { position: relative; font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); margin: 0 0 0.55rem; padding-left: 1.9rem; }
@@ -198,7 +198,7 @@
   .mx-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin: 0.4rem 0 0; }
   .mx-meta div { font-family: var(--font-body); font-size: 0.95rem; color: var(--text-dim); }
   .mx-meta b { color: var(--text); font-weight: 600; }
-  .mx-miss { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text-dim); margin: 0; }
+  .mx .mx-miss { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text-dim); margin: 0; }
   .mx-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 1.2rem; }
   .mx-navb { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.05em; color: var(--accent); background: transparent; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 0.4em 1em; cursor: pointer; transition: border-color .2s, color .2s; }
   .mx-navb:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-hover); }

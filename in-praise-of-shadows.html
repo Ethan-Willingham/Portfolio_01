@@ -128,15 +128,15 @@
   .gal-chip.is-on { color: var(--text-bright); border-color: var(--ta, var(--accent)); background: color-mix(in srgb, var(--ta, var(--accent)) 14%, transparent); }
 
   .gal-frame { border: 1px solid var(--rule); border-left: 3px solid var(--ta, var(--accent)); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); padding: 1.5rem 1.6rem 1.6rem; transition: border-color .25s; }
-  .gal-card-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .gal-wrap .gal-card-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
   .gal-card-k .place { color: var(--text-faint); letter-spacing: 0.06em; }
-  .gal-card-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.5rem, 4vw, 1.95rem); line-height: 1.18; color: var(--text-bright); margin: 0 0 0.3rem; letter-spacing: -0.01em; text-wrap: pretty; }
+  .gal-wrap .gal-card-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.4rem, 3.2vw, 1.7rem); line-height: 1.18; color: var(--text-bright); margin: 0 0 0.3rem; letter-spacing: -0.01em; text-wrap: pretty; }
   .gal-card-say { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em; color: var(--text-faint); margin: 0 0 0.9rem; }
   .gal-card-body p { font-family: var(--font-body); font-size: 1.08rem; line-height: 1.62; color: var(--text); margin: 0 0 0.85em; text-wrap: pretty; }
   .gal-card-body p:last-child { margin-bottom: 0; }
-  .gal-lesson { margin: 1.2rem 0 0; padding: 0.9rem 0 0.1rem; border-top: 1px solid var(--rule); font-family: var(--font-heading); font-style: italic; font-size: 1.16rem; line-height: 1.45; color: var(--text-bright); text-wrap: pretty; }
+  .gal-wrap .gal-lesson { margin: 1.2rem 0 0; padding: 0.9rem 0 0.1rem; border-top: 1px solid var(--rule); font-family: var(--font-heading); font-style: italic; font-size: 1.16rem; line-height: 1.45; color: var(--text-bright); text-wrap: pretty; }
   .gal-lesson .lk { font-family: var(--font-mono); font-style: normal; font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ta, var(--accent)); display: block; margin-bottom: 0.45rem; }
-  .gal-src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 1rem 0 0; }
+  .gal-wrap .gal-src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 1rem 0 0; }
 
   .gal-bar { display: flex; align-items: center; gap: 0.7rem; margin: 1rem 0 0; }
   .gal-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.14rem; transition: border-color .2s, color .2s; }
@@ -151,12 +151,12 @@
   html.js .tales { display: none; }
   .tale { padding: 1.5rem 0 0; border-top: 1px solid var(--rule); margin-top: 1.5rem; }
   .tale:first-child { border-top: none; margin-top: 0; padding-top: 0; }
-  .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.4rem; }
-  .tale-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 0.2rem; }
+  .tales .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.4rem; }
+  .tales .tale-h { font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem; line-height: 1.2; color: var(--text-bright); margin: 0 0 0.2rem; }
   .tale-say { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); margin: 0 0 0.7rem; }
   .tale-body p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 0.8em; }
-  .tale-lesson { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; color: var(--text-bright); margin: 0.4rem 0 0; }
-  .tale-src { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); margin: 0.7rem 0 0; }
+  .tales .tale-lesson { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; color: var(--text-bright); margin: 0.4rem 0 0; }
+  .tales .tale-src { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); margin: 0.7rem 0 0; }
 
   /* ---------- SOURCES ---------- */
   #sources .src-note { font-size: 0.95rem; line-height: 1.55; color: var(--text-dim); max-width: 64ch; margin: 0 0 1.3em; }
