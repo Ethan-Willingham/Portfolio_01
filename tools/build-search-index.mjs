@@ -112,11 +112,11 @@ for (const block of cardBlocks) {
   seen.add(href);
 }
 
-// Hub child posts: the series posts now live inside the four hub index pages
-// instead of on the homepage. Pull each hub's member links, tag them with the
-// hub slug (so a hub page's own search scopes to its posts, and the homepage
+// Hub child posts: the series/collection posts now live inside the hub index
+// pages instead of on the homepage. Pull each hub's member links, tag them with
+// the hub slug (so a hub page's own search scopes to its posts, and the homepage
 // search still finds them as non-archived), and index their real text.
-const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love'];
+const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive'];
 for (const slug of HUB_SLUGS) {
   const hubFile = join(ROOT, slug + '.html');
   if (!existsSync(hubFile)) continue;

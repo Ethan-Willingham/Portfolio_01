@@ -96,6 +96,19 @@ const HUBS = [
       live('in-praise-of-shadows.html', 'In Praise of Shadows', 'in-praise-of-shadows.jpg', '1906-1933', 1933, "A Japanese reply to Western taste: beauty lives in shadow, age, and imperfection, not in bright light and the brand new. Wabi-sabi, explained through a dim room and a cup of tea."),
     ],
   },
+  {
+    slug: 'staying-alive', title: 'Staying Alive',
+    card: { thumb: 'big-enough.jpg', alt: 'The bowed bearded head and massive shoulders of the Farnese Hercules, an ancient marble statue.',
+      desc: 'How to take care of the one body you get: muscle, the heart, food, sleep, and the rest, plus how long a human can really live. The actionable science, with the hype stripped off.' },
+    lead: 'Taking care of the one body you get, from muscle and the heart to food, sleep, and how long a human can really live. The actionable health science, sorted from what is settled to what is merely sold.',
+    members: [
+      live('big-enough.html', 'Big Enough', 'big-enough.jpg', 'muscle', 1, "How to build muscle the natural way, and the harder skill of knowing when to stop. One supplement that works, real food, enough sleep, and a last ten percent that costs twice the effort for a result almost nobody will notice."),
+      live('still-moving.html', 'Still Moving', 'still-moving.jpg', 'the heart', 2, "The two thirds of fitness lifting leaves out: cardio and stretching. How fit your heart is predicts how long you live better than almost anything, most stretching is wasted motion, and a small dose buys nearly all of the benefit."),
+      live('what-to-eat.html', "What You're Supposed to Eat", 'what-to-eat.jpg', 'food', 3, "What to eat, sorted from the settled to the sold. Weight is just energy, health is mostly real food, and every famous diet ties when you actually test it. The few things that are true, and the long aisle of things that are not."),
+      live('the-other-hours.html', 'The Other Hours', 'the-other-hours.jpg', 'the rest', 4, "Everything that decides your health but is not the gym or the kitchen: sleep, the people you love, what you breathe and drink, the medical numbers that save lives, and the recovery rituals that mostly do not work. Ranked biggest lever first."),
+      live('how-long-can-you-live.html', 'How Long Can You Live?', 'how-long-can-you-live.jpg', 'the limit', 5, "The hard wall at 120 is unproven, the oldest-age records are riddled with missing paperwork and pension fraud, and the thing that actually adds years is the one nobody calls a hack. How long a human can last, and why."),
+    ],
+  },
 ];
 
 /* oldest first, live before coming-soon */
