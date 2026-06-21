@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.7';
+  var GAME_VERSION = 'v25.8';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2512,7 +2512,7 @@
     TURN_OMEGA_MULT: 0.80,  // spin-cap authority while thrusting
     TURN_EASE: 12,          // 1/s ease between coast/thrust turn regimes
     // --- speed envelope: soft cap + dive-earned overshoot ---
-    SOFT_CAP: 215,     // px/s sustained envelope (aero wall, not a clamp). ~15 MPH surface cruise (owner 2026-06: left/right should read ~15, was ~28). Underground flight uses UNDERGROUND_AIR_SPEED, unaffected.
+    SOFT_CAP: 323,     // px/s sustained envelope (aero wall, not a clamp). ~27 MPH surface cruise (owner 2026-06-21: bump max horizontal from ~18 to ~27; was 215/~15). Underground flight uses UNDERGROUND_AIR_SPEED, unaffected.
     OVER_K: 60,        // steepness of the overspeed drag wall
     DIVE_OVER: 1.45,   // max earned cap multiplier from a committed dive
     OVER_GAIN: 0.28,   // how fast diving earns overshoot budget
@@ -2571,7 +2571,7 @@
   // paradigm — never a flip. Registered as the 'vtol' GM group (L panel).
   var vtolTune = {
     acc: 850,         // px/s^2 direct horizontal authority (the "wings" half)
-    speed: 215,       // px/s cruise cap — input stops pushing here. ~15 MPH surface cruise (owner 2026-06: was ~29)
+    speed: 323,       // px/s cruise cap — input stops pushing here. ~27 MPH surface cruise (owner 2026-06-21: bump max horizontal from ~18 to ~27; was 215/~15)
     fric: 240,        // px/s^2 no-input horizontal bleed (a little glide-slide)
     revBoost: 1.9,    // accel multiplier while opposing your own vx (dodge flips)
     climbForce: 1500, // px/s^2 peak upward force
@@ -2585,7 +2585,7 @@
   // owner picks by feel). Full bundles — applying one is deterministic.
   var VTOL_PRESETS = {
     // The shipped default: crisp strafe authority, real fall, dodge-flip bite.
-    Strafe:  { acc: 850, speed: 215, fric: 240, revBoost: 1.9, climbForce: 1500, climbTerm: -380, gravity: 760, gravRelief: 0.30, overBleed: 0.55, tilt: 0.34 },
+    Strafe:  { acc: 850, speed: 323, fric: 240, revBoost: 1.9, climbForce: 1500, climbTerm: -380, gravity: 760, gravRelief: 0.30, overBleed: 0.55, tilt: 0.34 },
     // Light and hangy: softer pull, long slide, gentler climb — the lazy cruiser.
     Feather: { acc: 700, speed: 210, fric: 140, revBoost: 1.6, climbForce: 1400, climbTerm: -330, gravity: 620, gravRelief: 0.42, overBleed: 0.40, tilt: 0.30 },
     // Mass: strong engine, hard fall, deliberate direction changes, keeps speed.
