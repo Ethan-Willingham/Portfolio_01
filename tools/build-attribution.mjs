@@ -82,9 +82,19 @@ function relpath(p) {
 }
 function keyFor(rel) {
   if (!rel) return '';
-  const am = rel.match(/^archive\/([^/]+)\//);
-  if (am) return am[1];
-  return route.get(rel) || '';
+  // Try the path and each trailing suffix, so an edit made in ANY sibling clone or
+  // worktree routes like one in the main checkout. The posts were drafted in oddly
+  // named clones (/Users/ethan/portfolio-mach/machiavelli.html, /Users/ethan/
+  // pf-sapiens/sapiens.html, /Users/ethan/Portfolio_01-camus/camus.html, ...) whose
+  // prefixes relpath() does not strip, so a plain route.get(rel) missed them.
+  const parts = rel.split('/');
+  for (let i = 0; i < parts.length; i++) {
+    const tail = parts.slice(i).join('/');
+    const am = tail.match(/^archive\/([^/]+)\//);
+    if (am) return am[1];
+    if (route.has(tail)) return route.get(tail);
+  }
+  return '';
 }
 
 const acc = new Map();

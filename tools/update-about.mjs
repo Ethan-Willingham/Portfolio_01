@@ -80,24 +80,60 @@ const nowSec = () => Math.floor(Date.now() / 1000);
 // ============================================================================
 function enumeratePosts() {
   const out = [];
-  const idx = readFileSync(join(REPO, 'index.html'), 'utf8');
-  const listHtml = (idx.match(/<ul class="article-list">([\s\S]*?)<\/ul>/) || [, ''])[1];
+  const seen = new Set();                                            // a post lives in one place; first source wins
   const strip = s => s.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
-  for (const block of listHtml.split(/<li class="article-list-item/).slice(1)) {
-    const href = (block.match(/<a class="article-item" href="([^"]+)"/) || [])[1];
-    if (!href || !/^[a-z0-9-]+\.html$/.test(href)) continue;       // skip external / sub-path links
-    if (href === 'grand-motherload.html') continue;                // frozen game demo (Sluice) is excluded from the build viz
-    const title = strip((block.match(/<h2 class="article-item-title">([\s\S]*?)<\/h2>/) || [, ''])[1]);
-    out.push({ key: href.replace(/\.html$/, ''), href, title, kind: 'post' });
+  const titleOf = file => {                                          // a post's own canonical title (og:title), for hub members + archive
+    try {
+      const head = readFileSync(join(REPO, file), 'utf8').slice(0, 4000);
+      return strip((head.match(/<meta property="og:title" content="([^"]+)"/) || head.match(/<title>([^<]+)<\/title>/) || [, ''])[1]);
+    } catch { return ''; }
+  };
+  // pull every <a class="article-item"> out of an <ul class="article-list"> (the
+  // markup the homepage AND the hub pages share). preferFileTitle: a hub labels its
+  // card with a short series name, so take the post's own <title> for the tile.
+  const fromList = (html, preferFileTitle) => {
+    const listHtml = (html.match(/<ul class="article-list">([\s\S]*?)<\/ul>/) || [, ''])[1];
+    for (const block of listHtml.split(/<li class="article-list-item/).slice(1)) {
+      const href = (block.match(/<a class="article-item" href="([^"]+)"/) || [])[1];
+      if (!href || !/^[a-z0-9-]+\.html$/.test(href)) continue;      // skip external / sub-path links
+      if (href === 'grand-motherload.html') continue;               // frozen game demo (Sluice) is excluded from the build viz
+      if (seen.has(href)) continue;
+      seen.add(href);
+      const cardTitle = strip((block.match(/<h2 class="article-item-title">([\s\S]*?)<\/h2>/) || [, ''])[1]);
+      const title = (preferFileTitle && titleOf(href)) || cardTitle;
+      out.push({ key: href.replace(/\.html$/, ''), href, title, kind: 'post' });
+    }
+  };
+
+  // 1. live posts on the homepage
+  fromList(readFileSync(join(REPO, 'index.html'), 'utf8'), false);
+
+  // 2. the series posts that live INSIDE the hub index pages (religion, philosophy,
+  //    ...), not on the homepage. Without this they get no river topic and no
+  //    attribution tile at all. Discover the hubs from gen-hubs.mjs (its own source
+  //    of truth, so new shelves are picked up), falling back to any root page that
+  //    itself renders an article-list.
+  let hubs = [];
+  try {
+    const src = readFileSync(join(REPO, 'tools/gen-hubs.mjs'), 'utf8');
+    hubs = [...src.matchAll(/slug:\s*'([a-z0-9-]+)'/g)].map(m => m[1] + '.html');
+  } catch {}
+  if (!hubs.length) {
+    try {
+      hubs = readdirSync(REPO).filter(f => /^[a-z0-9-]+\.html$/.test(f) && f !== 'index.html' &&
+        /<ul class="article-list">/.test(readFileSync(join(REPO, f), 'utf8')));
+    } catch {}
   }
+  for (const hub of hubs) if (existsSync(join(REPO, hub))) fromList(readFileSync(join(REPO, hub), 'utf8'), true);
+
+  // 3. archived posts
   let dirs = [];
   try { dirs = readdirSync(join(REPO, 'archive'), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch {}
   for (const slug of dirs) {
     const href = `archive/${slug}/${slug}.html`;
-    if (!existsSync(join(REPO, href))) continue;
-    const head = readFileSync(join(REPO, href), 'utf8').slice(0, 4000);
-    const title = strip((head.match(/<meta property="og:title" content="([^"]+)"/) || head.match(/<title>([^<]+)<\/title>/) || [, slug])[1]);
-    out.push({ key: slug, href, title, kind: 'archived' });
+    if (!existsSync(join(REPO, href)) || seen.has(href)) continue;
+    seen.add(href);
+    out.push({ key: slug, href, title: titleOf(href) || slug, kind: 'archived' });
   }
   return out;
 }
