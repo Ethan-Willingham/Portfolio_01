@@ -41,7 +41,7 @@
   // prefer the commit log's real first/last dates so header, day-count and sparkline agree
   function postDates(post) { var e = EFFORT[post.key]; return e ? dateRange(e.firstYMD, e.lastYMD) : dateRange(post.first, post.last); }
 
-  var metric = 'edits'; // 'edits' | 'tokens'
+  var metric = 'tokens'; // 'tokens' | 'edits' — tokens leads, and the grid sorts by it
   var activeModel = null; // model id the grid is filtered to, or null for "all"
 
   // ---------- formatting ----------
@@ -68,6 +68,15 @@
   // value of a model within a post for the current metric
   function val(post, mid) { var r = post.models[mid]; return r ? (metric === 'tokens' ? r.tokens : r.edits) : 0; }
   function total(post) { return metric === 'tokens' ? post.tokens : post.edits; }
+  // order the posts by the current metric (desc), tie-broken by the other metric then key
+  // so the sort is fully deterministic and the same post never "jitters" between equal neighbours
+  function sortPosts() {
+    POSTS.sort(function (a, b) {
+      return (total(b) - total(a)) ||
+        (metric === 'tokens' ? b.edits - a.edits : b.tokens - a.tokens) ||
+        (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+    });
+  }
   // ordered [{m, v, pct}] desc, only models that contributed
   function split(post) {
     var t = total(post) || 1;
@@ -215,11 +224,11 @@
   controls.className = 'ma-controls';
   controls.innerHTML =
     '<div class="ma-toggle" role="tablist" aria-label="Choose how to measure each model\'s share">' +
-    '<button class="ma-seg is-on" role="tab" aria-selected="true" data-m="edits">Changes</button>' +
-    '<button class="ma-seg" role="tab" aria-selected="false" data-m="tokens">Tokens</button>' +
+    '<button class="ma-seg is-on" role="tab" aria-selected="true" data-m="tokens">Tokens</button>' +
+    '<button class="ma-seg" role="tab" aria-selected="false" data-m="edits">Changes</button>' +
     '<span class="ma-seg-glider" aria-hidden="true"></span>' +
     '</div>' +
-    '<p class="ma-controls-note" id="ma-note">Share of file changes each model made to a post.</p>';
+    '<p class="ma-controls-note" id="ma-note">Share of output tokens each model actually wrote into a post.</p>';
 
   // ---------- build: card grid ----------
   function cardInner(post, parts) {
@@ -230,6 +239,7 @@
   }
   var grid = document.createElement('div');
   grid.className = 'cv-grid';
+  sortPosts(); // lay the cards out biggest-first by the default metric (tokens)
   var ANIM = !REDUCE && ('IntersectionObserver' in window);
   POSTS.forEach(function (post) {
     var parts = split(post);
@@ -248,6 +258,56 @@
     var parts = split(post), el = post._el;
     el.innerHTML = cardInner(post, parts);
     growBars(el.querySelector('.cv-bar'));
+  }
+
+  // re-sort + re-lay-out the grid for the current metric using a FLIP glide.
+  // FLIP = measure First rects, reorder the DOM, measure Last rects, Invert each card with a
+  // transform back to where it was, then Play to none. Only `transform` (and the split-bar
+  // `width`) animate, both compositor-cheap, so even the full ~50-card grid re-sorts smoothly
+  // without thrashing layout or pegging the CPU. Reads and writes are batched into separate
+  // passes so the whole move forces only a couple of reflows.
+  var flipTok = 0, flipTimer = 0;
+  function reorderGrid() {
+    var go = !REDUCE && !document.hidden;
+    // FIRST — where each visible card sits right now (one batched read)
+    if (go) POSTS.forEach(function (p) {
+      p._r0 = p._el.style.display === 'none' ? null : p._el.getBoundingClientRect();
+    });
+    // reorder the DOM into the new sort + repaint every tile for the new metric
+    sortPosts();
+    POSTS.forEach(function (p) { paintTile(p); grid.appendChild(p._el); });
+    if (!go) return;
+    // LAST — read all the new positions before touching any styles (no read/write interleave)
+    var r1 = POSTS.map(function (p) {
+      return (!p._r0 || p._el.style.display === 'none') ? null : p._el.getBoundingClientRect();
+    });
+    // INVERT — translate each card back to its old spot, instantly
+    var moved = [];
+    POSTS.forEach(function (p, i) {
+      if (!r1[i]) return;
+      var dx = p._r0.left - r1[i].left, dy = p._r0.top - r1[i].top;
+      if (!dx && !dy) return;
+      var el = p._el;
+      el.style.transition = 'none';
+      el.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
+      el.style.zIndex = '1';
+      moved.push({ el: el, i: i });
+    });
+    void grid.offsetWidth; // commit the inverted start positions in one reflow
+    // PLAY — release the transforms; a soft top-to-bottom wave (capped so it never drags)
+    var tok = ++flipTok;
+    requestAnimationFrame(function () {
+      moved.forEach(function (mv) {
+        mv.el.style.transition = 'transform 0.6s var(--ma-flip) ' + Math.min(mv.i * 6, 150) + 'ms';
+        mv.el.style.transform = 'none';
+      });
+    });
+    // strip the inline transform once it settles, or it would override the CSS hover/scroll transforms
+    if (flipTimer) clearTimeout(flipTimer);
+    flipTimer = setTimeout(function () {
+      if (tok !== flipTok) return;
+      moved.forEach(function (mv) { mv.el.style.transition = ''; mv.el.style.transform = ''; mv.el.style.zIndex = ''; });
+    }, 820);
   }
 
   // staggered reveal: cards rise + fade in and the split bars grow, on scroll-in
@@ -390,11 +450,11 @@
       var on = s.getAttribute('data-m') === metric;
       s.classList.toggle('is-on', on); s.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    controls.querySelector('.ma-toggle').classList.toggle('is-tokens', metric === 'tokens');
+    controls.querySelector('.ma-toggle').classList.toggle('is-edits', metric === 'edits');
     document.getElementById('ma-note').textContent = metric === 'tokens'
       ? 'Share of output tokens each model actually wrote into a post.'
       : 'Share of file changes each model made to a post.';
-    POSTS.forEach(function (p) { paintTile(p); });
+    reorderGrid(); // re-sort the grid by the new metric and FLIP-glide the cards (also repaints)
     if (openPost) paintTray(openPost);
   });
 
