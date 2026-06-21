@@ -30,3 +30,31 @@ assets/Sluice Audio/
 # The shipped post uses the web-optimized derivatives in assets/images/zoom/;
 # keep the masters local, do not commit them.
 assets/images/zoom-src/
+
+# --- Local working scratch (kept on disk, not part of the deployed site) ---
+# Research corpora + dossiers (large; one working dir per post topic).
+research/
+# Throwaway *-lab.html choosers that were never committed.
+debate-lab.html
+kit-cleanup-lab.html
+opening-lab.html
+search-lab.html
+thumbs-lab.html
+voice-lab.html
+# Thumbnail-experiment staging.
+assets/thumbs/_lab/
+# Stale root copy of a post that now lives under archive/.
+nothing-new-under-the-sun.html
+assets/thumbs/nothing-new-under-the-sun.jpg
+# Orphan single-file game build from the abandoned re-freeze (the kept game uses js/sluice.js).
+js/grand-motherload.js
+# Raw scratch captures.
+mc_archive_raw.html
+mc_fadedpage.txt
+# Unused image sources that did not ship.
+assets/photos/
+assets/darwin/darwin-portrait-late.jpg
+assets/darwin/origin-title-page-1859.jpg
+assets/darwin/tree-of-life-diagram-1859.png
+assets/meditation/*-src.jpg
+assets/shop/soviet/masks/
