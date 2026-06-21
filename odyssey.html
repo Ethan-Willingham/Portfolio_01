@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Odyssey, the Long Way Home</title>
+  <meta name="description" content="A guided walk through Homer's Odyssey in Emily Wilson's landmark translation: the founding adventure of the Western imagination, the long journey home and what it costs, unpacked one stop at a time, with the keystone scenes stacked across the great English translators.">
+  <meta property="og:title" content="The Odyssey, the Long Way Home">
+  <meta property="og:description" content="A soldier wins a ten-year war, then spends ten more years trying to get home. A plain-language walk through Homer's Odyssey in Emily Wilson's translation: the monsters, the underworld, the test of the bow, and who you still are when you finally arrive.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/odyssey.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/odyssey-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/odyssey-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE ODYSSEY, THE LONG WAY HOME
+     Approach B, the One-Reading Walk. Read top to bottom: eight
+     stops through the poem in Emily Wilson's 2017 translation,
+     each unpacked in plain language, with collapsible side panels
+     that stack the other translators on the famous lines (the
+     proem, the Cyclops pun, the dead). Sits in the site shell
+     (forest green, parchment, Century Supra / Segoe UI / Commit
+     Mono). The Greek lines need a polytonic-capable serif. No em
+     dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --gk-font: "Cambria","Gentium Plus","GFS Neohellenic","Times New Roman",serif;
+    --early:  #cf9f78;                 /* the grand old verse (Chapman, Pope) */
+    --mid:    #bc9d65;                 /* the 20th-century standards */
+    --modern: #9ec79a;                 /* modern, and Wilson the spine */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .gk { font-family: var(--gk-font); }
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* the opening "fan": one Greek line, many Englishes (after the Tao post) */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-gk { font-family: var(--gk-font); font-size: clamp(1.2rem, 3.6vw, 1.6rem); line-height: 1.5; color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.5rem; }
+  .fan-gk small { display: block; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  .fan-list .feat .e { color: var(--text-bright); }
+  .fan-list .feat .who { color: var(--modern); }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured Wilson passage: where you meet the actual words */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-v { display: block; }                    /* a verse line break inside the passage */
+  .passage-sp { display: block; height: 0.6em; }    /* a stanza gap */
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* a second, quieter passage in the same station */
+  .passage.passage-2 { background: rgba(255,255,255,0.018); border-left-color: var(--rule-strong); }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION / WORD SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gk { font-family: var(--gk-font); font-size: clamp(1.1rem, 3.2vw, 1.35rem); line-height: 1.7; color: var(--text-bright); margin: 0 0 0.2rem; }
+  .stack-translit { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; color: var(--text-dim); font-style: normal; margin: 0 0 0.5rem; line-height: 1.5; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-early  { border-left-color: var(--early); }
+  .stack-mid    { border-left-color: var(--mid); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(158,199,154,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--modern); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .stack-vt .vbr { display: block; }
+  /* the word panel: a single Greek term, many Englishes */
+  .stack-term { padding: 0.95rem 0; border-top: 1px solid var(--rule); }
+  .stack-term:first-of-type { border-top: none; }
+  .stack-term-h { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+  .stack-term-gk { font-family: var(--gk-font); font-size: 1.3rem; color: var(--text-bright); }
+  .stack-term-w { font-family: var(--font-heading); font-style: italic; font-size: 1.05rem; color: var(--accent); }
+  .stack-term-lit { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--text-faint); }
+  .stack-term-b { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.55; color: var(--text); margin: 0; }
+  .stack-term-b b { color: var(--text-bright); font-weight: 600; }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .fan-gk { font-size: 1.12rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1rem; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Odyssey, the long way home</h1>
+    <p class="hero-dek">A soldier wins a ten-year war and then spends ten more years trying to get home to one rocky island. The founding adventure of the West turns out to be about what homecoming costs, and who you are when you finally arrive.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>8 stops</b> through Homer's Odyssey <span class="sep">/</span> featured: <b>Emily Wilson</b> <span class="sep">/</span> ~25 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">A man leaves home for war and comes back twenty years later. Ten years of fighting, then ten years lost at sea, all to reach one small rocky island where his wife and his grown son are waiting, and where almost everyone has long since decided he is dead. That is the Odyssey. It is about twenty-eight centuries old, and it is the story the whole Western imagination grew out of.</p>
+
+      <p>Homer, whoever he was, left two poems. The Iliad is about a war, and about a young man, Achilles, who chooses a short and blazing life over a long and quiet one. The Odyssey is the other kind of story. Its hero, Odysseus, just wants to grow old at home. He is not the strongest man in the room and he knows it, so he lies, hides, waits, and thinks his way out instead. He is the first hero in Western literature who wins by being clever rather than strong, and the poem loves him for it.</p>
+
+      <p>It tells you what kind of man he is in its very first word, and that word has been starting fights for centuries. In Greek it is <em class="gk">polytropos</em>, literally "of many turns." It means both a man the world keeps spinning around, blown off course for years, and a man of many tricks, who can turn any situation to his own advantage. Wandering and cunning, fused in one word. Here is how that opening line has come into English over four hundred years.</p>
+
+      <div class="fan">
+        <p class="fan-gk gk">ἄνδρα μοι ἔννεπε, μοῦσα, πολύτροπον&hellip;<small>Book 1, line 1 &middot; the first word the poem says about its hero is <span class="gk">polytropon</span>, "of many turns"</small></p>
+        <ul class="fan-list">
+          <li><span class="e">The man, O Muse, inform, that many a way wound with his wisdom to his wished stay.</span><span class="who">Chapman, 1615</span></li>
+          <li><span class="e">The man for wisdom's various arts renown'd.</span><span class="who">Pope, 1725</span></li>
+          <li><span class="e">Tell me, O Muse, of that ingenious hero who travelled far and wide.</span><span class="who">Butler, 1900</span></li>
+          <li><span class="e">Tell me, Muse, of the man of many ways, who was driven far journeys.</span><span class="who">Lattimore, 1965</span></li>
+          <li><span class="e">Sing in me, Muse, and through me tell the story of that man skilled in all ways of contending.</span><span class="who">Fitzgerald, 1961</span></li>
+          <li><span class="e">Sing to me of the man, Muse, the man of twists and turns.</span><span class="who">Fagles, 1996</span></li>
+          <li class="feat"><span class="e">Tell me about a complicated man.</span><span class="who">Wilson, 2017</span></li>
+        </ul>
+      </div>
+
+      <p>Same line, same man. One translator makes him a paragon, renowned "for wisdom's various arts." Another calls him "the man of twists and turns." And Emily Wilson, in 2017, just calls him complicated. That plain word does something the grand ones do not. A complicated man is not simply clever; he is hard to judge, and maybe not entirely good. Which is exactly the man the rest of the poem shows you: a liar, a raider, a husband, a survivor, often all at once.</p>
+
+      <p>We are going to walk the whole poem in Wilson's translation. There are dozens of good ones, and the famous older versions show up all the way through, but hers is the one to read first. It was the first English Odyssey published by a woman, in 2017, more than four hundred years after the first English one. She wrote it in plain, quick iambic pentameter, the natural meter of English, and held herself to exactly as many lines as the Greek, so it moves at Homer's speed instead of swelling up the way translations usually do. Nothing in it hides behind grandeur. You always know exactly what is happening.</p>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/images/odyssey-bocklin-calypso.jpg" width="1500" height="1040" loading="lazy" decoding="async" alt="Arnold Bocklin's 1882 painting: a dark cloaked figure of Odysseus stands on a rock with his back turned, gazing out over a pale sea, while the goddess Calypso reclines on a red cloth at the mouth of a cave to the right, holding a lyre.">
+        <figcaption class="u-figure-cap">Arnold Böcklin, <em>Odysseus and Calypso</em> (1882). The goddess Calypso kept Odysseus on her island for seven years and offered him a thing no other hero is offered: immortality, youth that never ends, if only he would stay. He turned it down. He wanted to grow old at home with his wife more than he wanted to be a god in paradise with the wrong person. That refusal is the engine of the whole poem.</figcaption>
+      </figure>
+
+      <p>One thing to know before we start, because you will feel it on every page. The same phrases keep coming back. Dawn is forever "rosy-fingered," the sea is "wine-dark," Odysseus is "much-enduring." These are not a tic. They are tools.</p>
+
+      <aside class="u-callout">
+        <p class="u-callout-k">Why the same phrases keep coming back</p>
+        <p class="u-callout-body">In the 1930s a young scholar named Milman Parry proved that Homer's poems were built to be sung out loud, from memory, before anyone wrote them down. The fixed phrases, the "rosy-fingered dawn" and the rest, are a kit of pre-shaped, metrically perfect pieces a singer could reach for to keep the verse flowing while he thought ahead. Parry and his student Albert Lord went to what was then Yugoslavia and recorded living bards doing exactly this, improvising hour-long epics from the same kind of toolbox. So the repetition is the sound of a performance, not a poem read silently. Wilson does something bold with it: she <em>varies</em> the epithets instead of fixing them, because in a printed book the same tag repeated three hundred times reads as a glitch, not an anchor.</p>
+      </aside>
+
+      <p>Eight stops, following Odysseus from the war to his own front door. His words, in Wilson's English, come first at each stop. Then we unpack them. Where a famous line has been turned into English a dozen ways, open the panel to see the translators split.</p>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">A complicated man</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 8</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-complicated" data-label="A complicated man" data-tag="Book 1">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The opening lines</p>
+      <h2 class="station-h">A complicated man</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 1, the proem</p>
+        <div class="passage-t">
+          <p>Tell me about a complicated man.<span class="passage-v">Muse, tell me how he wandered and was lost</span><span class="passage-v">when he had wrecked the holy town of Troy,</span><span class="passage-v">and where he went, and who he met, the pain</span><span class="passage-v">he suffered in the storms at sea, and how</span><span class="passage-v">he worked to save his life and bring his men</span><span class="passage-v">back home. He failed to keep them safe; poor fools,</span><span class="passage-v">they ate the Sun God's cattle, and the god</span><span class="passage-v">kept them from home. Now goddess, child of Zeus,</span><span class="passage-v">tell the old story for our modern times.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Ten lines, and the whole poem is already in the room. A wanderer, lost at sea. A city he destroyed behind him. Men he tried and failed to save. And at the very front, before the name Odysseus is even spoken, that one word for the man himself: complicated.</p>
+        <p>This is the hero who is not a fighter first. Greek has a word for his real talent, <em class="gk">metis</em>, which means cunning, craft, the intelligence that finds an angle. Odysseus is its human form. Where Achilles in the Iliad would put his head down and charge, Odysseus looks for the trick, the disguise, the lie that gets him through. The poem is openly thrilled by this. It calls him a master of schemes and is not embarrassed to.</p>
+        <p>Notice what the proem refuses to do, though. It will not call him good. It tells you he sacked a holy city, that his own recklessness and his crew's got everyone but him killed. Wilson's "complicated" keeps that door open in a way the older, grander translations quietly shut. He is a man worth admiring and a man who leaves a trail of bodies, and the poem asks you to hold both for twelve thousand lines.</p>
+        <p>And the goal is named right away: home. Not glory, not conquest, not a throne in some better place. The engine of this story is <em class="gk">nostos</em>, the Greek word for homecoming, the safe return. It is the root we kept in "nostalgia," the ache for a place you cannot get back to. Everything Odysseus survives, he survives to get home. That is what makes him strange among heroes, and it is what makes the poem feel modern. He is trying to do the most ordinary thing in the world.</p>
+      </div>
+
+      <details class="stack">
+        <summary>One word, eight ways: <span class="gk" style="text-transform:none;letter-spacing:0">polytropos</span></summary>
+        <div class="stack-body">
+          <p class="stack-gk gk">ἄνδρα μοι ἔννεπε, μοῦσα, πολύτροπον, ὃς μάλα πολλὰ πλάγχθη&hellip;</p>
+          <p class="stack-translit">andra moi ennepe, mousa, polytropon, hos mala polla planchthē...</p>
+          <p class="stack-gloss">The first real word about the hero is <em class="gk">polytropon</em>: <em>poly</em> (many) + <em>tropos</em> (turn). It points two directions at once, a man <em>turned</em> by the world (tossed around, much-wandering) and a man <em>of turns</em> (shifty, versatile, wily). No single English word holds both, so every translator has to choose what to lose.</p>
+
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">"that many a way wound with his wisdom"</span><span class="stack-term-lit">Chapman, 1615</span></div>
+            <p class="stack-term-b">The Elizabethan version Keats stayed up all night reading. It keeps the literal "many a way" and ties it straight to wisdom, so the wandering and the cleverness are one motion.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">"for wisdom's various arts renown'd"</span><span class="stack-term-lit">Pope, 1725</span></div>
+            <p class="stack-term-b">Pope drops the wandering entirely and makes him pure intellect, "renowned," polished, heroic. The most flattering reading on the page, and the least troubled.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">"the man of many devices"</span><span class="stack-term-lit">Murray, 1919</span></div>
+            <p class="stack-term-b">The scholar's literal answer: <em>devices</em>, tricks, schemes. Accurate and a little cold. This is the cunning side with the wandering filed off.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">"the man of twists and turns"</span><span class="stack-term-lit">Fagles, 1996</span></div>
+            <p class="stack-term-b">Fagles tries to keep both halves: a man twisted by his journey <em>and</em> a man who twists. The closest the modern verse comes to the doubleness of the Greek.</p>
+          </div>
+          <div class="stack-term">
+            <div class="stack-term-h"><span class="stack-term-w">"a complicated man"</span><span class="stack-term-lit">Wilson, 2017 <span class="star">featured</span></span></div>
+            <p class="stack-term-b">Wilson reaches for the one English word that is itself ambiguous. "Complicated" can mean ingenious or it can mean trouble, a person you cannot sum up. It even carries an old medical sense, a "complicated" case, tangled and hard to treat. She is not smoothing him into a hero. She is warning you he is a knot.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-lotus" data-label="The land of forgetting" data-tag="Book 9">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> The Lotus-Eaters</p>
+      <h2 class="station-h">The land where you forget home</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 9, the Lotus-Eaters</p>
+        <div class="passage-t">
+          <p>The scouts encountered humans, Lotus-Eaters,<span class="passage-v">who did not hurt them. They just shared with them</span><span class="passage-v">their sweet delicious fruit. But as they ate it,</span><span class="passage-v">they lost the will to come back and bring news</span><span class="passage-v">to me. They wanted only to stay there,</span><span class="passage-v">feeding on lotus with the Lotus-Eaters.</span></p>
+          <p>They had forgotten home. I dragged them back<span class="passage-v">in tears, forced them on board the hollow ships.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The first danger Odysseus meets on the way home is not a monster. It is a snack. He sends three men ashore on the coast of the Lotus-Eaters, a people who live on a sweet flowering plant, and the locals, friendly enough, share some. Whoever eats it stops wanting anything else. Not drugged into sleep, not hurt. Just emptied of the one thing the whole poem runs on: the desire to go home.</p>
+        <p>That is what makes it the truest temptation in the book, and a strange one to put first. There is no fight here. The men who taste the lotus are not in pain. They are, in a way, happy. They simply no longer care about Ithaca, or their families, or who they used to be. Contentment that costs you your whole purpose is still a kind of death, and Odysseus treats it like one. He does not argue with them. He hauls them back to the ship in tears, ties them under the benches so they cannot swim back to the shore, and rows out fast before anyone else can take a bite.</p>
+        <p>Notice how gentle the trap is. Most of what nearly stops Odysseus getting home is not violence. It is comfort. A soft island, a kind goddess, an easy forgetting. The poem keeps asking the same quiet question: how much would you have to be offered to stop trying? The lotus is just the first and bluntest version of it. Later the offer will be a goddess, and then immortality itself.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The opposite of going home is not death. It is forgetting you ever wanted to.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-cyclops" data-label="Nobody" data-tag="Book 9">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> The Cyclops</p>
+      <h2 class="station-h">Nobody blinds the giant</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 9, in the Cyclops' cave</p>
+        <div class="passage-t">
+          <p>Cyclops, you asked my name. I will reveal it;<span class="passage-v">then you must give the gift you promised me,</span><span class="passage-v">of hospitality. My name is Noman.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the scene everyone remembers, and it is the clearest demonstration of what Odysseus is for. He and his men get trapped in the cave of Polyphemus, a one-eyed giant, a Cyclops, who rolls a boulder across the door that no human could move and starts eating the crew two at a time. Strength is useless here. If they kill the giant in his sleep, they die in the cave, sealed in behind that rock. They need him alive to open the door, and blind so he cannot stop them leaving. So Odysseus thinks.</p>
+        <p>First the setup. He gets the giant drunk on strong wine, and when Polyphemus, pleased, asks his name and promises him a "guest-gift" in return, Odysseus tells him: my name is Noman. Then, once the giant is in a wine-heavy sleep, they drive a sharpened, fire-hardened stake into his single eye and put it out.</p>
+        <p>Now the trick pays off. The blinded giant roars, and the other Cyclopes come running to the cave to ask what is wrong. Who is hurting you, they shout through the rock. And Polyphemus bellows back the literal truth: Noman is killing me. So they shrug and leave. If nobody is hurting you, they call back, you must be sick, and sickness comes from the gods. The pun is the whole point. The name that means "no one" turns a cry for help into a punchline, and the giant's neighbors walk away. Cleverness has done what an army could not.</p>
+        <p>But the poem will not let him off clean, and this is where you see how careful it is about its own hero. Rowing away, safe, Odysseus cannot resist. He shouts his real name back across the water, so the giant will know who beat him. It is pride, the need to be known, the opposite of "Noman," and it is a catastrophe. Polyphemus is a son of Poseidon, god of the sea. Now he knows exactly whose son to curse. The same sea Odysseus has to cross to get home belongs to the father of the monster he just taunted. His cunning saves his life; his vanity costs him ten years.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The pun, six ways: what do you call "Nobody"?</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The joke only works if the false name sounds like the ordinary word for "no one." In Greek the name is <em class="gk">Outis</em>, "no one," and when the other giants ask in the negative, the form they use, <em class="gk">me tis</em>, sounds just like <em class="gk">metis</em>, the word for cunning. So in the very sound of the giant's cry, the man called Nobody <em>is</em> Cleverness. The pun has been noted since antiquity, and every English translator has to invent a name that can do the same double duty. Here is the blinded giant's cry to his neighbors, the moment the trick lands.</p>
+
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Alexander Pope</span><span class="stack-vy">1725</span></div>
+            <div class="stack-vt">"Friends, Noman kills me; Noman in the hour<span class="vbr">of sleep, oppresses me with fraudful power."</span></div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Samuel Butler</span><span class="stack-vy">1900</span></div>
+            <div class="stack-vt">"Noman is killing me by fraud! Noman is killing me by force!"</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">Robert Fitzgerald</span><span class="stack-vy">1961</span></div>
+            <div class="stack-vt">"Nohbdy, Nohbdy's tricked me, Nohbdy's ruined me!"</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">Richmond Lattimore</span><span class="stack-vy">1965</span></div>
+            <div class="stack-vt">"Good friends, Nobody is killing me by force or treachery."</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Robert Fagles</span><span class="stack-vy">1996</span></div>
+            <div class="stack-vt">"Nobody, friends... Nobody's killing me now by fraud and not by force!"</div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Emily Wilson <span class="star">featured</span></span><span class="stack-vy">2017</span></div>
+            <div class="stack-vt">"My friends! Noman is killing me<span class="vbr">by tricks, not force."</span></div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Fitzgerald's "Nohbdy" is the boldest: he respells the real word so it still reads as "nobody" when it is shouted. Wilson keeps it plainest, "Noman," one short syllable doing all the work, and a few lines later lets Odysseus savor his own joke, calling it "the no-man maneuver."</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-dead" data-label="The kingdom of the dead" data-tag="Book 11">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> The Underworld</p>
+      <h2 class="station-h">The kingdom of the dead</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 11, Achilles in the underworld</p>
+        <div class="passage-t">
+          <p>Odysseus, you must not comfort me<span class="passage-v">for death. I would prefer to be a workman,</span><span class="passage-v">hired by a poor man on a peasant farm,</span><span class="passage-v">than rule as king of all the dead.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Before the Sirens, before the deadly strait, the road home runs straight down into the land of the dead. Odysseus has to go there to ask directions from a dead prophet. It is the still center of the poem, and the most haunted. He digs a pit, fills it with blood, and the ghosts come crowding up to drink and speak: his own mother, who he did not know had died; the soldiers he fought beside at Troy; the famous dead. And then Achilles.</p>
+        <p>Achilles is the whole point of the Iliad, the greatest warrior who ever lived, the man who knowingly traded a long life for eternal fame and got it. If anyone should be content in death, it is him. He won the deal he made. So Odysseus, trying to be kind, greets him as a prince among the dead, says surely he rules down here, surely death is not so bad for <em>him</em>. And Achilles cuts him off.</p>
+        <p>Read the lines again. The greatest hero in Greek literature says he would rather be alive as the lowest, poorest, most landless hired hand, breaking his back for some dirt-poor farmer in the sun, than be king of all the dead. Everything the warrior code promised, the glory worth dying for, he now says he would trade in a heartbeat for one more ordinary mortal day. It is the bluntest thing anyone says in either poem, and it quietly tears down the entire value system of the Iliad. Glory is cold. Being alive, however small your life, is the only good there is.</p>
+        <p>And it is the secret argument of the whole Odyssey, spoken out loud by the one man with the authority to say it. This is the poem of the hero who chose to live. Odysseus turned down the goddess and her offer of immortality; he is clawing his way back to a small rocky island and a wife who will grow old and die. Here, in the dark, Achilles tells him he chose right. A real and mortal life, with an end on it, beats every glory and every paradise. Keep going home.</p>
+      </div>
+
+      <details class="stack">
+        <summary>"Better a slave on earth": one line, seven translators</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">This may be the most quoted passage in Homer, and translators have sweated it for three hundred years, because everything depends on how hard the contrast bites. The Greek has Achilles wishing to be a <em>thes</em>, a hired laborer, the lowest free worker there was, bound to a man who himself has no land. Watch the floor he is willing to take just to be breathing.</p>
+
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Alexander Pope</span><span class="stack-vy">1726</span></div>
+            <div class="stack-vt">"Rather I'd choose laboriously to bear<span class="vbr">a weight of woes, and breathe the vital air,</span><span class="vbr">a slave to some poor hind that toils for bread,</span><span class="vbr">than reign the sceptred monarch of the dead."</span></div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">Samuel Butler</span><span class="stack-vy">1900</span></div>
+            <div class="stack-vt">"I would rather be a paid servant in a poor man's house and be above ground than king of kings among the dead."</div>
+          </div>
+          <div class="stack-v stack-early">
+            <div class="stack-vh"><span class="stack-vn">A. T. Murray</span><span class="stack-vy">1919</span></div>
+            <div class="stack-vt">"I should choose, so I might live on earth, to serve as the hireling of another, of some portionless man whose livelihood was but small, rather than to be lord over all the dead."</div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">Robert Fitzgerald</span><span class="stack-vy">1961</span></div>
+            <div class="stack-vt">"Better, I say, to break sod as a farm hand<span class="vbr">for some poor country man, on iron rations,</span><span class="vbr">than lord it over all the exhausted dead."</span></div>
+          </div>
+          <div class="stack-v stack-mid">
+            <div class="stack-vh"><span class="stack-vn">Richmond Lattimore</span><span class="stack-vy">1965</span></div>
+            <div class="stack-vt">"I would rather follow the plow as thrall to another<span class="vbr">man, one with no land allotted him and not much to live on,</span><span class="vbr">than be a king over all the perished dead."</span></div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">Robert Fagles</span><span class="stack-vy">1996</span></div>
+            <div class="stack-vt">"By god, I'd rather slave on earth for another man,<span class="vbr">some dirt-poor tenant farmer who scrapes to keep alive,</span><span class="vbr">than rule down here over all the breathless dead."</span></div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Emily Wilson <span class="star">featured</span></span><span class="stack-vy">2017</span></div>
+            <div class="stack-vt">"I would prefer to be a workman,<span class="vbr">hired by a poor man on a peasant farm,</span><span class="vbr">than rule as king of all the dead."</span></div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Pope needs four grand rhyming lines and a "sceptred monarch" to land it. Wilson needs three plain ones and the flat word "workman." Same despair, opposite music: the older the translation, the more it dresses up the very ordinariness Achilles is begging for.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-sirens" data-label="The song you must not hear" data-tag="Book 12">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> The Sirens</p>
+      <h2 class="station-h">The song you are not allowed to hear</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 12, the Sirens' song</p>
+        <div class="passage-t">
+          <p>Odysseus! Come here! You are well-known<span class="passage-v">from many stories! Glory of the Greeks!</span><span class="passage-v">Now stop your ship and listen to our voices.</span><span class="passage-v">All those who pass this way hear honeyed song,</span><span class="passage-v">poured from our mouths. The music brings them joy,</span><span class="passage-v">and they go on their way with greater knowledge,</span><span class="passage-v">since we know everything the Greeks and Trojans</span><span class="passage-v">suffered in Troy, by gods' will; and we know</span><span class="passage-v">whatever happens anywhere on earth.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>We have turned the Sirens into pop-up ads and pretty mermaids, so it is easy to miss what they are actually selling. Listen to the pitch. They do not offer Odysseus sex, or wealth, or rest. They offer him <em>knowledge</em>. We know everything that happened at Troy, they sing, and everything that happens anywhere on earth. Stop the ship, and you can know it all.</p>
+        <p>Wilson is precise about this where other translators get dreamy. Her Sirens sing from their "mouths," not their lips; the temptation is in the words, not the bodies. For a man whose whole identity is wanting to understand, to learn every mind and every city, this is the most personal trap in the poem. The thing that makes Odysseus great, his hunger to know, is exactly the hook. And it is fatal: the shore below the Sirens is a heap of rotting men who stopped to listen.</p>
+        <p>His solution is the most Odysseus thing in the book. He does not avoid the temptation, and he does not pretend he is strong enough to resist it. He splits the difference with a trick. He plugs his crew's ears with wax so they hear nothing and can row straight past, but leaves his own ears open, because he wants to hear, and has himself tied to the mast with orders not to be released no matter how he begs. So he gets to hear the forbidden song and live. He is the only man who does. He just has to be physically unable to act on what he wants. That is the whole human comedy of him: he knows his own weakness exactly, and engineers around it.</p>
+      </div>
+
+      <figure class="u-figure">
+        <img class="u-figure-img" src="assets/images/odyssey-waterhouse-sirens.jpg" width="1296" height="641" loading="lazy" decoding="async" alt="John William Waterhouse's 1891 painting Ulysses and the Sirens: Odysseus is lashed to the mast of his ship as his oarsmen row, while seven bird-bodied Sirens with women's heads swoop in close around the crew.">
+        <figcaption class="u-figure-cap">John William Waterhouse, <em>Ulysses and the Sirens</em> (1891). The crew row with stopped ears while Odysseus, bound to the mast, is left to hear. Waterhouse paints the Sirens the old way, as birds with women's faces, closer to Homer than the later mermaid. The danger was never beauty. It was the song.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-strait" data-label="Between monster and whirlpool" data-tag="Book 12">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> Scylla and Charybdis</p>
+      <h2 class="station-h">Between the monster and the whirlpool</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 12, Circe's counsel</p>
+        <div class="passage-t">
+          <p>Row fast, and steer your ship alongside Scylla,<span class="passage-v">since it is better if you lose six men</span><span class="passage-v">than all of them.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The same stretch of Book 12 that gives us the Sirens gives us the cruelest lesson in the poem, and this one has no trick in it. Just past the Sirens, the route home runs through a narrow channel with a death on each side. On one cliff lives Scylla, a monster with six heads on six long necks, who snatches and eats exactly six sailors as a ship passes, one for each mouth. Below the other side is Charybdis, a whirlpool that swallows the whole sea three times a day and spits it back, and would take the entire ship at once.</p>
+        <p>Odysseus asks the goddess Circe the obvious question: how do I fight them off, how do I save everyone? Her answer is the hardest thing anyone tells him on the whole journey. You do not fight. You row hard along Scylla's cliff and you let her take six men, because the only other option is Charybdis taking all of them. Better to lose six than lose everyone. There is no version where the ship comes through whole.</p>
+        <p>This is the exact opposite of the Cyclops. In the cave, cleverness solved the problem completely, and nobody on Odysseus' side had to die. Here there is no clever solution, only arithmetic, and the leader's whole job is to do the math and live with it. Circe even tells him not to warn the men, because if they know, they will drop the oars and hide, and then Charybdis gets all of them. So Odysseus steers the ship in close, says nothing, and watches six of his men get plucked off the deck screaming his name. He calls it the most pitiable thing he saw in all his wanderings, worse than any monster, because there was nothing to outwit. He just had to choose the loss and keep rowing.</p>
+        <p>We still carry the phrase. To be caught "between Scylla and Charybdis" is to be stuck between two bad outcomes with no good one on offer, which is a fair description of most real decisions once you are the one who has to make them.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>Some problems you outwit. Some you can only pay for. Telling the two apart, and paying up when you have to, is most of what it means to be in charge.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-bow" data-label="The string of the bow" data-tag="Book 21">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> The Contest of the Bow</p>
+      <h2 class="station-h">The string of the bow</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 21, Penelope fetches the bow</p>
+        <div class="passage-t">
+          <p>and reached to lift the bow<span class="passage-v">down from its hook, still in its shining case.</span><span class="passage-v">She sat down on the floor to take it out,</span><span class="passage-v">resting it on her lap, and started sobbing</span><span class="passage-v">and wailing as she saw her husband's bow.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Odysseus finally reaches Ithaca around the poem's halfway mark, but he cannot just walk in the door. His house has been occupied for years by more than a hundred young men, the suitors, who assume he is dead and are eating him out of house and home while they pressure his wife, Penelope, to pick one of them and remarry. They would kill his son to clear the way. So Odysseus comes home in disguise, as a ragged old beggar, and watches, and waits, and counts. The man who survived the Cyclops by hiding his name now hides his whole self inside his own house.</p>
+        <p>Penelope, who has held them off for years with tricks of her own, finally sets the contest that will decide everything. She brings out the great bow her husband left behind, and weeps over it, because to her it is the relic of a dead man. The rule: whichever suitor can string Odysseus' bow and shoot an arrow clean through a row of twelve axe-heads can have her. None of them can even bend it enough to get the string on. It is too stiff, and they are too soft. One by one they fail, and grease the bow with fat, and fail again. Then the ragged beggar asks for a turn, and the room laughs at him.</p>
+
+        <div class="passage passage-2">
+          <p class="passage-k">Wilson / Book 21, the beggar strings it</p>
+          <div class="passage-t">
+            <p>After examining the mighty bow<span class="passage-v">carefully, inch by inch, as easily</span><span class="passage-v">as an experienced musician stretches</span><span class="passage-v">a sheep-gut string around a lyre's peg</span><span class="passage-v">and makes it fast, Odysseus, with ease,</span><span class="passage-v">strung the great bow. He held it in his right hand</span><span class="passage-v">and plucked the string, which sang like swallow-song,</span><span class="passage-v">a clear sweet note.</span></p>
+          </div>
+        </div>
+
+        <p>Look at the picture Homer reaches for at the biggest moment in the book. Not a soldier flexing, not a strongman. A musician, calm, fitting a new string to a lyre and tuning it. Odysseus turns the bow over, checks it like the craftsman he is, and strings the thing a dozen strong young men could not bend, without a grunt. Then he plucks it, and the string sings, high and clear as a swallow. The disguise is still on. But anyone in that hall just learned, in one quiet motion, exactly who the old beggar is. The body remembers the bow.</p>
+        <p>It is a quietly perfect way to bring him home. Not by shouting his name, which last time cost him ten years, but by doing the one thing only he can do. Identity here is not a word you announce. It is a skill in the hands, something the real Odysseus can simply <em>do</em> that no impostor could fake. The next thing he sends through the line of axes is not a contest arrow. It is the first shot of the reckoning.</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 8 ============================ -->
+    <section class="station" id="st-bed" data-label="Who you still are" data-tag="Books 22 to 23">
+      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> The Reckoning and the Bed</p>
+      <h2 class="station-h">Who you still are when you get back</h2>
+
+      <div class="passage">
+        <p class="passage-k">Wilson / Book 22, the first arrow</p>
+        <div class="passage-t">
+          <p>Odysseus ripped off his rags. Now naked,<span class="passage-v">he leapt upon the threshold with his bow</span><span class="passage-v">and quiverful of arrows, which he tipped</span><span class="passage-v">out in a rush before his feet, and spoke.</span></p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The second he has the strung bow in his hands, the disguise comes off. Odysseus jumps onto the threshold, the only way out of the hall, pours his arrows at his feet, and starts killing. The suitors are trapped in the room where they spent years eating his food, and someone has quietly removed all the weapons from the walls. It is not a duel. It is an execution, and the poem does not flinch from it, or pretend the man we have followed home is gentle. He is not. He is the same person who blinded the Cyclops, and he has come home to a slaughter.</p>
+        <p>When it is over and the hall has been washed of blood, the hardest reunion in the poem is still waiting. Penelope comes down to meet the man who claims to be her husband, and she does not run to him. She has been lied to by hopeful strangers for twenty years. She has survived exactly as he has, by trusting no one and giving nothing away. So she tests him. She calmly tells the housekeeper to move their bed out of the bedroom and make it up for him there. And Odysseus, who has lied his way through the entire poem without a crack, finally breaks.</p>
+
+        <div class="passage passage-2">
+          <p class="passage-k">Wilson / Book 23, the secret of the bed</p>
+          <div class="passage-t">
+            <p>Woman! Your words have cut my heart! Who moved<span class="passage-v">my bed? It would be difficult for even</span><span class="passage-v">a master craftsman, though a god could do it</span><span class="passage-v">with ease. No man, however young and strong,</span><span class="passage-v">could pry it out. There is a trick to how</span><span class="passage-v">this bed was made. I made it, no one else.</span><span class="passage-v">Inside the court there grew an olive tree</span><span class="passage-v">with delicate long leaves, full-grown and green,</span><span class="passage-v">as sturdy as a pillar, and I built</span><span class="passage-v">the room around it.</span></p>
+          </div>
+        </div>
+
+        <p>The bed cannot be moved. He built it himself, years ago, around a living olive tree still rooted in the ground, and made the trunk one of its posts. Only three people ever knew. So when she says "move the bed," she is not asking. She is laying a trap of exactly the kind he would lay, and his outrage is the password. No impostor could be angry about that secret, because no impostor would know it. She has caught the master of disguise with his own weapon, and only now, sure at last, does she let herself cross the room.</p>
+        <p>Look at what the password is. Their marriage is built, literally, around a tree that grew out of the earth and cannot be dug up without killing it. That is the image the whole long poem has been rowing toward: home as the one thing rooted, immovable, still alive after twenty years. He crossed the whole world, turned down a goddess and her offer of eternal youth, walked through the kingdom of the dead, to get back to a bed he could not have taken with him if he tried.</p>
+        <p>And notice the real answer to the question the poem has been asking. Who are you when you finally get home? Not the war hero, not the king, not the man of many tricks. The thing that proves him is the smallest, most private fact in his life: how he built a bed for his wife. After everything, the self that survives is the husband. That is who came home.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>He could outwit a god's son and a field of monsters. The one person he could not fool, and did not want to, was the woman who had learned to survive the same way he did.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ CLOSE ============================ -->
+    <section class="sec">
+      <h2 class="sechead">Why it is still the first story</h2>
+      <p>The Odyssey is not a moral code. It does not tell you how to live, the way the other old books in this series do. It is something more basic and harder to replace: the first long story the West told itself about a person, and almost every story since has its fingerprints on it. The journey home, the monsters that are really temptations, the hero who lies and improvises and is loved anyway, the loyal wife and the lost years, the return in disguise, the reckoning. We have been retelling this for twenty-eight centuries because Homer got there first and got it right.</p>
+      <p>And under the adventure, a single stubborn idea. Of every prize the poem dangles, glory, comfort, knowledge, immortal life with a goddess, Odysseus turns down all of it for the smallest one: to go home, grow old, and die as himself in the place he came from. Achilles, in the dark, told him that was the right choice. The whole poem is the case for it. Be clever, endure everything, want the ordinary thing, and find out, when you finally get there, whether you are still the person who left.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The featured translation throughout is <strong>Emily Wilson's</strong> <em>The Odyssey</em> (W. W. Norton, 2017), the first English translation of the poem published by a woman, written in iambic pentameter and held to the same line count as the Greek. Each quotation is reproduced for study and comparison, with the translator and the book named, and the side panels stack the other major English versions on the lines where they most famously diverge.</p>
+      <ul class="src-list">
+        <li><b>The featured walk</b> is Emily Wilson (2017). Wilson is Professor of Classical Studies at the University of Pennsylvania; she went on to publish a translation of the Iliad in 2023.</li>
+        <li><b>The comparison panels</b> stack George Chapman (1615), Alexander Pope (1725 to 1726), Samuel Butler (1900, prose), A. T. Murray (the 1919 Loeb, prose), Robert Fitzgerald (1961), Richmond Lattimore (1965), and Robert Fagles (1996). The public-domain versions (Chapman, Pope, Butler, Murray) are quoted from <a href="https://www.gutenberg.org/ebooks/author/705">Project Gutenberg</a>, <a href="https://en.wikisource.org/wiki/The_Odyssey">Wikisource</a>, and the <a href="https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0136">Perseus Digital Library</a>.</li>
+        <li><b>The Greek</b> is the standard text from the <a href="https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0135">Perseus Digital Library</a> at Tufts. The Odyssey is roughly 12,100 lines of dactylic hexameter, composed in Homeric Greek around the late 8th or early 7th century BCE.</li>
+        <li><b>On Homer and the oral tradition</b>, the account of Milman Parry and Albert Lord follows the standard scholarship, including Lord's <em>The Singer of Tales</em> (1960) and the Wikipedia summaries of the <a href="https://en.wikipedia.org/wiki/Homeric_Question">Homeric Question</a> and <a href="https://en.wikipedia.org/wiki/Epithets_in_Homer">Homeric epithets</a>. The Greek wordplay linking <em class="gk">Outis</em> ("no one") to <em class="gk">metis</em> ("cunning") follows the <a href="https://dcc.dickinson.edu/homer-odyssey/intro/essays-book-9">Dickinson College Commentaries</a> on Book 9.</li>
+      </ul>
+      <p>A few honest notes. "Homer" is a convenience: most scholars now think the Iliad and the Odyssey come out of a long oral tradition and were probably not even composed by the same poet, with the Odyssey the later of the two. The famous adventures (the Cyclops, the Sirens, the dead) are not told straight; Odysseus narrates them himself, as a flashback, to an audience at a royal feast, so the most fantastic parts of the poem come from the mouth of its most accomplished liar. And the "first woman to translate the Odyssey" line needs its qualifier: Anne Dacier published a French Odyssey in 1716, and other women have translated Homer into other languages; Wilson's is the first published English translation by a woman. The breakdowns are mine.</p>
+      <p class="colo-note">The image on the homepage card is the "Siren Vase," an Athenian red-figure stamnos painted about 480 to 470 BCE (British Museum, 1843,1103.31), showing Odysseus bound to the mast as the Sirens fly around the ship. It is roughly as old as the written poem itself. The painting in the opening is Arnold Böcklin's <em>Odysseus and Calypso</em> (1882, Kunstmuseum Basel), and the Sirens are John William Waterhouse's <em>Ulysses and the Sirens</em> (1891, National Gallery of Victoria). All three are in the public domain.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/odyssey.js" defer></script>
+</body>
+</html>
