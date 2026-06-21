@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Prince, Power Without the Moralizing</title>
+  <meta name="description" content="A guided walk through Machiavelli's The Prince in W. K. Marriott's translation: the first honest manual of power, stripped of the moralizing, unpacked one hard lesson at a time, with the famous lines stacked across the Italian and the great English translators.">
+  <meta property="og:title" content="The Prince, Power Without the Moralizing">
+  <meta property="og:description" content="A tortured ex-official, banished to a farm, sat down and wrote the most honest and most hated book about power ever published. A plain-language walk through Machiavelli's Prince: how not to be good, feared or loved, the lion and the fox, and the line he never actually wrote.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/machiavelli.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/machiavelli-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/machiavelli-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE PRINCE, POWER WITHOUT THE MORALIZING
+     Approach B, the One-Reading Walk. Read top to bottom: seven
+     stops through the argument of Machiavelli's Prince in W. K.
+     Marriott's 1908 translation, each unpacked in plain language,
+     with collapsible side panels that stack the Italian and the
+     modern translators on the famous lines (feared or loved, the
+     lion and the fox, the misquote, fortune is a woman). Sits in
+     the site shell (forest green, parchment, Century Supra / Segoe
+     UI / Commit Mono). No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --src:     #bc9d65;               /* the Italian source line */
+    --classic: #cf9f78;              /* the classic English (Marriott, 1908) */
+    --modern:  #9ec79a;              /* the modern translators (Bull, Mansfield) */
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8.4vw, 5rem); line-height: 1.03; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 48ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
+  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
+  .sec em, .prose em { font-style: italic; }
+  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+  .it { font-family: var(--font-heading); font-style: italic; }   /* an Italian word, inline */
+  .sec .u-figure { margin: 2.4rem 0 0.5rem; }
+
+  /* the opening "fan": one Italian line, the translators underneath (after the Tao post) */
+  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .fan-src { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.16rem, 3.4vw, 1.5rem); line-height: 1.5; color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.5rem; }
+  .fan-src small { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
+  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
+  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
+  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.1rem; line-height: 1.4; color: var(--text); }
+  .fan-list .who { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
+  .fan-list .feat .e { color: var(--text-bright); }
+  .fan-list .feat .who { color: var(--modern); }
+  @media (min-width: 680px){
+    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
+    .fan-list .who { text-align: right; }
+  }
+
+  /* ---------- STICKY STATION RAIL ---------- */
+  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
+  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
+  .walk-nav:disabled { opacity: 0.3; cursor: default; }
+  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
+  .walk-jump:hover { background: rgba(255,255,255,0.05); }
+  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
+  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
+  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
+  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
+  .walk-count b { color: var(--accent); font-weight: 400; }
+
+  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
+  .walkpop[hidden] { display: none; }
+  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
+  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
+  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
+  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
+  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
+  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
+
+  /* ---------- A STATION ---------- */
+  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
+  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* the featured passage: where you meet the actual words (Marriott) */
+  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
+  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
+  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--text-bright); }
+  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
+  .passage-t p:last-child { margin-bottom: 0; }
+  .passage-n { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 0.6rem; }
+  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
+
+  /* a second, quieter passage in the same station */
+  .passage.passage-2 { background: rgba(255,255,255,0.018); border-left-color: var(--rule-strong); }
+
+  /* the unpacking sits in .prose (scoped so kit components stay intact) */
+  .prose { margin: 0; }
+
+  /* ---------- TRANSLATION SIDEBAR ---------- */
+  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
+  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
+  .stack > summary::-webkit-details-marker { display: none; }
+  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
+  .stack[open] > summary::before { content: "\2212"; }
+  .stack > summary:hover { color: var(--accent-hover); }
+  .stack-body { padding: 0 1.1rem 1.1rem; }
+  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
+  .stack-gloss em, .stack-gloss .it { color: var(--text-dim); font-style: italic; }
+  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
+  .stack-v:first-of-type { border-top: none; }
+  .stack-src    { border-left-color: var(--src); }
+  .stack-classic{ border-left-color: var(--classic); }
+  .stack-modern { border-left-color: var(--modern); }
+  .stack-feat { background: rgba(158,199,154,0.06); }
+  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
+  .stack-vn .star { color: var(--modern); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
+  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
+  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .stack-vt.src { font-family: var(--font-heading); font-style: italic; color: var(--text-bright); }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); margin: 3.6rem auto 0; }
+  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
+  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
+  .src-list li { margin-bottom: 0.5em; }
+  .src-list b { color: var(--text); font-weight: 600; }
+  .colo-note { font-size: 0.92rem; color: var(--text-faint); }
+
+  /* the three readings, in the close */
+  .reads { display: grid; gap: 0.9rem; margin: 1.6rem 0 0.5rem; }
+  .read { border: 1px solid var(--rule); border-left: 3px solid var(--line-mid); border-radius: 12px; padding: 1.1rem 1.3rem; background: rgba(255,255,255,0.015); }
+  .read-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+  .read p { margin: 0; font-size: 1.02rem; line-height: 1.6; color: var(--text); }
+  .read p + p { margin-top: 0.6em; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 560px){
+    /* phones: the body already supplies the side gutter, so drop the duplicate
+       column padding here (it was doubling up to ~40px of dead space). */
+    body { padding-left: 0; padding-right: 0; }
+    .fan-src { font-size: 1.1rem; padding: 1.1rem 1rem 0.5rem; }
+    .fan-list li { padding: 0.65rem 1rem; }
+    .fan-list .e { font-size: 1rem; }
+    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .walk-jump #walk-stlabel { font-size: 0.98rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <h1 class="hero-title">The Prince, power without the moralizing</h1>
+    <p class="hero-dek">Every book of advice to rulers before it said the same thing: be just, be merciful, be good. Machiavelli, fresh out of a torture cell and writing to win back a job, said the opposite out loud. A ruler who insists on being good among men who are not will be destroyed, so he had better learn how not to be.</p>
+    <p class="hero-meta">A guided walk <span class="sep">/</span> <b>7 stops</b> through Machiavelli's Prince <span class="sep">/</span> walking text: <b>Marriott, 1908</b> <span class="sep">/</span> ~22 min</p>
+  </header>
+
+  <main>
+    <!-- ============================ INTRO ============================ -->
+    <section class="sec">
+      <p class="lede">In 1513 a man was hung from a prison ceiling by his wrists, tied behind his back, and dropped until the joints in his shoulders tore. He confessed to nothing, because there was nothing to confess. A few months later, broke and banished to a small farm, he sat down and wrote a job application to the family that had just done this to him. The job application was The Prince.</p>
+
+      <p>The man was Niccolò Machiavelli, and for fourteen years he had run the diplomacy and the home-grown army of the Florentine Republic. Then the Medici, the banking dynasty the republic had kept out of power, came back and dissolved it, and he was thrown out of the only work he had ever loved. When a clumsy plot against the Medici turned up with his name on a list of suspects, they arrested him, gave him the rope, and let him go only because a new Medici pope happened to declare an amnesty. He went to his little estate south of the city, and there, with nothing left to lose and nothing to do, he wrote the most honest and most hated book about power anyone has published.</p>
+
+      <p>Here is what made it a scandal. For a thousand years, books of advice to rulers had a name, "mirrors for princes," and they all said roughly the same thing: a good king is just, merciful, truthful, and generous, and heaven rewards him for it. Machiavelli had watched real rulers from across the negotiating table, and he had noticed that the just and merciful ones tended to get eaten. So he threw the mirror out. He would write what he called the <em class="it">verità effettuale</em>, the effectual truth, how power actually behaves rather than how a sermon wishes it would, and the first thing that honesty costs you is goodness.</p>
+
+      <p>The book's most important sentence is also its plainest. Here is the line the rest of it grows out of, in Machiavelli's Italian and then in two English translators who each had to decide how much to flinch.</p>
+
+      <div class="fan">
+        <p class="fan-src it">imparare a potere essere non buono, e usarlo e non usarlo secondo la necessità<small>Chapter 15 &middot; a prince must learn "to be able not to be good"</small></p>
+        <ul class="fan-list">
+          <li><span class="e">to know how to do wrong, and to make use of it or not according to necessity.</span><span class="who">Marriott, 1908</span></li>
+          <li class="feat"><span class="e">to learn to be able not to be good, and to use this and not use it according to necessity.</span><span class="who">Mansfield, 1998</span></li>
+        </ul>
+      </div>
+
+      <p>Watch the older translator flinch. Marriott, writing in 1908, cannot quite put it on the page, so "not good" becomes "do wrong," which sounds like ordinary sin. Mansfield, in 1998, keeps the blade: learn to be able not to be good. That is stranger and colder than wickedness. Machiavelli is not telling a prince to be bad. He is telling him to keep his goodness on a shelf and take it down only when it works, the way you would a tool.</p>
+
+      <p>We are going to walk the argument the way the book builds it, seven steps from that idea down to its hardest conclusions. The quotations are W. K. Marriott's 1908 translation, which is out of copyright and quoted here at length. It is genteel where Machiavelli is blunt, and that turns out to be useful: every time it softens a line, you can watch a modern translator put the edge back. Where a sentence is famous enough to have started fights, open the panel to see the Italian and the other Englishes line up.</p>
+
+      <p>Hold one thing the whole way down. People still cannot agree on what this book even is. Some read it as the founding document of evil, a how-to for tyrants. Some read it as the first honest political science, a man finally writing down what everyone does and no one admits. And some read it as a trap, a lifelong republican who hated princes handing the public a manual so they would know exactly how they were being worked. We come back to that fight at the end. The strange part is that the same cold sentences feed all three.</p>
+    </section>
+
+    <!-- ======================= STICKY STATION RAIL ======================= -->
+    <nav class="walkbar" id="walkbar" aria-label="The walk">
+      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
+      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
+        <span id="walk-stno">Stop 1</span>
+        <span id="walk-stlabel">Learn how not to be good</span>
+      </button>
+      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
+      <span class="walk-count" id="walk-count"><b>1</b> / 7</span>
+    </nav>
+    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
+
+    <!-- ============================ STATION 1 ============================ -->
+    <section class="station" id="st-notgood" data-label="Learn how not to be good" data-tag="Ch. 15">
+      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> The effectual truth</p>
+      <h2 class="station-h">Learn how not to be good</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 15</p>
+        <div class="passage-t">
+          <p>It appears to me more appropriate to follow up the real truth of the matter than the imagination of it; for many have pictured republics and principalities which in fact have never been known or seen, because how one lives is so far distant from how one ought to live, that he who neglects what is done for what ought to be done, sooner effects his ruin than his preservation.</p>
+          <p>Hence it is necessary for a prince wishing to hold his own to know how to do wrong, and to make use of it or not according to necessity.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This short passage is where political philosophy turns a corner and does not turn back. Look at the move he makes. Other writers, he says, have pictured ideal states, the republic as it ought to be, the prince as he ought to be. He is going to deal with the real one instead, because the gap between how people actually live and how they ought to live is so wide that a ruler who steers by the "ought" drives straight off a cliff. A man who insists on being good in every situation, surrounded by people who are not good, will be destroyed. That is not cynicism for its own sake. It is an observation, and Machiavelli thought it was simply true.</p>
+        <p>So the famous instruction is not "be evil." It is colder than that. A prince has to <em>learn how not to be good</em>, the way you learn a skill, and then choose when to use it by necessity rather than by appetite. Goodness becomes one option among several, picked up when it serves and put down when it does not. The cruelty of the book is not that it loves wrongdoing. It is that it treats being good as a tactic with no special standing, something you reach for when it works and skip when it doesn't.</p>
+        <p>Everything else in The Prince is this one idea, applied. Once being good is just a tool, every virtue is up for the same cold review: does it actually keep you in power, or does it only sound nice from a pulpit? The next six stops are Machiavelli running that test on the things everyone praises, generosity, mercy, honesty, and watching most of them fail it.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>He is not recommending evil. He is demoting goodness, from a law you obey to a tool you use when it works.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 2 ============================ -->
+    <section class="station" id="st-meanness" data-label="A name for stinginess" data-tag="Ch. 16">
+      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Generosity</p>
+      <h2 class="station-h">Why a name for stinginess beats one for generosity</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 16</p>
+        <div class="passage-t">
+          <p>A prince, therefore, provided that he has not to rob his subjects, that he can defend himself, that he does not become poor and abject, that he is not forced to become rapacious, ought to hold of little account a reputation for being mean, for it is one of those vices which will enable him to govern.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Start with the gentlest of the virtues, generosity, and watch Machiavelli take it apart with arithmetic. A prince who wants a name for being generous has to keep being seen to give: lavish gifts, big public spending, an open hand. The trouble is that this is expensive, and the money has to come from somewhere. Soon he has drained his own treasury, and the only way to keep up the show is to tax his people harder and harder. The generous prince ends up squeezing the very subjects he was trying to charm, and they come to hate him for it. Generosity, chased as a reputation, eats itself.</p>
+        <p>Now take the prince everyone calls a miser. He does not throw money around, so he never has to raise taxes to cover it. He can defend the state out of his own funds, take on a war without robbing anyone, and leave his subjects' pockets alone. Over time, Machiavelli says, that man is the truly generous one, because he gives his people the thing they actually want, which is to be left unplundered. The stingy reputation is a small price, and it buys real freedom of action.</p>
+        <p>This is the whole method in miniature, run on the easiest case. A vice that everyone scorns, meanness, turns out to function as a virtue, and a virtue that everyone praises, open-handedness, turns out to function as a slow disaster. He is not playing word games. He is asking one question about each trait, the only question he cares about: when you actually run it forward, does it keep the prince standing, or knock him down?</p>
+      </div>
+    </section>
+
+    <!-- ============================ STATION 3 ============================ -->
+    <section class="station" id="st-feared" data-label="Better feared than loved" data-tag="Ch. 17">
+      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Cruelty and mercy</p>
+      <h2 class="station-h">Better feared than loved</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 17</p>
+        <div class="passage-t">
+          <p>It may be answered that one should wish to be both, but, because it is difficult to unite them in one person, it is much safer to be feared than loved, when, of the two, either must be dispensed with.</p>
+          <p>Men have less scruple in offending one who is beloved than one who is feared, for love is preserved by the link of obligation which, owing to the baseness of men, is broken at every opportunity for their advantage; but fear preserves you by a dread of punishment which never fails.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the line everyone knows, and almost everyone gets it slightly wrong. Machiavelli does not say "be feared, not loved." He says the prince should want to be both, and that being both is the best outcome by far. The cold part is only the tie-breaker. If you are forced to give one up, keep the fear, because love and fear hold a person under completely different conditions. Love is a bond people keep while it suits them and drop the moment it costs them something. Fear is a dread of punishment, and that, he says drily, never lets go.</p>
+        <p>Read it as a claim about which bond survives pressure, not as a taste for cruelty, and it stops sounding like a villain's motto and starts sounding like something you have watched happen. The friends who vanish when you can no longer do anything for them are the bond of love working exactly as he describes. Machiavelli is not telling you the world should be this way. He is telling you it is, and that a ruler who bets his life on people's gratitude has misread them.</p>
+        <p>But there is a limit, and he is emphatic about it, which is the part the bumper sticker drops. Fear is safe only as long as it does not curdle into hatred, and the way to be feared without being hated is simple: keep your hands off two things, your subjects' property and their women. Take a man's life with a clear public reason and he may accept it. Take his inheritance and you have made a permanent enemy. Then comes one of the most quietly brutal lines in the book, about why money matters more than blood.</p>
+
+        <div class="passage passage-2">
+          <p class="passage-k">Marriott / Chapter 17</p>
+          <div class="passage-t">
+            <p>Men more quickly forget the death of their father than the loss of their patrimony.</p>
+          </div>
+        </div>
+
+        <p>He says it flat, with no horror attached, and that is what makes it land. A son gets over a dead father faster than he gets over a stolen inheritance. It is an ugly thing to claim about people, and Machiavelli clearly thinks it is also a useful thing to know if you are trying to stay alive in power. Be frightening, he is saying, but never be a thief, because grief fades and a grudge over property does not.</p>
+      </div>
+
+      <details class="stack">
+        <summary>"Better feared than loved," three ways</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">The Italian is calm and conditional: it is safer to be feared <em>quando s'abbi a mancare dell'un de' duoi</em>, "when one of the two must be lacking." That clause is the whole argument, and it is exactly what the popular quote throws away. The Yale management scholar Jeffrey Sonnenfeld has spent years pointing out that Machiavelli's actual advice was to be both, and to fall back on fear only when you genuinely cannot.</p>
+
+          <div class="stack-v stack-src">
+            <div class="stack-vh"><span class="stack-vn">The Italian</span><span class="stack-vy">1513</span></div>
+            <div class="stack-vt src">è molto più sicuro l'esser temuto che amato, quando s'abbi a mancare dell'un de' duoi.</div>
+          </div>
+          <div class="stack-v stack-classic">
+            <div class="stack-vh"><span class="stack-vn">W. K. Marriott</span><span class="stack-vy">1908</span></div>
+            <div class="stack-vt">it is much safer to be feared than loved, when, of the two, either must be dispensed with.</div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">George Bull <span class="star">Penguin</span></span><span class="stack-vy">1961</span></div>
+            <div class="stack-vt">one ought to be both feared and loved, but as it is difficult for the two to go together, it is much safer to be feared than loved, if one of the two has to be wanting.</div>
+          </div>
+
+          <p class="stack-gloss" style="margin-top:1rem">Bull spells out the part the slogan eats: <em>one ought to be both.</em> Strip the condition and you get a tyrant's catchphrase. Keep it and you get a sober note on how people behave when the bill comes due.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 4 ============================ -->
+    <section class="station" id="st-cruelty" data-label="Cruelty, used well" data-tag="Ch. 7 to 8">
+      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> Cesare Borgia and the knife</p>
+      <h2 class="station-h">Cruelty, used well</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 7, the minister Remirro de Orco</p>
+        <div class="passage-t">
+          <p>Under this pretence he took Ramiro, and one morning caused him to be executed and left on the piazza at Cesena with the block and a bloody knife at his side. The barbarity of this spectacle caused the people to be at once satisfied and dismayed.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The hero of The Prince, as far as it has one, is Cesare Borgia, the ruthless son of a pope, whom Machiavelli had met and studied up close as a diplomat. Borgia had just conquered a lawless region, the Romagna, full of bandits and feuding lords, and he needed it pacified fast. So he handed it to a hard man named Remirro de Orco and let him be as brutal as the job required. Remirro crushed the place into order. He also became, by design, the most hated man in it.</p>
+        <p>Then Borgia did the thing Machiavelli could not stop turning over. Once the dirty work was done and the people loathed Remirro for it, Borgia had him killed and put his body on display in the town square, cut in two, a block and a bloodied knife laid beside him. The message was unmistakable: the cruelty was his, not mine, and look what I do to men like that. The crowd, Machiavelli writes, was left "at once satisfied and dismayed." They got their hated enforcer's head, and a warning about who had taken it. One execution bought Borgia both gratitude and fear in a single morning.</p>
+        <p>That scene sets up the coldest distinction in the book, from the next chapter: cruelty can be used well or used badly. Used well, it is done all at once, out of real necessity, and then stopped, so people stop feeling it and even come around. Used badly, it starts small and grows, dripping on and on until the whole reign is soaked in it. Here is the actual rule.</p>
+
+        <div class="passage passage-2">
+          <p class="passage-k">Marriott / Chapter 8</p>
+          <div class="passage-t">
+            <p>Those [cruelties] may be called properly used, if of evil it is possible to speak well, that are applied at one blow and are necessary to one's security, and that are not persisted in afterwards unless they can be turned to the advantage of the subjects. The badly employed are those which, notwithstanding they may be few in the commencement, multiply with time rather than decrease.</p>
+          </div>
+        </div>
+
+        <p>"If of evil it is possible to speak well." Even Machiavelli flags that he is saying something that should not be sayable. And notice what he is actually claiming, because it is the engine of the whole book: violence has a better and a worse way of being done, judged purely by results, with the morality bracketed out. He is not celebrating the knife in the piazza. He is doing something a sermon never would, which is studying it, the way you would study any other instrument of rule, to see what makes it work.</p>
+      </div>
+
+      <aside class="u-aside">
+        <p>The Italian says Borgia left Remirro <span class="it">in duo pezzi</span>, in two pieces. Even Marriott flinches, and writes only "executed, with the block." The translators soften him more than he softened himself.</p>
+      </aside>
+    </section>
+
+    <!-- ============================ STATION 5 ============================ -->
+    <section class="station" id="st-foxlion" data-label="The lion and the fox" data-tag="Ch. 18">
+      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> Keeping faith</p>
+      <h2 class="station-h">The lion and the fox</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 18</p>
+        <div class="passage-t">
+          <p>You must know there are two ways of contesting, the one by the law, the other by force; the first method is proper to men, the second to beasts; but because the first is frequently not sufficient, it is necessary to have recourse to the second.</p>
+          <p>A prince, therefore, being compelled knowingly to adopt the beast, ought to choose the fox and the lion; because the lion cannot defend himself against snares and the fox cannot defend himself against wolves. Therefore, it is necessary to be a fox to discover the snares and a lion to terrify the wolves.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>This is the chapter that got Machiavelli his reputation as the devil, and it is about keeping your word. Everyone agrees, he begins, that a prince who keeps faith and lives honestly is admirable. Then he points at the record: the princes who did great things were the ones who treated their promises lightly and knew how to outwit the people who trusted them. There are two ways to win a fight, by law, which is the human way, and by force, which is the animal way. Since the human way often is not enough, a ruler has to be fluent in both. He has to be, in part, a beast.</p>
+        <p>And if he is going to be a beast, he should be two of them at once. The lion is strong but blunders into traps. The fox sees the traps but cannot fight off wolves. So be the fox to spot the snare and the lion to scare the wolves, neither one alone. A ruler who is all force is stupid, and a ruler who is all cunning is weak. It is a genuinely useful image, which is part of why it has lasted five hundred years, and Machiavelli pulls it from old stories of heroes raised by a creature half-man and half-horse, taught from the start that a leader has to use both natures.</p>
+        <p>The part that scandalized people comes next. A prince does not actually need to be merciful, faithful, and honest, Machiavelli says. He needs to <em>seem</em> so, while keeping a mind ready to turn the moment turning pays. Most people judge a ruler by what they can see, and almost no one gets close enough to check. So the appearance of virtue does the work of virtue, at a fraction of the cost, and a prince who confuses the two, who is honest when a lie would save him, has misunderstood the job.</p>
+      </div>
+
+      <details class="stack">
+        <summary>The fox and the lion, in his own Tuscan</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">Machiavelli's word for the fox is the old Tuscan <em class="it">golpe</em>, not the standard <em class="it">volpe</em>, a blunt country word that suits the animal cunning he means. The modernized Italian below regularizes it to <em class="it">volpe</em>; the sense is the same.</p>
+
+          <div class="stack-v stack-src">
+            <div class="stack-vh"><span class="stack-vn">The Italian</span><span class="stack-vy">1513</span></div>
+            <div class="stack-vt src">Bisogna adunque essere volpe a cognoscere i lacci, e lione a sbigottire i lupi.</div>
+          </div>
+          <div class="stack-v stack-classic">
+            <div class="stack-vh"><span class="stack-vn">W. K. Marriott</span><span class="stack-vy">1908</span></div>
+            <div class="stack-vt">it is necessary to be a fox to discover the snares and a lion to terrify the wolves.</div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">George Bull <span class="star">Penguin</span></span><span class="stack-vy">1961</span></div>
+            <div class="stack-vt">One must be a fox in order to recognise traps, and a lion to frighten off wolves.</div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 6 ============================ -->
+    <section class="station" id="st-ends" data-label="The line he never wrote" data-tag="Ch. 18">
+      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> The misquote</p>
+      <h2 class="station-h">The line he never actually wrote</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 18</p>
+        <div class="passage-t">
+          <p>In the actions of all men, and especially of princes, which it is not prudent to challenge, one judges by the result. For that reason, let a prince have the credit of conquering and holding his state, the means will always be considered honest, and he will be praised by everybody.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>The most famous thing Machiavelli ever said is something he never said. "The ends justify the means" appears nowhere in The Prince, in any chapter, in any translation. The sentence above is the closest he comes, and look carefully at what it actually claims, because it is not the same thing at all. He writes <em class="it">si guarda al fine</em>, "one looks to the result." That is a flat description of how people behave, not a rule about what is allowed.</p>
+        <p>Read it again with that in mind. He is saying that ordinary people judge a ruler by outcomes, that they will call a winner's methods honorable no matter what those methods were, and that in politics, "where there is no court of appeal," this is simply what happens. It is an observation about public opinion, cold and probably correct. The popular slogan turns it inside out, from "people forgive winners" into "do whatever you want as long as you win." One is a remark about how crowds think. The other is a moral blank check, and Machiavelli did not sign it.</p>
+        <p>The idea behind the misquote is older than him anyway. The Roman poet Ovid wrote <em class="it">exitus acta probat</em>, the outcome justifies the deed, fifteen centuries earlier, and Machiavelli quotes that very line elsewhere, in his Discourses, while half-excusing Romulus for killing his brother to found Rome: the act accuses him, he says, but the result excuses him. So the thought is real and he did hold a version of it. He just never compressed it into the ruthless five-word formula that now carries his name, and the gap between what he wrote and what he is quoted as writing is the difference between describing a hard world and recommending one.</p>
+      </div>
+
+      <details class="stack">
+        <summary>What he wrote, and what he is quoted as writing</summary>
+        <div class="stack-body">
+          <div class="stack-v stack-src">
+            <div class="stack-vh"><span class="stack-vn">The Italian</span><span class="stack-vy">1513</span></div>
+            <div class="stack-vt src">si guarda al fine &hellip; i mezzi saranno sempre giudicati onorevoli, e da ciascuno lodati.</div>
+          </div>
+          <div class="stack-v stack-classic">
+            <div class="stack-vh"><span class="stack-vn">W. K. Marriott</span><span class="stack-vy">1908</span></div>
+            <div class="stack-vt">one judges by the result &hellip; the means will always be considered honest, and he will be praised by everybody.</div>
+          </div>
+          <div class="stack-v stack-modern">
+            <div class="stack-vh"><span class="stack-vn">The popular misquote</span><span class="stack-vy">not his words</span></div>
+            <div class="stack-vt">"The ends justify the means."</div>
+          </div>
+          <p class="stack-gloss" style="margin-top:1rem">His sentence is descriptive: people will judge you by whether you won. The slogan is prescriptive: therefore do anything. Four hundred years of readers have quietly swapped the second for the first.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ STATION 7 ============================ -->
+    <section class="station" id="st-fortune" data-label="Fortune is a woman" data-tag="Ch. 25">
+      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> Luck and nerve</p>
+      <h2 class="station-h">Fortune is a woman</h2>
+
+      <div class="passage">
+        <p class="passage-k">Marriott / Chapter 25</p>
+        <div class="passage-t">
+          <p>I hold it to be true that Fortune is the arbiter of one-half of our actions, but that she still leaves us to direct the other half, or perhaps a little less. I compare her to one of those raging rivers, which when in flood overflows the plains, sweeping away trees and buildings &hellip; and yet, though its nature be such, it does not follow that men, when the weather becomes fair, shall not make provision, both with defences and barriers.</p>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>Under the whole book runs a single contest, between two forces Machiavelli names again and again. One is <em class="it">fortuna</em>, fortune, meaning luck, chance, everything outside your control. The other is <em class="it">virtù</em>, which looks like our word "virtue" but means almost the opposite of goodness here. It comes from <em class="it">vir</em>, Latin for "man," and it means skill, nerve, drive, the force of will a ruler brings to bear. The question of The Prince is how much of your fate each one decides.</p>
+        <p>His answer is the most quietly hopeful thing in the book. Fortune controls about half of what happens to you, he says, and leaves the other half to you. And even the half she controls is not pure helplessness. He compares fortune to a river in flood, which tears through the plains and wrecks everything when it rises. But you know floods come. So in the calm season you build the dikes and the channels, and when the water rises it does far less harm. That is what <em class="it">virtù</em> is: the work you do before the crisis, the preparation that turns a catastrophe into a bad week. Luck rules the unprepared. The ready meet it halfway.</p>
+        <p>And then he ends the chapter with the ugliest sentence he ever wrote, and there is no use pretending he did not. Fortune, he says, is a woman, and so she yields to the man who is bold and rough with her, who masters her by force, rather than to the one who approaches coldly and carefully. She favors the young because they command her with more audacity. It is a Renaissance man's image, a violent one, built on a pun his readers heard instantly, <em class="it">virtù</em> as manliness against <em class="it">Fortuna</em> the goddess. It is genuinely repellent, and it is also load-bearing: his point is that boldness, even reckless boldness, beats caution when the times are turning, because the cautious man cannot change fast enough. Here is the line, with a modern translator who refuses to soften it.</p>
+      </div>
+
+      <details class="stack">
+        <summary>"Fortune is a woman," and the brutal verb under it</summary>
+        <div class="stack-body">
+          <p class="stack-gloss">Marriott's Edwardian "beat and ill-use her" is already hard. Harvey Mansfield, going for the literal force of <em class="it">batterla e urtarla</em>, makes it worse, and means to, because softening it would hide what Machiavelli actually wrote.</p>
+
+          <div class="stack-v stack-src">
+            <div class="stack-vh"><span class="stack-vn">The Italian</span><span class="stack-vy">1513</span></div>
+            <div class="stack-vt src">la Fortuna è donna; ed è necessario, volendola tener sotto, batterla, ed urtarla.</div>
+          </div>
+          <div class="stack-v stack-classic">
+            <div class="stack-vh"><span class="stack-vn">W. K. Marriott</span><span class="stack-vy">1908</span></div>
+            <div class="stack-vt">fortune is a woman, and if you wish to keep her under it is necessary to beat and ill-use her.</div>
+          </div>
+          <div class="stack-v stack-modern stack-feat">
+            <div class="stack-vh"><span class="stack-vn">Harvey Mansfield <span class="star">Chicago</span></span><span class="stack-vy">1998</span></div>
+            <div class="stack-vt">fortune is a woman; and it is necessary, if one wants to hold her down, to beat her and strike her down.</div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ CLOSE ============================ -->
+    <section class="sec">
+      <h2 class="sechead">So what was he?</h2>
+      <p>Here is the strange thing about the man whose name became an insult. Nobody can agree on what he was doing. The same seven stops we just walked have been read three completely different ways for centuries, by serious people, and the argument is not close to settled.</p>
+
+      <div class="reads">
+        <div class="read">
+          <p class="read-k">One &middot; A teacher of evil</p>
+          <p>The oldest reading, and the one that gave us the word "Machiavellian." On the Elizabethan stage he was "Old Nick," a grinning devil. The philosopher Leo Strauss, no lightweight, put the case plainly in 1958: "we shall not shrink from expressing the old-fashioned and simple opinion according to which Machiavelli was a teacher of evil." A churchman who read it early called it a book written by an enemy of the human race. On this view, the cold sentences mean exactly what they say.</p>
+        </div>
+        <div class="read">
+          <p class="read-k">Two &middot; An honest scientist</p>
+          <p>The opposite reading: he is not endorsing any of it, just describing it, and his sin is only that he refused to lie about how power works. Francis Bacon praised him for it within a century: "we are much beholden to Machiavelli and others, that write what men do, and not what they ought to do." On this view he is the first political scientist, the man who pried politics loose from the sermon and looked at it straight, and we resent him the way we resent anyone who says the quiet part out loud.</p>
+        </div>
+        <div class="read">
+          <p class="read-k">Three &middot; A republican laying a trap</p>
+          <p>The boldest reading, and the most contested. Remember that Machiavelli spent his life serving a republic and, in his other big book, the Discourses, argued passionately for self-government and against one-man rule. So why write a handbook for princes? Rousseau's answer, in 1762: it was a trick. "He professed to teach kings; but it was the people he really taught. His Prince is the book of Republicans." Expose the machinery, and you arm the public against it. The historian Garrett Mattingly called the book a kind of political Black Mass. Most scholars think this goes too far; Isaiah Berlin said he could find nothing in it that reads less like satire. But the suspicion never quite dies, because the book really does hand you every move a tyrant will use on you.</p>
+        </div>
+      </div>
+
+      <p>You do not have to pick. The lasting power of The Prince is that all three can be true of the same short, cold book, which is exactly what you would expect from a brilliant, bitter man writing fast, in disgrace, partly to get a job and partly to settle a score with a world that had just broken his body and taken his work. He died in 1527 without the job, and without seeing the book in print; it came out five years later and never went out of circulation again.</p>
+      <p>What he actually did, whatever he meant by it, was permanent. He was the first to write down, without one word of apology, how power behaves the moment people stop pretending it is good. You can call that evil, or call it honesty, or call it a warning. You cannot un-read it. That is why a torn-up civil servant on a farm outside Florence ended up with his name attached, fairly or not, to the very thing he may only have been the first to describe.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <h2 class="sechead">Where the text comes from</h2>
+      <p>The walking text is <strong>W. K. Marriott's</strong> 1908 translation of <em>The Prince</em>, which is in the public domain and quoted here at length from <a href="https://www.gutenberg.org/ebooks/1232">Project Gutenberg</a> (eBook 1232). Marriott's English is dignified and a little Edwardian, which makes it a useful baseline: where it softens a hard line, the modern translators in the side panels put the edge back.</p>
+      <ul class="src-list">
+        <li><b>The Italian source lines</b> are from the text of <em>Il Principe</em> at <a href="https://it.wikisource.org/wiki/Il_Principe">Italian Wikisource</a>, a modernized-spelling edition (Machiavelli's own Tuscan keeps older forms, such as <span class="it">golpe</span> for fox, noted where it matters). The Prince was written in 1513 and first printed in 1532.</li>
+        <li><b>The comparison panels</b> stack two modern translations on the famous lines: <b>George Bull</b> (Penguin Classics, 1961), the most widely read modern English version, and <b>Harvey C. Mansfield</b> (University of Chicago Press, 2nd ed. 1998), the most deliberately literal. Angelo Codevilla's Yale edition (1997), prized for keeping Machiavelli's deliberate ambiguities, was also consulted; lines are quoted only where they could be checked against the editions themselves.</li>
+        <li><b>The life</b> follows the standard biography: Machiavelli's fourteen years as secretary of the Florentine Second Chancery, his 1513 arrest and torture by the strappado after the Medici returned, his exile to Sant'Andrea in Percussina, and his <a href="https://en.wikipedia.org/wiki/Niccol%C3%B2_Machiavelli">famous 10 December 1513 letter to Francesco Vettori</a>, where in the evening he puts on courtly robes and "enters the ancient courts of ancient men."</li>
+        <li><b>The three readings</b> quote Leo Strauss, <em>Thoughts on Machiavelli</em> (1958); Francis Bacon, <em>The Advancement of Learning</em> (1605); Jean-Jacques Rousseau, <em>The Social Contract</em> (1762, Book III); and Garrett Mattingly, "Machiavelli's Prince: Political Science or Political Satire?" (1958), with Isaiah Berlin's reply in "The Originality of Machiavelli." The note that the popular "feared than loved" drops Machiavelli's own qualifier follows Jeffrey Sonnenfeld of the Yale School of Management.</li>
+        <li><b>On "the ends justify the means":</b> the phrase is not in The Prince. The nearest text is Chapter 18 (<span class="it">si guarda al fine</span>); the idea traces to Ovid's <span class="it">exitus acta probat</span> (Heroides II), which Machiavelli quotes in his <em>Discourses on Livy</em>, I.9.</li>
+      </ul>
+      <p>The breakdowns and the walk are mine. Quotations are reproduced for study and comparison, with every translator and chapter named.</p>
+      <p class="colo-note">The portrait on the homepage card and in link previews is Santi di Tito's <em>Portrait of Niccolò Machiavelli</em> (oil on panel, later 16th century), in the Palazzo Vecchio, Florence. Painted a generation after his death, it is the image that fixed his face for posterity: the thin, knowing half-smile of a man who has watched how the world really works. It is in the public domain.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+  <script src="js/machiavelli.js" defer></script>
+</body>
+</html>
