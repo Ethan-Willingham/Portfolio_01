@@ -1000,7 +1000,10 @@ body {
    each section by the gutter themselves; the footer must match, or the copyright
    byline ends up flush against the screen edge on mobile. Home-style pages keep
    the footer inside .site-wrapper and inherit the body's gutter, so scope this to
-   pages without a wrapper. Posts that already set footer padding inline keep it. */
+   pages without a wrapper. Posts that already set footer padding inline keep it.
+   :where() keeps this default at zero specificity, so a post can still set its own
+   body padding inline (e.g. the-first-year's left rail) and win the cascade. */
+body:where(:not(:has(.site-wrapper))) { padding-left: 0; padding-right: 0; }
 body:not(:has(.site-wrapper)) .site-footer-inner { padding-left: var(--gutter); padding-right: var(--gutter); }
 .site-footer a { color: var(--text-dim); text-decoration: none; transition: color 0.25s; }
 .site-footer a:hover { color: var(--text-bright); }
