@@ -423,10 +423,16 @@ try {
   log(ok('  rebuilt search-index.json'));
 } catch (e) { console.error(warn('  build-search-index failed: ' + e.message)); }
 
+// 5. site-size growth curve (deployed bytes per day, from git blob sizes)
+try {
+  execSync('node tools/build-site-size.mjs --write', { cwd: REPO, stdio: 'inherit' });
+  log(ok('  rebuilt js/site-size-data.js'));
+} catch (e) { console.error(warn('  build-site-size failed: ' + e.message)); }
+
 // optional commit + push
 if (COMMIT) {
   log(H('COMMIT + PUSH'));
-  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json'];
+  const files = ['js/git-history-data.js', 'js/git-attribution-data.js', 'js/site-size-data.js', 'about.html', 'search-index.json', 'tools/about-stats.json'];
   try {
     execSync('git add ' + files.map(f => JSON.stringify(f)).join(' '), { cwd: REPO, stdio: 'inherit' });
     const msg = `about: refresh build stats (+${fresh.length} commits, +${newTopics.length} posts, ${tokStr || 'tokens'})`;
