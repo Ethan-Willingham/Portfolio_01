@@ -15,19 +15,27 @@
 /* Segoe UI (the body face). local()-first: any device that already has Segoe
    installed (every Windows machine, plus Macs with Microsoft Office) renders the
    genuine font and downloads NOTHING; everyone else (mobile, most Macs, Linux)
-   gets the self-hosted woff. Deliberately NOT preloaded: a <link rel=preload>
-   would force the download even where local() would have won, defeating the point.
-   Three real weights are bundled: 400 / 600 / 700. The 600 is genuine Segoe UI
-   Semibold, so the homepage date kickers and section labels (font-weight:600) get
-   the true weight rather than rounding up to bold. A real Segoe UI Italic is
-   bundled at weight 400; heavier italics (e.g. the 600 homepage tagline) keep the
-   true italic letterforms with a synthesised weight bump, since no semibold/bold
-   italic is bundled. Segoe UI is proprietary; self-hosting these files is the
-   owner's call. */
-@font-face { font-family: 'Segoe UI'; font-style: normal; font-weight: 400; font-display: swap; src: local('Segoe UI'), local('SegoeUI'), url('assets/fonts/segoe_ui_regular.woff') format('woff'); }
-@font-face { font-family: 'Segoe UI'; font-style: italic; font-weight: 400; font-display: swap; src: local('Segoe UI Italic'), local('SegoeUI-Italic'), url('assets/fonts/segoe_ui_italic.woff') format('woff'); }
-@font-face { font-family: 'Segoe UI'; font-style: normal; font-weight: 600; font-display: swap; src: local('Segoe UI Semibold'), local('SegoeUI-Semibold'), url('assets/fonts/segoe_ui_semibold.woff') format('woff'); }
-@font-face { font-family: 'Segoe UI'; font-style: normal; font-weight: 700; font-display: swap; src: local('Segoe UI Bold'), local('SegoeUI-Bold'), url('assets/fonts/segoe_ui_bold.woff') format('woff'); }
+   gets the self-hosted file. woff2 first (Brotli, what every current browser takes),
+   woff second as a fallback for ancient engines. Both are subset to the glyphs the
+   site uses (Latin, accents, Greek for the canon posts, punctuation, currency) plus
+   generous range headroom; the full Cyrillic / IPA / symbol tables Microsoft ships
+   are dropped, which cuts the four weights from ~853KB of woff to ~163KB of woff2.
+   Anything outside the subset falls back per glyph to system-ui (the next family in
+   --font-body), so nothing renders as tofu. Hinting is stripped because only
+   non-Windows engines ever fetch these and they ignore TrueType hinting anyway. The
+   full pre-subset source files live in git history if a wider subset is ever needed.
+   Deliberately NOT preloaded: a <link rel=preload> would force the download even
+   where local() would have won, defeating the point. Three real weights are bundled:
+   400 / 600 / 700. The 600 is genuine Segoe UI Semibold, so the homepage date kickers
+   and section labels (font-weight:600) get the true weight rather than rounding up to
+   bold. A real Segoe UI Italic is bundled at weight 400; heavier italics (e.g. the 600
+   homepage tagline) keep the true italic letterforms with a synthesised weight bump,
+   since no semibold/bold italic is bundled. Segoe UI is proprietary; self-hosting
+   these files is the owner's call. */
+@font-face { font-family: 'Segoe UI'; font-style: normal; font-weight: 400; font-display: swap; src: local('Segoe UI'), local('SegoeUI'), url('assets/fonts/segoe_ui_regular.woff2') format('woff2'), url('assets/fonts/segoe_ui_regular.woff') format('woff'); }
+@font-face { font-family: 'Segoe UI'; font-style: italic; font-weight: 400; font-display: swap; src: local('Segoe UI Italic'), local('SegoeUI-Italic'), url('assets/fonts/segoe_ui_italic.woff2') format('woff2'), url('assets/fonts/segoe_ui_italic.woff') format('woff'); }
+@font-face { font-family: 'Segoe UI'; font-style: normal; font-weight: 600; font-display: swap; src: local('Segoe UI Semibold'), local('SegoeUI-Semibold'), url('assets/fonts/segoe_ui_semibold.woff2') format('woff2'), url('assets/fonts/segoe_ui_semibold.woff') format('woff'); }
+@font-face { font-family: 'Segoe UI'; font-style: normal; font-weight: 700; font-display: swap; src: local('Segoe UI Bold'), local('SegoeUI-Bold'), url('assets/fonts/segoe_ui_bold.woff2') format('woff2'), url('assets/fonts/segoe_ui_bold.woff') format('woff'); }
 
 /* Commit Mono, the monospace voice (data, code, gauges, the game HUD). Self-hosted
    and free. The whole site uses exactly THREE faces and no others: Century Supra
