@@ -21,7 +21,7 @@ const soon = (title, era, year, desc) => ({ title, era, year, desc, soon: true }
 
 const HUBS = [
   {
-    slug: 'religion', title: 'Religion, the Sacred Books',
+    slug: 'religion', title: 'The Sacred Books',
     card: { thumb: 'hebrew-bible.jpg', alt: 'An open Torah scroll on velvet with a silver pointer resting in front.',
       desc: 'The ten books billions live by, each in its own language against the great English translations, with the keystones broken down where the translators split.' },
     lead: 'The books billions live by, laid out oldest first, from the Hebrew Bible to the Guru Granth Sahib. Each scripture in its own language against the great English translations.',
@@ -40,7 +40,7 @@ const HUBS = [
     ],
   },
   {
-    slug: 'philosophy', title: 'Philosophy and Science',
+    slug: 'philosophy', title: "How to Think, and What's Real",
     card: { thumb: 'aristotle.jpg', alt: "Rembrandt's painting of Aristotle resting a hand on a bust of Homer.",
       desc: 'How to think and what is real, from Plato and Aristotle to Darwin and Deutsch, each argument walked one move at a time, the dissenters kept in.' },
     lead: 'How to think, and what is real, in the order it was argued. From the ancient Greeks through the Enlightenment to modern science, with the dissenters kept in the room.',
