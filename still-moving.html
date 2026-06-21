@@ -159,6 +159,7 @@
   figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
   figure.photo .cred a:hover { color: var(--accent-hover); }
   .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig.lead { max-width: var(--measure); padding: 0 var(--gutter); } /* establishing header photo: fill the reading column */
   .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
   .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
   @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
@@ -259,7 +260,7 @@
 
   <main id="guide">
 
-  <figure class="pfig reveal">
+  <figure class="pfig lead reveal">
     <picture><img src="assets/images/still-moving/runner.webp" width="900" height="1200" loading="eager" decoding="async" alt="A lone runner in silhouette, mid-stride, against a vast blue dawn sky and distant desert mountains."></picture>
     <figcaption>Grand Bara 15K, Djibouti, 2011. U.S. Air Force, public domain.</figcaption>
   </figure>

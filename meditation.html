@@ -161,6 +161,7 @@
   figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
   figure.photo .cred a:hover { color: var(--accent-hover); }
   .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig.lead { max-width: var(--measure); padding: 0 var(--gutter); } /* establishing header photo: fill the reading column */
   .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
   .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
   @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
@@ -306,7 +307,7 @@
 
   <main id="guide">
 
-  <figure class="pfig reveal">
+  <figure class="pfig lead reveal">
     <picture><img src="assets/meditation/bodhidharma.webp" width="560" height="840" loading="eager" decoding="async" alt="A Song-dynasty ink painting: a lone robed monk sits in profile on a rock before a cliff face, a small attendant below him, surrounded by empty misty silk."></picture>
     <figcaption><em>Bodhidharma Meditating Facing a Cliff</em>, China, late 1200s. Cleveland Museum of Art, CC0.</figcaption>
   </figure>

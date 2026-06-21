@@ -152,6 +152,7 @@
   figure.photo .cred a { color: var(--text-dim); border-bottom: 1px solid rgba(212,196,160,0.2); text-decoration: none; }
   figure.photo .cred a:hover { color: var(--accent-hover); }
   .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
+  .pfig.lead { max-width: var(--measure); padding: 0 var(--gutter); } /* establishing header photo: fill the reading column */
   .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
   .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
   @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
@@ -257,7 +258,7 @@
 
   <main id="guide">
 
-  <figure class="pfig reveal">
+  <figure class="pfig lead reveal">
     <picture><source type="image/webp" srcset="assets/thumbs/cults-the-cage-og.webp"><img src="assets/thumbs/cults-the-cage-og.jpg" width="1200" height="800" loading="eager" decoding="async" alt="A white Rolls-Royce drives down a dirt road in the Oregon high desert, walled on both sides by hundreds of followers dressed in red, waiting to watch it pass."></picture>
     <figcaption>Rajneeshpuram, Oregon, 1982. Photo: Samvado Gunnar Kossatz, CC BY-SA.</figcaption>
   </figure>
