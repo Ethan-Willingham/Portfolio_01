@@ -142,6 +142,18 @@
   .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
   .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
   .v-mono { font-family: var(--font-mono); }
+  /* ---------- GUIDE CARD GRID (real, legible HTML; replaces the cramped in-SVG card decks) ---------- */
+  .gcards { display: grid; grid-template-columns: 1fr; gap: 0.7rem; margin: 0.1rem 0 0; }
+  @media (min-width: 540px) { .gcards { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 760px) { .gcards { grid-template-columns: repeat(3, 1fr); } .gcards.gc-4 { grid-template-columns: repeat(4, 1fr); } }
+  .gcard { background: #232a25; border: 1px solid var(--gc-accent, var(--rule)); border-radius: 10px; padding: 0.85em 0.95em 0.95em; }
+  .gcard .gc-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.08rem; line-height: 1.22; color: var(--gc-accent, var(--text-bright)); display: flex; align-items: center; gap: 0.5em; }
+  .gcard .gc-num { flex: none; display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; border: 1px solid currentColor; border-radius: 50%; font-size: 0.82em; }
+  .gcard .gc-body { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.42; color: var(--text); margin: 0.5em 0 0; }
+  .gcard .gc-tags { margin-top: 0.7em; }
+  .gcard .gc-tag { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.02em; line-height: 1.6; color: var(--text-faint); }
+  .gcard.gc-em { background: #2a2520; border-style: dashed; }
+  .gcard.gc-em .gc-body { color: var(--text-bright); }
   @media (max-width: 720px) {
     figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     figure.viz.scrollx > svg { min-width: 560px; }
@@ -298,52 +310,32 @@
     <figure class="viz reveal" aria-label="The whole guide on a single card: six rules for eating well.">
       <figcaption>The whole thing, on one card</figcaption>
       <p class="viz-sub">If you did only these six things and ignored every other word written about food, you would be eating better than almost everyone.</p>
-      <svg viewBox="0 0 700 250" role="img" aria-label="Six tiles: weight is energy, eat a little less than you burn; protein, about 0.7 grams per pound; fiber, 25 to 38 grams a day, most people get half; mostly real food, the less it came from a factory the better; skip liquid sugar; and most supplements do nothing, a few do not.">
-        <g font-family="var(--font-body)">
-          <g transform="translate(10,10)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#8fb3c7"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#8fb3c7">1 &#183; Weight is energy</text>
-            <text x="18" y="60" class="v-label" font-size="13">Eat a little less than</text>
-            <text x="18" y="80" class="v-label" font-size="13">you burn. The diet's</text>
-            <text x="18" y="100" class="v-label" font-size="13">name does not matter.</text>
-          </g>
-          <g transform="translate(240,10)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#9ec79a"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#9ec79a">2 &#183; Protein</text>
-            <text x="18" y="60" class="v-label" font-size="13">About 0.7 g per pound.</text>
-            <text x="18" y="80" class="v-label" font-size="13">It fills you up and</text>
-            <text x="18" y="100" class="v-label" font-size="13">keeps your muscle.</text>
-          </g>
-          <g transform="translate(470,10)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#9ec79a"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#9ec79a">3 &#183; Fiber</text>
-            <text x="18" y="60" class="v-label" font-size="13">25 to 38 g a day.</text>
-            <text x="18" y="80" class="v-label" font-size="13">Most people get half.</text>
-            <text x="18" y="100" class="v-label" font-size="13">From food, not pills.</text>
-          </g>
-          <g transform="translate(10,130)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#cf9f78"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#cf9f78">4 &#183; Mostly real food</text>
-            <text x="18" y="60" class="v-label" font-size="13">The less it came from</text>
-            <text x="18" y="80" class="v-label" font-size="13">a factory, the better.</text>
-            <text x="18" y="100" class="v-label" font-size="13">That is most of it.</text>
-          </g>
-          <g transform="translate(240,130)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#dfc288"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#dfc288">5 &#183; Skip liquid sugar</text>
-            <text x="18" y="60" class="v-label" font-size="13">Soda, juice, the sweet</text>
-            <text x="18" y="80" class="v-label" font-size="13">coffee. The single</text>
-            <text x="18" y="100" class="v-label" font-size="13">easiest win there is.</text>
-          </g>
-          <g transform="translate(470,130)">
-            <rect width="220" height="110" rx="10" fill="#232a25" stroke="#b79bc4"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#b79bc4">6 &#183; Most pills, skip</text>
-            <text x="18" y="60" class="v-label" font-size="13">The multivitamin does</text>
-            <text x="18" y="80" class="v-label" font-size="13">nothing. Five or so</text>
-            <text x="18" y="100" class="v-label" font-size="13">are worth taking.</text>
-          </g>
-        </g>
-      </svg>
+      <div class="gcards" role="list">
+        <div class="gcard" role="listitem" style="--gc-accent:#8fb3c7">
+          <div class="gc-title">1 &#183; Weight is energy</div>
+          <div class="gc-body">Eat a little less than you burn. The diet's name does not matter.</div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#9ec79a">
+          <div class="gc-title">2 &#183; Protein</div>
+          <div class="gc-body">About 0.7 g per pound. It fills you up and keeps your muscle.</div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#9ec79a">
+          <div class="gc-title">3 &#183; Fiber</div>
+          <div class="gc-body">25 to 38 g a day. Most people get half. From food, not pills.</div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#cf9f78">
+          <div class="gc-title">4 &#183; Mostly real food</div>
+          <div class="gc-body">The less it came from a factory, the better. That is most of it.</div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#dfc288">
+          <div class="gc-title">5 &#183; Skip liquid sugar</div>
+          <div class="gc-body">Soda, juice, the sweet coffee. The single easiest win there is.</div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#b79bc4">
+          <div class="gc-title">6 &#183; Most pills, skip</div>
+          <div class="gc-body">The multivitamin does nothing. Five or so are worth taking.</div>
+        </div>
+      </div>
       <p class="viz-note">That is the whole pantry. The chapters that follow are just the manual: what each rule rests on, how hard to pull it, and the exact point where pulling harder stops paying you back.</p>
     </figure>
 

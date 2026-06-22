@@ -141,6 +141,18 @@
   .v-label-b { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
   .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
   .v-mono { font-family: var(--font-mono); }
+  /* ---------- GUIDE CARD GRID (real, legible HTML; replaces the cramped in-SVG card decks) ---------- */
+  .gcards { display: grid; grid-template-columns: 1fr; gap: 0.7rem; margin: 0.1rem 0 0; }
+  @media (min-width: 540px) { .gcards { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 760px) { .gcards { grid-template-columns: repeat(3, 1fr); } .gcards.gc-4 { grid-template-columns: repeat(4, 1fr); } }
+  .gcard { background: #232a25; border: 1px solid var(--gc-accent, var(--rule)); border-radius: 10px; padding: 0.85em 0.95em 0.95em; }
+  .gcard .gc-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.08rem; line-height: 1.22; color: var(--gc-accent, var(--text-bright)); display: flex; align-items: center; gap: 0.5em; }
+  .gcard .gc-num { flex: none; display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; border: 1px solid currentColor; border-radius: 50%; font-size: 0.82em; }
+  .gcard .gc-body { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.42; color: var(--text); margin: 0.5em 0 0; }
+  .gcard .gc-tags { margin-top: 0.7em; }
+  .gcard .gc-tag { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.02em; line-height: 1.6; color: var(--text-faint); }
+  .gcard.gc-em { background: #2a2520; border-style: dashed; }
+  .gcard.gc-em .gc-body { color: var(--text-bright); }
   @media (max-width: 720px) {
     figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     figure.viz.scrollx > svg { min-width: 560px; }
@@ -337,52 +349,38 @@
     <figure class="viz reveal" aria-label="The five families of meditation on one card.">
       <figcaption>Eleven techniques, five families</figcaption>
       <p class="viz-sub">Every practice in this guide sorts by one question: what do you do with your attention? Underneath all of them is the same move.</p>
-      <svg viewBox="0 0 700 270" role="img" aria-label="Five tiles: focus on one thing (a mantra, the body scan); open awareness (mindfulness, vipassana, Zen); heart and compassion (loving-kindness, tonglen); working the breath (breathwork, pranayama); sacred words (centering prayer, the Jesus Prayer, dhikr). Underneath all of them: pick one thing, lose it, come back.">
-        <g font-family="var(--font-body)">
-          <g transform="translate(10,10)">
-            <rect width="220" height="116" rx="10" fill="#232a25" stroke="#dfc288"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#dfc288">Focus on one thing</text>
-            <text x="18" y="62" class="v-label" font-size="13">Hold attention on a single</text>
-            <text x="18" y="82" class="v-label" font-size="13">anchor.</text>
-            <text x="18" y="104" class="v-axis-t" fill="#a4a293">a mantra &#183; the body scan</text>
-          </g>
-          <g transform="translate(240,10)">
-            <rect width="220" height="116" rx="10" fill="#232a25" stroke="#8fb3c7"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#8fb3c7">Open awareness</text>
-            <text x="18" y="62" class="v-label" font-size="13">Watch whatever shows up,</text>
-            <text x="18" y="82" class="v-label" font-size="13">without grabbing it.</text>
-            <text x="18" y="104" class="v-axis-t" fill="#a4a293">mindfulness &#183; vipassana &#183; Zen</text>
-          </g>
-          <g transform="translate(470,10)">
-            <rect width="220" height="116" rx="10" fill="#232a25" stroke="#d9978c"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#d9978c">Heart and compassion</text>
-            <text x="18" y="62" class="v-label" font-size="13">Aim goodwill at yourself</text>
-            <text x="18" y="82" class="v-label" font-size="13">and others, on purpose.</text>
-            <text x="18" y="104" class="v-axis-t" fill="#a4a293">loving-kindness &#183; tonglen</text>
-          </g>
-          <g transform="translate(10,134)">
-            <rect width="220" height="116" rx="10" fill="#232a25" stroke="#9ec79a"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#9ec79a">Working the breath</text>
-            <text x="18" y="62" class="v-label" font-size="13">Shape the breath to steer</text>
-            <text x="18" y="82" class="v-label" font-size="13">the nervous system.</text>
-            <text x="18" y="104" class="v-axis-t" fill="#a4a293">breathwork &#183; pranayama</text>
-          </g>
-          <g transform="translate(240,134)">
-            <rect width="220" height="116" rx="10" fill="#232a25" stroke="#b79bc4"/>
-            <text x="18" y="34" class="v-cap" font-size="15" fill="#b79bc4">Sacred words</text>
-            <text x="18" y="62" class="v-label" font-size="13">Repeat a holy name or</text>
-            <text x="18" y="82" class="v-label" font-size="13">phrase as a prayer.</text>
-            <text x="18" y="104" class="v-axis-t" fill="#a4a293">centering prayer &#183; dhikr</text>
-          </g>
-          <g transform="translate(470,134)">
-            <rect width="220" height="116" rx="10" fill="#2a2520" stroke="#d4c4a0" stroke-dasharray="4 4"/>
-            <text x="18" y="34" class="v-cap" font-size="14" fill="#d4c4a0">Underneath all of them</text>
-            <text x="18" y="64" class="v-label" font-size="13" fill="#e8e2d6">Pick one thing.</text>
-            <text x="18" y="84" class="v-label" font-size="13" fill="#e8e2d6">Lose it. Come back.</text>
-            <text x="18" y="106" class="v-axis-t" fill="#a4a293">that is the rep</text>
-          </g>
-        </g>
-      </svg>
+      <div class="gcards" role="list">
+        <div class="gcard" role="listitem" style="--gc-accent:#dfc288">
+          <div class="gc-title">Focus on one thing</div>
+          <div class="gc-body">Hold attention on a single anchor.</div>
+          <div class="gc-tags"><div class="gc-tag">a mantra &#183; the body scan</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#8fb3c7">
+          <div class="gc-title">Open awareness</div>
+          <div class="gc-body">Watch whatever shows up, without grabbing it.</div>
+          <div class="gc-tags"><div class="gc-tag">mindfulness &#183; vipassana &#183; Zen</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#d9978c">
+          <div class="gc-title">Heart and compassion</div>
+          <div class="gc-body">Aim goodwill at yourself and others, on purpose.</div>
+          <div class="gc-tags"><div class="gc-tag">loving-kindness &#183; tonglen</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#9ec79a">
+          <div class="gc-title">Working the breath</div>
+          <div class="gc-body">Shape the breath to steer the nervous system.</div>
+          <div class="gc-tags"><div class="gc-tag">breathwork &#183; pranayama</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#b79bc4">
+          <div class="gc-title">Sacred words</div>
+          <div class="gc-body">Repeat a holy name or phrase as a prayer.</div>
+          <div class="gc-tags"><div class="gc-tag">centering prayer &#183; dhikr</div></div>
+        </div>
+        <div class="gcard gc-em" role="listitem" style="--gc-accent:#d4c4a0">
+          <div class="gc-title">Underneath all of them</div>
+          <div class="gc-body">Pick one thing. Lose it. Come back.</div>
+          <div class="gc-tags"><div class="gc-tag">that is the rep</div></div>
+        </div>
+      </div>
       <p class="viz-note">The traditions argue fiercely about <b>why</b> you do this and what it leads to. They barely argue about the move itself.</p>
     </figure>
 

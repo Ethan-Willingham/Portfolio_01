@@ -137,6 +137,18 @@
   .v-axis-t { fill: var(--text-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; }
   .v-label { fill: var(--text); font-family: var(--font-body); font-size: 12px; }
   .v-cap { fill: var(--text-bright); font-family: var(--font-heading); font-weight: 700; }
+  /* ---------- GUIDE CARD GRID (real, legible HTML; replaces the cramped in-SVG card decks) ---------- */
+  .gcards { display: grid; grid-template-columns: 1fr; gap: 0.7rem; margin: 0.1rem 0 0; }
+  @media (min-width: 540px) { .gcards { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 760px) { .gcards { grid-template-columns: repeat(3, 1fr); } .gcards.gc-4 { grid-template-columns: repeat(4, 1fr); } }
+  .gcard { background: #232a25; border: 1px solid var(--gc-accent, var(--rule)); border-radius: 10px; padding: 0.85em 0.95em 0.95em; }
+  .gcard .gc-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.08rem; line-height: 1.22; color: var(--gc-accent, var(--text-bright)); display: flex; align-items: center; gap: 0.5em; }
+  .gcard .gc-num { flex: none; display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; border: 1px solid currentColor; border-radius: 50%; font-size: 0.82em; }
+  .gcard .gc-body { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.42; color: var(--text); margin: 0.5em 0 0; }
+  .gcard .gc-tags { margin-top: 0.7em; }
+  .gcard .gc-tag { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.02em; line-height: 1.6; color: var(--text-faint); }
+  .gcard.gc-em { background: #2a2520; border-style: dashed; }
+  .gcard.gc-em .gc-body { color: var(--text-bright); }
   @media (max-width: 720px) {
     figure.viz.scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     figure.viz.scrollx > svg { min-width: 620px; }
@@ -303,53 +315,31 @@
 
     <p>By the time leaving crosses your mind, leaving costs everything. Your friends, your job, your husband or wife, your sense of who you are, and the years you already sank, are all inside the group. Some groups make the exit cost explicit, by shunning anyone who goes or holding a secret over them. Most never have to. The exit has simply been priced out of reach. That pricing is the cage. The doors usually stand open. It is just that walking out now means losing your whole world.</p>
 
-    <figure class="viz scrollx reveal" aria-label="The four stages of capture, left to right: the welcome, the new world, the squeeze, and the lock.">
+    <figure class="viz reveal" aria-label="The four stages of capture, left to right: the welcome, the new world, the squeeze, and the lock.">
       <figcaption>The four stages of capture</figcaption>
       <p class="viz-sub">No stage feels like a trap from inside it. Each one is a small, reasonable step past the last, which is the whole trick.</p>
-      <svg viewBox="0 0 700 250" role="img" aria-label="Stage one, the welcome: love-bombing and instant belonging. Stage two, the new world: control of information and language, and one leader as the source of truth. Stage three, the squeeze: the demand for purity, confession, and escalating cost. Stage four, the lock: shunning, fear, and a cost of leaving you cannot pay.">
-        <g font-family="var(--font-body)">
-          <g transform="translate(8,16)">
-            <rect width="158" height="200" rx="10" fill="#232a25" stroke="#dfc288"/>
-            <circle cx="30" cy="34" r="13" fill="none" stroke="#dfc288"/><text x="30" y="39" text-anchor="middle" class="v-cap" font-size="14" fill="#dfc288">1</text>
-            <text x="54" y="39" class="v-cap" font-size="15" fill="#dfc288">The welcome</text>
-            <text x="18" y="74" class="v-label" font-size="12.5">Love arrives</text>
-            <text x="18" y="92" class="v-label" font-size="12.5">first, and fast.</text>
-            <text x="18" y="148" class="v-axis-t" fill="#a4a293">love-bombing</text>
-            <text x="18" y="166" class="v-axis-t" fill="#a4a293">instant belonging</text>
-            <text x="18" y="184" class="v-axis-t" fill="#a4a293">a huge promise</text>
-          </g>
-          <g transform="translate(182,16)">
-            <rect width="158" height="200" rx="10" fill="#232a25" stroke="#cf9f78"/>
-            <circle cx="30" cy="34" r="13" fill="none" stroke="#cf9f78"/><text x="30" y="39" text-anchor="middle" class="v-cap" font-size="14" fill="#cf9f78">2</text>
-            <text x="54" y="39" class="v-cap" font-size="15" fill="#cf9f78">The new world</text>
-            <text x="18" y="74" class="v-label" font-size="12.5">Your world</text>
-            <text x="18" y="92" class="v-label" font-size="12.5">narrows to it.</text>
-            <text x="18" y="148" class="v-axis-t" fill="#a4a293">milieu control</text>
-            <text x="18" y="166" class="v-axis-t" fill="#a4a293">loaded language</text>
-            <text x="18" y="184" class="v-axis-t" fill="#a4a293">the one leader</text>
-          </g>
-          <g transform="translate(356,16)">
-            <rect width="158" height="200" rx="10" fill="#232a25" stroke="#d9978c"/>
-            <circle cx="30" cy="34" r="13" fill="none" stroke="#d9978c"/><text x="30" y="39" text-anchor="middle" class="v-cap" font-size="14" fill="#d9978c">3</text>
-            <text x="54" y="39" class="v-cap" font-size="15" fill="#d9978c">The squeeze</text>
-            <text x="18" y="74" class="v-label" font-size="12.5">Never pure</text>
-            <text x="18" y="92" class="v-label" font-size="12.5">enough. Give more.</text>
-            <text x="18" y="148" class="v-axis-t" fill="#a4a293">demand for purity</text>
-            <text x="18" y="166" class="v-axis-t" fill="#a4a293">confession</text>
-            <text x="18" y="184" class="v-axis-t" fill="#a4a293">escalating cost</text>
-          </g>
-          <g transform="translate(530,16)">
-            <rect width="162" height="200" rx="10" fill="#2a2421" stroke="#b8796d"/>
-            <circle cx="30" cy="34" r="13" fill="none" stroke="#b8796d"/><text x="30" y="39" text-anchor="middle" class="v-cap" font-size="14" fill="#b8796d">4</text>
-            <text x="54" y="39" class="v-cap" font-size="15" fill="#b8796d">The lock</text>
-            <text x="18" y="74" class="v-label" font-size="12.5" fill="#e8e2d6">Leaving now</text>
-            <text x="18" y="92" class="v-label" font-size="12.5" fill="#e8e2d6">costs everything.</text>
-            <text x="18" y="148" class="v-axis-t" fill="#a4a293">shunning</text>
-            <text x="18" y="166" class="v-axis-t" fill="#a4a293">fear, blackmail</text>
-            <text x="18" y="184" class="v-axis-t" fill="#a4a293">no way back</text>
-          </g>
-        </g>
-      </svg>
+      <div class="gcards gc-4" role="list">
+        <div class="gcard" role="listitem" style="--gc-accent:#dfc288">
+          <div class="gc-title"><span class="gc-num">1</span>The welcome</div>
+          <div class="gc-body">Love arrives first, and fast.</div>
+          <div class="gc-tags"><div class="gc-tag">love-bombing</div><div class="gc-tag">instant belonging</div><div class="gc-tag">a huge promise</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#cf9f78">
+          <div class="gc-title"><span class="gc-num">2</span>The new world</div>
+          <div class="gc-body">Your world narrows to it.</div>
+          <div class="gc-tags"><div class="gc-tag">milieu control</div><div class="gc-tag">loaded language</div><div class="gc-tag">the one leader</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#d9978c">
+          <div class="gc-title"><span class="gc-num">3</span>The squeeze</div>
+          <div class="gc-body">Never pure enough. Give more.</div>
+          <div class="gc-tags"><div class="gc-tag">demand for purity</div><div class="gc-tag">confession</div><div class="gc-tag">escalating cost</div></div>
+        </div>
+        <div class="gcard" role="listitem" style="--gc-accent:#b8796d">
+          <div class="gc-title"><span class="gc-num">4</span>The lock</div>
+          <div class="gc-body">Leaving now costs everything.</div>
+          <div class="gc-tags"><div class="gc-tag">shunning</div><div class="gc-tag">fear, blackmail</div><div class="gc-tag">no way back</div></div>
+        </div>
+      </div>
       <p class="viz-note">The same four stages fit a meditation commune, a business seminar, and a doomsday church. <b>Only the doctrine in the middle changes.</b></p>
     </figure>
 
