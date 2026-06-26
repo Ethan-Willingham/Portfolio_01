@@ -57,6 +57,7 @@ const NEW = process.env.ATTR_NEW_JSON ? JSON.parse(process.env.ATTR_NEW_JSON) : 
   // 'my-post': { files: ['my-post.html', 'js/my-post.js'],
   //              label: 'My Post Title', href: 'my-post.html', kind: 'post' },
   // archived: href: 'archive/my-post/my-post.html', kind: 'archived'
+  sluice: { files: ['grand-motherload.html', 'js/sluice.js'], label: 'Sluice', href: 'grand-motherload.html', kind: 'post' },
 };
 
 // ---- file -> post-key router ----
@@ -72,7 +73,7 @@ const ALIAS = {
 };
 for (const [f, k] of Object.entries(ALIAS)) route.set(f, k);
 for (const [k, m] of Object.entries(NEW)) for (const f of (m.files || [])) route.set(f, k);
-const EXCLUDE = new Set(['sluice']);
+const EXCLUDE = new Set();  // (was ['sluice']) the game is now a first-class tile, like every other build
 
 const excludeSession = (process.argv.find(a => a.startsWith('--exclude-session=')) || '').split('=')[1] || '';
 
@@ -82,6 +83,10 @@ function relpath(p) {
 }
 function keyFor(rel) {
   if (!rel) return '';
+  // Sluice game files: most game code lives under js/sluice/ plus the wgpu/audio
+  // engines, build script, and game assets, none of which the topic/alias routes
+  // below would catch. Route them all to the one "sluice" tile.
+  if (/(^|\/)(js\/sluice(\.js|\/)|grand-motherload\.(html|js)|js\/(liquid|smoke|jello)-wgpu\.js|js\/audio\.js|build-sluice\.sh|assets\/(shop|music|sfx)\/|docs\/game\/)/.test(rel)) return 'sluice';
   // Try the path and each trailing suffix, so an edit made in ANY sibling clone or
   // worktree routes like one in the main checkout. The posts were drafted in oddly
   // named clones (/Users/ethan/portfolio-mach/machiavelli.html, /Users/ethan/
