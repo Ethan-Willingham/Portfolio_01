@@ -817,6 +817,17 @@
     if (typeof gmTuningButtonSync === 'function') gmTuningButtonSync();
   }
 
+  // v25.9 — the read-only perf overlay is shown when dev mode is on OR (on a
+  // touch device) when the DEBUG_PERF_ON_MOBILE diagnostic flag is set. Kept
+  // separate from devMode so a phone can show the perf panel for profiling
+  // without the free-purchase / money cheat that full dev mode brings. The perf
+  // instrumentation runs every frame regardless (see perfMark), so the numbers
+  // are real either way. isMobile is assigned later in this file but resolves at
+  // call time (this runs from the render loop), so the late binding is fine.
+  function perfOverlayOn() {
+    return devMode || (DEBUG_PERF_ON_MOBILE && typeof isMobile !== 'undefined' && isMobile);
+  }
+
   // ----- Perf overlay state (dev mode only) -----
   var perfFps = 0;
   var perfFrameMs = 0;

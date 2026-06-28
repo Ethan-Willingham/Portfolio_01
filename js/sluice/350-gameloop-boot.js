@@ -583,9 +583,11 @@
     perfBuckets['render.total'] = (perfBuckets['render.total'] || 0) * 0.9 + (_t5 - _t4) * 0.1;
 
     // v14.15 — sample WebGPU GPU drain (smoke + water). Non-intrusive, so
-    // it runs every dev-mode frame; all of this frame's GPU work is
+    // it runs every perf-overlay frame; all of this frame's GPU work is
     // submitted by now (update ran the sims, render ran the canvas draws).
-    if (devMode) probeWebGPUGpu();
+    // v25.9 — also runs on the mobile perf-overlay path so the phone panel
+    // shows the GPU drain (the onSubmittedWorkDone probe does not skew fps).
+    if (perfOverlayOn()) probeWebGPUGpu();
 
     // Perf metrics (smoothed via rolling window)
     perfUpdateMs = perfUpdateMs * 0.9 + (_t1 - _t0) * 0.1;

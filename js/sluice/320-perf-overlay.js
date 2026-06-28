@@ -168,7 +168,13 @@
       }
     }
     bucketEntries.sort(function (a, b) { return b[1] - a[1]; });
-    var TOP_N = 8;
+    // v25.9 — compact (mobile) layout: drop the keyboard-only sections (FLIGHT
+    // SPEED, OPT TOGGLES, A/B COMPARE, BENCH, DEV KEYS, JELLO COUPLING) and trim
+    // TOP BUCKETS so the panel fits a phone screen at a readable size for a
+    // screenshot. The diagnostic sections (DIAGNOSIS, WORST FRAME, FRAME,
+    // BACKENDS, WORLD, PARTICLES, TOP BUCKETS, RENDER) all stay.
+    var compact = (typeof isMobile !== 'undefined' && isMobile);
+    var TOP_N = compact ? 6 : 8;
 
     // ---- Cheap summary stats ----
     var fs = perfFrameStats();
@@ -246,7 +252,7 @@
     // player/jello hooks (see jelloDbg). RED marks a value that can move the rig.
     // v23.42 — only shown while actually riding jello (this is a coupling debug,
     // dead weight on the panel the 99% of the time the rig is not on a blob).
-    if (player && player.onJello) {
+    if (!compact && player && player.onJello) {
     H('JELLO COUPLING');
     var _jcIn = jelloDbg.input > 0 ? 'RIGHT' : (jelloDbg.input < 0 ? 'LEFT' : 'none');
     K('Input',           _jcIn, jelloDbg.input !== 0 ? '#66ff66' : '#888888');
@@ -313,6 +319,7 @@
     // model, not a single constant, so it must be observed. Fly full-tilt
     // sideways and read 'Peak air'; 'NMZ @ 90s' converts it straight to the
     // No Man's Zone width (90 seconds of flight) the expansion must lock.
+    if (!compact) {
     H('FLIGHT SPEED');
     var _onGround = player && player.onGround;
     var _vxNow = player ? Math.abs(player.vx) : 0;
@@ -321,6 +328,7 @@
     K('Peak air', perfPeakAirVx.toFixed(0) + ' px/s', '#66ccff');
     var _nmzTiles = Math.round(perfPeakAirVx * 90 / TILE);
     K('NMZ @ 90s', _nmzTiles + ' tiles (' + Math.round(perfPeakAirVx * 90) + ' px)', '#ffd47a');
+    }
 
     // ----- v17.76 — BACKENDS: at-a-glance compute/render backend per
     // subsystem, so the live build makes it obvious whether smoke, sky,
@@ -353,6 +361,7 @@
     // cycles, or the gm 'perf.*' levers / L panel) plus any subsystem currently
     // disabled via PERF ISO / PERF_DISABLE_*. Green = optimization running /
     // subsystem on; amber = the slower A/B comparison state.
+    if (!compact) {
     H('OPT TOGGLES  (K cycles smoke opt)');
     K('Smoke idle-skip',      PERF_SMOKE_IDLE_SKIP ? 'ON' : 'OFF (every frame)',
                               PERF_SMOKE_IDLE_SKIP ? '#66ff66' : '#ffcc44');
@@ -422,6 +431,8 @@
       }
     }
 
+    }  // end !compact — OPT TOGGLES / A/B COMPARE / BENCH (keyboard-only)
+
     H('WORLD');
     K('Cache',     Object.keys(terrainChunkCache).length + ' / ' + terrainChunkCacheLimit() +
                    '  @' + TERRAIN_CHUNK_RENDER_SCALE.toFixed(1) + 'x');
@@ -447,6 +458,7 @@
     // Jello solver always shown (drives the M-key solver A/B); colour-coded
     // amber = v1/PBD baseline, green = the new XPBD / FEM. The census + load
     // only when blobs actually exist (v23.42 — dead weight otherwise).
+    if (!compact) {
     var _jSolv = JELLO_SOLVER;
     var _jSolvName = _jSolv === 'pbd' ? 'PBD ' + JELLO_VERSION + ' (old)'
                    : _jSolv === 'xpbd' ? 'XPBD (new)' : 'FEM (new)';
@@ -454,6 +466,7 @@
     // Which FEEL preset is live (U cycles; index 0 = the boot defaults). The
     // owner had no way to tell which feel a screenshot showed before this.
     if (typeof JELLO_FEELS !== 'undefined') K('Jello feel', JELLO_FEELS[jelloFeelIdx].name + '  (U)');
+    }
     if (jelloBodies.length) {
       var _jAwake = 0, _jSleep = 0, _jFrozen = 0, _jSpr = 0, _jRing = 0, _jTri = 0;
       for (var _jb = 0; _jb < jelloBodies.length; _jb++) {
@@ -473,6 +486,7 @@
     // All of these fire only while dev mode is on (this whole panel is too).
     // Placed above TOP BUCKETS so the long bucket dump never pushes the
     // reference off the bottom of the screen.
+    if (!compact) {
     H('DEV KEYS');
     var _devKeys = [
       ['`', 'dev mode'],      ['G', 'sky GPU'],
@@ -487,6 +501,7 @@
       if (_devKeys[_dk + 1]) _dkRow.push(_devKeys[_dk + 1]);
       D(_dkRow);
     }
+    }  // end !compact — DEV KEYS reference (no keyboard on mobile)
 
     H('TOP ' + TOP_N + ' BUCKETS (avg / peak)');
     // v14.21 — each row shows the smoothed avg and the peak-hold value; a
@@ -550,10 +565,13 @@
     var _wantH  = _nText * lineH + _nGraph * graphH;
     if (_wantH > _availH && _wantH > 0) {
       var _fitK = _availH / _wantH;
-      lineH = Math.max(8, lineH * _fitK);
+      // v25.9 — compact (mobile) may shrink to a smaller floor so the trimmed
+      // panel still fits a short landscape phone; a portrait phone has the room
+      // to never hit this. The screenshot zooms in fine at the small size.
+      lineH = Math.max(compact ? 6 : 8, lineH * _fitK);
       graphH = graphH * _fitK;
     }
-    var _fontPx = Math.max(8, Math.round(lineH - 2));
+    var _fontPx = Math.max(compact ? 6 : 8, Math.round(lineH - 2));
     var rowH = function (it) { return it[0] === 'g' ? graphH : lineH; };
     var contentH = _nText * lineH + _nGraph * graphH;
     var boxH = pad * 2 + contentH;

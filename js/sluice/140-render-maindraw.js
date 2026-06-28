@@ -1222,8 +1222,8 @@
     // town exit + meters remaining while flying a gauntlet. Self-hides off-zone.
     drawNmzExitArrow();
 
-    // Perf overlay (dev mode only) — survives the strip
-    if (devMode) drawPerfOverlay();
+    // Perf overlay (dev mode, or the mobile diagnostic flag) — survives the strip
+    if (perfOverlayOn()) drawPerfOverlay();
     // In-game now-playing music readout (dev mode) — track name(s) + position
     if (devMode) drawNowPlaying();
 
