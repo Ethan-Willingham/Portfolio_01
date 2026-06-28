@@ -1783,6 +1783,26 @@
     var seqNow = liquidMutationSeq;
     var mutated = (seqNow !== liquidGPULastSeq);
     liquidGPULastSeq = seqNow;
+    // v25.11 — ZERO-WATER skip. The MPM solve dispatches a fixed full-grid GPU
+    // workload every frame regardless of particle count: ~1ms on a strong GPU
+    // (invisible) but ~124ms on a weak mobile Mali, which is exactly why a
+    // Galaxy A15 sits GPU-bound at 5fps on a DRY surface with liquidCount 0. The
+    // existing idle-skip below only fires for settled water (liquidCount > 0), so
+    // the no-water case fell through to a full solve over nothing. With no
+    // particles there is nothing to advance; a new pour bumps liquidCount (and
+    // the mutation seq), so this guard releases the same frame water appears. The
+    // one mutated frame at count 0 (water just drained/cleared) still runs so the
+    // removal is flushed to the GPU buffers before we stop stepping.
+    if (liquidCount === 0 && !mutated) {
+      liquidPendingDt = 0;
+      liquidSimSkipFrames = 0;
+      liquidDbgSkipped++;
+      for (var fxz = oilSuckFx.length - 1; fxz >= 0; fxz--) {
+        oilSuckFx[fxz].t -= dt;
+        if (oilSuckFx[fxz].t <= 0) oilSuckFx.splice(fxz, 1);
+      }
+      return;
+    }
     var playerCalm = !player ||
       (Math.abs(player.vx) < LIQUID_SIM_PLAYER_VEL_GATE &&
        Math.abs(player.vy) < LIQUID_SIM_PLAYER_VEL_GATE * 4);
