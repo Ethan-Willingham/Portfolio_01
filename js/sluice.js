@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.11';
+  var GAME_VERSION = 'v25.12';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1283,6 +1283,15 @@
   // buffers, so the sim advances one step every frame regardless of how
   // long the async readback round-trip takes. See runFrame in liquid-wgpu.js.
   var liquidMutationSeq = 0;
+  // v25.12 — WebGPU water draw idle countdown. draw() (runRender) always runs a
+  // full-screen composite pass regardless of particle count, so on a dry surface
+  // it burns GPU for nothing (a big slice of a weak mobile Mali's frame). drawLiquids
+  // skips draw() once there is no water, but keeps drawing for this many frames AFTER
+  // liquidCount hits 0 before idling: runRender uses the GPU-resident uploadedCount,
+  // which lags the CPU liquidCount by the readback round-trip, so we let those tail
+  // frames flush the GPU to empty (the composite pass loadOp:'clear' then wipes the
+  // canvas to transparent — no ghost water) before stopping the draw entirely.
+  var liquidWGPUIdleDrawFrames = 0;
   // v24.109 — GPU-resident mutation ops. Every particle add/remove (and the
   // few CPU-side state writes: the oil-suction nudge, the dig wake) is
   // logged here and REPLAYED on the GPU against its resident buffers,
@@ -10378,7 +10387,22 @@
       // v14.9 — reverted v14.6's "hide the WebGPU canvas when no water is
       // on screen" gate; it mis-fired and hid the water entirely. The
       // renderer just draws straight from the GPU buffer every frame.
-      liquidWGPU.draw();
+      // v25.12 — but idle that per-frame draw when there is NO water at all.
+      // draw() (runRender) always runs a full-screen composite pass + a field
+      // clear pass regardless of particle count; ~invisible on a strong GPU but
+      // a big slice of a weak mobile Mali's frame on a DRY surface (the A15's
+      // GPU-bound 37fps). Gate on the ABSOLUTE count (liquidCount 0 = nothing
+      // anywhere, unambiguous — unlike v14.6's on-screen cull). Keep drawing for a
+      // short tail after water leaves so the GPU-resident count (which lags the CPU
+      // liquidCount) drains and the composite pass (loadOp:'clear') wipes the canvas
+      // transparent, then stop dispatching entirely.
+      if (liquidCount > 0) {
+        liquidWGPU.draw();
+        liquidWGPUIdleDrawFrames = 10;
+      } else if (liquidWGPUIdleDrawFrames > 0) {
+        liquidWGPU.draw();
+        liquidWGPUIdleDrawFrames--;
+      }
       if (liquidGLCanvas && liquidGLCanvas.style.display !== 'none') {
         liquidGLCanvas.style.display = 'none';
       }

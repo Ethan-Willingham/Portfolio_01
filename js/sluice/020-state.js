@@ -126,6 +126,15 @@
   // buffers, so the sim advances one step every frame regardless of how
   // long the async readback round-trip takes. See runFrame in liquid-wgpu.js.
   var liquidMutationSeq = 0;
+  // v25.12 — WebGPU water draw idle countdown. draw() (runRender) always runs a
+  // full-screen composite pass regardless of particle count, so on a dry surface
+  // it burns GPU for nothing (a big slice of a weak mobile Mali's frame). drawLiquids
+  // skips draw() once there is no water, but keeps drawing for this many frames AFTER
+  // liquidCount hits 0 before idling: runRender uses the GPU-resident uploadedCount,
+  // which lags the CPU liquidCount by the readback round-trip, so we let those tail
+  // frames flush the GPU to empty (the composite pass loadOp:'clear' then wipes the
+  // canvas to transparent — no ghost water) before stopping the draw entirely.
+  var liquidWGPUIdleDrawFrames = 0;
   // v24.109 — GPU-resident mutation ops. Every particle add/remove (and the
   // few CPU-side state writes: the oil-suction nudge, the dig wake) is
   // logged here and REPLAYED on the GPU against its resident buffers,

@@ -2255,7 +2255,22 @@
       // v14.9 — reverted v14.6's "hide the WebGPU canvas when no water is
       // on screen" gate; it mis-fired and hid the water entirely. The
       // renderer just draws straight from the GPU buffer every frame.
-      liquidWGPU.draw();
+      // v25.12 — but idle that per-frame draw when there is NO water at all.
+      // draw() (runRender) always runs a full-screen composite pass + a field
+      // clear pass regardless of particle count; ~invisible on a strong GPU but
+      // a big slice of a weak mobile Mali's frame on a DRY surface (the A15's
+      // GPU-bound 37fps). Gate on the ABSOLUTE count (liquidCount 0 = nothing
+      // anywhere, unambiguous — unlike v14.6's on-screen cull). Keep drawing for a
+      // short tail after water leaves so the GPU-resident count (which lags the CPU
+      // liquidCount) drains and the composite pass (loadOp:'clear') wipes the canvas
+      // transparent, then stop dispatching entirely.
+      if (liquidCount > 0) {
+        liquidWGPU.draw();
+        liquidWGPUIdleDrawFrames = 10;
+      } else if (liquidWGPUIdleDrawFrames > 0) {
+        liquidWGPU.draw();
+        liquidWGPUIdleDrawFrames--;
+      }
       if (liquidGLCanvas && liquidGLCanvas.style.display !== 'none') {
         liquidGLCanvas.style.display = 'none';
       }
