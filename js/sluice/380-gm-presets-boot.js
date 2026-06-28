@@ -2085,13 +2085,20 @@
           console.log('gm: GM_AUTO_TIER on (applying device tier "' + gmBootTier + '")');
           window.gm.preset(gmBootTier);
         } else if (window.gm && window.gm.preset) {
-          // Default look (owner request): ship the EXTREME graphics preset out of
-          // the box for maximum fidelity. The detected device tier is still logged
-          // as a suggestion, and the L panel or ?gmpreset=NAME (below, which wins)
-          // can switch any time. This is unconditional, so weaker / mobile devices
-          // boot at extreme too; switch presets there if it runs heavy.
-          console.log('gm: applying default graphics preset "extreme" (detected device tier "' + gmBootTier + '")');
-          window.gm.preset('extreme');
+          // Default look (owner request): ship the EXTREME graphics preset on
+          // DESKTOP for maximum fidelity. v25.10 — but NOT on mobile. 'extreme'
+          // sets RENDER_SCALE_MOBILE 0.85 + a 6 MP budget + 4x terrain chunks +
+          // full-res smoke; on a phone that is a ~1.85 MP main canvas stacked with
+          // the uiTop + liquid canvases and a large terrain cache. A fast phone
+          // chip (e.g. iPhone Air) renders it at 60fps, but the GPU-memory footprint
+          // pushes iOS Safari past its per-tab limit and the tab CRASHES, while a
+          // weaker phone just runs heavy (the 20fps Android). Ship the memory-sane
+          // 'high' tier on mobile — which equals the in-code defaults (0.55 scale,
+          // 3 MP budget, 3x terrain, 0.6 smoke). The L panel or ?gmpreset=NAME
+          // (below, which wins) can still switch any device any time.
+          var gmBootPreset = (typeof isMobile !== 'undefined' && isMobile) ? 'high' : 'extreme';
+          console.log('gm: applying default graphics preset "' + gmBootPreset + '" (detected device tier "' + gmBootTier + '")');
+          window.gm.preset(gmBootPreset);
         }
       } catch (e) {
         try { console.warn('gm: boot tier detection failed:', e); } catch (_) {}
