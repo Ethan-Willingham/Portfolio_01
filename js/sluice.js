@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.12';
+  var GAME_VERSION = 'v25.13';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -55410,6 +55410,9 @@
           try { liquidWGPU.setSimParam(name, v); } catch (_) {}
         }
       }
+      // v25.13 — panel readout mirror for the engine-side sparse-grid flag
+      // (liquid-wgpu.js owns the real one; default there is 1 = sparse).
+      var gmWaterSparseMirror = 1;
       if (typeof LIQUID_GRAVITY !== 'undefined') {
         gmRegisterLever('water.LIQUID_GRAVITY', 'water', 'LIQUID_GRAVITY',
           function () { return LIQUID_GRAVITY; },
@@ -55502,6 +55505,16 @@
           function (v) { LIQUID_DECLUMP_ON = v ? 1 : 0; gmSetWaterSim('DECLUMP_ON', LIQUID_DECLUMP_ON); },
           0, 1, 1);
       }
+      // v25.13 — SPARSE BLOCK GRID (liquid-wgpu.js v15.0). 1 = GPU-driven
+      // sparse active-block dispatch, cost scales with wet area (shipping
+      // default); 0 = the old dense full-bbox chain (the A/B baseline; also
+      // the automatic fallback on devices under 10 storage buffers/stage).
+      // Engine-side flag, no game twin — the mirror var here only feeds the
+      // panel readout. Spot-check per load with ?wdbg=SPARSE:0.
+      gmRegisterLever('water.SPARSE', 'water', 'SPARSE grid (1=on)',
+        function () { return gmWaterSparseMirror; },
+        function (v) { gmWaterSparseMirror = v ? 1 : 0; gmSetWaterSim('SPARSE', gmWaterSparseMirror); },
+        0, 1, 1);
       // v24.173 OLD-FAITHFUL — speed cap + speed-gated burst damp. MAX_VEL =
       // hard per-particle speed cap (kills the "crazy particle" runaway, 0 =
       // off). BURST_DAMP = per-substep factor for fully-fast water (1.0 = off,

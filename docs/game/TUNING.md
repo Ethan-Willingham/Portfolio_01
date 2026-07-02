@@ -369,6 +369,8 @@ with wake-burst storms — keep that run in mind before re-tightening.
 ## 2.9 WebGPU water module · `js/liquid-wgpu.js` · tier `edit`
 | Lever | Now | Effect |
 |---|---|---|
+| `LIQUID_SPARSE` | `1` | **v15.0 sparse active-block grid** (gm `water.SPARSE`, boot `?wdbg=SPARSE:0`). 1 = every cell-space pass runs indirect over the GPU-built 16×16-cell active-block list, so grid cost scales with WET AREA, not bbox (2^21-cell bbox measured 4.3ms vs 7.8ms dense on M-series; the gap is what rescues Mali). 0 = the legacy dense full-bbox chain (A/B baseline; also the automatic fallback on devices under 10 storage buffers/stage). Physics is bit-identical — the boot Stage 2-6 self-tests diff the sparse chain against the CPU references every boot |
+| `LIQUID_SPARSE_MIN_CELLS` | `32768` | Hybrid gate (`setSimParam('SPARSE_MIN_CELLS')`): below this many bbox cells the dense chain is cheaper than the sparse bookkeeping (~0.35ms/frame fixed), so tight ponds keep the zero-overhead path; enter sparse at ≥ MIN, drop back under MIN/2 (hysteresis so a hovering bbox can't flap). 0 = always sparse. `LiquidWGPU.last.activeBlocks` + `LiquidWGPU.last.bench(120)` are the console probes |
 | `GRID_MARGIN` | `16` | Cell-padding halo on the sim grid bbox. Perf (minor) |
 | `LIQUID_READBACK_EVERY` | `20` | GPU→CPU readback cadence. Lower = fresher mirror but breaks pipelining. Perf |
 | `LIQUID_COLLIDE_RADIUS` | `≈1.06` | Particle terrain-collision probe radius |
@@ -393,6 +395,24 @@ buffers; flipping live first left a permanently frozen slice of the first
 pond on every boot. The live upload path strips the CPU-era frozen bit
 (`uploadParticles(instance, true)`); under the GPU the region box culls
 off-screen water instead.
+
+**v15.0 sparse-grid contract (read before touching any grid kernel):** the
+sparse chain has NO full-grid clears — it relies on a global-zero invariant
+(every cell buffer is zero outside the running sub-step). That only holds
+because every grid-buffer WRITE provably lands inside a marked block: the
+count kernel marks ±2 cells around the `x * invCell` stencil base (the same
+float math P2G/pressure/G2P use — `flatCell`'s `x / CELL` floor can differ
+by one, which was a real shipped bug), the declump move is capped at one
+cell per sub-step, and out-of-grid strays skip their scatters entirely (the
+kernel-side stray guards). If you add a kernel that writes any cell buffer,
+it must either dispatch over the active-block list or its writes must stay
+inside the marking window — otherwise dirt persists forever and reads as
+ghost mass. Clears: `clearPrev` at the head of sub-steps 2..N (same frame,
+same grid mapping) + `runSparseEndClear` once per frame, and
+`denseClearAll` (plain `clearBuffer`s) on every full upload / lever flip.
+Dawn validates buffer usage per compute pass, so the GPU-written dispatch
+args live in `blockMeta` (storage) and are copied 16 bytes into
+`blockDispatch` (INDIRECT-only, never bound as storage) between passes.
 
 ## 2.10 Stability — the giant-particle / runaway fix (v24.169-186) ✅ SOLVED
 

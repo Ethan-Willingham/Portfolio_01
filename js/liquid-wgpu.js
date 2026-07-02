@@ -111,6 +111,20 @@
  *   See TUNING.md §2.10. The harness can't reproduce the dug-cavern
  *   runaway; efficacy is owner-verified via the dev X water overlay.
  *
+ *   v15.0 — SPARSE ACTIVE-BLOCK GRID (the big-grid perf rewrite).
+ *   Every cell-space pass used to run over the whole particle-bbox grid
+ *   (up to 2^21 cells) every sub-step; the whole grid pipeline is now
+ *   GPU-driven sparse: 16x16-cell blocks, a bitmap marked from the
+ *   particle stencils, a single-workgroup compaction that writes the
+ *   indirect-dispatch args, every cell kernel dispatched indirectly over
+ *   ACTIVE blocks only, all per-sub-step full-grid clears replaced by a
+ *   global-zero invariant + a tiny indirect end-of-sub-step clear, and
+ *   the cellStart->cellCursor full-grid copy retired. Zero CPU readback;
+ *   cost scales with wet area instead of bounding-box area. The dense
+ *   chain is kept behind the live water.SPARSE lever (A/B + fallback for
+ *   devices under 10 storage buffers/stage). See the v15.0 banner above
+ *   BLOCK_W for the invariant details.
+ *
  * The GPU path is now LIVE when WebGPU is available.
  * ============================================================ */
 (function () {
@@ -372,6 +386,59 @@
   var WG = 256;                       // compute workgroup size
   var SCAN_BLOCKS = (GRID_MAX_CELLS + WG - 1) / WG | 0;  // 8192 prefix-sum blocks
 
+  /* ---- v15.0 — SPARSE ACTIVE-BLOCK GRID -------------------------------
+   * The pre-v15 pipeline ran EVERY cell-space kernel (clears, the count-
+   * sort scan, gridUpdate, gridBoundary) plus a cellStart->cellCursor
+   * buffer copy over the whole particle-bbox grid, every sub-step. Cost
+   * scaled with the BOUNDING BOX (up to GRID_MAX_CELLS = 2^21 cells), not
+   * with the water: two small ponds far apart paid for every empty cell
+   * between them (~124 ms/frame measured on a mobile Mali).
+   *
+   * v15.0 makes the grid sparse and fully GPU-driven:
+   *   - the grid is tiled into 16x16-cell BLOCKS (256 cells = exactly one
+   *     workgroup; gridW/gridH are padded to multiples of 16).
+   *   - the count kernel additionally marks, in a 1 KB bitmap, every block
+   *     the particle's 3x3 splat stencil overlaps.
+   *   - one single-workgroup kernel compacts the bitmap into a dense
+   *     active-block list (deterministic, blockId order) and writes the
+   *     block count into an INDIRECT-dispatch args buffer. The CPU never
+   *     reads the count back — zero sync points.
+   *   - every cell-space kernel is dispatched INDIRECTLY over the active
+   *     list: one workgroup per active block, lane i -> cell (i%16, i/16)
+   *     of the block. Cost is now proportional to wet area.
+   *   - the per-sub-step full-grid CLEARS are gone entirely, replaced by
+   *     a global-zero invariant: all cell buffers are zero outside the
+   *     running sub-step (kernels only ever write inside active blocks; a
+   *     tiny indirect clear re-zeroes those blocks at sub-step end; seeds
+   *     and harness runs re-establish the invariant with clearBuffer).
+   *     Reads that reach one cell past a stencil into an inactive block
+   *     (the gridUpdate viscosity gather) therefore see true zeros, so
+   *     the sparse chain is bit-equivalent to the dense one.
+   *   - the cellStart->cellCursor copy is gone (the sparse scan-add pass
+   *     writes both).
+   * The dense pipelines are kept and the live lever water.SPARSE (via
+   * setSimParam('SPARSE', 0/1)) switches paths per-frame — the shipping
+   * default is sparse; dense is the A/B baseline + automatic fallback if
+   * the sparse pipelines cannot build (needs 10 storage buffers/stage;
+   * the dense chain already needs 9).
+   * -------------------------------------------------------------------- */
+  var BLOCK_W = 16;                                   // cells per block side
+  var BLOCK_CELLS = BLOCK_W * BLOCK_W;                // 256 — one workgroup
+  var BLOCK_MAX = GRID_MAX_CELLS / BLOCK_CELLS | 0;   // 8192 blocks
+  var BLOCK_BITMAP_WORDS = BLOCK_MAX >> 5;            // 256 u32 = 1 KB
+  var LIQUID_SPARSE = 1;              // live via setSimParam('SPARSE', 0/1)
+  // Hybrid gate: the sparse bookkeeping (extra passes, the args copy, the
+  // tiny dispatches) is a FIXED ~0.35 ms/frame on desktop Metal, while the
+  // dense chain's cost is LINEAR in bbox cells. Below this many cells the
+  // dense chain is provably cheap and runs instead; above it the sparse
+  // chain caps the blowup (a 2^21-cell bbox measured 4.1 ms sparse vs
+  // >7.4 ms dense on an M-series — and the gap is what saves Mali). The
+  // runFrame gate has 2x hysteresis so a bbox hovering at the threshold
+  // cannot flap modes (each dense->sparse entry pays one denseClearAll).
+  // Live via setSimParam('SPARSE_MIN_CELLS'); harness/self-test chains
+  // ignore the gate (they always exercise the lever-selected path).
+  var LIQUID_SPARSE_MIN_CELLS = 32768;
+
   /* ---- Stage 6 — terrain bitmask sizing ------------------------------
    * The collide kernel samples a 1-bit-per-tile solidity mask covering
    * the live-particle tile bbox plus a 1-tile halo (so the +/-r collision
@@ -478,7 +545,30 @@
        * halo). The game fills a byte/tile array via the fillTerrainSolid
        * hook; uploadTerrainMask packs it 32 tiles to a u32 and writeBuffers
        * the active prefix. The collide kernel reads it to test solidity. */
-      terrainMask: mk('liquid.terrainMask', TERRAIN_MASK_WORDS * 4)
+      terrainMask: mk('liquid.terrainMask', TERRAIN_MASK_WORDS * 4),
+      /* ---- v15.0 — sparse active-block grid ----
+       * blockBitmap : 1 bit/block — the count kernel marks every block a
+       *               particle's 3x3 stencil overlaps (atomicOr).
+       * blockList   : compacted active blockIds, blockId order (built by
+       *               the single-workgroup compact kernel each build).
+       * blockMeta   : lane 0 = active-block count, lanes 1-2 = (1,1) —
+       *               the indirect args VALUES. Dawn validates buffer usage
+       *               per compute PASS (and by bind-group contents), so one
+       *               buffer cannot be writable storage and the indirect
+       *               source; the compact pass writes here and a 16-byte
+       *               copyBufferToBuffer (transfer scope) publishes it to:
+       * blockDispatch: the dispatchWorkgroupsIndirect args buffer — INDIRECT
+       *               usage only, never bound as storage, so every indirect
+       *               cell-space dispatch is conflict-free. The GPU sizes
+       *               every pass itself; the CPU never reads the count. */
+      blockBitmap: mk('liquid.blockBitmap', BLOCK_BITMAP_WORDS * 4),
+      blockList:   mk('liquid.blockList',   BLOCK_MAX * 4),
+      blockMeta:   mk('liquid.blockMeta',   16),
+      blockDispatch: dev.createBuffer({
+        label: 'liquid.blockDispatch',
+        size: 16,
+        usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST
+      })
     };
     // Params uniform — grid origin/dims + particle count, handed to
     // every grid kernel. std140-friendly: 20 lanes, 80 bytes. Lanes 0-5
@@ -553,6 +643,34 @@
   // permanently skipped AND invisible (the render collapses frozen quads).
   // The boot self-tests keep packing frozen as-is (their CPU references
   // snapshot the same arrays, so both sides must agree).
+  /* v15.0 — re-establish the sparse global-zero invariant: zero every cell
+   * buffer end to end with encoder clearBuffer (a transfer op — no pipeline
+   * needed, so it works before any pipeline is built). Called on every FULL
+   * particle upload (first seed, CPU-solver handoff, every harness/self-test
+   * run) and on a dense->sparse lever flip; the live sparse chain never
+   * needs it (its end-of-sub-step indirect clear keeps the invariant). */
+  function denseClearAll(instance) {
+    if (!instance.buffersReady || !instance.device) return;
+    var b = instance.buf;
+    var enc = instance.device.createCommandEncoder({ label: 'liquid.denseClearAll' });
+    enc.clearBuffer(b.cellCount);
+    enc.clearBuffer(b.cellStart);
+    enc.clearBuffer(b.cellCursor);
+    enc.clearBuffer(b.cellMass);
+    enc.clearBuffer(b.cellOilMass);
+    enc.clearBuffer(b.cellAeration);
+    enc.clearBuffer(b.cellVX);
+    enc.clearBuffer(b.cellVY);
+    enc.clearBuffer(b.cellDVX);
+    enc.clearBuffer(b.cellDVY);
+    enc.clearBuffer(b.cellVelX);
+    enc.clearBuffer(b.cellVelY);
+    enc.clearBuffer(b.blockBitmap);
+    enc.clearBuffer(b.blockMeta);
+    enc.clearBuffer(b.blockDispatch);
+    instance.queue.submit([enc.finish()]);
+  }
+
   function uploadParticles(instance, stripFrozen) {
     var L = instance.liquid;
     if (!L || !instance.buffersReady) return 0;
@@ -581,6 +699,12 @@
       q.writeBuffer(instance.buf.aux,    0, sx, 0, count * 4);
       q.writeBuffer(instance.buf.flag,   0, sf, 0, count);
     }
+    // v15.0 — a full upload is one of the sparse invariant's entry points
+    // (boot self-tests leave the cell buffers dirty in blocks the next grid
+    // mapping treats as inactive; a CPU-solver handoff arrives after dense
+    // frames that never end-cleared). Cheap (transfer-queue clears) and
+    // rare on the live path (first seed / handoff only).
+    denseClearAll(instance);
     instance.uploadedCount = count;
     return count;
   }
@@ -649,20 +773,29 @@
     var gh = (maxY - minY + 1) | 0;
     if (gw < 1) gw = 1;
     if (gh < 1) gh = 1;
+    // v15.0 — pad both dims up to multiples of BLOCK_W (16) so the sparse
+    // 16x16 blocks tile the grid exactly (bw = gridW >> 4 in-shader, every
+    // block cell a valid dense index, and the 2^21-cell cap is exactly
+    // 8192 blocks). Padding cells are empty and — under the sparse path —
+    // never touched; under the dense path they cost the same as the old
+    // GRID_MARGIN perimeter cells.
+    gw = (gw + BLOCK_W - 1) & ~(BLOCK_W - 1);
+    gh = (gh + BLOCK_W - 1) & ~(BLOCK_W - 1);
     var capped = false;
     if (gw * gh > GRID_MAX_CELLS) {
       // Active-region capping is a later-stage concern; the GRID_MAX_CELLS
       // cap is sized to clear a default world's whole-particle bbox. If
       // this fires, log loudly and clamp so the kernels cannot index past
-      // the fixed cell buffers.
+      // the fixed cell buffers. Shrink in block steps so the dims stay
+      // multiples of BLOCK_W.
       capped = true;
       try {
         console.warn('LiquidWGPU Stage 2: grid ' + gw + 'x' + gh +
           ' = ' + (gw * gh) + ' cells exceeds ' + GRID_MAX_CELLS +
           '-cell cap — clamping.');
       } catch (_) {}
-      while (gw * gh > GRID_MAX_CELLS && gh > 1) gh--;
-      while (gw * gh > GRID_MAX_CELLS && gw > 1) gw--;
+      while (gw * gh > GRID_MAX_CELLS && gh > BLOCK_W) gh -= BLOCK_W;
+      while (gw * gh > GRID_MAX_CELLS && gw > BLOCK_W) gw -= BLOCK_W;
     }
     instance.grid = {
       originX: minX, originY: minY, w: gw, h: gh,
@@ -972,13 +1105,80 @@
     else { instance.queue.submit([cb]); }
   }
 
-  function buildGrid(instance) {
+  function buildGrid(instance, clearPrev) {
     if (!instance.gridReady) return;
     var g = instance.grid;
     if (!g || g.cells <= 0) return;
     var count = instance.uploadedCount | 0;
     var dev = instance.device;
     var P = instance.pipe;
+
+    /* ---- v15.0 SPARSE build ------------------------------------------
+     * Two compute passes + one 16-byte copy, zero full-grid dispatches:
+     *   A: [deferred clear of the PREVIOUS sub-step's active blocks] ->
+     *      bitmapReset(1 wg) -> countCells+mark(particles) ->
+     *      blockCompact(1 wg, writes the args blockMeta)
+     *   copy blockMeta -> blockDispatch (transfer scope; Dawn forbids one
+     *      buffer being writable storage AND the indirect source in a pass)
+     *   B: scanLocal/scanBlocks/scanAdd over the ACTIVE blocks only
+     *      (indirect; scanAdd also seeds cellCursor, retiring the dense
+     *      cellStart->cellCursor copy) -> scatter(particles).
+     * Relies on the global-zero invariant for cellCount (no clear pass):
+     * within a frame, sub-step N's dirt is cleared here at the head of
+     * sub-step N+1 (clearPrev — same grid mapping, prev args still in
+     * blockDispatch/blockList); the LAST sub-step's dirt is cleared by
+     * runFrame's end-of-frame runSparseEndClear, BEFORE the mapping can
+     * change. denseClearAll covers seeds/handoffs/harness runs.
+     * ------------------------------------------------------------------ */
+    if (useSparse(instance)) {
+      var encS = dev.createCommandEncoder({ label: 'liquid.buildGridSparse' });
+      var partGroupsS = Math.max(1, Math.ceil(count / WG));
+      // Pass A — [deferred prev clear] + mark + compact.
+      var cpA = encS.beginComputePass({ label: 'liquid.gridSparseMark' });
+      if (clearPrev) {
+        cpA.setPipeline(P.clearCountSparse);
+        cpA.setBindGroup(0, instance.bg.grid);
+        cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+        cpA.setPipeline(instance.p2gPipe.clearSparse);
+        cpA.setBindGroup(0, instance.p2gBG);
+        cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+        cpA.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
+        cpA.setBindGroup(0, instance.gridUpdateBG);
+        cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+      }
+      cpA.setBindGroup(0, instance.bg.grid);
+      cpA.setPipeline(P.bitmapReset);
+      cpA.dispatchWorkgroups(1);
+      if (count > 0) {
+        cpA.setPipeline(P.countCellsMark);
+        cpA.dispatchWorkgroups(partGroupsS);
+      }
+      cpA.setPipeline(P.blockCompact);
+      cpA.dispatchWorkgroups(1);
+      cpA.end();
+      // Publish the GPU-written args to the INDIRECT-only buffer (transfer
+      // scope — Dawn validates buffer usage per compute pass, so the
+      // storage-written blockMeta cannot itself be the indirect source).
+      encS.copyBufferToBuffer(instance.buf.blockMeta, 0,
+                              instance.buf.blockDispatch, 0, 16);
+      // Pass B — the sparse count-sort scan + scatter, sized by the GPU.
+      var cpS = encS.beginComputePass({ label: 'liquid.gridSparseScan' });
+      cpS.setBindGroup(0, instance.bg.grid);
+      cpS.setPipeline(P.scanLocalSparse);
+      cpS.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+      cpS.setPipeline(P.scanBlocksSparse);
+      cpS.dispatchWorkgroups(1);
+      cpS.setPipeline(P.scanAddSparse);
+      cpS.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+      if (count > 0) {
+        cpS.setPipeline(P.scatter);
+        cpS.dispatchWorkgroups(partGroupsS);
+      }
+      cpS.end();
+      liquidSubmit(instance, encS);
+      return;
+    }
+
     var enc = dev.createCommandEncoder({ label: 'liquid.buildGrid' });
 
     var cellGroups  = Math.ceil(g.cells / WG);
@@ -1202,47 +1402,43 @@
           ' ref=' + refCount[firstCountCell] + ')';
       }
 
-      // (b) exclusive prefix-sum offsets must match exactly.
+      // (b)+(c) v15.0 — under the sparse grid, cellStart is an exclusive
+      // scan in ACTIVE-BLOCK compaction order, not the dense row-major
+      // order the CPU reference computes, so the offset VALUES are not
+      // comparable (they were never load-bearing). What every consumer
+      // (scatter, declump's neighbour walks) relies on is the count-sort
+      // CONTRACT, which is what is verified now, driven by the GPU's own
+      // offsets: each cell's segment [start, start+count) must stay inside
+      // [0, totalBinned), never overlap another cell's segment, and hold
+      // exactly that cell's particles (order-free — the scatter races
+      // within a cell on both paths). The same check passes for the dense
+      // path, whose offsets also satisfy the contract.
       if (!fail) {
-        var startMismatch = 0, firstStartCell = -1;
-        for (var s = 0; s < cells; s++) {
-          if (gpuStart[s] !== refStart[s]) {
-            startMismatch++;
-            if (firstStartCell < 0) firstStartCell = s;
-          }
-        }
-        if (startMismatch) {
-          fail = 'cellStart (prefix-sum) mismatch in ' + startMismatch +
-            ' cells (first cell ' + firstStartCell + ': gpu=' +
-            gpuStart[firstStartCell] + ' ref=' + refStart[firstStartCell] + ')';
-        }
-      }
-
-      // (c) sortedIdx: scatter order within a cell is non-deterministic
-      // (atomics race), so compare each cell's index SET, not the order.
-      if (!fail) {
+        var total = 0;
+        for (var t = 0; t < cells; t++) { total += refCount[t]; }
+        var slotSeen = new Uint8Array(total);
         var sortMismatch = 0, firstSortCell = -1;
         for (var cc = 0; cc < cells && sortMismatch === 0; cc++) {
           var n = refCount[cc];
           if (n === 0) continue;
-          var base = refStart[cc];
-          var seen = {};
+          var base = gpuStart[cc];
           var bad = false;
-          var j;
-          for (j = 0; j < n; j++) {
-            var idx = gpuSorted[base + j];
-            if (idx >= count || refCellOf[idx] !== cc || seen[idx]) { bad = true; break; }
-            seen[idx] = 1;
-          }
-          if (!bad) {
-            for (j = 0; j < n; j++) {
-              if (!seen[refSorted[base + j]]) { bad = true; break; }
+          if (base + n > total) {
+            bad = true;   // segment escapes the binned range
+          } else {
+            var seen = {};
+            for (var j = 0; j < n; j++) {
+              if (slotSeen[base + j]) { bad = true; break; }   // overlap
+              slotSeen[base + j] = 1;
+              var idx = gpuSorted[base + j];
+              if (idx >= count || refCellOf[idx] !== cc || seen[idx]) { bad = true; break; }
+              seen[idx] = 1;
             }
           }
           if (bad) { sortMismatch++; firstSortCell = cc; }
         }
         if (sortMismatch) {
-          fail = 'sortedIdx grouping wrong for cell ' + firstSortCell;
+          fail = 'sortedIdx segment contract broken for cell ' + firstSortCell;
         }
       }
 
@@ -2794,8 +2990,11 @@ struct GridParams {
   originX : u32,   // i32 bit pattern — cell-space bbox min x
   originY : u32,   // i32 bit pattern — cell-space bbox min y
   cells   : u32,   // gridW * gridH
-  _pad0   : u32,
-  _pad1   : u32,
+  stepDt  : f32,   // (shared paramsBuf lane 6 — named, was _pad0)
+  invCell : f32,   // v15.0 — the block-marking base MUST use the same
+                   // x * invCell math the P2G/pressure/G2P kernels use
+                   // (flatCell's x / CELL floor can differ by one at cell
+                   // boundaries in f32, letting a splat escape the marks)
   _pad2   : u32,
   _pad3   : u32,
   _pad4   : u32,
@@ -2814,9 +3013,29 @@ struct GridParams {
 @group(0) @binding(5) var<storage, read_write> blockSums  : array<u32>;
 @group(0) @binding(6) var<storage, read_write> cellOf     : array<u32>;
 @group(0) @binding(7) var<storage, read_write> sortedIdx  : array<u32>;
+// v15.0 sparse — declared here for the sparse kernels; the dense kernels
+// never reference them (unused declarations are not validated against the
+// layout, so a sparse-incapable device's 8-entry layout still builds the
+// dense pipelines from this same header).
+@group(0) @binding(8)  var<storage, read_write> blockBitmap : array<atomic<u32>>;
+@group(0) @binding(9)  var<storage, read_write> blockList   : array<u32>;
+@group(0) @binding(10) var<storage, read_write> blockMeta   : array<atomic<u32>>;
 
 const CELL : f32 = ${LIQUID_CELL_DEFAULT};
 const WG   : u32 = ${WG}u;
+const BLOCK_BITMAP_WORDS : u32 = ${BLOCK_BITMAP_WORDS}u;
+
+// v15.0 — mark a block live in the bitmap (blockId = by * (gridW/16) + bx).
+// Test-before-or: thousands of particles share a handful of pond blocks, so
+// a plain atomicOr serialises on the few hot words; once the bit is set
+// (the overwhelmingly common case) a read suffices.
+fn markBlock(b : u32) {
+  let w = b >> 5u;
+  let m = 1u << (b & 31u);
+  if ((atomicLoad(&blockBitmap[w]) & m) == 0u) {
+    atomicOr(&blockBitmap[w], m);
+  }
+}
 
 // Flat cell index for a particle position, clamped into the grid the
 // same way the CPU reference clamps (so out-of-bbox strays still land
@@ -2851,16 +3070,238 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 `;
 
   // 2. countCells — per particle: compute + store its flat cell index,
-  //    then atomicAdd a 1 into that cell's counter.
-  var WGSL_COUNT = /* wgsl */ `
+  //    then atomicAdd a 1 into that cell's counter. v15.0 — built by a
+  //    template: the sparse variant (mark=true) additionally marks every
+  //    16x16 block the particle's 3x3 stencil overlaps (up to 4 blocks —
+  //    the stencil spans at most 2 blocks per axis). Marking from the
+  //    CLAMPED cell keeps it consistent with cellOf; every cell any grid
+  //    kernel can WRITE for this particle lies inside a marked block.
+  function countKernel(mark) {
+    return '\n@compute @workgroup_size(256)\n' +
+      'fn main(@builtin(global_invocation_id) gid : vec3<u32>) {\n' +
+      '  let i = gid.x;\n' +
+      '  if (i >= gp.count) { return; }\n' +
+      '  if (outOfRegion(pos[i].xy)) { return; }   // v14.31 - skip off-region\n' +
+      '  let cell = flatCell(pos[i].xy);\n' +
+      '  cellOf[i] = cell;\n' +
+      '  atomicAdd(&cellCount[cell], 1u);\n' +
+      (mark ?
+      // The mark base is the P2G/pressure/G2P stencil base — the SAME
+      // x * invCell floor those kernels compute (NOT flatCell's x / CELL,
+      // whose f32 floor can land one cell off at boundaries). Marks cover
+      // the 3x3 stencil around it; block coords clamp at the grid edge
+      // (strays skip their splats via the kernel-side stray guard).
+      '  let ox  = bitcast<i32>(gp.originX);\n' +
+      '  let oy  = bitcast<i32>(gp.originY);\n' +
+      '  let mgx = i32(floor(pos[i].x * gp.invCell)) - ox;\n' +
+      '  let mgy = i32(floor(pos[i].y * gp.invCell)) - oy;\n' +
+      '  let bw  = gp.gridW >> 4u;\n' +
+      // +/-2 (not the stencil's +/-1): declump runs AFTER this marking and
+      // may move a particle up to one cell before P2G splats, shifting the
+      // 3x3 stencil by one. +/-2 covers the worst case; a 5-cell span still
+      // overlaps at most 2 blocks per axis, so the 4 atomicOrs below hold.
+      '  let bx0 = u32(clamp(mgx - 2, 0, i32(gp.gridW) - 1)) >> 4u;\n' +
+      '  let by0 = u32(clamp(mgy - 2, 0, i32(gp.gridH) - 1)) >> 4u;\n' +
+      '  let bx1 = u32(clamp(mgx + 2, 0, i32(gp.gridW) - 1)) >> 4u;\n' +
+      '  let by1 = u32(clamp(mgy + 2, 0, i32(gp.gridH) - 1)) >> 4u;\n' +
+      '  markBlock(by0 * bw + bx0);\n' +
+      '  if (bx1 != bx0) { markBlock(by0 * bw + bx1); }\n' +
+      '  if (by1 != by0) {\n' +
+      '    markBlock(by1 * bw + bx0);\n' +
+      '    if (bx1 != bx0) { markBlock(by1 * bw + bx1); }\n' +
+      '  }\n' : '') +
+      '}\n';
+  }
+  var WGSL_COUNT = countKernel(false);
+  var WGSL_COUNT_MARK = countKernel(true);
+
+  /* ---- v15.0 — sparse block bookkeeping kernels ----------------------
+   * bitmapReset : ONE workgroup — zero the 256 bitmap words and reset the
+   *               blockMeta indirect args to (0, 1, 1, 0).
+   * blockCompact: ONE workgroup — deterministic bitmap->list compaction.
+   *               Each lane owns one bitmap word (32 blocks); a workgroup
+   *               scan of the per-word popcounts assigns each word its
+   *               output base, then the lane streams its set bits into
+   *               blockList in blockId order. Lane 255 publishes the total
+   *               into blockMeta[0] — the x lane of every subsequent
+   *               dispatchWorkgroupsIndirect. No CPU involvement.
+   * ------------------------------------------------------------------- */
+  var WGSL_BITMAP_RESET = /* wgsl */ `
 @compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-  let i = gid.x;
-  if (i >= gp.count) { return; }
-  if (outOfRegion(pos[i].xy)) { return; }   // v14.31 - skip off-region
-  let cell = flatCell(pos[i].xy);
-  cellOf[i] = cell;
-  atomicAdd(&cellCount[cell], 1u);
+fn main(@builtin(local_invocation_id) lid : vec3<u32>) {
+  let lx = lid.x;
+  if (lx < BLOCK_BITMAP_WORDS) { atomicStore(&blockBitmap[lx], 0u); }
+  if (lx == 0u) {
+    atomicStore(&blockMeta[0], 0u);
+    atomicStore(&blockMeta[1], 1u);
+    atomicStore(&blockMeta[2], 1u);
+    atomicStore(&blockMeta[3], 0u);
+  }
+}
+`;
+
+  var WGSL_BLOCK_COMPACT = /* wgsl */ `
+var<workgroup> wsum : array<u32, 256>;
+
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) lid : vec3<u32>) {
+  let lx = lid.x;
+  let word = atomicLoad(&blockBitmap[lx]);
+  let n = countOneBits(word);
+  wsum[lx] = n;
+  workgroupBarrier();
+
+  // Inclusive Hillis-Steele scan of the 256 per-word popcounts.
+  var offset : u32 = 1u;
+  loop {
+    if (offset >= 256u) { break; }
+    var add : u32 = 0u;
+    if (lx >= offset) { add = wsum[lx - offset]; }
+    workgroupBarrier();
+    if (lx >= offset) { wsum[lx] = wsum[lx] + add; }
+    workgroupBarrier();
+    offset = offset * 2u;
+  }
+
+  // Stream this word's set bits to blockList at the exclusive base.
+  var m : u32 = word;
+  var o : u32 = wsum[lx] - n;
+  loop {
+    if (m == 0u) { break; }
+    let b = firstTrailingBit(m);
+    blockList[o] = lx * 32u + b;
+    m = m & (m - 1u);
+    o = o + 1u;
+  }
+  if (lx == 255u) { atomicStore(&blockMeta[0], wsum[lx]); }
+}
+`;
+
+  /* ---- v15.0 — sparse count-sort scan ---------------------------------
+   * Same two-level exclusive scan as the dense passes A/B/C, but over the
+   * ACTIVE blocks only: pass A scans each active block's 256 cellCounts
+   * (one workgroup per active block, indirect), pass B single-workgroup
+   * scans the per-block totals (dynamic count from blockMeta), pass C adds
+   * the block bases back AND seeds cellCursor — which retires the dense
+   * cellStart->cellCursor buffer copy. cellStart values land in active-
+   * list compaction order rather than dense row-major order; every
+   * consumer (scatter, declump's neighbour walk) only requires that the
+   * per-cell segments partition [0, inRegionCount), which holds.
+   * ------------------------------------------------------------------- */
+  var WGSL_SCAN_LOCAL_SPARSE = /* wgsl */ `
+var<workgroup> tmp : array<u32, 256>;
+
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) lid : vec3<u32>,
+        @builtin(workgroup_id)        wid : vec3<u32>) {
+  let lx  = lid.x;
+  let blk = blockList[wid.x];
+  let bw  = gp.gridW >> 4u;
+  let i = ((blk / bw) * 16u + (lx >> 4u)) * gp.gridW
+        +  (blk % bw) * 16u + (lx & 15u);
+  let v = atomicLoad(&cellCount[i]);
+  tmp[lx] = v;
+  workgroupBarrier();
+
+  var offset : u32 = 1u;
+  loop {
+    if (offset >= WG) { break; }
+    var add : u32 = 0u;
+    if (lx >= offset) { add = tmp[lx - offset]; }
+    workgroupBarrier();
+    if (lx >= offset) { tmp[lx] = tmp[lx] + add; }
+    workgroupBarrier();
+    offset = offset * 2u;
+  }
+
+  cellStart[i] = tmp[lx] - v;
+  if (lx == WG - 1u) {
+    blockSums[wid.x] = tmp[lx];
+  }
+}
+`;
+
+  // B-sparse — a single workgroup exclusive-scans the ACTIVE blockSums
+  // prefix (dynamic count from blockMeta[0], <= 8192; the strided
+  // two-phase layout mirrors the dense WGSL_SCAN_BLOCKS).
+  var WGSL_SCAN_BLOCKS_SPARSE = /* wgsl */ `
+var<workgroup> chunk : array<u32, 256>;
+
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) lid : vec3<u32>) {
+  let lx = lid.x;
+  let nblocks = atomicLoad(&blockMeta[0]);
+  let per = (nblocks + WG - 1u) / WG;
+  let base = lx * per;
+
+  var s : u32 = 0u;
+  var k : u32 = 0u;
+  loop {
+    if (k >= per) { break; }
+    let idx = base + k;
+    if (idx < nblocks) { s = s + blockSums[idx]; }
+    k = k + 1u;
+  }
+  chunk[lx] = s;
+  workgroupBarrier();
+
+  var offset : u32 = 1u;
+  loop {
+    if (offset >= WG) { break; }
+    var add : u32 = 0u;
+    if (lx >= offset) { add = chunk[lx - offset]; }
+    workgroupBarrier();
+    if (lx >= offset) { chunk[lx] = chunk[lx] + add; }
+    workgroupBarrier();
+    offset = offset * 2u;
+  }
+
+  var running : u32 = 0u;
+  if (lx > 0u) { running = chunk[lx - 1u]; }
+  var k2 : u32 = 0u;
+  loop {
+    if (k2 >= per) { break; }
+    let idx = base + k2;
+    if (idx < nblocks) {
+      let cv = blockSums[idx];
+      blockSums[idx] = running;
+      running = running + cv;
+    }
+    k2 = k2 + 1u;
+  }
+}
+`;
+
+  // C-sparse — add the block bases back onto each active block's 256
+  // cellStarts, and seed cellCursor with the final value (replaces the
+  // dense pass C + the cellStart->cellCursor copyBufferToBuffer).
+  var WGSL_SCAN_ADD_SPARSE = /* wgsl */ `
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) lid : vec3<u32>,
+        @builtin(workgroup_id)        wid : vec3<u32>) {
+  let lx  = lid.x;
+  let blk = blockList[wid.x];
+  let bw  = gp.gridW >> 4u;
+  let i = ((blk / bw) * 16u + (lx >> 4u)) * gp.gridW
+        +  (blk % bw) * 16u + (lx & 15u);
+  let v = cellStart[i] + blockSums[wid.x];
+  cellStart[i] = v;
+  atomicStore(&cellCursor[i], v);
+}
+`;
+
+  // v15.0 — end-of-sub-step clear, grid-layout share: re-zero the active
+  // blocks' cellCounts so the global-zero invariant holds for the next
+  // sub-step (the p2g / grid2 shares clear the other cell buffers).
+  var WGSL_CLEAR_COUNT_SPARSE = /* wgsl */ `
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) lid : vec3<u32>,
+        @builtin(workgroup_id)        wid : vec3<u32>) {
+  let blk = blockList[wid.x];
+  let bw  = gp.gridW >> 4u;
+  let i = ((blk / bw) * 16u + (lid.x >> 4u)) * gp.gridW
+        +  (blk % bw) * 16u + (lid.x & 15u);
+  atomicStore(&cellCount[i], 0u);
 }
 `;
 
@@ -3143,6 +3584,14 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // 3x3 in range so no clamp is needed.
   let bx = gx - ox;
   let by = gy - oy;
+  // v15.0 — stray guard. A particle whose UNCLAMPED base sits outside the
+  // padded grid (CPU-mirror-lag drift beyond the 16-cell GRID_MARGIN) used
+  // to scatter through wrapped row indices into unrelated cells; the dense
+  // chain wiped that garbage on the next sub-step's full clear, but the
+  // sparse chain must never write outside its marked blocks. The stray's
+  // splat was meaningless either way — skip it. countCells still bins it
+  // (clamped flatCell) and G2P/collide keep advancing it back into range.
+  if (bx < 1 || by < 1 || bx >= i32(gp.gridW) - 1 || by >= i32(gp.gridH) - 1) { return; }
   let row0 = u32((by - 1) * i32(gp.gridW) + bx);
   let row1 = u32( by      * i32(gp.gridW) + bx);
   let row2 = u32((by + 1) * i32(gp.gridW) + bx);
@@ -3162,22 +3611,68 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 }
 `;
 
+  /* ---- v15.0 — dense/sparse cell-kernel entry templating --------------
+   * Every per-cell kernel body below is written once, starting from `c` =
+   * the flat dense cell index, and assembled behind one of two entries:
+   *   dense  — one thread per cell of the whole bbox grid (gid.x), the
+   *            pre-v15 dispatch, kept as the A/B fallback path.
+   *   sparse — one 256-lane workgroup per ACTIVE block from blockList
+   *            (dispatched indirectly off blockMeta); lane i maps to cell
+   *            (i%16, i/16) of the block. gridW is a multiple of 16, so
+   *            bw = gridW >> 4 and every mapped c is a valid dense index.
+   * The `if (c >= gp.cells) return` guard inside each body stays for both
+   * (a no-op under sparse; belt and braces).
+   * -------------------------------------------------------------------- */
+  function cellEntryDense(body) {
+    return '\n@compute @workgroup_size(256)\n' +
+      'fn main(@builtin(global_invocation_id) gid : vec3<u32>) {\n' +
+      '  let c = gid.x;\n' + body + '}\n';
+  }
+  function cellEntrySparse(body) {
+    return '\n@compute @workgroup_size(256)\n' +
+      'fn main(@builtin(local_invocation_id) lid : vec3<u32>,\n' +
+      '        @builtin(workgroup_id)        wid : vec3<u32>) {\n' +
+      '  let blk = blockList[wid.x];\n' +
+      '  let bw  = gp.gridW >> 4u;\n' +
+      '  let c = ((blk / bw) * 16u + (lid.x >> 4u)) * gp.gridW\n' +
+      '        +  (blk % bw) * 16u + (lid.x & 15u);\n' + body + '}\n';
+  }
+  // Per-layout read-only blockList declaration for the sparse variants
+  // (the grid layout declares its own read_write copy in the common
+  // header; binding numbers differ per layout, same pattern as simBind).
+  function sparseListBind(binding) {
+    return '\n@group(0) @binding(' + binding +
+      ') var<storage, read> blockList : array<u32>;\n';
+  }
+
   /* 3. p2gNormalize — per-cell mass-normalize of aeration. Ports the
    *    CPU tail loop `if (mass > 0) cellAeration /= cellMass`. Mass and
    *    aeration are both fixed-point i32; decode both, divide in float,
    *    re-encode aeration in place. cellMass / momentum are left as-is
    *    (the downstream grid-update kernel consumes the raw fixed point). */
-  var WGSL_P2G_NORMALIZE = /* wgsl */ `
-@compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-  let i = gid.x;
-  if (i >= gp.cells) { return; }
-  let mass = f32(atomicLoad(&cellMass[i])) / FIXED_SCALE;
+  var WGSL_P2G_NORMALIZE_BODY = /* wgsl */ `
+  if (c >= gp.cells) { return; }
+  let mass = f32(atomicLoad(&cellMass[c])) / FIXED_SCALE;
   if (mass > 0.0) {
-    let aer = f32(atomicLoad(&cellAeration[i])) / FIXED_SCALE;
-    atomicStore(&cellAeration[i], encodeFx(aer / mass));
+    let aer = f32(atomicLoad(&cellAeration[c])) / FIXED_SCALE;
+    atomicStore(&cellAeration[c], encodeFx(aer / mass));
   }
-}
+`;
+  var WGSL_P2G_NORMALIZE = cellEntryDense(WGSL_P2G_NORMALIZE_BODY);
+
+  // v15.0 — end-of-sub-step clear, p2g-layout share: re-zero the active
+  // blocks' five fixed-point accumulators (the grid share clears
+  // cellCount, the grid2 share clears the DV impulses + resolved
+  // velocity). Together they restore the global-zero invariant, which is
+  // what lets the sparse chain skip the per-sub-step full-grid clears
+  // (WGSL_P2G_CLEAR / clearDV / clearCells) entirely.
+  var WGSL_CLEAR_P2G_SPARSE_BODY = /* wgsl */ `
+  if (c >= gp.cells) { return; }
+  atomicStore(&cellMass[c], 0);
+  atomicStore(&cellOilMass[c], 0);
+  atomicStore(&cellAeration[c], 0);
+  atomicStore(&cellVX[c], 0);
+  atomicStore(&cellVY[c], 0);
 `;
 
   /* ---- WGSL — pressure + grid-update kernels (Stage 4) ---------------
@@ -3571,6 +4066,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // Dense base cell; the 1-cell margin keeps the full 3x3 in range.
   let bx = gx - ox;
   let by = gy - oy;
+  // v15.0 — stray guard (see the P2G scatter twin): never gather from or
+  // scatter DV into wrapped cells for a particle outside the padded grid.
+  if (bx < 1 || by < 1 || bx >= i32(gp.gridW) - 1 || by >= i32(gp.gridH) - 1) { return; }
   let row0 = (by - 1) * i32(gp.gridW) + bx;
   let row1 =  by      * i32(gp.gridW) + bx;
   let row2 = (by + 1) * i32(gp.gridW) + bx;
@@ -3669,7 +4167,10 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    *    grid coords (the CPU's liquidCellGX/GY) are recovered from the flat
    *    cell index. v14.3 — the tile-boundary reflection + friction tail is
    *    now ported too, as the separate gridBoundary kernel. */
-  var WGSL_GRID_UPDATE = /* wgsl */ `
+  // v15.0 — split into helpers + body so the dense and sparse pipelines
+  // assemble the SAME physics text behind their two entries (see
+  // cellEntryDense / cellEntrySparse); zero drift between the paths.
+  var WGSL_GRID_UPDATE_HELPERS = /* wgsl */ `
 // v24.115 — raw resolved velocity of a cell, recomputed from the P2G /
 // pressure accumulators (NOT from cellVelX/Y, so the viscosity gather
 // below is race-free: every thread reads only kernel INPUTS). Returns
@@ -3687,10 +4188,9 @@ fn rawCellVel(n : u32) -> vec3<f32> {
              f32(atomicLoad(&cellDVY[n])) / FIXED_SCALE) * ninv + nGrav;
   return vec3<f32>(nvx, nvy, 1.0);
 }
+`;
 
-@compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-  let c = gid.x;
+  var WGSL_GRID_UPDATE_BODY = /* wgsl */ `
   if (c >= gp.cells) { return; }
   let mass = f32(atomicLoad(&cellMass[c])) / FIXED_SCALE;
   if (mass > 0.0) {
@@ -3745,7 +4245,18 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     cellVelX[c] = 0.0;
     cellVelY[c] = 0.0;
   }
-}
+`;
+  var WGSL_GRID_UPDATE =
+    WGSL_GRID_UPDATE_HELPERS + cellEntryDense(WGSL_GRID_UPDATE_BODY);
+
+  // v15.0 — end-of-sub-step clear, grid2-layout share: zero the active
+  // blocks' pressure impulses + resolved velocity (see the p2g share).
+  var WGSL_CLEAR_GRID2_SPARSE_BODY = /* wgsl */ `
+  if (c >= gp.cells) { return; }
+  atomicStore(&cellDVX[c], 0);
+  atomicStore(&cellDVY[c], 0);
+  cellVelX[c] = 0.0;
+  cellVelY[c] = 0.0;
 `;
 
   /* ---- WGSL — grid boundary (Stage 4b, v14.3) ------------------------
@@ -3763,7 +4274,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    * oil/water lerp), cellVelX/cellVelY (read_write) and the terrain mask
    * (read). 5 storage buffers — within the 8-buffer floor.
    * -------------------------------------------------------------------- */
-  var WGSL_GRID_BOUNDARY = /* wgsl */ `
+  // v15.0 — split into head (struct + bindings + terrain probes) and body
+  // so the dense and sparse pipelines assemble the same physics text.
+  var WGSL_GRID_BOUNDARY_HEAD = /* wgsl */ `
 struct P2GParams {
   count     : u32,
   gridW     : u32,
@@ -3815,10 +4328,9 @@ fn terrainSolidAt(px : f32, py : f32) -> bool {
 fn gridSolid(gx : i32, gy : i32) -> bool {
   return terrainSolidAt((f32(gx) + 0.5) * CELL, (f32(gy) + 0.5) * CELL);
 }
+`;
 
-@compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-  let c = gid.x;
+  var WGSL_GRID_BOUNDARY_BODY = /* wgsl */ `
   if (c >= gp.cells) { return; }
   // Empty cells: gridUpdate already zeroed their velocity, and the CPU
   // boundary block runs only inside its mass > 0 branch — skip them.
@@ -3864,8 +4376,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
   cellVelX[c] = vx;
   cellVelY[c] = vy;
-}
 `;
+  var WGSL_GRID_BOUNDARY =
+    WGSL_GRID_BOUNDARY_HEAD + cellEntryDense(WGSL_GRID_BOUNDARY_BODY);
 
   /* ---- WGSL — G2P grid->particle gather (Stage 5) --------------------
    * The final kernel of the core MPM step. One thread per particle GATHERs
@@ -4553,7 +5066,15 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // the push direction) stays out of solid, so a wall-packed knot spreads
   // ALONG / away from the wall into open water but never penetrates it. The
   // collide pass still resolves the fine radius after.
-  let cand = p + push * STR;
+  // v15.0 — cap the relaxation move at one cell per substep. A degenerate
+  // fully-coincident knot could sum a push of several cells in one step;
+  // the Jacobi relaxation converges over frames either way, and the cap is
+  // what lets the sparse grid's block marking (+/-2 cells around the
+  // pre-declump stencil base) provably cover every post-declump splat.
+  var mv = push * STR;
+  mv.x = clamp(mv.x, -CELL, CELL);
+  mv.y = clamp(mv.y, -CELL, CELL);
+  let cand = p + mv;
   var np = p;
   let dxm = cand.x - p.x;
   if (dxm != 0.0) {
@@ -4983,19 +5504,38 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
    * -------------------------------------------------------------------- */
   function buildGridPipelines(instance) {
     var dev = instance.device;
-    var bgl = dev.createBindGroupLayout({
-      label: 'liquid.gridBGL',
-      entries: [
-        { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
-      ]
-    });
+    // v15.0 — the sparse kernels put 10 storage buffers on the grid layout
+    // (the dense chain's own high-water mark is the 9-buffer P2G layout, so
+    // in practice any device running the GPU path at all clears 10). On a
+    // device that genuinely caps at 8-9 the layout stays at 8 entries, the
+    // sparse pipelines are skipped and the dense path drives — same
+    // graceful-degradation pattern as buildP2GPipelines.
+    var lim = (dev.limits && dev.limits.maxStorageBuffersPerShaderStage) || 8;
+    instance.sparseCapable = lim >= 10;
+    if (!instance.sparseCapable) {
+      try {
+        console.log('LiquidWGPU v15: device maxStorageBuffersPerShaderStage=' +
+          lim + ' < 10 — sparse block grid unavailable, dense grid drives.');
+      } catch (_) {}
+    }
+    var entries = [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
+    ];
+    if (instance.sparseCapable) {
+      entries.push(
+        { binding: 8,  visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 9,  visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+        { binding: 10, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
+      );
+    }
+    var bgl = dev.createBindGroupLayout({ label: 'liquid.gridBGL', entries: entries });
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
     function pipe(label, body) {
       return dev.createComputePipeline({
@@ -5015,20 +5555,45 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       scanAdd:    pipe('liquid.scanAdd',    WGSL_SCAN_ADD),
       scatter:    pipe('liquid.scatter',    WGSL_SCATTER)
     };
+    // v15.0 — the sparse block pipelines (grid-layout share). Wrapped so a
+    // WGSL compile failure only disables the sparse path, never the grid.
+    instance.sparseGridOK = false;
+    if (instance.sparseCapable) {
+      try {
+        instance.pipe.countCellsMark   = pipe('liquid.countCellsMark',   WGSL_COUNT_MARK);
+        instance.pipe.bitmapReset      = pipe('liquid.bitmapReset',      WGSL_BITMAP_RESET);
+        instance.pipe.blockCompact     = pipe('liquid.blockCompact',     WGSL_BLOCK_COMPACT);
+        instance.pipe.scanLocalSparse  = pipe('liquid.scanLocalSparse',  WGSL_SCAN_LOCAL_SPARSE);
+        instance.pipe.scanBlocksSparse = pipe('liquid.scanBlocksSparse', WGSL_SCAN_BLOCKS_SPARSE);
+        instance.pipe.scanAddSparse    = pipe('liquid.scanAddSparse',    WGSL_SCAN_ADD_SPARSE);
+        instance.pipe.clearCountSparse = pipe('liquid.clearCountSparse', WGSL_CLEAR_COUNT_SPARSE);
+        instance.sparseGridOK = true;
+      } catch (eSp) {
+        try { console.log('LiquidWGPU v15: sparse grid pipelines failed (' + ((eSp && eSp.message) || eSp) + ') — dense grid drives.'); } catch (_) {}
+      }
+    }
+    var bgEntries = [
+      { binding: 0, resource: { buffer: instance.paramsBuf } },
+      { binding: 1, resource: { buffer: instance.buf.pos } },
+      { binding: 2, resource: { buffer: instance.buf.cellCount } },
+      { binding: 3, resource: { buffer: instance.buf.cellStart } },
+      { binding: 4, resource: { buffer: instance.buf.cellCursor } },
+      { binding: 5, resource: { buffer: instance.buf.blockSums } },
+      { binding: 6, resource: { buffer: instance.buf.cellOf } },
+      { binding: 7, resource: { buffer: instance.buf.sortedIdx } }
+    ];
+    if (instance.sparseCapable) {
+      bgEntries.push(
+        { binding: 8,  resource: { buffer: instance.buf.blockBitmap } },
+        { binding: 9,  resource: { buffer: instance.buf.blockList } },
+        { binding: 10, resource: { buffer: instance.buf.blockMeta } }
+      );
+    }
     instance.bg = {
       grid: dev.createBindGroup({
         label: 'liquid.gridBG',
         layout: bgl,
-        entries: [
-          { binding: 0, resource: { buffer: instance.paramsBuf } },
-          { binding: 1, resource: { buffer: instance.buf.pos } },
-          { binding: 2, resource: { buffer: instance.buf.cellCount } },
-          { binding: 3, resource: { buffer: instance.buf.cellStart } },
-          { binding: 4, resource: { buffer: instance.buf.cellCursor } },
-          { binding: 5, resource: { buffer: instance.buf.blockSums } },
-          { binding: 6, resource: { buffer: instance.buf.cellOf } },
-          { binding: 7, resource: { buffer: instance.buf.sortedIdx } }
-        ]
+        entries: bgEntries
       })
     };
     instance.gridReady = true;
@@ -5058,21 +5623,24 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       } catch (_) {}
       return;
     }
-    var bgl = dev.createBindGroupLayout({
-      label: 'liquid.p2gBGL',
-      entries: [
-        { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 9, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
-      ]
-    });
+    var entries = [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 9, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
+    ];
+    // v15.0 — the sparse variants (indirect normalize + the end-of-sub-step
+    // accumulator clear) read the active-block list at binding 10.
+    if (instance.sparseCapable) {
+      entries.push({ binding: 10, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
+    }
+    var bgl = dev.createBindGroupLayout({ label: 'liquid.p2gBGL', entries: entries });
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
     function pipe(label, body) {
       return dev.createComputePipeline({
@@ -5089,21 +5657,37 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       scatter:   pipe('liquid.p2gScatter',   WGSL_P2G_SCATTER),
       normalize: pipe('liquid.p2gNormalize', WGSL_P2G_NORMALIZE)
     };
+    instance.sparseP2GOK = false;
+    if (instance.sparseCapable) {
+      try {
+        instance.p2gPipe.normalizeSparse = pipe('liquid.p2gNormalizeSparse',
+          sparseListBind(10) + cellEntrySparse(WGSL_P2G_NORMALIZE_BODY));
+        instance.p2gPipe.clearSparse = pipe('liquid.p2gClearSparse',
+          sparseListBind(10) + cellEntrySparse(WGSL_CLEAR_P2G_SPARSE_BODY));
+        instance.sparseP2GOK = true;
+      } catch (eSp) {
+        try { console.log('LiquidWGPU v15: sparse P2G pipelines failed (' + ((eSp && eSp.message) || eSp) + ') — dense grid drives.'); } catch (_) {}
+      }
+    }
+    var bgEntries = [
+      { binding: 0, resource: { buffer: instance.paramsBuf } },
+      { binding: 1, resource: { buffer: instance.buf.pos } },
+      { binding: 2, resource: { buffer: instance.buf.affine } },
+      { binding: 3, resource: { buffer: instance.buf.aux } },
+      { binding: 4, resource: { buffer: instance.buf.flag } },
+      { binding: 5, resource: { buffer: instance.buf.cellMass } },
+      { binding: 6, resource: { buffer: instance.buf.cellOilMass } },
+      { binding: 7, resource: { buffer: instance.buf.cellAeration } },
+      { binding: 8, resource: { buffer: instance.buf.cellVX } },
+      { binding: 9, resource: { buffer: instance.buf.cellVY } }
+    ];
+    if (instance.sparseCapable) {
+      bgEntries.push({ binding: 10, resource: { buffer: instance.buf.blockList } });
+    }
     instance.p2gBG = dev.createBindGroup({
       label: 'liquid.p2gBG',
       layout: bgl,
-      entries: [
-        { binding: 0, resource: { buffer: instance.paramsBuf } },
-        { binding: 1, resource: { buffer: instance.buf.pos } },
-        { binding: 2, resource: { buffer: instance.buf.affine } },
-        { binding: 3, resource: { buffer: instance.buf.aux } },
-        { binding: 4, resource: { buffer: instance.buf.flag } },
-        { binding: 5, resource: { buffer: instance.buf.cellMass } },
-        { binding: 6, resource: { buffer: instance.buf.cellOilMass } },
-        { binding: 7, resource: { buffer: instance.buf.cellAeration } },
-        { binding: 8, resource: { buffer: instance.buf.cellVX } },
-        { binding: 9, resource: { buffer: instance.buf.cellVY } }
-      ]
+      entries: bgEntries
     });
     instance.p2gReady = true;
   }
@@ -5165,47 +5749,76 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     //     SimParams uniform (binding 10). Both GameParams and SimParams are
     //     UNIFORMs — uniforms have their own per-stage limit, so the
     //     8-storage-buffer floor is untouched. ---
+    var uEntries = [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 9, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+      { binding: 10, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
+    ];
+    // v15.0 — the sparse gridUpdate + the end-of-sub-step DV/velocity clear
+    // read the active-block list at binding 11 (a 9th storage buffer; the
+    // dense chain already requires 9 via the P2G layout).
+    if (instance.sparseCapable) {
+      uEntries.push({ binding: 11, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
+    }
     var uBgl = dev.createBindGroupLayout({
       label: 'liquid.gridUpdateBGL',
-      entries: [
-        { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 9, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-        { binding: 10, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
-      ]
+      entries: uEntries
     });
     var uLayout = dev.createPipelineLayout({ bindGroupLayouts: [uBgl] });
     // GameParams binding line for the grid-update layout (binding 9).
     var gameBindGrid = '\n@group(0) @binding(9) var<uniform> gameP : GameParams;\n';
 
+    function uPipe(label, code) {
+      return dev.createComputePipeline({
+        label: label,
+        layout: uLayout,
+        compute: {
+          module: dev.createShaderModule({ code: code }),
+          entryPoint: 'main'
+        }
+      });
+    }
     instance.grid2Pipe = {
       clearDV:    pPipe('liquid.clearDV',      WGSL_DV_CLEAR),
       pressure:   pPipe('liquid.gridPressure', WGSL_GRID_PRESSURE),
-      gridUpdate: dev.createComputePipeline({
-        label: 'liquid.gridUpdate',
-        layout: uLayout,
-        compute: {
-          module: dev.createShaderModule({
-            // Stage 8 — gridUpdate carries the game-coupled wake code:
-            // the GameParams struct + binding + gridWake() before the
-            // kernel body that calls it. v14.26 — the SimParams struct +
-            // its binding (10) so the kernel can read `sp` (live gravity).
-            code: WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
-                  WGSL_GAME_PARAMS + gameBindGrid +
-                  WGSL_SIM_PARAMS + simBind(10) + WGSL_GRID_WAKE +
-                  WGSL_GRID_UPDATE
-          }),
-          entryPoint: 'main'
-        }
-      })
+      // Stage 8 — gridUpdate carries the game-coupled wake code: the
+      // GameParams struct + binding + gridWake() before the kernel body
+      // that calls it. v14.26 — the SimParams struct + its binding (10)
+      // so the kernel can read `sp` (live gravity).
+      gridUpdate: uPipe('liquid.gridUpdate',
+        WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
+        WGSL_GAME_PARAMS + gameBindGrid +
+        WGSL_SIM_PARAMS + simBind(10) + WGSL_GRID_WAKE +
+        WGSL_GRID_UPDATE)
     };
+    instance.sparseGrid2OK = false;
+    if (instance.sparseCapable) {
+      try {
+        // v15.0 — same physics text as the dense gridUpdate, sparse entry.
+        instance.grid2Pipe.gridUpdateSparse = uPipe('liquid.gridUpdateSparse',
+          WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
+          WGSL_GAME_PARAMS + gameBindGrid +
+          WGSL_SIM_PARAMS + simBind(10) + WGSL_GRID_WAKE +
+          WGSL_GRID_UPDATE_HELPERS + sparseListBind(11) +
+          cellEntrySparse(WGSL_GRID_UPDATE_BODY));
+        // v15.0 — end-of-sub-step clear, grid2-layout share (DV + vel).
+        instance.grid2Pipe.clearGrid2Sparse = uPipe('liquid.clearGrid2Sparse',
+          WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
+          sparseListBind(11) +
+          cellEntrySparse(WGSL_CLEAR_GRID2_SPARSE_BODY));
+        instance.sparseGrid2OK = true;
+      } catch (eSp) {
+        try { console.log('LiquidWGPU v15: sparse grid2 pipelines failed (' + ((eSp && eSp.message) || eSp) + ') — dense grid drives.'); } catch (_) {}
+      }
+    }
     // Pressure bind group — note cellMass / cellAeration are bound as
     // plain 'storage' (read-only in WGSL via atomicLoad; the layout entry
     // is 'storage' because the buffers are atomic<i32>).
@@ -5224,22 +5837,26 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         { binding: 8, resource: { buffer: instance.simParamsBuf } }
       ]
     });
+    var uBgEntries = [
+      { binding: 0, resource: { buffer: instance.paramsBuf } },
+      { binding: 1, resource: { buffer: instance.buf.cellMass } },
+      { binding: 2, resource: { buffer: instance.buf.cellOilMass } },
+      { binding: 3, resource: { buffer: instance.buf.cellVX } },
+      { binding: 4, resource: { buffer: instance.buf.cellVY } },
+      { binding: 5, resource: { buffer: instance.buf.cellDVX } },
+      { binding: 6, resource: { buffer: instance.buf.cellDVY } },
+      { binding: 7, resource: { buffer: instance.buf.cellVelX } },
+      { binding: 8, resource: { buffer: instance.buf.cellVelY } },
+      { binding: 9, resource: { buffer: instance.gameParamsBuf } },
+      { binding: 10, resource: { buffer: instance.simParamsBuf } }
+    ];
+    if (instance.sparseCapable) {
+      uBgEntries.push({ binding: 11, resource: { buffer: instance.buf.blockList } });
+    }
     instance.gridUpdateBG = dev.createBindGroup({
       label: 'liquid.gridUpdateBG',
       layout: uBgl,
-      entries: [
-        { binding: 0, resource: { buffer: instance.paramsBuf } },
-        { binding: 1, resource: { buffer: instance.buf.cellMass } },
-        { binding: 2, resource: { buffer: instance.buf.cellOilMass } },
-        { binding: 3, resource: { buffer: instance.buf.cellVX } },
-        { binding: 4, resource: { buffer: instance.buf.cellVY } },
-        { binding: 5, resource: { buffer: instance.buf.cellDVX } },
-        { binding: 6, resource: { buffer: instance.buf.cellDVY } },
-        { binding: 7, resource: { buffer: instance.buf.cellVelX } },
-        { binding: 8, resource: { buffer: instance.buf.cellVelY } },
-        { binding: 9, resource: { buffer: instance.gameParamsBuf } },
-        { binding: 10, resource: { buffer: instance.simParamsBuf } }
-      ]
+      entries: uBgEntries
     });
 
     // --- grid-boundary layout (v14.3): uniform + 5 storage buffers + the
@@ -5247,22 +5864,28 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     //     reflection + floor/wall friction tail of the CPU liquidUpdateGrid,
     //     ported as its own kernel — gridUpdate's layout is already at the
     //     8-storage-buffer floor, and this kernel additionally needs the
-    //     terrain mask. SimParams is a uniform, so the floor is untouched. ---
+    //     terrain mask. SimParams is a uniform, so the floor is untouched.
+    //     v15.0 — the sparse variant reads blockList at binding 7. ---
+    var bEntries = [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+      { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+      { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
+    ];
+    if (instance.sparseCapable) {
+      bEntries.push({ binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
+    }
     var bBgl = dev.createBindGroupLayout({
       label: 'liquid.gridBoundaryBGL',
-      entries: [
-        { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
-      ]
+      entries: bEntries
     });
+    var bLayout = dev.createPipelineLayout({ bindGroupLayouts: [bBgl] });
     instance.grid2Pipe.gridBoundary = dev.createComputePipeline({
       label: 'liquid.gridBoundary',
-      layout: dev.createPipelineLayout({ bindGroupLayouts: [bBgl] }),
+      layout: bLayout,
       compute: {
         // v14.26 — the SimParams struct + its binding (6) prepended so the
         // boundary kernel reads the live wall-bounce / friction constants.
@@ -5272,20 +5895,54 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         entryPoint: 'main'
       }
     });
+    if (instance.sparseCapable && instance.sparseGrid2OK) {
+      try {
+        instance.grid2Pipe.gridBoundarySparse = dev.createComputePipeline({
+          label: 'liquid.gridBoundarySparse',
+          layout: bLayout,
+          compute: {
+            module: dev.createShaderModule({
+              code: WGSL_SIM_PARAMS + simBind(6) + WGSL_GRID_BOUNDARY_HEAD +
+                    sparseListBind(7) + cellEntrySparse(WGSL_GRID_BOUNDARY_BODY)
+            }),
+            entryPoint: 'main'
+          }
+        });
+      } catch (eSp) {
+        instance.sparseGrid2OK = false;
+        try { console.log('LiquidWGPU v15: sparse boundary pipeline failed (' + ((eSp && eSp.message) || eSp) + ') — dense grid drives.'); } catch (_) {}
+      }
+    }
+    var bBgEntries = [
+      { binding: 0, resource: { buffer: instance.paramsBuf } },
+      { binding: 1, resource: { buffer: instance.buf.cellMass } },
+      { binding: 2, resource: { buffer: instance.buf.cellOilMass } },
+      { binding: 3, resource: { buffer: instance.buf.cellVelX } },
+      { binding: 4, resource: { buffer: instance.buf.cellVelY } },
+      { binding: 5, resource: { buffer: instance.buf.terrainMask } },
+      { binding: 6, resource: { buffer: instance.simParamsBuf } }
+    ];
+    if (instance.sparseCapable) {
+      bBgEntries.push({ binding: 7, resource: { buffer: instance.buf.blockList } });
+    }
     instance.gridBoundaryBG = dev.createBindGroup({
       label: 'liquid.gridBoundaryBG',
       layout: bBgl,
-      entries: [
-        { binding: 0, resource: { buffer: instance.paramsBuf } },
-        { binding: 1, resource: { buffer: instance.buf.cellMass } },
-        { binding: 2, resource: { buffer: instance.buf.cellOilMass } },
-        { binding: 3, resource: { buffer: instance.buf.cellVelX } },
-        { binding: 4, resource: { buffer: instance.buf.cellVelY } },
-        { binding: 5, resource: { buffer: instance.buf.terrainMask } },
-        { binding: 6, resource: { buffer: instance.simParamsBuf } }
-      ]
+      entries: bBgEntries
     });
     instance.grid2Ready = true;
+  }
+
+  // v15.0 — is the sparse block path driving this chain? All three sparse
+  // pipeline shares must have built and the live lever must be on;
+  // sparseVeto is runFrame's per-frame hybrid gate (small bboxes run the
+  // dense chain — its cost is linear in cells, so under the threshold it
+  // beats the sparse bookkeeping). Harness/self-test chains run before any
+  // live frame (veto false) or after uploadParticles' denseClearAll, so
+  // they exercise the lever-selected path either way.
+  function useSparse(instance) {
+    return !!(LIQUID_SPARSE && !instance.sparseVeto && instance.sparseGridOK &&
+              instance.sparseP2GOK && instance.sparseGrid2OK);
   }
 
   /* Run the Stage-4 pressure + grid-update kernels in one command
@@ -5313,13 +5970,17 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     writeSimParams(instance);
     var cellGroups = Math.ceil(g.cells / WG);
     var partGroups = Math.max(1, Math.ceil(count / WG));
+    var sparse = useSparse(instance);
     var enc = dev.createCommandEncoder({ label: 'liquid.runGrid2' });
     var cp = enc.beginComputePass({ label: 'liquid.grid2' });
 
     // 1. clearDV — zero the pressure-impulse accumulators over [0, cells).
-    cp.setPipeline(P.clearDV);
-    cp.setBindGroup(0, instance.pressureBG);
-    cp.dispatchWorkgroups(cellGroups);
+    //    v15.0 sparse: SKIPPED — already zero (global-zero invariant).
+    if (!sparse) {
+      cp.setPipeline(P.clearDV);
+      cp.setBindGroup(0, instance.pressureBG);
+      cp.dispatchWorkgroups(cellGroups);
+    }
 
     if (count > 0) {
       // 2. gridPressure — per awake particle: gather + scatter impulse.
@@ -5328,18 +5989,53 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       cp.dispatchWorkgroups(partGroups);
     }
 
-    // 3. gridUpdate — per cell: resolve velocity + gravity.
-    cp.setPipeline(P.gridUpdate);
+    // 3. gridUpdate — per cell: resolve velocity + gravity. v15.0 sparse:
+    //    active blocks only (indirect); massy cells only exist there.
+    cp.setPipeline(sparse ? P.gridUpdateSparse : P.gridUpdate);
     cp.setBindGroup(0, instance.gridUpdateBG);
-    cp.dispatchWorkgroups(cellGroups);
+    if (sparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
+    else { cp.dispatchWorkgroups(cellGroups); }
 
     // 4. gridBoundary — per cell: tile-boundary reflection + floor/wall
     //    friction on the resolved velocity (v14.3 — the CPU
     //    liquidUpdateGrid boundary tail, finally ported).
-    cp.setPipeline(P.gridBoundary);
+    cp.setPipeline(sparse ? P.gridBoundarySparse : P.gridBoundary);
     cp.setBindGroup(0, instance.gridBoundaryBG);
-    cp.dispatchWorkgroups(cellGroups);
+    if (sparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
+    else { cp.dispatchWorkgroups(cellGroups); }
 
+    cp.end();
+    liquidSubmit(instance, enc);
+  }
+
+  /* v15.0 — end-of-FRAME sparse clear: re-zero every cell buffer the LAST
+   * sub-step dirtied, active blocks only (three indirect dispatches, one
+   * per bind-group share). Together with buildGrid's clearPrev (which
+   * handles sub-steps 2..N inside a frame, where the grid mapping is
+   * constant) this maintains the global-zero invariant that lets the
+   * sparse chain drop ALL its full-grid clear passes, and guarantees
+   * reads that reach one cell past a stencil into a now-inactive block
+   * (the viscosity gather) see true zeros. It must run before the next
+   * frame recomputes the grid mapping — a deferred clear under a MOVED
+   * origin/gridW would zero the wrong cells and leak dirt.
+   * cellStart/cellCursor/sortedIdx are left as-is: they are only ever
+   * read through segments of cells whose cellCount > 0. */
+  function runSparseEndClear(instance) {
+    if (!useSparse(instance)) return;
+    var g = instance.grid;
+    if (!g || g.cells <= 0) return;
+    var dev = instance.device;
+    var enc = dev.createCommandEncoder({ label: 'liquid.sparseEndClear' });
+    var cp = enc.beginComputePass({ label: 'liquid.sparseEndClear' });
+    cp.setPipeline(instance.pipe.clearCountSparse);
+    cp.setBindGroup(0, instance.bg.grid);
+    cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+    cp.setPipeline(instance.p2gPipe.clearSparse);
+    cp.setBindGroup(0, instance.p2gBG);
+    cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+    cp.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
+    cp.setBindGroup(0, instance.gridUpdateBG);
+    cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
     cp.end();
     liquidSubmit(instance, enc);
   }
@@ -6014,7 +6710,11 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       pos:    mkRB('liquid.rb.pos',    n * 16),
       affine: mkRB('liquid.rb.affine', n * 16),
       aux:    mkRB('liquid.rb.aux',    n * 16),
-      flag:   mkRB('liquid.rb.flag',   n * 4)
+      flag:   mkRB('liquid.rb.flag',   n * 4),
+      // v15.0 — 16-byte mirror of blockMeta, piggybacked on the readback
+      // cadence so instance.activeBlocks tracks the sparse working set
+      // (observability only — the sim never reads it).
+      meta:   mkRB('liquid.rb.meta',   16)
     };
     instance.readbackPending = false;   // a mapAsync is in flight
     instance.readbackResolved = false;  // the in-flight map has resolved
@@ -6035,6 +6735,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     enc.copyBufferToBuffer(instance.buf.affine, 0, rb.affine, 0, count * 16);
     enc.copyBufferToBuffer(instance.buf.aux,    0, rb.aux,    0, count * 16);
     enc.copyBufferToBuffer(instance.buf.flag,   0, rb.flag,   0, count * 4);
+    if (rb.meta) {
+      enc.copyBufferToBuffer(instance.buf.blockMeta, 0, rb.meta, 0, 16);
+    }
     instance.queue.submit([enc.finish()]);
     instance.readbackPending = true;
     instance.readbackResolved = false;
@@ -6044,12 +6747,14 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // shuffled even when the count happens to match).
     instance.readbackSeq = (instance.liquid && typeof instance.liquid.getMutationSeq === 'function')
       ? instance.liquid.getMutationSeq() : 0;
-    Promise.all([
+    var maps = [
       rb.pos.mapAsync(GPUMapMode.READ,    0, count * 16),
       rb.affine.mapAsync(GPUMapMode.READ, 0, count * 16),
       rb.aux.mapAsync(GPUMapMode.READ,    0, count * 16),
       rb.flag.mapAsync(GPUMapMode.READ,   0, count * 4)
-    ]).then(function () {
+    ];
+    if (rb.meta) { maps.push(rb.meta.mapAsync(GPUMapMode.READ, 0, 16)); }
+    Promise.all(maps).then(function () {
       instance.readbackResolved = true;
     }).catch(function () {
       // A map failure (e.g. the device went away) — drop this readback;
@@ -6125,10 +6830,17 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     } catch (_) {
       // Ignore — the unmap below still runs so the buffers are reusable.
     }
+    // v15.0 — active-block stat (sparse working set) from the meta mirror.
+    try {
+      if (rb.meta) {
+        instance.activeBlocks = new Uint32Array(rb.meta.getMappedRange(0, 16))[0];
+      }
+    } catch (_) {}
     try { rb.pos.unmap(); } catch (_) {}
     try { rb.affine.unmap(); } catch (_) {}
     try { rb.aux.unmap(); } catch (_) {}
     try { rb.flag.unmap(); } catch (_) {}
+    try { if (rb.meta) { rb.meta.unmap(); } } catch (_) {}
     instance.readbackPending = false;
     instance.readbackResolved = false;
   }
@@ -6466,27 +7178,58 @@ fn main() {
     computeGridBounds(instance, count);
     computeTerrainBounds(instance, count);
     uploadTerrainMask(instance);
-    // 6. The full GPU per-frame chain — batched into one queue.submit
-    // (v14.7), run subSteps× (v24.10). Each stage records its own command
-    // buffer and routes it through liquidSubmit, which collects them while
-    // batchCBs is set; they execute in array order on the queue, same as five
-    // submits. Each sub-step rebuilds the grid from the resident (GPU-evolved)
-    // particle buffers and advances dt/N — uploadParticles seeded them once
-    // above, so the sub-steps compound on the GPU with no extra upload or
-    // readback. One submit per sub-step.
+    // v15.0 — the hybrid gate: below LIQUID_SPARSE_MIN_CELLS bbox cells
+    // the dense chain is cheaper than the sparse bookkeeping, so small
+    // settled ponds keep the zero-overhead legacy path and big bboxes get
+    // the sparse cap. 2x hysteresis (enter at MIN, exit at MIN/2) so a
+    // hovering bbox cannot flap; each dense->sparse entry re-establishes
+    // the global-zero invariant via needsDenseClear below.
+    if (LIQUID_SPARSE && instance.sparseGridOK &&
+        instance.sparseP2GOK && instance.sparseGrid2OK) {
+      var cellsNow = instance.grid ? instance.grid.cells : 0;
+      var vetoNow = instance.sparseVeto
+        ? (cellsNow < LIQUID_SPARSE_MIN_CELLS)
+        : (cellsNow < (LIQUID_SPARSE_MIN_CELLS >> 1));
+      if (instance.sparseVeto && !vetoNow) { instance.needsDenseClear = true; }
+      instance.sparseVeto = vetoNow;
+    }
+    // v15.0 — a dense->sparse lever flip re-enters the sparse invariant
+    // from dense-dirtied buffers (the dense chain start-clears rather than
+    // end-clears, so it leaves the last sub-step's counts/accumulators
+    // populated). One transfer-queue clear re-establishes global zero.
+    if (instance.needsDenseClear) {
+      denseClearAll(instance);
+      instance.needsDenseClear = false;
+    }
+    // 6. The full GPU per-frame chain — batched into one queue.submit,
+    // run subSteps× (v24.10). Each stage records its own command buffer
+    // and routes it through liquidSubmit, which collects them while
+    // batchCBs is set; they execute in array order on the queue. Each
+    // sub-step rebuilds the grid from the resident (GPU-evolved) particle
+    // buffers and advances dt/N — uploadParticles seeded them once above,
+    // so the sub-steps compound on the GPU with no extra upload or
+    // readback. v15.0 — ONE submit for the whole frame (was one per
+    // sub-step; submits are real driver overhead on mobile), and under the
+    // sparse path each sub-step ends with the indirect active-block clear
+    // that maintains the global-zero invariant.
+    instance.batchCBs = [];
     for (var ss = 0; ss < subSteps; ss++) {
-      instance.batchCBs = [];
-      buildGrid(instance);
+      // v15.0 — sub-steps after the first fold the previous sub-step's
+      // active-block clear into their own first pass (same grid mapping).
+      buildGrid(instance, ss > 0);
       runDeclump(instance);   // v24.185 — min-separation, after the fresh grid
       runP2G(instance);
       runGrid2(instance);
       runG2P(instance);
       runCollide(instance);
-      if (instance.batchCBs.length > 0) {
-        instance.queue.submit(instance.batchCBs);
-      }
-      instance.batchCBs = null;
     }
+    // v15.0 — clear the LAST sub-step's active blocks while this frame's
+    // grid mapping still holds (sparse path only; no-op dense).
+    runSparseEndClear(instance);
+    if (instance.batchCBs.length > 0) {
+      instance.queue.submit(instance.batchCBs);
+    }
+    instance.batchCBs = null;
     // 7. Kick the async copy-back for the CPU mirror — but only every
     // LIQUID_READBACK_EVERY runFrames (v14.5). Per-frame mapAsync serialises
     // the CPU and GPU; kicking it rarely lets them pipeline. The mirror is
@@ -6562,11 +7305,16 @@ fn main() {
     var partGroups = Math.max(1, Math.ceil(count / WG));
     var enc = dev.createCommandEncoder({ label: 'liquid.runP2G' });
     var cp = enc.beginComputePass({ label: 'liquid.p2g' });
+    var sparse = useSparse(instance);
 
-    // 1. clearP2GCells — zero accumulators over [0, cells).
-    cp.setPipeline(P.clear);
-    cp.setBindGroup(0, instance.p2gBG);
-    cp.dispatchWorkgroups(cellGroups);
+    // 1. clearP2GCells — zero accumulators over [0, cells). v15.0 sparse:
+    //    SKIPPED — the accumulators are already zero everywhere (the
+    //    global-zero invariant; see the end-of-sub-step clear).
+    if (!sparse) {
+      cp.setPipeline(P.clear);
+      cp.setBindGroup(0, instance.p2gBG);
+      cp.dispatchWorkgroups(cellGroups);
+    }
 
     if (count > 0) {
       // 2. p2gScatter — per particle: splat the 3x3 stencil.
@@ -6575,10 +7323,17 @@ fn main() {
       cp.dispatchWorkgroups(partGroups);
     }
 
-    // 3. p2gNormalize — per cell: mass-normalize aeration.
-    cp.setPipeline(P.normalize);
-    cp.setBindGroup(0, instance.p2gBG);
-    cp.dispatchWorkgroups(cellGroups);
+    // 3. p2gNormalize — per cell: mass-normalize aeration. v15.0 sparse:
+    //    active blocks only, sized by the GPU-written indirect args.
+    if (sparse) {
+      cp.setPipeline(P.normalizeSparse);
+      cp.setBindGroup(0, instance.p2gBG);
+      cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+    } else {
+      cp.setPipeline(P.normalize);
+      cp.setBindGroup(0, instance.p2gBG);
+      cp.dispatchWorkgroups(cellGroups);
+    }
 
     cp.end();
     liquidSubmit(instance, enc);
@@ -6738,7 +7493,13 @@ fn main() {
               console.log('LiquidWGPU Stage 8: GPU path ' +
                 (instance.simActive ? 'LIVE (sim)' : 'sim-disabled') + ' / ' +
                 (instance.renderActive ? 'LIVE (render)' : 'render-disabled') +
-                ' — ' + (instance.simActive ? 'GPU' : 'CPU') + ' solver driving.');
+                ' — ' + (instance.simActive ? 'GPU' : 'CPU') + ' solver driving' +
+                (instance.simActive
+                  ? (useSparse(instance)
+                      ? ' (v15 sparse block grid — cost scales with wet area, not bbox).'
+                      : ' (dense grid — sparse ' +
+                        (instance.sparseCapable ? 'off' : 'unavailable') + ').')
+                  : '.'));
             } catch (_) {}
           } catch (e) {
             instance.simActive = false;
@@ -6868,6 +7629,14 @@ fn main() {
       opsBG: null,           // v24.109 — replay bind group
       opsReady: false,       // v24.109 — ops-replay path available (else full re-upload)
       batchCBs: null,        // v14.7 — per-frame compute command-buffer batch
+      // v15.0 — sparse active-block grid state.
+      sparseCapable: false,  // device grants >= 10 storage buffers/stage
+      sparseGridOK: false,   // sparse grid-layout pipelines built
+      sparseP2GOK: false,    // sparse p2g-layout pipelines built
+      sparseGrid2OK: false,  // sparse grid2 + boundary pipelines built
+      sparseVeto: false,     // per-frame hybrid gate: small bbox -> dense
+      needsDenseClear: false,// re-zero everything before the next frame
+      activeBlocks: -1,      // last readback's active-block count (-1 unknown)
       deviceReady: false,   // requestDevice resolved
       available: false,     // WebGPU usable
       failed: false,        // unrecoverable — stay on CPU fallback
@@ -7020,9 +7789,55 @@ fn main() {
             // terrain restitution
             case 'BOUNCE_WATER':         LIQUID_BOUNCE_WATER = v; break;
             case 'BOUNCE_OIL':           LIQUID_BOUNCE_OIL = v; break;
+            // v15.0 — sparse block grid on/off (a dispatch-path flag, not a
+            // SimParams lane). Live A/B: 1 = sparse active-block chain
+            // (shipping default), 0 = the dense full-bbox chain. A
+            // dense->sparse flip must re-establish the global-zero
+            // invariant (dense start-clears rather than end-clears), so
+            // runFrame runs one denseClearAll first.
+            case 'SPARSE':
+              var wasSparse = LIQUID_SPARSE;
+              LIQUID_SPARSE = v ? 1 : 0;
+              if (!wasSparse && LIQUID_SPARSE) { instance.needsDenseClear = true; }
+              break;
+            // v15.0 — hybrid-gate threshold (bbox cells; dense below,
+            // sparse at/above; exit at half). 0 = always sparse.
+            case 'SPARSE_MIN_CELLS':
+              LIQUID_SPARSE_MIN_CELLS = Math.max(0, v | 0);
+              break;
             default: break;  // unknown name — no-op
           }
         } catch (_) {}
+      },
+      // v15.0 — dev perf probe: run the live sim chain `frames` times,
+      // serializing each frame against onSubmittedWorkDone, and resolve
+      // with the average wall ms per frame (CPU encode + full GPU solve),
+      // the active-block count and the grid size. Call from the console:
+      //   LiquidWGPU.last.bench(120).then(console.log)
+      // Flip water.SPARSE 0/1 between runs for the A/B. Advances the real
+      // sim (it IS the live chain), so bench on settled water.
+      bench: function (frames, dt) {
+        if (!instance.simActive) { return Promise.resolve(null); }
+        var n = Math.max(1, frames | 0 || 60);
+        var d = (typeof dt === 'number' && dt > 0) ? dt : (1 / 60);
+        var seq = Promise.resolve();
+        var t0 = 0;
+        var step = function () {
+          runFrame(instance, d);
+          return instance.queue.onSubmittedWorkDone();
+        };
+        seq = seq.then(function () { t0 = performance.now(); });
+        for (var k = 0; k < n; k++) { seq = seq.then(step); }
+        return seq.then(function () {
+          return {
+            sparse: !!useSparse(instance),
+            frames: n,
+            msPerFrame: (performance.now() - t0) / n,
+            activeBlocks: instance.activeBlocks,
+            gridCells: instance.grid ? instance.grid.cells : 0,
+            particles: instance.uploadedCount | 0
+          };
+        });
       },
       uploadParticles: function () { return uploadParticles(instance); },
       // Stage 2 — rebuild the spatial grid from the current particle
@@ -7143,8 +7958,12 @@ fn main() {
     }
 
     instance.readyPromise = initDevice(instance);
+    // v15.0 — console/dev handle to the newest instance (the game keeps
+    // its own reference in a closure): LiquidWGPU.last.bench(120),
+    // LiquidWGPU.last.setSimParam('SPARSE', 0), LiquidWGPU.last.activeBlocks.
+    window.LiquidWGPU.last = instance;
     return instance;
   }
 
-  window.LiquidWGPU = { create: create, stage: STAGE };
+  window.LiquidWGPU = { create: create, stage: STAGE, last: null };
 })();
