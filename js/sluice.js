@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.14';
+  var GAME_VERSION = 'v25.15';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2766,6 +2766,11 @@
   var surfacePonds = [];
   function generateWorld() {
     world = [];
+    // Live jello bodies never survive a world rebuild (New Game / dev restart): a body
+    // from the previous grid would float as a ghost in the new one. generateJelloPatches
+    // used to carry this reset, but the live path does not call it (see the surface-
+    // features note below), so the rebuild resets directly. (340 hoists resetJello.)
+    resetJello();
     var OCEAN_FLOOR = 8;   // ocean shelf depth; real water + horizon are a P0.6 follow-up
     for (var r = 0; r < TOTAL_ROWS; r++) {
       var row = [];
@@ -3816,7 +3821,11 @@
     // Dev-only: a small two-wall pen of vibrant tile-sized test slimes a short
     // fly LEFT of spawn (never injected in normal play). Carve BEFORE
     // lightingInit so the opening gets lit. Toggle dev with ` then press R.
-    if (devMode) injectJelloTestPen();
+    // ALSO gated on ENABLE_JELLO (v25.15): with the flag off, a ?dev=1 boot
+    // still built the pen — visible stone walls near spawn, undrillable buried
+    // jello tiles, and 8 invisible ghost bodies (update + draw are flag-gated,
+    // the injection was not). A disabled system must be inert, dev mode included.
+    if (devMode && ENABLE_JELLO) injectJelloTestPen();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;
@@ -4545,8 +4554,11 @@
   // WHAT IS NOT SAVED (v1, by design):
   //   - Live sims: liquid particles (ponds re-stream from surfacePonds),
   //     smoke, explosions, combat entities (zones respawn fresh each boot).
-  //   - Activated jello blobs that wandered off their cells: their origin
-  //     cells were nulled at activation, so they simply do not come back.
+  //     (Activated jello blobs used to be on this list — their origin cells
+  //     are nulled at activation, so they just vanished on reload. They now
+  //     persist via the additive `jello` envelope field: original cluster
+  //     cells + type + centroid, rebuilt at rest pose by jelloRestoreBodies.
+  //     Pose/velocity are not saved; a restored body settles and sleeps.)
   //   - Fog-of-war: lightingInit() re-floods from the sky through the saved
   //     tunnels, so connectivity reveal reconstructs itself exactly.
   //
@@ -4723,6 +4735,9 @@
       cargo: cargo,
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, filled: false }; }),   // v24.148 — d = lake depth
       world: saveSerializeWorld(),
+      // Live jello bodies (additive; old saves lack it and load as "none", exactly
+      // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
+      jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
     };
   }
 
@@ -4833,6 +4848,9 @@
     terrainChunkCache = {};
     terrainChunkCount = 0;
     terrainWarmupFrames = 3;
+    // Live jello bodies: rebuild the wanderers the grid can't carry (their tiles were
+    // nulled at activation). Absent/empty field (old saves) leaves the world body-free.
+    if (typeof jelloRestoreBodies === 'function') jelloRestoreBodies(env.jello);
     // Baseline the dirtiness signals so we don't immediately re-save.
     saveLastMoney = money;
     saveLastCargoN = cargo.length;
@@ -8143,7 +8161,13 @@
     if (r >= TOTAL_ROWS) return 'wall';
     // Above the Earth surface — open sky (lets the player fly up).
     if (r < 0) return null;
-    return world[r][c];
+    // A NaN r slips every bound check above (every comparison is false) and
+    // world[NaN] is undefined — reading [c] off it THREW and killed the whole
+    // game loop (found by the jello stress harness via a corrupt ring midpoint).
+    // A corrupt caller gets open sky, never a crash; in-bounds rows always
+    // exist, so real coordinates take the exact same path as before.
+    var rowA = world[r];
+    return rowA ? rowA[c] : null;
   }
   // Return ONLY the tile object at (r, c), or null. Unlike tileAt, this
   // never returns the 'wall' sentinel — out-of-bounds becomes null. Useful
@@ -49874,6 +49898,12 @@
   var JELLO_MAX_STRETCH    = 1.6;
 
   function jelloRecomputeMaterial() {
+    // Lever insurance: E <= 0 flips the XPBD compliances negative (constraint denominators
+    // can cross zero = blow-up) and NU >= 0.5 divides LAMBDA by zero. The gm slider clamps
+    // its own range but gm.set from the console does not — heal here, at the single choke
+    // point every E/NU write already goes through. !(x > f) also catches NaN.
+    if (!(JELLO_E > 0.05)) JELLO_E = 0.05;
+    if (!(JELLO_NU >= 0)) JELLO_NU = 0; else if (JELLO_NU > 0.49) JELLO_NU = 0.49;
     JELLO_MU     = JELLO_E / (2 * (1 + JELLO_NU));
     JELLO_LAMBDA = JELLO_E * JELLO_NU / ((1 + JELLO_NU) * (1 - 2 * JELLO_NU));
     var t = (JELLO_E - 10) / (400 - 10);
@@ -50094,9 +50124,11 @@
   // Jello -> player: soft, FORCE-based memory-foam contact (jelloPlayerCouple +
   // jelloResolvePlayer). The gel compresses around the rig and pushes back with a
   // force (no position teleport), so you sink into a deep give and get cradled.
-  var JELLO_CONTACT        = 0.3;    // 0..1 how much overlapping gel is eased out per substep. LOW = the gel
-                                     // stays compressed in contact (deep memory-foam give); HIGH = it ejects
-                                     // fast (firmer / shallower). The deep deformation lives here.
+  // (The old 0..1 "memory-foam ease-out" JELLO_CONTACT that lived here was DELETED in the
+  // duplicate-var sweep: nothing read that semantics since the v24.94 containment levers
+  // (JELLO_EJECT_RATE / JELLO_YIELD_RATE) took the job, and its re-declaration collided
+  // with the per-particle contact MASTER TOGGLE of the same name below — same landmine
+  // the gm facade already documents for its lever registration. One name, one var.)
   var JELLO_REACT          = 600;    // soft force shoving the rig back along the CONTACT NORMAL (out of the
                                      // local gel mass), scaled by how embedded it is. Higher = firmer cradle.
   var JELLO_BARRIER        = 3;      // px/frame hard position correction along the contact normal, applied
@@ -50211,7 +50243,10 @@
                                      // so a soft, deep cushioned sink stays grounded; feet deeper than this (a
                                      // side / underside hit) go to the soft force contact instead.
   var JELLO_PLAYER_BLOCK   = 0.45;   // (legacy; the hard side-block was replaced by the airbag deform)
-  var JELLO_PUSH           = 0.7;    // (legacy; the rig dents/envelops instead of shoving the cube as a block)
+  // (The legacy JELLO_PUSH ("rig dents/envelops") that lived here was DELETED in the
+  // duplicate-var sweep: it silently re-declared the v24.151 push-tier lever above and
+  // overwrote its 1.05 with 0.7 at load — below the >=1 floor that lever documents, so
+  // every walk-speed bulldoze stalled and the rig knifed through the gel. One name, one var.)
   var JELLO_PLAYER_CARRY   = 0.4;    // (kept for compatibility; carry was removed — see jelloResolvePlayer)
   var JELLO_SUPPORT        = 3.0;    // (kept for compatibility; movement owns Y grounding)
   var JELLO_SUPPORT_MIN    = 0.5;    // (kept for compatibility)
@@ -50483,6 +50518,11 @@
 
   // Tile solid test for jello point collision.
   function jelloWorldSolidAt(x, y) {
+    // Corrupt (non-finite) coordinates read as OPEN, never as a crash or a phantom
+    // wall: collision math on a NaN point is meaningless anyway, and the per-point
+    // heal + the finite sweep own the recovery. (Callers like jelloCollideRingEdges
+    // probe MIDPOINTS that skip the per-point heal, so this is their only guard.)
+    if (!isFinite(x) || !isFinite(y)) return false;
     var row = Math.floor(y / TILE);
     var col = Math.floor(x / TILE);
     return tileAt(row, col) !== null;
@@ -50607,6 +50647,9 @@
       jellyType: jellyType || 'slime'
     };
     b.tileW = TW; b.tileH = TH;
+    // Retained for save/load (jelloSaveBodies): the original cluster cells rebuild the
+    // SAME lattice on restore. <= JELLO_MAX_CELLS entries, so the retention is trivial.
+    b.cells = cells;
     for (var p = 0; p < n; p++) {
       b.px[p] = b.ox[p] = b.rx[p] = pts[p].x;
       b.py[p] = b.oy[p] = b.ry[p] = pts[p].y;
@@ -51639,7 +51682,17 @@
   function jelloCollidePointWorld(b, i, h) {
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     var x = px[i], y = py[i];
-    if (!isFinite(x) || !isFinite(y)) { px[i] = b.rx[i]; py[i] = b.ry[i]; ox[i] = b.rx[i]; oy[i] = b.ry[i]; return; }
+    if (!isFinite(x) || !isFinite(y)) {
+      // Heal a corrupt point to the body's CURRENT centroid, never its BUILD-site rest
+      // position: a body pushed/dropped far from its socket would otherwise teleport the
+      // point back across the map and the springs would drag the whole body after it.
+      // Tiny per-index spread so multiple healed points never land exactly coincident
+      // (coincident pairs are skipped by the d<eps guards and would never re-separate).
+      var hcx = isFinite(b.cx) ? b.cx : b.rx[i], hcy = isFinite(b.cy) ? b.cy : b.ry[i];
+      hcx += ((i % 7) - 3) * 0.4; hcy += ((((i / 7) | 0) % 7) - 3) * 0.4;
+      px[i] = ox[i] = hcx; py[i] = oy[i] = hcy;
+      return;
+    }
     if (!jelloWorldSolidAt(x, y)) { if (JELLO_GAP_BLOCK) jelloGapBlock(b, i); return; }
     var col = Math.floor(x / TILE), row = Math.floor(y / TILE);
     var left = col * TILE, right = left + TILE, top = row * TILE, bot = top + TILE;
@@ -52356,8 +52409,11 @@
     if (isFinite(_obR) && _obR < surr) surr = _obR;
     if (surr > 1e8) surr = probeY;   // no gel under the footprint band -> fall back to the probe crossing
     _jGroundResult.surfaceY = surr;
-    _jGroundResult.vx = bestVX;
-    _jGroundResult.vy = bestVY;
+    // The ride hands these straight into player.vy (the suspension damps RELATIVE to the
+    // gel), so a corrupt body velocity here would NaN the rig's own integrator. The finite
+    // sweep makes this unreachable in practice; the guard makes it unreachable, period.
+    _jGroundResult.vx = isFinite(bestVX) ? bestVX : 0;
+    _jGroundResult.vy = isFinite(bestVY) ? bestVY : 0;
     return _jGroundResult;
   }
 
@@ -53440,7 +53496,10 @@
             dx = GPX[j] - GPX[i]; dy = GPY[j] - GPY[i];
             d2 = dx * dx + dy * dy;
             var rr = GR[i] + GR[j];   // per-pair contact distance (mixed lattice densities)
-            if (d2 >= rr * rr || d2 < 1e-12) continue;
+            // !(d2 < rr*rr) instead of d2 >= rr*rr: identical for real numbers, but a NaN d2
+            // (a corrupt point) fails BOTH >= and <, fell through, and the NaN then spread
+            // through nx/ny into every body it touched. NaN must never enter the solve.
+            if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             d = Math.sqrt(d2); pen = rr - d;
             nx = dx / d; ny = dy / d; half = pen * 0.5;
             // 1. velocity-free positional separation: shift px AND ox by the same delta, so the
@@ -53510,7 +53569,7 @@
       if (!jelloPointInRing(B, x, y)) continue;                 // only points actually inside B
       var near = jelloNearestOnRing(B, x, y);
       var nx = near.x - x, ny = near.y - y, d = Math.sqrt(nx * nx + ny * ny);
-      if (d < 1e-4) continue;
+      if (!(d > 1e-4)) continue;   // !(...) also rejects a NaN d — never divide by it
       nx /= d; ny /= d;
       var tx = near.x + nx * margin, ty = near.y + ny * margin; // park just OUTSIDE B's boundary
       var ddx = tx - x, ddy = ty - y;
@@ -53535,6 +53594,44 @@
     }
   }
 
+  // ----- FINITE SWEEP (last-resort NaN/Inf recovery) --------------------------------
+  // Nothing in the solve should ever produce a non-finite coordinate (every division is
+  // guarded), but "should" is not a guarantee the rest of the game can live with: ONE NaN
+  // reaching jelloDrawBody's canvas gradients THROWS and kills the whole render loop, and
+  // a NaN b.vx read by the ground probe corrupts the rig's own physics. So once per frame
+  // every active body gets an O(n) isFinite sweep: corrupt points are healed to the
+  // centroid of the surviving finite points (velocity zeroed, small deterministic spread
+  // so no two land coincident) and the constraints re-form the body over the next ticks.
+  // A body with NO finite points (or corrupt REST data, which would re-poison the healed
+  // points every solve = a heal livelock) is beyond recovery: despawn it with a splat, so
+  // the worst possible numerical failure reads as "the slime popped", never a glitch.
+  // Returns false when the body must be despawned. Clean-path cost: two isFinite + two
+  // adds per point, once per frame — noise next to one constraint iteration.
+  function jelloSanitizeBody(b) {
+    var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var sumX = 0, sumY = 0, good = 0, bad = false, i, x, y;
+    for (i = 0; i < n; i++) {
+      x = px[i]; y = py[i];
+      if (isFinite(x) && isFinite(y)) { sumX += x; sumY += y; good++; }
+      else bad = true;
+    }
+    if (!bad) return true;
+    if (good === 0) return false;                       // every point corrupt -> despawn
+    var rx = b.rx, ry = b.ry;
+    for (i = 0; i < n; i++) if (!isFinite(rx[i]) || !isFinite(ry[i])) return false;   // rest data gone -> despawn
+    var hcx = sumX / good, hcy = sumY / good;
+    for (i = 0; i < n; i++) {
+      if (isFinite(px[i]) && isFinite(py[i])) {
+        if (!isFinite(ox[i]) || !isFinite(oy[i])) { ox[i] = px[i]; oy[i] = py[i]; }   // kill a NaN velocity
+        continue;
+      }
+      px[i] = ox[i] = hcx + ((i % 7) - 3) * 0.4;
+      py[i] = oy[i] = hcy + ((((i / 7) | 0) % 7) - 3) * 0.4;
+    }
+    b.sleeping = false; b.sleepFrames = 0;              // stay awake while the constraints re-form it
+    return true;
+  }
+
   function updateJello(dt) {
     if (jelloBodies.length === 0 && jelloSplats.length === 0) return;
     updateJelloSplats(dt);
@@ -53542,6 +53639,10 @@
     if (simFrozen || jelloBodies.length === 0) return;
     if (!isFinite(dt) || dt <= 0.0005) return;
     if (dt > 0.05) dt = 0.05;
+    // Lever insurance: the timescale divides gravity (grav / ts^2) and converts every
+    // real<->sim velocity, so 0 / negative / NaN (a stray gm.set from the console) means
+    // Inf gravity on the next integrate = instant corruption. Self-heal it instead.
+    if (!(JELLO_TIMESCALE >= 0.02)) JELLO_TIMESCALE = 0.02;
     jelloRippleFrame(dt);   // render-space impact ripples (advances every frame, pre-quantiser)
 
     // Slow-motion / massive feel: feed the sim a fraction of real time.
@@ -53641,10 +53742,14 @@
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve) jelloClampVelocity(b, h); }
     }
 
-    // ----- Finalize: rest recompute (plasticity), bbox/centroid/velocity/sleep, then the player
-    // hard-containment + resting bowl (run on the settled positions, as before). -----
+    // ----- Finalize: finite sweep, rest recompute (plasticity), bbox/centroid/velocity/sleep,
+    // then the player hard-containment + resting bowl (run on the settled positions, as before). -----
+    var deadJ = null;
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
+      // Finite sweep FIRST, so bbox/centroid/velocity below are recomputed from healed
+      // points — the ground probe and the render only ever see finite state.
+      if (!jelloSanitizeBody(b)) { if (!deadJ) deadJ = []; deadJ.push(b); continue; }
       if (b._restDirty) { jelloComputeRest(b); b._restDirty = false; }
       // Unfold any inverted lattice cells BEFORE the sleep evaluation, so a
       // mangled body can neither persist nor doze off mid-fold (v24.154).
@@ -53655,6 +53760,24 @@
       // awake bodies (a sleeper keeps its last field, e.g. a pile-crushed cube correctly
       // stays tinted compressed).
       if (JELLO_SHADE && JELLO_SHADE_STRAIN > 0 && JELLO_SHADE_STRAIN_K > 0 && b._solve && !b.sleeping) jelloStrainField(b);
+    }
+    // Despawn the unrecoverable bodies the sweep flagged (rare to never; see the
+    // jelloSanitizeBody banner). The splat centre comes from the frame-START snapshot
+    // (the last pose known finite) so the pop shows where the slime actually was.
+    if (deadJ) {
+      for (var dj = 0; dj < deadJ.length; dj++) {
+        b = deadJ[dj];
+        var di = jelloBodies.indexOf(b);
+        if (di >= 0) jelloBodies.splice(di, 1);
+        var dsx = cam.x + screenW * 0.5, dsy = cam.y + screenH * 0.5;
+        if (b.fpx) {
+          for (var dfi = 0; dfi < b.n; dfi++) {
+            if (isFinite(b.fpx[dfi]) && isFinite(b.fpy[dfi])) { dsx = b.fpx[dfi]; dsy = b.fpy[dfi]; break; }
+          }
+        }
+        spawnJelloSplat(dsx, dsy, 10, 90, 1.0, null);
+        try { console.warn('jello: despawned an unrecoverable body (non-finite state)'); } catch (e) {}
+      }
     }
     jelloCount = jelloTotalPoints();
     // Trampoline bank hygiene: a slam's stored rebound (080's player.jelloImpactVy)
@@ -53781,6 +53904,12 @@
 
   function jelloDrawBody(b) {
     if (b.ringN < 3) return;
+    // A non-finite bbox must never reach the canvas: createLinearGradient/createRadialGradient
+    // THROW on NaN/Inf arguments, which would kill the whole render loop (black screen), and a
+    // NaN bbox also defeats the draw cull (every < compare is false, so the body is "visible").
+    // The per-frame finite sweep heals active bodies before render; this is the belt-and-braces
+    // for anything it can't see (a body corrupted in its very last frame before freezing).
+    if (!isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
     jelloRingBake(b);   // bake the drawn ring (outset + ripple) once; the 3 path calls read it
     var l = b.bboxL, r = b.bboxR, t = b.bboxT, bm = b.bboxB;
     var w = r - l, hgt = bm - t;
@@ -54048,6 +54177,67 @@
     }
   }
 
+  // ----- Save / restore (047 calls these): live bodies persist across reload ---------
+  // The grid nulls a cluster's tiles at activation, so before this a live slime simply
+  // VANISHED on reload (047's "WHAT IS NOT SAVED" documented it away, but a disappearing
+  // slime is still a disappearing slime to the player). A body serializes as its ORIGINAL
+  // cluster cells + type + current centroid (~30 bytes); restore rebuilds the same lattice
+  // at rest pose translated to that centroid and lets it settle. Pose/velocity/deformation
+  // are deliberately NOT saved — a rest-shaped body one settle away from sleeping is
+  // indistinguishable from the real thing, at 1/3000th the point-data payload. The grid is
+  // the same one it was saved against, so the restored spot is open space by construction.
+  // Dev-pen triangles/discs carry no cells and are skipped (dev shapes, not game state).
+  function jelloSaveBodies() {
+    var out = [];
+    for (var bi = 0; bi < jelloBodies.length; bi++) {
+      var b = jelloBodies[bi];
+      if (!b.cells || !b.cells.length) continue;
+      if (!isFinite(b.cx) || !isFinite(b.cy)) continue;   // never persist corrupt state
+      var flat = [];
+      for (var ci = 0; ci < b.cells.length; ci++) flat.push(b.cells[ci].r, b.cells[ci].c);
+      out.push({ c: flat, t: b.jellyType || 'slime',
+                 x: Math.round(b.cx * 10) / 10, y: Math.round(b.cy * 10) / 10 });
+    }
+    return out;
+  }
+  function jelloRestoreBodies(list) {
+    resetJello();   // also the stale-body guard: restore always starts from empty
+    if (!list || !list.length) return;
+    for (var i = 0; i < list.length; i++) {
+      try {
+        var e = list[i];
+        if (!e || !e.c || !e.c.length || (e.c.length % 2) || !isFinite(e.x) || !isFinite(e.y)) continue;
+        if (e.c.length > JELLO_MAX_CELLS * 2) continue;   // corrupt save: more cells than any cluster can be
+        // Bounds envelope: everything save can WRITE must restore (the dev arena spawns
+        // cubes whose cells sit a few rows ABOVE the world top near the surface, so a
+        // hard 0..TOTAL_ROWS check refused legitimate saves — harness-caught), while a
+        // corrupt payload (giant coordinates would make the builder allocate a huge
+        // lattice index) still bounces. 16 tiles of slack on every side.
+        var cells = [];
+        var cMinR = 1e9, cMaxR = -1e9, cMinC = 1e9, cMaxC = -1e9;
+        for (var k = 0; k + 1 < e.c.length; k += 2) {
+          var rr = e.c[k] | 0, cc = e.c[k + 1] | 0;
+          if (rr < -16 || rr >= TOTAL_ROWS + 16 || cc < -16 || cc >= COLS + 16) { cells = null; break; }
+          if (rr < cMinR) cMinR = rr; if (rr > cMaxR) cMaxR = rr;
+          if (cc < cMinC) cMinC = cc; if (cc > cMaxC) cMaxC = cc;
+          cells.push({ r: rr, c: cc });
+        }
+        if (!cells || !cells.length) continue;
+        if (cMaxR - cMinR > 16 || cMaxC - cMinC > 16) continue;   // wider than any real cluster: corrupt
+        var b = jelloBuildBody(cells, (typeof e.t === 'string' && JELLO_TYPES[e.t]) ? e.t : 'slime');
+        if (!b) continue;                                  // budget exhausted: skip, never throw
+        var dx = e.x - b.cx, dy = e.y - b.cy;
+        if (dx || dy) {
+          for (var p = 0; p < b.n; p++) { b.px[p] += dx; b.ox[p] = b.px[p]; b.py[p] += dy; b.oy[p] = b.py[p]; }
+          b.bboxL += dx; b.bboxR += dx; b.bboxT += dy; b.bboxB += dy;
+          b.cx += dx; b.cy += dy;
+        }
+        b.sleeping = false; b.sleepFrames = 0;   // wake to settle; the sleep gate re-parks it
+      } catch (err) { /* one malformed entry must never take the boot down */ }
+    }
+    jelloCount = jelloTotalPoints();
+  }
+
   // ----- Headless-harness export (read/poke hooks, same spirit as window.gm) -----
   // The preview pauses the RAF loop, so jello solver changes are validated by a
   // headless-Chrome harness that boots the real game and needs to (a) spawn the
@@ -54067,6 +54257,9 @@
       buildTriangle: jelloBuildTriangle,
       placeTiles: jelloDevPlaceTiles,
       clearTile: jelloDevClearTile,
+      saveBodies: jelloSaveBodies,
+      restoreBodies: jelloRestoreBodies,
+      sanitize: jelloSanitizeBody,
       applyFeel: jelloApplyFeel,
       cycleFeel: jelloCycleFeel,
       feels: JELLO_FEELS,
@@ -56156,12 +56349,11 @@
           function (v) { JELLO_PLAYER_BLOCK = v; },
           0, 1, undefined);
       }
-      if (typeof JELLO_PUSH !== 'undefined') {
-        gmRegisterLever('jello.JELLO_PUSH', 'jello', 'JELLO_PUSH',
-          function () { return JELLO_PUSH; },
-          function (v) { JELLO_PUSH = v; },
-          0, 1.5, undefined);   // (legacy) how much ramming the side slides the whole cube
-      }
+      // (JELLO_PUSH is registered ONCE, in the drive/fling block far above: it is the
+      // v24.151 walk-speed bulldoze lever. The legacy "ramming slides the whole cube"
+      // registration that lived here clobbered that one's range + default — and its
+      // legacy `var` in 340 clobbered the VALUE (1.05 -> 0.7, under the >=1 floor the
+      // push tier documents). Both removed in the duplicate-var sweep. Don't re-add.)
       if (typeof JELLO_VISCOSITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_VISCOSITY', 'jello', 'JELLO_VISCOSITY',
           function () { return JELLO_VISCOSITY; },

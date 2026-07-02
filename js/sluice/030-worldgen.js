@@ -5,6 +5,11 @@
   var surfacePonds = [];
   function generateWorld() {
     world = [];
+    // Live jello bodies never survive a world rebuild (New Game / dev restart): a body
+    // from the previous grid would float as a ghost in the new one. generateJelloPatches
+    // used to carry this reset, but the live path does not call it (see the surface-
+    // features note below), so the rebuild resets directly. (340 hoists resetJello.)
+    resetJello();
     var OCEAN_FLOOR = 8;   // ocean shelf depth; real water + horizon are a P0.6 follow-up
     for (var r = 0; r < TOTAL_ROWS; r++) {
       var row = [];

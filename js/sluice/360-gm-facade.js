@@ -1426,12 +1426,11 @@
           function (v) { JELLO_PLAYER_BLOCK = v; },
           0, 1, undefined);
       }
-      if (typeof JELLO_PUSH !== 'undefined') {
-        gmRegisterLever('jello.JELLO_PUSH', 'jello', 'JELLO_PUSH',
-          function () { return JELLO_PUSH; },
-          function (v) { JELLO_PUSH = v; },
-          0, 1.5, undefined);   // (legacy) how much ramming the side slides the whole cube
-      }
+      // (JELLO_PUSH is registered ONCE, in the drive/fling block far above: it is the
+      // v24.151 walk-speed bulldoze lever. The legacy "ramming slides the whole cube"
+      // registration that lived here clobbered that one's range + default — and its
+      // legacy `var` in 340 clobbered the VALUE (1.05 -> 0.7, under the >=1 floor the
+      // push tier documents). Both removed in the duplicate-var sweep. Don't re-add.)
       if (typeof JELLO_VISCOSITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_VISCOSITY', 'jello', 'JELLO_VISCOSITY',
           function () { return JELLO_VISCOSITY; },

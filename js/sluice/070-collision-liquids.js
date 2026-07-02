@@ -11,7 +11,13 @@
     if (r >= TOTAL_ROWS) return 'wall';
     // Above the Earth surface — open sky (lets the player fly up).
     if (r < 0) return null;
-    return world[r][c];
+    // A NaN r slips every bound check above (every comparison is false) and
+    // world[NaN] is undefined — reading [c] off it THREW and killed the whole
+    // game loop (found by the jello stress harness via a corrupt ring midpoint).
+    // A corrupt caller gets open sky, never a crash; in-bounds rows always
+    // exist, so real coordinates take the exact same path as before.
+    var rowA = world[r];
+    return rowA ? rowA[c] : null;
   }
   // Return ONLY the tile object at (r, c), or null. Unlike tileAt, this
   // never returns the 'wall' sentinel — out-of-bounds becomes null. Useful

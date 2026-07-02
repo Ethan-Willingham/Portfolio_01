@@ -102,7 +102,11 @@
     // Dev-only: a small two-wall pen of vibrant tile-sized test slimes a short
     // fly LEFT of spawn (never injected in normal play). Carve BEFORE
     // lightingInit so the opening gets lit. Toggle dev with ` then press R.
-    if (devMode) injectJelloTestPen();
+    // ALSO gated on ENABLE_JELLO (v25.15): with the flag off, a ?dev=1 boot
+    // still built the pen — visible stone walls near spawn, undrillable buried
+    // jello tiles, and 8 invisible ghost bodies (update + draw are flag-gated,
+    // the injection was not). A disabled system must be inert, dev mode included.
+    if (devMode && ENABLE_JELLO) injectJelloTestPen();
     lightingInit();              // seed fog-of-war from the open sky (185-lighting.js)
     terrainChunkCache = {};
     terrainChunkCount = 0;

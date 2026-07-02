@@ -17,8 +17,11 @@
   // WHAT IS NOT SAVED (v1, by design):
   //   - Live sims: liquid particles (ponds re-stream from surfacePonds),
   //     smoke, explosions, combat entities (zones respawn fresh each boot).
-  //   - Activated jello blobs that wandered off their cells: their origin
-  //     cells were nulled at activation, so they simply do not come back.
+  //     (Activated jello blobs used to be on this list — their origin cells
+  //     are nulled at activation, so they just vanished on reload. They now
+  //     persist via the additive `jello` envelope field: original cluster
+  //     cells + type + centroid, rebuilt at rest pose by jelloRestoreBodies.
+  //     Pose/velocity are not saved; a restored body settles and sleeps.)
   //   - Fog-of-war: lightingInit() re-floods from the sky through the saved
   //     tunnels, so connectivity reveal reconstructs itself exactly.
   //
@@ -195,6 +198,9 @@
       cargo: cargo,
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, filled: false }; }),   // v24.148 — d = lake depth
       world: saveSerializeWorld(),
+      // Live jello bodies (additive; old saves lack it and load as "none", exactly
+      // the pre-field behaviour). ~30 bytes per body, bodies are capped at 64.
+      jello: (typeof jelloSaveBodies === 'function') ? jelloSaveBodies() : [],
     };
   }
 
@@ -305,6 +311,9 @@
     terrainChunkCache = {};
     terrainChunkCount = 0;
     terrainWarmupFrames = 3;
+    // Live jello bodies: rebuild the wanderers the grid can't carry (their tiles were
+    // nulled at activation). Absent/empty field (old saves) leaves the world body-free.
+    if (typeof jelloRestoreBodies === 'function') jelloRestoreBodies(env.jello);
     // Baseline the dirtiness signals so we don't immediately re-save.
     saveLastMoney = money;
     saveLastCargoN = cargo.length;
