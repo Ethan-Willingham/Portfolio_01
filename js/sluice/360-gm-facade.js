@@ -1544,6 +1544,12 @@
           function (v) { JELLO_EJECT_RATE = v; },
           60, 1200, undefined);   // px/s the hard containment may move the rig (anti teleport-pop)
       }
+      if (typeof JELLO_ENGULF_CAP !== 'undefined') {
+        gmRegisterLever('jello.JELLO_ENGULF_CAP', 'jello', 'JELLO_ENGULF_CAP',
+          function () { return JELLO_ENGULF_CAP; },
+          function (v) { JELLO_ENGULF_CAP = v; },
+          1, 20, 1);   // px of gel allowed inside the hull (the dent); past it gel is displaced out
+      }
       if (typeof JELLO_EJECT_SNAP !== 'undefined') {
         gmRegisterLever('jello.JELLO_EJECT_SNAP', 'jello', 'JELLO_EJECT_SNAP',
           function () { return JELLO_EJECT_SNAP; },

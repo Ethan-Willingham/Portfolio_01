@@ -1602,14 +1602,21 @@
   // persists across save/load via the envelope's h field.
   function jelloDevSpawnOne() {
     if (!player) return false;
-    var pcol = Math.floor((player.x + PLAYER_W * 0.5) / TILE);
-    if (pcol < 1) pcol = 1; else if (pcol > COLS - 2) pcol = COLS - 2;
+    var pcolC = Math.floor((player.x + PLAYER_W * 0.5) / TILE);
     var headRow = Math.floor(player.y / TILE);
-    var row = -1;
-    for (var up = 3; up <= 7; up++) {
-      var r = headRow - up;
-      if (r < 0) break;
-      if (tileAt(r, pcol) === null) { row = r; break; }
+    // Prefer dropping BESIDE the rig (2 cols out, then 1), on the head only as
+    // the last resort: an on-head drop shoves the rig every press and reads
+    // clumsy even now that the engulf cap deflects it cleanly.
+    var colTries = [pcolC + 2, pcolC - 2, pcolC + 1, pcolC - 1, pcolC];
+    var row = -1, pcol = pcolC;
+    for (var ct = 0; ct < colTries.length && row < 0; ct++) {
+      var c = colTries[ct];
+      if (c < 1 || c > COLS - 2) continue;
+      for (var up = 3; up <= 7; up++) {
+        var r = headRow - up;
+        if (r < 0) break;
+        if (tileAt(r, c) === null) { row = r; pcol = c; break; }
+      }
     }
     if (row < 0) return false;
     var b = jelloBuildBody([{ r: row, c: pcol }], 'slime');
@@ -3152,6 +3159,78 @@
     }
   }
 
+  // ----- RIG DISPLACES GEL (v25.17) — the "never inside a cube" guarantee -----------
+  // The soft containment lets the hull DENT into gel (memory foam) and the yield
+  // evacuates overlap at a gentle rate, but a cube falling ONTO the rig (the C drop
+  // lands overhead) could still wrap most of the hull for a beat (engulf harness:
+  // 71% border coverage on a head-drop), and a fast fly-in buries it briefly — the
+  // owner's "you can get inside the cubes". This pass makes the hull a HARD
+  // displacer: once per frame, any gel point deeper than JELLO_ENGULF_CAP inside
+  // the hull box is relocated (velocity-free, ox co-shifted, sleepers woken) out to
+  // CAP depth along its nearest hull face. The CAP of allowed overlap IS the dent
+  // feel; past it, gel flows around the hull, never through it. It engages every
+  // frame as soon as depth exceeds the cap, so per-frame shifts stay small (one
+  // frame's worth of approach) — no snap, no energy injected. While SEATED
+  // (onJello) only the TOP THIRD of the hull displaces: the bed-in, the landing
+  // dip and the bowl hug the lower hull by design (JELLO_RIDE_SINK / LAND_SPRING)
+  // and must keep doing so.
+  var JELLO_ENGULF_CAP  = 6;   // px of gel-into-hull overlap kept as the memory-foam dent (side hits)
+  var JELLO_ENGULF_RATE = 8;   // px/frame a point may be extruded (smooth eviction, no snap)
+  function jelloRigDisplaceGel() {
+    if (!player || jelloBodies.length === 0 || gameWon || gameOver) return;
+    if (JELLO_ENGULF_CAP <= 0) return;
+    var x0 = player.x, x1 = player.x + PLAYER_W;
+    var y0 = player.y, y1 = player.y + PLAYER_H;
+    var hcx = (x0 + x1) * 0.5, hcy = (y0 + y1) * 0.5;
+    var seatY = y1 - (JELLO_RIDE_SINK + 6);      // seated bed-in band: never touched
+    for (var bi = 0; bi < jelloBodies.length; bi++) {
+      var b = jelloBodies[bi];
+      if (b.frozen) continue;
+      if (b.bboxR < x0 || b.bboxL > x1 || b.bboxB < y0 || b.bboxT > y1) continue;
+      // ONE exit side per BODY, the side its centroid already favors (normalized by
+      // the hull half-extents so a cube overhead prefers UP even on a tall hull).
+      // v1 of this pass exited each point through its NEAREST face, which SPLIT the
+      // body's points to all four faces: the ring polygon draped AROUND the hull in
+      // a stable wrap, with every point held so shallow that the containment's
+      // anti-softlock escape never fired (harness: 4.9s center-inside). A single
+      // shared side means the ring can never close around the hull at all.
+      var sdx = (b.cx - hcx) / (PLAYER_W * 0.5), sdy = (b.cy - hcy) / (PLAYER_H * 0.5);
+      var side = (Math.abs(sdy) >= Math.abs(sdx)) ? (sdy < 0 ? 2 : 3) : (sdx < 0 ? 0 : 1);
+      // The gel under a rig is the SEAT (probe + bowl own it): seated, never evict
+      // downward-favoring bodies; grounded on solid, redirect them sideways instead
+      // of pushing gel into the floor.
+      if (side === 3 && player.onJello) continue;
+      if (side === 3 && player.onGround) side = (sdx < 0) ? 0 : 1;
+      // Roof crossings evict almost immediately (a cube should rest ON the roof,
+      // not sink into the cockpit); side hits keep the memory-foam dent cap.
+      var cap = (side === 2) ? 2 : JELLO_ENGULF_CAP;
+      var px = b.px, py = b.py, ox = b.ox, oy = b.oy, n = b.n, moved = false;
+      for (var i = 0; i < n; i++) {
+        var x = px[i], y = py[i];
+        if (x <= x0 || x >= x1 || y <= y0 || y >= y1) continue;
+        if (player.onJello && y > seatY) continue;          // seated bed-in band stays
+        // Intrusion depth along the body's exit side; within the cap = the dent.
+        var depth = (side === 0) ? (x - x0) : (side === 1) ? (x1 - x)
+                  : (side === 2) ? (y - y0) : (y1 - y);
+        if (depth <= cap) continue;
+        // Extrude toward just OUTSIDE the exit face, rate-limited per frame. The
+        // pass runs every frame from first contact, so depth can only exceed the
+        // cap by one frame's approach: normal motion never sees the rate clamp.
+        var tx2 = x, ty2 = y;
+        if (side === 0) tx2 = x0 - 0.5; else if (side === 1) tx2 = x1 + 0.5;
+        else if (side === 2) ty2 = y0 - 0.5; else ty2 = y1 + 0.5;
+        var mx2 = tx2 - x, my2 = ty2 - y;
+        if (mx2 > JELLO_ENGULF_RATE) mx2 = JELLO_ENGULF_RATE; else if (mx2 < -JELLO_ENGULF_RATE) mx2 = -JELLO_ENGULF_RATE;
+        if (my2 > JELLO_ENGULF_RATE) my2 = JELLO_ENGULF_RATE; else if (my2 < -JELLO_ENGULF_RATE) my2 = -JELLO_ENGULF_RATE;
+        // Never relocate gel INTO solid tiles (the jet's v24.171 lesson).
+        if (jelloWorldSolidAt(x + mx2, y + my2)) continue;
+        px[i] += mx2; py[i] += my2; ox[i] += mx2; oy[i] += my2;   // velocity-free
+        moved = true;
+      }
+      if (moved) { b.sleeping = false; b.sleepFrames = 0; }
+    }
+  }
+
   // ----- Active-region freeze (off-camera bodies skip simulating) -----
   function jelloBodyOnCamera(b) {
     var mx = screenW * JELLO_ACTIVE_MARGIN, my = screenH * JELLO_ACTIVE_MARGIN;
@@ -4193,6 +4272,7 @@
       player.vy -= jelloJetDY * _jrAcc * dt;
     }
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring
+    jelloRigDisplaceGel();    // hard displacement: gel can never be deeper than the dent cap inside the hull
     jelloDeformBowl();        // resting on top: carve the conforming membrane bowl
     // Jet blast point: a throttled splat (and a surface ripple, when that system is
     // live) where the exhaust ray lands ON a blob - the same ray the flame core +
