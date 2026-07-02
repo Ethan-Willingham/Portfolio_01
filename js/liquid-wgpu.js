@@ -451,7 +451,14 @@
    * -------------------------------------------------------------------- */
   var TERRAIN_MAX_TILES = 1 << 18;          // 262,144 tiles — bitmask cap
   var TERRAIN_MASK_WORDS = TERRAIN_MAX_TILES >> 5;  // u32 words (1 bit/tile)
-  var TERRAIN_HALO = 1;                     // tile halo around the bbox
+  // v15.1 — was 1 (sized for the +/-r collide probes). The rocket-wake
+  // occlusion march (wakeLineClear) samples the nozzle->cell segment, and
+  // out-of-rect samples read NON-solid, so the mask must cover the walls
+  // between a nozzle and any wake-eligible cell. The plume reaches at most
+  // TILE*5.5 from a nozzle, so a 6-tile halo around the water bbox covers
+  // every possible segment (cell in rect, nozzle <= 5.5 tiles away). Costs
+  // a slightly larger per-frame mask fill; still far under the cap.
+  var TERRAIN_HALO = 6;
 
   /* ---- Stage 3 — fixed-point scatter scale --------------------------
    * WGSL has no float atomics, so the P2G cell accumulators are
@@ -3713,14 +3720,22 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
    * -------------------------------------------------------------------- */
   var WGSL_GRID2_PRELUDE = /* wgsl */ `
 struct P2GParams {
-  count   : u32,
-  gridW   : u32,
-  gridH   : u32,
-  originX : u32,   // i32 bit pattern
-  originY : u32,   // i32 bit pattern
-  cells   : u32,
-  stepDt  : f32,
-  invCell : f32,
+  count     : u32,
+  gridW     : u32,
+  gridH     : u32,
+  originX   : u32,   // i32 bit pattern
+  originY   : u32,   // i32 bit pattern
+  cells     : u32,
+  stepDt    : f32,
+  invCell   : f32,
+  worldCols : f32,
+  worldTile : f32,   // v15.1 — the wake occlusion march needs the tile
+  worldRows : f32,   //         pitch + the terrain rect (lanes 12-15)
+  _pad0     : f32,
+  tileOrigC : u32,   // i32 bit pattern
+  tileOrigR : u32,   // i32 bit pattern
+  tileW     : u32,
+  tileH     : u32,
 };
 @group(0) @binding(0) var<uniform> gp : P2GParams;
 
@@ -3873,17 +3888,63 @@ struct SimParams {
    *  - player wake: nearest-face eject out of the hull/track rect the cell
    *    centre sits in (mirrored when the rig faces left). Identical math to
    *    the CPU; no outside-silhouette drag ring (the CPU has none either).
-   *  - rocket wake: per-nozzle cone push along the exhaust direction. The
-   *    CPU also runs a liquidLineClear terrain occlusion test per cell —
-   *    that needs the terrain mask, which the grid-update layout does not
-   *    bind, so the GPU port omits the occlusion check. A wake is a small
-   *    additive impulse; the worst case is the plume nudging water through
-   *    a thin wall. // TODO Stage 8+ — occlusion needs the terrain mask.
+   *  - rocket wake: per-nozzle cone push along the exhaust direction.
+   *    v15.1 — the CPU's liquidLineClear terrain occlusion test is now
+   *    ported too (wakeLineClear + the terrain mask at binding 12, with
+   *    TERRAIN_HALO widened to cover the plume reach); jets no longer
+   *    push water through solid ground into ponds below.
    *  - explosion wake: radial blast + slight downward bias. blastScale is
    *    CPU-precomputed; the CPU t-gate is applied CPU-side (only live
    *    explosions are uploaded).
    * gp is the P2GParams uniform, gameP the GameParams uniform; CELL is the
    * WGSL_GAME_PARAMS const (the grid2 prelude does not define it). */
+  /* v15.1 — wake terrain occlusion. The CPU liquidApplyRocketGridWake runs
+   * a liquidLineClear line-of-sight test per cell so the plume cannot push
+   * water through solid ground; the Stage-8 GPU port omitted it (the
+   * grid-update layout could not spare a storage buffer at the old 8-floor,
+   * left as a TODO) — the owner-visible bug: jets energising water THROUGH
+   * solid blocks into ponds below. The layout now binds the terrain mask at
+   * binding 12 (the GPU path already requires 9+ storage buffers via P2G),
+   * and TERRAIN_HALO grew to 6 tiles so the mask actually covers the walls
+   * between a nozzle and any cell the plume can reach (out-of-rect samples
+   * read non-solid). Same probe as the boundary/collide kernels; the march
+   * mirrors the CPU literal (14 px steps, endpoints excluded).
+   */
+  var WGSL_WAKE_TERRAIN = /* wgsl */ `
+@group(0) @binding(12) var<storage, read> terrainMask : array<u32>;
+
+fn wakeSolidAt(px : f32, py : f32) -> bool {
+  let oc   = bitcast<i32>(gp.tileOrigC);
+  let orow = bitcast<i32>(gp.tileOrigR);
+  let tc = i32(floor(px / gp.worldTile)) - oc;
+  let tr = i32(floor(py / gp.worldTile)) - orow;
+  if (tc < 0 || tr < 0 || tc >= i32(gp.tileW) || tr >= i32(gp.tileH)) {
+    return false;
+  }
+  let idx  = u32(tr) * gp.tileW + u32(tc);
+  let word = terrainMask[idx >> 5u];
+  return ((word >> (idx & 31u)) & 1u) != 0u;
+}
+
+// CPU liquidLineClear: sample the open segment every ~14 px (endpoints
+// excluded); any solid sample blocks the wake. Plume reach is <= 176 px,
+// so this is at most ~12 samples for a cell already inside the cone.
+fn wakeLineClear(x0 : f32, y0 : f32, x1 : f32, y1 : f32) -> bool {
+  let dx = x1 - x0;
+  let dy = y1 - y0;
+  let dist = sqrt(dx * dx + dy * dy);
+  let steps = max(1.0, ceil(dist / 14.0));
+  var i : f32 = 1.0;
+  loop {
+    if (i >= steps) { break; }
+    let t = i / steps;
+    if (wakeSolidAt(x0 + dx * t, y0 + dy * t)) { return false; }
+    i = i + 1.0;
+  }
+  return true;
+}
+`;
+
   var WGSL_GRID_WAKE = /* wgsl */ `
 fn gridWake(c : u32, cgx : i32, cgy : i32) {
   let wx = (f32(cgx) + 0.5) * CELL;
@@ -3936,9 +3997,16 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       } else {
         // Static rig — rigid-boundary pin to EXACT zero (an idle rig can
         // carry a small residual contact vx/vy; pinning to it would
-        // re-inject a few px/s forever).
-        cellVelX[c] = 0.0;
-        cellVelY[c] = 0.0;
+        // re-inject a few px/s forever). v25.14 — but NOT while the jets
+        // fire: the pin is the resting-rig firecracker fix, and zeroing
+        // in-silhouette cells every substep kept plume velocity from ever
+        // accumulating under a slow-moving thrusting rig (weak-feeling
+        // thrust over thin water). edit² sluice.js 070
+        // liquidApplyPlayerGridWake.
+        if (gameP.rocket.x < 0.5) {
+          cellVelX[c] = 0.0;
+          cellVelY[c] = 0.0;
+        }
       }
     }
   }
@@ -3961,6 +4029,10 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       let perp = abs(dx * -edy + dy * edx);
       let cone = 13.0 + alongPos * 0.22;
       if (perp > cone) { continue; }
+      // v15.1 — terrain occlusion (CPU liquidLineClear parity): a solid
+      // tile between the nozzle and this cell blocks the plume, so jets
+      // no longer push water through the ground into ponds below.
+      if (!wakeLineClear(nz.x, nz.y, wx, wy)) { continue; }
       var mouthBoost : f32 = 1.0;
       if (alongPos < 18.0) { mouthBoost = 1.35; }
       let falloff = (1.0 - alongPos / 176.0) * (1.0 - perp / cone) * mouthBoost;
@@ -5768,6 +5840,11 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     if (instance.sparseCapable) {
       uEntries.push({ binding: 11, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
     }
+    // v15.1 — the terrain mask for the rocket-wake occlusion march
+    // (wakeLineClear). Read-only; same buffer the boundary/collide layouts
+    // bind. Dense layout lands at 9 storage buffers (the GPU path already
+    // requires 9 via P2G), sparse at 10 (already required).
+    uEntries.push({ binding: 12, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
     var uBgl = dev.createBindGroupLayout({
       label: 'liquid.gridUpdateBGL',
       entries: uEntries
@@ -5792,11 +5869,13 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       // Stage 8 — gridUpdate carries the game-coupled wake code: the
       // GameParams struct + binding + gridWake() before the kernel body
       // that calls it. v14.26 — the SimParams struct + its binding (10)
-      // so the kernel can read `sp` (live gravity).
+      // so the kernel can read `sp` (live gravity). v15.1 — the wake
+      // terrain block (binding 12 + wakeLineClear) for plume occlusion.
       gridUpdate: uPipe('liquid.gridUpdate',
         WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
         WGSL_GAME_PARAMS + gameBindGrid +
-        WGSL_SIM_PARAMS + simBind(10) + WGSL_GRID_WAKE +
+        WGSL_SIM_PARAMS + simBind(10) +
+        WGSL_WAKE_TERRAIN + WGSL_GRID_WAKE +
         WGSL_GRID_UPDATE)
     };
     instance.sparseGrid2OK = false;
@@ -5806,7 +5885,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         instance.grid2Pipe.gridUpdateSparse = uPipe('liquid.gridUpdateSparse',
           WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
           WGSL_GAME_PARAMS + gameBindGrid +
-          WGSL_SIM_PARAMS + simBind(10) + WGSL_GRID_WAKE +
+          WGSL_SIM_PARAMS + simBind(10) +
+          WGSL_WAKE_TERRAIN + WGSL_GRID_WAKE +
           WGSL_GRID_UPDATE_HELPERS + sparseListBind(11) +
           cellEntrySparse(WGSL_GRID_UPDATE_BODY));
         // v15.0 — end-of-sub-step clear, grid2-layout share (DV + vel).
@@ -5853,6 +5933,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     if (instance.sparseCapable) {
       uBgEntries.push({ binding: 11, resource: { buffer: instance.buf.blockList } });
     }
+    uBgEntries.push({ binding: 12, resource: { buffer: instance.buf.terrainMask } });
     instance.gridUpdateBG = dev.createBindGroup({
       label: 'liquid.gridUpdateBG',
       layout: uBgl,

@@ -688,6 +688,17 @@
       var pvm = Math.abs(player.vx) + Math.abs(player.vy);
       var ejs = (pvm - 8) / 52;
       if (ejs <= 0) {
+        // v25.14 — do NOT pin while the jets are firing. The pin is the
+        // resting-rig firecracker fix (in-silhouette splat cells free-fall
+        // forever and pump a jet at the hull base) — that scenario only
+        // exists with the rockets cold. A slow-moving THRUSTING rig (hover,
+        // scoot-start over shallow water) had every in-silhouette cell
+        // zeroed each substep, so plume velocity could never accumulate
+        // under the rig and thrust felt weirdly weak in thin water. With
+        // the plume active the water under the rig is churning anyway; let
+        // the resolved velocity + the rocket wake act. edit² liquid-wgpu
+        // gridWake (the kernel gates on gameP.rocket.x the same way).
+        if (rocketIntensity > 0.02 && player.thrusting) return;
         // Below the deadzone pin to EXACT zero — a grounded/floating rig
         // can idle with a small residual vx/vy (contact physics), and
         // pinning cells to that re-injects a few px/s forever.
