@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.17';
+  var GAME_VERSION = 'v25.18';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -52800,6 +52800,82 @@
     }
   }
 
+  // ----- BODY-BODY UNMERGE (v25.18) — no slime can stay inside another --------------
+  // The per-particle contact + the containment backstop keep normally-colliding
+  // bodies apart, but a CONFINED pile (cubes crammed into a dug pocket with more
+  // dropped on top) can interleave two very soft rings faster than those passes
+  // separate them, and once one body's CENTROID is inside another's ring the
+  // point-level machinery has no notion of "who is inside whom" — the pair sits
+  // visibly merged (the owner's screenshot). Centroid-inside is unambiguous
+  // wrongness (a legal squish never puts one centroid inside another ring), so
+  // once per frame any such pair is pulled apart RIGIDLY: both bodies take a
+  // uniform, velocity-free, rate-limited shift along their centroid axis, split
+  // by tile mass (the lighter one moves more). The normal solve re-settles the
+  // gel as they separate, so it reads as blobs oozing apart, never a pop. A
+  // shift can nose points into a wall at ~1.5 px/frame worst case; the next
+  // substep's world collide (velocity-free) resolves that, as everywhere else.
+  var JELLO_UNMERGE_RATE = 90;   // px/s of combined separation while a pair is merged
+                                 // (escalates to 4x after 2s stuck — see _mergeT below)
+  function jelloShiftBody(b, dx, dy) {
+    var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    for (var i = 0; i < n; i++) { px[i] += dx; py[i] += dy; ox[i] += dx; oy[i] += dy; }
+    b.cx += dx; b.cy += dy; b.bboxL += dx; b.bboxR += dx; b.bboxT += dy; b.bboxB += dy;
+  }
+  var jelloUnmergePick = [];     // scratch: worst merged partner per active index (-1 = none)
+  var jelloUnmergeD2 = [];       // scratch: that partner's centroid distance^2
+  function jelloUnmergeBodies(frameDt, active, nActive) {
+    if (nActive < 2 || JELLO_UNMERGE_RATE <= 0) return;
+    var pick = jelloUnmergePick, pd2 = jelloUnmergeD2;
+    pick.length = nActive; pd2.length = nActive;
+    var a, c2, A, B;
+    for (a = 0; a < nActive; a++) pick[a] = -1;
+    // Pass 1: each body's single WORST merge partner (closest centroids). ONE
+    // partner per body per frame keeps a multi-way pile-merge COHERENT — the v1
+    // all-pairs version let six overlapping neighbours push a middle body in six
+    // directions that cancelled to gridlock (harness: 7 pairs still merged after
+    // 25s). The deepest pair wins; the rest resolve on later frames as the pile
+    // shells apart outside-in.
+    for (a = 0; a < nActive; a++) {
+      A = active[a];
+      if (A.ringN < 3) continue;
+      for (c2 = a + 1; c2 < nActive; c2++) {
+        B = active[c2];
+        if (B.ringN < 3) continue;
+        if (A.bboxR < B.bboxL || A.bboxL > B.bboxR || A.bboxB < B.bboxT || A.bboxT > B.bboxB) continue;
+        if (!jelloPointInRing(B, A.cx, A.cy) && !jelloPointInRing(A, B.cx, B.cy)) continue;
+        var ddx = A.cx - B.cx, ddy = A.cy - B.cy, dd2 = ddx * ddx + ddy * ddy;
+        if (pick[a] < 0 || dd2 < pd2[a]) { pick[a] = c2; pd2[a] = dd2; }
+        if (pick[c2] < 0 || dd2 < pd2[c2]) { pick[c2] = a; pd2[c2] = dd2; }
+      }
+    }
+    // Pass 2: apply each selected pair once; stuck pairs escalate (a crammed
+    // pocket resists at the base rate, and a merge that lingers is exactly the
+    // glitch this pass exists to kill).
+    for (a = 0; a < nActive; a++) {
+      c2 = pick[a];
+      A = active[a];
+      if (c2 < 0) { A._mergeT = 0; continue; }
+      A._mergeT = (A._mergeT || 0) + frameDt;
+      if (c2 < a && pick[c2] === a) continue;            // pair already applied from the other side
+      B = active[c2];
+      var dx = A.cx - B.cx, dy = A.cy - B.cy;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      var nx, ny;
+      if (d > 1e-3) { nx = dx / d; ny = dy / d; }
+      else { nx = 0; ny = -1; }                          // dead-centred: split vertically
+      var mt = (A._mergeT > (B._mergeT || 0)) ? A._mergeT : (B._mergeT || 0);
+      var esc = 1 + 3 * (mt > 2 ? 1 : mt / 2);           // 1x -> 4x over 2 seconds stuck
+      var sep = JELLO_UNMERGE_RATE * esc * frameDt;
+      var mA = A.n / (A.npt ? (A.npt + 1) * (A.npt + 1) : 16);   // tile mass (density independent)
+      var mB = B.n / (B.npt ? (B.npt + 1) * (B.npt + 1) : 16);
+      var fA = mB / (mA + mB);
+      jelloShiftBody(A, nx * sep * fA, ny * sep * fA);
+      jelloShiftBody(B, -nx * sep * (1 - fA), -ny * sep * (1 - fA));
+      A.sleeping = false; A.sleepFrames = 0;
+      B.sleeping = false; B.sleepFrames = 0;
+    }
+  }
+
   // ----- RIG DISPLACES GEL (v25.17) — the "never inside a cube" guarantee -----------
   // The soft containment lets the hull DENT into gel (memory foam) and the yield
   // evacuates overlap at a gentle rate, but a cube falling ONTO the rig (the C drop
@@ -53468,7 +53544,34 @@
     var dur = (b._invFrames - JELLO_HEAL_GRACE) / JELLO_HEAL_RAMP; if (dur > 1) dur = 1;
     var _hb = JELLO_SHAPE_BETA;
     JELLO_SHAPE_BETA = 0;
-    jelloShapeMatch(b, JELLO_HEAL_PULL * (sev > dur ? sev : dur));
+    // VELOCITY-FREE since v25.18: the unfold used to move px only, so the whole
+    // correction became Verlet velocity on the next step. On an isolated stuck fold
+    // that was fine (one yank, then quiet), but in a CONFINED PILE (a dug pocket
+    // crammed with cubes) folds re-form every frame and the heal became an energy
+    // PUMP: yank -> volume/contact fight -> new folds -> yank, churning the pile at
+    // thousands of px/s (the owner's "slimes get inside each other" report; the
+    // perf overlay read vmax 3474 with 521 contacts). Co-shifting ox/oy keeps the
+    // unfold purely positional: same per-frame correction, zero injected energy.
+    jelloContactAlloc();
+    var hpull = JELLO_HEAL_PULL * (sev > dur ? sev : dur);
+    // STUCK-FOLD SNAP (v25.18): a velocity-free pull can be resisted FOREVER by the
+    // fold-stable distance constraints — the limit cycle (pull in, springs pull
+    // back) kept folded cubes visibly wiggling and locked awake (_invHard blocks
+    // sleep by design; the pyramid harness caught three of them). If a fold has
+    // survived the full ramp plus a second of healing, restore the body to its
+    // rigid pose OUTRIGHT (pull 1.0): the rest pose satisfies every internal
+    // constraint by construction, so the fold is gone in one frame; the next
+    // substep's world collide resolves any wall overlap the snap leaves. Still
+    // velocity-free, so it adds no energy, and the clock re-arms so it can only
+    // fire once per failed second.
+    if (b._invFrames > JELLO_HEAL_GRACE + JELLO_HEAL_RAMP + 60) {
+      hpull = 1.0;
+      b._invFrames = JELLO_HEAL_GRACE + 1;
+    }
+    var hpx = jelloVAccX, hpy = jelloVAccY, hn = b.n, hi;
+    for (hi = 0; hi < hn; hi++) { hpx[hi] = b.px[hi]; hpy[hi] = b.py[hi]; }
+    jelloShapeMatch(b, hpull);
+    for (hi = 0; hi < hn; hi++) { b.ox[hi] += b.px[hi] - hpx[hi]; b.oy[hi] += b.py[hi] - hpy[hi]; }
     JELLO_SHAPE_BETA = _hb;
   }
 
@@ -53912,6 +54015,7 @@
       player.vx -= jelloJetDX * _jrAcc * dt;
       player.vy -= jelloJetDY * _jrAcc * dt;
     }
+    jelloUnmergeBodies(dt, active, nActive);   // no slime can stay inside another (rigid rate-limited split)
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring
     jelloRigDisplaceGel();    // hard displacement: gel can never be deeper than the dent cap inside the hull
     jelloDeformBowl();        // resting on top: carve the conforming membrane bowl
@@ -56596,6 +56700,12 @@
           function () { return JELLO_ENGULF_CAP; },
           function (v) { JELLO_ENGULF_CAP = v; },
           1, 20, 1);   // px of gel allowed inside the hull (the dent); past it gel is displaced out
+      }
+      if (typeof JELLO_UNMERGE_RATE !== 'undefined') {
+        gmRegisterLever('jello.JELLO_UNMERGE_RATE', 'jello', 'JELLO_UNMERGE_RATE',
+          function () { return JELLO_UNMERGE_RATE; },
+          function (v) { JELLO_UNMERGE_RATE = v; },
+          0, 300, undefined);   // px/s a merged pair (centroid inside the other ring) is pulled apart
       }
       if (typeof JELLO_EJECT_SNAP !== 'undefined') {
         gmRegisterLever('jello.JELLO_EJECT_SNAP', 'jello', 'JELLO_EJECT_SNAP',

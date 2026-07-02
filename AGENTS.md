@@ -25,9 +25,11 @@ plan is dead. The private `sluice-alpha` repo is archived (read-only pointer).
   BALANCE.md, TUNING.md, etc.), namespaced so they do not collide with the site's own
   AGENTS/CANON/STYLE/VOICE. **Read `docs/game/GAME.md` first for any game work.**
 
-**Build step (every game change):** edit a fragment in `js/sluice/`, run `./build-sluice.sh`,
-bump `GAME_VERSION` in `js/sluice/000-head.js`, commit BOTH the fragment(s) and the rebuilt
-`js/sluice.js`. Verify with `node --check js/sluice.js` plus a browser/headless boot.
+**Build step (every game change):** bump `GAME_VERSION` in `js/sluice/000-head.js`, edit the
+fragment(s) in `js/sluice/`, run `./build-sluice.sh`, then commit the fragment(s), the rebuilt
+`js/sluice.js`, AND `grand-motherload.html` (the build stamps its game script tags with
+`?v=<GAME_VERSION>` so a deployed fix is never masked by a stale browser/CDN cache).
+Verify with `node --check js/sluice.js` plus a browser/headless boot.
 
 **Site work vs game work:** site = the posts/pages + `style.css` + the non-sluice `js/` scripts
 (read this file + STYLE/VOICE/CANON). Game = `js/sluice/` + `grand-motherload.html` + the files

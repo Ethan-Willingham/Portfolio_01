@@ -1550,6 +1550,12 @@
           function (v) { JELLO_ENGULF_CAP = v; },
           1, 20, 1);   // px of gel allowed inside the hull (the dent); past it gel is displaced out
       }
+      if (typeof JELLO_UNMERGE_RATE !== 'undefined') {
+        gmRegisterLever('jello.JELLO_UNMERGE_RATE', 'jello', 'JELLO_UNMERGE_RATE',
+          function () { return JELLO_UNMERGE_RATE; },
+          function (v) { JELLO_UNMERGE_RATE = v; },
+          0, 300, undefined);   // px/s a merged pair (centroid inside the other ring) is pulled apart
+      }
       if (typeof JELLO_EJECT_SNAP !== 'undefined') {
         gmRegisterLever('jello.JELLO_EJECT_SNAP', 'jello', 'JELLO_EJECT_SNAP',
           function () { return JELLO_EJECT_SNAP; },

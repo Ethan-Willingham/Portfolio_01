@@ -30,3 +30,14 @@ fi
 
 cat "${frags[@]}" > "$out"
 echo "build-sluice: wrote $out from ${#frags[@]} fragments ($(wc -l < "$out") lines)"
+
+# Cache-bust the game page's script tags with the current GAME_VERSION so a
+# deployed fix is picked up on the next page load instead of whenever the
+# browser/CDN cache happens to expire (owner-reported: still playing v25.16
+# minutes after v25.17 shipped). Idempotent: rewrites any existing ?v= too.
+# Commit grand-motherload.html alongside the bundle when the stamp changes.
+ver="$(sed -nE "s/.*GAME_VERSION = '([^']+)'.*/\1/p" js/sluice/000-head.js | head -1)"
+if [ -n "$ver" ]; then
+  sed -i '' -E 's#src="js/(sluice|liquid-wgpu|smoke-wgpu|jello-wgpu|audio)\.js(\?v=[^"]*)?"#src="js/\1.js?v='"$ver"'"#g' grand-motherload.html
+  echo "build-sluice: stamped grand-motherload.html script tags with ?v=$ver"
+fi
