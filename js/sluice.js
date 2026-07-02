@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.18';
+  var GAME_VERSION = 'v25.19';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -52842,7 +52842,18 @@
         B = active[c2];
         if (B.ringN < 3) continue;
         if (A.bboxR < B.bboxL || A.bboxL > B.bboxR || A.bboxB < B.bboxT || A.bboxT > B.bboxB) continue;
-        if (!jelloPointInRing(B, A.cx, A.cy) && !jelloPointInRing(A, B.cx, B.cy)) continue;
+        // Fire only on a centroid CLEARLY inside (4px past the ring), not a grazing
+        // one: a centroid sitting exactly ON the other ring (two bodies built or
+        // squeezed to half-overlap) made this test flicker true/false per frame and
+        // the intermittent rigid shifts WALKED the pair around (harness: 194px of
+        // wander). Sub-margin overlap belongs to the contact solve, which owns it.
+        var aIn = jelloPointInRing(B, A.cx, A.cy);
+        var bIn = !aIn && jelloPointInRing(A, B.cx, B.cy);
+        if (!aIn && !bIn) continue;
+        var mNear = aIn ? jelloNearestOnRing(B, A.cx, A.cy) : jelloNearestOnRing(A, B.cx, B.cy);
+        var mqx = aIn ? A.cx : B.cx, mqy = aIn ? A.cy : B.cy;
+        var mdx = mNear.x - mqx, mdy = mNear.y - mqy;
+        if (mdx * mdx + mdy * mdy < 16) continue;          // < 4px deep: grazing, not merged
         var ddx = A.cx - B.cx, ddy = A.cy - B.cy, dd2 = ddx * ddx + ddy * ddy;
         if (pick[a] < 0 || dd2 < pd2[a]) { pick[a] = c2; pd2[a] = dd2; }
         if (pick[c2] < 0 || dd2 < pd2[c2]) { pick[c2] = a; pd2[c2] = dd2; }
@@ -52913,11 +52924,21 @@
       // shared side means the ring can never close around the hull at all.
       var sdx = (b.cx - hcx) / (PLAYER_W * 0.5), sdy = (b.cy - hcy) / (PLAYER_H * 0.5);
       var side = (Math.abs(sdy) >= Math.abs(sdx)) ? (sdy < 0 ? 2 : 3) : (sdx < 0 ? 0 : 1);
+      // Exit-side HYSTERESIS (v25.19): a body near dead-centre on the hull has
+      // |sdx| ~ |sdy| ~ 0, so the argmax above flips per frame and the eviction
+      // direction alternates — a wobble source. Keep the previously chosen side
+      // until the new dominant clearly beats it (0.35 of a half-hull margin).
+      if (b._rigSide !== undefined && b._rigSide >= 0 && b._rigSide !== side) {
+        var sNew = (side === 0) ? -sdx : (side === 1) ? sdx : (side === 2) ? -sdy : sdy;
+        var sOld = (b._rigSide === 0) ? -sdx : (b._rigSide === 1) ? sdx : (b._rigSide === 2) ? -sdy : sdy;
+        if (sNew < sOld + 0.35) side = b._rigSide;
+      }
       // The gel under a rig is the SEAT (probe + bowl own it): seated, never evict
       // downward-favoring bodies; grounded on solid, redirect them sideways instead
       // of pushing gel into the floor.
-      if (side === 3 && player.onJello) continue;
+      if (side === 3 && player.onJello) { b._rigSide = -1; continue; }
       if (side === 3 && player.onGround) side = (sdx < 0) ? 0 : 1;
+      b._rigSide = side;
       // Roof crossings evict almost immediately (a cube should rest ON the roof,
       // not sink into the cockpit); side hits keep the memory-foam dent cap.
       var cap = (side === 2) ? 2 : JELLO_ENGULF_CAP;
@@ -52930,18 +52951,33 @@
         var depth = (side === 0) ? (x - x0) : (side === 1) ? (x1 - x)
                   : (side === 2) ? (y - y0) : (y1 - y);
         if (depth <= cap) continue;
-        // Extrude toward just OUTSIDE the exit face, rate-limited per frame. The
-        // pass runs every frame from first contact, so depth can only exceed the
-        // cap by one frame's approach: normal motion never sees the rate clamp.
-        var tx2 = x, ty2 = y;
-        if (side === 0) tx2 = x0 - 0.5; else if (side === 1) tx2 = x1 + 0.5;
-        else if (side === 2) ty2 = y0 - 0.5; else ty2 = y1 + 0.5;
-        var mx2 = tx2 - x, my2 = ty2 - y;
-        if (mx2 > JELLO_ENGULF_RATE) mx2 = JELLO_ENGULF_RATE; else if (mx2 < -JELLO_ENGULF_RATE) mx2 = -JELLO_ENGULF_RATE;
-        if (my2 > JELLO_ENGULF_RATE) my2 = JELLO_ENGULF_RATE; else if (my2 < -JELLO_ENGULF_RATE) my2 = -JELLO_ENGULF_RATE;
+        // Extrude back TO THE CAP DEPTH, not out of the hull (v25.19). The first cut
+        // evicted fully outside (face - 0.5), so a body squeezed against the hull
+        // (the rig pinched between two slimes in a tight dig) rode a ~7px sawtooth:
+        // springs press the face past the cap, the eviction teleported it all the
+        // way out, springs pressed it back — an undamped standing oscillation that
+        // read as an audio-waveform outline (owner report; vmax 377 while parked).
+        // Clamped to the cap, the correction at equilibrium is just one frame's
+        // intrusion — sub-pixel. Rate-limited for the deep first-contact case.
+        var over = depth - cap, mx2 = 0, my2 = 0, exn = 0, eyn = 0;
+        if (over > JELLO_ENGULF_RATE) over = JELLO_ENGULF_RATE;
+        if (side === 0)      { mx2 = -over; exn = -1; }
+        else if (side === 1) { mx2 =  over; exn =  1; }
+        else if (side === 2) { my2 = -over; eyn = -1; }
+        else                 { my2 =  over; eyn =  1; }
         // Never relocate gel INTO solid tiles (the jet's v24.171 lesson).
         if (jelloWorldSolidAt(x + mx2, y + my2)) continue;
-        px[i] += mx2; py[i] += my2; ox[i] += mx2; oy[i] += my2;   // velocity-free
+        px[i] += mx2; py[i] += my2; ox[i] += mx2; oy[i] += my2;   // velocity-free relocation
+        // ...then BLEED the approach velocity along the exit normal, inelastic, the
+        // same way every other contact in this engine does (world collide's rest
+        // threshold, the contact solve's normal damping, the containment backstop).
+        // A velocity-PRESERVING eviction is an undamped oscillator: the point keeps
+        // its inward speed, dives back past the cap, and gets evicted again forever.
+        var vin = (px[i] - ox[i]) * exn + (py[i] - oy[i]) * eyn;   // + = leaving, - = pressing in
+        if (vin < 0) {
+          ox[i] += exn * vin * JELLO_CONTACT_DAMP;
+          oy[i] += eyn * vin * JELLO_CONTACT_DAMP;
+        }
         moved = true;
       }
       if (moved) { b.sleeping = false; b.sleepFrames = 0; }
