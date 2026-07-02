@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Other Side</title>
+  <meta name="description" content="A personal theory about the two sides of everything: the Tao Te Ching's nameless and its ten thousand things, exactly equal, drawn toward each other, and never crossing. With rocks, hallucinogens, and a proton seven miles per hour short of the speed of light.">
+  <meta property="og:title" content="The Other Side">
+  <meta property="og:description" content="The Tao Te Ching splits everything into the named and the nameless. A theory: the two sides are exactly equal, each is drawn toward the other, and nothing ever crosses.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/the-other-side.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/the-other-side-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/the-other-side-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE OTHER SIDE
+     A personal theory essay: the Tao Te Ching's two sides held
+     as exactly equal, mutually drawn, and never crossing. Straight
+     prose, one code-drawn figure. Site shell (forest green,
+     parchment, Century Supra / Segoe UI / Commit Mono), one sage
+     accent for kickers and quoted passages. No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;                 /* reading column */
+    --accent2: #9ec79a;               /* sage, from the site categorical set */
+  }
+  html, body { overflow-x: clip; }
+  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+  /* ---------- HERO ---------- */
+  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
+  .hero-k { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin: 0 0 1.1rem; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 48ch; text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero-meta b { color: var(--accent); font-weight: 400; }
+  .hero-meta .sep { opacity: 0.4; }
+
+  /* ---------- PROSE SECTIONS ---------- */
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
+  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
+  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
+  .sec strong { font-weight: 600; color: var(--text-bright); }
+  .sec em { font-style: italic; }
+  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+  /* section heading: mono kicker + serif head */
+  .sec-k.sec-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent2); margin: 0 0 0.5rem; }
+  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
+
+  /* pull quotes use the kit's .u-pq */
+
+  /* the one figure */
+  .fig { margin: 2.4rem 0 0.5rem; }
+  .fig svg { display: block; width: 100%; height: auto; }
+  .fig figcaption { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; line-height: 1.6; color: var(--text-faint); margin-top: 0.7rem; }
+  .sp-curve { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .sp-mid { stroke: var(--line-mid); stroke-width: 1.3; stroke-dasharray: 4 5; }
+  .sp-lab { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; fill: var(--text-faint); }
+  .sp-arrow { stroke: var(--text-faint); stroke-width: 1.2; }
+  .sp-arrow-h { fill: var(--text-faint); }
+
+  /* ---------- closing / colophon ---------- */
+  .u-divider { border: none; border-top: 1px solid var(--rule); max-width: var(--measure); width: calc(100% - 2 * var(--gutter)); margin: 3.8rem auto 0; }
+  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); margin-top: 1.4rem; }
+
+  </style>
+</head>
+<body>
+
+  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <p class="hero-k">A personal theory</p>
+    <h1 class="hero-title">The Other Side</h1>
+    <p class="hero-dek">The Tao Te Ching splits everything into two: the named and the nameless. I think the two sides are exactly equal, that each is drawn toward the other, and that nothing ever crosses.</p>
+    <p class="hero-meta"><span>A theory</span> <span class="sep">/</span> <b>7 sources</b> <span class="sep">/</span> <span>11 min read</span></p>
+  </header>
+
+  <main>
+
+    <!-- ============================ 1. THE CENSUS ============================ -->
+    <section class="sec">
+      <p class="sec-k">The census</p>
+      <h2 class="sec-h">Ten thousand things</h2>
+
+      <p class="lede">Myriad started as a number. In Greek it means ten thousand.</p>
+
+      <p>The Tao Te Ching is a Chinese book of 81 short chapters, roughly 2,400 years old, traditionally credited to a maybe-legendary sage called Laozi. Its third line splits everything that exists into two sides. One side holds every nameable thing. The other side is what that leaves.</p>
+
+      <blockquote class="u-pq">The nameless is the beginning of heaven and Earth.<br>The named is the mother of the ten thousand things.<cite class="u-pq-cite">Tao Te Ching, chapter 1, Feng and English</cite></blockquote>
+
+      <p>"The ten thousand things" is the book's name for our side: the whole crowd of particulars, rocks and animals and mortgages and you. D. C. Lau translates the same phrase as "the myriad creatures." Two old languages, counting the same crowd, settled on the same number. (I keep <a href="tao-te-ching.html">all 81 chapters side by side</a>, across 139 translators; every quote here comes from that shelf.)</p>
+
+      <p>One caution before we go further. In those two lines the book also hands out a birth order: the nameless as the beginning, the named as something born from it. I am not signing that part. I make no claim about how creation works, and later in the post I will disagree with the book about the seniority outright. All I am taking from chapter 1 is the split itself: two sides, one census.</p>
+
+      <p>This post is a theory about those two sides. The parts that touch the real world come with sources. The claims that are mine come with nothing, on purpose.</p>
+
+      <p>One rule before we start, and it is about precision, not mysticism. The other side gets no pronouns in this post: no <em>it</em>, no <em>there</em>, no <em>they</em>, and nothing over there gets called a being. Every one of those words was built on this side, for this-side things, and using one would smuggle in a claim I am not making. Physicists make the same move when they decline to say what happened "before" the big bang, because time is an inside-the-universe word. <strong>The book opens with the same warning:</strong> "The name that can be named is not the eternal name." Line one, and the author is telling you the book cannot do what it is about to try. <a href="william-james.html">William James</a> filed the same report from the psychology side: the first mark of a mystical experience, he found, is that words fail it.</p>
+    </section>
+
+    <!-- ============================ 2. THE AUDIT ============================ -->
+    <section class="sec">
+      <p class="sec-k">The audit</p>
+      <h2 class="sec-h">Neither side is better</h2>
+
+      <p class="lede">You own the proof already. It is in your cupboard.</p>
+
+      <p>A cup is a wall of clay around an empty space, and the empty space is the part that holds the coffee. Throw the clay away and there is nothing to drink from. Fill the space in and there is nothing to drink. It takes both to make a cup. Chapter 11 says it in twelve words:</p>
+
+      <blockquote class="u-pq">Thus we are helped by what is not<br>To use what is.<cite class="u-pq-cite">Tao Te Ching, chapter 11, Bynner</cite></blockquote>
+
+      <p>Notice the book only argues one direction: the nothing serves the something. The return trip, that the space needs the clay just as much, is not in the chapter, so let me add it. I doubt I am the first to say it in 2,400 years, but the book does not say it, and the theory needs it. Neither half is the cup. That is the whole idea, in one object you can wash.</p>
+
+      <p>The book mostly agrees with me. "Being and Not-being grow out of one another," says chapter 2 in Waley's translation: the two sides arrive together, each making the other possible. But chapter 40 breaks the tie. "Being itself is the product of Not-being." Laozi gives the nothing side seniority, the way a spring is senior to the stream.</p>
+
+      <p>Here the book and I part ways, exactly once, and it is the disagreement I flagged at the start. I think the ledger is flat. Neither side is prior. Neither is the source of the other. Neither is better, or worse, or right, or the real one, and the other side is not a place. I am not claiming to know how creation works; I am claiming the question is shaped wrong, the way "did the clay make the space or did the space make the clay" is shaped wrong. They are the two halves of one cup. That reading is mine in the honest sense: not that nobody has thought it before, but that the book says otherwise and I am saying it anyway.</p>
+    </section>
+
+    <!-- ============================ 3. THE ENGINE ============================ -->
+    <section class="sec">
+      <p class="sec-k">The engine</p>
+      <h2 class="sec-h">The pull</h2>
+
+      <p>Laozi ends his first chapter holding both sides in one hand.</p>
+
+      <blockquote class="u-pq">These two spring from the same source but differ in name; this appears as darkness.<br>Darkness within darkness.<br>The gate to all mystery.<cite class="u-pq-cite">Tao Te Ching, chapter 1, Feng and English</cite></blockquote>
+
+      <p>My gloss, and it is a gloss, not a translation: the mystery is the two sides facing each other. Everything on our side that has ever reached toward the nameless, every religion, every physicist muttering about why there is something rather than nothing, is one half of that facing. The theory says the facing is mutual. We feel a draw toward the other side; an equal draw answers it. From over there, this is the other side.</p>
+
+      <p>What the answering pull is like, I cannot say. By my own rule nobody can, because <em>saying</em> is a this-side activity. The claim is only the symmetry: equal pull, equal stake.</p>
+
+      <p>And the pull is not decoration. Take it away and neither side has a reason to exist, the way the cup and the hollow have no reason to exist without each other. The mystery is the one requirement both sides share.</p>
+    </section>
+
+    <!-- ============================ 4. THE MAP ============================ -->
+    <section class="sec">
+      <p class="sec-k">The map</p>
+      <h2 class="sec-h">Distance is self</h2>
+
+      <p>Once there are two sides there is a middle, and everything on our side sits at some distance from it. Here is the engine of the theory: the distance is self. The more of a someone a thing is, the farther out it lives.</p>
+
+      <p>The book keeps a mascot for the near end: pu, usually translated "the uncarved block." A block of wood before anyone improves it. Carve it and you get bowls and handles, each with a name. Carve a person's life and you get titles, tastes, grudges, a brand.</p>
+
+      <blockquote class="u-pq">Once the block is carved, there will be names,<br>And so soon as there are names,<br>Know that it is time to stop.<cite class="u-pq-cite">Tao Te Ching, chapter 32, Waley</cite></blockquote>
+
+      <p>Every cut adds a name, and every name is distance. Which produces the strangest ranking in this post, so let me say it plainly. A rock sits nearer the middle than an animal, and an animal sits nearer than you. Not because the rock is wise. Because it is barely cut at all: it cannot want, cannot compare, cannot tell itself from the mountain it fell off. An animal is cut further; hunger, fear, a territory to keep. You are the deepest cut there is, a self that sorts the whole world into me and not-me and never stops sorting.</p>
+
+      <p>The rock is not at the middle, to be clear. It has a mass, a location, a temperature, and those are already names; gravity claims it the way gravity claims everything with edges. It is on our side with the rest of us. Just seated close.</p>
+
+      <p>Ranking people below gravel sounds like an insult, but it is an old Taoist move, and I stole it. <a href="zhuangzi.html">Zhuangzi</a>, the other great Taoist, was once pressed to say where the Tao actually is. His answer went down, not up: in the ant. In the weeds. In a broken tile. In dung. The asker stopped asking. Call a rock spiritually fit and people laugh; on this map, fit just means near.</p>
+
+      <p>One more correction before we go on, because I have been cheating with geometry since the title. There is no physical distance between the two sides. None. The middle is not out past the atmosphere somewhere, and near and far are not measured in inches, because location, distance, and direction are this-side inventory, three more of the ten thousand things. A rock is not parked closer to anything; nearer means less named, and that is all it means. And notice who would assume the gap was physical in the first place: a myriad creature, something built from the same stuff distance is built from. Which is who is reading this. It is who is writing it too. So the geometry stays, spirals and middles and far ends, because a myriad creature writing for myriad creatures has no other language.</p>
+    </section>
+
+    <!-- ============================ 5. THE FAR ENDS ============================ -->
+    <section class="sec">
+      <p class="sec-k">The far ends</p>
+      <h2 class="sec-h">Winding inward</h2>
+
+      <p>Distance runs the other way too, and our side's far end is easy to sketch, because it has names. Money past counting. Power past use. The fourth line of cocaine at 4 a.m. Wanting turned up until nothing else is audible. Strip the particulars and the far end is always the same object: the self, maximized. The far end of a self is more self.</p>
+
+      <p>The theory says the other side has an equivalent far end: some counterpart of that drift, running away from the middle in a direction I have no words for, because the far end of the other side is where words were never going to reach anyway. About what recedes there, and into what, I can say nothing. The symmetry is the entire claim: two sides, each with a near shore and a deep interior, facing each other across a middle.</p>
+
+      <figure class="fig">
+        <svg viewBox="0 10 700 264" role="img" aria-label="Two golden spirals, labeled this side and the other side, sit either side of a dashed vertical line labeled the middle. Each spiral&apos;s outer arm runs down alongside the line, drawing closer the lower it goes and never touching. An arrow on the right points away from the middle, labeled more self.">
+          <line class="sp-mid" x1="350" y1="36" x2="350" y2="250"/>
+          <text class="sp-lab" x="235" y="24" text-anchor="middle">the other side</text>
+          <text class="sp-lab" x="465" y="24" text-anchor="middle">this side</text>
+          <text class="sp-lab" x="350" y="266" text-anchor="middle">the middle</text>
+          <text class="sp-lab" x="364" y="216">always closer, never touching</text>
+          <line class="sp-arrow" x1="372" y1="150" x2="472" y2="150"/>
+          <polygon class="sp-arrow-h" points="472,145.8 481,150 472,154.2"/>
+          <text class="sp-lab" x="426" y="141" text-anchor="middle">more self</text>
+          <path class="sp-curve" d="M353.2 248.0L353.3 244.5L353.4 241.0L353.6 237.5L353.7 234.0L353.8 230.5L353.9 227.0L354.1 223.5L354.2 220.0L354.4 216.5L354.5 213.0L354.7 209.5L354.8 206.0L355.0 202.5L355.2 199.0L355.4 195.5L355.5 192.0L355.7 188.5L355.9 185.0L356.1 181.5L356.3 178.0L356.6 174.5L356.8 171.0L357.0 167.5L357.3 164.0L357.5 160.5L357.8 157.0L358.0 153.5L358.3 150.0L358.6 146.5L358.9 143.0L359.2 139.5L359.5 136.0L359.9 132.5L360.2 129.0L360.6 125.5L360.9 122.2L361.6 116.8L362.6 111.4L363.8 106.3L365.2 101.2L366.9 96.3L368.8 91.6L370.9 87.0L373.2 82.6L375.7 78.4L378.3 74.4L381.1 70.6L384.0 67.0L387.0 63.6L390.2 60.4L393.5 57.4L396.9 54.6L400.3 52.0L403.8 49.6L407.4 47.5L411.1 45.6L414.7 43.8L418.4 42.3L422.1 41.0L425.8 39.9L429.5 39.0L433.2 38.3L436.9 37.8L440.5 37.4L444.1 37.3L447.6 37.3L451.1 37.5L454.5 37.9L457.8 38.4L461.0 39.1L464.2 40.0L467.3 40.9L470.2 42.1L473.1 43.3L475.9 44.7L478.5 46.1L481.0 47.7L483.4 49.4L485.7 51.2L487.9 53.0L489.9 55.0L491.8 57.0L493.6 59.0L495.2 61.1L496.8 63.3L498.1 65.5L499.4 67.7L500.5 70.0L501.5 72.3L502.4 74.5L503.1 76.8L503.7 79.1L504.2 81.4L504.6 83.7L504.8 85.9L505.0 88.1L505.0 90.3L504.9 92.5L504.7 94.6L504.4 96.7L504.1 98.7L503.6 100.7L503.0 102.6L502.3 104.5L501.6 106.3L500.8 108.0L499.9 109.7L499.0 111.3L497.9 112.8L496.9 114.2L495.7 115.6L494.6 116.9L493.4 118.1L492.1 119.2L490.8 120.3L489.5 121.3L488.1 122.1L486.8 122.9L485.4 123.7L484.0 124.3L482.6 124.9L481.1 125.4L479.7 125.8L478.3 126.1L476.9 126.4L475.5 126.6L474.1 126.7L472.8 126.7L471.4 126.7L470.1 126.6L468.8 126.5L467.5 126.2L466.3 126.0L465.1 125.6L463.9 125.3L462.8 124.8L461.7 124.3L460.7 123.8L459.7 123.2L458.7 122.6L457.8 122.0L456.9 121.3L456.1 120.6L455.4 119.8L454.6 119.1L454.0 118.3L453.3 117.5L452.8 116.6L452.3 115.8L451.8 114.9L451.4 114.1L451.0 113.2L450.7 112.3L450.4 111.5L450.2 110.6L450.0 109.7L449.9 108.9L449.8 108.0L449.7 107.1L449.7 106.3L449.8 105.5L449.8 104.7L450.0 103.9L450.1 103.1L450.3 102.4L450.5 101.6L450.8 100.9L451.1 100.3L451.4 99.6L451.7 99.0L452.1 98.4L452.5 97.8L452.9 97.2L453.3 96.7L453.8 96.2L454.2 95.8L454.7 95.3L455.2 95.0L455.7 94.6L456.3 94.3L456.8 93.9L457.3 93.7L457.8 93.4L458.4 93.2L458.9 93.0L459.5 92.9L460.0 92.8L460.5 92.7L461.1 92.6L461.6 92.6L462.1 92.6L462.6 92.6L463.1 92.6L463.6 92.7L464.1 92.8L464.6 92.9L465.0 93.0L465.5 93.1L465.9 93.3L466.3 93.5L466.7 93.7L467.1 93.9L467.5 94.2L467.8 94.4L468.1 94.7L468.4 94.9L468.7 95.2L469.0 95.5L469.3 95.8L469.5 96.1L469.7 96.5L469.9 96.8L470.1 97.1L470.2 97.4L470.4 97.8L470.5 98.1L470.6 98.4L470.7 98.8L470.7 99.1L470.8 99.4L470.8 99.8L470.8 100.1L470.8 100.4L470.8 100.7L470.8 101.0L470.7 101.3L470.7 101.6L470.6 101.9L470.5 102.2L470.4 102.5L470.3 102.7L470.2 103.0L470.0 103.2L469.9 103.4L469.8 103.6L469.6 103.9L469.4 104.0L469.3 104.2L469.1 104.4L468.9 104.6L468.7 104.7L468.5 104.9L468.3 105.0L468.1 105.1L467.9 105.2L467.7 105.3L467.5 105.4L467.3 105.4L467.1 105.5L466.9 105.5L466.7 105.6L466.5 105.6L466.3 105.6L466.1 105.6L465.9 105.6L465.7 105.6L465.5 105.6L465.3 105.5L465.1 105.5L465.0 105.4L464.8 105.4L464.6 105.3L464.5 105.2L464.3 105.2L464.2 105.1L464.0 105.0L463.9 104.9L463.8 104.8L463.7 104.7L463.6 104.6L463.5 104.5L463.4 104.3L463.3 104.2L463.2 104.1L463.1 104.0L463.1 103.8L463.0 103.7L462.9 103.6L462.9 103.5L462.9 103.3L462.8 103.2L462.8 103.1L462.8 103.0L462.8 102.8L462.8 102.7L462.8 102.6L462.8 102.5L462.8 102.4L462.8 102.2L462.8 102.1L462.9 102.0L462.9 101.9L462.9 101.8L463.0 101.7L463.0 101.6L463.1 101.5L463.1 101.4L463.2 101.4L463.3 101.3L463.3 101.2L463.4 101.1L463.5 101.1L463.5 101.0L463.6 101.0L463.7 100.9L463.7 100.9L463.8 100.8L463.9 100.8L464.0 100.7L464.1 100.7L464.1 100.7L464.2 100.7L464.3 100.6L464.4 100.6L464.5 100.6L464.5 100.6L464.6 100.6L464.7 100.6L464.8 100.6L464.8 100.6L464.9 100.7L465.0 100.7L465.0 100.7L465.1 100.7L465.2 100.7L465.2 100.8L465.3 100.8L465.3 100.8L465.4 100.9L465.4 100.9L465.5 100.9L465.5 101.0L465.6 101.0L465.6 101.1L465.6 101.1L465.7 101.2L465.7 101.2L465.7 101.3L465.7 101.3L465.8 101.4L465.8 101.4L465.8 101.4L465.8 101.5L465.8 101.5L465.8 101.6L465.8 101.6L465.9 101.7L465.9 101.7L465.9 101.8L465.8 101.8L465.8 101.9L465.8 101.9L465.8 102.0L465.8 102.0L465.8 102.0L465.8 102.1L465.8 102.1L465.7 102.2L465.7 102.2L465.7 102.2L465.7 102.3L465.7 102.3L465.6 102.3L465.6 102.3L465.6 102.4L465.6 102.4"/>
+          <path class="sp-curve" d="M346.8 248.0L346.7 244.5L346.6 241.0L346.4 237.5L346.3 234.0L346.2 230.5L346.1 227.0L345.9 223.5L345.8 220.0L345.6 216.5L345.5 213.0L345.3 209.5L345.2 206.0L345.0 202.5L344.8 199.0L344.6 195.5L344.5 192.0L344.3 188.5L344.1 185.0L343.9 181.5L343.7 178.0L343.4 174.5L343.2 171.0L343.0 167.5L342.7 164.0L342.5 160.5L342.2 157.0L342.0 153.5L341.7 150.0L341.4 146.5L341.1 143.0L340.8 139.5L340.5 136.0L340.1 132.5L339.8 129.0L339.4 125.5L339.1 122.2L338.4 116.8L337.4 111.4L336.2 106.3L334.8 101.2L333.1 96.3L331.2 91.6L329.1 87.0L326.8 82.6L324.3 78.4L321.7 74.4L318.9 70.6L316.0 67.0L313.0 63.6L309.8 60.4L306.5 57.4L303.1 54.6L299.7 52.0L296.2 49.6L292.6 47.5L288.9 45.6L285.3 43.8L281.6 42.3L277.9 41.0L274.2 39.9L270.5 39.0L266.8 38.3L263.1 37.8L259.5 37.4L255.9 37.3L252.4 37.3L248.9 37.5L245.5 37.9L242.2 38.4L239.0 39.1L235.8 40.0L232.7 40.9L229.8 42.1L226.9 43.3L224.1 44.7L221.5 46.1L219.0 47.7L216.6 49.4L214.3 51.2L212.1 53.0L210.1 55.0L208.2 57.0L206.4 59.0L204.8 61.1L203.2 63.3L201.9 65.5L200.6 67.7L199.5 70.0L198.5 72.3L197.6 74.5L196.9 76.8L196.3 79.1L195.8 81.4L195.4 83.7L195.2 85.9L195.0 88.1L195.0 90.3L195.1 92.5L195.3 94.6L195.6 96.7L195.9 98.7L196.4 100.7L197.0 102.6L197.7 104.5L198.4 106.3L199.2 108.0L200.1 109.7L201.0 111.3L202.1 112.8L203.1 114.2L204.3 115.6L205.4 116.9L206.6 118.1L207.9 119.2L209.2 120.3L210.5 121.3L211.9 122.1L213.2 122.9L214.6 123.7L216.0 124.3L217.4 124.9L218.9 125.4L220.3 125.8L221.7 126.1L223.1 126.4L224.5 126.6L225.9 126.7L227.2 126.7L228.6 126.7L229.9 126.6L231.2 126.5L232.5 126.2L233.7 126.0L234.9 125.6L236.1 125.3L237.2 124.8L238.3 124.3L239.3 123.8L240.3 123.2L241.3 122.6L242.2 122.0L243.1 121.3L243.9 120.6L244.6 119.8L245.4 119.1L246.0 118.3L246.7 117.5L247.2 116.6L247.7 115.8L248.2 114.9L248.6 114.1L249.0 113.2L249.3 112.3L249.6 111.5L249.8 110.6L250.0 109.7L250.1 108.9L250.2 108.0L250.3 107.1L250.3 106.3L250.2 105.5L250.2 104.7L250.0 103.9L249.9 103.1L249.7 102.4L249.5 101.6L249.2 100.9L248.9 100.3L248.6 99.6L248.3 99.0L247.9 98.4L247.5 97.8L247.1 97.2L246.7 96.7L246.2 96.2L245.8 95.8L245.3 95.3L244.8 95.0L244.3 94.6L243.7 94.3L243.2 93.9L242.7 93.7L242.2 93.4L241.6 93.2L241.1 93.0L240.5 92.9L240.0 92.8L239.5 92.7L238.9 92.6L238.4 92.6L237.9 92.6L237.4 92.6L236.9 92.6L236.4 92.7L235.9 92.8L235.4 92.9L235.0 93.0L234.5 93.1L234.1 93.3L233.7 93.5L233.3 93.7L232.9 93.9L232.5 94.2L232.2 94.4L231.9 94.7L231.6 94.9L231.3 95.2L231.0 95.5L230.7 95.8L230.5 96.1L230.3 96.5L230.1 96.8L229.9 97.1L229.8 97.4L229.6 97.8L229.5 98.1L229.4 98.4L229.3 98.8L229.3 99.1L229.2 99.4L229.2 99.8L229.2 100.1L229.2 100.4L229.2 100.7L229.2 101.0L229.3 101.3L229.3 101.6L229.4 101.9L229.5 102.2L229.6 102.5L229.7 102.7L229.8 103.0L230.0 103.2L230.1 103.4L230.2 103.6L230.4 103.9L230.6 104.0L230.7 104.2L230.9 104.4L231.1 104.6L231.3 104.7L231.5 104.9L231.7 105.0L231.9 105.1L232.1 105.2L232.3 105.3L232.5 105.4L232.7 105.4L232.9 105.5L233.1 105.5L233.3 105.6L233.5 105.6L233.7 105.6L233.9 105.6L234.1 105.6L234.3 105.6L234.5 105.6L234.7 105.5L234.9 105.5L235.0 105.4L235.2 105.4L235.4 105.3L235.5 105.2L235.7 105.2L235.8 105.1L236.0 105.0L236.1 104.9L236.2 104.8L236.3 104.7L236.4 104.6L236.5 104.5L236.6 104.3L236.7 104.2L236.8 104.1L236.9 104.0L236.9 103.8L237.0 103.7L237.1 103.6L237.1 103.5L237.1 103.3L237.2 103.2L237.2 103.1L237.2 103.0L237.2 102.8L237.2 102.7L237.2 102.6L237.2 102.5L237.2 102.4L237.2 102.2L237.2 102.1L237.1 102.0L237.1 101.9L237.1 101.8L237.0 101.7L237.0 101.6L236.9 101.5L236.9 101.4L236.8 101.4L236.7 101.3L236.7 101.2L236.6 101.1L236.5 101.1L236.5 101.0L236.4 101.0L236.3 100.9L236.3 100.9L236.2 100.8L236.1 100.8L236.0 100.7L235.9 100.7L235.9 100.7L235.8 100.7L235.7 100.6L235.6 100.6L235.5 100.6L235.5 100.6L235.4 100.6L235.3 100.6L235.2 100.6L235.2 100.6L235.1 100.7L235.0 100.7L235.0 100.7L234.9 100.7L234.8 100.7L234.8 100.8L234.7 100.8L234.7 100.8L234.6 100.9L234.6 100.9L234.5 100.9L234.5 101.0L234.4 101.0L234.4 101.1L234.4 101.1L234.3 101.2L234.3 101.2L234.3 101.3L234.3 101.3L234.2 101.4L234.2 101.4L234.2 101.4L234.2 101.5L234.2 101.5L234.2 101.6L234.2 101.6L234.1 101.7L234.1 101.7L234.1 101.8L234.2 101.8L234.2 101.9L234.2 101.9L234.2 102.0L234.2 102.0L234.2 102.0L234.2 102.1L234.2 102.1L234.3 102.2L234.3 102.2L234.3 102.2L234.3 102.3L234.3 102.3L234.4 102.3L234.4 102.3L234.4 102.4L234.4 102.4"/>
+        </svg>
+        <figcaption>Two golden spirals. Either arm gets forever closer to the middle and never touches it.</figcaption>
+      </figure>
+
+      <p>The coil is a golden spiral, which is taste, not evidence. The arms are the point: closer to the middle every inch, never touching, the exact approach a proton is about to make. Moving the other way, each curve winds around its own center; on our side that direction is labeled honestly. What the matching arrow would say on the other side, I don't know. The picture proves nothing. It is drawn in space, which the real gap is not even made of. It is the right doodle anyway.</p>
+    </section>
+
+    <!-- ============================ 6. THE LEAN ============================ -->
+    <section class="sec">
+      <p class="sec-k">The approach</p>
+      <h2 class="sec-h">Getting closer</h2>
+
+      <p>If distance is self, then anything that turns the self down should move a person toward the middle. As far as anyone can measure, that is what happens.</p>
+
+      <p>There is a network in your brain that runs hardest when nothing is happening: daydreaming, replaying an argument, narrating you to yourself. Neuroscientists call it the default mode network, and it is tied closely to the sense of being a single, separate someone. Hallucinogens turn it down, hard and fast. Put a volunteer on psilocybin in a scanner and the network <a href="https://www.pnas.org/doi/10.1073/pnas.1119598109">goes quiet</a>, and the quieter it goes, the more completely the feeling of being a separate self dissolves. Researchers call that ego dissolution, and it is one of the most reliable things these drugs do. I wrote about the whole business, Aldous Huxley's reducing valve included, in <a href="chemical-path.html">The Chemical Path</a>; the point this post needs is one sentence long. The drug does not add a vision. It subtracts a self.</p>
+
+      <p><a href="meditation.html">Meditation</a> dims the same network on a <a href="https://www.pnas.org/doi/10.1073/pnas.1112029108">slow dial</a>, which is presumably why every contemplative tradition converges on the same instruction: less you.</p>
+
+      <p>On this theory both are the same motion. Quiet the self and you slide toward the middle, because the self was most of your distance. And nothing crosses. Whoever it happens to still has eyes, ears, feelings, a pulse: our side, all of it. The deepest trip and the deepest sit are an approach, not an arrival. Just closer than a person normally gets to stand.</p>
+    </section>
+
+    <!-- ============================ 7. THE LIMIT ============================ -->
+    <section class="sec">
+      <p class="sec-k">The limit</p>
+      <h2 class="sec-h">Why nothing crosses</h2>
+
+      <p>Here is the shape I want you to hold, and it comes from physics rather than scripture.</p>
+
+      <p>The protons in the Large Hadron Collider are the fastest massive things humans have ever made. They travel about <a href="https://home.cern/resources/faqs/facts-and-figures-about-lhc">seven miles per hour slower than light</a>. Seven miles per hour is a bicycle. And the gap does not close: double the machine's energy and the protons claw back five of the seven; double it again and they are still about half a mile an hour short. You can approach the line forever, and nothing with mass ever touches it, because at the line the price of the next step is infinite. (<a href="sounds-made-up.html">The physics post</a> covers why.) That is the arm of the spiral from two sections back, drawn with protons instead of ink.</p>
+
+      <p>Relativity is a picture here, not a proof; the claim it draws is mine, and one difference matters. The proton's gap comes in miles per hour. This one does not come in units at all; the only distance in play is how much of a someone you are. The shape still holds. A brain, a self, a rock, anything that is still a something can keep approaching without limit and never arrive, because arriving would mean there was no longer a something to arrive.</p>
+
+      <p>Which is how the theory reads death. Death moves in the same direction as the approach, which is why the reports rhyme: in 2018 a London lab gave thirteen volunteers a short-acting hallucinogen (DMT) and then the standard questionnaire used to certify near-death experiences, and <a href="https://doi.org/10.3389/fpsyg.2018.01424">all thirteen scored over the clinical line</a>, on a ward, with a cannula in one arm, nowhere near death. Same direction, different depth. Death, though, completes the crossing, and the theory's fine print is that a you does not make the trip. A you is a this-side object, like a brain, like a name. Whoever nearly dies and comes back with a story came back from near, never from over. If you were there to see it, you were not there.</p>
+
+      <p>The same fine print answers the strangest question people ask about the far shore: who lives there. Nobody. There are no beings on the other side, and that is grammar before it is doctrine: <em>being</em> is a word, and the mint that makes words is over here. Trip reports are famously full of beings anyway. On this theory, whatever has a face came in with you.</p>
+    </section>
+
+    <!-- ============================ 8. THE GATE ============================ -->
+    <section class="sec">
+      <p class="sec-k">The gate</p>
+      <h2 class="sec-h">Both halves of the cup</h2>
+
+      <p>So the theory, in one breath. Two sides, exactly equal: neither prior, neither better, neither more real, and only ours is a place. One mutual pull between them, the only thing either side requires. On our side, distance from the middle is self; distance exists on the other side too, but what makes it over there is one more thing I have no words for. Quiet the self and you move closer. And nothing, not a rock, not a saint, not a proton, not a you, ever touches the middle, because touching would cost the last of the something doing the touching.</p>
+
+      <p>Laozi got there first and stopped at the gate. "Together we call them the Mystery," runs Legge's translation of that first chapter. I have added exactly one claim to his: the pull runs both ways.</p>
+    </section>
+
+    <!-- ============================ COLOPHON ============================ -->
+    <hr class="u-divider">
+    <section class="sec">
+      <details class="u-collapse">
+        <summary class="u-collapse-s">Where this comes from</summary>
+        <p class="colo-note">The theory is mine and carries no authority. The furniture it stands on is real and checkable, and every quotation above is verbatim from a named translator.</p>
+        <ul class="u-collapse-list">
+          <li><b>The Tao Te Ching quotes.</b> Chapters 1, 2, 11, 32, and 40, in the translations named inline: Feng and English (1972), Waley (1934), Bynner (1944), Legge (1891), with Lau (1963) for "the myriad creatures." All are side by side in <a href="tao-te-ching.html">the site's Tao Te Ching explorer</a>.</li>
+          <li><b>The census word.</b> Wanwu (萬物) is literally "ten thousand things"; English <em>myriad</em> comes from the Greek <a href="https://www.etymonline.com/word/myriad">myrias</a>, ten thousand.</li>
+          <li><b>Zhuangzi's downhill list.</b> Zhuangzi, chapter 22 ("Knowledge Wandered North"), in <a href="https://terebess.hu/english/chuangtzu.html">Burton Watson's translation</a>; my walk through the book is <a href="zhuangzi.html">here</a>.</li>
+          <li><b>Hallucinogens and the self network.</b> Carhart-Harris et al., "Neural correlates of the psychedelic state as determined by fMRI studies with psilocybin," <a href="https://www.pnas.org/doi/10.1073/pnas.1119598109">PNAS (2012)</a>. The fuller story, risks included, is in <a href="chemical-path.html">The Chemical Path</a>.</li>
+          <li><b>Meditation and the same network.</b> Brewer et al., "Meditation experience is associated with differences in default mode network activity and connectivity," <a href="https://www.pnas.org/doi/10.1073/pnas.1112029108">PNAS (2011)</a>.</li>
+          <li><b>The death rhyme.</b> Timmermann et al., "DMT models the near-death experience," <a href="https://doi.org/10.3389/fpsyg.2018.01424">Frontiers in Psychology (2018)</a>.</li>
+          <li><b>The proton gap.</b> CERN, <a href="https://home.cern/resources/faqs/facts-and-figures-about-lhc">facts and figures about the LHC</a>: protons reach 0.999999990 times the speed of light, about 3 meters per second (seven miles per hour) short. The speed limit itself: <a href="sounds-made-up.html">The Physics That Sounds Made Up</a>.</li>
+          <li><b>The image</b> is an artist's impression of a star drawn toward a supermassive black hole, by <a href="https://www.eso.org/public/images/eso1644a/">ESO/M. Kornmesser</a>, licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</li>
+        </ul>
+        <p class="colo-note">A personal theory, argued straight: sourced where it touches the real world, unsourced where it is mine, which is the point. Nothing here is advice, medical or otherwise.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+
+  <script src="js/backtotop.js"></script>
+</body>
+</html>

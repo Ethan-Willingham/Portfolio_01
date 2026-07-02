@@ -77,6 +77,7 @@ const HUBS = [
       live('william-james.html', 'William James', 'william-james.jpg', '1902', 1902, "The 1902 book behind Alcoholics Anonymous. A scientist takes religious experience seriously as evidence, studying conversions and mystical states by what they actually do in a person's life, not by whether their creeds are true."),
       live('perennial-philosophy.html', 'The Perennial Philosophy', 'perennial-philosophy.jpg', '1945', 1945, "Aldous Huxley's claim that underneath every religion lies one shared truth, assembled from the mystics of every tradition. Almost the secret thesis of this whole shelf, pressure-tested for where it overreaches."),
       live('modern-teachers.html', 'The Modern Teachers', 'modern-teachers.jpg', '20th c.', 1965, "How the East got sold to the West in the twentieth century, by five charismatic teachers from Alan Watts to Eckhart Tolle, each keeping one big idea: you are it, be here now, wake up. Plus the honest problem of the guru who turns out to be a fraud, and how to keep the teaching without the teacher."),
+      live('the-other-side.html', 'The Other Side', 'the-other-side.jpg', 'a theory', 2026, "Not a book but my own theory, built on the Tao Te Ching's split between the named and the nameless. The two sides are exactly equal, each is drawn toward the other, and nothing, not a rock, not a self, ever crosses the middle, the way nothing with mass ever reaches the speed of light."),
     ],
   },
   {
