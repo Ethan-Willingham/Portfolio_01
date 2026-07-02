@@ -59,7 +59,12 @@
     for (var i = 0; i < N; i++) {
       var bc = penL + margin + i * (gap + 1);
       setTile(blobRow, bc, { type: 'jello', jellyType: 'slime', hp: 999999, jelloMat: MATS[i] });
+      var _nB = jelloBodies.length;
       activateJelloCluster(blobRow, bc);
+      // Tag the pen blob as a per-boot FIXTURE: jelloSaveBodies skips these. The
+      // pen is re-injected on every dev boot (including after saveApply, see the
+      // 380 boot), so persisting its bodies would stack a duplicate set per session.
+      if (jelloBodies.length > _nB) jelloBodies[jelloBodies.length - 1].devFixture = true;
     }
     // A few BURIED material-slimes 5 blocks below the platform: dig straight down
     // from the pen to expose them. They are NOT pre-activated, so they sit as

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.15';
+  var GAME_VERSION = 'v25.16';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3778,7 +3778,12 @@
     for (var i = 0; i < N; i++) {
       var bc = penL + margin + i * (gap + 1);
       setTile(blobRow, bc, { type: 'jello', jellyType: 'slime', hp: 999999, jelloMat: MATS[i] });
+      var _nB = jelloBodies.length;
       activateJelloCluster(blobRow, bc);
+      // Tag the pen blob as a per-boot FIXTURE: jelloSaveBodies skips these. The
+      // pen is re-injected on every dev boot (including after saveApply, see the
+      // 380 boot), so persisting its bodies would stack a duplicate set per session.
+      if (jelloBodies.length > _nB) jelloBodies[jelloBodies.length - 1].devFixture = true;
     }
     // A few BURIED material-slimes 5 blocks below the platform: dig straight down
     // from the pen to expose them. They are NOT pre-activated, so they sit as
@@ -51115,12 +51120,12 @@
     return b;
   }
 
-  // ----- In-game jello PLAYGROUND (dev mode, reworked v24.123): 'C' builds a walled
-  // STONE test pen on the ground around the rig (once per session; tracked below)
-  // and drops the SHAPE SET into it: three 1-tile cubes, an 8x1 BAR (the I-piece),
-  // a perfect EQUILATERAL triangle, and a true DISC — each its own jello type.
-  // Repeat 'C' presses re-drop the set into the standing pen (jello tetris!);
-  // 'V' clears the bodies AND lifts the pen (350-gameloop-boot wires both).
+  // ----- HARNESS jello PLAYGROUND (v24.123; OFF the 'C' key since v25.16): builds a
+  // walled STONE test pen on the ground around the rig (once per session; tracked
+  // below) and drops the cube set into it. Driven ONLY by the headless harness now
+  // (__jello.spawn); the 'C' key drops a single random-colour cube instead
+  // (jelloDevSpawnOne, above). 'V' still clears the bodies AND lifts the pen
+  // (350-gameloop-boot wires it).
   // The pen is REAL minable stone (hp 2): it persists into the save like any
   // tile, so after a reload (which empties the tracking list) drill it away.
   // Walls only ever fill AIR cells (never overwrite terrain/station/water), and
@@ -51225,6 +51230,35 @@
     if (!b) return;
     var jx = (Math.random() - 0.5) * 14;
     for (var pi = 0; pi < b.n; pi++) { b.px[pi] += jx; b.ox[pi] += jx; }
+  }
+
+  // ----- 'C' (dev): drop ONE 1-tile cube in a RANDOM colour (v25.16) -----
+  // The owner's dial-in loop wants a steady supply of single cubes, not the old
+  // walled shape-set drop (jelloDevSpawnTiles below stays for the headless
+  // harness via __jello.spawn). Builds in the first AIR cell 3..7 rows above
+  // the rig's head at the rig's column, so it always falls in from above; no
+  // arena, works anywhere (surface or tunnel; a fully solid ceiling returns
+  // false and 350 reports it). The random colour is a render-only hue on the
+  // body: the sim and the saved jellyType stay 'slime', and the exact hue
+  // persists across save/load via the envelope's h field.
+  function jelloDevSpawnOne() {
+    if (!player) return false;
+    var pcol = Math.floor((player.x + PLAYER_W * 0.5) / TILE);
+    if (pcol < 1) pcol = 1; else if (pcol > COLS - 2) pcol = COLS - 2;
+    var headRow = Math.floor(player.y / TILE);
+    var row = -1;
+    for (var up = 3; up <= 7; up++) {
+      var r = headRow - up;
+      if (r < 0) break;
+      if (tileAt(r, pcol) === null) { row = r; break; }
+    }
+    if (row < 0) return false;
+    var b = jelloBuildBody([{ r: row, c: pcol }], 'slime');
+    if (!b) return false;
+    b.hue = Math.floor(Math.random() * 360);
+    jelloDevJitter(b);
+    spawnJelloSplat((pcol + 0.5) * TILE, (row + 0.5) * TILE, 5, 60, 0.8, null);
+    return true;
   }
 
   function jelloDevSpawnTiles() {
@@ -54191,11 +54225,14 @@
     var out = [];
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
+      if (b.devFixture) continue;   // the dev pen re-injects every dev boot (040 tags its
+                                    // blobs); persisting them would duplicate the pen set
       if (!b.cells || !b.cells.length) continue;
       if (!isFinite(b.cx) || !isFinite(b.cy)) continue;   // never persist corrupt state
       var flat = [];
       for (var ci = 0; ci < b.cells.length; ci++) flat.push(b.cells[ci].r, b.cells[ci].c);
       out.push({ c: flat, t: b.jellyType || 'slime',
+                 h: Math.round(b.hue),   // exact render hue (C-dropped cubes are random-coloured)
                  x: Math.round(b.cx * 10) / 10, y: Math.round(b.cy * 10) / 10 });
     }
     return out;
@@ -54226,6 +54263,7 @@
         if (cMaxR - cMinR > 16 || cMaxC - cMinC > 16) continue;   // wider than any real cluster: corrupt
         var b = jelloBuildBody(cells, (typeof e.t === 'string' && JELLO_TYPES[e.t]) ? e.t : 'slime');
         if (!b) continue;                                  // budget exhausted: skip, never throw
+        if (typeof e.h === 'number' && isFinite(e.h)) b.hue = ((Math.round(e.h) % 360) + 360) % 360;
         var dx = e.x - b.cx, dy = e.y - b.cy;
         if (dx || dy) {
           for (var p = 0; p < b.n; p++) { b.px[p] += dx; b.ox[p] = b.px[p]; b.py[p] += dy; b.oy[p] = b.py[p]; }
@@ -54249,6 +54287,7 @@
     window.__jello = {
       bodies: jelloBodies,
       spawn: jelloDevSpawnTiles,
+      spawnOne: jelloDevSpawnOne,
       reset: resetJello,
       arenaClear: jelloDevArenaClear,
       arenaInfo: function () { return { left: jelloArenaLeftC, ground: jelloArenaGroundR, cells: jelloArenaCells.length }; },
@@ -54699,15 +54738,20 @@
         showMsg('Test haul loaded (Y) — roll onto the pump pad to sell');
       }
     }
-    // In-game JELLO PLAYGROUND (dev mode, v24.123): 'C' builds a walled STONE test
-    // pen on the ground around the rig (first press) and drops the SHAPE SET into
-    // it — three cubes, the 8x1 bar, an equilateral triangle, a true disc. Repeat
-    // presses stack more sets into the standing pen; 'V' clears the bodies AND
-    // lifts the pen. With dev-mode flight + the 'L' tuning panel, that's a full
-    // sandbox for dialing the jello in-game.
+    // 'C' (dev, v25.16): drop ONE tile-sized cube in a RANDOM colour just above
+    // the rig (jelloDevSpawnOne — it falls in, no pen, works anywhere). The old
+    // walled-pen SHAPE-SET drop (jelloDevSpawnTiles, v24.123-v25.15) is off the
+    // key; it still serves the headless harness via __jello.spawn. 'V' clears
+    // all bodies + lifts any standing harness pen. Gated on ENABLE_JELLO so a
+    // flag-off dev boot says WHY nothing dropped instead of silently building
+    // invisible ghost bodies (update + draw are flag-gated, the key was not).
     if (keys['c'] || keys['C']) {
       keys['c'] = keys['C'] = false;
-      if (devMode) { jelloDevSpawnTiles(); showMsg('Jello set dropped: cubes + bar + triangle + disc (C stacks, V clears)'); }
+      if (devMode && ENABLE_JELLO) {
+        showMsg(jelloDevSpawnOne() ? 'Jello cube dropped (C for another, V clears)'
+                                   : 'No room overhead for a cube');
+      }
+      else if (devMode) showMsg('Jello is disabled (boot with ?jello=1)');
       // Normal play: 'C' opens the MINERAL LEDGER (295-collection-ledger.js).
       else if (typeof ledgerToggle === 'function') ledgerToggle();
     }
@@ -60365,6 +60409,18 @@
       try {
         saveApply(__saveEnv);
         console.log('save: resumed (slot n=' + (__saveEnv.n || 0) + ', $' + money + ', depth record ' + depthRecord + 'm)');
+        // Dev jello pen, take two (v25.16). init() carved the pen into the FRESH
+        // grid, but saveApply just swapped in the SAVED grid and jelloRestoreBodies
+        // reset every live body, so on any boot WITH a save the pen vanished (the
+        // owner's "jello is invisible" report; pre-v25.15 the pen BODIES survived
+        // because saveApply never touched bodies). Re-carve it on the final grid.
+        // Pen blobs are devFixture-tagged (040) and skipped by jelloSaveBodies, so
+        // re-injecting every boot can never stack duplicates into the save; the
+        // extra lightingInit re-floods the fog for the re-carved opening.
+        if (devMode && ENABLE_JELLO && typeof injectJelloTestPen === 'function') {
+          injectJelloTestPen();
+          lightingInit();
+        }
       } catch (e) {
         try { console.error('save: apply failed, starting fresh:', e); } catch (_) {}
         init();

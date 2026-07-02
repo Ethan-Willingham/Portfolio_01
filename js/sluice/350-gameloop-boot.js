@@ -429,15 +429,20 @@
         showMsg('Test haul loaded (Y) — roll onto the pump pad to sell');
       }
     }
-    // In-game JELLO PLAYGROUND (dev mode, v24.123): 'C' builds a walled STONE test
-    // pen on the ground around the rig (first press) and drops the SHAPE SET into
-    // it — three cubes, the 8x1 bar, an equilateral triangle, a true disc. Repeat
-    // presses stack more sets into the standing pen; 'V' clears the bodies AND
-    // lifts the pen. With dev-mode flight + the 'L' tuning panel, that's a full
-    // sandbox for dialing the jello in-game.
+    // 'C' (dev, v25.16): drop ONE tile-sized cube in a RANDOM colour just above
+    // the rig (jelloDevSpawnOne — it falls in, no pen, works anywhere). The old
+    // walled-pen SHAPE-SET drop (jelloDevSpawnTiles, v24.123-v25.15) is off the
+    // key; it still serves the headless harness via __jello.spawn. 'V' clears
+    // all bodies + lifts any standing harness pen. Gated on ENABLE_JELLO so a
+    // flag-off dev boot says WHY nothing dropped instead of silently building
+    // invisible ghost bodies (update + draw are flag-gated, the key was not).
     if (keys['c'] || keys['C']) {
       keys['c'] = keys['C'] = false;
-      if (devMode) { jelloDevSpawnTiles(); showMsg('Jello set dropped: cubes + bar + triangle + disc (C stacks, V clears)'); }
+      if (devMode && ENABLE_JELLO) {
+        showMsg(jelloDevSpawnOne() ? 'Jello cube dropped (C for another, V clears)'
+                                   : 'No room overhead for a cube');
+      }
+      else if (devMode) showMsg('Jello is disabled (boot with ?jello=1)');
       // Normal play: 'C' opens the MINERAL LEDGER (295-collection-ledger.js).
       else if (typeof ledgerToggle === 'function') ledgerToggle();
     }

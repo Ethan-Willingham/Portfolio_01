@@ -2154,6 +2154,18 @@
       try {
         saveApply(__saveEnv);
         console.log('save: resumed (slot n=' + (__saveEnv.n || 0) + ', $' + money + ', depth record ' + depthRecord + 'm)');
+        // Dev jello pen, take two (v25.16). init() carved the pen into the FRESH
+        // grid, but saveApply just swapped in the SAVED grid and jelloRestoreBodies
+        // reset every live body, so on any boot WITH a save the pen vanished (the
+        // owner's "jello is invisible" report; pre-v25.15 the pen BODIES survived
+        // because saveApply never touched bodies). Re-carve it on the final grid.
+        // Pen blobs are devFixture-tagged (040) and skipped by jelloSaveBodies, so
+        // re-injecting every boot can never stack duplicates into the save; the
+        // extra lightingInit re-floods the fog for the re-carved opening.
+        if (devMode && ENABLE_JELLO && typeof injectJelloTestPen === 'function') {
+          injectJelloTestPen();
+          lightingInit();
+        }
       } catch (e) {
         try { console.error('save: apply failed, starting fresh:', e); } catch (_) {}
         init();

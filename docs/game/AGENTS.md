@@ -408,7 +408,7 @@ Useful when scripting tests or telling the user how to repro:
 | <kbd>T</kbd> | Teleport to surface (consumable) |
 | <kbd>B</kbd> | Deploy rover balloons (consumable) |
 | <kbd>1</kbd> / <kbd>2</kbd> | Drop small / large bomb |
-| <kbd>C</kbd> | Mineral ledger (collection log; dev mode: jello test spawn instead) |
+| <kbd>C</kbd> | Mineral ledger (collection log; dev mode + jello flag: drops one random-colour jello cube) |
 | <kbd>Z</kbd> | Toggle zoom |
 | <kbd>R</kbd> | Restart (after game over / win) |
 | <kbd>`</kbd> / <kbd>~</kbd> | **Dev mode toggle** |
