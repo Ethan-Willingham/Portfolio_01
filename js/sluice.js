@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.19';
+  var GAME_VERSION = 'v25.20';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -259,10 +259,11 @@
   // WITHOUT changing the real fall speed (ΔV/frame = GRAVITY·dt is invariant of
   // the substep count), so deep water settles like saharan's while splashes
   // feel identical. N = clamp(ceil(dt / LIQUID_SUBSTEP_DT), 1, LIQUID_MAX_SUBSTEPS).
-  var LIQUID_SUBSTEP_DT = 1 / 120;       // v24.169 — was 1/240. Matched to saharan's cadence (2 substeps x
-                                         // 60fps = 120 steps/s). At 240/s our clamped pressure corrected 2x
-                                         // as often as he tuned for = the popcorn limit cycle; 120/s halves
-                                         // that. Paired with the LIQUID_GRAVITY drop above. edit² with js/liquid-wgpu.js.
+  var LIQUID_SUBSTEP_DT = 1 / 180;       // v25.20, was 1/120. Paired with the LIQUID_GRAVITY raise back to 600:
+                                         // rest compression ∝ gravity·stepDt², so tightening the quantum from
+                                         // 1/120 to 1/180 cancels the 2.4× gravity bump (600·(1/180)² ~=
+                                         // 250·(1/120)²) and preserves the deep-lake calm the v24.169 drop
+                                         // bought. 3 substeps/frame at 60fps (was 2). edit² with js/liquid-wgpu.js.
   var LIQUID_MAX_SUBSTEPS = 5;           // cap so a slow frame can't run away on cost. edit² with js/liquid-wgpu.js.
   // v24.124 FIXED-QUANTUM SUBSTEPPING (the 120 Hz "firecracker" fix): the old
   // split (stepDt = totalDt / ceil(totalDt/QUANTUM)) put every vsync rate
@@ -304,12 +305,14 @@
   // solid. Lower = more aggressive drag.
   var LIQUID_FLOOR_FRICTION = 0.92;   // v10.102 — was 0.95; water glides more on flats instead of stopping like tar
   var LIQUID_WALL_FRICTION = 0.97;    // v10.102 — was 0.975; very mild loosening
-  var LIQUID_GRAVITY = 250;          // v24.169 — was 1000. THE POPCORN FIX: our water gravity was ~4x
-                                     // saharan's regime, driving 4x the compression his clamped EOS is
-                                     // tuned for, so pressure over-corrected into the limit cycle. Matched
-                                     // to his per-step pull at the 1/120 cadence below = calm at rest
-                                     // (measured mean 10-13 -> 3-4, pops gone). Cost: water falls gentler.
-                                     // Live-tunable now (gm water.LIQUID_GRAVITY updates the GPU). edit2 liquid-wgpu.
+  var LIQUID_GRAVITY = 600;          // v25.20, was 250. REALISM: matched to world GRAVITY (600) so airborne
+                                     // water accelerates like the rig and terrain instead of the old ~0.42x
+                                     // floaty drift ("falls down way too slow"). v24.169 had cut it to 250 to
+                                     // kill deep-lake popcorn by shrinking rest compression (∝ gravity·stepDt²);
+                                     // to keep that calm at 600 the substep quantum below drops 1/120 to 1/180
+                                     // (600·(1/180)² ~= 250·(1/120)², compression held ~constant, 3 substeps/
+                                     // frame). Long-fall terminal is lifted by the wider LIQUID_BURST_GATE_HI
+                                     // (js/liquid-wgpu.js + 020-state.js). gm-live (water). edit2 liquid-wgpu.
   // Per-fluid restitution vs terrain tiles — used by liquidMoveParticle
   // (CPU) and the WebGPU collide kernel. v14.26 — named so the water
   // tuning levers can drive them on both solvers (were inline literals).
@@ -1483,7 +1486,7 @@
   var LIQUID_MAX_VEL = 600.0;         // px/s — hard per-particle speed cap (0 = off)
   var LIQUID_BURST_DAMP = 0.985;      // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO = 100.0;   // px/s — burst damp starts here (above rested ambient)
-  var LIQUID_BURST_GATE_HI = 300.0;   // px/s — burst damp reaches full BURST_DAMP here
+  var LIQUID_BURST_GATE_HI = 600.0;   // v25.20, was 300; free-fall reaches a realistic terminal (edit² liquid-wgpu.js)
   var LIQUID_VISC_LIVE = 0.10;        // grid viscosity while stimulated (lever target stays LIQUID_GRID_VISC;
                                       // v24.150: 0.15 -> 0.08, v24.152: 0.05, v24.157: -> 0.10 — part of the
                                       // lively dissipation floor that keeps the EOS pump bounded under
