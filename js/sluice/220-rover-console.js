@@ -604,6 +604,15 @@
   // orange → red as you climb into fall-damage territory (the little corner
   // lamp echoes it).
   var speedoMphSmooth = 0;
+  // Per-frame speedo ease (v25.31): runs from drawConsole EVERY frame, cache
+  // hit or not — see the note inside drawSpeedDisplay.
+  function consoleTickSpeedo() {
+    var spd = (typeof player !== 'undefined' && player)
+      ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
+    var mphNow = spd / 32 * 2.237;
+    speedoMphSmooth += (mphNow - speedoMphSmooth) * 0.18;
+    if (speedoMphSmooth < 0.05) speedoMphSmooth = 0;
+  }
   function drawSpeedDisplay(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'SPEED');
     drawBayBolts(bx, by, bw, bh);
@@ -661,12 +670,11 @@
     speedScrew(ax + 2, ay + 2);
     speedScrew(ax + aw - 3, ay + 2);
 
-    // ---- Live value: |velocity| px/s → MPH (same conversion as 'FELL n MPH') ----
-    var spd = (typeof player !== 'undefined' && player)
-      ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
-    var mphNow = spd / 32 * 2.237;
-    speedoMphSmooth += (mphNow - speedoMphSmooth) * 0.18;
-    if (speedoMphSmooth < 0.05) speedoMphSmooth = 0;
+    // ---- Live value: speedoMphSmooth, eased ONCE PER FRAME by
+    // consoleTickSpeedo() (v25.31) — the ease used to live here, but the
+    // instrument cache skips this draw on unchanged frames and an ease inside
+    // the draw would freeze the needle the moment it stopped being called.
+    // The tick runs from drawConsole every frame regardless of cache hits. ----
     var spdMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
     var spdFrac = Math.max(0, Math.min(1, speedoMphSmooth / spdMax));
 

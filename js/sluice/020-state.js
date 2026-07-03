@@ -1136,7 +1136,7 @@
     bucketSum: {}, sampleN: 0, startCfg: '', result: null, resultAt: 0
   };
   var benchSamples = null;
-  function benchStart() {
+  function benchStart(opts) {
     if (!benchSamples) benchSamples = new Float32Array(2048);
     benchState.running = true;
     benchState.t = 0; benchState.frames = 0;
@@ -1144,8 +1144,14 @@
     benchState.jank = 0;
     benchState.capMs = perfFpsCap > 0 ? 1000 / perfFpsCap : 16.7;
     benchState.bucketSum = {}; benchState.sampleN = 0;
+    // v25.31 — harness options: noFly = measure the CURRENT scene as-is (no
+    // scripted jetpack), dur = window seconds. The 'O' key keeps the classic
+    // 8s auto-fly; the perf harness benches arbitrary scenes with noFly.
+    benchState.fly = !(opts && opts.noFly);
+    benchState.dur = (opts && opts.dur > 0) ? opts.dur : 8;
     benchState.startCfg = 'idleSkip=' + (PERF_SMOKE_IDLE_SKIP ? 1 : 0) +
-                          ' obstacleDirty=' + (PERF_SMOKE_OBSTACLE_DIRTY ? 1 : 0);
+                          ' obstacleDirty=' + (PERF_SMOKE_OBSTACLE_DIRTY ? 1 : 0) +
+                          (benchState.fly ? '' : ' noFly');
   }
   function benchAbort() {
     benchState.running = false;
@@ -1171,9 +1177,12 @@
     // Scripted auto-fly: jetpack up for the first half, release for the second.
     // Sets the same up-intent a key/d-pad would, so the real movement + thrust +
     // smoke code drives it (dev mode keeps fuel topped up, so it sustains).
-    var up = benchState.t < benchState.dur * 0.5;
-    keys[' '] = up;
-    if (typeof dpad !== 'undefined' && dpad) dpad.up = up;
+    // noFly benches (harness) leave the inputs alone and measure the scene as-is.
+    if (benchState.fly) {
+      var up = benchState.t < benchState.dur * 0.5;
+      keys[' '] = up;
+      if (typeof dpad !== 'undefined' && dpad) dpad.up = up;
+    }
     if (benchState.t >= benchState.dur) benchFinish();
   }
   function benchFinish() {
@@ -1210,6 +1219,25 @@
       }
     }
   }
+
+  // ----- Headless-harness export (same spirit as window.__jello) -----
+  // The perf work is measured by a headless-Chrome harness (the preview pauses
+  // RAF): it benches arbitrary scenes via benchStart({noFly}) and reads the
+  // result + live EMA buckets numerically. Read-only apart from the bench
+  // driver; registering this changes nothing about gameplay.
+  try {
+    window.__perf = {
+      benchStart: benchStart,
+      benchAbort: benchAbort,
+      bench: function () { return benchState.result; },
+      running: function () { return benchState.running; },
+      buckets: function () {
+        var o = {}, k;
+        for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
+        return o;
+      }
+    };
+  } catch (e) {}
 
   // ----- Shop scroll state -----
   // The shop has grown well past one screenful on small mobile viewports.

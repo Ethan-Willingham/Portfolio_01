@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.30';
+  var GAME_VERSION = 'v25.31';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -119,6 +119,14 @@
   // and rely on the baked tint only — an A/B for the redundant-draw win. Default
   // false = current look exactly.
   var PERF_MAGMA_SKIP_LIVE_TINT = false;
+  // v25.31 — console instrument cache. render.console was the #1 CPU bucket in
+  // EVERY scene (harness-ranked, 1.8-2.3ms/frame at 4x throttle): all 8 gauges
+  // repainted every frame even parked. The instruments now render into an
+  // offscreen layer and a gauge repaints ONLY when its value signature changes
+  // (per-bay dirty tracking; the per-frame cost of a static console is two
+  // drawImage blits). Flip false (gm 'perf.consoleCache') to restore the
+  // pre-v25.31 direct draw for A/B.
+  var PERF_CONSOLE_CACHE = true;
   // Perf stress multiplier: renders the frame N times per tick so the true
   // frame cost surfaces past a vsync cap. Set via ?stress=N in the URL.
   var PERF_STRESS = 1;
@@ -2312,7 +2320,7 @@
     bucketSum: {}, sampleN: 0, startCfg: '', result: null, resultAt: 0
   };
   var benchSamples = null;
-  function benchStart() {
+  function benchStart(opts) {
     if (!benchSamples) benchSamples = new Float32Array(2048);
     benchState.running = true;
     benchState.t = 0; benchState.frames = 0;
@@ -2320,8 +2328,14 @@
     benchState.jank = 0;
     benchState.capMs = perfFpsCap > 0 ? 1000 / perfFpsCap : 16.7;
     benchState.bucketSum = {}; benchState.sampleN = 0;
+    // v25.31 — harness options: noFly = measure the CURRENT scene as-is (no
+    // scripted jetpack), dur = window seconds. The 'O' key keeps the classic
+    // 8s auto-fly; the perf harness benches arbitrary scenes with noFly.
+    benchState.fly = !(opts && opts.noFly);
+    benchState.dur = (opts && opts.dur > 0) ? opts.dur : 8;
     benchState.startCfg = 'idleSkip=' + (PERF_SMOKE_IDLE_SKIP ? 1 : 0) +
-                          ' obstacleDirty=' + (PERF_SMOKE_OBSTACLE_DIRTY ? 1 : 0);
+                          ' obstacleDirty=' + (PERF_SMOKE_OBSTACLE_DIRTY ? 1 : 0) +
+                          (benchState.fly ? '' : ' noFly');
   }
   function benchAbort() {
     benchState.running = false;
@@ -2347,9 +2361,12 @@
     // Scripted auto-fly: jetpack up for the first half, release for the second.
     // Sets the same up-intent a key/d-pad would, so the real movement + thrust +
     // smoke code drives it (dev mode keeps fuel topped up, so it sustains).
-    var up = benchState.t < benchState.dur * 0.5;
-    keys[' '] = up;
-    if (typeof dpad !== 'undefined' && dpad) dpad.up = up;
+    // noFly benches (harness) leave the inputs alone and measure the scene as-is.
+    if (benchState.fly) {
+      var up = benchState.t < benchState.dur * 0.5;
+      keys[' '] = up;
+      if (typeof dpad !== 'undefined' && dpad) dpad.up = up;
+    }
     if (benchState.t >= benchState.dur) benchFinish();
   }
   function benchFinish() {
@@ -2386,6 +2403,25 @@
       }
     }
   }
+
+  // ----- Headless-harness export (same spirit as window.__jello) -----
+  // The perf work is measured by a headless-Chrome harness (the preview pauses
+  // RAF): it benches arbitrary scenes via benchStart({noFly}) and reads the
+  // result + live EMA buckets numerically. Read-only apart from the bench
+  // driver; registering this changes nothing about gameplay.
+  try {
+    window.__perf = {
+      benchStart: benchStart,
+      benchAbort: benchAbort,
+      bench: function () { return benchState.result; },
+      running: function () { return benchState.running; },
+      buckets: function () {
+        var o = {}, k;
+        for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
+        return o;
+      }
+    };
+  } catch (e) {}
 
   // ----- Shop scroll state -----
   // The shop has grown well past one screenful on small mobile viewports.
@@ -37954,6 +37990,15 @@
   // orange → red as you climb into fall-damage territory (the little corner
   // lamp echoes it).
   var speedoMphSmooth = 0;
+  // Per-frame speedo ease (v25.31): runs from drawConsole EVERY frame, cache
+  // hit or not — see the note inside drawSpeedDisplay.
+  function consoleTickSpeedo() {
+    var spd = (typeof player !== 'undefined' && player)
+      ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
+    var mphNow = spd / 32 * 2.237;
+    speedoMphSmooth += (mphNow - speedoMphSmooth) * 0.18;
+    if (speedoMphSmooth < 0.05) speedoMphSmooth = 0;
+  }
   function drawSpeedDisplay(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'SPEED');
     drawBayBolts(bx, by, bw, bh);
@@ -38011,12 +38056,11 @@
     speedScrew(ax + 2, ay + 2);
     speedScrew(ax + aw - 3, ay + 2);
 
-    // ---- Live value: |velocity| px/s → MPH (same conversion as 'FELL n MPH') ----
-    var spd = (typeof player !== 'undefined' && player)
-      ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
-    var mphNow = spd / 32 * 2.237;
-    speedoMphSmooth += (mphNow - speedoMphSmooth) * 0.18;
-    if (speedoMphSmooth < 0.05) speedoMphSmooth = 0;
+    // ---- Live value: speedoMphSmooth, eased ONCE PER FRAME by
+    // consoleTickSpeedo() (v25.31) — the ease used to live here, but the
+    // instrument cache skips this draw on unchanged frames and an ease inside
+    // the draw would freeze the needle the moment it stopped being called.
+    // The tick runs from drawConsole every frame regardless of cache hits. ----
     var spdMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
     var spdFrac = Math.max(0, Math.min(1, speedoMphSmooth / spdMax));
 
@@ -47483,6 +47527,60 @@
     ctx = oldCtx;
   }
 
+  // ---- Instrument cache (v25.31) ----
+  // The static console FRAME has been cached since v11; the 8 live instruments
+  // still repainted every frame (harness-ranked #1 CPU bucket in every scene:
+  // 1.8-2.3ms/frame at 4x throttle). They now paint into this offscreen layer
+  // and each bay repaints ONLY when its VALUE SIGNATURE changes. A signature
+  // covers every dynamic input of its gauge, finely quantized — over-inclusion
+  // is fine (an extra repaint = the old cost), a MISSED input is a stale gauge.
+  // Time-based lamp blinks are quantized with the same floor(now/period)
+  // formula the lamp itself uses, so the signature flips exactly when the
+  // lamp does. The speedo/cash eases run in update or via consoleTickSpeedo,
+  // never inside a cached draw (a draw-side ease freezes on cache hits).
+  var consoleInstCache = null, consoleInstCtx = null, consoleInstKey = '';
+  var consoleBaySigs = [];
+  function consoleBaySig(id) {
+    var s;
+    if (id === 'fuel') {
+      var mf = (typeof maxFuel === 'number' && maxFuel > 0) ? maxFuel : 30;
+      var ff = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.fuel / mf)) : 0;
+      var toSurf = (typeof getFuelToSurface === 'function') ? getFuelToSurface() : 0;
+      var blink = ff < 0.15 ? (Math.floor(performance.now() / 250) & 1)
+                : ff < 0.30 ? (Math.floor(performance.now() / 500) & 1) : -1;
+      s = ((ff * 512) | 0) + ',' + ((toSurf * 8) | 0) + ',' + (player && player.fuel >= toSurf ? 1 : 0) + ',' + blink;
+    } else if (id === 'reserve') {
+      s = '' + ((typeof reserveFuel === 'number') ? reserveFuel : 0);
+    } else if (id === 'speed') {
+      s = '' + ((speedoMphSmooth * 8) | 0);
+    } else if (id === 'hull') {
+      var mh = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
+      s = ((typeof player !== 'undefined' && player) ? player.hull : 0) + '/' + mh;
+    } else if (id === 'cargo') {
+      var h = 0, cv = 0;
+      if (typeof cargo !== 'undefined' && cargo) {
+        for (var ci = 0; ci < cargo.length; ci++) {
+          var it = cargo[ci];
+          h = (h * 131 + (it && it.type ? it.type.charCodeAt(0) * 2 + it.type.length + (it.shiny ? 977 : 0) : 1)) & 0xfffffff;
+          if (typeof cargoUnitValue === 'function') cv += cargoUnitValue(it);
+        }
+      }
+      s = (cargo ? cargo.length : 0) + ',' + h + ',' + cv + ',' + ((typeof getCargoCap === 'function') ? getCargoCap() : 0);
+    } else if (id === 'cash') {
+      var dm = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
+      var pu = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.ceil(Math.min(1, cashPunch) * 32) : 0;
+      s = Math.round(dm) + ',' + pu;
+    } else if (id === 'depth') {
+      s = '' + ((typeof player !== 'undefined' && player && typeof SKY_ROWS === 'number')
+        ? Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0) : 0);
+    } else if (id === 'sys') {
+      s = (typeof saveLampFailT === 'number' && saveLampFailT > 0) ? 'F' + ((saveLampFailT % 1) < 0.5 ? 1 : 0)
+        : (typeof saveLampT === 'number' && saveLampT > 0) ? 'S' + Math.ceil(Math.min(1, saveLampT / 0.5) * 32)
+        : 'off';
+    } else s = 'x';
+    return s;
+  }
+
   function drawConsole() {
     if (!UI_NEW) return;
     var R = consoleRect();
@@ -47502,14 +47600,56 @@
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(consoleFrameCache, 0, consY);
     ctx.restore();
-    // Draw the live instruments on top, in the same scaled console space.
-    ctx.save();
-    ctx.setTransform(ds, 0, 0, ds, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    for (var i = 0; i < consoleBayLayout.length; i++) {
-      var L = consoleBayLayout[i];
-      drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
+    consoleTickSpeedo();   // the needle ease runs every frame, cache hit or not
+    var i, L;
+    if (!PERF_CONSOLE_CACHE) {
+      // Legacy direct draw (A/B path: gm 'perf.consoleCache' 0).
+      ctx.save();
+      ctx.setTransform(ds, 0, 0, ds, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      for (i = 0; i < consoleBayLayout.length; i++) {
+        L = consoleBayLayout[i];
+        var _dt0 = devMode ? performance.now() : 0;
+        drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
+        if (devMode) perfMark('console.' + L.bay.id, _dt0);
+      }
+      ctx.restore();
+      return;
     }
+    if (!consoleInstCache) {
+      consoleInstCache = document.createElement('canvas');
+      consoleInstCtx = consoleInstCache.getContext('2d');
+    }
+    if (consoleInstKey !== key) {
+      // Size/scale/style changed: match the frame cache and repaint every bay.
+      consoleInstCache.width = consoleFrameCache.width;
+      consoleInstCache.height = consoleFrameCache.height;
+      consoleInstKey = key;
+      consoleBaySigs.length = 0;
+    }
+    for (i = 0; i < consoleBayLayout.length; i++) {
+      L = consoleBayLayout[i];
+      var sig = consoleBaySig(L.bay.id);
+      if (sig === consoleBaySigs[i]) continue;   // gauge unchanged: keep the cached pixels
+      consoleBaySigs[i] = sig;
+      var _it0 = devMode ? performance.now() : 0;
+      // Repaint this bay into the layer: clear its rect (2px pad; bays sit in
+      // >=6px gutters so pads can't collide) and run the ordinary instrument
+      // draw with ctx pointed at the layer (the rebuildConsoleFrame pattern).
+      consoleInstCtx.setTransform(ds, 0, 0, ds, 0, -consY);
+      consoleInstCtx.imageSmoothingEnabled = false;
+      consoleInstCtx.clearRect(L.bx - 2, L.by - 2, L.bw + 4, L.bh + 4);
+      var oldCtx = ctx;
+      ctx = consoleInstCtx;
+      drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
+      ctx = oldCtx;
+      if (devMode) perfMark('console.' + L.bay.id, _it0);
+    }
+    // Blit the instrument layer over the frame, 1:1 in device pixels.
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(consoleInstCache, 0, consY);
     ctx.restore();
   }
 
@@ -57891,6 +58031,12 @@
           function () { return PERF_SMOKE_OBSTACLE_DIRTY ? 1 : 0; },
           function (v) { PERF_SMOKE_OBSTACLE_DIRTY = !!v; },
           0, 1, 1);
+      }
+      if (typeof PERF_CONSOLE_CACHE !== 'undefined') {
+        gmRegisterLever('perf.consoleCache', 'perf', 'consoleCache',
+          function () { return PERF_CONSOLE_CACHE ? 1 : 0; },
+          function (v) { PERF_CONSOLE_CACHE = !!v; },
+          0, 1, 1);           // v25.31 instrument cache; 0 = legacy direct draw (A/B)
       }
       if (typeof PERF_MAGMA_SKIP_LIVE_TINT !== 'undefined') {
         gmRegisterLever('perf.magmaSkipLiveTint', 'perf', 'magmaSkipLiveTint',

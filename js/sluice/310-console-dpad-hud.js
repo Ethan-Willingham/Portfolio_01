@@ -1,3 +1,57 @@
+  // ---- Instrument cache (v25.31) ----
+  // The static console FRAME has been cached since v11; the 8 live instruments
+  // still repainted every frame (harness-ranked #1 CPU bucket in every scene:
+  // 1.8-2.3ms/frame at 4x throttle). They now paint into this offscreen layer
+  // and each bay repaints ONLY when its VALUE SIGNATURE changes. A signature
+  // covers every dynamic input of its gauge, finely quantized — over-inclusion
+  // is fine (an extra repaint = the old cost), a MISSED input is a stale gauge.
+  // Time-based lamp blinks are quantized with the same floor(now/period)
+  // formula the lamp itself uses, so the signature flips exactly when the
+  // lamp does. The speedo/cash eases run in update or via consoleTickSpeedo,
+  // never inside a cached draw (a draw-side ease freezes on cache hits).
+  var consoleInstCache = null, consoleInstCtx = null, consoleInstKey = '';
+  var consoleBaySigs = [];
+  function consoleBaySig(id) {
+    var s;
+    if (id === 'fuel') {
+      var mf = (typeof maxFuel === 'number' && maxFuel > 0) ? maxFuel : 30;
+      var ff = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.fuel / mf)) : 0;
+      var toSurf = (typeof getFuelToSurface === 'function') ? getFuelToSurface() : 0;
+      var blink = ff < 0.15 ? (Math.floor(performance.now() / 250) & 1)
+                : ff < 0.30 ? (Math.floor(performance.now() / 500) & 1) : -1;
+      s = ((ff * 512) | 0) + ',' + ((toSurf * 8) | 0) + ',' + (player && player.fuel >= toSurf ? 1 : 0) + ',' + blink;
+    } else if (id === 'reserve') {
+      s = '' + ((typeof reserveFuel === 'number') ? reserveFuel : 0);
+    } else if (id === 'speed') {
+      s = '' + ((speedoMphSmooth * 8) | 0);
+    } else if (id === 'hull') {
+      var mh = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
+      s = ((typeof player !== 'undefined' && player) ? player.hull : 0) + '/' + mh;
+    } else if (id === 'cargo') {
+      var h = 0, cv = 0;
+      if (typeof cargo !== 'undefined' && cargo) {
+        for (var ci = 0; ci < cargo.length; ci++) {
+          var it = cargo[ci];
+          h = (h * 131 + (it && it.type ? it.type.charCodeAt(0) * 2 + it.type.length + (it.shiny ? 977 : 0) : 1)) & 0xfffffff;
+          if (typeof cargoUnitValue === 'function') cv += cargoUnitValue(it);
+        }
+      }
+      s = (cargo ? cargo.length : 0) + ',' + h + ',' + cv + ',' + ((typeof getCargoCap === 'function') ? getCargoCap() : 0);
+    } else if (id === 'cash') {
+      var dm = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
+      var pu = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.ceil(Math.min(1, cashPunch) * 32) : 0;
+      s = Math.round(dm) + ',' + pu;
+    } else if (id === 'depth') {
+      s = '' + ((typeof player !== 'undefined' && player && typeof SKY_ROWS === 'number')
+        ? Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0) : 0);
+    } else if (id === 'sys') {
+      s = (typeof saveLampFailT === 'number' && saveLampFailT > 0) ? 'F' + ((saveLampFailT % 1) < 0.5 ? 1 : 0)
+        : (typeof saveLampT === 'number' && saveLampT > 0) ? 'S' + Math.ceil(Math.min(1, saveLampT / 0.5) * 32)
+        : 'off';
+    } else s = 'x';
+    return s;
+  }
+
   function drawConsole() {
     if (!UI_NEW) return;
     var R = consoleRect();
@@ -17,14 +71,56 @@
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(consoleFrameCache, 0, consY);
     ctx.restore();
-    // Draw the live instruments on top, in the same scaled console space.
-    ctx.save();
-    ctx.setTransform(ds, 0, 0, ds, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    for (var i = 0; i < consoleBayLayout.length; i++) {
-      var L = consoleBayLayout[i];
-      drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
+    consoleTickSpeedo();   // the needle ease runs every frame, cache hit or not
+    var i, L;
+    if (!PERF_CONSOLE_CACHE) {
+      // Legacy direct draw (A/B path: gm 'perf.consoleCache' 0).
+      ctx.save();
+      ctx.setTransform(ds, 0, 0, ds, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      for (i = 0; i < consoleBayLayout.length; i++) {
+        L = consoleBayLayout[i];
+        var _dt0 = devMode ? performance.now() : 0;
+        drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
+        if (devMode) perfMark('console.' + L.bay.id, _dt0);
+      }
+      ctx.restore();
+      return;
     }
+    if (!consoleInstCache) {
+      consoleInstCache = document.createElement('canvas');
+      consoleInstCtx = consoleInstCache.getContext('2d');
+    }
+    if (consoleInstKey !== key) {
+      // Size/scale/style changed: match the frame cache and repaint every bay.
+      consoleInstCache.width = consoleFrameCache.width;
+      consoleInstCache.height = consoleFrameCache.height;
+      consoleInstKey = key;
+      consoleBaySigs.length = 0;
+    }
+    for (i = 0; i < consoleBayLayout.length; i++) {
+      L = consoleBayLayout[i];
+      var sig = consoleBaySig(L.bay.id);
+      if (sig === consoleBaySigs[i]) continue;   // gauge unchanged: keep the cached pixels
+      consoleBaySigs[i] = sig;
+      var _it0 = devMode ? performance.now() : 0;
+      // Repaint this bay into the layer: clear its rect (2px pad; bays sit in
+      // >=6px gutters so pads can't collide) and run the ordinary instrument
+      // draw with ctx pointed at the layer (the rebuildConsoleFrame pattern).
+      consoleInstCtx.setTransform(ds, 0, 0, ds, 0, -consY);
+      consoleInstCtx.imageSmoothingEnabled = false;
+      consoleInstCtx.clearRect(L.bx - 2, L.by - 2, L.bw + 4, L.bh + 4);
+      var oldCtx = ctx;
+      ctx = consoleInstCtx;
+      drawConsoleInstrument(L.bay, L.bx, L.by, L.bw, L.bh);
+      ctx = oldCtx;
+      if (devMode) perfMark('console.' + L.bay.id, _it0);
+    }
+    // Blit the instrument layer over the frame, 1:1 in device pixels.
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(consoleInstCache, 0, consY);
     ctx.restore();
   }
 

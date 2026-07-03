@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.30';
+  var GAME_VERSION = 'v25.31';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -119,6 +119,14 @@
   // and rely on the baked tint only — an A/B for the redundant-draw win. Default
   // false = current look exactly.
   var PERF_MAGMA_SKIP_LIVE_TINT = false;
+  // v25.31 — console instrument cache. render.console was the #1 CPU bucket in
+  // EVERY scene (harness-ranked, 1.8-2.3ms/frame at 4x throttle): all 8 gauges
+  // repainted every frame even parked. The instruments now render into an
+  // offscreen layer and a gauge repaints ONLY when its value signature changes
+  // (per-bay dirty tracking; the per-frame cost of a static console is two
+  // drawImage blits). Flip false (gm 'perf.consoleCache') to restore the
+  // pre-v25.31 direct draw for A/B.
+  var PERF_CONSOLE_CACHE = true;
   // Perf stress multiplier: renders the frame N times per tick so the true
   // frame cost surfaces past a vsync cap. Set via ?stress=N in the URL.
   var PERF_STRESS = 1;
