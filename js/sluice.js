@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.29';
+  var GAME_VERSION = 'v25.30';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -50464,7 +50464,10 @@
   //   0 CLASSIC (pre-v25.27 hard edge)  1 SOFT (chamfer + fringe)
   //   2 FUZZY (SOFT + hair coat)        3 PLUSH (longer, denser coat)
   // Physics, contacts and probes never read the drawn ring — zero sim risk.
-  var JELLO_EDGE_STYLE = 2;
+  // SHIPS 1 = SOFT since v25.28: the owner vetoed the peach-fuzz hairs for the
+  // ship look ("don't like the little hairs coming off of it"). FUZZY/PLUSH
+  // stay behind the dev 'I' cycle only.
+  var JELLO_EDGE_STYLE = 1;
   var JELLO_EDGE_FUZZ  = 1.0;   // fringe + hair scale (0.5 subtle .. 2 heavy)
   (function () {
     var m = /[?&]jelloedge=(\d)/.exec((window.location && window.location.search) || '');
@@ -50494,10 +50497,17 @@
   var JELLO_SHADE               = 1;     // master: 0 = legacy bbox/timer shading, 1 = physics-anchored
   var JELLO_SHADE_LAG           = 0.22;  // glint follower ease per frame (0..1; lower = longer liquid
                                          // trail, 1 = pinned to its anchor). Visual-only smoothing.
-  var JELLO_SHADE_CAUSTIC       = 9;     // px of caustic slide per px of anchor deformation (0 = parked).
-                                         // Wobble deforms anchors ~0.5-3px, so ~9 reads as a clear slosh;
-                                         // clamped to the body so it can never run off.
-  var JELLO_SHADE_STRAIN        = 0.6;   // strain-hotspot strength (0 = off). Scales hotspot alpha.
+  var JELLO_SHADE_CAUSTIC       = 4;     // px of caustic slide per px of anchor deformation (0 = parked).
+                                         // Was 9 through v25.27: anchor deviation is NOISY during motion
+                                         // and settling (~0.5-3px per frame), and x9 turned that into
+                                         // 10-25px streak JUMPS per frame — the owner's "whole thing
+                                         // flashes quickly and often". 4 + the eased follower (see the
+                                         // shimmer block) reads as a calm slosh; clamped to the body.
+  var JELLO_SHADE_STRAIN        = 0;     // strain-hotspot strength (0 = off). SHIPS 0 since v25.28
+                                         // (owner: the compression/stretch spots read as rapid FLICKER
+                                         // — settling micro-jiggle rides the STRAIN_MIN threshold, so
+                                         // the spots pulse in and out as a body moves or settles).
+                                         // Lever jello.JELLO_SHADE_STRAIN re-dials the effect.
   var JELLO_SHADE_STRAIN_K      = 3;     // max hotspots per body (the k most-strained ring points). 0-4.
   var JELLO_SHADE_SQUASH        = 0.8;   // 0..1 how much best-fit squash/rotation deforms the sheen
                                          // ellipse (0 = round sheen as before, 1 = full squash-stretch).
@@ -52426,9 +52436,17 @@
     // see the function banner; falls back to the old instantaneous gate if the
     // frame snapshot is missing).
     var stillSq = fpx ? maxFsq * 3600 : maxVsq;
-    if (stillSq < JELLO_SLEEP_VSQ && !b._invHard) {   // never sleep mid-MANGLE (v24.154; the heal keeps working it)
+    // _forceSleep (v25.28): the CHRONIC-fold endpoint. A deep confined fold's
+    // constraint fight re-injects motion DURING every solve, so neither the
+    // becalm nor any velocity bleed can ever bring stillSq under the bar — the
+    // accept/heal cycle churned forever (harness T1, an inv-7 fold pinned at
+    // the pen wall). After the third acceptance grant the fold is proven
+    // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
+    // any disturbance wakes it into fresh heal cycles).
+    if ((stillSq < JELLO_SLEEP_VSQ && !b._invHard) || b._forceSleep) {   // never sleep mid-MANGLE (v24.154; the heal keeps working it)
       b.sleepFrames++;
-      if (b.sleepFrames > JELLO_SLEEP_FRAMES) {
+      if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
+        b._forceSleep = false;
         // Sleep = the "visually still" contract: present the TRUE resting ring. A body
         // that dozes off mid-ring would freeze a wavy outline indefinitely (and a frozen
         // off-camera body holds its field forever by design), so the render-space ripple
@@ -53929,7 +53947,7 @@
       if (F00 * F11 - F01 * F10 < JELLO_HEAL_DET_MIN) inv++;
     }
     b._invN = inv;
-    if (inv === 0) { b._invFrames = 0; b._invHard = false; return; }   // clean -> reset the persistence clock
+    if (inv === 0) { b._invFrames = 0; b._invHard = false; b._acceptN = 0; return; }   // clean -> reset the persistence clock (and the chronic-fold strike count)
     // Accepted confined fold (see the snap-strikes block below): treat as clean
     // so the body can settle and SLEEP. Validity is self-expiring — 6s from the
     // grant (long enough to go still and sleep, short enough that a body dug
@@ -53938,7 +53956,22 @@
     // mutual contact suspended, so an accepted fold there read "still" and slept
     // MID-MERGE, parking the pair forever (harness R9).
     if (b._invAcceptAt && (b.sleeping || performance.now() - b._invAcceptAt < 6000) &&
-        (b._mergeT || 0) < 0.5 && !b._phaseMate) { b._invHard = false; return; }
+        (b._mergeT || 0) < 0.5 && !b._phaseMate) {
+      b._invHard = false;
+      // BECALM while accepted (v25.28): a DEEP fold's constraint fight can
+      // wiggle above the sleep bar indefinitely (harness T1: an inv-7 confined
+      // fold never stilled through the window, so accept/heal cycled forever
+      // awake). An accepted fold is by definition one we want QUIET: bleed its
+      // relative motion (ox toward px — velocity-only, zero transport risk) so
+      // stillness lands within a second and the body actually sleeps.
+      if (!b.sleeping) {
+        for (var az = 0; az < b.n; az++) {
+          b.ox[az] += (b.px[az] - b.ox[az]) * 0.3;
+          b.oy[az] += (b.py[az] - b.oy[az]) * 0.3;
+        }
+      }
+      return;
+    }
     // Time-tolerant trigger (v24.190): a negative-det tri never occurs in healthy
     // play (measured 0 across hard 2x2/3x3 landings), so a fold is real — tolerate a
     // BRIEF pinch (a hard crush can sliver a corner for a few frames), then engage on
@@ -53998,7 +54031,15 @@
       if ((b._mergeT || 0) < 0.5 && !b._phaseMate) {
         if (!b._snapT0 || _snNow - b._snapT0 > 15000) { b._snapT0 = _snNow; b._snapN = 0; }
         b._snapN = (b._snapN | 0) + 1;
-        if (b._snapN >= 3) { b._invAcceptAt = _snNow; b._snapN = 0; }
+        if (b._snapN >= 3) {
+          b._invAcceptAt = _snNow; b._snapN = 0;
+          // CHRONIC fold: the third grant means two full accept-settle windows
+          // already failed to end in sleep — the fold re-arms as fast as it is
+          // tolerated. Force the sleep endpoint (see the _forceSleep note at
+          // the sleep gate). Counter resets when the body ever reads clean.
+          b._acceptN = (b._acceptN | 0) + 1;
+          if (b._acceptN >= 3) b._forceSleep = true;
+        }
       }
     }
     var hpx = jelloVAccX, hpy = jelloVAccY, hn = b.n, hi;
@@ -54853,6 +54894,22 @@
           if (sOffX > sLim) sOffX = sLim; else if (sOffX < -sLim) sOffX = -sLim;
           sLim = maxR * 0.4;
           if (sOffY > sLim) sOffY = sLim; else if (sOffY < -sLim) sOffY = -sLim;
+          if (!isFinite(sOffX + sOffY)) { sOffX = 0; sOffY = 0; }   // never poison the persistent follower
+          // EASED follower (v25.28): the raw deviation is per-frame NOISY while a
+          // body moves or settles, and drawing it directly made the streaks JUMP
+          // — the owner's "whole thing flashes / flickers as it moves and as it
+          // settles". Each streak drifts toward its target at 10%/frame: still at
+          // rest (the follower converges and deviation is zero), a calm glide in
+          // motion, no pop at wake/sleep (lazily seeded AT the target).
+          if (sb === 0) {
+            if (b._cau0X === undefined) { b._cau0X = sOffX; b._cau0Y = sOffY; }
+            b._cau0X += (sOffX - b._cau0X) * 0.10; b._cau0Y += (sOffY - b._cau0Y) * 0.10;
+            sOffX = b._cau0X; sOffY = b._cau0Y;
+          } else {
+            if (b._cau1X === undefined) { b._cau1X = sOffX; b._cau1Y = sOffY; }
+            b._cau1X += (sOffX - b._cau1X) * 0.10; b._cau1Y += (sOffY - b._cau1Y) * 0.10;
+            sOffX = b._cau1X; sOffY = b._cau1Y;
+          }
         } else {
           var sph = sb === 0 ? tt * 0.5 : tt * 0.31 + 1.7;   // legacy timer slide
           sOffX = Math.sin(sph) * maxR * 0.5;
