@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.22';
+  var GAME_VERSION = 'v25.23';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -52891,6 +52891,48 @@
     for (var i = 0; i < n; i++) { px[i] += dx; py[i] += dy; ox[i] += dx; oy[i] += dy; }
     b.cx += dx; b.cy += dy; b.bboxL += dx; b.bboxR += dx; b.bboxT += dy; b.bboxB += dy;
   }
+  // ----- IN-WALL RESCUE (v25.23) — nothing may PERSIST inside solid ----------------
+  // Belt over every transport guard (entry-side lock, room probes, path-probed
+  // shifts): if some race still parks a body inside terrain (the owner's squished
+  // ghost among solid blocks), a body whose CENTROID sits in solid for a sustained
+  // second is relocated WHOLE to the nearest open tile centre (3-ring spiral),
+  // velocity-free with splats at both ends — the established "gel tension releases"
+  // read. Returns false when no open tile is in reach (the caller despawns: a
+  // popped slime, never a wall ghost).
+  function jelloRescueFromWall(b) {
+    // Anchor the search on the body's OPEN-POINT MASS, not its centroid (v25.23
+    // hotfix): a wall-pressed body's centroid can sit in the wall while most of
+    // its points remain on the legitimate side — anchoring on the centroid let
+    // the spiral cross a 1-tile wall's far side into a natural cave beyond it
+    // (harness R5b: a body rescued OUT of a sealed pocket). Where the body's
+    // open points are IS the right side; a fully-embedded ghost (no open
+    // points) falls back to the centroid.
+    var ax = 0, ay = 0, an = 0;
+    for (var pi2 = 0; pi2 < b.n; pi2++) {
+      if (!jelloWorldSolidAt(b.px[pi2], b.py[pi2])) { ax += b.px[pi2]; ay += b.py[pi2]; an++; }
+    }
+    if (an > 0) { ax /= an; ay /= an; } else { ax = b.cx; ay = b.cy; }
+    var cr = Math.floor(ay / TILE), cc = Math.floor(ax / TILE);
+    var bestD = 1e9, bx = 0, by = 0, found = false;
+    for (var ring = 0; ring <= 3 && !found; ring++) {
+      for (var dr = -ring; dr <= ring; dr++) {
+        for (var dc = -ring; dc <= ring; dc++) {
+          var mA = dr < 0 ? -dr : dr, mB = dc < 0 ? -dc : dc;
+          if ((mA > mB ? mA : mB) !== ring) continue;    // this ring's shell only
+          if (tileAt(cr + dr, cc + dc) !== null) continue;
+          var tx = (cc + dc + 0.5) * TILE, ty = (cr + dr + 0.5) * TILE;
+          var dd = (tx - ax) * (tx - ax) + (ty - ay) * (ty - ay);
+          if (dd < bestD) { bestD = dd; bx = tx; by = ty; found = true; }
+        }
+      }
+    }
+    if (!found) return false;
+    spawnJelloSplat(b.cx, b.cy, 6, 70, 0.8, null);
+    jelloShiftBody(b, bx - b.cx, by - b.cy);
+    spawnJelloSplat(b.cx, b.cy, 6, 70, 0.8, null);
+    b.sleeping = false; b.sleepFrames = 0;
+    return true;
+  }
   // Probe a body's LEADING bbox edge for solid tiles before a rigid unmerge shift:
   // shifting a body into sealed geometry drives points enclosed, and the enclosed-
   // point fallback (walk toward the centroid) can then WORM the body through a
@@ -52914,8 +52956,12 @@
       y0 = y1 = ly; x0 = b.bboxL + 3; x1 = b.bboxR - 3;
       if (x1 < x0) { x0 = x1 = (b.bboxL + b.bboxR) * 0.5; }
     }
-    for (var s = 0; s <= 4; s++) {
-      if (jelloWorldSolidAt(x0 + (x1 - x0) * s / 4, y0 + (y1 - y0) * s / 4)) return false;
+    // Samples every <= 6px (v25.23; was a fixed 5): 8px gaps between samples let a
+    // face straddling a solid/air tile boundary pass the probe while part of it
+    // entered solid — one of the transports behind the owner's wall ghost.
+    var rn = Math.ceil(((x1 - x0) + (y1 - y0)) / 6); if (rn < 4) rn = 4;
+    for (var s = 0; s <= rn; s++) {
+      if (jelloWorldSolidAt(x0 + (x1 - x0) * s / rn, y0 + (y1 - y0) * s / rn)) return false;
     }
     return true;
   }
@@ -53025,7 +53071,12 @@
       // threshold raced the two clocks — mt decays on pick-flicker while pressT
       // keeps accruing, so a free pair could cross the fixed bar before qualifying
       // and never phase (the R9 flake).
-      if (mt > 2.5 && d < phNeed * 0.6 &&
+      // Two tiers (v25.23): DEEPLY concentric pairs (d under a fifth of the
+      // separated distance — unreachable by ordinary contact, which holds bodies
+      // ~2r apart) qualify after just 1s, before the clock races that made the
+      // open-space unmerge flaky can accumulate; the looser 0.6 tier keeps its
+      // 2.5s persistence gate.
+      if (((mt > 2.5 && d < phNeed * 0.6) || (mt > 1.0 && d < phNeed * 0.2)) &&
           (A._pressT || 0) < mt * 1.2 + 1.5 && (B._pressT || 0) < mt * 1.2 + 1.5 &&
           !(A._phaseMate === B)) {
         A._phaseMate = B; B._phaseMate = A;
@@ -54281,7 +54332,24 @@
       // (couple/fling/push/displace stamp _plyMs): draining a driven body ate the
       // push and read as slow motion (v25.21, owner report). pressT still accrues,
       // so the calm re-engages the moment the player lets go.
+      // NET-MOTION gate (v25.23): pressure during real TRAVEL is normal physics —
+      // a slime knocked through or along others by ANOTHER SLIME's momentum has no
+      // player stamp, so the drain hit it ~1s into its slide and read as a sudden
+      // switch to slow motion (owner report). Churn is speed WITHOUT net
+      // displacement (the same insight as the sleep gate), so the drain requires
+      // the body to be going NOWHERE: centroid drift under 12px per 24-frame window
+      // (~60 px/s; a knocked slime rides above it for its whole visible slide, a
+      // cram's rearrangement shuffle stays under it — 6px exempted the shuffle too
+      // and crams went back to simmering, harness-caught).
+      b._nmF = (b._nmF | 0) + 1;
+      if (b._nmF >= 24) {
+        var _nmdx = b.cx - (b._nmX !== undefined ? b._nmX : b.cx);
+        var _nmdy = b.cy - (b._nmY !== undefined ? b._nmY : b.cy);
+        b._nmD = Math.sqrt(_nmdx * _nmdx + _nmdy * _nmdy);
+        b._nmX = b.cx; b._nmY = b.cy; b._nmF = 0;
+      }
       if (b._pressT > 0.75 && JELLO_CROWD_CALM > 0 &&
+          b._nmD !== undefined && b._nmD < 12 &&
           !(b._plyMs !== undefined && performance.now() - b._plyMs < 500)) {
         var _cf = JELLO_CROWD_CALM, _cn2 = b.n, _cpx = b.px, _cpy = b.py, _cox = b.ox, _coy = b.oy;
         for (var _ci = 0; _ci < _cn2; _ci++) {
@@ -54290,6 +54358,29 @@
         }
       }
       jelloUpdateBody(b, stepDt);
+      // IN-WALL RESCUE (v25.23, see the function banner): a body whose centroid has
+      // sat inside solid for a sustained second relocates to the nearest open tile,
+      // or despawns when nothing is in reach. Nothing persists inside a wall.
+      if (jelloWorldSolidAt(b.cx, b.cy)) {
+        b._inWallT = (b._inWallT || 0) + dt;
+        if (b._inWallT > 1) {
+          b._inWallT = 0;
+          // MOSTLY-EMBEDDED gate (v25.23 hotfix, harness-caught): a cram can press a
+          // body's centroid just past a wall face while most of its points stay in
+          // the chamber — rescuing THAT body teleported it to the nearest open tile,
+          // which from inside the wall is often the CAVITY side. The rescue became
+          // the leak (R12: 350px past the wall). Only a body with most of its
+          // POINTS inside solid is a genuine wall ghost; a pressed body's points
+          // are held out by the entry-side lock and it needs no rescue.
+          var _iwN = 0, _iwn = b.n;
+          for (var _iw = 0; _iw < _iwn; _iw++) if (jelloWorldSolidAt(b.px[_iw], b.py[_iw])) _iwN++;
+          if (_iwN > _iwn * 0.6 && !jelloRescueFromWall(b)) {
+            if (!deadJ) deadJ = [];
+            deadJ.push(b);
+            continue;
+          }
+        }
+      } else b._inWallT = 0;
       jelloPerchHold(b);   // hold a resting body undermined by digging (v24.168) — geometry-independent anti-drain
       // Physics-anchored shading: refresh the per-point strain field once per frame for
       // awake bodies (a sleeper keeps its last field, e.g. a pile-crushed cube correctly
