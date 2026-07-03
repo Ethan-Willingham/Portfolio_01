@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.25';
+  var GAME_VERSION = 'v25.26';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -51799,10 +51799,34 @@
     var epr, epc;
     if (b.fpx && i < b.fpx.length) { epr = Math.floor(b.fpy[i] / TILE); epc = Math.floor(b.fpx[i] / TILE); }
     else { epr = Math.floor(oy[i] / TILE); epc = Math.floor(ox[i] / TILE); }
-    if (epr === row && epc === col - 1 && tileAt(row, col - 1) === null) pen2 = -1e9;
-    else if (epr === row && epc === col + 1 && tileAt(row, col + 1) === null) pen3 = -1e9;
-    else if (epc === col && epr === row - 1 && tileAt(row - 1, col) === null) pen0 = -1e9;
-    else if (epc === col && epr === row + 1 && tileAt(row + 1, col) === null) pen1 = -1e9;
+    var _fAnch = false;
+    if (epr === row && epc === col - 1 && tileAt(row, col - 1) === null) { pen2 = -1e9; _fAnch = true; }
+    else if (epr === row && epc === col + 1 && tileAt(row, col + 1) === null) { pen3 = -1e9; _fAnch = true; }
+    else if (epc === col && epr === row - 1 && tileAt(row - 1, col) === null) { pen0 = -1e9; _fAnch = true; }
+    else if (epc === col && epr === row + 1 && tileAt(row + 1, col) === null) { pen1 = -1e9; _fAnch = true; }
+    if (!_fAnch && ((epr === row && epc === col) || tileAt(epr, epc) !== null)) {
+      // BODY-WARD cascade (v25.26): fires ONLY on a DIRTY snapshot — the frame-
+      // start position sits inside THIS tile or inside solid (a finalize-stage
+      // mover left the point in a wall at frame end), so it cannot anchor an
+      // entry side. Exit TOWARD THE BODY CENTROID: gel must never leave a wall
+      // AWAY from its own body — that is exactly the far-side leak (owner: an
+      // 8-slime stack pressured down squeezed points into the nearest cavity).
+      // A CLEAN but non-adjacent snapshot (a hard-kicked point that crossed a
+      // cell) keeps the plain biased scan: steering those body-ward fought the
+      // channel guard's mouth-parking and set a wedged body wobbling (harness).
+      var _anx = b.cx, _any = b.cy;
+      var _adx = _anx - (left + TILE * 0.5), _ady = _any - (top + TILE * 0.5);
+      var _aax = _adx < 0 ? -_adx : _adx, _aay = _ady < 0 ? -_ady : _ady;
+      for (var _ac = 0; _ac < 2 && !_fAnch; _ac++) {   // dominant axis toward the anchor, then the minor
+        if ((_ac === 0) === (_aax >= _aay)) {
+          if (_adx < 0 && tileAt(row, col - 1) === null) { pen2 = -1e9; _fAnch = true; }
+          else if (_adx >= 0 && tileAt(row, col + 1) === null) { pen3 = -1e9; _fAnch = true; }
+        } else {
+          if (_ady < 0 && tileAt(row - 1, col) === null) { pen0 = -1e9; _fAnch = true; }
+          else if (_ady >= 0 && tileAt(row + 1, col) === null) { pen1 = -1e9; _fAnch = true; }
+        }
+      }
+    }
     // Try the 4 sides in ascending penetration order, picking the first whose
     // neighbour tile is open. Bounded 4-pass selection — no allocation.
     var doneMask = 0;
@@ -53862,6 +53886,15 @@
     }
     b._invN = inv;
     if (inv === 0) { b._invFrames = 0; b._invHard = false; return; }   // clean -> reset the persistence clock
+    // Accepted confined fold (see the snap-strikes block below): treat as clean
+    // so the body can settle and SLEEP. Validity is self-expiring — 6s from the
+    // grant (long enough to go still and sleep, short enough that a body dug
+    // free resumes healing promptly) or while actually asleep — and it never
+    // applies to a merged/phasing body: phasing shifts are velocity-free with
+    // mutual contact suspended, so an accepted fold there read "still" and slept
+    // MID-MERGE, parking the pair forever (harness R9).
+    if (b._invAcceptAt && (b.sleeping || performance.now() - b._invAcceptAt < 6000) &&
+        (b._mergeT || 0) < 0.5 && !b._phaseMate) { b._invHard = false; return; }
     // Time-tolerant trigger (v24.190): a negative-det tri never occurs in healthy
     // play (measured 0 across hard 2x2/3x3 landings), so a fold is real — tolerate a
     // BRIEF pinch (a hard crush can sliver a corner for a few frames), then engage on
@@ -53908,6 +53941,21 @@
     if (b._invFrames > JELLO_HEAL_GRACE + JELLO_HEAL_RAMP + 60) {
       hpull = 1.0;
       b._invFrames = JELLO_HEAL_GRACE + 1;
+      // ACCEPT a CONFINED fold after three failed snaps (v25.26): a body wedged
+      // against world geometry re-folds the moment the snap restores its rigid
+      // pose — snap, re-fold, snap, forever, and since _invHard blocks sleep by
+      // design the body churned eternally (harness: the same cube failed the
+      // sleep gate twice at the same spot with invF cycling). Three strikes in
+      // ~15s = the fold is load-bearing; tolerate it (see the acceptance gate at
+      // the top of this function) so the body settles and SLEEPS slightly
+      // imperfect. SOLO bodies only — a merged pair's fold must keep blocking
+      // sleep or the pair parks interlocked (harness R9).
+      var _snNow = performance.now();
+      if ((b._mergeT || 0) < 0.5 && !b._phaseMate) {
+        if (!b._snapT0 || _snNow - b._snapT0 > 15000) { b._snapT0 = _snNow; b._snapN = 0; }
+        b._snapN = (b._snapN | 0) + 1;
+        if (b._snapN >= 3) { b._invAcceptAt = _snNow; b._snapN = 0; }
+      }
     }
     var hpx = jelloVAccX, hpy = jelloVAccY, hn = b.n, hi;
     for (hi = 0; hi < hn; hi++) { hpx[hi] = b.px[hi]; hpy[hi] = b.py[hi]; }
@@ -54466,6 +54514,30 @@
     jelloResolvePlayer(dt);   // hard containment: rig can never be inside a jello ring
     jelloRigDisplaceGel();    // hard displacement: gel can never be deeper than the dent cap inside the hull
     jelloDeformBowl();        // resting on top: carve the conforming membrane bowl
+    // END-OF-FRAME LEGALIZATION (v25.26): every mover above runs AFTER the substep
+    // loop's last collide, so under heavy pile pressure they could leave points
+    // inside solid at frame end — and the NEXT frame's fpx snapshot (the anchor
+    // every anti-slip guard trusts) was then itself inside the wall, re-opening
+    // the far-side exit one dirty frame at a time (owner: an 8-slime stack
+    // pressured down still leaked). One final resolve makes "a point ends the
+    // frame in solid" impossible; the snapshot is legal by construction.
+    for (ai = 0; ai < nActive; ai++) {
+      b = active[ai];
+      for (var lz = 0; lz < b.n; lz++) {
+        if (jelloWorldSolidAt(b.px[lz], b.py[lz])) {
+          // VELOCITY-FREE unclip: reuse the collide's side choice (entry-lock +
+          // body-ward cascade) but discard its bounce/friction velocity writes —
+          // a full response fired once per FRAME outside the substep cadence
+          // fought the in-substep machinery and set a wedged body's outline
+          // flip-flopping 14px (harness-caught). Translation only; the next
+          // frame's substeps own the dynamics.
+          var _lx0 = b.px[lz], _ly0 = b.py[lz], _lox = b.ox[lz], _loy = b.oy[lz];
+          jelloCollidePointWorld(b, lz, jelloStepH);
+          b.ox[lz] = _lox + (b.px[lz] - _lx0);
+          b.oy[lz] = _loy + (b.py[lz] - _ly0);
+        }
+      }
+    }
     // Jet blast point: a throttled splat (and a surface ripple, when that system is
     // live) where the exhaust ray lands ON a blob - the same ray the flame core +
     // ground wash already use, so all three agree on the impact point.
