@@ -3238,13 +3238,11 @@
   // positions, so the squeeze itself is untouched and any real push wakes it right up.
   var JELLO_CROWD_CALM = 0.2;    // fraction of velocity drained per frame under sustained crowd pressure
   var JELLO_CROWD_ON   = 0.12;   // pressure floor of the accrual band: BELOW it pressT decays; the
-                                 // accrual rate ramps 0 -> 1 across [ON, ON + 0.18] (v25.21). A single
-                                 // pressed FACE reads ~0.11-0.17, so it accrues slowly or not at all
-                                 // (an ordinary player push stays lively; the _plyMs exemption at the
-                                 // drain is the hard guarantee for driven bodies), while a real cram
-                                 // (pressed on multiple sides, cp 0.3+) trips within a second. The
-                                 // WEDGE signal (_wedgeHits) rides the same gauge so a body grinding
-                                 // inside a too-small tile channel calms too.
+                                 // accrual rate ramps 0 -> 1 across [ON, ON + 0.18]. (A 0.2 floor was
+                                 // tried in v25.24 to keep face contact from priming pressT — it
+                                 // weakened cram drainage instead, harness-measured; the SPEED FLOOR
+                                 // at the drain is the real fix for the post-push syrup, and with it
+                                 // in place an armed pressT is harmless to slow settles.)
   function jelloShiftBody(b, dx, dy) {
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     for (var i = 0; i < n; i++) { px[i] += dx; py[i] += dy; ox[i] += dx; oy[i] += dy; }
@@ -3280,12 +3278,26 @@
           if ((mA > mB ? mA : mB) !== ring) continue;    // this ring's shell only
           if (tileAt(cr + dr, cc + dc) !== null) continue;
           var tx = (cc + dc + 0.5) * TILE, ty = (cr + dr + 0.5) * TILE;
+          // When the anchor is in OPEN space (a pressed body with a legitimate
+          // side), the straight path from anchor to target may cross NO solid —
+          // the rescue must never carry a pressed body through a wall (v25.24).
+          // A FULLY-embedded body (no open points, anchor = centroid inside the
+          // wall) has no meaningful side: skip the path probe and take the
+          // nearest opening, or the body could only ever despawn.
+          if (an > 0) {
+            var pOK = true;
+            for (var ps = 1; ps <= 4 && pOK; ps++) {
+              if (jelloWorldSolidAt(ax + (tx - ax) * ps / 4, ay + (ty - ay) * ps / 4)) pOK = false;
+            }
+            if (!pOK) continue;
+          }
           var dd = (tx - ax) * (tx - ax) + (ty - ay) * (ty - ay);
           if (dd < bestD) { bestD = dd; bx = tx; by = ty; found = true; }
         }
       }
     }
     if (!found) return false;
+    try { console.warn('jello: wall rescue -> ' + Math.round(bx) + ',' + Math.round(by) + ' (open-mass anchor ' + Math.round(ax) + ',' + Math.round(ay) + ')'); } catch (e) {}
     spawnJelloSplat(b.cx, b.cy, 6, 70, 0.8, null);
     jelloShiftBody(b, bx - b.cx, by - b.cy);
     spawnJelloSplat(b.cx, b.cy, 6, 70, 0.8, null);
@@ -4707,7 +4719,21 @@
         b._nmD = Math.sqrt(_nmdx * _nmdx + _nmdy * _nmdy);
         b._nmX = b.cx; b._nmY = b.cy; b._nmF = 0;
       }
+      // SPEED FLOOR (v25.24): churn is FAST motion going nowhere — every measured
+      // pathology (cram simmer, wedge grind, merge cycle) ran 50-600 px/s of body
+      // speed, while an ordinary post-push settle (a pushed cube un-tipping after
+      // release) crawls at 10-30 px/s with pressT still primed from the squeeze.
+      // The drain ate that settle and it played out in syrup (owner video). Below
+      // 45 px/s a body is settling, not churning; friction, XSPH and sleep own it.
+      // ...but the floor only protects PLAYER-ADJACENT bodies (stamped within 5s):
+      // it exists for the post-push settle, which is always near a fresh stamp. A
+      // pure cram (no player anywhere) must drain at ANY speed like before — with
+      // a blanket floor its sub-45 slow-pressure crawl went undrained and the
+      // sealed-pocket escape returned (harness-caught same hour).
+      var _cvr = Math.sqrt(b.vx * b.vx + b.vy * b.vy) * JELLO_TIMESCALE;
+      var _plyFresh = b._plyMs !== undefined && performance.now() - b._plyMs < 5000;
       if (b._pressT > 0.75 && JELLO_CROWD_CALM > 0 &&
+          (_cvr > 45 || !_plyFresh) &&
           b._nmD !== undefined && b._nmD < 12 &&
           !(b._plyMs !== undefined && performance.now() - b._plyMs < 500)) {
         var _cf = JELLO_CROWD_CALM, _cn2 = b.n, _cpx = b.px, _cpy = b.py, _cox = b.ox, _coy = b.oy;
