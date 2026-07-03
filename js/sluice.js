@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.27';
+  var GAME_VERSION = 'v25.29';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -281,7 +281,26 @@
   // accuracy). Lever: water.FIXED_STEP (0 = legacy split, kept for A/B).
   // edit² with js/liquid-wgpu.js (module twin + runFrame).
   var LIQUID_FIXED_STEP = 1;
-  var liquidStepAcc = 0;                 // banked sub-quantum remainder, seconds
+  var liquidStepAcc = 0;                 // banked sub-quantum remainder, SIM seconds
+  // v25.29 — WATER TIMESCALE (the slo-mo fix). The v24.169 popcorn fix bought
+  // rest-calm by dropping LIQUID_GRAVITY 1000 -> 250 (saharan's regime), so
+  // water accelerates at well under half the world's GRAVITY (600) and every
+  // fall reads as slow motion. Raising gravity back re-enters the over-driven
+  // EOS regime the whole v24.169-186 saga climbed out of. Instead: play the
+  // SAME sim back faster. Each frame banks dt x TIMESCALE into the fixed-
+  // quantum accumulator, so more 1/120 substeps run per wall second while
+  // per-substep physics (the calm) is bit-identical — the identical
+  // trajectory, fast-forwarded. Effective wall-clock gravity scales by
+  // TIMESCALE²: 250 x 1.55² = 600.6 ≈ world GRAVITY, i.e. water finally
+  // falls like every other object in the game. Splash heights are unchanged
+  // (same trajectories), just snappier. Cost: awake water runs ~3 substeps
+  // per 60 Hz frame instead of 2 (+55% sim passes; calm/idle/zero-water
+  // skips are all outside the substep loop and still fire). MAX_SUBSTEPS
+  // still caps slow frames, so weak devices self-throttle toward 1x speed
+  // (never pay more than the old worst case + shed). 1 = the old slo-mo.
+  // gm water.TIMESCALE (live); boot A/B ?wdbg=TIMESCALE:1.
+  // edit² with js/liquid-wgpu.js (module twin + its runFrame).
+  var LIQUID_TIMESCALE = 1.55;
   var LIQUID_WATER_MOTION_SCALE = 0.97;   // v10.107 — restored v10.102 lively tune
   var LIQUID_WALL_BOUNCE_IN = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE = 0.095;
@@ -10164,18 +10183,20 @@
       // v24.124 fixed-quantum substepping — constant stepDt, remainder
       // banked (rationale at the lever block in 010-constants; edit²
       // liquid-wgpu runFrame). steps === 0 just banks this frame's dt;
-      // the fx tail below still runs.
-      liquidStepAcc += totalDt;
+      // the fx tail below still runs. v25.29 — dt banks x TIMESCALE (sim
+      // playback rate; the accumulator holds SIM seconds), and the shed
+      // cap scales with it so the bank still holds ~one 60 Hz frame.
+      liquidStepAcc += totalDt * LIQUID_TIMESCALE;
       steps = Math.floor(liquidStepAcc / LIQUID_SUBSTEP_DT);
       if (steps > LIQUID_MAX_SUBSTEPS) steps = LIQUID_MAX_SUBSTEPS;
       liquidStepAcc -= steps * LIQUID_SUBSTEP_DT;
-      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2) liquidStepAcc = LIQUID_SUBSTEP_DT * 2;
+      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE) liquidStepAcc = LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE;
       stepDt = LIQUID_SUBSTEP_DT;
     } else {
-      steps = Math.ceil(totalDt / LIQUID_SUBSTEP_DT);
+      steps = Math.ceil(totalDt * LIQUID_TIMESCALE / LIQUID_SUBSTEP_DT);
       if (steps < 1) steps = 1;
       if (steps > LIQUID_MAX_SUBSTEPS) steps = LIQUID_MAX_SUBSTEPS;
-      stepDt = totalDt / steps;
+      stepDt = totalDt * LIQUID_TIMESCALE / steps;
       if (stepDt <= 0.0005) return;
     }
 
@@ -56549,6 +56570,16 @@
           function () { return LIQUID_FIXED_STEP; },
           function (v) { LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; gmSetWaterSim('FIXED_STEP', v); },
           0, 1, 1);
+      }
+      // v25.29 — sim playback rate (the slo-mo fix): dt banks x TIMESCALE
+      // into the fixed-quantum accumulator, so the same calm physics play
+      // faster. 1.55² x LIQUID_GRAVITY(250) ≈ world GRAVITY (600). 1 = the
+      // old slo-mo; rationale at the 010-constants block.
+      if (typeof LIQUID_TIMESCALE !== 'undefined') {
+        gmRegisterLever('water.TIMESCALE', 'water', 'TIMESCALE (sim playback rate)',
+          function () { return LIQUID_TIMESCALE; },
+          function (v) { LIQUID_TIMESCALE = (v > 0 && isFinite(v)) ? v : 1; liquidStepAcc = 0; gmSetWaterSim('TIMESCALE', v); },
+          0.5, 2.5, undefined);
       }
       // v24.145 WATER STATE MACHINE — stimulated -> settling -> frozen
       // (liquidStateTick in 070; rationale at the const block in 020).

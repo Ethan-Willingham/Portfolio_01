@@ -140,7 +140,26 @@
   // accuracy). Lever: water.FIXED_STEP (0 = legacy split, kept for A/B).
   // edit² with js/liquid-wgpu.js (module twin + runFrame).
   var LIQUID_FIXED_STEP = 1;
-  var liquidStepAcc = 0;                 // banked sub-quantum remainder, seconds
+  var liquidStepAcc = 0;                 // banked sub-quantum remainder, SIM seconds
+  // v25.29 — WATER TIMESCALE (the slo-mo fix). The v24.169 popcorn fix bought
+  // rest-calm by dropping LIQUID_GRAVITY 1000 -> 250 (saharan's regime), so
+  // water accelerates at well under half the world's GRAVITY (600) and every
+  // fall reads as slow motion. Raising gravity back re-enters the over-driven
+  // EOS regime the whole v24.169-186 saga climbed out of. Instead: play the
+  // SAME sim back faster. Each frame banks dt x TIMESCALE into the fixed-
+  // quantum accumulator, so more 1/120 substeps run per wall second while
+  // per-substep physics (the calm) is bit-identical — the identical
+  // trajectory, fast-forwarded. Effective wall-clock gravity scales by
+  // TIMESCALE²: 250 x 1.55² = 600.6 ≈ world GRAVITY, i.e. water finally
+  // falls like every other object in the game. Splash heights are unchanged
+  // (same trajectories), just snappier. Cost: awake water runs ~3 substeps
+  // per 60 Hz frame instead of 2 (+55% sim passes; calm/idle/zero-water
+  // skips are all outside the substep loop and still fire). MAX_SUBSTEPS
+  // still caps slow frames, so weak devices self-throttle toward 1x speed
+  // (never pay more than the old worst case + shed). 1 = the old slo-mo.
+  // gm water.TIMESCALE (live); boot A/B ?wdbg=TIMESCALE:1.
+  // edit² with js/liquid-wgpu.js (module twin + its runFrame).
+  var LIQUID_TIMESCALE = 1.55;
   var LIQUID_WATER_MOTION_SCALE = 0.97;   // v10.107 — restored v10.102 lively tune
   var LIQUID_WALL_BOUNCE_IN = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE = 0.095;

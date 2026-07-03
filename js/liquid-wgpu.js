@@ -180,7 +180,15 @@
   // remainder; stepDt is then a true constant. Live toggle via
   // setSimParam('FIXED_STEP') (gm lever water.FIXED_STEP; 0 = legacy).
   var LIQUID_FIXED_STEP = 1;
-  var liquidStepAcc = 0;                // banked sub-quantum remainder, seconds
+  var liquidStepAcc = 0;                // banked sub-quantum remainder, SIM seconds
+  // v25.29 — WATER TIMESCALE (the slo-mo fix; full rationale at the
+  // 010-constants twin). runFrame banks dt x TIMESCALE into the accumulator:
+  // more 1/120 substeps per wall second, per-substep physics untouched (the
+  // identical trajectory, fast-forwarded, so the v24.169 calm survives).
+  // Wall-clock effective gravity = TIMESCALE² x 250 = 600.6 ≈ the game's
+  // world GRAVITY (600). Live via setSimParam('TIMESCALE') (gm
+  // water.TIMESCALE). 1 = the old slo-mo.
+  var LIQUID_TIMESCALE = 1.55;
   var LIQUID_AERATION_BLUR     = 0.01;
   var LIQUID_AERATION_DAMP     = 0.988;
   var LIQUID_OIL_AERATION_BLUR = 0.008;
@@ -7181,19 +7189,21 @@ fn main() {
       // v24.124 — fixed-quantum substepping (mirrors updateLiquids): exact
       // LIQUID_SUBSTEP_DT chunks, remainder banked, excess shed past a
       // 2-quantum cap. stepDt is a true constant so the compression
-      // equilibrium never moves with frame jitter.
-      liquidStepAcc += dt;
+      // equilibrium never moves with frame jitter. v25.29 — dt banks
+      // x TIMESCALE (sim playback rate; the bank holds SIM seconds), shed
+      // cap scaled with it so the bank still holds ~one 60 Hz frame.
+      liquidStepAcc += dt * LIQUID_TIMESCALE;
       subSteps = Math.floor(liquidStepAcc / LIQUID_SUBSTEP_DT);
       if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
       liquidStepAcc -= subSteps * LIQUID_SUBSTEP_DT;
-      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2) liquidStepAcc = LIQUID_SUBSTEP_DT * 2;
+      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE) liquidStepAcc = LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE;
       if (subSteps <= 0) return;        // banked — nothing to advance this frame
       instance.stepDt = LIQUID_SUBSTEP_DT;   // computeGridBounds pushes this into the uniform
     } else {
-      subSteps = Math.ceil(dt / LIQUID_SUBSTEP_DT);
+      subSteps = Math.ceil(dt * LIQUID_TIMESCALE / LIQUID_SUBSTEP_DT);
       if (subSteps < 1) subSteps = 1;
       if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
-      instance.stepDt = dt / subSteps;   // computeGridBounds pushes this into the uniform
+      instance.stepDt = dt * LIQUID_TIMESCALE / subSteps;   // computeGridBounds pushes this into the uniform
     }
 
     var L = instance.liquid;
@@ -7852,6 +7862,9 @@ fn main() {
             // v24.124 — fixed-quantum substepping toggle (runFrame host
             // partitioning, not a SimParams lane); reset the bank on flip
             case 'FIXED_STEP':           LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; break;
+            // v25.29 — sim playback rate (runFrame host partitioning, not a
+            // SimParams lane); reset the bank so the flip is clean
+            case 'TIMESCALE':            LIQUID_TIMESCALE = (v > 0 && isFinite(v)) ? v : 1; liquidStepAcc = 0; break;
             // v24.120 debug kit — bit 1 no-sleep, bit 2 no-brake (coll.w)
             case 'DBG_FLAGS':            LIQUID_DBG_FLAGS = v & 3; break;
             // v24.120 debug kit — CPU-mirror refresh cadence in frames (not

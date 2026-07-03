@@ -741,6 +741,16 @@
           function (v) { LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; gmSetWaterSim('FIXED_STEP', v); },
           0, 1, 1);
       }
+      // v25.29 — sim playback rate (the slo-mo fix): dt banks x TIMESCALE
+      // into the fixed-quantum accumulator, so the same calm physics play
+      // faster. 1.55² x LIQUID_GRAVITY(250) ≈ world GRAVITY (600). 1 = the
+      // old slo-mo; rationale at the 010-constants block.
+      if (typeof LIQUID_TIMESCALE !== 'undefined') {
+        gmRegisterLever('water.TIMESCALE', 'water', 'TIMESCALE (sim playback rate)',
+          function () { return LIQUID_TIMESCALE; },
+          function (v) { LIQUID_TIMESCALE = (v > 0 && isFinite(v)) ? v : 1; liquidStepAcc = 0; gmSetWaterSim('TIMESCALE', v); },
+          0.5, 2.5, undefined);
+      }
       // v24.145 WATER STATE MACHINE — stimulated -> settling -> frozen
       // (liquidStateTick in 070; rationale at the const block in 020).
       // FREEZE 0 also clears an active latch so the A/B flip is instant.

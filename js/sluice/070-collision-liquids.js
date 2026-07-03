@@ -2009,18 +2009,20 @@
       // v24.124 fixed-quantum substepping — constant stepDt, remainder
       // banked (rationale at the lever block in 010-constants; edit²
       // liquid-wgpu runFrame). steps === 0 just banks this frame's dt;
-      // the fx tail below still runs.
-      liquidStepAcc += totalDt;
+      // the fx tail below still runs. v25.29 — dt banks x TIMESCALE (sim
+      // playback rate; the accumulator holds SIM seconds), and the shed
+      // cap scales with it so the bank still holds ~one 60 Hz frame.
+      liquidStepAcc += totalDt * LIQUID_TIMESCALE;
       steps = Math.floor(liquidStepAcc / LIQUID_SUBSTEP_DT);
       if (steps > LIQUID_MAX_SUBSTEPS) steps = LIQUID_MAX_SUBSTEPS;
       liquidStepAcc -= steps * LIQUID_SUBSTEP_DT;
-      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2) liquidStepAcc = LIQUID_SUBSTEP_DT * 2;
+      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE) liquidStepAcc = LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE;
       stepDt = LIQUID_SUBSTEP_DT;
     } else {
-      steps = Math.ceil(totalDt / LIQUID_SUBSTEP_DT);
+      steps = Math.ceil(totalDt * LIQUID_TIMESCALE / LIQUID_SUBSTEP_DT);
       if (steps < 1) steps = 1;
       if (steps > LIQUID_MAX_SUBSTEPS) steps = LIQUID_MAX_SUBSTEPS;
-      stepDt = totalDt / steps;
+      stepDt = totalDt * LIQUID_TIMESCALE / steps;
       if (stepDt <= 0.0005) return;
     }
 
