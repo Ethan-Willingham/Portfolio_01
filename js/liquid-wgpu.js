@@ -159,7 +159,7 @@
   var LIQUID_DECLUMP_DMIN      = 1.1;                  // world px (rest spacing PDELTA*CELL = 1.25)
   var LIQUID_DECLUMP_STRENGTH  = 0.4;                  // 0..1 positional relaxation / substep
   var LIQUID_DECLUMP_OVERDENSE = 1.6 * LIQUID_DENSITY; // only de-clump above ~dn 1.6
-  var LIQUID_GRAVITY = 600;            // v25.20, was 250; matched to world GRAVITY for realistic fall. edit² 010-constants.js.
+  var LIQUID_GRAVITY = 250;
   var LIQUID_OIL_GRAVITY       = 600;
   var LIQUID_PRESSURE_STIFF    = 5;     // v24.10 — saharan's exact EOS stiffness (his is `(d/4-1)*5`). v24.8's 20 splashed; REVERTED. Deep-water "popcorn" is fixed by SUBSTEPPING (below), not stiffness. edit² with 010-constants.js.
   var LIQUID_OIL_PRESSURE_STIFF = 2.5;
@@ -170,7 +170,7 @@
   // kernel chain N small substeps per frame shrinks stepDt → compression drops
   // ∝ stepDt² while the real fall speed (ΔV/frame = GRAVITY·dt) is unchanged.
   // N = clamp(ceil(dt / LIQUID_SUBSTEP_DT), 1, LIQUID_MAX_SUBSTEPS). edit² with 010-constants.js.
-  var LIQUID_SUBSTEP_DT        = 1 / 180;   // v25.20, was 1/120; holds rest compression at LIQUID_GRAVITY 600. edit² 010-constants.js.
+  var LIQUID_SUBSTEP_DT        = 1 / 120;
   var LIQUID_MAX_SUBSTEPS      = 5;
   // v24.124 FIXED-QUANTUM SUBSTEPPING — see the rationale at the
   // 010-constants twin: the old ceil-split put 60/120 Hz exactly on a
@@ -287,7 +287,7 @@
   var LIQUID_MAX_VEL        = 600.0;   // px/s — hard per-particle speed cap (0 = off)
   var LIQUID_BURST_DAMP     = 0.985;   // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO  = 100.0;   // px/s — burst damp starts (above rested ambient peak)
-  var LIQUID_BURST_GATE_HI  = 600.0;   // v25.20, was 300. Widened so honest free-fall is only lightly bled and reaches a realistic terminal (~430 px/s, was ~220); full burst damp bites only near the MAX_VEL cap, still catching over-compression ejecta. gm-live. edit² 020-state.js.
+  var LIQUID_BURST_GATE_HI  = 300.0;   // px/s — burst damp reaches full BURST_DAMP
 
   /* ---- Grid sizing constants ----------------------------------------
    * The count-sort builds a uniform grid over the live particles each

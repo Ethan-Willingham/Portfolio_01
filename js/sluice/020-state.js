@@ -326,7 +326,7 @@
   var LIQUID_MAX_VEL = 600.0;         // px/s — hard per-particle speed cap (0 = off)
   var LIQUID_BURST_DAMP = 0.985;      // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO = 100.0;   // px/s — burst damp starts here (above rested ambient)
-  var LIQUID_BURST_GATE_HI = 600.0;   // v25.20, was 300; free-fall reaches a realistic terminal (edit² liquid-wgpu.js)
+  var LIQUID_BURST_GATE_HI = 300.0;   // px/s — burst damp reaches full BURST_DAMP here
   var LIQUID_VISC_LIVE = 0.10;        // grid viscosity while stimulated (lever target stays LIQUID_GRID_VISC;
                                       // v24.150: 0.15 -> 0.08, v24.152: 0.05, v24.157: -> 0.10 — part of the
                                       // lively dissipation floor that keeps the EOS pump bounded under
