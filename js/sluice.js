@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.24';
+  var GAME_VERSION = 'v25.25';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -51749,20 +51749,26 @@
       px[i] = ox[i] = hcx; py[i] = oy[i] = hcy;
       return;
     }
-    // DIAGONAL CORNER PINCH (v25.20): a point may never hop cells diagonally when
-    // BOTH orthogonal intermediate cells are solid — two tiles touching only at a
-    // corner are sealed geometry, but per-cell collision saw the origin and the
-    // destination as open and let points thread the zero-width corner one at a
-    // time (owner: slimes slip through to the free diagonal). A legal diagonal
-    // move over open ground always has at least one open intermediate cell. The
-    // undo is a dead stop for that point (ox follows px), which reads as the gel
-    // pressing against the corner seam.
-    var dpr0 = Math.floor(oy[i] / TILE), dpc0 = Math.floor(ox[i] / TILE);
+    // DIAGONAL CORNER PINCH (v25.20; frame-start anchored v25.25): a point may
+    // never cross cells diagonally when BOTH orthogonal intermediate cells are
+    // solid — two tiles touching only at a corner are sealed geometry. The "from"
+    // cell is the FRAME-START snapshot (b.fpx), NOT the Verlet prev position:
+    // half the engine's operations are velocity-free (contact separation,
+    // containment, unmerge shifts, rig displacement) and move ox WITH px, so an
+    // ox-based check saw a pressure-pushed point as never having moved at all and
+    // corners leaked one velocity-free nudge at a time (owner: slimes slip into a
+    // diagonally-adjacent cavity, or visibly REACH for it). A legal diagonal move
+    // over open ground always has an open intermediate. The undo is a dead stop
+    // at the frame-start position.
+    var dfx, dfy;
+    if (b.fpx && i < b.fpx.length) { dfx = b.fpx[i]; dfy = b.fpy[i]; }
+    else { dfx = ox[i]; dfy = oy[i]; }
+    var dpr0 = Math.floor(dfy / TILE), dpc0 = Math.floor(dfx / TILE);
     var dpr1 = Math.floor(y / TILE), dpc1 = Math.floor(x / TILE);
     if (dpr1 !== dpr0 && dpc1 !== dpc0 &&
         tileAt(dpr0, dpc1) !== null && tileAt(dpr1, dpc0) !== null) {
       b._wedgeHits = (b._wedgeHits | 0) + 1;   // wedge gauge (crowd calm): pressing a sealed corner
-      px[i] = ox[i]; py[i] = oy[i];
+      px[i] = ox[i] = dfx; py[i] = oy[i] = dfy;
       return;
     }
     if (!jelloWorldSolidAt(x, y)) { if (JELLO_GAP_BLOCK) jelloGapBlock(b, i); return; }
@@ -51784,10 +51790,15 @@
     // tile's midline and exit the FAR side — straight through a 1-tile wall into
     // whatever cavity lies behind it, with the springs hauling the whole body after
     // it (the owner's "slime stretches into a cavity that isn't even adjacent").
-    // The resolve always parks points in open space, so the previous cell is an
+    // The resolve always parks points in open space, so the frame-start cell is an
     // adjacent open cell in virtually every case; diagonal entries fall through to
     // the biased scan, and the diagonal-pinch rule above owns sealed corners.
-    var epr = Math.floor(oy[i] / TILE), epc = Math.floor(ox[i] / TILE);
+    // FRAME-START anchored (v25.25): keying on ox was blind to velocity-free
+    // pushes (they move ox with px), so a cram-pressed point could carry its
+    // "previous position" into the wall with it and exit the far side anyway.
+    var epr, epc;
+    if (b.fpx && i < b.fpx.length) { epr = Math.floor(b.fpy[i] / TILE); epc = Math.floor(b.fpx[i] / TILE); }
+    else { epr = Math.floor(oy[i] / TILE); epc = Math.floor(ox[i] / TILE); }
     if (epr === row && epc === col - 1 && tileAt(row, col - 1) === null) pen2 = -1e9;
     else if (epr === row && epc === col + 1 && tileAt(row, col + 1) === null) pen3 = -1e9;
     else if (epc === col && epr === row - 1 && tileAt(row - 1, col) === null) pen0 = -1e9;
