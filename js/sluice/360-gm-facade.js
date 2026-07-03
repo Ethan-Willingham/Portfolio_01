@@ -1741,6 +1741,18 @@
           function (v) { JELLO_RENDER_SMOOTH = v; },
           0, 1, 1);           // outline curve smoothing (ships 0 since v24.121 — sharp corners)
       }
+      if (typeof JELLO_EDGE_STYLE !== 'undefined') {
+        gmRegisterLever('jello.JELLO_EDGE_STYLE', 'jello', 'JELLO_EDGE_STYLE',
+          function () { return JELLO_EDGE_STYLE; },
+          function (v) { JELLO_EDGE_STYLE = v < 0 ? 0 : (v > 3 ? 3 : Math.round(v)); },
+          0, 3, 1);           // 0 classic, 1 soft fringe, 2 fuzzy (ships), 3 plush — dev 'I' cycles
+      }
+      if (typeof JELLO_EDGE_FUZZ !== 'undefined') {
+        gmRegisterLever('jello.JELLO_EDGE_FUZZ', 'jello', 'JELLO_EDGE_FUZZ',
+          function () { return JELLO_EDGE_FUZZ; },
+          function (v) { JELLO_EDGE_FUZZ = v; },
+          0, 2, undefined);   // fringe + hair scale (v25.27 edge treatment)
+      }
       if (typeof JELLO_GLOSS !== 'undefined') {
         gmRegisterLever('jello.JELLO_GLOSS', 'jello', 'JELLO_GLOSS',
           function () { return JELLO_GLOSS; },

@@ -378,6 +378,17 @@
         showMsg(JELLO_DEBUG_PARTICLES ? 'Jello particle debug ON' : 'Jello particle debug off');
       }
     }
+    // v25.27 — 'I' cycles the jello EDGE STYLE (dev mode only): CLASSIC (hard
+    // edge) -> SOFT (chamfer + fringe) -> FUZZY (+hair coat) -> PLUSH (max
+    // fuzz), so the skin treatment can be A/B'd live on a dropped pen (pairs
+    // with C to drop cubes).
+    if (keys['i'] || keys['I']) {
+      keys['i'] = keys['I'] = false;
+      if (devMode && typeof JELLO_EDGE_STYLE !== 'undefined') {
+        JELLO_EDGE_STYLE = (JELLO_EDGE_STYLE + 1) % 4;
+        showMsg('Jello edge: ' + ['CLASSIC (sharp)', 'SOFT fringe', 'FUZZY', 'PLUSH (max fuzz)'][JELLO_EDGE_STYLE] + ' (I cycles)');
+      }
+    }
     // 'M' cycles the jello solver (dev mode only): pbd (v1) -> xpbd -> fem -> pbd. The
     // whole pipeline except the constraint solve is shared, so this A/Bs them live.
     if (keys['m'] || keys['M']) {

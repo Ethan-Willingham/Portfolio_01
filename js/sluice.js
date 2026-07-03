@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.26';
+  var GAME_VERSION = 'v25.27';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -50426,6 +50426,29 @@
                                      // corners into balloons; the soft-body-tetris read wants the lattice
                                      // polygon itself (wobble still bends the faces — corners stay
                                      // corners). Was 1.0 from birth through v24.120; lever stays live.
+  // ---- EDGE STYLE (v25.27) — the skin treatment, owner-directed ----
+  // The silhouette used to be the fill's own hard clipped edge (rim strokes and
+  // gloss were vetoed as cartoon OUTLINES, v24.121/v24.160, and stay dead). But
+  // under a cram the lattice polygon shows angular KINKS and the crisp clip
+  // makes every one obvious (owner: make the edge fuzzy so sharp edges are
+  // never clearly visible). The treatment is three stacked render-only moves,
+  // none of which re-introduces a vetoed look:
+  //   - a single Chaikin pass CHAMFERS the drawn ring (~3px off each corner;
+  //     NOT the v24.121 balloon rounding — corners still read as corners),
+  //   - a layered SAME-COLOUR fringe diffuses the edge over ~7px (translucent
+  //     body hue, alpha stepping down outward — never a bright drawn line),
+  //   - deterministic "peach fuzz" hairs along the outward normals, seeded per
+  //     ring slot + body so the coat is stable frame-to-frame (no shimmer).
+  // Styles (dev 'I' cycles; gm 'jello.JELLO_EDGE_STYLE'; URL ?jelloedge=N):
+  //   0 CLASSIC (pre-v25.27 hard edge)  1 SOFT (chamfer + fringe)
+  //   2 FUZZY (SOFT + hair coat)        3 PLUSH (longer, denser coat)
+  // Physics, contacts and probes never read the drawn ring — zero sim risk.
+  var JELLO_EDGE_STYLE = 2;
+  var JELLO_EDGE_FUZZ  = 1.0;   // fringe + hair scale (0.5 subtle .. 2 heavy)
+  (function () {
+    var m = /[?&]jelloedge=(\d)/.exec((window.location && window.location.search) || '');
+    if (m) JELLO_EDGE_STYLE = +m[1] > 3 ? 3 : +m[1];
+  })();
   // Compatibility no-op render vars (still gm-registered; unused by this model).
   var JELLO_ISO            = 0.40;
   var JELLO_METABALL_RADIUS = 12;
@@ -53987,6 +54010,8 @@
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
+  var jelloRSX = null, jelloRSY = null;                         // render: chamfer-subdivision scratch (v25.27)
+  var jelloRingBakeN = 0;                                       // drawn-ring vertex count the last bake produced
   var jelloActive = [];                    // reused per frame: the non-frozen bodies in the sim step
   function jelloContactAlloc() {
     if (jelloGPX) return;
@@ -54000,6 +54025,7 @@
     jelloHashOrder = new Int32Array(MP);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
+    jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
   }
   // ----- XSPH viscosity (Schechter & Bridson 2012): nudge each point's velocity toward the
   // average of its spring-neighbours by JELLO_XSPH. Damps only RELATIVE motion (the bulk
@@ -54608,10 +54634,25 @@
         km = k;
       }
     }
+    // CHAMFER pass (v25.27, edge styles >= 1): one Chaikin corner-cut on the
+    // drawn ring — each vertex becomes two points at 1/4 and 3/4 of its edges,
+    // so a kink's amplitude halves and a rest-cube corner loses ~3px to a 45°
+    // chamfer (deliberately NOT the vetoed v24.121 balloon rounding; corners
+    // still read as corners). Render-only: the physics ring is untouched.
+    if (JELLO_EDGE_STYLE >= 1 && rn * 2 <= JELLO_MAX_POINTS) {
+      var SX = jelloRSX, SY = jelloRSY, j2 = 0, kn;
+      for (k = 0; k < rn; k++) {
+        kn = k + 1; if (kn === rn) kn = 0;
+        SX[j2] = ROX[k] * 0.75 + ROX[kn] * 0.25; SY[j2] = ROY[k] * 0.75 + ROY[kn] * 0.25; j2++;
+        SX[j2] = ROX[k] * 0.25 + ROX[kn] * 0.75; SY[j2] = ROY[k] * 0.25 + ROY[kn] * 0.75; j2++;
+      }
+      jelloRSX = ROX; jelloRSY = ROY; jelloROX = SX; jelloROY = SY;   // swap: ROX holds the chamfered ring
+      jelloRingBakeN = j2;
+    } else jelloRingBakeN = rn;
   }
 
   function jelloRingPath(b) {
-    var rn = b.ringN;
+    var rn = jelloRingBakeN || b.ringN;   // bake runs first (scratch-survival invariant); chamfer changes the count
     if (rn < 3) return false;
     // Reads the ring jelloRingBake wrote (call order: jelloDrawBody bakes once,
     // then paths 3x: clip + two rim strokes).
@@ -54638,6 +54679,52 @@
 
   // Clamp a percentage (saturation / lightness) to [0,100] for per-body hsla tints.
   function jelloClampPct(v) { return v < 0 ? 0 : (v > 100 ? 100 : v); }
+
+  // ---- Peach-fuzz coat (v25.27, edge styles >= 2) ----
+  // Short hairs along the chamfered ring's outward normals. DETERMINISTIC: each
+  // hair is seeded by its ring slot + a per-body constant, so the coat is stable
+  // frame to frame (a per-frame re-roll would shimmer at 60fps) while the roots
+  // still ride the skin as it wobbles. Two passes: a dense short base coat and
+  // sparse longer wisps. Plain strokes only — no gradients, so a non-finite
+  // point can never throw (canvas path ops IGNORE non-finite; gradients THROW).
+  function jelloFuzzHash(i) {
+    var h = (i * 2654435761 + 106039) >>> 0;
+    h ^= h >>> 13; h = (h * 2246822519) >>> 0;
+    return (h >>> 8) / 16777216;
+  }
+  function jelloDrawFuzz(b, hue, satMul, lightAdd, alpha, fz) {
+    var rn = jelloRingBakeN;
+    if (rn < 6) return;
+    var ROX = jelloROX, ROY = jelloROY;
+    var sign = b.ringSign || 1;
+    var seed = (Math.floor(b.hue) * 131 + b.n * 977) | 0;
+    var col = 'hsla(' + hue + ',' + jelloClampPct(70 * satMul) + '%,' + jelloClampPct(66 + lightAdd) + '%,';
+    ctx.lineWidth = 1.1;
+    ctx.lineCap = 'round';
+    for (var pass = 0; pass < 2; pass++) {
+      var stride = pass === 0 ? 2 : 7;
+      var lenMul = pass === 0 ? 1 : 1.9;
+      ctx.strokeStyle = col + (alpha * (pass === 0 ? 0.14 : 0.20)).toFixed(3) + ')';
+      ctx.beginPath();
+      for (var k = pass; k < rn; k += stride) {
+        var kp = k + 2 >= rn ? k + 2 - rn : k + 2;
+        var km = k - 2 < 0 ? k - 2 + rn : k - 2;
+        var tx = ROX[kp] - ROX[km], ty = ROY[kp] - ROY[km];
+        var tl = Math.sqrt(tx * tx + ty * ty);
+        if (tl < 1e-6) continue;
+        var nx = sign * ty / tl, ny = -sign * tx / tl;
+        var h1 = jelloFuzzHash(seed + k * 3);
+        var h2 = jelloFuzzHash(seed + k * 3 + 1);
+        var ln = (1.6 + 2.8 * h1) * fz * lenMul;
+        var la = (h2 - 0.5) * 0.9;   // lean up to ±0.45 rad off the normal
+        var ca = Math.cos(la), sa = Math.sin(la);
+        var hx = nx * ca - ny * sa, hy = nx * sa + ny * ca;
+        ctx.moveTo(ROX[k], ROY[k]);
+        ctx.lineTo(ROX[k] + hx * ln, ROY[k] + hy * ln);
+      }
+      ctx.stroke();
+    }
+  }
 
   function jelloDrawBody(b) {
     if (b.ringN < 3) return;
@@ -54835,9 +54922,33 @@
     }
     ctx.restore();
 
-    // ---- 6. Fresnel rim — the glass edge catches light (bright), with a thin
-    //         dark refraction line just inside it. Drawn after the clip release. ----
-    if (rim > 0.001) {
+    // ---- 6. EDGE TREATMENT (v25.27). Styles >= 1: a layered SAME-COLOUR
+    //         fringe centred on the (chamfered) ring — alpha steps down going
+    //         outward, so the gel diffuses into the background over ~7px. Half
+    //         of each stroke lies outside the clip and covers the fill's hard
+    //         aliased edge; the colour is the body's own mid-tone, never a
+    //         bright line (the v24.121 cartoon-outline veto stands). Styles
+    //         >= 2 add the peach-fuzz hair coat on top. ----
+    if (JELLO_EDGE_STYLE >= 1) {
+      var fz = JELLO_EDGE_FUZZ;
+      var eCol = 'hsla(' + hue + ',' + jelloClampPct(82 * satMul) + '%,' + jelloClampPct(52 + lightAdd) + '%,';
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      jelloRingPath(b);
+      ctx.strokeStyle = eCol + (alpha * 0.28).toFixed(3) + ')';
+      ctx.lineWidth = 2.2 * fz;
+      ctx.stroke();
+      ctx.strokeStyle = eCol + (alpha * 0.13).toFixed(3) + ')';
+      ctx.lineWidth = 4.6 * fz;
+      ctx.stroke();
+      ctx.strokeStyle = eCol + (alpha * 0.055).toFixed(3) + ')';
+      ctx.lineWidth = 7.6 * fz;
+      ctx.stroke();
+      if (JELLO_EDGE_STYLE >= 2) jelloDrawFuzz(b, hue, satMul, lightAdd, alpha, fz * (JELLO_EDGE_STYLE >= 3 ? 1.9 : 1));
+    } else if (rim > 0.001) {
+      // CLASSIC style keeps the legacy Fresnel rim for per-body dev materials
+      // (ships 0 since v24.121 — owner-vetoed outline).
       ctx.beginPath();
       jelloRingPath(b);
       ctx.strokeStyle = 'hsla(' + (hue + 14) + ', 100%, 90%, ' + (rim * 0.95).toFixed(3) + ')';
@@ -55016,7 +55127,14 @@
       cycleFeel: jelloCycleFeel,
       feels: JELLO_FEELS,
       totalPoints: jelloTotalPoints,
-      player: function () { return player; }
+      player: function () { return player; },
+      frame: function () { return jelloFrameNo; },   // real sim frames (loop-alive checks)
+      camXY: function () {   // world->viewport mapping for clipped screenshots:
+        // clipX = (worldX - .x) * .ws lands in viewport CSS px (canvas offset folded in)
+        var rect = canvas.getBoundingClientRect();
+        var ws2 = (typeof worldScale !== 'undefined' ? worldScale : 1);
+        return { x: cam.x - rect.left / ws2, y: cam.y - rect.top / ws2, ws: ws2 };
+      }
     };
   } catch (e) {}
 
@@ -55398,6 +55516,17 @@
       if (devMode && typeof JELLO_DEBUG_PARTICLES !== 'undefined') {
         JELLO_DEBUG_PARTICLES = JELLO_DEBUG_PARTICLES ? 0 : 1;
         showMsg(JELLO_DEBUG_PARTICLES ? 'Jello particle debug ON' : 'Jello particle debug off');
+      }
+    }
+    // v25.27 — 'I' cycles the jello EDGE STYLE (dev mode only): CLASSIC (hard
+    // edge) -> SOFT (chamfer + fringe) -> FUZZY (+hair coat) -> PLUSH (max
+    // fuzz), so the skin treatment can be A/B'd live on a dropped pen (pairs
+    // with C to drop cubes).
+    if (keys['i'] || keys['I']) {
+      keys['i'] = keys['I'] = false;
+      if (devMode && typeof JELLO_EDGE_STYLE !== 'undefined') {
+        JELLO_EDGE_STYLE = (JELLO_EDGE_STYLE + 1) % 4;
+        showMsg('Jello edge: ' + ['CLASSIC (sharp)', 'SOFT fringe', 'FUZZY', 'PLUSH (max fuzz)'][JELLO_EDGE_STYLE] + ' (I cycles)');
       }
     }
     // 'M' cycles the jello solver (dev mode only): pbd (v1) -> xpbd -> fem -> pbd. The
@@ -57420,6 +57549,18 @@
           function () { return JELLO_RENDER_SMOOTH; },
           function (v) { JELLO_RENDER_SMOOTH = v; },
           0, 1, 1);           // outline curve smoothing (ships 0 since v24.121 — sharp corners)
+      }
+      if (typeof JELLO_EDGE_STYLE !== 'undefined') {
+        gmRegisterLever('jello.JELLO_EDGE_STYLE', 'jello', 'JELLO_EDGE_STYLE',
+          function () { return JELLO_EDGE_STYLE; },
+          function (v) { JELLO_EDGE_STYLE = v < 0 ? 0 : (v > 3 ? 3 : Math.round(v)); },
+          0, 3, 1);           // 0 classic, 1 soft fringe, 2 fuzzy (ships), 3 plush — dev 'I' cycles
+      }
+      if (typeof JELLO_EDGE_FUZZ !== 'undefined') {
+        gmRegisterLever('jello.JELLO_EDGE_FUZZ', 'jello', 'JELLO_EDGE_FUZZ',
+          function () { return JELLO_EDGE_FUZZ; },
+          function (v) { JELLO_EDGE_FUZZ = v; },
+          0, 2, undefined);   // fringe + hair scale (v25.27 edge treatment)
       }
       if (typeof JELLO_GLOSS !== 'undefined') {
         gmRegisterLever('jello.JELLO_GLOSS', 'jello', 'JELLO_GLOSS',
