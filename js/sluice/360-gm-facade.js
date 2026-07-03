@@ -1556,6 +1556,12 @@
           function (v) { JELLO_UNMERGE_RATE = v; },
           0, 300, undefined);   // px/s a merged pair (centroid inside the other ring) is pulled apart
       }
+      if (typeof JELLO_CROWD_CALM !== 'undefined') {
+        gmRegisterLever('jello.JELLO_CROWD_CALM', 'jello', 'JELLO_CROWD_CALM',
+          function () { return JELLO_CROWD_CALM; },
+          function (v) { JELLO_CROWD_CALM = v; },
+          0, 0.5, undefined);   // velocity drained per frame while crowd-pressed (overfilled pocket sits still)
+      }
       if (typeof JELLO_EJECT_SNAP !== 'undefined') {
         gmRegisterLever('jello.JELLO_EJECT_SNAP', 'jello', 'JELLO_EJECT_SNAP',
           function () { return JELLO_EJECT_SNAP; },

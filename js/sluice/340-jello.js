@@ -579,6 +579,13 @@
   // in rotated body space (playerLocalToWorld). Cross-fragment calls are safe via
   // the single-IIFE hoisting (same pattern as tileAt). ----
   var jelloJetOn = false, jelloJetDX = 0, jelloJetDY = 1, jelloJetOX = 0, jelloJetOY = 0;
+  // Jet OCCLUSION (v25.20): axial distance to the first SOLID tile along the exhaust,
+  // recomputed once per frame with the jet frame. The cone used to be pure geometry,
+  // so a slime in a sealed cave 3 tiles under the hovering rig got blasted THROUGH
+  // the floor (owner report). Solid-tiles-only on purpose: gel must NOT occlude gel
+  // (the cone pushes into the first slime's interior, and blasting through a gel
+  // stack is the established feel); walls, floors and ceilings hard-stop the cone.
+  var jelloJetMaxS = Infinity;
   var jelloJetSplT = 0;
   var jelloJetReactT = 0;   // tiles-worth of gel the jet cone covered, summed over the frame's substeps
                             // (jelloPlayerCouple accumulates, updateJello averages + applies the back-pressure)
@@ -2093,6 +2100,21 @@
       px[i] = ox[i] = hcx; py[i] = oy[i] = hcy;
       return;
     }
+    // DIAGONAL CORNER PINCH (v25.20): a point may never hop cells diagonally when
+    // BOTH orthogonal intermediate cells are solid — two tiles touching only at a
+    // corner are sealed geometry, but per-cell collision saw the origin and the
+    // destination as open and let points thread the zero-width corner one at a
+    // time (owner: slimes slip through to the free diagonal). A legal diagonal
+    // move over open ground always has at least one open intermediate cell. The
+    // undo is a dead stop for that point (ox follows px), which reads as the gel
+    // pressing against the corner seam.
+    var dpr0 = Math.floor(oy[i] / TILE), dpc0 = Math.floor(ox[i] / TILE);
+    var dpr1 = Math.floor(y / TILE), dpc1 = Math.floor(x / TILE);
+    if (dpr1 !== dpr0 && dpc1 !== dpc0 &&
+        tileAt(dpr0, dpc1) !== null && tileAt(dpr1, dpc0) !== null) {
+      px[i] = ox[i]; py[i] = oy[i];
+      return;
+    }
     if (!jelloWorldSolidAt(x, y)) { if (JELLO_GAP_BLOCK) jelloGapBlock(b, i); return; }
     var col = Math.floor(x / TILE), row = Math.floor(y / TILE);
     var left = col * TILE, right = left + TILE, top = row * TILE, bot = top + TILE;
@@ -2335,7 +2357,9 @@
       if (thrust && jelloJetOn) {
         var jqx = x - jelloJetOX, jqy = y - jelloJetOY;
         var js = jqx * jelloJetDX + jqy * jelloJetDY;            // axial distance down the jet
-        if (js > 0 && js < JELLO_JET_LEN) {
+        // + half a tile past the occluding wall's first probe so gel resting ON the
+        // wall (surface points a few px past the ray's 4px-grid hit) still catches wash.
+        if (js > 0 && js < JELLO_JET_LEN && js <= jelloJetMaxS + TILE * 0.5) {
           var jt = jqx * (-jelloJetDY) + jqy * jelloJetDX;       // signed radial distance
           if (jt < 0) jt = -jt;
           var jrad = JELLO_JET_R0 + js * JELLO_JET_TAN;
@@ -3175,10 +3199,50 @@
   // substep's world collide (velocity-free) resolves that, as everywhere else.
   var JELLO_UNMERGE_RATE = 90;   // px/s of combined separation while a pair is merged
                                  // (escalates to 4x after 2s stuck — see _mergeT below)
+  // ----- CROWD CALM (v25.20) — an overfilled pocket sits still instead of churning ----
+  // When the player crams more gel into a dug pocket than fits, the constraint set is
+  // INFEASIBLE: volume re-inflation, contact, containment and the walls fight forever,
+  // and the only bound left is the VMAX clamp — the pile vibrates at the cap (owner's
+  // screenshot: vmax pinned at 600 with 629 contacts). Real crushed gel just sits there
+  // pressurized. So each body tracks sustained heavy contact (_cHits per frame vs its
+  // point count); past ~0.75s of it, a per-frame velocity bleed drains the churn and the
+  // pile parks, squeezed and still. The bleed touches velocity only (ox toward px), never
+  // positions, so the squeeze itself is untouched and any real push wakes it right up.
+  var JELLO_CROWD_CALM = 0.2;    // fraction of velocity drained per frame under sustained crowd pressure
+  var JELLO_CROWD_ON   = 0.12;   // fraction of points needing contact corrections per substep to count
+                                 // as "heavy" (a resting touch is well under this; a cram is far over)
   function jelloShiftBody(b, dx, dy) {
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     for (var i = 0; i < n; i++) { px[i] += dx; py[i] += dy; ox[i] += dx; oy[i] += dy; }
     b.cx += dx; b.cy += dy; b.bboxL += dx; b.bboxR += dx; b.bboxT += dy; b.bboxB += dy;
+  }
+  // Probe a body's LEADING bbox edge for solid tiles before a rigid unmerge shift:
+  // shifting a body into sealed geometry drives points enclosed, and the enclosed-
+  // point fallback (walk toward the centroid) can then WORM the body through a
+  // solid wall — the harness caught one escaping a sealed 16-tile pocket. A blocked
+  // side's share of the separation goes to the other body; both blocked = wall-
+  // pinned, leave it to the crowd calm.
+  function jelloUnmergeRoom(b, dx, dy) {
+    // The probe span is INSET 3px from the orthogonal edges: a grounded body's
+    // bottom points kiss (and transiently dip into) the floor line, so an
+    // un-inset horizontal probe read "solid" at the bottom sample and falsely
+    // wall-blocked sideways separation — a grounded merged pair then parked
+    // forever (harness R9). The inset probes the body's MID-FACE, which is
+    // what actually has to fit.
+    var x0, y0, x1, y1;
+    if ((dx < 0 ? -dx : dx) > (dy < 0 ? -dy : dy)) {
+      var lx = (dx > 0 ? b.bboxR : b.bboxL) + dx;
+      x0 = x1 = lx; y0 = b.bboxT + 3; y1 = b.bboxB - 3;
+      if (y1 < y0) { y0 = y1 = (b.bboxT + b.bboxB) * 0.5; }
+    } else {
+      var ly = (dy > 0 ? b.bboxB : b.bboxT) + dy;
+      y0 = y1 = ly; x0 = b.bboxL + 3; x1 = b.bboxR - 3;
+      if (x1 < x0) { x0 = x1 = (b.bboxL + b.bboxR) * 0.5; }
+    }
+    for (var s = 0; s <= 4; s++) {
+      if (jelloWorldSolidAt(x0 + (x1 - x0) * s / 4, y0 + (y1 - y0) * s / 4)) return false;
+    }
+    return true;
   }
   var jelloUnmergePick = [];     // scratch: worst merged partner per active index (-1 = none)
   var jelloUnmergeD2 = [];       // scratch: that partner's centroid distance^2
@@ -3224,23 +3288,125 @@
     for (a = 0; a < nActive; a++) {
       c2 = pick[a];
       A = active[a];
-      if (c2 < 0) { A._mergeT = 0; continue; }
+      if (c2 < 0) {
+        A._mergeT = 0; A._umParked = 0;
+        if (A._phaseMate) {                              // no longer merged with anyone: drop a stale mate
+          if (A._phaseMate._phaseMate === A) A._phaseMate._phaseMate = null;
+          A._phaseMate = null;
+        }
+        continue;
+      }
       A._mergeT = (A._mergeT || 0) + frameDt;
       if (c2 < a && pick[c2] === a) continue;            // pair already applied from the other side
       B = active[c2];
+      // A mate from a PREVIOUS pairing that isn't this frame's partner is stale.
+      if (A._phaseMate && A._phaseMate !== B) { if (A._phaseMate._phaseMate === A) A._phaseMate._phaseMate = null; A._phaseMate = null; }
+      if (B._phaseMate && B._phaseMate !== A) { if (B._phaseMate._phaseMate === B) B._phaseMate._phaseMate = null; B._phaseMate = null; }
       var dx = A.cx - B.cx, dy = A.cy - B.cy;
       var d = Math.sqrt(dx * dx + dy * dy);
+      var _pd2 = d * d;
+      // PARKED pairs are EVENT-driven (v25.20): a stalled merge stops shifting
+      // entirely and re-arms only when its geometry actually CHANGES (the player
+      // digs room, a neighbour moves off, a new body lands). Timed retries were
+      // tried first and a big merged blob never went quiet — with several parked
+      // pairs on staggered timers, some pair was always mid-attempt (harness:
+      // 65-120 px/s forever). A static merged pile now reads dead still.
+      if (A._umParked || B._umParked) {
+        var _dchg = _pd2 - (A._umD2 || 0); if (_dchg < 0) _dchg = -_dchg;
+        var _dchgB = _pd2 - (B._umD2 || 0); if (_dchgB > _dchg) _dchg = _dchgB;
+        if (_dchg < 9) continue;                         // nothing moved: stay parked
+        A._umParked = 0; B._umParked = 0;                // geometry changed: try again
+        A._umStall = 0; B._umStall = 0;
+      }
+      // PROGRESS GATE (v25.20): if the pair's separation hasn't grown for ~40
+      // frames of shifting, there is no room — a crowded pocket turns the
+      // escalated shifts into a ~50 px/s limit cycle against the neighbours
+      // (harness-measured). Park the pair (see above) and trip the crowd calm.
+      if (_pd2 <= (A._umD2 || 0) + 1) A._umStall = (A._umStall | 0) + 1; else A._umStall = 0;
+      if (_pd2 <= (B._umD2 || 0) + 1) B._umStall = (B._umStall | 0) + 1; else B._umStall = 0;
+      A._umD2 = _pd2; B._umD2 = _pd2;
+      if (A._umStall > 40 || B._umStall > 40) {
+        A._pressT = 1; B._pressT = 1;
+        A._umStall = 0; B._umStall = 0;
+        A._umParked = 1; B._umParked = 1;
+        // _mergeT deliberately NOT reset: it clocks TOTAL time merged, and the
+        // phase gate (below) needs it to survive park/unpark cycles — a jiggling
+        // concentric pair parks and unparks constantly, and resetting here kept
+        // the phase clock at zero forever (harness R9). A parked STATIC pair
+        // exits above before the phase block, so sealed crams still never phase.
+        continue;
+      }
+      var mt = (A._mergeT > (B._mergeT || 0)) ? A._mergeT : (B._mergeT || 0);
+      // PAIR PHASING (v25.20): a DEEPLY merged pair has concentric lattices locked
+      // by their own mutual point contact — every rigid shift is undone by the comb
+      // re-centering (harness R9: d pinned at 3.5px for 6s), and a teleport "pop"
+      // was tried and rejected (it wormed through sealed walls and yanked press-
+      // loaded pairs; three harness scenarios regressed). Instead: suspend the
+      // pair's MUTUAL contact (world collision and every other pair unaffected) so
+      // the ordinary rate shifts can slide the combs apart; contact resumes the
+      // moment they are separated (or on the safety timer) and pushes them the
+      // rest of the way. Gated on the merge persisting a beat, so ordinary brief
+      // overlaps never phase.
+      var phNeed = (A.bboxR - A.bboxL + B.bboxR - B.bboxL) * 0.5 + 2;
+      // TWO gates, both strict (an eager 0.6s phase let settling drops fall THROUGH
+      // their seat and press-loaded pairs cycle through each other — three harness
+      // scenarios regressed): the merge must have resisted shifting for 2.5s AND be
+      // genuinely CONCENTRIC (d under a third of the separated distance). Ordinary
+      // deep contact resolves by the contact solve long before either gate trips.
+      if (mt > 2.5 && d < phNeed * 0.35 && !(A._phaseMate === B)) {
+        A._phaseMate = B; B._phaseMate = A;
+        A._phaseT = 1.5; B._phaseT = 1.5;
+      }
+      if (A._phaseMate === B) {
+        A._phaseT -= frameDt; B._phaseT = A._phaseT;
+        if (d >= phNeed || A._phaseT <= 0) {
+          A._phaseMate = null; B._phaseMate = null;      // separated (or timed out): contact resumes
+          if (A._phaseT <= 0) { A._mergeT = 0; B._mergeT = 0; }   // timed out: re-gate the next phase
+        }
+      }
+      // No room to separate: while BOTH bodies are crowd-pressed (JELLO_CROWD_CALM
+      // banner) the pocket is overfilled and a rigid shift just bounces off the
+      // walls into fresh churn. Sit merged-but-CALM; the moment the player digs
+      // room and the pressure drops, unmerging resumes on its own. (A phasing pair
+      // keeps shifting: with mutual contact off, its shifts are not churn.)
+      if (!(A._phaseMate === B) && (A._pressT || 0) > 0.75 && (B._pressT || 0) > 0.75) continue;
       var nx, ny;
       if (d > 1e-3) { nx = dx / d; ny = dy / d; }
-      else { nx = 0; ny = -1; }                          // dead-centred: split vertically
-      var mt = (A._mergeT > (B._mergeT || 0)) ? A._mergeT : (B._mergeT || 0);
+      else { nx = 0; ny = 0; }
+      // GRAVITY-NEUTRAL split for (near-)vertical merges (v25.20): separating a
+      // stacked pair vertically is a Sisyphus loop — the lift falls straight back
+      // each frame, net progress ~0, and the stall gate parks the pair still merged
+      // (harness R9: two co-located cubes never separated). Bias hard to horizontal;
+      // the pair slides apart along the ground instead of fighting gravity.
+      if (dx < 6 && dx > -6) {
+        nx = ((a + c2) & 1) ? 0.85 : -0.85;
+        ny *= 0.4;
+        var _nl = Math.sqrt(nx * nx + ny * ny);
+        nx /= _nl; ny /= _nl;
+      }
       var esc = 1 + 3 * (mt > 2 ? 1 : mt / 2);           // 1x -> 4x over 2 seconds stuck
       var sep = JELLO_UNMERGE_RATE * esc * frameDt;
       var mA = A.n / (A.npt ? (A.npt + 1) * (A.npt + 1) : 16);   // tile mass (density independent)
       var mB = B.n / (B.npt ? (B.npt + 1) * (B.npt + 1) : 16);
       var fA = mB / (mA + mB);
-      jelloShiftBody(A, nx * sep * fA, ny * sep * fA);
-      jelloShiftBody(B, -nx * sep * (1 - fA), -ny * sep * (1 - fA));
+      var sepA = sep * fA, sepB = sep * (1 - fA);
+      // COMPONENT-WISE clamp (v25.20): zero only the shift component that would
+      // press the body into solid; the other axis keeps working. Blocking the
+      // WHOLE shift on one probe was wrong both ways: a grounded pair's floor-
+      // kissing bottom edge vetoed sideways separation (pair parked merged), and
+      // an unprobed minor axis let diagonal shifts press into floors and WORM a
+      // body through a sealed wall via the enclosed-point fallback (both
+      // harness-caught). Fully pinned pairs make no progress and the stall gate
+      // parks them calm.
+      var aX = nx * sepA, aY = ny * sepA;
+      if (aX !== 0 && !jelloUnmergeRoom(A, aX, 0)) aX = 0;
+      if (aY !== 0 && !jelloUnmergeRoom(A, 0, aY)) aY = 0;
+      var bX = -nx * sepB, bY = -ny * sepB;
+      if (bX !== 0 && !jelloUnmergeRoom(B, bX, 0)) bX = 0;
+      if (bY !== 0 && !jelloUnmergeRoom(B, 0, bY)) bY = 0;
+      if (aX === 0 && aY === 0 && bX === 0 && bY === 0) continue;
+      jelloShiftBody(A, aX, aY);
+      jelloShiftBody(B, bX, bY);
       A.sleeping = false; A.sleepFrames = 0;
       B.sleeping = false; B.sleepFrames = 0;
     }
@@ -4104,6 +4270,8 @@
               var rdx = bb.rx[GL[i]] - bb.rx[GL[j]], rdy = bb.ry[GL[i]] - bb.ry[GL[j]];
               if (rdx * rdx + rdy * rdy < bb.selfMin2) continue;
             }
+            else if (active[bi]._phaseMate === active[GB[j]]) continue;   // phasing pair (jelloUnmergeBodies):
+                                                                          // mutual contact suspended while they slide apart
             dx = GPX[j] - GPX[i]; dy = GPY[j] - GPY[i];
             d2 = dx * dx + dy * dy;
             var rr = GR[i] + GR[j];   // per-pair contact distance (mixed lattice densities)
@@ -4145,6 +4313,7 @@
               }
             }
             contacts++;
+            active[bi]._cHits++; active[GB[j]]._cHits++;   // crowd-pressure gauge (JELLO_CROWD_CALM)
             if (active[bi].sleeping)    { active[bi].sleeping = false;    active[bi]._solve = true; }
             if (active[GB[j]].sleeping) { active[GB[j]].sleeping = false; active[GB[j]]._solve = true; }
           }
@@ -4199,6 +4368,7 @@
       for (c = a + 1; c < nActive; c++) {
         B = active[c]; if (B.ringN < 3) continue;
         if (A._cbR < B._cbL || A._cbL > B._cbR || A._cbB < B._cbT || A._cbT > B._cbB) continue;   // bbox broadphase
+        if (A._phaseMate === B) continue;   // phasing pair: the backstop must not re-lock what unmerge is sliding apart
         jelloContainOneWay(A, B, margin, damp);
         jelloContainOneWay(B, A, margin, damp);
       }
@@ -4270,6 +4440,13 @@
       var jed = rocketExhaustDir();
       var jnz = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H - 1);
       jelloJetDX = jed.x; jelloJetDY = jed.y; jelloJetOX = jnz.x; jelloJetOY = jnz.y;
+      // Occlusion ray: solid tiles only (rocketFindImpactAlong also stops at gel,
+      // which would shield the very slime the jet is hitting). 4px steps, <= 32 probes.
+      jelloJetMaxS = Infinity;
+      for (var _jos = 4; _jos <= JELLO_JET_LEN; _jos += 4) {
+        if (tileAt(Math.floor((jelloJetOY + jelloJetDY * _jos) / TILE),
+                   Math.floor((jelloJetOX + jelloJetDX * _jos) / TILE)) !== null) { jelloJetMaxS = _jos; break; }
+      }
     }
     jelloJetReactT = 0;   // back-pressure coverage accumulates fresh each simulated frame
 
@@ -4296,6 +4473,7 @@
       var bsm = JELLO_SELF_MIN_REST * bsp;
       b.selfMin2 = bsm * bsm;
       if (b.cr > maxCr) maxCr = b.cr;
+      b._cHits = 0;   // crowd-pressure gauge, accumulated by the contact solve this frame
       b._solve = true;
       if (b.sleeping) {
         var awake = false;
@@ -4365,6 +4543,19 @@
       // Unfold any inverted lattice cells BEFORE the sleep evaluation, so a
       // mangled body can neither persist nor doze off mid-fold (v24.154).
       if (b._solve && !b.sleeping) jelloInversionHeal(b);
+      // Crowd calm (see the JELLO_CROWD_CALM banner): sustained heavy contact means
+      // the pile is squeezed with nowhere to go; drain the churn so it parks still
+      // instead of vibrating at the VMAX clamp. Velocity-domain only (ox toward px).
+      var _cp = (b._cHits || 0) / (b.n * totalSteps);
+      if (_cp > JELLO_CROWD_ON) b._pressT = (b._pressT || 0) + dt;
+      else b._pressT = (b._pressT || 0) * 0.8;
+      if (b._pressT > 0.75 && JELLO_CROWD_CALM > 0) {
+        var _cf = JELLO_CROWD_CALM, _cn2 = b.n, _cpx = b.px, _cpy = b.py, _cox = b.ox, _coy = b.oy;
+        for (var _ci = 0; _ci < _cn2; _ci++) {
+          _cox[_ci] += (_cpx[_ci] - _cox[_ci]) * _cf;
+          _coy[_ci] += (_cpy[_ci] - _coy[_ci]) * _cf;
+        }
+      }
       jelloUpdateBody(b, stepDt);
       jelloPerchHold(b);   // hold a resting body undermined by digging (v24.168) — geometry-independent anti-drain
       // Physics-anchored shading: refresh the per-point strain field once per frame for
@@ -4523,6 +4714,14 @@
     // The per-frame finite sweep heals active bodies before render; this is the belt-and-braces
     // for anything it can't see (a body corrupted in its very last frame before freezing).
     if (!isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
+    // The bbox alone is NOT enough for a PARTIALLY corrupt body: NaN points fail every
+    // < compare in the bbox scan, so the bbox comes out finite from the surviving points
+    // while a NaN SHADE ANCHOR (sheen/glint/caustic ride specific lattice points) feeds
+    // the caustics gradient — createLinearGradient throws and the loop dies (harness-
+    // caught). Verify the four anchors before any gradient math.
+    if (b.shineI !== undefined &&
+        !isFinite(b.px[b.shineI] + b.py[b.shineI] + b.px[b.glintI] + b.py[b.glintI] +
+                  b.px[b.causI0] + b.py[b.causI0] + b.px[b.causI1] + b.py[b.causI1])) return;
     jelloRingBake(b);   // bake the drawn ring (outset + ripple) once; the 3 path calls read it
     var l = b.bboxL, r = b.bboxR, t = b.bboxT, bm = b.bboxB;
     var w = r - l, hgt = bm - t;
@@ -4875,6 +5074,8 @@
       buildTriangle: jelloBuildTriangle,
       placeTiles: jelloDevPlaceTiles,
       clearTile: jelloDevClearTile,
+      tile: function (r, c) { return tileAt(r, c) === null ? 0 : 1; },   // harness world probe (procedural
+                                                                         // caves make blind dig sites flaky)
       saveBodies: jelloSaveBodies,
       restoreBodies: jelloRestoreBodies,
       sanitize: jelloSanitizeBody,
