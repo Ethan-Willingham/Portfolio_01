@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.21';
+  var GAME_VERSION = 'v25.22';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -51693,8 +51693,14 @@
       var leftOpen = tileAt(row, lCol - 1) === null;
       var rightOpen = tileAt(row, rCol + 1) === null;
       var cy = (row + 0.5) * TILE, goLeft;
-      if (leftOpen && rightOpen) goLeft = (x - ox[i]) >= 0;  // moving right -> entered from left -> exit left
-                                                             // (was (x - ox): scalar vs ARRAY -> NaN -> always false)
+      if (leftOpen && rightOpen) goLeft = b.cx < (col + 0.5) * TILE;
+                                                             // both mouths open: eject toward the BODY
+                                                             // CENTROID's side (v25.22). The old travel-
+                                                             // direction rule was a RATCHET under cram
+                                                             // pressure: points squeezed into the channel
+                                                             // moving cavity-ward got ejected deeper
+                                                             // cavity-ward, and the body oozed through
+                                                             // the channel one point at a time.
       else if (leftOpen) goLeft = true;
       else if (rightOpen) goLeft = false;
       else { b._wedgeHits = (b._wedgeHits | 0) + 1; py[i] = cy; oy[i] = cy; return; }
@@ -51771,6 +51777,21 @@
     var fb = 1.5;
     if (oy[i] < top + TILE * 0.5) pen0 -= fb; else pen1 -= fb;
     if (ox[i] < left + TILE * 0.5) pen2 -= fb; else pen3 -= fb;
+    // ENTRY-SIDE LOCK (v25.22): when the previous position sits in an ADJACENT OPEN
+    // cell, resolve back toward it UNCONDITIONALLY (a -1e9 "penetration" wins the
+    // scan, and the side is verified open right here). The small bias above only
+    // nudges the ordering, so a point DRIVEN deep by cram pressure could cross the
+    // tile's midline and exit the FAR side — straight through a 1-tile wall into
+    // whatever cavity lies behind it, with the springs hauling the whole body after
+    // it (the owner's "slime stretches into a cavity that isn't even adjacent").
+    // The resolve always parks points in open space, so the previous cell is an
+    // adjacent open cell in virtually every case; diagonal entries fall through to
+    // the biased scan, and the diagonal-pinch rule above owns sealed corners.
+    var epr = Math.floor(oy[i] / TILE), epc = Math.floor(ox[i] / TILE);
+    if (epr === row && epc === col - 1 && tileAt(row, col - 1) === null) pen2 = -1e9;
+    else if (epr === row && epc === col + 1 && tileAt(row, col + 1) === null) pen3 = -1e9;
+    else if (epc === col && epr === row - 1 && tileAt(row - 1, col) === null) pen0 = -1e9;
+    else if (epc === col && epr === row + 1 && tileAt(row + 1, col) === null) pen1 = -1e9;
     // Try the 4 sides in ascending penetration order, picking the first whose
     // neighbour tile is open. Bounded 4-pass selection — no allocation.
     var doneMask = 0;
@@ -52994,12 +53015,18 @@
       // it escalated forever without ever qualifying to phase. 0.6 still excludes
       // ordinary deep contact (which the contact solve resolves in well under the
       // 2.5s persistence gate anyway).
-      // ...and never in a CRAM (pressT >= 4): sealed-pocket phasing cannot succeed —
-      // the pair interpenetrates contact-free, times out still merged, and the
-      // resuming contact blasts them apart at ~60 px/s, cycling forever (harness
-      // R5b caught exactly two bodies doing this while the other 14 sat drained).
-      // A free concentric pair phases at mt 2.5s with pressT ~2.5, well under 4.
-      if (mt > 2.5 && d < phNeed * 0.6 && (A._pressT || 0) < 4 && (B._pressT || 0) < 4 &&
+      // ...and never in a CRAM: sealed-pocket phasing cannot succeed — the pair
+      // interpenetrates contact-free, times out still merged, and the resuming
+      // contact blasts them apart at ~60 px/s, cycling forever (harness R5b caught
+      // exactly two bodies doing this while the other 14 sat drained). The gate is
+      // RELATIVE (v25.22): a FREE pair's crowd pressure only comes from each other,
+      // so its pressT tracks its merge clock (pressT ~ mt); a crammed pair carries
+      // pressure that long predates this merge (pressT 20+ vs mt of a few). A fixed
+      // threshold raced the two clocks — mt decays on pick-flicker while pressT
+      // keeps accruing, so a free pair could cross the fixed bar before qualifying
+      // and never phase (the R9 flake).
+      if (mt > 2.5 && d < phNeed * 0.6 &&
+          (A._pressT || 0) < mt * 1.2 + 1.5 && (B._pressT || 0) < mt * 1.2 + 1.5 &&
           !(A._phaseMate === B)) {
         A._phaseMate = B; B._phaseMate = A;
         A._phaseT = 1.5; B._phaseT = 1.5;
