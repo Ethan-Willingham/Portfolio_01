@@ -229,6 +229,19 @@
   var LIQUID_SURFACE_THRESH = 1.8;    // v24.162 — was 0.85; one particle (peak ~1.0) now invisible
   var LIQUID_SURFACE_SOFT = 0.8;      // v24.162 — was 0.35; lower edge THRESH-SOFT=1.0 = exactly one-particle peak
   var LIQUID_SURFACE_RSCALE = 1.7;
+  // v25.32 — DROPLET PASS ("it is dumb to render particles but not have
+  // them visible", the owner). The v24.162 threshold keeps a LONE particle
+  // invisible (its metaball peak ~1.0 sits under the visibility edge) —
+  // right against the old fat-disc bug, wrong as invisible-but-physical
+  // water. The GPU surface renderer now draws every low-neighbour-support
+  // water particle as a small hard droplet (~1.4 world px, size fixed,
+  // never density-scaled, so the giant-disc failure mode cannot come
+  // back), fading out as support rises and the merged body field takes
+  // over. Spray reads as spray; strays are visible drops; bodies are
+  // untouched; the CPU/WebGL fallback already draws all particles.
+  // gm water.DROPLETS (1 = on); boot A/B ?wdbg=DROPLETS:0.
+  // edit² with js/liquid-wgpu.js (module twin + WGSL_SURFACE_DROPLETS).
+  var LIQUID_DROPLETS = 1;
   // v24.160 — PARTICLE PROOF overlay (WebGPU only): 1 = draw every particle
   // as its own tiny hard dot (no density scaling, no metaball merge),
   // coloured per-index, on top of the water. Diagnostic for "is that giant

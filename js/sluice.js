@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.31';
+  var GAME_VERSION = 'v25.32';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -378,6 +378,19 @@
   var LIQUID_SURFACE_THRESH = 1.8;    // v24.162 — was 0.85; one particle (peak ~1.0) now invisible
   var LIQUID_SURFACE_SOFT = 0.8;      // v24.162 — was 0.35; lower edge THRESH-SOFT=1.0 = exactly one-particle peak
   var LIQUID_SURFACE_RSCALE = 1.7;
+  // v25.32 — DROPLET PASS ("it is dumb to render particles but not have
+  // them visible", the owner). The v24.162 threshold keeps a LONE particle
+  // invisible (its metaball peak ~1.0 sits under the visibility edge) —
+  // right against the old fat-disc bug, wrong as invisible-but-physical
+  // water. The GPU surface renderer now draws every low-neighbour-support
+  // water particle as a small hard droplet (~1.4 world px, size fixed,
+  // never density-scaled, so the giant-disc failure mode cannot come
+  // back), fading out as support rises and the merged body field takes
+  // over. Spray reads as spray; strays are visible drops; bodies are
+  // untouched; the CPU/WebGL fallback already draws all particles.
+  // gm water.DROPLETS (1 = on); boot A/B ?wdbg=DROPLETS:0.
+  // edit² with js/liquid-wgpu.js (module twin + WGSL_SURFACE_DROPLETS).
+  var LIQUID_DROPLETS = 1;
   // v24.160 — PARTICLE PROOF overlay (WebGPU only): 1 = draw every particle
   // as its own tiny hard dot (no density scaling, no metaball merge),
   // coloured per-index, on top of the water. Diagnostic for "is that giant
@@ -1469,7 +1482,19 @@
   // remains is a faint uniform shimmer (mean ~10 px/s), bounded, no explosion
   // even under sustained stimulus — saharan's actual rest behaviour, mostly
   // hidden under the surface render. water.RAW = 0 restores the old machinery.
-  var LIQUID_RAW = 1;
+  // v25.32 — DEFAULT OFF (the owner's shallow-popcorn call, 2026-07-03): the
+  // raw shimmer is NOT hidden on 1-2 tile water — a shallow pool is all
+  // surface, so the permanent limit-cycle simmer + its periodic 30-100 px/s
+  // bursts read as endless popcorn/boil ("when only 1 tile deep of water
+  // exists, it should be calm"). The state machine below (lively -> settling
+  // -> frozen) is exactly that contract, and the reasons RAW benched it are
+  // obsolete: the pops' true root was the gravity/cadence mismatch (fixed
+  // v24.169 SUBSTEP_DT+GRAVITY, kept), the runaway is fixed at the source
+  // (v24.182-186 DENS_CAP + DECLUMP, kept), and MAX_VEL/BURST_DAMP still
+  // bound bursts. Lively water keeps near-raw feel (DAMP_LIVE/MOTION_LIVE/
+  // VISC_LIVE floors); calm water now actually goes still and freezes
+  // (stepping stops = zero cost at rest). A/B: gm water.RAW / ?wdbg=RAW:1.
+  var LIQUID_RAW = 0;
   // v24.170 — RAW UNIFORM DAMPING. Back to 1.0 (= pure saharan, no uniform
   // damp) in v24.173: a uniform per-substep damp settles bursts too weakly
   // AND, with the clamped EOS, creeps the rest baseline up (damp -> particles
@@ -56674,6 +56699,15 @@
           function (v) { LIQUID_SURFACE_RENDER = v; gmSetWaterLook('SURFACE_RENDER', v); },
           0, 1, 1);
       }
+      // v25.32 — droplet pass: low-support water particles draw as small
+      // visible drops (spray/strays) instead of falling under the surface
+      // threshold and vanishing. 0 = the old invisible-stray behavior.
+      if (typeof LIQUID_DROPLETS !== 'undefined') {
+        gmRegisterLever('water.DROPLETS', 'water', 'DROPLETS (visible spray)',
+          function () { return LIQUID_DROPLETS; },
+          function (v) { LIQUID_DROPLETS = v ? 1 : 0; gmSetWaterLook('DROPLETS', LIQUID_DROPLETS); },
+          0, 1, 1);
+      }
       // v24.160 — PARTICLE PROOF overlay toggle: each particle drawn as one
       // hard dot over the water, so a "giant particle" is provably one
       // particle (one dot) or a merged cluster (a speckle of many dots).
@@ -56794,7 +56828,17 @@
       if (typeof LIQUID_RAW !== 'undefined') {
         gmRegisterLever('water.RAW', 'water', 'RAW',
           function () { return LIQUID_RAW; },
-          function (v) { LIQUID_RAW = v ? 1 : 0; if (!LIQUID_RAW) LIQUID_DBG_NO_SLEEP = 0; },
+          function (v) {
+            LIQUID_RAW = v ? 1 : 0;
+            // v25.32 — a live 1 -> 0 flip must also clear the KERNEL no-sleep
+            // bit (the RAW state-tick pushes DBG_FLAGS 1 every frame; nothing
+            // in the normal path re-pushes it, so GPU sleep stayed off and
+            // the freeze latch could never converge after an A/B flip).
+            if (!LIQUID_RAW) {
+              LIQUID_DBG_NO_SLEEP = 0;
+              gmSetWaterSim('DBG_FLAGS', LIQUID_DBG_FLAGS);
+            }
+          },
           0, 1, 1);
       }
       // v24.170 — RAW settling dissipation (Old Faithful knob): 1.0 = pure

@@ -647,6 +647,15 @@
           function (v) { LIQUID_SURFACE_RENDER = v; gmSetWaterLook('SURFACE_RENDER', v); },
           0, 1, 1);
       }
+      // v25.32 — droplet pass: low-support water particles draw as small
+      // visible drops (spray/strays) instead of falling under the surface
+      // threshold and vanishing. 0 = the old invisible-stray behavior.
+      if (typeof LIQUID_DROPLETS !== 'undefined') {
+        gmRegisterLever('water.DROPLETS', 'water', 'DROPLETS (visible spray)',
+          function () { return LIQUID_DROPLETS; },
+          function (v) { LIQUID_DROPLETS = v ? 1 : 0; gmSetWaterLook('DROPLETS', LIQUID_DROPLETS); },
+          0, 1, 1);
+      }
       // v24.160 — PARTICLE PROOF overlay toggle: each particle drawn as one
       // hard dot over the water, so a "giant particle" is provably one
       // particle (one dot) or a merged cluster (a speckle of many dots).
@@ -767,7 +776,17 @@
       if (typeof LIQUID_RAW !== 'undefined') {
         gmRegisterLever('water.RAW', 'water', 'RAW',
           function () { return LIQUID_RAW; },
-          function (v) { LIQUID_RAW = v ? 1 : 0; if (!LIQUID_RAW) LIQUID_DBG_NO_SLEEP = 0; },
+          function (v) {
+            LIQUID_RAW = v ? 1 : 0;
+            // v25.32 — a live 1 -> 0 flip must also clear the KERNEL no-sleep
+            // bit (the RAW state-tick pushes DBG_FLAGS 1 every frame; nothing
+            // in the normal path re-pushes it, so GPU sleep stayed off and
+            // the freeze latch could never converge after an A/B flip).
+            if (!LIQUID_RAW) {
+              LIQUID_DBG_NO_SLEEP = 0;
+              gmSetWaterSim('DBG_FLAGS', LIQUID_DBG_FLAGS);
+            }
+          },
           0, 1, 1);
       }
       // v24.170 — RAW settling dissipation (Old Faithful knob): 1.0 = pure

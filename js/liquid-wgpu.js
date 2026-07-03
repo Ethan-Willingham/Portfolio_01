@@ -360,6 +360,10 @@
   var LIQUID_SURFACE_THRESH  = 1.8;   // v24.162 — raised from 0.85: a lone particle's metaball peak is ~1.0, so THRESH-SOFT=1.0 makes single particles invisible while bodies (field >> 1) stay solid. edit2 sluice 010
   var LIQUID_SURFACE_SOFT    = 0.8;   // v24.162 — was 0.35 (lower edge = one-particle peak)
   var LIQUID_SURFACE_RSCALE  = 1.7;   // splat radius multiplier vs the legacy disc size
+  var LIQUID_DROPLETS        = 1;     // v25.32 — visible-droplet pass for low-support particles
+                                      // (strays/spray render as small drops instead of nothing;
+                                      // the fat-disc bug is impossible: droplet size is fixed,
+                                      // never density-scaled). edit² with 010-constants.js.
   // v24.160 — PARTICLE PROOF overlay. 1 = draw every particle as its own
   // tiny hard dot (fixed size, NO density scaling, NO threshold merge),
   // coloured by a per-index hash, ON TOP of the normal water. The owner's
@@ -5514,6 +5518,97 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
 }
 `;
 
+  /* ---- WGSL — DROPLET pass (v25.32) ----------------------------------
+   * "It is dumb to render particles but not have them visible" (the
+   * owner). The v24.162 threshold makes a LONE particle's field peak
+   * (~1.0) invisible — right against the old fat-disc bug, wrong as
+   * "water that exists but cannot be seen". This pass draws every
+   * low-support water particle as a SMALL hard droplet (~1.4 world px,
+   * never density-scaled, so the giant-disc failure mode is impossible
+   * by construction), fading out as neighbour support rises and the
+   * merged field takes over (nb 8 -> 14). Spray reads as spray, strays
+   * are visible little drops, the body is untouched. Water only; the
+   * legacy disc renderer already draws everything. gm water.DROPLETS.
+   * ------------------------------------------------------------------ */
+  var WGSL_SURFACE_DROPLETS = /* wgsl */ `
+@group(0) @binding(1) var<storage, read> pos  : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> aux  : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read> flag : array<u32>;
+struct GParams { c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32, c6:u32, c7:u32 };
+@group(0) @binding(4) var<uniform> gpc : GParams;
+@group(0) @binding(5) var<storage, read> cellCnt : array<u32>;
+const NB_CELL : f32 = ${LIQUID_CELL_DEFAULT};
+
+struct VOut {
+  @builtin(position) pos   : vec4<f32>,
+  @location(0)       uv    : vec2<f32>,
+  @location(1)       alpha : f32,
+};
+
+fn corner(vid : u32) -> vec2<f32> {
+  var c = vec2<f32>(-1.0, -1.0);
+  if (vid == 1u) { c = vec2<f32>( 1.0, -1.0); }
+  else if (vid == 2u) { c = vec2<f32>(-1.0,  1.0); }
+  else if (vid == 3u) { c = vec2<f32>(-1.0,  1.0); }
+  else if (vid == 4u) { c = vec2<f32>( 1.0, -1.0); }
+  else if (vid == 5u) { c = vec2<f32>( 1.0,  1.0); }
+  return c;
+}
+
+@vertex
+fn vs(@builtin(vertex_index)   vid : u32,
+      @builtin(instance_index) iid : u32) -> VOut {
+  var out : VOut;
+  out.pos = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+  out.uv  = vec2<f32>(0.0, 0.0);
+  out.alpha = 0.0;
+  let fl = flag[iid];
+  let frozen = (fl >> 5u) & 1u;
+  let isOil  = (fl & 3u) == 1u;
+  if (frozen != 0u || isOil) { return out; }
+  // Neighbour support at the PRE-STEP position (aux.zw), same lookup as
+  // the field pass (v24.180: the grid counts were built pre-move).
+  let gpx = aux[iid].z;
+  let gpy = aux[iid].w;
+  let cgx = i32(floor(gpx / NB_CELL)) - bitcast<i32>(gpc.originX);
+  let cgy = i32(floor(gpy / NB_CELL)) - bitcast<i32>(gpc.originY);
+  let gw = i32(gpc.gridW);
+  let gh = i32(gpc.gridH);
+  var nb : u32 = 99u;                 // off-grid: treat as supported (no droplet)
+  if (cgx >= 1 && cgy >= 1 && cgx < gw - 1 && cgy < gh - 1) {
+    nb = 0u;
+    for (var ddy = -1; ddy <= 1; ddy = ddy + 1) {
+      let rowb = (cgy + ddy) * gw + cgx;
+      nb = nb + cellCnt[u32(rowb - 1)] + cellCnt[u32(rowb)] + cellCnt[u32(rowb + 1)];
+    }
+    if (nb == 0u) { nb = 99u; }       // stale grid (boot) — no droplet
+  }
+  // Fade out as the merged field takes over (body edge); interior culled.
+  let a = 1.0 - smoothstep(8.0, 14.0, f32(nb));
+  if (a <= 0.01) { return out; }
+  let p = pos[iid];
+  let pointSize = max(1.4 * rp.dpws, 1.6);   // ~1.4 world px, never density-scaled
+  let halfPx = pointSize * 0.5;
+  let scrX = (p.x - rp.camX) * rp.dpws;
+  let scrY = (p.y - rp.camY) * rp.dpws;
+  let c = corner(vid);
+  out.pos = vec4<f32>((scrX + c.x * halfPx) / (rp.canvasW * 0.5) - 1.0,
+                      1.0 - (scrY + c.y * halfPx) / (rp.canvasH * 0.5), 0.0, 1.0);
+  out.uv = c;
+  out.alpha = a * 0.85 * rp.waterColor.a;
+  return out;
+}
+
+@fragment
+fn fs(in : VOut) -> @location(0) vec4<f32> {
+  let r2 = dot(in.uv, in.uv);
+  if (r2 >= 1.0) { discard; }
+  let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha;
+  // Base water colour, premultiplied (the pass blends one / 1-src-alpha).
+  return vec4<f32>(rp.waterColor.rgb * a, a);
+}
+`;
+
   /* ---- WGSL — PARTICLE PROOF dots (v24.160) --------------------------
    * Draws ONE small hard dot per particle at its true centre — no density
    * scaling, no metaball merge — coloured by a per-index hash, on top of
@@ -6590,6 +6685,33 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       instance.surfReady = false;
       try { console.log('LiquidWGPU Stage 7b: surface-render pipeline build failed (' + ((eSurf && eSurf.message) || eSurf) + '); legacy disc renderer stays.'); } catch (_) {}
     }
+
+    // --- v25.32 droplet pass pipeline (visible strays/spray) ---
+    // Reuses bgl + renderBG like the dots overlay. A build failure only
+    // loses the droplets, never the surface renderer.
+    try {
+      var dropMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
+      instance.surfDropletPipeline = dev.createRenderPipeline({
+        label: 'liquid.surfDroplets',
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+        vertex: { module: dropMod, entryPoint: 'vs' },
+        fragment: {
+          module: dropMod,
+          entryPoint: 'fs',
+          targets: [{
+            format: fmt,
+            blend: {
+              color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' }
+            }
+          }]
+        },
+        primitive: { topology: 'triangle-list' }
+      });
+    } catch (eDrop) {
+      instance.surfDropletPipeline = null;
+      try { console.log('LiquidWGPU: droplet pipeline build failed (' + ((eDrop && eDrop.message) || eDrop) + ')'); } catch (_) {}
+    }
   }
 
   // (Re)create the offscreen field texture + the composite bind group when
@@ -6738,6 +6860,24 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         pass.draw(6, count);
       }
       pass.end();
+    }
+    // v25.32 — DROPLET pass: every low-support water particle draws as a
+    // small visible droplet over the composite (surface path only; the
+    // legacy disc renderer already draws all particles). Skipped entirely
+    // when off — zero cost.
+    if (useSurface && LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline && count > 0) {
+      var dropPass = enc.beginRenderPass({
+        label: 'liquid.dropletPass',
+        colorAttachments: [{
+          view: ctx.getCurrentTexture().createView(),
+          loadOp: 'load',
+          storeOp: 'store'
+        }]
+      });
+      dropPass.setPipeline(instance.surfDropletPipeline);
+      dropPass.setBindGroup(0, instance.renderBG);
+      dropPass.draw(6, count);
+      dropPass.end();
     }
     // v24.160 — PARTICLE PROOF overlay: draw each particle as one hard dot
     // ON TOP of the water (loadOp 'load' preserves the composite). Proof of
@@ -7697,6 +7837,7 @@ fn main() {
       surfReady: false,         // v24.113 — surface-render pipelines built (Stage 7b)
       surfFieldPipeline: null,  // v24.113 — particle -> density-field splat pipeline
       surfCompositePipeline: null, // v24.113 — field -> canvas threshold composite
+      surfDropletPipeline: null,   // v25.32 — visible strays/spray droplet pass
       surfCompositeBGL: null,   // v24.113 — composite bind-group layout
       surfCompositeBG: null,    // v24.113 — composite bind group (rebuilt with the texture)
       surfTex: null,            // v24.113 — offscreen rgba16float density field
@@ -7808,6 +7949,7 @@ fn main() {
             case 'SURFACE_THRESH':       LIQUID_SURFACE_THRESH = v; break;
             case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
+            case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
             case 'DBG_PARTICLES':        LIQUID_DBG_PARTICLES = v ? 1 : 0; break;   // v24.160 particle-proof overlay
             default: break;  // unknown name — no-op
           }

@@ -285,7 +285,19 @@
   // remains is a faint uniform shimmer (mean ~10 px/s), bounded, no explosion
   // even under sustained stimulus — saharan's actual rest behaviour, mostly
   // hidden under the surface render. water.RAW = 0 restores the old machinery.
-  var LIQUID_RAW = 1;
+  // v25.32 — DEFAULT OFF (the owner's shallow-popcorn call, 2026-07-03): the
+  // raw shimmer is NOT hidden on 1-2 tile water — a shallow pool is all
+  // surface, so the permanent limit-cycle simmer + its periodic 30-100 px/s
+  // bursts read as endless popcorn/boil ("when only 1 tile deep of water
+  // exists, it should be calm"). The state machine below (lively -> settling
+  // -> frozen) is exactly that contract, and the reasons RAW benched it are
+  // obsolete: the pops' true root was the gravity/cadence mismatch (fixed
+  // v24.169 SUBSTEP_DT+GRAVITY, kept), the runaway is fixed at the source
+  // (v24.182-186 DENS_CAP + DECLUMP, kept), and MAX_VEL/BURST_DAMP still
+  // bound bursts. Lively water keeps near-raw feel (DAMP_LIVE/MOTION_LIVE/
+  // VISC_LIVE floors); calm water now actually goes still and freezes
+  // (stepping stops = zero cost at rest). A/B: gm water.RAW / ?wdbg=RAW:1.
+  var LIQUID_RAW = 0;
   // v24.170 — RAW UNIFORM DAMPING. Back to 1.0 (= pure saharan, no uniform
   // damp) in v24.173: a uniform per-substep damp settles bursts too weakly
   // AND, with the clamped EOS, creeps the rest baseline up (damp -> particles
