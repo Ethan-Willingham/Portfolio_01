@@ -2019,7 +2019,8 @@
       var cx = (col + 0.5) * TILE, goUp;
       if (botOpen) goUp = false;                   // open shaft below -> ooze DOWN into the hole
       else if (topOpen) goUp = true;               // capped below, open above -> rest up on the lip
-      else { px[i] = cx; ox[i] = cx; return; }     // capped both ends: just centre it
+      else { b._wedgeHits = (b._wedgeHits | 0) + 1; px[i] = cx; ox[i] = cx; return; }   // capped both ends: just centre it
+      b._wedgeHits = (b._wedgeHits | 0) + 1;       // wedge gauge (crowd calm): grinding in a channel
       var ny = goUp ? (topRow * TILE - 0.01) : ((botRow + 1) * TILE + 0.01);
       // PER-FRAME eject clamp (v24.165): a node may be ejected at most one tile
       // from where it was at the START OF THE FRAME (b.fpy), not one tile per
@@ -2055,7 +2056,8 @@
                                                              // (was (x - ox): scalar vs ARRAY -> NaN -> always false)
       else if (leftOpen) goLeft = true;
       else if (rightOpen) goLeft = false;
-      else { py[i] = cy; oy[i] = cy; return; }
+      else { b._wedgeHits = (b._wedgeHits | 0) + 1; py[i] = cy; oy[i] = cy; return; }
+      b._wedgeHits = (b._wedgeHits | 0) + 1;       // wedge gauge (crowd calm): grinding in a channel
       var nx = goLeft ? (lCol * TILE - 0.01) : ((rCol + 1) * TILE + 0.01);
       // PER-FRAME eject clamp (v24.165, same rationale as the vertical branch):
       // cap horizontal eject migration to 1 tile per FRAME (off b.fpx), not per
@@ -2112,6 +2114,7 @@
     var dpr1 = Math.floor(y / TILE), dpc1 = Math.floor(x / TILE);
     if (dpr1 !== dpr0 && dpc1 !== dpc0 &&
         tileAt(dpr0, dpc1) !== null && tileAt(dpr1, dpc0) !== null) {
+      b._wedgeHits = (b._wedgeHits | 0) + 1;   // wedge gauge (crowd calm): pressing a sealed corner
       px[i] = ox[i]; py[i] = oy[i];
       return;
     }
@@ -2396,7 +2399,10 @@
       }
     }
     if (jetBestF > 0.05) { b._ripJetOn = 1; b._ripJetX = jetBX; b._ripJetY = jetBY; }   // churn the skin under the jet
-    if (disturbed && b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
+    if (disturbed) {
+      b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
+      if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
+    }
   }
 
   // Player -> jello DRIVE, two tiers (v24.151). Runs once per frame per awake
@@ -2448,6 +2454,7 @@
       }
     }
     if (!touching) return;
+    b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
     // Mark this body as ACTIVELY BEING PUSHED (ms wall-clock TTL, read by the plow
     // + the ground probe). While fresh: the plow's tip-shear gradient flattens to a
     // uniform bite (rotating the cube forward turned it into a RAMP the rig drove
@@ -3209,8 +3216,14 @@
   // pile parks, squeezed and still. The bleed touches velocity only (ox toward px), never
   // positions, so the squeeze itself is untouched and any real push wakes it right up.
   var JELLO_CROWD_CALM = 0.2;    // fraction of velocity drained per frame under sustained crowd pressure
-  var JELLO_CROWD_ON   = 0.12;   // fraction of points needing contact corrections per substep to count
-                                 // as "heavy" (a resting touch is well under this; a cram is far over)
+  var JELLO_CROWD_ON   = 0.12;   // pressure floor of the accrual band: BELOW it pressT decays; the
+                                 // accrual rate ramps 0 -> 1 across [ON, ON + 0.18] (v25.21). A single
+                                 // pressed FACE reads ~0.11-0.17, so it accrues slowly or not at all
+                                 // (an ordinary player push stays lively; the _plyMs exemption at the
+                                 // drain is the hard guarantee for driven bodies), while a real cram
+                                 // (pressed on multiple sides, cp 0.3+) trips within a second. The
+                                 // WEDGE signal (_wedgeHits) rides the same gauge so a body grinding
+                                 // inside a too-small tile channel calms too.
   function jelloShiftBody(b, dx, dy) {
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     for (var i = 0; i < n; i++) { px[i] += dx; py[i] += dy; ox[i] += dx; oy[i] += dy; }
@@ -3289,7 +3302,14 @@
       c2 = pick[a];
       A = active[a];
       if (c2 < 0) {
-        A._mergeT = 0; A._umParked = 0;
+        // DECAY the merge clock, never hard-reset it (v25.21): a pair dancing at
+        // the merge-test threshold (d hovering right at the 4px margin) flickered
+        // picked/unpicked every few frames, and the old `_mergeT = 0` here kept
+        // the 2.5s phase clock at zero forever — the pair escalated-shifted at
+        // ~65 px/s indefinitely and never phased apart (harness R9). A real
+        // separation still clears the clock in well under a second.
+        A._mergeT = (A._mergeT || 0) * 0.9;
+        A._umParked = 0;
         if (A._phaseMate) {                              // no longer merged with anyone: drop a stale mate
           if (A._phaseMate._phaseMate === A) A._phaseMate._phaseMate = null;
           A._phaseMate = null;
@@ -3305,37 +3325,6 @@
       var dx = A.cx - B.cx, dy = A.cy - B.cy;
       var d = Math.sqrt(dx * dx + dy * dy);
       var _pd2 = d * d;
-      // PARKED pairs are EVENT-driven (v25.20): a stalled merge stops shifting
-      // entirely and re-arms only when its geometry actually CHANGES (the player
-      // digs room, a neighbour moves off, a new body lands). Timed retries were
-      // tried first and a big merged blob never went quiet — with several parked
-      // pairs on staggered timers, some pair was always mid-attempt (harness:
-      // 65-120 px/s forever). A static merged pile now reads dead still.
-      if (A._umParked || B._umParked) {
-        var _dchg = _pd2 - (A._umD2 || 0); if (_dchg < 0) _dchg = -_dchg;
-        var _dchgB = _pd2 - (B._umD2 || 0); if (_dchgB > _dchg) _dchg = _dchgB;
-        if (_dchg < 9) continue;                         // nothing moved: stay parked
-        A._umParked = 0; B._umParked = 0;                // geometry changed: try again
-        A._umStall = 0; B._umStall = 0;
-      }
-      // PROGRESS GATE (v25.20): if the pair's separation hasn't grown for ~40
-      // frames of shifting, there is no room — a crowded pocket turns the
-      // escalated shifts into a ~50 px/s limit cycle against the neighbours
-      // (harness-measured). Park the pair (see above) and trip the crowd calm.
-      if (_pd2 <= (A._umD2 || 0) + 1) A._umStall = (A._umStall | 0) + 1; else A._umStall = 0;
-      if (_pd2 <= (B._umD2 || 0) + 1) B._umStall = (B._umStall | 0) + 1; else B._umStall = 0;
-      A._umD2 = _pd2; B._umD2 = _pd2;
-      if (A._umStall > 40 || B._umStall > 40) {
-        A._pressT = 1; B._pressT = 1;
-        A._umStall = 0; B._umStall = 0;
-        A._umParked = 1; B._umParked = 1;
-        // _mergeT deliberately NOT reset: it clocks TOTAL time merged, and the
-        // phase gate (below) needs it to survive park/unpark cycles — a jiggling
-        // concentric pair parks and unparks constantly, and resetting here kept
-        // the phase clock at zero forever (harness R9). A parked STATIC pair
-        // exits above before the phase block, so sealed crams still never phase.
-        continue;
-      }
       var mt = (A._mergeT > (B._mergeT || 0)) ? A._mergeT : (B._mergeT || 0);
       // PAIR PHASING (v25.20): a DEEPLY merged pair has concentric lattices locked
       // by their own mutual point contact — every rigid shift is undone by the comb
@@ -3347,21 +3336,70 @@
       // moment they are separated (or on the safety timer) and pushes them the
       // rest of the way. Gated on the merge persisting a beat, so ordinary brief
       // overlaps never phase.
+      // EVALUATED BEFORE THE PARK GATES since v25.21: with the crowd calm draining
+      // a parked concentric pair fully STATIC, its distance never changed, so it
+      // never unparked and never reached this trigger — merged forever (harness
+      // R9). Phasing IS the escape for exactly that state, so it must see parked
+      // pairs; while a pair phases, the park/progress gates are skipped (its
+      // shifts are contact-free, not churn) and re-engage fresh when phasing ends.
       var phNeed = (A.bboxR - A.bboxL + B.bboxR - B.bboxL) * 0.5 + 2;
       // TWO gates, both strict (an eager 0.6s phase let settling drops fall THROUGH
       // their seat and press-loaded pairs cycle through each other — three harness
       // scenarios regressed): the merge must have resisted shifting for 2.5s AND be
       // genuinely CONCENTRIC (d under a third of the separated distance). Ordinary
       // deep contact resolves by the contact solve long before either gate trips.
-      if (mt > 2.5 && d < phNeed * 0.35 && !(A._phaseMate === B)) {
+      // 0.35 -> 0.6 concentric gate (v25.21): the threshold-dancing pair (above)
+      // hovers at d ~ 0.4-0.5 of the separated distance, outside the old gate, so
+      // it escalated forever without ever qualifying to phase. 0.6 still excludes
+      // ordinary deep contact (which the contact solve resolves in well under the
+      // 2.5s persistence gate anyway).
+      // ...and never in a CRAM (pressT >= 4): sealed-pocket phasing cannot succeed —
+      // the pair interpenetrates contact-free, times out still merged, and the
+      // resuming contact blasts them apart at ~60 px/s, cycling forever (harness
+      // R5b caught exactly two bodies doing this while the other 14 sat drained).
+      // A free concentric pair phases at mt 2.5s with pressT ~2.5, well under 4.
+      if (mt > 2.5 && d < phNeed * 0.6 && (A._pressT || 0) < 4 && (B._pressT || 0) < 4 &&
+          !(A._phaseMate === B)) {
         A._phaseMate = B; B._phaseMate = A;
         A._phaseT = 1.5; B._phaseT = 1.5;
+        A._umParked = 0; B._umParked = 0;
+        A._umStall = 0; B._umStall = 0;
       }
       if (A._phaseMate === B) {
         A._phaseT -= frameDt; B._phaseT = A._phaseT;
         if (d >= phNeed || A._phaseT <= 0) {
           A._phaseMate = null; B._phaseMate = null;      // separated (or timed out): contact resumes
           if (A._phaseT <= 0) { A._mergeT = 0; B._mergeT = 0; }   // timed out: re-gate the next phase
+        }
+      }
+      if (!(A._phaseMate === B)) {
+        // PARKED pairs are EVENT-driven (v25.20): a stalled merge stops shifting
+        // entirely and re-arms only when its geometry actually CHANGES (the player
+        // digs room, a neighbour moves off, a new body lands). Timed retries were
+        // tried first and a big merged blob never went quiet — with several parked
+        // pairs on staggered timers, some pair was always mid-attempt (harness:
+        // 65-120 px/s forever). A static merged pile now reads dead still.
+        if (A._umParked || B._umParked) {
+          var _dchg = _pd2 - (A._umD2 || 0); if (_dchg < 0) _dchg = -_dchg;
+          var _dchgB = _pd2 - (B._umD2 || 0); if (_dchgB > _dchg) _dchg = _dchgB;
+          if (_dchg < 9) continue;                         // nothing moved: stay parked
+          A._umParked = 0; B._umParked = 0;                // geometry changed: try again
+          A._umStall = 0; B._umStall = 0;
+        }
+        // PROGRESS GATE (v25.20): if the pair's separation hasn't grown for ~40
+        // frames of shifting, there is no room — a crowded pocket turns the
+        // escalated shifts into a ~50 px/s limit cycle against the neighbours
+        // (harness-measured). Park the pair (see above) and trip the crowd calm.
+        // (_mergeT deliberately NOT reset: it clocks TOTAL time merged, and the
+        // phase gate above needs it to survive park/unpark cycles.)
+        if (_pd2 <= (A._umD2 || 0) + 1) A._umStall = (A._umStall | 0) + 1; else A._umStall = 0;
+        if (_pd2 <= (B._umD2 || 0) + 1) B._umStall = (B._umStall | 0) + 1; else B._umStall = 0;
+        A._umD2 = _pd2; B._umD2 = _pd2;
+        if (A._umStall > 40 || B._umStall > 40) {
+          A._pressT = 1; B._pressT = 1;
+          A._umStall = 0; B._umStall = 0;
+          A._umParked = 1; B._umParked = 1;
+          continue;
         }
       }
       // No room to separate: while BOTH bodies are crowd-pressed (JELLO_CROWD_CALM
@@ -3505,7 +3543,7 @@
         }
         moved = true;
       }
-      if (moved) { b.sleeping = false; b.sleepFrames = 0; }
+      if (moved) { b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now(); }
     }
   }
 
@@ -4314,6 +4352,16 @@
             }
             contacts++;
             active[bi]._cHits++; active[GB[j]]._cHits++;   // crowd-pressure gauge (JELLO_CROWD_CALM)
+            // PUSH-CHAIN stamp propagation (v25.21): a body being pressed by a
+            // player-driven body is part of the player's push and must not be
+            // drained either — without this the FAR cube in a two-cube shove was
+            // never stamped, the calm froze it, and the whole chain stopped dead
+            // (owner's "pushing one against another, it won't move"). Each hop
+            // inherits the stamp 120ms older, so the exemption fades across a
+            // long chain instead of blanket-exempting a whole touching pile.
+            var _psA = active[bi]._plyMs || 0, _psB = active[GB[j]]._plyMs || 0;
+            if (_psA > _psB + 120) active[GB[j]]._plyMs = _psA - 120;
+            else if (_psB > _psA + 120) active[bi]._plyMs = _psB - 120;
             if (active[bi].sleeping)    { active[bi].sleeping = false;    active[bi]._solve = true; }
             if (active[GB[j]].sleeping) { active[GB[j]].sleeping = false; active[GB[j]]._solve = true; }
           }
@@ -4473,7 +4521,10 @@
       var bsm = JELLO_SELF_MIN_REST * bsp;
       b.selfMin2 = bsm * bsm;
       if (b.cr > maxCr) maxCr = b.cr;
-      b._cHits = 0;   // crowd-pressure gauge, accumulated by the contact solve this frame
+      b._cHits = 0;      // crowd-pressure gauge, accumulated by the contact solve this frame
+      b._wedgeHits = 0;  // wedge gauge: gap-block ejects + diagonal-pinch undos this frame (v25.21) —
+                         // a body grinding inside a too-small tile channel churns against SOLID, which
+                         // the body-body gauge above never sees (the owner's wedged-slime shake)
       b._solve = true;
       if (b.sleeping) {
         var awake = false;
@@ -4546,10 +4597,24 @@
       // Crowd calm (see the JELLO_CROWD_CALM banner): sustained heavy contact means
       // the pile is squeezed with nowhere to go; drain the churn so it parks still
       // instead of vibrating at the VMAX clamp. Velocity-domain only (ox toward px).
-      var _cp = (b._cHits || 0) / (b.n * totalSteps);
-      if (_cp > JELLO_CROWD_ON) b._pressT = (b._pressT || 0) + dt;
-      else b._pressT = (b._pressT || 0) * 0.8;
-      if (b._pressT > 0.75 && JELLO_CROWD_CALM > 0) {
+      // Wedge events (few points, hard evidence) weigh 3x body-body corrections.
+      var _cp = ((b._cHits || 0) + (b._wedgeHits || 0) * 3) / (b.n * totalSteps);
+      // Proportional accrual over [ON, ON+0.18]: face-level pressure barely accrues,
+      // full crowd pressure trips in under a second (see the JELLO_CROWD_ON banner).
+      var _cr = (_cp - JELLO_CROWD_ON) / 0.18;
+      if (_cr > 0) b._pressT = (b._pressT || 0) + dt * (_cr > 1 ? 1 : _cr);
+      else b._pressT = (b._pressT || 0) * 0.93;   // ~10-frame half-life: a shuffling pile's contact
+                                                  // FLICKERS below the band a frame at a time, and a
+                                                  // 0.8 decay dropped pressT under the drain gate in
+                                                  // 2 such frames (cram simmered at ~50 px/s), while
+                                                  // 0.98 held the drain on ~forever and froze bodies
+                                                  // long after the pressure ended (both harness-caught)
+      // The drain NEVER runs on a body the player touched in the last half second
+      // (couple/fling/push/displace stamp _plyMs): draining a driven body ate the
+      // push and read as slow motion (v25.21, owner report). pressT still accrues,
+      // so the calm re-engages the moment the player lets go.
+      if (b._pressT > 0.75 && JELLO_CROWD_CALM > 0 &&
+          !(b._plyMs !== undefined && performance.now() - b._plyMs < 500)) {
         var _cf = JELLO_CROWD_CALM, _cn2 = b.n, _cpx = b.px, _cpy = b.py, _cox = b.ox, _coy = b.oy;
         for (var _ci = 0; _ci < _cn2; _ci++) {
           _cox[_ci] += (_cpx[_ci] - _cox[_ci]) * _cf;
