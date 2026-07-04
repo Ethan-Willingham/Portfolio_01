@@ -14,10 +14,10 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // The stat. Counted 2026-06-19: 15 archived, 14 still live on the homepage.
-  var ARCHIVED = 15;
-  var TOTAL = 29;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 52
+  // The stat. Counted 2026-07-03: 16 archived, 14 still live on the homepage.
+  var ARCHIVED = 16;
+  var TOTAL = 30;
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 53
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +
