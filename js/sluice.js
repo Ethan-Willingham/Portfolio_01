@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.41';
+  var GAME_VERSION = 'v25.42';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -331,6 +331,40 @@
   // solid. Lower = more aggressive drag.
   var LIQUID_FLOOR_FRICTION = 0.92;   // v10.102 — was 0.95; water glides more on flats instead of stopping like tar
   var LIQUID_WALL_FRICTION = 0.97;    // v10.102 — was 0.975; very mild loosening
+  // v25.41 — THE SHALLOW-POPCORN ROOT FIX (owner: "liquid that is one tile
+  // deep constantly pops off... it should be calm; don't let the current way
+  // it is built hold you back"). Root: the clamped EOS is a ONE-WAY spring —
+  // pressure = max(0, (dn-1)·stiff) pushes when over-packed but can never
+  // pull, so a thin pond's surface can only ever SPIT particles; gravity
+  // re-compresses, the EOS spits again = endless popcorn, and every brake/
+  // freeze layer ever added was fighting this one-way valve. Two-part fix,
+  // both physical:
+  //   PRESSURE_MAX_DV — THE FIX: a per-substep cap (px/s) on the velocity
+  //     change a grid cell may receive from the pressure impulse. The
+  //     scatter is a per-step (dt=1) impulse, so ONE substep can kick a
+  //     cell 50-200 px/s off a single-frame density blip (grid aliasing) —
+  //     that one-substep spike IS the pop. Rest corrections (~2 px/s per
+  //     substep vs gravity) never touch the cap; a sustained splash
+  //     gradient re-earns it every substep (cap x 120+/s of correction),
+  //     so geysers survive. Unconditionally stabilizing (only removes
+  //     energy). 0 = off (the old unbounded impulse).
+  //   AIR_DRAG — per-substep velocity keep-factor for SEPARATED particles
+  //     (densityRatio < 0.55, ramping to full by 0.35): a droplet in air
+  //     decelerates instead of flying ballistic (the sim had zero air
+  //     resistance). 1 = off.
+  //   COHESION — detachment surface tension, KEPT AT 0 / EXPERIMENTAL:
+  //     both a flat negative-pressure floor AND a dn<0.7-gated pull were
+  //     measured EXPLOSIVE (the skin is permanently under-dense, so any
+  //     sustained attraction there pumps the surface limit cycle to the
+  //     600 px/s cap within seconds). The gated code stays for future
+  //     experiments; do not raise the default.
+  // All live: gm water.PRESSURE_MAX_DV / water.AIR_DRAG / water.COHESION;
+  // boot A/B ?wdbg=PRESSURE_MAX_DV:0,AIR_DRAG:1,COHESION:0 = the exact old
+  // physics. edit² with js/liquid-wgpu.js (module twins + WGSL pressure/
+  // gridUpdate/g2p + both fr() refs).
+  var LIQUID_COHESION = 0;
+  var LIQUID_AIR_DRAG = 0.993;
+  var LIQUID_PRESSURE_MAX_DV = 10;
   var LIQUID_GRAVITY = 250;          // v24.169 — was 1000. THE POPCORN FIX: our water gravity was ~4x
                                      // saharan's regime, driving 4x the compression his clamped EOS is
                                      // tuned for, so pressure over-corrected into the limit cycle. Matched
@@ -1600,7 +1634,15 @@
   // structurally disables the freeze the owner vetoed ("we absolutely
   // cannot just freeze all the water"). gm water.CALM_MAX (live; a live
   // drop below the current calm clamps down next tick).
-  var LIQUID_CALM_MAX = 0.5;
+  // v25.41 — DEFAULT 0 (the owner's holistic call: "i dont think it should
+  // ever freeze unless off screen"). The shallow popcorn is now fixed at
+  // the physics root (LIQUID_COHESION + LIQUID_AIR_DRAG in 010): the EOS
+  // can pull its surface back together, so the brake/settle machinery is
+  // no longer needed to fake calm — water is pure fluid at all times on
+  // screen (per-particle off-screen freezing is camera-distance-based and
+  // untouched). The whole state machine stays one lever away: raise
+  // water.CALM_MAX to re-engage settling (1 = the old full grind+freeze).
+  var LIQUID_CALM_MAX = 0;
   var LIQUID_STIM_HOLD = 1.0;         // s — quiet time before calm starts rising
   var LIQUID_STIM_MAX = 6.0;          // s — hard cap: settle regardless of fast-water hold (convergence guarantee)
   var LIQUID_FAST_VSQ = 576.0;        // px/s squared — "still really flowing" metric (24 px/s, above the
@@ -2479,18 +2521,6 @@
       buckets: function () {
         var o = {}, k;
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
-        return o;
-      },
-      conSig: function (id) {   // live bay signature (function-hoisted; defined in 310)
-        return typeof consoleBaySig === 'function' ? consoleBaySig(id) : '?';
-      },
-      conKey: function () {   // console cache keys (var-hoisted; assigned in 300/310)
-        return (typeof consoleFrameKey !== 'undefined' ? consoleFrameKey : '?') + ' || ' +
-               (typeof consoleInstKey !== 'undefined' ? consoleInstKey : '?');
-      },
-      peaks: function () {   // peak-hold companions (snap up, slow decay): spike hunting
-        var o = {}, k;
-        for (k in perfBucketsPk) if (Object.prototype.hasOwnProperty.call(perfBucketsPk, k)) o[k] = +perfBucketsPk[k].toFixed(3);
         return o;
       }
     };
@@ -8890,7 +8920,20 @@
       liquidAeration[i] = aerDamp * (liquidAeration[i] + (aeration - liquidAeration[i]) * aerBlur);
       var stiff = oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
       var pressure = (density / LIQUID_DENSITY - 1) * stiff;
-      if (pressure < 0 || density <= 0) pressure = 0;
+      // v25.41 — DETACHMENT COHESION (water only): material leaving the body
+      // (dn < 0.7, full pull by 0.4) feels a small negative pressure that
+      // hauls it back = surface tension at the skin; the shallow-popcorn
+      // root fix. The bulk band (dn 0.7-1.0) keeps the EXACT old zero clamp
+      // — a flat negative floor there is a tensile instability (measured:
+      // pond exploded to the speed cap). 0 = the old clamp everywhere.
+      // edit² liquid-wgpu (WGSL pressure + both fr() refs).
+      if (pressure < 0) {
+        var dnR = density / LIQUID_DENSITY;
+        var ck = (0.7 - dnR) / 0.3;
+        if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
+        pressure = oil ? 0 : -(LIQUID_COHESION * stiff) * ck;
+      }
+      if (density <= 0) pressure = 0;
       var volume = density > 0 ? 1 / density : 0;
       var coeff = volume * 4 * -pressure;
       var coeffx = coeff * liquidDX[i];
@@ -9081,8 +9124,23 @@
         var invm = 1 / liquidCellMass[c];
         var oilK = liquidCellOilMass[c] * invm;
         var grav = (LIQUID_GRAVITY + OIL_GRAV_DLT * oilK) * gravScale;
-        liquidCellDVX[c] = (liquidCellVX[c] + liquidCellDVX[c]) * invm;
-        liquidCellDVY[c] = (liquidCellVY[c] + liquidCellDVY[c]) * invm + grav;
+        // v25.41 — SHOCK LIMITER: cap the per-substep velocity change a
+        // cell may receive from the pressure impulse (the one-substep
+        // 50-200 px/s spike that IS the shallow popcorn); rationale at
+        // the WGSL gridUpdate twin. 0 = off.
+        var pdvX = liquidCellDVX[c];
+        var pdvY = liquidCellDVY[c];
+        if (LIQUID_PRESSURE_MAX_DV > 0) {
+          var dvCap = LIQUID_PRESSURE_MAX_DV * stepDt / LIQUID_CELL * liquidCellMass[c];
+          var dvL2 = pdvX * pdvX + pdvY * pdvY;
+          if (dvL2 > dvCap * dvCap) {
+            var dvSc = dvCap / Math.sqrt(dvL2);
+            pdvX *= dvSc;
+            pdvY *= dvSc;
+          }
+        }
+        liquidCellDVX[c] = (liquidCellVX[c] + pdvX) * invm;
+        liquidCellDVY[c] = (liquidCellVY[c] + pdvY) * invm + grav;
       } else {
         liquidCellDVX[c] = 0;
         liquidCellDVY[c] = 0;
@@ -9319,6 +9377,18 @@
             newVX *= mvSc;
             newVY *= mvSc;
           }
+        }
+        // v25.41 — AIR DRAG: a separated droplet (densityRatio < 0.55; the
+        // surface skin reads 0.5-0.9, airborne spray 0.1-0.3) decelerates
+        // in air instead of flying ballistic; full drag by 0.35. Kills the
+        // popcorn ejecta at the visible end. 1 = off. edit² liquid-wgpu
+        // (WGSL g2p + reference).
+        if (LIQUID_AIR_DRAG < 1 && densityRatio < 0.55) {
+          var adT = (0.55 - densityRatio) * 5;
+          if (adT > 1) adT = 1;
+          var adF = 1 + (LIQUID_AIR_DRAG - 1) * adT;
+          newVX *= adF;
+          newVY *= adF;
         }
       }
       liquidVX[i] = newVX;
@@ -57157,6 +57227,28 @@
       // lower = a stir settles faster). GATE_LO/HI = the px/s band over which
       // burst damp ramps in (LO above rested ambient so rest stays calm). Each
       // pushes to the GPU sim (g2pC lane) live, no recompile.
+      // v25.41 — the shallow-popcorn root fix: per-substep pressure impulse
+      // cap (the pop quantum) + air drag on separated droplets. 0 / 1 = old.
+      if (typeof LIQUID_PRESSURE_MAX_DV !== 'undefined') {
+        gmRegisterLever('water.PRESSURE_MAX_DV', 'water', 'PRESSURE_MAX_DV (px/s per substep, 0=off)',
+          function () { return LIQUID_PRESSURE_MAX_DV; },
+          function (v) { LIQUID_PRESSURE_MAX_DV = v < 0 ? 0 : v; gmSetWaterSim('PRESSURE_MAX_DV', LIQUID_PRESSURE_MAX_DV); },
+          0, 40, undefined);
+      }
+      // COHESION is EXPERIMENTAL and defaults 0 — measured explosive at any
+      // sustained level (see 010); the lever exists for supervised A/B only.
+      if (typeof LIQUID_COHESION !== 'undefined') {
+        gmRegisterLever('water.COHESION', 'water', 'COHESION (DANGER: explosive)',
+          function () { return LIQUID_COHESION; },
+          function (v) { LIQUID_COHESION = v < 0 ? 0 : (v > 1 ? 1 : v); gmSetWaterSim('COHESION', LIQUID_COHESION); },
+          0, 0.3, undefined);
+      }
+      if (typeof LIQUID_AIR_DRAG !== 'undefined') {
+        gmRegisterLever('water.AIR_DRAG', 'water', 'AIR_DRAG (droplet keep/substep)',
+          function () { return LIQUID_AIR_DRAG; },
+          function (v) { LIQUID_AIR_DRAG = v < 0.9 ? 0.9 : (v > 1 ? 1 : v); gmSetWaterSim('AIR_DRAG', LIQUID_AIR_DRAG); },
+          0.98, 1.0, undefined);
+      }
       if (typeof LIQUID_MAX_VEL !== 'undefined') {
         gmRegisterLever('water.MAX_VEL', 'water', 'MAX_VEL (px/s cap, 0=off)',
           function () { return LIQUID_MAX_VEL; },

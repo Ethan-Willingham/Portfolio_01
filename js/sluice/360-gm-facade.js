@@ -846,6 +846,28 @@
       // lower = a stir settles faster). GATE_LO/HI = the px/s band over which
       // burst damp ramps in (LO above rested ambient so rest stays calm). Each
       // pushes to the GPU sim (g2pC lane) live, no recompile.
+      // v25.41 — the shallow-popcorn root fix: per-substep pressure impulse
+      // cap (the pop quantum) + air drag on separated droplets. 0 / 1 = old.
+      if (typeof LIQUID_PRESSURE_MAX_DV !== 'undefined') {
+        gmRegisterLever('water.PRESSURE_MAX_DV', 'water', 'PRESSURE_MAX_DV (px/s per substep, 0=off)',
+          function () { return LIQUID_PRESSURE_MAX_DV; },
+          function (v) { LIQUID_PRESSURE_MAX_DV = v < 0 ? 0 : v; gmSetWaterSim('PRESSURE_MAX_DV', LIQUID_PRESSURE_MAX_DV); },
+          0, 40, undefined);
+      }
+      // COHESION is EXPERIMENTAL and defaults 0 — measured explosive at any
+      // sustained level (see 010); the lever exists for supervised A/B only.
+      if (typeof LIQUID_COHESION !== 'undefined') {
+        gmRegisterLever('water.COHESION', 'water', 'COHESION (DANGER: explosive)',
+          function () { return LIQUID_COHESION; },
+          function (v) { LIQUID_COHESION = v < 0 ? 0 : (v > 1 ? 1 : v); gmSetWaterSim('COHESION', LIQUID_COHESION); },
+          0, 0.3, undefined);
+      }
+      if (typeof LIQUID_AIR_DRAG !== 'undefined') {
+        gmRegisterLever('water.AIR_DRAG', 'water', 'AIR_DRAG (droplet keep/substep)',
+          function () { return LIQUID_AIR_DRAG; },
+          function (v) { LIQUID_AIR_DRAG = v < 0.9 ? 0.9 : (v > 1 ? 1 : v); gmSetWaterSim('AIR_DRAG', LIQUID_AIR_DRAG); },
+          0.98, 1.0, undefined);
+      }
       if (typeof LIQUID_MAX_VEL !== 'undefined') {
         gmRegisterLever('water.MAX_VEL', 'water', 'MAX_VEL (px/s cap, 0=off)',
           function () { return LIQUID_MAX_VEL; },

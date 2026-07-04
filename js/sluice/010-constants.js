@@ -182,6 +182,40 @@
   // solid. Lower = more aggressive drag.
   var LIQUID_FLOOR_FRICTION = 0.92;   // v10.102 — was 0.95; water glides more on flats instead of stopping like tar
   var LIQUID_WALL_FRICTION = 0.97;    // v10.102 — was 0.975; very mild loosening
+  // v25.41 — THE SHALLOW-POPCORN ROOT FIX (owner: "liquid that is one tile
+  // deep constantly pops off... it should be calm; don't let the current way
+  // it is built hold you back"). Root: the clamped EOS is a ONE-WAY spring —
+  // pressure = max(0, (dn-1)·stiff) pushes when over-packed but can never
+  // pull, so a thin pond's surface can only ever SPIT particles; gravity
+  // re-compresses, the EOS spits again = endless popcorn, and every brake/
+  // freeze layer ever added was fighting this one-way valve. Two-part fix,
+  // both physical:
+  //   PRESSURE_MAX_DV — THE FIX: a per-substep cap (px/s) on the velocity
+  //     change a grid cell may receive from the pressure impulse. The
+  //     scatter is a per-step (dt=1) impulse, so ONE substep can kick a
+  //     cell 50-200 px/s off a single-frame density blip (grid aliasing) —
+  //     that one-substep spike IS the pop. Rest corrections (~2 px/s per
+  //     substep vs gravity) never touch the cap; a sustained splash
+  //     gradient re-earns it every substep (cap x 120+/s of correction),
+  //     so geysers survive. Unconditionally stabilizing (only removes
+  //     energy). 0 = off (the old unbounded impulse).
+  //   AIR_DRAG — per-substep velocity keep-factor for SEPARATED particles
+  //     (densityRatio < 0.55, ramping to full by 0.35): a droplet in air
+  //     decelerates instead of flying ballistic (the sim had zero air
+  //     resistance). 1 = off.
+  //   COHESION — detachment surface tension, KEPT AT 0 / EXPERIMENTAL:
+  //     both a flat negative-pressure floor AND a dn<0.7-gated pull were
+  //     measured EXPLOSIVE (the skin is permanently under-dense, so any
+  //     sustained attraction there pumps the surface limit cycle to the
+  //     600 px/s cap within seconds). The gated code stays for future
+  //     experiments; do not raise the default.
+  // All live: gm water.PRESSURE_MAX_DV / water.AIR_DRAG / water.COHESION;
+  // boot A/B ?wdbg=PRESSURE_MAX_DV:0,AIR_DRAG:1,COHESION:0 = the exact old
+  // physics. edit² with js/liquid-wgpu.js (module twins + WGSL pressure/
+  // gridUpdate/g2p + both fr() refs).
+  var LIQUID_COHESION = 0;
+  var LIQUID_AIR_DRAG = 0.993;
+  var LIQUID_PRESSURE_MAX_DV = 10;
   var LIQUID_GRAVITY = 250;          // v24.169 — was 1000. THE POPCORN FIX: our water gravity was ~4x
                                      // saharan's regime, driving 4x the compression his clamped EOS is
                                      // tuned for, so pressure over-corrected into the limit cycle. Matched

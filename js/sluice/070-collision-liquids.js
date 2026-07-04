@@ -617,7 +617,20 @@
       liquidAeration[i] = aerDamp * (liquidAeration[i] + (aeration - liquidAeration[i]) * aerBlur);
       var stiff = oil ? LIQUID_OIL_PRESSURE_STIFF : LIQUID_PRESSURE_STIFF;
       var pressure = (density / LIQUID_DENSITY - 1) * stiff;
-      if (pressure < 0 || density <= 0) pressure = 0;
+      // v25.41 — DETACHMENT COHESION (water only): material leaving the body
+      // (dn < 0.7, full pull by 0.4) feels a small negative pressure that
+      // hauls it back = surface tension at the skin; the shallow-popcorn
+      // root fix. The bulk band (dn 0.7-1.0) keeps the EXACT old zero clamp
+      // — a flat negative floor there is a tensile instability (measured:
+      // pond exploded to the speed cap). 0 = the old clamp everywhere.
+      // edit² liquid-wgpu (WGSL pressure + both fr() refs).
+      if (pressure < 0) {
+        var dnR = density / LIQUID_DENSITY;
+        var ck = (0.7 - dnR) / 0.3;
+        if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
+        pressure = oil ? 0 : -(LIQUID_COHESION * stiff) * ck;
+      }
+      if (density <= 0) pressure = 0;
       var volume = density > 0 ? 1 / density : 0;
       var coeff = volume * 4 * -pressure;
       var coeffx = coeff * liquidDX[i];
@@ -808,8 +821,23 @@
         var invm = 1 / liquidCellMass[c];
         var oilK = liquidCellOilMass[c] * invm;
         var grav = (LIQUID_GRAVITY + OIL_GRAV_DLT * oilK) * gravScale;
-        liquidCellDVX[c] = (liquidCellVX[c] + liquidCellDVX[c]) * invm;
-        liquidCellDVY[c] = (liquidCellVY[c] + liquidCellDVY[c]) * invm + grav;
+        // v25.41 — SHOCK LIMITER: cap the per-substep velocity change a
+        // cell may receive from the pressure impulse (the one-substep
+        // 50-200 px/s spike that IS the shallow popcorn); rationale at
+        // the WGSL gridUpdate twin. 0 = off.
+        var pdvX = liquidCellDVX[c];
+        var pdvY = liquidCellDVY[c];
+        if (LIQUID_PRESSURE_MAX_DV > 0) {
+          var dvCap = LIQUID_PRESSURE_MAX_DV * stepDt / LIQUID_CELL * liquidCellMass[c];
+          var dvL2 = pdvX * pdvX + pdvY * pdvY;
+          if (dvL2 > dvCap * dvCap) {
+            var dvSc = dvCap / Math.sqrt(dvL2);
+            pdvX *= dvSc;
+            pdvY *= dvSc;
+          }
+        }
+        liquidCellDVX[c] = (liquidCellVX[c] + pdvX) * invm;
+        liquidCellDVY[c] = (liquidCellVY[c] + pdvY) * invm + grav;
       } else {
         liquidCellDVX[c] = 0;
         liquidCellDVY[c] = 0;
@@ -1046,6 +1074,18 @@
             newVX *= mvSc;
             newVY *= mvSc;
           }
+        }
+        // v25.41 — AIR DRAG: a separated droplet (densityRatio < 0.55; the
+        // surface skin reads 0.5-0.9, airborne spray 0.1-0.3) decelerates
+        // in air instead of flying ballistic; full drag by 0.35. Kills the
+        // popcorn ejecta at the visible end. 1 = off. edit² liquid-wgpu
+        // (WGSL g2p + reference).
+        if (LIQUID_AIR_DRAG < 1 && densityRatio < 0.55) {
+          var adT = (0.55 - densityRatio) * 5;
+          if (adT > 1) adT = 1;
+          var adF = 1 + (LIQUID_AIR_DRAG - 1) * adT;
+          newVX *= adF;
+          newVY *= adF;
         }
       }
       liquidVX[i] = newVX;

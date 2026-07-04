@@ -381,7 +381,15 @@
   // structurally disables the freeze the owner vetoed ("we absolutely
   // cannot just freeze all the water"). gm water.CALM_MAX (live; a live
   // drop below the current calm clamps down next tick).
-  var LIQUID_CALM_MAX = 0.5;
+  // v25.41 — DEFAULT 0 (the owner's holistic call: "i dont think it should
+  // ever freeze unless off screen"). The shallow popcorn is now fixed at
+  // the physics root (LIQUID_COHESION + LIQUID_AIR_DRAG in 010): the EOS
+  // can pull its surface back together, so the brake/settle machinery is
+  // no longer needed to fake calm — water is pure fluid at all times on
+  // screen (per-particle off-screen freezing is camera-distance-based and
+  // untouched). The whole state machine stays one lever away: raise
+  // water.CALM_MAX to re-engage settling (1 = the old full grind+freeze).
+  var LIQUID_CALM_MAX = 0;
   var LIQUID_STIM_HOLD = 1.0;         // s — quiet time before calm starts rising
   var LIQUID_STIM_MAX = 6.0;          // s — hard cap: settle regardless of fast-water hold (convergence guarantee)
   var LIQUID_FAST_VSQ = 576.0;        // px/s squared — "still really flowing" metric (24 px/s, above the
@@ -1260,18 +1268,6 @@
       buckets: function () {
         var o = {}, k;
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
-        return o;
-      },
-      conSig: function (id) {   // live bay signature (function-hoisted; defined in 310)
-        return typeof consoleBaySig === 'function' ? consoleBaySig(id) : '?';
-      },
-      conKey: function () {   // console cache keys (var-hoisted; assigned in 300/310)
-        return (typeof consoleFrameKey !== 'undefined' ? consoleFrameKey : '?') + ' || ' +
-               (typeof consoleInstKey !== 'undefined' ? consoleInstKey : '?');
-      },
-      peaks: function () {   // peak-hold companions (snap up, slow decay): spike hunting
-        var o = {}, k;
-        for (k in perfBucketsPk) if (Object.prototype.hasOwnProperty.call(perfBucketsPk, k)) o[k] = +perfBucketsPk[k].toFixed(3);
         return o;
       }
     };

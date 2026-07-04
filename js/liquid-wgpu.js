@@ -294,6 +294,19 @@
   // CPU fallback reads those); the fr() reference below reads these.
   var LIQUID_MAX_VEL        = 600.0;   // px/s — hard per-particle speed cap (0 = off)
   var LIQUID_BURST_DAMP     = 0.985;   // per-substep factor for FULLY-fast water (1.0 = off)
+  // v25.41 — the shallow-popcorn root fix (rationale at the 010-constants
+  // twins). PRESSURE_MAX_DV is the fix: a per-substep cap (px/s) on the
+  // velocity change a grid cell may receive from the pressure impulse —
+  // the one-substep 50-200 px/s spike off a density blip IS the pop.
+  // AIR_DRAG decelerates separated droplets (densityRatio < 0.55) so any
+  // residue arcs down. COHESION (detachment surface tension) is KEPT AT 0:
+  // both a flat negative floor AND a dn<0.7-gated pull were measured
+  // EXPLOSIVE (the skin is permanently under-dense; attraction there pumps
+  // the surface limit cycle to the speed cap). Uniform lanes sp.feel.xyz;
+  // 0 / 1 / 0 = old physics.
+  var LIQUID_COHESION        = 0;
+  var LIQUID_AIR_DRAG        = 0.993;
+  var LIQUID_PRESSURE_MAX_DV = 10;
   var LIQUID_BURST_GATE_LO  = 100.0;   // px/s — burst damp starts (above rested ambient peak)
   var LIQUID_BURST_GATE_HI  = 300.0;   // px/s — burst damp reaches full BURST_DAMP
 
@@ -631,10 +644,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 128,
+      size: 144,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(32);   // 8 vec4 lanes
+    instance.simParamsHost = new Float32Array(36);   // 9 vec4 lanes (v25.41 + feel)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -1102,6 +1115,9 @@
     // g2pC : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173 Old-Faithful)
     sh[28] = LIQUID_MAX_VEL;        sh[29] = LIQUID_BURST_DAMP;
     sh[30] = LIQUID_BURST_GATE_LO;  sh[31] = LIQUID_BURST_GATE_HI;
+    // feel : cohesion, airDrag, pressureMaxDv (v25.41 popcorn fix), spare
+    sh[32] = LIQUID_COHESION;       sh[33] = LIQUID_AIR_DRAG;
+    sh[34] = LIQUID_PRESSURE_MAX_DV; sh[35] = 0;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -1884,7 +1900,14 @@
       refDensity[i] = density;
       refAerationOut[i] = newAer;
       var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
-      if (pressure < 0 || density <= 0) pressure = 0;
+      // v25.41 — detachment cohesion (water only), matches the WGSL block.
+      if (pressure < 0) {
+        var dnR = fr(density / fr(LIQUID_DENSITY));
+        var ck = fr(fr(fr(0.7) - dnR) * fr(1 / 0.3));
+        if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
+        pressure = oil ? 0 : fr(-fr(fr(LIQUID_COHESION) * fr(stiff)) * ck);
+      }
+      if (density <= 0) pressure = 0;
       var volume = density > 0 ? fr(1 / density) : 0;
       var coeff  = fr(fr(volume * 4) * fr(-pressure));
       var coeffx = fr(coeff * pdx);
@@ -1923,6 +1946,16 @@
         var momY = fr(fr(refVYFx[ci]) / FX);
         var dvX  = fr(fr(refDVXFx[ci]) / FX);
         var dvY  = fr(fr(refDVYFx[ci]) / FX);
+        // v25.41 — shock limiter (matches the kernel dvCap block).
+        var dvCapR = fr(fr(fr(fr(LIQUID_PRESSURE_MAX_DV) * fr(dt)) * fr(inv)) * massC);
+        if (fr(LIQUID_PRESSURE_MAX_DV) > 0) {
+          var dvL2R = fr(fr(dvX * dvX) + fr(dvY * dvY));
+          if (dvL2R > fr(dvCapR * dvCapR)) {
+            var dvScR = fr(dvCapR / fr(Math.sqrt(dvL2R)));
+            dvX = fr(dvX * dvScR);
+            dvY = fr(dvY * dvScR);
+          }
+        }
         refVelX[ci] = fr(fr(momX + dvX) * invm);
         refVelY[ci] = fr(fr(fr(momY + dvY) * invm) + grav);
       } else {
@@ -2164,7 +2197,14 @@
       refDensity[i] = density;
       refAerationOut[i] = newAerP;
       var pressure = fr(fr(fr(density / fr(LIQUID_DENSITY)) - 1) * fr(stiff));
-      if (pressure < 0 || density <= 0) pressure = 0;
+      // v25.41 — detachment cohesion (water only), matches the WGSL block.
+      if (pressure < 0) {
+        var dnR = fr(density / fr(LIQUID_DENSITY));
+        var ck = fr(fr(fr(0.7) - dnR) * fr(1 / 0.3));
+        if (ck < 0) ck = 0; else if (ck > 1) ck = 1;
+        pressure = oilP ? 0 : fr(-fr(fr(LIQUID_COHESION) * fr(stiff)) * ck);
+      }
+      if (density <= 0) pressure = 0;
       var volume = density > 0 ? fr(1 / density) : 0;
       var coeff  = fr(fr(volume * 4) * fr(-pressure));
       var coeffx = fr(coeff * pdx);
@@ -2200,6 +2240,16 @@
         var momY = fr(fr(refVYFx[ci]) / FX);
         var dvX  = fr(fr(refDVXFx[ci]) / FX);
         var dvY  = fr(fr(refDVYFx[ci]) / FX);
+        // v25.41 — shock limiter (matches the kernel dvCap block).
+        var dvCapR = fr(fr(fr(fr(LIQUID_PRESSURE_MAX_DV) * fr(dt)) * fr(inv)) * massC);
+        if (fr(LIQUID_PRESSURE_MAX_DV) > 0) {
+          var dvL2R = fr(fr(dvX * dvX) + fr(dvY * dvY));
+          if (dvL2R > fr(dvCapR * dvCapR)) {
+            var dvScR = fr(dvCapR / fr(Math.sqrt(dvL2R)));
+            dvX = fr(dvX * dvScR);
+            dvY = fr(dvY * dvScR);
+          }
+        }
         refVelX[ci] = fr(fr(momX + dvX) * invm);
         refVelY[ci] = fr(fr(fr(momY + dvY) * invm) + grav);
       } else {
@@ -2459,6 +2509,15 @@
             newVX = fr(newVX * mvSc);
             newVY = fr(newVY * mvSc);
           }
+        }
+        // v25.41 — air drag on separated droplets (matches the WGSL g2p).
+        var adAmp = fr(LIQUID_AIR_DRAG);
+        if (adAmp < 1 && densityRatio < fr(0.55)) {
+          var adT = fr(fr(fr(0.55) - densityRatio) * 5);
+          if (adT > 1) adT = 1;
+          var adF = fr(1 + fr(fr(adAmp - 1) * adT));
+          newVX = fr(newVX * adF);
+          newVY = fr(newVY * adF);
         }
       }
       refPX[i] = fr(npx * CELL);
@@ -3878,6 +3937,7 @@ struct SimParams {
   g2pB   : vec4<f32>,
   coll   : vec4<f32>,
   g2pC   : vec4<f32>,
+  feel   : vec4<f32>,   // v25.41 — cohesion, airDrag, spare, spare
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4191,9 +4251,26 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   aux[i].x = density;
   aux[i].y = newAer;
 
-  // Weakly-compressible pressure — clamp non-negative.
+  // Weakly-compressible pressure. v25.41 — DETACHMENT COHESION: the old
+  // non-negative clamp made the EOS a one-way spring (push when
+  // over-packed, never pull), so a thin pond's surface could only ever
+  // SPIT particles — the shallow "popcorn". Water leaving the body
+  // (dn < 0.7, ramping to full pull by 0.4) now feels a small negative
+  // pressure that hauls it back = surface tension at the skin. CRITICAL:
+  // the bulk fluctuation band (dn 0.7-1.0) keeps the EXACT old zero clamp
+  // — measured: a flat -0.25·stiff floor there is a tensile instability
+  // (attraction amplifies density noise; the test pond exploded to the
+  // 600 px/s cap within seconds). Oil keeps the old clamp everywhere.
+  // sp.feel.x = 0 restores the exact old behavior.
   var pressure = (density / LIQUID_DENSITY - 1.0) * stiff;
-  if (pressure < 0.0 || density <= 0.0) { pressure = 0.0; }
+  if (pressure < 0.0) {
+    let dnR = density / LIQUID_DENSITY;
+    var ck = (0.7 - dnR) * ${1 / 0.3};
+    ck = clamp(ck, 0.0, 1.0);
+    let coh = select(sp.feel.x, 0.0, oil);
+    pressure = (-(coh * stiff)) * ck;
+  }
+  if (density <= 0.0) { pressure = 0.0; }
   var volume : f32 = 0.0;
   if (density > 0.0) { volume = 1.0 / density; }
   let coeff  = volume * 4.0 * (-pressure);
@@ -4288,8 +4365,27 @@ fn rawCellVel(n : u32) -> vec3<f32> {
     let grav    = gravPx * gravScale;
     let momX = f32(atomicLoad(&cellVX[c]))  / FIXED_SCALE;
     let momY = f32(atomicLoad(&cellVY[c]))  / FIXED_SCALE;
-    let dvX  = f32(atomicLoad(&cellDVX[c])) / FIXED_SCALE;
-    let dvY  = f32(atomicLoad(&cellDVY[c])) / FIXED_SCALE;
+    var dvX  = f32(atomicLoad(&cellDVX[c])) / FIXED_SCALE;
+    var dvY  = f32(atomicLoad(&cellDVY[c])) / FIXED_SCALE;
+    // v25.41 — SHOCK LIMITER (the popcorn quantum fix). The pressure
+    // scatter is a per-substep impulse in per-step units, so ONE substep
+    // can kick a cell 50-200 px/s off a single-frame density blip (grid
+    // aliasing) — that spike IS the at-rest pop on shallow water. Cap the
+    // per-substep velocity change a cell may receive from pressure
+    // (sp.feel.z, px/s; 0 = off). Rest corrections (~2 px/s vs gravity)
+    // never touch the cap; a sustained splash gradient re-earns it every
+    // substep (feel.z x 120+/s of correction), so geysers survive — only
+    // the one-substep spike dies. Unconditionally stabilizing: this only
+    // ever REMOVES energy. edit2 the CPU fallback (070) + both fr() refs.
+    let dvCap = sp.feel.z * gp.stepDt * gp.invCell * mass;
+    if (sp.feel.z > 0.0) {
+      let dvLen2 = dvX * dvX + dvY * dvY;
+      if (dvLen2 > dvCap * dvCap) {
+        let dvSc = dvCap / sqrt(dvLen2);
+        dvX = dvX * dvSc;
+        dvY = dvY * dvSc;
+      }
+    }
     var velX = (momX + dvX) * invm;
     var velY = (momY + dvY) * invm + grav;
     // v24.115 — grid viscosity (sp.coll.z): blend toward the massy
@@ -4799,6 +4895,20 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         newVX = newVX * sc;
         newVY = newVY * sc;
       }
+    }
+    // v25.41 — AIR DRAG: a separated droplet decelerates in air instead of
+    // flying ballistic (the sim had zero air resistance). densityRatio
+    // < 0.55 means the particle has left the body (surface skin reads
+    // 0.5-0.9, airborne spray 0.1-0.3); drag ramps to full by 0.35.
+    // sp.feel.y = per-substep keep factor; 1 = off (exact old path).
+    // edit2 the CPU fallback (sluice 070) + the fr() reference.
+    let airDrag = sp.feel.y;
+    if (airDrag < 1.0 && densityRatio < 0.55) {
+      var adT = (0.55 - densityRatio) * 5.0;
+      if (adT > 1.0) { adT = 1.0; }
+      let adF = 1.0 + (airDrag - 1.0) * adT;
+      newVX = newVX * adF;
+      newVY = newVY * adF;
     }
   }
   pos[i] = vec4<f32>(npx * CELL, npy * CELL, newVX, newVY);
@@ -7992,6 +8102,10 @@ fn main() {
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
             case 'MAX_VEL':              LIQUID_MAX_VEL = v < 0 ? 0 : v; break;
+            // v25.41 — shallow-popcorn root fix (feel lanes)
+            case 'COHESION':             LIQUID_COHESION = v < 0 ? 0 : (v > 1 ? 1 : v); break;
+            case 'AIR_DRAG':             LIQUID_AIR_DRAG = v < 0.9 ? 0.9 : (v > 1 ? 1 : v); break;
+            case 'PRESSURE_MAX_DV':      LIQUID_PRESSURE_MAX_DV = v < 0 ? 0 : v; break;
             case 'BURST_DAMP':           LIQUID_BURST_DAMP = v; break;
             case 'BURST_GATE_LO':        LIQUID_BURST_GATE_LO = v; break;
             case 'BURST_GATE_HI':        LIQUID_BURST_GATE_HI = v; break;
