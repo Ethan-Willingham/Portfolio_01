@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.32';
+  var GAME_VERSION = 'v25.33';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -5379,21 +5379,11 @@
     // remember the touch identifier so subsequent touchmove/touchend
     // events for OTHER fingers (e.g. tapping a HUD chip) don't clobber
     // the d-pad state.
-    // v23.93/98 — mobile split flight controls. The LEFT rotate L/R cluster is
-    // ALWAYS active (steer left/right: rotate in the air, move on the ground), so
-    // it never disappears. The RIGHT side is the thrust button while flying, else
-    // the dig d-pad. Independent touch ids so rotate + thrust hold at once.
-    if (isMobile) {
-      var _fg = flightTouchGeom();
-      if (inFlightBtn(x, y, _fg.rotL) || inFlightBtn(x, y, _fg.rotR)) {
-        flightTouch.rotId = id; updateFlightRot(x, y); return;
-      }
-      if (flightControlsActive()) {
-        // Flying: right side = thrust; the d-pad is hidden, so a miss does nothing.
-        if (inFlightBtn(x, y, _fg.thrust)) { flightTouch.thrustId = id; flightTouch.thrust = true; }
-        return;
-      }
-    }
+    // v25.33 — one mobile control: the full d-pad wheel drives ground AND
+    // flight. The old split flight pad (rotate L/R bottom-left + thrust
+    // bottom-right) is retired. The wheel's up = thrust, left/right = rotate,
+    // and a diagonal (up + L/R) thrusts and rotates at once. It always fed the
+    // same moveU/moveL/moveR as the pad (see 080), so flight feel is unchanged.
     if (isInDpadZone(x, y)) {
       dpadTouchId = id;
       updateDpad(x, y);
@@ -25328,12 +25318,10 @@
     // Earlier builds drew this on the bottom-left, but that fought with the
     // station/shop interactions and made the game feel left-handed by default.
     if (isMobile) {
-      // v23.98 — the LEFT rotate L/R cluster stays ON at all times (drawn full
-      // opacity inside drawFlightPad); only the RIGHT side cross-fades: the dig
-      // d-pad fades out (1-_fa) as the thrust button fades in (_fa).
-      var _fa = player.flightCtrlAlpha || 0;
-      if (_fa < 0.985) { ctx.save(); ctx.globalAlpha = 1 - _fa; drawDpad(DPAD_CX, DPAD_CY); ctx.restore(); }
-      drawFlightPad(_fa);
+      // v25.33 — one mobile control: the full d-pad wheel, always. The split
+      // flight pad (rotate L/R + thrust) is retired; the wheel drives flight too
+      // (up = thrust, L/R = rotate). See processPointerDown (050) + moveU/L/R (080).
+      drawDpad(DPAD_CX, DPAD_CY);
     }
 
     // ---- Damage flash (full-screen red vignette) ----

@@ -1167,12 +1167,10 @@
     // Earlier builds drew this on the bottom-left, but that fought with the
     // station/shop interactions and made the game feel left-handed by default.
     if (isMobile) {
-      // v23.98 — the LEFT rotate L/R cluster stays ON at all times (drawn full
-      // opacity inside drawFlightPad); only the RIGHT side cross-fades: the dig
-      // d-pad fades out (1-_fa) as the thrust button fades in (_fa).
-      var _fa = player.flightCtrlAlpha || 0;
-      if (_fa < 0.985) { ctx.save(); ctx.globalAlpha = 1 - _fa; drawDpad(DPAD_CX, DPAD_CY); ctx.restore(); }
-      drawFlightPad(_fa);
+      // v25.33 — one mobile control: the full d-pad wheel, always. The split
+      // flight pad (rotate L/R + thrust) is retired; the wheel drives flight too
+      // (up = thrust, L/R = rotate). See processPointerDown (050) + moveU/L/R (080).
+      drawDpad(DPAD_CX, DPAD_CY);
     }
 
     // ---- Damage flash (full-screen red vignette) ----

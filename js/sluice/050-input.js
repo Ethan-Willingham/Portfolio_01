@@ -272,21 +272,11 @@
     // remember the touch identifier so subsequent touchmove/touchend
     // events for OTHER fingers (e.g. tapping a HUD chip) don't clobber
     // the d-pad state.
-    // v23.93/98 — mobile split flight controls. The LEFT rotate L/R cluster is
-    // ALWAYS active (steer left/right: rotate in the air, move on the ground), so
-    // it never disappears. The RIGHT side is the thrust button while flying, else
-    // the dig d-pad. Independent touch ids so rotate + thrust hold at once.
-    if (isMobile) {
-      var _fg = flightTouchGeom();
-      if (inFlightBtn(x, y, _fg.rotL) || inFlightBtn(x, y, _fg.rotR)) {
-        flightTouch.rotId = id; updateFlightRot(x, y); return;
-      }
-      if (flightControlsActive()) {
-        // Flying: right side = thrust; the d-pad is hidden, so a miss does nothing.
-        if (inFlightBtn(x, y, _fg.thrust)) { flightTouch.thrustId = id; flightTouch.thrust = true; }
-        return;
-      }
-    }
+    // v25.33 — one mobile control: the full d-pad wheel drives ground AND
+    // flight. The old split flight pad (rotate L/R bottom-left + thrust
+    // bottom-right) is retired. The wheel's up = thrust, left/right = rotate,
+    // and a diagonal (up + L/R) thrusts and rotates at once. It always fed the
+    // same moveU/moveL/moveR as the pad (see 080), so flight feel is unchanged.
     if (isInDpadZone(x, y)) {
       dpadTouchId = id;
       updateDpad(x, y);
