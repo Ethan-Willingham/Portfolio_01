@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.41';
+  var GAME_VERSION = 'v25.43';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -59106,6 +59106,10 @@
       // in descending importance, and the parked / structural / debug levers are demoted to
       // the BOTTOM. Keyed by full path; unlisted = 500 (alphabetical middle).
       var LEVER_PRIORITY = {
+        // --- v25.42 popcorn-fix trio: the owner's live water-feel dials ---
+        'water.PRESSURE_MAX_DV': 1,            // THE pop killer (px/s per substep; 0 = old popcorn)
+        'water.AIR_DRAG': 2,                   // airborne droplet deceleration (1 = off)
+        'water.COHESION': 3,                   // DANGER: explosive above 0; supervised A/B only
         // --- core feel (v22 unified-contact model): dial these to shape the slime ---
         'jello.JELLO_SOLVER_ID': 1,            // pbd / xpbd / fem
         'jello.JELLO_E': 2,                    // overall softness (lower = squishier)
