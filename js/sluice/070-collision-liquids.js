@@ -1491,6 +1491,11 @@
       LIQUID_CALM += dt / LIQUID_CALM_RAMP;
       if (LIQUID_CALM > 1) LIQUID_CALM = 1;
     }
+    // v25.39 — REST LIVELINESS CAP: the ramp parks at CALM_MAX (default 0.5)
+    // instead of 1, so rest keeps the mid-settle shimmer the owner asked for
+    // (rationale at the const in 020). Clamp unconditionally so a live lever
+    // drop below the current calm takes effect immediately.
+    if (LIQUID_CALM > LIQUID_CALM_MAX) LIQUID_CALM = LIQUID_CALM_MAX;
     // fround-quantize so the f64 module mirrors == the f32 uniform lane the
     // GPU kernel reads (keeps the in-file reference's math in lockstep).
     LIQUID_CALM = Math.fround(LIQUID_CALM);
@@ -1526,6 +1531,9 @@
     //       forever (the deep-lake popcorn), so freeze regardless of awake
     //       count. Both require a velocity TROUGH (!fastHold) so the frozen
     //       snapshot is near-flat.
+    // (v25.39: with LIQUID_CALM_MAX < 1 the calm never reaches 1, so this
+    // latch is structurally disarmed — the owner vetoed the frozen look.
+    // Dialing water.CALM_MAX back to 1 re-arms it unchanged.)
     if (LIQUID_FREEZE && !liquidFrozenAll && liquidCount > 0 && !hard && !soft &&
         LIQUID_CALM >= 1) {
       var awakeNow = (liquidWGPU && liquidWGPU.simActive) ? liquidWGPU.awakeCount : liquidStatAwake;
@@ -1554,7 +1562,8 @@
       }
     }
     liquidStateName = liquidFrozenAll ? 'frozen'
-      : (LIQUID_CALM >= 1 ? 'settled' : (LIQUID_CALM > 0.02 ? 'settling' : 'live'));
+      : (LIQUID_CALM >= Math.min(LIQUID_CALM_MAX, 1) - 1e-4 && LIQUID_CALM > 0.02 ? 'settled'
+        : (LIQUID_CALM > 0.02 ? 'settling' : 'live'));
   }
 
   // v14.4 — GPU-path adaptive idle-skip: skip the GPU SIM step when the

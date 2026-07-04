@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.38';
+  var GAME_VERSION = 'v25.39';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -1587,6 +1587,20 @@
   var liquidDampEff = LIQUID_DAMPING;
   var liquidMotionEff = LIQUID_WATER_MOTION_SCALE;
   var LIQUID_CALM_RAMP = 1.2;         // s — calm 0 -> 1 ramp once quiet
+  // v25.39 — REST LIVELINESS CAP (the owner: fully-settled water "looks
+  // horrible... although for the .5 seconds that it is transitioning from
+  // popcorny to still, it's right where I want it"). The calm ramp no
+  // longer runs to 1.0 (full brake + full grid-visc + accumulating sleep =
+  // rigid, dead water); it stops at LIQUID_CALM_MAX, so the PERMANENT rest
+  // state is the mid-transition physics he pointed at: the popcorn is still
+  // ground out by the half-strength brake, but the pond keeps a faint
+  // living shimmer and particles mostly stay above the sleep gate. 1.0
+  // restores the old dead-still settle; lower = livelier rest. The
+  // whole-body freeze latch requires calm >= 1, so any cap < 1 also
+  // structurally disables the freeze the owner vetoed ("we absolutely
+  // cannot just freeze all the water"). gm water.CALM_MAX (live; a live
+  // drop below the current calm clamps down next tick).
+  var LIQUID_CALM_MAX = 0.5;
   var LIQUID_STIM_HOLD = 1.0;         // s — quiet time before calm starts rising
   var LIQUID_STIM_MAX = 6.0;          // s — hard cap: settle regardless of fast-water hold (convergence guarantee)
   var LIQUID_FAST_VSQ = 576.0;        // px/s squared — "still really flowing" metric (24 px/s, above the
@@ -9738,6 +9752,11 @@
       LIQUID_CALM += dt / LIQUID_CALM_RAMP;
       if (LIQUID_CALM > 1) LIQUID_CALM = 1;
     }
+    // v25.39 — REST LIVELINESS CAP: the ramp parks at CALM_MAX (default 0.5)
+    // instead of 1, so rest keeps the mid-settle shimmer the owner asked for
+    // (rationale at the const in 020). Clamp unconditionally so a live lever
+    // drop below the current calm takes effect immediately.
+    if (LIQUID_CALM > LIQUID_CALM_MAX) LIQUID_CALM = LIQUID_CALM_MAX;
     // fround-quantize so the f64 module mirrors == the f32 uniform lane the
     // GPU kernel reads (keeps the in-file reference's math in lockstep).
     LIQUID_CALM = Math.fround(LIQUID_CALM);
@@ -9773,6 +9792,9 @@
     //       forever (the deep-lake popcorn), so freeze regardless of awake
     //       count. Both require a velocity TROUGH (!fastHold) so the frozen
     //       snapshot is near-flat.
+    // (v25.39: with LIQUID_CALM_MAX < 1 the calm never reaches 1, so this
+    // latch is structurally disarmed — the owner vetoed the frozen look.
+    // Dialing water.CALM_MAX back to 1 re-arms it unchanged.)
     if (LIQUID_FREEZE && !liquidFrozenAll && liquidCount > 0 && !hard && !soft &&
         LIQUID_CALM >= 1) {
       var awakeNow = (liquidWGPU && liquidWGPU.simActive) ? liquidWGPU.awakeCount : liquidStatAwake;
@@ -9801,7 +9823,8 @@
       }
     }
     liquidStateName = liquidFrozenAll ? 'frozen'
-      : (LIQUID_CALM >= 1 ? 'settled' : (LIQUID_CALM > 0.02 ? 'settling' : 'live'));
+      : (LIQUID_CALM >= Math.min(LIQUID_CALM_MAX, 1) - 1e-4 && LIQUID_CALM > 0.02 ? 'settled'
+        : (LIQUID_CALM > 0.02 ? 'settling' : 'live'));
   }
 
   // v14.4 — GPU-path adaptive idle-skip: skip the GPU SIM step when the
@@ -57121,6 +57144,15 @@
           function () { return LIQUID_CALM_RAMP; },
           function (v) { LIQUID_CALM_RAMP = v; },
           0.2, 4.0, undefined);
+      }
+      // v25.39 — rest liveliness: the calm ramp parks here instead of 1.0.
+      // 1 = the old dead-still settle (re-arms the freeze latch), lower =
+      // livelier rest; 0.5 = the mid-transition shimmer the owner picked.
+      if (typeof LIQUID_CALM_MAX !== 'undefined') {
+        gmRegisterLever('water.CALM_MAX', 'water', 'CALM_MAX (rest stillness)',
+          function () { return LIQUID_CALM_MAX; },
+          function (v) { LIQUID_CALM_MAX = v < 0 ? 0 : (v > 1 ? 1 : v); },
+          0, 1, undefined);
       }
       if (typeof LIQUID_STIM_HOLD !== 'undefined') {
         gmRegisterLever('water.STIM_HOLD', 'water', 'STIM_HOLD',

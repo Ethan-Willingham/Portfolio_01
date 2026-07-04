@@ -368,6 +368,20 @@
   var liquidDampEff = LIQUID_DAMPING;
   var liquidMotionEff = LIQUID_WATER_MOTION_SCALE;
   var LIQUID_CALM_RAMP = 1.2;         // s — calm 0 -> 1 ramp once quiet
+  // v25.39 — REST LIVELINESS CAP (the owner: fully-settled water "looks
+  // horrible... although for the .5 seconds that it is transitioning from
+  // popcorny to still, it's right where I want it"). The calm ramp no
+  // longer runs to 1.0 (full brake + full grid-visc + accumulating sleep =
+  // rigid, dead water); it stops at LIQUID_CALM_MAX, so the PERMANENT rest
+  // state is the mid-transition physics he pointed at: the popcorn is still
+  // ground out by the half-strength brake, but the pond keeps a faint
+  // living shimmer and particles mostly stay above the sleep gate. 1.0
+  // restores the old dead-still settle; lower = livelier rest. The
+  // whole-body freeze latch requires calm >= 1, so any cap < 1 also
+  // structurally disables the freeze the owner vetoed ("we absolutely
+  // cannot just freeze all the water"). gm water.CALM_MAX (live; a live
+  // drop below the current calm clamps down next tick).
+  var LIQUID_CALM_MAX = 0.5;
   var LIQUID_STIM_HOLD = 1.0;         // s — quiet time before calm starts rising
   var LIQUID_STIM_MAX = 6.0;          // s — hard cap: settle regardless of fast-water hold (convergence guarantee)
   var LIQUID_FAST_VSQ = 576.0;        // px/s squared — "still really flowing" metric (24 px/s, above the

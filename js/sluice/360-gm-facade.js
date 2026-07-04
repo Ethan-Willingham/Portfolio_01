@@ -902,6 +902,15 @@
           function (v) { LIQUID_CALM_RAMP = v; },
           0.2, 4.0, undefined);
       }
+      // v25.39 — rest liveliness: the calm ramp parks here instead of 1.0.
+      // 1 = the old dead-still settle (re-arms the freeze latch), lower =
+      // livelier rest; 0.5 = the mid-transition shimmer the owner picked.
+      if (typeof LIQUID_CALM_MAX !== 'undefined') {
+        gmRegisterLever('water.CALM_MAX', 'water', 'CALM_MAX (rest stillness)',
+          function () { return LIQUID_CALM_MAX; },
+          function (v) { LIQUID_CALM_MAX = v < 0 ? 0 : (v > 1 ? 1 : v); },
+          0, 1, undefined);
+      }
       if (typeof LIQUID_STIM_HOLD !== 'undefined') {
         gmRegisterLever('water.STIM_HOLD', 'water', 'STIM_HOLD',
           function () { return LIQUID_STIM_HOLD; },
