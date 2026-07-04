@@ -366,7 +366,7 @@
     if (hits.length > 0) {
       var pt = hits[0].point;
       hoverLat = Math.asin(Math.max(-1, Math.min(1, pt.y))) / DEG;
-      hoverLon = Math.atan2(pt.x, pt.z) / DEG;
+      hoverLon = Math.atan2(-pt.z, pt.x) / DEG;
       while (hoverLon > 180) hoverLon -= 360;
       while (hoverLon < -180) hoverLon += 360;
     } else { hoverLat = null; hoverLon = null; }
@@ -380,7 +380,10 @@
     if (hits.length > 0) {
       var pt = hits[0].point;
       var lat = Math.asin(Math.max(-1, Math.min(1, pt.y))) / DEG;
-      var lon = Math.atan2(pt.x, pt.z) / DEG;
+      // Geographic longitude is the inverse of the sun/texture convention above
+      // (point at lon sits at x=cos*cos(lon), z=-cos*sin(lon)). Using
+      // atan2(x, z) here returned lon+90, so clicks read ~90 deg too far east.
+      var lon = Math.atan2(-pt.z, pt.x) / DEG;
       while (lon > 180) lon -= 360;
       while (lon < -180) lon += 360;
       return { lat: lat, lon: lon };
@@ -398,7 +401,9 @@
     var ringGeom = new THREE.RingGeometry(0.012, 0.018, 24);
     var ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
     pinMarker = new THREE.Mesh(ringGeom, ringMat);
-    pinMarker.position.set(r * Math.cos(phi) * Math.sin(theta), r * Math.sin(phi), r * Math.cos(phi) * Math.cos(theta));
+    // Match the sun/texture convention (see updateSun) so the marker lands on
+    // the clicked point now that lon is true geographic longitude.
+    pinMarker.position.set(r * Math.cos(phi) * Math.cos(theta), r * Math.sin(phi), -r * Math.cos(phi) * Math.sin(theta));
     pinMarker.lookAt(0, 0, 0);
     scene.add(pinMarker);
   }
