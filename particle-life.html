@@ -43,11 +43,11 @@
     /* ============================================================
        PARTICLE-LIFE LAYOUT  (height-aware + fullscreen-ready)
        Three layouts, one DOM:
-         · stacked    — phones, narrow OR short windows (default)
-         · studio     — wide AND tall: square canvas flanked by two
+         · stacked      phones, narrow OR short windows (default)
+         · studio       wide AND tall: square canvas flanked by two
                         control panels, sized off available HEIGHT so
                         the whole block fits the viewport without a scroll
-         · fullscreen — .pl-wrapper.is-fs: canvas fills the screen,
+         · fullscreen   .pl-wrapper.is-fs: canvas fills the screen,
                         controls live in a slide-in drawer
        ============================================================ */
 
@@ -78,7 +78,7 @@
        Gated on min-height too, so short windows fall back to the safe
        stacked layout instead of an over-tall three-column block. The
        canvas is sized off --pl-stage: the smaller of leftover height,
-       the width left after two >=240px side panels, and a hard cap — so
+       the width left after two >=240px side panels, and a hard cap, so
        the component always fits one viewport and the panels stay legible.
        Disabled while fullscreen via :not(.is-fs). */
     @media (min-width: 1120px) and (min-height: 620px) {
@@ -94,10 +94,12 @@
 
         display: grid;
         grid-template-columns: minmax(240px, 1fr) var(--pl-stage) minmax(240px, 1fr);
-        /* Row 2 grows to the tallest side panel so dense controls (the Force
-           Matrix + Rogue field column) are never clipped; the canvas stays its
-           square --pl-stage size, top-aligned in the row. */
-        grid-template-rows: auto minmax(var(--pl-stage), max-content) auto;
+        /* Row 2 is pinned to the square canvas height so it NEVER changes with
+           the control content. The side panels span rows 2-3 and top-align, so
+           a taller Force Matrix (more species) grows DOWNWARD into row 3 instead
+           of stretching row 2 -- that keeps the action bar (pinned under the
+           canvas in row 3) from moving when you hit Randomize all. */
+        grid-template-rows: auto var(--pl-stage) auto;
         column-gap: 0;
         row-gap: 0;
         align-items: stretch;
@@ -112,13 +114,22 @@
         aspect-ratio: auto;
         max-height: none;
       }
-      .pl-wrapper:not(.is-fs) > .pl-action-bar { grid-column: 1 / -1; grid-row: 3; }
+      /* Action bar sits under the CANVAS (centre column), top-aligned in row 3,
+         so its position is governed only by the fixed canvas height -- not by
+         the side panels, which are free to be as tall as their content needs. */
+      .pl-wrapper:not(.is-fs) > .pl-action-bar {
+        grid-column: 2;
+        grid-row: 3;
+        align-self: start;
+      }
       /* The .pl-controls grid becomes display:contents so its two child
          groups participate directly in the outer grid and land in the
-         side columns, matching the canvas height exactly. */
+         side columns. They span rows 2-3 and top-align, so extra matrix rows
+         grow downward past the canvas rather than stretching row 2. */
       .pl-wrapper:not(.is-fs) > .pl-controls { display: contents; }
       .pl-wrapper:not(.is-fs) > .pl-controls > .pl-control-group {
-        grid-row: 2;
+        grid-row: 2 / span 2;
+        align-self: start;
         background: var(--d-bg-raised);
         padding: 0.9rem 1.05rem 1rem;
         max-height: none;
@@ -227,7 +238,7 @@
     .pl-fs-only { display: none; }
 
     /* ============================================================
-       FULLSCREEN MODE  (.pl-wrapper.is-fs — applied by JS for both the
+       FULLSCREEN MODE  (.pl-wrapper.is-fs, applied by JS for both the
        native Fullscreen API and the CSS fallback, so one class drives
        the whole look)
        ============================================================ */
@@ -280,7 +291,7 @@
       max-height: none;
     }
     /* In fullscreen the action bar floats at the BOTTOM, centered over the
-       canvas (Randomize + New colors) — the same bar as inline, repositioned.
+       canvas (Randomize + New colors), the same bar as inline, repositioned.
        It auto-dims with the header while the pointer is idle, and sits below
        the drawer/scrim z-index so an open drawer covers it. */
     .pl-wrapper.is-fs .pl-action-bar {
