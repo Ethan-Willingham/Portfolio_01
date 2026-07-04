@@ -1176,6 +1176,25 @@
       // JELLO_E and JELLO_NU have custom setters that call jelloRecomputeMaterial()
       // so MU/LAMBDA are re-derived immediately — no reload needed.
       if (typeof JELLO_E !== 'undefined') {
+        // v25.45 — perf-era A/B toggles, kept at the TOP of the jello group
+        // (owner: "so I can turn off and on what you just did"). 1 = shipped
+        // behavior, 0 = the exact pre-change behavior.
+        gmRegisterLever('jello.PARK_PIPELINE (v25.38 sleep)', 'jello', 'PARK_PIPELINE',
+          function () { return JELLO_PARK_PIPELINE; },
+          function (v) { JELLO_PARK_PIPELINE = v ? 1 : 0; },
+          0, 1, 1);
+        gmRegisterLever('jello.WAKE_GATES (v25.38 parked-rig)', 'jello', 'WAKE_GATES',
+          function () { return JELLO_WAKE_GATES; },
+          function (v) { JELLO_WAKE_GATES = v ? 1 : 0; },
+          0, 1, 1);
+        gmRegisterLever('jello.GATE_EARLY_EXIT (v25.43)', 'jello', 'GATE_EARLY_EXIT',
+          function () { return JELLO_GATE_EARLY_EXIT; },
+          function (v) { JELLO_GATE_EARLY_EXIT = v ? 1 : 0; },
+          0, 1, 1);
+        gmRegisterLever('jello.GATE_SLEEP_PAIRS (v25.43)', 'jello', 'GATE_SLEEP_PAIRS',
+          function () { return JELLO_GATE_SLEEP_PAIRS; },
+          function (v) { JELLO_GATE_SLEEP_PAIRS = v ? 1 : 0; },
+          0, 1, 1);
         gmRegisterLever('jello.JELLO_E', 'jello', 'JELLO_E',
           function () { return JELLO_E; },
           function (v) { JELLO_E = Math.max(0.5, v); jelloRecomputeMaterial(); },

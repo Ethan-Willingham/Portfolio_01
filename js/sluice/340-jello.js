@@ -805,6 +805,14 @@
   // SHIPS 1 = SOFT since v25.28: the owner vetoed the peach-fuzz hairs for the
   // ship look ("don't like the little hairs coming off of it"). FUZZY/PLUSH
   // stay behind the dev 'I' cycle only.
+  // ---- PERF-ERA A/B TOGGLES (v25.45, owner-requested; top of the L panel's
+  // jello group). Each gates one perf-pass behavior so the owner can bisect
+  // feel changes live. ALL default 1 = current shipped behavior; 0 = the
+  // pre-change behavior, exactly.
+  var JELLO_PARK_PIPELINE   = 1;   // v25.38 park ramp + force-sleep + island sleep (0 = bodies never force-sleep; pre-v25.38 always-awake piles)
+  var JELLO_WAKE_GATES      = 1;   // v25.38 stamps/wakes only from a MOVING rig (0 = a parked rig re-stamps + re-wakes neighbours every frame, pre-v25.38)
+  var JELLO_GATE_EARLY_EXIT = 1;   // v25.43 zero-contact Gauss-Seidel pass early-exit (0 = always run all passes)
+  var JELLO_GATE_SLEEP_PAIRS= 1;   // v25.43 sleeper-sleeper pair skip (0 = sleeping bodies' overlaps wake them apart, pre-v25.43)
   var JELLO_EDGE_STYLE = 1;
   var JELLO_EDGE_FUZZ  = 1.0;   // fringe + hair scale (0.5 subtle .. 2 heavy)
   (function () {
@@ -2568,7 +2576,7 @@
     // forever and update.jello owned the frame (owner: 250 -> 600 fps with
     // jello off; harness: 9 of 13 bodies awake after 20s, all ply-fresh).
     // A push is by definition a moving rig, so pushes keep their protection.
-    if (player.vx * player.vx + player.vy * player.vy > 144)
+    if (!JELLO_WAKE_GATES || player.vx * player.vx + player.vy * player.vy > 144)
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
     // Mark this body as ACTIVELY BEING PUSHED (ms wall-clock TTL, read by the plow
     // + the ground probe). While fresh: the plow's tip-shear gradient flattens to a
@@ -3758,7 +3766,7 @@
         // cycling awake with the park pipeline armed). The eviction itself
         // always applies (the hull stays clean); a sleeping body absorbs the
         // nudge in place, exactly like terrain does.
-        if (player.vx * player.vx + player.vy * player.vy > 144) {
+        if (!JELLO_WAKE_GATES || player.vx * player.vx + player.vy * player.vy > 144) {
           b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;
           b._plyMs = performance.now();
         }
@@ -4564,7 +4572,7 @@
     for (si = 0; si < N; si++) {
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
-      var iAsleep = !active[bi]._solve;   // v25.41: sleeper-sleeper pairs are no-ops — any real
+      var iAsleep = JELLO_GATE_SLEEP_PAIRS && !active[bi]._solve;   // v25.41: sleeper-sleeper pairs are no-ops (jello.GATE_SLEEP_PAIRS toggles) — any real
                                           // penetration wakes both right here in the pair math,
                                           // so a steady pile only ever offers pen<=0 pairs
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
@@ -4642,7 +4650,7 @@
         }
       }
     }
-    if (contacts === 0) break;   // v25.41: a pass with zero contacts means the remaining
+    if (JELLO_GATE_EARLY_EXIT && contacts === 0) break;   // v25.41: a pass with zero contacts means the remaining
                                  // passes are no-ops by definition (settled / fully separated)
     }   // end citers iteration loop
     // 4. write the corrected positions AND prev-positions back (ox carries the velocity damping)
@@ -4811,7 +4819,8 @@
         // wake-solve-park-sleep thrash). The instant the rig moves or fires
         // the jet, the pad wakes everything exactly as before.
         if (player && !gameWon && !gameOver &&
-            ((player.thrusting && player.fuel > 0) ||
+            (!JELLO_WAKE_GATES ||
+             (player.thrusting && player.fuel > 0) ||
              player.vx * player.vx + player.vy * player.vy > 144 ||
              // INPUT INTENT: a rig driving into a sleeping cube can be blocked
              // to ~0 speed by the very body it needs to wake (harness R11: rig
@@ -4983,7 +4992,7 @@
       // Fresh player contact (2s) exempts, so pushes never turn to syrup; any
       // real displacement resets the clock. Positional systems (unmerge
       // shifts, phasing, heal) are untouched — they move px directly.
-      if (!b.sleeping && b._nmD !== undefined && b._nmD < 6 &&
+      if (JELLO_PARK_PIPELINE && !b.sleeping && b._nmD !== undefined && b._nmD < 6 &&
           !(b._plyMs !== undefined && performance.now() - b._plyMs < 2000)) {
         b._parkT = (b._parkT || 0) + dt;   // REAL seconds, not frames: a frame
                                            // clock stretched 4-8x on throttled
@@ -5118,7 +5127,7 @@
     // motion, no fresh player stamp, not merged/phasing), force-sleep the
     // whole island in the same frame — nothing is left awake inside it to
     // wake the others. Any real disturbance wakes bodies exactly as before.
-    if (nActive > 0) {
+    if (JELLO_PARK_PIPELINE && nActive > 0) {
       var _isEl = jelloIslandEl, _isId = jelloIslandId;
       _isEl.length = nActive; _isId.length = nActive;
       for (ai = 0; ai < nActive; ai++) {
