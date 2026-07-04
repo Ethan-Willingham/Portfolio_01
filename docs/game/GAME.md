@@ -13,9 +13,11 @@ deep design docs are the other files in `docs/game/` (see the map at the bottom)
 
 ## The loop (what the game IS now)
 
-Dig down through one deep town, collect ore, fly up to the surface station to sell + refuel
-+ upgrade, then go deeper. No win screen, just a deeper hole. Balanced for a ~33 min skilled
-speedrun to the bottom and a ~2 to 3 hr normal playthrough (see `BALANCE.md`).
+Dig down through one town, collect ore, fly up to the surface station to sell + refuel
++ upgrade, then go deeper. No win screen, just a deeper hole. The town is 400 m deep (was
+800; compressed 2026-07-03 so the ore art's native ~400 m arc lands and variety hits from
+the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and a ~1.5 hr
+normal playthrough (see `BALANCE.md`).
 
 ---
 
@@ -63,7 +65,7 @@ A disabled system is **inert by design** (guarded with first-line early-returns 
 functions; the code still compiles and keeps its gm levers). Missing enemies / zones / oil /
 slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the owner.
 
-**ACTIVE for the simple game:** worldgen (single town, 6 layers, 19 ores), drilling, fuel,
+**ACTIVE for the simple game:** worldgen (single town, 400 m, 6 layers, all 32 ores), drilling, fuel,
 cargo, the surface station shop (Workshop + Supply Shelf only), upgrades (drill/fuel/cargo/
 hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water only), smoke, jello
 is OFF, flight (Rotation default + VTOL; the pause toggle hides legacy "Today"), the night

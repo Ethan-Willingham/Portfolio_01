@@ -37,7 +37,7 @@
   // is not re-run), so a multi-town save (3188 wide) loaded into a single-town
   // world (320 wide) would corrupt out of bounds. A version mismatch is skipped
   // (treated as no save -> fresh world), so this cleanly retires old saves.
-  var SAVE_VERSION = 2;
+  var SAVE_VERSION = 3;
   // Dev lever: ?nosave=1 boots a FRESH world with persistence fully off
   // (no load at boot, no autosaves, no unload save). For testing worldgen
   // changes without wiping or racing the real save slots.

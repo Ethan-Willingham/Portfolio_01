@@ -78,9 +78,9 @@
       { key: 'hull',   title: 'Hull Plating',  desc: deltaDesc(hl, 'Hull',     hullAt),      level: hl, costs: shop.hull },
       { key: 'cargo',  title: 'Cargo Bay',     desc: deltaDesc(cl, 'Slots',    cargoAt),     level: cl, costs: shop.cargo },
       { key: 'booster',title: 'Booster',       desc: boosterDesc,                            level: bl, costs: shop.booster },
-      { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (35m+)',  level: upgrades.heatLevel,   costs: shop.heat,   special: true },
+      { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (200m+)', level: upgrades.heatLevel,   costs: shop.heat,   special: true },
       { key: 'shield', title: 'Heat Shield',   desc: upgrades.shieldLevel === 0
-                                                       ? 'Mk 1: halves magma damage (110m+)'
+                                                       ? 'Mk 1: halves magma damage (270m+)'
                                                        : (upgrades.shieldLevel === 1
                                                           ? 'Mk 2: full magma immunity'
                                                           : 'Mk 2 · full magma immunity'),

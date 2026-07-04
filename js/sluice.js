@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.34';
+  var GAME_VERSION = 'v25.35';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -832,10 +832,13 @@
      round(topFlightSpeed * 90 / TILE), and ~840 stands in for ~300 px/s. */
 
   // Per-town mineable floor depth in rows below the surface, indexed by townIndex.
-  // Town 0 is the SINGLE_TOWN game's full arc (800 deep: surface metals down to a
-  // magma/mantle core, balanced in BALANCE.md). Towns 1-3 only matter under
-  // ?multitown=1 (the legacy wide world). WORLD_ROWS (>= max here) caps the grid.
-  var TOWN_DEPTHS = [800, 700, 1050, 1400];
+  // Town 0 is the SINGLE_TOWN game's full arc (400 deep: surface metals down to a
+  // magma/mantle core, balanced in BALANCE.md). The ore art was designed for this
+  // ~400 m arc, so all 32 ores get a real band and variety hits from the first few
+  // metres (it was stretched thin over 800, so the open read as coal + copper).
+  // Towns 1-3 only matter under ?multitown=1 (the legacy wide world). WORLD_ROWS
+  // (>= max here) caps the grid.
+  var TOWN_DEPTHS = [400, 700, 1050, 1400];
   var TOWN_WIDTH = 320;     // town footprint + safe apron, in columns (~2x today)
   var OCEAN_WIDTH = 24;     // ocean cap width at each far edge, in columns
   var NMZ_WIDTH = 620;      // No Man's Zone width, columns; ~63s of flight (315 px/s * 90s / TILE, then trimmed 30% for pacing 2026-05-28)
@@ -936,15 +939,17 @@
   // Palettes reuse the existing BG discipline; per-town palette polish is a
   // follow-up (the functional win here is per-town counts/depths + hazards).
   var TOWN_LAYERS = [
-    // Town 0 = the SINGLE_TOWN game's full arc (800 deep). Calm topsoil down
+    // Town 0 = the SINGLE_TOWN game's full arc (400 deep). Calm topsoil down
     // through a heat-gated permafrost band into a shield-gated magma/mantle core,
-    // so Heated Drill + Heat Shield become real progression gates (see BALANCE.md).
-    [ { name: 'topsoil',    minDepth: 0,   maxDepth: 120, bg: '#1a1008', tint: null },
-      { name: 'subsoil',    minDepth: 120, maxDepth: 280, bg: '#161a1d', tint: null },
-      { name: 'deepcrust',  minDepth: 280, maxDepth: 440, bg: '#13110e', tint: null },
-      { name: 'permafrost', minDepth: 440, maxDepth: 580, bg: '#0c1a26', tint: '#d2eaff', requiresHeat: true },
-      { name: 'magma',      minDepth: 580, maxDepth: 720, bg: '#220804', tint: '#ff5a1a', dangerous: true, requiresShield: true },
-      { name: 'mantle',     minDepth: 720, maxDepth: 800, bg: '#1a0608', tint: '#ff2030', dangerous: true, requiresShield: true } ],
+    // so Heated Drill (permafrost 200 m) + Heat Shield (magma 270 m) become real
+    // progression gates (see BALANCE.md). Six ~65 m bands keep the visual drama
+    // (blue ice, orange magma, red mantle) while the whole descent is half of 800.
+    [ { name: 'topsoil',    minDepth: 0,   maxDepth: 60,  bg: '#1a1008', tint: null },
+      { name: 'subsoil',    minDepth: 60,  maxDepth: 130, bg: '#161a1d', tint: null },
+      { name: 'deepcrust',  minDepth: 130, maxDepth: 200, bg: '#13110e', tint: null },
+      { name: 'permafrost', minDepth: 200, maxDepth: 270, bg: '#0c1a26', tint: '#d2eaff', requiresHeat: true },
+      { name: 'magma',      minDepth: 270, maxDepth: 340, bg: '#220804', tint: '#ff5a1a', dangerous: true, requiresShield: true },
+      { name: 'mantle',     minDepth: 340, maxDepth: 400, bg: '#1a0608', tint: '#ff2030', dangerous: true, requiresShield: true } ],
     // Town 2 (~600): adds a permafrost ice band (the first heat gate). 4 layers.
     [ { name: 'topsoil',    minDepth: 0,   maxDepth: 150, bg: '#1a1008', tint: null },
       { name: 'subsoil',    minDepth: 150, maxDepth: 330, bg: '#161a1d', tint: null },
@@ -1025,9 +1030,12 @@
   // it). Each town owns a value tier (cheap shallow, exotic deep), low tiers
   // retire one town later,
   // reqHeat ores sit in permafrost bands, gems live deep in T4's magma/mantle.
-  // Town 1 is deliberately low-variety (3 regulars + 2 specials). All ore types
-  // here exist in ORES; the planned magnetite/cobalt/jade/opal join after their
-  // art lands. Depths are tunable; this is the first redistribution pass.
+  // Town 0 (the free-forever game) is deliberately HIGH-variety now: all 32 ORES
+  // types get a real band across the 400 m arc. Every one has a finished renderer
+  // (checked in 120), so nothing falls back. Curated to ~5 per layer with
+  // deliberate band OVERLAP so the visible set rotates as you descend, plus two
+  // rare shallow "lucky strikes" (gold at 22 m, amethyst at 95 m) for early
+  // dopamine. Depths + chances are tunable.
   //
   // Placement character (WORLD_DESIGN §0/§3), read by depositOreVeins in 030:
   //   vein:N    REGULAR: grows a connected seam of mean ~N tiles (follow it).
@@ -1042,31 +1050,45 @@
     // by reqDrill (intrinsic in ORES) + the permafrost heat gate + the magma shield
     // gate. Only renderer-proven ores (each already shipped in a live town) are
     // used, so nothing renders as a fallback. Tuned in BALANCE.md.
-    [ // topsoil 0-120: cheap surface metals (the bootstrap)
-      { type: 'coal',     minDepth: 4,   maxDepth: 150, chance: 0.105, vein: 7 },
-      { type: 'copper',   minDepth: 30,  maxDepth: 240, chance: 0.075, vein: 6 },
-      // subsoil 120-280: base metals
-      { type: 'bauxite',  minDepth: 120, maxDepth: 320, chance: 0.05,  vein: 5 },
-      { type: 'iron',     minDepth: 150, maxDepth: 380, chance: 0.05,  vein: 5 },
-      { type: 'pyrite',   minDepth: 200, maxDepth: 420, chance: 0.03,  vein: 4 },
-      // deepcrust 280-440: precious metals + first finds
-      { type: 'silver',   minDepth: 280, maxDepth: 500, chance: 0.03,  vein: 4 },
-      { type: 'cinnabar', minDepth: 300, maxDepth: 500, chance: 0.022, scatter: true },
-      { type: 'gold',     minDepth: 320, maxDepth: 560, chance: 0.02,  scatter: true },
-      { type: 'amber',    minDepth: 300, maxDepth: 520, chance: 0.02,  scatter: true },
-      // permafrost 440-580 (heat-gated): methane ice + deep fossils
-      { type: 'methaneice', minDepth: 440, maxDepth: 600, chance: 0.045, vein: 5 },
-      { type: 'fossil',   minDepth: 420, maxDepth: 600, chance: 0.014, scatter: true },
-      // magma 580-720 (shield-gated, drill-gated): volcanic exotics
-      { type: 'obsidian', minDepth: 560, maxDepth: 740, chance: 0.03,  vein: 4 },
-      { type: 'uranium',  minDepth: 600, maxDepth: 760, chance: 0.016, scatter: true },
-      { type: 'ruby',     minDepth: 620, maxDepth: 760, chance: 0.012, scatter: true },
-      { type: 'tanzanite',minDepth: 640, maxDepth: 760, chance: 0.009, scatter: true },
-      // mantle 720-800: the legendary core
-      { type: 'emerald',  minDepth: 700, maxDepth: 800, chance: 0.014, scatter: true },
-      { type: 'diamond',  minDepth: 720, maxDepth: 800, chance: 0.009, scatter: true },
-      { type: 'painite',  minDepth: 740, maxDepth: 800, chance: 0.005, scatter: true },
-      { type: 'unobtanium', minDepth: 760, maxDepth: 800, chance: 0.003, scatter: true } ],
+    [ // ---- topsoil 0-60: the VARIED bootstrap (was coal + copper only) ----
+      { type: 'coal',        minDepth: 2,   maxDepth: 70,   chance: 0.11,   vein: 7 },
+      { type: 'copper',      minDepth: 6,   maxDepth: 78,   chance: 0.08,   vein: 6 },
+      { type: 'malachite',   minDepth: 16,  maxDepth: 92,   chance: 0.032,  vein: 4 },
+      { type: 'bauxite',     minDepth: 34,  maxDepth: 108,  chance: 0.05,   vein: 5 },
+      { type: 'gold',        minDepth: 22,  maxDepth: 150,  chance: 0.004,  scatter: true }, // LUCKY STRIKE: rare shallow jackpot
+      // ---- subsoil 60-130: base metals get interesting ----
+      { type: 'iron',        minDepth: 55,  maxDepth: 158,  chance: 0.05,   vein: 5 },
+      { type: 'galena',      minDepth: 62,  maxDepth: 152,  chance: 0.03,   vein: 4 },
+      { type: 'magnetite',   minDepth: 72,  maxDepth: 178,  chance: 0.03,   vein: 4 },
+      { type: 'pyrite',      minDepth: 82,  maxDepth: 162,  chance: 0.024,  vein: 4 },
+      { type: 'amethyst',    minDepth: 95,  maxDepth: 212,  chance: 0.0055, scatter: true }, // LUCKY STRIKE: rare geode
+      // ---- deepcrust 130-200: the first real treasures ----
+      { type: 'silver',      minDepth: 130, maxDepth: 238,  chance: 0.03,   vein: 4 },
+      { type: 'jade',        minDepth: 132, maxDepth: 262,  chance: 0.02,   scatter: true },
+      { type: 'cinnabar',    minDepth: 138, maxDepth: 246,  chance: 0.024,  scatter: true },
+      { type: 'gold',        minDepth: 150, maxDepth: 262,  chance: 0.02,   scatter: true }, // staple gold (crossover below the lucky-strike band)
+      { type: 'amber',       minDepth: 150, maxDepth: 252,  chance: 0.02,   scatter: true },
+      { type: 'rhodochrosite', minDepth: 165, maxDepth: 252, chance: 0.014, scatter: true },
+      // ---- permafrost 200-270 (HEAT gate): the blue ice band + deep fossils ----
+      { type: 'methaneice',  minDepth: 200, maxDepth: 276,  chance: 0.04,   vein: 5 },
+      { type: 'cobalt',      minDepth: 200, maxDepth: 286,  chance: 0.024,  vein: 4 },
+      { type: 'turquoise',   minDepth: 196, maxDepth: 272,  chance: 0.02,   scatter: true },
+      { type: 'lapis',       minDepth: 205, maxDepth: 288,  chance: 0.018,  scatter: true },
+      { type: 'fossil',      minDepth: 210, maxDepth: 286,  chance: 0.014,  scatter: true },
+      // ---- magma 270-340 (SHIELD + drill gate): volcanic exotics ----
+      { type: 'obsidian',    minDepth: 265, maxDepth: 346,  chance: 0.03,   vein: 4 },
+      { type: 'uranium',     minDepth: 250, maxDepth: 322,  chance: 0.014,  scatter: true },
+      { type: 'sulfur',      minDepth: 272, maxDepth: 342,  chance: 0.022,  scatter: true },
+      { type: 'emerald',     minDepth: 278, maxDepth: 350,  chance: 0.015,  scatter: true },
+      { type: 'peridot',     minDepth: 285, maxDepth: 352,  chance: 0.011,  scatter: true },
+      // ---- mantle 340-400 (SHIELD + drill gate): the legendary crystal core ----
+      { type: 'ruby',        minDepth: 330, maxDepth: 388,  chance: 0.012,  scatter: true },
+      { type: 'tanzanite',   minDepth: 340, maxDepth: 396,  chance: 0.009,  scatter: true },
+      { type: 'opal',        minDepth: 335, maxDepth: 400,  chance: 0.008,  scatter: true },
+      { type: 'diamond',     minDepth: 348, maxDepth: 400,  chance: 0.0075, scatter: true },
+      { type: 'platinum',    minDepth: 350, maxDepth: 400,  chance: 0.006,  scatter: true },
+      { type: 'painite',     minDepth: 365, maxDepth: 400,  chance: 0.004,  scatter: true },
+      { type: 'unobtanium',  minDepth: 380, maxDepth: 400,  chance: 0.003,  scatter: true } ],
     // Town 2 (~600): subsoil metals + permafrost methane ice + cinnabar/gold.
     [ { type: 'copper',     minDepth: 0,   maxDepth: 160, chance: 0.06,  vein: 6 },
       { type: 'bauxite',    minDepth: 80,  maxDepth: 330, chance: 0.055, vein: 5 },
@@ -4659,7 +4681,7 @@
   // is not re-run), so a multi-town save (3188 wide) loaded into a single-town
   // world (320 wide) would corrupt out of bounds. A version mismatch is skipped
   // (treated as no save -> fresh world), so this cleanly retires old saves.
-  var SAVE_VERSION = 2;
+  var SAVE_VERSION = 3;
   // Dev lever: ?nosave=1 boots a FRESH world with persistence fully off
   // (no load at boot, no autosaves, no unload save). For testing worldgen
   // changes without wiping or racing the real save slots.
@@ -6641,9 +6663,9 @@
       { key: 'hull',   title: 'Hull Plating',  desc: deltaDesc(hl, 'Hull',     hullAt),      level: hl, costs: shop.hull },
       { key: 'cargo',  title: 'Cargo Bay',     desc: deltaDesc(cl, 'Slots',    cargoAt),     level: cl, costs: shop.cargo },
       { key: 'booster',title: 'Booster',       desc: boosterDesc,                            level: bl, costs: shop.booster },
-      { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (35m+)',  level: upgrades.heatLevel,   costs: shop.heat,   special: true },
+      { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (200m+)', level: upgrades.heatLevel,   costs: shop.heat,   special: true },
       { key: 'shield', title: 'Heat Shield',   desc: upgrades.shieldLevel === 0
-                                                       ? 'Mk 1: halves magma damage (110m+)'
+                                                       ? 'Mk 1: halves magma damage (270m+)'
                                                        : (upgrades.shieldLevel === 1
                                                           ? 'Mk 2: full magma immunity'
                                                           : 'Mk 2 · full magma immunity'),
