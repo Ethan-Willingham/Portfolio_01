@@ -4564,6 +4564,9 @@
     for (si = 0; si < N; si++) {
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
+      var iAsleep = !active[bi]._solve;   // v25.41: sleeper-sleeper pairs are no-ops — any real
+                                          // penetration wakes both right here in the pair math,
+                                          // so a steady pile only ever offers pen<=0 pairs
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
       for (gx = cx - 1; gx <= cx + 1; gx++) {
         for (gy = cy - 1; gy <= cy + 1; gy++) {
@@ -4572,6 +4575,7 @@
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
             if (j <= i) continue;            // each unordered pair once (gather-index order)
+            if (iAsleep && !active[GB[j]]._solve) continue;   // both asleep: see iAsleep note
             if (GB[j] === bi) {              // same body: self-collide ONLY points far apart in the rest
               if (!selfOn) continue;         // lattice (a genuine fold), never near-neighbours / squish
               var bb = active[bi]; if (!bb.rx) continue;
@@ -4638,6 +4642,8 @@
         }
       }
     }
+    if (contacts === 0) break;   // v25.41: a pass with zero contacts means the remaining
+                                 // passes are no-ops by definition (settled / fully separated)
     }   // end citers iteration loop
     // 4. write the corrected positions AND prev-positions back (ox carries the velocity damping)
     for (i = 0; i < N; i++) { b = active[GB[i]]; var li = GL[i]; b.px[li] = GPX[i]; b.py[li] = GPY[i]; b.ox[li] = GOX[i]; b.oy[li] = GOY[i]; }
@@ -4862,9 +4868,18 @@
     // parked-pile common case). The rig displace + rescue + render below still
     // run, so a rig pressed into a sleeping pile stays evicted.
     if (!anySolve) totalSteps = 0;
+    // Dev-only phase timing (v25.41): jello.internal / jello.contact / etc
+    // buckets — where does the AWAKE-solver frame go? Emitted via the perfMark
+    // now-minus-acc trick; zero cost outside dev mode. (Measured: the contact
+    // sweep is ~75-80% of update.jello with a crammed awake pile.)
+    var _phT = devMode ? performance.now() : 0;
+    var _phInternal = 0, _phContact = 0, _phTail = 0, _phT0 = 0;
     for (step = 0; step < totalSteps; step++) {
+      if (devMode) _phT0 = performance.now();
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve && !b.sleeping) jelloBodyInternalSubstep(b, h); }
+      if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
+      if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
       // World re-collide AFTER contact + containment: those passes move points without
       // seeing tiles, so a pressed pile could park points inside a wall until the NEXT
@@ -4876,6 +4891,14 @@
         }
       }
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve) jelloClampVelocity(b, h); }
+      if (devMode) _phTail += performance.now() - _phT0;
+    }
+    if (devMode && totalSteps > 0) {
+      var _phNow = performance.now();
+      perfMark('jello.internal', _phNow - _phInternal);
+      perfMark('jello.contact', _phNow - _phContact);
+      perfMark('jello.tail', _phNow - _phTail);
+      perfMark('jello.substepsAll', _phT);
     }
 
     // ----- Finalize: finite sweep, rest recompute (plasticity), bbox/centroid/velocity/sleep,
