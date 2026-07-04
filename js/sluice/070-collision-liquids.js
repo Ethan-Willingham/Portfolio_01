@@ -898,7 +898,16 @@
           // Surface friction. Floor brakes lateral motion; walls brake
           // vertical motion. Stops the "shoot-along-the-surface" jet that
           // pressure scatter creates on flat floors with no drag.
-          if (downSolid) liquidCellVX[c2] *= floorFriction;
+          if (downSolid) {
+            var fricF = floorFriction;
+            // v25.45 — LEDGE LIP (see the WGSL gridBoundary twin): an
+            // open-edge floor cell barely grips so bodies spill over the
+            // lip instead of damming; walled edges keep full friction.
+            var lipL = !leftSolid && !liquidGridWorldSolid(cgx - 1, cgy + 1);
+            var lipR = !rightSolid && !liquidGridWorldSolid(cgx + 1, cgy + 1);
+            if (lipL || lipR) fricF = Math.max(fricF, LIQUID_LIP_FRICTION);
+            liquidCellVX[c2] *= fricF;
+          }
           if (leftSolid || rightSolid) liquidCellVY[c2] *= wallFriction;
         }
       } else {

@@ -939,6 +939,14 @@
           function (v) { LIQUID_WALL_FRICTION = v; gmSetWaterSim('WALL_FRICTION', v); },
           0.9, 1.0, undefined);
       }
+      // v25.45 — ledge-lip spill: open-edge floor cells barely grip so
+      // blobs pour off ledges; set equal to FLOOR_FRICTION = old damming.
+      if (typeof LIQUID_LIP_FRICTION !== 'undefined') {
+        gmRegisterLever('water.LIP_FRICTION', 'water', 'LIP_FRICTION (ledge spill)',
+          function () { return LIQUID_LIP_FRICTION; },
+          function (v) { LIQUID_LIP_FRICTION = v < 0.9 ? 0.9 : (v > 1 ? 1 : v); gmSetWaterSim('LIP_FRICTION', LIQUID_LIP_FRICTION); },
+          0.9, 1.0, undefined);
+      }
       if (typeof LIQUID_CALM_RAMP !== 'undefined') {
         gmRegisterLever('water.CALM_RAMP', 'water', 'CALM_RAMP',
           function () { return LIQUID_CALM_RAMP; },

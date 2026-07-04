@@ -210,6 +210,7 @@ banner is `LIQUIDS: SURFACE WATER`. Tier `edit` unless marked `edit²`
 | `LIQUID_WATER_MOTION_SCALE` | `0.97` | 0.8–1.0 | Global scale on water motion (liveliness). LEGACY (RAW=0) path; `MOTION_LIVE` is the live value under RAW |
 | `LIQUID_GRAVITY` | `250` | 200–1000 | Downward accel (px/s²). **v24.169: 1000→250** — the old ~4x-saharan gravity was THE POPCORN driver (see §2.10). gm-LIVE |
 | `LIQUID_FLOOR_FRICTION` | `0.97` | 0.85–1.0 | Horizontal drag over solid floor, PER SUBSTEP — lower = more drag. v25.44 HONEY FIX: was 0.92, tuned in the single-step era; at 186 substeps/s it compounded to a near-instant stop for floor-adjacent cells, which is why shallow water spread like tar. gm `water.FLOOR_FRICTION` |
+| `LIQUID_LIP_FRICTION` `edit²` | `0.999` | 0.9–1.0 | v25.45 — LEDGE-LIP SPILL (the owner's "big blobs hanging at the edge" fix). A floor cell at an OPEN edge (passable horizontal neighbour with no floor under it) uses this nearly-slick friction instead of `LIQUID_FLOOR_FRICTION`, so a body pushed toward a lip pours over instead of damming; only bead-scale water can rest at an edge (the droplet pass renders it as small drops). Walled edges (stone-lined ponds) are NOT lips and keep full grip. Set equal to FLOOR_FRICTION for the old damming. gm `water.LIP_FRICTION` |
 | `LIQUID_WALL_FRICTION` | `0.97` | 0.85–1.0 | Vertical drag against a side wall |
 | `LIQUID_WALL_BOUNCE_IN` | `0.075` | 0.0–0.4 | Reflection for cells inside solids — lower = wetter |
 | `LIQUID_WALL_BOUNCE_EDGE` | `0.095` | 0.0–0.4 | Reflection for cells adjacent to solids |

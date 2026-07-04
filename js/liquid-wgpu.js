@@ -206,6 +206,7 @@
   var LIQUID_WALL_BOUNCE_EDGE     = 0.095;
   var LIQUID_FLOOR_FRICTION       = 0.97;    // v25.44 honey fix — edit² 010-constants (per-substep; was 0.92)
   var LIQUID_WALL_FRICTION        = 0.985;   // v25.44 honey fix — edit² 010-constants (per-substep; was 0.97)
+  var LIQUID_LIP_FRICTION         = 0.999;   // v25.45 ledge-lip spill — edit² 010-constants (feel.w lane)
   var LIQUID_OIL_WALL_BOUNCE_IN   = 0.05;
   var LIQUID_OIL_WALL_BOUNCE_EDGE = 0.06;
   var LIQUID_OIL_FLOOR_FRICTION   = 0.89;
@@ -1115,9 +1116,9 @@
     // g2pC : maxVel, burstDamp, burstGateLo, burstGateHi (v24.173 Old-Faithful)
     sh[28] = LIQUID_MAX_VEL;        sh[29] = LIQUID_BURST_DAMP;
     sh[30] = LIQUID_BURST_GATE_LO;  sh[31] = LIQUID_BURST_GATE_HI;
-    // feel : cohesion, airDrag, pressureMaxDv (v25.41 popcorn fix), spare
-    sh[32] = LIQUID_COHESION;       sh[33] = LIQUID_AIR_DRAG;
-    sh[34] = LIQUID_PRESSURE_MAX_DV; sh[35] = 0;
+    // feel : cohesion, airDrag, pressureMaxDv (v25.41), lipFriction (v25.45)
+    sh[32] = LIQUID_COHESION;        sh[33] = LIQUID_AIR_DRAG;
+    sh[34] = LIQUID_PRESSURE_MAX_DV; sh[35] = LIQUID_LIP_FRICTION;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -4551,7 +4552,20 @@ fn gridSolid(gx : i32, gy : i32) -> bool {
     // Surface friction — a floor brakes lateral motion, walls brake
     // vertical. This is the drag that kills the shoot-along-the-surface
     // jet pressure scatter creates on flat floors.
-    if (downSolid) { vx = vx * floorFric; }
+    if (downSolid) {
+      var fricF = floorFric;
+      // v25.45 — LEDGE LIP: a floor cell at an OPEN edge (a passable
+      // horizontal neighbour with no floor under it) barely grips
+      // (sp.feel.w), so a body pushed toward the lip SPILLS over instead
+      // of damming into a fat blob hanging at the edge; only bead-scale
+      // water (no push behind it) can rest there. Walled edges (stone-
+      // lined ponds) are not lips — full friction. max() so a lip can
+      // never grip harder than the floor. edit2 the CPU twin (070).
+      let leftOpen  = !leftSolid  && !gridSolid(cgx - 1, cgy + 1);
+      let rightOpen = !rightSolid && !gridSolid(cgx + 1, cgy + 1);
+      if (leftOpen || rightOpen) { fricF = max(fricF, sp.feel.w); }
+      vx = vx * fricF;
+    }
     if (leftSolid || rightSolid) { vy = vy * wallFric; }
   }
   cellVelX[c] = vx;
@@ -8106,6 +8120,7 @@ fn main() {
             case 'COHESION':             LIQUID_COHESION = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             case 'AIR_DRAG':             LIQUID_AIR_DRAG = v < 0.9 ? 0.9 : (v > 1 ? 1 : v); break;
             case 'PRESSURE_MAX_DV':      LIQUID_PRESSURE_MAX_DV = v < 0 ? 0 : v; break;
+            case 'LIP_FRICTION':         LIQUID_LIP_FRICTION = v < 0.9 ? 0.9 : (v > 1 ? 1 : v); break;   // v25.45 ledge spill
             case 'BURST_DAMP':           LIQUID_BURST_DAMP = v; break;
             case 'BURST_GATE_LO':        LIQUID_BURST_GATE_LO = v; break;
             case 'BURST_GATE_HI':        LIQUID_BURST_GATE_HI = v; break;

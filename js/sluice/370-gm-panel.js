@@ -466,6 +466,7 @@
         'water.VISC_LIVE': 6,                  // lively grid viscosity (0 = raw)
         'water.FLOOR_FRICTION': 7,             // per-substep drag on floor-adjacent cells
         'water.WALL_FRICTION': 8,              // per-substep drag on wall-adjacent cells
+        'water.LIP_FRICTION': 9,               // v25.45 ledge spill (= FLOOR_FRICTION for old damming)
         // --- core feel (v22 unified-contact model): dial these to shape the slime ---
         'jello.JELLO_SOLVER_ID': 1,            // pbd / xpbd / fem
         'jello.JELLO_E': 2,                    // overall softness (lower = squishier)
