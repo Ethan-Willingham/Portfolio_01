@@ -1209,6 +1209,15 @@
       var _rCon = performance.now();
       if (!PERF_DISABLE_CONSOLE) drawConsole();
       perfMark('render.console', _rCon);
+      // v25.37 — the dock-sale payout reveal (placards + chips + telegraph)
+      // draws HERE, in the full-screen HUD pass, every frame. It used to render
+      // inside drawCashDisplay, but the v25.31 console instrument cache swaps
+      // ctx to an offscreen console layer and repaints the CASH bay only when
+      // its value signature changes: from there the reveal was trapped in the
+      // bottom console strip AND froze between cash ticks. Hoisted out per the
+      // "draw-side eases live outside a cached draw" rule (project_sluice_perf_pass).
+      // It self-guards to a no-op when no sale is playing.
+      drawSellReveal();
       // v11.10 — Item radial wheel (button always visible; wheel only when held)
       drawItemWheel();
       // v11.27 — top-left FPS + version overlay (replaces the legacy

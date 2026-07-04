@@ -1199,26 +1199,6 @@
     ctx.fillRect(x - 2, groundY - 1, 10, 1);             // shadow at the foot
   }
 
-  // Simple squared timber post — a plain 5-px wood beam with a sunlit + a
-  // shadowed edge and a small stone foot. Holds up the wooden v1 gas-station
-  // canopy (drawCanopy); the beefier riveted drawSupportPost carries the iron
-  // depot slab (drawDepotCanopy) instead.
-  function drawTimberPost(px, top, groundY) {
-    var h = groundY - top;
-    ctx.fillStyle = BLD.outline;
-    ctx.fillRect(px - 1, top, 7, h);
-    ctx.fillStyle = BLD.woodBase;
-    ctx.fillRect(px, top, 5, h);
-    ctx.fillStyle = BLD.woodLight;                       // sunlit edge
-    ctx.fillRect(px, top, 1, h);
-    ctx.fillStyle = BLD.woodDeep;                        // shadow edge
-    ctx.fillRect(px + 4, top, 1, h);
-    ctx.fillStyle = BLD.outline;                         // stone foot block
-    ctx.fillRect(px - 2, groundY - 3, 9, 3);
-    ctx.fillStyle = BLD.stoneBase;
-    ctx.fillRect(px - 1, groundY - 2, 7, 2);
-  }
-
   // Wide flat gas-station canopy — wooden plank top with a red trim strip
   // along the bottom edge (the "fueling station" silhouette). Outlined.
   // COLD STORAGE since the v24.138 depot v2 (drawDepotCanopy is the live
@@ -2136,18 +2116,21 @@
   //
   // The pumpPadRect hit zone sits exactly under the parking arrow so the
   // player can see where to drive. Refuel + auto-deposit both arm here.
-  // v25.36 — reverted to the ORIGINAL v1 gas-station look (owner call: the
-  // simpler wooden-canopy filling station read better than the v24.138 iron
-  // depot). A wide flat WOODEN canopy on two timber posts spans the bay; the
-  // pumpPadRect hit zone under the parking arrow is untouched (refuel +
-  // auto-deposit still arm there).
+  // v25.37 — restored the ORIGINAL pre-depot gas station VERBATIM from the
+  // archived alpha history (v24.138, commit a5f2d12: the exact code the
+  // v24.139 ЗАПРАВКА depot v2 replaced). The owner preferred this simpler
+  // bay: a "floating" wood-shelf canopy on two iron posts over a spaced pump
+  // + pay-out terminal, sky showing through the gaps, hanging oil lamp +
+  // REFUEL · DEPOSIT under the shelf. The v2 depot helpers (drawDepotCanopy /
+  // drawCashBooth / drawFuelTank) stay defined as cold storage. Hit zone
+  // (pumpPadRect) untouched — refuel + auto-deposit still arm there.
   function drawPumpPad() {
     var pad = pumpPadRect();
     var groundY = DECK_ROW * TILE;
-    // AABB: tank plinth at pad.x-56 … right post foot at pad.x+97; the
-    // ЗАПРАВКА roof sign tops out near groundY-83.
+    var depotX = pad.x - 40;     // leftPostX — innerGap+pumpW+outerGap+postW left of the pad
+    var W = pad.w + 80;          // postW+outerGap+pumpW+innerGap + pad + innerGap+termW+outerGap+postW
     drawCachedStructure('pumppad', 33,
-      pad.x - 76, groundY - 88, 186, 96,
+      depotX - 18, groundY - 86, W + 36, 94,
       (playerOnPumpPad() ? '1' : '0') + (player.refueling ? '1' : '0'),
       drawPumpPadContent);
   }
@@ -2156,43 +2139,39 @@
     var groundY = DECK_ROW * TILE;
     var t = performance.now() / 1000;
     var active = playerOnPumpPad();
-    var P = pad.x;
-    var padCenterX = P + pad.w / 2;
 
-    // Layout (left → right) under one wide flat wooden canopy: fuel tank on
-    // its plinth → pump on its island → parking pad (the hit zone, untouched)
-    // → PAY-OUT terminal. Two timber posts carry the canopy at the far ends.
-    var tankX = P - 54, tankW = 20, tankH = 42;
-    var pumpX = P - 24;
-    var termX = P + 72;
-    var canopyX = P - 66, canopyW = 162, canopyH = 14;
-    var canopyTop = groundY - 70;            // roof top; underside groundY-56
-    var canopyBot = canopyTop + canopyH;
+    // Layout — components are SPACED (not packed) so the gas-station bay
+    // reads as open. Sky shows through inter-component gaps which sells
+    // the drive-up feel:
+    //   leftPost(6) → 8 gap → pump(16) → 10 gap → pad(64) → 10 gap → terminal(16) → 8 gap → rightPost(6)
+    var pumpW = 16;
+    var termW = 16;
+    var postW = 6;
+    var innerGap = 10;
+    var outerGap = 8;
+    var pumpX = pad.x - innerGap - pumpW;
+    var termX = pad.x + pad.w + innerGap;
+    var leftPostX = pumpX - outerGap - postW;
+    var rightPostX = termX + termW + outerGap;
+    var depotX = leftPostX;
+    var W = (rightPostX + postW) - leftPostX;     // 6+8+16+10+64+10+16+8+6 = 144
+    var padCenterX = pad.x + pad.w / 2;
 
-    // ---------- Timber posts (FIRST, so the canopy overlaps their tops and
-    //            the tank/pump plinths overlap their feet) ----------
-    drawTimberPost(P - 62, canopyBot, groundY);
-    drawTimberPost(P + 90, canopyBot, groundY);
+    var canopyY = groundY - 64;
+    var canopyH = 12;
+    var postH = groundY - canopyY;                 // posts run from canopy to ground
 
-    // ---------- Fuel tank on a concrete plinth ----------
-    ctx.fillStyle = BLD.outline;
-    ctx.fillRect(tankX - 2, groundY - 3, tankW + 4, 3);
-    ctx.fillStyle = BLD.stoneBase;
-    ctx.fillRect(tankX - 1, groundY - 2, tankW + 2, 2);
-    ctx.fillStyle = BLD.stoneLight;
-    ctx.fillRect(tankX - 1, groundY - 2, tankW + 2, 1);
-    drawFuelTank(tankX, groundY - 3, tankW, tankH, t);
+    // ---------- Support posts (drawn FIRST so canopy overlaps them at the top) ----------
+    drawSupportPost(leftPostX + postW / 2, groundY, postH);
+    drawSupportPost(rightPostX + postW / 2, groundY, postH);
 
-    // ---------- Pump on a low concrete island ----------
-    ctx.fillStyle = BLD.outline;
-    ctx.fillRect(pumpX - 4, groundY - 4, 24, 4);
-    ctx.fillStyle = BLD.stoneBase;
-    ctx.fillRect(pumpX - 3, groundY - 3, 22, 3);
-    ctx.fillStyle = BLD.stonePale;
-    ctx.fillRect(pumpX - 3, groundY - 3, 22, 1);
-    drawFuelPump(pumpX, groundY - 3, t, active);
+    // ---------- Old-school fuel pump (left of pad, with 10 px gap) ----------
+    drawFuelPump(pumpX, groundY, t, active);
 
-    // ---------- Parking pad — hazard-striped floor only (hit zone, unchanged) ----------
+    // ---------- Payout terminal (right of pad, with 10 px gap) ----------
+    drawPayoutTerminal(termX, groundY, t, active);
+
+    // ---------- Parking pad — hazard-striped floor only, no stone base ----------
     drawHazardStripes(pad.x, groundY - 4, pad.w, 4, t, active);
     // Iron rails along the pad top + sides
     ctx.fillStyle = BLD.outline;
@@ -2208,13 +2187,31 @@
       ctx.fillRect(pad.x, groundY - 24, pad.w, 24);
     }
 
-    // ---------- Pay-out terminal (the pay point) ----------
-    drawPayoutTerminal(termX, groundY, t, active);
+    // ---------- Canopy — overhangs the posts by 8 px each side ----------
+    var canopyOverhang = 8;
+    var canopyX = depotX - canopyOverhang;
+    var canopyW = W + canopyOverhang * 2;          // 144 + 16 = 160
+    drawCanopy(canopyX, canopyY, canopyW, canopyH);
 
-    // ---------- Wide flat wooden canopy over the whole bay ----------
-    drawCanopy(canopyX, canopyTop, canopyW, canopyH);
-    // ЗАПРАВКА sign board standing on the canopy roof
-    drawSignBoard(padCenterX - 32, canopyTop - 12, 64, 12, 'ЗАПРАВКА');
+    // ---------- Sign on top of the canopy ----------
+    var signW = 88, signH = 13;
+    var signX = Math.floor(padCenterX - signW / 2);
+    var signY = canopyY - signH - 2;
+    drawSignBoard(signX, signY, signW, signH, '★ ЗАПРАВКА ★');
+    // English subtitle — anchor the centered "·" exactly at padCenterX so
+    // it lines up under the hanging lamp. "REFUEL" (6 chars) and "DEPOSIT"
+    // (7 chars) have unequal widths, so a plain `textAlign:'center'` would
+    // push the dot a couple of px off-center.
+    ctx.font = 'bold 5px ' + UI_FONT;
+    ctx.fillStyle = BLD.cream;
+    ctx.textAlign = 'left';
+    var leftWidth = ctx.measureText('REFUEL ').width;
+    var dotWidth = ctx.measureText('·').width;
+    var subStartX = padCenterX - leftWidth - dotWidth / 2;
+    ctx.fillText('REFUEL · DEPOSIT', subStartX, canopyY + canopyH + 8);
+
+    // ---------- Hanging lamp directly above the "·" between the words ----------
+    drawOilLamp(padCenterX, canopyY + canopyH + 4, t);
 
     // ---------- Bobbing parking arrow above the pad ----------
     drawParkingArrow(padCenterX, groundY - 8, t, active);

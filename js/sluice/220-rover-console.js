@@ -1366,11 +1366,12 @@
     ctx.fillStyle = 'rgba(180,255,200,0.55)';
     ctx.fillRect(lampX, lampY, 1, 1);
 
-    // The dock-sale reveal (placards + chips + telegraph) renders here, hung off
-    // the CASH bay since it is the balance window's moment. It paints in its own
-    // full-screen CSS-pixel transform, isolated from the console's scaled space
-    // by the save/restore inside drawSellReveal.
-    drawSellReveal();
+    // v25.37 — the dock-sale reveal used to render here ("hung off the CASH
+    // bay"), but the v25.31 console instrument cache swaps ctx to an offscreen
+    // console layer and repaints this bay only when its value signature changes,
+    // which trapped the reveal in the bottom console strip and froze it between
+    // cash ticks. It now draws every frame in the full-screen HUD pass
+    // (140-render-maindraw.js, right after drawConsole()).
   }
 
   // ----- Auto-sell reveal renderer (the floaters style from autosell-lab.html) -----
