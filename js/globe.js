@@ -500,24 +500,40 @@
 
   /* ---- Daylight bar ---- */
   function updateDaylightBar(hour, day, tilt) {
-    var lat, latSource;
-    if (pinnedLat !== null) { lat = pinnedLat; latSource = 'pinned'; }
-    else if (hoverLat !== null) { lat = hoverLat; latSource = 'hover'; }
-    else { lat = 0; latSource = 'default'; }
+    var lat, lon, latSource;
+    if (pinnedLat !== null) { lat = pinnedLat; lon = pinnedLon; latSource = 'pinned'; }
+    else if (hoverLat !== null) { lat = hoverLat; lon = hoverLon; latSource = 'hover'; }
+    else { lat = 0; lon = 0; latSource = 'default'; }
     var dl = daylightHours(lat, day, tilt);
+    // Sunrise/sunset in the selected timezone's wall clock. dl.rise/dl.set are
+    // in local apparent solar time (noon = subsolar); solarTime - lon/15 = UTC,
+    // then + off = clock time. Omitting the longitude term is what pushed
+    // sunrise past midnight for locations far from the prime meridian.
+    var off = TZ_OFFSETS[currentTZ] || -5;
+    var riseLocal = dl.rise - lon / 15 + off;
+    var setLocal = dl.set - lon / 15 + off;
+    while (riseLocal < 0) riseLocal += 24; while (riseLocal >= 24) riseLocal -= 24;
+    while (setLocal < 0) setLocal += 24; while (setLocal >= 24) setLocal -= 24;
     if (daylightBarCanvas) {
       var w = daylightBarCanvas.width, h = daylightBarCanvas.height;
       var bc = daylightBarCanvas.getContext('2d');
       bc.fillStyle = '#0a0b0c'; bc.fillRect(0, 0, w, h);
-      if (dl.hours > 0 && dl.hours < 24) {
-        var x1 = (dl.rise / 24) * w, x2 = (dl.set / 24) * w;
-        var g = bc.createLinearGradient(x1, 0, x2, 0);
-        g.addColorStop(0, '#4a3520'); g.addColorStop(0.15, '#c49540');
-        g.addColorStop(0.5, '#e8c060'); g.addColorStop(0.85, '#c49540');
-        g.addColorStop(1, '#4a3520');
-        bc.fillStyle = g; bc.fillRect(x1, 0, x2 - x1, h);
-      } else if (dl.hours >= 24) {
+      if (dl.hours >= 24) {
         bc.fillStyle = '#c49540'; bc.fillRect(0, 0, w, h);
+      } else if (dl.hours > 0) {
+        // Lit band drawn at its wall-clock position so it lines up with the
+        // axis ticks and the sunrise/sunset text. It wraps past midnight when a
+        // location sits far from its timezone's meridian.
+        var band = function (a, b) {
+          var xa = (a / 24) * w, xb = (b / 24) * w;
+          var g = bc.createLinearGradient(xa, 0, xb, 0);
+          g.addColorStop(0, '#4a3520'); g.addColorStop(0.15, '#c49540');
+          g.addColorStop(0.5, '#e8c060'); g.addColorStop(0.85, '#c49540');
+          g.addColorStop(1, '#4a3520');
+          bc.fillStyle = g; bc.fillRect(xa, 0, xb - xa, h);
+        };
+        if (setLocal >= riseLocal) band(riseLocal, setLocal);
+        else { band(riseLocal, 24); band(0, setLocal); }
       }
       var cx = (hour / 24) * w;
       bc.fillStyle = dl.hours <= 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)';
@@ -535,15 +551,13 @@
       else daylightLabel.textContent = ls + ': ' + dl.hours.toFixed(1) + 'h daylight';
     }
     if (sunriseLabel) {
-      // Show sunrise/sunset in local timezone
-      var off = TZ_OFFSETS[currentTZ] || -5;
       if (dl.hours >= 24) sunriseLabel.textContent = 'Sun never sets';
       else if (dl.hours <= 0) sunriseLabel.textContent = 'Sun never rises';
       else {
-        var rLocal = dl.rise + off; if (rLocal < 0) rLocal += 24;
-        var sLocal = dl.set + off; if (sLocal < 0) sLocal += 24; if (sLocal >= 24) sLocal -= 24;
-        var rh = rLocal | 0, rm = Math.round((rLocal - rh) * 60);
-        var sh = sLocal | 0, sm = Math.round((sLocal - sh) * 60);
+        var rh = riseLocal | 0, rm = Math.round((riseLocal - rh) * 60);
+        if (rm === 60) { rm = 0; rh = (rh + 1) % 24; }
+        var sh = setLocal | 0, sm = Math.round((setLocal - sh) * 60);
+        if (sm === 60) { sm = 0; sh = (sh + 1) % 24; }
         var rap = rh < 12 ? 'AM' : 'PM', sap = sh < 12 ? 'AM' : 'PM';
         var rh12 = rh % 12; if (rh12 === 0) rh12 = 12;
         var sh12 = sh % 12; if (sh12 === 0) sh12 = 12;
