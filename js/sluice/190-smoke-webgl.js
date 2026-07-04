@@ -953,9 +953,27 @@
   // still detected (trackers stay stale) and repainted on the next wake.
   function smokeObstacleNeedsRepaint() {
     if (!PERF_SMOKE_OBSTACLE_DIRTY) return true;
-    if (smokeObstPrevCamX !== cam.x || smokeObstPrevCamY !== cam.y ||
+    // v25.40 — two dirty-gate leaks made this fire EVERY frame in EVERY scene:
+    // (1) the camera compare was EXACT floats, and the camera's exponential
+    //     ease converges without ever landing exactly, so sub-pixel drift
+    //     repainted forever even parked. The mask is rasterized at pixel
+    //     granularity — drift under half a pixel cannot change it. The prev
+    //     trackers still only advance on a repaint, so slow pans accumulate
+    //     and trigger once they cross the threshold (nothing is ever missed).
+    // (2) jelloBodies.length forced a repaint whenever any slime EXISTS; a
+    //     SLEEPING pile is pose-frozen by the park pipeline and cannot
+    //     reshape the mask. Only awake bodies repaint; any wake (including
+    //     the rig pressing in, which implies camera motion) resumes it.
+    var _odx = cam.x - smokeObstPrevCamX; if (_odx < 0) _odx = -_odx;
+    var _ody = cam.y - smokeObstPrevCamY; if (_ody < 0) _ody = -_ody;
+    var _jAwake = false;
+    for (var _ji = 0; _ji < jelloBodies.length; _ji++) {
+      var _jb = jelloBodies[_ji];
+      if (!_jb.sleeping && !_jb.frozen) { _jAwake = true; break; }
+    }
+    if (_odx > 0.5 || _ody > 0.5 ||
         smokeObstPrevScrW !== screenW || smokeObstPrevScrH !== screenH ||
-        drilling || explosions.length || liveBombs.length || jelloBodies.length) {
+        drilling || explosions.length || liveBombs.length || _jAwake) {
       smokeObstPrevCamX = cam.x; smokeObstPrevCamY = cam.y;
       smokeObstPrevScrW = screenW; smokeObstPrevScrH = screenH;
       return true;

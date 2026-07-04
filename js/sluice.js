@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.39';
+  var GAME_VERSION = 'v25.40';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2479,6 +2479,18 @@
       buckets: function () {
         var o = {}, k;
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
+        return o;
+      },
+      conSig: function (id) {   // live bay signature (function-hoisted; defined in 310)
+        return typeof consoleBaySig === 'function' ? consoleBaySig(id) : '?';
+      },
+      conKey: function () {   // console cache keys (var-hoisted; assigned in 300/310)
+        return (typeof consoleFrameKey !== 'undefined' ? consoleFrameKey : '?') + ' || ' +
+               (typeof consoleInstKey !== 'undefined' ? consoleInstKey : '?');
+      },
+      peaks: function () {   // peak-hold companions (snap up, slow decay): spike hunting
+        var o = {}, k;
+        for (k in perfBucketsPk) if (Object.prototype.hasOwnProperty.call(perfBucketsPk, k)) o[k] = +perfBucketsPk[k].toFixed(3);
         return o;
       }
     };
@@ -25314,7 +25326,9 @@
     // ====== RENDER: Darkness / fog-of-war overlay ======
     // World-space; on top of terrain + entities, beneath the UI. Hides every
     // cell without a path to the surface (see 185-lighting.js).
+    var _lf0 = performance.now();
     drawDarknessOverlay(startRow, endRow, startCol, endCol);
+    perfMark('render.lightFog', _lf0);
 
     // ====== RENDER: Horizon atmosphere (haze veil + horizon limb) ======
     // Screen-space; over the world + fog, beneath precip + HUD. The veil
@@ -32872,6 +32886,7 @@
   // holds flat indices; the lit bit gates re-entry so every cell is visited at
   // most once ever — breaking into a large cavern is a one-time cost, then free.
   function lightFlood(stack) {
+    lightRev++;   // v25.40: the fog overlay caches on this (flood = the only lightArr writer)
     var arr = lightArr, cols = lightCols, rows = TOTAL_ROWS;
     while (stack.length) {
       var idx = stack.pop();
@@ -32907,6 +32922,8 @@
     if (!lightArr || r < 0 || r >= TOTAL_ROWS || c < 0 || c >= lightCols) return;
     var idx = r * lightCols + c;
     if (lightArr[idx]) return;                        // already lit
+    lightRev++;   // v25.40: even an UNCONNECTED clear changes the fog (graded
+                  // solid -> full-dark air), so the cached overlay must rebuild
     var connected = (r < SKY_ROWS);                   // open sky is always lit
     if (!connected) {
       if (r > 0 && lightArr[idx - lightCols]) connected = true;
@@ -32965,6 +32982,8 @@
   // every lit/dark boundary; with it off the edge is crisp tile steps. RGB is
   // 0 everywhere so only the alpha is interpolated — no colour fringing.
   var lightFogCanvas = null, lightFogCtx = null, lightFogImg = null;
+  var lightRev = 0;        // bumped by lightFlood — the only lightArr writer
+  var lightFogSig = '';    // v25.40: the fog IMAGE rebuilds only when this changes
   function drawDarknessOverlay(startRow, endRow, startCol, endCol) {
     if (!lightTune.enabled || !lightArr) return;
     var pad = 1;                                      // 1-tile margin: gradient blends in from off-screen
@@ -32979,20 +32998,32 @@
     if (lightFogCanvas.width !== bw || lightFogCanvas.height !== bh || !lightFogImg) {
       lightFogCanvas.width = bw; lightFogCanvas.height = bh;
       lightFogImg = lightFogCtx.createImageData(bw, bh);
+      lightFogSig = '';                               // realloc wiped the pixels: force a rebuild
     }
-    var data = lightFogImg.data;
     var a = Math.round(255 * (lightTune.darkAlpha < 0 ? 0 : (lightTune.darkAlpha > 1 ? 1 : lightTune.darkAlpha)));
-    var p = 0;
-    for (var j = 0; j < bh; j++) {
-      var rr = r0 + j;
-      for (var i = 0; i < bw; i++) {
-        data[p] = 0; data[p + 1] = 0; data[p + 2] = 0;
-        var sh = lightCellShade(rr, c0 + i);
-        data[p + 3] = sh <= 0 ? 0 : (sh >= 1 ? a : Math.round(a * sh));
-        p += 4;
+    // The per-cell shade scan (~900 cells x up-to-reach ring probes) + the
+    // putImageData ran EVERY frame underground, ~all of it for an unchanged
+    // view (harness: the biggest unbucketed slice of the deep-idle frame).
+    // The fog only changes when the view window shifts a whole tile, the lit
+    // grid gains cells (lightRev — lightFlood is the only writer), or the
+    // levers move; rebuild exactly then. The blit below still runs per frame
+    // (the main canvas is cleared each frame).
+    var sig = c0 + ',' + r0 + ',' + bw + ',' + bh + ',' + lightRev + ',' + a + ',' + lightTune.reach;
+    if (sig !== lightFogSig) {
+      lightFogSig = sig;
+      var data = lightFogImg.data;
+      var p = 0;
+      for (var j = 0; j < bh; j++) {
+        var rr = r0 + j;
+        for (var i = 0; i < bw; i++) {
+          data[p] = 0; data[p + 1] = 0; data[p + 2] = 0;
+          var sh = lightCellShade(rr, c0 + i);
+          data[p + 3] = sh <= 0 ? 0 : (sh >= 1 ? a : Math.round(a * sh));
+          p += 4;
+        }
       }
+      lightFogCtx.putImageData(lightFogImg, 0, 0);
     }
-    lightFogCtx.putImageData(lightFogImg, 0, 0);
     ctx.save();
     ctx.imageSmoothingEnabled = !!lightTune.soft;
     ctx.drawImage(lightFogCanvas, c0 * TILE, r0 * TILE, bw * TILE, bh * TILE);
@@ -33953,9 +33984,27 @@
   // still detected (trackers stay stale) and repainted on the next wake.
   function smokeObstacleNeedsRepaint() {
     if (!PERF_SMOKE_OBSTACLE_DIRTY) return true;
-    if (smokeObstPrevCamX !== cam.x || smokeObstPrevCamY !== cam.y ||
+    // v25.40 — two dirty-gate leaks made this fire EVERY frame in EVERY scene:
+    // (1) the camera compare was EXACT floats, and the camera's exponential
+    //     ease converges without ever landing exactly, so sub-pixel drift
+    //     repainted forever even parked. The mask is rasterized at pixel
+    //     granularity — drift under half a pixel cannot change it. The prev
+    //     trackers still only advance on a repaint, so slow pans accumulate
+    //     and trigger once they cross the threshold (nothing is ever missed).
+    // (2) jelloBodies.length forced a repaint whenever any slime EXISTS; a
+    //     SLEEPING pile is pose-frozen by the park pipeline and cannot
+    //     reshape the mask. Only awake bodies repaint; any wake (including
+    //     the rig pressing in, which implies camera motion) resumes it.
+    var _odx = cam.x - smokeObstPrevCamX; if (_odx < 0) _odx = -_odx;
+    var _ody = cam.y - smokeObstPrevCamY; if (_ody < 0) _ody = -_ody;
+    var _jAwake = false;
+    for (var _ji = 0; _ji < jelloBodies.length; _ji++) {
+      var _jb = jelloBodies[_ji];
+      if (!_jb.sleeping && !_jb.frozen) { _jAwake = true; break; }
+    }
+    if (_odx > 0.5 || _ody > 0.5 ||
         smokeObstPrevScrW !== screenW || smokeObstPrevScrH !== screenH ||
-        drilling || explosions.length || liveBombs.length || jelloBodies.length) {
+        drilling || explosions.length || liveBombs.length || _jAwake) {
       smokeObstPrevCamX = cam.x; smokeObstPrevCamY = cam.y;
       smokeObstPrevScrW = screenW; smokeObstPrevScrH = screenH;
       return true;

@@ -1118,7 +1118,9 @@
     // ====== RENDER: Darkness / fog-of-war overlay ======
     // World-space; on top of terrain + entities, beneath the UI. Hides every
     // cell without a path to the surface (see 185-lighting.js).
+    var _lf0 = performance.now();
     drawDarknessOverlay(startRow, endRow, startCol, endCol);
+    perfMark('render.lightFog', _lf0);
 
     // ====== RENDER: Horizon atmosphere (haze veil + horizon limb) ======
     // Screen-space; over the world + fog, beneath precip + HUD. The veil

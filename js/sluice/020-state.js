@@ -1261,6 +1261,18 @@
         var o = {}, k;
         for (k in perfBuckets) if (Object.prototype.hasOwnProperty.call(perfBuckets, k)) o[k] = +perfBuckets[k].toFixed(3);
         return o;
+      },
+      conSig: function (id) {   // live bay signature (function-hoisted; defined in 310)
+        return typeof consoleBaySig === 'function' ? consoleBaySig(id) : '?';
+      },
+      conKey: function () {   // console cache keys (var-hoisted; assigned in 300/310)
+        return (typeof consoleFrameKey !== 'undefined' ? consoleFrameKey : '?') + ' || ' +
+               (typeof consoleInstKey !== 'undefined' ? consoleInstKey : '?');
+      },
+      peaks: function () {   // peak-hold companions (snap up, slow decay): spike hunting
+        var o = {}, k;
+        for (k in perfBucketsPk) if (Object.prototype.hasOwnProperty.call(perfBucketsPk, k)) o[k] = +perfBucketsPk[k].toFixed(3);
+        return o;
       }
     };
   } catch (e) {}

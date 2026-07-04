@@ -35,6 +35,7 @@
   // holds flat indices; the lit bit gates re-entry so every cell is visited at
   // most once ever — breaking into a large cavern is a one-time cost, then free.
   function lightFlood(stack) {
+    lightRev++;   // v25.40: the fog overlay caches on this (flood = the only lightArr writer)
     var arr = lightArr, cols = lightCols, rows = TOTAL_ROWS;
     while (stack.length) {
       var idx = stack.pop();
@@ -70,6 +71,8 @@
     if (!lightArr || r < 0 || r >= TOTAL_ROWS || c < 0 || c >= lightCols) return;
     var idx = r * lightCols + c;
     if (lightArr[idx]) return;                        // already lit
+    lightRev++;   // v25.40: even an UNCONNECTED clear changes the fog (graded
+                  // solid -> full-dark air), so the cached overlay must rebuild
     var connected = (r < SKY_ROWS);                   // open sky is always lit
     if (!connected) {
       if (r > 0 && lightArr[idx - lightCols]) connected = true;
@@ -128,6 +131,8 @@
   // every lit/dark boundary; with it off the edge is crisp tile steps. RGB is
   // 0 everywhere so only the alpha is interpolated — no colour fringing.
   var lightFogCanvas = null, lightFogCtx = null, lightFogImg = null;
+  var lightRev = 0;        // bumped by lightFlood — the only lightArr writer
+  var lightFogSig = '';    // v25.40: the fog IMAGE rebuilds only when this changes
   function drawDarknessOverlay(startRow, endRow, startCol, endCol) {
     if (!lightTune.enabled || !lightArr) return;
     var pad = 1;                                      // 1-tile margin: gradient blends in from off-screen
@@ -142,20 +147,32 @@
     if (lightFogCanvas.width !== bw || lightFogCanvas.height !== bh || !lightFogImg) {
       lightFogCanvas.width = bw; lightFogCanvas.height = bh;
       lightFogImg = lightFogCtx.createImageData(bw, bh);
+      lightFogSig = '';                               // realloc wiped the pixels: force a rebuild
     }
-    var data = lightFogImg.data;
     var a = Math.round(255 * (lightTune.darkAlpha < 0 ? 0 : (lightTune.darkAlpha > 1 ? 1 : lightTune.darkAlpha)));
-    var p = 0;
-    for (var j = 0; j < bh; j++) {
-      var rr = r0 + j;
-      for (var i = 0; i < bw; i++) {
-        data[p] = 0; data[p + 1] = 0; data[p + 2] = 0;
-        var sh = lightCellShade(rr, c0 + i);
-        data[p + 3] = sh <= 0 ? 0 : (sh >= 1 ? a : Math.round(a * sh));
-        p += 4;
+    // The per-cell shade scan (~900 cells x up-to-reach ring probes) + the
+    // putImageData ran EVERY frame underground, ~all of it for an unchanged
+    // view (harness: the biggest unbucketed slice of the deep-idle frame).
+    // The fog only changes when the view window shifts a whole tile, the lit
+    // grid gains cells (lightRev — lightFlood is the only writer), or the
+    // levers move; rebuild exactly then. The blit below still runs per frame
+    // (the main canvas is cleared each frame).
+    var sig = c0 + ',' + r0 + ',' + bw + ',' + bh + ',' + lightRev + ',' + a + ',' + lightTune.reach;
+    if (sig !== lightFogSig) {
+      lightFogSig = sig;
+      var data = lightFogImg.data;
+      var p = 0;
+      for (var j = 0; j < bh; j++) {
+        var rr = r0 + j;
+        for (var i = 0; i < bw; i++) {
+          data[p] = 0; data[p + 1] = 0; data[p + 2] = 0;
+          var sh = lightCellShade(rr, c0 + i);
+          data[p + 3] = sh <= 0 ? 0 : (sh >= 1 ? a : Math.round(a * sh));
+          p += 4;
+        }
       }
+      lightFogCtx.putImageData(lightFogImg, 0, 0);
     }
-    lightFogCtx.putImageData(lightFogImg, 0, 0);
     ctx.save();
     ctx.imageSmoothingEnabled = !!lightTune.soft;
     ctx.drawImage(lightFogCanvas, c0 * TILE, r0 * TILE, bw * TILE, bh * TILE);
