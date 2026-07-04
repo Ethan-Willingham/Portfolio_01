@@ -180,8 +180,17 @@
   // velocity when the cell directly below is solid; wall friction
   // multiplies vertical cell velocity when a horizontal neighbor is
   // solid. Lower = more aggressive drag.
-  var LIQUID_FLOOR_FRICTION = 0.92;   // v10.102 — was 0.95; water glides more on flats instead of stopping like tar
-  var LIQUID_WALL_FRICTION = 0.97;    // v10.102 — was 0.975; very mild loosening
+  // v25.44 — HONEY FIX part 2: these frictions are PER SUBSTEP and were
+  // tuned in the single-step era (60 applications/s); at today's 186
+  // substeps/s they compounded to a near-instant stop for any cell
+  // touching terrain (0.92^186 ~ 0), which is why SHALLOW water (every
+  // cell floor-adjacent) spread like tar. Slicked to hold ~0.3%/s along
+  // floors instead of ~0: shallow flows race and level like water. The
+  // shock limiter now suppresses the glide-noise these once masked.
+  // gm water.FLOOR_FRICTION / water.WALL_FRICTION (live). edit² with
+  // js/liquid-wgpu.js (module twins).
+  var LIQUID_FLOOR_FRICTION = 0.97;   // per substep (was 0.92; v10.102 history: 0.95 -> 0.92)
+  var LIQUID_WALL_FRICTION = 0.985;   // per substep (was 0.97)
   // v25.41 — THE SHALLOW-POPCORN ROOT FIX (owner: "liquid that is one tile
   // deep constantly pops off... it should be calm; don't let the current way
   // it is built hold you back"). Root: the clamped EOS is a ONE-WAY spring —

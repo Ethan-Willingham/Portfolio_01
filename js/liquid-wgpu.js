@@ -204,8 +204,8 @@
    * -------------------------------------------------------------------- */
   var LIQUID_WALL_BOUNCE_IN       = 0.075;
   var LIQUID_WALL_BOUNCE_EDGE     = 0.095;
-  var LIQUID_FLOOR_FRICTION       = 0.92;
-  var LIQUID_WALL_FRICTION        = 0.97;
+  var LIQUID_FLOOR_FRICTION       = 0.97;    // v25.44 honey fix — edit² 010-constants (per-substep; was 0.92)
+  var LIQUID_WALL_FRICTION        = 0.985;   // v25.44 honey fix — edit² 010-constants (per-substep; was 0.97)
   var LIQUID_OIL_WALL_BOUNCE_IN   = 0.05;
   var LIQUID_OIL_WALL_BOUNCE_EDGE = 0.06;
   var LIQUID_OIL_FLOOR_FRICTION   = 0.89;

@@ -339,10 +339,10 @@
   var LIQUID_BURST_DAMP = 0.985;      // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO = 100.0;   // px/s — burst damp starts here (above rested ambient)
   var LIQUID_BURST_GATE_HI = 300.0;   // px/s — burst damp reaches full BURST_DAMP here
-  var LIQUID_VISC_LIVE = 0.10;        // grid viscosity while stimulated (lever target stays LIQUID_GRID_VISC;
-                                      // v24.150: 0.15 -> 0.08, v24.152: 0.05, v24.157: -> 0.10 — part of the
-                                      // lively dissipation floor that keeps the EOS pump bounded under
-                                      // sustained stimulation; the settled grind gets the full lever value)
+  var LIQUID_VISC_LIVE = 0;           // v25.44 — was 0.10 (the v24.157 floor): the honey fix, see the
+                                      // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
+                                      // v24.152 0.05, v24.157 0.10; the settled grind still gets the
+                                      // full LIQUID_GRID_VISC lever value as calm ramps.)
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -363,8 +363,22 @@
   // energy as the old always-on stack (still far sloshier than pre-152)
   // and hold a permanently-stimulated fresh fill bounded for minutes
   // (?pondtest=4 is the regression harness for exactly this).
-  var LIQUID_DAMP_LIVE = 0.9985;      // per-substep damping while lively (~30%/s kept; was 0.9995 = boom)
-  var LIQUID_MOTION_LIVE = 0.997;     // near-full APIC transfer while lively (lever 0.97 = settled target)
+  // v25.44 — THE HONEY FIX: the v24.157 floor is RETIRED (values -> pure
+  // saharan-raw). The floor existed because the lively state had to
+  // out-dissipate the clamped-EOS energy pump; the v25.42 SHOCK LIMITER
+  // (LIQUID_PRESSURE_MAX_DV) now bounds that pump at the source, so the
+  // floor only added drag. It was also compounding 1.55x harder per wall
+  // second since the v25.29 timescale (per-substep factors at 186/s):
+  // damp 0.9985 x motion 0.997 kept only ~43%/s of velocity — bomb slosh
+  // died in ~1.5 s and every flow oozed like honey. Measured at raw
+  // (motion-pixel decay, same pond, same bomb): 3.6-5x bigger splash,
+  // living tail 6+ s, drain 324 vs 209 particles/s — while the pondtest=4
+  // explosion regression stays bounded (mean 2.2-3.5, max 27) and rest
+  // stays pop-free (fast avg 1.6). gm water.DAMP_LIVE / MOTION_LIVE /
+  // VISC_LIVE restore any of it live; the settled (calm-ramped) targets
+  // are untouched.
+  var LIQUID_DAMP_LIVE = 1.0;         // per-substep damping while lively (1.0 = raw; was 0.9985, the floor)
+  var LIQUID_MOTION_LIVE = 1.0;       // full APIC transfer while lively (was 0.997; lever 0.97 = settled target)
   var liquidDampEff = LIQUID_DAMPING;
   var liquidMotionEff = LIQUID_WATER_MOTION_SCALE;
   var LIQUID_CALM_RAMP = 1.2;         // s — calm 0 -> 1 ramp once quiet

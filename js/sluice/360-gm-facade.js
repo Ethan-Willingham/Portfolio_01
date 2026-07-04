@@ -918,6 +918,27 @@
           function (v) { LIQUID_DAMP_LIVE = v; },
           0.99, 1.0, undefined);
       }
+      // v25.44 — the honey dials: the lively APIC transfer scale and the
+      // per-substep terrain frictions (state tick pushes MOTION_LIVE per
+      // frame at calm 0; frictions ride gmSetWaterSim to the GPU).
+      if (typeof LIQUID_MOTION_LIVE !== 'undefined') {
+        gmRegisterLever('water.MOTION_LIVE', 'water', 'MOTION_LIVE',
+          function () { return LIQUID_MOTION_LIVE; },
+          function (v) { LIQUID_MOTION_LIVE = v; },
+          0.97, 1.0, undefined);
+      }
+      if (typeof LIQUID_FLOOR_FRICTION !== 'undefined') {
+        gmRegisterLever('water.FLOOR_FRICTION', 'water', 'FLOOR_FRICTION (per substep)',
+          function () { return LIQUID_FLOOR_FRICTION; },
+          function (v) { LIQUID_FLOOR_FRICTION = v; gmSetWaterSim('FLOOR_FRICTION', v); },
+          0.85, 1.0, undefined);
+      }
+      if (typeof LIQUID_WALL_FRICTION !== 'undefined') {
+        gmRegisterLever('water.WALL_FRICTION', 'water', 'WALL_FRICTION (per substep)',
+          function () { return LIQUID_WALL_FRICTION; },
+          function (v) { LIQUID_WALL_FRICTION = v; gmSetWaterSim('WALL_FRICTION', v); },
+          0.9, 1.0, undefined);
+      }
       if (typeof LIQUID_CALM_RAMP !== 'undefined') {
         gmRegisterLever('water.CALM_RAMP', 'water', 'CALM_RAMP',
           function () { return LIQUID_CALM_RAMP; },

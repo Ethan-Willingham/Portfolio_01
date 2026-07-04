@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.43';
+  var GAME_VERSION = 'v25.44';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -329,8 +329,17 @@
   // velocity when the cell directly below is solid; wall friction
   // multiplies vertical cell velocity when a horizontal neighbor is
   // solid. Lower = more aggressive drag.
-  var LIQUID_FLOOR_FRICTION = 0.92;   // v10.102 — was 0.95; water glides more on flats instead of stopping like tar
-  var LIQUID_WALL_FRICTION = 0.97;    // v10.102 — was 0.975; very mild loosening
+  // v25.44 — HONEY FIX part 2: these frictions are PER SUBSTEP and were
+  // tuned in the single-step era (60 applications/s); at today's 186
+  // substeps/s they compounded to a near-instant stop for any cell
+  // touching terrain (0.92^186 ~ 0), which is why SHALLOW water (every
+  // cell floor-adjacent) spread like tar. Slicked to hold ~0.3%/s along
+  // floors instead of ~0: shallow flows race and level like water. The
+  // shock limiter now suppresses the glide-noise these once masked.
+  // gm water.FLOOR_FRICTION / water.WALL_FRICTION (live). edit² with
+  // js/liquid-wgpu.js (module twins).
+  var LIQUID_FLOOR_FRICTION = 0.97;   // per substep (was 0.92; v10.102 history: 0.95 -> 0.92)
+  var LIQUID_WALL_FRICTION = 0.985;   // per substep (was 0.97)
   // v25.41 — THE SHALLOW-POPCORN ROOT FIX (owner: "liquid that is one tile
   // deep constantly pops off... it should be calm; don't let the current way
   // it is built hold you back"). Root: the clamped EOS is a ONE-WAY spring —
@@ -1592,10 +1601,10 @@
   var LIQUID_BURST_DAMP = 0.985;      // per-substep factor for FULLY-fast water (1.0 = off)
   var LIQUID_BURST_GATE_LO = 100.0;   // px/s — burst damp starts here (above rested ambient)
   var LIQUID_BURST_GATE_HI = 300.0;   // px/s — burst damp reaches full BURST_DAMP here
-  var LIQUID_VISC_LIVE = 0.10;        // grid viscosity while stimulated (lever target stays LIQUID_GRID_VISC;
-                                      // v24.150: 0.15 -> 0.08, v24.152: 0.05, v24.157: -> 0.10 — part of the
-                                      // lively dissipation floor that keeps the EOS pump bounded under
-                                      // sustained stimulation; the settled grind gets the full lever value)
+  var LIQUID_VISC_LIVE = 0;           // v25.44 — was 0.10 (the v24.157 floor): the honey fix, see the
+                                      // DAMP_LIVE note below. 0 = raw. (History: v24.150 0.15 -> 0.08,
+                                      // v24.152 0.05, v24.157 0.10; the settled grind still gets the
+                                      // full LIQUID_GRID_VISC lever value as calm ramps.)
   // v24.152 — THE SLOSH FIX: the reference demo (saharan, the codebase our
   // solver is ported from) runs essentially UNDAMPED; ours carried months
   // of anti-popcorn dissipation on EVERY substep at 240 Hz: DAMPING 0.992
@@ -1616,8 +1625,22 @@
   // energy as the old always-on stack (still far sloshier than pre-152)
   // and hold a permanently-stimulated fresh fill bounded for minutes
   // (?pondtest=4 is the regression harness for exactly this).
-  var LIQUID_DAMP_LIVE = 0.9985;      // per-substep damping while lively (~30%/s kept; was 0.9995 = boom)
-  var LIQUID_MOTION_LIVE = 0.997;     // near-full APIC transfer while lively (lever 0.97 = settled target)
+  // v25.44 — THE HONEY FIX: the v24.157 floor is RETIRED (values -> pure
+  // saharan-raw). The floor existed because the lively state had to
+  // out-dissipate the clamped-EOS energy pump; the v25.42 SHOCK LIMITER
+  // (LIQUID_PRESSURE_MAX_DV) now bounds that pump at the source, so the
+  // floor only added drag. It was also compounding 1.55x harder per wall
+  // second since the v25.29 timescale (per-substep factors at 186/s):
+  // damp 0.9985 x motion 0.997 kept only ~43%/s of velocity — bomb slosh
+  // died in ~1.5 s and every flow oozed like honey. Measured at raw
+  // (motion-pixel decay, same pond, same bomb): 3.6-5x bigger splash,
+  // living tail 6+ s, drain 324 vs 209 particles/s — while the pondtest=4
+  // explosion regression stays bounded (mean 2.2-3.5, max 27) and rest
+  // stays pop-free (fast avg 1.6). gm water.DAMP_LIVE / MOTION_LIVE /
+  // VISC_LIVE restore any of it live; the settled (calm-ramped) targets
+  // are untouched.
+  var LIQUID_DAMP_LIVE = 1.0;         // per-substep damping while lively (1.0 = raw; was 0.9985, the floor)
+  var LIQUID_MOTION_LIVE = 1.0;       // full APIC transfer while lively (was 0.997; lever 0.97 = settled target)
   var liquidDampEff = LIQUID_DAMPING;
   var liquidMotionEff = LIQUID_WATER_MOTION_SCALE;
   var LIQUID_CALM_RAMP = 1.2;         // s — calm 0 -> 1 ramp once quiet
@@ -57322,6 +57345,27 @@
           function (v) { LIQUID_DAMP_LIVE = v; },
           0.99, 1.0, undefined);
       }
+      // v25.44 — the honey dials: the lively APIC transfer scale and the
+      // per-substep terrain frictions (state tick pushes MOTION_LIVE per
+      // frame at calm 0; frictions ride gmSetWaterSim to the GPU).
+      if (typeof LIQUID_MOTION_LIVE !== 'undefined') {
+        gmRegisterLever('water.MOTION_LIVE', 'water', 'MOTION_LIVE',
+          function () { return LIQUID_MOTION_LIVE; },
+          function (v) { LIQUID_MOTION_LIVE = v; },
+          0.97, 1.0, undefined);
+      }
+      if (typeof LIQUID_FLOOR_FRICTION !== 'undefined') {
+        gmRegisterLever('water.FLOOR_FRICTION', 'water', 'FLOOR_FRICTION (per substep)',
+          function () { return LIQUID_FLOOR_FRICTION; },
+          function (v) { LIQUID_FLOOR_FRICTION = v; gmSetWaterSim('FLOOR_FRICTION', v); },
+          0.85, 1.0, undefined);
+      }
+      if (typeof LIQUID_WALL_FRICTION !== 'undefined') {
+        gmRegisterLever('water.WALL_FRICTION', 'water', 'WALL_FRICTION (per substep)',
+          function () { return LIQUID_WALL_FRICTION; },
+          function (v) { LIQUID_WALL_FRICTION = v; gmSetWaterSim('WALL_FRICTION', v); },
+          0.9, 1.0, undefined);
+      }
       if (typeof LIQUID_CALM_RAMP !== 'undefined') {
         gmRegisterLever('water.CALM_RAMP', 'water', 'CALM_RAMP',
           function () { return LIQUID_CALM_RAMP; },
@@ -59110,6 +59154,12 @@
         'water.PRESSURE_MAX_DV': 1,            // THE pop killer (px/s per substep; 0 = old popcorn)
         'water.AIR_DRAG': 2,                   // airborne droplet deceleration (1 = off)
         'water.COHESION': 3,                   // DANGER: explosive above 0; supervised A/B only
+        // --- v25.44 honey dials: how watery flow feels (1.0/1.0/0 = raw) ---
+        'water.DAMP_LIVE': 4,                  // lively velocity keep/substep (1 = frictionless slosh)
+        'water.MOTION_LIVE': 5,                // lively APIC transfer scale (1 = full)
+        'water.VISC_LIVE': 6,                  // lively grid viscosity (0 = raw)
+        'water.FLOOR_FRICTION': 7,             // per-substep drag on floor-adjacent cells
+        'water.WALL_FRICTION': 8,              // per-substep drag on wall-adjacent cells
         // --- core feel (v22 unified-contact model): dial these to shape the slime ---
         'jello.JELLO_SOLVER_ID': 1,            // pbd / xpbd / fem
         'jello.JELLO_E': 2,                    // overall softness (lower = squishier)
