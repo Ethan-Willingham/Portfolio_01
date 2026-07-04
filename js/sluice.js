@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.40';
+  var GAME_VERSION = 'v25.41';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -51572,13 +51572,31 @@
     // clumsy even now that the engulf cap deflects it cleanly.
     var colTries = [pcolC + 2, pcolC - 2, pcolC + 1, pcolC - 1, pcolC];
     var row = -1, pcol = pcolC;
+    // Pass 1 (preferred): an AIR cell 3..7 rows above the head, so the cube
+    // falls in from above and lands with a little squash. Open sky above the
+    // world top (r < 0 -> tileAt returns null) counts as air: spawn at the very
+    // top instead of bailing, so flying high no longer reports "no room".
     for (var ct = 0; ct < colTries.length && row < 0; ct++) {
       var c = colTries[ct];
       if (c < 1 || c > COLS - 2) continue;
       for (var up = 3; up <= 7; up++) {
         var r = headRow - up;
-        if (r < 0) break;
+        if (r < 0) { row = 0; pcol = c; break; }
         if (tileAt(r, c) === null) { row = r; pcol = c; break; }
+      }
+    }
+    // Pass 2 (fallback): no 3-tile overhead clearance -- the rig is in a tight
+    // tunnel it just dug (ceiling ~1 tile up). A mining game spends most of its
+    // time here, so refuse-to-spawn was the common case, not the exception.
+    // Drop into the nearest open cell just above / beside the rig (headRow-2,
+    // -1, then the rig's own row) so a visible open pocket still takes a cube.
+    for (var ct2 = 0; ct2 < colTries.length && row < 0; ct2++) {
+      var c2 = colTries[ct2];
+      if (c2 < 1 || c2 > COLS - 2) continue;
+      for (var dr = 2; dr >= 0; dr--) {
+        var r2 = headRow - dr;
+        if (r2 < 0) continue;
+        if (tileAt(r2, c2) === null) { row = r2; pcol = c2; break; }
       }
     }
     if (row < 0) return false;
@@ -56063,8 +56081,9 @@
         showMsg('Test haul loaded (Y) — roll onto the pump pad to sell');
       }
     }
-    // 'C' (dev, v25.16): drop ONE tile-sized cube in a RANDOM colour just above
-    // the rig (jelloDevSpawnOne — it falls in, no pen, works anywhere). The old
+    // 'C' (dev, v25.16): drop ONE tile-sized cube in a RANDOM colour near the
+    // rig (jelloDevSpawnOne: falls in from overhead when there's room, else
+    // pops into an open pocket beside the rig; no pen, works in any tunnel). The old
     // walled-pen SHAPE-SET drop (jelloDevSpawnTiles, v24.123-v25.15) is off the
     // key; it still serves the headless harness via __jello.spawn. 'V' clears
     // all bodies + lifts any standing harness pen. Gated on ENABLE_JELLO so a
@@ -56074,7 +56093,7 @@
       keys['c'] = keys['C'] = false;
       if (devMode && ENABLE_JELLO) {
         showMsg(jelloDevSpawnOne() ? 'Jello cube dropped (C for another, V clears)'
-                                   : 'No room overhead for a cube');
+                                   : 'No room for a cube (rig is boxed in)');
       }
       else if (devMode) showMsg('Jello is disabled (boot with ?jello=1)');
       // Normal play: 'C' opens the MINERAL LEDGER (295-collection-ledger.js).

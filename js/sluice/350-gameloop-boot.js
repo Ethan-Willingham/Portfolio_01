@@ -440,8 +440,9 @@
         showMsg('Test haul loaded (Y) — roll onto the pump pad to sell');
       }
     }
-    // 'C' (dev, v25.16): drop ONE tile-sized cube in a RANDOM colour just above
-    // the rig (jelloDevSpawnOne — it falls in, no pen, works anywhere). The old
+    // 'C' (dev, v25.16): drop ONE tile-sized cube in a RANDOM colour near the
+    // rig (jelloDevSpawnOne: falls in from overhead when there's room, else
+    // pops into an open pocket beside the rig; no pen, works in any tunnel). The old
     // walled-pen SHAPE-SET drop (jelloDevSpawnTiles, v24.123-v25.15) is off the
     // key; it still serves the headless harness via __jello.spawn. 'V' clears
     // all bodies + lifts any standing harness pen. Gated on ENABLE_JELLO so a
@@ -451,7 +452,7 @@
       keys['c'] = keys['C'] = false;
       if (devMode && ENABLE_JELLO) {
         showMsg(jelloDevSpawnOne() ? 'Jello cube dropped (C for another, V clears)'
-                                   : 'No room overhead for a cube');
+                                   : 'No room for a cube (rig is boxed in)');
       }
       else if (devMode) showMsg('Jello is disabled (boot with ?jello=1)');
       // Normal play: 'C' opens the MINERAL LEDGER (295-collection-ledger.js).
