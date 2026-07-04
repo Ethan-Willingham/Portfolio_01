@@ -560,6 +560,14 @@
           function (v) { SMOKE_FLUID_OVERSCAN = v; },
           0.0, 0.6, undefined);
       }
+      // v25.46 — smoke collides with water (the rendered body rides in the
+      // obstacle mask). 0 = the old ghost-through-on-a-separate-layer look.
+      if (typeof SMOKE_WATER_OBSTACLE !== 'undefined') {
+        gmRegisterLever('smoke.WATER_OBSTACLE', 'smoke', 'WATER_OBSTACLE (collide with water)',
+          function () { return SMOKE_WATER_OBSTACLE; },
+          function (v) { SMOKE_WATER_OBSTACLE = v ? 1 : 0; },
+          0, 1, 1);
+      }
 
       // Water LOOK levers (v14.25) — the WebGPU water's rendered colour +
       // opacity + particle size. These are LIVE: each set() reassigns the

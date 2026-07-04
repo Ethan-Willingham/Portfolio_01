@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.45';
+  var GAME_VERSION = 'v25.46';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -34095,29 +34095,26 @@
   // trackers only when it returns true; the && short-circuit in updateSmoke
   // means it is not even called while asleep, so a pan made during sleep is
   // still detected (trackers stay stale) and repainted on the next wake.
+  // v25.46 — smoke collides with WATER: the rendered water body rides in
+  // the obstacle mask (Pass 4 in smokeFluidPaintObstacle), so the mask
+  // must refresh on a cadence while water exists (water moves without any
+  // of the classic dirty triggers firing). Every 8th frame ≈ 8-15 Hz:
+  // one drawImage + texture upload, ~0.5 ms, amortized to ~0.06 ms/frame.
+  var SMOKE_WATER_OBSTACLE = 1;      // gm smoke.WATER_OBSTACLE (0 = the old ghost-through)
+  var smokeObstWaterTick = 0;
+  var SMOKE_OBST_WATER_EVERY = 8;
   function smokeObstacleNeedsRepaint() {
     if (!PERF_SMOKE_OBSTACLE_DIRTY) return true;
-    // v25.40 — two dirty-gate leaks made this fire EVERY frame in EVERY scene:
-    // (1) the camera compare was EXACT floats, and the camera's exponential
-    //     ease converges without ever landing exactly, so sub-pixel drift
-    //     repainted forever even parked. The mask is rasterized at pixel
-    //     granularity — drift under half a pixel cannot change it. The prev
-    //     trackers still only advance on a repaint, so slow pans accumulate
-    //     and trigger once they cross the threshold (nothing is ever missed).
-    // (2) jelloBodies.length forced a repaint whenever any slime EXISTS; a
-    //     SLEEPING pile is pose-frozen by the park pipeline and cannot
-    //     reshape the mask. Only awake bodies repaint; any wake (including
-    //     the rig pressing in, which implies camera motion) resumes it.
-    var _odx = cam.x - smokeObstPrevCamX; if (_odx < 0) _odx = -_odx;
-    var _ody = cam.y - smokeObstPrevCamY; if (_ody < 0) _ody = -_ody;
-    var _jAwake = false;
-    for (var _ji = 0; _ji < jelloBodies.length; _ji++) {
-      var _jb = jelloBodies[_ji];
-      if (!_jb.sleeping && !_jb.frozen) { _jAwake = true; break; }
-    }
-    if (_odx > 0.5 || _ody > 0.5 ||
+    if (smokeObstPrevCamX !== cam.x || smokeObstPrevCamY !== cam.y ||
         smokeObstPrevScrW !== screenW || smokeObstPrevScrH !== screenH ||
-        drilling || explosions.length || liveBombs.length || _jAwake) {
+        drilling || explosions.length || liveBombs.length || jelloBodies.length) {
+      smokeObstPrevCamX = cam.x; smokeObstPrevCamY = cam.y;
+      smokeObstPrevScrW = screenW; smokeObstPrevScrH = screenH;
+      return true;
+    }
+    if (SMOKE_WATER_OBSTACLE && liquidCount > 0 &&
+        ++smokeObstWaterTick >= SMOKE_OBST_WATER_EVERY) {
+      smokeObstWaterTick = 0;
       smokeObstPrevCamX = cam.x; smokeObstPrevCamY = cam.y;
       smokeObstPrevScrW = screenW; smokeObstPrevScrH = screenH;
       return true;
@@ -34808,6 +34805,30 @@
         oc.fill();
       }
       oc.restore();
+    }
+
+    // Pass 4 — WATER as obstacle (v25.46, the owner's "smoke clearly exists
+    // on a completely separate layer" fix): stamp the rendered water body —
+    // the live water canvas, the exact metaball shape on screen — into the
+    // mask, so smoke piles onto pond surfaces and curls around waterfalls
+    // instead of ghosting straight over them. The water canvas covers the
+    // viewport; the obstacle domain adds overscan margins, so the stamp
+    // lands at the margin offset. Alpha rides as-is: the body (~0.82)
+    // reads solid to the solver, the feathered rim is a soft boundary,
+    // and thin spray (low alpha) lets smoke partially through. Water in
+    // the overscan band is not stamped (off-screen smoke only). The
+    // GL/mobile quad path skips water (coarse grid, perf-first).
+    if (SMOKE_WATER_OBSTACLE && liquidCount > 0) {
+      var wCv = (typeof liquidWGPU !== 'undefined' && liquidWGPU &&
+                 liquidWGPU.renderActive && liquidWGPU.renderCanvas)
+        ? liquidWGPU.renderCanvas
+        : (typeof liquidGLCanvas !== 'undefined' && liquidGLCanvas &&
+           liquidGLCanvas.style.display !== 'none' ? liquidGLCanvas : null);
+      if (wCv && wCv.width > 0) {
+        oc.drawImage(wCv,
+          smokeFluidMarginWorldX * sxScale, smokeFluidMarginWorldY * syScale,
+          screenW * sxScale, screenH * syScale);
+      }
     }
 
     perfMark('update.smokeObstacleDraw', _opd0);
@@ -57015,6 +57036,14 @@
           function () { return SMOKE_FLUID_OVERSCAN; },
           function (v) { SMOKE_FLUID_OVERSCAN = v; },
           0.0, 0.6, undefined);
+      }
+      // v25.46 — smoke collides with water (the rendered body rides in the
+      // obstacle mask). 0 = the old ghost-through-on-a-separate-layer look.
+      if (typeof SMOKE_WATER_OBSTACLE !== 'undefined') {
+        gmRegisterLever('smoke.WATER_OBSTACLE', 'smoke', 'WATER_OBSTACLE (collide with water)',
+          function () { return SMOKE_WATER_OBSTACLE; },
+          function (v) { SMOKE_WATER_OBSTACLE = v ? 1 : 0; },
+          0, 1, 1);
       }
 
       // Water LOOK levers (v14.25) — the WebGPU water's rendered colour +

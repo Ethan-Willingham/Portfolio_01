@@ -134,6 +134,7 @@ drive how blurry the smoke reads** — see the deblur recipe in §9.
 | `SMOKE_RENDER_SCALE_MOBILE` | `0.7` | 0.5–1.0 | Same, mobile |
 | `SMOKE_FLUID_OVERSCAN` | `0.2` | 0.0–0.6 | Smoke-domain margin beyond viewport. ↑ = smoke persists further off-screen but spreads the dye budget thinner (softer) |
 | `smokeFluidObstacleW/H` | desktop `768×576`, mobile `320×240` | — | Obstacle-mask resolution — crispness of smoke-vs-terrain edges. grep `smokeFluidObstacleW` |
+| `SMOKE_WATER_OBSTACLE` | `1` | 0/1 | v25.46 — smoke COLLIDES WITH WATER: the rendered water body (the live water canvas, exact metaball shape) is stamped into the obstacle mask each refresh, so smoke piles onto pond surfaces and curls around waterfalls instead of ghosting over them on a separate layer. Soft alpha rim = soft boundary; thin spray lets smoke partially through. Mask refreshes every `SMOKE_OBST_WATER_EVERY` (8) frames while water exists (~0.5 ms per repaint ≈ 0.07 ms/frame amortized; measured 120 fps steady). Desktop canvas path only (the GL/mobile quad path skips water). gm `smoke.WATER_OBSTACLE`; 0 = the old separate-layer look |
 
 ## 1.3 `fireplaceTune` — station chimney smoke · tier `live`
 
