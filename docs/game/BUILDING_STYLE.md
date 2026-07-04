@@ -144,14 +144,14 @@ These live in [`js/sluice.js`](js/sluice.js) just above `drawStation`. Compose n
 | `drawFuelPump` | `(x, groundY, time, active)` | Old-school cream-bodied gas pump — brass globe finial, large round mechanical gauge with red needle, green-digit odometer screen, red label panel with fuel-droplet icon, curving hose with brass nozzle on a hook. 16 × 36 wide × tall. |
 | `drawWindsockTower` | `(baseX, groundY, time)` | Tall standalone iron windsock tower — pyramidal base, bolted pole with mid-plaque, pivot housing with red star, striped sock animated via `surfaceWind` |
 | `drawHazardStripes` | `(x, y, w, h, time, active)` | Diagonal yellow/black hazard stripes; scrolls when `active` |
-| `drawFuelTank` | `(x, groundY, w, h, time)` | Large cylindrical fuel tank — outlined silhouette, red star + horizontal stripes, top vent + pressure gauge |
+| `drawFuelTank` | `(x, groundY, w, h, time)` | Large cylindrical fuel tank — outlined silhouette, red star + horizontal stripes, top vent + pressure gauge. COLD STORAGE since the v25.37 revert to the pre-depot station (the original filling station has no tank) |
 | `drawOreHopper` | `(x, y, w, h)` | Coal-filled scoop with red riveted funnel below |
 | `drawAlertDome` | `(x, y, time)` | Red flashing dome alarm — 1 Hz blink |
 | `drawControlPanel` | `(x, y, w, h, time)` | Small metal electrical box with a green power light and orange status buttons |
-| `drawPayoutTerminal` | `(x, groundY, time, active)` | Slim cabinet with green LCD readout, gold ₽ coin slot, receipt paper slot. COLD STORAGE since the v24.138 depot v2 (the КАССА booth is the pay point) |
-| `drawCanopy` | `(x, y, w, h)` | Wide flat gas-station canopy — wooden plank top with a red trim strip along the bottom edge. COLD STORAGE since the v24.138 depot v2 (`drawDepotCanopy` is the live canopy) |
-| `drawCashBooth` | `(x, groundY, w, h, time)` | Cashier booth, the depot's pay point: stone base + wood-plank walls + iron stovepipe (three-era stratification), КАССА service window with warm glow + mullion cross, transaction shelf, posted tariff board. Stovepipe draws but NEVER emits |
-| `drawDepotCanopy` | `(x, y, w, signCx)` | Flat modernist canopy slab: thin iron roof sheet with standing seams over a deep CLEAN dark fascia carrying the sign board inset flush at `signCx`. The classic Soviet АЗС silhouette — one slab, one column, the booth holding up the other end |
+| `drawPayoutTerminal` | `(x, groundY, time, active)` | Slim cabinet with green LCD readout, gold ₽ coin slot, receipt paper slot. LIVE again since the v25.37 revert to the pre-depot station (the pay point, sits right of the pad) |
+| `drawCanopy` | `(x, y, w, h)` | Wide flat gas-station canopy — wooden plank top with a red trim strip along the bottom edge. LIVE again since the v25.37 revert to the pre-depot station (the "floating" wood shelf on two `drawSupportPost`s) |
+| `drawCashBooth` | `(x, groundY, w, h, time)` | Cashier booth, the depot's pay point: stone base + wood-plank walls + iron stovepipe (three-era stratification), КАССА service window with warm glow + mullion cross, transaction shelf, posted tariff board. Stovepipe draws but NEVER emits. COLD STORAGE since the v25.37 revert to the pre-depot station (`drawPayoutTerminal` is the pay point again) |
+| `drawDepotCanopy` | `(x, y, w, signCx)` | Flat modernist canopy slab: thin iron roof sheet with standing seams over a deep CLEAN dark fascia carrying the sign board inset flush at `signCx`. The classic Soviet АЗС silhouette — one slab, one column, the booth holding up the other end. COLD STORAGE since the v25.37 revert to the pre-depot station (`drawCanopy` is the live canopy again) |
 | `drawParkingArrow` | `(centerX, padY, time, active)` | Bobbing downward chevron that marks the parking spot under the canopy |
 | `drawSupportPost` | `(x, groundY, height)` | Iron support post — wider capital at top + wider base flange at bottom, riveted body with bolts. Used to hold up the gas-station canopy |
 | `drawChair` | `(x, groundY)` | Wooden outdoor chair, 10 × 14, plank seat + slatted back with a small red star on the lower slat |
@@ -225,8 +225,8 @@ The KOMENDATURA station is 88 wide × ~86 tall world px (original arched false-f
 | Flagpole | 4 wide × 50–70 tall, banner 18 × 12 |
 | Windsock tower | 22 wide × ~92 tall (stone pad 6 + iron pyramid base 14 + pole 60 + pivot 12); sock extends ~25 outward |
 | Open-air fireplace | 36 wide × ~114 tall — hearth 28 × 22 (stacked-stone) + mantle 36 × 6 + chimney 14 × 70 (stacked-stone, with two rust-red iron bands) + stone corbel 20 × 4 + iron cap 24 × 8. Flanked by two `drawChair` and a `drawLogEnd` × 3 stack on the left, iron poker + shovel on the right. Emits real wood smoke from the chimney top via `SmokeFluid.splat` (use `{r,g,b}` object, NOT array — see v9.88) |
-| Fuel pump | 16 wide × 36 tall on its 3 px concrete island curb |
-| Gas station (v24.138 depot v2) | ~177 wide × ~81 tall footprint, `pad.x − 72` (tank plinth) to `pad.x + 105` (slab edge). One flat iron canopy slab (152 × 18 at `groundY − 69`: 3 px roof sheet + 15 px clean dark fascia carrying the ЗАПРАВКА board inset flush) over an asymmetric bay: fuel TANK 20 × 42 on a plinth OUTSIDE the canopy (vented storage never sits under a roof) → ground pipe with red valve wheel → one riveted column → pump on its island → parking pad (64, the hit zone) → КАССА booth 26 × 50 carrying the slab's right end. Hanging REFUEL · DEPOSIT plate on chains at pad center; oil lamp lights the walk to the cashier. The fuel's path from storage to nozzle to till is legible — every element has a physical reason |
+| Fuel pump | 16 wide × 36 tall, sits directly on the deck (the 3 px concrete island was a depot-v2 addition, gone since v25.37) |
+| Gas station (original, restored v25.37) | ~161 wide × ~79 tall footprint, canopy `pad.x − 49` to `pad.x + 112` at `groundY − 64` (12 tall: wooden plank top + red trim), held up by TWO iron `drawSupportPost`s (6 wide, 64 tall). SPACED bay, sky through the gaps, left to right: left post → pump (16 × 36, on the deck) → parking pad (64, the hit zone) → `drawPayoutTerminal` (16 × 36) → right post. A `★ ЗАПРАВКА ★` sign board (88 × 13) stands on the canopy roof; a hanging `drawOilLamp` + a "REFUEL · DEPOSIT" subtitle sit under the shelf at pad center. No fuel tank (that was a depot-v2 addition) |
 | Tiny shack | 32–48 wide × 48–60 tall |
 | Standard outpost / store | 80–96 wide × 80–96 tall |
 | Compound centerpiece (HQ, factory) | 120–160 wide × 100–140 tall |
@@ -275,8 +275,8 @@ The current Earth surface compound, left to right relative to the station center
 ```
    ┌─────────────────────┐         ▌▌                ┌────────────────────────────────┐
    │     KOMENDATURA     │      🪑 ▌▌ 🪑            │  ▁▁▁▁▁ ★ ЗАПРАВКА ★ ▁▁▁▁▁▁▁  │
-   │       station       │         ▌▌                │ 🛢═▌ ⛽   [pad]   КАССА booth  │
-   │     (no smoke)      │      🪵🔥🔧               │ tank pipe column      (pay)    │
+   │       station       │         ▌▌                │  ▊   ⛽   [pad]   💵   ▊       │
+   │     (no smoke)      │      🪵🔥🔧               │ post pump  🪔lamp  payout post  │
    └─────────────────────┘      fireplace             └────────────────────────────────┘
    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ slate foundation tile ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ```
@@ -284,8 +284,8 @@ The current Earth surface compound, left to right relative to the station center
 Placement (world px relative to `cx`):
 
 - **Station** — centered at `cx`, the ORIGINAL arched false-front (88-wide body, porch awning, posters + double door, stone foundation). The v24.130 two-storey v2 rebuild was reverted to this in v24.135 (owner call; recover from `b43320e` if ever wanted). The double-door rect is mirrored by `getShopDoorRect()` in 050 and the 96 × 86 hit box by `isPointOnShop()` — keep all three in sync if the geometry moves. Smokestack draws but never emits — the fireplace is the compound's only active smoke source.
-- **Open-air fireplace** — at `cx + 150`. Hearth + chimney span ~36 wide × 114 tall (cap at `groundY − 114`). Chair-to-chair silhouette: `cx + 113` to `cx + 181`. Leaves ~65 px to the station's right edge and exactly 64 px to the depot's tank plinth — both meet the 64 px rule.
-- **Gas-station depot (v24.138 v2)** — anchored on `pumpPadRect` at `(DECK_CENTER_COL + 8) * TILE`. Footprint `pad.x − 72` (tank plinth — the 64 px fireplace gap holds exactly) to `pad.x + 105` (canopy slab edge). Bay reads left to right: tank → ground pipe + valve → column → pump island → parking pad (hit zone, untouched) → КАССА booth; one flat iron slab over all of it, ЗАПРАВКА board inset in the fascia, stovepipe cap as the skyline accent.
+- **Open-air fireplace** — at `cx + 150`. Hearth + chimney span ~36 wide × 114 tall (cap at `groundY − 114`). Chair-to-chair silhouette: `cx + 113` to `cx + 181`. Leaves ~65 px to the station's right edge and clears the 64 px rule to the gas station's left edge (the restored station's canopy + left post start near `pad.x − 49`, further right than the old depot's `pad.x − 72` tank plinth, so that gap only grew). Both sides meet the 64 px rule.
+- **Gas station (original, restored v25.37)**: anchored on `pumpPadRect` at `(DECK_CENTER_COL + 8) * TILE`, restored VERBATIM from alpha v24.138 (the code the v24.139 depot v2 replaced, recovered from `/Users/ethan/sluice-alpha`). Footprint ~`pad.x − 49` (canopy left edge) to ~`pad.x + 112` (canopy right edge). Bay reads left to right, SPACED so sky shows through: left iron post → pump (on the deck) → parking pad (hit zone, untouched) → payout terminal → right iron post. A wooden "floating" canopy shelf spans the posts, a `★ ЗАПРАВКА ★` sign sits on the roof, and a hanging oil lamp + a "REFUEL · DEPOSIT" subtitle mark pad center. No tank, no booth, no pipework (those were depot-v2 additions).
 - **Foundation** — asymmetric: `DECK_HALF_LEFT = 4` and `DECK_HALF_RIGHT = 11`. The fireplace lives on the RIGHT half of the deck now, between station and depot.
 
 **Cold storage** — `drawSurfaceWindsock`, `drawWindsockTower`, and `drawWindsockSock` are preserved in the file (with their helpers) but the render call is commented out. Swap them back in by uncommenting the line in the render entities pass; no other change required as long as a free 22-wide × 64-clearance slot exists somewhere in the compound.
