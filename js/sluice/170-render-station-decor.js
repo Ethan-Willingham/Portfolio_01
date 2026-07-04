@@ -1199,6 +1199,26 @@
     ctx.fillRect(x - 2, groundY - 1, 10, 1);             // shadow at the foot
   }
 
+  // Simple squared timber post — a plain 5-px wood beam with a sunlit + a
+  // shadowed edge and a small stone foot. Holds up the wooden v1 gas-station
+  // canopy (drawCanopy); the beefier riveted drawSupportPost carries the iron
+  // depot slab (drawDepotCanopy) instead.
+  function drawTimberPost(px, top, groundY) {
+    var h = groundY - top;
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(px - 1, top, 7, h);
+    ctx.fillStyle = BLD.woodBase;
+    ctx.fillRect(px, top, 5, h);
+    ctx.fillStyle = BLD.woodLight;                       // sunlit edge
+    ctx.fillRect(px, top, 1, h);
+    ctx.fillStyle = BLD.woodDeep;                        // shadow edge
+    ctx.fillRect(px + 4, top, 1, h);
+    ctx.fillStyle = BLD.outline;                         // stone foot block
+    ctx.fillRect(px - 2, groundY - 3, 9, 3);
+    ctx.fillStyle = BLD.stoneBase;
+    ctx.fillRect(px - 1, groundY - 2, 7, 2);
+  }
+
   // Wide flat gas-station canopy — wooden plank top with a red trim strip
   // along the bottom edge (the "fueling station" silhouette). Outlined.
   // COLD STORAGE since the v24.138 depot v2 (drawDepotCanopy is the live
@@ -2116,19 +2136,18 @@
   //
   // The pumpPadRect hit zone sits exactly under the parking arrow so the
   // player can see where to drive. Refuel + auto-deposit both arm here.
-  // v24.138 depot v2 — the bay reads as real infrastructure: fuel TANK
-  // (left, in the open) → ground pipe → PUMP on its concrete island →
-  // parking pad → cashier BOOTH, all under one flat iron canopy slab with
-  // the ЗАПРАВКА board inset in its fascia. Every element has a physical
-  // reason; the fuel's path from storage to nozzle to till is legible.
+  // v25.36 — reverted to the ORIGINAL v1 gas-station look (owner call: the
+  // simpler wooden-canopy filling station read better than the v24.138 iron
+  // depot). A wide flat WOODEN canopy on two timber posts spans the bay; the
+  // pumpPadRect hit zone under the parking arrow is untouched (refuel +
+  // auto-deposit still arm there).
   function drawPumpPad() {
     var pad = pumpPadRect();
     var groundY = DECK_ROW * TILE;
-    // AABB: tank plinth at pad.x-72 (the §15 64 px fireplace gap holds
-    // exactly) … canopy slab right edge at pad.x+105; stovepipe cap tops
-    // out near groundY-81.
+    // AABB: tank plinth at pad.x-56 … right post foot at pad.x+97; the
+    // ЗАПРАВКА roof sign tops out near groundY-83.
     drawCachedStructure('pumppad', 33,
-      pad.x - 76, groundY - 84, 186, 92,
+      pad.x - 76, groundY - 88, 186, 96,
       (playerOnPumpPad() ? '1' : '0') + (player.refueling ? '1' : '0'),
       drawPumpPadContent);
   }
@@ -2140,16 +2159,20 @@
     var P = pad.x;
     var padCenterX = P + pad.w / 2;
 
-    // Layout (left → right), one flat slab over an asymmetric composition:
-    //   tank(P-70, OUTSIDE the canopy — vented storage never sits under a
-    //   roof) → ground pipe → iron column → pump island → parking pad
-    //   (hit zone, untouched) → cashier booth carrying the slab's right end.
-    var tankX = P - 70, tankW = 20, tankH = 42;
-    var pumpX = P - 26;
-    var boothX = P + 74, boothW = 26, boothH = 50;
-    var canopyX = P - 48, canopyW = 152;
-    var canopyTop = groundY - 69;            // slab top; underside groundY-50
-                                             // (clears the pump's brass globe)
+    // Layout (left → right) under one wide flat wooden canopy: fuel tank on
+    // its plinth → pump on its island → parking pad (the hit zone, untouched)
+    // → PAY-OUT terminal. Two timber posts carry the canopy at the far ends.
+    var tankX = P - 54, tankW = 20, tankH = 42;
+    var pumpX = P - 24;
+    var termX = P + 72;
+    var canopyX = P - 66, canopyW = 162, canopyH = 14;
+    var canopyTop = groundY - 70;            // roof top; underside groundY-56
+    var canopyBot = canopyTop + canopyH;
+
+    // ---------- Timber posts (FIRST, so the canopy overlaps their tops and
+    //            the tank/pump plinths overlap their feet) ----------
+    drawTimberPost(P - 62, canopyBot, groundY);
+    drawTimberPost(P + 90, canopyBot, groundY);
 
     // ---------- Fuel tank on a concrete plinth ----------
     ctx.fillStyle = BLD.outline;
@@ -2160,36 +2183,14 @@
     ctx.fillRect(tankX - 1, groundY - 2, tankW + 2, 1);
     drawFuelTank(tankX, groundY - 3, tankW, tankH, t);
 
-    // ---------- Ground pipe tank → pump island, red valve wheel midway ----------
+    // ---------- Pump on a low concrete island ----------
     ctx.fillStyle = BLD.outline;
-    ctx.fillRect(P - 51, groundY - 7, 22, 4);
-    ctx.fillStyle = BLD.metalBase;
-    ctx.fillRect(P - 50, groundY - 6, 20, 2);
-    ctx.fillStyle = BLD.metalPale;                       // flange ticks
-    ctx.fillRect(P - 50, groundY - 6, 1, 2);
-    ctx.fillRect(P - 31, groundY - 6, 1, 2);
-    ctx.fillStyle = BLD.outline;                         // valve stem + wheel
-    ctx.fillRect(P - 46, groundY - 9, 1, 3);
-    ctx.beginPath(); ctx.arc(P - 45.5, groundY - 10, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = BLD.redBase;
-    ctx.beginPath(); ctx.arc(P - 45.5, groundY - 10, 1.6, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = BLD.redBright;
-    ctx.fillRect(P - 46, groundY - 11, 1, 1);
-
-    // ---------- Canopy column (FIRST so the slab overlaps its capital) ----------
-    drawSupportPost(P - 38, groundY, 50);
-
-    // ---------- Pump island — low concrete curb lifting the pump ----------
-    ctx.fillStyle = BLD.outline;
-    ctx.fillRect(P - 30, groundY - 4, 29, 4);
+    ctx.fillRect(pumpX - 4, groundY - 4, 24, 4);
     ctx.fillStyle = BLD.stoneBase;
-    ctx.fillRect(P - 29, groundY - 3, 27, 3);
+    ctx.fillRect(pumpX - 3, groundY - 3, 22, 3);
     ctx.fillStyle = BLD.stonePale;
-    ctx.fillRect(P - 29, groundY - 3, 27, 1);
+    ctx.fillRect(pumpX - 3, groundY - 3, 22, 1);
     drawFuelPump(pumpX, groundY - 3, t, active);
-
-    // ---------- Cashier booth (the pay point) ----------
-    drawCashBooth(boothX, groundY, boothW, boothH, t);
 
     // ---------- Parking pad — hazard-striped floor only (hit zone, unchanged) ----------
     drawHazardStripes(pad.x, groundY - 4, pad.w, 4, t, active);
@@ -2207,26 +2208,13 @@
       ctx.fillRect(pad.x, groundY - 24, pad.w, 24);
     }
 
-    // ---------- Canopy slab + fascia (overlaps column capital + booth top) ----------
-    drawDepotCanopy(canopyX, canopyTop, canopyW, padCenterX);
+    // ---------- Pay-out terminal (the pay point) ----------
+    drawPayoutTerminal(termX, groundY, t, active);
 
-    // ---------- Hanging REFUEL · DEPOSIT plate under the slab ----------
-    ctx.fillStyle = BLD.outline;                          // two chain drops
-    ctx.fillRect(padCenterX - 20, groundY - 50, 1, 4);
-    ctx.fillRect(padCenterX + 19, groundY - 50, 1, 4);
-    ctx.fillRect(padCenterX - 30, groundY - 47, 60, 10);  // plate incl. outline
-    ctx.fillStyle = BLD.metalDark;
-    ctx.fillRect(padCenterX - 29, groundY - 46, 58, 8);
-    ctx.fillStyle = BLD.metalBase;
-    ctx.fillRect(padCenterX - 29, groundY - 46, 58, 1);
-    ctx.font = 'bold 5px ' + UI_FONT;
-    ctx.fillStyle = BLD.cream;
-    ctx.textAlign = 'center';
-    ctx.fillText('REFUEL · DEPOSIT', padCenterX, groundY - 40);
-    ctx.textAlign = 'left';
-
-    // ---------- Oil lamp under the slab, lighting the walk to the cashier ----------
-    drawOilLamp(P + 69, groundY - 48, t);
+    // ---------- Wide flat wooden canopy over the whole bay ----------
+    drawCanopy(canopyX, canopyTop, canopyW, canopyH);
+    // ЗАПРАВКА sign board standing on the canopy roof
+    drawSignBoard(padCenterX - 32, canopyTop - 12, 64, 12, 'ЗАПРАВКА');
 
     // ---------- Bobbing parking arrow above the pad ----------
     drawParkingArrow(padCenterX, groundY - 8, t, active);
