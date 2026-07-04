@@ -504,12 +504,14 @@ The 8 documented levers live in the `Resolution config` block (grep
 ## 5.1 Night sky · grep `RENDER: Night sky`
 | Lever | Now | Effect |
 |---|---|---|
+| `NIGHT_SKY.intensity` (gm `sky.NIGHT_DIM`) | `0.6` | **Master dimmer** over the whole baked star+nebula layer AND the twinklers (0–1, 1 = pre-v25.34 strong look). The one knob to chill the night sky |
+| `NIGHT_SKY.twinkle` (gm `sky.TWINKLE`) | `0.30` | Twinkle pulse DEPTH (was 0.45); lower = gentler breath, less eye-catching motion |
 | Star tier 1 density | `(cols*rows)/28 ×0.30` | Dim background star count |
 | Star tier 2 density | `(cols*rows)/220` | Medium star count |
 | Star tier 3 density | `max(8,(cols*rows)/1800)` | Bright large-core star count |
 | Twinkler count `n` | `50` | Animated twinkling stars/frame. Perf |
 | Twinkler rate | `0.4–1.8 Hz` | Twinkle pulse frequency range |
-| Twinkler baseA | `0.40–0.85` | Twinkler base-alpha range |
+| Twinkler baseA | `0.40–0.85` | Twinkler base-alpha range (before the master dimmer) |
 | Nebula band density | formula | Faint nebula pixel-scatter density |
 | Nebula band geometry | cx0.55w cy0.34h len1.05w thk0.18h ang-0.22 | Nebula position/size/tilt |
 | 4×4 Bayer dither LUT | `nightSkyDitherLUT` | Sky-gradient banding hardness |

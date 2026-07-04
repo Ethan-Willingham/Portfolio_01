@@ -429,6 +429,21 @@
         mieG:         { min: 0.6, max: 0.9 }
       });
 
+      // Night star field — master dimmer + twinkle depth (150-render-nightsky.js
+      // NIGHT_SKY). Live so the owner can chill the cosmos to taste without a
+      // rebuild; both fold straight into the per-frame draw alpha, no cache to
+      // bust. NIGHT_DIM 1 restores the pre-v25.34 (strong) look.
+      if (typeof NIGHT_SKY !== 'undefined') {
+        gmRegisterLever('sky.NIGHT_DIM', 'sky', 'star field brightness (stars+nebula+twinkle)',
+          function () { return NIGHT_SKY.intensity; },
+          function (v) { NIGHT_SKY.intensity = v; },
+          0, 1, 0.02);
+        gmRegisterLever('sky.TWINKLE', 'sky', 'twinkle pulse depth (0 steady .. flickerier)',
+          function () { return NIGHT_SKY.twinkle; },
+          function (v) { NIGHT_SKY.twinkle = v; },
+          0, 0.6, 0.02);
+      }
+
       // ----- Standalone var levers (need side-effects on set) -----
       // Shiny ore spawn rarity — live-tunable so the owner can dial how often
       // a shiny appears by feel (takes effect on the next world / regen).

@@ -79,6 +79,19 @@
   var nightSkyTwinklers = null;
   var nightSkyDitherLUT = null;     // 256×256 Uint8Array, built once
 
+  // v25.34 (owner) — the night star field read too strong and pulled the eye
+  // off the game. One master dimmer scales the whole baked star+nebula layer
+  // AND the twinklers together (multiplied into their draw-time alpha, on top
+  // of the twilight starWeight fade), so the cosmos sits quietly behind the
+  // world instead of competing with it. `twinkle` is the pulse DEPTH of the
+  // animated stars: lower = a gentler breath, less attention-grabbing motion
+  // (per the "barely perceptible motion" rule). Both are live gm levers in the
+  // `sky` group (sky.NIGHT_DIM / sky.TWINKLE).
+  var NIGHT_SKY = {
+    intensity: 0.6,    // master brightness of stars + nebula + twinklers (1 = old look)
+    twinkle:   0.30    // twinkle pulse depth (was 0.45); 0 = steady, higher = flickerier
+  };
+
   // ===== Stage 5e — WebGL per-pixel atmospheric scattering =====
   // The 5-stop ImageData path (still kept as fallback) bakes the same
   // Maxime Heckel raymarch but only at 5 view elevations along a single
@@ -1878,7 +1891,9 @@
     var starWeight = scatStarWeight(sunElev);
     if (starWeight > 0.001) {
       ctx.save();
-      ctx.globalAlpha = starWeight;
+      // v25.34 — NIGHT_SKY.intensity is the master dimmer over the whole baked
+      // star + nebula layer, on top of the twilight starWeight fade.
+      ctx.globalAlpha = starWeight * NIGHT_SKY.intensity;
       ctx.drawImage(nightSkyStarsTex, 0, 0);
       ctx.restore();
     }
@@ -1897,11 +1912,15 @@
     var arr = nightSkyTwinklers;
     // Twinklers ride the same starWeight as the static star texture.
     if (starWeight > 0.001) {
+      // v25.34 — NIGHT_SKY.twinkle sets the pulse DEPTH (steady base = 1-depth);
+      // NIGHT_SKY.intensity dims the twinklers with the rest of the star field.
+      var twDepth = NIGHT_SKY.twinkle;
+      var twBase = 1 - twDepth;
       for (var i = 0; i < arr.length; i++) {
         var st = arr[i];
         if (st.y >= skyBottomPx) continue;
-        var pulse = 0.55 + 0.45 * Math.sin(t * st.rate + st.phase);
-        var a = st.baseA * pulse * starWeight;
+        var pulse = twBase + twDepth * Math.sin(t * st.rate + st.phase);
+        var a = st.baseA * pulse * starWeight * NIGHT_SKY.intensity;
         ctx.fillStyle = st.rgbaPrefix + a.toFixed(3) + ')';
         ctx.fillRect(st.x, st.y, st.size, st.size);
       }
