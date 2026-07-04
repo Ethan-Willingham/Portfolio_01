@@ -408,9 +408,12 @@ if (cc) {
   let about = readFileSync(F_ABOUT, 'utf8');
   // function replacements: costStr contains a '$', which would be read as a
   // backreference ($1) in a string replacement and corrupt the markup.
+  // NB: these label strings must match about.html exactly. If the copy is
+  // reworded, update them here too, or the number silently stops refreshing
+  // (String.replace on a non-matching regex is a no-op, not an error).
   about = about
-    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">[^<]*and counting)/, (_, a, b) => a + tokStr + b)
-    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">in a single day)/, (_, a, b) => a + peakStr + b)
+    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">tokens in total)/, (_, a, b) => a + tokStr + b)
+    .replace(/(<span class="n">)[^<]*(<\/span><span class="l">the busiest single day)/, (_, a, b) => a + peakStr + b)
     .replace(/(<span class="n">)[^<]*(<\/span><span class="l">at list prices)/, (_, a, b) => a + costStr + b);
   writeFileSync(F_ABOUT, about);
   writeFileSync(F_STATS, JSON.stringify(stats, null, 2) + '\n');

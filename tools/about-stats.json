@@ -1,8 +1,8 @@
 {
   "note": "Durable baseline for the About-page token stats. tokens/cost/peak are everything through lastFoldedDate; update-about.mjs adds this machine's ccusage since, and folds completed days back in here so the totals survive ccusage log pruning. Edit by hand only to re-baseline.",
-  "lastFoldedDate": "2026-06-20",
-  "tokens": 20295441722,
-  "cost": 19355.3180253,
+  "lastFoldedDate": "2026-07-02",
+  "tokens": 21173415857,
+  "cost": 20384.827193549998,
   "peakTokens": 1543803732,
   "models": {
     "claude-opus-4-7": {
@@ -10,20 +10,24 @@
       "cost": 4001
     },
     "claude-opus-4-8": {
-      "tokens": 9600269169,
-      "cost": 9488.721033999998
+      "tokens": 10221875453,
+      "cost": 10079.39916275
     },
     "claude-fable-5": {
-      "tokens": 1657000000,
-      "cost": 3074
+      "tokens": 1911087039,
+      "cost": 3512.260953
     },
     "claude-sonnet-4-6": {
       "tokens": 258941168,
       "cost": 165.1265942
     },
     "claude-haiku-4-5-20251001": {
-      "tokens": 77231385,
-      "cost": 16.4703971
+      "tokens": 79429905,
+      "cost": 17.040483599999998
+    },
+    "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit": {
+      "tokens": 82292,
+      "cost": 0
     }
   },
   "daily": {
