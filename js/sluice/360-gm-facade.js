@@ -1190,10 +1190,6 @@
           function () { return JELLO_DISSOLVE_N; },
           function (v) { JELLO_DISSOLVE_N = v; },
           100, 3000, undefined); // dense-bin particles needed (films never count)
-        gmRegisterLever('jello.JELLO_DISSOLVE_BURST_T', 'jello', 'JELLO_DISSOLVE_BURST_T',
-          function () { return JELLO_DISSOLVE_BURST_T; },
-          function (v) { JELLO_DISSOLVE_BURST_T = v; },
-          0.3, 6, undefined);    // s the bottom-up conversion takes (whole body)
       }
       if (typeof JELLO_PLASTICITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_PLASTICITY', 'jello', 'JELLO_PLASTICITY',
