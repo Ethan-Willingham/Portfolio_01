@@ -29,6 +29,22 @@ and 0 Dawn/console errors across ~25k log lines. Feel levers for the owner:
 `window.bathTune('BATH_BUOY'|'BATH_EXCHANGE'|'BATH_COOL'|'BATH_SRC_T'|'BATH_SRC_RATE', v)`
 and `BATH_ON` 0/1, live, no rebuild.
 
+**v25.57 (2026-07-05): B1 made VISIBLE + the "I don't see it" fix.** Two findings
+first: (a) the public site briefly served v25.55 because the Pages build for the
+bath commit was mid-flight, resolves itself; (b) the shared local checkout is many
+commits behind with WIP, so the bath code was never in the owner's local files
+(sync/serve from a fresh checkout, per memory `knowledge_shared_checkout_push`).
+The real gap: **B1 shipped physics-only, so hot water looked identical to cold**
+(no tint = no steam yet). Fixed by a heat TINT (a B4-preview pulled forward so the
+feel-check is possible): the surface FIELD pass carries per-particle temperature in
+its free alpha channel, the COMPOSITE lerps water toward a warm tint by mean cell
+temperature. Byte-exact no-op with the bath off (heat bits 0 -> field alpha 0).
+CDP A/B verified: heated pond shows a warm floor gradient with the tint on, all-blue
+with `BATH_TINT_STR 0`, same frame. New dev helper `window.__bath.jump()` teleports
+the rig to the heated pond (one call, no blind fly-across). Tint is LIVE-tunable and
+a taste call: `window.bathTune('BATH_TINT_STR'|'BATH_TINT_R'|'BATH_TINT_G'|'BATH_TINT_B', v)`;
+default 0.55 is deliberately strong so it is unmissable, dial down or 0 to taste.
+
 ---
 
 ## 1. Vision (locked with the owner)

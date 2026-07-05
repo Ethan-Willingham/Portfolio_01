@@ -246,6 +246,17 @@
   var LIQUID_BATH_SRC_Y1   = 0;
   var LIQUID_BATH_SRC_T    = 1.4;   // source target temperature (T units, cap 2)
   var LIQUID_BATH_SRC_RATE = 0.03;  // per-substep relax toward SRC_T inside the rect
+  /* v25.57 BATH B1: the heat TINT (a B4-preview pulled forward so B1 is
+   * actually visible for the feel-check). Hot water lerps toward this warm
+   * hot-spring colour by its temperature x strength. Rides the surface
+   * field's free alpha channel, so it is a byte-for-byte no-op with the
+   * bath off (heat bits are 0 -> field alpha 0 -> zero tint). Live via
+   * setRenderParam('BATH_TINT_*'). Deliberately a HINT, not a highlighter;
+   * the final look is a taste call for the owner (dial STR, or 0 to kill). */
+  var LIQUID_BATH_TINT_R   = 0.95;
+  var LIQUID_BATH_TINT_G   = 0.45;
+  var LIQUID_BATH_TINT_B   = 0.30;
+  var LIQUID_BATH_TINT_STR = 0.55;  // max fraction toward the tint at T=1 (0 = off)
   var LIQUID_SLEEP_FRAMES   = 45;       // consecutive low-KE frames before sleeping (v24.112: 60 -> 45)
   var LIQUID_SLEEP_VSQ      = 9.0;      // px/s squared — sleep below this (v24.112: 1.0 -> 9.0, |v| < 3 px/s;
                                         // at 1.0 a settled pond's surface simmer kept every particle awake
@@ -5560,6 +5571,7 @@ struct RenderParams {
   waterFoam     : vec4<f32>,
   oilColor      : vec4<f32>,
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
+  bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 `;
@@ -5589,6 +5601,7 @@ struct VOut {
   @builtin(position) pos    : vec4<f32>,
   @location(0)       uv     : vec2<f32>,
   @location(1)       weight : vec3<f32>,   // x = water, y = water aeration, z = oil
+  @location(2)       heat   : f32,         // v25.57 bath: temperature (0 when off)
 };
 
 fn quadCorner(vid : u32) -> vec2<f32> {
@@ -5611,6 +5624,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
     out.pos    = vec4<f32>(0.0, 0.0, 0.0, 1.0);
     out.uv     = vec2<f32>(0.0, 0.0);
     out.weight = vec3<f32>(0.0, 0.0, 0.0);
+    out.heat   = 0.0;
     return out;
   }
   let p = pos[iid];
@@ -5692,8 +5706,11 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let aerW = aer * clamp((spd - 12.0) / 68.0, 0.0, 1.0);
   if (isOil) {
     out.weight = vec3<f32>(0.0, 0.0, 1.0);
+    out.heat   = 0.0;
   } else {
     out.weight = vec3<f32>(1.0, aerW, 0.0);
+    // v25.57 bath: temperature from flag bits 24:31 (0 = ambient / bath off).
+    out.heat   = f32((fl >> 24u) & 0xffu) / 127.5;
   }
   return out;
 }
@@ -5702,8 +5719,10 @@ fn vs(@builtin(vertex_index)   vid : u32,
 fn fs(in : VOut) -> @location(0) vec4<f32> {
   let w = clamp(1.0 - dot(in.uv, in.uv), 0.0, 1.0);
   if (w <= 0.0) { discard; }
-  // Additive accumulation into the field (R water, G aeration, B oil).
-  return vec4<f32>(in.weight * w, 0.0);
+  // Additive accumulation into the field: R water, G aeration, B oil, and
+  // A = temperature-weighted (v25.57 bath). A stays 0 with the bath off, so
+  // the composite's heat tint is a no-op then.
+  return vec4<f32>(in.weight * w, in.heat * w);
 }
 `;
 
@@ -5740,7 +5759,13 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   // still read as plain water.
   let bodyK = smoothstep(t * 0.6, t * 1.6, f.r);
   let foam = clamp(f.g / max(f.r, 0.001), 0.0, 1.0) * bodyK;
-  let waterRGB = mix(rp.waterColor.rgb, rp.waterFoam.rgb, foam);
+  var waterRGB = mix(rp.waterColor.rgb, rp.waterFoam.rgb, foam);
+  // v25.57 bath: warm the water by its mean temperature (field A / water
+  // weight). f.a is 0 with the bath off, so heatN 0 -> no tint (byte-exact
+  // old look). Tint fights foam so hot churn still reads as hot, not white.
+  let heatN = clamp(f.a / max(f.r, 0.001), 0.0, 2.0);
+  let heatMix = clamp(heatN * rp.bathTint.w, 0.0, 1.0);
+  waterRGB = mix(waterRGB, rp.bathTint.rgb, heatMix);
   var outA = aWaterEdge * rp.waterColor.a;
   var outRGB = waterRGB * outA;
   // Oil composites over water.
@@ -6826,10 +6851,10 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // larger buffer to it is valid (buffer >= struct).
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 96,
+      size: 112,   // v25.57: +16 for the bathTint vec4 (surface struct only)
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(24);
+    instance.renderParamsHost = new Float32Array(28);
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var bgl = dev.createBindGroupLayout({
@@ -7083,6 +7108,10 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     rh[21] = LIQUID_SURFACE_SOFT;
     rh[22] = LIQUID_SURFACE_RSCALE;
     rh[23] = LIQUID_SURFACE_RENDER;
+    // v25.57 bath heat tint (lanes 24-27). Only the surface composite reads
+    // it; with the bath off the field's heat alpha is 0, so it never applies.
+    rh[24] = LIQUID_BATH_TINT_R;   rh[25] = LIQUID_BATH_TINT_G;
+    rh[26] = LIQUID_BATH_TINT_B;   rh[27] = LIQUID_BATH_TINT_STR;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -8228,6 +8257,12 @@ fn main() {
             case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
+            // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
+            // the hot-water look for the feel-check; STR 0 kills the tint.
+            case 'BATH_TINT_R':          LIQUID_BATH_TINT_R = v; break;
+            case 'BATH_TINT_G':          LIQUID_BATH_TINT_G = v; break;
+            case 'BATH_TINT_B':          LIQUID_BATH_TINT_B = v; break;
+            case 'BATH_TINT_STR':        LIQUID_BATH_TINT_STR = v < 0 ? 0 : v; break;
             case 'DBG_PARTICLES':        LIQUID_DBG_PARTICLES = v ? 1 : 0; break;   // v24.160 particle-proof overlay
             default: break;  // unknown name — no-op
           }
