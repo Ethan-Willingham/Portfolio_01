@@ -344,8 +344,8 @@ Squishy unminable `jello` tiles that become live PBD soft bodies.
 - `js/sluice/010-constants.js` — the `ENABLE_JELLO` feature flag (ships OFF; `?jello=1` spot-checks a page-load).
 - `js/sluice/040-init-resize-resolution.js` — dev test-pen injection at boot (`injectJelloTestPen`, devFixture-tagged).
 - `js/sluice/047-save.js` — the additive `jello` save-envelope field wiring (calls 340's save/restore).
-- `js/sluice/070-collision-liquids.js` — `tileAt` (the NaN-safe world probe every jello guard reads); the water side of the v25.50 slime-water coupling (`liquidSolidAt`/`liquidGridWorldSolid` slime probes + the splash grid-wake twin).
-- `js/sluice/020-state.js` — the liquid bridge: `fillTerrainSolid` ORs the slime tile map into the GPU terrain mask; `getGameState` feeds slime splash wakes to the GPU kernel (v25.50).
+- `js/sluice/070-collision-liquids.js` — `tileAt` (the NaN-safe world probe every jello guard reads); `liquidApplyJelloSplashGridWake`, the CPU twin of the dissolve release wake (v25.53).
+- `js/sluice/020-state.js` — the liquid bridge: `getGameState` feeds the dissolve release wake to the GPU kernel via the explosion channel (v25.53).
 - `js/sluice/140-render-maindraw.js` — the render call site (`drawJelloBlobs()` on the entity layer).
 - `js/sluice/350-gameloop-boot.js` — `updateJello(dt)` call + dev hotkeys (C drop cube, V clear, M solver, U feel, I edge style, J point debug).
 - `js/sluice/360-gm-facade.js` / `370-gm-panel.js` — the `jello.*` levers and their L-panel ordering (`LEVER_PRIORITY`).
