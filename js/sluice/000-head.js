@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.58';
+  var GAME_VERSION = 'v25.59';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -140,10 +140,10 @@
   // screenshot. Set false and rebuild to hide it once mobile profiling is done.
   var DEBUG_PERF_ON_MOBILE = false;
   // ---- Hard-landing impact FX master switch (testing aid, v22.17) ----
-  // Everything that fires when the rig SLAMS into solid ground or a slime: fall damage,
+  // Everything that fires when the rig SLAMS into solid ground: fall damage,
   // the landing squash, the red damage-flash, and the hit-pause (a brief game-loop FREEZE).
-  // Defaulted OFF so none of it disrupts physics testing (the freeze + flash are jarring while
-  // watching the jello, and fall death forces a restart mid-test). Set true, or flip the gm
-  // lever 'jello.FALL_IMPACT_FX' (top of the L panel), to restore the full landing feel.
-  var FALL_IMPACT_FX = false;
+  // LIVE since v25.59 (owner: re-implement fall damage so a bad drop can kill; the rare buried
+  // slimes are the cushion). Landing ON a slime fully negates the hull damage (see 080). Flip
+  // the gm lever 'jello.FALL_IMPACT_FX' (top of the L panel) to mute it for physics testing.
+  var FALL_IMPACT_FX = true;
 

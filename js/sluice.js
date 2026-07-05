@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.58';
+  var GAME_VERSION = 'v25.59';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -140,12 +140,12 @@
   // screenshot. Set false and rebuild to hide it once mobile profiling is done.
   var DEBUG_PERF_ON_MOBILE = false;
   // ---- Hard-landing impact FX master switch (testing aid, v22.17) ----
-  // Everything that fires when the rig SLAMS into solid ground or a slime: fall damage,
+  // Everything that fires when the rig SLAMS into solid ground: fall damage,
   // the landing squash, the red damage-flash, and the hit-pause (a brief game-loop FREEZE).
-  // Defaulted OFF so none of it disrupts physics testing (the freeze + flash are jarring while
-  // watching the jello, and fall death forces a restart mid-test). Set true, or flip the gm
-  // lever 'jello.FALL_IMPACT_FX' (top of the L panel), to restore the full landing feel.
-  var FALL_IMPACT_FX = false;
+  // LIVE since v25.59 (owner: re-implement fall damage so a bad drop can kill; the rare buried
+  // slimes are the cushion). Landing ON a slime fully negates the hull damage (see 080). Flip
+  // the gm lever 'jello.FALL_IMPACT_FX' (top of the L panel) to mute it for physics testing.
+  var FALL_IMPACT_FX = true;
 
   /* ---- Constants ---- */
 
@@ -175,7 +175,7 @@
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
   var ENABLE_NMZ         = false;  // No Man's Zone obstacle courses + exit-arrow HUD
   var ENABLE_TRADE_BOARD = false;  // the cross-town commodity Trade Board station
-  var ENABLE_JELLO       = false;  // squishy jello / slime soft bodies
+  var ENABLE_JELLO       = true;   // squishy jello / slime soft bodies — LIVE (v25.59): rare buried slimes cushion big falls
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
   var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): B1 water heat, in progress
@@ -188,6 +188,7 @@
     if (/[?&]nmz=1/.test(_ffq))       ENABLE_NMZ = true;
     if (/[?&]board=1/.test(_ffq))     ENABLE_TRADE_BOARD = true;
     if (/[?&]jello=1/.test(_ffq))     ENABLE_JELLO = true;
+    if (/[?&]jello=0/.test(_ffq))     ENABLE_JELLO = false;   // escape hatch: boot without slimes for A/B or perf checks
     if (/[?&]oil=1/.test(_ffq))       ENABLE_OIL = true;
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
     if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
@@ -3005,13 +3006,18 @@
     // The legendary one-time find (see 295-collection-ledger.js). Carved
     // after the terrain passes so nothing regrows over it.
     carveGreatSeamChamber();
+    // v25.59 — scatter the rare buried slimes (region-aware, one creature per
+    // patch). Runs AFTER the ore deposit + host-ring lock so a slime overwrites
+    // ore rather than being perturbed by it, and after the void carve so no
+    // slime seeds into open cave. No-op when ENABLE_JELLO is off.
+    if (ENABLE_JELLO) generateJelloPatches();
     // ----- P0.4 WIP deferrals -----
-    // Surface ponds, oil pockets, jello patches, and the reinforced barrier band
-    // assume a single 160-col town or global positions; they return per-town in a
-    // follow-up. The bedrock floor is now produced by each region's sub-floor fill
-    // above (BEDROCK_PROTO below every town/ocean), so the old global bedrock pass
-    // is gone. Intentionally NOT calling generateOilPockets / generateJelloPatches,
-    // and not filling the barrier band.
+    // Surface ponds, oil pockets, and the reinforced barrier band assume a single
+    // 160-col town or global positions; they return per-town in a follow-up. The
+    // bedrock floor is now produced by each region's sub-floor fill above
+    // (BEDROCK_PROTO below every town/ocean), so the old global bedrock pass is
+    // gone. Intentionally NOT calling generateOilPockets, and not filling the
+    // barrier band.
     // Surface LAKES (v24.148, was 1-deep "ponds" v24.11-147): DEEP NARROW
     // stone-lined pits, 9-14 wide x 5-8 deep. The owner's diagnosis, and
     // saharan's reference demo (the exact codebase our MLS-MPM solver is
@@ -3654,13 +3660,16 @@
   // 4-connected polyomino — important: the activation boundary tracer relies
   // on clusters being 4-connected so no degree-4 pinch vertices ever form).
   // Clusters overwrite whatever the ore deposit placed (jello is rare, small).
+  // v25.59 — density of the scattered buried slimes, as a chance per diggable
+  // tile. Tuned so a straight-down 1-tile shaft meets about ONE slime per 150 m
+  // of descent (owner's target): each seed grows a small 2..6-cell cluster (one
+  // creature) that spans ~1.6 columns, so encounters/150 m ≈ chance*150*1.6.
+  // Rare enough to read as "here and there", common enough to cushion a deep
+  // fall. ?jello=0 removes them entirely; scale this to make them rarer/denser.
+  var JELLO_PATCH_CHANCE = 0.0042;
   function generateJelloPatches() {
     resetJello();
-    if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches (also not called in the live path)
-    // v17.96 — scattered underground jello patches disabled while we tune the
-    // feel on a single big demo cube. Restore the two bands to re-enable the
-    // world jello once the jello is dialed in.
-    var bands = [];
+    if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
     function jelloCellOk(r, c) {
       if (c < 3 || c >= COLS - 3) return false;
       if (r < SKY_ROWS || r >= BEDROCK_ROW) return false;
@@ -3672,13 +3681,24 @@
           t.type === 'bedrock' || t.type === 'jello') return false;
       return true;
     }
-    for (var bi = 0; bi < bands.length; bi++) {
-      var band = bands[bi];
+    // Scatter single-slime clusters through every town, at JELLO_PATCH_CHANCE
+    // per diggable tile. Region-aware (works for the single town and the wide
+    // multitown world alike): each town gets its own floor + column span, and
+    // slimes start a couple of metres under the surface so the station apron
+    // never sits on gel. jelloCellOk rejects air / bedrock / foundation, so a
+    // seed that misses is just retried.
+    for (var ri = 0; ri < REGIONS.length; ri++) {
+      var reg = REGIONS[ri];
+      if (reg.kind !== REGION_TOWN) continue;
+      var ti = (reg.townIndex >= 0 && reg.townIndex < TOWN_DEPTHS.length) ? reg.townIndex : 0;
+      var floor = TOWN_DEPTHS[ti];               // diggable depth in rows (= metres)
+      var width = reg.c1 - reg.c0;
+      var seeds = Math.round(width * floor * JELLO_PATCH_CHANCE);
       var placed = 0, tries = 0;
-      while (placed < band.clusters && tries < band.clusters * 16) {
+      while (placed < seeds && tries < seeds * 16) {
         tries++;
-        var sr = band.rowMin + Math.floor(Math.random() * (band.rowMax - band.rowMin));
-        var sc = 4 + Math.floor(Math.random() * (COLS - 8));
+        var sr = SKY_ROWS + 3 + Math.floor(Math.random() * (floor - 3));
+        var sc = reg.c0 + Math.floor(Math.random() * width);
         if (!jelloCellOk(sr, sc)) continue;
         // Grow a compact cluster by random walk — 2..6 cells, weighted small.
         var target = 2 + Math.floor(Math.random() * Math.random() * 5);
@@ -12227,17 +12247,11 @@
           player.jelloImpactVy = 0;
         }
         player.y += player.vy * dt;                        // natural decelerating motion
-        if (!_wasJello && _impactVy > 120) {               // first hard contact: fall damage + splash
-          var _jFallDmg = fallDamageForImpact(_impactVy) * 0.2;
-          if (_jFallDmg > 0) {
-            player.squash = Math.min(1, _jFallDmg / 80);   // landing squash (visual feel) stays
-            if (FALL_IMPACT_FX) {                            // hull damage + flash + fall-death gated off for testing
-              player.hull -= _jFallDmg;
-              sfxPlay('land-damage', { gain: 0.45 });        // softened — the gel ate most of it
-              damageFlashT = Math.max(damageFlashT, Math.min(1, 0.18 + _jFallDmg / 90));
-              if (player.hull <= 0) { endGame({ type: 'fall', speed: _impactVy, damage: _jFallDmg }); return; }
-            }
-          }
+        if (!_wasJello && _impactVy > 120) {               // first hard contact: the gel FULLY cushions the fall
+          // v25.59 — a slime is the safety net (owner): landing on it takes ZERO hull damage no
+          // matter how fast the drop, so a slime at the bottom of a shaft saves the rig from a fall
+          // that would otherwise kill it on bare rock. Keep the squash + wet splat for feel only.
+          player.squash = Math.min(1, _impactVy / 700);    // landing squash scales with impact speed (cosmetic)
           jelloLandImpact(player.x + PLAYER_W * 0.5, player.y + PLAYER_H, _impactVy);
           var _jSplN = 3 + Math.min(9, (_impactVy / 110) | 0);
           spawnJelloSplat(player.x + PLAYER_W * 0.5, _surr, _jSplN, _impactVy * 0.5, 0.85, null);

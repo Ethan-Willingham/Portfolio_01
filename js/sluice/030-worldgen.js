@@ -160,13 +160,18 @@
     // The legendary one-time find (see 295-collection-ledger.js). Carved
     // after the terrain passes so nothing regrows over it.
     carveGreatSeamChamber();
+    // v25.59 — scatter the rare buried slimes (region-aware, one creature per
+    // patch). Runs AFTER the ore deposit + host-ring lock so a slime overwrites
+    // ore rather than being perturbed by it, and after the void carve so no
+    // slime seeds into open cave. No-op when ENABLE_JELLO is off.
+    if (ENABLE_JELLO) generateJelloPatches();
     // ----- P0.4 WIP deferrals -----
-    // Surface ponds, oil pockets, jello patches, and the reinforced barrier band
-    // assume a single 160-col town or global positions; they return per-town in a
-    // follow-up. The bedrock floor is now produced by each region's sub-floor fill
-    // above (BEDROCK_PROTO below every town/ocean), so the old global bedrock pass
-    // is gone. Intentionally NOT calling generateOilPockets / generateJelloPatches,
-    // and not filling the barrier band.
+    // Surface ponds, oil pockets, and the reinforced barrier band assume a single
+    // 160-col town or global positions; they return per-town in a follow-up. The
+    // bedrock floor is now produced by each region's sub-floor fill above
+    // (BEDROCK_PROTO below every town/ocean), so the old global bedrock pass is
+    // gone. Intentionally NOT calling generateOilPockets, and not filling the
+    // barrier band.
     // Surface LAKES (v24.148, was 1-deep "ponds" v24.11-147): DEEP NARROW
     // stone-lined pits, 9-14 wide x 5-8 deep. The owner's diagnosis, and
     // saharan's reference demo (the exact codebase our MLS-MPM solver is
@@ -809,13 +814,16 @@
   // 4-connected polyomino — important: the activation boundary tracer relies
   // on clusters being 4-connected so no degree-4 pinch vertices ever form).
   // Clusters overwrite whatever the ore deposit placed (jello is rare, small).
+  // v25.59 — density of the scattered buried slimes, as a chance per diggable
+  // tile. Tuned so a straight-down 1-tile shaft meets about ONE slime per 150 m
+  // of descent (owner's target): each seed grows a small 2..6-cell cluster (one
+  // creature) that spans ~1.6 columns, so encounters/150 m ≈ chance*150*1.6.
+  // Rare enough to read as "here and there", common enough to cushion a deep
+  // fall. ?jello=0 removes them entirely; scale this to make them rarer/denser.
+  var JELLO_PATCH_CHANCE = 0.0042;
   function generateJelloPatches() {
     resetJello();
-    if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches (also not called in the live path)
-    // v17.96 — scattered underground jello patches disabled while we tune the
-    // feel on a single big demo cube. Restore the two bands to re-enable the
-    // world jello once the jello is dialed in.
-    var bands = [];
+    if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
     function jelloCellOk(r, c) {
       if (c < 3 || c >= COLS - 3) return false;
       if (r < SKY_ROWS || r >= BEDROCK_ROW) return false;
@@ -827,13 +835,24 @@
           t.type === 'bedrock' || t.type === 'jello') return false;
       return true;
     }
-    for (var bi = 0; bi < bands.length; bi++) {
-      var band = bands[bi];
+    // Scatter single-slime clusters through every town, at JELLO_PATCH_CHANCE
+    // per diggable tile. Region-aware (works for the single town and the wide
+    // multitown world alike): each town gets its own floor + column span, and
+    // slimes start a couple of metres under the surface so the station apron
+    // never sits on gel. jelloCellOk rejects air / bedrock / foundation, so a
+    // seed that misses is just retried.
+    for (var ri = 0; ri < REGIONS.length; ri++) {
+      var reg = REGIONS[ri];
+      if (reg.kind !== REGION_TOWN) continue;
+      var ti = (reg.townIndex >= 0 && reg.townIndex < TOWN_DEPTHS.length) ? reg.townIndex : 0;
+      var floor = TOWN_DEPTHS[ti];               // diggable depth in rows (= metres)
+      var width = reg.c1 - reg.c0;
+      var seeds = Math.round(width * floor * JELLO_PATCH_CHANCE);
       var placed = 0, tries = 0;
-      while (placed < band.clusters && tries < band.clusters * 16) {
+      while (placed < seeds && tries < seeds * 16) {
         tries++;
-        var sr = band.rowMin + Math.floor(Math.random() * (band.rowMax - band.rowMin));
-        var sc = 4 + Math.floor(Math.random() * (COLS - 8));
+        var sr = SKY_ROWS + 3 + Math.floor(Math.random() * (floor - 3));
+        var sc = reg.c0 + Math.floor(Math.random() * width);
         if (!jelloCellOk(sr, sc)) continue;
         // Grow a compact cluster by random walk — 2..6 cells, weighted small.
         var target = 2 + Math.floor(Math.random() * Math.random() * 5);

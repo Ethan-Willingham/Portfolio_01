@@ -57,7 +57,7 @@ before everything, and each flag is URL-overridable for a no-build spot-check.
 | Combat + rig auto-turret | `ENABLE_COMBAT` | off | `?combat=1` |
 | No Man's Zone courses | `ENABLE_NMZ` | off | `?nmz=1` |
 | Cross-town Trade Board | `ENABLE_TRADE_BOARD` | off | `?board=1` |
-| Jello / slime soft bodies | `ENABLE_JELLO` | off | `?jello=1` |
+| Jello / slime soft bodies | `ENABLE_JELLO` | **on** (v25.59) | `?jello=0` boots without slimes |
 | Underground oil + pump | `ENABLE_OIL` | off | `?oil=1` |
 | Ore refinement catalog | `ENABLE_REFINEMENT` | off | `?refine=1` |
 
@@ -67,10 +67,12 @@ slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the
 
 **ACTIVE for the simple game:** worldgen (single town, 400 m, 6 layers, all 32 ores), drilling, fuel,
 cargo, the surface station shop (Workshop + Supply Shelf only), upgrades (drill/fuel/cargo/
-hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water only), smoke, jello
-is OFF, flight (ONE unified model everywhere since v25.49: `flyTune` + the FLY FEEL presets), the night
-sky/weather/mountains/trees, audio (music + the wired-but-empty SFX), save/respawn, the Great
-Seam endgame chamber, the Mineral Ledger.
+hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water only), smoke, rare
+buried slimes (v25.59: `ENABLE_JELLO` on; ~1 straight-down encounter per 150 m, tuned by
+`JELLO_PATCH_CHANCE` in 030) that fully cushion a fall, fall damage (v25.59: `FALL_IMPACT_FX`
+on, a bad drop can kill on bare rock), flight (ONE unified model everywhere since v25.49:
+`flyTune` + the FLY FEEL presets), the night sky/weather/mountains/trees, audio (music + the
+wired-but-empty SFX), save/respawn, the Great Seam endgame chamber, the Mineral Ledger.
 
 ---
 

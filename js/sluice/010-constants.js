@@ -26,7 +26,7 @@
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
   var ENABLE_NMZ         = false;  // No Man's Zone obstacle courses + exit-arrow HUD
   var ENABLE_TRADE_BOARD = false;  // the cross-town commodity Trade Board station
-  var ENABLE_JELLO       = false;  // squishy jello / slime soft bodies
+  var ENABLE_JELLO       = true;   // squishy jello / slime soft bodies — LIVE (v25.59): rare buried slimes cushion big falls
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
   var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): B1 water heat, in progress
@@ -39,6 +39,7 @@
     if (/[?&]nmz=1/.test(_ffq))       ENABLE_NMZ = true;
     if (/[?&]board=1/.test(_ffq))     ENABLE_TRADE_BOARD = true;
     if (/[?&]jello=1/.test(_ffq))     ENABLE_JELLO = true;
+    if (/[?&]jello=0/.test(_ffq))     ENABLE_JELLO = false;   // escape hatch: boot without slimes for A/B or perf checks
     if (/[?&]oil=1/.test(_ffq))       ENABLE_OIL = true;
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
     if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;

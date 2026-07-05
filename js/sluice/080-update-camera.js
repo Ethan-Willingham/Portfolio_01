@@ -1012,17 +1012,11 @@
           player.jelloImpactVy = 0;
         }
         player.y += player.vy * dt;                        // natural decelerating motion
-        if (!_wasJello && _impactVy > 120) {               // first hard contact: fall damage + splash
-          var _jFallDmg = fallDamageForImpact(_impactVy) * 0.2;
-          if (_jFallDmg > 0) {
-            player.squash = Math.min(1, _jFallDmg / 80);   // landing squash (visual feel) stays
-            if (FALL_IMPACT_FX) {                            // hull damage + flash + fall-death gated off for testing
-              player.hull -= _jFallDmg;
-              sfxPlay('land-damage', { gain: 0.45 });        // softened — the gel ate most of it
-              damageFlashT = Math.max(damageFlashT, Math.min(1, 0.18 + _jFallDmg / 90));
-              if (player.hull <= 0) { endGame({ type: 'fall', speed: _impactVy, damage: _jFallDmg }); return; }
-            }
-          }
+        if (!_wasJello && _impactVy > 120) {               // first hard contact: the gel FULLY cushions the fall
+          // v25.59 — a slime is the safety net (owner): landing on it takes ZERO hull damage no
+          // matter how fast the drop, so a slime at the bottom of a shaft saves the rig from a fall
+          // that would otherwise kill it on bare rock. Keep the squash + wet splat for feel only.
+          player.squash = Math.min(1, _impactVy / 700);    // landing squash scales with impact speed (cosmetic)
           jelloLandImpact(player.x + PLAYER_W * 0.5, player.y + PLAYER_H, _impactVy);
           var _jSplN = 3 + Math.min(9, (_impactVy / 110) | 0);
           spawnJelloSplat(player.x + PLAYER_W * 0.5, _surr, _jSplN, _impactVy * 0.5, 0.85, null);
