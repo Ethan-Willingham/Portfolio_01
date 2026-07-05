@@ -959,6 +959,32 @@
   var SMOKE_WATER_OBSTACLE = 1;      // gm smoke.WATER_OBSTACLE (0 = the old ghost-through)
   var smokeObstWaterTick = 0;
   var SMOKE_OBST_WATER_EVERY = 8;
+  var smokeObstDbgSrc = 'unset';     // dev probe: water-stamp source last repaint
+  var smokeObstWaterBins = null;     // v25.47 — reusable per-bin particle counts (water mask pass)
+  // v25.47 — dev debug handle (window.__bombs pattern): lets a headless
+  // harness read the obstacle mask + the water-stamp state directly.
+  var smokeObstDbgPaints = 0, smokeObstDbgFinishes = 0, smokeObstDbgStamps = 0;
+  if (typeof window !== 'undefined') {
+    window.__smokeObst = {
+      canvas: function () { return smokeFluidObstacleCanvas; },
+      info: function () {
+        return {
+          src: smokeObstDbgSrc,
+          paints: smokeObstDbgPaints, stamps: smokeObstDbgStamps,
+          smokeActive: (typeof smokeFluidActive !== 'undefined') ? !!smokeFluidActive : null,
+          awakeT: (typeof smokeAwakeT !== 'undefined') ? smokeAwakeT : null,
+          waterLever: SMOKE_WATER_OBSTACLE,
+          liquidCount: (typeof liquidCount !== 'undefined') ? liquidCount : -1,
+          wgpuRenderActive: (typeof liquidWGPU !== 'undefined' && liquidWGPU) ? !!liquidWGPU.renderActive : null,
+          screenW: screenW, screenH: screenH,
+          marginX: smokeFluidMarginWorldX, marginY: smokeFluidMarginWorldY,
+          obstW: (typeof smokeFluidObstacleW !== 'undefined') ? smokeFluidObstacleW : -1,
+          obstH: (typeof smokeFluidObstacleH !== 'undefined') ? smokeFluidObstacleH : -1,
+          camX: cam.x, camY: cam.y
+        };
+      }
+    };
+  }
   function smokeObstacleNeedsRepaint() {
     if (!PERF_SMOKE_OBSTACLE_DIRTY) return true;
     if (smokeObstPrevCamX !== cam.x || smokeObstPrevCamY !== cam.y ||
@@ -1574,6 +1600,7 @@
   }
 
   function smokeFluidPaintObstacle() {
+    smokeObstDbgPaints++;
     if (!smokeFluidActive) return;
     if (isMobile) {
       smokeFluidPaintObstacleGL();
@@ -1663,28 +1690,59 @@
       oc.restore();
     }
 
-    // Pass 4 — WATER as obstacle (v25.46, the owner's "smoke clearly exists
-    // on a completely separate layer" fix): stamp the rendered water body —
-    // the live water canvas, the exact metaball shape on screen — into the
-    // mask, so smoke piles onto pond surfaces and curls around waterfalls
-    // instead of ghosting straight over them. The water canvas covers the
-    // viewport; the obstacle domain adds overscan margins, so the stamp
-    // lands at the margin offset. Alpha rides as-is: the body (~0.82)
-    // reads solid to the solver, the feathered rim is a soft boundary,
-    // and thin spray (low alpha) lets smoke partially through. Water in
-    // the overscan band is not stamped (off-screen smoke only). The
-    // GL/mobile quad path skips water (coarse grid, perf-first).
+    // Pass 4 — WATER as obstacle (v25.47, the owner's "smoke clearly exists
+    // on a completely separate layer" fix): paint the water body into the
+    // mask from the liquid CPU MIRROR (particle positions, refreshed each
+    // frame from the async GPU readback), the same way tiles and jello are
+    // painted — pure CPU geometry, never the rendered canvas. Two earlier
+    // attempts read the water canvas via drawImage and BOTH failed: in the
+    // update phase a WebGPU canvas reads blank (its texture is cleared
+    // after present — measured 0 px), and in the render phase the read is
+    // a GPU sync stall (measured 120 -> 30 fps while the camera moved).
+    // Binning ~15k particles into 8-px cells costs ~0.3 ms CPU, covers the
+    // whole overscan domain (the mirror has every particle, not just the
+    // viewport), and needs no timing contract with the renderer.
+    // Two alpha levels: full bins are solid to the solver (>0.5 threshold),
+    // half-full rim/spray bins paint at 0.4 = passable, so the boundary
+    // stays soft and thin spray lets smoke through. Skip = the exact old
+    // ghost-through. GL/mobile quad path skips water (perf-first).
     if (SMOKE_WATER_OBSTACLE && liquidCount > 0) {
-      var wCv = (typeof liquidWGPU !== 'undefined' && liquidWGPU &&
-                 liquidWGPU.renderActive && liquidWGPU.renderCanvas)
-        ? liquidWGPU.renderCanvas
-        : (typeof liquidGLCanvas !== 'undefined' && liquidGLCanvas &&
-           liquidGLCanvas.style.display !== 'none' ? liquidGLCanvas : null);
-      if (wCv && wCv.width > 0) {
-        oc.drawImage(wCv,
-          smokeFluidMarginWorldX * sxScale, smokeFluidMarginWorldY * syScale,
-          screenW * sxScale, screenH * syScale);
+      smokeObstDbgStamps++;
+      var BIN = 8;                                     // world px per bin
+      var binsW = Math.ceil(smokeFluidDomainWorldW / BIN);
+      var binsH = Math.ceil(smokeFluidDomainWorldH / BIN);
+      var nBins = binsW * binsH;
+      if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
+        smokeObstWaterBins = new Uint8Array(Math.max(nBins, 16384));
       }
+      var bins = smokeObstWaterBins;
+      bins.fill(0, 0, nBins);
+      var domR = domainX + smokeFluidDomainWorldW;
+      var domB = domainY + smokeFluidDomainWorldH;
+      for (var wi = 0; wi < liquidCount; wi++) {
+        if (liquidFrozen[wi]) continue;
+        var wx = liquidX[wi], wy = liquidY[wi];
+        if (wx < domainX || wx >= domR || wy < domainY || wy >= domB) continue;
+        var bi = ((wy - domainY) / BIN | 0) * binsW + ((wx - domainX) / BIN | 0);
+        if (bins[bi] < 255) bins[bi]++;
+      }
+      // Rest density is ~41 particles per 8x8 bin (655/tile). Solid from
+      // ~60% of rest; rim/spray from ~25%.
+      var bw = BIN * sxScale, bh = BIN * syScale;
+      for (var pass = 0; pass < 2; pass++) {
+        oc.fillStyle = pass === 0 ? 'rgba(0,0,0,1)' : 'rgba(0,0,0,0.4)';
+        var lo = pass === 0 ? 24 : 10, hi = pass === 0 ? 256 : 24;
+        for (var by = 0; by < binsH; by++) {
+          var rowB = by * binsW;
+          for (var bx = 0; bx < binsW; bx++) {
+            var bn = bins[rowB + bx];
+            if (bn >= lo && bn < hi) {
+              oc.fillRect(bx * bw, by * bh, bw + 0.5, bh + 0.5);
+            }
+          }
+        }
+      }
+      smokeObstDbgSrc = 'mirror';
     }
 
     perfMark('update.smokeObstacleDraw', _opd0);
