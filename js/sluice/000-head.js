@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.57';
+  var GAME_VERSION = 'v25.58';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -138,7 +138,7 @@
   // panel is auto-trimmed to the diagnostic sections on mobile (the keyboard-only
   // A/B, BENCH, OPT and DEV-KEY sections are dropped) so it fits the screen for a
   // screenshot. Set false and rebuild to hide it once mobile profiling is done.
-  var DEBUG_PERF_ON_MOBILE = true;
+  var DEBUG_PERF_ON_MOBILE = false;
   // ---- Hard-landing impact FX master switch (testing aid, v22.17) ----
   // Everything that fires when the rig SLAMS into solid ground or a slime: fall damage,
   // the landing squash, the red damage-flash, and the hit-pause (a brief game-loop FREEZE).
