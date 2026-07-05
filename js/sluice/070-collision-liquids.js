@@ -483,7 +483,12 @@
     // bounce to wipe out the eject impulse, parking water on the hull.
     var x = (gx + 0.5) * LIQUID_CELL;
     var y = (gy + 0.5) * LIQUID_CELL;
-    return liquidWorldSolidAt(x, y);
+    if (liquidWorldSolidAt(x, y)) return true;
+    // v25.50 — live SLIME reads solid to the boundary bounce too. Unlike the
+    // miner there is no per-frame eject impulse here to wipe out (the splash
+    // wake is brief + radial), and slime-as-floor is what gives resting
+    // water its friction instead of an eternal seethe at the gel boundary.
+    return JELLO_WATER_MASK !== 0 && jelloWaterTileCount > 0 && jelloWaterPointSolid(x, y);
   }
 
   function liquidP2G(stepDt) {
@@ -786,6 +791,32 @@
     }
   }
 
+  // v25.50 — SLIME SPLASH twin of the explosion wake above: a body plunging
+  // into water emits a small radial wake (entries from 340's jelloWaterFrame,
+  // wall-clock gated against liquidJelloWakeNow, hoisted once per grid pass —
+  // never call performance.now() per cell). Same falloff math, gentler blast,
+  // a light upward bias so a plop crowns instead of only shoving sideways.
+  // The GPU path consumes the SAME entries via getGameState's explosion list.
+  var liquidJelloWakeNow = 0;
+  function liquidApplyJelloSplashGridWake(c, stepDt) {
+    var gx = (liquidCellGX[c] + 0.5) * LIQUID_CELL;
+    var gy = (liquidCellGY[c] + 0.5) * LIQUID_CELL;
+    for (var i = 0; i < jelloSplashWakes.length; i++) {
+      var wk = jelloSplashWakes[i];
+      if (liquidJelloWakeNow - wk.t0 > 220) continue;
+      var dx = gx - wk.cx;
+      var dy = gy - wk.cy;
+      var d2 = dx * dx + dy * dy;
+      var r = wk.r * 1.15;
+      if (d2 > r * r || d2 <= 0.0001) continue;
+      var d = Math.sqrt(d2);
+      var k = 1 - d / r;
+      var blast = wk.blast * k * stepDt / LIQUID_CELL;
+      liquidCellVX[c] += dx / d * blast;
+      liquidCellVY[c] += dy / d * blast - 50 * k * stepDt / LIQUID_CELL;
+    }
+  }
+
   // v24.115 — read-only twin of liquidGetCell: returns the cell index or
   // -1, never inserts (the grid-viscosity neighbour lookup must not
   // allocate cells).
@@ -811,6 +842,9 @@
     var OIL_FFR_DLT   = LIQUID_OIL_FLOOR_FRICTION - LIQUID_FLOOR_FRICTION;
     var OIL_WFR_DLT   = LIQUID_OIL_WALL_FRICTION - LIQUID_WALL_FRICTION;
     var gravScale = stepDt * stepDt / LIQUID_CELL;
+    // v25.50 — one clock read per grid pass for the slime-splash wall-clock
+    // gate (liquidApplyJelloSplashGridWake runs per massy cell).
+    if (jelloSplashWakes.length) liquidJelloWakeNow = performance.now();
     // v24.115 phase 1 — resolve the RAW velocity of every massy cell into
     // the DV arrays (consumed exactly here, so they are free as scratch).
     // The viscosity blend in phase 2 must read UN-blended neighbours,
@@ -881,6 +915,7 @@
         liquidApplyPlayerGridWake(c2, stepDt);
         liquidApplyRocketGridWake(c2, stepDt);
         liquidApplyExplosionGridWake(c2, stepDt);
+        if (jelloSplashWakes.length) liquidApplyJelloSplashGridWake(c2, stepDt);
         var selfSolid = liquidGridWorldSolid(cgx, cgy);
         if (selfSolid) {
           liquidCellVX[c2] *= -bounceIn;
@@ -1148,6 +1183,23 @@
       if (liquidWorldSolidAt(x - r, y    )) return true;
       if (liquidWorldSolidAt(x + r, y    )) return true;
       if (liquidWorldSolidAt(x,     y - r)) return true;
+    }
+    // v25.50 — live SLIME bodies block water, miner-style: an AABB fast-gate
+    // (one compare for the 99% of particles nowhere near gel) then the same
+    // 4 probe points against the TILE-granular slime map (see 340's WATER
+    // MEDIUM banner; the GPU path reads the identical tiles via the terrain
+    // mask). Buried jello TILES were already solid via liquidWorldSolidAt.
+    // ESCAPE RULE: a particle whose own position is ALREADY inside a slime
+    // tile ignores slime solidity entirely — the tile map is one frame stale
+    // and TILE-granular, so a moving body inevitably closes over a few
+    // particles; blocking their exit trapped hundreds inside the blob
+    // (harness-measured ~1600). One-way collision: can't get in, always out.
+    if (jelloWaterTileCount > 0 && JELLO_WATER_MASK &&
+        x + r >= jelloWaterX0 && x - r <= jelloWaterX1 &&
+        y + r >= jelloWaterY0 && y - r <= jelloWaterY1 &&
+        !jelloWaterPointSolid(x, y)) {
+      if (jelloWaterPointSolid(x,     y + r) || jelloWaterPointSolid(x - r, y) ||
+          jelloWaterPointSolid(x + r, y    ) || jelloWaterPointSolid(x,     y - r)) return true;
     }
     return false;
   }

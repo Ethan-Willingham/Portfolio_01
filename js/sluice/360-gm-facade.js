@@ -1175,6 +1175,29 @@
           function (v) { JELLO_TIMESCALE = v; },
           0.15, 1, undefined);  // <1 = slow-mo / massive feel
       }
+      // v25.50 — WATER MEDIUM (slime <-> water coupling; TUNING.md jello rows)
+      if (typeof JELLO_WATER !== 'undefined') {
+        gmRegisterLever('jello.JELLO_WATER', 'jello', 'JELLO_WATER',
+          function () { return JELLO_WATER; },
+          function (v) { JELLO_WATER = v; },
+          0, 1, 1);   // master: water pushes slime (buoy/drag/splash)
+        gmRegisterLever('jello.JELLO_WATER_BUOY', 'jello', 'JELLO_WATER_BUOY',
+          function () { return JELLO_WATER_BUOY; },
+          function (v) { JELLO_WATER_BUOY = v; },
+          0, 2.5, undefined);   // >1 floats (1.35 ~ 74% submerged), 0.55 = rig-style sink
+        gmRegisterLever('jello.JELLO_WATER_DRAG', 'jello', 'JELLO_WATER_DRAG',
+          function () { return JELLO_WATER_DRAG; },
+          function (v) { JELLO_WATER_DRAG = v; },
+          0, 8, undefined);     // /s ease toward the local water velocity
+        gmRegisterLever('jello.JELLO_WATER_MASK', 'jello', 'JELLO_WATER_MASK',
+          function () { return JELLO_WATER_MASK; },
+          function (v) { JELLO_WATER_MASK = v; },
+          0, 1, 1);   // slime blocks water; 0 = the old separate-layer ghost
+        gmRegisterLever('jello.JELLO_WATER_SPLASH', 'jello', 'JELLO_WATER_SPLASH',
+          function () { return JELLO_WATER_SPLASH; },
+          function (v) { JELLO_WATER_SPLASH = v; },
+          0, 3, undefined);     // entry-plop wake strength (0 = silent)
+      }
       if (typeof JELLO_PLASTICITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_PLASTICITY', 'jello', 'JELLO_PLASTICITY',
           function () { return JELLO_PLASTICITY; },

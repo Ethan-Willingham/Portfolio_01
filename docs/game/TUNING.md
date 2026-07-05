@@ -454,6 +454,32 @@ pond is a dense body below the 6.4 declump trigger), so efficacy is owner-
 verified via the dev `X` water overlay (the `dn MAX` and `v: mean` lines). To
 A/B the fix live: `water.DECLUMP` 1/0, or boot `?wdbg=DECLUMP:0`.
 
+## 2.11 Slime ↔ water coupling (v25.50) · tier `live` (the `jello` gm group)
+
+Two-way, both engine paths, flag-inert when `ENABLE_JELLO` is off. Water →
+slime: per-point submersion from the liquid CPU mirror (16-px bins + a LOCAL
+WATERLINE scan, because a displacing body's own bins read dry) drives buoyancy
++ a velocity pull toward the local water velocity in `jelloIntegrate`. Slime →
+water: live bodies rasterize into `jelloSolidTiles` (TILE-granular, end of
+`updateJello`); the GPU collide kernel reads it through the per-frame
+`fillTerrainSolid` mask, the CPU path through `liquidSolidAt` +
+`liquidGridWorldSolid`. Splashes ride the explosion-wake channel. A tile only
+goes solid once ≥5 body points cover it AND its water has drained (the 1-bit
+GPU mask cannot tell slime from terrain, so never-close-over-water is the
+path-neutral anti-trap; the CPU path adds an already-inside escape rule).
+Dev probe `window.__jelloWater()` (tiles/bins/wakes/per-body wetness +
+`waterInTiles`, the interpenetration count). Headless suite:
+`slime-water-test.mjs` (session scratchpad — float, displacement, splash,
+lever A/B, CPU path, dry-land REST-OR-QUIET; rebuild from this list if lost).
+
+| Lever | Now | Range | Effect |
+|---|---|---|---|
+| `JELLO_WATER` | `1` | 0/1 | Master: water pushes slime (buoyancy/drag/splash). 0 = water ignores gel |
+| `JELLO_WATER_BUOY` | `1.35` | 0–2.5 | Gravity fraction cancelled at full submersion. >1 floats (1.35 ≈ 74% under, textbook bob); 0.55 = rig-style heavy sink. Net lift caps at 0.6 g |
+| `JELLO_WATER_DRAG` | `2.6` | 0–8 | /s ease of point velocity toward LOCAL water velocity — calm water damps the bob, currents/waterfalls CARRY gel |
+| `JELLO_WATER_MASK` | `1` | 0/1 | Slime blocks water (mask + CPU probes). 0 = the old separate-layer ghost-through |
+| `JELLO_WATER_SPLASH` | `1.0` | 0–3 | Entry-plop + moving-displacement wake strength. 0 = silent entry (water still parts via the mask, just without the crown) |
+
 ---
 
 # 3 · RESOLUTION · tier `edit`

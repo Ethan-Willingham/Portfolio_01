@@ -613,11 +613,17 @@
         // dynamic miner collision is a Stage 8 game-bridge concern.
         fillTerrainSolid: function (originCol, originRow, w, h, out) {
           var k = 0;
+          // v25.50 — live SLIME bodies ride the same mask (the module refills
+          // + re-uploads it EVERY frame, so a drifting blob tracks at frame
+          // rate). jelloSolidTiles is rebuilt at the end of updateJello from
+          // the legalized poses; flag off / no bodies = one int compare.
+          var jw = JELLO_WATER_MASK && jelloWaterTileCount > 0;
           for (var r = 0; r < h; r++) {
             var wy = (originRow + r + 0.5) * TILE;
             for (var c = 0; c < w; c++) {
               var wx = (originCol + c + 0.5) * TILE;
-              out[k++] = liquidWorldSolidAt(wx, wy) ? 1 : 0;
+              out[k++] = (liquidWorldSolidAt(wx, wy) ||
+                          (jw && jelloWaterTileSolid(originCol + c, originRow + r))) ? 1 : 0;
             }
           }
         },
@@ -661,6 +667,18 @@
               cx: e.cx, cy: e.cy, r: e.r,
               blastScale: e.large ? 1050 : 660
             });
+          }
+          // v25.50 — SLIME SPLASH wakes ride the same explosion channel (a
+          // plop is a tiny radial blast to the grid kernel). Read-only here:
+          // wall-clock gated so a paused jello sim can't pump forever;
+          // jelloWaterFrame owns the expiry sweep.
+          if (jelloSplashWakes.length) {
+            var nowW = performance.now();
+            for (var wi = 0; wi < jelloSplashWakes.length && ex.length < 8; wi++) {
+              var wk = jelloSplashWakes[wi];
+              if (nowW - wk.t0 > 220) continue;
+              ex.push({ cx: wk.cx, cy: wk.cy, r: wk.r, blastScale: wk.blast });
+            }
           }
           return { player: pl, rocket: rk, explosions: ex };
         }
