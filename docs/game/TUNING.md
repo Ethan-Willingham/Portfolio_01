@@ -478,7 +478,8 @@ lever A/B, CPU path, dry-land REST-OR-QUIET; rebuild from this list if lost).
 | `JELLO_WATER_BUOY` | `1.35` | 0–2.5 | Gravity fraction cancelled at full submersion. >1 floats (1.35 ≈ 74% under, textbook bob); 0.55 = rig-style heavy sink. Net lift caps at 0.6 g |
 | `JELLO_WATER_DRAG` | `2.6` | 0–8 | /s ease of point velocity toward LOCAL water velocity — calm water damps the bob, currents/waterfalls CARRY gel |
 | `JELLO_WATER_MASK` | `1` | 0/1 | Slime blocks water (mask + CPU probes). 0 = the old separate-layer ghost-through |
-| `JELLO_WATER_SPLASH` | `1.0` | 0–3 | Entry-plop + moving-displacement wake strength. 0 = silent entry (water still parts via the mask, just without the crown) |
+| `JELLO_WATER_SPLASH` | `1.0` | 0–3 | Entry-plop + moving-displacement wake strength. 0 = silent entry (water still parts via the mask, just without the crown). Sustained wakes fire only while submersion is RISING — waking on the bob's down-phase looped the pond into a permanent slosh (harness-caught) |
+| `JELLO_WATER_SEEP` | `1` | 0/1 | v25.51 — gel is PERMEABLE (the owner's "water cuts itself off in tile sized squares"): tile quantization seals a pile's crevices, so crevice water pooled in permanent tile-shaped noise-boxes. Covered tiles under wet water now open on a dithered duty cycle — 1-in-4 frames when the water is CAPPED by slime/terrain within 3 tiles (a pocket), 1-in-16 for a ≤1-tile film (a crown puddle soaks away). DEEP UNCAPPED water is a real pond: no valve, full displacement, which is what keeps a floating body's submerged shoulders sealed. Solid→open transitions WAKE the settled water above them (also fixes "slime slides out from under a sleeping puddle"). 0 = v25.50 sealing |
 
 ---
 

@@ -1197,6 +1197,10 @@
           function () { return JELLO_WATER_SPLASH; },
           function (v) { JELLO_WATER_SPLASH = v; },
           0, 3, undefined);     // entry-plop wake strength (0 = silent)
+        gmRegisterLever('jello.JELLO_WATER_SEEP', 'jello', 'JELLO_WATER_SEEP',
+          function () { return JELLO_WATER_SEEP; },
+          function (v) { JELLO_WATER_SEEP = v; },
+          0, 1, 1);   // gel permeability: pocket/film water drains through the pile
       }
       if (typeof JELLO_PLASTICITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_PLASTICITY', 'jello', 'JELLO_PLASTICITY',
