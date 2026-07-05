@@ -613,17 +613,11 @@
         // dynamic miner collision is a Stage 8 game-bridge concern.
         fillTerrainSolid: function (originCol, originRow, w, h, out) {
           var k = 0;
-          // v25.50 — live SLIME bodies ride the same mask (the module refills
-          // + re-uploads it EVERY frame, so a drifting blob tracks at frame
-          // rate). jelloSolidTiles is rebuilt at the end of updateJello from
-          // the legalized poses; flag off / no bodies = one int compare.
-          var jw = JELLO_WATER_MASK && jelloWaterTileCount > 0;
           for (var r = 0; r < h; r++) {
             var wy = (originRow + r + 0.5) * TILE;
             for (var c = 0; c < w; c++) {
               var wx = (originCol + c + 0.5) * TILE;
-              out[k++] = (liquidWorldSolidAt(wx, wy) ||
-                          (jw && jelloWaterTileSolid(originCol + c, originRow + r))) ? 1 : 0;
+              out[k++] = liquidWorldSolidAt(wx, wy) ? 1 : 0;
             }
           }
         },
@@ -668,10 +662,10 @@
               blastScale: e.large ? 1050 : 660
             });
           }
-          // v25.50 — SLIME SPLASH wakes ride the same explosion channel (a
-          // plop is a tiny radial blast to the grid kernel). Read-only here:
-          // wall-clock gated so a paused jello sim can't pump forever;
-          // jelloWaterFrame owns the expiry sweep.
+          // v25.53 — the slime DISSOLVE release wake rides the explosion
+          // channel (a tiny radial blast to the grid kernel as a body melts
+          // into water). Read-only here: wall-clock gated so a paused jello
+          // sim can't pump forever; jelloWaterDissolveFrame owns the expiry.
           if (jelloSplashWakes.length) {
             var nowW = performance.now();
             for (var wi = 0; wi < jelloSplashWakes.length && ex.length < 8; wi++) {

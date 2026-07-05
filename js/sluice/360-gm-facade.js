@@ -1175,32 +1175,21 @@
           function (v) { JELLO_TIMESCALE = v; },
           0.15, 1, undefined);  // <1 = slow-mo / massive feel
       }
-      // v25.50 — WATER MEDIUM (slime <-> water coupling; TUNING.md jello rows)
-      if (typeof JELLO_WATER !== 'undefined') {
-        gmRegisterLever('jello.JELLO_WATER', 'jello', 'JELLO_WATER',
-          function () { return JELLO_WATER; },
-          function (v) { JELLO_WATER = v; },
-          0, 1, 1);   // master: water pushes slime (buoy/drag/splash)
-        gmRegisterLever('jello.JELLO_WATER_BUOY', 'jello', 'JELLO_WATER_BUOY',
-          function () { return JELLO_WATER_BUOY; },
-          function (v) { JELLO_WATER_BUOY = v; },
-          0, 2.5, undefined);   // >1 floats (1.35 ~ 74% submerged), 0.55 = rig-style sink
-        gmRegisterLever('jello.JELLO_WATER_DRAG', 'jello', 'JELLO_WATER_DRAG',
-          function () { return JELLO_WATER_DRAG; },
-          function (v) { JELLO_WATER_DRAG = v; },
-          0, 8, undefined);     // /s ease toward the local water velocity
-        gmRegisterLever('jello.JELLO_WATER_MASK', 'jello', 'JELLO_WATER_MASK',
-          function () { return JELLO_WATER_MASK; },
-          function (v) { JELLO_WATER_MASK = v; },
-          0, 1, 1);   // slime blocks water; 0 = the old separate-layer ghost
-        gmRegisterLever('jello.JELLO_WATER_SPLASH', 'jello', 'JELLO_WATER_SPLASH',
-          function () { return JELLO_WATER_SPLASH; },
-          function (v) { JELLO_WATER_SPLASH = v; },
-          0, 3, undefined);     // entry-plop wake strength (0 = silent)
-        gmRegisterLever('jello.JELLO_WATER_SHED', 'jello', 'JELLO_WATER_SHED',
-          function () { return JELLO_WATER_SHED; },
-          function (v) { JELLO_WATER_SHED = v; },
-          0, 1, 1);   // expulsion: water never rests in/on gel, always around it
+      // v25.53 — DISSOLVE (enough nearby water turns a slime INTO water;
+      // TUNING.md jello rows)
+      if (typeof JELLO_DISSOLVE !== 'undefined') {
+        gmRegisterLever('jello.JELLO_DISSOLVE', 'jello', 'JELLO_DISSOLVE',
+          function () { return JELLO_DISSOLVE; },
+          function (v) { JELLO_DISSOLVE = v; },
+          0, 1, 1);   // master: slimes melt into a nearby body of water
+        gmRegisterLever('jello.JELLO_DISSOLVE_R', 'jello', 'JELLO_DISSOLVE_R',
+          function () { return JELLO_DISSOLVE_R; },
+          function (v) { JELLO_DISSOLVE_R = v; },
+          16, 128, undefined);   // px beyond the body counted as "near"
+        gmRegisterLever('jello.JELLO_DISSOLVE_N', 'jello', 'JELLO_DISSOLVE_N',
+          function () { return JELLO_DISSOLVE_N; },
+          function (v) { JELLO_DISSOLVE_N = v; },
+          100, 3000, undefined); // dense-bin particles needed (films never count)
       }
       if (typeof JELLO_PLASTICITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_PLASTICITY', 'jello', 'JELLO_PLASTICITY',

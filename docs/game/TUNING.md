@@ -454,32 +454,35 @@ pond is a dense body below the 6.4 declump trigger), so efficacy is owner-
 verified via the dev `X` water overlay (the `dn MAX` and `v: mean` lines). To
 A/B the fix live: `water.DECLUMP` 1/0, or boot `?wdbg=DECLUMP:0`.
 
-## 2.11 Slime ↔ water coupling (v25.50) · tier `live` (the `jello` gm group)
+## 2.11 Slime dissolve (v25.53) · tier `live` (the `jello` gm group)
 
-Two-way, both engine paths, flag-inert when `ENABLE_JELLO` is off. Water →
-slime: per-point submersion from the liquid CPU mirror (16-px bins + a LOCAL
-WATERLINE scan, because a displacing body's own bins read dry) drives buoyancy
-+ a velocity pull toward the local water velocity in `jelloIntegrate`. Slime →
-water: live bodies rasterize into `jelloSolidTiles` (TILE-granular, end of
-`updateJello`); the GPU collide kernel reads it through the per-frame
-`fillTerrainSolid` mask, the CPU path through `liquidSolidAt` +
-`liquidGridWorldSolid`. Splashes ride the explosion-wake channel. A tile only
-goes solid once ≥5 body points cover it AND its water has drained (the 1-bit
-GPU mask cannot tell slime from terrain, so never-close-over-water is the
-path-neutral anti-trap; the CPU path adds an already-inside escape rule).
-Dev probe `window.__jelloWater()` (tiles/bins/wakes/per-body wetness +
-`waterInTiles`, the interpenetration count). Headless suite:
-`slime-water-test.mjs` (session scratchpad — float, displacement, splash,
-lever A/B, CPU path, dry-land REST-OR-QUIET; rebuild from this list if lost).
+Enough nearby water turns a slime INTO water (the owner's design; the
+v25.50-52 collision/coupling generations — buoyancy, tile masks, seep valves,
+expulsion — are fully reverted, history in git). Per active body, mirror
+particles sitting in DENSE 16-px bins (>= `JELLO_DISSOLVE_DENSE` 80 — a
+ground film or stray droplet measures 20-60 and never counts) within
+`JELLO_DISSOLVE_R` of the bbox are summed; a sustained count
+(`JELLO_DISSOLVE_DWELL` 0.35 s) starts the melt. Transition: ~0.5 s telegraph
+(the body wakes, its hue eases to water-teal, it goes glassier while still
+jiggling), then a bottom-up staggered burst — the lowest lattice points each
+release `JELLO_DISSOLVE_PPP` 62 particles (~85% of the sim's 655/tile rest
+density, ~2,230 for a dev cube) jittered across their cell with the body's
+real velocity, while the render clips away below the rising melt line
+(`b._meltY`), so gel visibly becomes the water replacing it. One release wake
+on the explosion channel + `liquidWakeForDig` (a settled pond must react) + a
+gel splat, then the body despawns. One body converts at a time; spawn is
+staggered (`JELLO_DISSOLVE_SPAWN` 260/frame) and budget-clamped against
+`LIQUID_MAX_PARTICLES`. Dev probe `window.__jelloWater()` (per-body
+near/dwell/melting + dissolved total). Headless suite: `dissolve-test.mjs`
+(session scratchpad — pond dissolve both engine paths, lever A/B persists,
+dry-land no-trigger REST-OR-QUIET; rebuild from this list if lost; NOTE dev
+worlds boot with test-pen bodies, assert against the pre-drop baseline).
 
 | Lever | Now | Range | Effect |
 |---|---|---|---|
-| `JELLO_WATER` | `1` | 0/1 | Master: water pushes slime (buoyancy/drag/splash). 0 = water ignores gel |
-| `JELLO_WATER_BUOY` | `1.35` | 0–2.5 | Gravity fraction cancelled at full submersion. >1 floats (1.35 ≈ 74% under, textbook bob); 0.55 = rig-style heavy sink. Net lift caps at 0.6 g |
-| `JELLO_WATER_DRAG` | `2.6` | 0–8 | /s ease of point velocity toward LOCAL water velocity — calm water damps the bob, currents/waterfalls CARRY gel |
-| `JELLO_WATER_MASK` | `1` | 0/1 | Slime blocks water (mask + CPU probes). 0 = the old separate-layer ghost-through |
-| `JELLO_WATER_SPLASH` | `1.0` | 0–3 | Entry-plop + moving-displacement wake strength. 0 = silent entry (water still parts via the mask, just without the crown). Sustained wakes fire only while submersion is RISING — waking on the bob's down-phase looped the pond into a permanent slosh (harness-caught) |
-| `JELLO_WATER_SHED` | `1` | 0/1 | v25.52 — FULL COLLISION + EXPULSION outside ponds (the owner's "water cuts itself off in tile sized squares" + "never on top, always around"): tile quantization seals a pile's crevices, so crevice water pooled in permanent tile-shaped noise-boxes (v25.51's seep valves drained them too slowly to kill the look). TWO REGIMES, selected by the filled `surfacePonds` rects: IN A POND, covered tiles holding water stay open and drain via displacement (the proven v25.50 coexistence — full-closure + teleport-expel there re-tossed the pond into a permanent storm that dragged the floater to the bottom, harness-caught twice); EVERYWHERE ELSE covered = solid unconditionally, particles inside covered tiles are RELOCATED to the nearest open tile (BFS through the pile; remove+add rides the op replay so the GPU path moves too; sealed pockets EVAPORATE), and thin films RESTING on gel shed off sideways/down (free-surface guards: long rest + sparse own bin + a near-empty 48-px column above — the pond surface lapping a floater must never shed). Splash hygiene shipped with it: ONE entry splash per immersion episode (re-arm after ~dry 500 ms), no displacement wakes from an already-submerged body, and solid→open wakes touch SLEEPERS only. 0 = collision without expulsion |
+| `JELLO_DISSOLVE` | `1` | 0/1 | Master: slimes melt into a nearby body of water. 0 = slimes and water ignore each other |
+| `JELLO_DISSOLVE_R` | `40` | 16–128 | px beyond the body bbox counted as "near" |
+| `JELLO_DISSOLVE_N` | `500` | 100–3000 | Dense-bin particles within range required to trigger (films/sprays never count toward it) |
 
 ---
 

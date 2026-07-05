@@ -764,84 +764,46 @@
     return def ? def.hue : JELLO_RENDER_HUE;
   }
 
-  // ---- WATER MEDIUM (v25.50) — slimes and water share one world ----
-  // Two-way coupling with the liquid particle sim, both engine paths:
-  //   water -> slime: per-POINT submersion (b.wf, built once per frame by
-  //     jelloWaterFrame from the liquid CPU mirror binned at 16-px cells)
-  //     drives buoyancy + a velocity pull toward the LOCAL water velocity
-  //     inside jelloIntegrate — so gel floats to its own waterline, bobs,
-  //     and currents/waterfalls CARRY it. The mirror's x/y/vx/vy refresh
-  //     per frame from the async GPU readback (Stage 8); on the CPU water
-  //     path they are simply the live arrays.
-  //   slime -> water: live bodies rasterize their point lattice into
-  //     jelloSolidTiles (TILE-granular, rebuilt at the END of updateJello,
-  //     so water reads last frame's settled pose — same one-frame lag the
-  //     smoke mask accepts). The GPU collide kernel sees those tiles via
-  //     the fillTerrainSolid hook (020: the mask re-fills EVERY frame);
-  //     the CPU path sees them in liquidSolidAt + liquidGridWorldSolid
-  //     (070). Buried jello TILES were always solid to water; this closes
-  //     the gap for ACTIVATED bodies only.
-  //   splash: a body immersing fast emits a radial grid wake (the
-  //     explosion-wake channel: getGameState feeds the GPU kernel, a CPU
-  //     twin feeds liquidUpdateGrid) + liquidWakeForDig so a SLEEPING pond
-  //     actually responds. Entries expire by wall clock (t0), so a paused
-  //     jello sim can never leave a wake pumping forever.
-  // NaN armor: the bin pass drops non-finite mirror entries; b.wf is
-  // finite by construction. Never feed jelloSolidTiles into
-  // jelloWorldSolidAt (gel must not collide with itself as WORLD).
-  var JELLO_WATER        = 1;     // master 0/1 — water pushes slime (buoy/drag/splash)
-  var JELLO_WATER_BUOY   = 1.35;  // fraction of gravity cancelled at FULL submersion.
-                                  // >1 = gel is lighter than water and floats to a
-                                  // partial-submersion waterline (1.35 ~ 74% under);
-                                  // 0.55 = rig-style heavy sink. Net upward accel is
-                                  // capped at 0.6 g so a silly lever can't rocket gel.
-  var JELLO_WATER_DRAG   = 2.6;   // /s ease of point velocity toward the LOCAL water
-                                  // velocity at full submersion (0 in calm water =
-                                  // plain drag; a current or waterfall carries gel)
-  var JELLO_WATER_MASK   = 1;     // 0/1 — slime blocks water (mask + CPU probes).
-                                  // 0 = the old ghost-through-each-other layers
-  var JELLO_WATER_SPLASH = 1.0;   // splash wake strength scale (0 = silent entry)
-  var JELLO_WATER_LO     = 20;    // bin particle count where submersion starts...
-  var JELLO_WATER_HI     = 90;    // ...and where it reads fully submerged. 16-px bins;
-                                  // a filled pond measures ~140/bin at rest (harness
-                                  // binMax ~300 under splash compression), so LO skips
-                                  // spray and HI saturates just under the body density
-  var JELLO_WATER_TILE_MIN = 5;   // points required to mark a tile slime-solid: a
-                                  // sliver-covered RIM tile (1-4 points poking in) must
-                                  // not close over open water — rim slivers were the
-                                  // main particle trap (a fully covered tile holds ~9
-                                  // points at JELLO_NPT 3, so real coverage clears this)
-  var JELLO_WATER_TILE_WET = 30;  // water particles inside a covered tile above which
-                                  // it stays OPEN (still draining; ~140/bin body density
-                                  // means a genuinely submerged-in-body tile reads 100s)
-  var JELLO_WATER_SHED   = 1;     // v25.52 — FULL COLLISION + EXPULSION (the owner's
-                                  // call: water is never IN or ON gel, always AROUND
-                                  // it). Slime tiles are always solid; any particle
-                                  // inside one is RELOCATED to the nearest open space
-                                  // (remove+add rides the op replay, so the GPU path
-                                  // moves too), and water RESTING on gel sheds off to
-                                  // the flanks/underside. Replaced the v25.51 seep
-                                  // valves, which drained pockets too slowly to kill
-                                  // the tile-box look. 0 = collision only, no expel
+  // ---- DISSOLVE (v25.53) — enough nearby water turns a slime INTO water ----
+  // The owner's design after the v25.50-52 collision generations (buoyancy,
+  // tile masks, seep valves, expulsion — all reverted, history in git): a
+  // live body that sits near a real BODY of water melts and joins the liquid
+  // sim. No coexistence physics to keep honest, no tile-quantized boundary
+  // to read wrong, and the "separate layers" question dissolves with it.
+  //   TRIGGER: per active body, count mirror particles in DENSE 16-px bins
+  //     (>= JELLO_DISSOLVE_DENSE — a ground film or a stray splash droplet
+  //     never reads dense) within JELLO_DISSOLVE_R px of the body's bbox,
+  //     sustained JELLO_DISSOLVE_DWELL s. One body dissolves at a time.
+  //   TRANSITION: a MELT telegraph (~0.5 s: the body wakes, its render hue
+  //     eases to water-teal and it goes glassier), then a bottom-up
+  //     staggered BURST: each frame the lowest untreated lattice points
+  //     each release ~62 water particles (~85% of the sim's 655/tile rest
+  //     density) jittered across their cell, inheriting the body's real
+  //     velocity; the render clips away below the rising melt line so gel
+  //     visibly BECOMES the water that replaces it. One release wake on the
+  //     explosion channel + liquidWakeForDig (a settled pond must react) +
+  //     a small gel splat, then the body despawns. Spawn is budget-clamped
+  //     against LIQUID_MAX_PARTICLES and staggered (~260 adds/frame), so
+  //     the op replay and the pressure solver ingest it smoothly.
+  // NaN armor: the bin pass drops non-finite mirror entries.
+  var JELLO_DISSOLVE       = 1;    // master 0/1 (gm jello.JELLO_DISSOLVE)
+  var JELLO_DISSOLVE_R     = 40;   // px beyond the body bbox counted as "near"
+  var JELLO_DISSOLVE_N     = 500;  // dense-bin particles within range to trigger
+  var JELLO_DISSOLVE_DENSE = 80;   // 16-px bin count that reads as a real water body
+                                   // (films/sprays measure 20-60, pond interiors 140+)
+  var JELLO_DISSOLVE_DWELL = 0.35; // s the count must hold (no single-frame flukes)
+  var JELLO_DISSOLVE_MELT  = 0.5;  // s of melt telegraph before the burst
+  var JELLO_DISSOLVE_PPP   = 62;   // particles released per lattice point (~560/tile)
+  var JELLO_DISSOLVE_SPAWN = 260;  // max particle adds per frame (stagger)
   var jelloWaterBins   = new Map();              // binKey -> slot in the scratch below
   var jelloWaterBinN   = new Float32Array(2048); // particles per bin (2048-bin cap:
-  var jelloWaterBinVX  = new Float32Array(2048); //  overflow bins just read dry,
-  var jelloWaterBinVY  = new Float32Array(2048); //  and the pass is AABB-gated)
-  var jelloSolidTiles  = new Set();              // TILE keys (row*2048+col) of live-body cells
-  var jelloSolidTilesPrev = new Set();           // last frame's set (swap pair): solid->open
-                                                 // transitions must WAKE the water above them
-  var jelloWaterTileScratch = new Map();         // rebuild scratch: tile key -> point count
-  var jelloWaterTileCount = 0;                   // cheap emptiness gate for the water probes
-  var jelloWaterX0 = 0, jelloWaterY0 = 0, jelloWaterX1 = -1, jelloWaterY1 = -1; // live-body union AABB (world px)
+                                                 //  overflow bins just read dry, and
+                                                 //  the pass is AABB-gated)
   var jelloSplashWakes = [];                     // {cx,cy,r,blast,t0} radial grid wakes
-  var jelloSplashTotal = 0;                      // lifetime splash count (dev probe)
-  var jelloWaterExpelIdx = new Int32Array(512);  // this frame's relocation candidates
-  var jelloWaterExpelN = 0;
-  var jelloWaterBfsSeen = new Set();             // BFS scratch (nearest-open-tile search)
-  var jelloWaterBfsQ = new Int32Array(256);
-  var jelloWaterTileTarget = new Map();          // per-frame cache: source tile -> target tile
-  var jelloWaterExpelTotal = 0;                  // lifetime relocations (dev probe)
-  var jelloWaterEvapTotal = 0;                   // lifetime sealed-in deletions (dev probe)
+                                                 // (the dissolve release wake channel)
+  var jelloSplashTotal = 0;                      // lifetime wake count (dev probe)
+  var jelloDissolveTotal = 0;                    // lifetime dissolved bodies (dev probe)
+  var jelloDissolving = null;                    // the one body currently melting/bursting
   var JELLO_RENDER_ALPHA   = 0.8;    // overall body opacity (lower = glassier / more see-through)
   var JELLO_REFRACT        = 0.12;   // backdrop lens magnification (0 = off; ~0.1-0.25 = glassy bulge)
   var JELLO_GLOSS          = 0;      // specular sheen + sharp glint strength. SHIPS 0 since v24.160: the
@@ -991,14 +953,11 @@
     jelloSplats.length = 0;
     jelloCount = 0;
     jelloAccum = 0;
-    // Water coupling state (v25.50): a world rebuild must not leave ghost
-    // slime tiles blocking the new world's water, or a stale wake pushing it.
-    if (jelloSolidTiles.size) jelloSolidTiles.clear();
-    if (jelloSolidTilesPrev.size) jelloSolidTilesPrev.clear();
-    jelloWaterTileCount = 0;
+    // Dissolve state (v25.53): a world rebuild must not leave a stale wake
+    // pushing the new world's water or a ghost body mid-melt.
     if (jelloWaterBins.size) jelloWaterBins.clear();
     jelloSplashWakes.length = 0;
-    jelloWaterExpelN = 0;   // stale candidate indices must not survive a world rebuild
+    jelloDissolving = null;
   }
 
   function jelloTotalPoints() {
@@ -1911,43 +1870,16 @@
     }
     var vcap = JELLO_VMAX * dt;   // max per-step displacement (px)
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
-    // WATER MEDIUM (v25.50): b.wf = per-point submersion 0..1, b.wvx/b.wvy =
-    // local water velocity (real px/s), all built once per frame by
-    // jelloWaterFrame. Buoyancy relieves THIS substep's gravity pull (>1
-    // floats); drag eases the point toward the local water velocity so
-    // currents carry gel. stepScale converts real px/s -> px per sim substep
-    // (the same real<->sim conversion gravity makes above). The whole branch
-    // is skipped for dry bodies (b._wfOn) — zero cost out of water. The exp
-    // is hoisted; the per-point factor blends it linearly by submersion.
-    var wf = (JELLO_WATER && b._wfOn && b.wf) ? b.wf : null;
-    var wvx = null, wvy = null, stepScale = 0, wDragK = 0;
-    if (wf) {
-      wvx = b.wvx; wvy = b.wvy;
-      stepScale = dt / JELLO_TIMESCALE;
-      wDragK = 1 - Math.exp(-JELLO_WATER_DRAG * stepScale);
-    }
     for (var i = 0; i < n; i++) {
       var x = px[i], y = py[i];
       var vx = (x - ox[i]) * damp;
       var vy = (y - oy[i]) * damp;
-      var g = grav;
-      if (wf) {
-        var w = wf[i];
-        if (w > 0) {
-          var bf = 1 - JELLO_WATER_BUOY * w;   // buoyant fraction of gravity
-          if (bf < -0.6) bf = -0.6;            // never more than 0.6 g of lift
-          g = grav * bf;
-          var wk = wDragK * w;
-          vx += (wvx[i] * stepScale - vx) * wk;
-          vy += (wvy[i] * stepScale - vy) * wk;
-        }
-      }
       // clamp runaway
       if (vx > vcap) vx = vcap; else if (vx < -vcap) vx = -vcap;
       if (vy > vcap) vy = vcap; else if (vy < -vcap) vy = -vcap;
       ox[i] = x; oy[i] = y;
       px[i] = x + vx;
-      py[i] = y + vy + g;
+      py[i] = y + vy + grav;
     }
   }
 
@@ -4822,137 +4754,127 @@
     return true;
   }
 
-  // ===== WATER COUPLING (v25.50) — see the JELLO_WATER tunables banner =====
+  // ===== DISSOLVE (v25.53) — see the JELLO_DISSOLVE tunables banner =====
 
-  // BFS from a COVERED tile THROUGH covered tiles to the nearest OPEN tile
-  // (not slime-covered, not world-solid). forbidUp = sideways/down only
-  // (shedding must never pop water back on top of the gel). Returns the
-  // tile key or -1 (fully sealed pocket). Bounded ~220 visits.
-  function jelloWaterFindOpenTile(srcKey, forbidUp) {
-    var q = jelloWaterBfsQ, seen = jelloWaterBfsSeen;
-    seen.clear();
-    var head = 0, tail = 0;
-    q[tail++] = srcKey;
-    seen.add(srcKey);
-    while (head < tail) {
-      var k = q[head++];
-      var tr = Math.floor(k / 2048), tc = k - tr * 2048;
-      for (var d = 0; d < 4; d++) {
-        var dr = d === 0 ? 1 : (d === 3 ? -1 : 0);
-        var dc = d === 1 ? -1 : (d === 2 ? 1 : 0);
-        if (forbidUp && dr === -1) continue;
-        var nr = tr + dr, nc = tc + dc;
-        var nk = nr * 2048 + nc;
-        if (seen.has(nk)) continue;
-        seen.add(nk);
-        if (!jelloSolidTiles.has(nk)) {
-          if (tileAt(nr, nc) === null) return nk;   // open space — done
-          continue;                                  // terrain wall: not traversable
+  // Begin the transition: wake the body, stamp the melt clock, build the
+  // bottom-up point order the burst will consume, and fire the one-time
+  // flourish (release wake on the explosion channel + liquidWakeForDig so a
+  // SETTLED pond reacts + a small gel splat).
+  function jelloDissolveStart(b) {
+    b._melting = true;
+    b._meltT = 0;
+    b._meltSpawned = 0;
+    b._meltPt = 0;
+    b.sleeping = false; b.sleepFrames = 0;
+    var n = b.n, order = new Int32Array(n), i;
+    for (i = 0; i < n; i++) order[i] = i;
+    var py = b.py;
+    // insertion sort by DESCENDING py (lowest points burst first) — n is tiny
+    for (i = 1; i < n; i++) {
+      var v = order[i], j = i - 1;
+      while (j >= 0 && py[order[j]] < py[v]) { order[j + 1] = order[j]; j--; }
+      order[j + 1] = v;
+    }
+    b._meltOrder = order;
+    jelloDissolving = b;
+    jelloDissolveTotal++;
+    var brad = ((b.bboxR - b.bboxL) + (b.bboxB - b.bboxT)) * 0.25;
+    if (jelloSplashWakes.length < 8) {
+      jelloSplashTotal++;
+      jelloSplashWakes.push({ cx: b.cx, cy: b.cy, r: brad * 1.6 + TILE, blast: 170, t0: performance.now() });
+    }
+    if (typeof liquidWakeForDig === 'function') {
+      try { liquidWakeForDig(Math.floor(b.cy / TILE), Math.floor(b.cx / TILE)); } catch (e) {}
+    }
+    spawnJelloSplat(b.cx, b.cy, 8, 70, 0.8, null);
+  }
+
+  // Advance the melting body one frame. Telegraph first (render-only water
+  // tint via b._meltT; the body keeps solving so it jiggles alive), then
+  // the staggered bottom-up BURST: the lowest untreated lattice points each
+  // release JELLO_DISSOLVE_PPP particles jittered across their cell with
+  // the body's real velocity. The render clips away below the rising melt
+  // line (b._meltY), so gel visibly becomes the water replacing it.
+  // Returns true when fully converted (the caller sweeps the body).
+  // Budget-clamped: near the liquid cap the burst spawns less — a slightly
+  // thinner puddle beats a stuck half-melted body.
+  function jelloDissolveStep(b, dt) {
+    b._meltT += dt;
+    if (b._meltT < JELLO_DISSOLVE_MELT) return false;
+    var n = b.n, order = b._meltOrder;
+    if (!order) { b._melting = false; return true; }   // corrupt start: just despawn
+    var canAdd = typeof addLiquidParticle === 'function';
+    var budget = JELLO_DISSOLVE_SPAWN;
+    var rvx = (b.vx || 0) * JELLO_TIMESCALE, rvy = (b.vy || 0) * JELLO_TIMESCALE;
+    if (rvx > 300) rvx = 300; else if (rvx < -300) rvx = -300;
+    if (rvy > 300) rvy = 300; else if (rvy < -300) rvy = -300;
+    if (rvx !== rvx) rvx = 0;
+    if (rvy !== rvy) rvy = 0;
+    var half = (b.spacing || (TILE / JELLO_NPT)) * 0.55;
+    while (b._meltPt < n && budget > 0) {
+      var pi = order[b._meltPt++];
+      var x = b.px[pi], y = b.py[pi];
+      if (x !== x || y !== y) continue;   // corrupt point releases nothing
+      if (canAdd) {
+        for (var s = 0; s < JELLO_DISSOLVE_PPP; s++) {
+          if (liquidCount >= LIQUID_MAX_PARTICLES - 64) { budget = 0; break; }
+          var h1 = (Math.imul((pi + 1) * 641 + s, 2654435761) >>> 0);
+          addLiquidParticle('water',
+            x + (((h1 & 255) / 255) * 2 - 1) * half,
+            y + ((((h1 >> 8) & 255) / 255) * 2 - 1) * half,
+            rvx + (((h1 >> 16) & 63) - 31.5) * 1.2,
+            rvy - 12 + (((h1 >> 22) & 63) - 31.5) * 0.8,
+            0);
+          b._meltSpawned++;
+          budget--;
         }
-        if (tail < q.length) q[tail++] = nk;         // gel: search through the pile
-      }
-      if (seen.size > 220) break;
+      } else budget -= JELLO_DISSOLVE_PPP;
     }
-    return -1;
+    // Rising melt line for the render clip: fraction of points converted.
+    b._meltY = b.bboxB - (b.bboxB - b.bboxT + 6) * (b._meltPt / n);
+    return b._meltPt >= n;
   }
 
-  // ===== EXPULSION (v25.52) — water is never IN or ON gel ==========
-  // Process this frame's candidates (collected during the bin pass):
-  //   INSIDE a covered tile  -> relocate to the nearest open tile, any
-  //     direction (mask lag or a body landing over water let it in);
-  //   RESTING on gel as a thin film -> shed to the nearest open tile,
-  //     sideways/down only. Film guards re-checked here against the now-
-  //     COMPLETE bins: own bin dense = the pond surface lapping a floater's
-  //     shoulder (leave it), anything above = mid-column water (leave it).
-  // remove+add rides the op replay, so the GPU solver relocates the same
-  // rows. DESCENDING index order: removeLiquidParticle swap-removes, which
-  // keeps every not-yet-processed (smaller) index valid. A sealed pocket
-  // with no reachable opening EVAPORATES (the stray sweep already sanctions
-  // deletion; a vanished droplet beats a noise box in the pile).
-  function jelloWaterExpel() {
-    var n = jelloWaterExpelN;
-    jelloWaterExpelN = 0;
-    if (!n || !JELLO_WATER_SHED || !JELLO_WATER_MASK || jelloWaterTileCount === 0) return;
-    jelloWaterTileTarget.clear();
-    var moved = 0;
-    for (var ci = n - 1; ci >= 0; ci--) {
-      var i = jelloWaterExpelIdx[ci];
-      if (i >= liquidCount) continue;                // a prior removal shrank the array
-      var wx = liquidX[i], wy = liquidY[i];
-      if (wx !== wx || wy !== wy) continue;
-      var tc = Math.floor(wx / TILE), tr = Math.floor(wy / TILE);
-      var srcKey = tr * 2048 + tc;
-      var inside = jelloSolidTiles.has(srcKey);
-      var bfsFrom = srcKey;
-      if (!inside) {
-        // SHED fires ONLY for a genuine free-surface FILM on gel. The first
-        // build shed the pond column resting on a lakebed body: it carved a
-        // VACUUM SHELL around the body (wf flip-flopped 0<->36), buoyancy
-        // died, and the body never floated (harness-caught). Guards: long
-        // rest, sparse own bin, and the WHOLE 48-px column above near-empty
-        // — churn can thin one bin, it cannot empty a column of pond.
-        if (!(liquidRestFrames[i] >= 30 && jelloSolidTiles.has((tr + 1) * 2048 + tc))) continue;
-        var bxc = Math.floor(wx * 0.0625), byc = Math.floor(wy * 0.0625);
-        var sOwn = jelloWaterBins.get(byc * 8192 + bxc);
-        if (sOwn !== undefined && jelloWaterBinN[sOwn] >= 60) continue;
-        var colUp = 0, sUp;
-        sUp = jelloWaterBins.get((byc - 1) * 8192 + bxc); if (sUp !== undefined) colUp += jelloWaterBinN[sUp];
-        sUp = jelloWaterBins.get((byc - 2) * 8192 + bxc); if (sUp !== undefined) colUp += jelloWaterBinN[sUp];
-        sUp = jelloWaterBins.get((byc - 3) * 8192 + bxc); if (sUp !== undefined) colUp += jelloWaterBinN[sUp];
-        if (colUp >= JELLO_WATER_LO) continue;
-        bfsFrom = (tr + 1) * 2048 + tc;              // shed: search from the gel below
-      }
-      var tk = jelloWaterTileTarget.get(bfsFrom);
-      if (tk === undefined) {
-        tk = jelloWaterFindOpenTile(bfsFrom, !inside);
-        jelloWaterTileTarget.set(bfsFrom, tk);
-        if (tk >= 0) jelloWaterTileTarget.set(-1 - tk, 0);   // per-target placement counter slot
-      }
-      if (tk < 0) {
-        removeLiquidParticle(i);
-        jelloWaterEvapTotal++;
-        continue;
-      }
-      // Per-target-per-frame placement cap: the first build funneled a whole
-      // source tile into ONE target at 9 jitter spots — a density spike the
-      // shock limiter then fought (binMax ~900). Beyond the cap the particle
-      // simply waits a frame.
-      var placed = jelloWaterTileTarget.get(-1 - tk) || 0;
-      if (placed >= 24) continue;
-      jelloWaterTileTarget.set(-1 - tk, placed + 1);
-      var typ = liquidType[i] === 1 ? 'oil' : 'water';
-      var org = liquidOrigin[i];
-      var ttr = Math.floor(tk / 2048), ttc = tk - ttr * 2048;
-      // Hash-spread across the target tile's interior (not 9 shared spots).
-      var hsh = (Math.imul(i + 1, 2654435761) >>> 0);
-      var tx = ttc * TILE + 4 + (hsh & 15) * 1.6;
-      var ty = ttr * TILE + 4 + ((hsh >> 4) & 15) * 1.6;
-      var dvx = tx - wx, dvy = ty - wy;
-      var dl = Math.sqrt(dvx * dvx + dvy * dvy) || 1;
-      removeLiquidParticle(i);
-      addLiquidParticle(typ, tx, ty, dvx / dl * 40, dvy / dl * 40 + 15, org);
-      moved++;
-    }
-    if (moved) jelloWaterExpelTotal += moved;
-  }
-
-  // Per-frame water context: bin the liquid mirror (16-px cells) over the
-  // active bodies' union AABB, then write per-point submersion + local water
-  // velocity into each active body (b.wf/b.wvx/b.wvy, consumed by
-  // jelloIntegrate). Also owns the water-change SLEEP WAKE, the splash-wake
-  // emission, the expired-wake sweep (consumers only read, gated on t0),
-  // and EXPULSION-candidate collection (processed by jelloWaterExpel).
-  function jelloWaterFrame(active, nActive) {
+  // Per-frame dissolve pass (replaces the reverted v25.50-52 coupling).
+  // Bin the liquid mirror at 16-px cells over the active bodies' union AABB
+  // (+ trigger radius), then per body count particles sitting in DENSE bins
+  // within JELLO_DISSOLVE_R of its bbox; a sustained count starts the melt.
+  // The mirror's x/y refresh per frame from the async GPU readback; on the
+  // CPU water path they are simply the live arrays.
+  function jelloWaterDissolveFrame(active, nActive, dt) {
     var bins = jelloWaterBins;
-    var ai, b;
-    if (!JELLO_WATER || nActive === 0 ||
+    // Expire release wakes (consumers read-gate on t0; this forgets them).
+    if (jelloSplashWakes.length) {
+      var nowW = performance.now();
+      for (var wi = jelloSplashWakes.length - 1; wi >= 0; wi--) {
+        if (nowW - jelloSplashWakes[wi].t0 > 260) jelloSplashWakes.splice(wi, 1);
+      }
+    }
+    if (!JELLO_DISSOLVE || nActive === 0 ||
         typeof liquidCount === 'undefined' || liquidCount === 0) {
       if (bins.size) bins.clear();
-      for (ai = 0; ai < nActive; ai++) active[ai]._wfOn = false;
       return;
     }
-    // Union AABB of the active bodies (+ a tile of pad for the probe reach).
-    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    // Advance the one in-flight melt; no new triggers meanwhile (pacing: a
+    // pile beside a flood converts one body at a time, not as a bomb).
+    if (jelloDissolving) {
+      var db = jelloDissolving;
+      if (jelloBodies.indexOf(db) < 0) {
+        jelloDissolving = null;   // despawned by another system mid-melt
+      } else if (jelloDissolveStep(db, dt)) {
+        var di = jelloBodies.indexOf(db);
+        if (di >= 0) jelloBodies.splice(di, 1);
+        spawnJelloSplat(db.cx, db.cy - 6, 6, 60, 0.7, null);
+        jelloDissolving = null;
+      }
+      if (bins.size) bins.clear();
+      return;
+    }
+    // Union AABB (+R) of the active bodies, then one binning sweep of the
+    // mirror. O(liquidCount) with a bbox reject — the same cost class
+    // playerWaterCushion already pays while the rig is wet.
+    var pad = TILE + JELLO_DISSOLVE_R;
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, ai, b;
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
       if (b.bboxL < x0) x0 = b.bboxL;
@@ -4960,311 +4882,60 @@
       if (b.bboxT < y0) y0 = b.bboxT;
       if (b.bboxB > y1) y1 = b.bboxB;
     }
-    x0 -= TILE; x1 += TILE; y0 -= TILE; y1 += TILE;
-    // Bin pass: one sweep of the mirror, AABB-gated (the NaN-armor compare
-    // also drops non-finite entries). O(liquidCount) once per frame — the
-    // same cost class playerWaterCushion already pays while the rig is wet.
+    x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
     bins.clear();
-    jelloWaterExpelN = 0;
-    var shedOn = JELLO_WATER_SHED && JELLO_WATER_MASK && jelloWaterTileCount > 0;
     var cur = 0, cap = jelloWaterBinN.length;
     for (var i = 0; i < liquidCount; i++) {
       var wx = liquidX[i], wy = liquidY[i];
-      if (!(wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1)) continue;
+      if (!(wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1)) continue;   // NaN also skips
+      if (liquidType[i] !== 0) continue;   // WATER only (gel-in-oil = future reactions)
       var key = Math.floor(wy * 0.0625) * 8192 + Math.floor(wx * 0.0625);
       var s = bins.get(key);
       if (s === undefined) {
         if (cur >= cap) continue;   // bin cap: overflow just reads dry
         s = cur++;
         bins.set(key, s);
-        jelloWaterBinN[s] = 0; jelloWaterBinVX[s] = 0; jelloWaterBinVY[s] = 0;
+        jelloWaterBinN[s] = 0;
       }
       jelloWaterBinN[s] += 1;
-      var lvx = liquidVX[i], lvy = liquidVY[i];
-      if (lvx === lvx) jelloWaterBinVX[s] += lvx;
-      if (lvy === lvy) jelloWaterBinVY[s] += lvy;
-      // EXPULSION candidates (v25.52): inside a covered tile, or resting on
-      // one (shed film guards re-checked at process time, when the bins are
-      // complete). Bins use LAST frame's tile map — consistent with the
-      // collision the water actually experienced this frame.
-      if (shedOn && jelloWaterExpelN < jelloWaterExpelIdx.length) {
-        var ptr2 = Math.floor(wy / TILE), ptc2 = Math.floor(wx / TILE);
-        if ((jelloSolidTiles.has(ptr2 * 2048 + ptc2) ||
-             (liquidRestFrames[i] >= 20 && jelloSolidTiles.has((ptr2 + 1) * 2048 + ptc2))) &&
-            !jelloWaterTileInPond(ptc2, ptr2)) {   // pond regime: coexist, never expel
-          jelloWaterExpelIdx[jelloWaterExpelN++] = i;
-        }
-      }
     }
-    var now = performance.now();
-    var invSpan = 1 / (JELLO_WATER_HI - JELLO_WATER_LO || 1);
-    var denseN = JELLO_WATER_HI * 0.6;
+    if (!bins.size) return;
+    // Per body: sum particles in DENSE bins within [bbox +/- R]. The DENSE
+    // gate (>= JELLO_DISSOLVE_DENSE per 16-px bin) is the owner's "a ground
+    // film or one droplet must not trigger": films/sprays measure 20-60 a
+    // bin, real water bodies 140+. Sustained over the dwell -> melt.
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
-      if (!b.wf || b.wf.length < b.n) {
-        b.wf = new Float32Array(b.px.length);
-        b.wvx = new Float32Array(b.px.length);
-        b.wvy = new Float32Array(b.px.length);
-      }
-      // LOCAL WATERLINE (the Archimedes fix): once displacement works, a
-      // submerged body's own bins read DRY (the water was pushed out), so
-      // the per-bin test alone made full submersion read ~neutral and
-      // bodies parked mid-water (harness-caught, deep-pond run). Scan the
-      // body's x-range top-down for the first row with >= 3 ADJACENT dense
-      // bins — a real water surface — and every point below it is
-      // submerged. The 3-adjacent rule rejects a 1-2 bin waterfall column
-      // (a stream pouring on gel must push it, not float it); a puddle
-      // narrower than 48px still registers through the per-bin path below.
-      var bx0 = Math.floor((b.bboxL - 16) * 0.0625), bx1 = Math.floor((b.bboxR + 16) * 0.0625);
-      var by0 = Math.floor((b.bboxT - 16) * 0.0625), by1 = Math.floor((b.bboxB + 16) * 0.0625);
-      var waterY = Infinity;
+      var bx0 = Math.floor((b.bboxL - JELLO_DISSOLVE_R) * 0.0625);
+      var bx1 = Math.floor((b.bboxR + JELLO_DISSOLVE_R) * 0.0625);
+      var by0 = Math.floor((b.bboxT - JELLO_DISSOLVE_R) * 0.0625);
+      var by1 = Math.floor((b.bboxB + JELLO_DISSOLVE_R) * 0.0625);
+      var near = 0;
       for (var br = by0; br <= by1; br++) {
-        var run = 0;
         for (var bc = bx0; bc <= bx1; bc++) {
-          var slw = bins.get(br * 8192 + bc);
-          if (slw !== undefined && jelloWaterBinN[slw] >= denseN) { run++; if (run >= 3) break; }
-          else run = 0;
-        }
-        if (run >= 3) { waterY = br * 16; break; }   // top-down: first hit = the surface
-      }
-      b._waterY = waterY;   // dev probe / diagnosis only
-      var wfSum = 0;
-      for (var pi = 0; pi < b.n; pi++) {
-        var s2 = bins.get(Math.floor(b.py[pi] * 0.0625) * 8192 + Math.floor(b.px[pi] * 0.0625));
-        var w2 = 0, wvx2 = 0, wvy2 = 0;
-        if (s2 !== undefined) {
-          var nn = jelloWaterBinN[s2];
-          w2 = (nn - JELLO_WATER_LO) * invSpan;
-          if (w2 > 1) w2 = 1; else if (w2 < 0) w2 = 0;
-          if (w2 > 0) { var inv = 1 / nn; wvx2 = jelloWaterBinVX[s2] * inv; wvy2 = jelloWaterBinVY[s2] * inv; }
-        }
-        if (waterY < Infinity) {
-          // Depth below the surface, eased over ~12px. Velocity stays the
-          // LOCAL bin's (a displaced interior reads still water = 0).
-          var lw = (b.py[pi] - waterY + 4) * (1 / 12);
-          if (lw > 1) lw = 1;
-          if (lw > w2) w2 = lw;
-        }
-        b.wf[pi] = w2; b.wvx[pi] = wvx2; b.wvy[pi] = wvy2;
-        wfSum += w2;
-      }
-      b._wfOn = wfSum > 0.001;
-      var prev = b._wfSum || 0;
-      b._wfSum = wfSum;
-      // SLEEP WAKE, two triggers. (1) Water CHANGE (rising flood, draining
-      // pond, an arriving wave): a sleeper skips integrate, so without this
-      // it hangs mid-air over a drained pond. (2) Buoyant DISEQUILIBRIUM:
-      // netG is the mean gravity fraction left after buoyancy (0 = force
-      // balance at the float waterline). A body that settled to the LAKEBED
-      // and slept before lift could act (the GPU mirror lags entry braking a
-      // frame or two) is asleep under a real net force — wake it so it
-      // floats up. At the waterline netG ~ 0, so a legitimately parked
-      // floater stays asleep (lively-rest machinery untouched).
-      var netG = b.n > 0 ? (b.n - JELLO_WATER_BUOY * wfSum) / b.n : 0;
-      if (b.sleeping &&
-          (Math.abs(wfSum - prev) > Math.max(1.5, b.n * 0.06) ||
-           (b._wfOn && wfSum > b.n * 0.25 && (netG < -0.12 || netG > 0.5)))) {
-        b.sleeping = false; b.sleepFrames = 0; b._solve = true;
-      }
-      // SPLASH + DISPLACEMENT WAKES. Entry plop: fast immersion rise + real
-      // body speed (b.vx is last frame's jelloUpdateBody report; * TIMESCALE
-      // is the crowd-calm idiom for real px/s). Sustained: a WET body still
-      // moving keeps pushing water out of its path every 150 ms at reduced
-      // blast — this is the displacement flow that keeps particles from
-      // being closed over and trapped inside the footprint.
-      if (JELLO_WATER_SPLASH > 0) {
-        var spd = Math.sqrt((b.vx || 0) * (b.vx || 0) + (b.vy || 0) * (b.vy || 0)) * JELLO_TIMESCALE;
-        // ONE entry splash per immersion episode: a tossed submerged body
-        // re-tripped the entry trigger and each wake re-tossed it — a
-        // feedback loop (harness: 7 splashes, permanent churn, the body
-        // dragged low by its own storm). Re-arm only after ~dry for 500 ms.
-        if (wfSum < b.n * 0.05) {
-          if (b._dryMs === undefined) b._dryMs = now;
-          if (now - b._dryMs > 500) b._splashArmed = true;
-        } else b._dryMs = undefined;
-        var entry = (b._splashArmed !== false) && (wfSum - prev > b.n * 0.10) && spd > 170;
-        // Sustained wakes require submersion RISING (advancing into water)
-        // and NOT already submerged (a fully-under body is carried, not
-        // entering; its wakes were pure agitation). A floater's bob
-        // oscillates wfSum around equilibrium — the rising gate skips it.
-        var moving = b._wfOn && wfSum > b.n * 0.2 && wfSum < b.n * 0.85 &&
-                     spd > 120 && (wfSum - prev > b.n * 0.02);
-        var cool = entry ? 300 : 150;
-        if ((entry || moving) && (!b._splashMs || now - b._splashMs > cool) && jelloSplashWakes.length < 8) {
-          b._splashMs = now;
-          if (entry) b._splashArmed = false;
-          var brad = ((b.bboxR - b.bboxL) + (b.bboxB - b.bboxT)) * 0.25;
-          jelloSplashTotal++;
-          jelloSplashWakes.push({
-            cx: b.cx, cy: b.cy + brad * 0.4,
-            r: brad * 1.5 + TILE,
-            blast: (entry ? 140 + Math.min(260, spd * 0.5) : 60 + Math.min(140, spd * 0.35)) * JELLO_WATER_SPLASH,
-            t0: now
-          });
-          // A settled pond's particles SLEEP; wake the rect so they respond
-          // (mirror + the op-4 replay reaches the GPU path).
-          if (typeof liquidWakeForDig === 'function') {
-            try { liquidWakeForDig(Math.floor(b.cy / TILE), Math.floor(b.cx / TILE)); } catch (e) {}
-          }
+          var sl = bins.get(br * 8192 + bc);
+          if (sl !== undefined && jelloWaterBinN[sl] >= JELLO_DISSOLVE_DENSE) near += jelloWaterBinN[sl];
         }
       }
+      b._dslNear = near;
+      if (near >= JELLO_DISSOLVE_N) {
+        b._dslT = (b._dslT || 0) + dt;
+        if (b._dslT >= JELLO_DISSOLVE_DWELL && !b._melting) {
+          jelloDissolveStart(b);
+          break;   // one at a time
+        }
+      } else b._dslT = 0;
     }
-    // The one remover: consumers read-gate on t0, this sweep forgets them.
-    for (var wi = jelloSplashWakes.length - 1; wi >= 0; wi--) {
-      if (now - jelloSplashWakes[wi].t0 > 260) jelloSplashWakes.splice(wi, 1);
-    }
-    // Relocate this frame's trapped/resting water out of the gel (v25.52).
-    jelloWaterExpel();
   }
 
-  // Rasterize every live body's point lattice into jelloSolidTiles (the
-  // interior is dense at TILE/JELLO_NPT spacing, so points cover it) +
-  // refresh the union AABB the water probes fast-gate on. Runs at the END of
-  // updateJello (after the legalization sweep, positions final) and from
-  // resetJello. Frozen off-camera bodies are included at their parked pose —
-  // the pond-extension can keep water live past the camera. Whole-list cost
-  // is a few thousand int Set.adds worst case (~0.1 ms), typically far less.
-  // Is this tile inside a FILLED surface pond's rect (+1 tile margin)? The
-  // regime selector: ponds keep the proven v25.50 coexistence (wet-gate,
-  // no expel); everywhere else (caverns, piles, films on gel) runs the
-  // v25.52 full-collision + expulsion the owner asked for. Few ponds, O(n).
-  function jelloWaterTileInPond(tc, tr) {
-    if (typeof surfacePonds === 'undefined' || !surfacePonds) return false;
-    for (var i = 0; i < surfacePonds.length; i++) {
-      var p = surfacePonds[i];
-      if (!p.filled) continue;
-      if (tc >= p.cL - 1 && tc <= p.cR + 1 &&
-          tr >= SKY_ROWS - 2 && tr <= SKY_ROWS + (p.d || 1) + 1) return true;
-    }
-    return false;
-  }
-
-  // Water particles inside tile (tc, tr): the 4 16-px bins fully inside it
-  // (bins are exact quarter-tiles; they only exist within the active-body
-  // AABB, so far tiles read 0, which is right for every caller).
-  function jelloWaterTileWaterN(tc, tr) {
-    var bins = jelloWaterBins;
-    if (!bins.size) return 0;
-    var bN = jelloWaterBinN, bx = tc * 2, by = tr * 2, wn = 0, sl;
-    sl = bins.get(by * 8192 + bx);             if (sl !== undefined) wn += bN[sl];
-    sl = bins.get(by * 8192 + bx + 1);         if (sl !== undefined) wn += bN[sl];
-    sl = bins.get((by + 1) * 8192 + bx);       if (sl !== undefined) wn += bN[sl];
-    sl = bins.get((by + 1) * 8192 + bx + 1);   if (sl !== undefined) wn += bN[sl];
-    return wn;
-  }
-
-  function jelloWaterRebuildTiles() {
-    // Swap the set pair: jelloSolidTiles becomes this frame's truth, the old
-    // set is kept for the solid->open WAKE sweep below.
-    var set = jelloSolidTilesPrev;
-    jelloSolidTilesPrev = jelloSolidTiles;
-    jelloSolidTiles = set;
-    if (set.size) set.clear();
-    jelloWaterX0 = Infinity; jelloWaterY0 = Infinity;
-    jelloWaterX1 = -Infinity; jelloWaterY1 = -Infinity;
-    if (JELLO_WATER_MASK) {
-      var counts = jelloWaterTileScratch;
-      counts.clear();
-      for (var bi = 0; bi < jelloBodies.length; bi++) {
-        var b = jelloBodies[bi];
-        var n = b.n, px = b.px, py = b.py;
-        for (var i = 0; i < n; i++) {
-          var x = px[i], y = py[i];
-          if (x !== x || y !== y) continue;
-          var tk = Math.floor(y / TILE) * 2048 + Math.floor(x / TILE);
-          counts.set(tk, (counts.get(tk) || 0) + 1);
-        }
-        if (b.bboxL < jelloWaterX0) jelloWaterX0 = b.bboxL;
-        if (b.bboxR > jelloWaterX1) jelloWaterX1 = b.bboxR;
-        if (b.bboxT < jelloWaterY0) jelloWaterY0 = b.bboxT;
-        if (b.bboxB > jelloWaterY1) jelloWaterY1 = b.bboxB;
-      }
-      // TWO REGIMES (v25.52, the owner's full-collision call, scoped after
-      // the harness showed each one poisons the other's home turf):
-      //   SURFACE POND (tile inside a filled pond rect): the proven v25.50
-      //     coexistence — a covered tile still holding water stays OPEN and
-      //     drains via displacement. Full-closure + teleport-expel HERE
-      //     re-tossed the pond forever (momentum-violating relocations +
-      //     slam-shut tiles made a permanent storm that dragged the floater
-      //     to the bottom; harness-caught twice).
-      //   EVERYWHERE ELSE (caverns, piles, films on gel — the owner's
-      //     screenshot): covered = SOLID, unconditionally. Water never
-      //     coexists with gel; whatever gets in anyway (mask lag) is
-      //     relocated out by jelloWaterExpel.
-      // Coverage gate both regimes: a rim sliver must not annex open water.
-      counts.forEach(function (cnt, key) {
-        if (cnt < JELLO_WATER_TILE_MIN) return;
-        var tr2 = Math.floor(key / 2048), tc2 = key - tr2 * 2048;
-        if (jelloWaterTileInPond(tc2, tr2) &&
-            jelloWaterTileWaterN(tc2, tr2) > JELLO_WATER_TILE_WET) return;
-        set.add(key);
-      });
-    }
-    jelloWaterTileCount = set.size;
-    // WAKE the water over vanished solids: a tile going solid->open (a body
-    // slid away, or a seep valve pulsed) can leave SETTLED particles parked
-    // on a floor that no longer exists — sleepers skip the move loop on both
-    // paths, so without this they hang mid-air. One union-rect sweep, only
-    // on transition frames (mirrors liquidWakeForDig's wake + op-4 replay).
-    var prev = jelloSolidTilesPrev;
-    if (prev.size) {
-      var wx0 = Infinity, wy0 = Infinity, wx1 = -Infinity, wy1 = -Infinity, opened = 0;
-      prev.forEach(function (key) {
-        if (set.has(key)) return;
-        var trw = Math.floor(key / 2048), tcw = key - trw * 2048;
-        var x0 = tcw * TILE, y0 = trw * TILE;
-        if (x0 < wx0) wx0 = x0;
-        if (x0 + TILE > wx1) wx1 = x0 + TILE;
-        if (y0 - TILE < wy0) wy0 = y0 - TILE;   // the parked water sits ABOVE the tile
-        if (y0 + TILE > wy1) wy1 = y0 + TILE;
-        opened++;
-      });
-      if (opened && typeof liquidCount !== 'undefined' && liquidCount > 0) {
-        var woke = 0;
-        for (var wi2 = 0; wi2 < liquidCount; wi2++) {
-          // SLEEPERS only: they skip the move loop and would hang mid-air.
-          // Resetting restFrames on merely-resting AWAKE water postponed the
-          // whole pond's sleep every bob-flicker = permanent churn.
-          if (!liquidSleeping[wi2]) continue;
-          var wpx = liquidX[wi2], wpy = liquidY[wi2];
-          if (wpx < wx0 || wpx > wx1 || wpy < wy0 || wpy > wy1) continue;
-          liquidSleeping[wi2] = 0;
-          liquidRestFrames[wi2] = 0;
-          if (liquidOps.length < LIQUID_OPS_MAX) {
-            liquidOps.push(4, wi2, liquidType[wi2], liquidOrigin[wi2]);
-          } else liquidOpsOverflow = true;
-          woke++;
-        }
-        if (woke) liquidMutationSeq++;
-      }
-    }
-  }
-  // Water-side probes (020 fillTerrainSolid + 070 liquidSolidAt /
-  // liquidGridWorldSolid). Key math must stay identical to the rebuild.
-  function jelloWaterTileSolid(col, row) { return jelloSolidTiles.has(row * 2048 + col); }
-  function jelloWaterPointSolid(x, y) { return jelloSolidTiles.has(Math.floor(y / TILE) * 2048 + Math.floor(x / TILE)); }
   // Dev probe (window.__smokeObst pattern): headless harnesses + owner bug
-  // reports read the coupling state directly. Never read by game code.
+  // reports read the dissolve state directly. Never read by game code.
   if (typeof window !== 'undefined') {
     window.__jelloWater = function () {
-      // On-demand extras (dev probe only, never per-frame): particles
-      // currently INSIDE slime tiles (the interpenetration measure) and the
-      // densest 16-px bin near gel (calibrates JELLO_WATER_LO/HI).
-      var inTiles = 0, binMax = 0;
-      if (typeof liquidCount !== 'undefined' && liquidCount > 0) {
-        var probeBins = new Map();
-        for (var i = 0; i < liquidCount; i++) {
-          var wx = liquidX[i], wy = liquidY[i];
-          if (jelloWaterTileCount > 0 && jelloWaterPointSolid(wx, wy)) inTiles++;
-          if (wx >= jelloWaterX0 - TILE && wx <= jelloWaterX1 + TILE &&
-              wy >= jelloWaterY0 - TILE && wy <= jelloWaterY1 + TILE) {
-            var bk = Math.floor(wy * 0.0625) * 8192 + Math.floor(wx * 0.0625);
-            var bn = (probeBins.get(bk) || 0) + 1;
-            probeBins.set(bk, bn);
-            if (bn > binMax) binMax = bn;
-          }
-        }
-      }
+      var binMax = 0;
+      jelloWaterBins.forEach(function (slot) {
+        if (jelloWaterBinN[slot] > binMax) binMax = jelloWaterBinN[slot];
+      });
       var ponds = [];
       if (typeof surfacePonds !== 'undefined' && surfacePonds) {
         for (var pi = 0; pi < surfacePonds.length; pi++) {
@@ -5273,19 +4944,18 @@
         }
       }
       return {
-        lever: JELLO_WATER, mask: JELLO_WATER_MASK, buoy: JELLO_WATER_BUOY,
-        shed: JELLO_WATER_SHED, expelled: jelloWaterExpelTotal, evaporated: jelloWaterEvapTotal,
-        tiles: jelloWaterTileCount, bins: jelloWaterBins.size,
+        lever: JELLO_DISSOLVE, r: JELLO_DISSOLVE_R, need: JELLO_DISSOLVE_N,
+        dissolved: jelloDissolveTotal, melting: !!jelloDissolving,
+        bins: jelloWaterBins.size, binMax: binMax,
         wakes: jelloSplashWakes.length, splashes: jelloSplashTotal,
-        aabb: [jelloWaterX0, jelloWaterY0, jelloWaterX1, jelloWaterY1],
-        waterInTiles: inTiles, binMax: binMax,
-        skyY: SKY_ROWS * TILE, tile: TILE, liquidN: (typeof liquidCount !== 'undefined') ? liquidCount : -1,
+        skyY: SKY_ROWS * TILE, tile: TILE,
+        liquidN: (typeof liquidCount !== 'undefined') ? liquidCount : -1,
         ponds: ponds,
         bodies: jelloBodies.map(function (b) {
-          return { wf: b._wfSum || 0, wet: !!b._wfOn, cx: b.cx, cy: b.cy,
-                   vx: b.vx || 0, vy: b.vy || 0, sleeping: !!b.sleeping,
-                   n: b.n, wl: (b._waterY === undefined ? null : (isFinite(b._waterY) ? b._waterY : -1)),
-                   bt: b.bboxT, bb: b.bboxB };
+          return { near: b._dslNear || 0, dwell: b._dslT || 0,
+                   melting: !!b._melting, meltPt: b._meltPt || 0,
+                   cx: b.cx, cy: b.cy, n: b.n, sleeping: !!b.sleeping,
+                   bt: b.bboxT, bb: b.bboxB, vx: b.vx || 0, vy: b.vy || 0 };
         })
       };
     };
@@ -5374,10 +5044,13 @@
     }
     var nActive = active.length;
 
-    // WATER MEDIUM (v25.50): build this frame's per-point submersion + local
-    // water velocity, wake sleepers on water change, emit splash wakes. Runs
-    // BEFORE the fpx snapshot so a water-woken body gets a legal anchor.
-    jelloWaterFrame(active, nActive);
+    // DISSOLVE (v25.53): count dense water near each body, advance any
+    // in-flight melt/burst. Runs BEFORE the fpx snapshot so a melt-woken
+    // body gets a legal frame anchor. A completed burst splices its body
+    // out of jelloBodies here; `active` still holds it for this frame's
+    // substeps, which is harmless (the object stays finite) and cheaper
+    // than rebuilding the active list mid-frame.
+    jelloWaterDissolveFrame(active, nActive, dt);
 
     // ----- Frame-START position snapshot (for the frame-displacement sleep gate in
     // jelloUpdateBody): per-substep constraint pulses cancel over the frame, real
@@ -5625,10 +5298,6 @@
         } else jelloJetSplT = 0.05;
       }
     }
-    // WATER MEDIUM (v25.50): refresh the slime-solid tile map from the FINAL
-    // (legalized) poses — next frame's water collides with tonight's truth.
-    // Runs after the despawn splice, so a dead body's tiles clear with it.
-    jelloWaterRebuildTiles();
   }
 
   // ===== Render — clean gel cube with a crisp outline ==============
@@ -5803,6 +5472,16 @@
     var alpha    = (b.alpha   != null) ? b.alpha   : JELLO_RENDER_ALPHA;
     var refract  = (b.refract != null) ? b.refract : JELLO_REFRACT;
     var shimmer  = (b.shimmer != null) ? b.shimmer : JELLO_SHIMMER;
+    // DISSOLVE melt telegraph (v25.53, render-only): the doomed body's
+    // colour eases toward water-teal and it goes a touch glassier while it
+    // keeps jiggling, so the burst reads as intended, not as a glitch.
+    if (b._melting) {
+      var _mk = b._meltT / JELLO_DISSOLVE_MELT;
+      if (_mk > 1) _mk = 1;
+      hue = hue + (200 - hue) * _mk;
+      alpha *= 1 - _mk * 0.25;
+      shimmer += _mk * 0.25;
+    }
     var gloss    = (b.gloss   != null) ? b.gloss   : JELLO_GLOSS;
     var rim      = (b.rim     != null) ? b.rim     : JELLO_RIM;
     var satMul   = (b.sat     != null) ? b.sat     : 1;
@@ -6094,7 +5773,21 @@
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
       if (b.bboxR < visL || b.bboxL > visR || b.bboxB < visT || b.bboxT > visB) continue;
-      jelloDrawBody(b);
+      // DISSOLVE burst clip (v25.53): everything below the rising melt line
+      // is gone — the freshly spawned water is what lives there now. The
+      // clip wraps the call (jelloDrawBody has early returns; a save/clip
+      // inside it could leak). Canvas rect clips ignore non-finite guards
+      // upstream: _meltY is finite by construction (bbox math).
+      if (b._melting && b._meltY !== undefined && isFinite(b._meltY)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(b.bboxL - 24, b._meltY - 420, (b.bboxR - b.bboxL) + 48, 420);
+        ctx.clip();
+        jelloDrawBody(b);
+        ctx.restore();
+      } else {
+        jelloDrawBody(b);
+      }
     }
   }
 

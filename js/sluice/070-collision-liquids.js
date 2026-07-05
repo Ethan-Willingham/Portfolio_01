@@ -483,12 +483,7 @@
     // bounce to wipe out the eject impulse, parking water on the hull.
     var x = (gx + 0.5) * LIQUID_CELL;
     var y = (gy + 0.5) * LIQUID_CELL;
-    if (liquidWorldSolidAt(x, y)) return true;
-    // v25.50 — live SLIME reads solid to the boundary bounce too. Unlike the
-    // miner there is no per-frame eject impulse here to wipe out (the splash
-    // wake is brief + radial), and slime-as-floor is what gives resting
-    // water its friction instead of an eternal seethe at the gel boundary.
-    return JELLO_WATER_MASK !== 0 && jelloWaterTileCount > 0 && jelloWaterPointSolid(x, y);
+    return liquidWorldSolidAt(x, y);
   }
 
   function liquidP2G(stepDt) {
@@ -791,11 +786,11 @@
     }
   }
 
-  // v25.50 — SLIME SPLASH twin of the explosion wake above: a body plunging
-  // into water emits a small radial wake (entries from 340's jelloWaterFrame,
-  // wall-clock gated against liquidJelloWakeNow, hoisted once per grid pass —
-  // never call performance.now() per cell). Same falloff math, gentler blast,
-  // a light upward bias so a plop crowns instead of only shoving sideways.
+  // v25.53 — DISSOLVE RELEASE twin of the explosion wake above: a slime
+  // melting into water emits one small radial wake (entries from 340's
+  // jelloDissolveStart, wall-clock gated against liquidJelloWakeNow, hoisted
+  // once per grid pass — never call performance.now() per cell). Same
+  // falloff math, gentler blast, a light upward bias so the release crowns.
   // The GPU path consumes the SAME entries via getGameState's explosion list.
   var liquidJelloWakeNow = 0;
   function liquidApplyJelloSplashGridWake(c, stepDt) {
@@ -1183,23 +1178,6 @@
       if (liquidWorldSolidAt(x - r, y    )) return true;
       if (liquidWorldSolidAt(x + r, y    )) return true;
       if (liquidWorldSolidAt(x,     y - r)) return true;
-    }
-    // v25.50 — live SLIME bodies block water, miner-style: an AABB fast-gate
-    // (one compare for the 99% of particles nowhere near gel) then the same
-    // 4 probe points against the TILE-granular slime map (see 340's WATER
-    // MEDIUM banner; the GPU path reads the identical tiles via the terrain
-    // mask). Buried jello TILES were already solid via liquidWorldSolidAt.
-    // ESCAPE RULE: a particle whose own position is ALREADY inside a slime
-    // tile ignores slime solidity entirely — the tile map is one frame stale
-    // and TILE-granular, so a moving body inevitably closes over a few
-    // particles; blocking their exit trapped hundreds inside the blob
-    // (harness-measured ~1600). One-way collision: can't get in, always out.
-    if (jelloWaterTileCount > 0 && JELLO_WATER_MASK &&
-        x + r >= jelloWaterX0 && x - r <= jelloWaterX1 &&
-        y + r >= jelloWaterY0 && y - r <= jelloWaterY1 &&
-        !jelloWaterPointSolid(x, y)) {
-      if (jelloWaterPointSolid(x,     y + r) || jelloWaterPointSolid(x - r, y) ||
-          jelloWaterPointSolid(x + r, y    ) || jelloWaterPointSolid(x,     y - r)) return true;
     }
     return false;
   }
