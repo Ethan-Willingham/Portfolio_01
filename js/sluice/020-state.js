@@ -1376,170 +1376,48 @@
   var keys = {};
   var touch = { active: false, x: 0, y: 0, startX: 0, startY: 0 };
   var dpad = { left: false, right: false, up: false, down: false };
-  // v23.93 — mobile split flight controls: rotate L/R (bottom-left) + thrust
-  // hold (bottom-right), shown only in rotation flight on touch. Separate touch
-  // ids so rotate + thrust can be held simultaneously. Geometry + draw in 310,
-  // hit-test in 050, fed into moveL/moveR/moveU in 080.
-  var flightTouch = { rotL: false, rotR: false, thrust: false, rotId: null, thrustId: null };
+  // ===== The ONE flight model (v25.49 rebuild) =====
+  // Read by update() in 080; registered as the 'fly' GM group (press L in dev
+  // mode; the FLY FEEL preset strip is pinned at the top of the panel).
+  // Upright rig, axis-aligned thrust, and the SAME numbers above ground and
+  // underground: no modes, no handoff band. The one asymmetry is 'catch',
+  // a thrust multiplier that only applies while FALLING, so a long fall
+  // arrests visibly faster than the (gentle) launch accelerates.
+  // Feel math at defaults, booster tier 1, full spool:
+  //   lit gravity  = gravity*(1-gravRelief)         = 532 px/s^2
+  //   net climb    = climbForce - 532               = 348 px/s^2 (soft launch)
+  //   sustained    = |climbTerm|*(1-532/climbForce) ~= 166 px/s
+  //   net arrest   = climbForce*catch - 532         = 832 px/s^2
+  //                  (a full 740 px/s fall dies in ~0.9 s, ~330 px eaten)
+  var flyTune = {
+    // --- vertical ---
+    gravity:    760,   // px/s^2 pull (unlit); lit pull = gravity*(1-gravRelief)
+    gravRelief: 0.30,  // fraction of gravity removed at full thrust spool
+    maxFall:    740,   // px/s terminal fall
+    climbForce: 880,   // px/s^2 peak thrust at booster tier 1, full spool
+    climbTerm:  -420,  // px/s sustained-climb headroom anchor (envelope, not clamp)
+    catch:      1.55,  // thrust multiplier while FALLING (vy > 0): the arrest lever
+    // --- horizontal (direct authority everywhere) ---
+    acc:       950,    // px/s^2 steering authority
+    speed:     290,    // px/s cruise cap; input never pushes past, earned overspeed kept
+    fric:      300,    // px/s^2 no-input bleed
+    revBoost:  1.9,    // authority multiplier while opposing your own vx
+    overBleed: 0.55,   // 1/s exp decay on speed past the cap
+    // --- visual ---
+    tilt:      0.34    // rad bank lean while steering (a lean, not physics)
+  };
+  // One-click feel bundles for the pinned FLY FEEL strip (370). Default MUST
+  // equal the flyTune literals above so the strip's exact-match highlight
+  // lights the active preset. Miner is the deliberate hedge for the biggest
+  // rebuild delta: it restores the old tight underground horizontal (cap 210,
+  // hard stops) if the unified 290 cruise feels too hot in tunnels.
+  var FLY_PRESETS = {
+    Default: { gravity: 760, gravRelief: 0.30, maxFall: 740, climbForce: 880,  climbTerm: -420, catch: 1.55, acc: 950,  speed: 290, fric: 300, revBoost: 1.9, overBleed: 0.55, tilt: 0.34 },
+    Floaty:  { gravity: 620, gravRelief: 0.42, maxFall: 640, climbForce: 820,  climbTerm: -380, catch: 1.40, acc: 800,  speed: 260, fric: 170, revBoost: 1.6, overBleed: 0.40, tilt: 0.30 },
+    Freight: { gravity: 880, gravRelief: 0.22, maxFall: 800, climbForce: 1080, climbTerm: -340, catch: 1.80, acc: 700,  speed: 250, fric: 390, revBoost: 1.5, overBleed: 0.72, tilt: 0.40 },
+    Miner:   { gravity: 760, gravRelief: 0.30, maxFall: 740, climbForce: 880,  climbTerm: -420, catch: 1.55, acc: 1050, speed: 210, fric: 430, revBoost: 2.1, overBleed: 0.80, tilt: 0.30 }
+  };
 
-  // ===== Rotational flight tunables (v23.81) =====
-  // Read by update(); registered as the 'flight' GM group (press L in dev mode).
-  // This object IS the in-game "flight lab" — tune turn/thrust/gravity/drag live.
-  // mode: 0 = today's axis-aligned flight (the pre-rotation legacy); 1 = full
-  // rotation (A/D rotate, thrust along the nose, momentum); 2 = VTOL hover
-  // (v24.145 — upright rig, direct strafe authority; vtolTune below). Press F
-  // (dev) to cycle. Defaults below = the 'Snappy' rotation preset.
-  var flightTune = {
-    mode: 1,         // 0 = today (legacy) / 1 = full rotation / 2 = VTOL hover.
-                     // DEFAULT = rotation. Switch on the pause screen
-                     // (Today / Rotation / VTOL) or F in dev mode.
-    // Default feel = a TAMED TWITCH: agile, acrobatic spin but a notch below the
-    // full 'Twitch' preset, with a real fall + retained inertia (low drag = air).
-    thrust: 1450,    // px/s^2 along the heading
-    gravity: 600,    // px/s^2 down — fall terminal = gravity/linDamp ~750, clamps to MAX_FALL 740
-    linDamp: 0.8,    // 1/s linear drag (INERTIA) — LOW: long coast + real fall
-    turnAccel: 26.0, // rad/s^2 — fast ramp to the spin cap
-    angDamp: 6.5,    // 1/s angular damping on release — settles fairly fast, stays agile
-    maxOmega: 7.5,   // rad/s spin cap ~= 430 deg/s (twitchy; just under Twitch's 9)
-    maxSpeed: 0      // hard speed clamp px/s; 0 = off (keep your inertia)
-  };
-  // Named feel presets for full-rotation flight (the L-panel buttons apply these;
-  // owner picks by feel). PURE PHYSICS: thrust, gravity, linDamp (INERTIA), and the
-  // spin (turnAccel ramp / angDamp release-settle / maxOmega cap). Controllable
-  // presets keep the spin cap in the canon's ~180-300 deg/s band; Twitch is
-  // deliberately past it. Each moves several axes so none feel alike.
-  var FLIGHT_PRESETS = {
-    // max inertia: very low drag = long spacey drift + the nose coasts; lighter gravity
-    Drift:  { thrust: 1150, gravity: 460, linDamp: 0.45, turnAccel: 12, angDamp: 4,  maxOmega: 4.0, maxSpeed: 0 },
-    // light gravity = floats/hovers easily; gentle, lift-biased cruising (soft fall)
-    Glide:  { thrust: 1250, gravity: 360, linDamp: 0.8,  turnAccel: 14, angDamp: 7,  maxOmega: 4.2, maxSpeed: 0 },
-    // light drag = real fall + long coast, fast well-damped turn = crisp but airy (DEFAULT)
-    Snappy: { thrust: 1450, gravity: 640, linDamp: 0.85, turnAccel: 26, angDamp: 11, maxOmega: 4.6, maxSpeed: 0 },
-    // strong gravity (hard fall) + slow deliberate turn + big momentum = heavy mass
-    Heavy:  { thrust: 1750, gravity: 820, linDamp: 0.65, turnAccel: 7,  angDamp: 4,  maxOmega: 3.1, maxSpeed: 0 },
-    // very fast spin (past the comfortable band) + light gravity = acrobatic, flips
-    Twitch: { thrust: 1400, gravity: 440, linDamp: 0.8,  turnAccel: 30, angDamp: 6,  maxOmega: 9.0, maxSpeed: 0 }
-  };
-  // ===== flight2 — above-ground AERO model (v24.112) =====
-  // Layered ON TOP of flightTune by the rotFlight integrator (080). Gives the
-  // rig a real flight envelope: angle-of-attack lift + stall (swoop, dive-to-
-  // speed exchange, zoom climbs, flare landings, engine-off glides), a ground-
-  // effect cushion near terrain (the ekranoplan), a dive-EARNED soft speed cap
-  // (momentum from a dive is kept, then decays — replaces the hard sideways
-  // clamp while enabled), throttle-coupled turn authority (coast to whip the
-  // nose, thrust to commit), and a transonic ladder (controls stiffen toward
-  // BOOM_V; crossing it fires a one-shot sonic-boom event for FX/audio).
-  // NO WIND ANYWHERE: every force is a pure function of the rig's own state
-  // (owner rule 2026-06-09 — air must never shove the rig around).
-  // ENABLE: 0 reverts to the pure thrust+drag model above. 'flight2' GM group.
-  var flight2 = {
-    ENABLE: 1,
-    // --- lift + drag (the aero core; facing-vs-velocity angle drives Cl) ---
-    CLA: 4.6,          // lift slope per rad of angle-of-attack
-    STALL_A: 0.30,     // stall alpha (rad, ~17 deg) — Cl breaks past this
-    STALL_BLEND: 1.45, // stall->flat-plate blend width (x STALL_A)
-    CLMAX: 1.25,       // lift ceiling
-    CD0: 0.09,         // parasitic drag (raise = brickier rig, steeper glides)
-    K_IND: 0.30,       // induced drag (cost of pulling lift; bleeds turns)
-    AREA_K: 0.011,     // q normalizer (wing area / mass): lift scale
-    MIN_AERO_V: 70,    // px/s — below this NO aero at all (hover untouched)
-    LINDAMP_MULT: 0.45,// scales flightTune.linDamp while aero drag is live
-    // --- stall telegraph + recovery assist (band-limited, v24.116) ---
-    // The telegraph + assist fire ONLY in the wing-flight envelope. Past
-    // BUFFET_HI x STALL_A the rig is just a falling/ballistic body (tail
-    // slides, upright descents, drifting liftoffs): no buzz, no horn, no
-    // weathervane there. That band cap is what keeps falls + liftoffs calm.
-    BUFFET_A0: 0.75,   // buffet warning starts at this fraction of STALL_A
-    BUFFET_HI: 2.0,    // telegraph fades OUT by this multiple of STALL_A
-    TELEGRAPH_V: 150,  // px/s min airspeed for any buffet/horn/assist
-    WV_TORQUE: 5.0,    // weathervane nose-toward-velocity rate past stall
-    WV_HI: 1.15,       // rad: assist fades to zero by this alpha (no tail-slide fighting)
-    TREMOR_AMP: 1.0,   // event-shiver strength (0 = off; ~0.2px at 1.0, barely-there by design)
-    // --- handling: throttle-coupled turn (Luftrausers) ---
-    TURN_THRUST_MULT: 0.62, // turn-accel authority while thrusting
-    TURN_OMEGA_MULT: 0.80,  // spin-cap authority while thrusting
-    TURN_EASE: 12,          // 1/s ease between coast/thrust turn regimes
-    // --- speed envelope: soft cap + dive-earned overshoot ---
-    SOFT_CAP: 323,     // px/s sustained envelope (aero wall, not a clamp). ~27 MPH surface cruise (owner 2026-06-21: bump max horizontal from ~18 to ~27; was 215/~15). Underground flight uses UNDERGROUND_AIR_SPEED, unaffected.
-    OVER_K: 60,        // steepness of the overspeed drag wall
-    DIVE_OVER: 1.45,   // max earned cap multiplier from a committed dive
-    OVER_GAIN: 0.28,   // how fast diving earns overshoot budget
-    OVER_DECAY: 2.4,   // s — earned overshoot bleeds back after the pullout
-    FALL_CAP: 980,     // replaces MAX_FALL 740 while aero is on (dives bite)
-    // --- ground effect (ekranoplan cushion near terrain/water decks) ---
-    GE_SPAN: 88,       // px "wingspan": cushion strength keyed to h/span
-    GE_LIFT: 0.10,     // max bonus lift at the deck
-    GE_DRAG: 0.55,     // induced-drag fraction remaining at the deck
-    // --- transonic ladder ---
-    STIFF_V: 470,      // px/s — rotation authority starts stiffening here
-    STIFF_MIN: 0.62,   // floor on rotation authority at the barrier
-    BOOM_V: 575,       // px/s — sonic-boom threshold (dive-reachable only)
-    // --- thrust spool ADSR (audible spool; ignition kick keeps frame-1 punch) ---
-    SPOOL_RISE: 11,    // 1/s attack (~90ms) — was 48 (~20ms) in flight1
-    SPOOL_FALL: 26,    // 1/s release — soft enough for a flame tail
-    SPOOL_FLOOR: 0.35  // spool snaps here on ignition so taps still kick
-  };
-  // ----- Aero feel presets (the FLIGHT FEEL strip pinned atop the L panel) -----
-  // Base = the stock flight2 values captured right here at boot, so the stock
-  // bundle can never drift from the defaults above. Each preset is a FULL
-  // bundle (base + overrides): applying one is deterministic and the strip's
-  // exact-match highlight works. Tune characters, not single numbers.
-  var FLIGHT2_PRESET_BASE = (function () {
-    var o = {}, k;
-    for (k in flight2) { if (flight2.hasOwnProperty(k)) o[k] = flight2[k]; }
-    return o;
-  })();
-  function buildFlight2Preset(over) {
-    var o = {}, k;
-    for (k in FLIGHT2_PRESET_BASE) { if (FLIGHT2_PRESET_BASE.hasOwnProperty(k)) o[k] = FLIGHT2_PRESET_BASE[k]; }
-    for (k in over) { if (over.hasOwnProperty(k)) o[k] = over[k]; }
-    return o;
-  }
-  var FLIGHT2_PRESETS = {
-    // The shipped default: balanced hero rig (swoop with honest weight).
-    'Stock Rig': buildFlight2Preset({}),
-    // Draggy workhorse: steeper glides, lower envelope, boom takes real commitment.
-    'Heavy Hauler': buildFlight2Preset({ CD0: 0.16, K_IND: 0.45, AREA_K: 0.0095, LINDAMP_MULT: 0.55, SOFT_CAP: 200, OVER_K: 70, DIVE_OVER: 1.35, OVER_GAIN: 0.24, FALL_CAP: 940, GE_LIFT: 0.12, STIFF_V: 430, BOOM_V: 520 }),
-    // Long floaty glides, generous deck cushion, gentle early stall.
-    'Sailplane': buildFlight2Preset({ CD0: 0.05, K_IND: 0.18, AREA_K: 0.014, LINDAMP_MULT: 0.30, SOFT_CAP: 225, DIVE_OVER: 1.55, OVER_DECAY: 3.0, GE_LIFT: 0.14, GE_SPAN: 100, STALL_A: 0.27, BOOM_V: 590 }),
-    // Loose and fast: big coast-whip contrast, easy boom, weak assists.
-    'Daredevil': buildFlight2Preset({ TURN_THRUST_MULT: 0.52, TURN_OMEGA_MULT: 0.72, DIVE_OVER: 1.65, OVER_GAIN: 0.34, OVER_DECAY: 3.4, SOFT_CAP: 220, BOOM_V: 545, STIFF_MIN: 0.55, WV_TORQUE: 4.0, FALL_CAP: 1060 }),
-    // The pre-aero v24.64 model: every aero term off, hard caps back.
-    'Classic (no aero)': buildFlight2Preset({ ENABLE: 0 })
-  };
-  // ===== VTOL hover flight tunables (v24.145, flight mode 2) =====
-  // Terraria-wings HANDLING on the same diesel rocket: the rig stays upright
-  // (no heading), moveU climbs, L/R is DIRECT horizontal authority, release
-  // drifts on mild air friction. Fuel is the only limiter — no flight meter,
-  // no run-dry glide state, full fall damage. Input never pushes past the
-  // cruise cap, but EARNED overspeed (boost rings, dives) is kept and bled
-  // gently so combat/course dynamics survive. The integrator (080) LERPs this
-  // whole envelope into the underground air numbers across the 3-block
-  // handoff band, so underground/above-ground is one continuous control
-  // paradigm — never a flip. Registered as the 'vtol' GM group (L panel).
-  var vtolTune = {
-    acc: 850,         // px/s^2 direct horizontal authority (the "wings" half)
-    speed: 323,       // px/s cruise cap — input stops pushing here. ~27 MPH surface cruise (owner 2026-06-21: bump max horizontal from ~18 to ~27; was 215/~15)
-    fric: 240,        // px/s^2 no-input horizontal bleed (a little glide-slide)
-    revBoost: 1.9,    // accel multiplier while opposing your own vx (dodge flips)
-    climbForce: 1500, // px/s^2 peak upward force
-    climbTerm: -380,  // px/s sustained climb ceiling (headroom-eased, like the jet)
-    gravity: 760,     // px/s^2 fall pull (= GRAVITY_PLAYER for a real, rockety fall)
-    gravRelief: 0.30, // fraction of gravity removed at full thrust spool
-    overBleed: 0.55,  // 1/s exp decay on speed past the cap (~1.3s half-life)
-    tilt: 0.34        // rad visual bank target while steering (a lean, not physics)
-  };
-  // Named VTOL feel presets (one-click buttons atop the 'vtol' L-panel group;
-  // owner picks by feel). Full bundles — applying one is deterministic.
-  var VTOL_PRESETS = {
-    // The shipped default: crisp strafe authority, real fall, dodge-flip bite.
-    Strafe:  { acc: 850, speed: 323, fric: 240, revBoost: 1.9, climbForce: 1500, climbTerm: -380, gravity: 760, gravRelief: 0.30, overBleed: 0.55, tilt: 0.34 },
-    // Light and hangy: softer pull, long slide, gentler climb — the lazy cruiser.
-    Feather: { acc: 700, speed: 210, fric: 140, revBoost: 1.6, climbForce: 1400, climbTerm: -330, gravity: 620, gravRelief: 0.42, overBleed: 0.40, tilt: 0.30 },
-    // Mass: strong engine, hard fall, deliberate direction changes, keeps speed.
-    Freight: { acc: 600, speed: 230, fric: 320, revBoost: 1.5, climbForce: 1650, climbTerm: -300, gravity: 880, gravRelief: 0.25, overBleed: 0.70, tilt: 0.40 }
-  };
-  var FLIGHT_MODE_NAMES = ['today (legacy)', 'full rotation', 'VTOL hover'];
   var lastTime = 0;
   var depthRecord = 0;
   var gameStartedAt = 0;

@@ -85,7 +85,6 @@
     player.flightTiltVel = 0;
     player.thrustVecX = 0;
     player.thrustVecY = -1;
-    player.sideThrustCook = 0;
   }
 
   function playerInMiningPose() {
@@ -95,12 +94,9 @@
   // World-space exhaust mouth (rear top of rig). Mirrored by player.dir
   // and rotated by the flight bank so smoke stays glued to the sprite.
   function getExhaustWorldPos() {
-    // The pipe mouth lives at local x≈4. Legacy/ground rendering mirrors the body
-    // when facing left, moving the visible mouth to PLAYER_W-4, so we compensate.
-    // Rotational flight NEVER mirrors the body (rotation owns orientation), so the
-    // mouth stays at x≈4 there — applying the dir flip would detach the smoke + the
-    // dark exhaust-bridge puff from the pipe when flying left (v24.63).
-    var localX = (player.rotFlightActive || player.dir > 0) ? 4 : (PLAYER_W - 4);
+    // The pipe mouth lives at local x≈4. Rendering mirrors the body when
+    // facing left, moving the visible mouth to PLAYER_W-4, so we compensate.
+    var localX = player.dir > 0 ? 4 : (PLAYER_W - 4);
     return playerLocalToWorld(localX, 0.7);
   }
 

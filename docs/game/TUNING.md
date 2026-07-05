@@ -653,55 +653,74 @@ expose it). Procedural flame core + additive sparks + smoke wake + ground wash.
 `wake_drag` 0.1 · `wake_buoyancy` 68 · `wake_r/g/b` 1.76/0.85/1.36 ·
 `wake_alpha` 0.91
 
-## 6.2 `flightTune` — rotation flight feel · grep `var flightTune` · tier `live` (the `flight` gm group)
+## 6.2 `flyTune` — the ONE flight model · grep `var flyTune` · tier `live` (the `fly` gm group)
 
-Above-ground flight. `mode`: **0** = today's axis-aligned/directional flight (legacy d-pad style) · **1** = full rotation (A/D rotate, thrust along the nose, momentum) · **2** = VTOL hover (v24.145 — upright rig, direct strafe; its levers are §6.5). **DEFAULT = 1** (v23.96 — owner: rotation is the flight now). Switch on the **pause screen** (Today / Rotation / VTOL) or **F** in dev mode (cycles all three). Both sky models persist until **~3 blocks below the surface** (`flightDeepUnder`, 080) before handing off to the underground/legacy flight + d-pad.
+v25.49 rebuild: the three sky modes (legacy "Today", full rotation, VTOL hover) and the
+separate underground air envelope are GONE, along with the 3-block handoff band, the
+pause-screen toggle, and the F hotkey. One integrator (080), one constant set, identical
+above ground and underground. Upright rig, axis-aligned thrust, d-pad/keys everywhere
+(mobile keeps the plain dig d-pad in every regime). The vertical model is the proven jet
+stack (tap kick, spool, headroom envelope toward `climbTerm`, hover assist, gravity
+relief, apex easing, hover settle; those shared constants live in 080) with ONE new
+asymmetry:
 
-Default feel = a **tamed Twitch** (agile spin, a notch under the Twitch preset) with a real fall + low-drag inertia:
-`thrust` 1450 · `gravity` 600 *(fall terminal = gravity/linDamp, clamps to MAX_FALL 740)* · `linDamp` 0.8 *(linear drag = INERTIA — low = long coast + real fall; the "grape in oil" complaint was 2.6)* · `turnAccel` 26 · `angDamp` 6.5 *(angular damping, applied only when NOT steering — settle-on-release)* · `maxOmega` 7.5 *(spin cap ≈ 430°/s)* · `maxSpeed` 0 *(hard total-speed clamp; 0 = off, keep inertia)*
-
-Model (080, the `rotFlight` branch): semi-implicit Euler, thrust along `player.angle`, exp linear + angular damping (emergent top speed = thrust/linDamp). Takeoff from the ground always seeds UPRIGHT (coyote timer `flightGroundT`) even on held thrust. The visual body tilt is one eased `player.bodyTiltRender` shared by `drawPlayer` + the exhaust so they rotate in lockstep and EASE (not snap) at the rotation→upright boundary.
-
-**No camera juice** (owner rule): the feel is PURE physics. A velocity look-ahead was tried (v23.83) and fully removed (v23.86) — do not re-add camera motion.
-
-**`FLIGHT_PRESETS`** (grep `var FLIGHT_PRESETS`) — one-click feel buttons at the top of the `flight` L-panel group; each applies a full bundle. All low-drag; controllable spin caps sit in ~180-300°/s, Twitch deliberately past it:
-
-| Preset | Feel | thrust · gravity · linDamp · turnAccel · angDamp · maxOmega |
-|---|---|---|
-| Drift | spacey, max inertia, long coast | 1150 · 460 · 0.45 · 12 · 4 · 4.0 |
-| Glide | floaty, lift-biased | 1250 · 360 · 0.8 · 14 · 7 · 4.2 |
-| Snappy | crisp arcade | 1450 · 640 · 0.85 · 26 · 11 · 4.6 |
-| Heavy | high mass, hard fall, slow turn | 1750 · 820 · 0.65 · 7 · 4 · 3.1 |
-| Twitch | acrobatic, fast spin | 1400 · 440 · 0.8 · 30 · 6 · 9.0 |
-
-## 6.3 Booster — 5-tier flight upgrade · grep `BOOST_THRUST_MULT` · tier `edit`
-
-A `booster` Workshop upgrade, 5 tiers, **tier 3 = today's feel (1.0×)**. `BOOST_THRUST_MULT` (040) `[_, 0.70, 0.85, 1.00, 1.25, 1.55]` scales flight thrust (both models). Fresh runs start at **tier 1** — `upgrades.boosterLevel: 1` in 020 AND the `init()` reset in 040 (change BOTH to 3 to start at today's feel). Prices `shop.booster` (020). Per-tier exhaust in 200: `BOOST_FLAME` (per-tier core colours; tier 3 = today's live `rocketTune` unchanged) + per-tier flame size, shock-diamond count, and a tier-4/5 additive halo. Shop icon `buildBooster` (240).
-
-## 6.4 Mobile split touch controls · grep `flightTouchGeom` / `drawFlightPad` · tier `edit`
-
-Rotation flight on touch: **rotate L/R chevrons bottom-LEFT (always on)** + **thrust hold bottom-RIGHT** (cross-fades with the dig d-pad). Independent touch ids so rotate + thrust hold at once. Geometry mirrors the d-pad (`flightTouchGeom`, 310); hit-test `flightControlsActive` / `inFlightBtn` / `updateFlightRot` (050) — **the whole touch-flight hit-test is wrapped in `if (isMobile)`; do NOT un-gate it (desktop clicks would move the rig).** Visibility eases via `player.flightCtrlT` (dwell) + `player.flightCtrlAlpha` (cross-fade) in 080. Players switch flight mode on the pause screen (`sluice.html` → `window.gm` flight.mode). VTOL (mode 2) never raises `flightCtrlT`, so touch keeps the plain dig d-pad in every regime — no split controls to learn. Deferred: haptics, left-handed mirror, size/opacity options.
-
-## 6.5 `vtolTune` — VTOL hover flight (mode 2) · grep `var vtolTune` · tier `live` (the `vtol` gm group)
-
-Terraria-wings HANDLING on the same rocket (v24.145): upright rig (no heading), `moveU` climbs, L/R is **direct** horizontal authority, release drifts on mild air friction. Fuel is the **only** limiter — no flight meter, no run-dry glide, full fall damage. The vertical model reuses the legacy jet's shape (tap kick, spool, headroom toward a terminal, hover assist, gravity relief, apex easing, hover-settle — the shared constants in 080) at sky authority. The integrator (080, the `vtolFlight` branch) **lerps the whole envelope to the underground air numbers across the 3-block handoff band**, so the underground takeover is a parameter slide, not a control flip — one paradigm everywhere.
+**`catch`, the fall-arrest lever.** Thrust is multiplied by `catch` while FALLING
+(vy > 0, smoothstepped in over `CATCH_BAND` 60 px/s so force is continuous across the
+apex). A long fall still takes a visible inertia fight to arrest, just far less than the
+old underground crawl. Feel math at defaults (booster tier 1, full spool): lit gravity
+532 px/s² · net climb 348 px/s² (gentle launch, ~166 px/s sustained) · net arrest
+832 px/s² (a full 740 px/s fall dies in ~0.9 s, eating ~330 px).
 
 | Lever | Now | Range | Effect |
 |---|---|---|---|
-| `acc` | `850` | 0–3000 | Direct horizontal accel (px/s²) — the "wings" authority |
-| `speed` | `420` | 50–900 | Cruise cap (px/s); input stops pushing here |
-| `fric` | `240` | 0–1200 | No-input horizontal bleed (px/s²) — lower = longer glide-slide |
-| `revBoost` | `1.9` | 1–4 | Accel multiplier while opposing your own vx (dodge flips) |
-| `climbForce` | `1500` | 0–4000 | Peak upward force (px/s²) |
-| `climbTerm` | `-380` | -900–-50 | Sustained climb ceiling (px/s, negative = up) |
-| `gravity` | `760` | 0–1500 | Fall pull (px/s²); falls cap at MAX_FALL 740 |
+| `gravity` | `760` | 0–1500 | Fall pull (px/s²), everywhere |
 | `gravRelief` | `0.30` | 0–0.9 | Fraction of gravity removed at full spool |
-| `overBleed` | `0.55` | 0–3 | 1/s exp decay on speed past the cap — **earned overspeed (boost rings, dives) is kept and bled, never clamped** |
+| `maxFall` | `740` | 200–1400 | Terminal fall (px/s) |
+| `climbForce` | `880` | 0–4000 | Peak thrust (px/s²) at booster tier 1, full spool |
+| `climbTerm` | `-420` | -900–-50 | Sustained-climb headroom anchor (an envelope, not a clamp) |
+| `catch` | `1.55` | 1–3 | Thrust multiplier while falling: the arrest-time dial |
+| `acc` | `950` | 0–3000 | Direct horizontal accel (px/s²), airborne |
+| `speed` | `290` | 50–900 | Cruise cap (px/s); input never pushes past, earned overspeed kept |
+| `fric` | `300` | 0–1200 | No-input horizontal bleed (px/s²) |
+| `revBoost` | `1.9` | 1–4 | Accel multiplier while opposing your own vx (dodge flips) |
+| `overBleed` | `0.55` | 0–3 | 1/s exp decay on speed past the cap, never a hard clamp |
 | `tilt` | `0.34` | 0–0.56 | Visual bank while steering (a lean; physics stays axis-aligned) |
 
-**`VTOL_PRESETS`** (020): `Strafe` (default — crisp authority, real fall, dodge bite) · `Feather` (light + hangy, long slide) · `Freight` (mass — strong engine, hard fall, deliberate). One-click buttons live in the **VTOL FEEL strip pinned at the top of the L panel** (directly under FLIGHT FEEL, v24.146 — each button switches to mode 2 + applies the full bundle), plus a contextual row atop the collapsible `vtol` group. Combat invariants: input never exceeds `speed`, the NMZ storm-shear cap still applies, and the booster upgrade still never changes above-ground flight (its multiplier fades in only across the handoff band, v24.59 rule).
+**`FLY_PRESETS`** (020): `Default` (= the flyTune literals; the strip's exact-match
+highlight depends on it) · `Floaty` (light + hangy, long slides) · `Freight` (mass:
+hard fall, strong engine, brutal catch) · `Miner` (the old tight underground horizontal:
+cap 210, hard stops; the one-click retreat if the unified 290 cruise feels hot in
+tunnels). Buttons live in the **FLY FEEL strip pinned at the top of the L panel**.
 
-## 6.5 Bomb physics · grep `BOMB PHYSICS` · tier `live` (the `bombs` gm group)
+**No camera juice** (owner rule): the feel is PURE physics. A velocity look-ahead was
+tried (v23.83) and fully removed (v23.86); do not re-add camera motion. Fuel is the only
+limiter: no flight meter, no run-dry glide, full fall damage. The NMZ storm-shear cap
+applies at `flyTune.speed * shear`.
+
+Known feel deltas vs the old three-mode setup (all live levers): the underground
+horizontal cap rose 185 to 290 px/s and air friction dropped 430 to 300 (tunnels faster
+and slidier; `Miner` restores the old numbers); the sky launch is much gentler by design
+(the old VTOL net was ~968 px/s²); sustained dig-out climb at booster tier 3+ runs a
+touch slower than the old boosted `UG_VERT` pair.
+
+## 6.3 Booster — 5-tier flight upgrade · grep `BOOST_THRUST_MULT` · tier `edit`
+
+A `booster` Workshop upgrade, 5 tiers, **tier 1 = the designed baseline (1.0×)**: a
+fresh run flies the intended default feel and every tier is a felt step up.
+`BOOST_THRUST_MULT` (040) `[_, 1.00, 1.15, 1.35, 1.60, 1.90]` scales `flyTune.climbForce`
+EVERYWHERE (sky + underground identically; the old v24.59 "sky is upgrade-independent"
+rule retired with the modes). Each tier speeds the climb (sustained ladder ~166 / 199 /
+232 / 261 / 286 px/s) and hardens the fall-catch (arrest ~0.9 s at tier 1 down to
+~0.36 s at tier 5; lower `catch` if high tiers eat the inertia fight). The
+fuel-to-surface marker computes LIVE from flyTune + the tier via
+`getUndergroundClimbSpeed()` (040), so it tracks lever tuning too. Fresh runs start at
+tier 1 (`upgrades.boosterLevel: 1` in 020 AND the `init()` reset in 040). Prices
+`shop.booster` (020). Per-tier exhaust in 200: `BOOST_FLAME` per-tier core colours +
+flame size, shock-diamond count, and a tier-4/5 additive halo. Shop icon `buildBooster`
+(240). The Workshop row's stat label is `CLIMB` (270; the percentages are the multiplier
+ladder).
+
+## 6.4 Bomb physics · grep `BOMB PHYSICS` · tier `live` (the `bombs` gm group)
 
 Live charges are projectiles (`065-bombs.js`, v24.144): release inherits the rig's velocity, then gravity + bounce + tumble + roll on the tile grid (substepped, max ~8 px per substep, so no tunneling at dive speeds). The blast aims at the cell the charge ends up in (one cell down when bedded, preserving the drop-to-dig move). Debug handle `window.__bombs` (count / info / spawn / boomAll / tune).
 

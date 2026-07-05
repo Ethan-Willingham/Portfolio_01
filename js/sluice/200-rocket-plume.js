@@ -80,24 +80,18 @@
   var rocketWakeCarry = 0;
   var rocketWash = [];
   var rocketWashCarry = 0;
-  var sideThrusterPuffs = [];
 
-  // ----- Flight FX state (RCS blips, ignition pop, vapor cone, boom rings, landing dust) -----
+  // ----- Flight FX state (ignition pop rings, landing dust) -----
   // Consumes the player.fx event counters from the flight integrator (080); the
   // counters only ever increment, so we diff them against this local snapshot.
   var FLIGHT_FLAME_SHORTEN = 0.28;   // flame length shed at full airspeed response (0..1)
   var FLIGHT_FLAME_WIDEN = 0.42;     // flame width gain at full airspeed response (0..1)
   var FLIGHT_FLAME_BEND_MAX = 0.5;   // crosswind tail push at full response, fraction of flame length
-  var FLIGHT_FLAME_BEND_V0 = 0.5;    // speed01 (|v| / flight2.SOFT_CAP) where the airspeed response starts
+  var FLIGHT_FLAME_BEND_V0 = 0.5;    // speed01 (|v| / flyTune.speed) where the airspeed response starts
   var FLIGHT_FLAME_BEND_V1 = 1.4;    // speed01 where the airspeed response reaches full strength
-  var flightFxSeen = { sync: false, ignite: 0, boom: 0, vapor: 0, land: 0 };
-  var flightRcsPuffs = [];     // tiny cool-white attitude-thruster blips
-  var flightRcsLastTurn = 0;   // last player.turnDir, for start/flip edge detection
-  var flightRcsCooldown = 0;   // seconds until the next RCS burst may fire (rate cap)
+  var flightFxSeen = { sync: false, ignite: 0, land: 0 };
   var flightIgniteT = 0;       // remaining ignition-pop flame overshoot (s)
-  var flightBlowoutT = 0;      // remaining post-boom flame blowout (s)
   var flightRings = [];        // expanding rings (ignition smoke + boom shock share one pool)
-  var flightVapors = [];       // one-shot transonic vapor-cone discs
 
   function rocketTuneNum(v, fb) { v = Number(v); return isFinite(v) ? v : fb; }
   function rocketChan(v) { return Math.max(0, Math.min(255, Math.round(rocketTuneNum(v, 0) * 255))); }
@@ -135,11 +129,6 @@
   }
 
   function rocketExhaustDir() {
-    if (player.rotFlightActive) {
-      // Free-rotate flight (v23.70): exhaust fires opposite the thrust heading.
-      var a = player.angle || 0;
-      return { x: -Math.cos(a), y: -Math.sin(a) };
-    }
     var angle = player.flightTilt || 0;
     return { x: -Math.sin(angle), y: Math.cos(angle) };
   }
@@ -157,40 +146,15 @@
     rocketSparks.length = 0;
     rocketWake.length = 0;
     rocketWash.length = 0;
-    sideThrusterPuffs.length = 0;
     rocketSparkCarry = 0;
     rocketWakeCarry = 0;
     rocketWashCarry = 0;
     rocketIntensity = 0;
-    flightRcsPuffs.length = 0;
     flightRings.length = 0;
-    flightVapors.length = 0;
-    flightRcsLastTurn = 0;
-    flightRcsCooldown = 0;
     flightIgniteT = 0;
-    flightBlowoutT = 0;
     flightFxSeen.sync = false;   // re-adopt the fx counters on the next frame, no stale replays
   }
 
-  function spawnSideThrusterPuff(dir) {
-    var local = player.dir > 0 ? { x: 2.2, y: 16.2 } : { x: PLAYER_W - 2.2, y: 16.2 };
-    var base = playerLocalToWorld(local.x, local.y);
-    var outDir = dir || 1;
-    for (var i = 0; i < 7; i++) {
-      var sp = 28 + Math.random() * 42;
-      var spread = (Math.random() - 0.5) * 26;
-      sideThrusterPuffs.push({
-        x: base.x + outDir * (Math.random() * 2.0),
-        y: base.y + (Math.random() - 0.5) * 2.0,
-        vx: outDir * sp + player.vx * 0.04,
-        vy: spread + player.vy * 0.02,
-        age: 0,
-        life: 0.24 + Math.random() * 0.12,
-        size: 1.2 + Math.random() * 1.7
-      });
-    }
-    while (sideThrusterPuffs.length > 80) sideThrusterPuffs.shift();
-  }
 
 
   function spawnRocketSpark(nx, ny, exhaustDir) {
@@ -255,49 +219,6 @@
     while (rocketWash.length > 240) rocketWash.shift();
   }
 
-  // ----- Flight FX helpers -----
-  // Rotate a player-local direction into world space with the same eased body
-  // tilt the exhaust attach uses, so emissions ride the rotated hull.
-  function flightLocalDir(dx, dy) {
-    var a = player.bodyTiltRender || 0;
-    var ca = Math.cos(a);
-    var sa = Math.sin(a);
-    return { x: dx * ca - dy * sa, y: dx * sa + dy * ca };
-  }
-
-  // Read-only peek at the weather mood (155): precip intensity wins, otherwise
-  // cloud cover stands in for humidity. Returns 1 when no signal is readable
-  // so the vapor cone still shows on builds without the weather system.
-  function flightHumidity01() {
-    if (typeof weather !== 'undefined' && weather && isFinite(weather.pcp)) {
-      var h = Math.max(weather.pcp, (weather.cov || 0) * 0.7);
-      return h < 0 ? 0 : (h > 1 ? 1 : h);
-    }
-    return 1;
-  }
-
-  function spawnFlightRcsBurst(turn) {
-    // A real attitude thruster sits on the hull side OPPOSITE the turn, near
-    // the nose, and pushes the nose around the pivot; the blips puff outward
-    // from that corner. Local nose corners are y near 0 (top of the hull).
-    var side = -turn;
-    var base = playerLocalToWorld(side < 0 ? 1.5 : PLAYER_W - 1.5, 2.5);
-    var out = flightLocalDir(side, -0.2);
-    var n = 2 + (Math.random() < 0.5 ? 1 : 0);
-    for (var i = 0; i < n; i++) {
-      var sp = 30 + Math.random() * 26;
-      flightRcsPuffs.push({
-        x: base.x + out.x * i * 1.5,
-        y: base.y + out.y * i * 1.5,
-        vx: out.x * sp + player.vx * 0.75,
-        vy: out.y * sp + player.vy * 0.75,
-        age: 0,
-        life: 0.10 + Math.random() * 0.05,
-        size: 1.5 + Math.random()
-      });
-    }
-    while (flightRcsPuffs.length > 24) flightRcsPuffs.shift();
-  }
 
   // One pool serves both ring looks: shock 1 = bright sonic-boom ring,
   // shock 0 = small gray ignition smoke ring. delay staggers birth (age < 0).
@@ -336,22 +257,9 @@
         // First frame after boot/restart: adopt the counters without firing so
         // a restored or restarted session does not replay stale events.
         flightFxSeen.ignite = fx.igniteN || 0;
-        flightFxSeen.boom = fx.boomN || 0;
-        flightFxSeen.vapor = fx.vaporN || 0;
         flightFxSeen.land = fx.landN || 0;
         flightFxSeen.sync = true;
       }
-
-      // RCS rotation blips: fire when the turn input starts or flips, rate
-      // capped so a stick wiggle cannot spam (2-3 puffs per burst, bursts at
-      // most every 0.4s, so roughly 6 puffs/s worst case).
-      if (flightRcsCooldown > 0) flightRcsCooldown -= dt;
-      var turn = player.rotFlightActive ? (player.turnDir || 0) : 0;
-      if (turn !== 0 && turn !== flightRcsLastTurn && flightRcsCooldown <= 0) {
-        spawnFlightRcsBurst(turn);
-        flightRcsCooldown = 0.4;
-      }
-      flightRcsLastTurn = turn;
 
       // Ignition pop: brief core-flame overshoot + small smoke rings that
       // roll off the nozzles with the exhaust.
@@ -367,31 +275,6 @@
             edI.x * 26 + player.vx * 0.5, edI.y * 26 + player.vy * 0.5,
             2, 9 + ri * 3, 0.24 + ri * 0.05, 1.4, 0, ri * 0.035);
         }
-      }
-
-      // Vapor cone: a single one-shot disc perpendicular to the velocity,
-      // fired near the sound barrier. Mostly rides with the rig, then fades.
-      if (fx.vaporN !== flightFxSeen.vapor) {
-        flightFxSeen.vapor = fx.vaporN;
-        var cV = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H * 0.56);
-        flightVapors.push({
-          x: cV.x, y: cV.y,
-          vx: player.vx * 0.9, vy: player.vy * 0.9,
-          ang: Math.atan2(player.vy, player.vx),
-          age: 0, life: 0.22,
-          a0: 0.4 * (0.5 + 0.5 * flightHumidity01())
-        });
-        while (flightVapors.length > 6) flightVapors.shift();
-      }
-
-      // Sonic boom: two staggered shock rings centered on the rig, plus a
-      // brief flame blowout as if the rig outran its own exhaust.
-      if (fx.boomN !== flightFxSeen.boom) {
-        flightFxSeen.boom = fx.boomN;
-        var cB = playerLocalToWorld(PLAYER_W * 0.5, PLAYER_H * 0.56);
-        spawnFlightRing(cB.x, cB.y, 0, 0, 10, 90, 0.35, 2, 1, 0);
-        spawnFlightRing(cB.x, cB.y, 0, 0, 10, 68, 0.32, 2, 1, 0.06);
-        flightBlowoutT = 0.08;
       }
 
       // Landing dust: hard hits (landVy > 420) kick a wide 10-puff fan out of
@@ -414,21 +297,8 @@
     }
 
     if (flightIgniteT > 0) flightIgniteT -= dt;
-    if (flightBlowoutT > 0) flightBlowoutT -= dt;
 
     // Advance the pools (forward in-place compaction, same pattern as above).
-    var rcsN = flightRcsPuffs.length, rcsW = 0;
-    for (var rp = 0; rp < rcsN; rp++) {
-      var rpp = flightRcsPuffs[rp];
-      rpp.age += dt;
-      if (rpp.age > rpp.life) continue;
-      rpp.vx *= Math.exp(-6.0 * dt);
-      rpp.vy *= Math.exp(-6.0 * dt);
-      rpp.x += rpp.vx * dt;
-      rpp.y += rpp.vy * dt;
-      flightRcsPuffs[rcsW++] = rpp;
-    }
-    flightRcsPuffs.length = rcsW;
 
     var rgN = flightRings.length, rgW = 0;
     for (var rg = 0; rg < rgN; rg++) {
@@ -442,17 +312,6 @@
       flightRings[rgW++] = ring;
     }
     flightRings.length = rgW;
-
-    var vpN = flightVapors.length, vpW = 0;
-    for (var vp = 0; vp < vpN; vp++) {
-      var vap = flightVapors[vp];
-      vap.age += dt;
-      if (vap.age > vap.life) continue;
-      vap.x += vap.vx * dt;
-      vap.y += vap.vy * dt;
-      flightVapors[vpW++] = vap;
-    }
-    flightVapors.length = vpW;
   }
 
   function updateRocketPlume(dt) {
@@ -623,23 +482,9 @@
     }
     rocketWash.length = washW;
 
-    var puffN = sideThrusterPuffs.length, puffW = 0;
-    for (var spf = 0; spf < puffN; spf++) {
-      var puff = sideThrusterPuffs[spf];
-      puff.age += dt;
-      if (puff.age > puff.life) continue;
-      puff.vx *= Math.exp(-5.2 * dt);
-      puff.vy *= Math.exp(-4.4 * dt);
-      puff.x += puff.vx * dt;
-      puff.y += puff.vy * dt;
-      if (rocketInSolid(puff.x, puff.y)) continue;
-      sideThrusterPuffs[puffW++] = puff;
-    }
-    sideThrusterPuffs.length = puffW;
-
-    // Flight FX (RCS blips, ignition pop, vapor cone, boom rings, landing
-    // dust) diff the player.fx counters and advance their pools here so they
-    // share the plume's per-frame entry point.
+    // Flight FX (ignition pop rings, landing dust) diff the player.fx
+    // counters and advance their pools here so they share the plume's
+    // per-frame entry point.
     updateFlightFx(dt);
   }
 
@@ -707,41 +552,6 @@
       ctx.restore();
     }
 
-    // ----- Pass 2b: side attitude-thruster puffs -----
-    if (sideThrusterPuffs.length) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      for (var pf = 0; pf < sideThrusterPuffs.length; pf++) {
-        var puff = sideThrusterPuffs[pf];
-        if (puff.x + 16 < cam.x || puff.x - 16 > cam.x + screenW) continue;
-        if (puff.y + 16 < cam.y || puff.y - 16 > cam.y + screenH) continue;
-        var pFade = 1 - puff.age / puff.life;
-        var pSize = puff.size + puff.age * 9.5;
-        ctx.fillStyle = 'rgba(190,195,185,' + (0.28 * pFade * pFade).toFixed(3) + ')';
-        ctx.beginPath();
-        ctx.arc(puff.x, puff.y, pSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    // ----- Pass 2c: RCS attitude blips (faint cool white, barely there) -----
-    if (flightRcsPuffs.length) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      for (var rc = 0; rc < flightRcsPuffs.length; rc++) {
-        var rcp = flightRcsPuffs[rc];
-        if (rcp.x + 12 < cam.x || rcp.x - 12 > cam.x + screenW) continue;
-        if (rcp.y + 12 < cam.y || rcp.y - 12 > cam.y + screenH) continue;
-        var rcF = 1 - rcp.age / rcp.life;
-        ctx.fillStyle = 'rgba(206,216,226,' + (0.34 * rcF * rcF).toFixed(3) + ')';
-        ctx.beginPath();
-        ctx.arc(rcp.x, rcp.y, rcp.size + rcp.age * 10, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
     // ----- Pass 3: core flame (additive) -----
     if (rocketIntensity > 0.02) {
       ctx.save();
@@ -782,7 +592,7 @@
       // the relative wind (the axial component is dropped so straight cruise
       // keeps the clean shortened look). Subtle by design.
       var ffSpd = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
-      var ffCap = (typeof flight2 !== 'undefined' && flight2 && flight2.SOFT_CAP) ? flight2.SOFT_CAP : 400;
+      var ffCap = flyTune.speed || 400;
       var ffT = (ffSpd / ffCap - FLIGHT_FLAME_BEND_V0) / (FLIGHT_FLAME_BEND_V1 - FLIGHT_FLAME_BEND_V0);
       if (ffT < 0) ffT = 0; else if (ffT > 1) ffT = 1;
       ffT = ffT * ffT * (3 - 2 * ffT);
@@ -798,7 +608,6 @@
         }
       }
       if (flightIgniteT > 0) { len *= 1.35; ww *= 1.35; }   // ignition pop overshoot
-      if (flightBlowoutT > 0) len *= 0.4;   // post-boom blowout, the rig outran its exhaust
 
       for (var n = 0; n < nozzles.length; n++) {
         var nz = nozzles[n];
@@ -922,34 +731,6 @@
       ctx.restore();
     }
 
-    // ----- Pass 6: transonic vapor cones (one-shot discs across the flight path) -----
-    if (flightVapors.length) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      for (var vpi = 0; vpi < flightVapors.length; vpi++) {
-        var vap = flightVapors[vpi];
-        if (vap.x + 80 < cam.x || vap.x - 80 > cam.x + screenW) continue;
-        if (vap.y + 80 < cam.y || vap.y - 80 > cam.y + screenH) continue;
-        var vpT = vap.age / vap.life;
-        if (vpT > 1) vpT = 1;
-        var vpR = 15 + 9 * vpT;   // slight expansion over the fade
-        var vpA = vap.a0 * (1 - vpT);
-        ctx.save();
-        ctx.translate(vap.x, vap.y);
-        ctx.rotate(vap.ang);
-        ctx.scale(1, 2.2);   // ellipse long axis perpendicular to the velocity
-        var vGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, vpR);
-        vGrad.addColorStop(0, 'rgba(245,250,255,' + vpA.toFixed(3) + ')');
-        vGrad.addColorStop(0.75, 'rgba(245,250,255,' + (vpA * 0.55).toFixed(3) + ')');
-        vGrad.addColorStop(1, 'rgba(245,250,255,0)');
-        ctx.fillStyle = vGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, vpR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-      ctx.restore();
-    }
   }
 
 

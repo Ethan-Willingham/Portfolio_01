@@ -189,21 +189,7 @@
       thrustVecY: -1,
       flightTilt: 0,
       flightTiltVel: 0,
-      angle: -Math.PI / 2,
-      angVel: 0,
-      flightGroundT: 0,
-      flightCtrlT: 0,
-      flightCtrlAlpha: 0,
-      rotFlightActive: false,
       bodyTiltRender: 0,
-      sideThrustCook: 0,
-      sideThrusterDeploy: 0,
-      sideThrusterT: 0,
-      sideThrusterDir: 0,
-      sideThrusterCharged: true,
-      surfaceThrusterPending: false,
-      surfaceThrusterGraceT: 0,
-      wasUnderground: false,
       coyoteT: 0,
       jetBufferT: 0,
       edgeMoveL: false,
@@ -350,29 +336,29 @@
     if (lv < 1) return caps[1];
     return caps[lv];
   }
-  // v23.75 booster thrust multiplier per tier. 5 levels; tier 3 = 1.0 (the
-  // climb-thrust anchor). v24.59: this ONLY scales the UNDERGROUND vertical climb
-  // (see UG_VERT_* in 080); above-ground flight is fixed at FLIGHT_ABOVE_MULT and
-  // does not read this. Each step clears the ~15% just-noticeable threshold.
+  // v25.49 booster thrust multiplier per tier. 5 levels; tier 1 = 1.0 (the
+  // designed flyTune baseline; a fresh run flies the intended default feel).
+  // The ONE flight model reads this EVERYWHERE: each rocket tier speeds the
+  // climb and hardens the fall-catch above ground and underground alike (the
+  // old v24.59 "sky is upgrade-independent" rule retired with the modes).
+  // Each step clears the ~15% just-noticeable threshold.
   // Tunable; index = upgrades.boosterLevel.
-  var BOOST_THRUST_MULT = [0, 0.70, 0.85, 1.00, 1.25, 1.55];
+  var BOOST_THRUST_MULT = [0, 1.00, 1.15, 1.35, 1.60, 1.90];
   function getBoosterThrustMult() {
     var lv = upgrades.boosterLevel || 1;
     if (lv >= BOOST_THRUST_MULT.length) return BOOST_THRUST_MULT[BOOST_THRUST_MULT.length - 1];
     if (lv < 1) return BOOST_THRUST_MULT[1];
     return BOOST_THRUST_MULT[lv];
   }
-  // v24.64: sustained UNDERGROUND vertical climb speed (px/s) at the current
-  // booster tier, i.e. the force-vs-gravity equilibrium of the UG_VERT_* climb in
-  // 080. DUPLICATED from 080 (keep F / T / G in sync with UG_VERT_FORCE,
-  // |UG_VERT_TERMINAL|, and the thrusting gravity GRAVITY_PLAYER*(1-GRAVITY_RELIEF)).
-  // This is what lets the fuel-to-surface marker react to rocket upgrades.
+  // v25.49: sustained vertical climb speed (px/s) at the current booster tier,
+  // i.e. the force-vs-gravity equilibrium of the ONE flight model. Computed
+  // LIVE from flyTune (no duplicated numbers to drift), so the fuel-to-surface
+  // marker tracks both rocket upgrades and any live lever tuning.
   function getUndergroundClimbSpeed() {
-    var F = 1100;   // UG_VERT_FORCE (080)
-    var T = 560;    // |UG_VERT_TERMINAL| (080)
-    var G = 532;    // gravity while thrusting = GRAVITY_PLAYER 760 * (1 - GRAVITY_RELIEF 0.30)
-    var v = T * (1 - G / (F * getBoosterThrustMult()));
-    return v > 40 ? v : 40;   // floor so a low tier never blows up the estimate
+    var F = flyTune.climbForce * getBoosterThrustMult();
+    var G = flyTune.gravity * (1 - flyTune.gravRelief);   // gravity while thrusting
+    var v = Math.abs(flyTune.climbTerm) * (1 - G / Math.max(1, F));
+    return v > 40 ? v : 40;   // floor so a weak tune never blows up the estimate
   }
   function getMaxHull() { return BASE_HULL + (upgrades.hullLevel - 1) * 60; }
   function getMaxCargo() { return 5 + (upgrades.cargoLevel - 1) * 4; }

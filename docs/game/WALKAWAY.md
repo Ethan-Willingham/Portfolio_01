@@ -47,8 +47,8 @@ Use dev mode (backtick = money 999,999 + free purchases) to move fast.
 - [ ] **The gates**: confirm the permafrost wall needs Heated Drill ($900) and that magma/mantle
       are tense-but-survivable with Heat Shield (not instant death). Fly to the bottom (~800m),
       confirm the 6 layers read distinctly and the deep gems feel weighty + rare.
-- [ ] **Flight**: pause toggle shows only Rotation + VTOL; both feel right; mobile split controls
-      work in Rotation.
+- [ ] **Flight**: ONE model everywhere (v25.49, `flyTune`): gentle launch, ~0.9 s fall-catch,
+      identical above/underground; the plain d-pad drives it on mobile; FLY FEEL presets in the L panel.
 - [ ] **Shop**: exactly two counters (Workshop + Supply Shelf), no Trade Board.
 - [ ] **Audio**: drop a real key.m4a (or key_N.m4a) into assets/sfx, confirm it fires in-game.
       Then run the publish flow: sfx-test.html to audition, sfx-publish.html to send to prod

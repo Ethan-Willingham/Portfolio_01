@@ -420,16 +420,6 @@
         showMsg('Weather: ' + weatherMoodName());
       }
     }
-    // 'F' cycles the flight model (dev mode only): 0 today (legacy) -> 1 full
-    // rotation -> 2 VTOL hover. The L-panel 'flight' + 'vtol' groups have
-    // one-click feel presets too.
-    if (keys['f'] || keys['F']) {
-      keys['f'] = keys['F'] = false;
-      if (devMode && typeof flightTune !== 'undefined') {
-        flightTune.mode = (flightTune.mode + 1) % 3;
-        showMsg('Flight model: ' + FLIGHT_MODE_NAMES[flightTune.mode]);
-      }
-    }
     // 'Y' reloads the dev auto-sell test haul (dev mode only): refills the cargo
     // bay with the varied spread from devLoadTestHaul (060) so the pump-pad
     // reveal can be replayed instantly — roll onto the pad afterward to sell.

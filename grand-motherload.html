@@ -203,10 +203,7 @@
       accent-color: var(--d-accent);
       cursor: pointer;
     }
-    /* Flight-mode toggle row — lets touch players choose the flight style (the
-       F dev hotkey + L panel are keyboard-only). Drives window.gm flight.mode.
-       .pause-opt shares the look (the segmented rows on the OPTIONS pane). */
-    #game-pause .pause-flight,
+    /* Segmented option rows on the OPTIONS pane. */
     #game-pause .pause-opt {
       display: flex;
       align-items: center;
@@ -215,13 +212,11 @@
       padding-top: 0.9em;
       border-top: 1px solid var(--d-rule);
     }
-    #game-pause .pause-flight button,
     #game-pause .pause-opt button {
       flex: 1 1 0;
       padding: 0.55em 0.4em;
       font-size: 0.62rem;
     }
-    #game-pause .pause-flight button.is-active,
     #game-pause .pause-opt button.is-active {
       background: var(--d-accent);
       border-color: var(--d-accent);
@@ -552,11 +547,6 @@
                          so. Death and R-bailout merely respawn at town. -->
                     <button id="gm-restart-btn" class="pause-secondary" type="button">New Game</button>
                     <button id="gm-options-btn" class="pause-secondary" type="button">Options</button>
-                    <div class="pause-flight">
-                      <span class="pause-vol-label">Flight</span>
-                      <button id="gm-flight-rot" type="button">Rotation</button>
-                      <button id="gm-flight-vtol" type="button">VTOL</button>
-                    </div>
                     <!-- Autosave status footer. Filled by showPauseOverlay
                          (020-state.js) from saveStatusLine (047-save.js). -->
                     <div class="pause-save" id="gm-pause-save"></div>
@@ -767,10 +757,10 @@
       });
     })();
   </script>
-  <script src="js/liquid-wgpu.js?v=v25.48"></script>
-  <script src="js/smoke-wgpu.js?v=v25.48"></script>
-  <script src="js/jello-wgpu.js?v=v25.48"></script>
-  <script src="js/audio.js?v=v25.48"></script>
+  <script src="js/liquid-wgpu.js?v=v25.49"></script>
+  <script src="js/smoke-wgpu.js?v=v25.49"></script>
+  <script src="js/jello-wgpu.js?v=v25.49"></script>
+  <script src="js/audio.js?v=v25.49"></script>
   <script>
     // Pause-screen volume slider -> SluiceAudio master, persisted across sessions.
     (function () {
@@ -831,8 +821,8 @@
         });
       }
 
-      // A row of buttons acting as a single-choice select (the flight-toggle
-      // pattern): highlight the active one, persist + apply on click.
+      // A row of buttons acting as a single-choice select: highlight the
+      // active one, persist + apply on click.
       function wireSeg(key, fallback, pairs) {
         var btns = [];
         function sync(val) {
@@ -862,44 +852,7 @@
       wireSeg('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
     })();
 
-    // Pause-screen flight-mode toggle -> window.gm flight.mode. The F dev hotkey
-    // and L panel are keyboard-only, so this is how TOUCH players pick the flight
-    // style (and the only way to reach the mobile split rotate/thrust controls,
-    // which appear when flying in rotation mode; VTOL mode 2 keeps the plain
-    // d-pad everywhere). The highlight reflects the live flight.mode, which
-    // defaults to Rotation (mode 1).
-    (function () {
-      var bRot = document.getElementById('gm-flight-rot');
-      var bVtol = document.getElementById('gm-flight-vtol');
-      var pauseEl = document.getElementById('game-pause');
-      if (!bRot || !bVtol) return;
-      function getMode() { try { return (window.gm && window.gm.get) ? window.gm.get('flight.mode') : 1; } catch (e) { return 1; } }
-      function syncBtns() {
-        // The toggle offers only Rotation + VTOL now. Legacy "Today" (mode 0,
-        // reachable only via the dev F hotkey) coerces to the Rotation highlight.
-        var m = getMode();
-        bRot.classList.toggle('is-active', m !== 2);
-        bVtol.classList.toggle('is-active', m === 2);
-      }
-      function setMode(n) { try { if (window.gm && window.gm.set) window.gm.set('flight.mode', n); } catch (e) {} syncBtns(); }
-      bRot.addEventListener('click', function () { setMode(1); });
-      bVtol.addEventListener('click', function () { setMode(2); });
-      // Re-sync the highlight each time the pause card opens (the mode may have
-      // changed via the F hotkey / L panel meanwhile).
-      if (pauseEl && window.MutationObserver) {
-        new MutationObserver(syncBtns).observe(pauseEl, { attributes: true, attributeFilter: ['class'] });
-      }
-      syncBtns();
-      // js/sluice.js (which creates window.gm) loads AFTER this inline script, so
-      // the syncBtns() above ran before gm existed and used the default (Rotation /
-      // flight.mode 1). Re-sync once the game has booted so the buttons reflect the
-      // live mode.
-      (function resyncWhenReady(tries) {
-        if (window.gm && window.gm.get) { syncBtns(); return; }
-        if (tries > 0) setTimeout(function () { resyncWhenReady(tries - 1); }, 80);
-      })(60);
-    })();
   </script>
-  <script src="js/sluice.js?v=v25.48"></script>
+  <script src="js/sluice.js?v=v25.49"></script>
 </body>
 </html>

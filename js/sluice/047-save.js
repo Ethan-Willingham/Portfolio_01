@@ -382,9 +382,7 @@
     player.fuel = getMaxFuel();
     player.hull = getMaxHull();
     player.thrustSpool = 0;
-    player.angle = -Math.PI / 2;
-    player.angVel = 0;
-    player.rotFlightActive = false;
+    resetFlightBank();
     player.drillGlideT = 0;
     player.drillGlideDir = null;
     player.drillCooldownT = 0;

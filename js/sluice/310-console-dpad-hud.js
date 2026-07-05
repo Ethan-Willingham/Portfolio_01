@@ -145,66 +145,6 @@
     ctx.restore();
   }
 
-  // v23.93 — geometry for the mobile split flight controls. Mirrors the d-pad
-  // anchor: rotate L/R cluster bottom-LEFT, thrust bottom-RIGHT (the d-pad slot).
-  // Shared by the touch hit-test (050) and the draw below. `hit` is the oversized
-  // touch radius (visual `r` + 12) per the mobile-ergonomics research.
-  function flightTouchGeom() {
-    var r = DPAD_BTN;              // rotate button radius (~0.38 * DPAD_SIZE)
-    var tR = DPAD_SIZE * 0.5;      // thrust radius — bigger (the primary verb)
-    var cy = DPAD_CY;             // same height as the d-pad (clears the wheel button)
-    var leftCX = DPAD_SIZE * 0.95; // mirror of DPAD_CX, bottom-left
-    var sep = DPAD_SIZE * 0.5;
-    return {
-      rotL:   { cx: leftCX - sep, cy: cy, r: r,  hit: r + 12 },
-      rotR:   { cx: leftCX + sep, cy: cy, r: r,  hit: r + 12 },
-      thrust: { cx: DPAD_CX,      cy: cy, r: tR, hit: tR + 12 }
-    };
-  }
-  // Split touch flight controls, Frontier-Soviet to match the d-pad (recessed
-  // disc, orange pressed-state). The caller cross-fades via globalAlpha.
-  function drawFlightPad(thrustAlpha) {
-    // The rotate L/R cluster (left) draws at full opacity always; the thrust
-    // button (right) is faded by thrustAlpha so it cross-fades with the d-pad.
-    if (thrustAlpha === undefined) thrustAlpha = 1;
-    var g = flightTouchGeom();
-    function fpBtn(b, pressed, glyph) {
-      ctx.beginPath(); ctx.arc(b.cx, b.cy, b.r + DPAD_SIZE * 0.05, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(15,11,4,0.45)'; ctx.fill();
-      ctx.beginPath(); ctx.arc(b.cx, b.cy, b.r, 0, Math.PI * 2);
-      ctx.fillStyle   = pressed ? 'rgba(239,159,39,0.55)' : 'rgba(255,255,255,0.05)';
-      ctx.strokeStyle = pressed ? '#EF9F27' : 'rgba(255,255,255,0.18)';
-      ctx.lineWidth = 1; ctx.fill(); ctx.stroke();
-      glyph(b, pressed);
-    }
-    function fpInk(pressed) { return pressed ? '#1a1208' : 'rgba(255,255,255,0.62)'; }
-    // rotate-left chevron
-    fpBtn(g.rotL, flightTouch.rotL, function (b, p) {
-      var s = b.r * 0.36;
-      ctx.strokeStyle = fpInk(p); ctx.lineWidth = Math.max(2, DPAD_SIZE * 0.022);
-      ctx.lineJoin = ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(b.cx + s * 0.5, b.cy - s); ctx.lineTo(b.cx - s * 0.6, b.cy); ctx.lineTo(b.cx + s * 0.5, b.cy + s); ctx.stroke();
-    });
-    // rotate-right chevron
-    fpBtn(g.rotR, flightTouch.rotR, function (b, p) {
-      var s = b.r * 0.36;
-      ctx.strokeStyle = fpInk(p); ctx.lineWidth = Math.max(2, DPAD_SIZE * 0.022);
-      ctx.lineJoin = ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(b.cx - s * 0.5, b.cy - s); ctx.lineTo(b.cx + s * 0.6, b.cy); ctx.lineTo(b.cx - s * 0.5, b.cy + s); ctx.stroke();
-    });
-    // thrust — upward flame/triangle. Faded by thrustAlpha (cross-fades with the
-    // dig d-pad on the RIGHT). The rotate cluster above stays full opacity.
-    if (thrustAlpha > 0.015) {
-      ctx.save();
-      ctx.globalAlpha *= thrustAlpha;
-      fpBtn(g.thrust, flightTouch.thrust, function (b, p) {
-        var s = b.r * 0.5;
-        ctx.fillStyle = fpInk(p);
-        ctx.beginPath(); ctx.moveTo(b.cx, b.cy - s); ctx.lineTo(b.cx + s * 0.7, b.cy + s * 0.6); ctx.lineTo(b.cx - s * 0.7, b.cy + s * 0.6); ctx.closePath(); ctx.fill();
-      });
-      ctx.restore();
-    }
-  }
   function drawDpad(cx, cy) {
     // Orbital arcs design: four arc segments arranged in a ring (Option B).
     var RO  = DPAD_SIZE * 0.85;   // outer radius — matches existing touch radius

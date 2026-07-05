@@ -208,8 +208,8 @@ Organized by IEZA (§3). Logical names follow the `js/audio.js` convention (lowe
 | `jello-wobble` | one-shot | 3 | squish/bounce |
 | `rig-hum` | loop | the player rig engine idle hum (deep, not whiny; §6 rule) |
 | `rig-drive` | loop | 1 | WIRED (350 audioUpdate: ground roll, pitch by speed); the player movement voice (the rig is a vehicle, not feet); 3 lab directions, tracked is the rec |
-| `jet-spin` | loop | 1 | WIRED (080 flight bridge); rotation layer over the synth flight pack, pitch mapped to angular velocity |
-| `air-pulse` | one-shot | 6 | WIRED (080 movement: underground edge-taps); the horizontal thruster puff, survives rapid tapping |
+| `jet-spin` | loop | 1 | RETIRED v25.49 (rotation flight removed; nothing drives it, the asset slot stays reserved) |
+| `air-pulse` | one-shot | 6 | WIRED (080 movement: airborne edge-taps everywhere since v25.49); the horizontal thruster puff, survives rapid tapping |
 | `turret-fire` / `enemy-hit` | one-shot | 3 each | WIRED (085: fireBullet = every gun; friendly-hit loops), panned by screen X; auto-fire restraint: small, low-fatigue, never a movie boom |
 | `drone-down` / `stinger-hit` | one-shot | 2 each | WIRED (085: every kill* + savage fn; stinger pecks throttled ~90ms); swarm hits stay light, the heavy receive is `hull-hit` |
 | `missile-launch` / `missile-hit` | one-shot | 2 each | WIRED (085: spawnMissile / both detonation paths); the launch doubles as the danger telegraph |

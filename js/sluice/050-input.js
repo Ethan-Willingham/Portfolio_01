@@ -39,8 +39,6 @@
       // touch after returning to the tab might look like a continuation
       // of a touch the OS already cancelled, and the d-pad would lock on.
       dpadTouchId = null;
-      flightTouch.rotL = flightTouch.rotR = flightTouch.thrust = false;
-      flightTouch.rotId = flightTouch.thrustId = null;
       shopDrag = null;
       if (itemWheel.open) closeItemWheel(false);
     }
@@ -324,8 +322,6 @@
     // moving around (e.g. while a HUD chip is being held) won't disturb it.
     // For mouse, dpadTouchId === 'mouse' once a mouse-drag began inside
     // the d-pad; that's still the owning pointer.
-    if (id === flightTouch.rotId) { updateFlightRot(x, y); return; }
-    if (id === flightTouch.thrustId) { return; }   // thrust is a hold — stays on while the finger is down
     if (id !== undefined && id === dpadTouchId) {
       updateDpad(x, y);
     }
@@ -343,12 +339,6 @@
     }
     // Only releasing the d-pad's owning touch clears the d-pad. Other
     // fingers lifting (button taps, etc.) leave movement intact.
-    if (id === undefined) {
-      flightTouch.rotId = flightTouch.thrustId = null;
-      flightTouch.rotL = flightTouch.rotR = flightTouch.thrust = false;
-    }
-    if (id === flightTouch.rotId) { flightTouch.rotId = null; flightTouch.rotL = flightTouch.rotR = false; }
-    if (id === flightTouch.thrustId) { flightTouch.thrustId = null; flightTouch.thrust = false; }
     if (id === undefined || id === dpadTouchId) {
       dpadTouchId = null;
       dpad.left = dpad.right = dpad.up = dpad.down = false;
@@ -395,21 +385,6 @@
     if (axisGap(Math.PI)      < reach) dpad.left  = true;
     if (axisGap(Math.PI / 2)  < reach) dpad.down  = true;
     if (axisGap(-Math.PI / 2) < reach) dpad.up    = true;
-  }
-
-  // v23.93 — mobile split flight controls (rotate L/R + thrust). Shown only in
-  // rotation flight on touch; geometry mirrors the d-pad (flightTouchGeom, 310).
-  function flightControlsActive() {
-    return isMobile && (player.flightCtrlT || 0) > 0;
-  }
-  function inFlightBtn(x, y, b) {
-    var dx = x - b.cx, dy = y - b.cy;
-    return Math.sqrt(dx * dx + dy * dy) < b.hit;
-  }
-  function updateFlightRot(x, y) {
-    var g = flightTouchGeom();
-    flightTouch.rotL = inFlightBtn(x, y, g.rotL);
-    flightTouch.rotR = inFlightBtn(x, y, g.rotR);
   }
 
   function playerNearSurface() {

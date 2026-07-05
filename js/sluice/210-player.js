@@ -445,51 +445,6 @@
     ctx.arc(6.0, 16.5, 0.9, 0, Math.PI * 2);
     ctx.fill();
 
-    // ----- Side attitude thruster -----
-    // One visible suit-style maneuvering rocket bolted to this side of the
-    // rig; the paired thruster is implied to live on the far side.
-    var sideDeploy = player.sideThrusterDeploy || 0;
-    if (sideDeploy > 0.01) {
-      var pulse = player.sideThrusterT > 0 ? player.sideThrusterT / 0.16 : 0;
-      ctx.save();
-      ctx.translate(3.0 - sideDeploy * 1.6, 16.2);
-      ctx.rotate(-0.06 + 0.12 * sideDeploy);
-      ctx.strokeStyle = 'rgba(6,8,7,0.92)';
-      ctx.lineWidth = 0.55;
-      ctx.beginPath();
-      ctx.moveTo(-1.2, 0.1);
-      ctx.lineTo(-0.1, -0.45);
-      ctx.stroke();
-      ctx.fillStyle = pgrad.pod;
-      roundRect(ctx, -0.4, -1.45, 3.1, 2.8, 0.8, true);
-      ctx.strokeStyle = '#050606';
-      ctx.lineWidth = 0.45;
-      roundRect(ctx, -0.4, -1.45, 3.1, 2.8, 0.8, false, true);
-      ctx.fillStyle = '#050606';
-      ctx.fillRect(2.4, -0.72, 0.75, 1.35);
-      ctx.fillStyle = 'rgba(190,205,188,0.42)';
-      ctx.fillRect(0.1, -1.0, 1.35, 0.28);
-      if (pulse > 0) {
-        var visibleDir = (player.sideThrusterDir || 0) * player.dir;
-        var flameLen = 2.7 + pulse * 4.5;
-        var flameAlpha = Math.max(0, Math.min(1, pulse));
-        var flameOut = visibleDir > 0 ? 1 : -1;
-        var flameBase = flameOut > 0 ? 3.0 : -0.55;
-        var flameGrad = ctx.createLinearGradient(flameBase, 0, flameBase + flameOut * flameLen, 0);
-        flameGrad.addColorStop(0, 'rgba(255,238,180,' + (0.78 * flameAlpha).toFixed(3) + ')');
-        flameGrad.addColorStop(0.45, 'rgba(255,128,54,' + (0.54 * flameAlpha).toFixed(3) + ')');
-        flameGrad.addColorStop(1, 'rgba(255,80,30,0)');
-        ctx.fillStyle = flameGrad;
-        ctx.beginPath();
-        ctx.moveTo(flameBase, -0.75);
-        ctx.lineTo(flameBase + flameOut * flameLen, 0);
-        ctx.lineTo(flameBase, 0.75);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
     // ----- Hooded white work lamp -----
     ctx.fillStyle = '#d7dbd0';
     ctx.beginPath();
@@ -544,17 +499,15 @@
       shakeX = (Math.random() - 0.5) * 0.6;
       shakeY = (Math.random() - 0.5) * 0.6;
     }
-    // Airframe shiver (v24.117): EVENT-driven only. Discrete moments (the
-    // stall break, the vapor threshold, the sonic boom) kick player.tremor
-    // in the integrator and it decays out in ~0.3s; there is NO continuous
-    // source any more (owner: it happened too much). Barely-there by design
+    // Airframe shiver (v24.117): EVENT-driven only. Discrete moments (a bomb
+    // blast nearby, 065) kick player.tremor and it decays out in ~0.3s in the
+    // integrator (080); there is NO continuous source. Barely-there by design
     // (motion you feel, not see): ~0.45 deg of rotational strain plus a
-    // ~0.25px lateral whisper at the kick instant, fading fast, scaled by
-    // the flight2.TREMOR_AMP lever (0 disables). Angular into bodyTilt below
-    // so hull + ghosts + arm strain together; camera/world/shadow/HUD solid.
+    // ~0.25px lateral whisper at the kick instant, fading fast. Angular into
+    // bodyTilt below so hull + arm strain together; camera/world/HUD solid.
     var trembleTilt = 0;
-    if (player.rotFlightActive && (player.tremor || 0) > 0) {
-      var bufK = ((typeof flight2 !== 'undefined' && flight2.TREMOR_AMP) || 0) * player.tremor;
+    if ((player.tremor || 0) > 0) {
+      var bufK = player.tremor;
       trembleTilt = (Math.sin(_pfxTime * 53) + 0.5 * Math.sin(_pfxTime * 37 + 1.3)) * 0.0055 * bufK;
       shakeX += Math.sin(_pfxTime * 41 + 0.7) * 0.25 * bufK;
     }
@@ -610,46 +563,13 @@
       sx *= fxSx;
     }
 
-    // Flip horizontally if facing left. Suppressed only while the full-body
-    // rotation owns orientation (v23.70): during rotational free-flight, and
-    // through its ease back to upright, so the mirror doesn't fight / pop the
-    // rotation as the heading crosses vertical. Two fixes (v24.58):
-    //  - measure the tilt as the SHORTEST angle from upright. bodyTiltRender
-    //    after a heading-left run settles near 2π, so the raw |value| stayed
-    //    >0.25 and left the rig showing its right-facing base while it was
-    //    already visually upright (then popped on the final snap).
-    //  - only gate on tilt in rotation mode (mode === 1, v24.145 — VTOL mode 2
-    //    banks as a lean exactly like legacy). Legacy "Today" flight banks up to
-    //    ~0.56 rad (FLIGHT_TILT_MAX) as a lean, not a reorientation, so it must
-    //    still flip to face its travel direction while banking — the old gate
-    //    killed the flip past ~14° of bank, so flying left drew the rig right.
-    var _btUp = (player.bodyTiltRender || 0) % (Math.PI * 2);
-    if (_btUp > Math.PI) _btUp -= Math.PI * 2;
-    else if (_btUp < -Math.PI) _btUp += Math.PI * 2;
-    var rotOwnsFacing = player.rotFlightActive ||
-      (flightTune.mode === 1 && Math.abs(_btUp) >= 0.25);
-    var rigFlip = player.dir < 0 && !rotOwnsFacing;
+    // Flip horizontally if facing left. The bank is a lean, never a
+    // reorientation (v25.49: the one flight model never rotates the rig),
+    // so the mirror always follows the travel direction.
+    var rigFlip = player.dir < 0;
 
     var rigOX = player.renderX + shakeX;
     var rigOY = player.renderY + shakeY;
-
-    // Rotation smear frames: while rotational flight is spinning fast, draw
-    // up to two ghost copies of the body BEFORE the main sprite, at the
-    // angles the rig had ~16ms and ~32ms ago (reconstructed from angVel, no
-    // history buffer needed), faintest first. The alphas ramp in just above
-    // the spin threshold so the ghosts never strobe while angVel hovers at
-    // the gate, and a near-invisible ghost skips its pass entirely.
-    var angVel = player.angVel || 0;
-    if (player.rotFlightActive && Math.abs(angVel) > 5) {
-      var smearK = (Math.abs(angVel) - 5) / 2;
-      if (smearK > 1) smearK = 1;
-      if (smearK * 0.08 > 0.012) {
-        drawRigBodyPass(rigOX, rigOY, bodyTilt - angVel * 0.032, sx, sy, rigFlip, 0.08 * smearK, t);
-      }
-      if (smearK * 0.16 > 0.012) {
-        drawRigBodyPass(rigOX, rigOY, bodyTilt - angVel * 0.016, sx, sy, rigFlip, 0.16 * smearK, t);
-      }
-    }
 
     // Main body pass. Translate uses the smoothed render position so
     // corner-correction snaps ease in instead of teleporting the sprite.

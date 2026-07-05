@@ -38,8 +38,7 @@
           if (row.valEl) row.valEl.textContent = gmPanelFmt(v);
         }
         gmPanelMarkPresets();
-        if (gmPanelFlight2Refresh) gmPanelFlight2Refresh();
-        if (gmPanelVtolRefresh) gmPanelVtolRefresh();
+        if (gmPanelFlyRefresh) gmPanelFlyRefresh();
       } catch (e) {
         try { console.warn('gmPanelSync failed:', e); } catch (_) {}
       }
@@ -197,10 +196,8 @@
     // Holds the preset section element so a save can rebuild just that block
     // without re-rendering the whole panel.
     var gmPanelPresetsEl = null;
-    // Refreshes the FLIGHT FEEL strip's active highlight; assigned at build.
-    var gmPanelFlight2Refresh = null;
-    // Same for the VTOL FEEL strip (v24.146); assigned at build.
-    var gmPanelVtolRefresh = null;
+    // Refreshes the FLY FEEL strip's active highlight; assigned at build.
+    var gmPanelFlyRefresh = null;
 
     // ----- Active-preset highlighting -----
     // gm.activePreset is the last preset applied (panel button or console). A
@@ -446,9 +443,9 @@
       // ----- One collapsible section per group -----
       // Group order: keep a stable, sensible order; any unexpected group falls
       // in alphabetically after the known ones.
-      var GROUP_ORDER = ['flight2', 'flight', 'vtol', 'smoke', 'fireplace', 'rocket', 'sky', 'res', 'camera'];
+      var GROUP_ORDER = ['fly', 'smoke', 'fireplace', 'rocket', 'sky', 'res', 'camera'];
       // v24.115 (owner): EVERY section starts folded, including PRESETS, so
-      // the panel opens to the pinned FLIGHT FEEL strip at the very top.
+      // the panel opens to the pinned FLY FEEL strip at the very top.
       // Expand a group only when you want to fine-tune its levers.
 
       // Within-group lever order. Most levers fall in alphabetically (priority 500), but
@@ -456,6 +453,12 @@
       // in descending importance, and the parked / structural / debug levers are demoted to
       // the BOTTOM. Keyed by full path; unlisted = 500 (alphabetical middle).
       var LEVER_PRIORITY = {
+        // --- v25.49 fly group: the flight-feel dials, most-used first ---
+        'fly.catch': 1,                        // fall-arrest authority (the inertia-fight lever)
+        'fly.climbForce': 2,                   // launch/climb strength
+        'fly.climbTerm': 3,                    // sustained climb ceiling
+        'fly.speed': 4,                        // horizontal cruise cap
+        'fly.acc': 5,                          // horizontal steering authority
         // --- v25.42 popcorn-fix trio: the owner's live water-feel dials ---
         'water.PRESSURE_MAX_DV': 1,            // THE pop killer (px/s per substep; 0 = old popcorn)
         'water.AIR_DRAG': 2,                   // airborne droplet deceleration (1 = off)
@@ -563,98 +566,6 @@
         var body = document.createElement('div');
         body.setAttribute('data-gm-body', '1');
         body.style.cssText = collapsed ? 'display:none;' : '';
-        // v23.74 — flight preset buttons: a quick A/B of the flight models at the
-        // top of the 'flight' group: one-click FEEL presets (owner picks by
-        // feel). "Today's Flight" = mode 0 (legacy); each named preset = mode 1
-        // (full rotation) + that preset's tune values. Mode slider + lever rows
-        // stay in sync via gmPanelSync; the active preset (or Today) highlights.
-        if (g === 'flight') {
-          var fRow = document.createElement('div');
-          fRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 6px 14px;';
-          var fNames = (typeof FLIGHT_PRESETS !== 'undefined') ? Object.keys(FLIGHT_PRESETS) : [];
-          var fBtns = [];   // each { el, kind:'today'|'preset', name }
-          var fMatches = function (name) {
-            var p = FLIGHT_PRESETS[name]; if (!p) return false;
-            for (var k in p) {
-              if (!p.hasOwnProperty(k)) continue;
-              var cur = 0; try { cur = window.gm.get('flight.' + k); } catch (e) {}
-              if (Math.abs((cur || 0) - p[k]) > 0.001) return false;
-            }
-            return true;
-          };
-          var fRefresh = function () {
-            var mode = 0; try { mode = window.gm.get('flight.mode'); } catch (e) {}
-            for (var fi = 0; fi < fBtns.length; fi++) {
-              var b = fBtns[fi];
-              var on = (b.kind === 'today') ? (mode === 0) : (mode === 1 && fMatches(b.name));
-              b.el.style.cssText = gmPresetBtnStyle(false, on ? 'active' : 'normal');
-            }
-          };
-          var fMakeBtn = function (label, kind, name) {
-            var el = document.createElement('button');
-            el.textContent = label;
-            el.addEventListener('click', function () {
-              try {
-                if (kind === 'today') {
-                  window.gm.set('flight.mode', 0);
-                } else {
-                  window.gm.set('flight.mode', 1);
-                  var p = FLIGHT_PRESETS[name];
-                  for (var k in p) { if (p.hasOwnProperty(k)) window.gm.set('flight.' + k, p[k]); }
-                }
-                window.gmPanelSync(); fRefresh();
-              } catch (e) {}
-            });
-            fBtns.push({ el: el, kind: kind, name: name });
-            fRow.appendChild(el);
-          };
-          fMakeBtn("Today's Flight", 'today', null);
-          for (var pi = 0; pi < fNames.length; pi++) fMakeBtn(fNames[pi], 'preset', fNames[pi]);
-          fRefresh();
-          body.appendChild(fRow);
-        }
-        // v24.145 — VTOL preset buttons, same pattern atop the 'vtol' group:
-        // each button switches to flight mode 2 and applies a full vtolTune
-        // bundle; the active one highlights while mode 2 + values match.
-        if (g === 'vtol') {
-          var vRow = document.createElement('div');
-          vRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 6px 14px;';
-          var vNames = (typeof VTOL_PRESETS !== 'undefined') ? Object.keys(VTOL_PRESETS) : [];
-          var vBtns = [];   // each { el, name }
-          var vMatches = function (name) {
-            var p = VTOL_PRESETS[name]; if (!p) return false;
-            for (var k in p) {
-              if (!p.hasOwnProperty(k)) continue;
-              var cur = 0; try { cur = window.gm.get('vtol.' + k); } catch (e) {}
-              if (Math.abs((cur || 0) - p[k]) > 0.001) return false;
-            }
-            return true;
-          };
-          var vRefresh = function () {
-            var vMode = 0; try { vMode = window.gm.get('flight.mode'); } catch (e) {}
-            for (var vi = 0; vi < vBtns.length; vi++) {
-              var vb = vBtns[vi];
-              vb.el.style.cssText = gmPresetBtnStyle(false, (vMode === 2 && vMatches(vb.name)) ? 'active' : 'normal');
-            }
-          };
-          var vMakeBtn = function (name) {
-            var el = document.createElement('button');
-            el.textContent = name;
-            el.addEventListener('click', function () {
-              try {
-                window.gm.set('flight.mode', 2);
-                var p = VTOL_PRESETS[name];
-                for (var k in p) { if (p.hasOwnProperty(k)) window.gm.set('vtol.' + k, p[k]); }
-                window.gmPanelSync(); vRefresh();
-              } catch (e) {}
-            });
-            vBtns.push({ el: el, name: name });
-            vRow.appendChild(el);
-          };
-          for (var vpi = 0; vpi < vNames.length; vpi++) vMakeBtn(vNames[vpi]);
-          vRefresh();
-          body.appendChild(vRow);
-        }
         paths.forEach(function (path) {
           try {
             body.appendChild(gmPanelBuildRow(path, LEVERS[path]));
@@ -756,129 +667,64 @@
         try { console.warn('gm panel presets section failed:', e); } catch (_) {}
       }
 
-      // ----- FLIGHT FEEL strip (v24.115) -----
-      // Owner request: one-click aero feel presets pinned at the VERY top of
-      // the panel (above PRESETS; every section below starts collapsed). Each
-      // button writes the full FLIGHT2_PRESETS bundle through gm.set (clamps
-      // and side-effects apply), keeps rotation flight on, and re-syncs the
-      // panel. The bundle that exactly matches the live levers shows active.
-      try {
-        if (typeof FLIGHT2_PRESETS !== 'undefined' && window.gm) {
-          var ffSec = document.createElement('div');
-          var ffHead = document.createElement('div');
-          ffHead.textContent = 'FLIGHT FEEL';
-          ffHead.style.cssText =
-            'padding:5px 8px 2px;background:#14181f;color:#9fc1e8;font-weight:bold;' +
-            'letter-spacing:1px;border-bottom:1px solid #000;border-top:1px solid #000;';
-          ffSec.appendChild(ffHead);
-          var ffRow = document.createElement('div');
-          ffRow.style.cssText =
-            'display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 8px;background:#14181f;' +
-            'border-bottom:1px solid #333;';
-          var ffBtns = [];
-          var ffMatches = function (name) {
-            var p = FLIGHT2_PRESETS[name];
-            if (!p) return false;
-            for (var k in p) {
-              if (!p.hasOwnProperty(k)) continue;
-              var cur = 0;
-              try { cur = window.gm.get('flight2.' + k); } catch (e) {}
-              if (Math.abs((cur || 0) - p[k]) > 0.0001) return false;
-            }
-            return true;
-          };
-          gmPanelFlight2Refresh = function () {
-            for (var i = 0; i < ffBtns.length; i++) {
-              var b = ffBtns[i];
-              b.el.style.cssText = gmPresetBtnStyle(false, ffMatches(b.name) ? 'active' : 'normal');
-            }
-          };
-          Object.keys(FLIGHT2_PRESETS).forEach(function (name) {
-            var btn = document.createElement('button');
-            btn.textContent = name;
-            btn.title = 'Apply the "' + name + '" aero feel (full flight2 bundle)';
-            ffBtns.push({ name: name, el: btn });
-            btn.addEventListener('click', function () {
-              try {
-                var p = FLIGHT2_PRESETS[name];
-                for (var k in p) { if (p.hasOwnProperty(k)) window.gm.set('flight2.' + k, p[k]); }
-                try { window.gm.set('flight.mode', 1); } catch (e) {}
-                gmPanelSync();
-              } catch (e) { try { console.warn('flight feel preset failed:', e); } catch (_) {} }
-            });
-            ffRow.appendChild(btn);
-          });
-          ffSec.appendChild(ffRow);
-          panel.insertBefore(ffSec, header.nextSibling);
-          gmPanelFlight2Refresh();
-        }
-      } catch (e) {
-        try { console.warn('flight feel strip failed:', e); } catch (_) {}
-      }
 
-      // ----- VTOL FEEL strip (v24.146) -----
-      // Owner request: the VTOL presets must be VISIBLE, not buried in the
-      // collapsed 'vtol' group — so they get the same pinned treatment as
-      // FLIGHT FEEL, directly under it. Each button switches to flight mode 2
-      // and writes the full VTOL_PRESETS bundle through gm.set; the bundle
-      // that matches the live levers (while mode 2 is on) shows active.
+      // ----- FLY FEEL strip (v25.49) -----
+      // One-click feel presets for the ONE flight model, pinned at the VERY
+      // top of the panel (above PRESETS; every section below starts
+      // collapsed). Each button writes the full FLY_PRESETS bundle through
+      // gm.set (clamps and side-effects apply) and re-syncs the panel; the
+      // bundle that exactly matches the live levers shows active.
       try {
-        if (typeof VTOL_PRESETS !== 'undefined' && window.gm) {
-          var vfSec = document.createElement('div');
-          var vfHead = document.createElement('div');
-          vfHead.textContent = 'VTOL FEEL';
-          vfHead.style.cssText =
+        if (typeof FLY_PRESETS !== 'undefined' && window.gm) {
+          var flSec = document.createElement('div');
+          var flHead = document.createElement('div');
+          flHead.textContent = 'FLY FEEL';
+          flHead.style.cssText =
             'padding:5px 8px 2px;background:#14181f;color:#9fc1e8;font-weight:bold;' +
             'letter-spacing:1px;border-bottom:1px solid #000;border-top:1px solid #000;';
-          vfSec.appendChild(vfHead);
-          var vfRow = document.createElement('div');
-          vfRow.style.cssText =
+          flSec.appendChild(flHead);
+          var flRow = document.createElement('div');
+          flRow.style.cssText =
             'display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 8px;background:#14181f;' +
             'border-bottom:1px solid #333;';
-          var vfBtns = [];
-          var vfMatches = function (name) {
-            var p = VTOL_PRESETS[name];
+          var flBtns = [];
+          var flMatches = function (name) {
+            var p = FLY_PRESETS[name];
             if (!p) return false;
             for (var k in p) {
               if (!p.hasOwnProperty(k)) continue;
               var cur = 0;
-              try { cur = window.gm.get('vtol.' + k); } catch (e) {}
+              try { cur = window.gm.get('fly.' + k); } catch (e) {}
               if (Math.abs((cur || 0) - p[k]) > 0.0001) return false;
             }
             return true;
           };
-          gmPanelVtolRefresh = function () {
-            var vfMode = 0;
-            try { vfMode = window.gm.get('flight.mode'); } catch (e) {}
-            for (var i = 0; i < vfBtns.length; i++) {
-              var b = vfBtns[i];
-              b.el.style.cssText = gmPresetBtnStyle(false, (vfMode === 2 && vfMatches(b.name)) ? 'active' : 'normal');
+          gmPanelFlyRefresh = function () {
+            for (var i = 0; i < flBtns.length; i++) {
+              var b = flBtns[i];
+              b.el.style.cssText = gmPresetBtnStyle(false, flMatches(b.name) ? 'active' : 'normal');
             }
           };
-          Object.keys(VTOL_PRESETS).forEach(function (name) {
+          Object.keys(FLY_PRESETS).forEach(function (name) {
             var btn = document.createElement('button');
             btn.textContent = name;
-            btn.title = 'Switch to VTOL flight (mode 2) + apply the "' + name + '" feel (full vtol bundle)';
-            vfBtns.push({ name: name, el: btn });
+            btn.title = 'Apply the "' + name + '" flight feel (full fly bundle)';
+            flBtns.push({ name: name, el: btn });
             btn.addEventListener('click', function () {
               try {
-                try { window.gm.set('flight.mode', 2); } catch (e) {}
-                var p = VTOL_PRESETS[name];
-                for (var k in p) { if (p.hasOwnProperty(k)) window.gm.set('vtol.' + k, p[k]); }
+                var p = FLY_PRESETS[name];
+                for (var k in p) { if (p.hasOwnProperty(k)) window.gm.set('fly.' + k, p[k]); }
                 gmPanelSync();
-              } catch (e) { try { console.warn('vtol feel preset failed:', e); } catch (_) {} }
+              } catch (e) { try { console.warn('fly feel preset failed:', e); } catch (_) {} }
             });
-            vfRow.appendChild(btn);
+            flRow.appendChild(btn);
           });
-          vfSec.appendChild(vfRow);
-          // Pin directly UNDER the FLIGHT FEEL strip when it exists; else top.
-          var vfAnchor = (typeof ffSec !== 'undefined' && ffSec && ffSec.parentNode === panel)
-            ? ffSec.nextSibling : header.nextSibling;
-          panel.insertBefore(vfSec, vfAnchor);
-          gmPanelVtolRefresh();
+          flSec.appendChild(flRow);
+          panel.insertBefore(flSec, header.nextSibling);
+          gmPanelFlyRefresh();
         }
       } catch (e) {
-        try { console.warn('vtol feel strip failed:', e); } catch (_) {}
+        try { console.warn('fly feel strip failed:', e); } catch (_) {}
       }
 
       document.body.appendChild(panel);

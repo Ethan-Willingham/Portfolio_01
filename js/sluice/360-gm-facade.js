@@ -110,73 +110,21 @@
         sim_splat_radius:         { min: 0.05, max: 0.5 }
       });
 
-      // flightTune — full-rotation flight feel levers. The in-game flight lab:
-      // mode (0 today / 1 full rotation / 2 VTOL hover) plus turn / thrust /
-      // gravity / drag. Press F in dev mode to cycle; the L-panel buttons
-      // apply named presets. Mode 2's own levers are the 'vtol' group below.
-      gmRegisterObject('flight', 'flight', flightTune, {
-        mode:      { min: 0, max: 2, step: 1 },
-        thrust:    { min: 0, max: 4000 },
-        gravity:   { min: 0, max: 1500 },
-        linDamp:   { min: 0, max: 6, step: 0.05 },
-        turnAccel: { min: 0, max: 40, step: 0.5 },
-        angDamp:   { min: 0, max: 15, step: 0.1 },
-        maxOmega:  { min: 1, max: 20, step: 0.5 },
-        maxSpeed:  { min: 0, max: 2000, step: 10 }
-      });
-
-      // flight2 — the above-ground AERO layer (v24.112): lift/AoA/stall +
-      // ground-effect cushion + dive-earned soft cap + throttle-coupled turn +
-      // transonic ladder. ENABLE 0 reverts to pure thrust+drag (flight1).
-      gmRegisterObject('flight2', 'flight2', flight2, {
-        ENABLE:           { min: 0, max: 1, step: 1 },
-        CLA:              { min: 0, max: 10, step: 0.1 },
-        STALL_A:          { min: 0.1, max: 0.8, step: 0.01 },
-        STALL_BLEND:      { min: 1.05, max: 2.5, step: 0.05 },
-        CLMAX:            { min: 0.3, max: 3, step: 0.05 },
-        CD0:              { min: 0.01, max: 0.5, step: 0.005 },
-        K_IND:            { min: 0, max: 1.5, step: 0.01 },
-        AREA_K:           { min: 0.001, max: 0.05, step: 0.0005 },
-        MIN_AERO_V:       { min: 20, max: 200, step: 5 },
-        LINDAMP_MULT:     { min: 0, max: 1, step: 0.05 },
-        BUFFET_A0:        { min: 0.4, max: 0.95, step: 0.05 },
-        BUFFET_HI:        { min: 1.2, max: 4, step: 0.05 },
-        TELEGRAPH_V:      { min: 60, max: 400, step: 5 },
-        WV_TORQUE:        { min: 0, max: 15, step: 0.5 },
-        WV_HI:            { min: 0.5, max: 2.5, step: 0.05 },
-        TREMOR_AMP:       { min: 0, max: 2, step: 0.05 },
-        TURN_THRUST_MULT: { min: 0.2, max: 1, step: 0.02 },
-        TURN_OMEGA_MULT:  { min: 0.2, max: 1, step: 0.02 },
-        TURN_EASE:        { min: 2, max: 30, step: 1 },
-        SOFT_CAP:         { min: 200, max: 900, step: 10 },
-        OVER_K:           { min: 5, max: 200, step: 5 },
-        DIVE_OVER:        { min: 1, max: 2.2, step: 0.05 },
-        OVER_GAIN:        { min: 0.05, max: 1, step: 0.01 },
-        OVER_DECAY:       { min: 0.5, max: 8, step: 0.1 },
-        FALL_CAP:         { min: 600, max: 1400, step: 20 },
-        GE_SPAN:          { min: 32, max: 200, step: 4 },
-        GE_LIFT:          { min: 0, max: 0.4, step: 0.01 },
-        GE_DRAG:          { min: 0.2, max: 1, step: 0.05 },
-        STIFF_V:          { min: 300, max: 900, step: 10 },
-        STIFF_MIN:        { min: 0.3, max: 1, step: 0.02 },
-        BOOM_V:           { min: 400, max: 1200, step: 5 },
-        SPOOL_RISE:       { min: 3, max: 60, step: 1 },
-        SPOOL_FALL:       { min: 5, max: 160, step: 1 },
-        SPOOL_FLOOR:      { min: 0, max: 0.8, step: 0.05 }
-      });
-
-      // vtolTune — VTOL hover flight (mode 2, v24.145): direct strafe
-      // authority + the legacy jet's vertical shape at sky grade. The L-panel
-      // 'vtol' group carries one-click VTOL_PRESETS buttons (370).
-      gmRegisterObject('vtol', 'vtol', vtolTune, {
+      // flyTune — the ONE flight model (v25.49): identical above ground and
+      // underground, no modes. 'catch' is the fall-arrest authority (thrust
+      // multiplier while falling); the pinned FLY FEEL strip (370) applies
+      // full FLY_PRESETS bundles through this group.
+      gmRegisterObject('fly', 'fly', flyTune, {
+        gravity:    { min: 0, max: 1500, step: 5 },
+        gravRelief: { min: 0, max: 0.9, step: 0.01 },
+        maxFall:    { min: 200, max: 1400, step: 10 },
+        climbForce: { min: 0, max: 4000, step: 10 },
+        climbTerm:  { min: -900, max: -50, step: 5 },
+        catch:      { min: 1, max: 3, step: 0.05 },
         acc:        { min: 0, max: 3000, step: 10 },
         speed:      { min: 50, max: 900, step: 5 },
         fric:       { min: 0, max: 1200, step: 10 },
         revBoost:   { min: 1, max: 4, step: 0.05 },
-        climbForce: { min: 0, max: 4000, step: 10 },
-        climbTerm:  { min: -900, max: -50, step: 5 },
-        gravity:    { min: 0, max: 1500, step: 5 },
-        gravRelief: { min: 0, max: 0.9, step: 0.01 },
         overBleed:  { min: 0, max: 3, step: 0.05 },
         tilt:       { min: 0, max: 0.56, step: 0.01 }
       });
@@ -2158,7 +2106,7 @@
       gm.smoke = smokeTune;
       gm.fireplace = fireplaceTune;
       gm.rocket = rocketTune;
-      gm.flight = flightTune;
+      gm.fly = flyTune;
 
       // Numeric coerce helper — booleans pass through 0/1.
       function gmCoerce(entry, value) {

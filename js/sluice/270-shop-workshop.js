@@ -44,8 +44,8 @@
         o.statLabel = 'SLOTS';
         o.cur = 5 + (lvl - 1) * 4; o.next = 5 + lvl * 4;
       } else if (it.key === 'booster') {
-        o.statLabel = 'UG CLIMB';
-        var bm = [0, 70, 85, 100, 125, 155];
+        o.statLabel = 'CLIMB';
+        var bm = [0, 100, 115, 135, 160, 190];
         var bcur = (lvl >= bm.length) ? bm[bm.length - 1] : (lvl < 1 ? bm[1] : bm[lvl]);
         var bnxt = ((lvl + 1) >= bm.length) ? bm[bm.length - 1] : bm[lvl + 1];
         o.cur = bcur + '%'; o.next = bnxt + '%';

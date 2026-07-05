@@ -38,7 +38,7 @@
     // v24.117: pulses ride the event-driven shiver envelope (stall break,
     // vapor, boom), not the continuous buffet state, so rumble is as rare
     // and brief as the visual tremor.
-    if (player.rotFlightActive && (player.tremor || 0) > 0.35) {
+    if ((player.tremor || 0) > 0.35) {
       _hapBuffetT -= dt;
       if (_hapBuffetT <= 0) {
         _hapBuffetT = 0.09;

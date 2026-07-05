@@ -68,7 +68,7 @@ slimes are NOT bugs. Do not flip a flag to `true` and ship it without asking the
 **ACTIVE for the simple game:** worldgen (single town, 400 m, 6 layers, all 32 ores), drilling, fuel,
 cargo, the surface station shop (Workshop + Supply Shelf only), upgrades (drill/fuel/cargo/
 hull/booster/heat/shield/vert), bombs, the water/oil particle sim (water only), smoke, jello
-is OFF, flight (Rotation default + VTOL; the pause toggle hides legacy "Today"), the night
+is OFF, flight (ONE unified model everywhere since v25.49: `flyTune` + the FLY FEEL presets), the night
 sky/weather/mountains/trees, audio (music + the wired-but-empty SFX), save/respawn, the Great
 Seam endgame chamber, the Mineral Ledger.
 
@@ -89,7 +89,7 @@ Seam endgame chamber, the Mineral Ledger.
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
 | `250/270/280-shop-*.js` | the station hub + Workshop + Supply Shelf pages |
-| `080-update-camera.js` | movement, drilling, fuel burn, flight integrators, the SFX shims |
+| `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |
 
@@ -102,7 +102,7 @@ Then the useful keys: **L** opens the `window.gm` slider panel (every tunable, g
 **X** cycles the water debug kit; **N** cycles weather moods; **G** the GPU probe; **H** the
 perf-ISO A/B; **Z** zoom; **R** restart. From the console, `gm.get('group.lever')` /
 `gm.set('group.lever', v)` change anything live; the groups you will reach for most are
-`water.*` (the liquid sim, see TUNING.md §2), `light.*` (fog of war), `weather.*`, `flight.*`
+`water.*` (the liquid sim, see TUNING.md §2), `light.*` (fog of war), `weather.*`, `fly.*`
 (mode + feel), `trees.*`, `haze.*`. Boot levers: `?nosave=1` (fresh world, no save), `?dev=1`,
 the feature-flag overrides above (`?multitown=1` etc.), and the water harness
 `?pondtest=1..4` + `?wdbg=NAME:V,...`.

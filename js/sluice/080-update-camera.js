@@ -34,25 +34,6 @@
     f *= 0.8;
     return f < -0.8 ? -0.8 : (f > 0.8 ? 0.8 : f);
   }
-  // ----- flight2 helper: clear air below the rig (ground-effect probe) -----
-  // px of open space between the rig's feet and the first solid tile straight
-  // below (2-column probe under the hull), capped at maxPx. Drives the
-  // ekranoplan cushion in the rotFlight aero block; <= ~14 tileAt calls.
-  function flightGroundClearance(maxPx) {
-    var footY = player.y + PLAYER_H;
-    var r0 = Math.floor(footY / TILE);
-    var rMax = Math.floor((footY + maxPx) / TILE);
-    var c1 = Math.floor((player.x + PLAYER_W * 0.2) / TILE);
-    var c2 = Math.floor((player.x + PLAYER_W * 0.8) / TILE);
-    for (var r = r0; r <= rMax; r++) {
-      if (r < 0) continue;
-      if (tileAt(r, c1) !== null || (c2 !== c1 && tileAt(r, c2) !== null)) {
-        var d = r * TILE - footY;
-        return d > 0 ? d : 0;
-      }
-    }
-    return maxPx;
-  }
   function update(dt) {
     if (gameOver || gameWon || shopOpen) return;
     // v11.38 — ALL shop states freeze the world (was: only sub-pages).
@@ -99,7 +80,7 @@
       if (player.drillGlideLockX != null) { player.x = player.drillGlideLockX; player.vx = 0; }
       if (player.drillGlideLockY != null) { player.y = player.drillGlideLockY; player.vy = 0; }
       // Drill-axis velocity is left alone — input can build up normally,
-      // capped by TOP_SPEED / MAX_FALL clamps. We prevent the catapult by
+      // capped by the TOP_SPEED / flyTune.maxFall clamps. We prevent the catapult by
       // skipping the drill-axis motion sweep below (glide owns position),
       // not by zeroing velocity. That way the rig exits the glide already
       // moving at natural cruise speed and there's no lurch.
@@ -156,11 +137,11 @@
     }
 
     // Input
-    var moveL = keys['ArrowLeft'] || keys['a'] || keys['A'] || dpad.left || flightTouch.rotL;
-    var moveR = keys['ArrowRight'] || keys['d'] || keys['D'] || dpad.right || flightTouch.rotR;
+    var moveL = keys['ArrowLeft'] || keys['a'] || keys['A'] || dpad.left;
+    var moveR = keys['ArrowRight'] || keys['d'] || keys['D'] || dpad.right;
     if (devMode) { jelloDbg.input = (moveR ? 1 : 0) - (moveL ? 1 : 0); jelloDbg.onJello = false; jelloDbg.carryReal = 0; jelloDbg.effCarry = 0; jelloDbg.injected = 0; }
     player.jelloGroundT = Math.max(0, (player.jelloGroundT || 0) - dt);   // coyote: "on a cube top" debounce (refreshed when grounded; gates fling+plow through the onJello flicker)
-    var moveU = keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '] || keys['Space'] || keys['Spacebar'] || dpad.up || flightTouch.thrust;
+    var moveU = keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '] || keys['Space'] || keys['Spacebar'] || dpad.up;
     var moveD = keys['ArrowDown'] || keys['s'] || keys['S'] || dpad.down;
 
     // Edge detection — true only on the frame an input was just pressed.
@@ -442,9 +423,7 @@
     //   - Gravity relief while thrusting: lighter pull while jet is held,
     //     making sustained climbs feel like a true rocket, not a wet noodle
     var TOP_SPEED = 200;
-    var ROCKET_SIDE_SPEED_LIMIT = 390;  // above-ground sideways cap, ~28 MPH (px/s / 32 * 2.237). Fixed, upgrade-independent.
     var ACC_GROUND = 2000;
-    var TURN_BOOST = 1.9;
     var TURN_BRAKE_GROUND = 1650;  // extra braking while reversing on ground
     var FRIC_GROUND = 1150;
     var FRIC_GROUND_SKID = 220;     // low friction while landing with rocket overspeed
@@ -459,106 +438,46 @@
     //      of ramping. The ramp is preserved past TAP_FLOOR for hold polish.
     //   3. Hard release — spool collapses in ~7ms on key release. The
     //      thrust force vanishes; the velocity you built coasts.
-    var THRUST_FORCE_MAX = 1400;        // peak upward force (px/s²)
-    var THRUST_TERMINAL = -320;         // peak upward velocity (px/s) — above-ground legacy climb
-    // v24.59 — UNDERGROUND vertical climb (dig-out) gets its own, stronger force +
-    // terminal pair so the booster/rocket upgrade can actually speed it up. Above
-    // ground the climb stays on THRUST_* at the fixed FLIGHT_ABOVE_MULT and is
-    // never touched by upgrades. At the base booster tier (x0.70) the
-    // force-vs-gravity balance settles near -173 px/s (~12 MPH); each rocket tier
-    // raises it (roughly 12 / 17 / 20 / 24 / 27 MPH for tiers 1..5).
-    var UG_VERT_FORCE = 1100;           // underground peak upward force (px/s^2)
-    var UG_VERT_TERMINAL = -560;        // underground nominal terminal (headroom anchor)
-    // Above-ground flight thrust is frozen at this fixed multiplier instead of the
-    // booster's per-tier value, so buying rockets never changes above-ground feel.
-    // 0.70 = today's starting feel; raise toward 1.00 for the snappier anchor feel.
-    var FLIGHT_ABOVE_MULT = 0.70;
-    var THRUST_TILT_INPUT_MAX = 0.54;   // desired body bank while steering in flight
-    var THRUST_SIDE_AUTHORITY = 0.88;   // effective side thrust after rig mass/inertia
-    var SIDE_THRUST_COOK_RISE = 2.6;    // 1/sec horizontal thrust authority build-up
-    var SIDE_THRUST_COOK_FALL = 3.4;    // 1/sec side burn vent/reset
-    var ROCKET_SIDE_DRAG_LINEAR = 0.45; // 1/sec aerodynamic damping (raised so coasting bleeds quicker)
-    var ROCKET_SIDE_DRAG_QUAD = 0.00120;// v² drag; creates a soft sideways terminal
-    var FLIGHT_TILT_MAX = 0.56;         // visual/physics bank cap (~32°)
-    var FLIGHT_TILT_SPRING = 230;       // angular spring toward desired bank (raised for snappier reverse)
-    var FLIGHT_TILT_DAMP = 18.0;        // angular damping for inertial bank
-    var REVERSE_THRUST_BOOST = 1.85;    // side-thrust multiplier when banking opposes current vx
     var THRUST_SPOOL_RISE = 48;         // 1/sec — full in ~20ms after the tap floor
     var THRUST_SPOOL_FALL = 145;        // 1/sec — gone in ~7ms (clean cutoff)
     var THRUST_SPOOL_TAP_FLOOR = 0.68;  // spool snaps to this on press edge
     var TAP_IMPULSE_DELTA = 150;        // px/s velocity kick on tap
     var TAP_IMPULSE_FLOOR = -160;       // tap clamps vy no lower than this
     var TAP_FUEL_COST = 0.05;           // small per-tap fuel cost
-    var SIDE_THRUSTER_IMPULSE = 92;      // astronaut-suit nudge for surface liftoff / tunnel exit
-    var SIDE_THRUSTER_SPEED_CAP = 260;   // cap after the impulse so pulses stay minute
-    var SIDE_THRUSTER_FUEL_COST = 0.025;
-    var SIDE_THRUSTER_LIFTOFF_WINDOW = 0.4; // seconds after leaving ground to spend the side puff
-    var SURFACE_EXIT_PUFF_GRACE = 0.50;  // starts once the whole rig clears the tunnel mouth
-    var UNDERGROUND_AIR_SPEED = 185;     // direct in-air steering while below the surface
-    var UNDERGROUND_AIR_ACCEL = 1100;
-    var UNDERGROUND_AIR_TURN_BRAKE = 1050;
-    var UNDERGROUND_AIR_FRIC = 430;
-    var UNDERGROUND_AIR_OVERSPEED_BLEED = 900;
+    var FLIGHT_TILT_MAX = 0.56;         // visual bank cap (~32 deg): a lean, not physics
+    var FLIGHT_TILT_SPRING = 230;       // angular spring toward desired bank
+    var FLIGHT_TILT_DAMP = 18.0;        // angular damping for inertial bank
     var HOVER_ASSIST = 220;         // anti-grav force when near zero vy
     var HOVER_BAND = 80;            // |vy| within which hover is full strength
     var COYOTE_T = 0.10;            // seconds of grace after leaving ground
     var JET_BUFFER_T = 0.10;        // seconds jet press is buffered forward (reserved for future drill-cancel use; does not affect held jet)
-    var GRAVITY_PLAYER = 760;       // heavier than world GRAVITY for bite
-    var GRAVITY_RELIEF = 0.30;      // gravity scaled DOWN while jet active
-    var MAX_FALL = 740;             // terminal fall speed
     // ---- Stage 2: hover-settle + apex easing ----
     // Hover-settle (Terraria UFO): when jet is released near zero vy, damp
     // toward zero so the rig parks instead of drifting. Only applies when no
     // jet input is held — held jet uses HOVER_ASSIST above for the same job.
     // Apex easing (Hollow Knight): gravity is briefly reduced near vy=0 so
     // the top of an ascent hangs a beat longer. Short and strong, not long
-    // and weak — band stays well below |TERMINAL|/3.
+    // and weak — band stays well below |climbTerm|/3.
     var HOVER_SETTLE_BAND = 60;     // |vy| under which settle damping applies
     var HOVER_SETTLE_DAMP = 5.5;    // 1/sec damping rate (vy *= exp(-k*dt))
     var APEX_EASING_BAND = 80;      // |vy| under which gravity is reduced
     var APEX_EASING_FACTOR = 0.5;   // gravity multiplier at vy=0 inside band
+    // v25.49: the catch multiplier (flyTune.catch) smoothsteps in across this
+    // band of falling speed so force is continuous through the apex; without
+    // it the vy=0 crossing would step by climbForce*(catch-1)*spool.
+    var CATCH_BAND = 60;            // px/s of fall over which the catch fades in
+    // Gravity, terminal fall, thrust and horizontal authority all live in
+    // flyTune (020, the 'fly' gm group): ONE constant set, sky + underground.
 
     var undergroundNow = playerIsUnderground();
-    var undergroundAirControl = undergroundNow && !player.onGround && !drilling;
-    // v24.1 — rotation flight persists ~3 BLOCKS below the surface before handing
-    // off to the underground (axis-aligned) flight + d-pad, so a dive doesn't snap
-    // the controls the instant you cross the surface. Flight-only threshold; the
-    // global `undergroundNow` (collision / biome / render) is untouched.
-    var flightDeepUnder = (player.y + PLAYER_H * 0.65) > (SKY_ROWS * TILE + 3 * TILE);
-    // v23.70 — rotational free-flight: within ~3 blocks of the surface, airborne,
-    // not drilling, mode 1. When true the legacy jet/tilt/gravity block below is
-    // replaced by the rotational integrator; both converge on the shared sweep.
-    var rotFlight = flightTune.mode === 1 && !flightDeepUnder && !player.onGround && !drilling;
-    // v24.145 — VTOL hover flight (mode 2): same gate shape, its own integrator
-    // below. Ground / underground / drilling stay on the legacy code in every mode.
-    var vtolFlight = flightTune.mode === 2 && !flightDeepUnder && !player.onGround && !drilling;
-    // v23.88 — coyote timer for "just left the ground", so rotation flight takes
-    // off UPRIGHT from the ground (even while holding thrust) instead of seeding
-    // the heading from launch velocity. Set while grounded, decays in the air.
-    if (player.onGround) player.flightGroundT = 0.18;
-    else player.flightGroundT = Math.max(0, (player.flightGroundT || 0) - dt);
-    var surfaceClearedNow = playerHasClearedSurface();
-    if (undergroundNow) {
-      player.surfaceThrusterPending = false;
-      player.surfaceThrusterGraceT = 0;
-      player.sideThrusterT = 0;
-      player.sideThrusterDir = 0;
-      if (sideThrusterPuffs) sideThrusterPuffs.length = 0;
-    } else if (player.wasUnderground) {
-      player.surfaceThrusterPending = true;
-      player.surfaceThrusterGraceT = 0;
-    }
-    if (player.surfaceThrusterPending && surfaceClearedNow) {
-      player.surfaceThrusterPending = false;
-      player.surfaceThrusterGraceT = SURFACE_EXIT_PUFF_GRACE;
-    } else if (player.surfaceThrusterGraceT > 0) {
-      player.surfaceThrusterGraceT -= dt;
-      if (player.surfaceThrusterGraceT < 0) player.surfaceThrusterGraceT = 0;
-    }
-    player.wasUnderground = undergroundNow;
+    // v25.49: ONE flight model everywhere. The mode gates (rotation / VTOL /
+    // legacy), the 3-block flightDeepUnder handoff band, and the separate
+    // underground air-control envelope are gone; the same integrator and the
+    // same flyTune numbers run everywhere. undergroundNow survives for biome
+    // flavor (the audio wind bed) only. It gates no physics.
 
     // Coyote and jet-buffer bookkeeping
-    // flight2 FX event counters (consumers diff the N fields; never reset).
+    // FX event counters (consumers diff the N fields; never reset).
     if (!player.fx) player.fx = { igniteN: 0, boomN: 0, vaporN: 0, landN: 0, landVy: 0, landTilt: 0 };
     if (player.onGround) {
       if (!player._groundWas && (player.airTime || 0) > 0.22) {
@@ -574,7 +493,6 @@
       player.coyoteT = COYOTE_T;
       player.airTime = 0;
       player.peakFallVy = 0;
-      player.sideThrusterCharged = true;
       resetFlightBank();
     } else {
       player.coyoteT = Math.max(0, player.coyoteT - dt);
@@ -585,45 +503,12 @@
     if (player.edgeMoveU) player.jetBufferT = JET_BUFFER_T;
     else player.jetBufferT = Math.max(0, player.jetBufferT - dt);
 
-    var sideThrusterAvailable = !rotFlight && !vtolFlight && !undergroundNow && !player.onGround && player.airTime <= SIDE_THRUSTER_LIFTOFF_WINDOW && !drilling && player.fuel > 0;
-    var surfaceExitThrusterAvailable = !rotFlight && !vtolFlight && player.surfaceThrusterGraceT > 0 && !drilling && player.fuel > 0;
-    var sidePulseDir = 0;
-    var useSideGrace = false;
-    if ((sideThrusterAvailable || surfaceExitThrusterAvailable) && moveL !== moveR) {
-      if (surfaceExitThrusterAvailable) {
-        sidePulseDir = moveR ? 1 : -1;
-        useSideGrace = true;
-      } else if (sideThrusterAvailable && player.sideThrusterCharged) {
-        if (player.edgeMoveL) sidePulseDir = -1;
-        else if (player.edgeMoveR) sidePulseDir = 1;
-      }
-    }
-    if (sidePulseDir !== 0) {
-      var sideImpulse = SIDE_THRUSTER_IMPULSE * (useSideGrace ? 2.0 : 1);
-      player.vx += sidePulseDir * sideImpulse;
-      if (player.vx > SIDE_THRUSTER_SPEED_CAP) player.vx = SIDE_THRUSTER_SPEED_CAP;
-      if (player.vx < -SIDE_THRUSTER_SPEED_CAP) player.vx = -SIDE_THRUSTER_SPEED_CAP;
-      player.sideThrusterT = 0.16;
-      player.sideThrusterDir = sidePulseDir;
-      spawnSideThrusterPuff(-sidePulseDir);
-      if (useSideGrace) player.surfaceThrusterGraceT = 0;
-      else player.sideThrusterCharged = false;
-      player.fuel -= SIDE_THRUSTER_FUEL_COST;
-      if (player.fuel < 0) player.fuel = 0;
-    }
-    if (player.sideThrusterT > 0) {
-      player.sideThrusterT -= dt;
-      if (player.sideThrusterT < 0) player.sideThrusterT = 0;
-    }
-    var deployTarget = (sideThrusterAvailable || surfaceExitThrusterAvailable || player.sideThrusterT > 0) ? 1 : 0;
-    player.sideThrusterDeploy += (deployTarget - player.sideThrusterDeploy) * Math.min(1, dt * 10);
-
-    // In open air, left/right input changes attitude and the rocket provides
-    // lateral force. Underground, it directly steers the rig for tight tunnels.
-    var jetIntent = player.fuel > 0 && (moveU || player.thrustSpool > 0.08);
+    // Horizontal drive: the ground keeps the platformer tread (instant kick,
+    // turnaround brake, skid); the air is DIRECT authority with the same
+    // accel, cap, friction and reversal bite above ground and underground.
     // Jello grip: slightly slippery when standing on a gel blob. 1.0 on solid ground.
     var _jelloGrip = (player.onGround && player.onJello) ? JELLO_GROUND_GRIP : 1.0;
-    var acc = (player.onGround ? ACC_GROUND : (undergroundAirControl ? UNDERGROUND_AIR_ACCEL : 0)) * _jelloGrip;
+    var acc = (player.onGround ? ACC_GROUND : flyTune.acc) * _jelloGrip;
 
     // Gentle post-drill centering assist. It nudges the rig into a freshly
     // opened downward shaft without injecting a big velocity spike.
@@ -649,32 +534,38 @@
       // older "left wins" behavior and matches what most platformers do.
       var dirIn = moveR ? 1 : -1;
       var reversing = (dirIn > 0 && player.vx < -8) || (dirIn < 0 && player.vx > 8);
-      if (reversing && (player.onGround || undergroundAirControl)) {
-        var brake = (player.onGround ? TURN_BRAKE_GROUND : UNDERGROUND_AIR_TURN_BRAKE) * dt;
+      if (reversing && player.onGround) {
+        var brake = TURN_BRAKE_GROUND * dt;
         if (player.vx > 0) {
           player.vx = Math.max(0, player.vx - brake);
         } else {
           player.vx = Math.min(0, player.vx + brake);
         }
       }
-      // Active turnaround: ground gets a slight tread-shift because the
-      // brake above eats the old velocity before full pull-away. Open air
-      // still leaves translation to bank + boosters; underground air gets
-      // direct acceleration for readable tunnel navigation.
+      // Active turnaround: the ground gets a slight tread-shift because the
+      // brake above eats the old velocity; the air multiplies authority while
+      // opposing your own vx (flyTune.revBoost) so a dodge-flip is immediate.
       var accNow = reversing
-        ? (player.onGround ? acc * 0.72 : (undergroundAirControl ? acc * 0.85 : acc * TURN_BOOST))
+        ? (player.onGround ? acc * 0.72 : acc * flyTune.revBoost)
         : acc;
-      var inputSpeedLimit = player.onGround ? TOP_SPEED : (undergroundAirControl ? UNDERGROUND_AIR_SPEED : (jetIntent ? ROCKET_SIDE_SPEED_LIMIT : TOP_SPEED));
+      var inputSpeedLimit = player.onGround ? TOP_SPEED : flyTune.speed;
       var pushingPastLimit = (dirIn > 0 && player.vx >= inputSpeedLimit) ||
                              (dirIn < 0 && player.vx <= -inputSpeedLimit);
-      if (pushingPastLimit) accNow = 0;
-      if (accNow !== 0) player.vx += dirIn * accNow * dt;
+      if (!pushingPastLimit && accNow !== 0) {
+        // Input alone never pushes PAST the cap, but never confiscates
+        // over-cap speed that was already earned (dive exits, jello flings).
+        var _prevVx = player.vx;
+        player.vx += dirIn * accNow * dt;
+        if (player.vx > inputSpeedLimit && _prevVx <= inputSpeedLimit) player.vx = inputSpeedLimit;
+        else if (player.vx < -inputSpeedLimit && _prevVx >= -inputSpeedLimit) player.vx = -inputSpeedLimit;
+      }
       // Instant tap kick: only on edge press, only when starting from low/wrong-sign vx,
       // and only on the ground (in the air it would feel like a teleport-step).
       var edgeTap = (dirIn > 0 && player.edgeMoveR) || (dirIn < 0 && player.edgeMoveL);
-      // air-pulse: the underground horizontal thruster puff — one per fresh
-      // tap (pool of 6 + jitter keeps rapid tapping from machine-gunning).
-      if (edgeTap && !player.onGround && undergroundAirControl) {
+      // air-pulse: the horizontal thruster puff, one per fresh airborne tap
+      // (pool of 6 + jitter keeps rapid tapping from machine-gunning). Was
+      // underground-only; the one model puffs everywhere airborne.
+      if (edgeTap && !player.onGround) {
         sfxPlay('air-pulse', { pan: 0.25 * dirIn });
       }
       if (edgeTap && player.onGround) {
@@ -684,180 +575,54 @@
         }
       }
     } else {
-      // No directional input — friction toward zero
+      // No directional input: friction toward zero (the air uses flyTune.fric,
+      // the same gentle bleed above ground and underground).
       var fric = player.onGround
         ? (Math.abs(player.vx) > TOP_SPEED ? FRIC_GROUND_SKID : FRIC_GROUND) * _jelloGrip
-        : (undergroundAirControl ? UNDERGROUND_AIR_FRIC : 0);
+        : flyTune.fric;
       if (fric > 0) {
         if (player.vx > 0) { player.vx -= fric * dt; if (player.vx < 0) player.vx = 0; }
         else if (player.vx < 0) { player.vx += fric * dt; if (player.vx > 0) player.vx = 0; }
       }
     }
-    // Horizontal safety cap. Ground drive tops out at TOP_SPEED by refusing
-    // further same-direction acceleration above; rocket inertia can carry
-    // much higher and then skids down under ground friction after landing.
+    // Horizontal caps. Ground drive tops out at TOP_SPEED by refusing further
+    // same-direction acceleration above; landing overspeed skids down under
+    // ground friction. Airborne overspeed bleeds exponentially instead of
+    // hitting a wall, so earned momentum stays meaningful for a beat or two.
     if (player.onGround && Math.abs(player.vx) > TOP_SPEED) {
       var skidSign = player.vx > 0 ? 1 : -1;
       var skidBleed = Math.min(Math.abs(player.vx) - TOP_SPEED, FRIC_GROUND_SKID * 0.55 * dt);
       player.vx -= skidSign * skidBleed;
     }
-    if (undergroundAirControl && Math.abs(player.vx) > UNDERGROUND_AIR_SPEED) {
-      var airSkidSign = player.vx > 0 ? 1 : -1;
-      var airBleed = Math.min(Math.abs(player.vx) - UNDERGROUND_AIR_SPEED, UNDERGROUND_AIR_OVERSPEED_BLEED * dt);
-      player.vx -= airSkidSign * airBleed;
-    }
-    // flight2: while the aero layer is live in rotation flight, the hard
-    // sideways clamp is OFF — the dive-earned soft cap (aero drag wall in the
-    // rotFlight branch) owns the envelope instead, so dive momentum survives.
-    // VTOL likewise owns its envelope (cruise cap + gentle over-cap bleed in
-    // its branch). The NMZ storm-shear cap below stays for all (zone balance).
-    var f2rot = rotFlight && flight2.ENABLE > 0;
-    if (!f2rot && !vtolFlight) {
-      if (player.vx > ROCKET_SIDE_SPEED_LIMIT) player.vx = ROCKET_SIDE_SPEED_LIMIT;
-      if (player.vx < -ROCKET_SIDE_SPEED_LIMIT) player.vx = -ROCKET_SIDE_SPEED_LIMIT;
+    if (!player.onGround) {
+      var _vxa = Math.abs(player.vx);
+      if (_vxa > flyTune.speed) {
+        var _vxEx = (_vxa - flyTune.speed) * Math.exp(-flyTune.overBleed * dt);
+        player.vx = (player.vx > 0 ? 1 : -1) * (flyTune.speed + _vxEx);
+      }
     }
     // Storm-shear headwind: tighter sideways cap above the flak deck in a zone.
     if (nmzShear && nmzShear.speed < 1) {
-      var _shearCap = ROCKET_SIDE_SPEED_LIMIT * nmzShear.speed;
+      var _shearCap = flyTune.speed * nmzShear.speed;
       if (player.vx > _shearCap) player.vx = _shearCap;
       if (player.vx < -_shearCap) player.vx = -_shearCap;
     }
 
-    // v23.70 / v24.145 — three flight integrators: VTOL hover (mode 2) first,
-    // then the legacy axis-aligned jet (mode 0, plus ground/underground for all
-    // modes), then rotational free-flight (mode 1). The legacy region below is
-    // left at its original indentation to keep the diff minimal; it runs
-    // verbatim when neither sky model is active.
-    if (vtolFlight) {
-      // ===== VTOL hover flight (above-ground, mode 2) — v24.145 =====
-      // "Wings" handling on the same diesel rocket: upright rig (no heading),
-      // moveU climbs, L/R is DIRECT horizontal authority with reversal bite,
-      // release drifts on mild air friction. Fuel is the only limiter — no
-      // flight meter, no run-dry glide, full fall damage. The vertical model
-      // is the legacy jet's proven shape (tap kick, spool, headroom toward a
-      // terminal, hover assist, gravity relief, apex easing, hover-settle) at
-      // sky authority. The WHOLE envelope lerps to the underground air numbers
-      // across the 3-block handoff band (skyT below), so the legacy takeover
-      // at flightDeepUnder is a seamless parameter slide, not a control flip.
-      // Tunables: vtolTune (020, the 'vtol' gm group / L-panel presets).
-      var vt = vtolTune;
-      player.rotFlightActive = false;
+    // ===== The ONE flight model (v25.49 rebuild) =====
+    // Upright rig, axis-aligned thrust; sky and underground are byte-identical
+    // (no modes, no handoff band). Vertical = the proven jet stack (tap kick,
+    // spool, headroom envelope toward flyTune.climbTerm, hover assist, gravity
+    // relief, apex easing, hover settle) plus the NEW catch asymmetry: thrust
+    // is multiplied by flyTune.catch while FALLING, so a long fall arrests in
+    // about 0.9 s at booster tier 1 (net ~830 px/s^2) while the launch stays
+    // gentle (net ~350 px/s^2 toward a ~166 px/s sustained climb). The
+    // horizontal half (direct authority, the old VTOL shape) lives in the
+    // input block above; this block owns the vertical, the bank, and the
+    // shared tails. Tunables: flyTune (020, 'fly' gm group / FLY FEEL strip).
 
-      // Depth blend — 1 = rig clear of the surface line, 0 = at the handoff.
-      // Same foot anchor as the flightDeepUnder gate so the two agree.
-      var _vtFoot = player.y + PLAYER_H * 0.65;
-      var _vtSkyT = 1 - Math.max(0, Math.min(1, (_vtFoot - SKY_ROWS * TILE) / (3 * TILE)));
-      var _vtUgT = 1 - _vtSkyT;
-
-      // --- Horizontal: direct air control (the wings half) ---
-      var _vtAcc  = vt.acc   * _vtSkyT + UNDERGROUND_AIR_ACCEL * _vtUgT;
-      var _vtCap  = vt.speed * _vtSkyT + UNDERGROUND_AIR_SPEED  * _vtUgT;
-      var _vtFric = vt.fric  * _vtSkyT + UNDERGROUND_AIR_FRIC   * _vtUgT;
-      var _vtDir = (moveR ? 1 : 0) - (moveL ? 1 : 0);
-      if (_vtDir !== 0) {
-        // Reversal bite: opposing your own vx multiplies authority so a
-        // dodge-flip is immediate (the combat half of "easy but variable").
-        var _vtRev = (_vtDir * player.vx < -8) ? vt.revBoost : 1;
-        var _vtPast = (_vtDir > 0 && player.vx >= _vtCap) || (_vtDir < 0 && player.vx <= -_vtCap);
-        if (!_vtPast) {
-          var _vtPrevVx = player.vx;
-          player.vx += _vtDir * _vtAcc * _vtRev * dt;
-          // Input alone never pushes PAST the cap — but never confiscates
-          // over-cap speed that was already earned (rings, dive exits).
-          if (player.vx > _vtCap && _vtPrevVx <= _vtCap) player.vx = _vtCap;
-          else if (player.vx < -_vtCap && _vtPrevVx >= -_vtCap) player.vx = -_vtCap;
-        }
-      } else if (player.vx !== 0) {
-        var _vtF = _vtFric * dt;
-        if (player.vx > 0) { player.vx -= _vtF; if (player.vx < 0) player.vx = 0; }
-        else { player.vx += _vtF; if (player.vx > 0) player.vx = 0; }
-      }
-      // Earned overspeed bleeds exponentially instead of hitting a wall, so
-      // boost rings / momentum carries stay meaningful for a beat or two.
-      var _vtVxa = Math.abs(player.vx);
-      if (_vtVxa > _vtCap) {
-        var _vtEx = (_vtVxa - _vtCap) * Math.exp(-vt.overBleed * dt);
-        player.vx = (player.vx > 0 ? 1 : -1) * (_vtCap + _vtEx);
-      }
-
-      // --- Vertical: the proven legacy jet shape at sky authority ---
-      if (player.edgeMoveU && player.fuel > 0) {
-        var _vtTapVy = player.vy - TAP_IMPULSE_DELTA;
-        if (_vtTapVy < TAP_IMPULSE_FLOOR) _vtTapVy = TAP_IMPULSE_FLOOR;
-        if (_vtTapVy < player.vy) {
-          player.vy = _vtTapVy;
-          if (player.thrustSpool < THRUST_SPOOL_TAP_FLOOR) player.thrustSpool = THRUST_SPOOL_TAP_FLOOR;
-          player.fuel -= TAP_FUEL_COST;
-          if (player.fuel < 0) player.fuel = 0;
-        }
-      }
-      var _vtHeld = moveU && player.fuel > 0;
-      if (_vtHeld && !player._thrustWas) player.fx.igniteN++;
-      player._thrustWas = _vtHeld;
-      if (_vtHeld) player.thrustSpool = Math.min(1, player.thrustSpool + dt * THRUST_SPOOL_RISE);
-      else player.thrustSpool = Math.max(0, player.thrustSpool - dt * THRUST_SPOOL_FALL);
-
-      if (player.thrustSpool > 0.001) {
-        var _vtTerm = vt.climbTerm * _vtSkyT + UG_VERT_TERMINAL * _vtUgT;
-        var _vtFmax = vt.climbForce * _vtSkyT + UG_VERT_FORCE * _vtUgT;
-        // v24.59 rule kept: upgrades never change ABOVE-ground flight; the
-        // booster multiplier fades in only across the handoff band so the
-        // climb meets the (boosted) underground numbers at the line.
-        var _vtMult = _vtSkyT + getBoosterThrustMult() * _vtUgT;
-        var _vtHead = (player.vy - _vtTerm) / Math.max(1, Math.abs(_vtTerm));
-        if (_vtHead < 0) _vtHead = 0; else if (_vtHead > 1) _vtHead = 1;
-        var _vtForce = _vtFmax * player.thrustSpool * _vtHead * _vtMult;
-        var _vtVya = Math.abs(player.vy);
-        if (_vtVya < HOVER_BAND) {
-          var _vtHk = 1 - (_vtVya / HOVER_BAND);
-          _vtHk = _vtHk * _vtHk * (3 - 2 * _vtHk);    // smoothstep
-          _vtForce += HOVER_ASSIST * _vtHk * player.thrustSpool;
-        }
-        player.vy -= _vtForce * dt;
-        player.fuel -= DRILL_FUEL * 0.5 * player.thrustSpool * (nmzShear ? nmzShear.fuel : 1) * dt;
-        if (player.fuel < 0) player.fuel = 0;
-      }
-      // Legacy's side-burn glow state decays here too so the plume never
-      // carries a stale cook value across a mode hop.
-      player.sideThrustCook = Math.max(0, (player.sideThrustCook || 0) - SIDE_THRUST_COOK_FALL * dt);
-      player.thrusting = player.thrustSpool > 0.15;
-
-      // Gravity with relief while lit + apex hang near vy=0 + hover-settle on
-      // release — shared constants with the legacy jet so the regimes rhyme.
-      gravScale = 1 - vt.gravRelief * player.thrustSpool;
-      var _vtVyApex = Math.abs(player.vy);
-      if (_vtVyApex < APEX_EASING_BAND) {
-        var _vtAk = 1 - (_vtVyApex / APEX_EASING_BAND);
-        _vtAk = _vtAk * _vtAk * (3 - 2 * _vtAk);    // smoothstep
-        gravScale *= 1 - (1 - APEX_EASING_FACTOR) * _vtAk;
-      }
-      player.vy += vt.gravity * gravScale * dt;
-      if (!moveU && player.thrustSpool < 0.05 && Math.abs(player.vy) < HOVER_SETTLE_BAND) {
-        player.vy *= Math.exp(-HOVER_SETTLE_DAMP * dt);
-      }
-
-      // Visual bank only — the physics is axis-aligned. Input lean + a touch
-      // of speed lean on the same spring as the legacy flight, so drawPlayer
-      // and the plume (thrustVec) read the motion via the shared bodyTilt.
-      var _vtTiltT = _vtDir * vt.tilt +
-        Math.max(-1, Math.min(1, player.vx / Math.max(1, vt.speed))) * 0.10;
-      if (_vtTiltT > FLIGHT_TILT_MAX) _vtTiltT = FLIGHT_TILT_MAX;
-      if (_vtTiltT < -FLIGHT_TILT_MAX) _vtTiltT = -FLIGHT_TILT_MAX;
-      player.flightTiltVel += (_vtTiltT - player.flightTilt) * FLIGHT_TILT_SPRING * dt;
-      player.flightTiltVel *= Math.exp(-FLIGHT_TILT_DAMP * dt);
-      player.flightTilt += player.flightTiltVel * dt;
-      if (player.flightTilt > FLIGHT_TILT_MAX) { player.flightTilt = FLIGHT_TILT_MAX; player.flightTiltVel = 0; }
-      if (player.flightTilt < -FLIGHT_TILT_MAX) { player.flightTilt = -FLIGHT_TILT_MAX; player.flightTiltVel = 0; }
-      player.thrustVecX = Math.sin(player.flightTilt || 0);
-      player.thrustVecY = -Math.cos(player.flightTilt || 0);
-    } else if (!rotFlight) {
-    player.rotFlightActive = false;
-
-    // ---- Jet thrust (variable: tap-burst + hold-climb + clean release) ----
-
-    // 1. Tap impulse — frame-rate-independent velocity kick on the press edge.
-    //    Won't fire if you're already climbing faster than the impulse target,
-    //    so a follow-up tap during a powered ascent doesn't slow you down.
+    // 1. Tap impulse: frame-rate-independent velocity kick on the press edge.
+    //    Won't fire if already climbing faster than the impulse target, so a
+    //    follow-up tap during a powered ascent doesn't slow you down.
     if (player.edgeMoveU && player.fuel > 0) {
       var tapTargetVy = player.vy - TAP_IMPULSE_DELTA;
       if (tapTargetVy < TAP_IMPULSE_FLOOR) tapTargetVy = TAP_IMPULSE_FLOOR;
@@ -872,124 +637,56 @@
       }
     }
 
-    // 2. Held thrust — clean release: only the live moveU keeps the spool
-    //    alive. jetBufferT is preserved as state but no longer drives the
-    //    spool, so a quick tap-release is *immediately* a release (no drift).
+    // 2. Held thrust, clean release: only the live moveU keeps the spool
+    //    alive, so a quick tap-release is *immediately* a release (no drift).
     var jetHeld = moveU && player.fuel > 0;
+    if (jetHeld && !player._thrustWas) player.fx.igniteN++;
+    player._thrustWas = jetHeld;
     if (jetHeld) {
       player.thrustSpool = Math.min(1, player.thrustSpool + dt * THRUST_SPOOL_RISE);
     } else {
       player.thrustSpool = Math.max(0, player.thrustSpool - dt * THRUST_SPOOL_FALL);
     }
 
-    // Body-mounted vector thrust: horizontal input banks the airborne rig
-    // whether or not the booster is lit. The booster only decides whether
-    // that attitude produces force.
-    var bankInputX = 0;
-    if (moveL !== moveR) bankInputX = moveR ? 1 : -1;
-    var speedBank = Math.max(-1, Math.min(1, player.vx / TOP_SPEED)) * 0.08;
-    var targetTilt = 0;
-    if (!playerInMiningPose() && !player.onGround && !undergroundAirControl) {
-      // One steering posture: pressing left/right asks for the same bank
-      // whether you're reversing or already moving that way. Velocity still
-      // adds a tiny lean so fast travel reads in the sprite, but input no
-      // longer has two different tilt levels.
-      targetTilt = bankInputX * THRUST_TILT_INPUT_MAX + speedBank;
-    }
-    if (targetTilt > FLIGHT_TILT_MAX) targetTilt = FLIGHT_TILT_MAX;
-    if (targetTilt < -FLIGHT_TILT_MAX) targetTilt = -FLIGHT_TILT_MAX;
-    if (player.onGround || playerInMiningPose() || undergroundAirControl) {
-      resetFlightBank();
-    } else {
-      player.flightTiltVel += (targetTilt - player.flightTilt) * FLIGHT_TILT_SPRING * dt;
-      player.flightTiltVel *= Math.exp(-FLIGHT_TILT_DAMP * dt);
-      player.flightTilt += player.flightTiltVel * dt;
-      if (player.flightTilt > FLIGHT_TILT_MAX) { player.flightTilt = FLIGHT_TILT_MAX; player.flightTiltVel = 0; }
-      if (player.flightTilt < -FLIGHT_TILT_MAX) { player.flightTilt = -FLIGHT_TILT_MAX; player.flightTiltVel = 0; }
-    }
-    player.thrustVecX = Math.sin(player.flightTilt || 0);
-    player.thrustVecY = -Math.cos(player.flightTilt || 0);
-    var lateralBurn = jetHeld && !player.onGround && Math.abs(player.thrustVecX) > 0.035;
-    if (lateralBurn) {
-      player.sideThrustCook = Math.min(1, (player.sideThrustCook || 0) + SIDE_THRUST_COOK_RISE * dt);
-    } else {
-      player.sideThrustCook = Math.max(0, (player.sideThrustCook || 0) - SIDE_THRUST_COOK_FALL * dt);
-    }
-
+    // 3. Climb force through the headroom envelope, catch-boosted against a
+    //    fall. Runs while grounded too: that IS the takeoff path (vy goes
+    //    negative, the collision sweep lifts the rig off the tiles).
+    var _flyCatchK = 1;
+    var _flyForce = 0;
     if (player.thrustSpool > 0.001) {
-      // Tilt-scaled terminal: banking trims climb speed, but no longer
-      // crushes vertical movement toward zero. You should be able to steer
-      // while still meaningfully rising.
-      // v24.59 — only the UNDERGROUND climb reads the booster/rocket upgrade, and
-      // it uses the stronger UG_VERT_* pair so the upgrade actually speeds the
-      // dig-out (~20 MPH at the base tier, rising per tier). Above ground the climb
-      // is frozen at FLIGHT_ABOVE_MULT so upgrades never change above-ground flight.
-      var ugClimb = undergroundNow;
-      var climbTerminal = ugClimb ? UG_VERT_TERMINAL : THRUST_TERMINAL;
-      var climbForceMax = ugClimb ? UG_VERT_FORCE : THRUST_FORCE_MAX;
-      var climbMult = ugClimb ? getBoosterThrustMult() : FLIGHT_ABOVE_MULT;
-      var tiltFracForTerm = Math.min(1, Math.abs(player.flightTilt || 0) / FLIGHT_TILT_MAX);
-      var effTerminal = climbTerminal * (1 - tiltFracForTerm * 0.35);
-      var THRUST_TERMINAL_FADE = Math.abs(climbTerminal);
-      var headroom = (player.vy - effTerminal) / THRUST_TERMINAL_FADE;
+      var headroom = (player.vy - flyTune.climbTerm) / Math.max(1, Math.abs(flyTune.climbTerm));
       if (headroom < 0) headroom = 0;
       else if (headroom > 1) headroom = 1;
-      var force = climbForceMax * player.thrustSpool * headroom * climbMult;
-
-      // Hover assist: extra anti-grav near zero vy. Falls off as |vy| grows
-      // beyond HOVER_BAND so it doesn't fight terminal climb. Smoothstep gives
-      // a gentle, predictable transition between hover and full climb.
+      if (player.vy > 0 && flyTune.catch > 1) {
+        var _ck = Math.min(1, player.vy / CATCH_BAND);
+        _ck = _ck * _ck * (3 - 2 * _ck);    // smoothstep
+        _flyCatchK = 1 + (flyTune.catch - 1) * _ck;
+      }
+      var force = flyTune.climbForce * getBoosterThrustMult() * player.thrustSpool * headroom * _flyCatchK;
+      // Hover assist: extra anti-grav near zero vy. Falls off past HOVER_BAND
+      // so it never fights the terminal climb. Smoothstep keeps the
+      // hover-to-climb transition gentle and predictable.
       var vyAbs = Math.abs(player.vy);
       if (vyAbs < HOVER_BAND) {
         var hoverK = 1 - (vyAbs / HOVER_BAND);
         hoverK = hoverK * hoverK * (3 - 2 * hoverK);    // smoothstep
         force += HOVER_ASSIST * hoverK * player.thrustSpool;
       }
-
-      var sideCook = player.sideThrustCook || 0;
-      var sideCookCurve = sideCook <= 0 ? 0 : (0.28 + sideCook * 0.72);
-      var thrustAx = force * player.thrustVecX * THRUST_SIDE_AUTHORITY * sideCookCurve;
-      var thrustAy = force * player.thrustVecY;
-      // Reverse-thrust boost: when banking opposes current horizontal velocity,
-      // multiply lateral acceleration so coming in hot from one side and
-      // braking the other way doesn't take forever. Strongest at high |vx|.
-      if (thrustAx * player.vx < 0) {
-        var brakeStrength = Math.min(1, Math.abs(player.vx) / TOP_SPEED);
-        thrustAx *= 1 + (REVERSE_THRUST_BOOST - 1) * brakeStrength;
-      }
-      player.vx += thrustAx * dt;
-      player.vy += thrustAy * dt;
-      // No hard clamp on vy here. The smooth headroom curve above already
-      // zeros out thrust force past effTerminal, so sustained held thrust
-      // can't push beyond it. Tap impulse and momentum are free to overshoot
-      // briefly — gravity restores them, which feels natural.
-
-      // Fuel drain proportional to spool — taps cost less than holds
+      _flyForce = force;
+      player.vy -= force * dt;
+      // No hard clamp on vy here: the headroom curve already zeros sustained
+      // thrust past climbTerm. Taps and momentum may overshoot briefly and
+      // gravity restores them, which feels natural.
+      // The ONE flight fuel drain, proportional to spool (taps cost less).
       player.fuel -= DRILL_FUEL * 0.5 * player.thrustSpool * (nmzShear ? nmzShear.fuel : 1) * dt;
-    }
-    if (!player.onGround && player.thrustSpool > 0.08) {
-      var dragAx = player.vx * ROCKET_SIDE_DRAG_LINEAR +
-                   player.vx * Math.abs(player.vx) * ROCKET_SIDE_DRAG_QUAD;
-      var prevDragVx = player.vx;
-      player.vx -= dragAx * dt;
-      if (prevDragVx !== 0 && prevDragVx * player.vx < 0) player.vx = 0;
-    }
-    if (player.vx > ROCKET_SIDE_SPEED_LIMIT) player.vx = ROCKET_SIDE_SPEED_LIMIT;
-    if (player.vx < -ROCKET_SIDE_SPEED_LIMIT) player.vx = -ROCKET_SIDE_SPEED_LIMIT;
-    // Storm-shear headwind: tighter sideways cap above the flak deck in a zone.
-    if (nmzShear && nmzShear.speed < 1) {
-      var _shearCap = ROCKET_SIDE_SPEED_LIMIT * nmzShear.speed;
-      if (player.vx > _shearCap) player.vx = _shearCap;
-      if (player.vx < -_shearCap) player.vx = -_shearCap;
+      if (player.fuel < 0) player.fuel = 0;
     }
     player.thrusting = player.thrustSpool > 0.15;
 
-    // ---- Gravity (with relief while thrust active + apex easing) ----
-    var gravScale = 1 - GRAVITY_RELIEF * player.thrustSpool;
-    // Apex easing: scale gravity down near vy=0 so the apex of an ascent and
-    // the moment of suspended hover both hang a beat longer. Smoothstep keeps
-    // the transition out of the band invisible. Strongest at vy=0, gone past
-    // the band edge.
+    // 4. Gravity with relief while lit + apex hang near vy=0 + hover-settle
+    //    on release. gravScale is read again downstream (water medium, jello
+    //    ride), so it is assigned unconditionally on every frame.
+    var gravScale = 1 - flyTune.gravRelief * player.thrustSpool;
     if (!player.onGround) {
       var vyAbsForApex = Math.abs(player.vy);
       if (vyAbsForApex < APEX_EASING_BAND) {
@@ -998,271 +695,51 @@
         gravScale *= 1 - (1 - APEX_EASING_FACTOR) * apexK;
       }
     }
-    player.vy += GRAVITY_PLAYER * gravScale * dt;
-
-    // Hover-settle: when jet input is released and we're crawling near zero
-    // vy, damp toward zero exponentially. Frame-rate independent. Only fires
-    // when not actively thrusting (held jet's HOVER_ASSIST already handles
-    // it) and not standing on the ground (ground friction handles vy=0).
+    player.vy += flyTune.gravity * gravScale * dt;
     if (!moveU && !player.onGround && player.thrustSpool < 0.05) {
       if (Math.abs(player.vy) < HOVER_SETTLE_BAND) {
         player.vy *= Math.exp(-HOVER_SETTLE_DAMP * dt);
       }
     }
 
+    // 5. Visual bank: a lean, not physics (the model never rotates). Input
+    //    lean plus a touch of speed lean, on the spring shared with
+    //    drawPlayer and the plume via flightTilt -> bodyTiltRender/thrustVec.
+    var _flyDir = (moveR ? 1 : 0) - (moveL ? 1 : 0);
+    if (player.onGround || playerInMiningPose()) {
+      resetFlightBank();
     } else {
-      // ===== Rotational free-flight (above-ground) — v23.70 =====
-      // Self-contained: steer the heading, thrust along it, gravity + linear
-      // drag (emergent top speed), then fall through to the shared position +
-      // collision sweep below. Tunables live in flightTune (the 'flight' GM
-      // group / L panel). A/D (or d-pad L/R) rotate; moveU (W / up / space /
-      // d-pad-up) is thrust. (v23.81: aim-at-cursor mode removed.)
-      var ft = flightTune;
-      if (!player.rotFlightActive) {
-        // Rising edge. Taking off from the ground (coyote timer) always launches
-        // UPRIGHT so a rotated landing + held gas doesn't fling you off sideways.
-        // Entering flight mid-air instead seeds the nose from current motion so a
-        // climb doesn't snap to a random heading.
-        if (player.flightGroundT > 0) {
-          player.angle = -Math.PI / 2;
-        } else {
-          var _spd0 = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
-          player.angle = _spd0 > 60 ? Math.atan2(player.vy, player.vx) : -Math.PI / 2;
-        }
-        player.angVel = 0;
-        player.aeroBuffetS = 0;   // fresh flight, fresh telegraph envelope
-        player.tremor = 0;
-        player._stallWas = false;
-      }
-      player.rotFlightActive = true;
-      gravScale = 1;   // keep the gel-buoyancy path (reads gravScale) NaN-free
-
-      var thrustHeld = false;
-      // A/D (or d-pad L/R) rotate, moveU (W / up / space / d-pad-up) thrusts.
-      // Settle-on-release (Rocket-League trick): angular damping applies ONLY
-      // when not actively steering, so the turn ramps cleanly to its cap while
-      // held and the nose stops fast on release. flight2 layers two authority
-      // scalers on top: throttle-coupled turn (coast = whippy nose, thrust =
-      // committed, the Luftrausers rhythm) and transonic stiffening (the nose
-      // firms up between STIFF_V and BOOM_V so deep dives demand commitment).
-      thrustHeld = moveU && player.fuel > 0;
-      var _f2 = flight2.ENABLE > 0;
-      var _turn = (moveR ? 1 : 0) - (moveL ? 1 : 0);
-      player.turnDir = _turn;
-      var _spdPrev = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
-      var _tAuth = 1, _omAuth = 1;
-      if (_f2) {
-        var _tcT = (player.thrustSpool > 0.3) ? 1 : 0;
-        player.turnThrustEase = (player.turnThrustEase || 0) +
-          (_tcT - (player.turnThrustEase || 0)) * (1 - Math.exp(-flight2.TURN_EASE * dt));
-        _tAuth = 1 - (1 - flight2.TURN_THRUST_MULT) * player.turnThrustEase;
-        _omAuth = 1 - (1 - flight2.TURN_OMEGA_MULT) * player.turnThrustEase;
-        if (_spdPrev > flight2.STIFF_V) {
-          var _stT = (_spdPrev - flight2.STIFF_V) / Math.max(1, flight2.BOOM_V * 1.05 - flight2.STIFF_V);
-          if (_stT > 1) _stT = 1;
-          _stT = _stT * _stT * (3 - 2 * _stT);
-          var _stiff = 1 - (1 - flight2.STIFF_MIN) * _stT;
-          _tAuth *= _stiff; _omAuth *= _stiff;
-        }
-      }
-      player.angVel += _turn * ft.turnAccel * _tAuth * dt;
-      if (_turn === 0) player.angVel *= Math.exp(-ft.angDamp * dt);
-      var _omCap = ft.maxOmega * _omAuth;
-      if (player.angVel > _omCap) player.angVel = _omCap;
-      else if (player.angVel < -_omCap) player.angVel = -_omCap;
-      player.angle += player.angVel * dt;
-      // Normalize heading to [0, 2pi).
-      player.angle = ((player.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-
-      // Spool drives the plume, fuel burn, and the shared `thrusting` flag.
-      // flight2 slows the attack to an audible ~90ms spool but keeps frame-1
-      // punch: thrust FORCE stays full-on-hold (below), and the ignition
-      // floor snap + igniteN event give the press edge its bark.
-      var _sRise = _f2 ? flight2.SPOOL_RISE : THRUST_SPOOL_RISE;
-      var _sFall = _f2 ? flight2.SPOOL_FALL : THRUST_SPOOL_FALL;
-      if (thrustHeld && !player._thrustWas) {
-        player.fx.igniteN++;
-        if (_f2 && player.thrustSpool < flight2.SPOOL_FLOOR) player.thrustSpool = flight2.SPOOL_FLOOR;
-      }
-      player._thrustWas = thrustHeld;
-      if (thrustHeld) player.thrustSpool = Math.min(1, player.thrustSpool + dt * _sRise);
-      else player.thrustSpool = Math.max(0, player.thrustSpool - dt * _sFall);
-
-      if (thrustHeld) {
-        var _ca = Math.cos(player.angle), _sa = Math.sin(player.angle);
-        var _bThr = ft.thrust * FLIGHT_ABOVE_MULT;  // v24.59: above-ground thrust is fixed; the booster only speeds the underground climb
-        player.vx += _ca * _bThr * dt;
-        player.vy += _sa * _bThr * dt;
-        player.fuel -= DRILL_FUEL * 0.5 * player.thrustSpool * (nmzShear ? nmzShear.fuel : 1) * dt;
-        if (player.fuel < 0) player.fuel = 0;
-      }
-      // Gravity (own lever, lighter than the ground pull for a flight feel).
-      player.vy += ft.gravity * dt;
-
-      // ===== flight2 AERO (v24.112) =====
-      // A real flight envelope from the rig's OWN motion only (no wind, ever;
-      // owner rule): angle-of-attack lift perpendicular to the velocity
-      // (swoop, zoom climb, flare, engine-off glide), a drag polar whose
-      // overspeed wall the rig EARNS past by diving (momentum kept through
-      // the pullout, then bled over OVER_DECAY), a stall with a buffet
-      // telegraph + weathervane auto-recovery, and an ekranoplan ground-
-      // effect cushion within ~GE_SPAN of the deck. Below MIN_AERO_V there
-      // is NO aero at all, so hover + takeoff are byte-identical to flight1.
-      player.aeroBuffet = 0; player.aeroStall = false; player.aeroAlpha = 0; player.aeroGE = 0;
-      if (_f2) {
-        var f2 = flight2;
-        var _avx = player.vx, _avy = player.vy;
-        var _s = Math.sqrt(_avx * _avx + _avy * _avy);
-        if (_s > f2.MIN_AERO_V) {
-          var _velAng = Math.atan2(_avy, _avx);
-          var _al = _velAng - player.angle;
-          while (_al > Math.PI) _al -= Math.PI * 2;
-          while (_al < -Math.PI) _al += Math.PI * 2;
-          player.aeroAlpha = _al;
-          var _alAbs = _al < 0 ? -_al : _al;
-          // Cl: linear up to the stall, then blended into a flat-plate lobe.
-          var _clLin = f2.CLA * _al;
-          if (_clLin > f2.CLMAX) _clLin = f2.CLMAX; else if (_clLin < -f2.CLMAX) _clLin = -f2.CLMAX;
-          var _tt = (_alAbs - f2.STALL_A) / Math.max(0.001, f2.STALL_A * (f2.STALL_BLEND - 1));
-          if (_tt < 0) _tt = 0; else if (_tt > 1) _tt = 1;
-          _tt = _tt * _tt * (3 - 2 * _tt);
-          var _cl = _clLin * (1 - _tt) + (1.1 * Math.sin(2 * _al)) * _tt;
-          // Ground effect: induced-drag cut + lift cushion near the deck.
-          var _hb = flightGroundClearance(f2.GE_SPAN * 2) / f2.GE_SPAN;
-          if (_hb < 0.05) _hb = 0.05;
-          var _gp = 33 * Math.pow(_hb, 1.5);
-          var _G = _gp / (1 + _gp);                 // 1 = free air, -> 0 at the deck
-          player.aeroGE = 1 - _G;
-          var _kInd = f2.K_IND * (f2.GE_DRAG + (1 - f2.GE_DRAG) * _G);
-          var _cd = f2.CD0 + _kInd * _cl * _cl + 1.2 * _tt * Math.abs(Math.sin(_al));
-          // Dive-earned overspeed: descending fast raises the soft cap, and
-          // the budget decays after the pullout, so dive speed is yours for
-          // a few seconds instead of being confiscated by a hard clamp.
-          var _ovr = player.overBudget || 0;
-          if (player.vy > 0 && _s > f2.SOFT_CAP * 0.85) {
-            _ovr += (player.vy / _s) * f2.OVER_GAIN * dt;
-            if (_ovr > f2.DIVE_OVER - 1) _ovr = f2.DIVE_OVER - 1;
-          }
-          _ovr *= Math.exp(-dt / f2.OVER_DECAY);
-          player.overBudget = _ovr;
-          var _ovF = _s / (f2.SOFT_CAP * (1 + _ovr)) - 0.92;
-          if (_ovF > 0) _cd += f2.OVER_K * _ovF * _ovF;
-          var _qa = 0.5 * f2.AREA_K * _s * _s;
-          var _liftA = _qa * _cl * (1 + f2.GE_LIFT * (1 - _G));
-          var _dragA = _qa * _cd;
-          var _dx = _avx / _s, _dy = _avy / _s;
-          player.vx += (_liftA * _dy - _dragA * _dx) * dt;
-          player.vy += (-_liftA * _dx - _dragA * _dy) * dt;
-          // Stall telegraph + recovery, BAND-LIMITED to real wing-flight
-          // (v24.116, owner: falls + drifting liftoffs were buzzing). The
-          // lift/drag physics above already handle EVERY alpha; the FEEDBACK
-          // fires only in the pre-stall envelope: buffet ramps over
-          // [BUFFET_A0..1] x STALL_A, holds, then fades OUT by BUFFET_HI x
-          // STALL_A, and needs TELEGRAPH_V of airspeed. A rig falling
-          // tail-first (alpha ~180 deg) or lifting off with sideways drift
-          // is not a stalling wing: no buzz, no horn, no assist there.
-          var _bf0 = f2.STALL_A * f2.BUFFET_A0;
-          var _bfRaw = 0;
-          if (_s > f2.TELEGRAPH_V && _alAbs > _bf0) {
-            var _bUp = (_alAbs - _bf0) / Math.max(0.001, f2.STALL_A - _bf0);
-            if (_bUp > 1) _bUp = 1;
-            var _bDn = 1 - (_alAbs - f2.STALL_A * 1.5) / Math.max(0.001, f2.STALL_A * (f2.BUFFET_HI - 1.5));
-            if (_bDn > 1) _bDn = 1; else if (_bDn < 0) _bDn = 0;
-            _bfRaw = _bUp < _bDn ? _bUp : _bDn;
-          }
-          // Eased envelope (fast attack, slower release) so the tremble
-          // swells in and breathes out instead of popping per frame.
-          var _bfPrev = player.aeroBuffetS || 0;
-          player.aeroBuffetS = _bfPrev + (_bfRaw - _bfPrev) * (1 - Math.exp(-(_bfRaw > _bfPrev ? 14 : 7) * dt));
-          player.aeroBuffet = player.aeroBuffetS < 0.005 ? 0 : player.aeroBuffetS;
-          // Weathervane assist: strongest right past the break, fading to
-          // ZERO by WV_HI so tail slides and upright descents are never
-          // fought (the rig is a rocket; it may fall tail-first in peace).
-          if (_alAbs > f2.STALL_A && _alAbs < f2.WV_HI && _s > f2.TELEGRAPH_V) {
-            player.aeroStall = true;
-            var _wvFade = 1 - (_alAbs - f2.STALL_A) / Math.max(0.001, f2.WV_HI - f2.STALL_A);
-            player.angVel += _al * f2.WV_TORQUE * _wvFade * Math.min(1, _s / 300) * dt;
-            player.angVel *= Math.exp(-1.5 * dt);   // keep the assist from winding up
-          }
-          // Airframe shiver kicks (v24.117, owner: the continuous tremor was
-          // too much). Only discrete MOMENTS kick player.tremor (it decays in
-          // ~0.3s below): the instant the stall breaks here, plus the vapor
-          // threshold + the boom in the event block underneath. The render
-          // keeps it barely-there (flight2.TREMOR_AMP scales, 0 = off).
-          if (player.aeroStall && !player._stallWas) player.tremor = 1;
-          player._stallWas = player.aeroStall;
-          // Transonic ladder events (consumed by plume FX + audio + birds):
-          // vapor sheath near the barrier, ONE boom per crossing (hysteresis).
-          if (!player._vaporOn && _s >= f2.BOOM_V * 0.95) {
-            player._vaporOn = true; player.fx.vaporN++;
-            if ((player.tremor || 0) < 0.6) player.tremor = 0.6;
-          }
-          else if (player._vaporOn && _s < f2.BOOM_V * 0.86) player._vaporOn = false;
-          if (!player._superSonic && _s >= f2.BOOM_V) {
-            player._superSonic = true; player.fx.boomN++;
-            player.tremor = 1;
-          } else if (player._superSonic && _s < f2.BOOM_V * 0.88) {
-            player._superSonic = false;
-          }
-        } else {
-          player.overBudget = (player.overBudget || 0) * Math.exp(-dt / f2.OVER_DECAY);
-          // Below aero speed the eased buffet envelope breathes out too, so
-          // re-entering the envelope never pops a stale tremble.
-          player.aeroBuffetS = (player.aeroBuffetS || 0) * Math.exp(-7 * dt);
-          player._stallWas = false;
-        }
-      }
-      // Shiver envelope breathes out fast; only the event kicks above raise it.
-      player.tremor = (player.tremor || 0) * Math.exp(-dt / 0.14);
-      if (player.tremor < 0.01) player.tremor = 0;
-      // Linear drag (frame-rate independent). With aero ON most of the drag
-      // story moves to the polar above, so linDamp is scaled down; without
-      // aero the emergent top speed stays thrust/linDamp as before.
-      var _ld = Math.exp(-ft.linDamp * (_f2 ? flight2.LINDAMP_MULT : 1) * dt);
-      player.vx *= _ld;
-      player.vy *= _ld;
-      // Optional hard speed cap (0 = off; rely on the emergent drag cap).
-      if (ft.maxSpeed > 0) {
-        var _sp = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
-        if (_sp > ft.maxSpeed) { var _kc = ft.maxSpeed / _sp; player.vx *= _kc; player.vy *= _kc; }
-      }
-      player.thrusting = player.thrustSpool > 0.15;
-      // Expose the heading as the thrust vector so the plume (and anything else
-      // reading thrustVec) stays correct; legacy sets these from flightTilt.
-      player.thrustVecX = Math.cos(player.angle);
-      player.thrustVecY = Math.sin(player.angle);
+      var targetTilt = _flyDir * flyTune.tilt +
+        Math.max(-1, Math.min(1, player.vx / Math.max(1, flyTune.speed))) * 0.10;
+      if (targetTilt > FLIGHT_TILT_MAX) targetTilt = FLIGHT_TILT_MAX;
+      if (targetTilt < -FLIGHT_TILT_MAX) targetTilt = -FLIGHT_TILT_MAX;
+      player.flightTiltVel += (targetTilt - player.flightTilt) * FLIGHT_TILT_SPRING * dt;
+      player.flightTiltVel *= Math.exp(-FLIGHT_TILT_DAMP * dt);
+      player.flightTilt += player.flightTiltVel * dt;
+      if (player.flightTilt > FLIGHT_TILT_MAX) { player.flightTilt = FLIGHT_TILT_MAX; player.flightTiltVel = 0; }
+      if (player.flightTilt < -FLIGHT_TILT_MAX) { player.flightTilt = -FLIGHT_TILT_MAX; player.flightTiltVel = 0; }
     }
+    player.thrustVecX = Math.sin(player.flightTilt || 0);
+    player.thrustVecY = -Math.cos(player.flightTilt || 0);
 
-    // flight2: dives may exceed the old terminal so the boom is reachable;
-    // FALL_CAP is the safety ceiling while aero is on (drag does the rest).
-    var _fallCap = f2rot ? flight2.FALL_CAP : MAX_FALL;
-    if (player.vy > _fallCap) player.vy = _fallCap;
+    // Bomb-blast shiver decay (writer: 065-bombs). This envelope used to
+    // decay inside the rotation integrator; it must decay in every regime.
+    player.tremor = (player.tremor || 0) * Math.exp(-dt / 0.14);
+    if (player.tremor < 0.01) player.tremor = 0;
 
-    // v23.93 — mobile flight-control visibility: a dwell timer (so a brief ground
-    // touch doesn't flicker the controls) + an eased cross-fade alpha (d-pad <->
-    // rotate/thrust). Read by the UI overlay (140) + the touch hit-test (050).
-    if (player.rotFlightActive) player.flightCtrlT = 0.45;
-    else player.flightCtrlT = Math.max(0, (player.flightCtrlT || 0) - dt);
-    var _fcTarget = (player.flightCtrlT > 0) ? 1 : 0;
-    player.flightCtrlAlpha = (player.flightCtrlAlpha || 0) + (_fcTarget - (player.flightCtrlAlpha || 0)) * (1 - Math.exp(-10 * dt));
+    // Terminal fall: one cap, every regime (a live lever like the rest).
+    if (player.vy > flyTune.maxFall) player.vy = flyTune.maxFall;
 
     // v23.82 — eased visual body tilt: the SINGLE source for both drawPlayer and
     // the exhaust/smoke (via playerLocalToWorld), so they rotate in lockstep.
-    // Tracks the heading crisply while actively rotating, but eases back to
-    // upright on exit so leaving rotation flight (into a shaft / onto the
-    // ground) doesn't snap the rig. Shortest-angle ease; ~0.15s settle.
-    var _btTarget = (player.rotFlightActive && !playerInMiningPose())
-      ? (player.angle || 0) + Math.PI / 2
-      : (playerInMiningPose() ? 0 : (player.flightTilt || 0));
-    if (player.rotFlightActive && !playerInMiningPose()) {
-      player.bodyTiltRender = _btTarget;
-    } else {
-      var _btD = _btTarget - (player.bodyTiltRender || 0);
-      while (_btD > Math.PI) _btD -= Math.PI * 2;
-      while (_btD < -Math.PI) _btD += Math.PI * 2;
-      player.bodyTiltRender = (player.bodyTiltRender || 0) + _btD * (1 - Math.exp(-12 * dt));
-      if (Math.abs(_btD) < 0.002) player.bodyTiltRender = _btTarget;
-    }
+    // Eases toward the flight bank (or upright in the mining pose) so entering
+    // a shaft / landing never snaps the rig. Shortest-angle ease; ~0.15s settle.
+    var _btTarget = playerInMiningPose() ? 0 : (player.flightTilt || 0);
+    var _btD = _btTarget - (player.bodyTiltRender || 0);
+    while (_btD > Math.PI) _btD -= Math.PI * 2;
+    while (_btD < -Math.PI) _btD += Math.PI * 2;
+    player.bodyTiltRender = (player.bodyTiltRender || 0) + _btD * (1 - Math.exp(-12 * dt));
+    if (Math.abs(_btD) < 0.002) player.bodyTiltRender = _btTarget;
 
     // ----- v24.148 WATER MEDIUM (deep lakes) -----
     // One shared step after every flight branch (upright, rotation, VTOL):
@@ -1278,7 +755,7 @@
       var wDragK = Math.exp(-WATER_RIG_DRAG * wFrac * dt);
       player.vx *= wDragK;
       player.vy *= wDragK;
-      player.vy -= GRAVITY_PLAYER * gravScale * dt * WATER_RIG_BUOY * wFrac;
+      player.vy -= flyTune.gravity * gravScale * dt * WATER_RIG_BUOY * wFrac;
       if (wFrac > 0.5 && player.vy > WATER_RIG_SINK_VMAX) {
         player.vy += (WATER_RIG_SINK_VMAX - player.vy) * (1 - Math.exp(-6 * dt));
       }
@@ -1289,8 +766,8 @@
     // reports ("what does __flight say"). Never read by game code.
     if (!window.__flight) window.__flight = {};
     var _fdbg = window.__flight;
-    _fdbg.mode = flightTune.mode; _fdbg.rot = !!player.rotFlightActive;
-    _fdbg.vtol = !!vtolFlight; _fdbg.x = player.x; _fdbg.y = player.y;
+    _fdbg.x = player.x; _fdbg.y = player.y;
+    _fdbg.catchK = _flyCatchK; _fdbg.force = _flyForce;
     _fdbg.vx = player.vx; _fdbg.vy = player.vy; _fdbg.spool = player.thrustSpool || 0;
     _fdbg.tilt = player.bodyTiltRender || 0; _fdbg.fuel = player.fuel;
     _fdbg.onGround = !!player.onGround;
@@ -1303,31 +780,20 @@
       try {
         SluiceAudio.flight({
           air: !player.onGround && !undergroundNow,
-          rot: !!player.rotFlightActive,
+          rot: false,
           speed: Math.sqrt(player.vx * player.vx + player.vy * player.vy),
-          cap: flight2.SOFT_CAP,
-          boomV: flight2.BOOM_V,
+          cap: flyTune.speed,
+          boomV: flyTune.speed * 2,
           spool: player.thrustSpool || 0,
           climb: -player.vy,
-          buffet: player.rotFlightActive ? (player.aeroBuffet || 0) : 0,
-          stall: !!(player.rotFlightActive && player.aeroStall),
-          over: player.overBudget || 0,
-          ge: player.rotFlightActive ? (player.aeroGE || 0) : 0,
+          buffet: 0,
+          stall: false,
+          over: 0,
+          ge: 0,
           fx: player.fx,
           dt: dt
         });
       } catch (e) {}
-    }
-    // jet-spin: the asset rotation layer over the synthesized pack — pitch
-    // and level ride |angular velocity| so hard spins audibly wind up.
-    if (player.rotFlightActive && !player.onGround) {
-      var _avSfx = Math.abs(player.angVel || 0);
-      if (_avSfx > 0.35) {
-        sfxLoop('jet-spin', {
-          gain: Math.min(1, (_avSfx - 0.25) / 2.2),
-          pitch: 0.8 + Math.min(0.6, _avSfx * 0.18)
-        });
-      }
     }
     if (typeof hapticsUpdate === 'function') hapticsUpdate(dt);
 
@@ -1519,7 +985,7 @@
         // the weight like a floor at the surface itself, and the spring only resists the
         // transient landing dip, easing the rig back up with no embedded rest.
         var _dEff = _depth - JELLO_RIDE_SINK;
-        if (_dEff >= 0) player.vy -= GRAVITY_PLAYER * gravScale * dt;   // gel holds the weight at the sink line
+        if (_dEff >= 0) player.vy -= flyTune.gravity * gravScale * dt;   // gel holds the weight at the sink line
         if (_dEff > 0) player.vy -= _dEff * JELLO_LAND_SPRING * dt;     // resist dipping below the sink line
         var _ld = JELLO_LAND_DAMP * dt; if (_ld > 0.9) _ld = 0.9;
         // Damp the fall RELATIVE TO THE GEL, not in the world frame. The old `vy *= (1-ld)`

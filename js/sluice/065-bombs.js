@@ -250,8 +250,8 @@
     if (bombTune.SHAKE > 0 && typeof addTrauma === 'function') {
       addTrauma((isLarge ? 0.42 : 0.24) * bombTune.SHAKE);
     }
-    // Hull shiver: a decaying event kick (the flight2 contract), scaled by
-    // how close the blast was. Never a sustained loop.
+    // Hull shiver: a decaying event kick (player.tremor, decayed in 080 and
+    // rendered in 210), scaled by how close the blast was. Never a loop.
     var dxp = (player.x + PLAYER_W / 2) - cx;
     var dyp = (player.y + PLAYER_H / 2) - cy;
     var dp = Math.sqrt(dxp * dxp + dyp * dyp);
