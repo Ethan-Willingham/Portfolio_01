@@ -210,7 +210,37 @@ boiler tech gates deep-ore heat (recommended yes), the name (floated: The Sluice
 Springs, The Boilhouse), and slime staff scope (recommended: 2-3 hires, friendship
 gated).
 
-## 7. Deviation log (append-only)
+## 7. Design Q&A (owner session 2026-07-05; recommended answers, confirm at feel-checks)
+
+- **Slime dissolve (v25.55 poof)**: keep the code, demote to a per-body `soluble`
+  flag at the dissolve trigger. Guests are insoluble (B-D5). Twist worth building:
+  soluble "mineral slimes" ARE bath additives (toss in a tub, it poofs in its own
+  silhouette and tints the water = the salt-block mechanic with a face).
+- **Slime shapes**: physics is a point+spring lattice; cubes are just the default
+  constructor. Track 1 (cheap, first): keep cube physics, render a smooth rounded
+  blob skin with squash-stretch + a simple face. Track 2: new lattice constructors
+  (disc blob, worm chain, sheet, big amoeba) in the same solver. CAUTION: the
+  contact sweep + the 82-check suites were built against cubes; every new body
+  plan needs a contact audit + suite pass.
+- **Building/interior**: NO separate scene, no loading. Cutaway ant-farm rooms in
+  the same world grid (Terraria-style); the rig flies in through a door gap; the
+  interior backdrop reuses the cave-wall layer trick. Look: BUILDING_STYLE.md
+  language, timber + corrugated iron + riveted boiler + copper pipe + lanterns,
+  one rig-height room per floor, windows glow at dusk, rooftop flue feeds steam.
+- **Slime autonomy**: guests get a tiny state machine (queue -> tub -> soak ->
+  pay -> leave) whose only output is compress-and-hop IMPULSES toward waypoints
+  (Slime Rancher locomotion). The body stays a full soft body; pathing is a
+  per-floor waypoint list, no real pathfinding. Wild slimes later get the same
+  brain with wander/flee personality.
+- **Water verbs**: sources = cold ponds, HOT aquifer pockets, steam vents (heat
+  only), the boiler (cold + fuel -> hot). Moving: act 1 = rig water tank (reuse
+  the disabled ENABLE_OIL pump intake), act 2 = pipes as endpoint pairs (B-D3),
+  always = dug channels (v25.45 ledge pouring already does this: digging is
+  plumbing). In-bath: fill, blend against a thermometer reading the REAL grid
+  temperature (B1), salt (B3 tint/props), hose-scrub, squeegee-to-drain, pull the
+  plug -> sump -> grate payout.
+
+## 8. Deviation log (append-only)
 
 - 2026-07-05 (B1, deviates from B-D7/B-D9 as written): temperature does NOT get a
   `buf.temp`; it rides **flag bits 24:31** (raw 0..255 = T 0..2, floor-encoded so
