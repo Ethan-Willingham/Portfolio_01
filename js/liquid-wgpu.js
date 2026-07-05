@@ -226,6 +226,26 @@
   var LIQUID_OIL_AERATION_THRESHOLD = 0.5;
   var LIQUID_AERATION_COEFF         = 10.0;
   var LIQUID_OIL_AERATION_COEFF     = 10.0;
+
+  /* ---- v25.56 BATHHOUSE B1: water temperature (docs/game/BATHHOUSE_PLAN.md)
+   * Heat is stored per particle as "heat above ambient" in flag bits 24:31
+   * (raw 0..255 = T 0..2, floor-encoded so decay always reaches 0). Every
+   * kernel term MULTIPLIES by the heat, so with BATH_ON = 0 (or all-zero
+   * heat, which is the boot state) every pass is byte-identical to v25.55
+   * and the boot self-tests hold unchanged (plan decision B-D1). The cell
+   * field (cellHeat) lives in the PRESSURE layout: splat in gridPressure,
+   * mass-normalize in heatNormalize, gather + advance + buoyancy in G2P.
+   * Levers flow live through setSimParam('BATH_*'). */
+  var LIQUID_BATH_ON       = 0;     // 0/1 master gate; the game flips it (ENABLE_BATH)
+  var LIQUID_BATH_EXCHANGE = 0.15;  // per-substep particle<->field relax (0..1)
+  var LIQUID_BATH_COOL     = 0.05;  // 1/s heat decay toward ambient
+  var LIQUID_BATH_BUOY     = 260;   // px/s^2 upward at T=1 (gravity is 600 down)
+  var LIQUID_BATH_SRC_X0   = 0;     // heat-source rect, world px (ONE rect in v1;
+  var LIQUID_BATH_SRC_Y0   = 0;     // B2 grows this into a proper source list)
+  var LIQUID_BATH_SRC_X1   = 0;
+  var LIQUID_BATH_SRC_Y1   = 0;
+  var LIQUID_BATH_SRC_T    = 1.4;   // source target temperature (T units, cap 2)
+  var LIQUID_BATH_SRC_RATE = 0.03;  // per-substep relax toward SRC_T inside the rect
   var LIQUID_SLEEP_FRAMES   = 45;       // consecutive low-KE frames before sleeping (v24.112: 60 -> 45)
   var LIQUID_SLEEP_VSQ      = 9.0;      // px/s squared — sleep below this (v24.112: 1.0 -> 9.0, |v| < 3 px/s;
                                         // at 1.0 a settled pond's surface simmer kept every particle awake
@@ -559,6 +579,10 @@
       cellAeration:mk('liquid.cellAeration',GRID_MAX_CELLS * 4),
       cellVX:      mk('liquid.cellVX',      GRID_MAX_CELLS * 4),
       cellVY:      mk('liquid.cellVY',      GRID_MAX_CELLS * 4),
+      /* v25.56 BATH B1: fixed-point heat accumulator (pressure layout:
+       * splat by gridPressure, normalized by heatNormalize, read by G2P).
+       * Cleared with the DV impulses (dense) / heatClearSparse (sparse). */
+      cellHeat:    mk('liquid.cellHeat',    GRID_MAX_CELLS * 4),
       /* ---- Stage 4 — pressure impulse + resolved cell velocity ----
        * cellDVX/DVY  : fixed-point i32 atomics — the weakly-compressible
        *               pressure impulse scattered by the pressure kernel
@@ -645,10 +669,10 @@
     // change.
     instance.simParamsBuf = dev.createBuffer({
       label: 'liquid.simParams',
-      size: 144,
+      size: 192,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.simParamsHost = new Float32Array(36);   // 9 vec4 lanes (v25.41 + feel)
+    instance.simParamsHost = new Float32Array(48);   // 12 vec4 lanes (v25.56 + bath)
     // CPU-side staging arrays, allocated once and reused for upload.
     // terrainSolid is the byte/tile array the game fills; terrainMask is
     // its bit-packed (32 tiles/u32) form uploaded to the GPU.
@@ -698,6 +722,7 @@
     enc.clearBuffer(b.cellDVY);
     enc.clearBuffer(b.cellVelX);
     enc.clearBuffer(b.cellVelY);
+    enc.clearBuffer(b.cellHeat);
     enc.clearBuffer(b.blockBitmap);
     enc.clearBuffer(b.blockMeta);
     enc.clearBuffer(b.blockDispatch);
@@ -1119,6 +1144,16 @@
     // feel : cohesion, airDrag, pressureMaxDv (v25.41), lipFriction (v25.45)
     sh[32] = LIQUID_COHESION;        sh[33] = LIQUID_AIR_DRAG;
     sh[34] = LIQUID_PRESSURE_MAX_DV; sh[35] = LIQUID_LIP_FRICTION;
+    // bathA/B/C : v25.56 BATHHOUSE B1 (docs/game/BATHHOUSE_PLAN.md). Every
+    // heat term multiplies by T (0 at ambient), so with BATH_ON = 0 or
+    // all-zero heat the kernels are byte-identical and the boot self-tests
+    // hold with unchanged diffs (plan decision B-D1).
+    sh[36] = LIQUID_BATH_EXCHANGE;  sh[37] = LIQUID_BATH_COOL;
+    sh[38] = LIQUID_BATH_BUOY;      sh[39] = LIQUID_BATH_ON;
+    sh[40] = LIQUID_BATH_SRC_X0;    sh[41] = LIQUID_BATH_SRC_Y0;
+    sh[42] = LIQUID_BATH_SRC_X1;    sh[43] = LIQUID_BATH_SRC_Y1;
+    sh[44] = LIQUID_BATH_SRC_T;     sh[45] = LIQUID_BATH_SRC_RATE;
+    sh[46] = 0; sh[47] = 0;
     instance.queue.writeBuffer(instance.simParamsBuf, 0, sh);
   }
 
@@ -1181,6 +1216,12 @@
         cpA.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
         cpA.setBindGroup(0, instance.gridUpdateBG);
         cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+        // v25.56 BATH B1: pressure-layout share (cellHeat).
+        if (instance.grid2Pipe.heatClearSparse) {
+          cpA.setPipeline(instance.grid2Pipe.heatClearSparse);
+          cpA.setBindGroup(0, instance.pressureBG);
+          cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+        }
       }
       cpA.setBindGroup(0, instance.bg.grid);
       cpA.setPipeline(P.bitmapReset);
@@ -3833,6 +3874,7 @@ fn encodeFx(v : f32) -> i32 {
 @group(0) @binding(5) var<storage, read_write> cellAeration : array<atomic<i32>>;
 @group(0) @binding(6) var<storage, read_write> cellDVX      : array<atomic<i32>>;
 @group(0) @binding(7) var<storage, read_write> cellDVY      : array<atomic<i32>>;
+@group(0) @binding(9) var<storage, read_write> cellHeat     : array<atomic<i32>>;
 `;
 
   // Grid-update-layout buffer header — bindings 1..8.
@@ -3939,6 +3981,9 @@ struct SimParams {
   coll   : vec4<f32>,
   g2pC   : vec4<f32>,
   feel   : vec4<f32>,   // v25.41 — cohesion, airDrag, spare, spare
+  bathA  : vec4<f32>,   // v25.56 bath: heatExchange, heatCool, heatBuoy, bathOn
+  bathB  : vec4<f32>,   // v25.56 bath: heat-source rect x0, y0, x1, y1 (world px)
+  bathC  : vec4<f32>,   // v25.56 bath: source target T, source rate, spare, spare
 };
 `;
   // Per-pipeline SimParams binding line. The struct above is shared but
@@ -4146,7 +4191,27 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (i >= gp.cells) { return; }
   atomicStore(&cellDVX[i], 0);
   atomicStore(&cellDVY[i], 0);
+  atomicStore(&cellHeat[i], 0);
 }
+`;
+
+  // v25.56 BATH B1 (pressure layout). heatNormalize: mass-normalize the
+  // heat field right after gridPressure splats it (the aeration pattern);
+  // no-op unless bath is on. The sparse clear body re-zeroes cellHeat at
+  // the same points the other bind-group shares clear theirs (clearPrev +
+  // runSparseEndClear); the dense chain clears it in clearDV above.
+  var WGSL_HEAT_NORMALIZE_BODY = /* wgsl */ `
+  if (c >= gp.cells) { return; }
+  if (sp.bathA.w < 0.5) { return; }
+  let m = f32(atomicLoad(&cellMass[c])) / FIXED_SCALE;
+  if (m > 0.0) {
+    let h = f32(atomicLoad(&cellHeat[c])) / FIXED_SCALE;
+    atomicStore(&cellHeat[c], encodeFx(h / m));
+  }
+`;
+  var WGSL_HEAT_CLEAR_SPARSE_BODY = /* wgsl */ `
+  if (c >= gp.cells) { return; }
+  atomicStore(&cellHeat[c], 0);
 `;
 
   /* 2. gridPressure — one thread per particle. A faithful port of the CPU
@@ -4296,6 +4361,18 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     scatterDV(nbr[6], wgt[6], cxm,    cyp);
     scatterDV(nbr[7], wgt[7], coeffx, cyp);
     scatterDV(nbr[8], wgt[8], cxp,    cyp);
+  }
+
+  // v25.56 BATH B1: splat this particle's heat (flag bits 24:31, raw
+  // 0..255) into the cell field; heatNormalize divides by mass next.
+  // Zero heat adds nothing, so the non-bath path is byte-identical.
+  if (sp.bathA.w > 0.5) {
+    let tmpFx = f32((fl >> 24u) & 0xffu);
+    if (tmpFx > 0.0) {
+      for (var s : u32 = 0u; s < 9u; s = s + 1u) {
+        atomicAdd(&cellHeat[nbr[s]], encodeFx(wgt[s] * tmpFx));
+      }
+    }
   }
 }
 `;
@@ -4617,9 +4694,13 @@ struct P2GParams {
 @group(0) @binding(4) var<storage, read_write> flag     : array<u32>;
 @group(0) @binding(5) var<storage, read>       cellVelX : array<f32>;
 @group(0) @binding(6) var<storage, read>       cellVelY : array<f32>;
+// v25.56 BATH B1: the mass-normalized heat field (pressure layout wrote
+// it this substep). Bound rw because the buffer is an atomic accumulator.
+@group(0) @binding(8) var<storage, read_write> cellHeat : array<atomic<i32>>;
 
 // Cell pitch (world px / cell) — LIQUID_CELL on the CPU side.
 const CELL : f32 = ${LIQUID_CELL_DEFAULT};
+const FIXED_SCALE : f32 = ${FIXED_SCALE};
 
 // v14.26 — the fluid-feel constants liquidG2P reads (water motion scale,
 // damping, aeration threshold/coeff) now flow live through the SimParams
@@ -4802,6 +4883,26 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   wvxi = wi * vxi; wvyi = wi * vyi; vx = vx + wvxi; vy = vy + wvyi;
   gv00 = gv00 + wvxi; gv01 = gv01 + wvxi; gv10 = gv10 + wvyi; gv11 = gv11 + wvyi;
 
+  // v25.56 BATH B1: gather the mass-normalized cell heat with the same
+  // stencil, relax the particle's heat toward it (diffusion), take the
+  // source rect, and cool toward ambient. tHeat stays 0 unless the bath
+  // is on, and every term below multiplies by it: byte-identical when off.
+  var tHeat : f32 = 0.0;
+  if (sp.bathA.w > 0.5) {
+    var hAcc : f32 = 0.0;
+    for (var s : u32 = 0u; s < 9u; s = s + 1u) {
+      hAcc = hAcc + wgt[s] * (f32(atomicLoad(&cellHeat[nbr[s]])) / FIXED_SCALE);
+    }
+    tHeat = f32((fl >> 24u) & 0xffu) / 127.5;
+    tHeat = tHeat + (hAcc / 127.5 - tHeat) * sp.bathA.x;
+    if (pp.x >= sp.bathB.x && pp.x <= sp.bathB.z &&
+        pp.y >= sp.bathB.y && pp.y <= sp.bathB.w) {
+      tHeat = tHeat + (sp.bathC.x - tHeat) * sp.bathC.y;
+    }
+    tHeat = tHeat * max(0.0, 1.0 - sp.bathA.y * gp.stepDt);
+    tHeat = clamp(tHeat, 0.0, 2.0);
+  }
+
   // Reconstruct the APIC affine matrix C (== the CPU's 4*(gv + v*dd)).
   gv00 = 4.0 * (gv00 + vx * ddx);
   gv01 = 4.0 * (gv01 + vx * ddy);
@@ -4925,6 +5026,11 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       newVY = newVY * adF;
     }
   }
+  // v25.56 BATH B1: thermal buoyancy (water only). Upward is negative y;
+  // it scales with heat above ambient, so ambient water is untouched.
+  if (!oil) {
+    newVY = newVY - sp.bathA.z * tHeat * gp.stepDt;
+  }
   pos[i] = vec4<f32>(npx * CELL, npy * CELL, newVX, newVY);
   affine[i] = vec4<f32>(gv00, gv01, gv10, gv11);
   aux[i].y = newAer;
@@ -4952,7 +5058,10 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
   // Rebuild the flag: keep type[0:1]+origin[2:3], set sleeping[4],
   // clear frozen[5] (a frozen particle never reaches here), set rest[8:23].
-  flag[i] = (fl & 0xfu) | (sleepBit << 4u) | (rest << 8u);
+  // v25.56 BATH B1: bits 24:31 carry the particle heat, floor-encoded so
+  // cooling always reaches true 0 (and 0 when the bath is off = old bits).
+  let tBits = u32(clamp(floor(tHeat * 127.5), 0.0, 255.0));
+  flag[i] = (fl & 0xfu) | (sleepBit << 4u) | (rest << 8u) | (tBits << 24u);
 }
 `;
 
@@ -6012,9 +6121,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     //     UNIFORM — uniforms have their own per-stage limit, so the
     //     8-storage-buffer floor is untouched. clearDV shares the layout
     //     but does not reference `sp`; gridPressure reads it. ---
-    var pBgl = dev.createBindGroupLayout({
-      label: 'liquid.pressureBGL',
-      entries: [
+    var pEntries = [
         { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
@@ -6023,8 +6130,20 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
-      ]
+        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+        // v25.56 BATH B1: the heat accumulator. 8 storage buffers dense,
+        // 9 sparse (with blockList below): both within what the dense (9
+        // via P2G) and sparse (10) chains already require, so no new
+        // device-limit gate is needed.
+        { binding: 9, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
+    ];
+    if (instance.sparseCapable) {
+      // The sparse heat normalize/clear variants read blockList at 10.
+      pEntries.push({ binding: 10, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
+    }
+    var pBgl = dev.createBindGroupLayout({
+      label: 'liquid.pressureBGL',
+      entries: pEntries
     });
     var pLayout = dev.createPipelineLayout({ bindGroupLayouts: [pBgl] });
     function pPipe(label, body) {
@@ -6093,6 +6212,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     instance.grid2Pipe = {
       clearDV:    pPipe('liquid.clearDV',      WGSL_DV_CLEAR),
       pressure:   pPipe('liquid.gridPressure', WGSL_GRID_PRESSURE),
+      // v25.56 BATH B1: per-cell heat mass-normalize (pressure layout).
+      heatNormalize: pPipe('liquid.heatNormalize', cellEntryDense(WGSL_HEAT_NORMALIZE_BODY)),
       // Stage 8 — gridUpdate carries the game-coupled wake code: the
       // GameParams struct + binding + gridWake() before the kernel body
       // that calls it. v14.26 — the SimParams struct + its binding (10)
@@ -6121,6 +6242,12 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
           WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
           sparseListBind(11) +
           cellEntrySparse(WGSL_CLEAR_GRID2_SPARSE_BODY));
+        // v25.56 BATH B1: sparse heat normalize + the pressure-layout
+        // share of the end-of-sub-step clear (blockList at binding 10).
+        instance.grid2Pipe.heatNormalizeSparse = pPipe('liquid.heatNormalizeSparse',
+          sparseListBind(10) + cellEntrySparse(WGSL_HEAT_NORMALIZE_BODY));
+        instance.grid2Pipe.heatClearSparse = pPipe('liquid.heatClearSparse',
+          sparseListBind(10) + cellEntrySparse(WGSL_HEAT_CLEAR_SPARSE_BODY));
         instance.sparseGrid2OK = true;
       } catch (eSp) {
         try { console.log('LiquidWGPU v15: sparse grid2 pipelines failed (' + ((eSp && eSp.message) || eSp) + ') — dense grid drives.'); } catch (_) {}
@@ -6129,10 +6256,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // Pressure bind group — note cellMass / cellAeration are bound as
     // plain 'storage' (read-only in WGSL via atomicLoad; the layout entry
     // is 'storage' because the buffers are atomic<i32>).
-    instance.pressureBG = dev.createBindGroup({
-      label: 'liquid.pressureBG',
-      layout: pBgl,
-      entries: [
+    var pBgEntries = [
         { binding: 0, resource: { buffer: instance.paramsBuf } },
         { binding: 1, resource: { buffer: instance.buf.pos } },
         { binding: 2, resource: { buffer: instance.buf.aux } },
@@ -6141,8 +6265,16 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         { binding: 5, resource: { buffer: instance.buf.cellAeration } },
         { binding: 6, resource: { buffer: instance.buf.cellDVX } },
         { binding: 7, resource: { buffer: instance.buf.cellDVY } },
-        { binding: 8, resource: { buffer: instance.simParamsBuf } }
-      ]
+        { binding: 8, resource: { buffer: instance.simParamsBuf } },
+        { binding: 9, resource: { buffer: instance.buf.cellHeat } }   // v25.56 bath
+    ];
+    if (instance.sparseCapable) {
+      pBgEntries.push({ binding: 10, resource: { buffer: instance.buf.blockList } });
+    }
+    instance.pressureBG = dev.createBindGroup({
+      label: 'liquid.pressureBG',
+      layout: pBgl,
+      entries: pBgEntries
     });
     var uBgEntries = [
       { binding: 0, resource: { buffer: instance.paramsBuf } },
@@ -6297,6 +6429,17 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       cp.dispatchWorkgroups(partGroups);
     }
 
+    // 2b. heatNormalize, v25.56 BATH B1: mass-normalize the heat field
+    //     the pressure pass splat. Dispatched only while the bath is live
+    //     (non-bath players pay nothing; the kernel also self-gates).
+    if (LIQUID_BATH_ON) {
+      var hnSparse = sparse && P.heatNormalizeSparse;
+      cp.setPipeline(hnSparse ? P.heatNormalizeSparse : P.heatNormalize);
+      cp.setBindGroup(0, instance.pressureBG);
+      if (hnSparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
+      else { cp.dispatchWorkgroups(cellGroups); }
+    }
+
     // 3. gridUpdate — per cell: resolve velocity + gravity. v15.0 sparse:
     //    active blocks only (indirect); massy cells only exist there.
     cp.setPipeline(sparse ? P.gridUpdateSparse : P.gridUpdate);
@@ -6344,6 +6487,13 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     cp.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
     cp.setBindGroup(0, instance.gridUpdateBG);
     cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+    // v25.56 BATH B1: pressure-layout share (cellHeat). Always cleared
+    // when the pipe exists so a bath toggled off leaves no stale field.
+    if (instance.grid2Pipe.heatClearSparse) {
+      cp.setPipeline(instance.grid2Pipe.heatClearSparse);
+      cp.setBindGroup(0, instance.pressureBG);
+      cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+    }
     cp.end();
     liquidSubmit(instance, enc);
   }
@@ -6377,7 +6527,10 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
         { binding: 6, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
+        { binding: 7, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+        // v25.56 BATH B1: cellHeat (7 storage buffers, still within the
+        // 8-storage-buffer WebGPU floor this layout has always relied on).
+        { binding: 8, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
       ]
     });
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
@@ -6407,7 +6560,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         { binding: 4, resource: { buffer: instance.buf.flag } },
         { binding: 5, resource: { buffer: instance.buf.cellVelX } },
         { binding: 6, resource: { buffer: instance.buf.cellVelY } },
-        { binding: 7, resource: { buffer: instance.simParamsBuf } }
+        { binding: 7, resource: { buffer: instance.simParamsBuf } },
+        { binding: 8, resource: { buffer: instance.buf.cellHeat } }   // v25.56 bath
       ]
     });
     instance.g2pReady = true;
@@ -8129,6 +8283,18 @@ fn main() {
             // frame. GRID_VISC above also receives the calm-BLENDED value
             // per frame from the same tick (the gm lever's pristine target
             // lives game-side in 020).
+            // v25.56 BATHHOUSE B1 (docs/game/BATHHOUSE_PLAN.md): the
+            // heat channel. BATH_ON also gates the heatNormalize dispatch.
+            case 'BATH_ON':              LIQUID_BATH_ON = v ? 1 : 0; break;
+            case 'BATH_EXCHANGE':        LIQUID_BATH_EXCHANGE = v < 0 ? 0 : (v > 1 ? 1 : v); break;
+            case 'BATH_COOL':            LIQUID_BATH_COOL = v < 0 ? 0 : v; break;
+            case 'BATH_BUOY':            LIQUID_BATH_BUOY = v; break;
+            case 'BATH_SRC_X0':          LIQUID_BATH_SRC_X0 = v; break;
+            case 'BATH_SRC_Y0':          LIQUID_BATH_SRC_Y0 = v; break;
+            case 'BATH_SRC_X1':          LIQUID_BATH_SRC_X1 = v; break;
+            case 'BATH_SRC_Y1':          LIQUID_BATH_SRC_Y1 = v; break;
+            case 'BATH_SRC_T':           LIQUID_BATH_SRC_T = v < 0 ? 0 : (v > 2 ? 2 : v); break;
+            case 'BATH_SRC_RATE':        LIQUID_BATH_SRC_RATE = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             case 'CALM':                 LIQUID_CALM = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             // v24.124 — fixed-quantum substepping toggle (runFrame host
             // partitioning, not a SimParams lane); reset the bank on flip

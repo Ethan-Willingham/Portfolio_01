@@ -15,9 +15,19 @@ owner (weekly Fable budget was nearly exhausted, so this doc front-loads every
 architectural decision at line-level precision for Opus/Sonnet execution). The
 conversational design treatment lives in that session; this doc is self-sufficient.
 
-Status: **B1 in progress** (see Stage board). Nothing ships enabled: everything sits
-behind `ENABLE_BATH` (default false, `?bath=1` override), added to the flag block in
-`js/sluice/010-constants.js` in the exact style of `ENABLE_JELLO`.
+Status: **B1 SHIPPED (v25.56)** by the Fable session itself; next = B2 (steam +
+source authoring) after the owner's feel-check of the heated pond. Nothing ships
+enabled: everything sits behind `ENABLE_BATH` (default false, `?bath=1` override)
+in the `js/sluice/010-constants.js` flag block, exact style of `ENABLE_JELLO`.
+
+**B1 verification record (2026-07-05, headless Chrome + CDP, Apple/Metal):**
+baseline boot (no flag) logs all LiquidWGPU stages with 0 errors; `?bath=1` boot
+logs `[bath] B1 heat source armed under pond 0`; a CDP-driven rover parked at the
+pond shows 15,720 GPU particles staying fully awake (0 sleeping) with a rising
+foam column over the heated floor while the rig sits still, at a capped 120 FPS
+and 0 Dawn/console errors across ~25k log lines. Feel levers for the owner:
+`window.bathTune('BATH_BUOY'|'BATH_EXCHANGE'|'BATH_COOL'|'BATH_SRC_T'|'BATH_SRC_RATE', v)`
+and `BATH_ON` 0/1, live, no rebuild.
 
 ---
 
@@ -202,4 +212,25 @@ gated).
 
 ## 7. Deviation log (append-only)
 
-- (none yet)
+- 2026-07-05 (B1, deviates from B-D7/B-D9 as written): temperature does NOT get a
+  `buf.temp`; it rides **flag bits 24:31** (raw 0..255 = T 0..2, floor-encoded so
+  cooling reaches true 0). The G2P flag rebuild already re-wrote those bits and
+  `restBase` is masked (`& 0xffff`), the ops-replay compaction copies flags whole,
+  and spawns zero them (= ambient). Bonus: the existing flag readback mirror
+  carries temperature for free (steam/scoring in B2 need no new readback).
+- 2026-07-05 (B1): `cellHeat` lives in the **pressure layout**, not P2G. P2G sits
+  at its 9-storage-buffer bail threshold; pressure had headroom (8 dense / 9
+  sparse, both within what the chains already require), and gridPressure is a
+  per-particle stencil pass with SimParams already bound, so splat/normalize/
+  gather land there with ZERO new device requirements and zero P2G edits. Chain
+  per substep: clearDV zeroes heat (dense) or heatClearSparse does (sparse, in
+  clearPrev + runSparseEndClear, always dispatched so a toggled-off bath leaves
+  no stale field) -> gridPressure splats -> heatNormalize (2b, dispatched only
+  when BATH_ON) -> G2P gathers, relaxes, applies the source rect, cools, buoys.
+- 2026-07-05 (B1): heat sources are ONE world-px rect in SimParams lanes
+  (`bathB` rect + `bathC` strength/rate), not the B-D8 uniform list; B2 grows it
+  to a list when vents/boiler need more than one.
+- 2026-07-05 (B1, known behavior): sleeping particles neither splat nor update
+  heat, so calm hot water holds its temperature (a resting tub stays hot, nice)
+  but the cell field dilutes near sleep boundaries (mild artificial surface
+  cooling). Revisit only if the owner's feel-check flags it.

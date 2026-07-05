@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.55';
+  var GAME_VERSION = 'v25.56';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -169,7 +169,7 @@
        ?multitown=1  wide 4-town world      ?combat=1  enemies + turret
        ?nmz=1        No Man's Zone courses   ?board=1   the Trade Board
        ?jello=1      jello/slime bodies      ?oil=1     oil seams + pump
-       ?refine=1     ore-refinement catalog
+       ?refine=1     ore-refinement catalog  ?bath=1    bathhouse heat (B1)
      ============================================================ */
   var SINGLE_TOWN        = true;   // one coherent town; false = the wide 4-town world
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
@@ -178,6 +178,7 @@
   var ENABLE_JELLO       = false;  // squishy jello / slime soft bodies
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
+  var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): B1 water heat, in progress
   // Per-load URL overrides for spot-checking a disabled system (see above).
   try {
     var _ffq = (window.location && window.location.search) || '';
@@ -189,6 +190,7 @@
     if (/[?&]jello=1/.test(_ffq))     ENABLE_JELLO = true;
     if (/[?&]oil=1/.test(_ffq))       ENABLE_OIL = true;
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
+    if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
   } catch (e) {}
 
   var TILE = 32;
@@ -11150,6 +11152,49 @@
     }
   }
 
+  /* ==== BATHHOUSE B1 (v25.56): water-temperature dev scene =============
+     Flag-gated (ENABLE_BATH, ?bath=1); the plan and every locked decision
+     live in docs/game/BATHHOUSE_PLAN.md. v1 is WebGPU-only (B-D4): once
+     the GPU liquid sim is driving, register ONE heat-source rect across
+     the floor of the leftmost surface pond and flip the sim's BATH_ON
+     lane. Hot water rises off the pond floor, convects, and cools toward
+     ambient; per-particle heat rides flag bits 24:31 (see the v25.56
+     blocks in js/liquid-wgpu.js). The CPU fallback ignores the flag
+     until stage B9 ports the channel.
+     Feel levers from the console: window.bathTune('BATH_BUOY', 400),
+     BATH_EXCHANGE / BATH_COOL / BATH_SRC_T / BATH_SRC_RATE, BATH_ON 0/1.
+     ===================================================================== */
+  var bathArmed = false;   // one-shot: set once the dev source is registered
+  function bathTune(name, v) {
+    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam(name, v);
+  }
+  function bathArmDevScene() {
+    if (bathArmed || !ENABLE_BATH) return;
+    if (!(liquidWGPU && liquidWGPU.simActive)) return;   // GPU sim not driving yet
+    if (typeof surfacePonds === 'undefined' || !surfacePonds.length) return;
+    var p = surfacePonds[0];
+    var d = p.d || 1;
+    // The pond body spans rows SKY_ROWS-1 .. SKY_ROWS+d (see the pond wake
+    // expansion in 030-worldgen). Heat only its FLOOR band so the plume
+    // reads as convection (rise, spread, cool, sink), not uniform warming.
+    var x0 = p.cL * TILE, x1 = (p.cR + 1) * TILE;
+    var y0 = (SKY_ROWS + d - 1) * TILE, y1 = (SKY_ROWS + d + 1) * TILE;
+    bathTune('BATH_SRC_X0', x0); bathTune('BATH_SRC_Y0', y0);
+    bathTune('BATH_SRC_X1', x1); bathTune('BATH_SRC_Y1', y1);
+    bathTune('BATH_ON', 1);
+    bathArmed = true;
+    try {
+      console.log('[bath] B1 heat source armed under pond 0: cols ' + p.cL +
+        '-' + p.cR + ', floor rows ' + (SKY_ROWS + d - 1) + '-' + (SKY_ROWS + d) +
+        '. Levers: window.bathTune (BATH_BUOY/BATH_EXCHANGE/BATH_COOL/BATH_SRC_T).');
+    } catch (e) {}
+  }
+  if (ENABLE_BATH) {
+    // Self-contained arm loop: no game-loop wiring for a dev scene. Cheap
+    // (guards short-circuit), and irrelevant once armed.
+    window.bathTune = bathTune;
+    setInterval(bathArmDevScene, 500);
+  }
   /* ---- Update ---- */
   // ----- Drill SFX bridge state (engine facade: js/audio.js SluiceAudio.sfx.drill) -----
   // Persistent across frames; the per-frame logic lives in the drilling section

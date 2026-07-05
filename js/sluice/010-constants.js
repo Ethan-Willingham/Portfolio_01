@@ -20,7 +20,7 @@
        ?multitown=1  wide 4-town world      ?combat=1  enemies + turret
        ?nmz=1        No Man's Zone courses   ?board=1   the Trade Board
        ?jello=1      jello/slime bodies      ?oil=1     oil seams + pump
-       ?refine=1     ore-refinement catalog
+       ?refine=1     ore-refinement catalog  ?bath=1    bathhouse heat (B1)
      ============================================================ */
   var SINGLE_TOWN        = true;   // one coherent town; false = the wide 4-town world
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
@@ -29,6 +29,7 @@
   var ENABLE_JELLO       = false;  // squishy jello / slime soft bodies
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
+  var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): B1 water heat, in progress
   // Per-load URL overrides for spot-checking a disabled system (see above).
   try {
     var _ffq = (window.location && window.location.search) || '';
@@ -40,6 +41,7 @@
     if (/[?&]jello=1/.test(_ffq))     ENABLE_JELLO = true;
     if (/[?&]oil=1/.test(_ffq))       ENABLE_OIL = true;
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
+    if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
   } catch (e) {}
 
   var TILE = 32;
