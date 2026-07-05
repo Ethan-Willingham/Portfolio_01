@@ -12,7 +12,17 @@ building it.
   gaussian peaks per ore, so each ore has a depth band where it is most common.
 - **Layer-identity pass**: stronger visual identity per underground layer.
 
-## Perf (from the v25.31-40 optimization pass; baseline harness = scratchpad perf-baseline.mjs recipe)
+## Perf (from the v25.31-47 optimization pass; baseline harness = scratchpad perf-baseline.mjs recipe)
+- **v25.47 OWNER CALL — slimes stay lively:** the park-to-sleep pipeline, wake
+  gates and sleeper-pair skip were A/B'd (v25.45 toggles) and REMOVED; resting
+  piles keep their simmer and pay the awake solver. Kept: the zero-contact
+  contact-pass early-exit. Awake cost profile: contact sweep = 75-80% of
+  update.jello (~2.4ms @ 396 pts M-series); the counting-sort hash is already
+  memset-fast (linked-list rewrite measured neutral, not shipped).
+- **Weak-device slime budget (parked, needs the owner):** a mobile-preset
+  awake-body cap — nearest-N bodies solve fully, distant ones settle early,
+  instant wake on approach. The only realistic Galaxy-A15 path; a feel call.
+## Perf (from the v25.31-40, superseded notes below optimization pass; baseline harness = scratchpad perf-baseline.mjs recipe)
 - DONE v25.40: smoke obstacle dirty-gate leaks (exact-float cam compare +
   jelloBodies.length) and the fog-of-war per-frame rebuild (now cached on
   view window + lightRev + levers; deep-idle frame halved, jank 29% -> 4%).

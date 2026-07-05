@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.47';
+  var GAME_VERSION = 'v25.48';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -50920,14 +50920,6 @@
   // SHIPS 1 = SOFT since v25.28: the owner vetoed the peach-fuzz hairs for the
   // ship look ("don't like the little hairs coming off of it"). FUZZY/PLUSH
   // stay behind the dev 'I' cycle only.
-  // ---- PERF-ERA A/B TOGGLES (v25.45, owner-requested; top of the L panel's
-  // jello group). Each gates one perf-pass behavior so the owner can bisect
-  // feel changes live. ALL default 1 = current shipped behavior; 0 = the
-  // pre-change behavior, exactly.
-  var JELLO_PARK_PIPELINE   = 1;   // v25.38 park ramp + force-sleep + island sleep (0 = bodies never force-sleep; pre-v25.38 always-awake piles)
-  var JELLO_WAKE_GATES      = 1;   // v25.38 stamps/wakes only from a MOVING rig (0 = a parked rig re-stamps + re-wakes neighbours every frame, pre-v25.38)
-  var JELLO_GATE_EARLY_EXIT = 1;   // v25.43 zero-contact Gauss-Seidel pass early-exit (0 = always run all passes)
-  var JELLO_GATE_SLEEP_PAIRS= 1;   // v25.43 sleeper-sleeper pair skip (0 = sleeping bodies' overlaps wake them apart, pre-v25.43)
   var JELLO_EDGE_STYLE = 1;
   var JELLO_EDGE_FUZZ  = 1.0;   // fringe + hair scale (0.5 subtle .. 2 heavy)
   (function () {
@@ -51912,7 +51904,7 @@
     JELLO_SHADE_STRAIN  = f.shStrain;
     JELLO_SHADE_SQUASH  = f.shSquash;
     // Wake every body so the new feel shows immediately (a sleeper keeps its pose).
-    for (var bi = 0; bi < jelloBodies.length; bi++) { jelloBodies[bi].sleeping = false; jelloBodies[bi].sleepFrames = 0; jelloBodies[bi]._parkT = 0; }
+    for (var bi = 0; bi < jelloBodies.length; bi++) { jelloBodies[bi].sleeping = false; jelloBodies[bi].sleepFrames = 0; }
   }
 
   function jelloCycleFeel() {
@@ -52631,7 +52623,7 @@
     if (jetBestF > 0.05) { b._ripJetOn = 1; b._ripJetX = jetBX; b._ripJetY = jetBY; }   // churn the skin under the jet
     if (disturbed) {
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
-      if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; b._parkT = 0; }
+      if (b.sleeping) { b.sleeping = false; b.sleepFrames = 0; }
     }
   }
 
@@ -52691,7 +52683,6 @@
     // forever and update.jello owned the frame (owner: 250 -> 600 fps with
     // jello off; harness: 9 of 13 bodies awake after 20s, all ply-fresh).
     // A push is by definition a moving rig, so pushes keep their protection.
-    if (!JELLO_WAKE_GATES || player.vx * player.vx + player.vy * player.vy > 144)
       b._plyMs = performance.now();   // player-driven: the crowd calm must not eat this motion (v25.21)
     // Mark this body as ACTIVELY BEING PUSHED (ms wall-clock TTL, read by the plow
     // + the ground probe). While fresh: the plow's tip-shear gradient flattens to a
@@ -52768,7 +52759,7 @@
     var _along = player.vx * dirx + player.vy * diry;           // rig speed along the travel dir
     if (_react > _along) _react = _along;
     if (_react > 0) { player.vx -= dirx * _react; player.vy -= diry * _react; }
-    b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;
+    b.sleeping = false; b.sleepFrames = 0;
   }
 
   // Bombs never destroy jello — a blast applies a radial impulse to points.
@@ -52809,7 +52800,7 @@
         var bFall = 1 - nd / rad; if (bFall < 0.25) bFall = 0.25; if (bFall > 1) bFall = 1;
         jelloRippleInject(b, wx, wy, -bFall * JELLO_RIPPLE_MAX, 4);
         b.rippleCd = 0.08;
-        b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;
+        b.sleeping = false; b.sleepFrames = 0;
         jelloSfxWobble(bFall);
       }
     }
@@ -52840,7 +52831,7 @@
         var lAmp = impactVy / 600; if (lAmp > 1) lAmp = 1;
         jelloRippleInject(b, cx, feetY, -lAmp * JELLO_RIPPLE_MAX, 2);
         b.rippleCd = 0.08;   // the world-hit echoes of the same landing don't double-inject
-        b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;
+        b.sleeping = false; b.sleepFrames = 0;
         jelloSfxWobble(lAmp);
       }
     }
@@ -52946,17 +52937,6 @@
     } else {
       b.sleepFrames = 0;
       b.sleeping = false;
-      // REAL disturbance = park clock re-earns its full window (v25.31 perf).
-      // Without a reset, a kicked/pushed body woke with 7s+ already banked and
-      // the park block force-slept it again within a frame (nmD lags 24
-      // frames) — kicks died mid-air, a driving rig froze against re-sleeping
-      // cubes (harness R11/R14/R15: everything 0.0px). But resetting on ANY
-      // above-bar motion re-broke the pipeline: cram-equilibrium solver jitter
-      // is exactly what the park clock exists to outlast (7 bodies churned
-      // awake again). Distinguish by magnitude + provenance: kicks and pushes
-      // run hundreds of px/s or carry a fresh player stamp; jitter sits under
-      // ~30 px/s with no stamp. 1600 = (40 px/s)^2 in the gate's units.
-      if (b._plyMs !== undefined && performance.now() - b._plyMs < 500) b._parkT = 0;
     }
   }
 
@@ -53435,7 +53415,7 @@
           var bShift = (dvB / JELLO_TIMESCALE) * JELLO_H * jelloImpulseScale();
           var box2 = hitBody.ox, boy2 = hitBody.oy;
           for (var bk = 0; bk < hitBody.n; bk++) { box2[bk] += nxL * bShift; boy2[bk] += nyL * bShift; }
-          hitBody.sleeping = false; hitBody.sleepFrames = 0; hitBody._parkT = 0;
+          hitBody.sleeping = false; hitBody.sleepFrames = 0;
         }
       }
     }
@@ -53541,7 +53521,7 @@
     spawnJelloSplat(b.cx, b.cy, 6, 70, 0.8, null);
     jelloShiftBody(b, bx - b.cx, by - b.cy);
     spawnJelloSplat(b.cx, b.cy, 6, 70, 0.8, null);
-    b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;
+    b.sleeping = false; b.sleepFrames = 0;
     return true;
   }
   // Probe a body's LEADING bbox edge for solid tiles before a rigid unmerge shift:
@@ -53775,8 +53755,8 @@
       if (aX === 0 && aY === 0 && bX === 0 && bY === 0) continue;
       jelloShiftBody(A, aX, aY);
       jelloShiftBody(B, bX, bY);
-      A.sleeping = false; A.sleepFrames = 0; A._parkT = 0;
-      B.sleeping = false; B.sleepFrames = 0; B._parkT = 0;
+      A.sleeping = false; A.sleepFrames = 0;
+      B.sleeping = false; B.sleepFrames = 0;
     }
   }
 
@@ -53873,19 +53853,7 @@
         }
         moved = true;
       }
-      if (moved) {
-        // Wake + freshness only from a MOVING rig (see the touch-stamp note):
-        // a PARKED rig pressed against gel evicts a point or two every frame,
-        // and waking on those nudges re-woke each force-slept body the frame
-        // after it slept — the pile could never stay asleep (harness: 8 bodies
-        // cycling awake with the park pipeline armed). The eviction itself
-        // always applies (the hull stays clean); a sleeping body absorbs the
-        // nudge in place, exactly like terrain does.
-        if (!JELLO_WAKE_GATES || player.vx * player.vx + player.vy * player.vy > 144) {
-          b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;
-          b._plyMs = performance.now();
-        }
-      }
+      if (moved) { b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now(); }
     }
   }
 
@@ -54589,7 +54557,6 @@
   var jelloRSX = null, jelloRSY = null;                         // render: chamfer-subdivision scratch (v25.27)
   var jelloRingBakeN = 0;                                       // drawn-ring vertex count the last bake produced
   var jelloActive = [];                    // reused per frame: the non-frozen bodies in the sim step
-  var jelloIslandEl = [], jelloIslandId = [];   // island park-sleep scratch (v25.31)
   function jelloContactAlloc() {
     if (jelloGPX) return;
     var MP = JELLO_MAX_POINTS;
@@ -54687,9 +54654,6 @@
     for (si = 0; si < N; si++) {
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
-      var iAsleep = JELLO_GATE_SLEEP_PAIRS && !active[bi]._solve;   // v25.41: sleeper-sleeper pairs are no-ops (jello.GATE_SLEEP_PAIRS toggles) — any real
-                                          // penetration wakes both right here in the pair math,
-                                          // so a steady pile only ever offers pen<=0 pairs
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
       for (gx = cx - 1; gx <= cx + 1; gx++) {
         for (gy = cy - 1; gy <= cy + 1; gy++) {
@@ -54698,7 +54662,6 @@
           for (kk = START[h]; kk < cend; kk++) {
             j = ORDER[kk];
             if (j <= i) continue;            // each unordered pair once (gather-index order)
-            if (iAsleep && !active[GB[j]]._solve) continue;   // both asleep: see iAsleep note
             if (GB[j] === bi) {              // same body: self-collide ONLY points far apart in the rest
               if (!selfOn) continue;         // lattice (a genuine fold), never near-neighbours / squish
               var bb = active[bi]; if (!bb.rx) continue;
@@ -54765,8 +54728,8 @@
         }
       }
     }
-    if (JELLO_GATE_EARLY_EXIT && contacts === 0) break;   // v25.41: a pass with zero contacts means the remaining
-                                 // passes are no-ops by definition (settled / fully separated)
+    if (contacts === 0) break;   // v25.43 perf (owner-kept in the v25.47 A/B): a zero-contact pass
+                                 // means the remaining passes are no-ops (settled / fully separated)
     }   // end citers iteration loop
     // 4. write the corrected positions AND prev-positions back (ox carries the velocity damping)
     for (i = 0; i < N; i++) { b = active[GB[i]]; var li = GL[i]; b.px[li] = GPX[i]; b.py[li] = GPY[i]; b.ox[li] = GOX[i]; b.oy[li] = GOY[i]; }
@@ -54927,25 +54890,7 @@
       b._solve = true;
       if (b.sleeping) {
         var awake = false;
-        // Proximity wake requires the rig to be DOING something (v25.31 perf):
-        // thrusting, or actually moving. A rig PARKED beside a sleeping pile
-        // re-woke every body inside the pad every frame — the pile solved
-        // forever and update.jello owned the frame even at "0 awake" (the
-        // wake-solve-park-sleep thrash). The instant the rig moves or fires
-        // the jet, the pad wakes everything exactly as before.
-        if (player && !gameWon && !gameOver &&
-            (!JELLO_WAKE_GATES ||
-             (player.thrusting && player.fuel > 0) ||
-             player.vx * player.vx + player.vy * player.vy > 144 ||
-             // INPUT INTENT: a rig driving into a sleeping cube can be blocked
-             // to ~0 speed by the very body it needs to wake (harness R11: rig
-             // advanced 0.0px forever). Held movement input opens the pad even
-             // at zero achieved speed; a parked rig with no input still never
-             // wakes the pile.
-             (typeof keys !== 'undefined' && (keys['ArrowLeft'] || keys['ArrowRight'] ||
-              keys['a'] || keys['A'] || keys['d'] || keys['D'] ||
-              keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '])) ||
-             (typeof dpad !== 'undefined' && dpad && (dpad.left || dpad.right || dpad.up)))) {
+        if (player && !gameWon && !gameOver) {
           // Jet wash reaches ~4 tiles below the feet and +/-JELLO_JET_RANGE to the sides; widen
           // the wake region to that cone so a sleeping blob reacts the instant you fly over it.
           var padX = TILE * 0.75, padUp = TILE * 0.75, padDn = TILE * 0.75;
@@ -54954,7 +54899,7 @@
                 b.bboxB < player.y - padUp || b.bboxT > player.y + PLAYER_H + padDn)) awake = true;
         }
         if (!awake) b._solve = false;                  // stays asleep (still collides), no internal solve
-        else { b.sleeping = false; b.sleepFrames = 0; b._parkT = 0; }
+        else { b.sleeping = false; b.sleepFrames = 0; }
       }
       if (b._solve) jelloPlayerFling(b, dt);           // drive-into push/fling, once before the substeps
       active[active.length] = b;
@@ -55095,46 +55040,6 @@
           _coy[_ci] += (_cpy[_ci] - _coy[_ci]) * _cf;
         }
       }
-      // PARK RAMP (v25.31 perf): the #1 jello cost is bodies that never reach
-      // SLEEP — a pen/pile cram jiggles above the sleep bar indefinitely (9 of
-      // 13 bodies still awake after 15s, update.jello ~90ms/frame at 4x
-      // throttle; the owner measures 250 -> 600 fps turning jello off). Net
-      // centroid motion is the transport-safe "is it actually going anywhere"
-      // signal (same gauge as the drain above): a body that has moved < 3px
-      // per 24-frame window for ~4s straight IS parked, whatever its
-      // point-level jiggle says — bleed the jiggle (ox toward px, velocity
-      // domain only, ramping 0 -> 0.5) until the ordinary sleep gate takes it.
-      // Fresh player contact (2s) exempts, so pushes never turn to syrup; any
-      // real displacement resets the clock. Positional systems (unmerge
-      // shifts, phasing, heal) are untouched — they move px directly.
-      if (JELLO_PARK_PIPELINE && !b.sleeping && b._nmD !== undefined && b._nmD < 6 &&
-          !(b._plyMs !== undefined && performance.now() - b._plyMs < 2000)) {
-        b._parkT = (b._parkT || 0) + dt;   // REAL seconds, not frames: a frame
-                                           // clock stretched 4-8x on throttled
-                                           // devices, the ones that need this
-        if (b._parkT > 4) {
-          var _pkf = (b._parkT - 4) / 4 * 0.5;
-          if (_pkf > 0.5) _pkf = 0.5;
-          for (var _pi = 0; _pi < b.n; _pi++) {
-            b.ox[_pi] += (b.px[_pi] - b.ox[_pi]) * _pkf;
-            b.oy[_pi] += (b.py[_pi] - b.oy[_pi]) * _pkf;
-          }
-          // FORCE the sleep after a long proven park (harness: five bodies sat
-          // at pk 350-566, v ~0, nmD 0.1 with the drain at MAX and never slept
-          // — the SOLVE ITSELF moves px at cram equilibrium every substep, so
-          // no velocity-domain bleed can ever satisfy the stillness gate). 7s
-          // of sub-6px net motion IS rest: sleep the pose as-is via the
-          // v25.30 _forceSleep endpoint (sleep skips the solve, so each
-          // sleeper also removes a churn source from its neighbours). Never
-          // for a merged/phasing body (R9: pairs must not park interlocked).
-          // Merged-but-PARKED pairs may sleep too (v25.20 design: a sealed
-          // cram sits merged-but-calm until the player digs room — sleep IS
-          // calm, and any wake re-arms the unmerge). An actively-unmerging
-          // pair never parks: its shifts keep net motion above the bar.
-          // Phasing stays vetoed (mutual contact is suspended mid-phase).
-          if (b._parkT > 7 && !b._phaseMate) b._forceSleep = true;
-        }
-      } else if (b._nmD !== undefined && b._nmD >= 6) b._parkT = 0;
       jelloUpdateBody(b, stepDt);
       // IN-WALL RESCUE (v25.23, see the function banner): a body whose centroid has
       // sat inside solid for a sustained second relocates to the nearest open tile,
@@ -55229,48 +55134,6 @@
           b.ox[lz] = _lox + (b.px[lz] - _lx0);
           b.oy[lz] = _loy + (b.py[lz] - _ly0);
         }
-      }
-    }
-    // ---- ISLAND PARK-SLEEP (v25.31 perf) ----
-    // A crammed PILE can never fall asleep one body at a time: the moment one
-    // sleeps, its still-awake neighbours' contact solve nudges it and the wake
-    // fires — measured five bodies at park 350-566 frames, velocity ~0, that
-    // cycled awake forever while update.jello owned the frame (the owner: 250
-    // -> 600 fps with jello off). Classic engine island sleeping: group the
-    // active bodies by bbox adjacency (union-find; N is small) and when EVERY
-    // member of an island has been PARKED long enough (7s of sub-6px net
-    // motion, no fresh player stamp, not merged/phasing), force-sleep the
-    // whole island in the same frame — nothing is left awake inside it to
-    // wake the others. Any real disturbance wakes bodies exactly as before.
-    if (JELLO_PARK_PIPELINE && nActive > 0) {
-      var _isEl = jelloIslandEl, _isId = jelloIslandId;
-      _isEl.length = nActive; _isId.length = nActive;
-      for (ai = 0; ai < nActive; ai++) {
-        b = active[ai];
-        _isEl[ai] = !b.sleeping && (b._parkT || 0) > 7 &&
-                    !b._phaseMate &&
-                    !(b._plyMs !== undefined && performance.now() - b._plyMs < 2000);
-        _isId[ai] = ai;
-      }
-      for (ai = 0; ai < nActive; ai++) {
-        for (var _bj = ai + 1; _bj < nActive; _bj++) {
-          var _A3 = active[ai], _B3 = active[_bj];
-          if (_A3.bboxR + 4 < _B3.bboxL || _B3.bboxR + 4 < _A3.bboxL ||
-              _A3.bboxB + 4 < _B3.bboxT || _B3.bboxB + 4 < _A3.bboxT) continue;
-          var _ra = ai, _rb = _bj;
-          while (_isId[_ra] !== _ra) _ra = _isId[_ra];
-          while (_isId[_rb] !== _rb) _rb = _isId[_rb];
-          if (_ra !== _rb) _isId[_ra] = _rb;
-        }
-      }
-      for (ai = 0; ai < nActive; ai++) {
-        var _rr = ai;
-        while (_isId[_rr] !== _rr) _rr = _isId[_rr];
-        if (!_isEl[ai]) _isEl[_rr] = false;   // one ineligible member vetoes the island root
-        _isId[ai] = _rr;                      // path-compress to the root
-      }
-      for (ai = 0; ai < nActive; ai++) {
-        if (_isEl[_isId[ai]] && _isEl[ai]) active[ai]._forceSleep = true;
       }
     }
     // Jet blast point: a throttled splat (and a surface ripple, when that system is
@@ -55817,7 +55680,7 @@
           b.bboxL += dx; b.bboxR += dx; b.bboxT += dy; b.bboxB += dy;
           b.cx += dx; b.cy += dy;
         }
-        b.sleeping = false; b.sleepFrames = 0; b._parkT = 0;   // wake to settle; the sleep gate re-parks it
+        b.sleeping = false; b.sleepFrames = 0;   // wake to settle; the sleep gate re-parks it
       } catch (err) { /* one malformed entry must never take the boot down */ }
     }
     jelloCount = jelloTotalPoints();
@@ -57727,25 +57590,6 @@
       // JELLO_E and JELLO_NU have custom setters that call jelloRecomputeMaterial()
       // so MU/LAMBDA are re-derived immediately — no reload needed.
       if (typeof JELLO_E !== 'undefined') {
-        // v25.45 — perf-era A/B toggles, kept at the TOP of the jello group
-        // (owner: "so I can turn off and on what you just did"). 1 = shipped
-        // behavior, 0 = the exact pre-change behavior.
-        gmRegisterLever('jello.PARK_PIPELINE (v25.38 sleep)', 'jello', 'PARK_PIPELINE',
-          function () { return JELLO_PARK_PIPELINE; },
-          function (v) { JELLO_PARK_PIPELINE = v ? 1 : 0; },
-          0, 1, 1);
-        gmRegisterLever('jello.WAKE_GATES (v25.38 parked-rig)', 'jello', 'WAKE_GATES',
-          function () { return JELLO_WAKE_GATES; },
-          function (v) { JELLO_WAKE_GATES = v ? 1 : 0; },
-          0, 1, 1);
-        gmRegisterLever('jello.GATE_EARLY_EXIT (v25.43)', 'jello', 'GATE_EARLY_EXIT',
-          function () { return JELLO_GATE_EARLY_EXIT; },
-          function (v) { JELLO_GATE_EARLY_EXIT = v ? 1 : 0; },
-          0, 1, 1);
-        gmRegisterLever('jello.GATE_SLEEP_PAIRS (v25.43)', 'jello', 'GATE_SLEEP_PAIRS',
-          function () { return JELLO_GATE_SLEEP_PAIRS; },
-          function (v) { JELLO_GATE_SLEEP_PAIRS = v ? 1 : 0; },
-          0, 1, 1);
         gmRegisterLever('jello.JELLO_E', 'jello', 'JELLO_E',
           function () { return JELLO_E; },
           function (v) { JELLO_E = Math.max(0.5, v); jelloRecomputeMaterial(); },
