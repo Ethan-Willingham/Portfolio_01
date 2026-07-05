@@ -1247,6 +1247,13 @@ var SluiceAudio = (function () {
       duck(DUCK_HARD.amt, DUCK_HARD.atk, DUCK_HARD.rel);
       playOne('death', { bus: musicBus, track: true });
     },
+    // Leaving the death scene (respawn / restart): cut the death lament. It is a
+    // tracked one-shot on the MUSIC bus, so setMusic() only layers the resumed
+    // world track ON TOP of it — without this it keeps playing to the end of the
+    // ~full clip. Safe no-op if the sting already ended (music.oneShot is null).
+    revive: function () {
+      if (music.oneShot) { stopVoice(music.oneShot, 0.3); music.oneShot = null; }
+    },
     event: function (name, opts) {
       var map = { bigStrike: 'event-bigstrike', arrival: 'event-arrival', ui: 'event-ui' };
       var s = playOne(map[name] || name, opts);

@@ -29,6 +29,13 @@
         sfxPlay('hull-hit'); sfxPlay('land-damage');
         SluiceAudio.death(); _audio.mode = null; _audio.danger = false;
       }
+      // Revive edge: the player just left the death scene (respawn or restart).
+      // Cut the death lament — it is a music-bus one-shot, so the resumed world
+      // track (setMusic below) only layers over it; without this it plays on to
+      // the end of the clip. _audio.mode is null here, so setMusic re-fires too.
+      if (!gameOver && _audio.gameOver && typeof SluiceAudio.revive === 'function') {
+        SluiceAudio.revive();
+      }
       _audio.gameOver = gameOver;
       if (gameOver) return;
 

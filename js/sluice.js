@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.59';
+  var GAME_VERSION = 'v25.60';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -55074,6 +55074,13 @@
         // side is hull-hit + land-damage; the music side is death()).
         sfxPlay('hull-hit'); sfxPlay('land-damage');
         SluiceAudio.death(); _audio.mode = null; _audio.danger = false;
+      }
+      // Revive edge: the player just left the death scene (respawn or restart).
+      // Cut the death lament — it is a music-bus one-shot, so the resumed world
+      // track (setMusic below) only layers over it; without this it plays on to
+      // the end of the clip. _audio.mode is null here, so setMusic re-fires too.
+      if (!gameOver && _audio.gameOver && typeof SluiceAudio.revive === 'function') {
+        SluiceAudio.revive();
       }
       _audio.gameOver = gameOver;
       if (gameOver) return;
