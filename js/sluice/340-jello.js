@@ -814,10 +814,15 @@
   var JELLO_WATER_TILE_WET = 30;  // water particles inside a covered tile above which
                                   // it stays OPEN (still draining; ~140/bin body density
                                   // means a genuinely submerged-in-body tile reads 100s)
-  var JELLO_WATER_SEEP   = 1;     // v25.51 — gel is PERMEABLE: water caught ON/IN a pile
-                                  // drains down through it instead of pooling in
-                                  // tile-shaped pockets (the owner's "water cuts itself
-                                  // off in tile sized squares"). 0 = v25.50 sealing
+  var JELLO_WATER_SHED   = 1;     // v25.52 — FULL COLLISION + EXPULSION (the owner's
+                                  // call: water is never IN or ON gel, always AROUND
+                                  // it). Slime tiles are always solid; any particle
+                                  // inside one is RELOCATED to the nearest open space
+                                  // (remove+add rides the op replay, so the GPU path
+                                  // moves too), and water RESTING on gel sheds off to
+                                  // the flanks/underside. Replaced the v25.51 seep
+                                  // valves, which drained pockets too slowly to kill
+                                  // the tile-box look. 0 = collision only, no expel
   var jelloWaterBins   = new Map();              // binKey -> slot in the scratch below
   var jelloWaterBinN   = new Float32Array(2048); // particles per bin (2048-bin cap:
   var jelloWaterBinVX  = new Float32Array(2048); //  overflow bins just read dry,
@@ -830,6 +835,13 @@
   var jelloWaterX0 = 0, jelloWaterY0 = 0, jelloWaterX1 = -1, jelloWaterY1 = -1; // live-body union AABB (world px)
   var jelloSplashWakes = [];                     // {cx,cy,r,blast,t0} radial grid wakes
   var jelloSplashTotal = 0;                      // lifetime splash count (dev probe)
+  var jelloWaterExpelIdx = new Int32Array(512);  // this frame's relocation candidates
+  var jelloWaterExpelN = 0;
+  var jelloWaterBfsSeen = new Set();             // BFS scratch (nearest-open-tile search)
+  var jelloWaterBfsQ = new Int32Array(256);
+  var jelloWaterTileTarget = new Map();          // per-frame cache: source tile -> target tile
+  var jelloWaterExpelTotal = 0;                  // lifetime relocations (dev probe)
+  var jelloWaterEvapTotal = 0;                   // lifetime sealed-in deletions (dev probe)
   var JELLO_RENDER_ALPHA   = 0.8;    // overall body opacity (lower = glassier / more see-through)
   var JELLO_REFRACT        = 0.12;   // backdrop lens magnification (0 = off; ~0.1-0.25 = glassy bulge)
   var JELLO_GLOSS          = 0;      // specular sheen + sharp glint strength. SHIPS 0 since v24.160: the
@@ -986,6 +998,7 @@
     jelloWaterTileCount = 0;
     if (jelloWaterBins.size) jelloWaterBins.clear();
     jelloSplashWakes.length = 0;
+    jelloWaterExpelN = 0;   // stale candidate indices must not survive a world rebuild
   }
 
   function jelloTotalPoints() {
@@ -4811,11 +4824,124 @@
 
   // ===== WATER COUPLING (v25.50) — see the JELLO_WATER tunables banner =====
 
+  // BFS from a COVERED tile THROUGH covered tiles to the nearest OPEN tile
+  // (not slime-covered, not world-solid). forbidUp = sideways/down only
+  // (shedding must never pop water back on top of the gel). Returns the
+  // tile key or -1 (fully sealed pocket). Bounded ~220 visits.
+  function jelloWaterFindOpenTile(srcKey, forbidUp) {
+    var q = jelloWaterBfsQ, seen = jelloWaterBfsSeen;
+    seen.clear();
+    var head = 0, tail = 0;
+    q[tail++] = srcKey;
+    seen.add(srcKey);
+    while (head < tail) {
+      var k = q[head++];
+      var tr = Math.floor(k / 2048), tc = k - tr * 2048;
+      for (var d = 0; d < 4; d++) {
+        var dr = d === 0 ? 1 : (d === 3 ? -1 : 0);
+        var dc = d === 1 ? -1 : (d === 2 ? 1 : 0);
+        if (forbidUp && dr === -1) continue;
+        var nr = tr + dr, nc = tc + dc;
+        var nk = nr * 2048 + nc;
+        if (seen.has(nk)) continue;
+        seen.add(nk);
+        if (!jelloSolidTiles.has(nk)) {
+          if (tileAt(nr, nc) === null) return nk;   // open space — done
+          continue;                                  // terrain wall: not traversable
+        }
+        if (tail < q.length) q[tail++] = nk;         // gel: search through the pile
+      }
+      if (seen.size > 220) break;
+    }
+    return -1;
+  }
+
+  // ===== EXPULSION (v25.52) — water is never IN or ON gel ==========
+  // Process this frame's candidates (collected during the bin pass):
+  //   INSIDE a covered tile  -> relocate to the nearest open tile, any
+  //     direction (mask lag or a body landing over water let it in);
+  //   RESTING on gel as a thin film -> shed to the nearest open tile,
+  //     sideways/down only. Film guards re-checked here against the now-
+  //     COMPLETE bins: own bin dense = the pond surface lapping a floater's
+  //     shoulder (leave it), anything above = mid-column water (leave it).
+  // remove+add rides the op replay, so the GPU solver relocates the same
+  // rows. DESCENDING index order: removeLiquidParticle swap-removes, which
+  // keeps every not-yet-processed (smaller) index valid. A sealed pocket
+  // with no reachable opening EVAPORATES (the stray sweep already sanctions
+  // deletion; a vanished droplet beats a noise box in the pile).
+  function jelloWaterExpel() {
+    var n = jelloWaterExpelN;
+    jelloWaterExpelN = 0;
+    if (!n || !JELLO_WATER_SHED || !JELLO_WATER_MASK || jelloWaterTileCount === 0) return;
+    jelloWaterTileTarget.clear();
+    var moved = 0;
+    for (var ci = n - 1; ci >= 0; ci--) {
+      var i = jelloWaterExpelIdx[ci];
+      if (i >= liquidCount) continue;                // a prior removal shrank the array
+      var wx = liquidX[i], wy = liquidY[i];
+      if (wx !== wx || wy !== wy) continue;
+      var tc = Math.floor(wx / TILE), tr = Math.floor(wy / TILE);
+      var srcKey = tr * 2048 + tc;
+      var inside = jelloSolidTiles.has(srcKey);
+      var bfsFrom = srcKey;
+      if (!inside) {
+        // SHED fires ONLY for a genuine free-surface FILM on gel. The first
+        // build shed the pond column resting on a lakebed body: it carved a
+        // VACUUM SHELL around the body (wf flip-flopped 0<->36), buoyancy
+        // died, and the body never floated (harness-caught). Guards: long
+        // rest, sparse own bin, and the WHOLE 48-px column above near-empty
+        // — churn can thin one bin, it cannot empty a column of pond.
+        if (!(liquidRestFrames[i] >= 30 && jelloSolidTiles.has((tr + 1) * 2048 + tc))) continue;
+        var bxc = Math.floor(wx * 0.0625), byc = Math.floor(wy * 0.0625);
+        var sOwn = jelloWaterBins.get(byc * 8192 + bxc);
+        if (sOwn !== undefined && jelloWaterBinN[sOwn] >= 60) continue;
+        var colUp = 0, sUp;
+        sUp = jelloWaterBins.get((byc - 1) * 8192 + bxc); if (sUp !== undefined) colUp += jelloWaterBinN[sUp];
+        sUp = jelloWaterBins.get((byc - 2) * 8192 + bxc); if (sUp !== undefined) colUp += jelloWaterBinN[sUp];
+        sUp = jelloWaterBins.get((byc - 3) * 8192 + bxc); if (sUp !== undefined) colUp += jelloWaterBinN[sUp];
+        if (colUp >= JELLO_WATER_LO) continue;
+        bfsFrom = (tr + 1) * 2048 + tc;              // shed: search from the gel below
+      }
+      var tk = jelloWaterTileTarget.get(bfsFrom);
+      if (tk === undefined) {
+        tk = jelloWaterFindOpenTile(bfsFrom, !inside);
+        jelloWaterTileTarget.set(bfsFrom, tk);
+        if (tk >= 0) jelloWaterTileTarget.set(-1 - tk, 0);   // per-target placement counter slot
+      }
+      if (tk < 0) {
+        removeLiquidParticle(i);
+        jelloWaterEvapTotal++;
+        continue;
+      }
+      // Per-target-per-frame placement cap: the first build funneled a whole
+      // source tile into ONE target at 9 jitter spots — a density spike the
+      // shock limiter then fought (binMax ~900). Beyond the cap the particle
+      // simply waits a frame.
+      var placed = jelloWaterTileTarget.get(-1 - tk) || 0;
+      if (placed >= 24) continue;
+      jelloWaterTileTarget.set(-1 - tk, placed + 1);
+      var typ = liquidType[i] === 1 ? 'oil' : 'water';
+      var org = liquidOrigin[i];
+      var ttr = Math.floor(tk / 2048), ttc = tk - ttr * 2048;
+      // Hash-spread across the target tile's interior (not 9 shared spots).
+      var hsh = (Math.imul(i + 1, 2654435761) >>> 0);
+      var tx = ttc * TILE + 4 + (hsh & 15) * 1.6;
+      var ty = ttr * TILE + 4 + ((hsh >> 4) & 15) * 1.6;
+      var dvx = tx - wx, dvy = ty - wy;
+      var dl = Math.sqrt(dvx * dvx + dvy * dvy) || 1;
+      removeLiquidParticle(i);
+      addLiquidParticle(typ, tx, ty, dvx / dl * 40, dvy / dl * 40 + 15, org);
+      moved++;
+    }
+    if (moved) jelloWaterExpelTotal += moved;
+  }
+
   // Per-frame water context: bin the liquid mirror (16-px cells) over the
   // active bodies' union AABB, then write per-point submersion + local water
   // velocity into each active body (b.wf/b.wvx/b.wvy, consumed by
   // jelloIntegrate). Also owns the water-change SLEEP WAKE, the splash-wake
-  // emission, and the expired-wake sweep (consumers only read, gated on t0).
+  // emission, the expired-wake sweep (consumers only read, gated on t0),
+  // and EXPULSION-candidate collection (processed by jelloWaterExpel).
   function jelloWaterFrame(active, nActive) {
     var bins = jelloWaterBins;
     var ai, b;
@@ -4839,6 +4965,8 @@
     // also drops non-finite entries). O(liquidCount) once per frame — the
     // same cost class playerWaterCushion already pays while the rig is wet.
     bins.clear();
+    jelloWaterExpelN = 0;
+    var shedOn = JELLO_WATER_SHED && JELLO_WATER_MASK && jelloWaterTileCount > 0;
     var cur = 0, cap = jelloWaterBinN.length;
     for (var i = 0; i < liquidCount; i++) {
       var wx = liquidX[i], wy = liquidY[i];
@@ -4855,6 +4983,18 @@
       var lvx = liquidVX[i], lvy = liquidVY[i];
       if (lvx === lvx) jelloWaterBinVX[s] += lvx;
       if (lvy === lvy) jelloWaterBinVY[s] += lvy;
+      // EXPULSION candidates (v25.52): inside a covered tile, or resting on
+      // one (shed film guards re-checked at process time, when the bins are
+      // complete). Bins use LAST frame's tile map — consistent with the
+      // collision the water actually experienced this frame.
+      if (shedOn && jelloWaterExpelN < jelloWaterExpelIdx.length) {
+        var ptr2 = Math.floor(wy / TILE), ptc2 = Math.floor(wx / TILE);
+        if ((jelloSolidTiles.has(ptr2 * 2048 + ptc2) ||
+             (liquidRestFrames[i] >= 20 && jelloSolidTiles.has((ptr2 + 1) * 2048 + ptc2))) &&
+            !jelloWaterTileInPond(ptc2, ptr2)) {   // pond regime: coexist, never expel
+          jelloWaterExpelIdx[jelloWaterExpelN++] = i;
+        }
+      }
     }
     var now = performance.now();
     var invSpan = 1 / (JELLO_WATER_HI - JELLO_WATER_LO || 1);
@@ -4934,15 +5074,25 @@
       // being closed over and trapped inside the footprint.
       if (JELLO_WATER_SPLASH > 0) {
         var spd = Math.sqrt((b.vx || 0) * (b.vx || 0) + (b.vy || 0) * (b.vy || 0)) * JELLO_TIMESCALE;
-        var entry = (wfSum - prev > b.n * 0.10) && spd > 170;
-        // Sustained wakes require submersion RISING (advancing into water):
-        // a floater's bob oscillates wfSum around equilibrium, and wakes on
-        // the down-phase re-agitated the pond into a permanent slosh loop
-        // (harness: 8 splashes and a never-settling CPU pond).
-        var moving = b._wfOn && wfSum > b.n * 0.2 && spd > 120 && (wfSum - prev > b.n * 0.02);
+        // ONE entry splash per immersion episode: a tossed submerged body
+        // re-tripped the entry trigger and each wake re-tossed it — a
+        // feedback loop (harness: 7 splashes, permanent churn, the body
+        // dragged low by its own storm). Re-arm only after ~dry for 500 ms.
+        if (wfSum < b.n * 0.05) {
+          if (b._dryMs === undefined) b._dryMs = now;
+          if (now - b._dryMs > 500) b._splashArmed = true;
+        } else b._dryMs = undefined;
+        var entry = (b._splashArmed !== false) && (wfSum - prev > b.n * 0.10) && spd > 170;
+        // Sustained wakes require submersion RISING (advancing into water)
+        // and NOT already submerged (a fully-under body is carried, not
+        // entering; its wakes were pure agitation). A floater's bob
+        // oscillates wfSum around equilibrium — the rising gate skips it.
+        var moving = b._wfOn && wfSum > b.n * 0.2 && wfSum < b.n * 0.85 &&
+                     spd > 120 && (wfSum - prev > b.n * 0.02);
         var cool = entry ? 300 : 150;
         if ((entry || moving) && (!b._splashMs || now - b._splashMs > cool) && jelloSplashWakes.length < 8) {
           b._splashMs = now;
+          if (entry) b._splashArmed = false;
           var brad = ((b.bboxR - b.bboxL) + (b.bboxB - b.bboxT)) * 0.25;
           jelloSplashTotal++;
           jelloSplashWakes.push({
@@ -4963,6 +5113,8 @@
     for (var wi = jelloSplashWakes.length - 1; wi >= 0; wi--) {
       if (now - jelloSplashWakes[wi].t0 > 260) jelloSplashWakes.splice(wi, 1);
     }
+    // Relocate this frame's trapped/resting water out of the gel (v25.52).
+    jelloWaterExpel();
   }
 
   // Rasterize every live body's point lattice into jelloSolidTiles (the
@@ -4972,10 +5124,24 @@
   // resetJello. Frozen off-camera bodies are included at their parked pose —
   // the pond-extension can keep water live past the camera. Whole-list cost
   // is a few thousand int Set.adds worst case (~0.1 ms), typically far less.
+  // Is this tile inside a FILLED surface pond's rect (+1 tile margin)? The
+  // regime selector: ponds keep the proven v25.50 coexistence (wet-gate,
+  // no expel); everywhere else (caverns, piles, films on gel) runs the
+  // v25.52 full-collision + expulsion the owner asked for. Few ponds, O(n).
+  function jelloWaterTileInPond(tc, tr) {
+    if (typeof surfacePonds === 'undefined' || !surfacePonds) return false;
+    for (var i = 0; i < surfacePonds.length; i++) {
+      var p = surfacePonds[i];
+      if (!p.filled) continue;
+      if (tc >= p.cL - 1 && tc <= p.cR + 1 &&
+          tr >= SKY_ROWS - 2 && tr <= SKY_ROWS + (p.d || 1) + 1) return true;
+    }
+    return false;
+  }
+
   // Water particles inside tile (tc, tr): the 4 16-px bins fully inside it
-  // (bins are exact quarter-tiles). Bins only exist within the active-body
-  // AABB (+ a tile), so far-away tiles read 0 — which is correct for every
-  // caller (a frozen far body's dry tiles close normally).
+  // (bins are exact quarter-tiles; they only exist within the active-body
+  // AABB, so far tiles read 0, which is right for every caller).
   function jelloWaterTileWaterN(tc, tr) {
     var bins = jelloWaterBins;
     if (!bins.size) return 0;
@@ -5013,37 +5179,24 @@
         if (b.bboxT < jelloWaterY0) jelloWaterY0 = b.bboxT;
         if (b.bboxB > jelloWaterY1) jelloWaterY1 = b.bboxB;
       }
-      // Gates before a tile goes solid. (1) COVERAGE: only really covered
-      // tiles (JELLO_WATER_TILE_MIN) — a rim sliver closing over open water
-      // swallowed particles. (2) DRAINAGE: a tile still holding water stays
-      // OPEN — the GPU mask is 1-bit (the kernel can't tell slime from
-      // terrain), so never-close-over-water is the path-neutral anti-trap.
-      // (3) SEEP VALVES (v25.51, the owner's "water cuts itself off in tile
-      // sized squares"): tile quantization seals the crevices of a pile, so
-      // crevice water pooled ON/BETWEEN blobs sat forever in tile-shaped
-      // pockets. Gel is permeable now — a covered tile under wet water
-      // opens on a dithered duty cycle so the water dribbles down THROUGH
-      // the pile: 1-in-4 frames when the water is CAPPED (slime or terrain
-      // within 3 tiles above it = a pocket), 1-in-16 when it is a thin
-      // surface film (<= 1 tile deep, dwindles like soak-in). DEEP UNCAPPED
-      // water is a real pond: no valve, full displacement — this is what
-      // keeps a floating body's submerged shoulders sealed (a plunging
-      // floater must not flood open, harness float suite).
+      // TWO REGIMES (v25.52, the owner's full-collision call, scoped after
+      // the harness showed each one poisons the other's home turf):
+      //   SURFACE POND (tile inside a filled pond rect): the proven v25.50
+      //     coexistence — a covered tile still holding water stays OPEN and
+      //     drains via displacement. Full-closure + teleport-expel HERE
+      //     re-tossed the pond forever (momentum-violating relocations +
+      //     slam-shut tiles made a permanent storm that dragged the floater
+      //     to the bottom; harness-caught twice).
+      //   EVERYWHERE ELSE (caverns, piles, films on gel — the owner's
+      //     screenshot): covered = SOLID, unconditionally. Water never
+      //     coexists with gel; whatever gets in anyway (mask lag) is
+      //     relocated out by jelloWaterExpel.
+      // Coverage gate both regimes: a rim sliver must not annex open water.
       counts.forEach(function (cnt, key) {
         if (cnt < JELLO_WATER_TILE_MIN) return;
         var tr2 = Math.floor(key / 2048), tc2 = key - tr2 * 2048;
-        if (jelloWaterTileWaterN(tc2, tr2) > JELLO_WATER_TILE_WET) return;   // still draining
-        if (JELLO_WATER_SEEP && jelloWaterBins.size &&
-            jelloWaterTileWaterN(tc2, tr2 - 1) > JELLO_WATER_TILE_WET) {
-          var capped = false;
-          for (var up = 2; up <= 4; up++) {
-            if (counts.get((tr2 - up) * 2048 + tc2) >= JELLO_WATER_TILE_MIN ||
-                tileAt(tr2 - up, tc2) !== null) { capped = true; break; }
-          }
-          var phase = (tc2 * 5 + tr2 * 11 + jelloFrameNo) | 0;
-          if (capped) { if ((phase & 3) === 0) return; }
-          else if (jelloWaterTileWaterN(tc2, tr2 - 2) < 8) { if ((phase & 15) === 0) return; }
-        }
+        if (jelloWaterTileInPond(tc2, tr2) &&
+            jelloWaterTileWaterN(tc2, tr2) > JELLO_WATER_TILE_WET) return;
         set.add(key);
       });
     }
@@ -5069,9 +5222,12 @@
       if (opened && typeof liquidCount !== 'undefined' && liquidCount > 0) {
         var woke = 0;
         for (var wi2 = 0; wi2 < liquidCount; wi2++) {
+          // SLEEPERS only: they skip the move loop and would hang mid-air.
+          // Resetting restFrames on merely-resting AWAKE water postponed the
+          // whole pond's sleep every bob-flicker = permanent churn.
+          if (!liquidSleeping[wi2]) continue;
           var wpx = liquidX[wi2], wpy = liquidY[wi2];
           if (wpx < wx0 || wpx > wx1 || wpy < wy0 || wpy > wy1) continue;
-          if (!liquidSleeping[wi2] && !liquidRestFrames[wi2]) continue;
           liquidSleeping[wi2] = 0;
           liquidRestFrames[wi2] = 0;
           if (liquidOps.length < LIQUID_OPS_MAX) {
@@ -5118,7 +5274,7 @@
       }
       return {
         lever: JELLO_WATER, mask: JELLO_WATER_MASK, buoy: JELLO_WATER_BUOY,
-        seep: JELLO_WATER_SEEP,
+        shed: JELLO_WATER_SHED, expelled: jelloWaterExpelTotal, evaporated: jelloWaterEvapTotal,
         tiles: jelloWaterTileCount, bins: jelloWaterBins.size,
         wakes: jelloSplashWakes.length, splashes: jelloSplashTotal,
         aabb: [jelloWaterX0, jelloWaterY0, jelloWaterX1, jelloWaterY1],
