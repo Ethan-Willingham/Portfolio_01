@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.53';
+  var GAME_VERSION = 'v25.54';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -49889,9 +49889,13 @@
   var JELLO_DISSOLVE_DENSE = 80;   // 16-px bin count that reads as a real water body
                                    // (films/sprays measure 20-60, pond interiors 140+)
   var JELLO_DISSOLVE_DWELL = 0.35; // s the count must hold (no single-frame flukes)
-  var JELLO_DISSOLVE_MELT  = 0.5;  // s of melt telegraph before the burst
+  var JELLO_DISSOLVE_MELT  = 0.7;  // s of melt telegraph before the burst
+  var JELLO_DISSOLVE_BURST_T = 2.2;// s the bottom-up conversion takes, whole body —
+                                   // the owner's pacing call (v25.54): the first cut
+                                   // converted a cube in ~0.15 s, unreadable
   var JELLO_DISSOLVE_PPP   = 62;   // particles released per lattice point (~560/tile)
-  var JELLO_DISSOLVE_SPAWN = 260;  // max particle adds per frame (stagger)
+                                   // BEFORE the density scale below
+  var JELLO_DISSOLVE_SPAWN = 260;  // hard cap on particle adds per frame (giant bodies)
   var jelloWaterBins   = new Map();              // binKey -> slot in the scratch below
   var jelloWaterBinN   = new Float32Array(2048); // particles per bin (2048-bin cap:
                                                  //  overflow bins just read dry, and
@@ -53853,53 +53857,67 @@
 
   // ===== DISSOLVE (v25.53) — see the JELLO_DISSOLVE tunables banner =====
 
-  // Begin the transition: wake the body, stamp the melt clock, build the
-  // bottom-up point order the burst will consume, and fire the one-time
-  // flourish (release wake on the explosion channel + liquidWakeForDig so a
-  // SETTLED pond reacts + a small gel splat).
+  // Begin the transition: wake the body and stamp the melt clock. NOTHING
+  // pushes the water here (v25.54): the v25.53 opener fired a blast-170
+  // wake + splat at melt START, which read as an unexplained explosion
+  // that blew the pond away before anything visibly happened (owner
+  // report). The telegraph is purely the colour ease now; the (gentle)
+  // flourish moved to the first burst tick, where water actually appears.
   function jelloDissolveStart(b) {
     b._melting = true;
     b._meltT = 0;
     b._meltSpawned = 0;
     b._meltPt = 0;
+    b._meltBurst = false;
+    b._meltDone = new Uint8Array(b.n);
+    b._meltY = b.bboxB + 2;
     b.sleeping = false; b.sleepFrames = 0;
-    var n = b.n, order = new Int32Array(n), i;
-    for (i = 0; i < n; i++) order[i] = i;
-    var py = b.py;
-    // insertion sort by DESCENDING py (lowest points burst first) — n is tiny
-    for (i = 1; i < n; i++) {
-      var v = order[i], j = i - 1;
-      while (j >= 0 && py[order[j]] < py[v]) { order[j + 1] = order[j]; j--; }
-      order[j + 1] = v;
-    }
-    b._meltOrder = order;
     jelloDissolving = b;
     jelloDissolveTotal++;
-    var brad = ((b.bboxR - b.bboxL) + (b.bboxB - b.bboxT)) * 0.25;
-    if (jelloSplashWakes.length < 8) {
-      jelloSplashTotal++;
-      jelloSplashWakes.push({ cx: b.cx, cy: b.cy, r: brad * 1.6 + TILE, blast: 170, t0: performance.now() });
-    }
-    if (typeof liquidWakeForDig === 'function') {
-      try { liquidWakeForDig(Math.floor(b.cy / TILE), Math.floor(b.cx / TILE)); } catch (e) {}
-    }
-    spawnJelloSplat(b.cx, b.cy, 8, 70, 0.8, null);
   }
 
   // Advance the melting body one frame. Telegraph first (render-only water
   // tint via b._meltT; the body keeps solving so it jiggles alive), then
-  // the staggered bottom-up BURST: the lowest untreated lattice points each
-  // release JELLO_DISSOLVE_PPP particles jittered across their cell with
-  // the body's real velocity. The render clips away below the rising melt
-  // line (b._meltY), so gel visibly becomes the water replacing it.
-  // Returns true when fully converted (the caller sweeps the body).
-  // Budget-clamped: near the liquid cap the burst spawns less — a slightly
-  // thinner puddle beats a stuck half-melted body.
+  // the TIME-PACED bottom-up burst: the whole body converts over
+  // JELLO_DISSOLVE_BURST_T seconds (v25.54 — the first cut converted a
+  // cube in ~0.15 s and the owner couldn't even tell it was bottom-up).
+  // Each tick converts the LIVE lowest unconverted point (scanned fresh —
+  // the body keeps moving during the long burst, so a start-time sort
+  // drifts) and releases DENSITY-SCALED particles: the body interpenetrates
+  // the pond (no collision anymore), so releasing the full volume where
+  // water already stands DOUBLED local density and the pressure solver
+  // blew the pond apart — the owner's "initial explosion". In a pond
+  // interior (~140/bin) a point releases ~15% of nominal; at a dry edge
+  // the full JELLO_DISSOLVE_PPP. The render clips below the EASED melt
+  // line b._meltY (a fraction-snapped line stepped tile rows, and
+  // despawning before the line cleared the crown popped the top half);
+  // the body only despawns once the line glides past its top.
+  // Budget-clamped near the liquid cap: a thinner puddle beats a stuck
+  // half-melted body.
   function jelloDissolveStep(b, dt) {
     b._meltT += dt;
-    if (b._meltT < JELLO_DISSOLVE_MELT) return false;
-    var n = b.n, order = b._meltOrder;
-    if (!order) { b._melting = false; return true; }   // corrupt start: just despawn
+    if (b._meltT < JELLO_DISSOLVE_MELT) return false;   // telegraph: colour only
+    var n = b.n, done = b._meltDone;
+    if (!done) { b._melting = false; return true; }     // corrupt start: just despawn
+    // One-time burst-start flourish, now GENTLE (blast 45; a bomb is 660):
+    // a soft stir + wake the receiving pond + a few gel droplets, fired
+    // where the water actually starts appearing instead of at melt start.
+    if (!b._meltBurst) {
+      b._meltBurst = true;
+      var brad0 = ((b.bboxR - b.bboxL) + (b.bboxB - b.bboxT)) * 0.25;
+      if (jelloSplashWakes.length < 8) {
+        jelloSplashTotal++;
+        jelloSplashWakes.push({ cx: b.cx, cy: b.cy, r: brad0 * 1.4 + TILE, blast: 45, t0: performance.now() });
+      }
+      if (typeof liquidWakeForDig === 'function') {
+        try { liquidWakeForDig(Math.floor(b.cy / TILE), Math.floor(b.cx / TILE)); } catch (e) {}
+      }
+      spawnJelloSplat(b.cx, b.cy, 6, 55, 0.7, null);
+    }
+    var burstT = b._meltT - JELLO_DISSOLVE_MELT;
+    var span = JELLO_DISSOLVE_BURST_T > 0.1 ? JELLO_DISSOLVE_BURST_T : 0.1;
+    var tgt = Math.ceil(n * burstT / span);
+    if (tgt > n) tgt = n;
     var canAdd = typeof addLiquidParticle === 'function';
     var budget = JELLO_DISSOLVE_SPAWN;
     var rvx = (b.vx || 0) * JELLO_TIMESCALE, rvy = (b.vy || 0) * JELLO_TIMESCALE;
@@ -53908,28 +53926,46 @@
     if (rvx !== rvx) rvx = 0;
     if (rvy !== rvy) rvy = 0;
     var half = (b.spacing || (TILE / JELLO_NPT)) * 0.55;
-    while (b._meltPt < n && budget > 0) {
-      var pi = order[b._meltPt++];
+    var bins = jelloWaterBins, bN = jelloWaterBinN;
+    while (b._meltPt < tgt && budget > 0) {
+      // live lowest unconverted point (O(n) per tick; ticks are sparse now)
+      var pi = -1, best = -Infinity;
+      for (var q = 0; q < n; q++) {
+        if (!done[q] && b.py[q] > best) { best = b.py[q]; pi = q; }
+      }
+      if (pi < 0) { b._meltPt = n; break; }
+      done[pi] = 1;
+      b._meltPt++;
       var x = b.px[pi], y = b.py[pi];
       if (x !== x || y !== y) continue;   // corrupt point releases nothing
+      var k = JELLO_DISSOLVE_PPP;
+      var sl = bins.get(Math.floor(y * 0.0625) * 8192 + Math.floor(x * 0.0625));
+      if (sl !== undefined) {
+        var sc = 1 - bN[sl] / 140;
+        if (sc < 0.15) sc = 0.15; else if (sc > 1) sc = 1;
+        k = Math.round(k * sc);
+      }
       if (canAdd) {
-        for (var s = 0; s < JELLO_DISSOLVE_PPP; s++) {
+        for (var s = 0; s < k; s++) {
           if (liquidCount >= LIQUID_MAX_PARTICLES - 64) { budget = 0; break; }
           var h1 = (Math.imul((pi + 1) * 641 + s, 2654435761) >>> 0);
           addLiquidParticle('water',
             x + (((h1 & 255) / 255) * 2 - 1) * half,
             y + ((((h1 >> 8) & 255) / 255) * 2 - 1) * half,
-            rvx + (((h1 >> 16) & 63) - 31.5) * 1.2,
-            rvy - 12 + (((h1 >> 22) & 63) - 31.5) * 0.8,
+            rvx + (((h1 >> 16) & 63) - 31.5) * 0.7,
+            rvy - 6 + (((h1 >> 22) & 63) - 31.5) * 0.5,
             0);
           b._meltSpawned++;
           budget--;
         }
-      } else budget -= JELLO_DISSOLVE_PPP;
+      } else budget -= k;
     }
-    // Rising melt line for the render clip: fraction of points converted.
-    b._meltY = b.bboxB - (b.bboxB - b.bboxT + 6) * (b._meltPt / n);
-    return b._meltPt >= n;
+    // EASED melt line: glides ~0.4 s behind the conversion fraction.
+    var ty = b.bboxB - (b.bboxB - b.bboxT + 8) * (b._meltPt / n);
+    b._meltY = (b._meltY === undefined || !isFinite(b._meltY))
+      ? b.bboxB + 2
+      : b._meltY + (ty - b._meltY) * (1 - Math.exp(-6 * dt));
+    return b._meltPt >= n && b._meltY <= b.bboxT - 4;
   }
 
   // Per-frame dissolve pass (replaces the reverted v25.50-52 coupling).
@@ -53952,24 +53988,10 @@
       if (bins.size) bins.clear();
       return;
     }
-    // Advance the one in-flight melt; no new triggers meanwhile (pacing: a
-    // pile beside a flood converts one body at a time, not as a bomb).
-    if (jelloDissolving) {
-      var db = jelloDissolving;
-      if (jelloBodies.indexOf(db) < 0) {
-        jelloDissolving = null;   // despawned by another system mid-melt
-      } else if (jelloDissolveStep(db, dt)) {
-        var di = jelloBodies.indexOf(db);
-        if (di >= 0) jelloBodies.splice(di, 1);
-        spawnJelloSplat(db.cx, db.cy - 6, 6, 60, 0.7, null);
-        jelloDissolving = null;
-      }
-      if (bins.size) bins.clear();
-      return;
-    }
     // Union AABB (+R) of the active bodies, then one binning sweep of the
     // mirror. O(liquidCount) with a bbox reject — the same cost class
-    // playerWaterCushion already pays while the rig is wet.
+    // playerWaterCushion already pays while the rig is wet. Runs during a
+    // melt too (v25.54): the density-aware release reads FRESH bins.
     var pad = TILE + JELLO_DISSOLVE_R;
     var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, ai, b;
     for (ai = 0; ai < nActive; ai++) {
@@ -53995,6 +54017,20 @@
         jelloWaterBinN[s] = 0;
       }
       jelloWaterBinN[s] += 1;
+    }
+    // Advance the one in-flight melt; no new triggers meanwhile (pacing: a
+    // pile beside a flood converts one body at a time, not as a bomb).
+    if (jelloDissolving) {
+      var db = jelloDissolving;
+      if (jelloBodies.indexOf(db) < 0) {
+        jelloDissolving = null;   // despawned by another system mid-melt
+      } else if (jelloDissolveStep(db, dt)) {
+        var di = jelloBodies.indexOf(db);
+        if (di >= 0) jelloBodies.splice(di, 1);
+        spawnJelloSplat(db.cx, db.cy - 6, 6, 60, 0.7, null);
+        jelloDissolving = null;
+      }
+      return;
     }
     if (!bins.size) return;
     // Per body: sum particles in DENSE bins within [bbox +/- R]. The DENSE
@@ -56845,6 +56881,10 @@
           function () { return JELLO_DISSOLVE_N; },
           function (v) { JELLO_DISSOLVE_N = v; },
           100, 3000, undefined); // dense-bin particles needed (films never count)
+        gmRegisterLever('jello.JELLO_DISSOLVE_BURST_T', 'jello', 'JELLO_DISSOLVE_BURST_T',
+          function () { return JELLO_DISSOLVE_BURST_T; },
+          function (v) { JELLO_DISSOLVE_BURST_T = v; },
+          0.3, 6, undefined);    // s the bottom-up conversion takes (whole body)
       }
       if (typeof JELLO_PLASTICITY !== 'undefined') {
         gmRegisterLever('jello.JELLO_PLASTICITY', 'jello', 'JELLO_PLASTICITY',

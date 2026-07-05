@@ -462,16 +462,22 @@ expulsion — are fully reverted, history in git). Per active body, mirror
 particles sitting in DENSE 16-px bins (>= `JELLO_DISSOLVE_DENSE` 80 — a
 ground film or stray droplet measures 20-60 and never counts) within
 `JELLO_DISSOLVE_R` of the bbox are summed; a sustained count
-(`JELLO_DISSOLVE_DWELL` 0.35 s) starts the melt. Transition: ~0.5 s telegraph
-(the body wakes, its hue eases to water-teal, it goes glassier while still
-jiggling), then a bottom-up staggered burst — the lowest lattice points each
-release `JELLO_DISSOLVE_PPP` 62 particles (~85% of the sim's 655/tile rest
-density, ~2,230 for a dev cube) jittered across their cell with the body's
-real velocity, while the render clips away below the rising melt line
-(`b._meltY`), so gel visibly becomes the water replacing it. One release wake
-on the explosion channel + `liquidWakeForDig` (a settled pond must react) + a
-gel splat, then the body despawns. One body converts at a time; spawn is
-staggered (`JELLO_DISSOLVE_SPAWN` 260/frame) and budget-clamped against
+(`JELLO_DISSOLVE_DWELL` 0.35 s) starts the melt. Transition (v25.54 pacing,
+both owner-reported): ~0.7 s telegraph (the body wakes, its hue eases to
+water-teal, it goes glassier while still jiggling — and NOTHING pushes the
+water yet; the v25.53 blast-170 opener read as an unexplained explosion),
+then a TIME-PACED bottom-up burst over `JELLO_DISSOLVE_BURST_T` (2.2 s,
+whole body — the first cut converted a cube in ~0.15 s, unreadably fast):
+each tick converts the LIVE lowest unconverted point, releasing
+DENSITY-SCALED particles — the body interpenetrates the pond, so releasing
+the full `JELLO_DISSOLVE_PPP` 62 where water already stands doubled local
+density and the pressure solver blew the pond apart (the explosion's other
+half); a pond-interior point releases ~15%, a dry edge the full count. The
+render clips below the EASED melt line (`b._meltY` glides, never steps tile
+rows) and the body despawns only once the line clears its crown. One GENTLE
+stir (blast 45) + `liquidWakeForDig` + a gel splat fire at the FIRST burst
+tick, where water actually appears. One body converts at a time; spawn is
+hard-capped (`JELLO_DISSOLVE_SPAWN` 260/frame) and budget-clamped against
 `LIQUID_MAX_PARTICLES`. Dev probe `window.__jelloWater()` (per-body
 near/dwell/melting + dissolved total). Headless suite: `dissolve-test.mjs`
 (session scratchpad — pond dissolve both engine paths, lever A/B persists,
@@ -483,6 +489,7 @@ worlds boot with test-pen bodies, assert against the pre-drop baseline).
 | `JELLO_DISSOLVE` | `1` | 0/1 | Master: slimes melt into a nearby body of water. 0 = slimes and water ignore each other |
 | `JELLO_DISSOLVE_R` | `40` | 16–128 | px beyond the body bbox counted as "near" |
 | `JELLO_DISSOLVE_N` | `500` | 100–3000 | Dense-bin particles within range required to trigger (films/sprays never count toward it) |
+| `JELLO_DISSOLVE_BURST_T` | `2.2` | 0.3–6 | Seconds the bottom-up conversion takes, whole body — the readability lever |
 
 ---
 
