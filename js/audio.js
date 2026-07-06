@@ -92,9 +92,11 @@ var SluiceAudio = (function () {
     'town1': 'town1.m4a', 'town2': 'town2.m4a', 'town3': 'town3.m4a', 'town4': 'town4.m4a',
     'town5': 'town5.m4a', 'town6': 'town6.m4a', 'town7': 'town7.m4a', 'town8': 'town8.m4a',
     'town9': 'town9.m4a',
-    // above-ground travel pool (1-6; 4 and 5 not provided yet, silent until added)
+    // above-ground travel pool. Only 1-3 + 6 exist; travel4/travel5 were never
+    // produced (no source WAVs), so they are commented out rather than 404-ing
+    // on every boot. Uncomment them (+ re-add to TRAVEL_POOL) when the files land.
     'travel1': 'travel1.m4a', 'travel2': 'travel2.m4a', 'travel3': 'travel3.m4a',
-    'travel4': 'travel4.m4a', 'travel5': 'travel5.m4a', 'travel6': 'travel6.m4a',
+    /* 'travel4': 'travel4.m4a', 'travel5': 'travel5.m4a', */ 'travel6': 'travel6.m4a',
     // underground bed layers (ride gains by depth)
     'ug-l1': 'ug-l1.m4a', 'ug-l2': 'ug-l2.m4a', 'ug-l3': 'ug-l3.m4a', 'ug-l4': 'ug-l4.m4a',
     // combat layers
@@ -217,7 +219,8 @@ var SluiceAudio = (function () {
   // town id -> which theme buffer it uses (8 winning town themes)
   var TOWN_THEME = { 0: 'town1', 1: 'town2', 2: 'town3', 3: 'town4', 4: 'town5', 5: 'town6', 6: 'town7', 7: 'town8' };
   // travel3 pulled from rotation (cringe opening riff); kept in MANIFEST so it still loads + re-enables in one edit.
-  var TRAVEL_POOL = ['travel1', 'travel2', /* 'travel3' decringed */ 'travel4', 'travel5', 'travel6'];
+  // travel4/travel5 omitted: never produced (commented out of MANIFEST); re-add here when the files land.
+  var TRAVEL_POOL = ['travel1', 'travel2', /* 'travel3' decringed */ 'travel6'];
   // 8 town themes. Until towns exist to fly to, these cycle above ground with
   // short gaps (mode 'towns') so all of them are heard; mode 'town' (single,
   // by id) is kept for when the towns + No Man's Zone expansion ships.
