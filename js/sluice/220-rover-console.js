@@ -912,60 +912,102 @@
     var cellW = Math.floor((iw - gap * (cols + 1)) / cols);
     var cellH = Math.floor((ih - gap * (rows + 1)) / rows);
 
-    // Slot-sized fill: each mined unit occupies oreSlots(type) consecutive
-    // cells, so a single dense ore (Unobtanium = 8) visibly claims a big block
-    // of the bay while a coal chip takes one. Map every cell to its owning
-    // unit up front, then render in the same bottom-up, left-to-right order.
-    var cellOwner = [];
-    for (var co = 0; co < cargoArr.length; co++) {
-      var cslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(cargoArr[co]) : 1;
-      for (var cs = 0; cs < cslots; cs++) cellOwner.push(cargoArr[co]);
+    // Rectangle-packed hold: each mined unit is drawn as ONE solid block whose
+    // footprint (in grid cells) scales with its slot cost, so a dense ore
+    // (Unobtanium = 8) reads as a single big rectangle, not eight chips. Blocks
+    // pack bottom-left first in mining order; leftover cells stay empty.
+    // Footprint [w, h] per slot count, wide-leaning to suit the wide chamber.
+    // Preferred footprint [w, h] per slot count, wide-leaning to suit the wide
+    // chamber. Chunky blocks (no thin bars), so a rare ore reads as a slab.
+    var SLOT_FOOTPRINT = { 1: [1, 1], 2: [2, 1], 3: [3, 1], 4: [2, 2], 5: [3, 2], 6: [3, 2], 7: [4, 2], 8: [4, 2] };
+    // Occupancy grid, row 0 = bottom.
+    var occ = [];
+    for (var orr = 0; orr < rows; orr++) { occ.push([]); for (var occ0 = 0; occ0 < cols; occ0++) occ[orr].push(false); }
+    function fits(gr, gc, w, h) {
+      if (gc + w > cols || gr + h > rows) return false;
+      for (var rr2 = gr; rr2 < gr + h; rr2++) { for (var cc2 = gc; cc2 < gc + w; cc2++) { if (occ[rr2][cc2]) return false; } }
+      return true;
     }
-    var hoverOre = null, hoverCx = 0, hoverCellW = 0;
-    for (var k = 0; k < maxC; k++) {
-      var rowFromBottom = Math.floor(k / cols);
-      var colInRow = k % cols;
-      var cx = ix + gap + colInRow * (cellW + gap);
-      var cy = iy + ih - gap - cellH - rowFromBottom * (cellH + gap);
-      // Slot recess (always drawn so empties read as "this is a slot")
-      ctx.fillStyle = '#050505';
-      ctx.fillRect(cx, cy, cellW, cellH);
-      // 1-px inset shadow on top + left
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(cx, cy, cellW, 1);
-      ctx.fillRect(cx, cy, 1, cellH);
-      // 1-px inset highlight on bottom + right (recessed)
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(cx, cy + cellH - 1, cellW, 1);
-      ctx.fillRect(cx + cellW - 1, cy, 1, cellH);
+    function cellX(gc) { return ix + gap + gc * (cellW + gap); }
+    function cellY(gr) { return iy + ih - gap - cellH - gr * (cellH + gap); }   // gr = rows from bottom
+    // Place one unit: try its preferred block, then progressively flatter and
+    // smaller rectangles down to 1x1, so a near-full bay still shows every ore
+    // (a big block just degrades to a bar rather than vanishing). Lowest, then
+    // leftmost gap wins, so the hold fills from the bottom like the old grid.
+    function placeUnit(slots) {
+      var cand = [], seen = {};
+      function add(w, h) {
+        w = Math.min(w, cols); h = Math.min(h, rows);
+        if (w < 1 || h < 1) return;
+        var key = w + 'x' + h; if (seen[key]) return; seen[key] = 1; cand.push([w, h]);
+      }
+      var t = SLOT_FOOTPRINT[slots] || [slots, 1];
+      add(t[0], t[1]); add(t[1], t[0]);
+      for (var w = Math.min(cols, slots); w >= 1; w--) add(w, Math.ceil(slots / w));
+      add(1, 1);
+      for (var ci = 0; ci < cand.length; ci++) {
+        var cw = cand[ci][0], ch = cand[ci][1];
+        for (var pr = 0; pr <= rows - ch; pr++) {
+          for (var pc = 0; pc <= cols - cw; pc++) {
+            if (!fits(pr, pc, cw, ch)) continue;
+            for (var mr = pr; mr < pr + ch; mr++) { for (var mc = pc; mc < pc + cw; mc++) { occ[mr][mc] = true; } }
+            return { gc: pc, gr: pr, w: cw, h: ch };
+          }
+        }
+      }
+      return null;   // grid completely full: this unit overflows off-view
+    }
+    var blocks = [];
+    for (var bi = 0; bi < cargoArr.length; bi++) {
+      var bcu = cargoArr[bi];
+      var bslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(bcu) : 1;
+      var pos = placeUnit(bslots);
+      if (pos) { pos.cu = bcu; blocks.push(pos); }
+    }
 
-      if (k < cellOwner.length) {
-        var cu = cellOwner[k];
-        var ore = (typeof ORES !== 'undefined' && ORES[cargoType(cu)]) ? ORES[cargoType(cu)] : null;
-        var oreShiny = cargoShiny(cu);
-        var col = ore ? ore.color : '#888';
-        // Pointer hover — remember the ore the cursor is over (desktop).
-        if (ore && typeof mouseCursor !== 'undefined' &&
-            mouseCursor.x >= cx && mouseCursor.x < cx + cellW &&
-            mouseCursor.y >= cy && mouseCursor.y < cy + cellH) {
-          hoverOre = ore; hoverCx = cx; hoverCellW = cellW;
-        }
-        // Ore body (inset 1 px from slot edges)
-        ctx.fillStyle = col;
-        ctx.fillRect(cx + 1, cy + 1, cellW - 2, cellH - 2);
-        // Highlight + shadow for material read
-        ctx.fillStyle = 'rgba(255,255,255,0.22)';
-        ctx.fillRect(cx + 1, cy + 1, cellW - 2, 1);
-        ctx.fillStyle = 'rgba(0,0,0,0.30)';
-        ctx.fillRect(cx + 1, cy + cellH - 2, cellW - 2, 1);
-        if (oreShiny) {
-          // shiny unit in the hold: warm-gold corner pip + bright top/left rim
-          ctx.fillStyle = '#fff1b0';
-          ctx.fillRect(cx + cellW - 4, cy + 1, 3, 3);
-          ctx.fillStyle = 'rgba(255,240,170,0.85)';
-          ctx.fillRect(cx + 1, cy + 1, cellW - 2, 1);
-          ctx.fillRect(cx + 1, cy + 1, 1, cellH - 2);
-        }
+    // 1) Empty slot recesses for the whole grid, so unfilled capacity reads.
+    for (var er = 0; er < rows; er++) {
+      for (var ec = 0; ec < cols; ec++) {
+        var rxx = cellX(ec), ryy = cellY(er);
+        ctx.fillStyle = '#050505'; ctx.fillRect(rxx, ryy, cellW, cellH);
+        ctx.fillStyle = '#000000'; ctx.fillRect(rxx, ryy, cellW, 1); ctx.fillRect(rxx, ryy, 1, cellH);
+        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(rxx, ryy + cellH - 1, cellW, 1); ctx.fillRect(rxx + cellW - 1, ryy, 1, cellH);
+      }
+    }
+
+    // 2) Each ore as ONE solid block, spanning the inter-cell gaps so there are
+    //    no internal gridlines within a single unit.
+    var hoverOre = null, hoverCx = 0, hoverCellW = 0;
+    for (var di = 0; di < blocks.length; di++) {
+      var blk = blocks[di];
+      var ore = (typeof ORES !== 'undefined' && ORES[cargoType(blk.cu)]) ? ORES[cargoType(blk.cu)] : null;
+      var oreShiny = cargoShiny(blk.cu);
+      var col = ore ? ore.color : '#888';
+      var bxp = cellX(blk.gc);
+      var byp = cellY(blk.gr + blk.h - 1);                        // top row of the block
+      var bwp = blk.w * cellW + (blk.w - 1) * gap;
+      var bhp = blk.h * cellH + (blk.h - 1) * gap;
+      // Pointer hover: remember the ore the cursor is over (desktop).
+      if (ore && typeof mouseCursor !== 'undefined' &&
+          mouseCursor.x >= bxp && mouseCursor.x < bxp + bwp &&
+          mouseCursor.y >= byp && mouseCursor.y < byp + bhp) {
+        hoverOre = ore; hoverCx = bxp; hoverCellW = bwp;
+      }
+      // Ore body (inset 1 px so blocks keep a dark seam between them)
+      ctx.fillStyle = col;
+      ctx.fillRect(bxp + 1, byp + 1, bwp - 2, bhp - 2);
+      // Highlight + shadow for material read
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.fillRect(bxp + 1, byp + 1, bwp - 2, 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fillRect(bxp + 1, byp + bhp - 2, bwp - 2, 1);
+      if (oreShiny) {
+        // shiny unit in the hold: warm-gold corner pip + bright top/left rim
+        ctx.fillStyle = '#fff1b0';
+        ctx.fillRect(bxp + bwp - 4, byp + 1, 3, 3);
+        ctx.fillStyle = 'rgba(255,240,170,0.85)';
+        ctx.fillRect(bxp + 1, byp + 1, bwp - 2, 1);
+        ctx.fillRect(bxp + 1, byp + 1, 1, bhp - 2);
       }
     }
 
