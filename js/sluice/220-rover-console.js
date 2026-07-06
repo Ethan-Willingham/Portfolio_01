@@ -747,9 +747,24 @@
   function drawHullPlates(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'HULL');
     drawBayBolts(bx, by, bw, bh);
-    var n = 8;
-    var pw = 8;
+    // v25.66 — the plate COUNT tracks the Hull Plating upgrade. A stock rig
+    // shows HULL_PLATE_BASE plates; each upgrade tier bolts on one more, so
+    // buying hull is legible right here on the gauge (not just a bigger, invisible
+    // hull number). Plates still deplete from the RIGHT as damage lands (loop
+    // below) and keep the green/amber/red position zones; only the total grows.
+    var HULL_PLATE_BASE = 5;   // plates at hull level 1
+    var HULL_PLATE_STEP = 1;   // extra plates per upgrade tier (L1=5 .. L7=11)
+    var hullLvl = (typeof upgrades !== 'undefined' && upgrades && upgrades.hullLevel) ? upgrades.hullLevel : 1;
+    var n = HULL_PLATE_BASE + (Math.max(1, hullLvl) - 1) * HULL_PLATE_STEP;
+    if (n > 14) n = 14;        // safety clamp (dev free-buy over-levelling)
     var pgap = 1;
+    // Auto-fit the plate width so the extra plates never overflow the 92 px bay:
+    // low tiers show a few chunky plates, a maxed hull a denser strip. Capped at
+    // 9 px so a stock gauge doesn't balloon, floored at 4 px so it always fits.
+    var availW = bw - 10;      // leaves room for the recessed backing strip
+    var pw = Math.floor((availW - (n - 1) * pgap) / n);
+    if (pw > 9) pw = 9;
+    if (pw < 4) pw = 4;
     var rowW = n * pw + (n - 1) * pgap;
     var x0 = bx + (bw - rowW) / 2;
     var ph = Math.min(bh - 22, 40);

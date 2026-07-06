@@ -59,7 +59,7 @@ The console is divided into named **bays** by 2-px-wide vertical weld seams. Eac
 | Bay | Width | Instrument | Notes |
 |---|---|---|---|
 | Fuel | 92 px | Needle gauge | Half-circle, 0–F like a real diesel fuel meter |
-| Hull | 92 px | Plate counter | 8 hull plates, dim-to-bright as damaged |
+| Hull | 92 px | Plate counter | N hull plates (5 at level 1, +1 per Hull Plating tier to 11), dim-to-bright as damaged |
 | Cargo | 110 px | Bay window | Looks INTO a cargo hold; you see the actual ore inside |
 | Depth | 92 px | Dial wheel | Rotating drum showing rolled-up depth tick marks |
 | (free) | rest | Reserved | For future instruments — do not fill speculatively |
@@ -186,7 +186,7 @@ A row of N segmented plates. Each plate is intact (bright) or progressively dama
 
 Damage takes plates from the **right** first, so a full hull shows the whole green→yellow→red gradient as "you have margin." As damage progresses the red plates go first, then yellow, then green — when you can only see green plates you're holding on to the safe core.
 
-Used for: hull (8 plates = full hull), future shield panels.
+Used for: hull (plate COUNT tracks the Hull Plating upgrade: 5 plates at level 1, +1 per tier to 11 at level 7; width auto-fits the bay), future shield panels.
 
 ### 5.3 Bay window
 
