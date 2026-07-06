@@ -138,6 +138,21 @@
     } catch (e) { /* never break the game loop over audio */ }
   }
 
+  /* Manual pause button (DOM #gm-pause-btn) lives top-left, the same corner
+     the shop's brass BACK/EXIT arrow claims. On a phone the two sat right on
+     top of each other (both ~top-left, ~24-32px tall) -> fat-finger misfires.
+     A docked rig is already safe and the BACK arrow is the shop's own way out,
+     so we hide the generic pause button whenever the shop is open. Desktop
+     keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
+  var _pauseBtnHiddenForShop = null;
+  function syncPauseBtnForShop() {
+    var up = shopOpen || shopState !== 'closed';
+    if (up === _pauseBtnHiddenForShop) return;
+    _pauseBtnHiddenForShop = up;
+    var pb = document.getElementById('gm-pause-btn');
+    if (pb) pb.style.display = up ? 'none' : '';
+  }
+
   /* ---- Game Loop ---- */
   function loop(time) {
     // v17.82 — if a pause landed between scheduling and firing this frame,
@@ -151,6 +166,9 @@
     // v14.21 — fresh raw-bucket slate each frame; perfMark fills it, the
     // hitch capture below snapshots it. The EMA perfBuckets persists.
     perfBucketsRaw = {};
+
+    // Keep the DOM pause button clear of the shop's BACK arrow (see above).
+    syncPauseBtnForShop();
 
     // Stage 5a — advance the day/night cycle. Pure modulo wrap; pause /
     // restart logic can be layered later if we ever want it.
