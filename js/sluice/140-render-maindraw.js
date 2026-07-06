@@ -18,29 +18,6 @@
     return 'hsla(' + h.toFixed(1) + ',' + s.toFixed(1) + '%,' + l.toFixed(1) + '%,' + a.toFixed(3) + ')';
   }
 
-  // v23.44 — the magma/mantle molten-rock tint had a fresh createLinearGradient
-  // built for every visible magma tile, every frame. The stops are constant and
-  // the gradient is exactly one tile tall, so cache one per biome (built on the
-  // main ctx that render() always uses) and place it with a translate. Pixel-
-  // identical. Lazy so it is only built once the player reaches that depth.
-  var _magmaRockGradCache = null, _mantleRockGradCache = null;
-  function magmaRockGrad(name) {
-    if (name === 'mantle') {
-      if (!_mantleRockGradCache) {
-        _mantleRockGradCache = ctx.createLinearGradient(0, 0, 0, TILE);
-        _mantleRockGradCache.addColorStop(0, '#4a0c10');
-        _mantleRockGradCache.addColorStop(1, '#220406');
-      }
-      return _mantleRockGradCache;
-    }
-    if (!_magmaRockGradCache) {
-      _magmaRockGradCache = ctx.createLinearGradient(0, 0, 0, TILE);
-      _magmaRockGradCache.addColorStop(0, '#3a1410');
-      _magmaRockGradCache.addColorStop(1, '#1a0604');
-    }
-    return _magmaRockGradCache;
-  }
-
   // ===== Surface grass wind (v24.62) =====
   // The grass reacts to the miner's jet exhaust through a world-anchored 1-D wind
   // field: one damped spring per ~8 px of surface. The jet drives a target
@@ -667,54 +644,17 @@
               }
             } else if (rowLayer.name === 'magma' || rowLayer.name === 'mantle') {
               if (tile.type === 'dirt' || tile.type === 'stone') {
-                // Hot rock base — re-tint dirt/stone with a deep volcanic
-                // gradient so the tile reads as molten rock rather than brown
-                // earth with red specks. This static tint is ALSO baked into the
-                // chunk (drawCachedLayerDecoration); the live redraw is what
-                // covers the smooth void-erased cave edges. v23.44 — reuse a
-                // cached gradient placed by translate (was a fresh gradient per
-                // tile per frame); PERF_MAGMA_SKIP_LIVE_TINT skips it entirely to
-                // A/B the redundant-draw win against the baked-only look.
+                // Seamless cooled-basalt crust with a world-grid molten crack
+                // network (v25.63) — see drawMagmaCrust in 130-render-mine-break.
+                // The crust is ALSO baked into the chunk cache; this live redraw
+                // repaints it over the smooth void-erased cave edges so the
+                // molten seams reach right up to a cave mouth. Static (the drama
+                // lives in the animated heat background behind mined-out caves),
+                // so baked and live are pixel-identical — no shimmer seam where
+                // they meet. PERF_MAGMA_SKIP_LIVE_TINT drops it to baked-only.
                 if (!PERF_MAGMA_SKIP_LIVE_TINT) {
-                  ctx.fillStyle = magmaRockGrad(rowLayer.name);
-                  ctx.translate(0, ty);
-                  ctx.fillRect(tx, 0, TILE, TILE);
-                  ctx.translate(0, -ty);
+                  drawMagmaCrust(tx, ty, r, c, rowLayer.name === 'mantle');
                 }
-
-                // Pulsing magma veins — per-tile phase so they breathe
-                // independently. Intensity peaks around 0.9 and floors at 0.2.
-                var pulse = 0.5 + 0.5 * Math.sin(tNow * 1.6 + (r * 7 + c * 13));
-                var veinAlpha = 0.55 + pulse * 0.4;
-                // Build a unique-ish crack pattern per tile by hashing r,c
-                // into vertex offsets. Two intersecting vein paths feel more
-                // like real cracked lava than a single stroke.
-                var seed = ((r * 73856093) ^ (c * 19349663)) >>> 0;
-                var ax = (seed % 8);                 // 0..7
-                var ay = ((seed >>> 3) % 6) + 4;     // 4..9
-                var bx = ((seed >>> 7) % 10) + 12;   // 12..21
-                var by = ((seed >>> 11) % 8) + 6;    // 6..13
-                var dx2 = ((seed >>> 15) % 8) + 22;  // 22..29
-                var dy2 = ((seed >>> 19) % 10) + 18; // 18..27
-                // Bright glowing core stroke
-                ctx.strokeStyle = 'rgba(255,180,90,' + veinAlpha.toFixed(2) + ')';
-                ctx.lineWidth = 1.4;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(tx + ax, ty + ay);
-                ctx.lineTo(tx + bx, ty + by);
-                ctx.lineTo(tx + dx2, ty + dy2);
-                ctx.stroke();
-                // Outer warm halo around the veins
-                ctx.strokeStyle = 'rgba(255,80,30,' + (veinAlpha * 0.45).toFixed(2) + ')';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                // Tiny molten droplet at a vein junction
-                ctx.fillStyle = 'rgba(255,220,140,' + Math.min(1, veinAlpha + 0.1).toFixed(2) + ')';
-                ctx.beginPath();
-                ctx.arc(tx + bx, ty + by, 1.1, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.lineCap = 'butt';
               }
             } else if (rowLayer.name === 'crystal' && (tile.type === 'dirt' || tile.type === 'stone')) {
               // Sparkly crystal tint

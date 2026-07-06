@@ -265,46 +265,124 @@
     }
   }
 
+  // ===== Magma / mantle crust (v25.63 overhaul) =====
+  // The old magma decoration was a per-TILE vertical gradient plus a per-tile
+  // hashed vein whose vertices were clamped inside one tile — so the rock
+  // banded at every tile row and the "lava" read as a repeating grid of
+  // identical orange hooks (it did NOT tile). The crust below is built the
+  // same way dirt/stone tile seamlessly: everything is hashed on a WORLD grid,
+  // independent of tile origin, so the cooled-basalt plates and the glowing
+  // molten cracks flow continuously across tile (and chunk) boundaries. Shared
+  // by the baked chunk (drawCachedLayerDecoration), the live redraw that covers
+  // smooth void edges (140-render-maindraw), and the shatter FX — one look
+  // everywhere. Callers need not clip; the function clips itself to the tile so
+  // seams never bleed into an adjacent layer or ore tile.
+  var MAGMA_PLATE = 34;    // crack-network cell size in world px
+  var MAGMA_MOTTLE = 20;   // basalt-blotch grid in world px
+  function magmaCrustNode(gr, gc) {
+    return {
+      x: gc * MAGMA_PLATE + (tileHash01(gr, gc, 0x51A1) - 0.5) * MAGMA_PLATE * 0.62,
+      y: gr * MAGMA_PLATE + (tileHash01(gr, gc, 0x51A2) - 0.5) * MAGMA_PLATE * 0.62
+    };
+  }
+  function magmaCrustSeam(a, b, gr, gc, salt, pass, hot) {
+    // heat eased toward 0 (~h^1.8): most seams are dim hairline cracks, a few
+    // run bright and molten — dark plates with a scatter of live veins, not a
+    // uniform orange net.
+    var h = tileHash01(gr, gc, salt);
+    var heat = h * h * (1.7 - 0.7 * h);
+    var mx = (a.x + b.x) * 0.5, my = (a.y + b.y) * 0.5;
+    var pxp = -(b.y - a.y), pyp = (b.x - a.x);
+    var plen = Math.hypot(pxp, pyp) || 1;
+    var jit = (tileHash01(gr, gc, salt ^ 0x1234) - 0.5) * 9;
+    mx += pxp / plen * jit; my += pyp / plen * jit;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.quadraticCurveTo(mx, my, b.x, b.y);
+    if (pass === 0) {
+      ctx.strokeStyle = hot ? 'rgba(206,38,14,' + (0.02 + heat * 0.20).toFixed(3) + ')'
+                            : 'rgba(230,60,18,' + (0.02 + heat * 0.19).toFixed(3) + ')';
+      ctx.lineWidth = 2.4 + heat * 3.4;
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = hot ? 'rgba(255,84,34,' + (0.07 + heat * 0.60).toFixed(3) + ')'
+                            : 'rgba(255,116,42,' + (0.07 + heat * 0.60).toFixed(3) + ')';
+      ctx.lineWidth = 1.0 + heat * 1.7;
+      ctx.stroke();
+      if (heat > 0.5) {
+        ctx.strokeStyle = hot ? 'rgba(255,196,132,' + ((heat - 0.5) * 1.5).toFixed(3) + ')'
+                              : 'rgba(255,230,156,' + ((heat - 0.5) * 1.5).toFixed(3) + ')';
+        ctx.lineWidth = 0.6 + heat * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo(mx, my, b.x, b.y);
+        ctx.stroke();
+      }
+    }
+  }
+  function drawMagmaCrust(tx, ty, r, c, hot) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(tx, ty, TILE, TILE);
+    ctx.clip();
+    // 1. Flat dark basalt base — no per-tile gradient, so no row banding.
+    ctx.fillStyle = hot ? '#1f0806' : '#180a06';
+    ctx.fillRect(tx, ty, TILE, TILE);
+    // 2. World-grid basalt mottle so the plates are not a flat colour.
+    var MOT = MAGMA_MOTTLE;
+    var m0c = Math.floor((tx - MOT) / MOT), m1c = Math.floor((tx + TILE) / MOT);
+    var m0r = Math.floor((ty - MOT) / MOT), m1r = Math.floor((ty + TILE) / MOT);
+    for (var mr = m0r; mr <= m1r; mr++) {
+      for (var mc = m0c; mc <= m1c; mc++) {
+        var mh = tileHash01(mr, mc, 0x4113);
+        var mxx = mc * MOT + MOT * 0.5 + (tileHash01(mr, mc, 0x4114) - 0.5) * MOT * 0.7;
+        var myy = mr * MOT + MOT * 0.5 + (tileHash01(mr, mc, 0x4115) - 0.5) * MOT * 0.7;
+        var mrad = MOT * 0.4 + tileHash01(mr, mc, 0x4116) * MOT * 0.42;
+        ctx.fillStyle = mh > 0.5 ? (hot ? 'rgba(70,18,12,0.30)' : 'rgba(58,24,12,0.30)') : 'rgba(4,1,1,0.42)';
+        ctx.beginPath();
+        ctx.ellipse(mxx, myy, mrad, mrad * 0.78, mh * 6.2832, 0, 6.2832);
+        ctx.fill();
+      }
+    }
+    // 3. Glowing molten crack network on the world grid (flows across tiles).
+    var g0c = Math.floor(tx / MAGMA_PLATE) - 1, g1c = Math.floor((tx + TILE) / MAGMA_PLATE) + 1;
+    var g0r = Math.floor(ty / MAGMA_PLATE) - 1, g1r = Math.floor((ty + TILE) / MAGMA_PLATE) + 1;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (var pass = 0; pass < 2; pass++) {
+      for (var gr = g0r; gr <= g1r; gr++) {
+        for (var gc = g0c; gc <= g1c; gc++) {
+          var n0 = magmaCrustNode(gr, gc);
+          magmaCrustSeam(n0, magmaCrustNode(gr, gc + 1), gr, gc, 0x0077, pass, hot);
+          magmaCrustSeam(n0, magmaCrustNode(gr + 1, gc), gr, gc, 0x0088, pass, hot);
+          if (pass === 1) {
+            var ph = tileHash01(gr, gc, 0xB10B);
+            if (ph > 0.86) {
+              var pr = 1.4 + (ph - 0.86) * 11;
+              ctx.fillStyle = hot ? 'rgba(255,104,44,0.28)' : 'rgba(255,126,48,0.28)';
+              ctx.beginPath();
+              ctx.arc(n0.x, n0.y, pr, 0, 6.2832);
+              ctx.fill();
+              ctx.fillStyle = hot ? 'rgba(255,216,152,0.9)' : 'rgba(255,234,172,0.9)';
+              ctx.beginPath();
+              ctx.arc(n0.x, n0.y, pr * 0.4, 0, 6.2832);
+              ctx.fill();
+            }
+          }
+        }
+      }
+    }
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    ctx.restore();
+  }
+
   function drawCachedLayerDecoration(tile, tx, ty, r, c, rowLayer) {
     if (!rowLayer || (tile.type !== 'dirt' && tile.type !== 'stone')) return;
     if (rowLayer.name === 'permafrost') {
       drawPermafrostFrost(tx, ty, r, c, tile.type);
     } else if (rowLayer.name === 'magma' || rowLayer.name === 'mantle') {
-      var rockGrad = ctx.createLinearGradient(0, ty, 0, ty + TILE);
-      if (rowLayer.name === 'magma') {
-        rockGrad.addColorStop(0, '#3a1410');
-        rockGrad.addColorStop(1, '#1a0604');
-      } else {
-        rockGrad.addColorStop(0, '#4a0c10');
-        rockGrad.addColorStop(1, '#220406');
-      }
-      ctx.fillStyle = rockGrad;
-      ctx.fillRect(tx, ty, TILE, TILE);
-
-      var seed = ((r * 73856093) ^ (c * 19349663)) >>> 0;
-      var ax = (seed % 8);
-      var ay = ((seed >>> 3) % 6) + 4;
-      var bx = ((seed >>> 7) % 10) + 12;
-      var by = ((seed >>> 11) % 8) + 6;
-      var dx2 = ((seed >>> 15) % 8) + 22;
-      var dy2 = ((seed >>> 19) % 10) + 18;
-      var veinAlpha = 0.68 + tileHash01(r, c, 0x7A91) * 0.18;
-      ctx.strokeStyle = 'rgba(255,180,90,' + veinAlpha.toFixed(2) + ')';
-      ctx.lineWidth = 1.4;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(tx + ax, ty + ay);
-      ctx.lineTo(tx + bx, ty + by);
-      ctx.lineTo(tx + dx2, ty + dy2);
-      ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,80,30,' + (veinAlpha * 0.45).toFixed(2) + ')';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(255,220,140,' + Math.min(1, veinAlpha + 0.1).toFixed(2) + ')';
-      ctx.beginPath();
-      ctx.arc(tx + bx, ty + by, 1.1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.lineCap = 'butt';
+      drawMagmaCrust(tx, ty, r, c, rowLayer.name === 'mantle');
     } else if (rowLayer.name === 'crystal') {
       ctx.fillStyle = 'rgba(160,180,255,0.18)';
       ctx.fillRect(tx, ty, TILE, TILE);
