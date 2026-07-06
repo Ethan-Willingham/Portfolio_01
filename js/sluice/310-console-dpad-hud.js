@@ -615,10 +615,12 @@
     // tighter row gets crowded. Anchor cargo to the right edge of row 1
     // there so it always reads cleanly regardless of cash digit count;
     // on desktop, keep the original left-to-right flow.
+    // Readout is SLOTS used, not units: a rare ore fills several slots.
+    var cargoUsedN = (typeof cargoUsed === 'function') ? cargoUsed() : cargo.length;
     if (twoRow) {
       ctx.font = labelFont;
       var cargoLabel = 'CARGO';
-      var cargoVal = cargo.length + '/' + maxCargo;
+      var cargoVal = cargoUsedN + '/' + maxCargo;
       var cargoValW = 0;
       ctx.font = valueFont;
       cargoValW = ctx.measureText(cargoVal).width;
@@ -629,7 +631,7 @@
       ctx.fillStyle = '#9aa';
       ctx.fillText(cargoLabel, px, 12);
       ctx.font = valueFont;
-      var cargoColor = cargo.length >= maxCargo ? '#e44' : (cargo.length >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
+      var cargoColor = cargoUsedN >= maxCargo ? '#e44' : (cargoUsedN >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
       ctx.fillStyle = cargoColor;
       ctx.fillText(cargoVal, px, 30);
     } else {
@@ -638,9 +640,9 @@
       ctx.fillStyle = '#9aa';
       ctx.fillText('CARGO', px, 12);
       ctx.font = valueFont;
-      var cargoColor2 = cargo.length >= maxCargo ? '#e44' : (cargo.length >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
+      var cargoColor2 = cargoUsedN >= maxCargo ? '#e44' : (cargoUsedN >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
       ctx.fillStyle = cargoColor2;
-      ctx.fillText(cargo.length + '/' + maxCargo, px, 30);
+      ctx.fillText(cargoUsedN + '/' + maxCargo, px, 30);
     }
 
     // (Cargo contents are shown as a stacked indicator on the player rig

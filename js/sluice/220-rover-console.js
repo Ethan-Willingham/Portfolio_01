@@ -932,8 +932,15 @@
     var cellW = Math.floor((iw - gap * (cols + 1)) / cols);
     var cellH = Math.floor((ih - gap * (rows + 1)) / rows);
 
-    // Render slots. Fill ORDER: bottom-up, left-to-right. So cargo[0]
-    // sits in the bottom-left cell, cargo[1] right of it, etc.
+    // Slot-sized fill: each mined unit occupies oreSlots(type) consecutive
+    // cells, so a single dense ore (Unobtanium = 8) visibly claims a big block
+    // of the bay while a coal chip takes one. Map every cell to its owning
+    // unit up front, then render in the same bottom-up, left-to-right order.
+    var cellOwner = [];
+    for (var co = 0; co < cargoArr.length; co++) {
+      var cslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(cargoArr[co]) : 1;
+      for (var cs = 0; cs < cslots; cs++) cellOwner.push(cargoArr[co]);
+    }
     var hoverOre = null, hoverCx = 0, hoverCellW = 0;
     for (var k = 0; k < maxC; k++) {
       var rowFromBottom = Math.floor(k / cols);
@@ -952,8 +959,8 @@
       ctx.fillRect(cx, cy + cellH - 1, cellW, 1);
       ctx.fillRect(cx + cellW - 1, cy, 1, cellH);
 
-      if (k < cargoArr.length) {
-        var cu = cargoArr[k];
+      if (k < cellOwner.length) {
+        var cu = cellOwner[k];
         var ore = (typeof ORES !== 'undefined' && ORES[cargoType(cu)]) ? ORES[cargoType(cu)] : null;
         var oreShiny = cargoShiny(cu);
         var col = ore ? ore.color : '#888';

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.68';
+  var GAME_VERSION = 'v25.69';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -643,6 +643,41 @@
     var d = ORES[cargoType(u)];
     if (!d || !d.value) return 0;
     return Math.round(d.value * (cargoShiny(u) ? SHINY_VALUE_MULT : 1));
+  }
+  // ----- Cargo slot sizing (rarity = bulk) -----
+  // Rarer ore rides in a bigger crate: the cheapest rubble-tier ore takes a
+  // single hold slot, the priciest (Unobtanium) takes 8. Sizing is derived
+  // from base value so any new ore is auto-bucketed and the ORES table stays
+  // lean. Every capacity check counts SLOTS, not units: the pickup fit gate,
+  // the CARGO FULL drill gate, the HUD readout, and the bay-window grid all
+  // route through cargoUsed(). A shiny unit is worth 5x but is the same size.
+  var ORE_SLOT_BREAKS = [
+    // [minValue, slots] — first row the ore's base value meets wins (high→low)
+    [12000, 8],  // Unobtanium
+    [6000,  7],  // Painite
+    [3000,  6],  // Diamond
+    [2000,  5],  // Tanzanite, Platinum
+    [1000,  4],  // Peridot, Ruby
+    [500,   3],  // Fossil, Uranium, Emerald, Opal
+    [200,   2]   // Gold-tier through Rhodochrosite
+    // (else 1) — the shallow commons: coal through the permafrost band
+  ];
+  function oreSlots(type) {
+    var d = ORES[type];
+    var v = (d && d.value) || 0;
+    for (var si = 0; si < ORE_SLOT_BREAKS.length; si++) {
+      if (v >= ORE_SLOT_BREAKS[si][0]) return ORE_SLOT_BREAKS[si][1];
+    }
+    return 1;
+  }
+  function cargoUnitSlots(u) { return oreSlots(cargoType(u)); }
+  // Total slots the hold is using right now (sum over every mined unit). This
+  // replaces cargo.length as the "how full am I" measure everywhere capacity
+  // matters. cargo is declared in 020-state.js; this reads it at call time.
+  function cargoUsed() {
+    var n = 0;
+    for (var i = 0; i < cargo.length; i++) n += cargoUnitSlots(cargo[i]);
+    return n;
   }
   var EARTH_SINGLE_VOID_CHANCE = 0.035;
 
@@ -11557,7 +11592,9 @@
               var oreType = tile.type;
               var oreDef = ORES[oreType];
               if (oreType !== 'dirt' && oreType !== 'stone') {
-                if (cargo.length < maxCargo) {
+                // Slot-based fit: a rare ore may need several slots. An empty
+                // hold always accepts one unit, so nothing is ever un-minable.
+                if (cargoUsed() + oreSlots(oreType) <= maxCargo || cargo.length === 0) {
                   var _sh = !!(tile && tile.shiny);
                   cargo.push({ type: oreType, shiny: _sh });
                   if (typeof ledgerRecordOre === 'function') ledgerRecordOre(oreType, _sh);
@@ -11571,7 +11608,7 @@
                   // Notify (loudly!) the moment we hit max so the player
                   // knows to head back. Mining is also gated below — we
                   // refuse to start a new dig once full so no ore is wasted.
-                  if (cargo.length === maxCargo) {
+                  if (cargoUsed() >= maxCargo) {
                     showMsg('Cargo full!', true);
                     sfxPlay('cargo-full');
                   }
@@ -37799,8 +37836,15 @@
     var cellW = Math.floor((iw - gap * (cols + 1)) / cols);
     var cellH = Math.floor((ih - gap * (rows + 1)) / rows);
 
-    // Render slots. Fill ORDER: bottom-up, left-to-right. So cargo[0]
-    // sits in the bottom-left cell, cargo[1] right of it, etc.
+    // Slot-sized fill: each mined unit occupies oreSlots(type) consecutive
+    // cells, so a single dense ore (Unobtanium = 8) visibly claims a big block
+    // of the bay while a coal chip takes one. Map every cell to its owning
+    // unit up front, then render in the same bottom-up, left-to-right order.
+    var cellOwner = [];
+    for (var co = 0; co < cargoArr.length; co++) {
+      var cslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(cargoArr[co]) : 1;
+      for (var cs = 0; cs < cslots; cs++) cellOwner.push(cargoArr[co]);
+    }
     var hoverOre = null, hoverCx = 0, hoverCellW = 0;
     for (var k = 0; k < maxC; k++) {
       var rowFromBottom = Math.floor(k / cols);
@@ -37819,8 +37863,8 @@
       ctx.fillRect(cx, cy + cellH - 1, cellW, 1);
       ctx.fillRect(cx + cellW - 1, cy, 1, cellH);
 
-      if (k < cargoArr.length) {
-        var cu = cargoArr[k];
+      if (k < cellOwner.length) {
+        var cu = cellOwner[k];
         var ore = (typeof ORES !== 'undefined' && ORES[cargoType(cu)]) ? ORES[cargoType(cu)] : null;
         var oreShiny = cargoShiny(cu);
         var col = ore ? ore.color : '#888';
@@ -47675,10 +47719,12 @@
     // tighter row gets crowded. Anchor cargo to the right edge of row 1
     // there so it always reads cleanly regardless of cash digit count;
     // on desktop, keep the original left-to-right flow.
+    // Readout is SLOTS used, not units: a rare ore fills several slots.
+    var cargoUsedN = (typeof cargoUsed === 'function') ? cargoUsed() : cargo.length;
     if (twoRow) {
       ctx.font = labelFont;
       var cargoLabel = 'CARGO';
-      var cargoVal = cargo.length + '/' + maxCargo;
+      var cargoVal = cargoUsedN + '/' + maxCargo;
       var cargoValW = 0;
       ctx.font = valueFont;
       cargoValW = ctx.measureText(cargoVal).width;
@@ -47689,7 +47735,7 @@
       ctx.fillStyle = '#9aa';
       ctx.fillText(cargoLabel, px, 12);
       ctx.font = valueFont;
-      var cargoColor = cargo.length >= maxCargo ? '#e44' : (cargo.length >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
+      var cargoColor = cargoUsedN >= maxCargo ? '#e44' : (cargoUsedN >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
       ctx.fillStyle = cargoColor;
       ctx.fillText(cargoVal, px, 30);
     } else {
@@ -47698,9 +47744,9 @@
       ctx.fillStyle = '#9aa';
       ctx.fillText('CARGO', px, 12);
       ctx.font = valueFont;
-      var cargoColor2 = cargo.length >= maxCargo ? '#e44' : (cargo.length >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
+      var cargoColor2 = cargoUsedN >= maxCargo ? '#e44' : (cargoUsedN >= maxCargo * 0.8 ? '#e8a735' : '#e8e8d0');
       ctx.fillStyle = cargoColor2;
-      ctx.fillText(cargo.length + '/' + maxCargo, px, 30);
+      ctx.fillText(cargoUsedN + '/' + maxCargo, px, 30);
     }
 
     // (Cargo contents are shown as a stacked indicator on the player rig

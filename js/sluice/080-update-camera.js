@@ -294,7 +294,9 @@
               var oreType = tile.type;
               var oreDef = ORES[oreType];
               if (oreType !== 'dirt' && oreType !== 'stone') {
-                if (cargo.length < maxCargo) {
+                // Slot-based fit: a rare ore may need several slots. An empty
+                // hold always accepts one unit, so nothing is ever un-minable.
+                if (cargoUsed() + oreSlots(oreType) <= maxCargo || cargo.length === 0) {
                   var _sh = !!(tile && tile.shiny);
                   cargo.push({ type: oreType, shiny: _sh });
                   if (typeof ledgerRecordOre === 'function') ledgerRecordOre(oreType, _sh);
@@ -308,7 +310,7 @@
                   // Notify (loudly!) the moment we hit max so the player
                   // knows to head back. Mining is also gated below — we
                   // refuse to start a new dig once full so no ore is wasted.
-                  if (cargo.length === maxCargo) {
+                  if (cargoUsed() >= maxCargo) {
                     showMsg('Cargo full!', true);
                     sfxPlay('cargo-full');
                   }

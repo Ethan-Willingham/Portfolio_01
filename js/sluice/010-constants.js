@@ -495,6 +495,41 @@
     if (!d || !d.value) return 0;
     return Math.round(d.value * (cargoShiny(u) ? SHINY_VALUE_MULT : 1));
   }
+  // ----- Cargo slot sizing (rarity = bulk) -----
+  // Rarer ore rides in a bigger crate: the cheapest rubble-tier ore takes a
+  // single hold slot, the priciest (Unobtanium) takes 8. Sizing is derived
+  // from base value so any new ore is auto-bucketed and the ORES table stays
+  // lean. Every capacity check counts SLOTS, not units: the pickup fit gate,
+  // the CARGO FULL drill gate, the HUD readout, and the bay-window grid all
+  // route through cargoUsed(). A shiny unit is worth 5x but is the same size.
+  var ORE_SLOT_BREAKS = [
+    // [minValue, slots] — first row the ore's base value meets wins (high→low)
+    [12000, 8],  // Unobtanium
+    [6000,  7],  // Painite
+    [3000,  6],  // Diamond
+    [2000,  5],  // Tanzanite, Platinum
+    [1000,  4],  // Peridot, Ruby
+    [500,   3],  // Fossil, Uranium, Emerald, Opal
+    [200,   2]   // Gold-tier through Rhodochrosite
+    // (else 1) — the shallow commons: coal through the permafrost band
+  ];
+  function oreSlots(type) {
+    var d = ORES[type];
+    var v = (d && d.value) || 0;
+    for (var si = 0; si < ORE_SLOT_BREAKS.length; si++) {
+      if (v >= ORE_SLOT_BREAKS[si][0]) return ORE_SLOT_BREAKS[si][1];
+    }
+    return 1;
+  }
+  function cargoUnitSlots(u) { return oreSlots(cargoType(u)); }
+  // Total slots the hold is using right now (sum over every mined unit). This
+  // replaces cargo.length as the "how full am I" measure everywhere capacity
+  // matters. cargo is declared in 020-state.js; this reads it at call time.
+  function cargoUsed() {
+    var n = 0;
+    for (var i = 0; i < cargo.length; i++) n += cargoUnitSlots(cargo[i]);
+    return n;
+  }
   var EARTH_SINGLE_VOID_CHANCE = 0.035;
 
   /* ---- Layers ---- */
