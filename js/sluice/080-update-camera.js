@@ -255,7 +255,7 @@
         // Builds tension toward the break frame so the eye is primed for
         // the bigger squash spike that lands on tile-clear. Doesn't gate
         // damage (research: anticipation runs *during* the active phase).
-        var drillProg = 1 - drilling.timer / drillHitTime();
+        var drillProg = 1 - drilling.timer / drilling.hitTime;
         if (drillProg > 0) {
           var antic = 0.05 + drillProg * 0.30;     // 0.05 -> 0.35 over the drill
           if (player.squash < antic) player.squash = antic;
@@ -375,7 +375,7 @@
               // Release squash — tactile cue for the moment of break.
               player.squash = Math.max(player.squash, 0.25);
             } else {
-              drilling.timer = drillHitTime();
+              drilling.timer = drilling.hitTime;   // same tile — reuse its per-hit time
               player.fuel -= DRILL_FUEL * dt;
               return;
             }
@@ -1197,7 +1197,8 @@
           if (t_d.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr, pc); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason, blockReason === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc1 = drillSfx(); if (_bnc1) _bnc1.bounce(); }
         } else {
-          drilling = { r: pr, c: pc, timer: drillHitTime(), dirVec: 'd' };
+          var _htD = drillHitTime(pr, t_d.type);
+          drilling = { r: pr, c: pc, timer: _htD, hitTime: _htD, dirVec: 'd' };
           resetFlightBank();
           if (!hasDrilledOnce) { hasDrilledOnce = true; track('first_drill'); }
           // Ease the player into the target column over the drill animation
@@ -1224,7 +1225,8 @@
           if (t_l.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr2, pc2); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason2, blockReason2 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc2 = drillSfx(); if (_bnc2) _bnc2.bounce(); }
         } else {
-          drilling = { r: pr2, c: pc2, timer: drillHitTime(), dirVec: 'l' };
+          var _htL = drillHitTime(pr2, t_l.type);
+          drilling = { r: pr2, c: pc2, timer: _htL, hitTime: _htL, dirVec: 'l' };
           resetFlightBank();
           player.dir = -1;
           // Row-snap so the AABB sits cleanly inside the row of the
@@ -1250,7 +1252,8 @@
           if (t_r.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr3, pc3); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason3, blockReason3 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc3 = drillSfx(); if (_bnc3) _bnc3.bounce(); }
         } else {
-          drilling = { r: pr3, c: pc3, timer: drillHitTime(), dirVec: 'r' };
+          var _htR = drillHitTime(pr3, t_r.type);
+          drilling = { r: pr3, c: pc3, timer: _htR, hitTime: _htR, dirVec: 'r' };
           resetFlightBank();
           player.dir = 1;
           var snapY_r = pr3 * TILE + (TILE - PLAYER_H);
@@ -1276,7 +1279,8 @@
           if (t_u.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr4, pc4); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason4, blockReason4 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc4 = drillSfx(); if (_bnc4) _bnc4.bounce(); }
         } else {
-          drilling = { r: pr4, c: pc4, timer: drillHitTime(), dirVec: 'u' };
+          var _htU = drillHitTime(pr4, t_u.type);
+          drilling = { r: pr4, c: pc4, timer: _htU, hitTime: _htU, dirVec: 'u' };
           resetFlightBank();
           // Column-snap mirroring the downward-drill behavior so the rig
           // sits cleanly under the target tile when drilling up.

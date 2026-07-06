@@ -63,6 +63,20 @@
   // weighty even at max drill (unobtanium hp9 ≈ 0.83s of drilling at L7) so
   // the endgame keeps some grind. Tune the curve here.
   var DRILL_SPEED = [0, 1.00, 1.25, 1.55, 1.90, 2.30, 2.75, 3.25];
+  // ---- Depth hardness (v25.61) ----
+  // The worthless shaft filler (dirt/stone) gets TOUGHER the deeper you dig,
+  // so an under-tiered drill turns the descent into a felt slog — a real
+  // reason to upgrade beyond the hard reqDrill ore gates. Before this the only
+  // pressure to buy a drill was "you literally cannot mine that ore"; a level-1
+  // drill chewed 400 m of dirt at the same 0.30 s/tile as the surface.
+  // It is ONE multiplier on the per-hit time (drillHitTime, 040), scoped to
+  // dirt/stone only so the carefully tuned ORE dig times (BALANCE §4) are
+  // untouched. hardness(depth) = 1 at/above START, ramps linearly to MAX at
+  // FULL and holds. 1 tile = 1 m, so these are metres below the surface.
+  // Live-tunable from the L panel as drill.TERRAIN_HARD_* (gm facade, 360).
+  var TERRAIN_HARD_START = 40;    // no change through the topsoil intro (0..40 m stays snappy)
+  var TERRAIN_HARD_FULL  = 380;   // near the town floor (town is 400 m deep)
+  var TERRAIN_HARD_MAX   = 2.4;   // hit-time multiplier at/below FULL depth (L1 dirt: 0.30 -> 0.72 s)
   var FUEL_DRAIN = 0.8;
   var DRILL_FUEL = 1.5;
   var BASE_HULL = 100;

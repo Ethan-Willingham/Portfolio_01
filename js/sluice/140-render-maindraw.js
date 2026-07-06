@@ -1019,7 +1019,7 @@
       var dtile2 = world[drilling.r] && world[drilling.r][drilling.c];
       if (dtile2) {
         var maxHp2 = (ORES[dtile2.type] && ORES[dtile2.type].hp) || 1;
-        var dcyc = drillHitTime() > 0 ? 1 - drilling.timer / drillHitTime() : 0;
+        var dcyc = drilling.hitTime > 0 ? 1 - drilling.timer / drilling.hitTime : 0;
         if (dcyc < 0) dcyc = 0; if (dcyc > 1) dcyc = 1;
         var dprog = Math.min(1, ((maxHp2 - dtile2.hp) + dcyc) / maxHp2);
         if (dprog > 0.06) { try { mineDrawCracks(drilling.r, drilling.c, drilling.dirVec, dprog); } catch (e) {} }

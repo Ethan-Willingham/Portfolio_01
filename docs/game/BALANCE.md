@@ -122,6 +122,18 @@ stone (hp2); model the average shaft tile at **hp ~1.5**.
 
 Every tier is a real ~20-25% speedup AND most unlock deeper ore. No dead levels.
 
+**Depth hardness (v25.61):** the s/hit above is the SURFACE time. Dirt/stone
+(the worthless shaft filler, NOT ore) get tougher with depth so an under-tiered
+drill feels the descent instead of only hitting the hard `reqDrill` walls. The
+per-hit time is multiplied by `terrainDepthHardness(depth)` (040): 1.0 through the
+topsoil intro (0..`TERRAIN_HARD_START` = 40 m), then a linear ramp to
+`TERRAIN_HARD_MAX` (2.4x) at `TERRAIN_HARD_FULL` (380 m). So a level-1 drill in dirt
+goes 0.30 s/tile at the surface to 0.72 s/tile at the floor, while a max drill stays
+0.09 to 0.22. Ore hit times are untouched (the tuned hp curve above still holds).
+The three constants live in 010 and are live-tunable as `drill.TERRAIN_HARD_*` in
+the L panel (set `MAX` to 1 to disable). Note the fuel knock-on: `fuel/tile =
+2.3 * s/tile`, so deep filler also costs more fuel per tile for an under-tiered rig.
+
 ---
 
 ## 5. Fuel model (depth per trip is the descent limiter)

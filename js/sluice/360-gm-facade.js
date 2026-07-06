@@ -408,6 +408,25 @@
           function (v) { SHINY_VALUE_MULT = v; },
           1, 25, 0.5);
       }
+      // Depth hardness (v25.61) — the worthless shaft filler (dirt/stone) drills
+      // slower the deeper you go, so an under-tiered drill feels the descent and
+      // upgrading buys real speed (not just reqDrill ore unlocks). Ore hit times
+      // are untouched. MAX is the hit-time multiplier at/below FULL depth; the
+      // ramp is linear from START to FULL (metres; 1 tile = 1 m). Feel-tune live.
+      if (typeof TERRAIN_HARD_MAX !== 'undefined') {
+        gmRegisterLever('drill.TERRAIN_HARD_MAX', 'drill', 'deep dirt/stone hit-time x (1 = off)',
+          function () { return TERRAIN_HARD_MAX; },
+          function (v) { TERRAIN_HARD_MAX = v; },
+          1, 5, 0.1);
+        gmRegisterLever('drill.TERRAIN_HARD_START', 'drill', 'depth m where dirt/stone starts toughening',
+          function () { return TERRAIN_HARD_START; },
+          function (v) { TERRAIN_HARD_START = v; },
+          0, 400, 5);
+        gmRegisterLever('drill.TERRAIN_HARD_FULL', 'drill', 'depth m where toughening hits MAX',
+          function () { return TERRAIN_HARD_FULL; },
+          function (v) { TERRAIN_HARD_FULL = v; },
+          0, 400, 5);
+      }
       // Console end-cap style — the owner picks the ornate cap live from the L
       // panel. 0 = original plain cap; 1 Fluted Pilaster, 2 Star Medallion,
       // 3 Hazard Bracket, 4 Stepped Glass, 5 Filigree Rosette, 6 Gauge Cluster

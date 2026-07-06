@@ -372,13 +372,31 @@
     if (lv <= 0) return 0;
     return [0, 76, 112, 152][Math.min(3, lv)];
   }
-  function drillHitTime() {
+  // v25.61 — how much tougher the shaft filler is at a given row. Dirt/stone
+  // only; 1.0 at/above TERRAIN_HARD_START, ramping linearly to TERRAIN_HARD_MAX
+  // at TERRAIN_HARD_FULL and holding. 1 tile = 1 m, so depth = row - SKY_ROWS.
+  function terrainDepthHardness(row) {
+    var depthM = row - SKY_ROWS;
+    if (depthM <= TERRAIN_HARD_START) return 1;
+    var span = TERRAIN_HARD_FULL - TERRAIN_HARD_START;
+    var f = span > 0 ? (depthM - TERRAIN_HARD_START) / span : 1;
+    if (f > 1) f = 1;
+    return 1 + f * (TERRAIN_HARD_MAX - 1);
+  }
+  function drillHitTime(row, type) {
     // Seconds for one drill hit (removes 1 HP). Higher drill tiers drill
-    // faster per hit via DRILL_SPEED (see the constants block).
+    // faster per hit via DRILL_SPEED (see the constants block). Dirt/stone
+    // ALSO get tougher with depth (terrainDepthHardness) so an under-tiered
+    // drill feels the descent; ore hit times are unchanged. Callers pass the
+    // target row + type; a bare call (no args) returns the base surface time.
     var L = upgrades.drillLevel || 1;
     if (L < 1) L = 1;
     if (L >= DRILL_SPEED.length) L = DRILL_SPEED.length - 1;
-    return DRILL_TIME / DRILL_SPEED[L];
+    var t = DRILL_TIME / DRILL_SPEED[L];
+    if (typeof row === 'number' && (type === 'dirt' || type === 'stone')) {
+      t *= terrainDepthHardness(row);
+    }
+    return t;
   }
 
   function fallDamageForImpact(speed) {

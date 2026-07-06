@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.61';
+  var GAME_VERSION = 'v25.62';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -212,6 +212,20 @@
   // weighty even at max drill (unobtanium hp9 ≈ 0.83s of drilling at L7) so
   // the endgame keeps some grind. Tune the curve here.
   var DRILL_SPEED = [0, 1.00, 1.25, 1.55, 1.90, 2.30, 2.75, 3.25];
+  // ---- Depth hardness (v25.61) ----
+  // The worthless shaft filler (dirt/stone) gets TOUGHER the deeper you dig,
+  // so an under-tiered drill turns the descent into a felt slog — a real
+  // reason to upgrade beyond the hard reqDrill ore gates. Before this the only
+  // pressure to buy a drill was "you literally cannot mine that ore"; a level-1
+  // drill chewed 400 m of dirt at the same 0.30 s/tile as the surface.
+  // It is ONE multiplier on the per-hit time (drillHitTime, 040), scoped to
+  // dirt/stone only so the carefully tuned ORE dig times (BALANCE §4) are
+  // untouched. hardness(depth) = 1 at/above START, ramps linearly to MAX at
+  // FULL and holds. 1 tile = 1 m, so these are metres below the surface.
+  // Live-tunable from the L panel as drill.TERRAIN_HARD_* (gm facade, 360).
+  var TERRAIN_HARD_START = 40;    // no change through the topsoil intro (0..40 m stays snappy)
+  var TERRAIN_HARD_FULL  = 380;   // near the town floor (town is 400 m deep)
+  var TERRAIN_HARD_MAX   = 2.4;   // hit-time multiplier at/below FULL depth (L1 dirt: 0.30 -> 0.72 s)
   var FUEL_DRAIN = 0.8;
   var DRILL_FUEL = 1.5;
   var BASE_HULL = 100;
@@ -4195,13 +4209,31 @@
     if (lv <= 0) return 0;
     return [0, 76, 112, 152][Math.min(3, lv)];
   }
-  function drillHitTime() {
+  // v25.61 — how much tougher the shaft filler is at a given row. Dirt/stone
+  // only; 1.0 at/above TERRAIN_HARD_START, ramping linearly to TERRAIN_HARD_MAX
+  // at TERRAIN_HARD_FULL and holding. 1 tile = 1 m, so depth = row - SKY_ROWS.
+  function terrainDepthHardness(row) {
+    var depthM = row - SKY_ROWS;
+    if (depthM <= TERRAIN_HARD_START) return 1;
+    var span = TERRAIN_HARD_FULL - TERRAIN_HARD_START;
+    var f = span > 0 ? (depthM - TERRAIN_HARD_START) / span : 1;
+    if (f > 1) f = 1;
+    return 1 + f * (TERRAIN_HARD_MAX - 1);
+  }
+  function drillHitTime(row, type) {
     // Seconds for one drill hit (removes 1 HP). Higher drill tiers drill
-    // faster per hit via DRILL_SPEED (see the constants block).
+    // faster per hit via DRILL_SPEED (see the constants block). Dirt/stone
+    // ALSO get tougher with depth (terrainDepthHardness) so an under-tiered
+    // drill feels the descent; ore hit times are unchanged. Callers pass the
+    // target row + type; a bare call (no args) returns the base surface time.
     var L = upgrades.drillLevel || 1;
     if (L < 1) L = 1;
     if (L >= DRILL_SPEED.length) L = DRILL_SPEED.length - 1;
-    return DRILL_TIME / DRILL_SPEED[L];
+    var t = DRILL_TIME / DRILL_SPEED[L];
+    if (typeof row === 'number' && (type === 'dirt' || type === 'stone')) {
+      t *= terrainDepthHardness(row);
+    }
+    return t;
   }
 
   function fallDamageForImpact(speed) {
@@ -11490,7 +11522,7 @@
         // Builds tension toward the break frame so the eye is primed for
         // the bigger squash spike that lands on tile-clear. Doesn't gate
         // damage (research: anticipation runs *during* the active phase).
-        var drillProg = 1 - drilling.timer / drillHitTime();
+        var drillProg = 1 - drilling.timer / drilling.hitTime;
         if (drillProg > 0) {
           var antic = 0.05 + drillProg * 0.30;     // 0.05 -> 0.35 over the drill
           if (player.squash < antic) player.squash = antic;
@@ -11610,7 +11642,7 @@
               // Release squash — tactile cue for the moment of break.
               player.squash = Math.max(player.squash, 0.25);
             } else {
-              drilling.timer = drillHitTime();
+              drilling.timer = drilling.hitTime;   // same tile — reuse its per-hit time
               player.fuel -= DRILL_FUEL * dt;
               return;
             }
@@ -12432,7 +12464,8 @@
           if (t_d.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr, pc); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason, blockReason === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc1 = drillSfx(); if (_bnc1) _bnc1.bounce(); }
         } else {
-          drilling = { r: pr, c: pc, timer: drillHitTime(), dirVec: 'd' };
+          var _htD = drillHitTime(pr, t_d.type);
+          drilling = { r: pr, c: pc, timer: _htD, hitTime: _htD, dirVec: 'd' };
           resetFlightBank();
           if (!hasDrilledOnce) { hasDrilledOnce = true; track('first_drill'); }
           // Ease the player into the target column over the drill animation
@@ -12459,7 +12492,8 @@
           if (t_l.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr2, pc2); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason2, blockReason2 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc2 = drillSfx(); if (_bnc2) _bnc2.bounce(); }
         } else {
-          drilling = { r: pr2, c: pc2, timer: drillHitTime(), dirVec: 'l' };
+          var _htL = drillHitTime(pr2, t_l.type);
+          drilling = { r: pr2, c: pc2, timer: _htL, hitTime: _htL, dirVec: 'l' };
           resetFlightBank();
           player.dir = -1;
           // Row-snap so the AABB sits cleanly inside the row of the
@@ -12485,7 +12519,8 @@
           if (t_r.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr3, pc3); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason3, blockReason3 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc3 = drillSfx(); if (_bnc3) _bnc3.bounce(); }
         } else {
-          drilling = { r: pr3, c: pc3, timer: drillHitTime(), dirVec: 'r' };
+          var _htR = drillHitTime(pr3, t_r.type);
+          drilling = { r: pr3, c: pc3, timer: _htR, hitTime: _htR, dirVec: 'r' };
           resetFlightBank();
           player.dir = 1;
           var snapY_r = pr3 * TILE + (TILE - PLAYER_H);
@@ -12511,7 +12546,8 @@
           if (t_u.type === 'greatseam' && typeof seamExtract === 'function') { seamExtract(pr4, pc4); }
           else if (drillBlockMsgCool <= 0) { showMsg(blockReason4, blockReason4 === 'CARGO FULL'); drillBlockMsgCool = 1.5; var _bnc4 = drillSfx(); if (_bnc4) _bnc4.bounce(); }
         } else {
-          drilling = { r: pr4, c: pc4, timer: drillHitTime(), dirVec: 'u' };
+          var _htU = drillHitTime(pr4, t_u.type);
+          drilling = { r: pr4, c: pc4, timer: _htU, hitTime: _htU, dirVec: 'u' };
           resetFlightBank();
           // Column-snap mirroring the downward-drill behavior so the rig
           // sits cleanly under the target tile when drilling up.
@@ -24762,7 +24798,7 @@
       var dtile2 = world[drilling.r] && world[drilling.r][drilling.c];
       if (dtile2) {
         var maxHp2 = (ORES[dtile2.type] && ORES[dtile2.type].hp) || 1;
-        var dcyc = drillHitTime() > 0 ? 1 - drilling.timer / drillHitTime() : 0;
+        var dcyc = drilling.hitTime > 0 ? 1 - drilling.timer / drilling.hitTime : 0;
         if (dcyc < 0) dcyc = 0; if (dcyc > 1) dcyc = 1;
         var dprog = Math.min(1, ((maxHp2 - dtile2.hp) + dcyc) / maxHp2);
         if (dprog > 0.06) { try { mineDrawCracks(drilling.r, drilling.c, drilling.dirVec, dprog); } catch (e) {} }
@@ -56120,6 +56156,25 @@
           function () { return SHINY_VALUE_MULT; },
           function (v) { SHINY_VALUE_MULT = v; },
           1, 25, 0.5);
+      }
+      // Depth hardness (v25.61) — the worthless shaft filler (dirt/stone) drills
+      // slower the deeper you go, so an under-tiered drill feels the descent and
+      // upgrading buys real speed (not just reqDrill ore unlocks). Ore hit times
+      // are untouched. MAX is the hit-time multiplier at/below FULL depth; the
+      // ramp is linear from START to FULL (metres; 1 tile = 1 m). Feel-tune live.
+      if (typeof TERRAIN_HARD_MAX !== 'undefined') {
+        gmRegisterLever('drill.TERRAIN_HARD_MAX', 'drill', 'deep dirt/stone hit-time x (1 = off)',
+          function () { return TERRAIN_HARD_MAX; },
+          function (v) { TERRAIN_HARD_MAX = v; },
+          1, 5, 0.1);
+        gmRegisterLever('drill.TERRAIN_HARD_START', 'drill', 'depth m where dirt/stone starts toughening',
+          function () { return TERRAIN_HARD_START; },
+          function (v) { TERRAIN_HARD_START = v; },
+          0, 400, 5);
+        gmRegisterLever('drill.TERRAIN_HARD_FULL', 'drill', 'depth m where toughening hits MAX',
+          function () { return TERRAIN_HARD_FULL; },
+          function (v) { TERRAIN_HARD_FULL = v; },
+          0, 400, 5);
       }
       // Console end-cap style — the owner picks the ornate cap live from the L
       // panel. 0 = original plain cap; 1 Fluted Pilaster, 2 Star Medallion,
