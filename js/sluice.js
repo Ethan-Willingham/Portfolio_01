@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.71';
+  var GAME_VERSION = 'v25.72';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -37641,111 +37641,91 @@
   function drawHullPlates(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'HULL');
     drawBayBolts(bx, by, bw, bh);
-    // v25.66 — the plate COUNT tracks the Hull Plating upgrade. A stock rig
-    // shows HULL_PLATE_BASE plates; each upgrade tier bolts on one more, so
-    // buying hull is legible right here on the gauge (not just a bigger, invisible
-    // hull number). Plates still deplete from the RIGHT as damage lands (loop
-    // below) and keep the green/amber/red position zones; only the total grows.
-    var HULL_PLATE_BASE = 5;   // plates at hull level 1
-    var HULL_PLATE_STEP = 1;   // extra plates per upgrade tier (L1=5 .. L7=11)
+    // v25.71 — the hull gauge is a GRID of armor tiles, and the tile COUNT tracks
+    // the Hull Plating upgrade: a stock rig has HULL_PLATE_BASE tiles and each tier
+    // bolts on HULL_PLATE_STEP more, so a maxed hull reads as a visibly denser slab
+    // of plating (not just a bigger, invisible hull number). The grid auto-sizes its
+    // tiles + row count to fit the 92 px bay at any total. Tiles still drop from the
+    // END (bottom-right) as damage lands and keep the green/amber/red margin zones,
+    // so a battered hull is down to its solid green core up top.
+    var HULL_PLATE_BASE = 6;   // tiles at hull level 1
+    var HULL_PLATE_STEP = 3;   // extra tiles per upgrade tier (L1=6 .. L7=24)
     var hullLvl = (typeof upgrades !== 'undefined' && upgrades && upgrades.hullLevel) ? upgrades.hullLevel : 1;
     var n = HULL_PLATE_BASE + (Math.max(1, hullLvl) - 1) * HULL_PLATE_STEP;
-    if (n > 14) n = 14;        // safety clamp (dev free-buy over-levelling)
-    var pgap = 1;
-    // Auto-fit the plate width so the extra plates never overflow the 92 px bay:
-    // low tiers show a few chunky plates, a maxed hull a denser strip. Capped at
-    // 9 px so a stock gauge doesn't balloon, floored at 4 px so it always fits.
-    var availW = bw - 10;      // leaves room for the recessed backing strip
-    var pw = Math.floor((availW - (n - 1) * pgap) / n);
-    if (pw > 9) pw = 9;
-    if (pw < 4) pw = 4;
-    var rowW = n * pw + (n - 1) * pgap;
-    var x0 = bx + (bw - rowW) / 2;
-    var ph = Math.min(bh - 22, 40);
-    var y0 = by + (bh - ph) / 2 + 3;
+    if (n > 30) n = 30;        // safety clamp (dev free-buy over-levelling)
+
     var maxHullLocal = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
     var hullFrac = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.hull / maxHullLocal)) : 0;
     var intactPlates = Math.ceil(hullFrac * n);
 
-    // Per-plate position zones: green (left), amber (middle), red (right)
-    var nRed    = Math.max(1, Math.round(n * 0.15));   // 1
-    var nAmber  = Math.max(1, Math.round(n * 0.25));   // 2
-    var nGreen  = n - nRed - nAmber;                   // 5
+    // Position zones by tile index: green core (low) -> amber -> red margin (high).
+    var nRed    = Math.max(1, Math.round(n * 0.15));
+    var nAmber  = Math.max(1, Math.round(n * 0.25));
+    var nGreen  = n - nRed - nAmber;
     function plateZoneColors(idx) {
-      // idx is 0-based plate position
-      if (idx < nGreen) {
-        return { base: '#40c060', hi: '#7be098', sh: '#268040' };
-      } else if (idx < nGreen + nAmber) {
-        return { base: '#e0a020', hi: '#ffd47a', sh: '#9c6010' };
-      } else {
-        return { base: '#e83a26', hi: '#ff7060', sh: '#7a2418' };
-      }
+      if (idx < nGreen)               return { base: '#40c060', hi: '#7be098', sh: '#268040' };
+      else if (idx < nGreen + nAmber) return { base: '#e0a020', hi: '#ffd47a', sh: '#9c6010' };
+      else                            return { base: '#e83a26', hi: '#ff7060', sh: '#7a2418' };
     }
 
-    // Recessed metal backing strip (destroyed plates show this)
+    // Fit N tiles into the bay: the largest square tile (<=11 px) whose wrapped
+    // rows all clear the HULL label + corner bolts. Small counts stay chunky in
+    // one or two rows; a maxed hull packs into a denser multi-row grid.
+    var gap = 1;
+    var availW = bw - 8;
+    var availH = Math.max(6, bh - 16);            // band below the HULL label
+    var tile = 4, cols = 1, rows = n;
+    for (var t = 11; t >= 4; t--) {
+      var c = Math.max(1, Math.floor((availW + gap) / (t + gap)));
+      var r = Math.ceil(n / c);
+      if (r * (t + gap) - gap <= availH) { tile = t; cols = c; rows = r; break; }
+      if (t === 4) { tile = 4; cols = c; rows = r; }
+    }
+    var gridW = cols * (tile + gap) - gap;
+    var gridH = rows * (tile + gap) - gap;
+    var gx0 = bx + Math.round((bw - gridW) / 2);
+    var gy0 = (by + 12) + Math.max(0, Math.round((availH - gridH) / 2));
+
+    // Recessed metal backing (destroyed tiles show this through).
     ctx.fillStyle = '#0e0c0a';
-    ctx.fillRect(x0 - 3, y0 - 2, rowW + 6, ph + 4);
+    ctx.fillRect(gx0 - 3, gy0 - 3, gridW + 6, gridH + 6);
     ctx.fillStyle = '#1a1612';
-    ctx.fillRect(x0 - 3, y0 - 2, rowW + 6, 1);
-    ctx.fillRect(x0 - 3, y0 - 2, 1, ph + 4);
+    ctx.fillRect(gx0 - 3, gy0 - 3, gridW + 6, 1);
+    ctx.fillRect(gx0 - 3, gy0 - 3, 1, gridH + 6);
     ctx.fillStyle = '#2a2520';
-    ctx.fillRect(x0 - 3, y0 + ph + 1, rowW + 6, 1);
-    ctx.fillRect(x0 + rowW + 2, y0 - 2, 1, ph + 4);
+    ctx.fillRect(gx0 - 3, gy0 + gridH + 2, gridW + 6, 1);
+    ctx.fillRect(gx0 + gridW + 2, gy0 - 3, 1, gridH + 6);
 
     for (var i = 0; i < n; i++) {
-      var px = x0 + i * (pw + pgap);
       var stage;
       if (i < intactPlates - 1) stage = 0;
       else if (i === intactPlates - 1) {
         var subFrac = (hullFrac * n) - (intactPlates - 1);
-        if (subFrac > 0.66)      stage = 0;
-        else if (subFrac > 0.33) stage = 1;
-        else                     stage = 2;
+        stage = (subFrac > 0.4) ? 0 : 1;   // the draining tile cracks before it drops
       } else stage = 3;
       if (stage === 3) continue;
 
+      var col = i % cols;
+      var row = (i / cols) | 0;
+      var px = gx0 + col * (tile + gap);
+      var py = gy0 + row * (tile + gap);
       var z = plateZoneColors(i);
 
-      // Plate body in zone color
-      ctx.fillStyle = z.base;
-      ctx.fillRect(px, y0, pw, ph);
-      // Top + left highlight
-      ctx.fillStyle = z.hi;
-      ctx.fillRect(px, y0, pw, 1);
-      ctx.fillRect(px, y0, 1, ph);
-      // Bottom + right shadow
-      ctx.fillStyle = z.sh;
-      ctx.fillRect(px, y0 + ph - 1, pw, 1);
-      ctx.fillRect(px + pw - 1, y0, 1, ph);
-      // 4-corner rivets (always dark for industrial read regardless of zone)
-      ctx.fillStyle = UI_OUTLINE;
-      ctx.fillRect(px + 1, y0 + 1, 1, 1);
-      ctx.fillRect(px + pw - 2, y0 + 1, 1, 1);
-      ctx.fillRect(px + 1, y0 + ph - 2, 1, 1);
-      ctx.fillRect(px + pw - 2, y0 + ph - 2, 1, 1);
-      ctx.fillStyle = z.sh;
-      ctx.fillRect(px + 2, y0 + 2, 1, 1);
-      ctx.fillRect(px + pw - 3, y0 + 2, 1, 1);
-      // Centre groove
-      ctx.fillStyle = z.sh;
-      ctx.fillRect(px + Math.floor(pw / 2), y0 + 3, 1, ph - 6);
+      ctx.fillStyle = z.base;                // tile body
+      ctx.fillRect(px, py, tile, tile);
+      ctx.fillStyle = z.hi;                  // top + left highlight
+      ctx.fillRect(px, py, tile, 1);
+      ctx.fillRect(px, py, 1, tile);
+      ctx.fillStyle = z.sh;                  // bottom + right shadow
+      ctx.fillRect(px, py + tile - 1, tile, 1);
+      ctx.fillRect(px + tile - 1, py, 1, tile);
+      ctx.fillStyle = UI_OUTLINE;            // centre rivet (industrial read)
+      ctx.fillRect(px + (tile >> 1), py + (tile >> 1), 1, 1);
 
-      // Damage overlays — black cracks regardless of zone
-      if (stage >= 1) {
+      if (stage >= 1) {                      // cracked: a scatter of dark hits
         ctx.fillStyle = UI_OUTLINE;
-        for (var c = 0; c < 5; c++) {
-          ctx.fillRect(px + 1 + c, y0 + 5 + c, 1, 1);
-        }
-      }
-      if (stage >= 2) {
-        ctx.fillStyle = UI_OUTLINE;
-        for (var c2 = 0; c2 < 6; c2++) {
-          ctx.fillRect(px + 4 - Math.floor(c2 / 2), y0 + 12 + c2, 1, 1);
-        }
-        ctx.fillRect(px + 2, y0 + ph - 8, 3, 1);
-        ctx.fillRect(px + 2, y0 + ph - 7, 1, 2);
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(px + pw - 3, y0 + ph - 5, 1, 1);
+        ctx.fillRect(px + 2, py + 2, 1, 1);
+        ctx.fillRect(px + tile - 3, py + tile - 4, 1, 1);
       }
     }
   }
