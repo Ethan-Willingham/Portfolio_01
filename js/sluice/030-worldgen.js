@@ -884,10 +884,11 @@
   // ONE tile, the same one-tile rule as the buried slimes: it sits at row
   // SKY_ROWS-1 (the sky cell directly on top of the shore) resting on the solid
   // bank, so it reads as a little slime on the grass at the water's edge. Placed
-  // AFTER the pit + walls are carved. They wake into live soft bodies the instant
-  // the player digs the ground out from under one (or digs it directly), like the
-  // buried slimes. Spaced >=2 cols apart so no two share an edge (an edge touch
-  // would flood-fill into one 2-tile body, breaking the one-tile rule).
+  // AFTER the pit + walls are carved. They are woken into LIVE soft bodies as the
+  // lake enters view (wakeLakeShoreSlimes, from the pond streamer) so they are
+  // already wobbling when the player arrives, no digging needed. Spaced >=2 cols
+  // apart so no two share an edge (an edge touch would flood-fill into one 2-tile
+  // body, breaking the one-tile rule).
   // ENABLE_JELLO gated so ?jello=0 clears them too.
   function seedLakeShoreSlimes(cL, cR) {
     if (!ENABLE_JELLO) return;
@@ -914,6 +915,29 @@
       var jTile = { type: 'jello', hp: 999999 };
       if (jType) jTile.jellyType = jType;
       above[c] = jTile;
+    }
+  }
+
+  // ----- Wake the lake-shore slimes (v25.75) -----
+  // Turn a lake's above-ground bank slimes from inert tiles into LIVE soft bodies
+  // the moment the lake enters view, so they are already alive when the player
+  // arrives (owner: no digging to activate them). Called from the pond streamer
+  // (updateSurfacePondStreaming, 070) once per pond, on the same proximity gate the
+  // water uses. Off-screen bodies are frozen by updateJello, so a woken slime left
+  // behind is ~free. Idempotent: activateJelloCluster nulls the tile, so a re-scan
+  // (or a lake reloaded with its slimes already live) finds nothing. The only jello
+  // at SKY_ROWS-1 near a lake is a shore slime (buried ones live at SKY_ROWS+3 and
+  // deeper), so scanning the bank row is safe.
+  function wakeLakeShoreSlimes(pond) {
+    if (!ENABLE_JELLO || !pond) return;
+    var r = SKY_ROWS - 1;
+    if (r < 0) return;
+    var row = world[r];
+    if (!row) return;
+    for (var c = pond.cL - 5; c <= pond.cR + 5; c++) {
+      if (c < 0 || c >= COLS) continue;
+      var t = row[c];
+      if (t && t.type === 'jello') activateJelloCluster(r, c);
     }
   }
 

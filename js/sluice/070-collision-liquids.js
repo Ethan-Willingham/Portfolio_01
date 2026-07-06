@@ -458,6 +458,11 @@
       px0 = pond.cL * TILE; px1 = (pond.cR + 1) * TILE;
       if (px1 > camL - fillEdge && px0 < camR + fillEdge) {
         if (fillSurfacePond(pond)) pond.filled = true;
+        // Wake the above-ground bank slimes as the lake comes into view (v25.75) so
+        // they are already alive on arrival, no digging. Once per pond; the flag is
+        // not saved, so a reload re-scans (finds tiles on an unvisited lake, or
+        // nothing where they are already live bodies).
+        if (!pond.slimesLive) { wakeLakeShoreSlimes(pond); pond.slimesLive = true; }
       }
     }
   }
