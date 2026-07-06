@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.69';
+  var GAME_VERSION = 'v25.70';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3110,6 +3110,7 @@
         }
         for (var _fc = _px - 1; _fc <= _pr + 1; _fc++) world[SKY_ROWS + _pd][_fc] = { type: 'stone', hp: ORES.stone.hp }; // floor
         surfacePonds.push({ cL: _px, cR: _pr, d: _pd, filled: false });
+        seedLakeShoreSlimes(_px, _pr);   // a few 1-tile slimes perch above ground on each bank (v25.68)
       }
       _px = _pr + 1 + 130 + ((Math.random() * 80) | 0);  // gap 130..210 — wider (fewer lakes for low-end), still > the ~81-tile active region so only one streams in at a time
     }
@@ -3770,6 +3771,45 @@
         world[sr][sc] = jTile;
         placed++;
       }
+    }
+  }
+
+  // ----- Lake-shore slimes (v25.68) -----
+  // A few single 'jello' tiles perch ABOVE GROUND on the banks of every surface
+  // lake (owner request: slimes by the water, mobile + desktop). Each is EXACTLY
+  // ONE tile, the same one-tile rule as the buried slimes: it sits at row
+  // SKY_ROWS-1 (the sky cell directly on top of the shore) resting on the solid
+  // bank, so it reads as a little slime on the grass at the water's edge. Placed
+  // AFTER the pit + walls are carved. They wake into live soft bodies the instant
+  // the player digs the ground out from under one (or digs it directly), like the
+  // buried slimes. Spaced >=2 cols apart so no two share an edge (an edge touch
+  // would flood-fill into one 2-tile body, breaking the one-tile rule).
+  // ENABLE_JELLO gated so ?jello=0 clears them too.
+  function seedLakeShoreSlimes(cL, cR) {
+    if (!ENABLE_JELLO) return;
+    var aboveR = SKY_ROWS - 1;                 // the sky cell directly on top of the shore surface
+    if (aboveR < 0) return;
+    var above = world[aboveR], ground = world[aboveR + 1];   // ground = row SKY_ROWS, the shore surface
+    if (!above || !ground) return;
+    // Two perches per bank: snug against the wall, then one gap further out. Never
+    // the wall (cL-1 / cR+1) or the water (cL..cR); the 2-col spacing keeps each
+    // slime a separate one-tile creature.
+    var cols = [cL - 2, cL - 4, cR + 2, cR + 4];
+    for (var i = 0; i < cols.length; i++) {
+      var c = cols[i];
+      if (c < 3 || c >= COLS - 3) continue;
+      if (c >= DECK_LEFT_COL - 1 && c <= DECK_RIGHT_COL + 1) continue;   // clear of the station apron
+      if (above[c] != null) continue;                                   // the perch must be open sky
+      var g = ground[c];
+      if (!g || (g.type !== 'dirt' && g.type !== 'stone')) continue;     // rest on solid shore only
+      // One-tile rule: never let a perch share an edge with existing jello.
+      if ((above[c - 1] && above[c - 1].type === 'jello') ||
+          (above[c + 1] && above[c + 1].type === 'jello')) continue;
+      var jType = (typeof JELLO_TYPE_KEYS !== 'undefined' && JELLO_TYPE_KEYS.length)
+                  ? JELLO_TYPE_KEYS[(Math.random() * JELLO_TYPE_KEYS.length) | 0] : null;
+      var jTile = { type: 'jello', hp: 999999 };
+      if (jType) jTile.jellyType = jType;
+      above[c] = jTile;
     }
   }
 
