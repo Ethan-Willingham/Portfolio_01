@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.62';
+  var GAME_VERSION = 'v25.63';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -7475,7 +7475,7 @@
       var oreType = tile.type;
       var oreDef = ORES[oreType];
       if (oreDef && oreDef.value > 0 && oreType !== 'barrier') {
-        if (cargo.length < maxCargo) {
+        if (cargoUsed() + oreSlots(oreType) <= maxCargo || cargo.length === 0) {
           var _sh = !!(tile && tile.shiny);
           cargo.push({ type: oreType, shiny: _sh });
           var fwx = cell.c * TILE + TILE / 2;
@@ -7483,7 +7483,7 @@
           spawnFloater(fwx, fwy,
             (_sh ? 'Shiny ' : '') + oreDef.label + ' +$' + cargoUnitValue({ type: oreType, shiny: _sh }),
             _sh ? '#ffe6a0' : floaterColorFor(oreType), true);
-          if (cargo.length === maxCargo) { showMsg('Cargo full!', true); sfxPlay('cargo-full'); }
+          if (cargoUsed() >= maxCargo) { showMsg('Cargo full!', true); sfxPlay('cargo-full'); }
         }
       }
       arr[idx][cell.c] = null;
@@ -7757,6 +7757,12 @@
     if (tile.type === 'bedrock') return 'Impenetrable bedrock';
     // No Man's Zone substrate: fully impassable, no drill or bomb gets through.
     if (tile.type === 'voidrock') return 'Impenetrable void rock';
+    // The Great Seam: hp 999999, so the drill never chips it. Returning a
+    // truthy reason routes it into the block branch in 080, where contact
+    // fires the one-time seamExtract() core-sample payoff (295) instead of
+    // grinding forever. Without this it falls through to the ore path below and
+    // a maxed (heated) drill with room in cargo just mills an unbreakable tile.
+    if (tile.type === 'greatseam') return 'The Great Seam';
     var depth = row - SKY_ROWS;
     var layer = getLayerForRegion(depth, playerTownIndex());
     var ore = ORES[tile.type];
@@ -7774,8 +7780,11 @@
     }
     // Cargo full: refuse to start a dig on a *valuable* tile so we don't
     // waste it. Dirt and stone still drill normally — they're rubble, not
-    // collected, so the player can keep tunneling to get home.
-    if (cargo.length >= maxCargo && tile.type !== 'dirt' && tile.type !== 'stone') {
+    // collected, so the player can keep tunneling to get home. Slot-aware: a
+    // rare ore needs several slots, so a tile can be "too big to fit" while a
+    // cheaper 1-slot tile beside it still fits. An empty hold takes anything.
+    if (tile.type !== 'dirt' && tile.type !== 'stone' &&
+        cargo.length > 0 && cargoUsed() + oreSlots(tile.type) > maxCargo) {
       return 'CARGO FULL';
     }
     return null;
