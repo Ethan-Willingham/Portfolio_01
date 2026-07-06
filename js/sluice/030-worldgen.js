@@ -937,7 +937,15 @@
     for (var c = pond.cL - 5; c <= pond.cR + 5; c++) {
       if (c < 0 || c >= COLS) continue;
       var t = row[c];
-      if (t && t.type === 'jello') activateJelloCluster(r, c);
+      if (t && t.type === 'jello') {
+        activateJelloCluster(r, c);
+        // The tile is now air; relight the cell so the fog overlay does not leave a
+        // dark square where the slime spawned. activateJelloCluster nulls the tile
+        // but never touches lighting; buried slimes get lit by the mining flood via
+        // markTerrainCleared, but this runtime path has no such flood. r < SKY_ROWS
+        // so lightingOnClear lights it immediately (open sky is always lit).
+        lightingOnClear(r, c);
+      }
     }
   }
 

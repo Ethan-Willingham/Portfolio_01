@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.75';
+  var GAME_VERSION = 'v25.76';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -3832,7 +3832,15 @@
     for (var c = pond.cL - 5; c <= pond.cR + 5; c++) {
       if (c < 0 || c >= COLS) continue;
       var t = row[c];
-      if (t && t.type === 'jello') activateJelloCluster(r, c);
+      if (t && t.type === 'jello') {
+        activateJelloCluster(r, c);
+        // The tile is now air; relight the cell so the fog overlay does not leave a
+        // dark square where the slime spawned. activateJelloCluster nulls the tile
+        // but never touches lighting; buried slimes get lit by the mining flood via
+        // markTerrainCleared, but this runtime path has no such flood. r < SKY_ROWS
+        // so lightingOnClear lights it immediately (open sky is always lit).
+        lightingOnClear(r, c);
+      }
     }
   }
 
