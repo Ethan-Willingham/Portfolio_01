@@ -816,13 +816,12 @@
   // rejected so two slimes never share an edge (an edge touch would flood-fill
   // into one 2-tile body on activation, breaking the one-tile rule).
   // v25.59 — density of the scattered buried slimes, as a chance per diggable
-  // tile. Tuned so a straight-down 1-tile shaft meets about ONE slime per 150 m
-  // of descent (owner's target). Each slime now spans exactly one column, so
-  // encounters/150 m ≈ chance*150 (was chance*150*1.6 when clusters spanned
-  // ~1.6 columns, hence the ~1.6x bump from 0.0042 to keep the same feel).
-  // Rare enough to read as "here and there", common enough to cushion a deep
-  // fall. ?jello=0 removes them entirely; scale this to make them rarer/denser.
-  var JELLO_PATCH_CHANCE = 0.0068;
+  // tile. Each slime spans exactly one column, so a straight-down 1-tile shaft
+  // meets about chance*150 of them per 150 m. Owner dialed the rareness down to
+  // 0.0035, so roughly one buried slime every ~285 m of descent, down from the
+  // ~1-per-150 m the old 0.0068 gave. Rare enough to read as a real find;
+  // ?jello=0 removes them entirely; scale this to taste.
+  var JELLO_PATCH_CHANCE = 0.0035;
   function generateJelloPatches() {
     resetJello();
     if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
