@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.66';
+  var GAME_VERSION = 'v25.67';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -37211,9 +37211,18 @@
   }
 
   // Stenciled bay-edge label drawn into the top inset of the bay.
+  // v25.63 — fit the label to the bay width. In the stacked (portrait-phone)
+  // console the bays are far narrower than the ~92-110px the labels were authored
+  // for, so a value-bearing header ('CARGO  $45,347') centred at scale 1 spilled
+  // out both sides (into the gutter and the neighbouring bay). Shrink the stencil
+  // scale just enough to fit, floored so it stays legible; short labels ('FUEL',
+  // 'RESERVE') still fit at scale 1 and are untouched.
   function drawBayLabel(bx, by, bw, text) {
+    var avail = bw - 7;
     var w = stencilTextWidth(text, 1);
-    drawStencilText(text, bx + Math.floor((bw - w) / 2), by + 2, 1, '#d8d2c4');
+    var s = (w > avail && w > 0) ? Math.max(0.6, avail / w) : 1;
+    var wS = stencilTextWidth(text, s);
+    drawStencilText(text, bx + Math.floor((bw - wS) / 2), by + 2, s, '#d8d2c4');
   }
 
   // Four corner bolts inside a bay's inner rect.
@@ -37966,11 +37975,16 @@
     while (sDepth.length < 4) sDepth = '0' + sDepth;
 
     // Drum slot geometry
-    var scale = 2;
-    var digitW = 5 * scale;
-    var drumW = digitW + 4;
     var drumGap = 1;
     var nDigits = 4;
+    // v25.63 — fit the odometer to the brass face. On the narrow portrait-stacked
+    // bay the scale-2 four-drum cluster (65px + bezel) was wider than the face, so
+    // the last digit was crushed against the frame. Drop to scale 1 (45px) when
+    // the full cluster + its chrome bezel won't fit the available width `aw`.
+    var scale = 2;
+    if ((5 * scale + 4) * nDigits + drumGap * (nDigits - 1) + 6 > aw) scale = 1;
+    var digitW = 5 * scale;
+    var drumW = digitW + 4;
     var totalDrums = drumW * nDigits + drumGap * (nDigits - 1);
     // Suffix "M" is rendered at scale 1 below the drums, not inline,
     // so reserve no horizontal room for it here. This lets the drums
@@ -38218,6 +38232,11 @@
     // Largest stencil scale that fits the window; drops to 1 for long
     // numbers so the readout never clips.
     var scale = stencilTextWidth(cashStr, 2) <= winW - 8 ? 2 : 1;
+    // v25.63 — final guard: on a narrow portrait bay a 7-figure balance can still
+    // overflow at scale 1; shrink to a fractional scale that fits so it never clips.
+    if (stencilTextWidth(cashStr, scale) > winW - 6) {
+      scale = Math.max(0.6, (winW - 6) / stencilTextWidth(cashStr, 1));
+    }
     var tw = stencilTextWidth(cashStr, scale);
     var tx = winX + winW - 4 - tw;
     if (tx < winX + 3) tx = winX + 3;
@@ -45169,6 +45188,20 @@
     ctx.restore();
   }
 
+  // v25.63 — draw a receipt summary row (bold label left, value right-aligned)
+  // that never lets the two collide on a narrow portrait plate. The manifest was
+  // authored for a wide plate; on a portrait phone the paper is much narrower, so
+  // a long scale-2 label ('SALVAGE LEVY 10%') ran straight into its value. If the
+  // label + gap + value would overrun the row, both shrink to the largest scale
+  // that fits (floored so they stay bold and legible).
+  function drawDeathSummaryRow(label, valStr, hx, rightX, ly, sc, colL, colV) {
+    var need = stencilTextWidth(label, sc) + 12 + stencilTextWidth(valStr, sc);
+    var avail = rightX - hx;
+    if (need > avail && need > 0) sc = Math.max(0.7, sc * (avail / need));
+    drawStencilText(label, hx, ly, sc, colL);
+    drawStencilText(valStr, rightX - stencilTextWidth(valStr, sc), ly, sc, colV);
+  }
+
   function drawDeathScreen(dt) {
     if (!UI_NEW || !gameOver) return;
     // First frame of a new death: snapshot the incident before any
@@ -45276,7 +45309,11 @@
     if (tc > -0.1 && m) {
       var rowsAll = m.visLines.length;
       var fw = Math.min(400, Math.floor(pw * 0.46));
-      if (fw < 280) fw = Math.min(280, pw - 24);
+      // v25.63 — on a narrow portrait phone pw*0.46 is tiny, so the old
+      // min(280,...) fallback left a cramped paper the scale-2 summary rows
+      // overflowed. Give the receipt most of the available width so those rows
+      // fit at their authored size (the row helper still guards the rest).
+      if (fw < 320) fw = Math.min(340, pw - 24);
       var fh = Math.min(ph - 100, 272 + rowsAll * 22 + 24);
       var fx = Math.round((pw - fw) / 2);
       var fy = py + Math.floor((ph - fh) / 2) - 12;
@@ -45325,9 +45362,8 @@
       if (tc >= afterLines) {
         ctx.fillStyle = DEATH_INK_DIM;
         ctx.fillRect(hx, ly - 4, fw - 48, 1);
-        drawStencilText('CARGO FORFEIT', hx, ly + 4, 2, DEATH_RED_DARK);
         var tStr2 = '$' + deathOdo(tc, afterLines, 0.6, m.total).toLocaleString();
-        drawStencilText(tStr2, fx + fw - 20 - stencilTextWidth(tStr2, 2), ly + 4, 2, DEATH_RED_DARK);
+        drawDeathSummaryRow('CARGO FORFEIT', tStr2, hx, fx + fw - 20, ly + 4, 2, DEATH_RED_DARK, DEATH_RED_DARK);
       }
       ly += 30;
       // Balance on record
@@ -45338,9 +45374,8 @@
       // The levy counts DOWN in red
       var levyAt = afterLines + 1.15;
       if (tc >= levyAt) {
-        drawStencilText('SALVAGE LEVY 10%', hx, ly + 4, 2, DEATH_RED);
         var lvStr = '-$' + deathOdo(tc, levyAt, 0.8, m.fee).toLocaleString();
-        drawStencilText(lvStr, fx + fw - 20 - stencilTextWidth(lvStr, 2), ly + 4, 2, DEATH_RED);
+        drawDeathSummaryRow('SALVAGE LEVY 10%', lvStr, hx, fx + fw - 20, ly + 4, 2, DEATH_RED, DEATH_RED);
       }
       ly += 28;
       // Remittance
@@ -45351,9 +45386,8 @@
       if (tc >= remitAt) {
         ctx.fillStyle = DEATH_INK;
         ctx.fillRect(hx, ly - 4, fw - 48, 2);
-        drawStencilText('REMITTED', hx, ly + 6, 2, DEATH_INK);
         var rStr = '$' + m.remitted.toLocaleString();
-        drawStencilText(rStr, fx + fw - 20 - stencilTextWidth(rStr, 2), ly + 6, 2, DEATH_INK);
+        drawDeathSummaryRow('REMITTED', rStr, hx, fx + fw - 20, ly + 6, 2, DEATH_INK, DEATH_INK);
       }
       ly += 36;
       // SETTLED stamp in its own clear zone below the totals

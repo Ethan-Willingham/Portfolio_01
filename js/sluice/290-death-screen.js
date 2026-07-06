@@ -338,6 +338,20 @@
     ctx.restore();
   }
 
+  // v25.63 — draw a receipt summary row (bold label left, value right-aligned)
+  // that never lets the two collide on a narrow portrait plate. The manifest was
+  // authored for a wide plate; on a portrait phone the paper is much narrower, so
+  // a long scale-2 label ('SALVAGE LEVY 10%') ran straight into its value. If the
+  // label + gap + value would overrun the row, both shrink to the largest scale
+  // that fits (floored so they stay bold and legible).
+  function drawDeathSummaryRow(label, valStr, hx, rightX, ly, sc, colL, colV) {
+    var need = stencilTextWidth(label, sc) + 12 + stencilTextWidth(valStr, sc);
+    var avail = rightX - hx;
+    if (need > avail && need > 0) sc = Math.max(0.7, sc * (avail / need));
+    drawStencilText(label, hx, ly, sc, colL);
+    drawStencilText(valStr, rightX - stencilTextWidth(valStr, sc), ly, sc, colV);
+  }
+
   function drawDeathScreen(dt) {
     if (!UI_NEW || !gameOver) return;
     // First frame of a new death: snapshot the incident before any
@@ -445,7 +459,11 @@
     if (tc > -0.1 && m) {
       var rowsAll = m.visLines.length;
       var fw = Math.min(400, Math.floor(pw * 0.46));
-      if (fw < 280) fw = Math.min(280, pw - 24);
+      // v25.63 — on a narrow portrait phone pw*0.46 is tiny, so the old
+      // min(280,...) fallback left a cramped paper the scale-2 summary rows
+      // overflowed. Give the receipt most of the available width so those rows
+      // fit at their authored size (the row helper still guards the rest).
+      if (fw < 320) fw = Math.min(340, pw - 24);
       var fh = Math.min(ph - 100, 272 + rowsAll * 22 + 24);
       var fx = Math.round((pw - fw) / 2);
       var fy = py + Math.floor((ph - fh) / 2) - 12;
@@ -494,9 +512,8 @@
       if (tc >= afterLines) {
         ctx.fillStyle = DEATH_INK_DIM;
         ctx.fillRect(hx, ly - 4, fw - 48, 1);
-        drawStencilText('CARGO FORFEIT', hx, ly + 4, 2, DEATH_RED_DARK);
         var tStr2 = '$' + deathOdo(tc, afterLines, 0.6, m.total).toLocaleString();
-        drawStencilText(tStr2, fx + fw - 20 - stencilTextWidth(tStr2, 2), ly + 4, 2, DEATH_RED_DARK);
+        drawDeathSummaryRow('CARGO FORFEIT', tStr2, hx, fx + fw - 20, ly + 4, 2, DEATH_RED_DARK, DEATH_RED_DARK);
       }
       ly += 30;
       // Balance on record
@@ -507,9 +524,8 @@
       // The levy counts DOWN in red
       var levyAt = afterLines + 1.15;
       if (tc >= levyAt) {
-        drawStencilText('SALVAGE LEVY 10%', hx, ly + 4, 2, DEATH_RED);
         var lvStr = '-$' + deathOdo(tc, levyAt, 0.8, m.fee).toLocaleString();
-        drawStencilText(lvStr, fx + fw - 20 - stencilTextWidth(lvStr, 2), ly + 4, 2, DEATH_RED);
+        drawDeathSummaryRow('SALVAGE LEVY 10%', lvStr, hx, fx + fw - 20, ly + 4, 2, DEATH_RED, DEATH_RED);
       }
       ly += 28;
       // Remittance
@@ -520,9 +536,8 @@
       if (tc >= remitAt) {
         ctx.fillStyle = DEATH_INK;
         ctx.fillRect(hx, ly - 4, fw - 48, 2);
-        drawStencilText('REMITTED', hx, ly + 6, 2, DEATH_INK);
         var rStr = '$' + m.remitted.toLocaleString();
-        drawStencilText(rStr, fx + fw - 20 - stencilTextWidth(rStr, 2), ly + 6, 2, DEATH_INK);
+        drawDeathSummaryRow('REMITTED', rStr, hx, fx + fw - 20, ly + 6, 2, DEATH_INK, DEATH_INK);
       }
       ly += 36;
       // SETTLED stamp in its own clear zone below the totals

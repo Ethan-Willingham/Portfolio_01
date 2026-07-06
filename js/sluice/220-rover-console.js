@@ -331,9 +331,18 @@
   }
 
   // Stenciled bay-edge label drawn into the top inset of the bay.
+  // v25.63 — fit the label to the bay width. In the stacked (portrait-phone)
+  // console the bays are far narrower than the ~92-110px the labels were authored
+  // for, so a value-bearing header ('CARGO  $45,347') centred at scale 1 spilled
+  // out both sides (into the gutter and the neighbouring bay). Shrink the stencil
+  // scale just enough to fit, floored so it stays legible; short labels ('FUEL',
+  // 'RESERVE') still fit at scale 1 and are untouched.
   function drawBayLabel(bx, by, bw, text) {
+    var avail = bw - 7;
     var w = stencilTextWidth(text, 1);
-    drawStencilText(text, bx + Math.floor((bw - w) / 2), by + 2, 1, '#d8d2c4');
+    var s = (w > avail && w > 0) ? Math.max(0.6, avail / w) : 1;
+    var wS = stencilTextWidth(text, s);
+    drawStencilText(text, bx + Math.floor((bw - wS) / 2), by + 2, s, '#d8d2c4');
   }
 
   // Four corner bolts inside a bay's inner rect.
@@ -1086,11 +1095,16 @@
     while (sDepth.length < 4) sDepth = '0' + sDepth;
 
     // Drum slot geometry
-    var scale = 2;
-    var digitW = 5 * scale;
-    var drumW = digitW + 4;
     var drumGap = 1;
     var nDigits = 4;
+    // v25.63 — fit the odometer to the brass face. On the narrow portrait-stacked
+    // bay the scale-2 four-drum cluster (65px + bezel) was wider than the face, so
+    // the last digit was crushed against the frame. Drop to scale 1 (45px) when
+    // the full cluster + its chrome bezel won't fit the available width `aw`.
+    var scale = 2;
+    if ((5 * scale + 4) * nDigits + drumGap * (nDigits - 1) + 6 > aw) scale = 1;
+    var digitW = 5 * scale;
+    var drumW = digitW + 4;
     var totalDrums = drumW * nDigits + drumGap * (nDigits - 1);
     // Suffix "M" is rendered at scale 1 below the drums, not inline,
     // so reserve no horizontal room for it here. This lets the drums
@@ -1338,6 +1352,11 @@
     // Largest stencil scale that fits the window; drops to 1 for long
     // numbers so the readout never clips.
     var scale = stencilTextWidth(cashStr, 2) <= winW - 8 ? 2 : 1;
+    // v25.63 — final guard: on a narrow portrait bay a 7-figure balance can still
+    // overflow at scale 1; shrink to a fractional scale that fits so it never clips.
+    if (stencilTextWidth(cashStr, scale) > winW - 6) {
+      scale = Math.max(0.6, (winW - 6) / stencilTextWidth(cashStr, 1));
+    }
     var tw = stencilTextWidth(cashStr, scale);
     var tx = winX + winW - 4 - tw;
     if (tx < winX + 3) tx = winX + 3;
