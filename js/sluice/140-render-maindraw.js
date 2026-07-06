@@ -635,10 +635,9 @@
           // ===== Layer tints / special tile decorations =====
           if (rowLayer) {
             if (rowLayer.name === 'permafrost' && (tile.type === 'dirt' || tile.type === 'stone')) {
-              // The frozen-ground treatment is baked into the terrain
-              // chunk (drawPermafrostFrost). The live pass only adds
-              // icicles hanging from a cave ceiling — a solid tile with
-              // open space directly below it.
+              // The frozen ground is the cold permafrost palette, baked into
+              // the terrain chunk. The live pass only adds icicles hanging
+              // from a cave ceiling (a solid tile with open space below it).
               if (isOpenCell(r + 1, c)) {
                 drawPermafrostIcicles(tx, ty, r, c);
               }

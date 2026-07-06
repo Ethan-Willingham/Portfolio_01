@@ -17,7 +17,12 @@
       bedrock:   { top: '#715a45', mid: '#4e3b2e', bot: '#2b211a', warm: '#96704e', cool: '#211915', grit: '#17110e' },
       fossil:    { top: '#775134', mid: '#553723', bot: '#2c1f17', warm: '#a06c3f', cool: '#24160f', grit: '#160d08', fossil: true },
       deepcrust: { top: '#5d4436', mid: '#3f2d25', bot: '#1f1713', warm: '#7c5740', cool: '#17110f', grit: '#120c0a' },
-      crystal:   { top: '#4d3b4f', mid: '#30263a', bot: '#171322', warm: '#6b5574', cool: '#120f1b', grit: '#100c16' }
+      crystal:   { top: '#4d3b4f', mid: '#30263a', bot: '#171322', warm: '#6b5574', cool: '#120f1b', grit: '#100c16' },
+      // Frozen tundra earth: a cold, neutral taupe with pale-rime highlights
+      // and a blue-black shadow, so it reads as frost-locked ground next to
+      // the ice stone. Rendered through the same seamless world-coord wash as
+      // topsoil (no per-tile overlay), so it tiles identically.
+      permafrost:{ top: '#8b968d', mid: '#5f6058', bot: '#2e2f2a', warm: '#cbe4ee', cool: '#20282a', grit: '#15191a' }
     },
     stone: {
       default:   { top: '#8b8b84', mid: '#646660', bot: '#363936', hi: '#c7c8bd', lo: '#202321', speck: '#d7d6c8' },
@@ -25,7 +30,12 @@
       bedrock:   { top: '#898982', mid: '#62645f', bot: '#343836', hi: '#c2c3bb', lo: '#1f2321', speck: '#d4d4c8' },
       fossil:    { top: '#796c5c', mid: '#584f45', bot: '#302a25', hi: '#b9aa92', lo: '#211b17', speck: '#c8b99f' },
       deepcrust: { top: '#66655f', mid: '#484a46', bot: '#252824', hi: '#a8a79a', lo: '#171a17', speck: '#b8b7aa' },
-      crystal:   { top: '#666579', mid: '#404258', bot: '#202134', hi: '#aeb1d0', lo: '#141522', speck: '#c7caff' }
+      crystal:   { top: '#666579', mid: '#404258', bot: '#202134', hi: '#aeb1d0', lo: '#141522', speck: '#c7caff' },
+      // Glacier ice: pale blue-white mass. The seamless stone renderer's
+      // faceted chips + unified rounded silhouette + edge bevel read as ice
+      // crystal facets and glacier edges, so the "locked in ice" look comes
+      // from the palette + existing machinery, not a per-tile ice block.
+      permafrost:{ top: '#c6deee', mid: '#a6c9de', bot: '#6f97b3', hi: '#e9f5fc', lo: '#5f89a7', speck: '#f2fbff' }
     },
     // Mineral palettes use the bible's 4-axis vocabulary
     // (base / highlight / shadow / accent), not dirt/stone's 6-stop tone ramp.
@@ -528,7 +538,7 @@
       var rowDepth = r - SKY_ROWS;
       var rowLayer = (rowDepth >= 0 && r < TOTAL_ROWS) ? getLayerForCam(rowDepth) : null;
       var layerName = rowLayer ? rowLayer.name : 'topsoil';
-      if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+      if (layerName === 'magma' || layerName === 'mantle') {
         layerName = 'bedrock';
       }
       var pal = materialPalette('stone', layerName);
@@ -790,8 +800,8 @@
     // the high-frequency pebble field that the player notices.
     var worldX = c * TILE;
     var worldY = r * TILE;
-    var lineTint = layerName === 'crystal' ? 'rgba(210,185,235,' : 'rgba(32,17,9,';
-    var hiTint = layerName === 'crystal' ? 'rgba(225,210,255,' : 'rgba(230,145,78,';
+    var lineTint = layerName === 'crystal' ? 'rgba(210,185,235,' : layerName === 'permafrost' ? 'rgba(30,40,46,' : 'rgba(32,17,9,';
+    var hiTint = layerName === 'crystal' ? 'rgba(225,210,255,' : layerName === 'permafrost' ? 'rgba(214,236,245,' : 'rgba(230,145,78,';
 
     var clod = 8;
     var minClodC = Math.floor((worldX - clod) / clod);
@@ -825,8 +835,8 @@
     // tiles meeting at that boundary.
     var worldX = c * TILE;
     var worldY = r * TILE;
-    var coolHi = layerName === 'crystal' ? 'rgba(195,205,255,' : 'rgba(245,245,225,';
-    var coolLo = layerName === 'crystal' ? 'rgba(16,18,36,' : 'rgba(7,9,8,';
+    var coolHi = layerName === 'crystal' ? 'rgba(195,205,255,' : layerName === 'permafrost' ? 'rgba(233,245,252,' : 'rgba(245,245,225,';
+    var coolLo = layerName === 'crystal' ? 'rgba(16,18,36,' : layerName === 'permafrost' ? 'rgba(64,96,124,' : 'rgba(7,9,8,';
 
     var chip = 15;
     var minChipC = Math.floor((worldX - chip) / chip);
@@ -1236,7 +1246,7 @@
 
   function drawVoidBackingMaterial(kind, tx, ty, r, c, rowLayer, clipPath) {
     var layerName = materialLayer(rowLayer);
-    if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+    if (layerName === 'magma' || layerName === 'mantle') {
       layerName = kind === 'stone' ? 'bedrock' : 'deepcrust';
     }
     var n = materialNeighbors(r, c, kind);
@@ -2121,7 +2131,7 @@
 
   function drawMaterialTile(kind, tx, ty, r, c, rowLayer) {
     var layerName = materialLayer(rowLayer);
-    if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+    if (layerName === 'magma' || layerName === 'mantle') {
       layerName = kind === 'stone' ? 'bedrock' : 'deepcrust';
     }
     var n = materialNeighbors(r, c, kind);

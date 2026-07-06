@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.70';
+  var GAME_VERSION = 'v25.71';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -16935,7 +16935,12 @@
       bedrock:   { top: '#715a45', mid: '#4e3b2e', bot: '#2b211a', warm: '#96704e', cool: '#211915', grit: '#17110e' },
       fossil:    { top: '#775134', mid: '#553723', bot: '#2c1f17', warm: '#a06c3f', cool: '#24160f', grit: '#160d08', fossil: true },
       deepcrust: { top: '#5d4436', mid: '#3f2d25', bot: '#1f1713', warm: '#7c5740', cool: '#17110f', grit: '#120c0a' },
-      crystal:   { top: '#4d3b4f', mid: '#30263a', bot: '#171322', warm: '#6b5574', cool: '#120f1b', grit: '#100c16' }
+      crystal:   { top: '#4d3b4f', mid: '#30263a', bot: '#171322', warm: '#6b5574', cool: '#120f1b', grit: '#100c16' },
+      // Frozen tundra earth: a cold, neutral taupe with pale-rime highlights
+      // and a blue-black shadow, so it reads as frost-locked ground next to
+      // the ice stone. Rendered through the same seamless world-coord wash as
+      // topsoil (no per-tile overlay), so it tiles identically.
+      permafrost:{ top: '#8b968d', mid: '#5f6058', bot: '#2e2f2a', warm: '#cbe4ee', cool: '#20282a', grit: '#15191a' }
     },
     stone: {
       default:   { top: '#8b8b84', mid: '#646660', bot: '#363936', hi: '#c7c8bd', lo: '#202321', speck: '#d7d6c8' },
@@ -16943,7 +16948,12 @@
       bedrock:   { top: '#898982', mid: '#62645f', bot: '#343836', hi: '#c2c3bb', lo: '#1f2321', speck: '#d4d4c8' },
       fossil:    { top: '#796c5c', mid: '#584f45', bot: '#302a25', hi: '#b9aa92', lo: '#211b17', speck: '#c8b99f' },
       deepcrust: { top: '#66655f', mid: '#484a46', bot: '#252824', hi: '#a8a79a', lo: '#171a17', speck: '#b8b7aa' },
-      crystal:   { top: '#666579', mid: '#404258', bot: '#202134', hi: '#aeb1d0', lo: '#141522', speck: '#c7caff' }
+      crystal:   { top: '#666579', mid: '#404258', bot: '#202134', hi: '#aeb1d0', lo: '#141522', speck: '#c7caff' },
+      // Glacier ice: pale blue-white mass. The seamless stone renderer's
+      // faceted chips + unified rounded silhouette + edge bevel read as ice
+      // crystal facets and glacier edges, so the "locked in ice" look comes
+      // from the palette + existing machinery, not a per-tile ice block.
+      permafrost:{ top: '#c6deee', mid: '#a6c9de', bot: '#6f97b3', hi: '#e9f5fc', lo: '#5f89a7', speck: '#f2fbff' }
     },
     // Mineral palettes use the bible's 4-axis vocabulary
     // (base / highlight / shadow / accent), not dirt/stone's 6-stop tone ramp.
@@ -17446,7 +17456,7 @@
       var rowDepth = r - SKY_ROWS;
       var rowLayer = (rowDepth >= 0 && r < TOTAL_ROWS) ? getLayerForCam(rowDepth) : null;
       var layerName = rowLayer ? rowLayer.name : 'topsoil';
-      if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+      if (layerName === 'magma' || layerName === 'mantle') {
         layerName = 'bedrock';
       }
       var pal = materialPalette('stone', layerName);
@@ -17708,8 +17718,8 @@
     // the high-frequency pebble field that the player notices.
     var worldX = c * TILE;
     var worldY = r * TILE;
-    var lineTint = layerName === 'crystal' ? 'rgba(210,185,235,' : 'rgba(32,17,9,';
-    var hiTint = layerName === 'crystal' ? 'rgba(225,210,255,' : 'rgba(230,145,78,';
+    var lineTint = layerName === 'crystal' ? 'rgba(210,185,235,' : layerName === 'permafrost' ? 'rgba(30,40,46,' : 'rgba(32,17,9,';
+    var hiTint = layerName === 'crystal' ? 'rgba(225,210,255,' : layerName === 'permafrost' ? 'rgba(214,236,245,' : 'rgba(230,145,78,';
 
     var clod = 8;
     var minClodC = Math.floor((worldX - clod) / clod);
@@ -17743,8 +17753,8 @@
     // tiles meeting at that boundary.
     var worldX = c * TILE;
     var worldY = r * TILE;
-    var coolHi = layerName === 'crystal' ? 'rgba(195,205,255,' : 'rgba(245,245,225,';
-    var coolLo = layerName === 'crystal' ? 'rgba(16,18,36,' : 'rgba(7,9,8,';
+    var coolHi = layerName === 'crystal' ? 'rgba(195,205,255,' : layerName === 'permafrost' ? 'rgba(233,245,252,' : 'rgba(245,245,225,';
+    var coolLo = layerName === 'crystal' ? 'rgba(16,18,36,' : layerName === 'permafrost' ? 'rgba(64,96,124,' : 'rgba(7,9,8,';
 
     var chip = 15;
     var minChipC = Math.floor((worldX - chip) / chip);
@@ -18154,7 +18164,7 @@
 
   function drawVoidBackingMaterial(kind, tx, ty, r, c, rowLayer, clipPath) {
     var layerName = materialLayer(rowLayer);
-    if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+    if (layerName === 'magma' || layerName === 'mantle') {
       layerName = kind === 'stone' ? 'bedrock' : 'deepcrust';
     }
     var n = materialNeighbors(r, c, kind);
@@ -19039,7 +19049,7 @@
 
   function drawMaterialTile(kind, tx, ty, r, c, rowLayer) {
     var layerName = materialLayer(rowLayer);
-    if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+    if (layerName === 'magma' || layerName === 'mantle') {
       layerName = kind === 'stone' ? 'bedrock' : 'deepcrust';
     }
     var n = materialNeighbors(r, c, kind);
@@ -23208,93 +23218,18 @@
 
   function cacheLayerName(rowLayer, kind) {
     var layerName = materialLayer(rowLayer);
-    if (layerName === 'magma' || layerName === 'mantle' || layerName === 'permafrost') {
+    if (layerName === 'magma' || layerName === 'mantle') {
       layerName = kind === 'stone' ? 'bedrock' : 'deepcrust';
     }
     return layerName;
   }
 
-  // ----- Permafrost layer treatment (v16.8) -----
-  // Permafrost reads as ground locked in ancient ice. Cached per-tile
-  // pass, fully static. Permafrost DIRT renders as frost-crusted brown
-  // frozen earth (the earth stays readable); permafrost STONE renders as
-  // a solid block of pale blue-white glacier ice — a strong material
-  // contrast. Geometry hashed on (r,c): no two tiles repeat.
-  function drawPermafrostFrost(tx, ty, r, c, kind) {
-    if (kind === 'stone') {
-      // Glacier ice — the stone block reads as solid pale ice.
-      var ig = ctx.createLinearGradient(0, ty, 0, ty + TILE);
-      ig.addColorStop(0, 'rgba(216,238,249,0.82)');
-      ig.addColorStop(1, 'rgba(150,190,222,0.74)');
-      ctx.fillStyle = ig;
-      ctx.fillRect(tx, ty, TILE, TILE);
-      // Internal ice cracks — clean pale/dark seams through the ice.
-      for (var k = 0; k < 3; k++) {
-        if (tileHash01(r, c, 0x1C70 + k) > 0.72) continue;
-        var kx = tx + 3 + ((tileHash01(r, c, 0x1C78 + k) * 24) | 0);
-        var ky = ty + 3 + ((tileHash01(r, c, 0x1C80 + k) * 10) | 0);
-        var ka = tileHash01(r, c, 0x1C88 + k) * 6.283;
-        var kl = 9 + ((tileHash01(r, c, 0x1C90 + k) * 12) | 0);
-        ctx.fillStyle = (k % 2) ? 'rgba(96,140,170,0.55)' : 'rgba(246,253,255,0.62)';
-        for (var s = 0; s < kl; s++) {
-          ctx.fillRect(kx | 0, ky | 0, 1, 1);
-          kx += Math.cos(ka); ky += Math.sin(ka);
-          ka += (tileHash01(r, c, 0x1CA0 + s) - 0.5) * 0.42;
-        }
-      }
-      // Trapped air bubbles.
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      for (var b = 0; b < 4; b++) {
-        ctx.fillRect(tx + 4 + ((tileHash01(r, c, 0x1CC0 + b) * 24) | 0),
-                     ty + 5 + ((tileHash01(r, c, 0x1CC8 + b) * 22) | 0), 1, 1);
-      }
-      // Bright sheen along the top edge.
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.fillRect(tx, ty, TILE, 2);
-      return;
-    }
-    // Frozen earth (dirt) — the brown earth stays readable under a frost
-    // crust: a light cold gradient, rime specks, a buried ice lens, a
-    // hairline crack, and a frosted upper crust.
-    var g = ctx.createLinearGradient(0, ty, 0, ty + TILE);
-    g.addColorStop(0, 'rgba(200,224,240,0.42)');
-    g.addColorStop(1, 'rgba(120,150,180,0.20)');
-    ctx.fillStyle = g;
-    ctx.fillRect(tx, ty, TILE, TILE);
-    var rime = 3 + ((tileHash01(r, c, 0x1C01) * 4) | 0);
-    for (var i = 0; i < rime; i++) {
-      var fs = tileHash01(r, c, 0x1C30 + i) < 0.35 ? 2 : 1;
-      ctx.fillStyle = (i % 2) ? 'rgba(255,255,255,0.72)' : 'rgba(210,234,250,0.60)';
-      ctx.fillRect(tx + 2 + ((tileHash01(r, c, 0x1C10 + i) * (TILE - 5)) | 0),
-                   ty + 2 + ((tileHash01(r, c, 0x1C20 + i) * (TILE - 5)) | 0), fs, fs);
-    }
-    if (tileHash01(r, c, 0x1C40) < 0.32) {
-      var lx = tx + 8 + ((tileHash01(r, c, 0x1C41) * 14) | 0);
-      var ly = ty + 8 + ((tileHash01(r, c, 0x1C42) * 14) | 0);
-      var lr = 3 + ((tileHash01(r, c, 0x1C43) * 3) | 0);
-      ctx.fillStyle = 'rgba(150,206,235,0.34)';
-      ctx.beginPath(); ctx.arc(lx, ly, lr, 0, 6.283); ctx.fill();
-      ctx.fillStyle = 'rgba(234,247,255,0.6)';
-      ctx.fillRect(lx - ((lr * 0.4) | 0), ly - ((lr * 0.4) | 0), 1, 1);
-    }
-    if (tileHash01(r, c, 0x1C50) < 0.42) {
-      var ccx = tx + 4 + ((tileHash01(r, c, 0x1C51) * 12) | 0);
-      var ccy = ty + 5 + ((tileHash01(r, c, 0x1C52) * 16) | 0);
-      var ca = tileHash01(r, c, 0x1C53) * 6.283;
-      var clen = 5 + ((tileHash01(r, c, 0x1C54) * 6) | 0);
-      ctx.fillStyle = 'rgba(216,239,252,0.5)';
-      for (var s2 = 0; s2 < clen; s2++) {
-        ctx.fillRect(ccx | 0, ccy | 0, 1, 1);
-        ccx += Math.cos(ca); ccy += Math.sin(ca);
-        ca += (tileHash01(r, c, 0x1C60 + s2) - 0.5) * 0.5;
-      }
-    }
-    // Frosted upper crust.
-    ctx.fillStyle = 'rgba(228,242,252,0.5)';
-    ctx.fillRect(tx, ty, TILE, 3);
-    ctx.fillStyle = 'rgba(228,242,252,0.22)';
-    ctx.fillRect(tx, ty + 3, TILE, 2);
-  }
+  // v25.63 — Permafrost no longer gets a per-tile ice overlay. It renders as
+  // a cold palette (see TILE_MATERIALS.dirt/stone.permafrost) straight through
+  // the same seamless world-coord wash + chunk detail field that topsoil uses,
+  // so permafrost dirt and stone tile perfectly (the old drawPermafrostFrost
+  // painted tile-local gradients + a bright top edge, which read as a grid).
+  // Cave-ceiling icicles below are still drawn live.
 
   // Ice icicles hanging from a permafrost cave ceiling — a solid tile
   // with open space below. Drawn LIVE (after the terrain composite) so
@@ -23433,9 +23368,7 @@
 
   function drawCachedLayerDecoration(tile, tx, ty, r, c, rowLayer) {
     if (!rowLayer || (tile.type !== 'dirt' && tile.type !== 'stone')) return;
-    if (rowLayer.name === 'permafrost') {
-      drawPermafrostFrost(tx, ty, r, c, tile.type);
-    } else if (rowLayer.name === 'magma' || rowLayer.name === 'mantle') {
+    if (rowLayer.name === 'magma' || rowLayer.name === 'mantle') {
       drawMagmaCrust(tx, ty, r, c, rowLayer.name === 'mantle');
     } else if (rowLayer.name === 'crystal') {
       ctx.fillStyle = 'rgba(160,180,255,0.18)';
@@ -23558,7 +23491,7 @@
   // (matches the existing per-tile coercion in drawMaterialTile).
   function stoneLayerNameAtWorldY(wy) {
     var ln = layerNameAtWorldY(wy);
-    if (ln === 'magma' || ln === 'mantle' || ln === 'permafrost') return 'bedrock';
+    if (ln === 'magma' || ln === 'mantle') return 'bedrock';
     return ln;
   }
 
@@ -23599,7 +23532,16 @@
         var ry = (kind === 'dirt' ? 18 : 30) + tileHash01(gr, gc, 0xA11D1) * (kind === 'dirt' ? 26 : 46);
         var hot = h > 0.64;
         var rot = tileHash01(gr, gc, 0xA11D2) * Math.PI;
-        if (hot) {
+        if (layerNameAtWorldY(cy) === 'permafrost') {
+          // Frozen band: swap the warm/earthy stains for pale rime + blue shadow.
+          if (hot) {
+            if (kind === 'dirt') drawSoftEllipseBlob(cx, cy, rx, ry, rot, 200, 224, 236, 0.075, gr, gc, 0xC10D);
+            else drawSoftEllipseBlob(cx, cy, rx, ry, rot, 226, 240, 250, 0.050, gr, gc, 0xC10D);
+          } else {
+            if (kind === 'dirt') drawSoftEllipseBlob(cx, cy, rx, ry, rot, 26, 34, 40, 0.100, gr, gc, 0xC10D);
+            else drawSoftEllipseBlob(cx, cy, rx, ry, rot, 46, 72, 98, 0.070, gr, gc, 0xC10D);
+          }
+        } else if (hot) {
           if (kind === 'dirt') drawSoftEllipseBlob(cx, cy, rx, ry, rot, 196, 118, 62, 0.105, gr, gc, 0xC10D);
           else drawSoftEllipseBlob(cx, cy, rx, ry, rot, 235, 232, 210, 0.060, gr, gc, 0xC10D);
         } else {
@@ -23662,8 +23604,8 @@
         var rx = 2.0 + tileHash01(cr, cc, 0xD1AA) * 3.6;
         var ry = 1.45 + tileHash01(cr, cc, 0xD1AB) * 2.8;
         var layerName = layerNameAtWorldY(cy);
-        var lineTint = layerName === 'crystal' ? 'rgba(210,185,235,' : 'rgba(32,17,9,';
-        var hiTint = layerName === 'crystal' ? 'rgba(225,210,255,' : 'rgba(230,145,78,';
+        var lineTint = layerName === 'crystal' ? 'rgba(210,185,235,' : layerName === 'permafrost' ? 'rgba(30,40,46,' : 'rgba(32,17,9,';
+        var hiTint = layerName === 'crystal' ? 'rgba(225,210,255,' : layerName === 'permafrost' ? 'rgba(214,236,245,' : 'rgba(230,145,78,';
         ctx.fillStyle = h > 0.72
           ? hiTint + (0.08 + tileHash01(cr, cc, 0xD1AC) * 0.045).toFixed(3) + ')'
           : lineTint + (0.115 + tileHash01(cr, cc, 0xD1AD) * 0.070).toFixed(3) + ')';
@@ -23703,8 +23645,8 @@
         var sides = 5 + Math.floor(tileHash01(pr, pc, 0x51AF) * 3);
         var rot = tileHash01(pr, pc, 0x51B0) * Math.PI * 2;
         var layerName = stoneLayerNameAtWorldY(cy);
-        var coolHi = layerName === 'crystal' ? 'rgba(195,205,255,' : 'rgba(245,245,225,';
-        var coolLo = layerName === 'crystal' ? 'rgba(16,18,36,' : 'rgba(7,9,8,';
+        var coolHi = layerName === 'crystal' ? 'rgba(195,205,255,' : layerName === 'permafrost' ? 'rgba(233,245,252,' : 'rgba(245,245,225,';
+        var coolLo = layerName === 'crystal' ? 'rgba(16,18,36,' : layerName === 'permafrost' ? 'rgba(64,96,124,' : 'rgba(7,9,8,';
         ctx.fillStyle = ph > 0.58
           ? coolHi + (0.045 + tileHash01(pr, pc, 0x51B1) * 0.030).toFixed(3) + ')'
           : coolLo + (0.055 + tileHash01(pr, pc, 0x51B2) * 0.045).toFixed(3) + ')';
@@ -23788,7 +23730,7 @@
           var srowDepth = sr - SKY_ROWS;
           var srowLayer = (srowDepth >= 0 && sr < TOTAL_ROWS) ? getLayerForCam(srowDepth) : null;
           var slayerName = srowLayer ? srowLayer.name : 'topsoil';
-          if (slayerName === 'magma' || slayerName === 'mantle' || slayerName === 'permafrost') {
+          if (slayerName === 'magma' || slayerName === 'mantle') {
             slayerName = 'bedrock';
           }
           for (var sc = colStart - 1; sc <= colEnd + 1; sc++) {
@@ -24565,10 +24507,9 @@
           // ===== Layer tints / special tile decorations =====
           if (rowLayer) {
             if (rowLayer.name === 'permafrost' && (tile.type === 'dirt' || tile.type === 'stone')) {
-              // The frozen-ground treatment is baked into the terrain
-              // chunk (drawPermafrostFrost). The live pass only adds
-              // icicles hanging from a cave ceiling — a solid tile with
-              // open space directly below it.
+              // The frozen ground is the cold permafrost palette, baked into
+              // the terrain chunk. The live pass only adds icicles hanging
+              // from a cave ceiling (a solid tile with open space below it).
               if (isOpenCell(r + 1, c)) {
                 drawPermafrostIcicles(tx, ty, r, c);
               }
