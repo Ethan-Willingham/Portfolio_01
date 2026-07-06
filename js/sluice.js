@@ -3668,19 +3668,20 @@
   }
 
   // ----- Jello patches -----
-  // Scatter small clusters of squishy 'jello' tiles through two depth bands:
-  // a reachable one in the bedrock layer and a deeper field in the deepcrust.
-  // Each cluster is grown by a short random walk so shapes stay compact (a
-  // 4-connected polyomino — important: the activation boundary tracer relies
-  // on clusters being 4-connected so no degree-4 pinch vertices ever form).
-  // Clusters overwrite whatever the ore deposit placed (jello is rare, small).
+  // Scatter single 'jello' tiles (squishy slimes) through the diggable rock.
+  // v25.64 (owner): every buried slime is EXACTLY ONE tile. No more grown
+  // clusters (they read as random 2..15-tile globs of different sizes); each
+  // seed places one isolated tile, and a seed touching existing jello is
+  // rejected so two slimes never share an edge (an edge touch would flood-fill
+  // into one 2-tile body on activation, breaking the one-tile rule).
   // v25.59 — density of the scattered buried slimes, as a chance per diggable
   // tile. Tuned so a straight-down 1-tile shaft meets about ONE slime per 150 m
-  // of descent (owner's target): each seed grows a small 2..6-cell cluster (one
-  // creature) that spans ~1.6 columns, so encounters/150 m ≈ chance*150*1.6.
+  // of descent (owner's target). Each slime now spans exactly one column, so
+  // encounters/150 m ≈ chance*150 (was chance*150*1.6 when clusters spanned
+  // ~1.6 columns, hence the ~1.6x bump from 0.0042 to keep the same feel).
   // Rare enough to read as "here and there", common enough to cushion a deep
   // fall. ?jello=0 removes them entirely; scale this to make them rarer/denser.
-  var JELLO_PATCH_CHANCE = 0.0042;
+  var JELLO_PATCH_CHANCE = 0.0068;
   function generateJelloPatches() {
     resetJello();
     if (!ENABLE_JELLO) return;   // jello disabled: reset but place no patches
@@ -3695,8 +3696,8 @@
           t.type === 'bedrock' || t.type === 'jello') return false;
       return true;
     }
-    // Scatter single-slime clusters through every town, at JELLO_PATCH_CHANCE
-    // per diggable tile. Region-aware (works for the single town and the wide
+    // Scatter single-tile slimes through every town, at JELLO_PATCH_CHANCE per
+    // diggable tile. Region-aware (works for the single town and the wide
     // multitown world alike): each town gets its own floor + column span, and
     // slimes start a couple of metres under the surface so the station apron
     // never sits on gel. jelloCellOk rejects air / bedrock / foundation, so a
@@ -3714,38 +3715,24 @@
         var sr = SKY_ROWS + 3 + Math.floor(Math.random() * (floor - 3));
         var sc = reg.c0 + Math.floor(Math.random() * width);
         if (!jelloCellOk(sr, sc)) continue;
-        // Grow a compact cluster by random walk — 2..6 cells, weighted small.
-        var target = 2 + Math.floor(Math.random() * Math.random() * 5);
-        var cells = [{ r: sr, c: sc }];
-        var frontier = [{ r: sr, c: sc }];
-        var seen = {};
-        seen[sr * 1000 + sc] = true;
-        var guard = 0;
-        while (cells.length < target && frontier.length && guard < 48) {
-          guard++;
-          var from = frontier[Math.floor(Math.random() * frontier.length)];
-          var dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-          var d = dirs[Math.floor(Math.random() * 4)];
-          var nr = from.r + d[0], nc = from.c + d[1];
-          var key = nr * 1000 + nc;
-          if (seen[key]) continue;
-          if (!jelloCellOk(nr, nc)) continue;
-          seen[key] = true;
-          cells.push({ r: nr, c: nc });
-          frontier.push({ r: nr, c: nc });
-        }
-        // One jelly TYPE per patch (v24.154, owner: vary the underground ones in
-        // colours like the test-pen set) — the whole cluster is one creature.
-        // JELLO_TYPES lives in 340 (hoisted var, assigned before init() runs);
-        // the type rides on every tile (render hue + activation), and the save
-        // palette carries it as 'jello#<type>' (047).
+        // Every slime is EXACTLY ONE tile, no cluster growth. Reject a spot that
+        // shares an edge with existing jello: an edge touch flood-fills into one
+        // 2-tile body on activation, which is the "different sizes" the owner
+        // called out. (4-neighbours only, a diagonal jello tile activates as its
+        // own separate body, so a corner touch is fine.)
+        if ((world[sr - 1] && world[sr - 1][sc] && world[sr - 1][sc].type === 'jello') ||
+            (world[sr + 1] && world[sr + 1][sc] && world[sr + 1][sc].type === 'jello') ||
+            (world[sr][sc - 1] && world[sr][sc - 1].type === 'jello') ||
+            (world[sr][sc + 1] && world[sr][sc + 1].type === 'jello')) continue;
+        // One jelly TYPE per slime (v24.154, owner: vary the underground ones in
+        // colours like the test-pen set). JELLO_TYPES lives in 340 (hoisted var,
+        // assigned before init() runs); the type rides on the tile (render hue +
+        // activation), and the save palette carries it as 'jello#<type>' (047).
         var jType = (typeof JELLO_TYPE_KEYS !== 'undefined' && JELLO_TYPE_KEYS.length)
                     ? JELLO_TYPE_KEYS[Math.floor(Math.random() * JELLO_TYPE_KEYS.length)] : null;
-        for (var ci = 0; ci < cells.length; ci++) {
-          var jTile = { type: 'jello', hp: 999999 };
-          if (jType) jTile.jellyType = jType;
-          world[cells[ci].r][cells[ci].c] = jTile;
-        }
+        var jTile = { type: 'jello', hp: 999999 };
+        if (jType) jTile.jellyType = jType;
+        world[sr][sc] = jTile;
         placed++;
       }
     }
