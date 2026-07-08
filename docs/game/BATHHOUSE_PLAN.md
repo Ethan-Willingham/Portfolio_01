@@ -256,7 +256,58 @@ gated).
   temperature (B1), salt (B3 tint/props), hose-scrub, squeegee-to-drain, pull the
   plug -> sump -> grate payout.
 
-## 8. Deviation log (append-only)
+## 8. The shift, concretely (owner session 2026-07-05; the moment-to-moment)
+
+The vision, physics, geometry, and stage board were pinned before this; the actual
+interaction was still scattered across the Q&A. This section is the consolidated
+answer to "what do you DO in there." Numbers here are v0 proposals to react to, not
+locked. See also the tile geometry in section 6-adjacent notes (18-wide module,
+16 interior, 4-tile clear, rig < 1 tile).
+
+1. **No cursor, one verb.** The rig is a physical vehicle; "interacting" is always
+   fly-to-a-fixture + press the action button (the drill/interact button). Fixtures:
+   a **valve per tub** (bonk = run hot/cold into it), the **boiler pressure lever**
+   (supply temperature + steam output), a **salt hopper** (drop a salt block from
+   cargo into a tub), a **scrub hose** (dock, aim the nozzle at a grimy guest or
+   dirty tub), **windows/flues** (open to vent steam / thin the room), a **drain
+   plug per tub** (pull = dump that tub to the sump), and the **dusk bell** at the
+   door (bonk to start the shift). No menus, no pointer.
+2. **Slimes move by hop-impulse** (already in the Q&A): soft body + tiny brain that
+   fires one compress-and-hop toward its next waypoint. No pathfinding; flat floors,
+   so waypoints are door -> queue spot -> assigned tub rim -> (soak) -> door.
+3. **Headcount: cap ~5 guests inside at once** on desktop, ~2-3 on mobile (same
+   budgeting as the water-particle cap; each guest is a soft body). Waves of 1-2;
+   ~10-14 total across a night. Deliberately few so each is tendable.
+4. **In/out: they WALK, one ground door.** At dusk a queue forms on the town road
+   outside the main-hall door. A guest enters when a tub frees, hops to it, soaks a
+   timed stretch, walks back out the same door. Miners use it too. Guests never fly,
+   never go underground.
+5. **Where the rig can drive:** the building is a **cutaway (open front)**, so the
+   rig flies in from the front and moves freely through each room's open airspace,
+   and between floors via ONE open shaft column (left side). Solid = outer walls,
+   floor slabs (no dropping through a floor), tub bodies, the boiler drum. Outside
+   is the normal town.
+6. **Underground link = PIPE, not a tunnel.** You do NOT drive from the mine up into
+   the bathhouse; it is a surface building. The connection is a water pipe down to a
+   hot aquifer found while digging (this is "the mine supplies the bathhouse," made
+   physical). A drivable well is a possible later option; v1 stays surface-only.
+7. **Water: haul early, piped later.** Act 1 = manual: rig water tank (reuse the
+   disabled ENABLE_OIL pump intake), park in a pond, pump in, dump in a tub (chore
+   by design). Act 2 = a built pipe from aquifer/pond feeds the boiler automatically;
+   you just work valves. Haul -> pipe IS the act-1-to-2 beat.
+8. **Payment: yes, slimes pay, three physical ways, all to the sump.** (a) a
+   satisfied guest drops **coins** into its tub on leaving (satisfaction read from
+   the sim: temp/level/cleanliness at its body); (b) a slime soaking in mineral-
+   salted water condenses a **pearl / bit of ore** by end of soak (the slime is a
+   tiny refinery); (c) the grimy-spirit set piece **sheds ore chunks** as cleaned.
+   All sink through the tub drains to the **sump grate**; open it at closing = the
+   night's take pours out at once. **Reputation (stars) is separate from cash** and
+   is what gates the upper floors and fancier guest tiers.
+
+This maps onto the stage board: fixtures + sump + pipes are B6; the queue, guest
+brains, sim-read satisfaction, tips, and reputation are B7.
+
+## 9. Deviation log (append-only)
 
 - 2026-07-05 (B1, deviates from B-D7/B-D9 as written): temperature does NOT get a
   `buf.temp`; it rides **flag bits 24:31** (raw 0..255 = T 0..2, floor-encoded so
