@@ -332,7 +332,30 @@
   .ma-spark rect { fill: currentColor; }
   .ma-spark-lbl { display: block; margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; letter-spacing: 0.02em; }
   .ma-extra-note { margin: 0.85rem 0 0; font-family: var(--font-mono); font-size: 0.66rem; color: #8d9387; line-height: 1.4; }
-  @media (max-width: 560px) { .ma-donut { width: 58px; height: 58px; } }
+  /* the per-post prompt archive: the human prompts that built this post, copyable + scrollable */
+  .ma-prompts { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--ma-hair); }
+  .ma-prompts-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 0.85rem; }
+  .ma-prompts-kicker { display: block; font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8d9387; }
+  .ma-prompts-sub { display: block; margin-top: 0.16rem; font-family: var(--font-heading); font-size: 1.02rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.01em; }
+  .ma-copybtn { flex: none; font-family: var(--font-body); font-size: 0.76rem; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.05); border: 1px solid var(--ma-hair-2); border-radius: 999px; padding: 0.34rem 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.34rem; white-space: nowrap; transition: color 0.2s, background 0.2s, border-color 0.2s; }
+  .ma-copybtn:hover { color: var(--text-bright); background: rgba(255,255,255,0.09); border-color: var(--accent); }
+  .ma-copybtn.is-copied { color: #1a1f1a; background: linear-gradient(180deg, #F4B36B, #E8954E); border-color: transparent; }
+  .ma-copybtn svg { flex: none; }
+  .ma-prompts-scroll { display: flex; flex-direction: column; gap: 0.55rem; max-height: 42vh; overflow-y: auto; padding-right: 0.4rem; margin-right: -0.4rem; scrollbar-width: thin; scrollbar-color: rgba(245,241,234,0.2) transparent; overscroll-behavior: contain; }
+  .ma-prompts-scroll::-webkit-scrollbar { width: 8px; }
+  .ma-prompts-scroll::-webkit-scrollbar-thumb { background: rgba(245,241,234,0.16); border-radius: 999px; }
+  .ma-prompt { background: #2b322c; border: 1px solid var(--ma-hair); border-radius: 12px; padding: 0.6rem 0.75rem 0.72rem; }
+  .ma-prompt-top { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.42rem; }
+  .ma-prompt-n { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; }
+  .ma-prompt-when { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; }
+  .ma-prompt-copy { margin-left: auto; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); background: none; border: 0; padding: 0.1rem 0.2rem; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.18s; }
+  .ma-prompt-copy:hover, .ma-prompt-copy.is-copied { color: var(--accent); }
+  .ma-prompt-text { font-family: var(--font-body); font-size: 0.86rem; line-height: 1.5; color: var(--text); white-space: pre-wrap; overflow-wrap: break-word; }
+  .ma-prompt-text.is-clamped { max-height: 7.4em; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 66%, transparent); mask-image: linear-gradient(180deg, #000 66%, transparent); }
+  .ma-prompt-more { margin-top: 0.32rem; font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0.1rem 0; cursor: pointer; }
+  .ma-prompt-more:hover { color: var(--accent-hover); text-decoration: underline; }
+  .ma-prompts-note { margin: 0.75rem 0 0; font-family: var(--font-mono); font-size: 0.64rem; color: #8d9387; line-height: 1.45; }
+  @media (max-width: 560px) { .ma-donut { width: 58px; height: 58px; } .ma-prompts-scroll { max-height: 50vh; } }
 
   @media print { .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; } }
   </style>
@@ -474,6 +497,7 @@
   <script src="js/site-size-data.js"></script>
   <script src="js/site-size.js"></script>
   <script src="js/git-attribution-data.js"></script>
+  <script src="js/post-prompts-data.js"></script>
   <script src="js/git-attribution.js"></script>
   <script src="js/backtotop.js"></script>
   <script>

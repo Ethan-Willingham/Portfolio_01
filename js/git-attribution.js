@@ -345,6 +345,7 @@
     '<div class="ma-tray-bar" aria-hidden="true"></div>' +
     '<div class="ma-tray-rows"></div>' +
     '<div class="ma-extra"></div>' +
+    '<div class="ma-prompts"></div>' +
     '<a class="ma-tray-link" target="_self">Open the post<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3h8v8M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
 
   var openPost = null;
@@ -375,6 +376,87 @@
     document.body.classList.add('ma-locked');
   }
   function unlockScroll() { document.body.style.paddingRight = ''; document.body.classList.remove('ma-locked'); }
+
+  // ---------- the per-post prompt archive ----------
+  var PROMPTS = window.POST_PROMPTS || {};
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function fmtWhen(s) { // "2026-07-02T00:07" -> "Jul 2, 12:07 AM"
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || ''); if (!m) return '';
+    var h = +m[4], ap = h < 12 ? 'AM' : 'PM', h12 = h % 12 || 12;
+    return MON[+m[2] - 1] + ' ' + (+m[3]) + ', ' + h12 + ':' + m[5] + ' ' + ap;
+  }
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta);
+  }
+  function flashCopy(btn, label) {
+    if (btn._orig == null) btn._orig = btn.innerHTML;
+    clearTimeout(btn._t); btn.classList.add('is-copied'); btn.textContent = label || 'Copied';
+    btn._t = setTimeout(function () { btn.classList.remove('is-copied'); btn.innerHTML = btn._orig; btn._orig = null; }, 1500);
+  }
+  function copyText(text, btn, label) {
+    var ok = function () { flashCopy(btn, label); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, function () { legacyCopy(text); ok(); }); return;
+      }
+    } catch (e) {}
+    legacyCopy(text); ok();
+  }
+  var COPY_ICON = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">' +
+    '<path d="M5.5 4.6h5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+    '<path d="M7 4.6V3.7a1 1 0 0 1 1-1h2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  function renderPrompts(post) {
+    var host = tray.querySelector('.ma-prompts'); if (!host) return;
+    var data = PROMPTS[post.key];
+    host.innerHTML = '';
+    if (!data || !data.prompts || !data.prompts.length) { host.style.display = 'none'; return; }
+    host.style.display = '';
+    var items = data.prompts;
+
+    var head = document.createElement('div'); head.className = 'ma-prompts-head';
+    head.innerHTML = '<div><span class="ma-prompts-kicker">Prompts to Claude</span>' +
+      '<span class="ma-prompts-sub">' + items.length + ' ' + (items.length === 1 ? 'message' : 'messages') + ' that built it</span></div>';
+    var copyAll = document.createElement('button'); copyAll.type = 'button'; copyAll.className = 'ma-copybtn';
+    copyAll.innerHTML = COPY_ICON + 'Copy all';
+    copyAll.addEventListener('click', function () {
+      copyText(items.map(function (p) { return p.text; }).join('\n\n'), copyAll, 'Copied all');
+    });
+    head.appendChild(copyAll); host.appendChild(head);
+
+    var scroll = document.createElement('div'); scroll.className = 'ma-prompts-scroll';
+    items.forEach(function (p, i) {
+      var card = document.createElement('div'); card.className = 'ma-prompt';
+      var top = document.createElement('div'); top.className = 'ma-prompt-top';
+      top.innerHTML = '<span class="ma-prompt-n">' + ('0' + (i + 1)).slice(-2) + '</span>' +
+        '<span class="ma-prompt-when">' + fmtWhen(p.when) + '</span>';
+      var pc = document.createElement('button'); pc.type = 'button'; pc.className = 'ma-prompt-copy';
+      pc.textContent = 'copy'; pc.setAttribute('aria-label', 'Copy this prompt');
+      pc.addEventListener('click', function () { copyText(p.text, pc, 'copied'); });
+      top.appendChild(pc); card.appendChild(top);
+
+      var txt = document.createElement('div'); txt.className = 'ma-prompt-text'; txt.textContent = p.text;
+      var long = p.text.length > 240; if (long) txt.classList.add('is-clamped');
+      card.appendChild(txt);
+      if (long) {
+        var more = document.createElement('button'); more.type = 'button'; more.className = 'ma-prompt-more';
+        more.textContent = 'Show full prompt';
+        more.addEventListener('click', function () {
+          var clamped = txt.classList.toggle('is-clamped');
+          more.textContent = clamped ? 'Show full prompt' : 'Show less';
+        });
+        card.appendChild(more);
+      }
+      scroll.appendChild(card);
+    });
+    host.appendChild(scroll);
+
+    var note = document.createElement('p'); note.className = 'ma-prompts-note';
+    note.textContent = 'The actual messages I typed to Claude to build this post, in order. Lightly cleaned for typos and readability, otherwise verbatim.';
+    host.appendChild(note);
+  }
+
   function paintTray(post, parts, animDonut) {
     parts = parts || split(post);
     drawDonut(tray.querySelector('.ma-donut-lg'), parts, !!animDonut, 0);
@@ -422,6 +504,7 @@
         sparkHTML(eff.spark, lead) +
         '<p class="ma-extra-note">+' + eff.add.toLocaleString('en-US') + ' / -' + eff.del.toLocaleString('en-US') + ' lines, biggest single change +' + eff.biggest.toLocaleString('en-US') + '</p>';
     } else if (ex) { ex.innerHTML = ''; }
+    renderPrompts(post);
   }
   function closeTray() {
     openPost = null;
