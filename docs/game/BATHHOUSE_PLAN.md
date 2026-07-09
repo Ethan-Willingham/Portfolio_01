@@ -47,6 +47,36 @@ default 0.55 is deliberately strong so it is unmissable, dial down or 0 to taste
 
 ---
 
+## 0. THE PIVOT (2026-07-09, owner + Fable; supersedes parts of sections 1, 7, 8)
+
+The owner rejected the cutaway-in-the-world interior. The bathhouse is now TWO
+halves:
+
+- **Exterior**: a tall, beautiful pixel-art bathhouse standing in the town beside
+  the other buildings (BUILDING_STYLE.md language + lanterns; windows light up
+  floor by floor as reputation grows). Approach the door at dusk to enter.
+- **Interior**: its OWN SCENE. Entering swaps to a fixed-camera, one-screen,
+  lantern-lit bath hall; the world half is paused and unrendered. **The rig does
+  NOT come inside.** All interior interaction is direct pointer: tap/hold/drag on
+  mobile, click/hold/drag on PC. Pacing is Dave the Diver's sushi bar: requests
+  arrive and you keep up.
+
+**Architecture (new locked decision B-D11): the "separate scene" is presentation,
+not a second coordinate system.** The interior room is BUILT in a reserved off-map
+pocket of the existing world grid; entering = camera teleport + render/update mode
+swap (world skipped, room drawn). Because the room IS world space, all three sims
+(water, smoke/steam, jello guests) run inside it with zero sim changes, and with
+the world paused the ENTIRE physics budget belongs to the room. Everything shipped
+for B1 (temperature, tint, cooling) is load-bearing in the new design; nothing
+built so far is wasted.
+
+What this supersedes: vision bullets "tower in the world, not a scene" and "you
+never leave the rig" (rewritten below), the Q&A "Building/interior" cutaway answer,
+and section 8's fly-and-bonk fixture list (section 8 is rewritten as the pointer
+service loop). The D-table physics decisions stand unchanged.
+
+---
+
 ## 1. Vision (locked with the owner)
 
 - **Structure, not skin.** Spirited Away's shape (tower of baths, boiler below,
@@ -57,12 +87,14 @@ default 0.55 is deliberately strong so it is unmissable, dial down or 0 to taste
   minutes. Guests queue; tubs are real water; needs are read from the sim. End of
   shift, pull the sump grate and the night's coins, pearls, and sloughed ore pour
   out as one physical payout.
-- **The tower is in the world, not a scene.** A cutaway building at the edge of
-  town: boiler room dug in below grade, bath hall at street level, sauna and VIP
-  floors stacked above. Because the interior is world grid, the water sim, smoke
-  sim (steam), and slimes work inside it with zero new sim plumbing.
-- **You never leave the rig.** The bathhouse is rig-scale. Valves are bonked, the
-  scrub is a hose attachment, salts pour from a hopper. One control scheme.
+- **A landmark outside, a scene inside** (REWRITTEN by the 2026-07-09 pivot,
+  section 0). The tall bathhouse stands in the town as pixel-art architecture; its
+  interior is a fixed-camera one-screen scene entered through the door at dusk.
+  Technically the room lives in an off-map pocket of the world grid (B-D11), so
+  the sims still work inside it with zero new sim plumbing.
+- **Inside, your hands are the pointer** (REWRITTEN by the pivot). The rig stays
+  parked outside. Interior verbs are tap/click, press-and-hold, and drag: the same
+  gestures on mobile and desktop. No menus; every control is a physical fixture.
 - **Physics IS the score.** A guest's satisfaction samples actual water temperature
   at their body, actual submersion, actual murk/salt content, actual steam density.
   No faked meters anywhere. This is the game's identity claim; protect it.
@@ -84,6 +116,7 @@ default 0.55 is deliberately strong so it is unmissable, dial down or 0 to taste
 | B-D8 | Heat sources are a **small uniform list of world-space rects** (max 8: firebox, vents, aquifer taps), applied in p2gNormalize after mass-normalize: cells inside a rect lerp `cellHeat` toward the rect's strength. Game uploads the list per frame (dev scene registers one under a surface pond). | Avoids touching terrain encoding or the ops replay; sources are few and rectangular. |
 | B-D9 | New per-particle buffer `buf.temp` (n x f32). All four `aux` lanes are taken (x density, y aeration, zw pre-step pos). Spawns default 0; the ops-replay spawn path is untouched in v1 (sources warm water in place; a hot spring is a source rect at its mouth). | Smallest correct footprint. |
 | B-D10 | Flag: `ENABLE_BATH = false` + `?bath=1`, in the 010-constants.js flag block, documented in GAME.md's ACTIVE/DISABLED table when it first ships. | House style. |
+| B-D11 | (2026-07-09 pivot) The interior is a **separate SCENE built in a reserved off-map pocket of the world grid**: entering = camera teleport + mode swap (world paused + unrendered, room drawn with its own lighting). The rig stays outside; interior input is **pointer only** (tap/hold/drag = click/hold/drag). Exit restores the world at the door at morning. | Feels like Dave the Diver's restaurant; costs like a camera jump. The sims are world-space, so tubs/steam/guests work in the pocket with zero sim changes, and the paused world frees the whole physics budget for the room. |
 
 ## 3. Stage board (each stage = one focused session; owner feel-gates marked)
 
@@ -113,18 +146,29 @@ the surface field (`WGSL_SURFACE_FIELD`, line ~5458).
 lessons first (duplicate-var landmine, fpx anchoring, relocations are transports,
 ship from a worktree). OWNER FEEL-GATE with A/B levers.
 
-**B6. Build pieces.** Tub basins, valve tiles, pipe endpoints (B-D3), boiler +
-fuel, drain + sump with the physical payout. Reuses world-grid construction and the
-oil pump's plumbing hooks (`ENABLE_OIL` code, inert but compiled).
+**B6. The room** (restaged by the section-0 pivot). The off-map pocket room
+(B-D11): scene enter/exit (door prompt at dusk, camera teleport, world pause,
+morning return), the fixed-camera room render (timber, lanterns, its own light),
+tubs as solid basins holding real water, taps that spawn hot/cold particles while
+HELD, jar drag-and-pour (doses -> the B3 tint channel), plug-chain drain to the
+sump, flue vent, and the pointer layer (tap/hold/drag routing, one code path for
+touch + mouse). Reuses the oil pump intake for tap plumbing fiction only.
 
-**B7. The shift.** Dusk bell, queue, guest needs as icons, sim-read satisfaction
-(B-D4: sample grid temp/level/murk/steam at guest bodies), tips, reputation. Guest
-archetypes ship in this order: miners, slime guests, grimy spirit (set piece; sheds
-murk + ore chunks under hot flow), the recurring "quiet one".
+**B7. The service loop** (restaged). Dave-pacing: guests arrive on a clock, queue
+with visible patience (cap ~5 inside), wobble to a tub, show a pictographic
+request (temperature band + mineral), soak, pay coins into the water, leave.
+Satisfaction is sim-read at the body (B-D4). Hot-water reserve (boiler, coal-fed)
+and mineral doses are CONSUMABLES stocked by mining: the day-feeds-night link.
+Request tiers ramp: temp-only -> +1 mineral (gated on having MINED it; depth bands
+are the menu) -> combos/scrubs (rep 2) -> steam room requests (rep 3) -> VIP exact
+bands (rep 4) -> the quiet one arc (rep 5). Soft-fail only (impatient guest leaves,
+rep tick down). Night length ~3-5 min, 6 -> ~20 guests as tubs grow 2 -> 5.
 
-**B8. Tower render.** Cutaway interior layer + floors, per `BUILDING_STYLE.md`.
-Art direction lean (industrial vs lantern-fantasy) is an OWNER CALL; build a
-chooser lab page for it (house workflow).
+**B8. The exterior + transition.** The tall pixel-art bathhouse in the town per
+`BUILDING_STYLE.md` (the tile cross-section survives as the FACADE: stone base,
+timber body, iron top, lanterns; windows light floor by floor with reputation),
+the door-enter prompt, and the enter/exit swap polish. Art direction lean
+(industrial vs lantern-fantasy %) stays an OWNER CALL via a chooser lab page.
 
 **B9. CPU fallback port + mobile.** Port the temperature channel into the v15
 sparse CPU sim inside `js/sluice.js` fragments; mobile presets cap guests like they
@@ -238,11 +282,11 @@ gated).
   (disc blob, worm chain, sheet, big amoeba) in the same solver. CAUTION: the
   contact sweep + the 82-check suites were built against cubes; every new body
   plan needs a contact audit + suite pass.
-- **Building/interior**: NO separate scene, no loading. Cutaway ant-farm rooms in
-  the same world grid (Terraria-style); the rig flies in through a door gap; the
-  interior backdrop reuses the cave-wall layer trick. Look: BUILDING_STYLE.md
-  language, timber + corrugated iron + riveted boiler + copper pipe + lanterns,
-  one rig-height room per floor, windows glow at dusk, rooftop flue feeds steam.
+- **Building/interior** (SUPERSEDED 2026-07-09 by the section-0 pivot; kept for
+  history): the original answer was a no-loading cutaway in the world with the rig
+  flying in. The pivot keeps the world-grid trick (the room is an off-map pocket,
+  B-D11) but presents the interior as its OWN fixed-camera scene, rig outside,
+  pointer-driven. The BUILDING_STYLE.md material language and lantern look stand.
 - **Slime autonomy**: guests get a tiny state machine (queue -> tub -> soak ->
   pay -> leave) whose only output is compress-and-hop IMPULSES toward waypoints
   (Slime Rancher locomotion). The body stays a full soft body; pathing is a
@@ -256,58 +300,68 @@ gated).
   temperature (B1), salt (B3 tint/props), hose-scrub, squeegee-to-drain, pull the
   plug -> sump -> grate payout.
 
-## 8. The shift, concretely (owner session 2026-07-05; the moment-to-moment)
+## 8. The night shift, concretely (REWRITTEN 2026-07-09 for the section-0 pivot)
 
-The vision, physics, geometry, and stage board were pinned before this; the actual
-interaction was still scattered across the Q&A. This section is the consolidated
-answer to "what do you DO in there." Numbers here are v0 proposals to react to, not
-locked. See also the tile geometry in section 6-adjacent notes (18-wide module,
-16 interior, 4-tile clear, rig < 1 tile).
+One fixed room fills the screen; the whole night happens in this frame. Your hands
+are the pointer (tap/hold/drag = click/hold/drag; identical on touch and mouse).
+Numbers are v0 proposals. The scene mockup lives in the 2026-07-09 owner session.
 
-1. **No cursor, one verb.** The rig is a physical vehicle; "interacting" is always
-   fly-to-a-fixture + press the action button (the drill/interact button). Fixtures:
-   a **valve per tub** (bonk = run hot/cold into it), the **boiler pressure lever**
-   (supply temperature + steam output), a **salt hopper** (drop a salt block from
-   cargo into a tub), a **scrub hose** (dock, aim the nozzle at a grimy guest or
-   dirty tub), **windows/flues** (open to vent steam / thin the room), a **drain
-   plug per tub** (pull = dump that tub to the sump), and the **dusk bell** at the
-   door (bonk to start the shift). No menus, no pointer.
-2. **Slimes move by hop-impulse** (already in the Q&A): soft body + tiny brain that
-   fires one compress-and-hop toward its next waypoint. No pathfinding; flat floors,
-   so waypoints are door -> queue spot -> assigned tub rim -> (soak) -> door.
-3. **Headcount: cap ~5 guests inside at once** on desktop, ~2-3 on mobile (same
-   budgeting as the water-particle cap; each guest is a soft body). Waves of 1-2;
-   ~10-14 total across a night. Deliberately few so each is tendable.
-4. **In/out: they WALK, one ground door.** At dusk a queue forms on the town road
-   outside the main-hall door. A guest enters when a tub frees, hops to it, soaks a
-   timed stretch, walks back out the same door. Miners use it too. Guests never fly,
-   never go underground.
-5. **Where the rig can drive:** the building is a **cutaway (open front)**, so the
-   rig flies in from the front and moves freely through each room's open airspace,
-   and between floors via ONE open shaft column (left side). Solid = outer walls,
-   floor slabs (no dropping through a floor), tub bodies, the boiler drum. Outside
-   is the normal town.
-6. **Underground link = PIPE, not a tunnel.** You do NOT drive from the mine up into
-   the bathhouse; it is a surface building. The connection is a water pipe down to a
-   hot aquifer found while digging (this is "the mine supplies the bathhouse," made
-   physical). A drivable well is a possible later option; v1 stays surface-only.
-7. **Water: haul early, piped later.** Act 1 = manual: rig water tank (reuse the
-   disabled ENABLE_OIL pump intake), park in a pond, pump in, dump in a tub (chore
-   by design). Act 2 = a built pipe from aquifer/pond feeds the boiler automatically;
-   you just work valves. Haul -> pipe IS the act-1-to-2 beat.
-8. **Payment: yes, slimes pay, three physical ways, all to the sump.** (a) a
-   satisfied guest drops **coins** into its tub on leaving (satisfaction read from
-   the sim: temp/level/cleanliness at its body); (b) a slime soaking in mineral-
-   salted water condenses a **pearl / bit of ore** by end of soak (the slime is a
-   tiny refinery); (c) the grimy-spirit set piece **sheds ore chunks** as cleaned.
-   All sink through the tub drains to the **sump grate**; open it at closing = the
-   night's take pours out at once. **Reputation (stars) is separate from cash** and
-   is what gates the upper floors and fancier guest tiers.
+**The screen.** Left: the entry door + visible queue (planning info, like seeing
+Dave's line). Center: the tub row (2 tubs growing to 5) under a copper tap run,
+floor in front where guests wobble. Right: the service wall: mineral jar shelf,
+boiler with pressure gauge + firebox, coal pile. Floor: drain grate + till. Top:
+lanterns, drifting steam, a flue window. HUD is diegetic: thermometers on tubs,
+the gauge on the boiler, patience shown on the guests; only cash/rep sit small in
+a corner.
 
-This maps onto the stage board: fixtures + sump + pipes are B6; the queue, guest
-brains, sim-read satisfaction, tips, and reputation are B7.
+1. **Request.** A guest wobbles in low from the door, climbs into an empty tub DRY,
+   and shows a pictographic bubble: temperature band + mineral (later: two minerals,
+   murkiness, steam). You build the bath around the guest; satisfaction samples the
+   sim at its body (B-D4), so the water it sits in must hit the request.
+2. **Fill = press-and-HOLD a tap.** Hot (red) or cold (blue) per tub; real particles
+   pour while held. The tub thermometer reads the true B1 temperature; blending is
+   physical. Overfill sloshes over for real. B1 cooling means a prepared bath
+   drifts off-spec while a guest waits: THE PHYSICS IS THE ORDER TIMER (Dave's
+   sushi never cooled; ours does).
+3. **Minerals = drag a jar** from the shelf over a tub; it tips and pours while
+   held; powder dissolves into the B3 tint/property channel; water visibly changes.
+   One dose satisfies v1 requests; dose amounts are later depth. Mineral slimes
+   (soluble guests, Q&A) can BE premium doses.
+4. **Drain = tap the plug chain** (water + tint + contents drop to the sump).
+   **Scrub = rub back and forth** on a grimy guest with the pointer (grime flakes
+   into murk; drain + refill after). **Vent = tap the flue** when steam gets thick.
+5. **Queue + pacing (Dave).** Guests arrive on a clock, wait at the door with
+   visible patience, cap ~5 inside (~2-3 on weak mobile, same budget logic as the
+   water cap). Serve accurate + fast = bigger tips. A guest that waits too long
+   leaves slowly the way it came: no pay, a rep tick down. Soft fail only.
+6. **Supply = the day-feeds-night link.** The boiler's hot-water reserve burns down
+   with every hot pour and refills from mined COAL; the jars hold mined mineral
+   DOSES. Running out mid-rush gives tomorrow's dig a purpose (fish -> sushi, made
+   literal).
+7. **Payment, physical.** A happy guest flips coins into its water as it leaves;
+   mineral-bathed slimes condense a pearl/ore bit (tiny refinery); the grimy spirit
+   sheds ore as cleaned. Everything washes down the drain to the grate; pull it at
+   closing = the night's take in one pour. Reputation (stars) is separate and gates
+   floors + guest tiers.
+8. **Progression ramp** (owner delegated): nights 1-3 = temperature only, 2 tubs.
+   Minerals join the request pool only once MINED (depth bands = the menu: iron
+   shallow, sulfur mid, copper deep, stranger salts below). Rep 2 = combos + grimy
+   guests; rep 3 = steam room + steam requests; rep 4 = VIP long-soak whales with
+   exact bands; rep 5 = the quiet one's arc. Regulars with remembered "usuals"
+   start early. Night ~3-5 real minutes; ~6 guests growing toward ~20.
+
+Maps onto the stage board: room/fixtures/pointer = B6; queue, requests, pacing,
+supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
+
+- 2026-07-09 (THE PIVOT, owner-directed): interior changed from cutaway-in-world +
+  rig-scale to a SEPARATE fixed-camera scene with pointer-only interaction and
+  Dave-the-Diver request pacing (section 0, B-D11, rewritten section 8). The
+  engine trick: the room is an off-map pocket of the world grid, so the "scene"
+  is a camera teleport + mode swap and every sim works inside unchanged. All B1
+  physics (temperature/tint/cooling) remains load-bearing: cooling IS the order
+  timer. Superseded text is annotated in place, not deleted.
 
 - 2026-07-05 (B1, deviates from B-D7/B-D9 as written): temperature does NOT get a
   `buf.temp`; it rides **flag bits 24:31** (raw 0..255 = T 0..2, floor-encoded so
