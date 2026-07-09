@@ -11,7 +11,12 @@
 
   var REDUCE = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var MODELS = DATA.models;
-  var POSTS = DATA.posts;
+  // Posts that are unlisted everywhere public (no homepage card, no hub, and pulled from the
+  // archive page) should not surface a tile here either. Their data stays in
+  // git-attribution-data.js untouched; the model fuel totals still count them. We just don't
+  // render their tiles. To hide another post, add its key here.
+  var HIDDEN_TILES = { 'weather': 1, 'forty': 1, 'alcoholics-anonymous': 1, 'first-164': 1 };
+  var POSTS = DATA.posts.filter(function (p) { return !HIDDEN_TILES[p.key]; });
   var MID = {};
   MODELS.forEach(function (m) { MID[m.id] = m; });
 
