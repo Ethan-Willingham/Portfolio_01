@@ -79,9 +79,15 @@ service loop). The D-table physics decisions stand unchanged.
 
 ## 1. Vision (locked with the owner)
 
-- **Structure, not skin.** Spirited Away's shape (tower of baths, boiler below,
-  strange guests, one filthy-spirit set piece) in the game's own frontier-steamworks
-  art language (timber, corrugated iron, copper pipe, lanterns later). No pastiche.
+- **Structure, not skin, RESOLVED (2026-07-09): it is a BANYA.** Spirited Away's
+  shape (tower of baths, boiler below, strange guests, a filthy-spirit set piece)
+  wearing the game's own culture: the Russian bathhouse. The town already speaks
+  Cyrillic (КАССА), so the sign reads «БАНЯ», materials stay timber + copper +
+  riveted iron per BUILDING_STYLE.md, lighting is oil lamps, the door hangs a felt
+  flap, birch bundles (veniki) hang by the tubs, and a samovar corner arrives as
+  an upgrade. The recurring mysterious guest is the **Bannik**, the actual
+  bathhouse spirit of Slavic folklore. Zero Japanese pastiche: the anime is the
+  soul, the banya is the body.
 - **The whole loop.** Dig by day (now also: cap steam vents, tap hot aquifers, chip
   mineral salts, meet slime dens). At dusk a bell starts an opt-in shift of a few
   minutes. Guests queue; tubs are real water; needs are read from the sim. End of
@@ -98,9 +104,14 @@ service loop). The D-table physics decisions stand unchanged.
 - **Physics IS the score.** A guest's satisfaction samples actual water temperature
   at their body, actual submersion, actual murk/salt content, actual steam density.
   No faked meters anywhere. This is the game's identity claim; protect it.
-- **Economy.** One currency (cash) plus reputation stars. Rep, not money, gates
-  floors and guest tiers. Bathhouse income complements ore (pocket money early,
-  unique goods late), never replaces it.
+- **Economy (REVISED 2026-07-09: no abstract stars).** One currency: cash. Cash
+  buys tubs, TUB TIERS, floors, tanks, hose upgrades. What attracts guests is the
+  BATH ITSELF: each slime species has requirements (tub tier >= X, liquid Y
+  stocked, mineral Z stocked); meet them and that species starts appearing in the
+  queue. New shapes + colors = new species = progression the player can SEE (ties
+  to the Q&A body-plans track). No star meter anywhere; renown is emergent
+  (fancier species tip more). Guests are SLIMES ONLY; miners get a bench outside.
+  Bathhouse income complements ore, never replaces it.
 
 ## 2. Locked decisions (D-table; append, don't edit)
 
@@ -127,11 +138,20 @@ self-tests all OK at defaults, then with `?bath=1` a visible convection roll in 
 heated pond and no Dawn validation errors (check via Log domain / uncapturederror,
 NOT consoleAPI; memory `knowledge_webgpu_dawn_pass_usage`).
 
-**B2. Steam + heat-source authoring.** Mirror-driven steam emission (B-D6) tuned to
-read as bath steam (white, lazy). Worldgen: 2-3 steam vents and 1 hot aquifer pocket
-in the existing 400 m arc (`030-worldgen.js`), each a capped source rect the player
-activates. OWNER FEEL-GATE: "does hot water + steam feel magical?" If no, stop and
-re-scope before B3+.
+**B2. THE STEAM SYSTEM (expanded 2026-07-09: steam must NOT look like smoke).**
+The owner's call: players know our smoke; steam needs its own identity. Same fluid
+solver, its own parameter set + palette, run scene-local (in the banya the smoke
+backend runs in STEAM MODE; the world is paused so there is no conflict; the world
+keeps smoke mode). Look targets: soft white rounded puffs, higher buoyancy (lazy
+but insistent rise), much higher dissipation (short-lived), LOW curl (billow, not
+swirl), slight warm tint under the lamps, pools into a visible layer under the
+rafters, drains out the flue, thick steam legitimately obscures the room (venting
+is management). No soot darkening ever; firebox smoke goes up the chimney and is
+not simulated in-room. Emission via the flag-bit mirror scan (B-D6): rate scales
+with temperature AND agitation, so pouring hot water throws a big plume off the
+splash. gm lever group STEAM_* (buoy/diss/curl/alpha/tint). Worldgen half stays:
+2-3 steam vents + 1 hot aquifer pocket in the 400 m arc. OWNER FEEL-GATE: "does
+hot water + steam feel magical, and does steam read as NOT-smoke at a glance?"
 
 **B3. Murk + salt content.** Second scalar channel, same machinery as temperature
 (consider packing temp+murk as two halves of one buffer or two buffers; measure).
@@ -146,33 +166,57 @@ the surface field (`WGSL_SURFACE_FIELD`, line ~5458).
 lessons first (duplicate-var landmine, fpx anchoring, relocations are transports,
 ship from a worktree). OWNER FEEL-GATE with A/B levers.
 
-**B6. The room** (restaged by the section-0 pivot). The off-map pocket room
-(B-D11): scene enter/exit (door prompt at dusk, camera teleport, world pause,
-morning return), the fixed-camera room render (timber, lanterns, its own light),
-tubs as solid basins holding real water, taps that spawn hot/cold particles while
-HELD, jar drag-and-pour (doses -> the B3 tint channel), plug-chain drain to the
-sump, flue vent, and the pointer layer (tap/hold/drag routing, one code path for
-touch + mouse). Reuses the oil pump intake for tap plumbing fiction only.
+**B6. The room + THE HOSE** (restaged by the pivot; hose replaces per-tub taps,
+owner design 2026-07-09). The off-map pocket room (B-D11): scene enter/exit (door
+prompt at dusk, camera teleport, world pause, morning return), the fixed-camera
+room render (banya timber, oil lamps, «БАНЯ» sign, its own light), tubs as solid
+basins holding real water, plug-chain drain to the sump, flue vent, and the
+pointer layer (tap/hold/drag, one code path for touch + mouse).
+**The hose is the room's one instrument:** a copper articulated arm on a short
+ceiling rail (Soviet swing-arm look; friction joints justify staying EXACTLY
+where released). DRAG the nozzle anywhere; release and it holds position. TAP the
+nozzle = flow on/off (a toggle, not a hold, so you can walk away from a running
+pour or steer it live). A DIAL on the nozzle selects the liquid (v1: hot / cold;
+later: whatever the tanks hold). While flowing it spawns real particles from the
+nozzle mouth and DRAINS THE MATCHING TANK: spills are real, deliberate splashing
+is allowed fun, waste is the cost. Arm follow uses a lightly damped 2-joint IK so
+dragging has springy overshoot juice. Wall tanks (hot fed by boiler + coal; cold
+by pond pipe) show reserves diegetically. Minerals stay JARS (drag over a tub to
+tip and pour a dose into the B3 tint channel): hose = liquids, jars = minerals.
 
-**B7. The service loop** (restaged). Dave-pacing: guests arrive on a clock, queue
-with visible patience (cap ~5 inside), wobble to a tub, show a pictographic
-request (temperature band + mineral), soak, pay coins into the water, leave.
-Satisfaction is sim-read at the body (B-D4). Hot-water reserve (boiler, coal-fed)
-and mineral doses are CONSUMABLES stocked by mining: the day-feeds-night link.
-Request tiers ramp: temp-only -> +1 mineral (gated on having MINED it; depth bands
-are the menu) -> combos/scrubs (rep 2) -> steam room requests (rep 3) -> VIP exact
-bands (rep 4) -> the quiet one arc (rep 5). Soft-fail only (impatient guest leaves,
-rep tick down). Night length ~3-5 min, 6 -> ~20 guests as tubs grow 2 -> 5.
+**B7. The service loop** (restaged; attractor model 2026-07-09, stars removed).
+Dave-pacing: guests arrive on a clock, queue with visible patience (cap ~5
+inside), wobble to a tub, show a pictographic request (fill level + temperature
+band + mineral), soak, pay coins into the water, leave. Satisfaction is sim-read
+at the body (B-D4). Tank reserves (hot = boiler + mined coal) and mineral doses
+are CONSUMABLES stocked by mining: the day-feeds-night link. **Progression is the
+attractor model:** each slime species (shape + color, per the body-plans track)
+has requirements over tub tier + stocked liquids + stocked minerals; upgrading
+the bath makes new species start appearing in the queue, and their requests use
+what attracted them. Ramp: temp-only nights first; minerals join requests only
+once MINED (depth bands are the menu); combos, scrubbing grimy guests, steam-room
+requests, long-soak exact-band whales, and the Bannik's arc arrive as the bath's
+tier + pantry grow. Soft-fail only (an impatient guest leaves; the queue thins
+for a while). Night ~3-5 min, 6 -> ~20 guests as tubs grow 2 -> 5.
 
-**B8. The exterior + transition.** The tall pixel-art bathhouse in the town per
+**B8. The exterior + transition.** The tall pixel-art BANYA in the town per
 `BUILDING_STYLE.md` (the tile cross-section survives as the FACADE: stone base,
-timber body, iron top, lanterns; windows light floor by floor with reputation),
-the door-enter prompt, and the enter/exit swap polish. Art direction lean
-(industrial vs lantern-fantasy %) stays an OWNER CALL via a chooser lab page.
+timber body, iron top, «БАНЯ» sign, oil lamps; windows light floor by floor as
+floors are BUILT), the door-enter prompt, and the enter/exit swap polish. Art
+lean within the banya register (how weathered, how warm) via a chooser lab page.
 
 **B9. CPU fallback port + mobile.** Port the temperature channel into the v15
 sparse CPU sim inside `js/sluice.js` fragments; mobile presets cap guests like they
 cap water. Only after B2 and B5 gates pass.
+
+**B10. LIQUID LOGISTICS (owner-parked 2026-07-09: design locked, build LATER).**
+Underground gains typed LIQUID POCKETS beyond water/oil (hot spring water, mineral
+brines, mud, stranger fluids deep). The rig gets a liquid TANK system separate
+from ore cargo (revive the disabled `ENABLE_OIL` pump as the intake): suck a
+pocket up, haul it home, DEPOSIT at the banya's tank station. Stocked exotic
+liquids join the hose dial and the attractor requirements (exotic liquid + exotic
+mineral + high tub tier = the rarest species). Do NOT build any of this until the
+core night loop (B6 + B7) is fun; v1 ships with hot/cold only.
 
 Parallelization: B3/B4 are same-file (liquid-wgpu.js) as B1 residue, serialize
 them. B6/B7/B8 live in distinct sluice fragments and can run as parallel sessions
@@ -306,23 +350,29 @@ One fixed room fills the screen; the whole night happens in this frame. Your han
 are the pointer (tap/hold/drag = click/hold/drag; identical on touch and mouse).
 Numbers are v0 proposals. The scene mockup lives in the 2026-07-09 owner session.
 
-**The screen.** Left: the entry door + visible queue (planning info, like seeing
-Dave's line). Center: the tub row (2 tubs growing to 5) under a copper tap run,
-floor in front where guests wobble. Right: the service wall: mineral jar shelf,
-boiler with pressure gauge + firebox, coal pile. Floor: drain grate + till. Top:
-lanterns, drifting steam, a flue window. HUD is diegetic: thermometers on tubs,
-the gauge on the boiler, patience shown on the guests; only cash/rep sit small in
-a corner.
+**The screen.** Left: the entry door (felt flap) + visible queue (planning info,
+like seeing Dave's line) + the «БАНЯ» sign. Center: the tub row (2 tubs growing to
+5) under the CEILING RAIL carrying the hose arm, floor in front where guests
+wobble. Right: the service wall: liquid TANKS with visible levels (hot, cold,
+later exotics), mineral jar shelf, boiler with pressure gauge + firebox, coal
+pile. Floor: drain grate + till. Top: oil lamps, pooling steam, a flue window.
+HUD is diegetic: thermometers on tubs, tank levels, patience on the guests; only
+cash sits small in a corner.
 
 1. **Request.** A guest wobbles in low from the door, climbs into an empty tub DRY,
    and shows a pictographic bubble: temperature band + mineral (later: two minerals,
    murkiness, steam). You build the bath around the guest; satisfaction samples the
    sim at its body (B-D4), so the water it sits in must hit the request.
-2. **Fill = press-and-HOLD a tap.** Hot (red) or cold (blue) per tub; real particles
-   pour while held. The tub thermometer reads the true B1 temperature; blending is
-   physical. Overfill sloshes over for real. B1 cooling means a prepared bath
-   drifts off-spec while a guest waits: THE PHYSICS IS THE ORDER TIMER (Dave's
-   sushi never cooled; ours does).
+2. **Fill = THE HOSE** (owner design 2026-07-09; replaces per-tub taps). One
+   copper articulated arm on a ceiling rail serves the whole row. DRAG the nozzle
+   anywhere and it STAYS where released (friction joints); TAP the nozzle to
+   toggle flow on/off; a DIAL on the nozzle picks the liquid (v1 hot/cold; later
+   the tanks' exotics). Flow spawns real particles and drains the matching tank
+   while running, whether or not you are holding it: steer a live pour, splash
+   around a slime for fun, or waste your reserve, all real. The tub thermometer
+   reads the true B1 temperature; blending is physical; overfill sloshes over.
+   B1 cooling means a prepared bath drifts off-spec while a guest waits: THE
+   PHYSICS IS THE ORDER TIMER (Dave's sushi never cooled; ours does).
 3. **Minerals = drag a jar** from the shelf over a tub; it tips and pours while
    held; powder dissolves into the B3 tint/property channel; water visibly changes.
    One dose satisfies v1 requests; dose amounts are later depth. Mineral slimes
@@ -333,7 +383,8 @@ a corner.
 5. **Queue + pacing (Dave).** Guests arrive on a clock, wait at the door with
    visible patience, cap ~5 inside (~2-3 on weak mobile, same budget logic as the
    water cap). Serve accurate + fast = bigger tips. A guest that waits too long
-   leaves slowly the way it came: no pay, a rep tick down. Soft fail only.
+   leaves slowly the way it came: no pay, and the queue thins for a while. Soft
+   fail only.
 6. **Supply = the day-feeds-night link.** The boiler's hot-water reserve burns down
    with every hot pour and refills from mined COAL; the jars hold mined mineral
    DOSES. Running out mid-rush gives tomorrow's dig a purpose (fish -> sushi, made
@@ -341,20 +392,35 @@ a corner.
 7. **Payment, physical.** A happy guest flips coins into its water as it leaves;
    mineral-bathed slimes condense a pearl/ore bit (tiny refinery); the grimy spirit
    sheds ore as cleaned. Everything washes down the drain to the grate; pull it at
-   closing = the night's take in one pour. Reputation (stars) is separate and gates
-   floors + guest tiers.
-8. **Progression ramp** (owner delegated): nights 1-3 = temperature only, 2 tubs.
-   Minerals join the request pool only once MINED (depth bands = the menu: iron
-   shallow, sulfur mid, copper deep, stranger salts below). Rep 2 = combos + grimy
-   guests; rep 3 = steam room + steam requests; rep 4 = VIP long-soak whales with
-   exact bands; rep 5 = the quiet one's arc. Regulars with remembered "usuals"
-   start early. Night ~3-5 real minutes; ~6 guests growing toward ~20.
+   closing = the night's take in one pour. No star meter (2026-07-09): cash is the
+   only currency, and the bath itself is the gate (next item).
+8. **Progression = the ATTRACTOR model** (owner direction 2026-07-09): upgrading
+   the actual bath brings new guests. Each slime species (new shapes, new colors,
+   per the body-plans track) has requirements over TUB TIER (wood -> copper ->
+   stone -> exotic) + stocked liquids + stocked minerals; meet them and that
+   species starts appearing in the queue, with requests drawn from what attracted
+   it. Minerals join the pool only once MINED (depth bands = the menu: iron
+   shallow, sulfur mid, copper deep, stranger salts below); exotic liquids join
+   via B10 later. Grimy guests, steam-room requests, long-soak exact-band whales,
+   and the Bannik's recurring arc arrive as tier + pantry grow. Regulars with
+   remembered "usuals" start early. Night ~3-5 real minutes; ~6 guests growing
+   toward ~20.
 
 Maps onto the stage board: room/fixtures/pointer = B6; queue, requests, pacing,
 supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-09 later session (owner + Fable): (a) per-tub taps replaced by THE HOSE
+  (ceiling-rail articulated arm, drag + stays, tap-to-toggle flow, liquid dial,
+  drains tanks while running, spills welcome); (b) art direction RESOLVED as
+  frontier-Soviet BANYA («БАНЯ», oil lamps, veniki, samovar upgrade, the Bannik as
+  the mysterious regular; no Japanese pastiche); (c) reputation stars REMOVED:
+  progression = the attractor model (tub tier + stocked liquids/minerals decide
+  which slime species appear); (d) B2 expanded into the STEAM SYSTEM (steam must
+  read as not-smoke: own params/palette, scene-local steam mode); (e) B10 parked:
+  typed underground liquid pockets + rig tank + banya tank deposits, build only
+  after B6/B7 are fun; (f) guests locked slimes-only.
 - 2026-07-09 (THE PIVOT, owner-directed): interior changed from cutaway-in-world +
   rig-scale to a SEPARATE fixed-camera scene with pointer-only interaction and
   Dave-the-Diver request pacing (section 0, B-D11, rewritten section 8). The
