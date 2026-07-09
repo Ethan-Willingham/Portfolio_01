@@ -35,22 +35,28 @@ const TX_DIR = '/Users/ethan/.claude/projects/-Users-ethan-Portfolio-01';
 const SRC_DIR = path.join(ROOT, 'research', 'prompts');
 const OUT_JS = path.join(ROOT, 'js', 'post-prompts-data.js');
 
-// Per-post config. `match` = path fragments that mark an edit as "building this post".
-// Defaults from the slug cover most posts; add entries only when a post needs more.
+// Pull each post's display label + href from the committed attribution data, so most
+// posts need no hand-config below.
+global.window = {};
+await import('file://' + path.join(ROOT, 'js/git-attribution-data.js'));
+const ATTR_BY_KEY = new Map(((global.window.GIT_ATTRIBUTION && global.window.GIT_ATTRIBUTION.posts) || []).map(p => [p.key, p]));
+
+// Optional per-post overrides. `match` = path fragments that mark an edit as "building this
+// post"; only add an entry when the slug defaults + attribution href are not enough.
 const POSTS = {
-  'the-other-side': {
-    title: 'The Other Side', href: 'the-other-side.html',
-    match: ['the-other-side.html', 'research/other-side/'],
-  },
+  'the-other-side': { match: ['the-other-side.html', 'research/other-side/'] },
 };
 
 function cfg(slug) {
   const c = POSTS[slug] || {};
+  const a = ATTR_BY_KEY.get(slug) || {};
+  const href = c.href || a.href || (slug + '.html');
+  const base = href.split('/').pop();
   return {
     slug,
-    title: c.title || slug,
-    href: c.href || slug + '.html',
-    match: c.match || [slug + '.html', 'js/' + slug + '.js'],
+    title: c.title || a.label || slug,
+    href,
+    match: c.match || [base, 'js/' + slug + '.js', '/' + slug + '/'],
   };
 }
 
@@ -71,6 +77,7 @@ function isSubstantive(text) {
   if (t.startsWith('<') && t.includes('system-reminder')) return false;
   if (t.includes('<command-name>') || t.includes('<command-message>') || t.includes('<command-args>')) return false;
   if (t.includes('<local-command-stdout>') || t.includes('<local-command-stderr>')) return false;
+  if (t.includes('<task-notification')) return false; // background sub-agent completion notices, not human prompts
   if (t.includes('Request interrupted by user')) return false;
   if (FILLER.has(t.toLowerCase())) return false;
   return true;
@@ -86,15 +93,17 @@ function readJsonl(file) {
   return out;
 }
 
-// find sessions whose Edit/Write/MultiEdit touched one of the post's match fragments
-function findSessions(match) {
-  const hits = [];
+// index every transcript ONCE (edits + substantive prompts per session); lazy so --bundle
+// never pays for it. A batch of --extract calls then shares the single build.
+let _INDEX = null;
+function index() {
+  if (_INDEX) return _INDEX;
+  _INDEX = [];
   for (const f of fs.readdirSync(TX_DIR)) {
     if (!f.endsWith('.jsonl')) continue;
-    const objs = readJsonl(path.join(TX_DIR, f));
+    const edits = [], prompts = [];
     let firstTs = null;
-    let edited = false;
-    for (const o of objs) {
+    for (const o of readJsonl(path.join(TX_DIR, f))) {
       const ts = o.timestamp ? Date.parse(o.timestamp) : null;
       if (ts && firstTs == null) firstTs = ts;
       const msg = o.message;
@@ -102,29 +111,37 @@ function findSessions(match) {
         for (const c of msg.content) {
           if (c && c.type === 'tool_use' && /^(Edit|Write|MultiEdit)$/i.test(c.name || '')) {
             const fp = (c.input && (c.input.file_path || c.input.path)) || '';
-            if (match.some(m => fp.includes(m))) edited = true;
+            if (fp) edits.push(fp);
           }
         }
       }
+      if (o.type === 'user' && !o.isMeta) {
+        const t = textOf(o.message).trim();
+        if (isSubstantive(t)) prompts.push({ when: o.timestamp ? o.timestamp.slice(0, 16) : '', text: t });
+      }
     }
-    if (edited) hits.push({ id: f.replace('.jsonl', ''), firstTs: firstTs || 0 });
+    _INDEX.push({ id: f.replace('.jsonl', ''), firstTs: firstTs || 0, edits, prompts });
   }
-  hits.sort((a, b) => a.firstTs - b.firstTs);
-  return hits.map(h => h.id);
+  return _INDEX;
+}
+
+// sessions whose Edit/Write/MultiEdit touched one of the post's match fragments
+function findSessions(match) {
+  return index().filter(s => s.edits.some(fp => match.some(m => fp.includes(m))))
+    .sort((a, b) => a.firstTs - b.firstTs).map(s => s.id);
 }
 
 function extractPrompts(sessionIds) {
+  const byId = new Map(index().map(s => [s.id, s]));
   const seen = new Set();
   const rows = [];
   for (const id of sessionIds) {
-    for (const o of readJsonl(path.join(TX_DIR, id + '.jsonl'))) {
-      if (o.type !== 'user' || o.isMeta) continue;
-      const text = textOf(o.message).trim();
-      if (!isSubstantive(text)) continue;
-      const key = text.slice(0, 120);
+    const s = byId.get(id); if (!s) continue;
+    for (const p of s.prompts) {
+      const key = p.text.slice(0, 120);
       if (seen.has(key)) continue;
       seen.add(key);
-      rows.push({ when: o.timestamp ? o.timestamp.slice(0, 16) : '', session: id, text });
+      rows.push({ when: p.when, session: id, text: p.text });
     }
   }
   rows.sort((a, b) => (a.when < b.when ? -1 : a.when > b.when ? 1 : 0));
@@ -134,7 +151,7 @@ function extractPrompts(sessionIds) {
 function extract(slug, forceSession) {
   const c = cfg(slug);
   const sessions = forceSession ? [forceSession] : findSessions(c.match);
-  if (!sessions.length) { console.error(`no editing sessions found for ${slug} (match: ${c.match.join(', ')})`); process.exit(1); }
+  if (!sessions.length) throw new Error(`no editing sessions found for ${slug} (match: ${c.match.join(', ')})`);
   const raw = extractPrompts(sessions);
   const dst = path.join(SRC_DIR, slug + '.json');
   let prev = {};
@@ -148,8 +165,15 @@ function extract(slug, forceSession) {
   };
   fs.mkdirSync(SRC_DIR, { recursive: true });
   fs.writeFileSync(dst, JSON.stringify(doc, null, 2) + '\n');
-  console.log(`extracted ${raw.length} substantive prompts for ${slug} from ${sessions.length} session(s): ${sessions.join(', ')}`);
-  console.log(`wrote ${path.relative(ROOT, dst)}: now CLEAN the prompts[] array (typos, profanity, public-safe), then --bundle`);
+  console.log(`  ${slug.padEnd(26)} ${String(raw.length).padStart(3)} prompts  ${sessions.length} session(s)  ${sessions.map(s => s.slice(0, 8)).join(',')}`);
+  return raw.length;
+}
+
+function extractMany(slugs) {
+  console.log(`extracting ${slugs.length} posts (whole session):`);
+  let total = 0;
+  for (const s of slugs) { try { total += extract(s) || 0; } catch (e) { console.log(`  ${s.padEnd(26)} SKIP: ${e.message}`); } }
+  console.log(`\ndone: ${total} prompts across ${slugs.length} posts. Now CLEAN each research/prompts/<slug>.json prompts[], then --bundle.`);
 }
 
 function bundle() {
@@ -185,9 +209,12 @@ function bundle() {
 const args = process.argv.slice(2);
 if (args[0] === '--extract' && args[1]) {
   const si = args.indexOf('--session');
-  extract(args[1], si > -1 ? args[si + 1] : null);
+  try { extract(args[1], si > -1 ? args[si + 1] : null); }
+  catch (e) { console.error(e.message); process.exit(1); }
+} else if (args[0] === '--extract-list' && args[1]) {
+  extractMany(args[1].split(',').map(s => s.trim()).filter(Boolean));
 } else if (args[0] === '--bundle') {
   bundle();
 } else {
-  console.log('usage:\n  node tools/build-post-prompts.mjs --extract <slug> [--session <id>]\n  node tools/build-post-prompts.mjs --bundle');
+  console.log('usage:\n  node tools/build-post-prompts.mjs --extract <slug> [--session <id>]\n  node tools/build-post-prompts.mjs --extract-list <slug,slug,...>\n  node tools/build-post-prompts.mjs --bundle');
 }
