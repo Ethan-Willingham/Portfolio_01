@@ -526,20 +526,26 @@
       if (yrs < 10) return 'in ' + yrs.toFixed(1) + ' years';
       return 'in ' + Math.round(yrs).toLocaleString() + ' years';
     }
-    function nextEarthBirthday(birth, ref) {
-      var mo = birth.getMonth(), day = birth.getDate(), y = ref.getFullYear();
-      var c = new Date(y, mo, day);
-      if (c <= ref) c = new Date(y + 1, mo, day);
-      if (c.getMonth() !== mo) c = new Date(c.getFullYear(), mo + 1, 0);
+    function earthBirthdayInYear(birth, year) {
+      var mo = birth.getMonth(), day = birth.getDate();
+      var c = new Date(year, mo, day);
+      // Treat Feb 28 as the birthday in non-leap years for a Feb 29 birth.
+      if (c.getMonth() !== mo) c = new Date(year, mo + 1, 0);
       return c;
     }
-    // A short, contextual line that makes each number land.
-    function subFor(b, age) {
-      if (b.earth) return 'home, the year you count by';
-      if (age < 1) return 'your first lap is ' + Math.floor(age * 100) + '% done';
-      if (b.days < YEAR_DAYS) return 'a year here is just ' + Math.round(b.days) + ' days';
-      var inEarth = b.days / YEAR_DAYS;
-      return 'a year here lasts ' + inEarth.toFixed(inEarth < 100 ? 1 : 0) + ' of ours';
+    function nextEarthBirthday(birth, ref) {
+      var y = ref.getFullYear();
+      var c = earthBirthdayInYear(birth, y);
+      if (c <= ref) c = earthBirthdayInYear(birth, y + 1);
+      return c;
+    }
+    function fmtDate(date) {
+      return date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    }
+    function dateAttr(date) {
+      var mo = String(date.getMonth() + 1).padStart(2, '0');
+      var day = String(date.getDate()).padStart(2, '0');
+      return date.getFullYear() + '-' + mo + '-' + day;
     }
 
     function render(birth, user) {
@@ -549,18 +555,40 @@
       var elapsedMs = nowT - birthMs;
       var elapsedDays = elapsedMs / DAY_MS;
 
-      // Planet rows.
+      // Calculate once so the list and the headline agree on which birthday
+      // comes next. Ties keep the solar-system order from BODIES.
+      var birthdays = BODIES.map(function (b, order) {
+        var nextN, nextDate;
+        if (b.earth) {
+          nextDate = nextEarthBirthday(birth, nowDate);
+          nextN = nextDate.getFullYear() - birth.getFullYear();
+        } else {
+          nextN = Math.floor(elapsedDays / b.days) + 1;
+          nextDate = new Date(birthMs + nextN * b.days * DAY_MS);
+        }
+        return {
+          body: b,
+          age: elapsedDays / b.days,
+          nextN: nextN,
+          nextDate: nextDate,
+          order: order
+        };
+      }).sort(function (a, b) {
+        return a.nextDate.getTime() - b.nextDate.getTime() || a.order - b.order;
+      });
+
+      // Planet rows, ordered by the soonest upcoming birthday.
       var rows = '';
-      BODIES.forEach(function (b, i) {
-        var age = elapsedDays / b.days;
+      birthdays.forEach(function (item, i) {
+        var b = item.body;
         rows += '<li class="pl sa-rise" style="animation-delay:' + (0.06 * i).toFixed(2) + 's">' +
                   '<img class="pl-img" src="assets/planets/' + b.key + '.jpg" width="160" height="160" loading="lazy" decoding="async" alt="">' +
                   '<div class="pl-main">' +
                     '<div class="pl-name">' + b.name +
                       (b.tag ? '<span class="pl-tag">' + b.tag + '</span>' : '') + '</div>' +
-                    '<div class="pl-sub">' + subFor(b, age) + '</div>' +
+                    '<div class="pl-sub">Next birthday &middot; <time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time></div>' +
                   '</div>' +
-                  '<div class="pl-age"><span class="pl-num">' + fmtAge(age) + '</span>' +
+                  '<div class="pl-age"><span class="pl-num">' + fmtAge(item.age) + '</span>' +
                     '<span class="pl-unit">years old</span></div>' +
                 '</li>';
       });
@@ -568,13 +596,8 @@
 
       // Your soonest upcoming birthday across the worlds: the line under the
       // input, and the message behind the Share button.
-      var soonest = null;
-      BODIES.forEach(function (b) {
-        var nextN = Math.floor(elapsedDays / b.days) + 1;
-        var date = b.earth ? nextEarthBirthday(birth, nowDate).getTime()
-                           : birthMs + nextN * b.days * DAY_MS;
-        if (date > nowT && (!soonest || date < soonest.date)) soonest = { date: date, name: b.name, n: nextN };
-      });
+      var first = birthdays[0];
+      var soonest = first ? { date: first.nextDate.getTime(), name: first.body.name, n: first.nextN } : null;
       if (soonest) {
         var when = fmtUntil(soonest.date - nowT);
         if (when === 'in 1 month') when = 'next month';
