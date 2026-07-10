@@ -1870,16 +1870,29 @@
     }
     var vcap = JELLO_VMAX * dt;   // max per-step displacement (px)
     var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    // v25.85 BANYA soak (plan B-D5): ONE-WAY buoyancy for guest slimes in a
+    // tub. Points below the analytic waterline get gravity progressively
+    // cancelled and overshoot into lift, plus extra velocity drag, so the
+    // body bobs at the line instead of sinking. The water is never pushed
+    // back (the v25.50-52 two-way coupling stays dead); the game fakes the
+    // splash separately. bathBuoy = { line, x0, x1, lift, drag } | null.
+    var bb = b.bathBuoy || null;
     for (var i = 0; i < n; i++) {
       var x = px[i], y = py[i];
       var vx = (x - ox[i]) * damp;
       var vy = (y - oy[i]) * damp;
+      var g = grav;
+      if (bb && y > bb.line && x >= bb.x0 && x <= bb.x1) {
+        var sub = (y - bb.line) * 0.045; if (sub > 1) sub = 1;
+        g = grav * (1 - bb.lift * sub);
+        vx *= bb.drag; vy *= bb.drag;
+      }
       // clamp runaway
       if (vx > vcap) vx = vcap; else if (vx < -vcap) vx = -vcap;
       if (vy > vcap) vy = vcap; else if (vy < -vcap) vy = -vcap;
       ox[i] = x; oy[i] = y;
       px[i] = x + vx;
-      py[i] = y + vy + grav;
+      py[i] = y + vy + g;
     }
   }
 
@@ -4894,6 +4907,8 @@
     // bin, real water bodies 140+. Sustained over the dwell -> melt.
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai];
+      // v25.85 BANYA: guest slimes are customers, not solutes (plan B-D5).
+      if (b.guest) { b._dslT = 0; b._dslNear = 0; continue; }
       var bx0 = Math.floor((b.bboxL - JELLO_DISSOLVE_R) * 0.0625);
       var bx1 = Math.floor((b.bboxR + JELLO_DISSOLVE_R) * 0.0625);
       var by0 = Math.floor((b.bboxT - JELLO_DISSOLVE_R) * 0.0625);

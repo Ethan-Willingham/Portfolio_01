@@ -426,6 +426,22 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 v25.85 (Fable physics session): B2 CORE + B5 CORE SHIPPED. STEAM:
+  scene-local steam mode (smokeTune fields scaled on enter, restored exact on
+  exit), emitted off hot (fill 2) tubs via world-to-UV splats, pooling under the
+  slabs. THE GUEST: first slime customer (b.guest = dissolve-immune at the scan;
+  jelloBuildBody 1-tile body; hop brain; one-way waterline buoyancy b.bathBuoy in
+  jelloIntegrate, water NEVER force-coupled back; entry splash = spawned
+  droplets). FOUR found-the-hard-way lessons for future sessions: (1) the scene
+  MUST own screenW/screenH with worldScale (jello's draw cull + the smoke domain
+  read them; stale values culled an on-camera body and shrank the domain);
+  (2) drawSmoke() lives in the world render path, the scene must call it or dye
+  steps invisibly; (3) guest "grounded" must be POSITIONAL/stall-based, never
+  velocity (wedged bodies churn phantom velocity: two deadlocks); (4) guests
+  must soak in WHATEVER tub they land in, any state (overshoot is charming).
+  Steam brightness/rate + buoyancy lift/drag are v0 levers. Guests: 1, home
+  floor only, no elevator ride yet (B7).
+
 - 2026-07-09 v25.84 (owner): floors became PURCHASABLE: F1 free with two tubs,
   F2-F5 locked (grayed + in-scene КУПИТЬ button priced $2k/$8k/$20k/$50k v0, paid
   from real game money, red-blink when short); water + the crown heat spawn on
