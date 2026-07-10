@@ -426,6 +426,13 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-09 v25.84 (owner): floors became PURCHASABLE: F1 free with two tubs,
+  F2-F5 locked (grayed + in-scene КУПИТЬ button priced $2k/$8k/$20k/$50k v0, paid
+  from real game money, red-blink when short); water + the crown heat spawn on
+  unlock; the ELEVATOR shaft (cols 27-29, left-aligned floors so it runs truly
+  vertical) got doors on every floor with ambient open/close on owned floors
+  (slime traffic lands with B7); bottom clamp peeks a slice of F2 so scrolling is
+  discoverable. Floor ownership is SESSION-ONLY until it joins SAVE_VERSION.
 - 2026-07-09 latest session (owner): the interior became a five-floor SCROLLING
   TOWER (F1 4 tubs / F2 4 dry / F3 sauna / F4 2 wide / F5 big hot crown pool),
   replacing the single room; width-fit camera + vertical scroll target; enter at

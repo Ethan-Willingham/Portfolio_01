@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.83';
+  var GAME_VERSION = 'v25.84';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11392,17 +11392,26 @@
   // tubs = water spans [c0,c1]; walls are added at span edges +-1.
   // fill: 0 = dry, 1 = cold water, 2 = full + the heat source.
   var BATH_CX_COL = 36;
+  // v25.84 (owner): two tubs per bath floor; every floor above F1 starts
+  // LOCKED (grayed out + a purchase button priced in game money); the LEFT
+  // edge is shared by every floor so the ELEVATOR shaft (cols 27-29) runs
+  // truly vertical with doors on every floor. Slime traffic through it
+  // lands with B7; until then owned floors' doors cycle ambiently and
+  // locked doors stay shut. fill: 1 = cold water on unlock, 2 = water +
+  // the B1 heat source (the crown pool).
   var BATH_FLOORS = [
-    { c0: 26, c1: 46, fr: 613, deep: 2, tubs: [[28,30],[32,34],[36,38],[40,42]], fill: [1,1,1,1] },
-    { c0: 26, c1: 46, fr: 600, deep: 2, tubs: [[28,30],[32,34],[36,38],[40,42]], fill: [0,0,0,0] },
-    { c0: 28, c1: 44, fr: 587, deep: 0, tubs: [], fill: [], sauna: true },
-    { c0: 30, c1: 42, fr: 574, deep: 2, tubs: [[32,35],[37,40]], fill: [1,1] },
-    { c0: 31, c1: 41, fr: 561, deep: 3, tubs: [[33,39]], fill: [2] }
+    { c0: 27, c1: 45, fr: 613, deep: 2, tubs: [[32,35],[38,41]], fill: [1,1], price: 0 },
+    { c0: 27, c1: 45, fr: 600, deep: 2, tubs: [[32,35],[38,41]], fill: [1,1], price: 2000 },
+    { c0: 27, c1: 43, fr: 587, deep: 0, tubs: [], fill: [], sauna: true, price: 8000 },
+    { c0: 27, c1: 41, fr: 574, deep: 2, tubs: [[31,34],[37,40]], fill: [1,1], price: 20000 },
+    { c0: 27, c1: 39, fr: 561, deep: 3, tubs: [[30,37]], fill: [2], price: 50000 }
   ];
+  var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
+  var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 548;                       // F5 ceiling row
   var BATH_BOT_ROW = 613;                       // F1 floor slab row
-  var BATH_VIEW_W = 25 * TILE;                  // width-fit: widest floor + shell
-  var BATH_EXIT_X0 = 44 * TILE, BATH_EXIT_X1 = 47 * TILE;   // F1 right-wall door
+  var BATH_VIEW_W = 29 * TILE;                  // width-fit + headroom for the F2 peek
+  var BATH_EXIT_X0 = 43 * TILE, BATH_EXIT_X1 = 46 * TILE;   // F1 right-wall door
   var BATH_EXIT_Y0 = 609 * TILE, BATH_EXIT_Y1 = 613 * TILE;
 
   var bathMode = false;        // true while inside the scene
@@ -11443,32 +11452,66 @@
           world[r][tb[0] - 1] = { type: 'foundation', hp: 999999 };
           world[r][tb[1] + 1] = { type: 'foundation', hp: 999999 };
         }
-        if (F.fill[i]) {
-          var wy0 = (F.fr - F.deep) * TILE + 12, wy1 = F.fr * TILE - 3;
-          for (var wy = wy0; wy < wy1; wy += 1.6) {
-            for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.6) {
-              addLiquidParticle('water', wx, wy, 0, 0, 0);
-            }
-          }
-        }
       }
       if (F.sauna) {
-        // Two stepped bench tiers along the left wall (solid, sittable).
-        for (c = F.c0 + 1; c <= F.c0 + 7; c++) world[F.fr - 1][c] = { type: 'foundation', hp: 999999 };
-        for (c = F.c0 + 1; c <= F.c0 + 4; c++) world[F.fr - 2][c] = { type: 'foundation', hp: 999999 };
+        // Two stepped bench tiers right of the elevator (solid, sittable).
+        for (c = F.c0 + 4; c <= F.c0 + 10; c++) world[F.fr - 1][c] = { type: 'foundation', hp: 999999 };
+        for (c = F.c0 + 4; c <= F.c0 + 7; c++) world[F.fr - 2][c] = { type: 'foundation', hp: 999999 };
       }
+      if (bathFloorsOwned[f]) bathFillFloor(f);
     }
-    // The ONE B1 heat rect warms the CROWN POOL: the payoff at the top.
-    // (B2's source list will heat more; until then the lower tubs run cold.)
-    var P = BATH_FLOORS[4], pt = P.tubs[0];
-    bathTune('BATH_SRC_X0', pt[0] * TILE);       bathTune('BATH_SRC_Y0', (P.fr - 1) * TILE);
-    bathTune('BATH_SRC_X1', (pt[1] + 1) * TILE); bathTune('BATH_SRC_Y1', (P.fr + 1) * TILE);
-    bathTune('BATH_ON', 1);
     bathRoomReady = true;
     try {
-      console.log('[bath] tower carved: 5 floors, rows ' + BATH_TOP_ROW + '-' +
-        BATH_BOT_ROW + '; crown pool heated. __bath.floor(1..5) scrolls there.');
+      console.log('[bath] tower carved: 5 floors; F1 open, buy the rest in-scene. ' +
+        '__bath.floor(1..5) scrolls, __bath.buy(2..5) purchases.');
     } catch (e) {}
+  }
+
+  // Fill a floor's tubs with water (on unlock). fill mode 2 also arms the
+  // ONE B1 heat rect there (the crown pool) and turns the channel on.
+  function bathFillFloor(f) {
+    var F = BATH_FLOORS[f];
+    for (var i = 0; i < F.tubs.length; i++) {
+      if (!F.fill[i]) continue;
+      var tb = F.tubs[i];
+      var wy0 = (F.fr - F.deep) * TILE + 12, wy1 = F.fr * TILE - 3;
+      for (var wy = wy0; wy < wy1; wy += 1.6) {
+        for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.6) {
+          addLiquidParticle('water', wx, wy, 0, 0, 0);
+        }
+      }
+      if (F.fill[i] === 2) {
+        bathTune('BATH_SRC_X0', tb[0] * TILE);       bathTune('BATH_SRC_Y0', (F.fr - 1) * TILE);
+        bathTune('BATH_SRC_X1', (tb[1] + 1) * TILE); bathTune('BATH_SRC_Y1', (F.fr + 1) * TILE);
+        bathTune('BATH_ON', 1);
+      }
+    }
+  }
+
+  // Purchase-button rect for a locked floor (world px). One source of truth
+  // for the renderer AND the tap hit-test.
+  function bathBuyRect(f) {
+    var F = BATH_FLOORS[f];
+    var cxp = ((F.c0 + F.c1 + 1) / 2) * TILE;
+    return { x: cxp - 110, y: (F.fr - 12) * TILE + 6 * TILE - 30, w: 220, h: 60 };
+  }
+  function bathFmtMoney(n) {
+    return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  // Purchase a locked floor with game money; red-blink the price if short.
+  function bathBuyFloor(f) {
+    if (f < 1 || f > 4 || bathFloorsOwned[f]) return false;
+    var F = BATH_FLOORS[f];
+    if (typeof money !== 'number' || money < F.price) {
+      bathBuyFlash[f] = performance.now() + 900;
+      return false;
+    }
+    money -= F.price;
+    bathFloorsOwned[f] = true;
+    bathFillFloor(f);
+    try { console.log('[bath] floor ' + (f + 1) + ' purchased for $' + F.price); } catch (e) {}
+    return true;
   }
 
   // ---- Transition ---------------------------------------------------------
@@ -11558,7 +11601,7 @@
     var iws = 1 / (dpr * worldScale);
     bathViewH = canvas.height * iws;
     var minY = BATH_TOP_ROW * TILE - 24;
-    var maxY = (BATH_BOT_ROW + 1) * TILE + 24 - bathViewH;
+    var maxY = (BATH_BOT_ROW + 1) * TILE + 12 - bathViewH;
     if (maxY < minY) maxY = minY;
     if (bathScrollT < minY) bathScrollT = minY;
     if (bathScrollT > maxY) bathScrollT = maxY;
@@ -11620,6 +11663,15 @@
     if (bathPtrMoved >= 10) return;   // it was a drag, not a tap
     var p = bathClientToWorld(e);
     if (!p) return;
+    // Purchase buttons on locked floors take priority over the exit door.
+    for (var bf = 1; bf <= 4; bf++) {
+      if (bathFloorsOwned[bf]) continue;
+      var R = bathBuyRect(bf);
+      if (p.x >= R.x && p.x <= R.x + R.w && p.y >= R.y && p.y <= R.y + R.h) {
+        bathBuyFloor(bf);
+        return;
+      }
+    }
     if (p.x >= BATH_EXIT_X0 && p.x <= BATH_EXIT_X1 &&
         p.y >= BATH_EXIT_Y0 && p.y <= BATH_EXIT_Y1) bathExit();
   }
@@ -11869,6 +11921,41 @@
       ctx.fillStyle = 'rgba(255,206,106,' + fl + ')';
       ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 6.283); ctx.fill();
     }
+    // The elevator: one aligned shaft (cols 27-29), a door per floor. Owned
+    // floors' doors slide open ambiently (staggered phases); locked floors
+    // stay shut with a dead indicator lamp. Slime traffic arrives with B7.
+    function elevator(F, fi, owned) {
+      var ex = 27 * TILE + 8, ew = 3 * TILE - 16, eh = 3 * TILE - 12;
+      var ey = F.fr * TILE - eh;
+      ctx.fillStyle = '#39424c'; ctx.fillRect(ex - 8, ey - 16, ew + 16, eh + 16);
+      ctx.fillStyle = '#4a5560'; ctx.fillRect(ex - 5, ey - 11, ew + 10, eh + 11);
+      ctx.fillStyle = owned ? '#e8b53a' : '#57504a';
+      ctx.beginPath(); ctx.arc(ex + ew / 2 - 10, ey - 5, 3.5, 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#cfd6dd';
+      ctx.font = 'bold 10px "Commit Mono", monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(fi + 1), ex + ew / 2 + 12, ey - 5);
+      ctx.fillStyle = '#0d0a07'; ctx.fillRect(ex, ey, ew, eh);
+      var openK = 0;
+      if (owned) {
+        var ph = Math.sin(lt * 0.7 + fi * 2.3);
+        openK = ph > 0 ? ph * ph * ph * ph : 0;
+      }
+      if (openK > 0.02) {
+        ctx.strokeStyle = '#2c343c'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(ex + ew / 2, ey); ctx.lineTo(ex + ew / 2, ey + 24); ctx.stroke();
+      }
+      var half = ew / 2, slide = half * 0.94 * openK;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(ex, ey, ew, eh); ctx.clip();
+      ctx.fillStyle = '#6f7b86';
+      ctx.fillRect(ex - slide, ey, half - 1, eh);
+      ctx.fillRect(ex + half + 1 + slide, ey, half - 1, eh);
+      ctx.fillStyle = '#5a6570';
+      ctx.fillRect(ex - slide + half - 4, ey, 3, eh);
+      ctx.fillRect(ex + half + 1 + slide, ey, 3, eh);
+      ctx.restore();
+    }
     var f, i, F;
     for (f = 0; f < BATH_FLOORS.length; f++) {
       F = BATH_FLOORS[f];
@@ -11911,8 +11998,8 @@
       if (F.sauna) {
         // Bench tiers over the solid tiles, the kamenka stove with hot
         // rocks and an ember glow, and the ПАРИЛКА plaque.
-        drawWoodPlanking(ix + TILE, (F.fr - 2) * TILE, 4 * TILE, TILE, 5);
-        drawWoodPlanking(ix + TILE, (F.fr - 1) * TILE, 7 * TILE, TILE, 5);
+        drawWoodPlanking(ix + 4 * TILE, (F.fr - 2) * TILE, 4 * TILE, TILE, 5);
+        drawWoodPlanking(ix + 4 * TILE, (F.fr - 1) * TILE, 7 * TILE, TILE, 5);
         var kx = (F.c1 - 3) * TILE, ky = (F.fr - 3) * TILE;
         ctx.fillStyle = '#4a5560'; ctx.fillRect(kx, ky, 2 * TILE, 3 * TILE);
         ctx.fillStyle = '#39424c'; ctx.fillRect(kx - 4, ky - 6, 2 * TILE + 8, 8);
@@ -11932,6 +12019,31 @@
         ctx.font = 'bold 15px "Commit Mono", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('ПАРИЛКА', ix + iw / 2, iy + 39);
+      }
+      elevator(F, f, bathFloorsOwned[f]);
+      // Locked floors: gray the whole floor down, then the purchase button.
+      if (!bathFloorsOwned[f]) {
+        ctx.fillStyle = 'rgba(82,76,70,0.40)';
+        ctx.fillRect(ix - TILE - 6, iy - TILE, iw + 2 * TILE + 12, ih + 2 * TILE);
+        ctx.fillStyle = 'rgba(12,9,7,0.38)';
+        ctx.fillRect(ix - TILE - 6, iy - TILE, iw + 2 * TILE + 12, ih + 2 * TILE);
+        var R = bathBuyRect(f);
+        var canBuy = (typeof money === 'number') && money >= F.price;
+        var flash = performance.now() < bathBuyFlash[f];
+        ctx.fillStyle = canBuy ? '#2e4a2e' : '#3a2f28';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(R.x, R.y, R.w, R.h, 10);
+        else ctx.rect(R.x, R.y, R.w, R.h);
+        ctx.fill();
+        ctx.strokeStyle = flash ? '#e24b4a' : '#e0b060'; ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#f0dfae';
+        ctx.font = 'bold 17px "Commit Mono", monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('КУПИТЬ ЭТАЖ ' + (f + 1), R.x + R.w / 2, R.y + 20);
+        ctx.fillStyle = flash ? '#ff8a80' : (canBuy ? '#b8e0a0' : '#c9b090');
+        ctx.font = 'bold 15px "Commit Mono", monospace';
+        ctx.fillText('$' + bathFmtMoney(F.price), R.x + R.w / 2, R.y + 43);
       }
     }
     // «БАНЯ» sign on the bottom floor's back wall.
@@ -11961,6 +12073,11 @@
     ctx.font = '13px "Commit Mono", monospace';
     ctx.textAlign = 'center';
     ctx.fillText('scroll or drag to climb the tower · tap ВЫХОД (or ESC) to leave', canvas.width / 2, canvas.height - 26);
+    // Wallet, top right, so buying a floor has visible consequence.
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(240,223,174,0.9)';
+    ctx.font = 'bold 14px "Commit Mono", monospace';
+    ctx.fillText('$' + bathFmtMoney(typeof money === 'number' ? money : 0), canvas.width - 16, 30);
     ctx.textAlign = 'left';
     return true;
   }
@@ -11969,6 +12086,7 @@
     window.bathTune = bathTune;
     window.__bath = { tune: bathTune, enter: bathEnter, exit: bathExit,
                       floor: bathScrollToFloor,
+                      buy: bathBuyFloor,
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
                       warp: bathWarp,
                       get mode() { return bathMode; } };
