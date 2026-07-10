@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.79';
+  var GAME_VERSION = 'v25.80';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11648,12 +11648,12 @@
 
     // Four tiers, bottom-up: planking body (darkening wash with height),
     // then the flared eave with its pair of lanterns.
-    drawWoodPlanking(cx - 80, gy - 118, 160, 98, 7);
-    drawWoodPlanking(cx - 66, gy - 208, 132, 76, 7);
+    drawWoodPlanking(cx - 80, gy - 118, 160, 98, 4);
+    drawWoodPlanking(cx - 66, gy - 208, 132, 76, 4);
     ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(cx - 66, gy - 208, 132, 76);
-    drawWoodPlanking(cx - 52, gy - 288, 104, 66, 6);
+    drawWoodPlanking(cx - 52, gy - 288, 104, 66, 4);
     ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.fillRect(cx - 52, gy - 288, 104, 66);
-    drawWoodPlanking(cx - 38, gy - 356, 76, 54, 6);
+    drawWoodPlanking(cx - 38, gy - 356, 76, 54, 4);
     ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(cx - 38, gy - 356, 76, 54);
 
     // Windows before the eaves so glow halos sit over the wood cleanly.
