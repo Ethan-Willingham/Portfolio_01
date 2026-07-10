@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Work After the Sale</title>
+  <meta name="description" content="Customer success is the operating system between a signed subscription and a renewed one. A field guide to the whole discipline, then the hard center for SMB and mid-market warehouse software: retain recurring revenue and get customers to useful value fast.">
+  <meta property="og:title" content="The Work After the Sale">
+  <meta property="og:description" content="A field guide to customer success, recurring revenue retention, and onboarding to value, focused on SMB and mid-market SaaS warehouse software.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/customer-success.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/customer-success.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta property="article:published_time" content="2026-07-09">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/customer-success.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     THE WORK AFTER THE SALE
+     Customer success from the subscription model down to the
+     daily work of SMB and mid-market SaaS WMS. Retention is the
+     first spine. Onboarding and time to value are the second.
+     One reading column, wide teaching figures, two interactives.
+     No em dashes anywhere.
+     ============================================================ */
+  :root {
+    --measure: 64ch;
+    --tint: rgba(245,241,234,0.045);
+    --tint-strong: rgba(245,241,234,0.075);
+    --hair: rgba(212,196,160,0.20);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html { overflow-x: hidden; overscroll-behavior-x: none; scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--font-heading);
+    font-weight: 400; line-height: 1.66; padding: 0; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--selection-bg); color: var(--selection-text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  .top-nav { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin: 0 auto; padding: 2.5rem var(--gutter) 0; }
+  @media (min-width: 720px) { .top-nav { padding-top: 4rem; } }
+  @media (min-width: 1024px) { .top-nav { padding-top: 5rem; } }
+  .reading-progress { position: fixed; inset: 0 auto auto 0; width: 0; height: 2px; background: var(--accent); z-index: 1000; pointer-events: none; }
+
+  /* cover */
+  .cover { max-width: 61rem; margin: 0 auto; padding: 12svh var(--gutter) 6svh; text-align: center; }
+  .cover .eyebrow { font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.92rem; color: var(--accent); }
+  .cover h1 {
+    max-width: 10ch; margin: 1.05rem auto 0; color: var(--text-bright); font-weight: 700;
+    font-size: clamp(3.7rem, 12vw, 7.5rem); line-height: 0.94; letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+  .cover .dek { max-width: 49ch; margin: 1.6rem auto 0; color: var(--text-dim); font-size: 1.24rem; line-height: 1.58; text-wrap: pretty; }
+  .cover .hero-meta {
+    margin: 1.6rem auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5em 1.05em;
+    color: var(--text-dim); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.11em; text-transform: uppercase;
+  }
+  .cover .hero-meta b { color: var(--accent); font-weight: 400; }
+  .cover .hero-meta .sep { opacity: 0.42; }
+  .cover-motif { display: block; width: min(86vw, 440px); margin: 2.7rem auto 0; overflow: visible; }
+  .cover-motif .loop { fill: none; stroke: rgba(184,178,162,0.34); stroke-width: 1.2; stroke-dasharray: 3 4; }
+  .cover-motif .earned { fill: none; stroke: var(--accent); stroke-width: 2.1; stroke-linecap: round; }
+  .cover-motif .node { fill: var(--bg); stroke: var(--accent); stroke-width: 1.5; }
+  .cover-motif .start { fill: var(--accent); }
+  .cover-motif text { fill: var(--text-dim); font-family: var(--font-body); font-size: 7px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .scroll-cue { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: 0.68; font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.82rem; }
+
+  /* reading grid */
+  .essay {
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(var(--gutter), 1fr)
+      [wide-start] minmax(0, 7rem)
+      [content-start] min(var(--measure), calc(100% - var(--gutter) * 2)) [content-end]
+      minmax(0, 7rem) [wide-end]
+      minmax(var(--gutter), 1fr) [full-end];
+  }
+  .essay > * { grid-column: content; }
+  .essay > .wide { grid-column: wide; }
+  .essay > .full { grid-column: full; }
+  .essay p { margin: 0 0 1.15em; color: var(--text); font-size: 1.22rem; line-height: 1.68; text-wrap: pretty; }
+  .essay p b, .essay p strong { color: var(--text-bright); font-weight: 700; }
+  .essay a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.34); }
+  .essay a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
+  .lede { margin-top: 2.6rem; }
+  .lede.first p:first-of-type::first-letter {
+    float: left; padding: 0.06em 0.12em 0 0; color: var(--accent); font-size: 3.4em;
+    line-height: 0.74; font-weight: 700;
+  }
+  .act { margin: 7svh auto 1svh; text-align: center; }
+  .act .act-k { color: var(--text-dim); font-variant: small-caps; letter-spacing: 0.24em; font-size: 0.84rem; }
+  .act .act-t { margin-top: 0.3rem; color: var(--accent); font-weight: 700; font-style: italic; font-size: clamp(1.5rem, 4vw, 2.1rem); line-height: 1.2; text-wrap: balance; }
+  .act::after { content: ''; display: block; width: 90px; height: 1px; margin: 1.3rem auto 0; background: linear-gradient(90deg, transparent, var(--hair), transparent); }
+  .sec { margin: 6svh 0 0; scroll-margin-top: 2rem; }
+  .sec .u-sechead { margin-bottom: 0.5rem; gap: 0.45em; }
+  .sec .u-sechead-k { background: none; padding: 0; border-radius: 0; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: none; }
+  .sec .sub { margin: 0 0 1.4rem; color: var(--text-dim); font-style: italic; font-size: 1.18rem; line-height: 1.5; text-wrap: pretty; }
+  .fig-block { margin: 2.6rem 0; }
+  .fig-title { margin: 0 0 0.8rem; color: var(--text-bright); font-weight: 700; font-size: 1.06rem; }
+  .fig-note.fig-note { margin: 0.7rem 0 0; color: var(--text-dim); font-style: italic; font-size: 0.92rem; line-height: 1.48; }
+
+  /* lifecycle */
+  .lifecycle { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .life-step { position: relative; min-height: 116px; padding: 0.85rem 0.75rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .life-step::after { content: ''; position: absolute; top: 50%; right: -7px; width: 7px; border-top: 1px solid var(--accent); opacity: 0.6; }
+  .life-step:last-child::after { display: none; }
+  .life-step .n { color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; }
+  .life-step .h { margin-top: 0.25rem; color: var(--text-bright); font-weight: 700; font-size: 0.98rem; line-height: 1.1; }
+  .life-step .d { margin-top: 0.35rem; color: var(--text-dim); font-size: 0.82rem; line-height: 1.35; }
+
+  /* ownership cards */
+  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .role { padding: 1rem 1.05rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .role .rh { color: var(--text-bright); font-weight: 700; font-size: 1.05rem; }
+  .role .owns { margin-top: 0.22rem; color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .role .rd { margin-top: 0.55rem; color: var(--text-dim); font-size: 0.9rem; line-height: 1.46; }
+
+  /* retention waterfall */
+  .waterfall { padding: 1.3rem 1.35rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 8px; }
+  .water-row { display: grid; grid-template-columns: 8rem 1fr auto; gap: 0.8rem; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid var(--hair); }
+  .water-row:last-child { border-bottom: 0; }
+  .water-row .wh { color: var(--text-bright); font-weight: 700; font-size: 0.95rem; }
+  .water-row .bar { height: 12px; background: rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden; }
+  .water-row .fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .water-row.loss .fill { background: var(--text-faint); }
+  .water-row .wd { color: var(--text-dim); font-size: 0.82rem; text-align: right; }
+  .bench { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1.5rem; }
+  .bench-card { padding: 1.2rem 1.25rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .bench-card .bf { color: var(--accent); font-weight: 700; font-size: clamp(2.4rem, 8vw, 4rem); line-height: 0.95; }
+  .bench-card .bl { margin-top: 0.45rem; color: var(--text-bright); font-weight: 700; font-size: 0.98rem; }
+  .bench-card .bd { margin-top: 0.35rem; color: var(--text-dim); font-size: 0.86rem; line-height: 1.4; }
+  .bench-src { margin-top: 0.8rem; color: var(--text-dim); font-size: 0.86rem; line-height: 1.5; }
+
+  /* retention calculator */
+  .lab { margin: 3rem 0; overflow: hidden; background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; box-shadow: 0 18px 40px -18px rgba(8,12,9,0.58); }
+  .lab-head { padding: 1rem 1.3rem; background: var(--d-bg-raised); border-bottom: 1px solid var(--d-rule); }
+  .lab-head .t { color: var(--d-text-bright); font-weight: 700; font-size: 1.12rem; }
+  .lab-head .s { margin-top: 0.18rem; color: var(--d-text-dim); font-style: italic; font-size: 0.95rem; }
+  .lab-body { padding: 1.35rem; }
+  .lab-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 1.35rem; }
+  .lab-result { padding: 0.9rem 0.8rem; text-align: center; background: rgba(0,0,0,0.18); border: 1px solid var(--d-rule); border-radius: 6px; }
+  .lab-result .v { display: block; color: var(--d-accent); font-size: clamp(1.75rem, 6vw, 2.6rem); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .lab-result .k { display: block; margin-top: 0.35rem; color: var(--d-text-dim); font-family: var(--font-mono); font-size: 0.67rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .lab-controls { display: grid; gap: 1rem; }
+  .lab-control .lc-top { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-bottom: 0.35rem; }
+  .lab-control label { color: var(--d-text-bright); font-weight: 700; font-size: 0.96rem; }
+  .lab-control output { color: var(--d-accent); font-family: var(--font-mono); font-size: 0.84rem; }
+  .lab-control input[type="range"] { width: 100%; accent-color: var(--d-accent); }
+  .formula { margin-top: 1.2rem; padding: 0.95rem 1.05rem; background: rgba(0,0,0,0.18); border-left: 2px solid var(--d-accent); border-radius: 5px; color: var(--d-text); font-size: 0.95rem; line-height: 1.55; }
+  .formula code { color: var(--d-text-bright); font-family: var(--font-mono); font-size: 0.86rem; }
+  .lab-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+  .lab-reset { padding: 0.45rem 0.9rem; background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; color: var(--d-text); font-family: var(--font-heading); cursor: pointer; }
+
+  /* risks and health */
+  .risk-grid, .signal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .risk, .signal { padding: 1rem 1.05rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .risk .rk, .signal .sk { color: var(--accent); font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .risk .rh, .signal .sh { margin-top: 0.32rem; color: var(--text-bright); font-weight: 700; font-size: 1.02rem; }
+  .risk .rd, .signal .sd { margin-top: 0.35rem; color: var(--text-dim); font-size: 0.9rem; line-height: 1.45; }
+  .signal .evidence { display: block; margin-top: 0.55rem; color: var(--text); font-size: 0.84rem; line-height: 1.4; }
+
+  /* value ledger */
+  .ledger { overflow: hidden; background: var(--tint); border: 1px solid var(--hair); border-radius: 8px; }
+  .ledger-row { display: grid; grid-template-columns: 7.5rem 1fr; border-bottom: 1px solid var(--hair); }
+  .ledger-row:last-child { border-bottom: 0; }
+  .ledger-row .lk { padding: 0.8rem 0.9rem; color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.07em; text-transform: uppercase; background: rgba(0,0,0,0.12); }
+  .ledger-row .lv { padding: 0.8rem 1rem; color: var(--text); font-size: 0.94rem; line-height: 1.45; }
+
+  /* renewal and retention stack */
+  .renewal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .renew-step { padding: 1rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .renew-step .when { color: var(--accent); font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .renew-step .what { margin-top: 0.35rem; color: var(--text-bright); font-weight: 700; font-size: 1rem; }
+  .renew-step .how { margin-top: 0.4rem; color: var(--text-dim); font-size: 0.87rem; line-height: 1.42; }
+  .retention-stack { display: flex; flex-direction: column-reverse; gap: 5px; }
+  .ret-layer { display: grid; grid-template-columns: 2rem 10rem 1fr; gap: 0.7rem; align-items: baseline; padding: 0.75rem 0.9rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 6px; }
+  .ret-layer .rn { color: var(--accent); font-family: var(--font-mono); font-size: 0.72rem; }
+  .ret-layer .rh { color: var(--text-bright); font-weight: 700; font-size: 0.96rem; }
+  .ret-layer .rd { color: var(--text-dim); font-size: 0.88rem; line-height: 1.4; }
+
+  /* segment comparison */
+  .segments { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border: 1px solid var(--hair); border-radius: 8px; }
+  .segment { padding: 1.2rem 1.25rem; background: var(--tint); }
+  .segment:first-child { border-right: 1px solid var(--hair); }
+  .segment .sg-k { color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .segment h4 { margin: 0.35rem 0 0.8rem; color: var(--text-bright); font-size: 1.35rem; }
+  .segment dl { margin: 0; }
+  .segment dt { margin-top: 0.65rem; color: var(--text-bright); font-weight: 700; font-size: 0.9rem; }
+  .segment dd { margin: 0.15rem 0 0; color: var(--text-dim); font-size: 0.9rem; line-height: 1.42; }
+
+  /* time to value */
+  .ttv-clock { padding: 1.25rem 1.35rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 8px; }
+  .ttv-formula { display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap; color: var(--text-bright); font-family: var(--font-mono); font-size: clamp(1rem, 3vw, 1.35rem); }
+  .ttv-formula .term { padding: 0.5rem 0.7rem; background: rgba(0,0,0,0.16); border-radius: 4px; }
+  .ttv-formula .op { color: var(--accent); }
+  .value-levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 1.25rem; }
+  .value-level { padding: 0.95rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .value-level .vk { color: var(--accent); font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .value-level .vh { margin-top: 0.3rem; color: var(--text-bright); font-weight: 700; font-size: 0.98rem; }
+  .value-level .vd { margin-top: 0.35rem; color: var(--text-dim); font-size: 0.86rem; line-height: 1.42; }
+  .path { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .path-step { position: relative; padding: 0.95rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .path-step .pn { color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; }
+  .path-step .ph { margin-top: 0.3rem; color: var(--text-bright); font-weight: 700; font-size: 0.98rem; }
+  .path-step .pd { margin-top: 0.35rem; color: var(--text-dim); font-size: 0.85rem; line-height: 1.4; }
+
+  /* segment-motion interactive */
+  .journey { overflow: hidden; background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; }
+  .journey-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.15rem; background: var(--d-bg-raised); border-bottom: 1px solid var(--d-rule); }
+  .journey-head .jh { color: var(--d-text-bright); font-weight: 700; font-size: 1.08rem; }
+  .journey-tabs { display: flex; gap: 5px; }
+  .journey-tab { padding: 0.42rem 0.78rem; background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; color: var(--d-text); font-family: var(--font-heading); cursor: pointer; }
+  .journey-tab[aria-pressed="true"] { background: var(--d-accent); border-color: var(--d-accent); color: var(--d-bg); font-weight: 700; }
+  .journey-body { padding: 0.4rem 1.15rem 1rem; }
+  .journey-row { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--d-rule); }
+  .journey-row:last-child { border-bottom: 0; }
+  .journey-row .jk { color: var(--d-accent); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .journey-row .jv { color: var(--d-text); font-size: 0.94rem; line-height: 1.45; }
+
+  /* cadence */
+  .cadence { overflow: hidden; border: 1px solid var(--hair); border-radius: 8px; }
+  .cad-row { display: grid; grid-template-columns: 7rem 11rem 1fr; border-bottom: 1px solid var(--hair); }
+  .cad-row:last-child { border-bottom: 0; }
+  .cad-row > div { padding: 0.78rem 0.9rem; }
+  .cad-row .ck { color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.07em; text-transform: uppercase; background: rgba(0,0,0,0.12); }
+  .cad-row .co { color: var(--text-bright); font-weight: 700; font-size: 0.92rem; }
+  .cad-row .ca { color: var(--text-dim); font-size: 0.9rem; line-height: 1.42; }
+  .scorecards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .scorecard { padding: 1rem 1.05rem; background: var(--tint); border: 1px solid var(--hair); border-radius: 7px; }
+  .scorecard .sh { color: var(--text-bright); font-weight: 700; font-size: 1.03rem; }
+  .scorecard ul { margin: 0.6rem 0 0; padding: 0; list-style: none; }
+  .scorecard li { padding: 0.25rem 0; color: var(--text-dim); font-size: 0.89rem; line-height: 1.38; }
+
+  /* ending and sources */
+  .ending { max-width: 58rem; margin: 9svh auto 0; padding: 7svh var(--gutter); text-align: center; border-top: 1px solid var(--hair); }
+  .ending h2 { margin: 0; color: var(--text-bright); font-size: clamp(2.4rem, 8vw, 5.1rem); line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
+  .ending h2 em { color: var(--accent); font-weight: 400; }
+  .ending p { max-width: 49ch; margin: 1.5rem auto 0; color: var(--text-dim); font-size: 1.16rem; line-height: 1.62; }
+  .appendix { max-width: calc(var(--measure) + 4rem); margin: 0 auto; padding: 5svh var(--gutter) 8svh; }
+  .appendix h2 { color: var(--text-bright); font-size: 1.7rem; }
+  .appendix ol { margin: 1.2rem 0 0; padding-left: 1.25rem; }
+  .appendix li { margin: 0.7rem 0; color: var(--text-dim); font-family: var(--font-body); font-size: 0.92rem; line-height: 1.5; }
+  .appendix a { color: var(--accent); }
+
+  .reveal { opacity: 1; transform: none; }
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .js .reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out); }
+    .js .reveal.is-in { opacity: 1; transform: none; }
+  }
+  @media (max-width: 900px) {
+    .lifecycle { grid-template-columns: repeat(4, 1fr); }
+    .life-step:nth-child(4)::after { display: none; }
+    .roles, .risk-grid, .signal-grid { grid-template-columns: repeat(2, 1fr); }
+    .renewal, .value-levels, .path { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 700px) {
+    .essay p { font-size: 1.16rem; }
+    .cover { padding-top: 10svh; }
+    .lifecycle { grid-template-columns: repeat(2, 1fr); }
+    .life-step:nth-child(4)::after { display: block; }
+    .life-step:nth-child(even)::after { display: none; }
+    .bench, .segments { grid-template-columns: 1fr; }
+    .segment:first-child { border-right: 0; border-bottom: 1px solid var(--hair); }
+    .ret-layer { grid-template-columns: 1.5rem 8rem 1fr; }
+    .scorecards { grid-template-columns: 1fr; }
+    .cad-row { grid-template-columns: 6rem 1fr; }
+    .cad-row .ca { grid-column: 1 / -1; padding-top: 0; }
+  }
+  @media (max-width: 520px) {
+    .roles, .risk-grid, .signal-grid, .renewal, .value-levels, .path { grid-template-columns: 1fr; }
+    .lab-results { grid-template-columns: 1fr 1fr; }
+    .lab-result:first-child { grid-column: 1 / -1; }
+    .water-row { grid-template-columns: 6.5rem 1fr; }
+    .water-row .wd { grid-column: 1 / -1; text-align: left; }
+    .ledger-row { grid-template-columns: 1fr; }
+    .ledger-row .lv { padding-top: 0.25rem; }
+    .ret-layer { grid-template-columns: 1.5rem 1fr; }
+    .ret-layer .rd { grid-column: 2; }
+    .journey-row { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress"></div>
+  <div class="top-nav"><a href="/" class="post-back"><span class="pb-label">Home</span></a></div>
+
+  <header class="cover">
+    <div class="eyebrow">On Customer Success, Retention &amp; Time to Value</div>
+    <h1>The Work After the Sale</h1>
+    <p class="dek">A subscription turns one sale into a promise that must keep being true. This is the whole customer success job, then the hard center for small and mid-market warehouse software: keep the recurring revenue, and get each customer to useful value fast.</p>
+    <p class="hero-meta">A field guide <span class="sep">/</span> <b>18 stops</b> <span class="sep">/</span> <b>retention first</b> <span class="sep">/</span> onboarding to value <span class="sep">/</span> 25 min read</p>
+    <svg class="cover-motif" viewBox="0 0 220 92" aria-hidden="true">
+      <path class="loop" d="M42,52 C50,18 92,10 126,24 C162,39 173,70 146,81 C116,93 75,77 78,50 C81,31 109,26 132,36"/>
+      <path class="earned" d="M18,69 C42,69 52,67 66,58 C81,49 80,32 96,24 C116,14 146,23 157,43 C169,64 155,82 132,84"/>
+      <circle class="start" cx="18" cy="69" r="3.5"/>
+      <circle class="node" cx="66" cy="58" r="3"/>
+      <circle class="node" cx="96" cy="24" r="3"/>
+      <circle class="node" cx="157" cy="43" r="3"/>
+      <circle class="start" cx="132" cy="84" r="3.5"/>
+      <text x="15" y="84">sale</text>
+      <text x="62" y="72">value</text>
+      <text x="95" y="13" text-anchor="middle">adoption</text>
+      <text x="162" y="34">renewal</text>
+      <text x="134" y="92" text-anchor="middle">earned again</text>
+    </svg>
+    <span class="scroll-cue">scroll</span>
+  </header>
+
+  <main>
+    <article class="essay">
+      <div class="lede first reveal">
+        <p>A subscription sale is temporary revenue until the customer chooses it again. The contract can be signed, the invoice paid, and the software live while the customer is still headed for the door. They may never finish setup. The floor may keep a spreadsheet beside the new system. The executive who bought it may leave. Customer success is the work of seeing that drift early and closing it before renewal turns the answer into a number.</p>
+        <p>The discipline covers the whole path after the signature: handoff, onboarding, adoption, value, support, renewal, expansion, and the relationship holding it together. A customer success team can coordinate that path. It cannot carry it alone. Sales shapes the promise, product makes the promise possible, onboarding gets it working, support keeps it working, and the customer has to change enough of their own operation to receive the value they bought.</p>
+        <p>This guide starts with that whole system. Then it narrows to SMB and mid-market SaaS WMS, where the product sits in the daily path of receiving, picking, packing, and shipping. The first priority is recurring revenue retention. The second is onboarding time to value, because the renewal clock starts long before the renewal conversation.</p>
+      </div>
+
+      <div class="dlnum-wrap dlnum-2up reveal">
+        <p class="dlnum-head">Five terms before we start</p>
+        <div class="dlnum-item"><div class="dlnum-numeral">1</div><div class="dlnum-body"><h3 class="dlnum-term">Customer success</h3><p class="dlnum-def">The company-wide system for helping customers reach the outcome they bought, then retaining and growing the relationship when the value is real.</p></div></div>
+        <div class="dlnum-item"><div class="dlnum-numeral">2</div><div class="dlnum-body"><h3 class="dlnum-term">ARR</h3><p class="dlnum-def">Annual recurring revenue. The annualized subscription value of the active recurring customer book.</p></div></div>
+        <div class="dlnum-item"><div class="dlnum-numeral">3</div><div class="dlnum-body"><h3 class="dlnum-term">GRR</h3><p class="dlnum-def">Gross revenue retention. How much starting recurring revenue survived churn and contraction, before expansion can cover the loss.</p></div></div>
+        <div class="dlnum-item"><div class="dlnum-numeral">4</div><div class="dlnum-body"><h3 class="dlnum-term">NRR</h3><p class="dlnum-def">Net revenue retention. The same starting customer book after churn, contraction, and expansion are all counted.</p></div></div>
+        <div class="dlnum-item"><div class="dlnum-numeral">5</div><div class="dlnum-body"><h3 class="dlnum-term">TTV</h3><p class="dlnum-def">Time to value. The elapsed time between a named starting event and a customer reaching a named, verifiable value milestone.</p></div></div>
+      </div>
+
+      <div class="act reveal"><div class="act-k">Act I</div><div class="act-t">The whole job</div></div>
+
+      <section class="sec reveal" id="promise">
+        <div class="u-sechead"><p class="u-sechead-k">01</p><h2 class="u-sechead-h">The signature starts the work</h2></div>
+        <p class="sub">A customer buys an outcome. The software is the mechanism they chose to reach it.</p>
+        <p>A product can work exactly as designed and still fail the customer. The screens load. The reports run. Nobody uses the new workflow, the promised labor saving never appears, and the warehouse manager quietly decides the old system was easier. Product success happened. Customer success did not.</p>
+        <p>The job therefore begins with one plain question: <b>what had to become better for this purchase to have been worth it?</b> The answer cannot stop at "go live" or "use the picking module." Those are milestones. The outcome is closer to "ship the cutoff without adding a second shift," "trust inventory across every channel," or "open the next site without adding another spreadsheet." Customer success keeps that outcome visible while a hundred smaller tasks try to replace it.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Write the customer's intended outcome in one sentence before kickoff. If the sentence names only your product, it is not finished.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="lifecycle">
+        <div class="u-sechead"><p class="u-sechead-k">02</p><h2 class="u-sechead-h">The lifecycle is a loop</h2></div>
+        <p class="sub">Customers move forward when value accumulates, and backward when trust or adoption slips.</p>
+        <p>The clean diagram runs left to right: sell, hand off, onboard, adopt, realize value, renew, expand. Real accounts circle. A new module sends an old customer back through onboarding. A broken integration pushes adoption backward. A new executive can reopen the original business case. Support runs across the whole line because a serious incident can change the meaning of every stage after it.</p>
+        <div class="fig-block wide reveal">
+          <div class="fig-title">The customer lifecycle, one promise carried forward</div>
+          <div class="lifecycle">
+            <div class="life-step"><div class="n">01</div><div class="h">Sell</div><div class="d">Choose a customer the product can help.</div></div>
+            <div class="life-step"><div class="n">02</div><div class="h">Hand off</div><div class="d">Transfer the promise, scope, people, and risk.</div></div>
+            <div class="life-step"><div class="n">03</div><div class="h">Onboard</div><div class="d">Turn the sold design into a working operation.</div></div>
+            <div class="life-step"><div class="n">04</div><div class="h">Adopt</div><div class="d">Make the new workflow the normal way work happens.</div></div>
+            <div class="life-step"><div class="n">05</div><div class="h">Realize</div><div class="d">Measure the outcome the customer came for.</div></div>
+            <div class="life-step"><div class="n">06</div><div class="h">Renew</div><div class="d">Recommit because the value still holds.</div></div>
+            <div class="life-step"><div class="n">07</div><div class="h">Expand</div><div class="d">Add scope where earned value supports it.</div></div>
+          </div>
+          <p class="fig-note">The loop is the point. Expansion creates a new promise, and the work begins again.</p>
+        </div>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Give every account a current lifecycle stage and a next milestone. "Live" is too broad to run a customer book.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="ownership">
+        <div class="u-sechead"><p class="u-sechead-k">03</p><h2 class="u-sechead-h">Six teams, one promise</h2></div>
+        <p class="sub">Customer success fails at the seams when everyone owns the relationship and nobody owns the next result.</p>
+        <p>The customer experiences one company. Inside the vendor, six teams see six different pieces of the account. Clear ownership keeps those pieces from becoming gaps. It also prevents the customer success manager from turning into a human forwarding rule for every problem the company has.</p>
+        <div class="fig-block wide reveal">
+          <div class="roles">
+            <div class="role"><div class="rh">Sales</div><div class="owns">owns fit and promise</div><div class="rd">Qualifies the use case, names the outcome, records commitments, and leaves no surprise scope behind.</div></div>
+            <div class="role"><div class="rh">Onboarding</div><div class="owns">owns verified live work</div><div class="rd">Moves the customer through design, configuration, data, testing, training, cutover, and the first working flow.</div></div>
+            <div class="role"><div class="rh">Support</div><div class="owns">owns restoration</div><div class="rd">Receives incidents, establishes impact, restores service, communicates clearly, and preserves the evidence.</div></div>
+            <div class="role"><div class="rh">Customer success</div><div class="owns">owns outcome and risk</div><div class="rd">Connects adoption to value, keeps stakeholders aligned, carries risk to action, and runs the renewal path.</div></div>
+            <div class="role"><div class="rh">Product and engineering</div><div class="owns">owns the mechanism</div><div class="rd">Keeps the product reliable, studies repeated gaps, and makes the roadmap legible without promising dates it cannot hold.</div></div>
+            <div class="role"><div class="rh">Finance and RevOps</div><div class="owns">owns the commercial record</div><div class="rd">Keeps contracts, billing, ARR movements, renewal dates, and the customer book measurable and consistent.</div></div>
+          </div>
+        </div>
+        <p>The handoffs need named artifacts. Sales leaves a brief. Onboarding leaves a production record and open-risk list. Support leaves an incident history. Customer success leaves a value ledger and renewal record. The next team should never have to reconstruct the customer's story from email.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">For every customer-facing task, name one owner, one output, and the event that hands it to the next team.</p></aside>
+      </section>
+
+      <div class="act reveal"><div class="act-k">Act II</div><div class="act-t">Keep the recurring revenue</div></div>
+
+      <section class="sec reveal" id="retention-base">
+        <div class="u-sechead"><p class="u-sechead-k">04</p><h2 class="u-sechead-h">Freeze the customer book</h2></div>
+        <p class="sub">New sales can hide an old-customer leak. Retention starts by holding the starting cohort still.</p>
+        <p>Take every customer and recurring dollar you had at the beginning of a period. Then ignore every new logo sold after that date. What remains is the retention story. Some customers leave. Some stay and spend less. Some stay flat. Some expand. This frozen-book view makes the installed base answer for itself.</p>
+        <div class="fig-block reveal">
+          <div class="waterfall">
+            <div class="water-row"><div class="wh">Starting book</div><div class="bar"><div class="fill" style="width:100%"></div></div><div class="wd">the cohort you began with</div></div>
+            <div class="water-row loss"><div class="wh">Churn</div><div class="bar"><div class="fill" style="width:28%"></div></div><div class="wd">customers that leave</div></div>
+            <div class="water-row loss"><div class="wh">Contraction</div><div class="bar"><div class="fill" style="width:18%"></div></div><div class="wd">customers that spend less</div></div>
+            <div class="water-row"><div class="wh">Gross retained</div><div class="bar"><div class="fill" style="width:82%"></div></div><div class="wd">what survived before expansion</div></div>
+            <div class="water-row"><div class="wh">Expansion</div><div class="bar"><div class="fill" style="width:34%"></div></div><div class="wd">more value sold into survivors</div></div>
+          </div>
+          <p class="fig-note">The bars show the shape of the math, not a benchmark. The calculator in the next section uses a clearly labeled sample book.</p>
+        </div>
+        <p><b>Logo retention</b> counts customers. <b>Revenue retention</b> counts recurring dollars. You need both. Losing one tiny account and losing one anchor account look identical in logo churn and nothing alike in revenue churn.</p>
+        <div class="bench reveal">
+          <div class="bench-card"><div class="bf">91%</div><div class="bl">median GRR</div><div class="bd">Bootstrapped private B2B SaaS companies with $3 million to $20 million in ARR.</div></div>
+          <div class="bench-card"><div class="bf">103%</div><div class="bl">median NRR</div><div class="bd">The same 2026 survey cohort, after expansion is included.</div></div>
+        </div>
+        <p class="bench-src"><a href="https://www.saas-capital.com/blog-posts/benchmarking-metrics-for-bootstrapped-saas-companies/">SaaS Capital, 2026 survey of more than 1,000 private B2B SaaS companies</a>. A useful peer set, not a universal target.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Review logo retention, GRR, and NRR by segment. The company average can hide a weak SMB motion or one oversized mid-market loss.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="retention-math">
+        <div class="u-sechead"><p class="u-sechead-k">05</p><h2 class="u-sechead-h">The two retention rates</h2></div>
+        <p class="sub">GRR tells you whether customers kept what they bought. NRR tells you whether expansion repaired or exceeded the loss.</p>
+        <p>Gross revenue retention is the harder truth because expansion cannot help it. Start with recurring revenue, subtract churn and contraction, then divide by the starting amount. Net revenue retention adds expansion before dividing. GRR cannot rise above one hundred percent. NRR can.</p>
+        <div class="lab full reveal" id="retention-lab" aria-label="Interactive recurring revenue retention calculator">
+          <div style="max-width: calc(var(--measure) + 11rem); margin: 0 auto;">
+            <div class="lab-head"><div class="t">Move the recurring revenue</div><div class="s">A sample customer book. Change the losses and expansion to see which number moves.</div></div>
+            <div class="lab-body">
+              <div class="lab-results">
+                <div class="lab-result"><span class="v" id="retained-arr">$880k</span><span class="k">gross retained ARR</span></div>
+                <div class="lab-result"><span class="v" id="grr-out">88.0%</span><span class="k">GRR</span></div>
+                <div class="lab-result"><span class="v" id="nrr-out">98.0%</span><span class="k">NRR</span></div>
+              </div>
+              <div class="lab-controls">
+                <div class="lab-control"><div class="lc-top"><label for="start-arr">Starting ARR</label><output id="start-arr-out">$1.00m</output></div><input id="start-arr" type="range" min="500000" max="5000000" step="50000" value="1000000"></div>
+                <div class="lab-control"><div class="lc-top"><label for="churn-arr">Churned ARR</label><output id="churn-arr-out">$80k</output></div><input id="churn-arr" type="range" min="0" max="500000" step="10000" value="80000"></div>
+                <div class="lab-control"><div class="lc-top"><label for="contraction-arr">Contracted ARR</label><output id="contraction-arr-out">$40k</output></div><input id="contraction-arr" type="range" min="0" max="500000" step="10000" value="40000"></div>
+                <div class="lab-control"><div class="lc-top"><label for="expansion-arr">Expansion ARR</label><output id="expansion-arr-out">$100k</output></div><input id="expansion-arr" type="range" min="0" max="1000000" step="10000" value="100000"></div>
+              </div>
+              <div class="formula" id="retention-read" aria-live="polite"><code>GRR = (start - churn - contraction) / start</code><br><code>NRR = (start - churn - contraction + expansion) / start</code></div>
+              <div class="lab-actions"><button class="lab-reset" id="retention-reset" type="button">Reset sample</button></div>
+            </div>
+          </div>
+        </div>
+        <p>These measures are operating metrics, not GAAP measures, and companies do not all calculate them the same way. Some use ARR, some use revenue, and cohort rules vary. Put the formula and exclusions beside the dashboard so nobody argues from two valid-looking versions of the same acronym. <a href="https://www.sec.gov/Archives/edgar/data/1169561/000116956125000062/filename1.htm">The SEC makes the same comparability warning in company correspondence about SaaS NRR.</a></p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Manage GRR first. Expansion can make NRR look healthy while the original product, segment, or onboarding motion is losing ground.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="churn">
+        <div class="u-sechead"><p class="u-sechead-k">06</p><h2 class="u-sechead-h">Churn begins quietly</h2></div>
+        <p class="sub">Cancellation is the final event. The account usually changed direction earlier.</p>
+        <p>A customer rarely wakes up on renewal day and discovers they received no value. The story accumulates. The wrong customer was sold. The implementation never settled. Usage narrowed. The sponsor left. A painful incident changed the customer's trust. Nobody captured the original baseline, so the vendor could not prove improvement. By the time procurement sends the cancellation, the useful decisions are in the past.</p>
+        <div class="fig-block wide reveal">
+          <div class="risk-grid">
+            <div class="risk"><div class="rk">Fit debt</div><div class="rh">The product was stretched to win</div><div class="rd">The use case, segment, budget, or operating model never matched what the product could deliver well.</div></div>
+            <div class="risk"><div class="rk">Implementation debt</div><div class="rh">The account went live unfinished</div><div class="rd">Workarounds, dirty data, unclosed scope, or weak training became the permanent operating model.</div></div>
+            <div class="risk"><div class="rk">Adoption debt</div><div class="rh">The workflow stayed optional</div><div class="rd">Users kept parallel tools, skipped scans, or used only the narrowest piece of what was sold.</div></div>
+            <div class="risk"><div class="rk">Value debt</div><div class="rh">Nobody kept the proof</div><div class="rd">The outcome may exist, but there is no baseline, evidence, owner, or executive story tying it to the product.</div></div>
+            <div class="risk"><div class="rk">Relationship debt</div><div class="rh">One person held the account</div><div class="rd">The champion left, the buyer changed, or the operational users never trusted the people above them.</div></div>
+            <div class="risk"><div class="rk">External change</div><div class="rh">The customer became different</div><div class="rd">Acquisition, closure, leadership change, budget pressure, or a company-wide standard moved the decision.</div></div>
+          </div>
+        </div>
+        <p>Every churn review should separate what was preventable from what was merely painful. Name the earliest evidence, the decision that could have changed the path, and the playbook or product change that now follows. A churn reason chosen from a dropdown is bookkeeping. A changed system is learning.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">For every lost or contracted account, find the first signal you could have acted on, not the final reason the customer gave.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="health">
+        <div class="u-sechead"><p class="u-sechead-k">07</p><h2 class="u-sechead-h">Health is a forecast</h2></div>
+        <p class="sub">A health score should predict a decision and trigger an action. Color alone does neither.</p>
+        <p>Product usage matters, but a busy customer can still churn. They may have no executive sponsor, a renewal blocked in procurement, or a workflow so painful that high usage measures obligation instead of value. The reverse happens too: a customer with several support tickets may be deeply committed and working through a serious rollout. Health needs evidence from several parts of the relationship.</p>
+        <div class="fig-block wide reveal">
+          <div class="signal-grid">
+            <div class="signal"><div class="sk">Outcome</div><div class="sh">Is the business result moving?</div><div class="sd">The customer's own measure of success.</div><span class="evidence">Evidence: baseline, current result, named owner.</span></div>
+            <div class="signal"><div class="sk">Adoption</div><div class="sh">Is the intended workflow normal?</div><div class="sd">Breadth, depth, frequency, and exceptions.</div><span class="evidence">Evidence: workflow events, active sites, off-system work.</span></div>
+            <div class="signal"><div class="sk">Relationship</div><div class="sh">Do the right people still care?</div><div class="sd">Champion strength, executive access, and user trust.</div><span class="evidence">Evidence: stakeholder map and recent decisions.</span></div>
+            <div class="signal"><div class="sk">Reliability</div><div class="sh">Can the customer depend on it?</div><div class="sd">Incidents, recurring defects, integrations, and support confidence.</div><span class="evidence">Evidence: severity, age, repeat pattern, impact.</span></div>
+            <div class="signal"><div class="sk">Commercial</div><div class="sh">Can the contract move cleanly?</div><div class="sd">Renewal date, payment, procurement, scope, and pricing risk.</div><span class="evidence">Evidence: contract record and buying process.</span></div>
+            <div class="signal"><div class="sk">Change</div><div class="sh">What became different?</div><div class="sd">New leadership, acquisition, site plan, budget, or strategic direction.</div><span class="evidence">Evidence: customer news and confirmed account notes.</span></div>
+          </div>
+        </div>
+        <p>Each risk needs an owner, a next action, and a review date. Otherwise the health score is a weather report with no doors to close. Use judgment openly: show the evidence, record the override, and check later whether the forecast was right.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Never mark an account red without naming the action, or green without naming the evidence.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="value-ledger">
+        <div class="u-sechead"><p class="u-sechead-k">08</p><h2 class="u-sechead-h">Keep a value ledger</h2></div>
+        <p class="sub">Memory edits the old operation. A baseline preserves it.</p>
+        <p>Customers remember the pain that made them buy, then slowly forget its size. The new process becomes normal. The labor they no longer schedule disappears from view. A renewal arrives and the product is judged against its current annoyances instead of the old state it replaced. The defense is a living value ledger started before go-live.</p>
+        <div class="fig-block reveal">
+          <div class="ledger">
+            <div class="ledger-row"><div class="lk">Original wound</div><div class="lv">The operational problem that made the project worth funding.</div></div>
+            <div class="ledger-row"><div class="lk">Outcome</div><div class="lv">The customer result that would make the purchase worthwhile.</div></div>
+            <div class="ledger-row"><div class="lk">Baseline</div><div class="lv">The customer's own starting measure, source, date, and owner.</div></div>
+            <div class="ledger-row"><div class="lk">Current result</div><div class="lv">The latest comparable measure, including what changed around it.</div></div>
+            <div class="ledger-row"><div class="lk">Evidence</div><div class="lv">A report, audit, operating record, or agreed calculation both sides trust.</div></div>
+            <div class="ledger-row"><div class="lk">Next value</div><div class="lv">The next result worth pursuing, with an owner and decision attached.</div></div>
+          </div>
+        </div>
+        <p>An executive review should read like this ledger, not like a tour of product activity. Start with what the customer wanted, show the evidence, explain what is still in the way, and ask for the next decision. Usage supports the story. It is rarely the story by itself.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Capture the baseline before implementation changes the operation. If the customer has no clean measure, agree on the best available proxy in writing.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="renewal">
+        <div class="u-sechead"><p class="u-sechead-k">09</p><h2 class="u-sechead-h">Renewal is a project</h2></div>
+        <p class="sub">The commercial decision has a date. The value decision has been forming all year.</p>
+        <p>A renewal process begins at kickoff because that is when the desired outcome, buyer, contract, and first evidence should be recorded. The work continues through adoption and value reviews. The formal renewal window is where commercial terms, procurement, legal review, and final approval catch up with a decision the account has mostly already made.</p>
+        <div class="fig-block wide reveal">
+          <div class="renewal">
+            <div class="renew-step"><div class="when">At kickoff</div><div class="what">Define the win</div><div class="how">Outcome, baseline, stakeholders, contract date, scope, and buying reason.</div></div>
+            <div class="renew-step"><div class="when">During the term</div><div class="what">Accumulate proof</div><div class="how">Adoption, reliability, value evidence, decisions, and open risk.</div></div>
+            <div class="renew-step"><div class="when">Before the window</div><div class="what">Test the decision</div><div class="how">Confirm sponsor, buyer, procurement path, objections, and desired scope.</div></div>
+            <div class="renew-step"><div class="when">In the window</div><div class="what">Close cleanly</div><div class="how">Resolve terms, signatures, purchase order, billing, and internal forecast.</div></div>
+          </div>
+        </div>
+        <p>Expansion belongs after proven value. Selling more can deepen a healthy relationship, and it can also conceal a product or onboarding problem inside NRR. Protect the original recurring base first. Then use the value ledger to identify the next useful scope.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Forecast the customer decision separately from the paperwork. A signed order can be late while the relationship is healthy, and a timely procurement process can hide a customer already leaving.</p></aside>
+      </section>
+
+      <div class="act reveal"><div class="act-k">Act III</div><div class="act-t">The warehouse software version</div></div>
+
+      <section class="sec reveal" id="wms-stakes">
+        <div class="u-sechead"><p class="u-sechead-k">10</p><h2 class="u-sechead-h">The product lives on the floor</h2></div>
+        <p class="sub">A WMS is judged in motion, while orders, people, inventory, and carrier cutoffs keep moving around it.</p>
+        <p>Warehouse software sits in the daily path of revenue. Receiving, putaway, replenishment, picking, packing, shipping, returns, and inventory control all leave a record in it. When the system or an integration fails, the customer feels the failure in physical work. A label does not print. Pick tasks do not appear. Inventory exists but cannot be allocated. The business impact is immediate and visible.</p>
+        <p>That changes what adoption means. Logins are weak evidence. A warehouse has adopted the WMS when the intended workflows run through it, workers trust the directed work, scans keep reality aligned with the record, and managers use its data to operate. A zone running beside the system is both an adoption risk and an inventory risk. <a href="warehouse.html">The companion warehouse guide</a> walks those workflows from dock to door.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Measure workflow coverage and off-system work. Seat counts cannot tell you whether the warehouse actually runs on the product.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="segments">
+        <div class="u-sechead"><p class="u-sechead-k">11</p><h2 class="u-sechead-h">Segment by complexity</h2></div>
+        <p class="sub">SMB and mid-market are useful labels only after you define what changes the service motion.</p>
+        <p>Employee count alone tells you little about a warehouse implementation. A small company can run a complex third-party logistics operation with many clients and rules. A larger distributor can run one simple building. Segment the customer using recurring revenue, workflow complexity, integration surface, number of sites, operating risk, support need, and expansion potential.</p>
+        <div class="fig-block wide reveal">
+          <div class="segments">
+            <div class="segment">
+              <div class="sg-k">Typical SMB motion</div><h4>Standardize the road</h4>
+              <dl>
+                <dt>Shape</dt><dd>Often one site, a narrower workflow, and fewer connected systems.</dd>
+                <dt>Customer team</dt><dd>An operations leader or owner may also be the project manager and system administrator.</dd>
+                <dt>Constraint</dt><dd>Thin project bandwidth and little appetite for a large services bill.</dd>
+                <dt>Service model</dt><dd>Templates, guided setup, pooled expertise, office hours, clear escalation, and automation that still feels human.</dd>
+              </dl>
+            </div>
+            <div class="segment">
+              <div class="sg-k">Typical mid-market motion</div><h4>Control the dependencies</h4>
+              <dl>
+                <dt>Shape</dt><dd>More process variants, integrations, departments, sites, permissions, or automation.</dd>
+                <dt>Customer team</dt><dd>Operations, IT, finance, site leaders, executive sponsor, and procurement can all affect the result.</dd>
+                <dt>Constraint</dt><dd>Decisions and dependencies move across teams, so one delayed input can hold the whole path.</dd>
+                <dt>Service model</dt><dd>Named ownership, formal project control, solution design, change management, executive alignment, and a deliberate cutover.</dd>
+              </dl>
+            </div>
+          </div>
+          <p class="fig-note">These are operating patterns, not definitions. Set the thresholds from your own customer book and cost to serve.</p>
+        </div>
+        <p>Service level should follow need and economics. High-touch work belongs where complexity, risk, or value supports it. Tech-touch work belongs where the path can be standardized without abandoning the customer. A small account can earn a named expert during a risky cutover. A stable mid-market account may need less contact than its ARR suggests.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Build segments from the work required to retain and grow the account. Then check whether the revenue can support that work.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="wms-retention">
+        <div class="u-sechead"><p class="u-sechead-k">12</p><h2 class="u-sechead-h">The WMS retention stack</h2></div>
+        <p class="sub">Renewal sits on layers built in order. A quarterly meeting cannot repair a weak foundation.</p>
+        <p>Warehouse customers stay when the original fit was honest, the operation reached a stable live state, the core workflows remain reliable, users work inside the system, value is visible, and more than one stakeholder understands why the relationship matters. Renewal discipline closes the stack. It cannot substitute for the layers below it.</p>
+        <div class="fig-block reveal">
+          <div class="retention-stack">
+            <div class="ret-layer"><div class="rn">01</div><div class="rh">Fit</div><div class="rd">The product, segment, use case, economics, and customer readiness match.</div></div>
+            <div class="ret-layer"><div class="rn">02</div><div class="rh">Live success</div><div class="rd">The promised scope works in production and the customer can operate it.</div></div>
+            <div class="ret-layer"><div class="rn">03</div><div class="rh">Reliability</div><div class="rd">Core workflows and integrations behave well enough to earn operational trust.</div></div>
+            <div class="ret-layer"><div class="rn">04</div><div class="rh">Adoption</div><div class="rd">The intended work runs through the system, across the people and sites in scope.</div></div>
+            <div class="ret-layer"><div class="rn">05</div><div class="rh">Value proof</div><div class="rd">The customer and vendor share evidence that the bought outcome is moving.</div></div>
+            <div class="ret-layer"><div class="rn">06</div><div class="rh">Stakeholders</div><div class="rd">Users, champion, buyer, and technical partners stay connected to the story.</div></div>
+            <div class="ret-layer"><div class="rn">07</div><div class="rh">Renewal</div><div class="rd">The decision, scope, terms, and paperwork are run as a visible project.</div></div>
+          </div>
+        </div>
+        <p>The stack also tells you where to act. A reliability problem belongs with product, engineering, support, and CS together. A missing sponsor needs relationship work. An adoption gap may lead back to training, workflow design, permissions, or a feature problem. "At risk" names the result. The layer names the work.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Tag every retention risk to a layer in the stack. Review which layers create the most ARR loss, then fund the system change there.</p></aside>
+      </section>
+
+      <div class="act reveal"><div class="act-k">Act IV</div><div class="act-t">Get to value faster</div></div>
+
+      <section class="sec reveal" id="ttv">
+        <div class="u-sechead"><p class="u-sechead-k">13</p><h2 class="u-sechead-h">Start and stop the clock</h2></div>
+        <p class="sub">Time to value becomes useful when both ends name an event someone can verify.</p>
+        <p>"Faster onboarding" is too soft to manage. Choose a start, such as the completed handoff or kickoff. Choose a value event, such as the first real outbound order completed through the agreed workflow. Record both timestamps. Now the team can see elapsed time, stage aging, blocked time, and where the path changed.</p>
+        <div class="fig-block reveal">
+          <div class="ttv-clock">
+            <div class="ttv-formula"><span class="term">value milestone timestamp</span><span class="op">minus</span><span class="term">start event timestamp</span><span class="op">equals</span><span class="term">TTV</span></div>
+          </div>
+          <div class="value-levels">
+            <div class="value-level"><div class="vk">Technical value</div><div class="vh">The connection works</div><div class="vd">Data loads, the ERP or OMS exchanges a valid message, and the system responds correctly.</div></div>
+            <div class="value-level"><div class="vk">Workflow value</div><div class="vh">Real work completes</div><div class="vd">A real receipt, pick, pack, and shipment pass through the intended production flow.</div></div>
+            <div class="value-level"><div class="vk">Operational value</div><div class="vh">The floor can depend on it</div><div class="vd">The team runs normal volume, handles exceptions, and no longer needs vendor heroics.</div></div>
+            <div class="value-level"><div class="vk">Business value</div><div class="vh">The bought result appears</div><div class="vd">The customer's agreed measure moves and the evidence survives an executive review.</div></div>
+          </div>
+          <p class="fig-note">Call the first defensible milestone "first value." Keep measuring until the business outcome arrives.</p>
+        </div>
+        <p>Go-live may be the value event for a simple product. In a WMS it is often the start of production learning. The customer can be technically live while the floor is still slow, exceptions are still being discovered, and the business result is still ahead. Track more than one value level so a fast technical milestone cannot hide a slow operational one.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Publish one company definition for each value milestone. If teams stop the clock at different events, the TTV dashboard is decoration.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="critical-path">
+        <div class="u-sechead"><p class="u-sechead-k">14</p><h2 class="u-sechead-h">Follow the critical path</h2></div>
+        <p class="sub">Speed comes from removing waits and rework from the dependent chain, while the safety checks stay intact.</p>
+        <p>Warehouse onboarding contains work that can run in parallel and work that cannot. You can prepare training while an integration is built. You cannot test allocations against item and inventory data that nobody has cleaned. You cannot cut over safely before production messages, labels, devices, permissions, and inventory reconciliation have passed their exit criteria.</p>
+        <div class="fig-block wide reveal">
+          <div class="path">
+            <div class="path-step"><div class="pn">01</div><div class="ph">Outcome and scope</div><div class="pd">Name the bought result, phase boundary, owners, constraints, and success measure.</div></div>
+            <div class="path-step"><div class="pn">02</div><div class="ph">Process blueprint</div><div class="pd">Map receiving, inventory, orders, picking, packing, shipping, and exceptions.</div></div>
+            <div class="path-step"><div class="pn">03</div><div class="ph">Master data</div><div class="pd">Prepare items, units, locations, inventory, customers, carriers, and users.</div></div>
+            <div class="path-step"><div class="pn">04</div><div class="ph">Configure and connect</div><div class="pd">Build rules, roles, documents, devices, ERP or OMS links, carriers, and EDI where used.</div></div>
+            <div class="path-step"><div class="pn">05</div><div class="ph">Test the operation</div><div class="pd">Run end-to-end scenarios, volume, failure cases, reconciliations, and user acceptance.</div></div>
+            <div class="path-step"><div class="pn">06</div><div class="ph">Prepare the people</div><div class="pd">Train by role, rehearse cutover, publish support paths, and name floor champions.</div></div>
+            <div class="path-step"><div class="pn">07</div><div class="ph">Cut over</div><div class="pd">Move the live operation, reconcile the starting state, and control the first production work.</div></div>
+            <div class="path-step"><div class="pn">08</div><div class="ph">Stabilize and prove</div><div class="pd">Clear defects, close workarounds, reach normal operation, and measure the outcome.</div></div>
+          </div>
+        </div>
+        <p>Every dependency needs an owner, due event, exit test, and visible blocker. The fastest safe onboarding teams remove idle time before they remove work. They collect data before kickoff, reuse proven configurations, make decisions explicit, and escalate a blocked dependency while there is still time to change the plan.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Measure time spent waiting inside each stage. A short task with a long queue is still a long onboarding.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="two-motions">
+        <div class="u-sechead"><p class="u-sechead-k">15</p><h2 class="u-sechead-h">Two roads to first value</h2></div>
+        <p class="sub">SMB needs a narrow, repeatable road. Mid-market needs a controlled road through more dependencies.</p>
+        <p>The desired outcome can be the same while the delivery motion changes. An SMB customer usually benefits from a smaller first phase, strong defaults, guided preparation, and fast access to expert help when stuck. A mid-market customer needs sharper project control, broader stakeholder work, formal testing, and a cutover that respects connected systems and sites.</p>
+        <div class="journey wide reveal" id="journey" aria-label="Compare SMB and mid-market onboarding motions">
+          <div class="journey-head"><div class="jh">Choose the onboarding motion</div><div class="journey-tabs"><button class="journey-tab" type="button" data-mode="smb" aria-pressed="true">SMB</button><button class="journey-tab" type="button" data-mode="mid" aria-pressed="false">Mid-market</button></div></div>
+          <div class="journey-body">
+            <div class="journey-row"><div class="jk">Aim</div><div class="jv" data-journey="aim">Put one narrow, useful warehouse flow into production with as little custom work as the operation allows.</div></div>
+            <div class="journey-row"><div class="jk">Shape</div><div class="jv" data-journey="shape">Default configuration, one clear phase, standard connections, and reusable data templates.</div></div>
+            <div class="journey-row"><div class="jk">Customer team</div><div class="jv" data-journey="team">An operations lead or owner, a system administrator, and the floor people who will run the work.</div></div>
+            <div class="journey-row"><div class="jk">Vendor team</div><div class="jv" data-journey="vendor">An onboarding specialist with pooled product expertise, a clear support path, and a named post-live owner.</div></div>
+            <div class="journey-row"><div class="jk">First value</div><div class="jv" data-journey="value">A real order received, allocated, picked, packed, and shipped through the agreed production workflow.</div></div>
+            <div class="journey-row"><div class="jk">Main risk</div><div class="jv" data-journey="risk">Work waits on a customer team with little project time, then the go-live date stays fixed while preparation slips.</div></div>
+          </div>
+        </div>
+        <p>The SMB motion becomes profitable through reuse and clear scope. The mid-market motion becomes predictable through dependency control and change discipline. Copying the heavy motion downward makes small customers slow and expensive. Copying the light motion upward leaves complex customers exposed.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Standardize the path, then define the conditions that earn an exception. Custom work should be a decision with a cost, not the default answer to discomfort.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="after-go-live">
+        <div class="u-sechead"><p class="u-sechead-k">16</p><h2 class="u-sechead-h">Go-live starts adoption</h2></div>
+        <p class="sub">The system is in production. Now the operation has to become good at using it.</p>
+        <p>The first operating stretch exposes the difference between a tested design and a living warehouse. Users find shortcuts. Real volume finds configuration edges. Supervisors need new reports. A device loses connection in the one corner nobody tested. Hypercare exists to stabilize that reality, close the temporary workarounds, and move ownership from the project team into the normal support and success model.</p>
+        <p>Onboarding should close on evidence: the agreed workflow runs in production, users can perform their roles, the support path is understood, critical issues have owners, the baseline and current result are recorded, and the next success milestone has a date and owner. A celebratory meeting cannot replace those exit conditions.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Keep onboarding ownership through stable operation and the first verified value milestone. A technical cutover alone is too early a finish line for WMS.</p></aside>
+      </section>
+
+      <div class="act reveal"><div class="act-k">Act V</div><div class="act-t">Run the system</div></div>
+
+      <section class="sec reveal" id="cadence">
+        <div class="u-sechead"><p class="u-sechead-k">17</p><h2 class="u-sechead-h">Run on a cadence</h2></div>
+        <p class="sub">Retention work fails when it lives only in meetings. A cadence turns signals into decisions before urgency chooses the agenda.</p>
+        <div class="fig-block wide reveal">
+          <div class="cadence">
+            <div class="cad-row"><div class="ck">Daily</div><div class="co">Watch operations</div><div class="ca">Critical incidents, failed jobs, message backlogs, onboarding blockers, and events that can stop customer work.</div></div>
+            <div class="cad-row"><div class="ck">Weekly</div><div class="co">Move risk</div><div class="ca">At-risk accounts, implementation dependencies, overdue actions, product gaps, and the owners who can change them.</div></div>
+            <div class="cad-row"><div class="ck">Monthly</div><div class="co">Read the book</div><div class="ca">Health evidence, workflow adoption, value ledgers, support patterns, segment performance, renewal forecast, and capacity.</div></div>
+            <div class="cad-row"><div class="ck">Quarterly</div><div class="co">Change the system</div><div class="ca">Retention cohorts, churn learning, onboarding stage time, product themes, service economics, staffing, and playbook changes.</div></div>
+            <div class="cad-row"><div class="ck">By account</div><div class="co">Earn the next decision</div><div class="ca">The right customer meeting at the right lifecycle event: kickoff, milestone, value review, risk decision, renewal, or expansion.</div></div>
+          </div>
+        </div>
+        <p>Automation should bring the evidence forward. People should make the judgment and own the action. A task created from a risk is useful. A health score that sends another dashboard email is administrative weather.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Every recurring meeting should produce a decision, an owner, or a changed forecast. If it produces none of those, remove it or change its inputs.</p></aside>
+      </section>
+
+      <section class="sec reveal" id="scorecard">
+        <div class="u-sechead"><p class="u-sechead-k">18</p><h2 class="u-sechead-h">One scorecard, three levels</h2></div>
+        <p class="sub">Revenue is the outcome. Customer value and operating behavior explain how you are getting there.</p>
+        <p>A customer success organization needs a small set of measures that connect. Revenue retention sits at the top. Customer outcomes and adoption tell you whether the product is earning that retention. Onboarding flow tells you whether new customers are moving toward it fast enough. Keep definitions stable, segment every rate that can hide a different motion, and show the owner beside the metric.</p>
+        <div class="fig-block wide reveal">
+          <div class="scorecards">
+            <div class="scorecard"><div class="sh">Recurring revenue</div><ul><li>Logo retention and churn</li><li>Gross revenue retention</li><li>Net revenue retention</li><li>Contraction and expansion</li><li>Renewal forecast accuracy</li></ul></div>
+            <div class="scorecard"><div class="sh">Customer value</div><ul><li>Outcome milestones reached</li><li>Workflow adoption by segment</li><li>Off-system work and exceptions</li><li>Reliability and support impact</li><li>Stakeholder and risk coverage</li></ul></div>
+            <div class="scorecard"><div class="sh">Onboarding flow</div><ul><li>TTV by named milestone</li><li>Time and waiting inside each stage</li><li>Milestone completion by segment</li><li>Scope change and rework</li><li>Stable-operation exit rate</li></ul></div>
+          </div>
+        </div>
+        <p>The hierarchy matters. The company is trying to retain recurring revenue. It does that by helping customers achieve and recognize value. It reaches that value through a working product, an honest sale, a controlled onboarding, reliable support, real adoption, and a relationship broad enough to survive change. Customer success is the system that keeps those parts pointed at the same result.</p>
+        <aside class="u-callout u-move"><p class="u-callout-k">The move</p><p class="u-callout-body">Put GRR at the top of the customer scorecard and TTV directly beneath the new-customer motion. Then require every team to show which input it owns.</p></aside>
+      </section>
+    </article>
+
+    <div class="ending reveal">
+      <h2>The sale made a promise.<br><em>The renewal proves it held.</em></h2>
+      <p>Customer success is the work of turning that promise into a live operation, the operation into evidence, and the evidence into a decision the customer is glad to make again. In recurring software, that is how revenue becomes durable.</p>
+    </div>
+
+    <section class="appendix reveal" aria-label="Sources and artwork">
+      <h2>Sources and further reading</h2>
+      <ol>
+        <li><b>SaaS Capital.</b> <a href="https://www.saas-capital.com/blog-posts/benchmarking-metrics-for-bootstrapped-saas-companies/">2026 benchmarking metrics for bootstrapped SaaS companies</a>. More than 1,000 private B2B SaaS companies, with the cited cohort limited to $3 million to $20 million in ARR.</li>
+        <li><b>ChartMogul.</b> <a href="https://chartmogul.com/reports/saas-retention-the-new-normal/">The New Normal for SaaS</a>. Retention research from anonymized, aggregated data across more than 2,500 SaaS businesses, useful for seeing how NRR changes by ARR, ARPA, and subscriber count.</li>
+        <li><b>US Securities and Exchange Commission.</b> <a href="https://www.sec.gov/Archives/edgar/data/1169561/000116956125000062/filename1.htm">Company correspondence on ARR and SaaS NRR definitions</a>. The filing notes that these are non-GAAP operating metrics without standardized definitions.</li>
+        <li><b>Forrester.</b> <a href="https://secure.forrester.com/report/retention-starts-at-onboarding/RES178562">Retention Starts at Onboarding</a>. A current research brief on onboarding, time to value, retention, and account growth.</li>
+        <li><b>Artwork.</b> Homepage thumbnail: Winslow Homer, <i>Breezing Up (A Fair Wind)</i>, 1873 to 1876, National Gallery of Art, Washington. The NGA marks the image public domain. <a href="https://www.nga.gov/artworks/30228-breezing-fair-wind">Artwork record</a>.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="site-footer-inner" style="max-width: var(--content-width); margin: 0 auto; font-family: var(--font-body);"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var progress = document.getElementById('reading-progress');
+    function paintProgress() {
+      var root = document.documentElement;
+      var max = root.scrollHeight - root.clientHeight;
+      progress.style.width = (max > 0 ? (root.scrollTop / max) * 100 : 0).toFixed(2) + '%';
+    }
+    document.addEventListener('scroll', paintProgress, { passive: true });
+    paintProgress();
+
+    var reveal = document.querySelectorAll('.reveal');
+    var canReveal = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)').matches;
+    if (canReveal && 'IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) { if (entry.isIntersecting) { entry.target.classList.add('is-in'); observer.unobserve(entry.target); } });
+      }, { rootMargin: '0px 0px -7% 0px', threshold: 0.03 });
+      reveal.forEach(function (el) { observer.observe(el); });
+    } else {
+      reveal.forEach(function (el) { el.classList.add('is-in'); });
+    }
+
+    var fields = {
+      start: document.getElementById('start-arr'),
+      churn: document.getElementById('churn-arr'),
+      contraction: document.getElementById('contraction-arr'),
+      expansion: document.getElementById('expansion-arr')
+    };
+    var outputs = {
+      start: document.getElementById('start-arr-out'),
+      churn: document.getElementById('churn-arr-out'),
+      contraction: document.getElementById('contraction-arr-out'),
+      expansion: document.getElementById('expansion-arr-out')
+    };
+    function money(n) {
+      if (n >= 1000000) return '$' + (n / 1000000).toFixed(n % 1000000 ? 2 : 1) + 'm';
+      return '$' + Math.round(n / 1000) + 'k';
+    }
+    function updateRetention() {
+      var start = +fields.start.value;
+      var churn = Math.min(+fields.churn.value, start);
+      var contraction = Math.min(+fields.contraction.value, Math.max(0, start - churn));
+      var expansion = +fields.expansion.value;
+      var retained = Math.max(0, start - churn - contraction);
+      var grr = retained / start * 100;
+      var nrr = (retained + expansion) / start * 100;
+      outputs.start.textContent = money(start);
+      outputs.churn.textContent = money(churn);
+      outputs.contraction.textContent = money(contraction);
+      outputs.expansion.textContent = money(expansion);
+      document.getElementById('retained-arr').textContent = money(retained);
+      document.getElementById('grr-out').textContent = grr.toFixed(1) + '%';
+      document.getElementById('nrr-out').textContent = nrr.toFixed(1) + '%';
+      document.getElementById('retention-read').setAttribute('aria-label', 'Gross revenue retention ' + grr.toFixed(1) + ' percent. Net revenue retention ' + nrr.toFixed(1) + ' percent.');
+    }
+    Object.keys(fields).forEach(function (key) { fields[key].addEventListener('input', updateRetention); });
+    document.getElementById('retention-reset').addEventListener('click', function () {
+      fields.start.value = 1000000; fields.churn.value = 80000; fields.contraction.value = 40000; fields.expansion.value = 100000; updateRetention();
+    });
+    updateRetention();
+
+    var journeys = {
+      smb: {
+        aim: 'Put one narrow, useful warehouse flow into production with as little custom work as the operation allows.',
+        shape: 'Default configuration, one clear phase, standard connections, and reusable data templates.',
+        team: 'An operations lead or owner, a system administrator, and the floor people who will run the work.',
+        vendor: 'An onboarding specialist with pooled product expertise, a clear support path, and a named post-live owner.',
+        value: 'A real order received, allocated, picked, packed, and shipped through the agreed production workflow.',
+        risk: 'Work waits on a customer team with little project time, then the go-live date stays fixed while preparation slips.'
+      },
+      mid: {
+        aim: 'Move an agreed operating scope into production through a controlled cutover across connected teams and systems.',
+        shape: 'Process variants, formal design, integrations, permissions, sites, testing, change control, and cutover governance.',
+        team: 'An executive sponsor, operations, IT, finance, site leaders, subject experts, and procurement where required.',
+        vendor: 'A project manager, solution consultant, technical owners, named customer success partner, and an explicit support handoff.',
+        value: 'The agreed production flow runs at the planned scope with reconciled inventory, working integrations, and operational ownership.',
+        risk: 'A decision or dependency stalls between teams, while every downstream task keeps its original date.'
+      }
+    };
+    var tabs = document.querySelectorAll('.journey-tab');
+    function setJourney(mode) {
+      var data = journeys[mode];
+      Object.keys(data).forEach(function (key) { document.querySelector('[data-journey="' + key + '"]').textContent = data[key]; });
+      tabs.forEach(function (tab) { tab.setAttribute('aria-pressed', tab.getAttribute('data-mode') === mode ? 'true' : 'false'); });
+    }
+    tabs.forEach(function (tab) { tab.addEventListener('click', function () { setJourney(tab.getAttribute('data-mode')); }); });
+  })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
