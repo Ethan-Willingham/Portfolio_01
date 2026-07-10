@@ -91,11 +91,11 @@
   // the edges, deep in the middle) whose vessel is drawn from the mine's
   // FIRST ores: stone body, copper rim, iron rivets, coal + copper chips.
   var BATH_FLOORS = [
-    { c0: 27, c1: 45, fr: 613, deep: 2, tubs: [[34,39]], fill: [1], price: 0 },
+    { c0: 27, c1: 45, fr: 613, deep: 2, tubs: [[34,39]], fill: [2], price: 0 },
     { c0: 27, c1: 45, fr: 605, deep: 2, tubs: [[34,39]], fill: [1], price: 2000 },
     { c0: 27, c1: 43, fr: 597, deep: 0, tubs: [], fill: [], sauna: true, price: 8000 },
     { c0: 27, c1: 41, fr: 589, deep: 3, tubs: [[32,37]], fill: [1], price: 20000 },
-    { c0: 27, c1: 39, fr: 581, deep: 3, tubs: [[31,38]], fill: [2], price: 50000 }
+    { c0: 27, c1: 39, fr: 581, deep: 3, tubs: [[31,38]], fill: [1], price: 50000 }
   ];
   var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
@@ -367,6 +367,17 @@
 
   var bathGuests = [];
   var bathGuestTimer = -1;
+  var bathGuestCap = 2;
+  var bathFloats = [];        // rising "+$" payment texts {x, y, t, s}
+  function bathDespawnGuest(gi) {
+    var g = bathGuests[gi];
+    if (g && g.b) {
+      var di = jelloBodies.indexOf(g.b);
+      if (di >= 0) jelloBodies.splice(di, 1);
+      if (typeof jelloTotalPoints === 'function') jelloCount = jelloTotalPoints();
+    }
+    bathGuests.splice(gi, 1);
+  }
   function bathImpulse(b, ivx, ivy) {
     // Verlet velocity add: v = (p - o) / h, so o -= dv * h.
     var n = b.n;
@@ -386,7 +397,9 @@
       cx: ((tb[0] + tb[1] + 1) / 2) * TILE,
       x0: tb[0] * TILE + 6, x1: (tb[1] + 1) * TILE - 6,
       line: (F.fr - F.deep) * TILE + 14,
-      fy: F.fr * TILE, px: 0, py: 0, stall: 0
+      fy: F.fr * TILE, px: 0, py: 0, stall: 0,
+      soakT: 14 + Math.random() * 18,
+      homeX: 28 * TILE + 16
     });
     try { console.log('[bath] a guest arrives (guest slimes never dissolve).'); } catch (e) {}
     return b;
@@ -394,7 +407,16 @@
   function bathGuestTick(dt) {
     if (bathGuestTimer > 0) {
       bathGuestTimer -= dt;
-      if (bathGuestTimer <= 0) bathSpawnGuest();
+      if (bathGuestTimer <= 0 && bathGuests.length < bathGuestCap) {
+        bathSpawnGuest();
+        bathGuestTimer = 9 + Math.random() * 9;   // the queue keeps coming
+      } else if (bathGuestTimer <= 0) {
+        bathGuestTimer = 4;
+      }
+    }
+    for (var fi2 = bathFloats.length - 1; fi2 >= 0; fi2--) {
+      bathFloats[fi2].t += dt;
+      if (bathFloats[fi2].t > 1.3) bathFloats.splice(fi2, 1);
     }
     for (var i = 0; i < bathGuests.length; i++) {
       var g = bathGuests[i], b = g.b;
@@ -420,9 +442,9 @@
           if (b.cx > wx0 && b.cx < wx1) {
             g.st = 'soak'; g.cd = 1.2;
             b.bathBuoy = { line: g.line + 6, x0: wx0, x1: wx1, lift: 1.75, drag: 0.965 };
-            for (var sp0 = 0; sp0 < 26; sp0++) {
-              addLiquidParticle('water', b.cx + (Math.random() - 0.5) * 60, g.line - 6,
-                (Math.random() - 0.5) * 170, -50 - Math.random() * 130, 0);
+            for (var sp0 = 0; sp0 < 18; sp0++) {
+              addLiquidParticle('water', b.cx + (Math.random() - 0.5) * 50, g.line - 5,
+                (Math.random() - 0.5) * 110, -40 - Math.random() * 100, 0);
             }
             break;
           }
@@ -463,9 +485,28 @@
           if (g.cd <= 0) { g.st = 'walk'; g.cd = 0.3; }   // recover, retry
         }
       } else if (g.st === 'soak') {
-        if (g.cd <= 0) {
+        g.soakT -= dt;
+        if (g.soakT <= 0) {
+          // Done: LEAP out toward home (the physics moment the owner asked
+          // for), then waddle to the elevator and pay on the way out.
+          b.bathBuoy = null;
+          bathImpulse(b, b.cx > g.homeX ? -200 : 200, -430);
+          g.st = 'leave'; g.cd = 1.0;
+        } else if (g.cd <= 0) {
           bathImpulse(b, 0, -26);   // a contented bob
           g.cd = 2.6 + Math.random() * 2.2;
+        }
+      } else if (g.st === 'leave') {
+        if (g.cd <= 0 && standing) {
+          var dxh = g.homeX - b.cx;
+          if (Math.abs(dxh) < 34) {
+            if (typeof money === 'number') money += 25;
+            bathFloats.push({ x: b.cx, y: b.cy - 40, t: 0, s: '+$25' });
+            bathDespawnGuest(i); i--;
+            continue;
+          }
+          bathImpulse(b, dxh > 0 ? 120 : -120, -215);
+          g.cd = 0.85;
         }
       }
     }
@@ -878,51 +919,41 @@
       ctx.fillRect(ix - TILE, F.fr * TILE, iw + 2 * TILE, 4);
       lamp(ix + 40, iy + 62);
       lamp(ix + iw - 40, iy + 62);
-      // The BOWL tub: a vessel poured from the mine's first ores. Stone
-      // body following the stepped cavity, copper rim lip, iron rivets,
-      // and chips of coal + copper speckled in the stone. The dark inner
-      // bowl makes the water read; the water canvas draws over it.
+      // The tub: a simple rounded U (owner: no black metal, keep it easy).
+      // Light stone shell hugging the carved cavity, rounded rim caps, a
+      // copper lip on each rim, a few first-ore chips. The interior stays
+      // OPEN so the water (which fills the exact cavity) sits in the bowl.
       for (i = 0; i < F.tubs.length; i++) {
         var tb = F.tubs[i];
-        var tx0 = (tb[0] - 1) * TILE, tx1 = (tb[1] + 2) * TILE;
+        var x0 = (tb[0] - 1) * TILE, x1 = (tb[1] + 2) * TILE;
         var ty = (F.fr - F.deep) * TILE, by = F.fr * TILE;
-        var tcx = (tx0 + tx1) / 2;
-        // Outer stone vessel: rounded-bottom silhouette.
-        ctx.fillStyle = '#7a7a7a';
+        ctx.fillStyle = '#8b887c';
         ctx.beginPath();
-        ctx.moveTo(tx0 - 5, ty - 12);
-        ctx.quadraticCurveTo(tx0 - 5, by + 4, tcx, by + 4);
-        ctx.quadraticCurveTo(tx1 + 5, by + 4, tx1 + 5, ty - 12);
+        ctx.moveTo(x0, ty + 10);
+        ctx.arc(x0 + TILE / 2, ty + 10, TILE / 2, Math.PI, 0);
+        ctx.lineTo(x0 + TILE, by); ctx.lineTo(x0, by);
         ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#5f5f5f'; ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(tx0 - 1, ty + 6);
-        ctx.quadraticCurveTo(tx0 + 6, by - 6, tcx, by - 4);
+        ctx.moveTo(x1 - TILE, ty + 10);
+        ctx.arc(x1 - TILE / 2, ty + 10, TILE / 2, Math.PI, 0);
+        ctx.lineTo(x1, by); ctx.lineTo(x1 - TILE, by);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#8b887c'; ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 3, ty + 12);
+        ctx.lineTo(x0 + 3, by - 12);
+        ctx.quadraticCurveTo(x0 + 3, by + 8, x0 + 32, by + 8);
+        ctx.lineTo(x1 - 32, by + 8);
+        ctx.quadraticCurveTo(x1 - 3, by + 8, x1 - 3, by - 12);
+        ctx.lineTo(x1 - 3, ty + 12);
         ctx.stroke();
-        // Ore chips in the stone (coal dark, copper warm).
+        ctx.fillStyle = '#b5723a';
+        ctx.fillRect(x0 - 3, ty + 1, TILE + 6, 6);
+        ctx.fillRect(x1 - TILE - 3, ty + 1, TILE + 6, 6);
         ctx.fillStyle = '#2b2b2b';
-        ctx.fillRect(tx0 + 5, by - 14, 3, 3); ctx.fillRect(tcx + 14, by - 8, 3, 3);
-        ctx.fillRect(tx1 - 14, by - 20, 3, 3);
+        ctx.fillRect(x0 + 10, by - 18, 3, 3); ctx.fillRect(x1 - 13, by - 26, 3, 3);
         ctx.fillStyle = '#b5723a';
-        ctx.fillRect(tx0 + 16, by - 8, 3, 3); ctx.fillRect(tcx - 10, by - 6, 3, 3);
-        // Inner dark bowl (the cavity), inset from the vessel.
-        ctx.fillStyle = '#0e0a06';
-        ctx.beginPath();
-        ctx.moveTo(tb[0] * TILE, ty);
-        ctx.quadraticCurveTo(tb[0] * TILE + 4, by - 4, tcx, by - 4);
-        ctx.quadraticCurveTo((tb[1] + 1) * TILE - 4, by - 4, (tb[1] + 1) * TILE, ty);
-        ctx.closePath(); ctx.fill();
-        // Copper rim lip across the whole opening + iron rivets.
-        ctx.fillStyle = '#b5723a';
-        ctx.fillRect(tx0 - 8, ty - 12, tx1 - tx0 + 16, 6);
-        ctx.fillStyle = '#8a5427';
-        ctx.fillRect(tx0 - 8, ty - 7, tx1 - tx0 + 16, 2);
-        ctx.fillStyle = '#39424c';
-        ctx.fillRect(tx0 - 4, ty - 11, 3, 4); ctx.fillRect(tcx - 2, ty - 11, 3, 4);
-        ctx.fillRect(tx1 + 1, ty - 11, 3, 4);
-        // Stone feet.
-        ctx.fillStyle = '#5f5f5f';
-        ctx.fillRect(tx0 + 8, by + 2, 10, 6); ctx.fillRect(tx1 - 18, by + 2, 10, 6);
+        ctx.fillRect(x0 + 7, by - 34, 3, 3);
       }
       if (F.sauna) {
         // Bench tiers over the solid tiles, the kamenka stove with hot
@@ -985,6 +1016,14 @@
     ctx.font = 'bold 21px "Commit Mono", monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('БАНЯ', BATH_CX_COL * TILE, (F1.fr - 7) * TILE + 25);
+    // Payment floats: little "+$25" thanks rising off departing guests.
+    for (var pf = 0; pf < bathFloats.length; pf++) {
+      var FF = bathFloats[pf];
+      ctx.fillStyle = 'rgba(232,181,58,' + (1 - FF.t / 1.3).toFixed(3) + ')';
+      ctx.font = 'bold 15px "Commit Mono", monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(FF.s, FF.x, FF.y - FF.t * 26);
+    }
     // The guests (jello renders on the main canvas; the world render that
     // normally draws them is skipped in bathMode, so the scene calls it).
     if (ENABLE_JELLO && typeof drawJelloBlobs === 'function') drawJelloBlobs();

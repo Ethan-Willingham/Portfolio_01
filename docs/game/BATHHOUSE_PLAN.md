@@ -426,6 +426,20 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable, hard-physics session; v25.85-87): B5 CORE + B2 CORE SHIPPED.
+  Guests are real jello bodies (guest flag = dissolve-immune; ONE-WAY buoyancy in
+  jelloIntegrate against an analytic waterline via b.bathBuoy, the water is never
+  pushed back); a guest cycle runs continuously (spawn left/elevator, stall-based
+  hop navigation, plunge with a real droplet splash, timed soak with contented
+  bobs, LEAP out, waddle home, pay +$25 with a rising float, clean despawn, cap 2).
+  Steam: the smoke backend runs scene-local in steam mode (smokeTune fields scaled
+  + restored on exit, polarity-proof) with splats at hot-tub waterlines; the
+  "invisible steam" bug was the hot tub being OFF-SCREEN (the smoke domain hugs
+  the camera), fixed by moving heat to the bottom tub = the owner's test bench.
+  Tubs are stepped BOWLS carved per-column (1 deep at edges, F.deep centre) drawn
+  as a simple stone U with copper lips (owner cut the ornate vessel + black
+  interior). Floors are cozy now: 7 interior rows + slab, one tub per floor.
+
 - 2026-07-10 v25.85 (Fable physics session): B2 CORE + B5 CORE SHIPPED. STEAM:
   scene-local steam mode (smokeTune fields scaled on enter, restored exact on
   exit), emitted off hot (fill 2) tubs via world-to-UV splats, pooling under the
