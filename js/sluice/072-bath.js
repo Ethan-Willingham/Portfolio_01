@@ -37,13 +37,31 @@
     if (banyaX >= 0) return true;
     if (typeof surfacePonds === 'undefined' || typeof world === 'undefined' ||
         !world.length) return false;
-    var rightEdge = 15;
-    for (var i = 0; i < surfacePonds.length; i++) {
-      var p = surfacePonds[i];
-      if (p.cL < 70 && p.cR > rightEdge) rightEdge = p.cR;
+    // v25.78: the banya must be VISIBLE FROM SPAWN, no commands, no hunting
+    // (owner). Candidates sit deck-relative: just right of the depot pad
+    // first, then just left of the station cluster; a lake-safe far-left
+    // rule stays as the last resort. A slot loses only if a pond overlaps
+    // its 7-col footprint (+1 col of shore each side).
+    function pondFree(c0) {
+      for (var i = 0; i < surfacePonds.length; i++) {
+        var p = surfacePonds[i];
+        if (p.cR >= c0 - 2 && p.cL <= c0 + 8) return false;
+      }
+      return c0 >= 2 && c0 + 8 < COLS;
     }
-    var col = rightEdge + 3;
-    if (col > 62) col = 62;
+    var col = -1;
+    var cands = [DECK_CENTER_COL + 15, DECK_CENTER_COL - 30];
+    for (var k = 0; k < cands.length; k++) {
+      if (pondFree(cands[k])) { col = cands[k]; break; }
+    }
+    if (col < 0) {
+      var rightEdge = 15;
+      for (var j = 0; j < surfacePonds.length; j++) {
+        var q = surfacePonds[j];
+        if (q.cL < 70 && q.cR > rightEdge) rightEdge = q.cR;
+      }
+      col = Math.min(rightEdge + 3, 62);
+    }
     banyaX = col * TILE;
     banyaDoorX0 = banyaX + 152;
     banyaDoorX1 = banyaX + 200;
