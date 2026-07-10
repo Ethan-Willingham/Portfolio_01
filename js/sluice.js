@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.80';
+  var GAME_VERSION = 'v25.81';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11602,6 +11602,15 @@
       ctx.fillRect(lx - 2, ly + 22, 4, 2);
     }
     function win(wx, wy, ww, wh) {
+      // Nalichnik: the pale carved casing Russian windows wear, with a
+      // little crown peak over the lintel.
+      ctx.fillStyle = '#d68a5a';
+      ctx.fillRect(wx - 3, wy - 3, ww + 6, wh + 6);
+      ctx.beginPath();
+      ctx.moveTo(wx + ww / 2 - 7, wy - 3); ctx.lineTo(wx + ww / 2, wy - 9);
+      ctx.lineTo(wx + ww / 2 + 7, wy - 3); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#8a5427';
+      ctx.fillRect(wx - 3, wy + wh + 1, ww + 6, 2);
       if (lit) {
         ctx.fillStyle = 'rgba(255,184,92,' + (0.10 * night) + ')';
         ctx.beginPath(); ctx.arc(wx + ww / 2, wy + wh / 2, ww, 0, 6.283); ctx.fill();
@@ -11634,8 +11643,16 @@
       ctx.beginPath();
       ctx.moveTo(cx - half + 22, yB); ctx.lineTo(cx + half - 22, yB);
       ctx.stroke();
+      // Carved fringe board (prichelina): pale sawtooth lacework hanging
+      // off the drip edge, the classic Russian eave trim at pixel size.
+      ctx.fillStyle = '#d68a5a';
+      for (var fx = cx - half + 24; fx < cx + half - 28; fx += 8) {
+        ctx.beginPath();
+        ctx.moveTo(fx, yB + 1); ctx.lineTo(fx + 4, yB + 6); ctx.lineTo(fx + 8, yB + 1);
+        ctx.closePath(); ctx.fill();
+      }
       ctx.fillStyle = 'rgba(0,0,0,0.20)';
-      ctx.fillRect(cx - half + 26, yB + 1, half * 2 - 52, 7);
+      ctx.fillRect(cx - half + 26, yB + 7, half * 2 - 52, 6);
       lantern(cx - half + 4, yB - 7);
       lantern(cx + half - 4, yB - 7);
     }
@@ -11649,12 +11666,12 @@
     // Four tiers, bottom-up: planking body (darkening wash with height),
     // then the flared eave with its pair of lanterns.
     drawWoodPlanking(cx - 80, gy - 118, 160, 98, 4);
-    drawWoodPlanking(cx - 66, gy - 208, 132, 76, 4);
-    ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(cx - 66, gy - 208, 132, 76);
-    drawWoodPlanking(cx - 52, gy - 288, 104, 66, 4);
-    ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.fillRect(cx - 52, gy - 288, 104, 66);
-    drawWoodPlanking(cx - 38, gy - 356, 76, 54, 4);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(cx - 38, gy - 356, 76, 54);
+    drawWoodPlanking(cx - 66, gy - 208, 132, 84, 4);
+    ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(cx - 66, gy - 208, 132, 84);
+    drawWoodPlanking(cx - 52, gy - 288, 104, 74, 4);
+    ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.fillRect(cx - 52, gy - 288, 104, 74);
+    drawWoodPlanking(cx - 38, gy - 356, 76, 62, 4);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(cx - 38, gy - 356, 76, 62);
 
     // Windows before the eaves so glow halos sit over the wood cleanly.
     win(cx - 40, gy - 194, 22, 30); win(cx + 18, gy - 194, 22, 30);
@@ -11669,8 +11686,8 @@
     // Tent roof + copper cap + the red star (glows at night).
     ctx.fillStyle = '#39424c';
     ctx.beginPath();
-    ctx.moveTo(cx - 46, gy - 369); ctx.lineTo(cx, gy - 436);
-    ctx.lineTo(cx + 46, gy - 369); ctx.closePath(); ctx.fill();
+    ctx.moveTo(cx - 46, gy - 365); ctx.lineTo(cx, gy - 436);
+    ctx.lineTo(cx + 46, gy - 365); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#2c343c'; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, gy - 434); ctx.lineTo(cx - 38, gy - 372);
@@ -11679,6 +11696,9 @@
     ctx.fillStyle = '#b5723a';
     ctx.beginPath(); ctx.arc(cx, gy - 436, 9, Math.PI, 0); ctx.fill();
     ctx.fillRect(cx - 2, gy - 458, 4, 14);
+    // Stovepipe on the tent's right slope (the banya stove has to breathe).
+    ctx.fillStyle = '#4a5560'; ctx.fillRect(cx + 16, gy - 428, 6, 22);
+    ctx.fillStyle = '#39424c'; ctx.fillRect(cx + 13, gy - 432, 12, 5);
     if (lit) {
       ctx.fillStyle = 'rgba(226,75,74,' + (0.20 * night) + ')';
       ctx.beginPath(); ctx.arc(cx, gy - 466, 17, 0, 6.283); ctx.fill();
@@ -11722,7 +11742,37 @@
     ctx.quadraticCurveTo(banyaDoorX0 + 11, BANYA_DOOR_Y0 + 40, banyaDoorX0 + 22, BANYA_DOOR_Y0 + 32);
     ctx.quadraticCurveTo(banyaDoorX0 + 33, BANYA_DOOR_Y0 + 40, banyaDoorX1, BANYA_DOOR_Y0 + 32);
     ctx.stroke();
+    // Iron door handle + hinge plates on the jamb.
+    ctx.strokeStyle = '#8a95a0'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(banyaDoorX1 - 8, BANYA_DOOR_Y0 + 52, 3, 0, 6.283); ctx.stroke();
+    ctx.fillStyle = '#4a5560';
+    ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + 40, 3, 6);
+    ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + 62, 3, 6);
     lantern(banyaDoorX0 - 11, BANYA_DOOR_Y0 - 2);
+
+    // Lived-in props on the plinth: a bench between sign and door, birch
+    // bundles (veniki) on wall pegs, and a rain barrel right of the door.
+    ctx.fillStyle = '#54381f';
+    ctx.fillRect(cx - 34, gy - 28, 3, 8); ctx.fillRect(cx - 11, gy - 28, 3, 8);
+    ctx.fillStyle = '#b96b48'; ctx.fillRect(cx - 38, gy - 31, 34, 4);
+    ctx.fillStyle = '#2c1408'; ctx.fillRect(cx - 38, gy - 27, 34, 1);
+    function venik(vx, vy) {
+      ctx.strokeStyle = '#54381f'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx, vy + 7); ctx.stroke();
+      ctx.fillStyle = '#4a6b2a';
+      ctx.beginPath(); ctx.ellipse(vx, vy + 13, 6, 8, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#5d8136';
+      ctx.beginPath(); ctx.ellipse(vx - 2, vy + 11, 3.5, 5, 0, 0, 6.283); ctx.fill();
+      ctx.strokeStyle = '#3a2c1c'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(vx - 3, vy + 6); ctx.lineTo(vx + 3, vy + 6); ctx.stroke();
+    }
+    venik(cx - 2, gy - 74);
+    venik(cx + 12, gy - 70);
+    ctx.fillStyle = '#6e4526'; ctx.fillRect(cx + 68, gy - 40, 16, 20);
+    ctx.fillStyle = '#4a5560';
+    ctx.fillRect(cx + 67, gy - 36, 18, 2); ctx.fillRect(cx + 67, gy - 26, 18, 2);
+    ctx.fillStyle = '#1f4f9e';
+    ctx.beginPath(); ctx.ellipse(cx + 76, gy - 40, 7, 2.5, 0, 0, 6.283); ctx.fill();
 
     // Walk-in hint when the rig is near.
     var near = Math.abs((player.x + PLAYER_W / 2) - (banyaX + BANYA_W / 2)) < 9 * TILE;
