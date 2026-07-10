@@ -1,8 +1,9 @@
-/* gen-hubs.mjs  -  generate the four series hub index pages and rewrite the
-   homepage's card list (lift the series posts into hubs, drop in four hub cards).
+/* gen-hubs.mjs  -  generate the collection hub pages, the Boring Stuff shelf,
+   and rewrite the homepage's card list (lift the shelf posts off the homepage,
+   then add one shelf card).
    Idempotent: safe to re-run any time, e.g. after flipping a member from soon to
    live. Run from the repo root: node tools/gen-hubs.mjs   Then re-run
-   tools/wrap-picture.mjs on the four hubs + index.html to restore the WebP
+   tools/wrap-picture.mjs on the hubs + shelf + index.html to restore the WebP
    <picture> wrapping, and tools/build-search-index.mjs. No em dashes. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -22,7 +23,7 @@ const soon = (title, era, year, desc) => ({ title, era, year, desc, soon: true }
 const HUBS = [
   {
     slug: 'religion', title: 'The Sacred Books',
-    card: { thumb: 'hebrew-bible.jpg', alt: 'An open Torah scroll on velvet with a silver pointer resting in front.',
+    card: { thumb: 'guru-granth-sahib.jpg', alt: 'An illuminated page of the Guru Granth Sahib, with Gurmukhi script framed by orange, blue, and gold flowers.',
       desc: 'The ten books billions live by, each in its own language against the great English translations, with the keystones broken down where the translators split.' },
     lead: 'The books billions live by, laid out oldest first, from the Hebrew Bible to the Guru Granth Sahib. Each scripture in its own language against the great English translations.',
     members: [
@@ -82,7 +83,7 @@ const HUBS = [
   },
   {
     slug: 'power-story-love', title: 'Power, Story, and Love',
-    card: { thumb: 'odyssey.jpg', alt: 'The Siren Vase: Odysseus lashed to the mast as bird-bodied Sirens fly around his ship.',
+    card: { thumb: 'symposium.jpg', alt: "A detail of Anselm Feuerbach's Das Gastmahl, a torch-lit procession of garlanded revelers entering a feast.",
       desc: 'The human dramas: the Art of War on winning without fighting, the Odyssey on getting home, with power, story, and love still to come.' },
     lead: 'The human dramas, oldest first: the founding adventure of the West, the oldest book on strategy, and the great arguments about power, desire, and beauty still to come.',
     members: [
@@ -109,7 +110,34 @@ const HUBS = [
       live('the-body-rhymes.html', 'The Body Rhymes', 'the-body-rhymes.jpg', 'both ends', 6, "The normal-but-startling things the body does at the very start and end of life, set as mirror pairs, from a newborn running on its mother's hormones to the reflex you lose as a toddler and regain only if your brain fails. Why the two ends rhyme."),
     ],
   },
+  {
+    slug: 'career', title: 'Career',
+    card: { thumb: 'all-in.jpg', alt: "Two oarsmen in Thomas Eakins's painting The Biglin Brothers Racing pull in unison across calm water.",
+      desc: 'Managing people, warehouse software, and the work that starts after the sale.' },
+    lead: 'Three field guides from the work I know: managing professionals, the software behind a warehouse, and the customer work that starts after the sale.',
+    members: [
+      live('all-in.html', 'All In: Managing Professionals', 'all-in.jpg', 'management', 1, 'The work that makes people valuable changed; the way we manage them mostly did not. A field guide from managing your first team to leading managers and systems.'),
+      live('warehouse.html', 'The Brain Behind the Warehouse', 'warehouse.jpg', 'operations', 2, 'Behind every "your order has shipped" is a building you have probably never seen and software that knows where every item inside it is. How that software runs the warehouse and the factory beside it.'),
+      live('customer-success.html', 'The Work After the Sale', 'customer-success.jpg', 'customers', 3, 'A signed subscription starts the work. A field guide to customer success, then the hard center for warehouse software: retain recurring revenue and get customers to useful value fast.'),
+    ],
+  },
 ];
+
+const SHELF = {
+  path: 'boring-stuff',
+  title: 'Boring Stuff',
+  thumb: 'boring-stuff.jpg',
+  alt: 'A market display crowded with tomatoes, peppers, cucumbers, melon, watermelon, strawberries, salad, and cut fruit.',
+  hubOrder: ['inner-life', 'staying-alive', 'philosophy', 'religion', 'power-story-love', 'career'],
+  singles: [
+    {
+      href: 'no-blood-test.html', title: 'The Book With No Blood Test', thumb: 'no-blood-test.jpg',
+      date: '2026-06-20', dateDisplay: '20 Jun 2026',
+      alt: "A 19th-century painting of the neurologist Charcot presenting a fainting woman to a room of physicians at a Paris asylum.",
+      desc: "A field guide to the DSM, psychiatry's catalog of about three hundred disorders, not one of which can be proven by a test. A tour of the labels, the conditions medicine can prove cold instead, and how sure you should be that a diagnosis is you.",
+    },
+  ],
+};
 
 /* oldest first, live before coming-soon */
 const ordered = (members) => [...members].sort((a, b) => (a.soon ? 1 : 0) - (b.soon ? 1 : 0) || a.year - b.year);
@@ -161,7 +189,7 @@ const hubPage = (h) => `<!DOCTYPE html>
         <div class="hs-field-wrap">
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-            <input class="hs-input" type="search" data-search-scope="${h.slug}" placeholder="Search these posts" aria-label="Search ${h.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <input class="hs-input" type="search" data-search-scope="${h.slug}" placeholder="Search this collection only" aria-label="Search ${h.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
@@ -178,7 +206,7 @@ ${ordered(h.members).map(memberCard).join('\n')}
       </ul>
     </main>
     <footer class="site-footer">
-      <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div>
+      <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><span class="ftr-links"><a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a></span></div>
     </footer>
   </div>
   <script src="js/search.js"></script>
@@ -190,25 +218,112 @@ ${ordered(h.members).map(memberCard).join('\n')}
 </html>
 `;
 
-HUBS.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + h.members.filter((m) => !m.soon).length + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
+const liveCount = (h) => h.members.filter((m) => !m.soon).length;
+const shelfHubs = SHELF.hubOrder.map((slug) => HUBS.find((h) => h.slug === slug));
+if (shelfHubs.some((h) => !h)) throw new Error('SHELF.hubOrder names a missing hub');
+const shelfCount = shelfHubs.reduce((sum, h) => sum + liveCount(h), 0) + SHELF.singles.length;
+const shelfLead = `${shelfCount} posts that are more like vegetables than candy.`;
 
-/* ---- homepage surgery: drop series + old hub cards, drop in four collection
-   cards. REMOVE includes the hub slugs so re-running never doubles them. ------- */
-const REMOVE = new Set([
-  ...HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)),
-  ...HUBS.map((h) => h.slug + '.html'),
-]);
-const hubHomeCard = (h) => {
-  const n = h.members.filter((m) => !m.soon).length;
-  return `        <li class="article-list-item fade-in">
+const shelfHubCard = (h) => `        <li class="article-list-item fade-in">
           <a class="article-item is-collection" href="${h.slug}.html">
-            <span class="article-item-thumb"><img src="assets/thumbs/${h.card.thumb}" width="600" height="400" loading="eager" decoding="async" alt="${h.card.alt}"></span>
-            <span class="article-item-date">Collection &middot; ${n} posts</span>
+            <span class="article-item-thumb"><img src="assets/thumbs/${h.card.thumb}" width="600" height="400" loading="lazy" decoding="async" alt="${h.card.alt}"></span>
+            <span class="article-item-date">Collection &middot; ${liveCount(h)} posts</span>
             <h2 class="article-item-title">${h.title}</h2>
             <p class="article-item-description">${h.card.desc}</p>
           </a>
         </li>`;
-};
+
+const shelfSingleCard = (p) => `        <li class="article-list-item fade-in">
+          <a class="article-item" href="${p.href}">
+            <span class="article-item-thumb"><img src="assets/thumbs/${p.thumb}" width="600" height="400" loading="lazy" decoding="async" alt="${p.alt}"></span>
+            <time class="article-item-date" datetime="${p.date}">${p.dateDisplay}</time>
+            <h2 class="article-item-title">${p.title}</h2>
+            <p class="article-item-description">${p.desc}</p>
+          </a>
+        </li>`;
+
+const shelfPage = () => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${SHELF.title} | Ethan Willingham</title>
+  <meta name="description" content="${shelfLead}">
+  <meta property="og:title" content="${SHELF.title}">
+  <meta property="og:description" content="${shelfLead}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/${SHELF.path}.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/${SHELF.thumb}">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="collection.css">
+</head>
+<body>
+  <div class="site-wrapper">
+    <header class="site-header">
+      <h1 class="site-name">${SHELF.title}</h1>
+      <p class="site-tagline">${shelfLead}</p>
+      <div class="home-search">
+        <div class="hs-field-wrap">
+          <label class="hs-field">
+            <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
+            <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search this shelf only" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+          </label>
+          <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
+        </div>
+        <span class="hs-links">
+          <a class="hs-about" href="/">Home</a>
+          <a class="hs-about" href="about.html">About</a>
+        </span>
+      </div>
+      <p class="hs-readout" role="status" aria-live="polite"></p>
+    </header>
+    <main>
+      <ul class="article-list">
+${shelfHubs.map(shelfHubCard).concat(SHELF.singles.map(shelfSingleCard)).join('\n')}
+      </ul>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><span class="ftr-links"><a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a></span></div>
+    </footer>
+  </div>
+  <script src="js/search.js"></script>
+  <script>
+  (function () { var root = document.querySelector('.home-search'); var input = root && root.querySelector('.hs-input'); if (!input) return; input.addEventListener('focus', function () { root.classList.add('is-open'); }); input.addEventListener('blur', function () { setTimeout(function () { if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open'); }, 160); }); })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
+`;
+
+HUBS.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + liveCount(h) + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
+writeFileSync(join(ROOT, SHELF.path + '.html'), shelfPage());
+console.log('wrote', SHELF.path + '.html', '(' + shelfCount + ' posts in ' + shelfHubs.length + ' collections + ' + SHELF.singles.length + ' single)');
+
+/* ---- homepage surgery: drop shelf posts + old hub/shelf cards, then add the
+   one Boring Stuff shelf card. REMOVE includes the shelf path so re-running
+   never doubles it. ---------------------------------------------------------- */
+const REMOVE = new Set([
+  ...HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)),
+  ...HUBS.map((h) => h.slug + '.html'),
+  ...SHELF.singles.map((p) => p.href),
+  SHELF.path + '.html',
+]);
+const shelfHomeCard = () => `        <li class="article-list-item fade-in" data-keywords="boring stuff vegetables essays guides collections inner life health philosophy religion sacred books stories career management warehouse customer success psychiatry dsm">
+          <a class="article-item is-collection" href="${SHELF.path}.html">
+            <span class="article-item-thumb">
+              <!-- thumbnail: Fresh cut fruits and vegetables, Peggy Greb, U.S. Department of Agriculture, public domain, via Wikimedia Commons. -->
+              <img src="assets/thumbs/${SHELF.thumb}" width="600" height="400" loading="eager" decoding="async" alt="${SHELF.alt}">
+            </span>
+            <span class="article-item-date">Shelf &middot; ${shelfCount} posts</span>
+            <h2 class="article-item-title">${SHELF.title}</h2>
+            <p class="article-item-description">${shelfLead}</p>
+          </a>
+        </li>`;
 
 let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
 const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
@@ -218,7 +333,7 @@ const keptLis = allLis.filter((li) => {
   if (href && REMOVE.has(href)) { removed++; return false; }
   return true;
 });
-const newList = HUBS.map(hubHomeCard).join('\n') + '\n' + keptLis.join('\n');
+const newList = shelfHomeCard() + '\n' + keptLis.join('\n');
 idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
 writeFileSync(join(ROOT, 'index.html'), idx);
-console.log('homepage: removed ' + removed + ' series/old-hub cards, kept ' + keptLis.length + ', added ' + HUBS.length + ' collection cards');
+console.log('homepage: removed ' + removed + ' shelf post/old-hub cards, kept ' + keptLis.length + ', added 1 shelf card');

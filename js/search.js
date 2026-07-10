@@ -31,7 +31,7 @@
   function inScope(p) {
     if (scope === 'home') return !p.archived;
     if (scope === 'archive') return !!p.archived;
-    return p.hub === scope;
+    return p.hub === scope || (p.hubs && p.hubs.indexOf(scope) >= 0);
   }
 
   var LIMIT = 6;            // results shown (kept tight on purpose)

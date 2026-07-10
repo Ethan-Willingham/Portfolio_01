@@ -116,7 +116,8 @@ for (const block of cardBlocks) {
 // pages instead of on the homepage. Pull each hub's member links, tag them with
 // the hub slug (so a hub page's own search scopes to its posts, and the homepage
 // search still finds them as non-archived), and index their real text.
-const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive'];
+const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive', 'career'];
+const BORING_HUBS = new Set(HUB_SLUGS);
 for (const slug of HUB_SLUGS) {
   const hubFile = join(ROOT, slug + '.html');
   if (!existsSync(hubFile)) continue;
@@ -131,7 +132,33 @@ for (const slug of HUB_SLUGS) {
       date: '', dateDisplay: '',
       desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
       thumb: attr(block, /<img[^>]*src="([^"]+)"/),
-      keywords: '', hub: slug, sections: [],
+      keywords: '', hub: slug, hubs: BORING_HUBS.has(slug) ? [slug, 'boring-stuff'] : [slug], sections: [],
+    };
+    buildSections(post, join(ROOT, href));
+    posts.push(post);
+    seen.add(href);
+  }
+}
+
+// Direct posts on the Boring Stuff shelf. Collection cards are skipped because
+// their child posts were indexed above and tagged with both their collection
+// slug and the parent shelf slug.
+const shelfFile = join(ROOT, 'boring-stuff.html');
+if (existsSync(shelfFile)) {
+  const shelfHtml = readFileSync(shelfFile, 'utf8');
+  const inner = (shelfHtml.match(/<ul class="article-list">([\s\S]*?)<\/ul>/) || [, ''])[1];
+  for (const block of inner.split(/<li class="article-list-item/).slice(1)) {
+    const href = attr(block, /<a class="article-item" href="([^"]+)"/);
+    const slug = href && href.replace(/\.html$/, '');
+    if (!href || !/\.html$/.test(href) || HUB_SLUGS.includes(slug) || seen.has(href)) continue;
+    const post = {
+      url: href,
+      title: stripToText(attr(block, /<h2 class="article-item-title">([\s\S]*?)<\/h2>/)),
+      date: attr(block, /datetime="([^"]+)"/),
+      dateDisplay: stripToText(attr(block, /<time[^>]*>([\s\S]*?)<\/time>/)),
+      desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
+      thumb: attr(block, /<img[^>]*src="([^"]+)"/),
+      keywords: '', hub: 'boring-stuff', hubs: ['boring-stuff'], sections: [],
     };
     buildSections(post, join(ROOT, href));
     posts.push(post);
