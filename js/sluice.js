@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.81';
+  var GAME_VERSION = 'v25.82';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11696,9 +11696,6 @@
     ctx.fillStyle = '#b5723a';
     ctx.beginPath(); ctx.arc(cx, gy - 436, 9, Math.PI, 0); ctx.fill();
     ctx.fillRect(cx - 2, gy - 458, 4, 14);
-    // Stovepipe on the tent's right slope (the banya stove has to breathe).
-    ctx.fillStyle = '#4a5560'; ctx.fillRect(cx + 16, gy - 428, 6, 22);
-    ctx.fillStyle = '#39424c'; ctx.fillRect(cx + 13, gy - 432, 12, 5);
     if (lit) {
       ctx.fillStyle = 'rgba(226,75,74,' + (0.20 * night) + ')';
       ctx.beginPath(); ctx.arc(cx, gy - 466, 17, 0, 6.283); ctx.fill();
@@ -11750,24 +11747,12 @@
     ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + 62, 3, 6);
     lantern(banyaDoorX0 - 11, BANYA_DOOR_Y0 - 2);
 
-    // Lived-in props on the plinth: a bench between sign and door, birch
-    // bundles (veniki) on wall pegs, and a rain barrel right of the door.
+    // Lived-in props: a bench on the GROUND beside the tower, and a rain
+    // barrel on the plinth right of the door.
     ctx.fillStyle = '#54381f';
-    ctx.fillRect(cx - 34, gy - 28, 3, 8); ctx.fillRect(cx - 11, gy - 28, 3, 8);
-    ctx.fillStyle = '#b96b48'; ctx.fillRect(cx - 38, gy - 31, 34, 4);
-    ctx.fillStyle = '#2c1408'; ctx.fillRect(cx - 38, gy - 27, 34, 1);
-    function venik(vx, vy) {
-      ctx.strokeStyle = '#54381f'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx, vy + 7); ctx.stroke();
-      ctx.fillStyle = '#4a6b2a';
-      ctx.beginPath(); ctx.ellipse(vx, vy + 13, 6, 8, 0, 0, 6.283); ctx.fill();
-      ctx.fillStyle = '#5d8136';
-      ctx.beginPath(); ctx.ellipse(vx - 2, vy + 11, 3.5, 5, 0, 0, 6.283); ctx.fill();
-      ctx.strokeStyle = '#3a2c1c'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(vx - 3, vy + 6); ctx.lineTo(vx + 3, vy + 6); ctx.stroke();
-    }
-    venik(cx - 2, gy - 74);
-    venik(cx + 12, gy - 70);
+    ctx.fillRect(x - 48, gy - 9, 3, 9); ctx.fillRect(x - 24, gy - 9, 3, 9);
+    ctx.fillStyle = '#b96b48'; ctx.fillRect(x - 52, gy - 12, 34, 4);
+    ctx.fillStyle = '#2c1408'; ctx.fillRect(x - 52, gy - 8, 34, 1);
     ctx.fillStyle = '#6e4526'; ctx.fillRect(cx + 68, gy - 40, 16, 20);
     ctx.fillStyle = '#4a5560';
     ctx.fillRect(cx + 67, gy - 36, 18, 2); ctx.fillRect(cx + 67, gy - 26, 18, 2);
