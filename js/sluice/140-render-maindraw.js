@@ -227,6 +227,11 @@
     // imageSmoothingEnabled true keeps gradients smooth
     ctx.imageSmoothingEnabled = true;
 
+    // v25.77 BANYA: the bathhouse interior is its own scene; when active it
+    // draws the room + the liquid layer itself and consumes the frame
+    // (docs/game/BATHHOUSE_PLAN.md, B-D11 + B6).
+    if (typeof bathRenderScene === 'function' && bathRenderScene()) return;
+
     // Visible world rect in world coords
     var worldLeft = cam.x;
     var worldTop = cam.y;
@@ -866,6 +871,8 @@
 
     // ---- Open-air fireplace (between station + depot; own render so it survives station cull) ----
     drawSurfaceFireplace();
+    // ---- v25.77 BANYA exterior (072-bath.js): the bathhouse tower + door ----
+    if (typeof drawBanyaExterior === 'function') drawBanyaExterior();
     // v11.46 — Fireplace smoke emission runs every frame regardless of
     // camera position. Combined with the wider smoke fluid domain
     // (overscan 1.6), the chimney keeps emitting into the sim even

@@ -15,10 +15,22 @@ owner (weekly Fable budget was nearly exhausted, so this doc front-loads every
 architectural decision at line-level precision for Opus/Sonnet execution). The
 conversational design treatment lives in that session; this doc is self-sufficient.
 
-Status: **B1 SHIPPED (v25.56)** by the Fable session itself; next = B2 (steam +
-source authoring) after the owner's feel-check of the heated pond. Nothing ships
-enabled: everything sits behind `ENABLE_BATH` (default false, `?bath=1` override)
-in the `js/sluice/010-constants.js` flag block, exact style of `ENABLE_JELLO`.
+Status: **B1 SHIPPED (v25.56/57); B6+B8 SLICE SHIPPED (v25.77)**: the banya
+tower stands in the town (dynamically sited clear of the lakes), walk-in or
+click-to-enter swaps to the interior scene (off-map pocket room per B-D11,
+scene-owned zoom fitting any canvas, HUD/smoke layers hidden inside, hot tub 1
+convecting with the B1 tint beside cold tub 2, tap-the-door/ESC exit). Try:
+`?bath=1`, then `__bath.warp()` + walk right into the door. Next = owner
+feel-check of the slice, then B2 (the steam system) and the HOSE (B6 rest).
+v25.77 slice lessons, recorded so nobody re-learns them: surface LAKES vary per
+seed so the site must be picked post-worldgen; the world viewport EXCLUDES the
+console strip so a scene must clear the FULL canvas itself; the console/toasts
+live on a separate z:6 DOM canvas (`uiTopCanvas`, 140) that must be hidden in
+scene mode (smoke z:5 too; liquid z:4 stays); the scene must OWN `worldScale`
+per frame (fit room to canvas, restore on exit) or the room does not fit the
+zoomed viewport, and overriding the global keeps the liquid overlay aligned.
+Nothing ships enabled: everything sits behind `ENABLE_BATH` (default false,
+`?bath=1` override) in the `js/sluice/010-constants.js` flag block.
 
 **B1 verification record (2026-07-05, headless Chrome + CDP, Apple/Metal):**
 baseline boot (no flag) logs all LiquidWGPU stages with 0 errors; `?bath=1` boot
