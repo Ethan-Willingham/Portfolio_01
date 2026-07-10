@@ -362,14 +362,17 @@ One fixed room fills the screen; the whole night happens in this frame. Your han
 are the pointer (tap/hold/drag = click/hold/drag; identical on touch and mouse).
 Numbers are v0 proposals. The scene mockup lives in the 2026-07-09 owner session.
 
-**The screen.** Left: the entry door (felt flap) + visible queue (planning info,
-like seeing Dave's line) + the «БАНЯ» sign. Center: the tub row (2 tubs growing to
-5) under the CEILING RAIL carrying the hose arm, floor in front where guests
-wobble. Right: the service wall: liquid TANKS with visible levels (hot, cold,
-later exotics), mineral jar shelf, boiler with pressure gauge + firebox, coal
-pile. Floor: drain grate + till. Top: oil lamps, pooling steam, a flue window.
-HUD is diegetic: thermometers on tubs, tank levels, patience on the guests; only
-cash sits small in a corner.
+**The screen (REVISED 2026-07-09 late: a SCROLLING TOWER, owner direction).**
+The interior is five stacked floors you climb by scrolling (wheel, mouse drag,
+touch drag; identical code path), entered at the BOTTOM: F1 four tubs + the
+«БАНЯ» sign + the ВЫХОД door, F2 four dry tubs (the hose era fills them), F3 the
+sauna «ПАРИЛКА» (bench tiers + kamenka stove), F4 two wide tubs, F5 one big hot
+crown pool (the B1 heat rect lives there: the reward for climbing). Floors taper
+with the exterior tiers. The camera fits the tower WIDTH on any screen, so
+mobile portrait shows ~3 floors and desktop ~1, and both scroll. The service
+wall (tanks, jars, boiler, hose rail) distributes across floors when B6's hose
+lands. HUD stays diegetic; SHIPPED as the v25.83 slice in 072-bath.js
+(BATH_FLOORS table; __bath.floor(1..5) scrolls for dev).
 
 1. **Request.** A guest wobbles in low from the door, climbs into an empty tub DRY,
    and shows a pictographic bubble: temperature band + mineral (later: two minerals,
@@ -422,6 +425,13 @@ Maps onto the stage board: room/fixtures/pointer = B6; queue, requests, pacing,
 supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
+
+- 2026-07-09 latest session (owner): the interior became a five-floor SCROLLING
+  TOWER (F1 4 tubs / F2 4 dry / F3 sauna / F4 2 wide / F5 big hot crown pool),
+  replacing the single room; width-fit camera + vertical scroll target; enter at
+  the bottom; the one B1 heat rect moved to the crown pool. Spawn lesson: tub
+  water must seed near REST density (~1.6 px spacing; 655/tile), sparse seeding
+  collapses to puddles. Shipped v25.83.
 
 - 2026-07-09 later session (owner + Fable): (a) per-tub taps replaced by THE HOSE
   (ceiling-rail articulated arm, drag + stays, tap-to-toggle flow, liquid dial,

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.82';
+  var GAME_VERSION = 'v25.83';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11382,14 +11382,28 @@
     return true;
   }
 
-  // ---- The pocket room (world tiles; deep in the inert bedrock fill) ----
-  var BATH_ROOM_R0 = 600, BATH_ROOM_R1 = 613;   // ceiling row / floor row
-  var BATH_ROOM_C0 = 20,  BATH_ROOM_C1 = 51;    // left wall col / right wall col
-  var BATH_TUB_WALLS = [26, 31, 38, 43];        // tub 1 = 26..31, tub 2 = 38..43
-  var BATH_EXIT_X0 = 48 * TILE, BATH_EXIT_X1 = 50 * TILE;   // exit door rect
+  // ---- The pocket TOWER (world tiles; deep in the inert bedrock fill) ----
+  // v25.83 interior revamp (owner): five floors you SCROLL through, entered
+  // at the bottom: F1 four tubs, F2 four tubs (dry, the hose era fills
+  // them), F3 the sauna (ПАРИЛКА), F4 two wide tubs, F5 one big hot crown
+  // pool (the B1 heat rect lives there: the payoff for climbing). Floors
+  // taper with the exterior. One floor = 13 rows (12 interior + slab).
+  // Camera fits the tower WIDTH; wheel / drag / touch scrolls vertically.
+  // tubs = water spans [c0,c1]; walls are added at span edges +-1.
+  // fill: 0 = dry, 1 = cold water, 2 = full + the heat source.
+  var BATH_CX_COL = 36;
+  var BATH_FLOORS = [
+    { c0: 26, c1: 46, fr: 613, deep: 2, tubs: [[28,30],[32,34],[36,38],[40,42]], fill: [1,1,1,1] },
+    { c0: 26, c1: 46, fr: 600, deep: 2, tubs: [[28,30],[32,34],[36,38],[40,42]], fill: [0,0,0,0] },
+    { c0: 28, c1: 44, fr: 587, deep: 0, tubs: [], fill: [], sauna: true },
+    { c0: 30, c1: 42, fr: 574, deep: 2, tubs: [[32,35],[37,40]], fill: [1,1] },
+    { c0: 31, c1: 41, fr: 561, deep: 3, tubs: [[33,39]], fill: [2] }
+  ];
+  var BATH_TOP_ROW = 548;                       // F5 ceiling row
+  var BATH_BOT_ROW = 613;                       // F1 floor slab row
+  var BATH_VIEW_W = 25 * TILE;                  // width-fit: widest floor + shell
+  var BATH_EXIT_X0 = 44 * TILE, BATH_EXIT_X1 = 47 * TILE;   // F1 right-wall door
   var BATH_EXIT_Y0 = 609 * TILE, BATH_EXIT_Y1 = 613 * TILE;
-  var BATH_CAM_CX = 36 * TILE;                  // camera pin centre
-  var BATH_CAM_CY = 607 * TILE + 8;             // slight down bias: tubs + floor
 
   var bathMode = false;        // true while inside the scene
   var bathRoomReady = false;   // room carved + water spawned + heat armed
@@ -11405,46 +11419,55 @@
     if (liquidWGPU && liquidWGPU.setRenderParam) liquidWGPU.setRenderParam(name, v);
   }
 
-  // ---- Room construction (one-shot, on first enter) ----------------------
+  // ---- Tower construction (one-shot, on first enter) ----------------------
   function bathCarveRoom() {
     if (bathRoomReady) return;
-    if (typeof world === 'undefined' || !world[BATH_ROOM_R1]) return;
-    // Shell + cavity. Replacing tile objects wholesale is safe (the shared
-    // frozen fill prototypes are never mutated, only de-referenced).
-    for (var r = BATH_ROOM_R0; r <= BATH_ROOM_R1; r++) {
-      for (var c = BATH_ROOM_C0; c <= BATH_ROOM_C1; c++) {
-        var edge = (r === BATH_ROOM_R0 || r === BATH_ROOM_R1 ||
-                    c === BATH_ROOM_C0 || c === BATH_ROOM_C1);
-        world[r][c] = edge ? { type: 'foundation', hp: 999999 } : null;
+    if (typeof world === 'undefined' || !world[BATH_BOT_ROW]) return;
+    var r, c, f, i;
+    // Solid block first (replacing tile objects wholesale is safe: the
+    // shared frozen fill prototypes are never mutated, only de-referenced),
+    // then carve each floor's cavity out of it.
+    for (r = BATH_TOP_ROW; r <= BATH_BOT_ROW; r++) {
+      for (c = BATH_CX_COL - 14; c <= BATH_CX_COL + 14; c++) {
+        world[r][c] = { type: 'foundation', hp: 999999 };
       }
     }
-    // Tub side walls (2 tiles tall, sitting on the floor row).
-    for (var i = 0; i < BATH_TUB_WALLS.length; i++) {
-      for (var r2 = 611; r2 <= 612; r2++) {
-        world[r2][BATH_TUB_WALLS[i]] = { type: 'foundation', hp: 999999 };
+    for (f = 0; f < BATH_FLOORS.length; f++) {
+      var F = BATH_FLOORS[f];
+      for (r = F.fr - 12; r <= F.fr - 1; r++) {
+        for (c = F.c0; c <= F.c1; c++) world[r][c] = null;
+      }
+      for (i = 0; i < F.tubs.length; i++) {
+        var tb = F.tubs[i];
+        for (r = F.fr - F.deep; r <= F.fr - 1; r++) {
+          world[r][tb[0] - 1] = { type: 'foundation', hp: 999999 };
+          world[r][tb[1] + 1] = { type: 'foundation', hp: 999999 };
+        }
+        if (F.fill[i]) {
+          var wy0 = (F.fr - F.deep) * TILE + 12, wy1 = F.fr * TILE - 3;
+          for (var wy = wy0; wy < wy1; wy += 1.6) {
+            for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.6) {
+              addLiquidParticle('water', wx, wy, 0, 0, 0);
+            }
+          }
+        }
+      }
+      if (F.sauna) {
+        // Two stepped bench tiers along the left wall (solid, sittable).
+        for (c = F.c0 + 1; c <= F.c0 + 7; c++) world[F.fr - 1][c] = { type: 'foundation', hp: 999999 };
+        for (c = F.c0 + 1; c <= F.c0 + 4; c++) world[F.fr - 2][c] = { type: 'foundation', hp: 999999 };
       }
     }
-    // Water: tub 1 (cols 27-30) full + HOT, tub 2 (cols 39-42) half + cold.
-    var sp = 4.8, x, y;
-    for (y = 611 * TILE + 3; y < 613 * TILE - 3; y += sp) {
-      for (x = 27 * TILE + 3; x < 31 * TILE - 3; x += sp) {
-        addLiquidParticle('water', x, y, 0, 0, 0);
-      }
-    }
-    for (y = 612 * TILE + 2; y < 613 * TILE - 3; y += sp) {
-      for (x = 39 * TILE + 3; x < 43 * TILE - 3; x += sp) {
-        addLiquidParticle('water', x, y, 0, 0, 0);
-      }
-    }
-    // Repoint the ONE B1 heat-source rect at tub 1's floor band. This
-    // supersedes the v25.56 pond demo (same lanes, better home).
-    bathTune('BATH_SRC_X0', 27 * TILE); bathTune('BATH_SRC_Y0', 612 * TILE);
-    bathTune('BATH_SRC_X1', 31 * TILE); bathTune('BATH_SRC_Y1', 613 * TILE + TILE);
+    // The ONE B1 heat rect warms the CROWN POOL: the payoff at the top.
+    // (B2's source list will heat more; until then the lower tubs run cold.)
+    var P = BATH_FLOORS[4], pt = P.tubs[0];
+    bathTune('BATH_SRC_X0', pt[0] * TILE);       bathTune('BATH_SRC_Y0', (P.fr - 1) * TILE);
+    bathTune('BATH_SRC_X1', (pt[1] + 1) * TILE); bathTune('BATH_SRC_Y1', (P.fr + 1) * TILE);
     bathTune('BATH_ON', 1);
     bathRoomReady = true;
     try {
-      console.log('[bath] room carved at rows ' + BATH_ROOM_R0 + '-' + BATH_ROOM_R1 +
-        ', tub 1 heated. __bath.enter()/.exit()/.warp(); levers via bathTune.');
+      console.log('[bath] tower carved: 5 floors, rows ' + BATH_TOP_ROW + '-' +
+        BATH_BOT_ROW + '; crown pool heated. __bath.floor(1..5) scrolls there.');
     } catch (e) {}
   }
 
@@ -11475,6 +11498,8 @@
     setTimeout(function () {
       if (toInside) {
         bathCarveRoom();
+        bathScrollT = 1e9;   // enter at the BOTTOM floor
+        bathCamY = -1;       // snap, no cross-tower pan on the first frame
         bathMode = true;
       } else {
         bathMode = false;
@@ -11514,47 +11539,94 @@
   }
 
   // ---- Hook 2: updateCamera() top (080). The scene OWNS the zoom: fit the
-  // whole room to the canvas every frame (any window size, any dpr), and
-  // restore the player's worldScale on exit. Overriding the global keeps
-  // the liquid overlay's view mapping in perfect agreement with the main
-  // canvas transform, since both read dpr * worldScale live. --------------
-  var BATH_VIEW_W = 34 * TILE;    // room + shell walls (cols 20-52 and change)
-  var BATH_VIEW_H = 15 * TILE;    // rows 600-614 incl. the floor boards
+  // tower WIDTH to the canvas (any window, any dpr) and scroll VERTICALLY
+  // through the floors (wheel / drag / touch feed bathScrollT). Overriding
+  // the global worldScale keeps the liquid overlay's view mapping in
+  // perfect agreement with the main canvas transform, since both read
+  // dpr * worldScale live. Restored on exit. -------------------------------
   var bathSavedScale = null;
+  var bathScrollT = 1e9;          // scroll target (world y); huge = clamp to bottom
+  var bathCamY = -1;              // smoothed camera y; -1 = snap on first pin
+  var bathViewH = 0;              // visible height in world px (set per frame)
   function bathCamPin() {
     if (!bathMode) {
       if (bathSavedScale !== null) { worldScale = bathSavedScale; bathSavedScale = null; }
       return false;
     }
     if (bathSavedScale === null) bathSavedScale = worldScale;
-    worldScale = Math.min(canvas.width / dpr / BATH_VIEW_W,
-                          canvas.height / dpr / BATH_VIEW_H);
+    worldScale = canvas.width / dpr / BATH_VIEW_W;
     var iws = 1 / (dpr * worldScale);
-    cam.x = BATH_CAM_CX - canvas.width * iws / 2;
-    cam.y = BATH_CAM_CY - canvas.height * iws / 2;
+    bathViewH = canvas.height * iws;
+    var minY = BATH_TOP_ROW * TILE - 24;
+    var maxY = (BATH_BOT_ROW + 1) * TILE + 24 - bathViewH;
+    if (maxY < minY) maxY = minY;
+    if (bathScrollT < minY) bathScrollT = minY;
+    if (bathScrollT > maxY) bathScrollT = maxY;
+    if (bathCamY < 0) bathCamY = bathScrollT;
+    bathCamY += (bathScrollT - bathCamY) * 0.22;
+    cam.x = BATH_CX_COL * TILE - canvas.width * iws / 2;
+    cam.y = bathCamY;
     return true;
   }
+  function bathScrollToFloor(n) {   // dev + future UI: centre floor n (1..5)
+    var F = BATH_FLOORS[Math.max(1, Math.min(5, n)) - 1];
+    bathScrollT = (F.fr - 6) * TILE - bathViewH / 2;
+  }
 
-  // ---- Click / tap: enter from outside (near the door), exit on the room's
-  // door. One handler, mouse + touch. --------------------------------------
+  // ---- Pointer: outside, tap the tower (near it) to enter. Inside, DRAG
+  // (mouse or finger) scrolls the tower, the wheel scrolls it, and a TAP
+  // (movement under 10 css px) on the ВЫХОД door leaves. One code path for
+  // touch and mouse via pointer events. -------------------------------------
+  var bathPtrDown = false, bathPtrX = 0, bathPtrY = 0, bathPtrMoved = 0;
+  function bathClientToWorld(e) {
+    var rct = canvas.getBoundingClientRect();
+    if (!rct.width || !rct.height) return null;
+    var ws = dpr * worldScale;
+    return {
+      x: cam.x + (e.clientX - rct.left) * (canvas.width / rct.width) / ws,
+      y: cam.y + (e.clientY - rct.top) * (canvas.height / rct.height) / ws
+    };
+  }
   function bathPointer(e) {
     if (!ENABLE_BATH || bathFading) return;
-    var rct = canvas.getBoundingClientRect();
-    if (!rct.width || !rct.height) return;
-    var ws = dpr * worldScale;
-    var wx = cam.x + (e.clientX - rct.left) * (canvas.width / rct.width) / ws;
-    var wy = cam.y + (e.clientY - rct.top) * (canvas.height / rct.height) / ws;
     if (bathMode) {
-      if (wx >= BATH_EXIT_X0 && wx <= BATH_EXIT_X1 &&
-          wy >= BATH_EXIT_Y0 && wy <= BATH_EXIT_Y1) bathExit();
+      bathPtrDown = true; bathPtrX = e.clientX; bathPtrY = e.clientY;
+      bathPtrMoved = 0;
       return;
     }
     // Outside: the whole tower is the button, but only when the rig is near.
     if (!bathPickSite()) return;
+    var p = bathClientToWorld(e);
+    if (!p) return;
     var dx = (player.x + PLAYER_W / 2) - (banyaX + BANYA_W / 2);
     if (Math.abs(dx) > 9 * TILE) return;
-    if (wx >= banyaX - 8 && wx <= banyaX + BANYA_W + 8 &&
-        wy >= SKY_ROWS * TILE - 480 && wy <= SKY_ROWS * TILE) bathEnter();
+    if (p.x >= banyaX - 8 && p.x <= banyaX + BANYA_W + 8 &&
+        p.y >= SKY_ROWS * TILE - 480 && p.y <= SKY_ROWS * TILE) bathEnter();
+  }
+  function bathPointerMove(e) {
+    if (!bathMode || !bathPtrDown) return;
+    var dy = e.clientY - bathPtrY;
+    bathPtrMoved += Math.abs(dy) + Math.abs(e.clientX - bathPtrX);
+    bathPtrX = e.clientX; bathPtrY = e.clientY;
+    // Content follows the finger: dragging DOWN shows higher floors' worth
+    // of tower above, i.e. the camera moves opposite the pointer.
+    var rct = canvas.getBoundingClientRect();
+    if (rct.height) bathScrollT -= dy * (canvas.height / rct.height) / (dpr * worldScale);
+  }
+  function bathPointerUp(e) {
+    var wasDown = bathPtrDown;
+    bathPtrDown = false;
+    if (!bathMode || !wasDown || bathFading) return;
+    if (bathPtrMoved >= 10) return;   // it was a drag, not a tap
+    var p = bathClientToWorld(e);
+    if (!p) return;
+    if (p.x >= BATH_EXIT_X0 && p.x <= BATH_EXIT_X1 &&
+        p.y >= BATH_EXIT_Y0 && p.y <= BATH_EXIT_Y1) bathExit();
+  }
+  function bathWheelScroll(e) {
+    if (!bathMode) return;
+    e.preventDefault();
+    bathScrollT += (e.deltaY || 0) / Math.max(worldScale, 0.001);
   }
 
   // ---- Exterior: the tiered tower (v25.79, owner direction) ---------------
@@ -11771,80 +11843,107 @@
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
 
-  // ---- Hook 3: render() top (140). Draws the whole scene and consumes the
-  // frame. The liquid layer is a separate DOM canvas above this one, so
-  // calling drawLiquids() here keeps the tub water live. -------------------
+  // ---- Hook 3: render() top (140). Draws the whole TOWER scene, floor by
+  // floor, and consumes the frame. The liquid layer is a separate DOM
+  // canvas above this one, so calling drawLiquids() keeps the water live. --
   function bathRenderScene() {
     if (!bathMode) return false;
     // Own the WHOLE canvas: the world viewport excludes the console strip,
     // so without this full-screen clear the strip keeps last frame's stale
     // console pixels (found the hard way). Then rebuild the world transform
-    // (no screenshake in here) and draw the room in world coords.
+    // (no screenshake in here) and draw in world coords.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#120d08';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     var _bws = dpr * worldScale;
     ctx.setTransform(_bws, 0, 0, _bws,
       -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
-    var iws2 = 1 / _bws;
-    var vx0 = cam.x - 8, vw = canvas.width * iws2 + 16;
-    var vy0 = cam.y - 8, vh = canvas.height * iws2 + 16;
-    // Back wall: planking pushed back by a dark wash.
-    drawWoodPlanking(BATH_ROOM_C0 * TILE + TILE, BATH_ROOM_R0 * TILE + TILE,
-                     (BATH_ROOM_C1 - BATH_ROOM_C0 - 1) * TILE,
-                     (BATH_ROOM_R1 - BATH_ROOM_R0 - 1) * TILE, 8);
-    ctx.fillStyle = 'rgba(10,6,3,0.42)';
-    ctx.fillRect(BATH_ROOM_C0 * TILE + TILE, BATH_ROOM_R0 * TILE + TILE,
-                 (BATH_ROOM_C1 - BATH_ROOM_C0 - 1) * TILE,
-                 (BATH_ROOM_R1 - BATH_ROOM_R0 - 1) * TILE);
-    // Ceiling beam + floor boards.
-    ctx.fillStyle = '#1c130c';
-    ctx.fillRect(vx0, BATH_ROOM_R0 * TILE - 8, vw, TILE + 8);
-    drawWoodPlanking(vx0, BATH_ROOM_R1 * TILE, vw, TILE + 10, 5);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(vx0, BATH_ROOM_R1 * TILE, vw, TILE + 10);
-    ctx.fillStyle = '#0d0906';
-    ctx.fillRect(vx0, BATH_ROOM_R1 * TILE + TILE + 10, vw, vh);
-    // Side pillars at the shell walls.
-    ctx.fillStyle = '#241810';
-    ctx.fillRect(BATH_ROOM_C0 * TILE - 8, BATH_ROOM_R0 * TILE, TILE + 8, (BATH_ROOM_R1 - BATH_ROOM_R0 + 1) * TILE);
-    ctx.fillRect(BATH_ROOM_C1 * TILE, BATH_ROOM_R0 * TILE, TILE + 8, (BATH_ROOM_R1 - BATH_ROOM_R0 + 1) * TILE);
-    // «БАНЯ» wall sign.
-    ctx.fillStyle = '#241810'; ctx.fillRect(1056, 19260, 192, 44);
-    ctx.strokeStyle = '#8a5427'; ctx.lineWidth = 2; ctx.strokeRect(1057, 19261, 190, 42);
-    ctx.fillStyle = '#e0b060';
-    ctx.font = 'bold 26px "Commit Mono", monospace';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('БАНЯ', 1152, 19283);
-    // Oil lamps (bracket + flame + layered halo; flat, no filters).
     var lt = performance.now() * 0.001;
     function lamp(lx, ly) {
-      var f = 0.9 + 0.1 * Math.sin(lt * 3 + lx);
+      var fl = 0.9 + 0.1 * Math.sin(lt * 3 + lx);
       ctx.fillStyle = 'rgba(255,184,92,0.05)';
       ctx.beginPath(); ctx.arc(lx, ly, 88, 0, 6.283); ctx.fill();
       ctx.fillStyle = 'rgba(255,184,92,0.09)';
       ctx.beginPath(); ctx.arc(lx, ly, 44, 0, 6.283); ctx.fill();
       ctx.fillStyle = '#54381f'; ctx.fillRect(lx - 3, ly - 26, 6, 18);
-      ctx.fillStyle = 'rgba(255,206,106,' + f + ')';
+      ctx.fillStyle = 'rgba(255,206,106,' + fl + ')';
       ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 6.283); ctx.fill();
     }
-    lamp(792, 19330); lamp(1450, 19330);
-    // Tubs: dark inner backdrop (water pops against it), stave walls, hoops.
-    function tub(wc0, wc1) {
-      var tx0 = wc0 * TILE, tx1 = (wc1 + 1) * TILE;
-      ctx.fillStyle = '#0e0a06';
-      ctx.fillRect(tx0 + TILE, 611 * TILE, (wc1 - wc0 - 1) * TILE, 2 * TILE);
-      ctx.fillStyle = '#6e4526';
-      ctx.fillRect(tx0, 611 * TILE - 6, TILE, 2 * TILE + 6);
-      ctx.fillRect(tx1 - TILE, 611 * TILE - 6, TILE, 2 * TILE + 6);
-      ctx.fillStyle = '#543319';
-      ctx.fillRect(tx0 - 4, 611 * TILE - 12, TILE + 8, 8);
-      ctx.fillRect(tx1 - TILE - 4, 611 * TILE - 12, TILE + 8, 8);
-      ctx.fillStyle = '#4a5560';
-      ctx.fillRect(tx0 - 2, 611 * TILE + 14, tx1 - tx0 + 4, 6);
-      ctx.fillRect(tx0 - 2, 612 * TILE + 10, tx1 - tx0 + 4, 6);
+    var f, i, F;
+    for (f = 0; f < BATH_FLOORS.length; f++) {
+      F = BATH_FLOORS[f];
+      var ix = F.c0 * TILE, iy = (F.fr - 12) * TILE;
+      var iw = (F.c1 - F.c0 + 1) * TILE, ih = 12 * TILE;
+      if (iy > cam.y + bathViewH + 200 || iy + ih < cam.y - 200) continue;
+      // Back wall planking, pushed back by a wash (the sauna runs warmer).
+      drawWoodPlanking(ix, iy, iw, ih, 8);
+      ctx.fillStyle = F.sauna ? 'rgba(34,12,4,0.30)' : 'rgba(10,6,3,0.42)';
+      ctx.fillRect(ix, iy, iw, ih);
+      // Side pillars hugging this floor's shell (they step with the taper).
+      ctx.fillStyle = '#241810';
+      ctx.fillRect(ix - TILE - 6, iy - TILE, TILE + 6, ih + 2 * TILE);
+      ctx.fillRect(ix + iw, iy - TILE, TILE + 6, ih + 2 * TILE);
+      // The slab underfoot: plank beam with a dark wash + top edge.
+      drawWoodPlanking(ix - TILE, F.fr * TILE, iw + 2 * TILE, TILE, 5);
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fillRect(ix - TILE, F.fr * TILE, iw + 2 * TILE, TILE);
+      ctx.fillStyle = '#54381f';
+      ctx.fillRect(ix - TILE, F.fr * TILE, iw + 2 * TILE, 4);
+      lamp(ix + 40, iy + 116);
+      lamp(ix + iw - 40, iy + 116);
+      // Tubs: dark inner backdrop (water pops), stave walls, iron hoops.
+      for (i = 0; i < F.tubs.length; i++) {
+        var tb = F.tubs[i];
+        var tx0 = (tb[0] - 1) * TILE, tx1 = (tb[1] + 2) * TILE;
+        var ty = (F.fr - F.deep) * TILE;
+        ctx.fillStyle = '#0e0a06';
+        ctx.fillRect(tb[0] * TILE, ty, (tb[1] - tb[0] + 1) * TILE, F.deep * TILE);
+        ctx.fillStyle = '#6e4526';
+        ctx.fillRect(tx0, ty - 6, TILE, F.deep * TILE + 6);
+        ctx.fillRect(tx1 - TILE, ty - 6, TILE, F.deep * TILE + 6);
+        ctx.fillStyle = '#543319';
+        ctx.fillRect(tx0 - 4, ty - 12, TILE + 8, 8);
+        ctx.fillRect(tx1 - TILE - 4, ty - 12, TILE + 8, 8);
+        ctx.fillStyle = '#4a5560';
+        ctx.fillRect(tx0 - 2, ty + 12, tx1 - tx0 + 4, 5);
+        if (F.deep > 1) ctx.fillRect(tx0 - 2, ty + F.deep * TILE - 18, tx1 - tx0 + 4, 5);
+      }
+      if (F.sauna) {
+        // Bench tiers over the solid tiles, the kamenka stove with hot
+        // rocks and an ember glow, and the ПАРИЛКА plaque.
+        drawWoodPlanking(ix + TILE, (F.fr - 2) * TILE, 4 * TILE, TILE, 5);
+        drawWoodPlanking(ix + TILE, (F.fr - 1) * TILE, 7 * TILE, TILE, 5);
+        var kx = (F.c1 - 3) * TILE, ky = (F.fr - 3) * TILE;
+        ctx.fillStyle = '#4a5560'; ctx.fillRect(kx, ky, 2 * TILE, 3 * TILE);
+        ctx.fillStyle = '#39424c'; ctx.fillRect(kx - 4, ky - 6, 2 * TILE + 8, 8);
+        ctx.fillStyle = '#1c130c'; ctx.fillRect(kx + 8, ky + 40, 2 * TILE - 16, 26);
+        ctx.fillStyle = 'rgba(255,122,42,0.10)';
+        ctx.beginPath(); ctx.arc(kx + TILE, ky + 50, 46, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#ff7a2a';
+        ctx.beginPath(); ctx.arc(kx + TILE, ky + 53, 9, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#3a3f46';
+        ctx.beginPath(); ctx.arc(kx + 20, ky + 10, 7, 0, 6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(kx + 36, ky + 5, 8, 0, 6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(kx + 50, ky + 11, 6, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#241810'; ctx.fillRect(ix + iw / 2 - 64, iy + 24, 128, 30);
+        ctx.strokeStyle = '#8a5427'; ctx.lineWidth = 2;
+        ctx.strokeRect(ix + iw / 2 - 63, iy + 25, 126, 28);
+        ctx.fillStyle = '#e0b060';
+        ctx.font = 'bold 15px "Commit Mono", monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('ПАРИЛКА', ix + iw / 2, iy + 39);
+      }
     }
-    tub(26, 31); tub(38, 43);
+    // «БАНЯ» sign on the bottom floor's back wall.
+    var F1 = BATH_FLOORS[0];
+    ctx.fillStyle = '#241810';
+    ctx.fillRect(BATH_CX_COL * TILE - 88, (F1.fr - 11) * TILE, 176, 40);
+    ctx.strokeStyle = '#8a5427'; ctx.lineWidth = 2;
+    ctx.strokeRect(BATH_CX_COL * TILE - 87, (F1.fr - 11) * TILE + 1, 174, 38);
+    ctx.fillStyle = '#e0b060';
+    ctx.font = 'bold 24px "Commit Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('БАНЯ', BATH_CX_COL * TILE, (F1.fr - 11) * TILE + 21);
     // Exit door + «ВЫХОД».
     ctx.fillStyle = '#0c0906';
     ctx.fillRect(BATH_EXIT_X0, BATH_EXIT_Y0, BATH_EXIT_X1 - BATH_EXIT_X0, BATH_EXIT_Y1 - BATH_EXIT_Y0);
@@ -11861,7 +11960,7 @@
     ctx.fillStyle = 'rgba(224,176,96,0.75)';
     ctx.font = '13px "Commit Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('tap the door (or ESC) to leave the banya', canvas.width / 2, canvas.height - 26);
+    ctx.fillText('scroll or drag to climb the tower · tap ВЫХОД (or ESC) to leave', canvas.width / 2, canvas.height - 26);
     ctx.textAlign = 'left';
     return true;
   }
@@ -11869,10 +11968,17 @@
   if (ENABLE_BATH) {
     window.bathTune = bathTune;
     window.__bath = { tune: bathTune, enter: bathEnter, exit: bathExit,
+                      floor: bathScrollToFloor,
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
                       warp: bathWarp,
                       get mode() { return bathMode; } };
-    try { canvas.addEventListener('pointerdown', bathPointer); } catch (e) {}
+    try {
+      canvas.addEventListener('pointerdown', bathPointer);
+      canvas.addEventListener('pointermove', bathPointerMove);
+      canvas.addEventListener('pointerup', bathPointerUp);
+      canvas.addEventListener('pointercancel', function () { bathPtrDown = false; });
+      canvas.addEventListener('wheel', bathWheelScroll, { passive: false });
+    } catch (e) {}
   }
   /* ---- Update ---- */
   // ----- Drill SFX bridge state (engine facade: js/audio.js SluiceAudio.sfx.drill) -----
