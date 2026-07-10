@@ -397,13 +397,26 @@
       vertical-align: 0.15em;
     }
     .pl-sub {
+      display: grid;
+      gap: 0.08rem;
       font-family: var(--font-body);
       font-size: 0.82rem;
       color: var(--dim);
       line-height: 1.35;
-      margin-top: 0.15rem;
+      margin-top: 0.3rem;
     }
     .pl.is-birthday .pl-sub { color: var(--gold-2); font-weight: 600; }
+    .pl-meta { display: block; }
+    .pl-label {
+      display: inline-block;
+      min-width: 3.1rem;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
     .pl-age { text-align: right; white-space: nowrap; }
     .pl-num {
       font-family: var(--font-mono);
@@ -427,44 +440,31 @@
     .sa-results.in .sa-rise { animation: sa-riseup 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
     @keyframes sa-riseup { to { opacity: 1; transform: none; } }
 
-    /* ---- Share, sitting right above the planets ---- */
+    /* Quiet utilities after the answer, so they do not compete with it. */
     .sa-share {
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
-      gap: 0.65rem;
-      margin: 0 0 1.7rem;
+      gap: 0.45rem;
+      margin: 1.25rem 0 0;
     }
     .sa-btn {
-      font-family: var(--font-heading);
-      font-size: 1.02rem;
-      color: #0a0e0c;
-      background: var(--gold);
-      border: 1px solid var(--gold);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--dim);
+      background: transparent;
+      border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 0.7em 1.6em;
-      min-height: 48px;
+      padding: 0.55em 1em;
+      min-height: 40px;
       cursor: pointer;
-      transition: background 0.2s, transform 0.08s, box-shadow 0.2s;
-      box-shadow: 0 4px 20px rgba(224, 205, 156, 0.18);
+      transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.08s;
+      box-shadow: none;
       white-space: nowrap;
     }
-    .sa-btn:hover { background: var(--gold-2); box-shadow: 0 4px 26px rgba(224, 205, 156, 0.28); }
+    .sa-btn:hover { color: var(--ink); background: rgba(224, 205, 156, 0.08); border-color: var(--gold); }
     .sa-btn:active { transform: translateY(1px); }
-    .sa-btn.done { background: var(--gold-2); }
-    .sa-btn--calendar {
-      color: var(--gold-2);
-      background: transparent;
-      border-color: var(--line);
-      box-shadow: none;
-    }
-    .sa-btn--calendar:hover {
-      color: var(--ink);
-      background: rgba(224, 205, 156, 0.08);
-      border-color: var(--gold);
-      box-shadow: none;
-    }
-    .sa-btn--calendar.done { color: #0a0e0c; border-color: var(--gold-2); }
+    .sa-btn.done { color: var(--gold-2); border-color: var(--gold); }
 
     @media (prefers-reduced-motion: reduce) {
       .pl-confetti { display: none; }
@@ -529,11 +529,11 @@
 
       <!-- RESULTS: revealed only once a birthday is in. -->
       <section class="sa-results" id="sa-results" hidden aria-live="polite">
+        <ol class="sa-list" id="sa-list"></ol>
         <div class="sa-share sa-rise">
           <button class="sa-btn" id="sa-share" type="button">Share</button>
           <button class="sa-btn sa-btn--calendar" id="sa-calendar" type="button">Add all to calendar</button>
         </div>
-        <ol class="sa-list" id="sa-list"></ol>
       </section>
 
     </main>
@@ -600,6 +600,18 @@
       if (when === 'in 1 month') return 'next month';
       if (when === 'in 1 day') return 'tomorrow';
       return when;
+    }
+    function fmtCountdown(ms) {
+      var when = fmtWhen(ms);
+      if (when === 'tomorrow') return '1 day';
+      if (when === 'next month') return '1 month';
+      return when.slice(0, 3) === 'in ' ? when.slice(3) : when;
+    }
+    function fmtEarthYears(days) {
+      var years = days / YEAR_DAYS;
+      var digits = years < 10 ? 2 : (years < 200 ? 1 : 0);
+      var value = years.toFixed(digits).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+      return value + ' Earth ' + (value === '1' ? 'year' : 'years');
     }
     function sameDay(a, b) {
       return a.getFullYear() === b.getFullYear() &&
@@ -680,10 +692,13 @@
       var rows = '';
       birthdays.forEach(function (item, i) {
         var b = item.body;
-        var when = fmtWhen(item.nextDate.getTime() - nowT);
-        var status = item.isToday
-          ? 'Birthday today &middot; <time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time>'
-          : 'Next birthday &middot; <time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time> &middot; ' + when;
+        var countdown = fmtCountdown(item.nextDate.getTime() - nowT);
+        var nextLabel = item.isToday ? 'Today' : 'Next';
+        var nextValue = item.isToday
+          ? 'Birthday &middot; <time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time>'
+          : '<time datetime="' + dateAttr(item.nextDate) + '">' + fmtDate(item.nextDate) + '</time> &middot; ' + countdown;
+        var status = '<span class="pl-meta"><span class="pl-label">' + nextLabel + '</span>' + nextValue + '</span>' +
+                     '<span class="pl-meta"><span class="pl-label">Year</span>' + fmtEarthYears(b.days) + '</span>';
         var confetti = item.isToday ? '<span class="pl-confetti" aria-hidden="true">' + '<i></i>'.repeat(9) + '</span>' : '';
         rows += '<li class="pl sa-rise' + (item.isToday ? ' is-birthday' : '') + '" style="animation-delay:' + (0.06 * i).toFixed(2) + 's">' +
                   '<div class="pl-orb"><img class="pl-img" src="assets/planets/' + b.key + '.jpg" width="160" height="160" loading="lazy" decoding="async" alt="">' + confetti + '</div>' +
@@ -750,6 +765,17 @@
       soonEl.hidden = true;
       soonEl.classList.remove('on');
     }
+    function hideResults() {
+      resultsEl.hidden = true;
+      resultsEl.classList.remove('in');
+      listEl.innerHTML = '';
+      upcomingBirthdays = [];
+      shareMsg = '';
+      if (calendarBtn) {
+        calendarBtn.textContent = 'Add all to calendar';
+        calendarBtn.classList.remove('done');
+      }
+    }
 
     function tryCompute(silent, user) {
       var mo = moEl.value, da = daEl.value, yr = yrEl.value;
@@ -758,6 +784,7 @@
         hintEl.classList.remove('err');
         hintEl.hidden = false;
         hideSoon();
+        hideResults();
         return;
       }
       var m = +mo, d = +da, y = +yr;
@@ -770,6 +797,7 @@
         hintEl.classList.add('err');
         hintEl.hidden = false;
         hideSoon();
+        hideResults();
         return;
       }
       if (dt > now) {
@@ -777,6 +805,7 @@
         hintEl.classList.add('err');
         hintEl.hidden = false;
         hideSoon();
+        hideResults();
         return;
       }
       hintEl.classList.remove('err');
