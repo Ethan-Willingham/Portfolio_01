@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.85';
+  var GAME_VERSION = 'v25.86';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11399,16 +11399,20 @@
   // lands with B7; until then owned floors' doors cycle ambiently and
   // locked doors stay shut. fill: 1 = cold water on unlock, 2 = water +
   // the B1 heat source (the crown pool).
+  // v25.86 (owner): floors are COZY now (7 interior rows + slab, was 12+1)
+  // and each bath floor holds ONE BOWL tub: stepped tile bowls (shallow at
+  // the edges, deep in the middle) whose vessel is drawn from the mine's
+  // FIRST ores: stone body, copper rim, iron rivets, coal + copper chips.
   var BATH_FLOORS = [
-    { c0: 27, c1: 45, fr: 613, deep: 2, tubs: [[32,35],[38,41]], fill: [1,1], price: 0 },
-    { c0: 27, c1: 45, fr: 600, deep: 2, tubs: [[32,35],[38,41]], fill: [1,1], price: 2000 },
-    { c0: 27, c1: 43, fr: 587, deep: 0, tubs: [], fill: [], sauna: true, price: 8000 },
-    { c0: 27, c1: 41, fr: 574, deep: 2, tubs: [[31,34],[37,40]], fill: [1,1], price: 20000 },
-    { c0: 27, c1: 39, fr: 561, deep: 3, tubs: [[30,37]], fill: [2], price: 50000 }
+    { c0: 27, c1: 45, fr: 613, deep: 2, tubs: [[34,39]], fill: [1], price: 0 },
+    { c0: 27, c1: 45, fr: 605, deep: 2, tubs: [[34,39]], fill: [1], price: 2000 },
+    { c0: 27, c1: 43, fr: 597, deep: 0, tubs: [], fill: [], sauna: true, price: 8000 },
+    { c0: 27, c1: 41, fr: 589, deep: 3, tubs: [[32,37]], fill: [1], price: 20000 },
+    { c0: 27, c1: 39, fr: 581, deep: 3, tubs: [[31,38]], fill: [2], price: 50000 }
   ];
   var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
-  var BATH_TOP_ROW = 548;                       // F5 ceiling row
+  var BATH_TOP_ROW = 572;                       // F5 ceiling row (8-row floors)
   var BATH_BOT_ROW = 613;                       // F1 floor slab row
   var BATH_VIEW_W = 29 * TILE;                  // width-fit + headroom for the F2 peek
   var BATH_EXIT_X0 = 43 * TILE, BATH_EXIT_X1 = 46 * TILE;   // F1 right-wall door
@@ -11443,14 +11447,22 @@
     }
     for (f = 0; f < BATH_FLOORS.length; f++) {
       var F = BATH_FLOORS[f];
-      for (r = F.fr - 12; r <= F.fr - 1; r++) {
+      for (r = F.fr - 7; r <= F.fr - 1; r++) {
         for (c = F.c0; c <= F.c1; c++) world[r][c] = null;
       }
       for (i = 0; i < F.tubs.length; i++) {
         var tb = F.tubs[i];
-        for (r = F.fr - F.deep; r <= F.fr - 1; r++) {
-          world[r][tb[0] - 1] = { type: 'foundation', hp: 999999 };
-          world[r][tb[1] + 1] = { type: 'foundation', hp: 999999 };
+        // Stepped BOWL: full-height rims outside the span; inside, each
+        // column's floor rises toward the edges (1 deep at the ends,
+        // F.deep in the middle), so the cavity reads as a bowl and its
+        // one-tile edges are an easy scramble for a guest.
+        for (var cc = tb[0] - 1; cc <= tb[1] + 1; cc++) {
+          var lodep;
+          if (cc < tb[0] || cc > tb[1]) lodep = 0;                     // rim wall
+          else lodep = Math.min(F.deep, 1 + Math.min(cc - tb[0], tb[1] - cc));
+          for (r = F.fr - F.deep; r <= F.fr - 1; r++) {
+            if ((F.fr - r) > lodep) world[r][cc] = { type: 'foundation', hp: 999999 };
+          }
         }
       }
       if (F.sauna) {
@@ -11474,9 +11486,10 @@
     for (var i = 0; i < F.tubs.length; i++) {
       if (!F.fill[i]) continue;
       var tb = F.tubs[i];
-      var wy0 = (F.fr - F.deep) * TILE + 12, wy1 = F.fr * TILE - 3;
+      var wy0 = (F.fr - F.deep) * TILE + 10, wy1 = F.fr * TILE - 3;
       for (var wy = wy0; wy < wy1; wy += 1.6) {
         for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.6) {
+          if (world[(wy / TILE) | 0][(wx / TILE) | 0]) continue;   // bowl body
           addLiquidParticle('water', wx, wy, 0, 0, 0);
         }
       }
@@ -11493,7 +11506,7 @@
   function bathBuyRect(f) {
     var F = BATH_FLOORS[f];
     var cxp = ((F.c0 + F.c1 + 1) / 2) * TILE;
-    return { x: cxp - 110, y: (F.fr - 12) * TILE + 6 * TILE - 30, w: 220, h: 60 };
+    return { x: cxp - 110, y: (F.fr - 7) * TILE + 3.5 * TILE - 30, w: 220, h: 60 };
   }
   function bathFmtMoney(n) {
     return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -11813,7 +11826,7 @@
   }
   function bathScrollToFloor(n) {   // dev + future UI: centre floor n (1..5)
     var F = BATH_FLOORS[Math.max(1, Math.min(5, n)) - 1];
-    bathScrollT = (F.fr - 6) * TILE - bathViewH / 2;
+    bathScrollT = (F.fr - 4) * TILE + 16 - bathViewH / 2;
   }
 
   // ---- Pointer: outside, tap the tower (near it) to enter. Inside, DRAG
@@ -12159,8 +12172,8 @@
     var f, i, F;
     for (f = 0; f < BATH_FLOORS.length; f++) {
       F = BATH_FLOORS[f];
-      var ix = F.c0 * TILE, iy = (F.fr - 12) * TILE;
-      var iw = (F.c1 - F.c0 + 1) * TILE, ih = 12 * TILE;
+      var ix = F.c0 * TILE, iy = (F.fr - 7) * TILE;
+      var iw = (F.c1 - F.c0 + 1) * TILE, ih = 7 * TILE;
       if (iy > cam.y + bathViewH + 200 || iy + ih < cam.y - 200) continue;
       // Back wall planking, pushed back by a wash (the sauna runs warmer).
       drawWoodPlanking(ix, iy, iw, ih, 8);
@@ -12176,24 +12189,53 @@
       ctx.fillRect(ix - TILE, F.fr * TILE, iw + 2 * TILE, TILE);
       ctx.fillStyle = '#54381f';
       ctx.fillRect(ix - TILE, F.fr * TILE, iw + 2 * TILE, 4);
-      lamp(ix + 40, iy + 116);
-      lamp(ix + iw - 40, iy + 116);
-      // Tubs: dark inner backdrop (water pops), stave walls, iron hoops.
+      lamp(ix + 40, iy + 62);
+      lamp(ix + iw - 40, iy + 62);
+      // The BOWL tub: a vessel poured from the mine's first ores. Stone
+      // body following the stepped cavity, copper rim lip, iron rivets,
+      // and chips of coal + copper speckled in the stone. The dark inner
+      // bowl makes the water read; the water canvas draws over it.
       for (i = 0; i < F.tubs.length; i++) {
         var tb = F.tubs[i];
         var tx0 = (tb[0] - 1) * TILE, tx1 = (tb[1] + 2) * TILE;
-        var ty = (F.fr - F.deep) * TILE;
+        var ty = (F.fr - F.deep) * TILE, by = F.fr * TILE;
+        var tcx = (tx0 + tx1) / 2;
+        // Outer stone vessel: rounded-bottom silhouette.
+        ctx.fillStyle = '#7a7a7a';
+        ctx.beginPath();
+        ctx.moveTo(tx0 - 5, ty - 12);
+        ctx.quadraticCurveTo(tx0 - 5, by + 4, tcx, by + 4);
+        ctx.quadraticCurveTo(tx1 + 5, by + 4, tx1 + 5, ty - 12);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#5f5f5f'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(tx0 - 1, ty + 6);
+        ctx.quadraticCurveTo(tx0 + 6, by - 6, tcx, by - 4);
+        ctx.stroke();
+        // Ore chips in the stone (coal dark, copper warm).
+        ctx.fillStyle = '#2b2b2b';
+        ctx.fillRect(tx0 + 5, by - 14, 3, 3); ctx.fillRect(tcx + 14, by - 8, 3, 3);
+        ctx.fillRect(tx1 - 14, by - 20, 3, 3);
+        ctx.fillStyle = '#b5723a';
+        ctx.fillRect(tx0 + 16, by - 8, 3, 3); ctx.fillRect(tcx - 10, by - 6, 3, 3);
+        // Inner dark bowl (the cavity), inset from the vessel.
         ctx.fillStyle = '#0e0a06';
-        ctx.fillRect(tb[0] * TILE, ty, (tb[1] - tb[0] + 1) * TILE, F.deep * TILE);
-        ctx.fillStyle = '#6e4526';
-        ctx.fillRect(tx0, ty - 6, TILE, F.deep * TILE + 6);
-        ctx.fillRect(tx1 - TILE, ty - 6, TILE, F.deep * TILE + 6);
-        ctx.fillStyle = '#543319';
-        ctx.fillRect(tx0 - 4, ty - 12, TILE + 8, 8);
-        ctx.fillRect(tx1 - TILE - 4, ty - 12, TILE + 8, 8);
-        ctx.fillStyle = '#4a5560';
-        ctx.fillRect(tx0 - 2, ty + 12, tx1 - tx0 + 4, 5);
-        if (F.deep > 1) ctx.fillRect(tx0 - 2, ty + F.deep * TILE - 18, tx1 - tx0 + 4, 5);
+        ctx.beginPath();
+        ctx.moveTo(tb[0] * TILE, ty);
+        ctx.quadraticCurveTo(tb[0] * TILE + 4, by - 4, tcx, by - 4);
+        ctx.quadraticCurveTo((tb[1] + 1) * TILE - 4, by - 4, (tb[1] + 1) * TILE, ty);
+        ctx.closePath(); ctx.fill();
+        // Copper rim lip across the whole opening + iron rivets.
+        ctx.fillStyle = '#b5723a';
+        ctx.fillRect(tx0 - 8, ty - 12, tx1 - tx0 + 16, 6);
+        ctx.fillStyle = '#8a5427';
+        ctx.fillRect(tx0 - 8, ty - 7, tx1 - tx0 + 16, 2);
+        ctx.fillStyle = '#39424c';
+        ctx.fillRect(tx0 - 4, ty - 11, 3, 4); ctx.fillRect(tcx - 2, ty - 11, 3, 4);
+        ctx.fillRect(tx1 + 1, ty - 11, 3, 4);
+        // Stone feet.
+        ctx.fillStyle = '#5f5f5f';
+        ctx.fillRect(tx0 + 8, by + 2, 10, 6); ctx.fillRect(tx1 - 18, by + 2, 10, 6);
       }
       if (F.sauna) {
         // Bench tiers over the solid tiles, the kamenka stove with hot
@@ -12212,13 +12254,13 @@
         ctx.beginPath(); ctx.arc(kx + 20, ky + 10, 7, 0, 6.283); ctx.fill();
         ctx.beginPath(); ctx.arc(kx + 36, ky + 5, 8, 0, 6.283); ctx.fill();
         ctx.beginPath(); ctx.arc(kx + 50, ky + 11, 6, 0, 6.283); ctx.fill();
-        ctx.fillStyle = '#241810'; ctx.fillRect(ix + iw / 2 - 64, iy + 24, 128, 30);
+        ctx.fillStyle = '#241810'; ctx.fillRect(ix + iw / 2 - 64, iy + 8, 128, 28);
         ctx.strokeStyle = '#8a5427'; ctx.lineWidth = 2;
-        ctx.strokeRect(ix + iw / 2 - 63, iy + 25, 126, 28);
+        ctx.strokeRect(ix + iw / 2 - 63, iy + 9, 126, 26);
         ctx.fillStyle = '#e0b060';
         ctx.font = 'bold 15px "Commit Mono", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('ПАРИЛКА', ix + iw / 2, iy + 39);
+        ctx.fillText('ПАРИЛКА', ix + iw / 2, iy + 22);
       }
       elevator(F, f, bathFloorsOwned[f]);
       // Locked floors: gray the whole floor down, then the purchase button.
@@ -12249,13 +12291,13 @@
     // «БАНЯ» sign on the bottom floor's back wall.
     var F1 = BATH_FLOORS[0];
     ctx.fillStyle = '#241810';
-    ctx.fillRect(BATH_CX_COL * TILE - 88, (F1.fr - 11) * TILE, 176, 40);
+    ctx.fillRect(BATH_CX_COL * TILE - 78, (F1.fr - 7) * TILE + 8, 156, 34);
     ctx.strokeStyle = '#8a5427'; ctx.lineWidth = 2;
-    ctx.strokeRect(BATH_CX_COL * TILE - 87, (F1.fr - 11) * TILE + 1, 174, 38);
+    ctx.strokeRect(BATH_CX_COL * TILE - 77, (F1.fr - 7) * TILE + 9, 154, 32);
     ctx.fillStyle = '#e0b060';
-    ctx.font = 'bold 24px "Commit Mono", monospace';
+    ctx.font = 'bold 21px "Commit Mono", monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('БАНЯ', BATH_CX_COL * TILE, (F1.fr - 11) * TILE + 21);
+    ctx.fillText('БАНЯ', BATH_CX_COL * TILE, (F1.fr - 7) * TILE + 25);
     // The guests (jello renders on the main canvas; the world render that
     // normally draws them is skipped in bathMode, so the scene calls it).
     if (ENABLE_JELLO && typeof drawJelloBlobs === 'function') drawJelloBlobs();
