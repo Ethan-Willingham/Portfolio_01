@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.87';
+  var GAME_VERSION = 'v25.88';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11403,20 +11403,24 @@
   // and each bath floor holds ONE BOWL tub: stepped tile bowls (shallow at
   // the edges, deep in the middle) whose vessel is drawn from the mine's
   // FIRST ores: stone body, copper rim, iron rivets, coal + copper chips.
+  // v25.88 (owner): tubs RECESS into the floor: a 1-row lip above the
+  // walking slab and a 3-row shaft below it, so the vessel reads low and
+  // simple while holding 3+ tiles of REAL water depth (deep water is calm
+  // water; the shallow popcorn problem dies here, no sim-scale tricks).
   var BATH_FLOORS = [
-    { c0: 27, c1: 45, fr: 613, deep: 2, tubs: [[34,39]], fill: [2], price: 0 },
-    { c0: 27, c1: 45, fr: 605, deep: 2, tubs: [[34,39]], fill: [1], price: 2000 },
-    { c0: 27, c1: 43, fr: 597, deep: 0, tubs: [], fill: [], sauna: true, price: 8000 },
-    { c0: 27, c1: 41, fr: 589, deep: 3, tubs: [[32,37]], fill: [1], price: 20000 },
-    { c0: 27, c1: 39, fr: 581, deep: 3, tubs: [[31,38]], fill: [1], price: 50000 }
+    { c0: 27, c1: 45, fr: 610, lip: 1, sink: 3, tubs: [[34,39]], fill: [2], price: 0 },
+    { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[34,39]], fill: [1], price: 2000 },
+    { c0: 27, c1: 43, fr: 588, lip: 0, sink: 0, tubs: [], fill: [], sauna: true, price: 8000 },
+    { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[32,37]], fill: [1], price: 20000 },
+    { c0: 27, c1: 39, fr: 566, lip: 1, sink: 3, tubs: [[31,38]], fill: [1], price: 50000 }
   ];
   var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
-  var BATH_TOP_ROW = 572;                       // F5 ceiling row (8-row floors)
+  var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
   var BATH_BOT_ROW = 613;                       // F1 floor slab row
   var BATH_VIEW_W = 29 * TILE;                  // width-fit + headroom for the F2 peek
   var BATH_EXIT_X0 = 43 * TILE, BATH_EXIT_X1 = 46 * TILE;   // F1 right-wall door
-  var BATH_EXIT_Y0 = 609 * TILE, BATH_EXIT_Y1 = 613 * TILE;
+  var BATH_EXIT_Y0 = 606 * TILE, BATH_EXIT_Y1 = 610 * TILE;
 
   var bathMode = false;        // true while inside the scene
   var bathRoomReady = false;   // room carved + water spawned + heat armed
@@ -11440,7 +11444,7 @@
     // Solid block first (replacing tile objects wholesale is safe: the
     // shared frozen fill prototypes are never mutated, only de-referenced),
     // then carve each floor's cavity out of it.
-    for (r = BATH_TOP_ROW; r <= BATH_BOT_ROW; r++) {
+    for (r = BATH_TOP_ROW; r <= BATH_BOT_ROW + 1; r++) {
       for (c = BATH_CX_COL - 14; c <= BATH_CX_COL + 14; c++) {
         world[r][c] = { type: 'foundation', hp: 999999 };
       }
@@ -11452,16 +11456,18 @@
       }
       for (i = 0; i < F.tubs.length; i++) {
         var tb = F.tubs[i];
-        // Stepped BOWL: full-height rims outside the span; inside, each
-        // column's floor rises toward the edges (1 deep at the ends,
-        // F.deep in the middle), so the cavity reads as a bowl and its
-        // one-tile edges are an easy scramble for a guest.
+        // RECESSED bowl (v25.88): a 1-row lip above the walking floor and
+        // an open shaft sunk F.sink rows into the slab, with the bottom
+        // corners stepped in so the cavity bottoms out bowl-ish. Sealed on
+        // all sides by the surrounding slab block.
         for (var cc = tb[0] - 1; cc <= tb[1] + 1; cc++) {
-          var lodep;
-          if (cc < tb[0] || cc > tb[1]) lodep = 0;                     // rim wall
-          else lodep = Math.min(F.deep, 1 + Math.min(cc - tb[0], tb[1] - cc));
-          for (r = F.fr - F.deep; r <= F.fr - 1; r++) {
-            if ((F.fr - r) > lodep) world[r][cc] = { type: 'foundation', hp: 999999 };
+          var isRim = (cc < tb[0] || cc > tb[1]);
+          if (isRim && F.lip > 0) world[F.fr - 1][cc] = { type: 'foundation', hp: 999999 };
+          for (r = F.fr; r <= F.fr + F.sink; r++) {
+            if (isRim) { world[r][cc] = { type: 'foundation', hp: 999999 }; continue; }
+            var edgeCol = (cc === tb[0] || cc === tb[1]);
+            var bottom = (r === F.fr + F.sink) || (edgeCol && r === F.fr + F.sink - 1);
+            world[r][cc] = bottom ? { type: 'foundation', hp: 999999 } : null;
           }
         }
       }
@@ -11486,7 +11492,7 @@
     for (var i = 0; i < F.tubs.length; i++) {
       if (!F.fill[i]) continue;
       var tb = F.tubs[i];
-      var wy0 = (F.fr - F.deep) * TILE + 10, wy1 = F.fr * TILE - 3;
+      var wy0 = (F.fr - F.lip) * TILE + 8, wy1 = (F.fr + F.sink + 1) * TILE - 3;
       for (var wy = wy0; wy < wy1; wy += 1.6) {
         for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.6) {
           if (world[(wy / TILE) | 0][(wx / TILE) | 0]) continue;   // bowl body
@@ -11494,9 +11500,12 @@
         }
       }
       if (F.fill[i] === 2) {
-        bathTune('BATH_SRC_X0', tb[0] * TILE);       bathTune('BATH_SRC_Y0', (F.fr - 1) * TILE);
-        bathTune('BATH_SRC_X1', (tb[1] + 1) * TILE); bathTune('BATH_SRC_Y1', (F.fr + 1) * TILE);
+        // Heat the SHAFT FLOOR so hot water visibly lifts through the
+        // cold column above it (the owner's "hot lifts into the cold").
+        bathTune('BATH_SRC_X0', tb[0] * TILE);       bathTune('BATH_SRC_Y0', (F.fr + F.sink - 1) * TILE);
+        bathTune('BATH_SRC_X1', (tb[1] + 1) * TILE); bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
         bathTune('BATH_ON', 1);
+        bathTune('BATH_BUOY', 340);
       }
     }
   }
@@ -11542,8 +11551,8 @@
     // 190) sit ABOVE the main canvas in the DOM, so the scene cannot paint
     // over them: hide both while inside. The liquid canvas (z:4) stays, it
     // IS the tub water. Restored on exit.
-    var d = inside ? 'none' : 'block';
-    try { if (typeof uiTopCanvas !== 'undefined' && uiTopCanvas) uiTopCanvas.style.display = d; } catch (e) {}
+    // v25.88: uiTop stays VISIBLE inside too; the scene clears it per
+    // frame and draws the tub-vessel foreground there (above the water).
     // v25.85: the smoke canvas STAYS visible inside; it carries the STEAM.
     // Stale world smoke is dropped by clearAllSmokeVisuals() on enter.
   }
@@ -11620,6 +11629,9 @@
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteamSaved = null;
   var bathSteamAcc = 0;
+  // Owner-dialable steam (v25.88): the old values sat in place and bloomed
+  // white (tiny rise velocity + heavy dye accumulating at one spot).
+  var bathSteam = { rate: 20, amt: 0.016, rise: 0.13 };
   var bathSteamCol = { r: 0, g: 0, b: 0 };
   function bathSteamPush() {
     if (typeof smokeTune === 'undefined' || bathSteamSaved) return;
@@ -11629,7 +11641,7 @@
       curl: smokeTune.sim_curl
     };
     // Scale, never set: polarity-proof against whatever the smoke tuning is.
-    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.986;
+    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.962;
     smokeTune.sim_curl = bathSteamSaved.curl * 0.35;
   }
   function bathSteamPop() {
@@ -11644,7 +11656,7 @@
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
     bathDbg.steamActive++;
-    bathSteamAcc += dt * 14;
+    bathSteamAcc += dt * bathSteam.rate;
     var units = bathSteamAcc | 0; bathSteamAcc -= units;
     if (units > 4) units = 4;
     for (var u = 0; u < units; u++) {
@@ -11654,25 +11666,21 @@
         for (var i = 0; i < F.tubs.length; i++) {
           if (F.fill[i] !== 2) continue;
           var tb = F.tubs[i];
-          var wl = (F.fr - F.deep) * TILE + 12;
+          var wl = (F.fr - F.lip) * TILE + 10;
           var sx = tb[0] * TILE + 10 + Math.random() * ((tb[1] - tb[0] + 1) * TILE - 20);
           var euv = smokeFluidWorldToUV(sx, wl - 18);
           if (!euv.inView) continue;
           bathDbg.steamInView++;
           smokeMarkActive();
-          var amt = 0.30 + Math.random() * 0.15;
+          var amt = bathSteam.amt * (0.7 + Math.random() * 0.6);
           bathSteamCol.r = amt * 0.92;
           bathSteamCol.g = amt * 0.97;
           bathSteamCol.b = amt * 1.05;
           smokeDriver.splat(euv.uvX, euv.uvY,
-            (Math.random() - 0.5) * 0.004,
-            0.014 + Math.random() * 0.012,
-            bathSteamCol, 0.026 + Math.random() * 0.016);
+            (Math.random() - 0.5) * 0.010,
+            bathSteam.rise * (0.7 + Math.random() * 0.6),
+            bathSteamCol, 0.008 + Math.random() * 0.006);
           bathDbg.steamSplats++;
-          if (window.__steamBlast) {
-            bathSteamCol.r = 0.5; bathSteamCol.g = 0.5; bathSteamCol.b = 0.55;
-            smokeDriver.splat(euv.uvX, euv.uvY, 0, 0.03, bathSteamCol, 0.05);
-          }
         }
       }
     }
@@ -11709,7 +11717,7 @@
       b: b, st: 'walk', t: 0, cd: 0.7,
       cx: ((tb[0] + tb[1] + 1) / 2) * TILE,
       x0: tb[0] * TILE + 6, x1: (tb[1] + 1) * TILE - 6,
-      line: (F.fr - F.deep) * TILE + 14,
+      line: (F.fr - F.lip) * TILE + 12,
       fy: F.fr * TILE, px: 0, py: 0, stall: 0,
       soakT: 14 + Math.random() * 18,
       homeX: 28 * TILE + 16
@@ -11754,7 +11762,7 @@
           var wx0 = ts0[0] * TILE + 6, wx1 = (ts0[1] + 1) * TILE - 6;
           if (b.cx > wx0 && b.cx < wx1) {
             g.st = 'soak'; g.cd = 1.2;
-            b.bathBuoy = { line: g.line + 6, x0: wx0, x1: wx1, lift: 1.75, drag: 0.965 };
+            b.bathBuoy = { line: g.line - 8, x0: wx0, x1: wx1, lift: 2.0, drag: 0.965 };
             for (var sp0 = 0; sp0 < 18; sp0++) {
               addLiquidParticle('water', b.cx + (Math.random() - 0.5) * 50, g.line - 5,
                 (Math.random() - 0.5) * 110, -40 - Math.random() * 100, 0);
@@ -12232,41 +12240,13 @@
       ctx.fillRect(ix - TILE, F.fr * TILE, iw + 2 * TILE, 4);
       lamp(ix + 40, iy + 62);
       lamp(ix + iw - 40, iy + 62);
-      // The tub: a simple rounded U (owner: no black metal, keep it easy).
-      // Light stone shell hugging the carved cavity, rounded rim caps, a
-      // copper lip on each rim, a few first-ore chips. The interior stays
-      // OPEN so the water (which fills the exact cavity) sits in the bowl.
-      for (i = 0; i < F.tubs.length; i++) {
-        var tb = F.tubs[i];
-        var x0 = (tb[0] - 1) * TILE, x1 = (tb[1] + 2) * TILE;
-        var ty = (F.fr - F.deep) * TILE, by = F.fr * TILE;
-        ctx.fillStyle = '#8b887c';
-        ctx.beginPath();
-        ctx.moveTo(x0, ty + 10);
-        ctx.arc(x0 + TILE / 2, ty + 10, TILE / 2, Math.PI, 0);
-        ctx.lineTo(x0 + TILE, by); ctx.lineTo(x0, by);
-        ctx.closePath(); ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(x1 - TILE, ty + 10);
-        ctx.arc(x1 - TILE / 2, ty + 10, TILE / 2, Math.PI, 0);
-        ctx.lineTo(x1, by); ctx.lineTo(x1 - TILE, by);
-        ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#8b887c'; ctx.lineWidth = 8;
-        ctx.beginPath();
-        ctx.moveTo(x0 + 3, ty + 12);
-        ctx.lineTo(x0 + 3, by - 12);
-        ctx.quadraticCurveTo(x0 + 3, by + 8, x0 + 32, by + 8);
-        ctx.lineTo(x1 - 32, by + 8);
-        ctx.quadraticCurveTo(x1 - 3, by + 8, x1 - 3, by - 12);
-        ctx.lineTo(x1 - 3, ty + 12);
-        ctx.stroke();
-        ctx.fillStyle = '#b5723a';
-        ctx.fillRect(x0 - 3, ty + 1, TILE + 6, 6);
-        ctx.fillRect(x1 - TILE - 3, ty + 1, TILE + 6, 6);
-        ctx.fillStyle = '#2b2b2b';
-        ctx.fillRect(x0 + 10, by - 18, 3, 3); ctx.fillRect(x1 - 13, by - 26, 3, 3);
-        ctx.fillStyle = '#b5723a';
-        ctx.fillRect(x0 + 7, by - 34, 3, 3);
+      // v25.88: the vessel itself is drawn on the FOREGROUND layer (above
+      // the water canvas) so the water's square corners hide behind its
+      // curve. Here on the room canvas: only the dark sub-floor band the
+      // recessed shafts sink through.
+      if (F.tubs.length) {
+        ctx.fillStyle = '#1a120b';
+        ctx.fillRect(ix - TILE, F.fr * TILE + 8, iw + 2 * TILE, (F.sink + 1) * TILE - 8);
       }
       if (F.sauna) {
         // Bench tiers over the solid tiles, the kamenka stove with hot
@@ -12329,6 +12309,47 @@
     ctx.font = 'bold 21px "Commit Mono", monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('БАНЯ', BATH_CX_COL * TILE, (F1.fr - 7) * TILE + 25);
+    // FOREGROUND (v25.88): the tub vessels live on the uiTop canvas, ABOVE
+    // the water layer, as a stone plate with a smooth-U hole cut out: the
+    // water shows through the hole and its square tile-corners hide behind
+    // the plate, so the bowl finally reads as a curved vessel.
+    var uiFg = (typeof uiTopEnsure === 'function') ? uiTopEnsure() : null;
+    if (uiFg && typeof uiTopCanvas !== 'undefined' && uiTopCanvas) {
+      uiFg.setTransform(1, 0, 0, 1, 0, 0);
+      uiFg.clearRect(0, 0, uiTopCanvas.width, uiTopCanvas.height);
+      uiFg.setTransform(_bws, 0, 0, _bws,
+        -Math.round(cam.x * _bws), -Math.round(cam.y * _bws));
+      for (var ff = 0; ff < BATH_FLOORS.length; ff++) {
+        var FG = BATH_FLOORS[ff];
+        if (!bathFloorsOwned[ff]) continue;   // vessels appear on purchase
+        var fgy = (FG.fr - 7) * TILE;
+        if (fgy > cam.y + bathViewH + 200 || fgy + 7 * TILE < cam.y - 200) continue;
+        for (var fti = 0; fti < FG.tubs.length; fti++) {
+          var ftb = FG.tubs[fti];
+          var fx0 = (ftb[0] - 1) * TILE, fx1 = (ftb[1] + 2) * TILE;
+          var lipY = (FG.fr - FG.lip) * TILE, botY = (FG.fr + FG.sink + 1) * TILE;
+          var hx0 = ftb[0] * TILE + 2, hx1 = (ftb[1] + 1) * TILE - 2;
+          var hbot = botY - 12;
+          uiFg.fillStyle = '#8b887c';
+          uiFg.beginPath();
+          uiFg.rect(fx0 - 4, lipY - 6, (fx1 - fx0) + 8, botY - lipY + 4);
+          uiFg.moveTo(hx0, lipY - 6);
+          uiFg.lineTo(hx0, hbot - 52);
+          uiFg.quadraticCurveTo(hx0, hbot, hx0 + 60, hbot);
+          uiFg.lineTo(hx1 - 60, hbot);
+          uiFg.quadraticCurveTo(hx1, hbot, hx1, hbot - 52);
+          uiFg.lineTo(hx1, lipY - 6);
+          uiFg.closePath();
+          uiFg.fill('evenodd');
+          uiFg.fillStyle = '#b5723a';
+          uiFg.fillRect(fx0 - 4, lipY - 8, TILE + 10, 6);
+          uiFg.fillRect(fx1 - TILE - 6, lipY - 8, TILE + 10, 6);
+          uiFg.fillStyle = '#2b2b2b';
+          uiFg.fillRect(fx0 + 6, botY - 22, 3, 3);
+          uiFg.fillRect(fx1 - 10, botY - 30, 3, 3);
+        }
+      }
+    }
     // Payment floats: little "+$25" thanks rising off departing guests.
     for (var pf = 0; pf < bathFloats.length; pf++) {
       var FF = bathFloats[pf];
@@ -12376,6 +12397,7 @@
                       floor: bathScrollToFloor,
                       buy: bathBuyFloor,
                       guest: function () { return !!bathSpawnGuest(); },
+                      steamTune: bathSteam,
                       dbg: function () { var g = bathGuests[0]; return JSON.stringify({ steam: bathDbg, uv: (typeof smokeFluidWorldToUV === 'function' ? smokeFluidWorldToUV(1100, 19560) : null), camY: Math.round(cam.y), guests: bathGuests.length, bodies: (typeof jelloBodies !== 'undefined' ? jelloBodies.length : -1), g: g ? { st: g.st, cx: Math.round(g.b.cx || -1), cy: Math.round(g.b.cy || -1), bb: [Math.round(g.b.bboxL), Math.round(g.b.bboxT), Math.round(g.b.bboxR), Math.round(g.b.bboxB)], vy: Math.round(g.b.vy || 0), slp: !!g.b.sleeping, tgt: Math.round(g.cx) } : null, solid: (function () { var out = []; for (var cc = 28; cc <= 33; cc++) { var t612 = world[612][cc], t613 = world[613][cc]; out.push(cc + ':' + (t612 ? t612.type[0] : '.') + (t613 ? t613.type[0] : '.')); } out.push('jws@' + (g ? Math.round(g.b.cx) : 0) + ',' + (g ? Math.round(g.b.bboxB + 4) : 0) + '=' + (g && typeof jelloWorldSolidAt === 'function' ? jelloWorldSolidAt(g.b.cx, g.b.bboxB + 4) : '?')); return out.join(' '); })() }); },
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
                       warp: bathWarp,
