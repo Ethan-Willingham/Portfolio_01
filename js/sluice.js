@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.90';
+  var GAME_VERSION = 'v25.91';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11408,23 +11408,39 @@
   // simple while holding 3+ tiles of REAL water depth (deep water is calm
   // water; the shallow popcorn problem dies here, no sim-scale tricks).
   var BATH_FLOORS = [
-    { c0: 27, c1: 45, fr: 610, lip: 1, sink: 3, tubs: [[33,40]], fill: [2], price: 0 },
-    { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[33,40]], fill: [1], price: 2000 },
+    { c0: 27, c1: 45, fr: 610, lip: 1, sink: 3, tubs: [[32,41]], fill: [2], price: 0 },
+    { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[32,41]], fill: [1], price: 2000 },
     { c0: 27, c1: 43, fr: 588, lip: 0, sink: 0, tubs: [], fill: [], sauna: true, price: 8000 },
-    { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[31,38]], fill: [1], price: 20000 },
+    { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[30,39]], fill: [1], price: 20000 },
     { c0: 27, c1: 39, fr: 566, lip: 1, sink: 3, tubs: [[31,38]], fill: [1], price: 50000 }
   ];
   // One tub curve, ONE source of truth (v25.90): each column's sunk depth
   // comes from a parabola, so the carved cavity IS the curve (stepped at
   // tile resolution) and the drawn hole threads the same columns' bottom
   // midpoints: always inside the water, so no phantom notches can show.
-  function bathTubProfile(F, tb) {
-    var n = tb[1] - tb[0] + 1, d = [];
-    for (var i = 0; i < n; i++) {
-      var xx = (2 * i / (n - 1)) - 1;
-      d.push(Math.round(F.sink * (1 - xx * xx)));
-    }
-    return d;
+  // v25.91: the bowl is a CATENARY (the hanging-chain curve, the vessel
+  // curve of Gaudi's arches and fine pottery) proportioned by the golden
+  // section: opening width : depth = phi^2 (~2.618). The drawn curve is
+  // the MASTER; the carve digs every column DEEPER than the curve needs,
+  // so each point of the visible curve is inside water by construction:
+  // the water meets the curve, the slack hides behind the stone plate.
+  var BATH_CAT_C = 2.0;                       // catenary tightness
+  function bathTubCurve(F, tb) {
+    var x0 = tb[0] * TILE, x1 = (tb[1] + 1) * TILE;
+    var W = x1 - x0;
+    var D = W / 2.618;
+    var maxD = (F.lip + F.sink) * TILE - 12;
+    if (D > maxD) D = maxD;
+    var y0 = (F.fr - F.lip) * TILE + 12;      // the lip waterline plane
+    var ch = Math.cosh(BATH_CAT_C) - 1;
+    return {
+      x0: x0, x1: x1, y0: y0, D: D,
+      depthAt: function (x) {
+        var t = ((x - x0) / W) * 2 - 1;
+        if (t < -1) t = -1; else if (t > 1) t = 1;
+        return D * (1 - (Math.cosh(BATH_CAT_C * t) - 1) / ch);
+      }
+    };
   }
   var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
@@ -11472,13 +11488,19 @@
         // an open shaft sunk F.sink rows into the slab, with the bottom
         // corners stepped in so the cavity bottoms out bowl-ish. Sealed on
         // all sides by the surrounding slab block.
-        var prof = bathTubProfile(F, tb);
+        var crv = bathTubCurve(F, tb);
         for (var cc = tb[0] - 1; cc <= tb[1] + 1; cc++) {
           var isRim = (cc < tb[0] || cc > tb[1]);
           if (isRim && F.lip > 0) world[F.fr - 1][cc] = { type: 'foundation', hp: 999999 };
+          var needY = 0;
+          if (!isRim) {
+            var dL = crv.depthAt(cc * TILE), dR = crv.depthAt((cc + 1) * TILE);
+            var dC = crv.depthAt(cc * TILE + TILE / 2);
+            needY = crv.y0 + Math.max(dL, dR, dC) + 10;   // curve + margin
+          }
           for (r = F.fr; r <= F.fr + F.sink; r++) {
             if (isRim) { world[r][cc] = { type: 'foundation', hp: 999999 }; continue; }
-            var open = (r - F.fr) < prof[cc - tb[0]];
+            var open = (r * TILE) < needY;                // cell top above need
             world[r][cc] = open ? null : { type: 'foundation', hp: 999999 };
           }
         }
@@ -12340,21 +12362,16 @@
           var ftb = FG.tubs[fti];
           var fx0 = (ftb[0] - 1) * TILE, fx1 = (ftb[1] + 2) * TILE;
           var lipY = (FG.fr - FG.lip) * TILE, botY = (FG.fr + FG.sink + 1) * TILE;
-          var hx0 = ftb[0] * TILE, hx1 = (ftb[1] + 1) * TILE;
-          var prof2 = bathTubProfile(FG, ftb);
+          var crv2 = bathTubCurve(FG, ftb);
           uiFg.fillStyle = '#8b887c';
           uiFg.beginPath();
           uiFg.rect(fx0 - 4, lipY - 6, (fx1 - fx0) + 8, botY - lipY + 4);
-          uiFg.moveTo(hx0, lipY - 6);
-          uiFg.lineTo(hx0, FG.fr * TILE - 2);
-          for (var pi2 = 0; pi2 < prof2.length; pi2++) {
-            // Straight chords between per-column bottom midpoints: chords
-            // of a convex region stay INSIDE it, so the hole can never
-            // reveal a step the water does not reach.
-            uiFg.lineTo((ftb[0] + pi2 + 0.5) * TILE, (FG.fr + prof2[pi2]) * TILE - 2);
+          uiFg.moveTo(crv2.x0, lipY - 6);
+          for (var sx2 = crv2.x0; sx2 <= crv2.x1; sx2 += 8) {
+            uiFg.lineTo(sx2, crv2.y0 + crv2.depthAt(sx2));
           }
-          uiFg.lineTo(hx1, FG.fr * TILE - 2);
-          uiFg.lineTo(hx1, lipY - 6);
+          uiFg.lineTo(crv2.x1, crv2.y0 + crv2.depthAt(crv2.x1));
+          uiFg.lineTo(crv2.x1, lipY - 6);
           uiFg.closePath();
           uiFg.fill('evenodd');
           uiFg.fillStyle = '#b5723a';
