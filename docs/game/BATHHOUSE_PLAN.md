@@ -426,6 +426,31 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable, convection saga; v25.90-96): THE BOWL + THE BOIL SHIPPED.
+  Bowl: the tub is ONE catenary at golden proportions (bathTubCurve, cosh with
+  BATH_CAT_C = 2.0, W:D = phi^2); the drawn curve is MASTER, the carve digs
+  deeper than the curve, and the foreground hole samples the exact curve, so
+  water collides with the curve itself (no staircase; three squarish attempts
+  before this law, do not retry them). Convection took five rounds of physics,
+  each a real mechanism, none a lever: (1) hot sleepers wake + refuse the sleep
+  latch (sleeping particles skip G2P where buoyancy lives); (2) bathMode is a
+  continuous hard stimulus in liquidStateTick (sleeping cold water still
+  carries mass = an immovable sculpture); (3) heat transport is
+  advection-dominant (BATH_EXCHANGE small so heat RIDES parcels; 0.15
+  equalized any plume away in ~40ms); (4) v25.95's concentrated vent was a
+  momentum cannon (a standing Old Faithful mound), so v25.96 heats a WIDE
+  band hugging the bowl belly instead and CAPS buoyant lift below gravity in
+  the kernel (a body force that outruns free fall stands as a permanent
+  fountain; capped, hot water rises only relative to cool water); (5) strong
+  cooling (BATH_COOL 0.28) closes the loop so the tub never saturates
+  uniformly hot and the boil stays alive forever (verified flat surface +
+  live plumes at 150s). The heat is now a visible STOVE: an industrial gas
+  burner under the copper bowl (fire chamber, steel manifold, flickering
+  blue-core flames, glowing copper shell), drawn per-frame on the uiTop
+  foreground strictly below the catenary. Tint is a soft exponential ramp
+  through a warm mid-tone (the hard hot/cold border was honest rendering of
+  a near-bimodal field). Steam biases over the full burner span.
+
 - 2026-07-10 (Fable, hard-physics session; v25.85-87): B5 CORE + B2 CORE SHIPPED.
   Guests are real jello bodies (guest flag = dissolve-immune; ONE-WAY buoyancy in
   jelloIntegrate against an analytic waterline via b.bathBuoy, the water is never

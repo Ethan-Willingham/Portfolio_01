@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.95';
+  var GAME_VERSION = 'v25.96';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11539,26 +11539,28 @@
         }
       }
       if (F.fill[i] === 2) {
-        // Heat the SHAFT FLOOR so hot water visibly lifts through the
-        // cold column above it (the owner's "hot lifts into the cold").
-        // ONE-SIDED heat (v25.92): warming only the left reach of the bowl
-        // drives a circulation CELL: up the hot side, across the surface,
-        // down the far side. Uniform bottom heat just stratifies.
-        // v25.95 THE HOT SPRING VENT: real springs are fed by an inlet,
-        // not a heated floor. A concentrated source at the bowl's bottom
-        // centre makes ONE coherent scalding jet (T -> 2.0) that rises,
-        // mushrooms at the surface, and drives a tub-wide circulation:
-        // large-scale, visibly alive.
+        // v25.96 THE WIDE BURNER. The v25.95 narrow vent was a momentum
+        // cannon: a continuous Old Faithful that piled a standing mound.
+        // A gas stove under the copper bowl heats a WIDE band hugging the
+        // bowl's belly instead, so heat enters as a broad rolling simmer.
+        // The source band crosses the catenary, which trims it to the
+        // water that actually touches the heated bottom. Cooling is the
+        // other half of the loop: strong enough that risen water sheds
+        // its heat in one circuit, so the tub never saturates uniformly
+        // hot and the boil stays alive forever.
         var ventCx = ((tb[0] + tb[1] + 1) / 2) * TILE;
-        bathTune('BATH_SRC_X0', ventCx - 14);
-        bathTune('BATH_SRC_Y0', (F.fr + F.sink - 1) * TILE);
-        bathTune('BATH_SRC_X1', ventCx + 14);
-        bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
-        bathTune('BATH_SRC_T', 2.0);
-        bathTune('BATH_SRC_RATE', 0.12);
+        var vcrv = bathTubCurve(F, tb);
+        var ventBy = vcrv.y0 + vcrv.depthAt(ventCx);
+        bathTune('BATH_SRC_X0', ventCx - 68);
+        bathTune('BATH_SRC_Y0', ventBy - 30);
+        bathTune('BATH_SRC_X1', ventCx + 68);
+        bathTune('BATH_SRC_Y1', ventBy + 12);
+        bathTune('BATH_SRC_T', 1.55);
+        bathTune('BATH_SRC_RATE', 0.05);
         bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 380);
-        bathHotTub = { F: F, tb: tb, ventX: ventCx };
+        bathTune('BATH_BUOY', 240);
+        bathTune('BATH_COOL', 0.28);
+        bathHotTub = { F: F, tb: tb, ventX: ventCx, ventHalf: 68 };
       }
     }
   }
@@ -11723,7 +11725,8 @@
           var wl = (F.fr - F.lip) * TILE + 10;
           var sx = tb[0] * TILE + 10 + Math.random() * ((tb[1] - tb[0] + 1) * TILE - 20);
           if (bathHotTub && bathHotTub.ventX && Math.random() < 0.55) {
-            sx = bathHotTub.ventX + (Math.random() - 0.5) * 70;   // over the boil
+            // Over the simmer: the full burner span, not a point boil.
+            sx = bathHotTub.ventX + (Math.random() - 0.5) * (bathHotTub.ventHalf * 2.3);
           }
           var euv = smokeFluidWorldToUV(sx, wl - 18);
           if (!euv.inView) continue;
@@ -12400,15 +12403,71 @@
           uiFg.fillStyle = '#b5723a';
           uiFg.fillRect(fx0 - 4, lipY - 8, TILE + 10, 6);
           uiFg.fillRect(fx1 - TILE - 6, lipY - 8, TILE + 10, 6);
-          // The spring vent at the bowl's lowest point: slot + warm glow.
+          // v25.96 THE STOVE. An industrial gas burner under the copper
+          // bowl: a dark fire chamber hugging the bowl's underside, a
+          // steel manifold with a row of nozzles, and flickering
+          // blue-core flames licking a glowing copper bottom. Everything
+          // paints strictly BELOW the catenary shell, so the water hole
+          // above stays untouched.
           var vcx = (crv2.x0 + crv2.x1) / 2;
-          var vby = crv2.y0 + crv2.depthAt(vcx);
-          uiFg.fillStyle = 'rgba(255,140,60,0.20)';
-          uiFg.beginPath(); uiFg.arc(vcx, vby + 6, 30, 0, 6.283); uiFg.fill();
-          uiFg.fillStyle = '#5a4630';
-          uiFg.fillRect(vcx - 16, vby - 2, 32, 8);
-          uiFg.fillStyle = '#b5723a';
-          uiFg.fillRect(vcx - 16, vby - 4, 32, 3);
+          if (FG.fill[fti] === 2) {
+            var bw = 68, barY = botY - 16;
+            var ft = performance.now() / 1000;
+            uiFg.fillStyle = '#17110c';
+            uiFg.beginPath();
+            uiFg.moveTo(vcx - bw - 12, botY - 4);
+            for (var cxq = vcx - bw - 12; cxq <= vcx + bw + 12; cxq += 6) {
+              uiFg.lineTo(cxq, crv2.y0 + crv2.depthAt(cxq) + 4);
+            }
+            uiFg.lineTo(vcx + bw + 12, botY - 4);
+            uiFg.closePath();
+            uiFg.fill();
+            uiFg.fillStyle = 'rgba(255,120,40,0.10)';
+            uiFg.fillRect(vcx - bw, barY + 7, bw * 2, botY - 11 - barY);
+            uiFg.fillStyle = '#3a3e44';
+            uiFg.fillRect(vcx + bw, barY + 2, fx1 - vcx - bw - 2, 4);
+            uiFg.fillStyle = '#33363c';
+            uiFg.fillRect(vcx - bw, barY, bw * 2, 7);
+            uiFg.fillRect(vcx - bw + 4, barY + 7, 5, botY - 11 - barY);
+            uiFg.fillRect(vcx + bw - 9, barY + 7, 5, botY - 11 - barY);
+            uiFg.fillStyle = '#565b63';
+            uiFg.fillRect(vcx - bw, barY, bw * 2, 2);
+            var ni = 0;
+            for (var nx = vcx - bw + 5; nx <= vcx + bw - 5; nx += 6) {
+              var capY = crv2.y0 + crv2.depthAt(nx) + 3;
+              var hMax = barY - capY;
+              if (hMax < 6) hMax = 6;
+              var flick = 0.66 +
+                0.34 * (0.5 + 0.5 * Math.sin(ft * 11 + ni * 2.63)) *
+                       (0.5 + 0.5 * Math.sin(ft * 5.7 + ni * 4.1));
+              var fh = Math.round(hMax * flick / 2) * 2;
+              if (fh < 6) fh = 6;
+              uiFg.fillStyle = 'rgba(96,158,240,0.85)';
+              uiFg.fillRect(nx - 2, barY - fh * 0.45, 4, fh * 0.45);
+              uiFg.fillStyle = 'rgba(255,138,40,0.88)';
+              uiFg.fillRect(nx - 1.5, barY - fh * 0.85, 3, fh * 0.42);
+              uiFg.fillStyle = 'rgba(255,214,120,0.9)';
+              uiFg.fillRect(nx - 1, barY - fh, 2, fh * 0.22);
+              ni++;
+            }
+            uiFg.strokeStyle = '#b5723a';
+            uiFg.lineWidth = 3.5;
+            uiFg.beginPath();
+            uiFg.moveTo(vcx - bw - 14, crv2.y0 + crv2.depthAt(vcx - bw - 14) + 1);
+            for (var shx = vcx - bw - 14; shx <= vcx + bw + 14; shx += 6) {
+              uiFg.lineTo(shx, crv2.y0 + crv2.depthAt(shx) + 1);
+            }
+            uiFg.stroke();
+            uiFg.strokeStyle = 'rgba(255,150,60,' +
+              (0.16 + 0.10 * Math.sin(ft * 3.1)).toFixed(3) + ')';
+            uiFg.lineWidth = 7;
+            uiFg.beginPath();
+            uiFg.moveTo(vcx - bw, crv2.y0 + crv2.depthAt(vcx - bw) + 1);
+            for (var glx = vcx - bw; glx <= vcx + bw; glx += 6) {
+              uiFg.lineTo(glx, crv2.y0 + crv2.depthAt(glx) + 1);
+            }
+            uiFg.stroke();
+          }
           uiFg.fillStyle = '#2b2b2b';
           uiFg.fillRect(fx0 + 6, botY - 22, 3, 3);
           uiFg.fillRect(fx1 - 10, botY - 30, 3, 3);

@@ -5045,8 +5045,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
   // v25.56 BATH B1: thermal buoyancy (water only). Upward is negative y;
   // it scales with heat above ambient, so ambient water is untouched.
+  // v25.96: capped BELOW gravity (600). Buoyancy is a body force here, so
+  // an uncapped lift let hot parcels outrun free fall and stand as a
+  // permanent fountain above the surface. Under the cap, hot water rises
+  // only relative to cooler water and always falls back through air.
   if (!oil) {
-    newVY = newVY - sp.bathA.z * tHeat * gp.stepDt;
+    newVY = newVY - min(sp.bathA.z * tHeat, 450.0) * gp.stepDt;
   }
   pos[i] = vec4<f32>(npx * CELL, npy * CELL, newVX, newVY);
   affine[i] = vec4<f32>(gv00, gv01, gv10, gv11);
