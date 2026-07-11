@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.92';
+  var GAME_VERSION = 'v25.93';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -9851,6 +9851,11 @@
     // timer: streamed fills/drains/sweeps (ADD/REMOVE ops), so a pond
     // arriving on screen stays serene instead of sloshing awake.
     var hard = false, soft = false;
+    // v25.93 BANYA: inside the bathhouse scene the water NEVER settles:
+    // sleeping particles still carry mass, so a half-asleep tub froze into
+    // a tilted sculpture the convection could not level. In-scene = hard
+    // stimulus every frame; the world settles normally again on exit.
+    if (typeof bathMode !== 'undefined' && bathMode) hard = true;
     if (liquidMutationSeq !== liquidStimSeq) {
       var seqDelta = liquidMutationSeq - liquidStimSeq;
       liquidStimSeq = liquidMutationSeq;
@@ -11544,7 +11549,8 @@
         bathTune('BATH_SRC_X1', tb[0] * TILE + (((tb[1] - tb[0] + 1) * TILE * 0.36) | 0));
         bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
         bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 300);
+        bathTune('BATH_BUOY', 360);
+        bathHotTub = { F: F, tb: tb };   // the sweep (bathSteamTick) drives it
       }
     }
   }
@@ -11690,7 +11696,20 @@
     smokeTune.sim_curl = bathSteamSaved.curl;
     bathSteamSaved = null;
   }
+  var bathHotTub = null;
   function bathSteamTick(dt) {
+    // v25.93: sweep the heater across the bowl (~9 s period) so the
+    // convection cell keeps overturning instead of finding equilibrium.
+    if (bathHotTub) {
+      var HT = bathHotTub, tbh = HT.tb;
+      var spanW = (tbh[1] - tbh[0] + 1) * TILE;
+      var cxh = (tbh[0] * TILE + (tbh[1] + 1) * TILE) / 2;
+      var osc = Math.sin(performance.now() * 0.000698);   // 2*pi / 9s
+      var hw = spanW * 0.17;
+      var hc = cxh + osc * spanW * 0.26;
+      bathTune('BATH_SRC_X0', hc - hw);
+      bathTune('BATH_SRC_X1', hc + hw);
+    }
     bathDbg.steamCalls++;
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;

@@ -1509,6 +1509,11 @@
     // timer: streamed fills/drains/sweeps (ADD/REMOVE ops), so a pond
     // arriving on screen stays serene instead of sloshing awake.
     var hard = false, soft = false;
+    // v25.93 BANYA: inside the bathhouse scene the water NEVER settles:
+    // sleeping particles still carry mass, so a half-asleep tub froze into
+    // a tilted sculpture the convection could not level. In-scene = hard
+    // stimulus every frame; the world settles normally again on exit.
+    if (typeof bathMode !== 'undefined' && bathMode) hard = true;
     if (liquidMutationSeq !== liquidStimSeq) {
       var seqDelta = liquidMutationSeq - liquidStimSeq;
       liquidStimSeq = liquidMutationSeq;
