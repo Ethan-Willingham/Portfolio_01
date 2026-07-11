@@ -426,6 +426,26 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-11 (Fable; v26.05): THE EXACT BOUNDARY. Owner (with a screenshot
+  of black voids flanking a soaker): "a truly perfect model, always
+  updating, optimized, fluid... obvious how well engineered." The v26.04
+  AABB was bigger than the body, so its eject evacuated water past the
+  visible edge = the voids. Guests now upload their EXACT deforming
+  silhouette every frame: the ordered jello boundary ring resampled to
+  <= 20 vertices, each carrying its own Verlet velocity ((p - o) /
+  jelloStepH), GameParams 336 -> 1296 B (meta lanes 60-83 + ring lanes
+  84-323). GRID: a cell inside the ring (crossing test) is pinned to the
+  LOCAL surface velocity of the nearest ring edge (lerped along the edge)
+  plus depth-scaled outward decompression (GUEST_PUSH 26/px, cap 10 px):
+  textbook kinematic no-slip, so a plunging face drives at plunge speed,
+  a trailing face drags, a squishing/rotating body transfers true local
+  motion. PARTICLES: pointInGuestAny joined terrainSolidAt/pointInMiner in
+  the collide solidRing, so particles can never take residence inside a
+  slime and every contact bumps aeration (foam at the contact line, free).
+  Both kernels bbox-reject first; with no guests it is three compares and
+  out (world byte-untouched, self-tests pass). Verified: the voids are
+  gone, the meniscus hugs the diamond and follows it frame to frame.
+
 - 2026-07-11 (Fable; v26.04): THE SIMULATED SPLASH. Owner rejected v26.03's
   choreographed impulse ("way more simulated and realistic... go to the
   fundamentals"). Guests are now MOVING BOUNDARIES in the MLS-MPM sim

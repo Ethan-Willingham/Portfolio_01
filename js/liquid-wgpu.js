@@ -439,7 +439,9 @@
   var GS_MAX_NOZZLES = 4;            // rocket-plume nozzle cap (game uses 2)
   var GS_MAX_EXPLOSIONS = 8;         // explosion-wake cap per frame
   var GS_MAX_GUESTS = 3;             // v26.04 — bath-guest moving boundaries
-  var LIQUID_GUEST_EJECT = 480;      // guest plow strength (rig hull = 720)
+  var GS_RING = 20;                  // v26.05 — ring vertices per guest (the
+                                     // EXACT deforming silhouette, resampled
+                                     // from the jello boundary each frame)
 
   var GRID_MAX_CELLS = 1 << 21;      // 2,097,152 — hard cap on grid cells
   var WG = 256;                       // compute workgroup size
@@ -668,10 +670,12 @@
     // and a single writeBuffer pushes it before the per-frame GPU chain.
     instance.gameParamsBuf = dev.createBuffer({
       label: 'liquid.gameParams',
-      size: 336,
+      size: 1296,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.gameParamsHost = new Float32Array(84);   // 21 vec4 lanes (v26.04 guests)
+    // 81 vec4 lanes: 15 legacy + 6 guest meta + 60 guest ring vertices
+    // (v26.05 exact-silhouette guest boundaries).
+    instance.gameParamsHost = new Float32Array(324);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
     // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
     // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
@@ -1058,19 +1062,26 @@
         gh[28 + e * 4 + 2] = ex[e].r || 0;
         gh[28 + e * 4 + 3] = ex[e].blastScale || 0;
       }
-      // guests array<vec4,6> — lanes 60-83 (v26.04): bath-guest moving
-      // boundaries, 2 vec4 each: (cx, cy, hw, hh) + (vx, vy, active, _).
+      // guests meta lanes 60-83 + ring vertices lanes 84-323 (v26.05):
+      // per guest, meta = (cx, cy, hw, hh) + (active, ringN, _, _); ring =
+      // up to GS_RING x (x, y, vx, vy). A guest without a valid ring is
+      // skipped entirely (the kernels only ever walk real silhouettes).
       var gu = gs.guests || [];
       var guN = gu.length;
       if (guN > GS_MAX_GUESTS) guN = GS_MAX_GUESTS;
       for (var q = 0; q < guN; q++) {
+        var pts = gu[q].pts;
+        var ptN = pts ? (pts.length >> 2) : 0;
+        if (ptN < 3) continue;
+        if (ptN > GS_RING) ptN = GS_RING;
         gh[60 + q * 8]     = gu[q].x || 0;
         gh[60 + q * 8 + 1] = gu[q].y || 0;
         gh[60 + q * 8 + 2] = gu[q].hw || 0;
         gh[60 + q * 8 + 3] = gu[q].hh || 0;
-        gh[60 + q * 8 + 4] = gu[q].vx || 0;
-        gh[60 + q * 8 + 5] = gu[q].vy || 0;
-        gh[60 + q * 8 + 6] = 1;
+        gh[60 + q * 8 + 4] = 1;
+        gh[60 + q * 8 + 5] = ptN;
+        var base = 84 + q * GS_RING * 4;
+        for (var pk = 0; pk < ptN * 4; pk++) gh[base + pk] = pts[pk] || 0;
       }
       // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, playerVx, playerVy).
       gh[8] = nozN;
@@ -3945,13 +3956,22 @@ struct GameParams {
   counts  : vec4<f32>,
   nozzles : array<vec4<f32>, ${GS_MAX_NOZZLES}>,
   explos  : array<vec4<f32>, ${GS_MAX_EXPLOSIONS}>,
-  // v26.04 — bath-guest moving boundaries, 2 vec4 per guest:
-  // (cx, cy, halfW, halfH) + (vx, vy, active, _). Zeroed outside the scene.
-  guests  : array<vec4<f32>, ${GS_MAX_GUESTS * 2}>,
+  // v26.05 — bath-guest EXACT moving boundaries. Meta, 2 vec4 per guest:
+  // (cx, cy, halfW, halfH) bbox reject + (active, ringN, _, _). Zeroed
+  // outside the scene, so every guest path below no-ops in the world.
+  guests   : array<vec4<f32>, ${GS_MAX_GUESTS * 2}>,
+  // The deforming silhouette: up to ${GS_RING} ring vertices per guest,
+  // (x, y, vx, vy) each — position AND local Verlet velocity, so the
+  // fluid feels the true shape and the true motion of every face.
+  guestPts : array<vec4<f32>, ${GS_MAX_GUESTS * GS_RING}>,
 };
 
-// v26.04 — guest plow strength (the rig hull uses PLAYER_EJECT = 720).
-const GUEST_EJECT : f32 = ${LIQUID_GUEST_EJECT};
+// v26.05 — a cell inside a guest is pinned to the LOCAL surface velocity
+// of the nearest ring edge plus a depth-scaled outward decompression, so
+// water cannot take residence inside the body and the meniscus hugs the
+// exact silhouette (the v26.04 box eject evacuated water past the visible
+// edge: black voids).
+const GUEST_PUSH : f32 = 26.0;   // px/s of outward push per px of depth
 
 // Miner silhouette rects (player-local px) — mirror the CPU literals.
 const MINER_HULL_L  : f32 = ${LIQUID_MINER_HULL_L};
@@ -4162,46 +4182,68 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
     }
   }
 
-  // --- guest wake (v26.04) — bath guests are moving rigid boundaries ---
-  // The same law as the rig silhouette above, generalized to N dynamic
-  // boxes: a MOVING body plows a nearest-face eject scaled by its speed,
-  // with the push blended toward the body's own motion direction so a
-  // plunging slime drives water down-and-out (the crown then erupts by
-  // continuity, the cavity opens, the exit leap drags a column up); a
-  // STILL body pins its cells rigid (water cannot flow through a soaking
-  // guest, and its bobs shed real ripples). Splashes are not authored
-  // anywhere: they emerge here.
+  // --- guest wake (v26.05) — bath guests are EXACT moving boundaries ---
+  // A cell inside a guest's deforming ring is pinned to the LOCAL surface
+  // velocity of the nearest ring edge (lerped between its two vertices),
+  // plus a depth-scaled outward decompression. That is the textbook
+  // kinematic no-slip boundary: a plunging face drives its cells at
+  // plunge speed (the crown erupts by continuity), a trailing face drags,
+  // a rotating or squishing body transfers its true local motion, and a
+  // still soaker is rigid, shedding real ripples when it bobs. Nothing
+  // about a splash is authored: the v26.04 box (whose oversized eject
+  // evacuated water past the visible edge) is gone.
   for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
     let gA = gameP.guests[gi * 2];
     let gB = gameP.guests[gi * 2 + 1];
-    if (gB.z < 0.5) { continue; }
-    let glx = wx - gA.x;
-    let gly = wy - gA.y;
-    if (abs(glx) > gA.z || abs(gly) > gA.w) { continue; }
-    let gspd = abs(gB.x) + abs(gB.y);
-    let gejs = clamp((gspd - 8.0) / 52.0, 0.0, 1.0);
-    if (gejs > 0.0) {
-      let dL = glx + gA.z;
-      let dR = gA.z - glx;
-      let dT = gly + gA.w;
-      let dB = gA.w - gly;
-      var gnx : f32 = -1.0; var gny : f32 = 0.0; var gminD = dL;
-      if (dR < gminD) { gminD = dR; gnx = 1.0; gny = 0.0; }
-      if (dT < gminD) { gminD = dT; gnx = 0.0; gny = -1.0; }
-      if (dB < gminD) { gminD = dB; gnx = 0.0; gny = 1.0; }
-      let ginv = 1.0 / max(gspd, 1.0);
-      let gbx = gnx * 0.55 + gB.x * ginv * 0.45;
-      let gby = gny * 0.55 + gB.y * ginv * 0.45;
-      // Past the rig's 60 px/s saturation a dive keeps hitting harder:
-      // the plunge term scales the plow with true impact speed.
-      let gplunge = 1.0 + clamp(gspd / 380.0, 0.0, 1.5);
-      let geject = GUEST_EJECT * gejs * gplunge * stepDt / CELL;
-      cellVelX[c] = cellVelX[c] + gbx * geject;
-      cellVelY[c] = cellVelY[c] + gby * geject;
-    } else {
-      cellVelX[c] = 0.0;
-      cellVelY[c] = 0.0;
+    if (gB.x < 0.5) { continue; }
+    if (abs(wx - gA.x) > gA.z + 4.0 || abs(wy - gA.y) > gA.w + 4.0) { continue; }
+    let gn = i32(gB.y);
+    let gBase = gi * ${GS_RING};
+    // Point-in-ring (crossing test over the true silhouette).
+    var ginside = false;
+    var gj = gn - 1;
+    for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
+      let pa = gameP.guestPts[gBase + gk];
+      let pb = gameP.guestPts[gBase + gj];
+      if (((pa.y > wy) != (pb.y > wy)) &&
+          (wx < (pb.x - pa.x) * (wy - pa.y) / (pb.y - pa.y) + pa.x)) {
+        ginside = !ginside;
+      }
+      gj = gk;
     }
+    if (!ginside) { continue; }
+    // Nearest ring edge: outward direction (inside point -> closest edge
+    // point), depth, and the LOCAL surface velocity at that spot.
+    var bestD2 : f32 = 1e9;
+    var bestPX : f32 = wx; var bestPY : f32 = wy;
+    var bestVX : f32 = 0.0; var bestVY : f32 = 0.0;
+    gj = gn - 1;
+    for (var ge : i32 = 0; ge < gn; ge = ge + 1) {
+      let pa = gameP.guestPts[gBase + ge];
+      let pb = gameP.guestPts[gBase + gj];
+      let ex = pb.x - pa.x;
+      let ey = pb.y - pa.y;
+      let el2 = max(ex * ex + ey * ey, 1e-6);
+      let et = clamp(((wx - pa.x) * ex + (wy - pa.y) * ey) / el2, 0.0, 1.0);
+      let qx = pa.x + ex * et;
+      let qy = pa.y + ey * et;
+      let dq2 = (wx - qx) * (wx - qx) + (wy - qy) * (wy - qy);
+      if (dq2 < bestD2) {
+        bestD2 = dq2;
+        bestPX = qx; bestPY = qy;
+        bestVX = pa.z + (pb.z - pa.z) * et;
+        bestVY = pa.w + (pb.w - pa.w) * et;
+      }
+      gj = ge;
+    }
+    let gdep = sqrt(bestD2);
+    var gox : f32 = 0.0; var goy : f32 = -1.0;
+    if (gdep > 0.001) {
+      gox = (bestPX - wx) / gdep;
+      goy = (bestPY - wy) / gdep;
+    }
+    cellVelX[c] = bestVX + gox * min(gdep, 10.0) * GUEST_PUSH;
+    cellVelY[c] = bestVY + goy * min(gdep, 10.0) * GUEST_PUSH;
   }
 
   // --- rocket-plume wake — per-nozzle cone push along the exhaust dir ---
@@ -5262,14 +5304,45 @@ fn pointInMiner(x : f32, y : f32) -> bool {
   return false;
 }
 
+// v26.05 — the guest silhouettes are solid to particles exactly like the
+// miner: a particle can never take residence inside a slime. The contact
+// rolls back + reflects + bumps aeration through the same solidRing path,
+// so foam forms at the contact line of a moving body for free. Point-in-
+// ring over the uploaded deforming silhouette, bbox-rejected first; with
+// no guests (the whole world) this is three compares and out.
+fn pointInGuestAny(x : f32, y : f32) -> bool {
+  for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
+    let gA = gameP.guests[gi * 2];
+    let gB = gameP.guests[gi * 2 + 1];
+    if (gB.x < 0.5) { continue; }
+    if (abs(x - gA.x) > gA.z + 2.0 || abs(y - gA.y) > gA.w + 2.0) { continue; }
+    let gn = i32(gB.y);
+    let gBase = gi * ${GS_RING};
+    var inside = false;
+    var gj = gn - 1;
+    for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
+      let pa = gameP.guestPts[gBase + gk];
+      let pb = gameP.guestPts[gBase + gj];
+      if (((pa.y > y) != (pb.y > y)) &&
+          (x < (pb.x - pa.x) * (y - pa.y) / (pb.y - pa.y) + pa.x)) {
+        inside = !inside;
+      }
+      gj = gk;
+    }
+    if (inside) { return true; }
+  }
+  return false;
+}
+
 // liquidSolidAt — the 4-point probe ring at radius r. Mirrors the CPU
 // liquidSolidAt: each ring point is solid if it is in a solid tile OR
-// inside the miner silhouette (Stage 8 — the miner half is now ported).
+// inside the miner silhouette (Stage 8 — the miner half is now ported)
+// OR inside a guest's deforming silhouette (v26.05).
 fn solidRing(x : f32, y : f32, r : f32) -> bool {
-  if (terrainSolidAt(x,     y + r) || pointInMiner(x,     y + r)) { return true; }
-  if (terrainSolidAt(x - r, y    ) || pointInMiner(x - r, y    )) { return true; }
-  if (terrainSolidAt(x + r, y    ) || pointInMiner(x + r, y    )) { return true; }
-  if (terrainSolidAt(x,     y - r) || pointInMiner(x,     y - r)) { return true; }
+  if (terrainSolidAt(x,     y + r) || pointInMiner(x,     y + r) || pointInGuestAny(x,     y + r)) { return true; }
+  if (terrainSolidAt(x - r, y    ) || pointInMiner(x - r, y    ) || pointInGuestAny(x - r, y    )) { return true; }
+  if (terrainSolidAt(x + r, y    ) || pointInMiner(x + r, y    ) || pointInGuestAny(x + r, y    )) { return true; }
+  if (terrainSolidAt(x,     y - r) || pointInMiner(x,     y - r) || pointInGuestAny(x,     y - r)) { return true; }
   return false;
 }
 

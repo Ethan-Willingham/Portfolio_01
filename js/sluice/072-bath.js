@@ -702,20 +702,35 @@
       var g = bathGuests[i], b = g.b;
       if (!b || b._melting) continue;
       g.t += dt; g.cd -= dt;
-      // v26.04: register this body as a moving fluid boundary for the
-      // frame. Velocity from the same positional tracker the stall gate
-      // uses (prev frame's center, before it is overwritten below).
-      if (dt > 0.0001 && bathGuestColliders.length < 3) {
-        var gvx = (b.cx - g.px) / dt, gvy = (b.cy - g.py) / dt;
-        if (gvx > 1000) gvx = 1000; else if (gvx < -1000) gvx = -1000;
-        if (gvy > 1000) gvy = 1000; else if (gvy < -1000) gvy = -1000;
-        var ghw = (b.bboxR - b.bboxL) / 2 + 2;
-        var ghh = (b.bboxB - b.bboxT) / 2 + 2;
+      // v26.05: register this body's EXACT deforming silhouette as a
+      // moving fluid boundary for the frame: the ordered jello boundary
+      // ring resampled to <= 20 vertices, each carrying its own Verlet
+      // velocity ((p - o) / h), so the kernels feel the true shape and
+      // the true local motion of every face, every frame.
+      if (bathGuestColliders.length < 3 && b.ringN >= 3 && b.ring) {
+        var rn = b.ringN | 0;
+        var take = rn < 20 ? rn : 20;
+        var ih = 1 / ((typeof jelloStepH === 'number' && jelloStepH > 0)
+                      ? jelloStepH : (1 / 240));
+        var pts = new Array(take * 4);
+        for (var rk2 = 0; rk2 < take; rk2++) {
+          var ri = b.ring[((rk2 * rn) / take) | 0];
+          var pvx = (b.px[ri] - b.ox[ri]) * ih;
+          var pvy = (b.py[ri] - b.oy[ri]) * ih;
+          if (pvx > 1200) pvx = 1200; else if (pvx < -1200) pvx = -1200;
+          if (pvy > 1200) pvy = 1200; else if (pvy < -1200) pvy = -1200;
+          pts[rk2 * 4]     = b.px[ri];
+          pts[rk2 * 4 + 1] = b.py[ri];
+          pts[rk2 * 4 + 2] = pvx;
+          pts[rk2 * 4 + 3] = pvy;
+        }
+        var ghw = (b.bboxR - b.bboxL) / 2 + 3;
+        var ghh = (b.bboxB - b.bboxT) / 2 + 3;
         bathGuestColliders.push({
-          x: b.cx, y: b.cy,
-          hw: ghw < 8 ? 8 : (ghw > 30 ? 30 : ghw),
-          hh: ghh < 8 ? 8 : (ghh > 30 ? 30 : ghh),
-          vx: gvx, vy: gvy
+          x: (b.bboxL + b.bboxR) / 2, y: (b.bboxT + b.bboxB) / 2,
+          hw: ghw < 8 ? 8 : (ghw > 34 ? 34 : ghw),
+          hh: ghh < 8 ? 8 : (ghh > 34 ? 34 : ghh),
+          pts: pts
         });
       }
       // "Standing" is POSITIONAL, never velocity: a wedged body churns
