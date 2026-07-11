@@ -237,8 +237,8 @@
    * mass-normalize in heatNormalize, gather + advance + buoyancy in G2P.
    * Levers flow live through setSimParam('BATH_*'). */
   var LIQUID_BATH_ON       = 0;     // 0/1 master gate; the game flips it (ENABLE_BATH)
-  var LIQUID_BATH_EXCHANGE = 0.15;  // per-substep particle<->field relax (0..1)
-  var LIQUID_BATH_COOL     = 0.05;  // 1/s heat decay toward ambient
+  var LIQUID_BATH_EXCHANGE = 0.015; // per-substep particle<->field relax: SMALL, so heat RIDES parcels (v25.94 model fix; 0.15 diffused 10x faster than water moves and plumes could never carry warmth)
+  var LIQUID_BATH_COOL     = 0.09;  // 1/s heat decay: surface water cools and SINKS at the walls, closing the circulation loop
   var LIQUID_BATH_BUOY     = 260;   // px/s^2 upward at T=1 (gravity is 600 down)
   var LIQUID_BATH_SRC_X0   = 0;     // heat-source rect, world px (ONE rect in v1;
   var LIQUID_BATH_SRC_Y0   = 0;     // B2 grows this into a proper source list)

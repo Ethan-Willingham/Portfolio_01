@@ -226,13 +226,16 @@
         // ONE-SIDED heat (v25.92): warming only the left reach of the bowl
         // drives a circulation CELL: up the hot side, across the surface,
         // down the far side. Uniform bottom heat just stratifies.
+        // Full-width BOTTOM band, centered: with heat conserved on parcels
+        // the Rayleigh-Benard instability breaks symmetry by itself, and
+        // the plumes form, wander, and mushroom naturally (v25.94).
         bathTune('BATH_SRC_X0', tb[0] * TILE);
-        bathTune('BATH_SRC_Y0', (F.fr + 1) * TILE);
-        bathTune('BATH_SRC_X1', tb[0] * TILE + (((tb[1] - tb[0] + 1) * TILE * 0.36) | 0));
+        bathTune('BATH_SRC_Y0', (F.fr + F.sink - 1) * TILE);
+        bathTune('BATH_SRC_X1', (tb[1] + 1) * TILE);
         bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
         bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 360);
-        bathHotTub = { F: F, tb: tb };   // the sweep (bathSteamTick) drives it
+        bathTune('BATH_BUOY', 330);
+        bathHotTub = { F: F, tb: tb };
       }
     }
   }
@@ -380,18 +383,6 @@
   }
   var bathHotTub = null;
   function bathSteamTick(dt) {
-    // v25.93: sweep the heater across the bowl (~9 s period) so the
-    // convection cell keeps overturning instead of finding equilibrium.
-    if (bathHotTub) {
-      var HT = bathHotTub, tbh = HT.tb;
-      var spanW = (tbh[1] - tbh[0] + 1) * TILE;
-      var cxh = (tbh[0] * TILE + (tbh[1] + 1) * TILE) / 2;
-      var osc = Math.sin(performance.now() * 0.000698);   // 2*pi / 9s
-      var hw = spanW * 0.17;
-      var hc = cxh + osc * spanW * 0.26;
-      bathTune('BATH_SRC_X0', hc - hw);
-      bathTune('BATH_SRC_X1', hc + hw);
-    }
     bathDbg.steamCalls++;
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
