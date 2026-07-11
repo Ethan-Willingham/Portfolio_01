@@ -226,16 +226,21 @@
         // ONE-SIDED heat (v25.92): warming only the left reach of the bowl
         // drives a circulation CELL: up the hot side, across the surface,
         // down the far side. Uniform bottom heat just stratifies.
-        // Full-width BOTTOM band, centered: with heat conserved on parcels
-        // the Rayleigh-Benard instability breaks symmetry by itself, and
-        // the plumes form, wander, and mushroom naturally (v25.94).
-        bathTune('BATH_SRC_X0', tb[0] * TILE);
+        // v25.95 THE HOT SPRING VENT: real springs are fed by an inlet,
+        // not a heated floor. A concentrated source at the bowl's bottom
+        // centre makes ONE coherent scalding jet (T -> 2.0) that rises,
+        // mushrooms at the surface, and drives a tub-wide circulation:
+        // large-scale, visibly alive.
+        var ventCx = ((tb[0] + tb[1] + 1) / 2) * TILE;
+        bathTune('BATH_SRC_X0', ventCx - 14);
         bathTune('BATH_SRC_Y0', (F.fr + F.sink - 1) * TILE);
-        bathTune('BATH_SRC_X1', (tb[1] + 1) * TILE);
+        bathTune('BATH_SRC_X1', ventCx + 14);
         bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
+        bathTune('BATH_SRC_T', 2.0);
+        bathTune('BATH_SRC_RATE', 0.12);
         bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 330);
-        bathHotTub = { F: F, tb: tb };
+        bathTune('BATH_BUOY', 380);
+        bathHotTub = { F: F, tb: tb, ventX: ventCx };
       }
     }
   }
@@ -399,6 +404,9 @@
           var tb = F.tubs[i];
           var wl = (F.fr - F.lip) * TILE + 10;
           var sx = tb[0] * TILE + 10 + Math.random() * ((tb[1] - tb[0] + 1) * TILE - 20);
+          if (bathHotTub && bathHotTub.ventX && Math.random() < 0.55) {
+            sx = bathHotTub.ventX + (Math.random() - 0.5) * 70;   // over the boil
+          }
           var euv = smokeFluidWorldToUV(sx, wl - 18);
           if (!euv.inView) continue;
           bathDbg.steamInView++;
@@ -1074,6 +1082,15 @@
           uiFg.fillStyle = '#b5723a';
           uiFg.fillRect(fx0 - 4, lipY - 8, TILE + 10, 6);
           uiFg.fillRect(fx1 - TILE - 6, lipY - 8, TILE + 10, 6);
+          // The spring vent at the bowl's lowest point: slot + warm glow.
+          var vcx = (crv2.x0 + crv2.x1) / 2;
+          var vby = crv2.y0 + crv2.depthAt(vcx);
+          uiFg.fillStyle = 'rgba(255,140,60,0.20)';
+          uiFg.beginPath(); uiFg.arc(vcx, vby + 6, 30, 0, 6.283); uiFg.fill();
+          uiFg.fillStyle = '#5a4630';
+          uiFg.fillRect(vcx - 16, vby - 2, 32, 8);
+          uiFg.fillStyle = '#b5723a';
+          uiFg.fillRect(vcx - 16, vby - 4, 32, 3);
           uiFg.fillStyle = '#2b2b2b';
           uiFg.fillRect(fx0 + 6, botY - 22, 3, 3);
           uiFg.fillRect(fx1 - 10, botY - 30, 3, 3);

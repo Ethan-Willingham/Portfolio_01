@@ -237,7 +237,7 @@
    * mass-normalize in heatNormalize, gather + advance + buoyancy in G2P.
    * Levers flow live through setSimParam('BATH_*'). */
   var LIQUID_BATH_ON       = 0;     // 0/1 master gate; the game flips it (ENABLE_BATH)
-  var LIQUID_BATH_EXCHANGE = 0.015; // per-substep particle<->field relax: SMALL, so heat RIDES parcels (v25.94 model fix; 0.15 diffused 10x faster than water moves and plumes could never carry warmth)
+  var LIQUID_BATH_EXCHANGE = 0.03;  // per-substep particle<->field relax: small (heat RIDES parcels, v25.94) but enough to feather the interface a particle-cluster wide (v25.95)
   var LIQUID_BATH_COOL     = 0.09;  // 1/s heat decay: surface water cools and SINKS at the walls, closing the circulation loop
   var LIQUID_BATH_BUOY     = 260;   // px/s^2 upward at T=1 (gravity is 600 down)
   var LIQUID_BATH_SRC_X0   = 0;     // heat-source rect, world px (ONE rect in v1;
@@ -5773,8 +5773,13 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   // weight). f.a is 0 with the bath off, so heatN 0 -> no tint (byte-exact
   // old look). Tint fights foam so hot churn still reads as hot, not white.
   let heatN = clamp(f.a / max(f.r, 0.001), 0.0, 2.0);
-  let heatMix = clamp(heatN * rp.bathTint.w, 0.0, 1.0);
-  waterRGB = mix(waterRGB, rp.bathTint.rgb, heatMix);
+  // v25.95: soft thermal ramp (1 - e^-kT). Temperature in the tub is nearly
+  // bimodal, so a linear tint painted a hard border; the exponential gives
+  // a wide warm halo around a hot core and the interface reads as a glow.
+  let warmK = (1.0 - exp(-1.7 * heatN)) * rp.bathTint.w;
+  let midRGB = mix(rp.waterColor.rgb, rp.bathTint.rgb, 0.45) * 1.08;
+  waterRGB = mix(waterRGB, midRGB, clamp(warmK * 1.6, 0.0, 1.0));
+  waterRGB = mix(waterRGB, rp.bathTint.rgb, clamp(warmK * warmK, 0.0, 1.0));
   var outA = aWaterEdge * rp.waterColor.a;
   var outRGB = waterRGB * outA;
   // Oil composites over water.
