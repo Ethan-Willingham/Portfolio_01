@@ -426,6 +426,20 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable; v25.98): STEAM QUALITY. Owner: blocky, low quality,
+  splotches flash into existence. Three causes, three fixes: (1) the sim grid
+  was the quality ceiling (velocity/curl at 160 short-axis for the whole view,
+  one texel ~10 screen px, and the v25.97 curl x1.3 amplified exactly that
+  grid frequency), so steam mode now RESIZES the smoke sim while inside
+  (sim 288 short-axis, dye to canvas short-axis capped 1080, desktop WebGPU
+  only, smokeWGPU.resize on push, smokeWGPUApplyRes recomputes standard on
+  pop; verified bit-exact tune restore across enter/exit/enter); (2) curl
+  boost trimmed to x1.12 since real detail now lives in the finer grid;
+  (3) nothing deposits in one frame anymore: puffs became BOILS (emitters
+  living ~0.6s under a sine envelope, ~1/10 the dye per frame, radius grows
+  as the billow swells) and licks ramp in over 0.18s. Result: fine curling
+  filaments and vortex pairs instead of stamped discs.
+
 - 2026-07-10 (Fable; v25.97): REAL STEAM. The old emitter was a uniform
   drizzle of needle splats with velY 0.06 in a sim whose diesel emitter
   splats at 2.75: the steam had no momentum and blurred into a faint band.

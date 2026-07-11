@@ -376,12 +376,13 @@
   //   licks:   short-lived jets that hold one spot for ~a second, so a
   //            coherent tendril climbs, curls and shreds in the air.
   var bathSteam = {
-    rate: 14, amt: 0.035, rise: 0.7,                       // drizzle
-    puffEvery: 0.85, puffAmt: 0.13, puffR: 0.055, puffRise: 1.6,
-    lickEvery: 2.2, lickDur: 0.75, lickAmt: 0.10, lickR: 0.022, lickRise: 2.6
+    rate: 14, amt: 0.03, rise: 0.7,                        // drizzle
+    puffEvery: 0.85, puffAmt: 0.13, puffR: 0.055, puffRise: 1.6, puffDur: 0.6,
+    lickEvery: 2.2, lickDur: 0.75, lickAmt: 0.10, lickR: 0.026, lickRise: 2.6
   };
   var bathSteamCol = { r: 0, g: 0, b: 0 };
   var bathSteamJets = [];      // live licks {x, t, dur, drift, rise, wig, ph}
+  var bathSteamBoils = [];     // live boils {x, t, dur, drift}
   var bathSteamPuffT = 0.4;
   var bathSteamLickT = 1.0;
   function bathSteamPush() {
@@ -393,11 +394,28 @@
       ts: smokeTune.sim_time_scale
     };
     // Scale, never set: polarity-proof against whatever the smoke tuning is.
-    // Longer-lived dye so plumes can climb the room, MORE curl so the
-    // risen steam wanders and licks, a livelier clock.
+    // Longer-lived dye so plumes can climb the room, a touch more curl so
+    // risen steam wanders (past 1.2x it amplifies grid-frequency wiggles
+    // and the steam turns blocky), a livelier clock.
     smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.47;
-    smokeTune.sim_curl = bathSteamSaved.curl * 1.3;
+    smokeTune.sim_curl = bathSteamSaved.curl * 1.12;
     smokeTune.sim_time_scale = bathSteamSaved.ts * 1.35;
+    // v25.98: run the steam sim FINER while inside. The world is paused,
+    // so the whole physics budget is the room's: ~2x the velocity grid
+    // (curl detail lives there) and near-full-res dye. Desktop WebGPU
+    // only; pop recomputes the standard resolution from the canvas.
+    if (typeof smokeWGPUDriving !== 'undefined' && smokeWGPUDriving &&
+        typeof smokeWGPUResDims === 'function' && !isMobile &&
+        typeof smokeFluidWidth === 'number' && smokeFluidWidth > 0) {
+      var bsSim = smokeWGPUResDims(288, smokeFluidWidth, smokeFluidHeight);
+      var bsDye = smokeWGPUResDims(
+        Math.min(Math.min(smokeFluidWidth, smokeFluidHeight), 1080),
+        smokeFluidWidth, smokeFluidHeight);
+      try {
+        smokeWGPU.resize(bsSim.w, bsSim.h, bsDye.w, bsDye.h);
+        bathSteamSaved.res = true;
+      } catch (e) {}
+    }
   }
   function bathSteamPop() {
     if (!bathSteamSaved || typeof smokeTune === 'undefined') return;
@@ -405,8 +423,13 @@
     smokeTune.sim_velocity_dissipation = bathSteamSaved.vd;
     smokeTune.sim_curl = bathSteamSaved.curl;
     smokeTune.sim_time_scale = bathSteamSaved.ts;
+    if (bathSteamSaved.res && typeof smokeWGPUApplyRes === 'function' &&
+        typeof smokeFluidWidth === 'number') {
+      try { smokeWGPUApplyRes(smokeFluidWidth, smokeFluidHeight); } catch (e) {}
+    }
     bathSteamSaved = null;
     bathSteamJets.length = 0;
+    bathSteamBoils.length = 0;
   }
   var bathHotTub = null;
   function bathSteamSplat(wx, wy, vx, vy, amt, r) {
@@ -453,27 +476,36 @@
     var HF = bathHotTub.F;
     var hwl = (HF.fr - HF.lip) * TILE + 10;
     var vX = bathHotTub.ventX, vH = bathHotTub.ventHalf;
-    // Layer 2: puffs. Random billows off the simmer: a tight cluster of
-    // heavy splats plus one wide faint bloom, real upward momentum.
+    // Layer 2: boils. A billow is never stamped in one frame (that reads
+    // as a flash): each boil is an emitter that lives ~0.6s under a sine
+    // envelope, so the puff FADES IN, swells as it rises, and lets go.
     bathSteamPuffT -= dt;
-    if (bathSteamPuffT <= 0) {
+    if (bathSteamPuffT <= 0 && bathSteamBoils.length < 4) {
       bathSteamPuffT = bathSteam.puffEvery * (0.45 + Math.random() * 1.1);
       var px = Math.random() < 0.75
         ? vX + (Math.random() - 0.5) * vH * 2
         : bathHotTub.tb[0] * TILE + 14 +
           Math.random() * ((bathHotTub.tb[1] - bathHotTub.tb[0] + 1) * TILE - 28);
-      for (var pk = 0; pk < 3; pk++) {
-        bathSteamSplat(px + (Math.random() - 0.5) * 16,
-          hwl - 10 - Math.random() * 10,
-          (Math.random() - 0.5) * 0.8,
-          bathSteam.puffRise * (0.75 + Math.random() * 0.5),
-          bathSteam.puffAmt * (0.7 + Math.random() * 0.6),
-          bathSteam.puffR * (0.75 + Math.random() * 0.5));
+      bathSteamBoils.push({
+        x: px, t: 0,
+        dur: bathSteam.puffDur * (0.7 + Math.random() * 0.8),
+        drift: (Math.random() - 0.5) * 0.5
+      });
+    }
+    for (var bq = bathSteamBoils.length - 1; bq >= 0; bq--) {
+      var B = bathSteamBoils[bq];
+      B.t += dt;
+      if (B.t > B.dur) { bathSteamBoils.splice(bq, 1); continue; }
+      var bfr = B.t / B.dur;
+      var benv = Math.sin(bfr * Math.PI);
+      for (var bs = 0; bs < 2; bs++) {
+        bathSteamSplat(B.x + (Math.random() - 0.5) * 18,
+          hwl - 8 - bfr * 14,
+          B.drift + (Math.random() - 0.5) * 0.6,
+          bathSteam.puffRise * (0.75 + Math.random() * 0.5) * (0.6 + 0.4 * benv),
+          bathSteam.puffAmt * benv * 0.30,
+          bathSteam.puffR * (0.5 + 0.9 * bfr) * (0.8 + Math.random() * 0.4));
       }
-      bathSteamSplat(px, hwl - 16, 0,
-        bathSteam.puffRise * 0.6,
-        bathSteam.puffAmt * 0.35,
-        bathSteam.puffR * 1.8);
     }
     // Layer 3: licks. A jet holds one spot for a fraction of a second,
     // wiggling at the base, so a coherent tendril climbs into the air
@@ -495,11 +527,13 @@
       var J = bathSteamJets[j];
       J.t += dt;
       if (J.t > J.dur) { bathSteamJets.splice(j, 1); continue; }
+      // Ramp in over the first ~0.18s (no flash), taper toward the end.
+      var lenv = Math.min(J.t / 0.18, 1) * (1 - (J.t / J.dur) * 0.55);
       bathSteamSplat(J.x + Math.sin(J.t * J.wig + J.ph) * 6,
         hwl - 8,
         J.drift + Math.sin(J.t * J.wig * 1.3 + J.ph) * 0.5,
-        J.rise,
-        bathSteam.lickAmt * (1 - (J.t / J.dur) * 0.55),
+        J.rise * (0.5 + 0.5 * Math.min(J.t / 0.15, 1)),
+        bathSteam.lickAmt * lenv,
         bathSteam.lickR * (0.8 + Math.random() * 0.4));
     }
   }
