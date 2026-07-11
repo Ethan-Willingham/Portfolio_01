@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.88';
+  var GAME_VERSION = 'v25.89';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11492,9 +11492,9 @@
     for (var i = 0; i < F.tubs.length; i++) {
       if (!F.fill[i]) continue;
       var tb = F.tubs[i];
-      var wy0 = (F.fr - F.lip) * TILE + 8, wy1 = (F.fr + F.sink + 1) * TILE - 3;
-      for (var wy = wy0; wy < wy1; wy += 1.6) {
-        for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.6) {
+      var wy0 = (F.fr - F.lip) * TILE + 10, wy1 = (F.fr + F.sink + 1) * TILE - 3;
+      for (var wy = wy0; wy < wy1; wy += 1.3) {
+        for (var wx = tb[0] * TILE + 3; wx < (tb[1] + 1) * TILE - 3; wx += 1.3) {
           if (world[(wy / TILE) | 0][(wx / TILE) | 0]) continue;   // bowl body
           addLiquidParticle('water', wx, wy, 0, 0, 0);
         }
@@ -11631,7 +11631,7 @@
   var bathSteamAcc = 0;
   // Owner-dialable steam (v25.88): the old values sat in place and bloomed
   // white (tiny rise velocity + heavy dye accumulating at one spot).
-  var bathSteam = { rate: 20, amt: 0.016, rise: 0.13 };
+  var bathSteam = { rate: 24, amt: 0.05, rise: 0.06 };
   var bathSteamCol = { r: 0, g: 0, b: 0 };
   function bathSteamPush() {
     if (typeof smokeTune === 'undefined' || bathSteamSaved) return;
@@ -11641,7 +11641,7 @@
       curl: smokeTune.sim_curl
     };
     // Scale, never set: polarity-proof against whatever the smoke tuning is.
-    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.962;
+    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.985;
     smokeTune.sim_curl = bathSteamSaved.curl * 0.35;
   }
   function bathSteamPop() {
@@ -11679,7 +11679,7 @@
           smokeDriver.splat(euv.uvX, euv.uvY,
             (Math.random() - 0.5) * 0.010,
             bathSteam.rise * (0.7 + Math.random() * 0.6),
-            bathSteamCol, 0.008 + Math.random() * 0.006);
+            bathSteamCol, 0.012 + Math.random() * 0.008);
           bathDbg.steamSplats++;
         }
       }
@@ -11762,7 +11762,7 @@
           var wx0 = ts0[0] * TILE + 6, wx1 = (ts0[1] + 1) * TILE - 6;
           if (b.cx > wx0 && b.cx < wx1) {
             g.st = 'soak'; g.cd = 1.2;
-            b.bathBuoy = { line: g.line - 8, x0: wx0, x1: wx1, lift: 2.0, drag: 0.965 };
+            b.bathBuoy = { line: g.line + 10, x0: wx0, x1: wx1, lift: 2.1, drag: 0.965 };
             for (var sp0 = 0; sp0 < 18; sp0++) {
               addLiquidParticle('water', b.cx + (Math.random() - 0.5) * 50, g.line - 5,
                 (Math.random() - 0.5) * 110, -40 - Math.random() * 100, 0);
@@ -12328,16 +12328,16 @@
           var ftb = FG.tubs[fti];
           var fx0 = (ftb[0] - 1) * TILE, fx1 = (ftb[1] + 2) * TILE;
           var lipY = (FG.fr - FG.lip) * TILE, botY = (FG.fr + FG.sink + 1) * TILE;
-          var hx0 = ftb[0] * TILE + 2, hx1 = (ftb[1] + 1) * TILE - 2;
-          var hbot = botY - 12;
+          var hx0 = ftb[0] * TILE, hx1 = (ftb[1] + 1) * TILE;
+          var hbot = (FG.fr + FG.sink) * TILE + 2;
           uiFg.fillStyle = '#8b887c';
           uiFg.beginPath();
           uiFg.rect(fx0 - 4, lipY - 6, (fx1 - fx0) + 8, botY - lipY + 4);
           uiFg.moveTo(hx0, lipY - 6);
-          uiFg.lineTo(hx0, hbot - 52);
-          uiFg.quadraticCurveTo(hx0, hbot, hx0 + 60, hbot);
-          uiFg.lineTo(hx1 - 60, hbot);
-          uiFg.quadraticCurveTo(hx1, hbot, hx1, hbot - 52);
+          uiFg.lineTo(hx0, hbot - 72);
+          uiFg.quadraticCurveTo(hx0, hbot, hx0 + 70, hbot);
+          uiFg.lineTo(hx1 - 70, hbot);
+          uiFg.quadraticCurveTo(hx1, hbot, hx1, hbot - 72);
           uiFg.lineTo(hx1, lipY - 6);
           uiFg.closePath();
           uiFg.fill('evenodd');
