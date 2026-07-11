@@ -331,18 +331,9 @@
   }
 
   // Stenciled bay-edge label drawn into the top inset of the bay.
-  // v25.63 — fit the label to the bay width. In the stacked (portrait-phone)
-  // console the bays are far narrower than the ~92-110px the labels were authored
-  // for, so a value-bearing header ('CARGO  $45,347') centred at scale 1 spilled
-  // out both sides (into the gutter and the neighbouring bay). Shrink the stencil
-  // scale just enough to fit, floored so it stays legible; short labels ('FUEL',
-  // 'RESERVE') still fit at scale 1 and are untouched.
   function drawBayLabel(bx, by, bw, text) {
-    var avail = bw - 7;
     var w = stencilTextWidth(text, 1);
-    var s = (w > avail && w > 0) ? Math.max(0.6, avail / w) : 1;
-    var wS = stencilTextWidth(text, s);
-    drawStencilText(text, bx + Math.floor((bw - wS) / 2), by + 2, s, '#d8d2c4');
+    drawStencilText(text, bx + Math.floor((bw - w) / 2), by + 2, 1, '#d8d2c4');
   }
 
   // Four corner bolts inside a bay's inner rect.
@@ -756,91 +747,96 @@
   function drawHullPlates(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'HULL');
     drawBayBolts(bx, by, bw, bh);
-    // v25.71 — the hull gauge is a GRID of armor tiles, and the tile COUNT tracks
-    // the Hull Plating upgrade: a stock rig has HULL_PLATE_BASE tiles and each tier
-    // bolts on HULL_PLATE_STEP more, so a maxed hull reads as a visibly denser slab
-    // of plating (not just a bigger, invisible hull number). The grid auto-sizes its
-    // tiles + row count to fit the 92 px bay at any total. Tiles still drop from the
-    // END (bottom-right) as damage lands and keep the green/amber/red margin zones,
-    // so a battered hull is down to its solid green core up top.
-    var HULL_PLATE_BASE = 6;   // tiles at hull level 1
-    var HULL_PLATE_STEP = 3;   // extra tiles per upgrade tier (L1=6 .. L7=24)
-    var hullLvl = (typeof upgrades !== 'undefined' && upgrades && upgrades.hullLevel) ? upgrades.hullLevel : 1;
-    var n = HULL_PLATE_BASE + (Math.max(1, hullLvl) - 1) * HULL_PLATE_STEP;
-    if (n > 30) n = 30;        // safety clamp (dev free-buy over-levelling)
-
+    var n = 8;
+    var pw = 8;
+    var pgap = 1;
+    var rowW = n * pw + (n - 1) * pgap;
+    var x0 = bx + (bw - rowW) / 2;
+    var ph = Math.min(bh - 22, 40);
+    var y0 = by + (bh - ph) / 2 + 3;
     var maxHullLocal = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
     var hullFrac = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.hull / maxHullLocal)) : 0;
     var intactPlates = Math.ceil(hullFrac * n);
 
-    // Position zones by tile index: green core (low) -> amber -> red margin (high).
-    var nRed    = Math.max(1, Math.round(n * 0.15));
-    var nAmber  = Math.max(1, Math.round(n * 0.25));
-    var nGreen  = n - nRed - nAmber;
+    // Per-plate position zones: green (left), amber (middle), red (right)
+    var nRed    = Math.max(1, Math.round(n * 0.15));   // 1
+    var nAmber  = Math.max(1, Math.round(n * 0.25));   // 2
+    var nGreen  = n - nRed - nAmber;                   // 5
     function plateZoneColors(idx) {
-      if (idx < nGreen)               return { base: '#40c060', hi: '#7be098', sh: '#268040' };
-      else if (idx < nGreen + nAmber) return { base: '#e0a020', hi: '#ffd47a', sh: '#9c6010' };
-      else                            return { base: '#e83a26', hi: '#ff7060', sh: '#7a2418' };
+      // idx is 0-based plate position
+      if (idx < nGreen) {
+        return { base: '#40c060', hi: '#7be098', sh: '#268040' };
+      } else if (idx < nGreen + nAmber) {
+        return { base: '#e0a020', hi: '#ffd47a', sh: '#9c6010' };
+      } else {
+        return { base: '#e83a26', hi: '#ff7060', sh: '#7a2418' };
+      }
     }
 
-    // Fit N tiles into the bay: the largest square tile (<=11 px) whose wrapped
-    // rows all clear the HULL label + corner bolts. Small counts stay chunky in
-    // one or two rows; a maxed hull packs into a denser multi-row grid.
-    var gap = 1;
-    var availW = bw - 8;
-    var availH = Math.max(6, bh - 16);            // band below the HULL label
-    var tile = 4, cols = 1, rows = n;
-    for (var t = 11; t >= 4; t--) {
-      var c = Math.max(1, Math.floor((availW + gap) / (t + gap)));
-      var r = Math.ceil(n / c);
-      if (r * (t + gap) - gap <= availH) { tile = t; cols = c; rows = r; break; }
-      if (t === 4) { tile = 4; cols = c; rows = r; }
-    }
-    var gridW = cols * (tile + gap) - gap;
-    var gridH = rows * (tile + gap) - gap;
-    var gx0 = bx + Math.round((bw - gridW) / 2);
-    var gy0 = (by + 12) + Math.max(0, Math.round((availH - gridH) / 2));
-
-    // Recessed metal backing (destroyed tiles show this through).
+    // Recessed metal backing strip (destroyed plates show this)
     ctx.fillStyle = '#0e0c0a';
-    ctx.fillRect(gx0 - 3, gy0 - 3, gridW + 6, gridH + 6);
+    ctx.fillRect(x0 - 3, y0 - 2, rowW + 6, ph + 4);
     ctx.fillStyle = '#1a1612';
-    ctx.fillRect(gx0 - 3, gy0 - 3, gridW + 6, 1);
-    ctx.fillRect(gx0 - 3, gy0 - 3, 1, gridH + 6);
+    ctx.fillRect(x0 - 3, y0 - 2, rowW + 6, 1);
+    ctx.fillRect(x0 - 3, y0 - 2, 1, ph + 4);
     ctx.fillStyle = '#2a2520';
-    ctx.fillRect(gx0 - 3, gy0 + gridH + 2, gridW + 6, 1);
-    ctx.fillRect(gx0 + gridW + 2, gy0 - 3, 1, gridH + 6);
+    ctx.fillRect(x0 - 3, y0 + ph + 1, rowW + 6, 1);
+    ctx.fillRect(x0 + rowW + 2, y0 - 2, 1, ph + 4);
 
     for (var i = 0; i < n; i++) {
+      var px = x0 + i * (pw + pgap);
       var stage;
       if (i < intactPlates - 1) stage = 0;
       else if (i === intactPlates - 1) {
         var subFrac = (hullFrac * n) - (intactPlates - 1);
-        stage = (subFrac > 0.4) ? 0 : 1;   // the draining tile cracks before it drops
+        if (subFrac > 0.66)      stage = 0;
+        else if (subFrac > 0.33) stage = 1;
+        else                     stage = 2;
       } else stage = 3;
       if (stage === 3) continue;
 
-      var col = i % cols;
-      var row = (i / cols) | 0;
-      var px = gx0 + col * (tile + gap);
-      var py = gy0 + row * (tile + gap);
       var z = plateZoneColors(i);
 
-      ctx.fillStyle = z.base;                // tile body
-      ctx.fillRect(px, py, tile, tile);
-      ctx.fillStyle = z.hi;                  // top + left highlight
-      ctx.fillRect(px, py, tile, 1);
-      ctx.fillRect(px, py, 1, tile);
-      ctx.fillStyle = z.sh;                  // bottom + right shadow
-      ctx.fillRect(px, py + tile - 1, tile, 1);
-      ctx.fillRect(px + tile - 1, py, 1, tile);
-      ctx.fillStyle = UI_OUTLINE;            // centre rivet (industrial read)
-      ctx.fillRect(px + (tile >> 1), py + (tile >> 1), 1, 1);
+      // Plate body in zone color
+      ctx.fillStyle = z.base;
+      ctx.fillRect(px, y0, pw, ph);
+      // Top + left highlight
+      ctx.fillStyle = z.hi;
+      ctx.fillRect(px, y0, pw, 1);
+      ctx.fillRect(px, y0, 1, ph);
+      // Bottom + right shadow
+      ctx.fillStyle = z.sh;
+      ctx.fillRect(px, y0 + ph - 1, pw, 1);
+      ctx.fillRect(px + pw - 1, y0, 1, ph);
+      // 4-corner rivets (always dark for industrial read regardless of zone)
+      ctx.fillStyle = UI_OUTLINE;
+      ctx.fillRect(px + 1, y0 + 1, 1, 1);
+      ctx.fillRect(px + pw - 2, y0 + 1, 1, 1);
+      ctx.fillRect(px + 1, y0 + ph - 2, 1, 1);
+      ctx.fillRect(px + pw - 2, y0 + ph - 2, 1, 1);
+      ctx.fillStyle = z.sh;
+      ctx.fillRect(px + 2, y0 + 2, 1, 1);
+      ctx.fillRect(px + pw - 3, y0 + 2, 1, 1);
+      // Centre groove
+      ctx.fillStyle = z.sh;
+      ctx.fillRect(px + Math.floor(pw / 2), y0 + 3, 1, ph - 6);
 
-      if (stage >= 1) {                      // cracked: a scatter of dark hits
+      // Damage overlays — black cracks regardless of zone
+      if (stage >= 1) {
         ctx.fillStyle = UI_OUTLINE;
-        ctx.fillRect(px + 2, py + 2, 1, 1);
-        ctx.fillRect(px + tile - 3, py + tile - 4, 1, 1);
+        for (var c = 0; c < 5; c++) {
+          ctx.fillRect(px + 1 + c, y0 + 5 + c, 1, 1);
+        }
+      }
+      if (stage >= 2) {
+        ctx.fillStyle = UI_OUTLINE;
+        for (var c2 = 0; c2 < 6; c2++) {
+          ctx.fillRect(px + 4 - Math.floor(c2 / 2), y0 + 12 + c2, 1, 1);
+        }
+        ctx.fillRect(px + 2, y0 + ph - 8, 3, 1);
+        ctx.fillRect(px + 2, y0 + ph - 7, 1, 2);
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(px + pw - 3, y0 + ph - 5, 1, 1);
       }
     }
   }
@@ -912,102 +908,60 @@
     var cellW = Math.floor((iw - gap * (cols + 1)) / cols);
     var cellH = Math.floor((ih - gap * (rows + 1)) / rows);
 
-    // Rectangle-packed hold: each mined unit is drawn as ONE solid block whose
-    // footprint (in grid cells) scales with its slot cost, so a dense ore
-    // (Unobtanium = 8) reads as a single big rectangle, not eight chips. Blocks
-    // pack bottom-left first in mining order; leftover cells stay empty.
-    // Footprint [w, h] per slot count, wide-leaning to suit the wide chamber.
-    // Preferred footprint [w, h] per slot count, wide-leaning to suit the wide
-    // chamber. Chunky blocks (no thin bars), so a rare ore reads as a slab.
-    var SLOT_FOOTPRINT = { 1: [1, 1], 2: [2, 1], 3: [3, 1], 4: [2, 2], 5: [3, 2], 6: [3, 2], 7: [4, 2], 8: [4, 2] };
-    // Occupancy grid, row 0 = bottom.
-    var occ = [];
-    for (var orr = 0; orr < rows; orr++) { occ.push([]); for (var occ0 = 0; occ0 < cols; occ0++) occ[orr].push(false); }
-    function fits(gr, gc, w, h) {
-      if (gc + w > cols || gr + h > rows) return false;
-      for (var rr2 = gr; rr2 < gr + h; rr2++) { for (var cc2 = gc; cc2 < gc + w; cc2++) { if (occ[rr2][cc2]) return false; } }
-      return true;
+    // Slot-sized fill: each mined unit occupies oreSlots(type) consecutive
+    // cells, so a single dense ore (Unobtanium = 8) visibly claims a big block
+    // of the bay while a coal chip takes one. Map every cell to its owning
+    // unit up front, then render in the same bottom-up, left-to-right order.
+    var cellOwner = [];
+    for (var co = 0; co < cargoArr.length; co++) {
+      var cslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(cargoArr[co]) : 1;
+      for (var cs = 0; cs < cslots; cs++) cellOwner.push(cargoArr[co]);
     }
-    function cellX(gc) { return ix + gap + gc * (cellW + gap); }
-    function cellY(gr) { return iy + ih - gap - cellH - gr * (cellH + gap); }   // gr = rows from bottom
-    // Place one unit: try its preferred block, then progressively flatter and
-    // smaller rectangles down to 1x1, so a near-full bay still shows every ore
-    // (a big block just degrades to a bar rather than vanishing). Lowest, then
-    // leftmost gap wins, so the hold fills from the bottom like the old grid.
-    function placeUnit(slots) {
-      var cand = [], seen = {};
-      function add(w, h) {
-        w = Math.min(w, cols); h = Math.min(h, rows);
-        if (w < 1 || h < 1) return;
-        var key = w + 'x' + h; if (seen[key]) return; seen[key] = 1; cand.push([w, h]);
-      }
-      var t = SLOT_FOOTPRINT[slots] || [slots, 1];
-      add(t[0], t[1]); add(t[1], t[0]);
-      for (var w = Math.min(cols, slots); w >= 1; w--) add(w, Math.ceil(slots / w));
-      add(1, 1);
-      for (var ci = 0; ci < cand.length; ci++) {
-        var cw = cand[ci][0], ch = cand[ci][1];
-        for (var pr = 0; pr <= rows - ch; pr++) {
-          for (var pc = 0; pc <= cols - cw; pc++) {
-            if (!fits(pr, pc, cw, ch)) continue;
-            for (var mr = pr; mr < pr + ch; mr++) { for (var mc = pc; mc < pc + cw; mc++) { occ[mr][mc] = true; } }
-            return { gc: pc, gr: pr, w: cw, h: ch };
-          }
-        }
-      }
-      return null;   // grid completely full: this unit overflows off-view
-    }
-    var blocks = [];
-    for (var bi = 0; bi < cargoArr.length; bi++) {
-      var bcu = cargoArr[bi];
-      var bslots = (typeof cargoUnitSlots === 'function') ? cargoUnitSlots(bcu) : 1;
-      var pos = placeUnit(bslots);
-      if (pos) { pos.cu = bcu; blocks.push(pos); }
-    }
-
-    // 1) Empty slot recesses for the whole grid, so unfilled capacity reads.
-    for (var er = 0; er < rows; er++) {
-      for (var ec = 0; ec < cols; ec++) {
-        var rxx = cellX(ec), ryy = cellY(er);
-        ctx.fillStyle = '#050505'; ctx.fillRect(rxx, ryy, cellW, cellH);
-        ctx.fillStyle = '#000000'; ctx.fillRect(rxx, ryy, cellW, 1); ctx.fillRect(rxx, ryy, 1, cellH);
-        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(rxx, ryy + cellH - 1, cellW, 1); ctx.fillRect(rxx + cellW - 1, ryy, 1, cellH);
-      }
-    }
-
-    // 2) Each ore as ONE solid block, spanning the inter-cell gaps so there are
-    //    no internal gridlines within a single unit.
     var hoverOre = null, hoverCx = 0, hoverCellW = 0;
-    for (var di = 0; di < blocks.length; di++) {
-      var blk = blocks[di];
-      var ore = (typeof ORES !== 'undefined' && ORES[cargoType(blk.cu)]) ? ORES[cargoType(blk.cu)] : null;
-      var oreShiny = cargoShiny(blk.cu);
-      var col = ore ? ore.color : '#888';
-      var bxp = cellX(blk.gc);
-      var byp = cellY(blk.gr + blk.h - 1);                        // top row of the block
-      var bwp = blk.w * cellW + (blk.w - 1) * gap;
-      var bhp = blk.h * cellH + (blk.h - 1) * gap;
-      // Pointer hover: remember the ore the cursor is over (desktop).
-      if (ore && typeof mouseCursor !== 'undefined' &&
-          mouseCursor.x >= bxp && mouseCursor.x < bxp + bwp &&
-          mouseCursor.y >= byp && mouseCursor.y < byp + bhp) {
-        hoverOre = ore; hoverCx = bxp; hoverCellW = bwp;
-      }
-      // Ore body (inset 1 px so blocks keep a dark seam between them)
-      ctx.fillStyle = col;
-      ctx.fillRect(bxp + 1, byp + 1, bwp - 2, bhp - 2);
-      // Highlight + shadow for material read
-      ctx.fillStyle = 'rgba(255,255,255,0.22)';
-      ctx.fillRect(bxp + 1, byp + 1, bwp - 2, 1);
-      ctx.fillStyle = 'rgba(0,0,0,0.30)';
-      ctx.fillRect(bxp + 1, byp + bhp - 2, bwp - 2, 1);
-      if (oreShiny) {
-        // shiny unit in the hold: warm-gold corner pip + bright top/left rim
-        ctx.fillStyle = '#fff1b0';
-        ctx.fillRect(bxp + bwp - 4, byp + 1, 3, 3);
-        ctx.fillStyle = 'rgba(255,240,170,0.85)';
-        ctx.fillRect(bxp + 1, byp + 1, bwp - 2, 1);
-        ctx.fillRect(bxp + 1, byp + 1, 1, bhp - 2);
+    for (var k = 0; k < maxC; k++) {
+      var rowFromBottom = Math.floor(k / cols);
+      var colInRow = k % cols;
+      var cx = ix + gap + colInRow * (cellW + gap);
+      var cy = iy + ih - gap - cellH - rowFromBottom * (cellH + gap);
+      // Slot recess (always drawn so empties read as "this is a slot")
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(cx, cy, cellW, cellH);
+      // 1-px inset shadow on top + left
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(cx, cy, cellW, 1);
+      ctx.fillRect(cx, cy, 1, cellH);
+      // 1-px inset highlight on bottom + right (recessed)
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(cx, cy + cellH - 1, cellW, 1);
+      ctx.fillRect(cx + cellW - 1, cy, 1, cellH);
+
+      if (k < cellOwner.length) {
+        var cu = cellOwner[k];
+        var ore = (typeof ORES !== 'undefined' && ORES[cargoType(cu)]) ? ORES[cargoType(cu)] : null;
+        var oreShiny = cargoShiny(cu);
+        var col = ore ? ore.color : '#888';
+        // Pointer hover — remember the ore the cursor is over (desktop).
+        if (ore && typeof mouseCursor !== 'undefined' &&
+            mouseCursor.x >= cx && mouseCursor.x < cx + cellW &&
+            mouseCursor.y >= cy && mouseCursor.y < cy + cellH) {
+          hoverOre = ore; hoverCx = cx; hoverCellW = cellW;
+        }
+        // Ore body (inset 1 px from slot edges)
+        ctx.fillStyle = col;
+        ctx.fillRect(cx + 1, cy + 1, cellW - 2, cellH - 2);
+        // Highlight + shadow for material read
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(cx + 1, cy + 1, cellW - 2, 1);
+        ctx.fillStyle = 'rgba(0,0,0,0.30)';
+        ctx.fillRect(cx + 1, cy + cellH - 2, cellW - 2, 1);
+        if (oreShiny) {
+          // shiny unit in the hold: warm-gold corner pip + bright top/left rim
+          ctx.fillStyle = '#fff1b0';
+          ctx.fillRect(cx + cellW - 4, cy + 1, 3, 3);
+          ctx.fillStyle = 'rgba(255,240,170,0.85)';
+          ctx.fillRect(cx + 1, cy + 1, cellW - 2, 1);
+          ctx.fillRect(cx + 1, cy + 1, 1, cellH - 2);
+        }
       }
     }
 
@@ -1124,16 +1078,11 @@
     while (sDepth.length < 4) sDepth = '0' + sDepth;
 
     // Drum slot geometry
-    var drumGap = 1;
-    var nDigits = 4;
-    // v25.63 — fit the odometer to the brass face. On the narrow portrait-stacked
-    // bay the scale-2 four-drum cluster (65px + bezel) was wider than the face, so
-    // the last digit was crushed against the frame. Drop to scale 1 (45px) when
-    // the full cluster + its chrome bezel won't fit the available width `aw`.
     var scale = 2;
-    if ((5 * scale + 4) * nDigits + drumGap * (nDigits - 1) + 6 > aw) scale = 1;
     var digitW = 5 * scale;
     var drumW = digitW + 4;
+    var drumGap = 1;
+    var nDigits = 4;
     var totalDrums = drumW * nDigits + drumGap * (nDigits - 1);
     // Suffix "M" is rendered at scale 1 below the drums, not inline,
     // so reserve no horizontal room for it here. This lets the drums
@@ -1381,11 +1330,6 @@
     // Largest stencil scale that fits the window; drops to 1 for long
     // numbers so the readout never clips.
     var scale = stencilTextWidth(cashStr, 2) <= winW - 8 ? 2 : 1;
-    // v25.63 — final guard: on a narrow portrait bay a 7-figure balance can still
-    // overflow at scale 1; shrink to a fractional scale that fits so it never clips.
-    if (stencilTextWidth(cashStr, scale) > winW - 6) {
-      scale = Math.max(0.6, (winW - 6) / stencilTextWidth(cashStr, 1));
-    }
     var tw = stencilTextWidth(cashStr, scale);
     var tx = winX + winW - 4 - tw;
     if (tx < winX + 3) tx = winX + 3;

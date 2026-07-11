@@ -40,9 +40,6 @@
     // Keeps the rig parked while shopping so leftover inertia doesn't
     // drift the player out by accident.
     if (UI_NEW && shopState !== 'closed') return;
-    // v25.77 BANYA: inside the bathhouse scene the world freezes and the
-    // scene consumes the frame (docs/game/BATHHOUSE_PLAN.md, B-D11 + B6).
-    if (typeof bathFrame === 'function' && bathFrame(dt)) return;
     if (dt > 0.05) dt = 0.05;
 
     // Dock auto-sell reveal: advance the per-ore sequencer (it credits the bank
@@ -1369,8 +1366,6 @@
 
   /* ---- Camera ---- */
   function updateCamera() {
-    // v25.77 BANYA: fixed frame while inside the bathhouse scene (B-D11).
-    if (typeof bathCamPin === 'function' && bathCamPin()) return;
     // Camera follows the LOGICAL position (player.x/y), not renderX/Y.
     // Camera has its own lerp (camFollow); stacking it on top of the
     // renderX/Y lerp produced sub-pixel cam.x movement every frame even
