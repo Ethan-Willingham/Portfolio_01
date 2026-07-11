@@ -426,6 +426,29 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-11 (Fable; v26.06): TRUE SCALE. Owner: same pixels, but the water
+  should behave like a body of water many times larger ("not levers, a true
+  proper scale"). This is dynamic similarity: the read of size is the
+  Froude number, big water plays the SAME shapes SLOWER (t ~ sqrt(L); the
+  movie-miniature law). One knob k (default 6, live __bath.scale(k)):
+  water = LIQUID_TIMESCALE/sqrt(k) via the engine's banked-substep
+  timescale (identical per-substep physics, slower wall clock, so waves,
+  splashes, convection and heat transport scale together bit-faithfully;
+  set through gm.set('water.TIMESCALE') so the lever panel shows truth,
+  which also means the gm range floor 0.5 caps useful k at ~9.6);
+  guests = JELLO_GRAVITY/k + every bathImpulse x 1/sqrt(k) (same
+  trajectory SHAPES, verified: leap apex unchanged ~155 px, airborne time
+  x sqrt(k)) + the brain's stall gate and recovery windows x sqrt(k) so a
+  giant's glide is not misread as a wedge; steam = smoke clock x
+  1/sqrt(k) on top of steam mode's 1.35 (slow clock also slows sim-time
+  dissipation, so the fog accumulates into a dense low bank, a look we
+  KEPT deliberately: giant hot spring at dawn). Scene-scoped push/pop,
+  verified bit-exact restore across enter/exit/re-enter, zero errors.
+  NOT YET: true resolution scaling (more, tinier particles) is pinned by
+  the grid quantum (rest spacing = PDELTA*CELL = 1.25 px): a real 2x
+  needs a scene-scoped sim rebuild at CELL/sqrt(2) with rest-density
+  recalibration, a separate project if the Froude feel is not enough.
+
 - 2026-07-11 (Fable; v26.05): THE EXACT BOUNDARY. Owner (with a screenshot
   of black voids flanking a soaker): "a truly perfect model, always
   updating, optimized, fluid... obvious how well engineered." The v26.04

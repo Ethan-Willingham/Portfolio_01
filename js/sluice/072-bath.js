@@ -151,6 +151,64 @@
     if (liquidWGPU && liquidWGPU.setRenderParam) liquidWGPU.setRenderParam(name, v);
   }
 
+  /* ==== TRUE SCALE (v26.06): the pool behaves k x bigger than it looks =
+     Dynamic similarity, not levers. The read of "size" in fluid motion is
+     the Froude number: big water plays the SAME shapes SLOWER (time goes
+     as sqrt of length; movie miniatures are filmed overcranked for
+     exactly this reason). One knob k = the implied size multiplier:
+       water:  LIQUID_TIMESCALE / sqrt(k). The engine's banked-substep
+               timescale replays identical per-substep physics at a
+               slower wall clock, so waves, splashes, convection and heat
+               transport all scale together, bit-faithfully.
+       guests: real fall accel JELLO_GRAVITY / k and every brain impulse
+               x 1/sqrt(k): the same trajectory SHAPES, stretched sqrt(k)
+               in time. A giant slime moves like a giant.
+       steam:  the smoke clock follows at 1/sqrt(k) (in bathSteamPush).
+     Scene-scoped: pushed on enter, restored exactly on exit. Live dial:
+     __bath.scale(k). ============================================= */
+  var bathScaleK = 6;
+  var bathScaleSaved = null;
+  function bathScalePush() {
+    if (bathScaleSaved || typeof JELLO_GRAVITY === 'undefined') return;
+    var wts = 1.55;
+    try {
+      if (typeof gm !== 'undefined' && gm && gm.get) {
+        var t = gm.get('water.TIMESCALE');
+        if (typeof t === 'number' && isFinite(t) && t > 0) wts = t;
+      }
+    } catch (e) {}
+    bathScaleSaved = { jg: JELLO_GRAVITY, wts: wts };
+    bathScaleSetWaterTs(wts / Math.sqrt(bathScaleK));
+    JELLO_GRAVITY = bathScaleSaved.jg / bathScaleK;
+  }
+  function bathScalePop() {
+    if (!bathScaleSaved) return;
+    bathScaleSetWaterTs(bathScaleSaved.wts);
+    JELLO_GRAVITY = bathScaleSaved.jg;
+    bathScaleSaved = null;
+  }
+  // Through the gm lever when it exists (so the owner's tuning panel and
+  // gm.get always show the live truth), setSimParam directly otherwise.
+  function bathScaleSetWaterTs(v) {
+    try {
+      if (typeof gm !== 'undefined' && gm && gm.set) { gm.set('water.TIMESCALE', v); return; }
+    } catch (e) {}
+    bathTune('TIMESCALE', v);
+  }
+  function bathScaleSet(k) {
+    k = (typeof k === 'number' && isFinite(k) && k >= 1) ? k : 1;
+    var inside = !!bathScaleSaved;
+    if (inside) { bathScalePop(); bathSteamPop(); }
+    bathScaleK = k;
+    if (inside) { bathSteamPush(); bathScalePush(); }
+    return bathScaleK;
+  }
+  // Every guest impulse runs through here, so the sqrt(k) stretch is one
+  // multiply: same hop arcs, giant timing.
+  function bathScaleV() {
+    return bathScaleSaved ? 1 / Math.sqrt(bathScaleK) : 1;
+  }
+
   // ---- Tower construction (one-shot, on first enter) ----------------------
   function bathCarveRoom() {
     if (bathRoomReady) return;
@@ -308,10 +366,12 @@
         // fluid for steam, and book the first guest's arrival.
         try { if (typeof clearAllSmokeVisuals === 'function') clearAllSmokeVisuals(); } catch (e2) {}
         bathSteamPush();
+        bathScalePush();
         if (!bathGuests.length) bathGuestTimer = 1.6;
       } else {
         bathMode = false;
         bathDoorArm = false;   // must step off the door before it re-arms
+        bathScalePop();
         bathSteamPop();
         bathGuestColliders.length = 0;   // no stale fluid boundaries outside
       }
@@ -452,7 +512,9 @@
     // and the steam turns blocky), a livelier clock.
     smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.47;
     smokeTune.sim_curl = bathSteamSaved.curl * 1.12;
-    smokeTune.sim_time_scale = bathSteamSaved.ts * 1.35;
+    // The steam clock follows the true-scale stretch (v26.06): a giant
+    // pool's steam climbs slowly relative to its size.
+    smokeTune.sim_time_scale = bathSteamSaved.ts * 1.35 / Math.sqrt(bathScaleK);
     // v25.98: run the steam sim FINER while inside. The world is paused,
     // so the whole physics budget is the room's: ~2x the velocity grid
     // (curl detail lives there) and near-full-res dye. Desktop WebGPU
@@ -630,9 +692,13 @@
     bathGuests.splice(gi, 1);
   }
   function bathImpulse(b, ivx, ivy) {
-    // Verlet velocity add: v = (p - o) / h, so o -= dv * h.
+    // Verlet velocity add: v = (p - o) / h, so o -= dv * h. The true-scale
+    // stretch rides here (x 1/sqrt(k) while inside): same arcs, giant
+    // timing, one multiply for every hop, plunge, bob and leap.
+    var sv = bathScaleV();
+    var dvx = ivx * sv, dvy = ivy * sv;
     var n = b.n;
-    for (var i = 0; i < n; i++) { b.ox[i] -= ivx * JELLO_H; b.oy[i] -= ivy * JELLO_H; }
+    for (var i = 0; i < n; i++) { b.ox[i] -= dvx * JELLO_H; b.oy[i] -= dvy * JELLO_H; }
     b.sleeping = false; b.sleepFrames = 0;
   }
   function bathSpawnGuest() {
@@ -739,10 +805,15 @@
       // slab, OR simply STALLED anywhere (friction-pinned on a tub wall
       // face was the second deadlock): no positional progress for half a
       // second means hop again, wherever you are.
+      // The brain's clock stretches with the true scale (v26.06): slowed
+      // arcs move fewer px per frame and hang longer, so the stall gate
+      // and every recovery window scale by sqrt(k) or they would misread
+      // a giant's glide as a wedge and spam hops.
+      var rt = bathScaleSaved ? Math.sqrt(bathScaleK) : 1;
       var mvd = Math.abs(b.cx - g.px) + Math.abs(b.cy - g.py);
       g.px = b.cx; g.py = b.cy;
-      if (mvd < 1.6) g.stall += dt; else g.stall = 0;
-      var standing = (b.bboxB >= g.fy - 14 && b.bboxB <= g.fy + 6) || g.stall > 0.5;
+      if (mvd < 1.6 / rt) g.stall += dt; else g.stall = 0;
+      var standing = (b.bboxB >= g.fy - 14 && b.bboxB <= g.fy + 6) || g.stall > 0.5 * rt;
       // Landed in ANY tub's water, whatever state the brain thought it was
       // in: start soaking (walkers can trip into a bath; that is a feature).
       if (g.st !== 'soak' && b.cy > g.line - 26) {
@@ -751,7 +822,7 @@
           var ts0 = HF0.tubs[ti0];
           var wx0 = ts0[0] * TILE + 6, wx1 = (ts0[1] + 1) * TILE - 6;
           if (b.cx > wx0 && b.cx < wx1) {
-            g.st = 'soak'; g.cd = 1.2;
+            g.st = 'soak'; g.cd = 1.2 * rt;
             b.bathBuoy = { line: g.line + 10, x0: wx0, x1: wx1, lift: 2.1, drag: 0.965 };
             // The splash itself is the collider's job (v26.04); the fog
             // just puffs aside.
@@ -765,10 +836,10 @@
           var dx = g.cx - b.cx;
           if (Math.abs(dx) < 130) {
             bathImpulse(b, dx > 0 ? 150 : -150, -325);
-            g.st = 'plunge'; g.cd = 1.1;
+            g.st = 'plunge'; g.cd = 1.1 * rt;
           } else {
             bathImpulse(b, dx > 0 ? 120 : -120, -215);
-            g.cd = 0.85;
+            g.cd = 0.85 * rt;
           }
         }
       } else if (g.st === 'plunge') {
@@ -791,7 +862,7 @@
           // Assisted climb: a small steady up-and-over push while airborne,
           // so the rim is a scramble, not a brick wall.
           bathImpulse(b, (g.cx > b.cx ? 250 : -250) * dt, -420 * dt);
-          if (g.cd <= 0) { g.st = 'walk'; g.cd = 0.3; }   // recover, retry
+          if (g.cd <= 0) { g.st = 'walk'; g.cd = 0.3 * rt; }   // recover, retry
         }
       } else if (g.st === 'soak') {
         g.soakT -= dt;
@@ -803,10 +874,10 @@
           b.bathBuoy = null;
           bathImpulse(b, b.cx > g.homeX ? -200 : 200, -430);
           bathSplashPoof(b.cx, g.line, 0.5);
-          g.st = 'leave'; g.cd = 1.0;
+          g.st = 'leave'; g.cd = 1.0 * rt;
         } else if (g.cd <= 0) {
           bathImpulse(b, 0, -26);   // a contented bob
-          g.cd = 2.6 + Math.random() * 2.2;
+          g.cd = (2.6 + Math.random() * 2.2) * rt;
         }
       } else if (g.st === 'leave') {
         if (g.cd <= 0 && standing) {
@@ -1452,6 +1523,7 @@
                       floor: bathScrollToFloor,
                       buy: bathBuyFloor,
                       guest: function () { return !!bathSpawnGuest(); },
+                      scale: bathScaleSet,
                       steamTune: bathSteam,
                       dbg: function () { var g = bathGuests[0]; return JSON.stringify({ steam: bathDbg, uv: (typeof smokeFluidWorldToUV === 'function' ? smokeFluidWorldToUV(1100, 19560) : null), camY: Math.round(cam.y), guests: bathGuests.length, bodies: (typeof jelloBodies !== 'undefined' ? jelloBodies.length : -1), g: g ? { st: g.st, cx: Math.round(g.b.cx || -1), cy: Math.round(g.b.cy || -1), bb: [Math.round(g.b.bboxL), Math.round(g.b.bboxT), Math.round(g.b.bboxR), Math.round(g.b.bboxB)], vy: Math.round(g.b.vy || 0), slp: !!g.b.sleeping, tgt: Math.round(g.cx) } : null, solid: (function () { var out = []; for (var cc = 28; cc <= 33; cc++) { var t612 = world[612][cc], t613 = world[613][cc]; out.push(cc + ':' + (t612 ? t612.type[0] : '.') + (t613 ? t613.type[0] : '.')); } out.push('jws@' + (g ? Math.round(g.b.cx) : 0) + ',' + (g ? Math.round(g.b.bboxB + 4) : 0) + '=' + (g && typeof jelloWorldSolidAt === 'function' ? jelloWorldSolidAt(g.b.cx, g.b.bboxB + 4) : '?')); return out.join(' '); })() }); },
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
