@@ -56,6 +56,16 @@ while IFS= read -r f; do
     hard_fail=1
   fi
 
+  # Emojis and pictographs. Hard block (owner rule, 2026-07-11). Covers the emoji
+  # planes plus the BMP symbol/dingbat blocks LLMs reach for. Three long-standing
+  # text glyphs stay allowed: check 2713, star 2605, pick 26CF.
+  emoji=$(printf '%s\n' "$content" | perl -CSD -ne 'while (/([\x{1F000}-\x{1FAFF}\x{FE0F}\x{2B00}-\x{2BFF}\x{2600}-\x{27BF}\x{231A}-\x{23FA}])/g) { next if $1 =~ /[\x{2713}\x{2605}\x{26CF}]/; print "$.: $1\n" }' || true)
+  if [ -n "$emoji" ]; then
+    echo "BLOCK  $f  (emoji/pictograph; no emojis anywhere in site content)"
+    printf '%s\n' "$emoji" | sed 's/^/    line /'
+    hard_fail=1
+  fi
+
   if ! skip_tells "$f"; then
     ph=$(printf '%s\n' "$content" | grep -niE "$HARD_PHRASES" || true)
     if [ -n "$ph" ]; then

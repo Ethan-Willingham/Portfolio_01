@@ -71,4 +71,8 @@ The portfolio pages and their assets:
 - Images: every photographic `<img>` is served as WebP through a `<picture>` wrapper with a JPG/PNG fallback (about 55% smaller, no visible quality loss). After adding or changing any post image, run `node tools/build-webp.mjs` (writes a `.webp` sibling for every raster the HTML references, q82 photos / lossless small PNGs) then `node tools/wrap-picture.mjs` (wraps bare `<img>` in `<picture>`); both are idempotent, driven by real references, and skip the `*-lab.html` choosers. Keep the first above-the-fold image `loading="eager"` and the rest `loading="lazy"`.
 - Commit and push every change to `main`; GitHub Pages auto-deploys. No manual deploy step.
 - No em dashes in any content or commit messages (use commas, periods, parentheses, or "to").
-- A git pre-commit linter (`tools/voice-lint.sh`, wired via `tools/githooks/`) hard-blocks em dashes and the formulaic LLM tells listed in `VOICE.md` from any staged `.html`/`.md` post content. Enable it once per checkout with `git config core.hooksPath tools/githooks`. It skips the frozen game demo, the throwaway `*-lab.html` choosers, and the meta-docs; bypass in a real exception with `git commit --no-verify`.
+- No emojis anywhere: posts, UI copy, commit messages, docs. This is an owner rule and it
+  applies to every AI assistant working in this repo (Claude, ChatGPT/Codex, all of them).
+  The only sanctioned pictographs are three long-standing text glyphs already in the site
+  (the checkmark, star, and pickaxe); do not add new ones.
+- A git pre-commit linter (`tools/voice-lint.sh`, wired via `tools/githooks/`) hard-blocks em dashes, emojis, and the formulaic LLM tells listed in `VOICE.md` from any staged `.html`/`.md` post content. Enable it once per checkout with `git config core.hooksPath tools/githooks`. It skips the frozen game demo, the throwaway `*-lab.html` choosers, and the meta-docs; bypass in a real exception with `git commit --no-verify`.

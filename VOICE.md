@@ -119,6 +119,10 @@ is a weak tell. The cluster below is what actually gives an LLM away.)
 
 - **No em dashes anywhere,** in posts or in commit messages. Use commas, periods,
   parentheses, or "to".
+- **No emojis anywhere,** in posts, UI copy, commit messages, or docs, whichever assistant
+  is writing (Claude, ChatGPT/Codex, all of them). The linter blocks them. Decorative
+  markers get drawn in CSS or SVG, never typed as pictograph characters: bare glyphs like
+  U+25B6 silently turn into color emoji on iOS and ignore the site palette.
 - **Imperial units in posts** (lb, oz, inches, F). Keep the real unit where imperial would be
   wrong (supplements in grams, vitamin D in ng/mL, energy in calories). Interactive tools
   default to imperial with a metric toggle.
