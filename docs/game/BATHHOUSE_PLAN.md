@@ -426,6 +426,23 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-11 (Fable; v26.02): THE AIR-GAP FIX. Owner: "weird gap between the
+  steam and the water... like blocks of air between the two." Root cause was
+  the smoke OBSTACLE MASK: Pass 4 (v25.47) paints the water body into the
+  mask from the liquid CPU mirror so world diesel cannot ghost through
+  lakes, but the advection shader ZEROES dye inside obstacle bins, so in
+  the scene the fog was forbidden from ever touching the water, and the
+  forbidden band's edge is quantized to 8 px bins that flicker as bins
+  cross the density threshold = inconsistent air blocks. Pass 3 also
+  painted soaking GUESTS' rings as obstacles, punching moving holes at the
+  waterline. Fix: Pass 4 skips in bathMode (bath steam must HUG the water;
+  the world keeps its water obstacle untouched), and guest jello bodies
+  are never obstacles (both desktop ring and mobile bbox painters).
+  Verified: fog lies directly on the surface edge to edge, no gap.
+  (Ship note: the first attempt to push this landed as 1873834, an
+  automation accident that committed a stale shared-checkout tree under
+  this fix's message; 3adc066 reverts it and the real fix follows it.)
+
 - 2026-07-10 (Fable; v26.01): LIVE-SURFACE STEAM + SMALL FREQUENT THERMALS.
   Owner (after "BOOM you got it"): closer to the water, dynamic with the
   surface shape, thermals more common (multiple at once) and WAY smaller.

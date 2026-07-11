@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.01';
+  var GAME_VERSION = 'v26.02';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -35609,6 +35609,7 @@
     for (var jb = 0; jb < jelloBodies.length; jb++) {
       var jbody = jelloBodies[jb];
       if (jbody.ringN < 3 || n + 12 > verts.length) break;
+      if (jbody.guest) continue;   // v26.02: soakers never block the fog
       if (jbody.bboxR < domainX || jbody.bboxL > domainX + domainW ||
           jbody.bboxB < domainY || jbody.bboxT > domainY + domainH) continue;
       var ju0 = ((jbody.bboxL - domainX) / domainW) * 2 - 1;
@@ -35705,6 +35706,11 @@
       for (var jb = 0; jb < jelloBodies.length; jb++) {
         var jbody = jelloBodies[jb];
         if (jbody.ringN < 3) continue;
+        // v26.02: bath guests are NOT smoke obstacles. A soaker's ring at
+        // the waterline zeroed the fog dye around it, punching moving
+        // holes between the steam and the water (the owner's "blocks of
+        // air"). Slimes are translucent gel; the fog may drift over them.
+        if (jbody.guest) continue;
         if (jbody.bboxR < domainX || jbody.bboxL > domR ||
             jbody.bboxB < domainY || jbody.bboxT > domB) continue;
         var jring = jbody.ring, jpx = jbody.px, jpy = jbody.py;
@@ -35733,7 +35739,15 @@
     // half-full rim/spray bins paint at 0.4 = passable, so the boundary
     // stays soft and thin spray lets smoke through. Skip = the exact old
     // ghost-through. GL/mobile quad path skips water (perf-first).
-    if (SMOKE_WATER_OBSTACLE && liquidCount > 0) {
+    // v26.02: NOT in the bath scene. In the world this keeps diesel smoke
+    // from ghosting through lakes, but the advection shader ZEROES dye
+    // inside obstacle bins, so in the scene it forbade the fog from ever
+    // touching the water: an inconsistent 8 px-quantized air gap flickering
+    // along the surface as bins crossed the density threshold (the owner's
+    // "blocks of air between the steam and the water"). Bath steam must
+    // HUG the water; the fog rides the live surface instead (bathSurfY).
+    if (SMOKE_WATER_OBSTACLE && liquidCount > 0 &&
+        !(typeof bathMode !== 'undefined' && bathMode)) {
       smokeObstDbgStamps++;
       var BIN = 8;                                     // world px per bin
       var binsW = Math.ceil(smokeFluidDomainWorldW / BIN);
