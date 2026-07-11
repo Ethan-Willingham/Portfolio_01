@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.02';
+  var GAME_VERSION = 'v26.03';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11972,6 +11972,80 @@
     try { console.log('[bath] a guest arrives (guest slimes never dissolve).'); } catch (e) {}
     return b;
   }
+  // v26.03 THE SPLASH. Guests never push the water (one-way coupling is
+  // law, B-D5), so a landing splashes by CHOREOGRAPHY: a radial impulse
+  // POKEd into the real pool particles (the same sanctioned op the oil
+  // pump uses), aerated so the crown flashes white foam. mode 1 = entry
+  // (crown thrown out and UP around the impact, cavity pushed open
+  // below), mode -1 = exit (the column above the leaper dragged up).
+  // Positions come from the CPU mirror (<= 20 frames stale: a fuzzy
+  // selection edge, invisible at splash scale).
+  function bathSplash(ix, iy, R, mode) {
+    if (typeof liquidCount === 'undefined' || !liquidCount) return 0;
+    var poked = 0;
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidFrozen[i]) continue;
+      var dx = liquidX[i] - ix, dy = liquidY[i] - iy;
+      var d2 = dx * dx + dy * dy;
+      if (d2 > R * R) continue;
+      var d = Math.sqrt(d2) || 1;
+      var fall = 1 - d / R;
+      if (mode === 1) {
+        var side = dx >= 0 ? 1 : -1;
+        var above = liquidY[i] < iy + 8;
+        liquidVX[i] += side * (60 + 250 * fall) * (0.7 + Math.random() * 0.6);
+        liquidVY[i] += (above ? -(150 + 320 * fall) : 45 * fall) *
+                       (0.7 + Math.random() * 0.6);
+        liquidAeration[i] = Math.min(1, liquidAeration[i] + 0.55 * fall + 0.1);
+      } else {
+        liquidVX[i] += dx / d * 45 * fall;
+        liquidVY[i] += -(140 + 270 * fall) * (0.75 + Math.random() * 0.5);
+        liquidAeration[i] = Math.min(1, liquidAeration[i] + 0.32 * fall);
+      }
+      liquidSleeping[i] = 0;
+      liquidRestFrames[i] = 0;
+      if (liquidOps.length < LIQUID_OPS_MAX) {
+        liquidOps.push(3, i, liquidVX[i], liquidVY[i], liquidAeration[i],
+          liquidType[i], liquidOrigin[i]);
+        poked++;
+      } else { liquidOpsOverflow = true; break; }
+    }
+    if (poked) liquidMutationSeq++;
+    return poked;
+  }
+  // Ballistic droplets riding the splash: spawned WITH velocity and
+  // immediately aerated (a follow-up POKE sets the foam lane the ADD op
+  // cannot carry), so the thrown water reads white.
+  function bathSplashDrops(ix, iy, n, vxSpread, vxBias, vyMin, vyRange) {
+    for (var k = 0; k < n; k++) {
+      var vx = vxBias + (Math.random() - 0.5) * vxSpread;
+      var vy = vyMin - Math.random() * vyRange;
+      var di = addLiquidParticle('water',
+        ix + (Math.random() - 0.5) * 44, iy - 4 - Math.random() * 6, vx, vy, 0);
+      if (di >= 0) {
+        liquidAeration[di] = 0.85;
+        if (liquidOps.length < LIQUID_OPS_MAX) {
+          liquidOps.push(3, di, vx, vy, 0.85, liquidType[di], liquidOrigin[di]);
+        } else liquidOpsOverflow = true;
+      }
+    }
+  }
+  // The fog reacts too: a white poof at the impact and a momentum shove
+  // that parts the blanket away from it.
+  function bathSplashPoof(ix, iy, k) {
+    if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
+    if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
+    for (var s = -1; s <= 1; s += 2) {
+      var uv = smokeFluidWorldToUV(ix + s * 20, iy - 8);
+      if (uv.inView) {
+        smokeMarkActive();
+        bathSteamCol.r = 0; bathSteamCol.g = 0; bathSteamCol.b = 0;
+        smokeDriver.splat(uv.uvX, uv.uvY, s * 1.7 * k, -0.2, bathSteamCol, 0.028);
+      }
+      bathSteamSplat(ix + s * 12, iy - 10, s * 0.6 * k, 1.1 * k,
+        0.05 * k, 0.024);
+    }
+  }
   function bathGuestTick(dt) {
     if (bathGuestTimer > 0) {
       bathGuestTimer -= dt;
@@ -12010,10 +12084,10 @@
           if (b.cx > wx0 && b.cx < wx1) {
             g.st = 'soak'; g.cd = 1.2;
             b.bathBuoy = { line: g.line + 10, x0: wx0, x1: wx1, lift: 2.1, drag: 0.965 };
-            for (var sp0 = 0; sp0 < 18; sp0++) {
-              addLiquidParticle('water', b.cx + (Math.random() - 0.5) * 50, g.line - 5,
-                (Math.random() - 0.5) * 110, -40 - Math.random() * 100, 0);
-            }
+            // Tripped in rather than dived: a modest real splash.
+            bathSplash(b.cx, g.line + 6, 46, 1);
+            bathSplashDrops(b.cx, g.line, 10, 200, 0, -50, 170);
+            bathSplashPoof(b.cx, g.line, 0.7);
             break;
           }
         }
@@ -12042,10 +12116,12 @@
         if (landed) {
           g.st = 'soak';
           b.bathBuoy = { line: g.line + 6, x0: landed.x0, x1: landed.x1, lift: 1.75, drag: 0.965 };
-          for (var s = 0; s < 26; s++) {
-            addLiquidParticle('water', b.cx + (Math.random() - 0.5) * 60, g.line - 6,
-              (Math.random() - 0.5) * 170, -50 - Math.random() * 130, 0);
-          }
+          // The cannonball: crown thrown out and up around the impact,
+          // cavity pushed open below, white ballistic droplets, and the
+          // fog blanket parted off the impact point.
+          bathSplash(b.cx, g.line + 4, 58, 1);
+          bathSplashDrops(b.cx, g.line, 16, 320, 0, -70, 260);
+          bathSplashPoof(b.cx, g.line, 1);
         } else {
           // Assisted climb: a small steady up-and-over push while airborne,
           // so the rim is a scramble, not a brick wall.
@@ -12057,8 +12133,14 @@
         if (g.soakT <= 0) {
           // Done: LEAP out toward home (the physics moment the owner asked
           // for), then waddle to the elevator and pay on the way out.
+          // The water goes WITH it: the column above the leaper dragged
+          // up, droplets trailing the jump, sheeting back down behind.
           b.bathBuoy = null;
-          bathImpulse(b, b.cx > g.homeX ? -200 : 200, -430);
+          var leapDir = b.cx > g.homeX ? -1 : 1;
+          bathImpulse(b, leapDir * 200, -430);
+          bathSplash(b.cx, g.line + 8, 46, -1);
+          bathSplashDrops(b.cx, g.line, 9, 140, leapDir * 70, -180, 220);
+          bathSplashPoof(b.cx, g.line, 0.6);
           g.st = 'leave'; g.cd = 1.0;
         } else if (g.cd <= 0) {
           bathImpulse(b, 0, -26);   // a contented bob

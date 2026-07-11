@@ -426,6 +426,25 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-11 (Fable; v26.03): THE SPLASH. Owner: a slime landing in the pool
+  should really splash the water, realistically, and when it jumps out.
+  One-way coupling stays law (B-D5): the splash is CHOREOGRAPHED into the
+  real pool via the sanctioned POKE op (the oil-pump pattern: mutate
+  liquidVX/VY on the mirror, clear sleep, push op 3, one liquidMutationSeq
+  bump per batch). bathSplash(ix, iy, R, mode): mode 1 = entry crown
+  (outward + strong upward kick above the impact, cavity push below, up to
+  ~570 px/s at the center, falloff to the rim) and mode -1 = exit drag (the
+  column above the leaper pulled up). Splashed particles get AERATION
+  (+0.55*fall entry) so the crown flashes WHITE FOAM. bathSplashDrops:
+  ballistic droplets spawned WITH velocity then aerated by a follow-up POKE
+  (the ADD op cannot carry the foam lane). bathSplashPoof: zero-dye
+  momentum splats PART the fog blanket off the impact + a white puff.
+  Wired at all three moments: plunge landing (R58, 16 drops), walk-trip
+  entry (R46, 10 drops), and the leave LEAP (R46 drag + 9 drops trailing
+  the jump direction). Verified headless: exit leap throws water globs and
+  a droplet fan over the rim, foam ridges span the surface after entry,
+  fog parts around the splash, zero console errors.
+
 - 2026-07-11 (Fable; v26.02): THE AIR-GAP FIX. Owner: "weird gap between the
   steam and the water... like blocks of air between the two." Root cause was
   the smoke OBSTACLE MASK: Pass 4 (v25.47) paints the water body into the
