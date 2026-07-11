@@ -98,7 +98,7 @@
   .essay > * { grid-column: content; }
   .essay > .wide { grid-column: wide; }
   .essay > .full { grid-column: full; }
-  .essay p { margin: 0 0 1.15em; color: var(--text); font-size: 1.22rem; line-height: 1.68; text-wrap: pretty; }
+  .essay p { margin: 0 0 1.15em; color: var(--text); font-size: 1.3rem; line-height: 1.74; text-wrap: pretty; }
   .essay p b, .essay p strong { color: var(--text-bright); font-weight: 700; }
   .essay a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.34); }
   .essay a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
@@ -114,7 +114,7 @@
   .sec { margin: 6svh 0 0; scroll-margin-top: 2rem; }
   .sec .u-sechead { margin-bottom: 0.5rem; gap: 0.45em; }
   .sec .u-sechead-k { background: none; padding: 0; border-radius: 0; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: none; }
-  .sec .sub { margin: 0 0 1.4rem; color: var(--text-dim); font-style: italic; font-size: 1.18rem; line-height: 1.5; text-wrap: pretty; }
+  .sec .sub { margin: 0 0 1.4rem; color: var(--text-dim); font-style: italic; font-size: 1.26rem; line-height: 1.5; text-wrap: pretty; }
   .fig-block { margin: 2.6rem 0; }
   .fig-title { margin: 0 0 0.8rem; color: var(--text-bright); font-weight: 700; font-size: 1.06rem; }
   .fig-note.fig-note { margin: 0.7rem 0 0; color: var(--text-dim); font-style: italic; font-size: 0.92rem; line-height: 1.48; }
@@ -149,7 +149,7 @@
   .bench-card .bf { color: var(--accent); font-weight: 700; font-size: clamp(2.4rem, 8vw, 4rem); line-height: 0.95; }
   .bench-card .bl { margin-top: 0.45rem; color: var(--text-bright); font-weight: 700; font-size: 0.98rem; }
   .bench-card .bd { margin-top: 0.35rem; color: var(--text-dim); font-size: 0.86rem; line-height: 1.4; }
-  .bench-src { margin-top: 0.8rem; color: var(--text-dim); font-size: 0.86rem; line-height: 1.5; }
+  .bench-src.bench-src { margin-top: 0.8rem; color: var(--text-dim); font-size: 0.86rem; line-height: 1.5; }
 
   /* retention calculator */
   .lab { margin: 3rem 0; overflow: hidden; background: var(--d-bg); border: 1px solid var(--d-rule); border-radius: 8px; box-shadow: 0 18px 40px -18px rgba(8,12,9,0.58); }
@@ -274,7 +274,7 @@
     .renewal, .value-levels, .path { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 700px) {
-    .essay p { font-size: 1.16rem; }
+    .essay p { font-size: 1.2rem; }
     .cover { padding-top: 10svh; }
     .lifecycle { grid-template-columns: repeat(2, 1fr); }
     .life-step:nth-child(4)::after { display: block; }
