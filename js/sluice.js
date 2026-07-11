@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.91';
+  var GAME_VERSION = 'v25.92';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11536,10 +11536,15 @@
       if (F.fill[i] === 2) {
         // Heat the SHAFT FLOOR so hot water visibly lifts through the
         // cold column above it (the owner's "hot lifts into the cold").
-        bathTune('BATH_SRC_X0', tb[0] * TILE);       bathTune('BATH_SRC_Y0', (F.fr + F.sink - 1) * TILE);
-        bathTune('BATH_SRC_X1', (tb[1] + 1) * TILE); bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
+        // ONE-SIDED heat (v25.92): warming only the left reach of the bowl
+        // drives a circulation CELL: up the hot side, across the surface,
+        // down the far side. Uniform bottom heat just stratifies.
+        bathTune('BATH_SRC_X0', tb[0] * TILE);
+        bathTune('BATH_SRC_Y0', (F.fr + 1) * TILE);
+        bathTune('BATH_SRC_X1', tb[0] * TILE + (((tb[1] - tb[0] + 1) * TILE * 0.36) | 0));
+        bathTune('BATH_SRC_Y1', (F.fr + F.sink + 1) * TILE);
         bathTune('BATH_ON', 1);
-        bathTune('BATH_BUOY', 340);
+        bathTune('BATH_BUOY', 300);
       }
     }
   }

@@ -4825,6 +4825,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       // No-sleep — force-wake; skip the scan. The flag rebuild at the
       // bottom clears the sleep bit (this branch never re-sets it).
       restBase = 0u;
+    } else if (sp.bathA.w > 0.5 && ((fl >> 24u) & 0xffu) > 20u) {
+      // v25.92 BANYA: HOT water never stays asleep. A sleeping parcel
+      // skips the rest of G2P, where buoyancy lives, so heated water froze
+      // into a painted blanket (hot but paralyzed). Bath-gated: with the
+      // bath off the heat bits are 0 and this branch never takes.
+      restBase = 0u;
     } else {
       var wakeMax : f32 = 0.0;
       for (var s : u32 = 0u; s < 9u; s = s + 1u) {
@@ -5054,7 +5060,10 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   // v24.150 — latch only while SETTLING (calm >= 0.5): lively water never
   // freezes mid-wave, so swells keep their whole body. Settled behaviour
   // is byte-identical (calm = 1).
-  if ((dbgF & 1u) == 0u && sp.g2pB.w >= 0.5 && newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
+  // v25.92 BANYA: a hot particle refuses the sleep latch too, or it dozes
+  // off between convection pulses and the cell dies. Zero-effect when off.
+  let bathHot = sp.bathA.w > 0.5 && tHeat > 0.16;
+  if ((dbgF & 1u) == 0u && !bathHot && sp.g2pB.w >= 0.5 && newVX * newVX + newVY * newVY < LIQUID_SLEEP_VSQ) {
     rest = rest + 1u;
     if (rest > LIQUID_SLEEP_FRAMES) {
       sleepBit = 1u;
