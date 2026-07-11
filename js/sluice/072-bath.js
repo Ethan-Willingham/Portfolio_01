@@ -95,12 +95,24 @@
   // simple while holding 3+ tiles of REAL water depth (deep water is calm
   // water; the shallow popcorn problem dies here, no sim-scale tricks).
   var BATH_FLOORS = [
-    { c0: 27, c1: 45, fr: 610, lip: 1, sink: 3, tubs: [[34,39]], fill: [2], price: 0 },
-    { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[34,39]], fill: [1], price: 2000 },
+    { c0: 27, c1: 45, fr: 610, lip: 1, sink: 3, tubs: [[33,40]], fill: [2], price: 0 },
+    { c0: 27, c1: 45, fr: 599, lip: 1, sink: 3, tubs: [[33,40]], fill: [1], price: 2000 },
     { c0: 27, c1: 43, fr: 588, lip: 0, sink: 0, tubs: [], fill: [], sauna: true, price: 8000 },
-    { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[32,37]], fill: [1], price: 20000 },
+    { c0: 27, c1: 41, fr: 577, lip: 1, sink: 3, tubs: [[31,38]], fill: [1], price: 20000 },
     { c0: 27, c1: 39, fr: 566, lip: 1, sink: 3, tubs: [[31,38]], fill: [1], price: 50000 }
   ];
+  // One tub curve, ONE source of truth (v25.90): each column's sunk depth
+  // comes from a parabola, so the carved cavity IS the curve (stepped at
+  // tile resolution) and the drawn hole threads the same columns' bottom
+  // midpoints: always inside the water, so no phantom notches can show.
+  function bathTubProfile(F, tb) {
+    var n = tb[1] - tb[0] + 1, d = [];
+    for (var i = 0; i < n; i++) {
+      var xx = (2 * i / (n - 1)) - 1;
+      d.push(Math.round(F.sink * (1 - xx * xx)));
+    }
+    return d;
+  }
   var bathFloorsOwned = [true, false, false, false, false];   // session-only for now
   var bathBuyFlash = [0, 0, 0, 0, 0];           // "not enough money" red blink until (ms)
   var BATH_TOP_ROW = 558;                       // F5 ceiling row (8-row floors)
@@ -147,14 +159,14 @@
         // an open shaft sunk F.sink rows into the slab, with the bottom
         // corners stepped in so the cavity bottoms out bowl-ish. Sealed on
         // all sides by the surrounding slab block.
+        var prof = bathTubProfile(F, tb);
         for (var cc = tb[0] - 1; cc <= tb[1] + 1; cc++) {
           var isRim = (cc < tb[0] || cc > tb[1]);
           if (isRim && F.lip > 0) world[F.fr - 1][cc] = { type: 'foundation', hp: 999999 };
           for (r = F.fr; r <= F.fr + F.sink; r++) {
             if (isRim) { world[r][cc] = { type: 'foundation', hp: 999999 }; continue; }
-            var edgeCol = (cc === tb[0] || cc === tb[1]);
-            var bottom = (r === F.fr + F.sink) || (edgeCol && r === F.fr + F.sink - 1);
-            world[r][cc] = bottom ? { type: 'foundation', hp: 999999 } : null;
+            var open = (r - F.fr) < prof[cc - tb[0]];
+            world[r][cc] = open ? null : { type: 'foundation', hp: 999999 };
           }
         }
       }
@@ -1016,15 +1028,19 @@
           var fx0 = (ftb[0] - 1) * TILE, fx1 = (ftb[1] + 2) * TILE;
           var lipY = (FG.fr - FG.lip) * TILE, botY = (FG.fr + FG.sink + 1) * TILE;
           var hx0 = ftb[0] * TILE, hx1 = (ftb[1] + 1) * TILE;
-          var hbot = (FG.fr + FG.sink) * TILE + 2;
+          var prof2 = bathTubProfile(FG, ftb);
           uiFg.fillStyle = '#8b887c';
           uiFg.beginPath();
           uiFg.rect(fx0 - 4, lipY - 6, (fx1 - fx0) + 8, botY - lipY + 4);
           uiFg.moveTo(hx0, lipY - 6);
-          uiFg.lineTo(hx0, hbot - 72);
-          uiFg.quadraticCurveTo(hx0, hbot, hx0 + 70, hbot);
-          uiFg.lineTo(hx1 - 70, hbot);
-          uiFg.quadraticCurveTo(hx1, hbot, hx1, hbot - 72);
+          uiFg.lineTo(hx0, FG.fr * TILE - 2);
+          for (var pi2 = 0; pi2 < prof2.length; pi2++) {
+            // Straight chords between per-column bottom midpoints: chords
+            // of a convex region stay INSIDE it, so the hole can never
+            // reveal a step the water does not reach.
+            uiFg.lineTo((ftb[0] + pi2 + 0.5) * TILE, (FG.fr + prof2[pi2]) * TILE - 2);
+          }
+          uiFg.lineTo(hx1, FG.fr * TILE - 2);
           uiFg.lineTo(hx1, lipY - 6);
           uiFg.closePath();
           uiFg.fill('evenodd');
