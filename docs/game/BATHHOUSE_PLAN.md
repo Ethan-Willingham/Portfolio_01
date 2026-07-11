@@ -426,6 +426,18 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable; v25.97): REAL STEAM. The old emitter was a uniform
+  drizzle of needle splats with velY 0.06 in a sim whose diesel emitter
+  splats at 2.75: the steam had no momentum and blurred into a faint band.
+  Steam is now EVENTS in three layers (all dials on __bath.steamTune):
+  ambient drizzle over the waterline, random PUFFS (splat clusters + a wide
+  faint bloom, rise ~1.6) that mushroom as they climb, and LICKS (short-lived
+  jets that hold one wiggling spot ~0.75s, rise ~2.6) that send coherent
+  tendrils up to curl and shred. Steam mode now also scales the sim itself:
+  dye dissipation x0.47 (plumes live long enough to climb), curl x1.3 (the
+  risen steam wanders and licks), time scale x1.35, all saved/restored on
+  exit. Verified: three checkpoints show three different skies, no whiteout.
+
 - 2026-07-10 (Fable, convection saga; v25.90-96): THE BOWL + THE BOIL SHIPPED.
   Bowl: the tub is ONE catenary at golden proportions (bathTubCurve, cosh with
   BATH_CAT_C = 2.0, W:D = phi^2); the drawn curve is MASTER, the carve digs

@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v25.96';
+  var GAME_VERSION = 'v25.97';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11684,34 +11684,66 @@
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteamSaved = null;
   var bathSteamAcc = 0;
-  // Owner-dialable steam (v25.88): the old values sat in place and bloomed
-  // white (tiny rise velocity + heavy dye accumulating at one spot).
-  var bathSteam = { rate: 24, amt: 0.05, rise: 0.06 };
+  // v25.97 REAL STEAM. The old emitter was a uniform drizzle of needle
+  // splats with velY 0.06 in a sim whose other emitters splat at 2.75:
+  // the steam had no momentum, so it sat where it was born and blurred
+  // into a faint band. Steam is EVENTS, three layers, all owner-dialable
+  // via __bath.steamTune:
+  //   drizzle: low ambient mist over the whole waterline,
+  //   puffs:   random billows off the simmer that mushroom as they rise,
+  //   licks:   short-lived jets that hold one spot for ~a second, so a
+  //            coherent tendril climbs, curls and shreds in the air.
+  var bathSteam = {
+    rate: 14, amt: 0.035, rise: 0.7,                       // drizzle
+    puffEvery: 0.85, puffAmt: 0.13, puffR: 0.055, puffRise: 1.6,
+    lickEvery: 2.2, lickDur: 0.75, lickAmt: 0.10, lickR: 0.022, lickRise: 2.6
+  };
   var bathSteamCol = { r: 0, g: 0, b: 0 };
+  var bathSteamJets = [];      // live licks {x, t, dur, drift, rise, wig, ph}
+  var bathSteamPuffT = 0.4;
+  var bathSteamLickT = 1.0;
   function bathSteamPush() {
     if (typeof smokeTune === 'undefined' || bathSteamSaved) return;
     bathSteamSaved = {
       dd: smokeTune.sim_density_dissipation,
       vd: smokeTune.sim_velocity_dissipation,
-      curl: smokeTune.sim_curl
+      curl: smokeTune.sim_curl,
+      ts: smokeTune.sim_time_scale
     };
     // Scale, never set: polarity-proof against whatever the smoke tuning is.
-    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.985;
-    smokeTune.sim_curl = bathSteamSaved.curl * 0.35;
+    // Longer-lived dye so plumes can climb the room, MORE curl so the
+    // risen steam wanders and licks, a livelier clock.
+    smokeTune.sim_density_dissipation = bathSteamSaved.dd * 0.47;
+    smokeTune.sim_curl = bathSteamSaved.curl * 1.3;
+    smokeTune.sim_time_scale = bathSteamSaved.ts * 1.35;
   }
   function bathSteamPop() {
     if (!bathSteamSaved || typeof smokeTune === 'undefined') return;
     smokeTune.sim_density_dissipation = bathSteamSaved.dd;
     smokeTune.sim_velocity_dissipation = bathSteamSaved.vd;
     smokeTune.sim_curl = bathSteamSaved.curl;
+    smokeTune.sim_time_scale = bathSteamSaved.ts;
     bathSteamSaved = null;
+    bathSteamJets.length = 0;
   }
   var bathHotTub = null;
+  function bathSteamSplat(wx, wy, vx, vy, amt, r) {
+    var uv = smokeFluidWorldToUV(wx, wy);
+    if (!uv.inView) return;
+    bathDbg.steamInView++;
+    smokeMarkActive();
+    bathSteamCol.r = amt * 0.92;
+    bathSteamCol.g = amt * 0.97;
+    bathSteamCol.b = amt * 1.05;
+    smokeDriver.splat(uv.uvX, uv.uvY, vx, vy, bathSteamCol, r);
+    bathDbg.steamSplats++;
+  }
   function bathSteamTick(dt) {
     bathDbg.steamCalls++;
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
     bathDbg.steamActive++;
+    // Layer 1: the ambient drizzle, over every hot waterline.
     bathSteamAcc += dt * bathSteam.rate;
     var units = bathSteamAcc | 0; bathSteamAcc -= units;
     if (units > 4) units = 4;
@@ -11725,24 +11757,68 @@
           var wl = (F.fr - F.lip) * TILE + 10;
           var sx = tb[0] * TILE + 10 + Math.random() * ((tb[1] - tb[0] + 1) * TILE - 20);
           if (bathHotTub && bathHotTub.ventX && Math.random() < 0.55) {
-            // Over the simmer: the full burner span, not a point boil.
             sx = bathHotTub.ventX + (Math.random() - 0.5) * (bathHotTub.ventHalf * 2.3);
           }
-          var euv = smokeFluidWorldToUV(sx, wl - 18);
-          if (!euv.inView) continue;
-          bathDbg.steamInView++;
-          smokeMarkActive();
-          var amt = bathSteam.amt * (0.7 + Math.random() * 0.6);
-          bathSteamCol.r = amt * 0.92;
-          bathSteamCol.g = amt * 0.97;
-          bathSteamCol.b = amt * 1.05;
-          smokeDriver.splat(euv.uvX, euv.uvY,
-            (Math.random() - 0.5) * 0.010,
+          bathSteamSplat(sx, wl - 14,
+            (Math.random() - 0.5) * 0.3,
             bathSteam.rise * (0.7 + Math.random() * 0.6),
-            bathSteamCol, 0.012 + Math.random() * 0.008);
-          bathDbg.steamSplats++;
+            bathSteam.amt * (0.7 + Math.random() * 0.6),
+            0.020 + Math.random() * 0.015);
         }
       }
+    }
+    if (!bathHotTub) return;
+    var HF = bathHotTub.F;
+    var hwl = (HF.fr - HF.lip) * TILE + 10;
+    var vX = bathHotTub.ventX, vH = bathHotTub.ventHalf;
+    // Layer 2: puffs. Random billows off the simmer: a tight cluster of
+    // heavy splats plus one wide faint bloom, real upward momentum.
+    bathSteamPuffT -= dt;
+    if (bathSteamPuffT <= 0) {
+      bathSteamPuffT = bathSteam.puffEvery * (0.45 + Math.random() * 1.1);
+      var px = Math.random() < 0.75
+        ? vX + (Math.random() - 0.5) * vH * 2
+        : bathHotTub.tb[0] * TILE + 14 +
+          Math.random() * ((bathHotTub.tb[1] - bathHotTub.tb[0] + 1) * TILE - 28);
+      for (var pk = 0; pk < 3; pk++) {
+        bathSteamSplat(px + (Math.random() - 0.5) * 16,
+          hwl - 10 - Math.random() * 10,
+          (Math.random() - 0.5) * 0.8,
+          bathSteam.puffRise * (0.75 + Math.random() * 0.5),
+          bathSteam.puffAmt * (0.7 + Math.random() * 0.6),
+          bathSteam.puffR * (0.75 + Math.random() * 0.5));
+      }
+      bathSteamSplat(px, hwl - 16, 0,
+        bathSteam.puffRise * 0.6,
+        bathSteam.puffAmt * 0.35,
+        bathSteam.puffR * 1.8);
+    }
+    // Layer 3: licks. A jet holds one spot for a fraction of a second,
+    // wiggling at the base, so a coherent tendril climbs into the air
+    // and the sim's curl bends and shreds it.
+    bathSteamLickT -= dt;
+    if (bathSteamLickT <= 0 && bathSteamJets.length < 3) {
+      bathSteamLickT = bathSteam.lickEvery * (0.5 + Math.random());
+      bathSteamJets.push({
+        x: vX + (Math.random() - 0.5) * vH * 1.7,
+        t: 0,
+        dur: bathSteam.lickDur * (0.7 + Math.random() * 0.8),
+        drift: (Math.random() - 0.5) * 0.9,
+        rise: bathSteam.lickRise * (0.8 + Math.random() * 0.5),
+        wig: 2 + Math.random() * 4,
+        ph: Math.random() * 6.28
+      });
+    }
+    for (var j = bathSteamJets.length - 1; j >= 0; j--) {
+      var J = bathSteamJets[j];
+      J.t += dt;
+      if (J.t > J.dur) { bathSteamJets.splice(j, 1); continue; }
+      bathSteamSplat(J.x + Math.sin(J.t * J.wig + J.ph) * 6,
+        hwl - 8,
+        J.drift + Math.sin(J.t * J.wig * 1.3 + J.ph) * 0.5,
+        J.rise,
+        bathSteam.lickAmt * (1 - (J.t / J.dur) * 0.55),
+        bathSteam.lickR * (0.8 + Math.random() * 0.4));
     }
   }
 
