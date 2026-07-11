@@ -366,24 +366,27 @@
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteamSaved = null;
   var bathSteamAcc = 0;
-  // v25.99 THE VEIL. Steam is not point sources popping up (owner-rejected
-  // v25.97/98 boils): it rises off the WHOLE water surface as a continuous
-  // curtain whose density wanders (drifting waves in bathSteamVeilW), the
-  // way a real hot bath steams: consistent and uniform at a glance, never
-  // the same twice. Splat velocity lives on the SIM'S scale (the diesel
-  // emitter splats at velY 2.75; anything near 0 just sits and blooms).
-  // Two layers, all owner-dialable via __bath.steamTune:
-  //   veil:  many small splats a second spread edge to edge, weighted by
-  //          the drifting density field + a slight burner-span favor,
-  //   licks: short-lived jets that hold one wiggling spot, so a coherent
-  //          tendril climbs out of the veil, curls and shreds in the air.
+  // v26.00 FOG + THERMALS (the owner's picture, verbatim: "thin fog just
+  // above the water on a lake, but some of it accumulating to mushroom up
+  // since there is heat involved, and as it rises it sucks from the
+  // immediate surrounding layer of fog").
+  //   fog:      a calm blanket hugging the WHOLE surface: many tiny
+  //             near-still splats a second, edge to edge, barely lifting.
+  //   thermals: every few seconds a spot gathers and RISES for ~1.5s.
+  //             The column is mostly MOMENTUM: zero-dye velocity splats
+  //             pull the existing fog inward at the base (entrainment,
+  //             the "sucking") and drive it upward, so the mushroom is
+  //             built from the blanket itself, plus a little dye of its
+  //             own. Ramped in and out; nothing pops.
+  // All dials on __bath.steamTune.
   var bathSteam = {
-    rate: 90, amt: 0.022, rise: 0.85,                      // the veil
-    lickEvery: 2.6, lickDur: 0.75, lickAmt: 0.07, lickR: 0.024, lickRise: 2.4
+    rate: 230, amt: 0.016, rise: 0.3,                      // the fog blanket
+    thermEvery: 2.8, thermDur: 1.6, thermAmt: 0.03,
+    thermRise: 1.9, thermR: 0.030, suck: 1.35
   };
   var bathSteamCol = { r: 0, g: 0, b: 0 };
-  var bathSteamJets = [];      // live licks {x, t, dur, drift, rise, wig, ph}
-  var bathSteamLickT = 1.0;
+  var bathSteamTherms = [];    // live thermals {x, t, dur, wig, ph}
+  var bathSteamThermT = 1.2;
   function bathSteamPush() {
     if (typeof smokeTune === 'undefined' || bathSteamSaved) return;
     bathSteamSaved = {
@@ -427,7 +430,7 @@
       try { smokeWGPUApplyRes(smokeFluidWidth, smokeFluidHeight); } catch (e) {}
     }
     bathSteamSaved = null;
-    bathSteamJets.length = 0;
+    bathSteamTherms.length = 0;
   }
   var bathHotTub = null;
   function bathSteamSplat(wx, wy, vx, vy, amt, r) {
@@ -458,14 +461,13 @@
     bathDbg.steamActive++;
     var tnow = performance.now() / 1000;
     // Room draft: a slow coherent side-to-side breath shared by all steam.
-    var draft = 0.22 * Math.sin(tnow * 0.23) + 0.10 * Math.sin(tnow * 0.71);
-    // Layer 1: THE VEIL (v25.99). Steam rises off the WHOLE surface, edge
-    // to edge, every frame: many small splats spread across the waterline,
-    // weighted by the drifting density field above, slightly favoring the
-    // burner span. Consistent and uniform at a glance, alive up close.
+    var draft = 0.13 * Math.sin(tnow * 0.23) + 0.06 * Math.sin(tnow * 0.71);
+    // Layer 1: THE FOG BLANKET. Many tiny near-still splats a second,
+    // edge to edge, right at the waterline, barely lifting: a calm thin
+    // fog hugging the water, its thickness wandering with the field.
     bathSteamAcc += dt * bathSteam.rate;
     var units = bathSteamAcc | 0; bathSteamAcc -= units;
-    if (units > 6) units = 6;
+    if (units > 8) units = 8;
     for (var u = 0; u < units; u++) {
       for (var f = 0; f < BATH_FLOORS.length; f++) {
         if (!bathFloorsOwned[f]) continue;
@@ -476,16 +478,12 @@
           var wl = (F.fr - F.lip) * TILE + 10;
           var x0 = tb[0] * TILE + 12, x1 = (tb[1] + 1) * TILE - 12;
           var sx = x0 + Math.random() * (x1 - x0);
-          var w = bathSteamVeilW(sx, tnow);
-          if (bathHotTub && bathHotTub.ventX) {
-            var dvx = (sx - bathHotTub.ventX) / (bathHotTub.ventHalf * 1.6);
-            w *= 0.85 + 0.30 * Math.exp(-dvx * dvx);
-          }
-          bathSteamSplat(sx, wl - 12,
-            draft + (Math.random() - 0.5) * 0.3,
-            bathSteam.rise * (0.55 + 0.65 * w) * (0.85 + Math.random() * 0.3),
+          var w = 0.7 + 0.3 * bathSteamVeilW(sx, tnow);
+          bathSteamSplat(sx, wl - 6,
+            draft + (Math.random() - 0.5) * 0.2,
+            bathSteam.rise * (0.5 + Math.random() * 0.8) * w,
             bathSteam.amt * w * (0.8 + Math.random() * 0.4),
-            0.018 + Math.random() * 0.014);
+            0.016 + Math.random() * 0.012);
         }
       }
     }
@@ -493,35 +491,70 @@
     var HF = bathHotTub.F;
     var hwl = (HF.fr - HF.lip) * TILE + 10;
     var htb = bathHotTub.tb;
-    // Layer 2: licks. A jet holds one spot for a fraction of a second,
-    // wiggling at the base, so a coherent tendril climbs out of the veil
-    // and the sim's curl bends and shreds it. Anywhere along the surface.
-    bathSteamLickT -= dt;
-    if (bathSteamLickT <= 0 && bathSteamJets.length < 2) {
-      bathSteamLickT = bathSteam.lickEvery * (0.5 + Math.random());
-      bathSteamJets.push({
-        x: htb[0] * TILE + 20 +
-           Math.random() * ((htb[1] - htb[0] + 1) * TILE - 40),
-        t: 0,
-        dur: bathSteam.lickDur * (0.7 + Math.random() * 0.8),
-        drift: (Math.random() - 0.5) * 0.9,
-        rise: bathSteam.lickRise * (0.8 + Math.random() * 0.5),
-        wig: 2 + Math.random() * 4,
+    // Layer 2: THERMALS. Every few seconds a spot on the surface gathers
+    // and rises. The column is mostly MOMENTUM: zero-dye velocity splats
+    // at the fog layer flanking the base pull the blanket INWARD (the
+    // entrainment the owner asked for), an updraft splat lifts what
+    // gathered, and a modest dye trickle seeds the core. The mushroom is
+    // made of the fog it swallowed.
+    bathSteamThermT -= dt;
+    if (bathSteamThermT <= 0 && bathSteamTherms.length < 2) {
+      bathSteamThermT = bathSteam.thermEvery * (0.6 + Math.random() * 0.9);
+      var tx;
+      if (bathHotTub.ventX && Math.random() < 0.6) {
+        tx = bathHotTub.ventX + (Math.random() - 0.5) * bathHotTub.ventHalf * 1.8;
+      } else {
+        tx = htb[0] * TILE + 26 +
+             Math.random() * ((htb[1] - htb[0] + 1) * TILE - 52);
+      }
+      bathSteamTherms.push({
+        x: tx, t: 0,
+        dur: bathSteam.thermDur * (0.7 + Math.random() * 0.7),
+        wig: 1.5 + Math.random() * 2.5,
         ph: Math.random() * 6.28
       });
     }
-    for (var j = bathSteamJets.length - 1; j >= 0; j--) {
-      var J = bathSteamJets[j];
-      J.t += dt;
-      if (J.t > J.dur) { bathSteamJets.splice(j, 1); continue; }
-      // Ramp in over the first ~0.18s (no flash), taper toward the end.
-      var lenv = Math.min(J.t / 0.18, 1) * (1 - (J.t / J.dur) * 0.55);
-      bathSteamSplat(J.x + Math.sin(J.t * J.wig + J.ph) * 6,
-        hwl - 8,
-        J.drift + Math.sin(J.t * J.wig * 1.3 + J.ph) * 0.5,
-        J.rise * (0.5 + 0.5 * Math.min(J.t / 0.15, 1)),
-        bathSteam.lickAmt * lenv,
-        bathSteam.lickR * (0.8 + Math.random() * 0.4));
+    for (var q = bathSteamTherms.length - 1; q >= 0; q--) {
+      var T = bathSteamTherms[q];
+      T.t += dt;
+      if (T.t > T.dur) { bathSteamTherms.splice(q, 1); continue; }
+      var tfr = T.t / T.dur;
+      // Strength ramps in over ~0.35s, lets go over the back half.
+      var ts = Math.min(T.t / 0.35, 1) * (1 - 0.45 * tfr);
+      var cx = T.x + Math.sin(T.t * T.wig + T.ph) * 5;
+      // Entrainment: momentum-only splats in the fog layer either side
+      // of the base, velocity pointing INTO the column.
+      var gap = 38 + 14 * tfr;
+      bathSteamCol.r = 0; bathSteamCol.g = 0; bathSteamCol.b = 0;
+      var uvL = smokeFluidWorldToUV(cx - gap, hwl - 8);
+      if (uvL.inView) {
+        smokeMarkActive();
+        smokeDriver.splat(uvL.uvX, uvL.uvY,
+          bathSteam.suck * ts, bathSteam.suck * ts * 0.15,
+          bathSteamCol, 0.030);
+      }
+      var uvR = smokeFluidWorldToUV(cx + gap, hwl - 8);
+      if (uvR.inView) {
+        smokeMarkActive();
+        smokeDriver.splat(uvR.uvX, uvR.uvY,
+          -bathSteam.suck * ts, bathSteam.suck * ts * 0.15,
+          bathSteamCol, 0.030);
+      }
+      // The updraft at the base: lifts the fog the entrainment gathered.
+      var uvU = smokeFluidWorldToUV(cx, hwl - 12);
+      if (uvU.inView) {
+        smokeMarkActive();
+        smokeDriver.splat(uvU.uvX, uvU.uvY,
+          0, bathSteam.thermRise * ts * 1.3,
+          bathSteamCol, 0.024);
+      }
+      // A modest dye trickle seeding the core, so the column reads even
+      // where the blanket was thin.
+      bathSteamSplat(cx, hwl - 10 - tfr * 12,
+        (Math.random() - 0.5) * 0.3,
+        bathSteam.thermRise * ts * (0.7 + Math.random() * 0.3),
+        bathSteam.thermAmt * ts * (0.8 + Math.random() * 0.4),
+        bathSteam.thermR * (0.7 + 0.6 * tfr));
     }
   }
 

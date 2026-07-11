@@ -426,6 +426,21 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable; v26.00): FOG + THERMALS, the owner's picture verbatim
+  ("thin fog just above the water on a lake... some of it accumulating to
+  mushroom up... as it rises it sucks from the immediate surrounding layer
+  of fog"). The veil/lick emitters are replaced by two layers: a FOG BLANKET
+  (~230 tiny near-still splats/s, edge to edge at the waterline, rise 0.3,
+  gentle draft) and THERMALS every ~2.8s whose column is mostly MOMENTUM:
+  zero-dye velocity splats flanking the base pull the blanket inward
+  (visible entrainment), an updraft splat lifts what gathered, and only a
+  small dye trickle seeds the core, so the mushroom is built from the fog
+  it swallowed. TECHNIQUE: smokeDriver.splat with a zero color is a pure
+  velocity injection, the tool for moving EXISTING dye without painting.
+  Verified: fog band lip to lip, stem-and-cap mushrooms, the blanket
+  visibly streams into the stems. Dials __bath.steamTune {rate, amt, rise,
+  thermEvery, thermDur, thermAmt, thermRise, thermR, suck}.
+
 - 2026-07-10 (Fable; v25.99): THE VEIL. Owner: steam should come off the
   water in general, not from random popping sources, consistent and uniform
   with natural randomness. The boil emitters are DELETED (do not re-add
