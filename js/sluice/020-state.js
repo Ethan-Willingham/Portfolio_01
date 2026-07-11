@@ -674,7 +674,11 @@
               ex.push({ cx: wk.cx, cy: wk.cy, r: wk.r, blastScale: wk.blast });
             }
           }
-          return { player: pl, rocket: rk, explosions: ex };
+          // v26.04 — bath guests as moving fluid boundaries (the registry
+          // is rebuilt each scene frame by bathGuestTick, empty outside).
+          return { player: pl, rocket: rk, explosions: ex,
+                   guests: (typeof bathGuestColliders !== 'undefined' &&
+                            bathGuestColliders.length) ? bathGuestColliders : null };
         }
       }
     };

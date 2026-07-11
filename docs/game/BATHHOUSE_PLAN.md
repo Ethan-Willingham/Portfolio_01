@@ -426,6 +426,28 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-11 (Fable; v26.04): THE SIMULATED SPLASH. Owner rejected v26.03's
+  choreographed impulse ("way more simulated and realistic... go to the
+  fundamentals"). Guests are now MOVING BOUNDARIES in the MLS-MPM sim
+  itself: GameParams grew a guests array (3 x 2 vec4: center/half-extents +
+  velocity/active; buffer 240 -> 336 B), bathGuestTick rebuilds the
+  collider registry from live jello bodies each scene frame (velocity from
+  the stall tracker's prev-center), getGameState carries it, and the
+  grid-update kernel applies the rig-silhouette law generalized: moving
+  bodies plow a speed-scaled nearest-face eject BLENDED toward their motion
+  direction (a plunge drives water down-and-out; the crown erupts by
+  continuity), still bodies pin their cells rigid (no flow through a
+  soaker; bobs shed real ripples), plus a plunge term past the rig's 60
+  px/s saturation (GUEST_EJECT 480, x up to 2.5 at dive speed). All v26.03
+  authored impulses/droplets DELETED; only the fog poof remains (the smoke
+  sim cannot see guests since v26.02). Zero-invariant: the registry is
+  empty outside the scene, active flags 0, kernels no-op, boot self-tests
+  untouched. Verified headless: a real exit CAVITY opens where a leaper
+  left and collapses into sloshing foam, droplets trail the jump, soakers
+  visibly displace the surface. One-way stays law: water never pushes the
+  slime back (B-D5), the body pushes the water, which is the correct
+  direction.
+
 - 2026-07-11 (Fable; v26.03): THE SPLASH. Owner: a slime landing in the pool
   should really splash the water, realistically, and when it jumps out.
   One-way coupling stays law (B-D5): the splash is CHOREOGRAPHED into the

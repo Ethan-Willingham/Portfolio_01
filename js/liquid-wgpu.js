@@ -438,6 +438,8 @@
   var LIQUID_MINER_TRACK_R = 20.5, LIQUID_MINER_TRACK_B = 25.0;
   var GS_MAX_NOZZLES = 4;            // rocket-plume nozzle cap (game uses 2)
   var GS_MAX_EXPLOSIONS = 8;         // explosion-wake cap per frame
+  var GS_MAX_GUESTS = 3;             // v26.04 — bath-guest moving boundaries
+  var LIQUID_GUEST_EJECT = 480;      // guest plow strength (rig hull = 720)
 
   var GRID_MAX_CELLS = 1 << 21;      // 2,097,152 — hard cap on grid cells
   var WG = 256;                       // compute workgroup size
@@ -666,10 +668,10 @@
     // and a single writeBuffer pushes it before the per-frame GPU chain.
     instance.gameParamsBuf = dev.createBuffer({
       label: 'liquid.gameParams',
-      size: 240,
+      size: 336,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.gameParamsHost = new Float32Array(60);   // 15 vec4 lanes
+    instance.gameParamsHost = new Float32Array(84);   // 21 vec4 lanes (v26.04 guests)
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
     // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
     // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
@@ -1055,6 +1057,20 @@
         gh[28 + e * 4 + 1] = ex[e].cy || 0;
         gh[28 + e * 4 + 2] = ex[e].r || 0;
         gh[28 + e * 4 + 3] = ex[e].blastScale || 0;
+      }
+      // guests array<vec4,6> — lanes 60-83 (v26.04): bath-guest moving
+      // boundaries, 2 vec4 each: (cx, cy, hw, hh) + (vx, vy, active, _).
+      var gu = gs.guests || [];
+      var guN = gu.length;
+      if (guN > GS_MAX_GUESTS) guN = GS_MAX_GUESTS;
+      for (var q = 0; q < guN; q++) {
+        gh[60 + q * 8]     = gu[q].x || 0;
+        gh[60 + q * 8 + 1] = gu[q].y || 0;
+        gh[60 + q * 8 + 2] = gu[q].hw || 0;
+        gh[60 + q * 8 + 3] = gu[q].hh || 0;
+        gh[60 + q * 8 + 4] = gu[q].vx || 0;
+        gh[60 + q * 8 + 5] = gu[q].vy || 0;
+        gh[60 + q * 8 + 6] = 1;
       }
       // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, playerVx, playerVy).
       gh[8] = nozN;
@@ -3929,7 +3945,13 @@ struct GameParams {
   counts  : vec4<f32>,
   nozzles : array<vec4<f32>, ${GS_MAX_NOZZLES}>,
   explos  : array<vec4<f32>, ${GS_MAX_EXPLOSIONS}>,
+  // v26.04 — bath-guest moving boundaries, 2 vec4 per guest:
+  // (cx, cy, halfW, halfH) + (vx, vy, active, _). Zeroed outside the scene.
+  guests  : array<vec4<f32>, ${GS_MAX_GUESTS * 2}>,
 };
+
+// v26.04 — guest plow strength (the rig hull uses PLAYER_EJECT = 720).
+const GUEST_EJECT : f32 = ${LIQUID_GUEST_EJECT};
 
 // Miner silhouette rects (player-local px) — mirror the CPU literals.
 const MINER_HULL_L  : f32 = ${LIQUID_MINER_HULL_L};
@@ -4137,6 +4159,48 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
           cellVelY[c] = 0.0;
         }
       }
+    }
+  }
+
+  // --- guest wake (v26.04) — bath guests are moving rigid boundaries ---
+  // The same law as the rig silhouette above, generalized to N dynamic
+  // boxes: a MOVING body plows a nearest-face eject scaled by its speed,
+  // with the push blended toward the body's own motion direction so a
+  // plunging slime drives water down-and-out (the crown then erupts by
+  // continuity, the cavity opens, the exit leap drags a column up); a
+  // STILL body pins its cells rigid (water cannot flow through a soaking
+  // guest, and its bobs shed real ripples). Splashes are not authored
+  // anywhere: they emerge here.
+  for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
+    let gA = gameP.guests[gi * 2];
+    let gB = gameP.guests[gi * 2 + 1];
+    if (gB.z < 0.5) { continue; }
+    let glx = wx - gA.x;
+    let gly = wy - gA.y;
+    if (abs(glx) > gA.z || abs(gly) > gA.w) { continue; }
+    let gspd = abs(gB.x) + abs(gB.y);
+    let gejs = clamp((gspd - 8.0) / 52.0, 0.0, 1.0);
+    if (gejs > 0.0) {
+      let dL = glx + gA.z;
+      let dR = gA.z - glx;
+      let dT = gly + gA.w;
+      let dB = gA.w - gly;
+      var gnx : f32 = -1.0; var gny : f32 = 0.0; var gminD = dL;
+      if (dR < gminD) { gminD = dR; gnx = 1.0; gny = 0.0; }
+      if (dT < gminD) { gminD = dT; gnx = 0.0; gny = -1.0; }
+      if (dB < gminD) { gminD = dB; gnx = 0.0; gny = 1.0; }
+      let ginv = 1.0 / max(gspd, 1.0);
+      let gbx = gnx * 0.55 + gB.x * ginv * 0.45;
+      let gby = gny * 0.55 + gB.y * ginv * 0.45;
+      // Past the rig's 60 px/s saturation a dive keeps hitting harder:
+      // the plunge term scales the plow with true impact speed.
+      let gplunge = 1.0 + clamp(gspd / 380.0, 0.0, 1.5);
+      let geject = GUEST_EJECT * gejs * gplunge * stepDt / CELL;
+      cellVelX[c] = cellVelX[c] + gbx * geject;
+      cellVelY[c] = cellVelY[c] + gby * geject;
+    } else {
+      cellVelX[c] = 0.0;
+      cellVelY[c] = 0.0;
     }
   }
 
