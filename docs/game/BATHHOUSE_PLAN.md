@@ -426,6 +426,21 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable; v26.01): LIVE-SURFACE STEAM + SMALL FREQUENT THERMALS.
+  Owner (after "BOOM you got it"): closer to the water, dynamic with the
+  surface shape, thermals more common (multiple at once) and WAY smaller.
+  New bathSurfY(x): every 8 frames the liquid engine's CPU mirror
+  (liquidX/liquidY/liquidCount, refreshed each LIQUID_READBACK_EVERY=20
+  frames) is bucketed over the hot tub into 12 px columns, highest particle
+  per column, 3-bucket median filter (one stray droplet cannot yank the fog),
+  clamped wl-60..wl+90, empty buckets fall back to the fill line. EVERY
+  emission height rides it (fog at surf-5, thermal base/entrainment/updraft
+  at the surface under each x), so the blanket drapes around plunging guests
+  and follows waves and level changes. Thermals: thermEvery 2.8->1.1s, cap
+  2->4 concurrent, dur 1.6->1.0s, rise 1.9->1.15, dye radius 0.030->0.016,
+  suck 1.35->1.0 with gap 38->22 px and tighter momentum splats: little
+  curling mushrooms, several alive at once, instead of towers.
+
 - 2026-07-10 (Fable; v26.00): FOG + THERMALS, the owner's picture verbatim
   ("thin fog just above the water on a lake... some of it accumulating to
   mushroom up... as it rises it sucks from the immediate surrounding layer
