@@ -426,6 +426,17 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-10 (Fable; v25.99): THE VEIL. Owner: steam should come off the
+  water in general, not from random popping sources, consistent and uniform
+  with natural randomness. The boil emitters are DELETED (do not re-add
+  point-source billows): the primary layer is now a continuous veil, ~90
+  small splats/s spread across the FULL waterline, weighted by a drifting
+  density field (three summed waves in bathSteamVeilW, smooth in x, slow in
+  t) plus a slight burner-span favor, all sharing a slow room draft. Licks
+  survive as the randomness accent (rarer, softer, anywhere along the
+  surface, still ramped in). Dials: __bath.steamTune {rate, amt, rise,
+  lickEvery, lickDur, lickAmt, lickR, lickRise}.
+
 - 2026-07-10 (Fable; v25.98): STEAM QUALITY. Owner: blocky, low quality,
   splotches flash into existence. Three causes, three fixes: (1) the sim grid
   was the quality ceiling (velocity/curl at 160 short-axis for the whole view,

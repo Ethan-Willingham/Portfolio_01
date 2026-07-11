@@ -366,24 +366,23 @@
   var bathDbg = { steamCalls: 0, steamActive: 0, steamInView: 0, steamSplats: 0 };
   var bathSteamSaved = null;
   var bathSteamAcc = 0;
-  // v25.97 REAL STEAM. The old emitter was a uniform drizzle of needle
-  // splats with velY 0.06 in a sim whose other emitters splat at 2.75:
-  // the steam had no momentum, so it sat where it was born and blurred
-  // into a faint band. Steam is EVENTS, three layers, all owner-dialable
-  // via __bath.steamTune:
-  //   drizzle: low ambient mist over the whole waterline,
-  //   puffs:   random billows off the simmer that mushroom as they rise,
-  //   licks:   short-lived jets that hold one spot for ~a second, so a
-  //            coherent tendril climbs, curls and shreds in the air.
+  // v25.99 THE VEIL. Steam is not point sources popping up (owner-rejected
+  // v25.97/98 boils): it rises off the WHOLE water surface as a continuous
+  // curtain whose density wanders (drifting waves in bathSteamVeilW), the
+  // way a real hot bath steams: consistent and uniform at a glance, never
+  // the same twice. Splat velocity lives on the SIM'S scale (the diesel
+  // emitter splats at velY 2.75; anything near 0 just sits and blooms).
+  // Two layers, all owner-dialable via __bath.steamTune:
+  //   veil:  many small splats a second spread edge to edge, weighted by
+  //          the drifting density field + a slight burner-span favor,
+  //   licks: short-lived jets that hold one wiggling spot, so a coherent
+  //          tendril climbs out of the veil, curls and shreds in the air.
   var bathSteam = {
-    rate: 14, amt: 0.03, rise: 0.7,                        // drizzle
-    puffEvery: 0.85, puffAmt: 0.13, puffR: 0.055, puffRise: 1.6, puffDur: 0.6,
-    lickEvery: 2.2, lickDur: 0.75, lickAmt: 0.10, lickR: 0.026, lickRise: 2.6
+    rate: 90, amt: 0.022, rise: 0.85,                      // the veil
+    lickEvery: 2.6, lickDur: 0.75, lickAmt: 0.07, lickR: 0.024, lickRise: 2.4
   };
   var bathSteamCol = { r: 0, g: 0, b: 0 };
   var bathSteamJets = [];      // live licks {x, t, dur, drift, rise, wig, ph}
-  var bathSteamBoils = [];     // live boils {x, t, dur, drift}
-  var bathSteamPuffT = 0.4;
   var bathSteamLickT = 1.0;
   function bathSteamPush() {
     if (typeof smokeTune === 'undefined' || bathSteamSaved) return;
@@ -429,7 +428,6 @@
     }
     bathSteamSaved = null;
     bathSteamJets.length = 0;
-    bathSteamBoils.length = 0;
   }
   var bathHotTub = null;
   function bathSteamSplat(wx, wy, vx, vy, amt, r) {
@@ -443,15 +441,31 @@
     smokeDriver.splat(uv.uvX, uv.uvY, vx, vy, bathSteamCol, r);
     bathDbg.steamSplats++;
   }
+  // The veil's density along the surface: three drifting waves summed, a
+  // poor man's Perlin. Smooth in x, slow in t, so the curtain of steam is
+  // denser here and thinner there and the pattern WANDERS, never pops.
+  function bathSteamVeilW(x, t) {
+    var w = 0.52
+      + 0.30 * Math.sin(x * 0.026 + t * 0.9)
+      + 0.20 * Math.sin(x * 0.019 - t * 0.6 + 1.7)
+      + 0.14 * Math.sin(x * 0.060 + t * 1.7 + 4.2);
+    return w < 0.12 ? 0.12 : (w > 1 ? 1 : w);
+  }
   function bathSteamTick(dt) {
     bathDbg.steamCalls++;
     if (typeof smokeDriver === 'undefined' || !smokeDriver) return;
     if (typeof smokeFluidActive === 'undefined' || !smokeFluidActive) return;
     bathDbg.steamActive++;
-    // Layer 1: the ambient drizzle, over every hot waterline.
+    var tnow = performance.now() / 1000;
+    // Room draft: a slow coherent side-to-side breath shared by all steam.
+    var draft = 0.22 * Math.sin(tnow * 0.23) + 0.10 * Math.sin(tnow * 0.71);
+    // Layer 1: THE VEIL (v25.99). Steam rises off the WHOLE surface, edge
+    // to edge, every frame: many small splats spread across the waterline,
+    // weighted by the drifting density field above, slightly favoring the
+    // burner span. Consistent and uniform at a glance, alive up close.
     bathSteamAcc += dt * bathSteam.rate;
     var units = bathSteamAcc | 0; bathSteamAcc -= units;
-    if (units > 4) units = 4;
+    if (units > 6) units = 6;
     for (var u = 0; u < units; u++) {
       for (var f = 0; f < BATH_FLOORS.length; f++) {
         if (!bathFloorsOwned[f]) continue;
@@ -460,61 +474,34 @@
           if (F.fill[i] !== 2) continue;
           var tb = F.tubs[i];
           var wl = (F.fr - F.lip) * TILE + 10;
-          var sx = tb[0] * TILE + 10 + Math.random() * ((tb[1] - tb[0] + 1) * TILE - 20);
-          if (bathHotTub && bathHotTub.ventX && Math.random() < 0.55) {
-            sx = bathHotTub.ventX + (Math.random() - 0.5) * (bathHotTub.ventHalf * 2.3);
+          var x0 = tb[0] * TILE + 12, x1 = (tb[1] + 1) * TILE - 12;
+          var sx = x0 + Math.random() * (x1 - x0);
+          var w = bathSteamVeilW(sx, tnow);
+          if (bathHotTub && bathHotTub.ventX) {
+            var dvx = (sx - bathHotTub.ventX) / (bathHotTub.ventHalf * 1.6);
+            w *= 0.85 + 0.30 * Math.exp(-dvx * dvx);
           }
-          bathSteamSplat(sx, wl - 14,
-            (Math.random() - 0.5) * 0.3,
-            bathSteam.rise * (0.7 + Math.random() * 0.6),
-            bathSteam.amt * (0.7 + Math.random() * 0.6),
-            0.020 + Math.random() * 0.015);
+          bathSteamSplat(sx, wl - 12,
+            draft + (Math.random() - 0.5) * 0.3,
+            bathSteam.rise * (0.55 + 0.65 * w) * (0.85 + Math.random() * 0.3),
+            bathSteam.amt * w * (0.8 + Math.random() * 0.4),
+            0.018 + Math.random() * 0.014);
         }
       }
     }
     if (!bathHotTub) return;
     var HF = bathHotTub.F;
     var hwl = (HF.fr - HF.lip) * TILE + 10;
-    var vX = bathHotTub.ventX, vH = bathHotTub.ventHalf;
-    // Layer 2: boils. A billow is never stamped in one frame (that reads
-    // as a flash): each boil is an emitter that lives ~0.6s under a sine
-    // envelope, so the puff FADES IN, swells as it rises, and lets go.
-    bathSteamPuffT -= dt;
-    if (bathSteamPuffT <= 0 && bathSteamBoils.length < 4) {
-      bathSteamPuffT = bathSteam.puffEvery * (0.45 + Math.random() * 1.1);
-      var px = Math.random() < 0.75
-        ? vX + (Math.random() - 0.5) * vH * 2
-        : bathHotTub.tb[0] * TILE + 14 +
-          Math.random() * ((bathHotTub.tb[1] - bathHotTub.tb[0] + 1) * TILE - 28);
-      bathSteamBoils.push({
-        x: px, t: 0,
-        dur: bathSteam.puffDur * (0.7 + Math.random() * 0.8),
-        drift: (Math.random() - 0.5) * 0.5
-      });
-    }
-    for (var bq = bathSteamBoils.length - 1; bq >= 0; bq--) {
-      var B = bathSteamBoils[bq];
-      B.t += dt;
-      if (B.t > B.dur) { bathSteamBoils.splice(bq, 1); continue; }
-      var bfr = B.t / B.dur;
-      var benv = Math.sin(bfr * Math.PI);
-      for (var bs = 0; bs < 2; bs++) {
-        bathSteamSplat(B.x + (Math.random() - 0.5) * 18,
-          hwl - 8 - bfr * 14,
-          B.drift + (Math.random() - 0.5) * 0.6,
-          bathSteam.puffRise * (0.75 + Math.random() * 0.5) * (0.6 + 0.4 * benv),
-          bathSteam.puffAmt * benv * 0.30,
-          bathSteam.puffR * (0.5 + 0.9 * bfr) * (0.8 + Math.random() * 0.4));
-      }
-    }
-    // Layer 3: licks. A jet holds one spot for a fraction of a second,
-    // wiggling at the base, so a coherent tendril climbs into the air
-    // and the sim's curl bends and shreds it.
+    var htb = bathHotTub.tb;
+    // Layer 2: licks. A jet holds one spot for a fraction of a second,
+    // wiggling at the base, so a coherent tendril climbs out of the veil
+    // and the sim's curl bends and shreds it. Anywhere along the surface.
     bathSteamLickT -= dt;
-    if (bathSteamLickT <= 0 && bathSteamJets.length < 3) {
+    if (bathSteamLickT <= 0 && bathSteamJets.length < 2) {
       bathSteamLickT = bathSteam.lickEvery * (0.5 + Math.random());
       bathSteamJets.push({
-        x: vX + (Math.random() - 0.5) * vH * 1.7,
+        x: htb[0] * TILE + 20 +
+           Math.random() * ((htb[1] - htb[0] + 1) * TILE - 40),
         t: 0,
         dur: bathSteam.lickDur * (0.7 + Math.random() * 0.8),
         drift: (Math.random() - 0.5) * 0.9,
