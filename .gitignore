@@ -33,7 +33,16 @@ assets/images/zoom-src/
 
 # --- Local working scratch (kept on disk, not part of the deployed site) ---
 # Research corpora + dossiers (large; one working dir per post topic).
+# Untracked for real on 2026-07-12: the early corpora were committed before this
+# rule existed and were being served publicly, including in-copyright translation
+# sources. Keep every research file local-only.
 research/
+MANAGING_PROFESSIONALS.md
+# Old whole-site style experiments (orphaned demos; the only pages that ever
+# loaded Google Fonts). Kept local for reference, off the deployed site.
+style-family.html
+style-linear.html
+style-press.html
 # Throwaway *-lab.html choosers that were never committed.
 debate-lab.html
 kit-cleanup-lab.html
