@@ -187,7 +187,7 @@
     var y0 = (seg.b[1] - cy) * s + H / 2, y1 = (seg.b[3] - cy) * s + H / 2;
     return x1 > -pad && x0 < W + pad && y1 > -pad && y0 < H + pad;
   }
-  function strokeBucket(segs, style, width, dash) {
+  function strokeBucket(segs, style, width, dash, casing) {
     var s = scale(), cx = view.x, cy = view.y, any = false;
     ctx.beginPath();
     for (var i = 0; i < segs.length; i++) {
@@ -195,9 +195,28 @@
       tracePath(segs[i], s, cx, cy); any = true;
     }
     if (!any) return;
+    if (casing) {
+      ctx.strokeStyle = casing; ctx.lineWidth = width + 2.4;
+      ctx.setLineDash([]); ctx.stroke();
+    }
     ctx.strokeStyle = style; ctx.lineWidth = width;
     ctx.setLineDash(dash || []);
     ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // Line styles per basemap. Satellite gets brighter cores; both get a dark
+  // casing under every utility line so they read over any background.
+  function lineStyles() {
+    if (SAT.on) return {
+      case_: 'rgba(8,12,9,0.9)',
+      kv345: { c: '#e8a48e', w: 2.6 }, kv200: { c: '#e09a86', w: 2.0 }, kv100: { c: '#d59079', w: 1.5 }, kvLow: { c: '#c48774', w: 1.0 }, minor: { c: 'rgba(214,150,132,0.8)', w: 0.9 },
+      sewer: { c: '#93cf8b', w: 2.3 }, siphon: { c: '#93cf8b', w: 2.5 }, ghost: { c: 'rgba(147,207,139,0.4)', w: 1.1 }
+    };
+    return {
+      case_: 'rgba(16,21,17,0.8)',
+      kv345: { c: '#cd8b78', w: 2.4 }, kv200: { c: '#c48371', w: 1.9 }, kv100: { c: '#b8796d', w: 1.4 }, kvLow: { c: 'rgba(184,121,109,0.6)', w: 0.95 }, minor: { c: 'rgba(184,121,109,0.42)', w: 0.8 },
+      sewer: { c: '#7fb27a', w: 2.0 }, siphon: { c: '#7fb27a', w: 2.2 }, ghost: { c: 'rgba(111,154,108,0.38)', w: 1.0 }
+    };
   }
 
   var shedPick = null; // name of the tapped sewershed
@@ -241,14 +260,15 @@
       strokeBucket(L.roads.r12, C.road12, 1.25);
     }
     // the grid: distribution feeders come in on zoom; transmission always,
-    // drawn thin to thick by voltage class
+    // drawn thin to thick by voltage class, cased so it reads anywhere
+    var LS = lineStyles();
     if (on.grid) {
-      if (L.powerminor && view.z > 10.4) strokeBucket(L.powerminor, C.gridMinor, 0.7);
+      if (L.powerminor && view.z > 10.4) strokeBucket(L.powerminor, LS.minor.c, LS.minor.w, null, LS.case_);
       if (L.grid) {
-        strokeBucket(L.grid.low, C.kvLow, 0.8);
-        strokeBucket(L.grid.k100, C.kv100, 1.15);
-        strokeBucket(L.grid.k200, C.kv200, 1.6);
-        strokeBucket(L.grid.k345, C.kv345, 2.1);
+        strokeBucket(L.grid.low, LS.kvLow.c, LS.kvLow.w, null, LS.case_);
+        strokeBucket(L.grid.k100, LS.kv100.c, LS.kv100.w, null, LS.case_);
+        strokeBucket(L.grid.k200, LS.kv200.c, LS.kv200.w, null, LS.case_);
+        strokeBucket(L.grid.k345, LS.kv345.c, LS.kv345.w, null, LS.case_);
       }
       if (L.subs) {
         ctx.fillStyle = C.sub;
@@ -264,10 +284,10 @@
     }
     // sewers: gravity solid, forcemains long-dashed (pumped), siphons dotted
     if (on.sewer && L.interceptors) {
-      strokeBucket(L.interceptors.ghost, C.sewerGhost, 1, [3, 4]);
-      strokeBucket(L.interceptors.g, C.sewerLive, 1.7);
-      strokeBucket(L.interceptors.f, C.sewerLive, 1.7, [8, 4]);
-      strokeBucket(L.interceptors.s, C.sewerLive, 1.9, [2, 3]);
+      strokeBucket(L.interceptors.ghost, LS.ghost.c, LS.ghost.w, [3, 4]);
+      strokeBucket(L.interceptors.g, LS.sewer.c, LS.sewer.w, null, LS.case_);
+      strokeBucket(L.interceptors.f, LS.sewer.c, LS.sewer.w, [8, 4], LS.case_);
+      strokeBucket(L.interceptors.s, LS.siphon.c, LS.siphon.w, [2, 3], LS.case_);
     }
     // lift stations
     if (on.sewer && L.lifts && view.z > 10.3) {
@@ -395,6 +415,11 @@
 
   // ---- sizing ----
   function resize() {
+    // True full-bleed: the section lives inside an off-center reading column,
+    // so CSS alone cannot center it on the viewport. Pin it here.
+    var parentLeft = HOST.parentElement.getBoundingClientRect().left;
+    HOST.style.marginLeft = (-parentLeft) + 'px';
+    HOST.style.width = document.documentElement.clientWidth + 'px';
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     var r = STAGE.getBoundingClientRect();
     W = Math.round(r.width); H = Math.round(r.height);
@@ -604,17 +629,24 @@
     });
     return { best: best, px: px, py: py };
   }
+  var FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var hoverName = null;
   function hover(e) {
     var r = nearestPoint(e);
     if (r.best) {
-      TIP.textContent = r.best.name;
-      TIP.style.left = r.best.px2 + 'px'; TIP.style.top = (r.best.py2 - 14) + 'px';
-      TIP.hidden = false; CANVAS.style.cursor = 'pointer';
-    } else { hideTip(); }
+      CANVAS.style.cursor = 'pointer';
+      if (FINE && r.best.sel.name !== hoverName) {
+        hoverName = r.best.sel.name;
+        openPanel(r.best.sel);
+      }
+    } else {
+      CANVAS.style.cursor = 'grab';
+      hoverName = null;
+    }
   }
   function tap(e) {
     var r = nearestPoint(e);
-    if (r.best) { hideTip(); openPanel(r.best.sel); return; }
+    if (r.best) { openPanel(r.best.sel); return; }
     // a line under the finger?
     var lineBuckets = [];
     if (on.grid && L.grid) {
@@ -659,7 +691,7 @@
     }
     requestDraw();
   }
-  function hideTip() { TIP.hidden = true; CANVAS.style.cursor = 'grab'; }
+  function hideTip() { if (TIP) TIP.hidden = true; CANVAS.style.cursor = 'grab'; }
 
   // controls
   HOST.querySelectorAll('[data-um-toggle]').forEach(function (btn) {
@@ -686,18 +718,19 @@
     }
   }
 
-  // ---- basemap switch ----
-  var baseBtns = HOST.querySelectorAll('[data-um-base]');
+  // ---- basemap switch: the corner thumbnail always previews the OTHER map ----
+  var baseThumb = HOST.querySelector('[data-um-basethumb]');
   function setBase(sat) {
     SAT.on = !!sat;
-    baseBtns.forEach(function (b2) {
-      b2.setAttribute('aria-pressed', (b2.getAttribute('data-um-base') === 'sat') === SAT.on ? 'true' : 'false');
-    });
+    if (baseThumb) {
+      var img = baseThumb.querySelector('img'), lbl = baseThumb.querySelector('span');
+      if (img) img.src = SAT.on ? 'assets/map/base-drawn.jpg' : 'assets/map/base-sat.jpg';
+      if (lbl) lbl.textContent = SAT.on ? 'Drawn' : 'Satellite';
+      baseThumb.setAttribute('aria-label', SAT.on ? 'Switch to the drawn map' : 'Switch to satellite view');
+    }
     noteMoved(); requestDraw();
   }
-  baseBtns.forEach(function (b2) {
-    b2.addEventListener('click', function () { setBase(b2.getAttribute('data-um-base') === 'sat'); });
-  });
+  if (baseThumb) baseThumb.addEventListener('click', function () { setBase(!SAT.on); });
 
   // ---- fly-to presets ----
   var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -722,6 +755,15 @@
       flyTo(+v[0], +v[1], +v[2]);
     });
   });
+  var placesSel = HOST.querySelector('[data-um-places]');
+  if (placesSel) placesSel.addEventListener('change', function () {
+    if (!placesSel.value) return;
+    var v = placesSel.value.split(',');
+    flyTo(+v[0], +v[1], +v[2]);
+  });
+  // the layers card starts open on wide screens, collapsed on phones
+  var layersCard = HOST.querySelector('.um-layers');
+  if (layersCard && window.matchMedia && window.matchMedia('(min-width: 701px)').matches) layersCard.setAttribute('open', '');
 
   // ---- data load (lazy) ----
   var started = false;
