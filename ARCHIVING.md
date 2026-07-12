@@ -55,12 +55,24 @@ Let `<slug>` be the post's basename (e.g. `seven-habits`).
 7. **Remove the homepage card.** Delete the post's whole
    `<li class="article-list-item ...">...</li>` block from `index.html`.
 
-8. **Rebuild the search index.** `node tools/build-search-index.mjs`, then commit the
+8. **Add the card to `archive.html`.** The shelf is HAND-AUTHORED: copy an existing
+   `<li class="article-list-item ...">` block, point it at the archive URL and the
+   moved thumb, and keep the shelf's newest-first order (first card's thumb is
+   `loading="eager"`, the rest lazy). Exception, owner's call: the three AA posts
+   (`alcoholics-anonymous`, `first-164`, `forty-not-a-hundred`) are deliberately
+   NOT carded on the shelf; they stay reachable through cross-links and search.
+   Do not add cards for them, and do not treat their absence as a bug.
+
+9. **Rebuild the search index.** `node tools/build-search-index.mjs`, then commit the
    regenerated `search-index.json`. The builder auto-discovers `archive/<slug>/`,
    drops the now-dead root entry (the card is gone), and reads the archived page's
    `og:image` as the result thumb, so steps 2, 4, and 7 must be done first.
 
-9. **Refresh the About-page attribution tile** (`js/git-attribution-data.js`, the
+10. **Regenerate the sitemap.** `node tools/build-sitemap.mjs` (run it AFTER the
+    commit that moves the page, or amend, so lastmod picks up the new path), then
+    commit `sitemap.xml`.
+
+11. **Refresh the About-page attribution tile** (`js/git-attribution-data.js`, the
    "Which mind built which page" viz). Run `node tools/build-attribution.mjs` (read
    its header first): add the post to the `NEW` config, run once to validate, then
    `--write`. It is **add-only** because old transcripts get pruned, so a full
@@ -68,11 +80,15 @@ Let `<slug>` be the post's basename (e.g. `seven-habits`).
    (e.g. `star-signs`, `remote-viewing`, `space-age`) has no local transcripts and
    legitimately never appears; the page scopes this, so do **not** fabricate a tile.
    Verify the new tile renders on `about.html` before committing.
+   If the post already has entries (it was live before), skip the tool and hand-edit
+   both data files instead: in `js/git-attribution-data.js` and `js/git-history-data.js`,
+   point the post's `href` at `archive/<slug>/<slug>.html` and set its `kind` to
+   `"archived"` (see the `weather` and `the-number` entries for the shape).
 
-10. **Update `AGENTS.md`** only if the post was named in the "Pages" list there
+12. **Update `AGENTS.md`** only if the post was named in the "Pages" list there
     (rare; `best-photographs` was the precedent).
 
-11. **Commit and push** to `main`. Then verify: the archive URL loads with the
+13. **Commit and push** to `main`. Then verify: the archive URL loads with the
     banner, and the old root URL 404s.
 
 ---
@@ -81,5 +97,6 @@ Let `<slug>` be the post's basename (e.g. `seven-habits`).
 
 Reverse the steps: `git mv` the page back to root, restore relative shared paths,
 move assets back to `assets/thumbs/`, revert the `og:`/`twitter:` tags, remove the
-banner script, decrement `ARCHIVED`, re-add the homepage card to `index.html`, and
-rebuild the search index.
+banner script, decrement `ARCHIVED`, re-add the homepage card to `index.html`,
+remove the card from `archive.html`, rebuild the search index, and regenerate the
+sitemap.

@@ -37,24 +37,34 @@ above (read `docs/game/GAME.md`). They share `style.css` (the game shell reuses 
 panel tokens) and the three fonts; otherwise they do not overlap.
 
 > **The game is a deliberately SIMPLE single-town mining sandbox.** Multi-town world, combat +
-> the rig auto-turret, No Man's Zone obstacle courses, the cross-town Trade Board, jello/slime
-> soft bodies, underground oil, and ore refinement are **intentionally disabled** behind a
+> the rig auto-turret, No Man's Zone obstacle courses, the cross-town Trade Board, underground
+> oil, ore refinement, and the in-progress bathhouse are **intentionally disabled** behind a
 > central feature-flag block (`js/sluice/010-constants.js`). They are NOT bugs and NOT missing
 > features; do not re-enable a flag without asking the owner. Each can be spot-checked per
 > page-load with a URL param (e.g. `?multitown=1`, `?combat=1`); see the flag block.
+> (Jello/slime soft bodies used to be on this list but are **LIVE** in production,
+> `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls.)
 
 ---
 
 ## What lives here
 
-The portfolio pages and their assets:
+The portfolio pages and their assets (~50 live posts now; this lists the structure,
+not every page):
 
-- Pages: `index.html`, `about.html`, `gallery.html`, `particle-life.html`, `particles.html`,
-  `daylight-globe.html`, `weather.html`, `optional-body.html`, `random-galaxy.html`, and
+- `index.html` holds the 12 curated homepage cards plus the site search; most posts
+  live under one of the hub/section pages instead: `boring-stuff.html` (the shelf),
+  `religion.html`, `philosophy.html`, `inner-life.html`, `power-story-love.html`,
+  `staying-alive.html`, and `career.html`. A post is either a homepage card OR a hub
+  member, never both.
+- Demo/visualization posts: `gallery.html`, `particle-life.html`, `particles.html`,
+  `daylight-globe.html`, `optional-body.html`, `random-galaxy.html`, `ocean.html`, and
   `grand-motherload.html` (the playable **Sluice** game; see the game section above).
-  `about.html` is the site's meta page (how it's made, and what it's
+- `about.html` is the site's meta page (how it's made, and what it's
   made of); it absorbed the former `colophon.html` and `git-history.html` posts
   and is powered by the `js/git-history*` and `js/git-attribution*` scripts.
+- `archive.html` + `archive/<slug>/` hold shelved posts (see Archiving below), and
+  `labs.html` indexes the throwaway `*-lab.html` choosers that were kept.
 - Shared: `style.css`, the site scripts in `js/` (`main.js`, `globe.js`, `particle-life.js`,
   `particles.js`, `git-history*.js`, `git-attribution*.js`, `optional-body.js`, `random-galaxy.js`, `backtotop.js`),
   and `assets/` (fonts, images, thumbs, etc.).
@@ -67,7 +77,8 @@ The portfolio pages and their assets:
   its canvas HUD uses Commit Mono.)
 - Color: the whole site runs on one warm, OKLCH-tuned palette on a locked dark-green background (`--bg: #303931`). **Read `STYLE.md` before adding or changing any color, type, or component** (it folds in the old PALETTE.md and documents the component kit in `kit.css`). The source of truth is the `:root` block in `style.css`; prefer `var(--token)` over a raw hex. Never recolor photographs, `--img-bg` mattes, `@media print` blocks, or the `best-photographs` gallery.
 - Prose: every post is written in one calibrated voice. **Read `VOICE.md` before writing or editing post prose** (the Warm base voice, how to open a post and how to deliver a fact, the LLM-tell kill-list, and the credibility rules that keep posts off the wrong end of a Hacker News thread). It was calibrated with the owner via `voice-lab.html`; the no-em-dash rule below is part of it.
-- Archiving: moving a finished post off the homepage into `/archive` (owner's curation call) is a multi-step checklist that is easy to half-do. **Read `ARCHIVING.md` before archiving or un-archiving any post** (move the page, move its thumbs, fix shared paths to absolute, fix the `og:`/`twitter:` tags to the archive URL, add the banner, bump the counter, drop the homepage card, rebuild the search index, refresh the About-page attribution tile).
+- Archiving: moving a finished post off the homepage into `/archive` (owner's curation call) is a multi-step checklist that is easy to half-do. **Read `ARCHIVING.md` before archiving or un-archiving any post** (move the page, move its thumbs, fix shared paths to absolute, fix the `og:`/`twitter:` tags to the archive URL, add the banner, bump the counter, drop the homepage card, add the card to `archive.html`, rebuild the search index, regenerate the sitemap, refresh the About-page attribution tile).
+- Sitemap: `sitemap.xml` is generated (`node tools/build-sitemap.mjs`, lastmod from git). Regenerate and commit it whenever a page is added, archived, or removed. `robots.txt` points crawlers at it.
 - Images: every photographic `<img>` is served as WebP through a `<picture>` wrapper with a JPG/PNG fallback (about 55% smaller, no visible quality loss). After adding or changing any post image, run `node tools/build-webp.mjs` (writes a `.webp` sibling for every raster the HTML references, q82 photos / lossless small PNGs) then `node tools/wrap-picture.mjs` (wraps bare `<img>` in `<picture>`); both are idempotent, driven by real references, and skip the `*-lab.html` choosers. Keep the first above-the-fold image `loading="eager"` and the rest `loading="lazy"`.
 - Commit and push every change to `main`; GitHub Pages auto-deploys. No manual deploy step.
 - No em dashes in any content or commit messages (use commas, periods, parentheses, or "to").
