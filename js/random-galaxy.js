@@ -6816,7 +6816,7 @@
       }).catch(function () {});
     };
     img.onerror = function () {};
-    img.src = 'assets/images/nebula-bg.jpg?v=6k';   // ?v cache-busts the 6000x3000 upgrade so browsers refetch the higher-res file
+    img.src = 'assets/images/nebula-bg.webp?v=7w';   // ?v cache-busts format changes (7w = the 3.4MB webp; the 8.2MB jpg master stays local, untracked)
   }
   var uniformData = new Float32Array(52);   // view + proj + params + params2 + params3 + params4 + params5
   // ----- LIFE / look-tuning state -----

@@ -31,6 +31,10 @@ assets/Sluice Audio/
 # keep the masters local, do not commit them.
 assets/images/zoom-src/
 
+# The random-galaxy sky master (8.2MB jpg). The site ships the 3.4MB webp
+# derivative (assets/images/nebula-bg.webp); keep the jpg local for re-encodes.
+assets/images/nebula-bg.jpg
+
 # --- Local working scratch (kept on disk, not part of the deployed site) ---
 # Research corpora + dossiers (large; one working dir per post topic).
 # Untracked for real on 2026-07-12: the early corpora were committed before this
