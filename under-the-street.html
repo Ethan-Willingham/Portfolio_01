@@ -105,6 +105,8 @@
   .um-stage canvas:active { cursor: grabbing; }
   .um-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); margin: 0; pointer-events: none; }
   .um-tip { position: absolute; transform: translate(-50%, -100%); background: #1e2420; color: var(--text); border: 1px solid var(--rule-strong); border-radius: 4px; padding: 0.3rem 0.6rem; font-family: var(--font-body); font-size: 0.82rem; white-space: nowrap; pointer-events: none; z-index: 3; }
+  .um-shed { position: absolute; left: 0.8rem; bottom: 2.4rem; margin: 0; background: #1e2420; color: var(--text); border: 1px solid var(--rule-strong); border-radius: 4px; padding: 0.35rem 0.7rem; font-family: var(--font-body); font-size: 0.85rem; z-index: 2; max-width: min(75%, 26rem); }
+  .um-scale { position: absolute; left: 0.85rem; bottom: 0.85rem; border-left: 1px solid var(--text-dim); border-right: 1px solid var(--text-dim); border-bottom: 1px solid var(--text-dim); height: 0.45rem; font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-dim); text-align: center; line-height: 0.1; padding-top: 0.1rem; z-index: 2; pointer-events: none; }
   .um-zoom { position: absolute; right: 0.8rem; bottom: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; z-index: 2; }
   .um-zoom button { width: 2.1rem; height: 2.1rem; border-radius: 4px; border: 1px solid var(--rule-strong); background: #1e2420; color: var(--text); font-family: var(--font-mono); font-size: 1rem; cursor: pointer; }
   .um-zoom button:hover { border-color: var(--accent); color: var(--accent-hover); }
@@ -177,22 +179,25 @@
       <section class="ummap" id="undermap" aria-label="An interactive map of real Twin Cities buried infrastructure">
         <div class="um-bar">
           <span class="um-k">The real lines</span>
-          <button class="um-toggle" data-um-toggle="sewer" aria-pressed="true" style="--pc:var(--mark-sewer)">interceptor sewers</button>
-          <button class="um-toggle" data-um-toggle="power" aria-pressed="true" style="--pc:var(--mark-elec)">transmission lines</button>
+          <button class="um-toggle" data-um-toggle="sewer" aria-pressed="true" style="--pc:var(--mark-sewer)">the sewer system</button>
+          <button class="um-toggle" data-um-toggle="grid" aria-pressed="true" style="--pc:var(--mark-elec)">the grid</button>
+          <button class="um-toggle" data-um-toggle="pplants" aria-pressed="true" style="--pc:#ece5d3">power plants</button>
           <button class="um-toggle" data-um-toggle="roads" aria-pressed="true" style="--pc:#8f9184">roads</button>
-          <button class="um-toggle" data-um-toggle="plants" aria-pressed="true" style="--pc:var(--mark-gas)">treatment plants</button>
         </div>
         <div class="um-stage">
-          <canvas aria-label="Map canvas. Drag to pan, scroll or pinch to zoom."></canvas>
+          <canvas tabindex="0" aria-label="Map canvas. Drag to pan, scroll or pinch to zoom; arrow keys pan, plus and minus zoom, 0 resets."></canvas>
           <p class="um-status">This map needs JavaScript.</p>
           <div class="um-tip" hidden></div>
+          <p class="um-shed" hidden></p>
+          <span class="um-scale" aria-hidden="true"></span>
           <div class="um-zoom">
             <button type="button" data-um-zoom="in" aria-label="Zoom in">+</button>
             <button type="button" data-um-zoom="out" aria-label="Zoom out">&minus;</button>
             <button type="button" data-um-zoom="home" aria-label="Reset view">&#8962;</button>
+            <button type="button" data-um-zoom="full" aria-label="Fullscreen">&#x2922;</button>
           </div>
         </div>
-        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, from the Met Council (MCES); treatment plants and lift stations, MCES; roads, MnDOT; lakes and the river, DNR/Met Council; electric transmission lines &copy; OpenStreetMap contributors (ODbL). Gas mains and street-level electric are not on the map because those maps are not public. Drag, pinch, and tap the dots.</p>
+        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Gas mains and street-level electric drops are not here because those maps are not public. Drag, pinch, tap a dot for its facts, or tap open ground to see which plant your flush drains to.</p>
       </section>
 
       <section class="layer" id="street" style="--lc:var(--accent)">
