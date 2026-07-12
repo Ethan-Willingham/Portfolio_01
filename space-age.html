@@ -701,7 +701,7 @@
                      '<span class="pl-meta"><span class="pl-label">Year</span>' + fmtEarthYears(b.days) + '</span>';
         var confetti = item.isToday ? '<span class="pl-confetti" aria-hidden="true">' + '<i></i>'.repeat(9) + '</span>' : '';
         rows += '<li class="pl sa-rise' + (item.isToday ? ' is-birthday' : '') + '" style="animation-delay:' + (0.06 * i).toFixed(2) + 's">' +
-                  '<div class="pl-orb"><img class="pl-img" src="assets/planets/' + b.key + '.jpg" width="160" height="160" loading="lazy" decoding="async" alt="">' + confetti + '</div>' +
+                  '<div class="pl-orb"><img class="pl-img" src="assets/planets/' + b.key + '.jpg" width="160" height="160" loading="eager" decoding="async" alt="">' + confetti + '</div>' +
                   '<div class="pl-main">' +
                     '<div class="pl-name">' + b.name +
                       (b.tag ? '<span class="pl-tag">' + b.tag + '</span>' : '') + '</div>' +
