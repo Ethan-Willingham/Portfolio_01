@@ -106,12 +106,32 @@
   .um-fly-row { margin-top: 0.15rem; }
   .um-fly { font-family: var(--font-mono); font-size: 0.73rem; letter-spacing: 0.03em; color: var(--text-dim); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.28rem 0.75rem; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
   .um-fly:hover { border-color: var(--accent); color: var(--accent-hover); }
-  .um-fuels { display: inline-flex; align-items: center; gap: 0.28rem; margin-left: auto; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.03em; color: var(--text-faint); flex-wrap: wrap; }
-  .um-fuels i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--fc); display: inline-block; margin-left: 0.45rem; }
+  .um-key { max-width: calc(var(--measure) + 14rem); margin: 0.2rem auto 0.7rem; padding: 0 var(--gutter, 1.5rem); }
+  .um-key summary { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); cursor: pointer; }
+  .um-key summary:hover { color: var(--text-dim); }
+  .um-keygrid { display: flex; flex-wrap: wrap; gap: 0.45rem 1.2rem; padding: 0.7rem 0 0.2rem; }
+  .um-ki { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
+  .um-ki .kl { width: 26px; height: 0; display: inline-block; }
+  .um-ki .kd { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--kc); display: inline-block; }
+  .um-ki .kd.kr { background: none; border: 1.6px solid var(--kc); }
+  .um-ki .kd.kdia { border-radius: 0; transform: rotate(45deg) scale(0.9); }
+  .um-ki .kd.ksq { border-radius: 0; }
+  .um-panel { position: absolute; top: 0.8rem; right: 0.8rem; width: min(320px, calc(100% - 1.6rem)); background: #1e2420; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 0.85rem 1rem 0.95rem; z-index: 4; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+  .um-panel h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; line-height: 1.2; color: var(--text-bright); margin: 0.15rem 1.2rem 0.4rem 0; }
+  .um-pk { display: flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
+  .um-pk::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--pk); flex: none; }
+  .um-prow { display: flex; justify-content: space-between; gap: 1rem; font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-faint); border-top: 1px solid var(--rule); padding: 0.3rem 0; }
+  .um-prow b { color: var(--text); font-weight: 400; }
+  .um-pblurb { font-family: var(--font-body); font-size: 0.88rem; line-height: 1.55; color: var(--text-dim); margin: 0.5rem 0 0; }
+  .um-pact { display: flex; gap: 0.45rem; margin-top: 0.75rem; }
+  .um-pact button { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); background: none; border: 1px solid var(--rule-strong); border-radius: 999px; padding: 0.3rem 0.75rem; cursor: pointer; }
+  .um-pact button:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .um-pclose { position: absolute; top: 0.45rem; right: 0.55rem; background: none; border: none; color: var(--text-faint); font-size: 1.15rem; cursor: pointer; line-height: 1; padding: 0.2rem; }
+  .um-pclose:hover { color: var(--text); }
   @media (max-width: 700px) {
-    .um-fuels { display: none; }
     .um-fly, .um-base button, .um-toggle { font-size: 0.68rem; }
     .um-fly { padding: 0.24rem 0.6rem; }
+    .um-panel { top: auto; bottom: 0.6rem; left: 0.6rem; right: 0.6rem; width: auto; max-height: 46%; overflow: auto; }
   }
   .um-stage { position: relative; height: clamp(440px, 74vh, 820px); background: #272e28; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
   .um-stage canvas { position: absolute; inset: 0; touch-action: none; cursor: grab; }
@@ -207,14 +227,37 @@
           <button class="um-fly" type="button" data-um-fly="-93.8426,45.33094,15.2">Monticello nuclear</button>
           <button class="um-fly" type="button" data-um-fly="-93.2577,44.9738,15.8">US Bank Stadium</button>
           <button class="um-fly" type="button" data-um-fly="-93.27868,45.04322,15.4">Mpls water works</button>
-          <span class="um-fuels" aria-hidden="true"><i style="--fc:#b79bc4"></i>nuclear <i style="--fc:#b8796d"></i>coal <i style="--fc:#dfc288"></i>gas <i style="--fc:#8fb3c7"></i>hydro <i style="--fc:#cf9f78"></i>waste <i style="--fc:#ece5d3"></i>solar</span>
         </div>
+        <details class="um-key">
+          <summary>Map key: every line, and what makes each different</summary>
+          <div class="um-keygrid">
+            <span class="um-ki"><i class="kl" style="border-top:2.2px solid #c47e70"></i>345 kV backbone</span>
+            <span class="um-ki"><i class="kl" style="border-top:1.7px solid #be7c6e"></i>230 kV</span>
+            <span class="um-ki"><i class="kl" style="border-top:1.2px solid #b8796d"></i>115 to 161 kV</span>
+            <span class="um-ki"><i class="kl" style="border-top:1px solid rgba(184,121,109,0.55)"></i>sub-100 kV</span>
+            <span class="um-ki"><i class="kl" style="border-top:1px dashed rgba(184,121,109,0.45)"></i>local feeder (zoom in)</span>
+            <span class="um-ki"><i class="kl" style="border-top:1.8px solid #6f9a6c"></i>gravity sewer</span>
+            <span class="um-ki"><i class="kl" style="border-top:1.8px dashed #6f9a6c"></i>forcemain, pumped</span>
+            <span class="um-ki"><i class="kl" style="border-top:1.9px dotted #6f9a6c"></i>siphon, dives under rivers</span>
+            <span class="um-ki"><i class="kl" style="border-top:1px dashed rgba(111,154,108,0.45)"></i>abandoned, a ghost</span>
+            <span class="um-ki"><i class="kd" style="--kc:#dfc288"></i>treatment plant</span>
+            <span class="um-ki"><i class="kd kr" style="--kc:#8fb3c7"></i>drinking water</span>
+            <span class="um-ki"><i class="kd kdia" style="--kc:#cf9f78"></i>data center</span>
+            <span class="um-ki"><i class="kd ksq" style="--kc:rgba(184,121,109,0.7)"></i>substation</span>
+            <span class="um-ki"><i class="kd" style="--kc:#b79bc4"></i>nuclear</span>
+            <span class="um-ki"><i class="kd" style="--kc:#b8796d"></i>coal</span>
+            <span class="um-ki"><i class="kd" style="--kc:#dfc288"></i>gas</span>
+            <span class="um-ki"><i class="kd" style="--kc:#8fb3c7"></i>hydro</span>
+            <span class="um-ki"><i class="kd" style="--kc:#ece5d3"></i>solar</span>
+          </div>
+        </details>
         <div class="um-stage">
           <canvas tabindex="0" aria-label="Map canvas. Drag to pan, scroll or pinch to zoom; arrow keys pan, plus and minus zoom, 0 resets."></canvas>
           <p class="um-status">This map needs JavaScript.</p>
           <div class="um-tip" hidden></div>
           <p class="um-shed" hidden></p>
           <span class="um-scale" aria-hidden="true"></span>
+          <aside class="um-panel" hidden aria-live="polite"></aside>
           <div class="um-zoom">
             <button type="button" data-um-zoom="in" aria-label="Zoom in">+</button>
             <button type="button" data-um-zoom="out" aria-label="Zoom out">&minus;</button>
@@ -222,7 +265,7 @@
             <button type="button" data-um-zoom="full" aria-label="Fullscreen">&#x2922;</button>
           </div>
         </div>
-        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Drinking-water plants, OSM. Gas mains and street-level electric drops are not here because those maps are not public. The satellite basemap is USGS aerial imagery (The National Map, public domain) and loads from usgs.gov only while switched on. Drag, pinch, tap a dot for its facts, or tap open ground to see which plant your flush drains to.</p>
+        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Drinking-water plants and data centers, OSM; the 511 Building interconnection, PeeringDB. Line differences are real: transmission is drawn by voltage class, sewers by how they move (gravity, pumped forcemain, or siphon). Gas mains and street-level electric drops are not here because those maps are not public. The satellite basemap is USGS aerial imagery (The National Map, public domain) and loads from usgs.gov only while switched on. Drag, pinch, tap a dot for its facts, or tap open ground to see which plant your flush drains to.</p>
       </section>
 
       <section class="layer" id="street" style="--lc:var(--accent)">
@@ -254,7 +297,7 @@
           <p class="sub">The newest utility gets the leftover space near the surface.</p>
         </div>
         <p>Communications lines are the shallowest thing in the ground, usually within the first couple of feet. They can afford to be: a fiber line doesn't freeze, doesn't leak, and doesn't explode, so it doesn't earn the expensive deep real estate. What it gets instead is conduit, plastic duct a crew can blow new cable through years later without digging, and the small square handholes you walk past in every boulevard.</p>
-        <p>The physical internet of the Twin Cities converges in ordinary-looking buildings where networks hand traffic to each other. The regional exchange, MICE (the Midwest Internet Cooperative Exchange), is a cooperative peering point in Minneapolis with 158 participating networks. <span class="u-src"><a href="https://www.micemn.net/">micemn.net</a></span> Traffic between two Minnesota customers on two different providers can turn around locally instead of detouring through Chicago, which is the entire point of having an exchange in town.</p>
+        <p>The physical internet of the Twin Cities converges in ordinary-looking buildings where networks hand traffic to each other. The biggest is the 511 Building, an old warehouse at 511 11th Avenue South in Minneapolis that works as the metro's carrier hotel: the regional exchange, MICE (the Midwest Internet Cooperative Exchange), peers 158 networks there, in the Cologix MIN1 facility. <span class="u-src"><a href="https://www.micemn.net/">micemn.net</a></span> <span class="u-src"><a href="https://www.peeringdb.com/ix/446">PeeringDB</a></span> Traffic between two Minnesota customers on two different providers can turn around locally instead of detouring through Chicago, which is the entire point of having an exchange in town. It is on the map, one block from the stadium.</p>
         <div class="seam"><p><b>The stress test came early.</b> Minneapolis was one of the few US cities that actually built a citywide municipal Wi-Fi network. Early in its rollout, the I-35W bridge fell into the Mississippi, and with phone networks overloaded the new mesh became a working channel for responders. Computerworld's headline three days later: "New Wi-Fi Network Proves Critical in Minneapolis Bridge Disaster." <span class="u-src"><a href="https://web.archive.org/web/20070914161811/http://www.computerworld.com/action/article.do?command=viewArticleBasic&amp;articleId=9028978">Computerworld, 2007</a></span></p></div>
       </section>
 
@@ -323,7 +366,7 @@
           <ol class="u-collapse-list">
             <li><b>Bassett Creek history, burial, and tunnels.</b> <a href="https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)">en.wikipedia.org</a></li>
             <li><b>Minnesota One Call law, 48-hour locate window.</b> <a href="https://gopherstateonecall.org/state-laws">gopherstateonecall.org</a></li>
-            <li><b>MICE, the regional internet exchange (158 participants).</b> <a href="https://www.micemn.net/">micemn.net</a></li>
+            <li><b>MICE, the regional internet exchange (158 participants), and its home at 511 11th Ave S (Cologix MIN1).</b> <a href="https://www.micemn.net/">micemn.net</a> · <a href="https://www.peeringdb.com/ix/446">peeringdb.com</a></li>
             <li><b>Municipal Wi-Fi in the I-35W bridge collapse.</b> Computerworld, Aug 3, 2007. <a href="https://web.archive.org/web/20070914161811/http://www.computerworld.com/action/article.do?command=viewArticleBasic&amp;articleId=9028978">archived copy</a> · <a href="https://en.wikipedia.org/wiki/I-35W_Mississippi_River_bridge">context</a></li>
             <li><b>CenterPoint Energy / Minnegasco lineage.</b> <a href="https://en.wikipedia.org/wiki/CenterPoint_Energy">en.wikipedia.org</a></li>
             <li><b>Frost footing depths, 42 in southern zone, 60 in northern.</b> Minnesota Rules 1303.1600. <a href="https://www.revisor.mn.gov/rules/1303.1600/">revisor.mn.gov</a></li>

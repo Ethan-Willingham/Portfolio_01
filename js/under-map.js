@@ -31,12 +31,14 @@
     county: 'rgba(232,226,214,0.10)', city: 'rgba(232,226,214,0.22)',
     water: '#26343b',
     road12: 'rgba(232,226,214,0.34)', road3: 'rgba(232,226,214,0.20)', road4: 'rgba(232,226,214,0.11)',
-    grid: 'rgba(184,121,109,0.85)', gridMinor: 'rgba(184,121,109,0.38)',
+    kv345: 'rgba(196,126,112,0.95)', kv200: 'rgba(190,124,110,0.85)', kv100: 'rgba(184,121,109,0.72)', kvLow: 'rgba(184,121,109,0.5)', gridMinor: 'rgba(184,121,109,0.34)',
     sub: 'rgba(184,121,109,0.60)',
     sewerLive: 'rgba(111,154,108,0.95)', sewerGhost: 'rgba(111,154,108,0.34)',
     lift: 'rgba(111,154,108,0.85)',
     shed: 'rgba(111,154,108,0.045)', shedLine: 'rgba(111,154,108,0.10)', shedHi: 'rgba(111,154,108,0.13)',
     tplant: '#dfc288',  tplantGhost: 'rgba(223,194,136,0.38)',
+    dc: '#cf9f78',
+    sel: '#ede0c0',
     label: 'rgba(245,241,234,0.92)', labelHalo: 'rgba(30,36,32,0.85)',
     mark: '#d4c4a0'
   };
@@ -99,14 +101,18 @@
     lifts: 'assets/map/lifts.json',
     tplants: 'assets/map/plants.json',
     sewersheds: 'assets/map/sewersheds.json',
-    waterworks: 'assets/map/waterworks.json'
+    waterworks: 'assets/map/waterworks.json',
+    comms: 'assets/map/comms.json'
   };
   var L = {};
   var on = { roads: true, grid: true, pplants: true, sewer: true };
 
   // ---- landmarks (hand-checked, deliberately few) ----
   var MARKS = [
-    { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike' }
+    { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike', kind: 'mark',
+      blurb: 'The only major waterfall on the Mississippi, artificial since 1880. Under the river just upstream sits the concrete dike the Army Corps finished in 1876, up to 40 feet deep and 1,850 feet across, built after the Eastman tunnel collapse nearly unzipped the falls.' },
+    { lon: -93.25458, lat: 44.97141, name: 'The 511 Building', kind: 'mark',
+      blurb: 'The metro\'s carrier hotel: the old warehouse at 511 11th Ave S where the region\'s networks physically interconnect. MICE, the Midwest Internet Cooperative Exchange, peers 158 networks here (Cologix MIN1, per PeeringDB). If your packet crosses town, odds are it passes through this building.' }
   ];
 
   // ---- mercator ----
@@ -234,10 +240,16 @@
       strokeBucket(L.roads.r3, C.road3, 0.8);
       strokeBucket(L.roads.r12, C.road12, 1.25);
     }
-    // the grid: distribution feeders come in on zoom, transmission always
+    // the grid: distribution feeders come in on zoom; transmission always,
+    // drawn thin to thick by voltage class
     if (on.grid) {
       if (L.powerminor && view.z > 10.4) strokeBucket(L.powerminor, C.gridMinor, 0.7);
-      if (L.power) strokeBucket(L.power, C.grid, 1.05);
+      if (L.grid) {
+        strokeBucket(L.grid.low, C.kvLow, 0.8);
+        strokeBucket(L.grid.k100, C.kv100, 1.15);
+        strokeBucket(L.grid.k200, C.kv200, 1.6);
+        strokeBucket(L.grid.k345, C.kv345, 2.1);
+      }
       if (L.subs) {
         ctx.fillStyle = C.sub;
         var showMinorSubs = view.z > 11.0;
@@ -250,10 +262,12 @@
         });
       }
     }
-    // sewers
+    // sewers: gravity solid, forcemains long-dashed (pumped), siphons dotted
     if (on.sewer && L.interceptors) {
       strokeBucket(L.interceptors.ghost, C.sewerGhost, 1, [3, 4]);
-      strokeBucket(L.interceptors.live, C.sewerLive, 1.7);
+      strokeBucket(L.interceptors.g, C.sewerLive, 1.7);
+      strokeBucket(L.interceptors.f, C.sewerLive, 1.7, [8, 4]);
+      strokeBucket(L.interceptors.s, C.sewerLive, 1.9, [2, 3]);
     }
     // lift stations
     if (on.sewer && L.lifts && view.z > 10.3) {
@@ -295,6 +309,19 @@
         if (view.z > 10.8) label(pt.p.name, p[0], p[1] - 8, 3);
       });
     }
+    // data centers: where the fiber physically meets
+    if (on.grid && L.dc) {
+      L.dc.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
+        ctx.fillStyle = C.dc;
+        ctx.beginPath();
+        ctx.moveTo(p[0], p[1] - 3.6); ctx.lineTo(p[0] + 3.6, p[1]); ctx.lineTo(p[0], p[1] + 3.6); ctx.lineTo(p[0] - 3.6, p[1]);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(30,36,32,0.9)'; ctx.lineWidth = 1.1; ctx.stroke();
+        if (view.z > 11.2) label(pt.p.name, p[0], p[1] - 8, 2);
+      });
+    }
     // power plants, sized by megawatts, colored by fuel
     if (on.pplants && L.pplants) {
       L.pplants.forEach(function (pt) {
@@ -321,6 +348,12 @@
       ctx.beginPath(); ctx.arc(p[0], p[1], 1.6, 0, 6.2832); ctx.fill();
       if (view.z > 10.4) label(m.name, p[0], p[1] - 11, 6);
     });
+    // selection ring
+    if (SEL && SEL.x !== undefined) {
+      var sp = toPx(SEL.x, SEL.y);
+      ctx.strokeStyle = C.sel; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(sp[0], sp[1], 9, 0, 6.2832); ctx.stroke();
+    }
     flushLabels();
     drawScale();
   }
@@ -396,7 +429,7 @@
 
   var pointers = new Map(), pinch = null, downAt = null;
   CANVAS.addEventListener('pointerdown', function (e) {
-    CANVAS.setPointerCapture(e.pointerId);
+    try { CANVAS.setPointerCapture(e.pointerId); } catch (err) {}
     downAt = { x: e.clientX, y: e.clientY, t: Date.now() };
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
@@ -453,45 +486,152 @@
     e.preventDefault(); clampView(); noteMoved(); requestDraw();
   });
 
+  // ---- the inspector ----
+  var PANEL = HOST.querySelector('.um-panel');
+  var SEL = null;
+  // Curated depth for the flagship facilities. Numbers come from the layer
+  // data itself or from facts already sourced in the essay above.
+  var FACTS = {
+    'Metro': 'The one that started it all: opened 1938 at Pig\'s Eye as the first major-metro sewage plant on the Mississippi. Today it treats about 225 million gallons a day, roughly half the wastewater the whole state produces, for a service population over two million.',
+    'Blue Lake': 'One of the regional system\'s two big southwest plants, serving the Minnesota River side of the metro.',
+    'Seneca': 'Treats the Minnesota River valley\'s share of the metro\'s flow, tucked below the bluffs in Eagan.',
+    'Monticello Nuclear Generating Plant': 'A single boiling-water reactor on the Mississippi upstream of the cities, running since 1971. The river water that cools it flows on down through both downtowns.',
+    'Prairie Island Nuclear Generating Plant': 'Two pressurized-water reactors downstream near Red Wing. Its spent fuel is stored on site, next to the Prairie Island Indian Community, some homes within 600 yards.',
+    'Allen S. King Power Plant': 'The tall stack on the St. Croix at Bayport. One of the last big coal units in the metro.',
+    'Covanta Hennepin Energy': 'The downtown garbage burner: Hennepin County trash goes in, about 39 megawatts come out, a block from the ballpark.',
+    'High Bridge Power Plant': 'St. Paul\'s riverside plant at the High Bridge, burning gas to cover the city\'s peaks.',
+    'Riverside Generating Plant': 'North Minneapolis\'s big gas plant on the river bend, a coal site for a century before conversion.',
+    'Minneapolis Water Treatment Plant': 'Where Minneapolis drinks from: river water drawn upstream in Fridley, softened, filtered, and pushed into the city\'s mains.',
+    'McCarrons Water Treatment Plant': 'St. Paul Regional Water\'s plant. The east metro\'s taps start here.',
+    'Minnesota Gateway Data Center': 'The data-center floors of the 511 Building, the metro\'s main carrier hotel.'
+  };
+  var KINDBLURB = {
+    tplant: 'A regional wastewater treatment plant: everything flushed in its sewershed ends up here, gets cleaned, and returns to the river.',
+    tplantGhost: 'A treatment plant that closed when the regional system consolidated. Its ground remembers.',
+    ww: 'A drinking-water treatment plant: the clean half of the water cycle, upstream of every tap it serves.',
+    dc: 'A data center: one of the buildings where the metro\'s fiber physically terminates and networks exchange traffic.',
+    sub: 'A substation: where transmission voltage steps down toward neighborhood feeders.',
+    pplant: { nuclear: 'Splits uranium to boil water.', coal: 'Burns coal, the old backbone.', gas: 'Burns natural gas, the system\'s flexible middle.', oil: 'An oil or dual-fuel peaker, run when demand spikes.', hydro: 'Spins on falling river water, the oldest power here.', waste: 'Burns garbage and sells the heat.', solar: 'A solar array.', wind: 'A wind site.', biomass: 'Burns plant matter.', battery: 'A grid battery.' }
+  };
+  function mwText(mw) { return mw ? (mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW') : null; }
+  function openPanel(sel) {
+    if (!PANEL) return;
+    SEL = sel;
+    var rows = '';
+    (sel.facts || []).forEach(function (f2) { rows += '<div class="um-prow"><span>' + f2[0] + '</span><b>' + f2[1] + '</b></div>'; });
+    PANEL.innerHTML =
+      '<button class="um-pclose" aria-label="Close">&times;</button>' +
+      '<p class="um-pk" style="--pk:' + (sel.color || '#d4c4a0') + '">' + sel.kindLabel + '</p>' +
+      '<h4>' + sel.name + '</h4>' + rows +
+      (sel.blurb ? '<p class="um-pblurb">' + sel.blurb + '</p>' : '') +
+      (sel.x !== undefined ? '<div class="um-pact"><button data-pa="fly">Fly closer</button><button data-pa="sat">See it from above</button></div>' : '');
+    PANEL.hidden = false;
+    PANEL.querySelector('.um-pclose').addEventListener('click', closePanel);
+    var fb = PANEL.querySelector('[data-pa="fly"]'), sb = PANEL.querySelector('[data-pa="sat"]');
+    if (fb) fb.addEventListener('click', function () { flyTo(lonOf(sel.x), latOf(sel.y), 15.4); });
+    if (sb) sb.addEventListener('click', function () { setBase(true); flyTo(lonOf(sel.x), latOf(sel.y), 16.2); });
+    requestDraw();
+  }
+  function closePanel() { if (PANEL) PANEL.hidden = true; SEL = null; requestDraw(); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+
+  // distance from a screen point to the nearest visible segment in buckets
+  function lineAt(px, py, buckets) {
+    var s = scale(), cx = view.x, cy = view.y;
+    var best = null, bd = 7;
+    buckets.forEach(function (bk) {
+      bk.segs.forEach(function (seg) {
+        if (!visible(seg, cx, cy, s)) return;
+        var xs = seg.xs, ys = seg.ys, n = seg.n;
+        var X0 = (xs[0] - cx) * s + W / 2, Y0 = (ys[0] - cy) * s + H / 2;
+        for (var i = 1; i < n; i++) {
+          var X1 = (xs[i] - cx) * s + W / 2, Y1 = (ys[i] - cy) * s + H / 2;
+          var dx = X1 - X0, dy = Y1 - Y0;
+          var L2 = dx * dx + dy * dy;
+          var t = L2 ? Math.max(0, Math.min(1, ((px - X0) * dx + (py - Y0) * dy) / L2)) : 0;
+          var qx = X0 + t * dx, qy = Y0 + t * dy;
+          var d2 = Math.hypot(px - qx, py - qy);
+          if (d2 < bd) { bd = d2; best = { meta: bk.meta, seg: seg }; }
+          X0 = X1; Y0 = Y1;
+        }
+      });
+    });
+    return best;
+  }
+
   // ---- hit testing ----
   function nearestPoint(e) {
     var rect = CANVAS.getBoundingClientRect();
     var px = e.clientX - rect.left, py = e.clientY - rect.top;
     var best = null, bd = 15;
-    function test(x, y, name) {
+    function test(x, y, name, sel) {
       var p = toPx(x, y), d = Math.hypot(p[0] - px, p[1] - py);
-      if (d < bd) { bd = d; best = { x: p[0], y: p[1], name: name }; }
+      if (d < bd) { bd = d; sel.x = x; sel.y = y; best = { px2: p[0], py2: p[1], name: name, sel: sel }; }
     }
     if (on.pplants && L.pplants) L.pplants.forEach(function (pt) {
-      var mw = pt.p.mw;
-      var bits = (pt.p.name === 'unnamed plant' ? 'power plant' : pt.p.name) + ' · ' + pt.p.src + (mw ? ' · ' + (mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW') : '');
-      test(pt.x, pt.y, bits);
+      var mw = pt.p.mw, nm = pt.p.name === 'unnamed plant' ? 'Power plant' : pt.p.name;
+      var facts = [['fuel', pt.p.src]]; if (mw) facts.push(['output', mwText(mw)]);
+      test(pt.x, pt.y, nm + ' · ' + pt.p.src + (mw ? ' · ' + mwText(mw) : ''),
+        { kind: 'pplant', kindLabel: 'Power plant · ' + pt.p.src, color: FUEL[pt.p.src] || C.mark, name: nm, facts: facts,
+          blurb: FACTS[pt.p.name] || (KINDBLURB.pplant[pt.p.src] || '') });
     });
     if (on.sewer && L.tplants) L.tplants.forEach(function (pt) {
-      var t = pt.p.name + (pt.p.k === 'ghost' ? ' (closed' : ' (wastewater');
-      t += pt.p.yr ? ', ' + pt.p.yr + ')' : ')';
-      test(pt.x, pt.y, t);
+      var ghost = pt.p.k === 'ghost';
+      var t = pt.p.name + (ghost ? ' (closed' : ' (wastewater'); t += pt.p.yr ? ', ' + pt.p.yr + ')' : ')';
+      var facts = []; if (pt.p.yr) facts.push([ghost ? 'opened' : 'opened', String(pt.p.yr)]);
+      test(pt.x, pt.y, t,
+        { kind: 'tplant', kindLabel: ghost ? 'Closed treatment plant' : 'Wastewater treatment plant', color: C.tplant, name: pt.p.name, facts: facts,
+          blurb: FACTS[pt.p.name] || (ghost ? KINDBLURB.tplantGhost : KINDBLURB.tplant) });
     });
-    if (on.sewer && L.ww) L.ww.forEach(function (pt) { test(pt.x, pt.y, pt.p.name + ' (drinking water)'); });
-    MARKS.forEach(function (m) { test(mx(m.lon), my(m.lat), m.name); });
+    if (on.sewer && L.ww) L.ww.forEach(function (pt) {
+      test(pt.x, pt.y, pt.p.name + ' (drinking water)',
+        { kind: 'ww', kindLabel: 'Drinking-water plant', color: '#8fb3c7', name: pt.p.name, facts: [], blurb: FACTS[pt.p.name] || KINDBLURB.ww });
+    });
+    if (on.grid && L.dc) L.dc.forEach(function (pt) {
+      test(pt.x, pt.y, pt.p.name + ' (data center)',
+        { kind: 'dc', kindLabel: 'Data center', color: C.dc, name: pt.p.name, facts: [], blurb: FACTS[pt.p.name] || KINDBLURB.dc });
+    });
+    if (on.grid && L.subs && view.z > 10.6) L.subs.forEach(function (pt) {
+      if (!pt.p.name && !pt.p.kv) return;
+      var nm = pt.p.name || 'Substation';
+      var facts = []; if (pt.p.kv) facts.push(['voltage', pt.p.kv + ' kV']);
+      test(pt.x, pt.y, nm + (pt.p.kv ? ' · ' + pt.p.kv + ' kV' : ''),
+        { kind: 'sub', kindLabel: 'Substation', color: C.kv100, name: nm, facts: facts, blurb: KINDBLURB.sub });
+    });
+    MARKS.forEach(function (m) {
+      test(mx(m.lon), my(m.lat), m.name,
+        { kind: 'mark', kindLabel: 'Landmark', color: C.mark, name: m.name, facts: [], blurb: m.blurb });
+    });
     return { best: best, px: px, py: py };
   }
   function hover(e) {
     var r = nearestPoint(e);
     if (r.best) {
       TIP.textContent = r.best.name;
-      TIP.style.left = r.best.x + 'px'; TIP.style.top = (r.best.y - 14) + 'px';
+      TIP.style.left = r.best.px2 + 'px'; TIP.style.top = (r.best.py2 - 14) + 'px';
       TIP.hidden = false; CANVAS.style.cursor = 'pointer';
     } else { hideTip(); }
   }
   function tap(e) {
     var r = nearestPoint(e);
-    if (r.best) {
-      TIP.textContent = r.best.name;
-      TIP.style.left = r.best.x + 'px'; TIP.style.top = (r.best.y - 14) + 'px';
-      TIP.hidden = false;
-      return;
+    if (r.best) { hideTip(); openPanel(r.best.sel); return; }
+    // a line under the finger?
+    var lineBuckets = [];
+    if (on.grid && L.grid) {
+      lineBuckets.push({ segs: L.grid.k345, meta: { name: '345 kV transmission line', kindLabel: 'The grid · backbone', color: C.kv345, blurb: 'The metro\'s highest-voltage tier: the long-haul lines that move bulk power between plants and the region.' } });
+      lineBuckets.push({ segs: L.grid.k200, meta: { name: '230 kV transmission line', kindLabel: 'The grid', color: C.kv200, blurb: 'Heavy regional transmission.' } });
+      lineBuckets.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'The grid', color: C.kv100, blurb: 'The workhorse tier that rings the cities and feeds the big substations.' } });
+      lineBuckets.push({ segs: L.grid.low, meta: { name: 'Sub-100 kV line', kindLabel: 'The grid', color: C.kvLow, blurb: 'Lower-voltage subtransmission, the step before neighborhood feeders.' } });
+      if (view.z > 10.4 && L.powerminor) lineBuckets.push({ segs: L.powerminor, meta: { name: 'Distribution feeder', kindLabel: 'The grid · local', color: C.gridMinor, blurb: 'A local feeder on its way to the poles and pad transformers.' } });
     }
+    if (on.sewer && L.interceptors) {
+      lineBuckets.push({ segs: L.interceptors.f, meta: { name: 'Forcemain interceptor', kindLabel: 'The sewer system', color: C.sewerLive, blurb: 'A pressurized sewer: where gravity runs out, lift-station pumps shove the flow uphill through these.' } });
+      lineBuckets.push({ segs: L.interceptors.s, meta: { name: 'Siphon crossing', kindLabel: 'The sewer system', color: C.sewerLive, blurb: 'An inverted siphon: the pipe dives under a river or obstacle and pressure pushes the flow up the far side.' } });
+      lineBuckets.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'The sewer system', color: C.sewerLive, blurb: 'The default sewer: a tunnel laid on a steady downhill grade, flowing to the plant on slope alone.' } });
+      lineBuckets.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'The sewer system · ghost', color: C.sewerGhost, blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
+    }
+    var lh = lineAt(r.px, r.py, lineBuckets);
+    if (lh) { hideTip(); openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }); return; }
     // no dot under the finger: answer the ground question instead
     if (!on.sewer || !L.sheds || !SHED) return;
     var s = scale();
@@ -601,17 +741,27 @@
         var segs = pack(r.roads); L.roads = { r12: [], r3: [], r4: [] };
         segs.forEach(function (s2) { var c2 = s2.p.c; (c2 <= 2 ? L.roads.r12 : c2 === 3 ? L.roads.r3 : L.roads.r4).push(s2); });
       }
-      if (r.power) L.power = pack(r.power);
+      if (r.power) {
+        var gsegs = pack(r.power); L.grid = { k345: [], k200: [], k100: [], low: [] };
+        gsegs.forEach(function (gs) {
+          var v = gs.p.v || 0;
+          (v >= 300 ? L.grid.k345 : v >= 200 ? L.grid.k200 : v >= 100 ? L.grid.k100 : L.grid.low).push(gs);
+        });
+      }
       if (r.powerminor) L.powerminor = pack(r.powerminor);
       if (r.substations) L.subs = pack(r.substations, 'points');
       if (r.powerplants) L.pplants = pack(r.powerplants, 'points');
       if (r.interceptors) {
-        var iv = pack(r.interceptors); L.interceptors = { live: [], ghost: [] };
-        iv.forEach(function (s3) { (s3.p.k === 'ghost' ? L.interceptors.ghost : L.interceptors.live).push(s3); });
+        var iv = pack(r.interceptors); L.interceptors = { g: [], f: [], s: [], ghost: [] };
+        iv.forEach(function (s3) {
+          var t3 = s3.p.t;
+          (t3 === 'x' ? L.interceptors.ghost : t3 === 'f' ? L.interceptors.f : t3 === 's' ? L.interceptors.s : L.interceptors.g).push(s3);
+        });
       }
       if (r.lifts) L.lifts = pack(r.lifts, 'points');
       if (r.tplants) L.tplants = pack(r.tplants, 'points');
       if (r.waterworks) L.ww = pack(r.waterworks, 'points');
+      if (r.comms) L.dc = pack(r.comms, 'points');
       if (r.sewersheds) {
         var shedSegs = pack(r.sewersheds); L.sheds = {};
         shedSegs.forEach(function (sg) {
