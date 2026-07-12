@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wo3l78g9ld");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's Under a Twin Cities Street</title>
+  <meta name="description" content="A creek has been in a pipe under downtown Minneapolis since 1892. A field guide to everything buried under Minneapolis and St. Paul: fiber, gas, power, storm drains, and the deep sewer tunnels in the sandstone, layer by layer, top to bottom.">
+  <meta property="og:title" content="What's Under a Twin Cities Street">
+  <meta property="og:description" content="A creek has been in a pipe under downtown Minneapolis since 1892. Fiber, gas, power, storm drains, and the deep sewers in the sandstone, layer by layer, top to bottom.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/under-the-street.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/under-the-street-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A color-coded cross-section of the ground under a street, from the pavement down to deep tunnel rock.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/under-the-street-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+  /* ============================================================
+     WHAT'S UNDER A TWIN CITIES STREET
+     A descent. The page reads top to bottom the way the ground is
+     stacked: pavement, comms, gas, power, storm, sanitary, rock.
+     The organizing color system is the real one: the national
+     utility-marking paint code that gets sprayed on the street
+     before any dig (orange comms, yellow gas, red electric, green
+     sewer), mapped onto the site's muted categorical accent set.
+     Desktop gets a sticky depth rail on the left that tracks the
+     reader's position; mobile drops the rail and keeps a mono
+     depth chip on each section head. Page background stays the
+     locked site green; the descent mood rides the per-layer accent
+     and the cross-section art, not the page color.
+     One inline SVG cross-section, drawn in code. No photographs.
+     No em dashes.
+     ============================================================ */
+  :root {
+    --measure: 760px;
+    /* the dig-paint code, capped to the site's categorical band */
+    --mark-comms: #cf9f78;   /* orange   = communications */
+    --mark-gas:   #dfc288;   /* yellow   = gas */
+    --mark-elec:  #b8796d;   /* red      = electric */
+    --mark-storm: #8fb3c7;   /* blue     = water in the wrong place */
+    --mark-sewer: #6f9a6c;   /* green    = sewer */
+    --mark-rock:  #b79bc4;   /* purple   = the rock itself (off-code) */
+  }
+  html { overflow-x: hidden; overscroll-behavior-x: none; }
+  body { overflow-x: hidden; }
+
+  .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto 0.4rem; padding: 1.1rem var(--gutter, 1.5rem) 0; }
+  .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
+
+  .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
+  @media (max-width: 700px) { .reading-progress { display: none; } }
+
+  /* ---------------- layout: rail + column ---------------- */
+  .descent { max-width: calc(var(--measure) + 14rem); margin: 0 auto; padding: 0 var(--gutter, 1.5rem); display: grid; grid-template-columns: 5.2rem minmax(0, 1fr); gap: 0 2.2rem; }
+  .descent > .col { grid-column: 2; max-width: var(--measure); min-width: 0; }
+
+  /* the depth rail (desktop only) */
+  .rail { grid-column: 1; grid-row: 1 / span 99; position: relative; }
+  .rail-inner { position: sticky; top: 4.5rem; display: flex; flex-direction: column; gap: 0; padding: 0.4rem 0 0.6rem; border-left: 1px solid var(--rule); }
+  .rail-stop { display: block; padding: 0.52rem 0 0.52rem 0.85rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-faint); text-decoration: none; border-left: 2px solid transparent; margin-left: -1.5px; line-height: 1.3; }
+  .rail-stop b { display: block; font-weight: 400; color: var(--text-dim); font-size: 0.74rem; }
+  .rail-stop.is-here { border-left-color: var(--stopc, var(--accent)); }
+  .rail-stop.is-here b { color: var(--stopc, var(--accent)); }
+  @media (max-width: 980px) { .descent { display: block; padding: 0 var(--gutter, 1.5rem); } .rail { display: none; } .descent > .col { max-width: var(--measure); margin: 0 auto; } }
+
+  /* ---------------- hero ---------------- */
+  .u-hero { margin-top: 1.6rem; }
+
+  /* the cross-section figure */
+  .xsec { margin: 2.4rem 0 0.4rem; }
+  .xsec svg { display: block; width: 100%; height: auto; }
+  .xsec figcaption { margin-top: 0.7rem; font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); }
+
+  /* ---------------- the paint key ---------------- */
+  .paintkey { margin: 2.2rem 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 1.1rem 0 1.2rem; }
+  .paintkey-k { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.75rem; }
+  .paintkey-row { display: flex; flex-wrap: wrap; gap: 0.5rem 0.55rem; margin: 0; }
+  .paint { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.04em; color: var(--text-dim); border: 1px solid var(--rule); border-radius: 999px; padding: 0.34rem 0.85rem 0.34rem 0.5rem; transition: border-color 0.15s ease, color 0.15s ease; }
+  .paint::before { content: ""; width: 0.72rem; height: 0.72rem; border-radius: 50%; background: var(--pc); flex: none; }
+  .paint:hover { border-color: var(--pc); color: var(--text); }
+
+  /* ---------------- layer sections ---------------- */
+  .layer { margin-top: 4.2rem; scroll-margin-top: 3.2rem; }
+  .layer-head { border-top: 2px solid var(--lc, var(--rule-strong)); padding-top: 0.85rem; }
+  .layer-band { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .layer-k { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--lc, var(--accent)); margin: 0; }
+  .layer-depth { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 999px; padding: 0.18rem 0.7rem; white-space: nowrap; }
+  .layer h2 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 4.6vw, 2.15rem); line-height: 1.12; letter-spacing: -0.015em; color: var(--text-bright); margin: 0.45rem 0 0.4rem; text-wrap: balance; }
+  .layer .sub { font-style: italic; font-family: var(--font-heading); font-size: 1.14rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.35rem; text-wrap: pretty; }
+
+  .layer p { font-size: 1.13rem; line-height: 1.72; margin: 0 0 1.15em; text-wrap: pretty; }
+  .layer a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in oklab, var(--accent) 45%, transparent); }
+  .layer a:hover { color: var(--accent-hover); border-color: var(--accent-hover); }
+  .layer .u-src a { border-bottom: none; }
+
+  /* one-fact stat line, tinted by layer */
+  .seam { margin: 1.7rem 0; padding: 0.95rem 1.1rem; border-left: 3px solid var(--lc, var(--accent)); background: color-mix(in oklab, var(--lc, var(--accent)) 7%, transparent); border-radius: 0 4px 4px 0; }
+  .seam p { margin: 0; font-size: 1.05rem; line-height: 1.6; color: var(--text); }
+  .seam b { color: var(--text-bright); }
+
+  @media (max-width: 700px) {
+    .layer { margin-top: 3.2rem; }
+    .layer p { font-size: 1.06rem; }
+  }
+
+  /* sources */
+  .srcs { margin: 4rem 0 2rem; }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" aria-hidden="true"></div>
+
+  <nav class="top-nav"><a class="post-back" href="/"><span class="pb-label">Home</span></a></nav>
+
+  <div class="descent">
+    <aside class="rail" aria-hidden="true">
+      <div class="rail-inner" id="rail">
+        <a class="rail-stop" href="#street" data-for="street" style="--stopc:var(--accent)"><b>0 ft</b>the street</a>
+        <a class="rail-stop" href="#comms" data-for="comms" style="--stopc:var(--mark-comms)"><b>2 ft</b>fiber</a>
+        <a class="rail-stop" href="#gas" data-for="gas" style="--stopc:var(--mark-gas)"><b>4 ft</b>gas</a>
+        <a class="rail-stop" href="#power" data-for="power" style="--stopc:var(--mark-elec)"><b>6 ft</b>power</a>
+        <a class="rail-stop" href="#storm" data-for="storm" style="--stopc:var(--mark-storm)"><b>20 ft</b>storm</a>
+        <a class="rail-stop" href="#sewer" data-for="sewer" style="--stopc:var(--mark-sewer)"><b>80 ft</b>sewer</a>
+        <a class="rail-stop" href="#rock" data-for="rock" style="--stopc:var(--mark-rock)"><b>rock</b>the falls</a>
+      </div>
+    </aside>
+
+    <div class="col">
+
+      <header class="u-hero">
+        <p class="u-eyebrow">Field guide · Minneapolis and St. Paul</p>
+        <h1 class="u-title">What's Under a Twin Cities Street</h1>
+        <p class="u-dek">Fiber, gas, power, storm drains, and the deep sewers in the sandstone, layer by layer, top to bottom.</p>
+        <p class="u-meta">A field guide <span class="u-sep">/</span> <b>17 sources</b> <span class="u-sep">/</span> 10 min read</p>
+      </header>
+
+      <figure class="xsec" id="xsec-fig">
+        <svg viewBox="0 0 760 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A cross-section of the ground under a Twin Cities street, showing utilities stacked by depth: communications conduit near the surface, then gas, electric duct banks, a storm tunnel, a deep sanitary tunnel in sandstone, and bedrock at the bottom.">
+          <!-- strata -->
+          <rect x="0" y="40" width="760" height="14" fill="#1e2420"/>
+          <rect x="0" y="54" width="760" height="120" fill="#3a4238"/>
+          <rect x="0" y="174" width="760" height="120" fill="#42493c"/>
+          <rect x="0" y="294" width="760" height="110" fill="#4a4f41"/>
+          <rect x="0" y="404" width="760" height="100" fill="#565344"/>
+          <rect x="0" y="504" width="760" height="56" fill="#3f3a45"/>
+          <!-- street furniture -->
+          <rect x="0" y="34" width="760" height="6" fill="#141914"/>
+          <rect x="330" y="30" width="46" height="6" rx="2" fill="#767d71"/>
+          <text x="353" y="24" font-family="Commit Mono, monospace" font-size="11" fill="#a4a293" text-anchor="middle">manhole</text>
+          <!-- frost line -->
+          <line x1="0" y1="216" x2="760" y2="216" stroke="var(--mark-storm)" stroke-width="1" stroke-dasharray="3 7" opacity="0.55"/>
+          <text x="748" y="208" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-storm)" text-anchor="end" opacity="0.9">frost line: 42 in by rule</text>
+          <!-- comms conduit -->
+          <g>
+            <rect x="80" y="88" width="150" height="16" rx="8" fill="none" stroke="var(--mark-comms)" stroke-width="2"/>
+            <circle cx="105" cy="96" r="2.5" fill="var(--mark-comms)"/><circle cx="120" cy="96" r="2.5" fill="var(--mark-comms)"/><circle cx="135" cy="96" r="2.5" fill="var(--mark-comms)"/>
+            <text x="80" y="76" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-comms)">comms duct</text>
+          </g>
+          <!-- gas main -->
+          <g>
+            <circle cx="480" cy="150" r="13" fill="none" stroke="var(--mark-gas)" stroke-width="2.5"/>
+            <text x="500" y="146" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-gas)">gas main</text>
+          </g>
+          <!-- electric duct bank -->
+          <g>
+            <rect x="150" y="236" width="64" height="42" rx="4" fill="none" stroke="var(--mark-elec)" stroke-width="2"/>
+            <circle cx="168" cy="250" r="5" fill="none" stroke="var(--mark-elec)" stroke-width="1.6"/>
+            <circle cx="196" cy="250" r="5" fill="none" stroke="var(--mark-elec)" stroke-width="1.6"/>
+            <circle cx="168" cy="266" r="5" fill="none" stroke="var(--mark-elec)" stroke-width="1.6"/>
+            <circle cx="196" cy="266" r="5" fill="none" stroke="var(--mark-elec)" stroke-width="1.6"/>
+            <text x="150" y="228" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-elec)">duct bank</text>
+          </g>
+          <!-- water main (cameo) -->
+          <g opacity="0.75">
+            <circle cx="600" cy="262" r="10" fill="none" stroke="var(--mark-storm)" stroke-width="2"/>
+            <text x="618" y="258" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-storm)">water</text>
+          </g>
+          <!-- storm tunnel -->
+          <g>
+            <path d="M 340 322 a 34 34 0 0 1 68 0 l 0 36 l -68 0 z" fill="none" stroke="var(--mark-storm)" stroke-width="2.5"/>
+            <path d="M 348 358 q 17 -8 52 0" stroke="var(--mark-storm)" stroke-width="1.5" fill="none" opacity="0.7"/>
+            <text x="420" y="330" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-storm)">storm tunnel</text>
+          </g>
+          <!-- sanitary tunnel in sandstone -->
+          <g>
+            <path d="M 190 434 a 30 30 0 0 1 60 0 l 0 34 l -60 0 z" fill="none" stroke="var(--mark-sewer)" stroke-width="2.5"/>
+            <text x="262" y="446" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-sewer)">sanitary interceptor</text>
+            <text x="560" y="446" font-family="Commit Mono, monospace" font-size="11" fill="#c9b98b" opacity="0.8">St. Peter sandstone</text>
+          </g>
+          <!-- bedrock label -->
+          <text x="20" y="536" font-family="Commit Mono, monospace" font-size="11" fill="var(--mark-rock)">Platteville limestone lies above; the falls stand on it</text>
+          <!-- depth ticks -->
+          <g font-family="Commit Mono, monospace" font-size="10" fill="#8f9184">
+            <text x="8" y="60">0 ft</text>
+            <text x="8" y="180">3 ft</text>
+            <text x="8" y="300">6 ft</text>
+            <text x="8" y="410">20 ft</text>
+            <text x="8" y="516">80 ft</text>
+          </g>
+        </svg>
+        <figcaption>The stack, roughly to order rather than to scale. Depths vary block to block; the order mostly doesn't.</figcaption>
+      </figure>
+
+      <section class="layer" id="street" style="--lc:var(--accent)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">Layer zero</p><span class="layer-depth">0 ft</span></div>
+          <h2>The street is a lid</h2>
+          <p class="sub">Five separate machines run under the pavement, stacked in roughly the same order on every block.</p>
+        </div>
+        <p>There is a creek under downtown Minneapolis. Bassett Creek was an open stream when the city grew up around it, an industrial dump by 1867, and locals were calling it a "mammoth sewer" by 1876. In 1892 the city straightened it and put it in a tunnel. It still flows today, under the warehouses and the entrance ramps, and its last 1.7 miles to the Mississippi are entirely underground. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)">Wikipedia</a></span></p>
+        <p>A buried creek is the extreme case of a general rule: anything a city needs that is ugly, dangerous, or freezable ends up under the street. In the Twin Cities that means five separate systems, run by five separate kinds of organization, stacked in loose layers: communications near the surface, then gas, then electric, then the storm drains, and at the very bottom, in tunnels bored through soft sandstone, the sanitary sewers. This post walks down through them in order.</p>
+        <p>You can see the whole stack without digging. Before any excavation, Minnesota law requires a locate request to Gopher State One Call, and utilities then get 48 hours to send locators out to mark their lines on the pavement. <span class="u-src"><a href="https://gopherstateonecall.org/state-laws">GSOC</a></span> The spray paint follows one national color code, so a torn-up street reads like a legend: orange for communications, yellow for gas, red for electric, green for sewer, blue for water. The colors of this post are the colors of the paint.</p>
+        <div class="paintkey" aria-label="The utility marking colors, which are also this post's sections">
+          <p class="paintkey-k">The paint code, and the descent</p>
+          <div class="paintkey-row">
+            <a class="paint" href="#comms" style="--pc:var(--mark-comms)">orange · comms</a>
+            <a class="paint" href="#gas" style="--pc:var(--mark-gas)">yellow · gas</a>
+            <a class="paint" href="#power" style="--pc:var(--mark-elec)">red · electric</a>
+            <a class="paint" href="#storm" style="--pc:var(--mark-storm)">blue and green · storm</a>
+            <a class="paint" href="#sewer" style="--pc:var(--mark-sewer)">green · sewer</a>
+            <a class="paint" href="#rock" style="--pc:var(--mark-rock)">and then the rock</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="layer" id="comms" style="--lc:var(--mark-comms)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">Orange paint</p><span class="layer-depth">the first 2 ft</span></div>
+          <h2>Fiber rides shallowest</h2>
+          <p class="sub">The newest utility gets the leftover space near the surface.</p>
+        </div>
+        <p>Communications lines are the shallowest thing in the ground, usually within the first couple of feet. They can afford to be: a fiber line doesn't freeze, doesn't leak, and doesn't explode, so it doesn't earn the expensive deep real estate. What it gets instead is conduit, plastic duct a crew can blow new cable through years later without digging, and the small square handholes you walk past in every boulevard.</p>
+        <p>The physical internet of the Twin Cities converges in ordinary-looking buildings where networks hand traffic to each other. The regional exchange, MICE (the Midwest Internet Cooperative Exchange), is a cooperative peering point in Minneapolis with 158 participating networks. <span class="u-src"><a href="https://www.micemn.net/">micemn.net</a></span> Traffic between two Minnesota customers on two different providers can turn around locally instead of detouring through Chicago, which is the entire point of having an exchange in town.</p>
+        <div class="seam"><p><b>The stress test came early.</b> Minneapolis was one of the few US cities that actually built a citywide municipal Wi-Fi network. Early in its rollout, the I-35W bridge fell into the Mississippi, and with phone networks overloaded the new mesh became a working channel for responders. Computerworld's headline three days later: "New Wi-Fi Network Proves Critical in Minneapolis Bridge Disaster." <span class="u-src"><a href="https://web.archive.org/web/20070914161811/http://www.computerworld.com/action/article.do?command=viewArticleBasic&amp;articleId=9028978">Computerworld, 2007</a></span></p></div>
+      </section>
+
+      <section class="layer" id="gas" style="--lc:var(--mark-gas)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">Yellow paint</p><span class="layer-depth">2 to 4 ft</span></div>
+          <h2>Gas is the polite guest</h2>
+          <p class="sub">The most dangerous thing under the street is engineered to announce itself.</p>
+        </div>
+        <p>The gas main running past your house is most likely yellow plastic, buried a few feet down, and owned by CenterPoint Energy, the company Minnesotans knew for decades as Minnegasco. <span class="u-src"><a href="https://en.wikipedia.org/wiki/CenterPoint_Energy">Wikipedia</a></span> Natural gas is odorless, so the smell you know is added at the plant: a trace of mercaptan, the rotten-egg sulfur compound, so a leak announces itself to anyone with a nose.</p>
+        <p>Minnesota's real enemy underground is not the gas. It is the frost. The ground here freezes deep enough that the state building code sets minimum footing depths by county: 3 feet 6 inches in the southern zone, which includes the metro, and a full 5 feet in the northern counties. <span class="u-src"><a href="https://www.revisor.mn.gov/rules/1303.1600/">MN Rules 1303.1600</a></span> Anything that can burst or heave has to live below that line. The frost is also why the street above every utility slowly fails: water gets into cracks, freezes, and jacks the pavement apart, one winter at a time. Potholes are the surface's opinion of the climate.</p>
+        <div class="seam"><p><b>Why winter never turns the gas off:</b> demand on the coldest morning of the year is many times the summer load, and the pipes are sized for that morning. The system's whole design brief is one sentence: keep the pressure up when it is 20 below and every furnace in the metro is running at once.</p></div>
+      </section>
+
+      <section class="layer" id="power" style="--lc:var(--mark-elec)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">Red paint</p><span class="layer-depth">poles, vaults, duct banks</span></div>
+          <h2>Power goes under downtown</h2>
+          <p class="sub">In the neighborhoods it hangs from poles. In the cores it runs beneath the sidewalk.</p>
+        </div>
+        <p>Electricity is the one utility you can watch enter the ground. In residential Minneapolis and St. Paul it mostly hangs overhead, but at the edge of each downtown the wires dive: into concrete duct banks under the sidewalks, splice vaults under those steel doors you walk over, and transformers humming in basements. Burying the core is a capacity decision: downtown load is too dense for poles, and a network fed from many directions at once can lose a cable without losing a block.</p>
+        <p>The wires lead back to Xcel Energy, the Minneapolis-headquartered utility serving about 3.9 million electric customers across eight states, and in Minnesota that power leans hard on two nuclear plants sitting on the same river the sewers drain to, Monticello upstream of the cities and Prairie Island downstream near Red Wing. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Xcel_Energy">Wikipedia</a></span></p>
+        <p>The reason the grid was born here at all is the falls. St. Anthony Falls is the only major waterfall on the entire Mississippi, and by 1882 its water was spinning a Brush central power station, the third central station in the country, the same year Edison's Pearl Street plant opened in Manhattan burning coal. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">Wikipedia</a></span> The falls have never stopped working: the Hennepin Island hydro plant, built in 1908, still generates for Xcel today. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Hennepin_Island_Hydroelectric_Plant">Wikipedia</a></span></p>
+        <div class="seam"><p><b>One more thing is down there keeping you warm:</b> both downtowns heat themselves through buried loops. District Energy St. Paul runs the largest hot-water district heating system in North America, fed mostly by a biomass plant next door; downtown Minneapolis runs a buried district loop of its own. <span class="u-src"><a href="https://en.wikipedia.org/wiki/District_heating">Wikipedia</a></span></p></div>
+      </section>
+
+      <section class="layer" id="storm" style="--lc:var(--mark-storm)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">Blue and green paint</p><span class="layer-depth">8 to 30 ft</span></div>
+          <h2>Storm drains are a shadow river</h2>
+          <p class="sub">The grate at the curb is a river inlet. There is no treatment plant on the other side.</p>
+        </div>
+        <p>Every street grate in the Twin Cities is the mouth of a second, parallel drainage system whose only job is moving rain and snowmelt off the pavement before it floods a basement. It ends at the lakes and the Mississippi, with no treatment plant in between. Whatever washes off the street goes with it.</p>
+        <p>That pathway is how the metro acquired its quietest pollution problem. Road salt dissolves, runs down the grates, and stays: one teaspoon of salt is enough to permanently pollute five gallons of water, and once chloride is in a lake there is no feasible way to get it back out. <span class="u-src"><a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></span> Every bag of ice-melt on every driveway is a permanent donation to the chain of lakes.</p>
+        <p>Bassett Creek, from layer zero, is the storm system's founding member: a real creek doing this job since before the city could build pipes, entombed in 1892 and still on duty. It even got an upgrade this decade, a new stretch of tunnel built between 2017 and 2020. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)">Wikipedia</a></span> The biggest tunnels under either downtown are storm tunnels, many tall enough to walk through. <span class="u-src"><a href="https://openlibrary.org/works/OL28366067W">Brick</a></span> Their whole job is getting a July cloudburst to the river before it finds your basement.</p>
+      </section>
+
+      <section class="layer" id="sewer" style="--lc:var(--mark-sewer)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">down to tunnel depth</span></div>
+          <h2>The sewers run through soft stone</h2>
+          <p class="sub">The deepest utility got there because the geology under the Twin Cities is a gift to tunnelers.</p>
+        </div>
+        <p>Under the glacial soil, the Twin Cities sit on a sandwich: a hard cap of Platteville limestone over the St. Peter Sandstone, a bed of soft, nearly pure quartz sand that barely holds itself together. <span class="u-src"><a href="https://en.wikipedia.org/wiki/St._Peter_Sandstone">Wikipedia</a></span> Soft rock under a strong natural roof is a tunneler's dream: crews carved sewer and utility tunnels through it by hand, a labyrinth documented at book length by the geologist Greg Brick, whose survey of it also describes Schieks Cave, a natural cave sitting under downtown Minneapolis that city workers reach through the sewers. <span class="u-src"><a href="https://openlibrary.org/works/OL28366067W">Brick, Subterranean Twin Cities</a></span> <span class="u-grade u-grade-b">book source</span></p>
+        <p>Everything you flush drops through city pipes into that deep layer, where regional interceptor tunnels collect both cities and carry the flow along the river to Pig's Eye Lake in St. Paul. The Metropolitan Council runs the regional system, nine treatment plants in all. <span class="u-src"><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment.aspx">Met Council</a></span> The Metro Plant there treats about 225 million gallons a day, roughly half the wastewater generated in the entire state, for a service population over two million. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p>
+        <p>The plant is the good ending of an ugly story. For the cities' first 80 years, everything went to the river raw. By the 1920s an estimated three million cubic yards of sewage sludge lay settled on the river bottom above the Ford Dam, with mats of it floating downstream. When the Pig's Eye plant opened in 1938, the Twin Cities became the first major metropolitan area on the Mississippi to treat its sewage at all, and the plant drew engineers from around the country to see how it was done. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p>
+        <p>One more fix took another half century. The old city sewers were combined, one pipe for both sewage and stormwater, so every hard rain flushed diluted sewage straight to the river through overflow outfalls. Minneapolis started separating the two systems in the 1960s, accelerated hard in 1986, and by 1996 had eliminated all but 8 of its 34 overflow regulators; the leftover corners were separated with later street projects, and by 2018 the city moved to retire its overflow discharge permit entirely. <span class="u-src"><a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">City of Minneapolis</a></span> <span class="u-src"><a href="https://lims.minneapolismn.gov/RCA/2075">council record</a></span></p>
+        <div class="seam"><p><b>How you can tell it worked:</b> mayflies, which only hatch from clean water, came back to the metro Mississippi. The 1987 hatch was heavy enough to close a highway. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p></div>
+      </section>
+
+      <section class="layer" id="rock" style="--lc:var(--mark-rock)">
+        <div class="layer-head">
+          <div class="layer-band"><p class="layer-k">No paint goes this deep</p><span class="layer-depth">the riverbed</span></div>
+          <h2>At the bottom, a hidden wall holds up the river</h2>
+          <p class="sub">The oldest piece of buried infrastructure in Minneapolis is the one that saved it.</p>
+        </div>
+        <p>That soft sandstone nearly killed the city once. St. Anthony Falls exists because the limestone cap resists the river; every tunnel and millrace cut into the rock weakened it, and between 1857 and 1868 the falls were eroding upstream at 26 feet per year. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">Wikipedia</a></span> If the cap failed, the falls would unravel into rapids, and the waterpower that ran the flour mills, which is to say the reason Minneapolis existed, would be gone.</p>
+        <p>On October 5, 1869, it almost happened. A tailrace tunnel being driven under the riverbed, the Eastman tunnel, got too close to the bottom of the limestone, and the Mississippi broke through into it, scouring out the tunnel and caving in part of Hennepin Island. Temporary dams held. The permanent fix took the Army Corps of Engineers seven years: a concrete dike, finished in 1876, driven down as much as 40 feet below the limestone and stretching 1,850 feet across the entire river channel, sealing off the tunnel and any future path under the falls. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Eastman_tunnel">Wikipedia</a></span></p>
+        <p>Then the Corps went further and replaced the waterfall itself. By 1880 the crumbling natural edge was covered with a sloping timber apron, rebuilt in concrete in the 1950s, and that apron is what you see from the Stone Arch Bridge today. The only major waterfall on the Mississippi has been an artificial structure since 1880, standing on a buried concrete wall almost nobody in the city knows is there. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">Wikipedia</a></span> <span class="u-src"><a href="https://en.wikipedia.org/wiki/Eastman_tunnel">Wikipedia</a></span></p>
+        <p>Which is the whole underground in one object. Nothing down there is glamorous. It is a wall, some pipes, a creek in a tube, a cave full of sewer access ladders, and a plant processing half a state's flushes. All of it was built because the surface city stops working the moment any of it doesn't, and nearly all of it works so well that you can live here a whole life without once thinking about what the street is a lid over.</p>
+      </section>
+
+      <div class="srcs">
+        <details class="u-collapse">
+          <summary class="u-collapse-s">Sources</summary>
+          <ol class="u-collapse-list">
+            <li><b>Bassett Creek history, burial, and tunnels.</b> <a href="https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)">en.wikipedia.org</a></li>
+            <li><b>Minnesota One Call law, 48-hour locate window.</b> <a href="https://gopherstateonecall.org/state-laws">gopherstateonecall.org</a></li>
+            <li><b>MICE, the regional internet exchange (158 participants).</b> <a href="https://www.micemn.net/">micemn.net</a></li>
+            <li><b>Municipal Wi-Fi in the I-35W bridge collapse.</b> Computerworld, Aug 3, 2007. <a href="https://web.archive.org/web/20070914161811/http://www.computerworld.com/action/article.do?command=viewArticleBasic&amp;articleId=9028978">archived copy</a> · <a href="https://en.wikipedia.org/wiki/I-35W_Mississippi_River_bridge">context</a></li>
+            <li><b>CenterPoint Energy / Minnegasco lineage.</b> <a href="https://en.wikipedia.org/wiki/CenterPoint_Energy">en.wikipedia.org</a></li>
+            <li><b>Frost footing depths, 42 in southern zone, 60 in northern.</b> Minnesota Rules 1303.1600. <a href="https://www.revisor.mn.gov/rules/1303.1600/">revisor.mn.gov</a></li>
+            <li><b>Xcel Energy service area and nuclear plants.</b> <a href="https://en.wikipedia.org/wiki/Xcel_Energy">en.wikipedia.org</a></li>
+            <li><b>St. Anthony Falls: erosion rate, 1882 central station, apron.</b> <a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">en.wikipedia.org</a></li>
+            <li><b>Hennepin Island hydro plant (1908, still operating).</b> <a href="https://en.wikipedia.org/wiki/Hennepin_Island_Hydroelectric_Plant">en.wikipedia.org</a></li>
+            <li><b>District Energy St. Paul, largest hot-water district system in North America.</b> <a href="https://en.wikipedia.org/wiki/District_heating">en.wikipedia.org</a></li>
+            <li><b>Chloride: one teaspoon permanently pollutes five gallons.</b> <a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">pca.state.mn.us</a></li>
+            <li><b>St. Peter Sandstone geology.</b> <a href="https://en.wikipedia.org/wiki/St._Peter_Sandstone">en.wikipedia.org</a></li>
+            <li><b>Hand-carved tunnels and Schieks Cave.</b> Greg Brick, <i>Subterranean Twin Cities</i>, University of Minnesota Press, 2009. <a href="https://openlibrary.org/works/OL28366067W">openlibrary.org</a></li>
+            <li><b>Met Council regional system, nine treatment plants.</b> <a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment.aspx">metrocouncil.org</a></li>
+            <li><b>Metro Plant: 1938, first on the Mississippi, 225 MGD, 2M+ served, sludge, mayflies.</b> Minnesota Dept. of Health, Waterline. <a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">health.state.mn.us</a></li>
+            <li><b>Minneapolis combined sewer separation timeline.</b> <a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">minneapolismn.gov</a> · <a href="https://lims.minneapolismn.gov/RCA/2075">2018 permit action</a></li>
+            <li><b>Eastman tunnel collapse and the 1876 dike.</b> <a href="https://en.wikipedia.org/wiki/Eastman_tunnel">en.wikipedia.org</a></li>
+          </ol>
+        </details>
+      </div>
+
+      <hr class="u-divider">
+
+    </div>
+  </div>
+
+  <script>
+    // Depth rail: highlight the section currently in view (desktop only).
+    (function () {
+      var rail = document.getElementById('rail');
+      if (!rail || !('IntersectionObserver' in window)) return;
+      var stops = {};
+      rail.querySelectorAll('.rail-stop').forEach(function (a) { stops[a.getAttribute('data-for')] = a; });
+      var current = null;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            if (current) current.classList.remove('is-here');
+            current = stops[e.target.id];
+            if (current) current.classList.add('is-here');
+          }
+        });
+      }, { rootMargin: '-20% 0px -60% 0px' });
+      document.querySelectorAll('.layer').forEach(function (s) { io.observe(s); });
+    })();
+    // Reading progress bar.
+    (function () {
+      var bar = document.querySelector('.reading-progress');
+      if (!bar) return;
+      var t;
+      window.addEventListener('scroll', function () {
+        if (t) return;
+        t = requestAnimationFrame(function () {
+          t = null;
+          var h = document.documentElement;
+          var max = h.scrollHeight - h.clientHeight;
+          bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+        });
+      }, { passive: true });
+    })();
+  </script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
