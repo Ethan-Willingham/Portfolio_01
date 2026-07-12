@@ -274,9 +274,9 @@ The current Earth surface compound, left to right relative to the station center
 
 ```
    ┌─────────────────────┐         ▌▌                ┌────────────────────────────────┐
-   │     KOMENDATURA     │      🪑 ▌▌ 🪑            │  ▁▁▁▁▁ ★ ЗАПРАВКА ★ ▁▁▁▁▁▁▁  │
-   │       station       │         ▌▌                │  ▊   ⛽   [pad]   💵   ▊       │
-   │     (no smoke)      │      🪵🔥🔧               │ post pump  🪔lamp  payout post  │
+   │     KOMENDATURA     │      bench ▌▌ bench            │  ▁▁▁▁▁ ★ ЗАПРАВКА ★ ▁▁▁▁▁▁▁  │
+   │       station       │         ▌▌                │  ▊   pump  [pad]  pay   ▊       │
+   │     (no smoke)      │      logs+fire               │ post pump  lamp  payout post  │
    └─────────────────────┘      fireplace             └────────────────────────────────┘
    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ slate foundation tile ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ```

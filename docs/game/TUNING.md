@@ -418,7 +418,7 @@ Dawn validates buffer usage per compute pass, so the GPU-written dispatch
 args live in `blockMeta` (storage) and are copied 16 bytes into
 `blockDispatch` (INDIRECT-only, never bound as storage) between passes.
 
-## 2.10 Stability — the giant-particle / runaway fix (v24.169-186) ✅ SOLVED
+## 2.10 Stability — the giant-particle / runaway fix (v24.169-186) ✓ SOLVED
 
 The months-long water saga ("popcorn", "infinite energetic mass", "giant
 particles that never shrink and bounce off the ground forever") all traced to

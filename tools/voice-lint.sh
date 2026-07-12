@@ -28,6 +28,7 @@ skip_all() {
     grand-motherload.html|*-lab.html|sfx-*.html) return 0 ;;
     research/*|node_modules/*|.git/*) return 0 ;;
     docs/game/*) return 0 ;;
+    archive/OPTIONAL_BODY_*) return 0 ;;  # legacy design docs for the optional-body post, pre-date the no-dash rule
   esac
   return 1
 }

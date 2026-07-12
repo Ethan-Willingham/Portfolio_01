@@ -223,45 +223,45 @@ Non-negotiable. A renderer that breaks these produces art that cannot ship.
 
 ## 8. The full roster — 32 ores
 
-`status`: ✅ done · ⬜ placeholder (needs art). `host`: dirt/stone material the
+`status`: ✓ done · [ ] placeholder (needs art). `host`: dirt/stone material the
 ore is locked to (v23.16). Order is by shallowest depth. Depths/host reflect
-v23.16; the live values are in the `ORES` table (planned ⬜ ores show their
+v23.16; the live values are in the `ORES` table (planned [ ] ores show their
 intended placement).
 
 | Ore | Status | Host | Depth | Rarity | Archetype | Palette region |
 |---|---|---|---|---|---|---|
-| coal | ✅ | dirt | 4–45 | common | Banded | near-black grey |
-| copper | ✅ | stone | 8–52 | common | Vein | copper-orange |
-| malachite | ✅ | stone | 18–80 | common | Banded botryoidal | banded green |
-| bauxite | ✅ | dirt | 38–88 | common | Pocket aggregate | rust-red-brown |
-| galena | ✅ | stone | 45–110 | common | Cube druse | lead-grey metallic |
-| iron | ✅ | stone | 50–105 | common | Banded | steel-grey |
-| magnetite | ✅ | stone | 60–180 | common | Octahedral druse | almost-black |
-| pyrite | ✅ | stone | 66–112 | common | Crystal druse | brassy pale gold |
-| turquoise | ✅ | dirt | 75–135 | uncommon | Polished + matrix | blue-green + black web |
-| cobalt | ✅ | stone | 80–200 | common | Tabular crystal | electric blue |
-| methaneice | ✅ | dirt | 82–128 | common | Encased | icy blue |
-| silver | ✅ | stone | 88–146 | common | Vein | cool near-white |
-| jade | ✅ | stone | 120–280 | uncommon | Polished stone | mottled deep green |
-| cinnabar | ✅ | stone | 140–196 | uncommon | Crystal druse | matte scarlet |
-| amber | ✅ | dirt | 142–188 | common | Encased | honey-gold |
-| fossil | ✅ | dirt | 148–188 | uncommon | Fossil | dinosaur skull + bones |
-| lapis | ✅ | stone | 150–225 | uncommon | Massive + flecks | ultramarine + gold |
-| amethyst | ✅ | stone | 160–240 | uncommon | Crystal points (geode) | purple |
-| gold | ✅ | dirt | 176–250 | uncommon | Vein | rich warm yellow |
-| uranium | ✅ | stone | 198–258 | uncommon | Crystal druse | acid green + glow |
-| opal | ✅ | dirt | 200–380 | rare | Iridescent nodule | milky white + rainbow flecks |
-| rhodochrosite | ✅ | stone | 200–270 | uncommon | Banded botryoidal | rose-pink |
-| obsidian | ✅ | stone | 248–320 | common | Massive glass | purple-black glass |
-| sulfur | ✅ | stone | 250–318 | common | Crystal crust | lemon-yellow |
-| emerald | ✅ | stone | 270–340 | uncommon | Cut gem | deep jewel green |
-| peridot | ✅ | stone | 280–345 | rare | Cut gem | olive-lime |
-| ruby | ✅ | stone | 318–386 | rare | Cut gem | crimson |
-| platinum | ✅ | stone | 330–396 | rare | Vein | white precious metal |
-| tanzanite | ✅ | stone | 330–390 | rare | Cut gem | violet-blue |
-| diamond | ✅ | stone | 345–396 | rare | Cut gem | near-colourless icy |
-| painite | ✅ | stone | 364–400 | rare | Cut gem | garnet orange |
-| unobtanium | ✅ | stone | 388–400 | legendary | Exotic | magenta iridescent |
+| coal | ✓ | dirt | 4–45 | common | Banded | near-black grey |
+| copper | ✓ | stone | 8–52 | common | Vein | copper-orange |
+| malachite | ✓ | stone | 18–80 | common | Banded botryoidal | banded green |
+| bauxite | ✓ | dirt | 38–88 | common | Pocket aggregate | rust-red-brown |
+| galena | ✓ | stone | 45–110 | common | Cube druse | lead-grey metallic |
+| iron | ✓ | stone | 50–105 | common | Banded | steel-grey |
+| magnetite | ✓ | stone | 60–180 | common | Octahedral druse | almost-black |
+| pyrite | ✓ | stone | 66–112 | common | Crystal druse | brassy pale gold |
+| turquoise | ✓ | dirt | 75–135 | uncommon | Polished + matrix | blue-green + black web |
+| cobalt | ✓ | stone | 80–200 | common | Tabular crystal | electric blue |
+| methaneice | ✓ | dirt | 82–128 | common | Encased | icy blue |
+| silver | ✓ | stone | 88–146 | common | Vein | cool near-white |
+| jade | ✓ | stone | 120–280 | uncommon | Polished stone | mottled deep green |
+| cinnabar | ✓ | stone | 140–196 | uncommon | Crystal druse | matte scarlet |
+| amber | ✓ | dirt | 142–188 | common | Encased | honey-gold |
+| fossil | ✓ | dirt | 148–188 | uncommon | Fossil | dinosaur skull + bones |
+| lapis | ✓ | stone | 150–225 | uncommon | Massive + flecks | ultramarine + gold |
+| amethyst | ✓ | stone | 160–240 | uncommon | Crystal points (geode) | purple |
+| gold | ✓ | dirt | 176–250 | uncommon | Vein | rich warm yellow |
+| uranium | ✓ | stone | 198–258 | uncommon | Crystal druse | acid green + glow |
+| opal | ✓ | dirt | 200–380 | rare | Iridescent nodule | milky white + rainbow flecks |
+| rhodochrosite | ✓ | stone | 200–270 | uncommon | Banded botryoidal | rose-pink |
+| obsidian | ✓ | stone | 248–320 | common | Massive glass | purple-black glass |
+| sulfur | ✓ | stone | 250–318 | common | Crystal crust | lemon-yellow |
+| emerald | ✓ | stone | 270–340 | uncommon | Cut gem | deep jewel green |
+| peridot | ✓ | stone | 280–345 | rare | Cut gem | olive-lime |
+| ruby | ✓ | stone | 318–386 | rare | Cut gem | crimson |
+| platinum | ✓ | stone | 330–396 | rare | Vein | white precious metal |
+| tanzanite | ✓ | stone | 330–390 | rare | Cut gem | violet-blue |
+| diamond | ✓ | stone | 345–396 | rare | Cut gem | near-colourless icy |
+| painite | ✓ | stone | 364–400 | rare | Cut gem | garnet orange |
+| unobtanium | ✓ | stone | 388–400 | legendary | Exotic | magenta iridescent |
 
 ### Per-ore design direction (the one-line tell)
 
@@ -351,7 +351,7 @@ something feels wrong, go **back** a stage — never push forward.
      system, yet distinctly itself?
   3. **Lighting** — upper-left light holds across all `tileHash01` variants?
   4. **Accent** — the signature detail reads at 1× zoom without zooming in?
-- **I — Update this doc.** Flip the ore to ✅ in §8, record final palette +
+- **I — Update this doc.** Flip the ore to ✓ in §8, record final palette +
   params, add a session-log line. Commit + ff-merge to `main` + push.
 
 **Suggested order** — anchor each archetype with its first/cheapest ore so
@@ -363,10 +363,10 @@ obsidian → emerald → ruby → tanzanite → diamond → painite → unobtani
 nodule, new archetype).
 
 **Planned ores not yet in `ORES` table:** magnetite, cobalt, jade, opal
-all live as ⬜ entries in §8 with palette + archetype + design direction
+all live as [ ] entries in §8 with palette + archetype + design direction
 locked in. Code-side implementation (ORES table row, draw function,
 drawEarlyOreBase registration, exclusions, showcase array) is deferred
-until after the 7 in-bible ⬜ ores (obsidian, emerald, ruby, tanzanite,
+until after the 7 in-bible [ ] ores (obsidian, emerald, ruby, tanzanite,
 diamond, painite, unobtanium) are migrated.
 
 ---
@@ -375,7 +375,7 @@ diamond, painite, unobtanium) are migrated.
 
 - *(foundation)* — Phase 0 complete. Back-documented the four reference
   ores; tiers/rarity/roster pulled from `ORES` + `LAYERS`; 8 archetypes
-  derived; palette atlas + adjacency locks set. 15 ores remain (⬜ in §8).
+  derived; palette atlas + adjacency locks set. 15 ores remain ([ ] in §8).
 - **pyrite** — done; redrawn v17.3, refined v17.4–v17.5. Crystal druse: 1
   hero + 2–4 satellite cubes interpenetrating into a clump. Each cube is a
   true three-face box (lit top / mid front / shaded side) rasterised by a

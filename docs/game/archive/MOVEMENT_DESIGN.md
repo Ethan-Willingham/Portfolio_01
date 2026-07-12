@@ -91,14 +91,14 @@ On `player`: `thrustSpool`, `sideThrustCook`, derived `thrustVecX/Y`, `flightTil
 
 ## Stages
 
-### Stage 1 — Variable jet ✅ SHIPPED
+### Stage 1 — Variable jet ✓ SHIPPED
 Commits: `c2d4c87` (initial), `61f1130` (tuning)
 
 What: Tap = micro-lift, hold = sustained climb, release = clean cutoff. Also fixed a critical sign bug in the headroom formula that had been zeroing thrust force at vy=0.
 
 Status: User accepted current tuning.
 
-### Stage 2 — Hover-settle + apex easing ✅ SHIPPED
+### Stage 2 — Hover-settle + apex easing ✓ SHIPPED
 Reference: Terraria UFO mount (settle) + Hollow Knight (apex).
 
 What:
@@ -115,7 +115,7 @@ var APEX_EASING_FACTOR = 0.5;     // gravity multiplier at vy=0 inside band
 
 Status: shipped, awaiting playtest feedback for tuning.
 
-### Stage 3 — Corner correction (ceiling + sides) ✅ SHIPPED
+### Stage 3 — Corner correction (ceiling + sides) ✓ SHIPPED
 Reference: Celeste (±1–4px nudges, source-doc'd), SMB head-bonk slip (~25% of tile), generic best practice = ceiling + sides only, skip floor (conflicts with landing/step-up).
 
 What:
@@ -128,7 +128,7 @@ So "four-sided" turned out to be three-sided after research. That matches Celest
 
 Status: shipped, awaiting playtest feedback.
 
-### Stage 4 — Drill flow ✅ SHIPPED (v4.1, overhauled to position-glide v5.4)
+### Stage 4 — Drill flow ✓ SHIPPED (v4.1, overhauled to position-glide v5.4)
 References (research-backed): SteamWorld Dig 2 drill cadence, Hollow Knight / God of War hit-pause (2-3 frames), Drill Dozer momentum carry-through, Terraria 250ms tier, Game Feel (Swink) <100ms input response.
 
 What:
@@ -148,7 +148,7 @@ var hitPauseT = 0;             // global hit-pause timer
 
 Status: shipped, awaiting playtest feedback. Stage 5 (hard-landing hit-pause) can now reuse the `hitPauseT` system.
 
-### Stage 5 — Hit-pause on hard impacts ✅ SHIPPED (v5.1)
+### Stage 5 — Hit-pause on hard impacts ✓ SHIPPED (v5.1)
 What:
 - **Damage-causing landings:** `hitPauseT = clamp(0.04 + fallDmg/600, _, 0.07)` — scales 40-70ms with damage magnitude, capped so chained big falls don't compound into input lag.
 - **Sub-damage thumps (impactVy > 260):** 22-35ms hit-pause via `landK`. Below 260 px/s impact, no pause — soft drops stay snappy.
@@ -156,7 +156,7 @@ What:
 
 Status: shipped, awaiting playtest feedback.
 
-### Stage 6 — Vector thrust + whole-rig bank ✅ SHIPPED
+### Stage 6 — Vector thrust + whole-rig bank ✓ SHIPPED
 What:
 - **Body-mounted vector thrust:** holding left/right while airborne changes the rig's attitude whether the booster is on or off; thrust force, plume, smoke, and nozzles all derive from the actual `flightTilt`, so thrusters never aim independently from the chassis.
 - **No hidden air strafe:** left/right input in air only rotates the rig. Horizontal movement comes from carried ground inertia, booster force along `flightTilt`, collision response, and drag.

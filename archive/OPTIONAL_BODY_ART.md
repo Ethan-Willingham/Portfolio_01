@@ -129,7 +129,7 @@ Torso box: top `Ty=0.205H` (shoulders), bottom `By=0.50H` (crotch). `u` = horizo
 |---|---|---|---|---|
 | Brain | 0.50 | (in head) | 0.85 of cranium | rounded mushroom-dome, gyri ripples, cerebellum bulge low-back |
 | Thyroid | 0.50 | −0.05 | 0.18×0.10 | **butterfly/bowtie**, wings up-out, midline neck |
-| Heart | 0.56 | 0.20 | 0.22×0.26 | **blunt cone, apex down → viewer-RIGHT**, vessel stubs off top (NOT a ❤) |
+| Heart | 0.56 | 0.20 | 0.22×0.26 | **blunt cone, apex down → viewer-RIGHT**, vessel stubs off top (NOT a valentine heart) |
 | Lung (viewer-L) | 0.30 | 0.18 | 0.26×0.42 | half-leaf/mitten, **3 lobes, larger**, hilum notch medial |
 | Lung (viewer-R) | 0.70 | 0.20 | 0.23×0.42 | **2 lobes + cardiac notch**, smaller |
 | Liver | 0.36 | 0.40 | 0.40×0.24 | **big right-triangle wedge, viewer-LEFT**, crosses midline (largest viscus) |

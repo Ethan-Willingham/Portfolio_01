@@ -286,7 +286,7 @@ Death is a RESPAWN, not a wipe: cargo lost + 10% salvage fee, rig recovered at t
 ### Dev mode
 Press <kbd>`</kbd> (backtick) in-game. Money clamps to 999,999, all shop purchases are free. Useful for quickly verifying late-game features without grinding. Mention this whenever you tell the user how to test deep-game changes.
 
-**Perf-panel caveat (v13.13):** dev mode shows the perf overlay, but the GPU probes (`gpuProbe`, which call `gl.finish()`) are OFF by default. `gl.finish()` is a hard CPU↔GPU sync — leaving it on serialises the pipeline and the panel under-reports FPS by a wide margin (it cost ~15fps on the surface). Press <kbd>G</kbd> in dev mode to enable the smoke/sky/liquid GPU breakdown when you actually need it; expect the FPS reading to drop while it's on. **The honest framerate is the one with the GPU probe off.**
+**Perf-panel caveat (v13.13):** dev mode shows the perf overlay, but the GPU probes (`gpuProbe`, which call `gl.finish()`) are OFF by default. `gl.finish()` is a hard CPU-GPU sync — leaving it on serialises the pipeline and the panel under-reports FPS by a wide margin (it cost ~15fps on the surface). Press <kbd>G</kbd> in dev mode to enable the smoke/sky/liquid GPU breakdown when you actually need it; expect the FPS reading to drop while it's on. **The honest framerate is the one with the GPU probe off.**
 
 **PERF ISO (v13.14):** press <kbd>H</kbd> in dev mode to cycle the PERF ISO A/B tool — each press disables the next subsystem (smoke fluid → rocket plume → night sky → mountains → console gauges → terrain chunks) and toasts the mode, so a GPU hog can be isolated empirically by watching the FPS at each step. The `PERF_DISABLE_*` flags all default false, so the build is unaffected unless `H` is pressed.
 
@@ -479,7 +479,7 @@ Caveat for this repo: parallelize **read-only / research** work freely (explorin
 
 ## How to add or redesign an ore
 
-The canonical design doc is **`MINERALS_BIBLE.md`** — read its §8 roster + per-ore design direction + cut-gem differentiation lock before touching any ore. Update the bible as you go (flip ⬜→✅ in the roster, add a session log entry).
+The canonical design doc is **`MINERALS_BIBLE.md`** — read its §8 roster + per-ore design direction + cut-gem differentiation lock before touching any ore. Update the bible as you go (flip [ ]→✓ in the roster, add a session log entry).
 
 Every ore touches **six** places in `js/sluice.js`:
 

@@ -293,11 +293,11 @@ Single chapter ahead: **Stage 5 atmospheric scattering day/night cycle**, based 
 
 | Stage | What lands | Status |
 |---|---|---|
-| **1** | Palette discipline + this bible | ✅ Done (v10.21) |
-| **2** | Procedural pixel sky | ✅ Done (v10.22-v10.27, perf fix v10.27) |
-| **3** | Mountain layer audit + atmospheric perspective | ✅ Done (v10.24-v10.47, polygon refactor) |
-| **3.5** | Underground biome wall pattern (Terraria-style) | ✅ Done (v10.28-v10.43; per-frame parallax via clip v10.42-v10.45; reworked to the occlusion model v13.11-v13.12 — see §10) |
-| **3.6** | Camera framing depth-aware | ✅ Done (v10.46-v10.47) |
+| **1** | Palette discipline + this bible | ✓ Done (v10.21) |
+| **2** | Procedural pixel sky | ✓ Done (v10.22-v10.27, perf fix v10.27) |
+| **3** | Mountain layer audit + atmospheric perspective | ✓ Done (v10.24-v10.47, polygon refactor) |
+| **3.5** | Underground biome wall pattern (Terraria-style) | ✓ Done (v10.28-v10.43; per-frame parallax via clip v10.42-v10.45; reworked to the occlusion model v13.11-v13.12 — see §10) |
+| **3.6** | Camera framing depth-aware | ✓ Done (v10.46-v10.47) |
 | **5a** | Time-of-day core (`timeT`, sun-elevation derivation, dev HUD readout, cycle length config) | NEXT |
 | **5b** | CPU port of Maxime's scattering integral — Rayleigh + Mie + Ozone — evaluated at 5 gradient stops per rebuild. Existing dithered ImageData pipeline preserved; only the 5 stop colours change | The engineering stage |
 | **5c** | Sun + moon transit as drawn celestial bodies. Mountain moon-side rim direction tracks actual sun/moon position | |
@@ -396,11 +396,11 @@ Maxime's article includes a `sunVisibility(point)` function comparing sun-direct
 
 ### Stage 5f — exaggerated sunset grade ("Volcanic", LIVE v23.58)
 
-Clear-sky scattering physics caps the palette at blue↔orange and ACES desaturates the result, so a *physically honest* sunset reads flat. The brief was "wayyyyy prettier, exaggerated for the vibes, lots of colour" — **not** a lever tweak, a new set of pipeline stages on top of the Maxime base. Four stages stack inside the GL sky shader (`SKY_GL_FS` in `js/sluice/150-render-nightsky.js`), all gated to a tight twilight window so **daytime stays pure blue**:
+Clear-sky scattering physics caps the palette at blue-orange and ACES desaturates the result, so a *physically honest* sunset reads flat. The brief was "wayyyyy prettier, exaggerated for the vibes, lots of colour" — **not** a lever tweak, a new set of pipeline stages on top of the Maxime base. Four stages stack inside the GL sky shader (`SKY_GL_FS` in `js/sluice/150-render-nightsky.js`), all gated to a tight twilight window so **daytime stays pure blue**:
 
 1. **Ozone absorption** — a mid-atmosphere ozone tent (`ozoneDensity`, peak ~0.33 of the slab) folded into both the light-march optical depth and `viewTransmittance` via `ozoneBetaAbs` (the Chappuis band). Paints the deep-twilight blue/violet the clear-sky model otherwise can't reach.
 2. **Multi-scatter glow** — a cheap Hillaire-style isotropic ambient fill added to `scatteredLight` (`uMulti`). Keeps the twilight sky from going black between the lit band and zenith.
-3. **Twilight colour-grade** — a 5-stop colour ramp (`uG0..uG4`, sampled along a radial-from-sun ↔ vertical blend `uRadial`) multiplied by a luminance curve (`uGain`/`uFloor`/`uContrast`) of the scattered light, composited over the baseline ACES look. This is where the "lots of colour" comes from.
+3. **Twilight colour-grade** — a 5-stop colour ramp (`uG0..uG4`, sampled along a radial-from-sun / vertical blend `uRadial`) multiplied by a luminance curve (`uGain`/`uFloor`/`uContrast`) of the scattered light, composited over the baseline ACES look. This is where the "lots of colour" comes from.
 4. **Saturation-preserving Reinhard** — the graded HDR is tone-mapped with a hue-preserving `x/(1+x)` Reinhard (not ACES, which desaturates) then saturation-lifted (`uSat`), so the colour survives to the screen.
 
 **The twilight gate (why midday stays blue).** `twilight = 1 - smoothstep(0, uTwi, abs(sunElevation))` in **sin-of-elevation** space, then `twilight = pow(twilight, uTwiShape)`. The `uTwiShape` exponent (>1) is load-bearing: it biases the whole grade hard toward the horizon so the blue daytime sky is untouched and only the sunrise/sunset window lights up. `dramaW = clamp(uDrama,0,2) * twilight` is the final blend weight; at noon it's ~0 (pure baseline blue), at the horizon it's full. **Do not widen `uTwi` or drop `uTwiShape` toward 1** without re-checking that midday stays blue — over-affected midday was the explicit thing the owner rejected.

@@ -1,6 +1,6 @@
 # JELLO_PLAN.md — Squishy "Jello Tiles"
 
-**Status:** ✅ Implemented in v17.69. The feature shipped — see the
+**Status:** ✓ Implemented in v17.69. The feature shipped — see the
 `JELLO SOFT BODIES` banner in `js/sluice.js` and the "Jello soft
 bodies" gotcha in [`AGENTS.md`](AGENTS.md). This doc is kept as the original
 design spec / rationale. Tune the feel via the `JELLO_*` constants block.
@@ -93,7 +93,7 @@ must be ~free until a jelly is actually moving.
 6. **Render** — glossy translucent filled polygon (the point ring) + inner
    highlight + specular + idle jiggle, on the entity layer.
 7. Bump `GAME_VERSION`; commit + ff-merge `main` + push. Update the AGENTS.md
-   section index with the new banner. Flip this doc's status ⬜→✅.
+   section index with the new banner. Flip this doc's status [ ]→✓.
 
 ## Trickiest bits (be careful)
 

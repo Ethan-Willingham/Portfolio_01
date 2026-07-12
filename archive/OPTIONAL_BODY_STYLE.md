@@ -168,15 +168,15 @@ Native `animation-timeline: view()/scroll()` runs scroll-linked animation off th
 
 ## 7. Anti-patterns (don't)
 
-- ❌ **Scroll-jacking** — hijacking the scrollbar, forcing fixed jumps, intercepting wheel/touch. Augment native scroll only.
-- ❌ **`100vh`** for full-screen beats on mobile → use `100dvh`.
-- ❌ **Animating layout properties** (`top/left/width/height`) per frame → `transform`/`opacity` only.
-- ❌ **A second core interaction.** One verb (scroll). Everything else is spice on top.
-- ❌ **Overfilling screens.** Dead air is a feature; one idea per screen.
-- ❌ **Realistic gore / saturated medical-plate rendering.** Friendly flat-vector, locked palette.
-- ❌ **Desktop-style side-by-side that collapses on phones.** Mobile-first stack/overlay.
-- ❌ **Calling the appendix/tonsils "useless," or repeating any BIBLE §7 myth.** Accuracy is the credibility.
-- ❌ **A build step / framework / heavy library.** Vanilla `var`/IIFE, one HTML + one JS, matching the site.
+- NEVER: **Scroll-jacking** — hijacking the scrollbar, forcing fixed jumps, intercepting wheel/touch. Augment native scroll only.
+- NEVER: **`100vh`** for full-screen beats on mobile → use `100dvh`.
+- NEVER: **Animating layout properties** (`top/left/width/height`) per frame → `transform`/`opacity` only.
+- NEVER: **A second core interaction.** One verb (scroll). Everything else is spice on top.
+- NEVER: **Overfilling screens.** Dead air is a feature; one idea per screen.
+- NEVER: **Realistic gore / saturated medical-plate rendering.** Friendly flat-vector, locked palette.
+- NEVER: **Desktop-style side-by-side that collapses on phones.** Mobile-first stack/overlay.
+- NEVER: **Calling the appendix/tonsils "useless," or repeating any BIBLE §7 myth.** Accuracy is the credibility.
+- NEVER: **A build step / framework / heavy library.** Vanilla `var`/IIFE, one HTML + one JS, matching the site.
 
 ---
 

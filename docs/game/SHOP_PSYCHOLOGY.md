@@ -366,7 +366,7 @@ The shop should have a voice. Hand-painted plaques, idiomatic taglines:
 - "STRIKE IT RICH OR DIE TRYING"
 - "STAKE YOUR CLAIM"
 
-Frontier-Soviet voice: terse, motivational, slightly grim. Not "Welcome to the shop! 😊" — that voice is forbidden by the bible.
+Frontier-Soviet voice: terse, motivational, slightly grim. Not "Welcome to the shop! (smiley)" — that voice is forbidden by the bible.
 
 ---
 
@@ -704,7 +704,7 @@ The shop must never:
 5. Show "BEST VALUE" or "SALE!" badges (cheap, F2P aesthetic)
 6. Use captive design (countdown timers, "must buy to leave," etc.)
 7. Use pure white surfaces (sterile)
-8. Use chatty / casual copy ("Welcome friend! 😊")
+8. Use chatty / casual copy ("Welcome friend! (smiley)")
 9. Show empty shelves or empty mid-shelf gaps
 10. Use unclear / random color choices for affordability
 11. Use generic fantasy tropes (potions, scrolls, magic items) — this is industrial mining
