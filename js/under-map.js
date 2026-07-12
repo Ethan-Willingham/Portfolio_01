@@ -1,17 +1,19 @@
 /* under-map.js - the real map for "What's Under a Twin Cities Street".
-   A self-contained canvas map: no tile server, no map library, no external
-   requests. Real geometry, drawn in the site palette:
-     - land + county lines, city limits            (Met Council)
-     - lakes + the Mississippi                     (DNR via Met Council)
-     - the road skeleton                           (MnDOT functional class 1-4)
-     - electric transmission + distribution lines,
-       substations, and every mapped power plant  (OpenStreetMap, ODbL)
-     - the regional sanitary interceptors, live + abandoned,
-       lift stations, treatment plants, and the
-       sewersheds that say where a flush drains   (MCES)
-   Web Mercator, flat typed arrays, one beginPath per style bucket, bbox
-   culling. Layers lazy-load when the section scrolls near. Tap a plant for
-   its facts; tap open ground to learn which treatment plant serves it. */
+   A self-contained canvas map: no map library, no tile server of our own.
+   Real geometry, drawn in the site palette:
+     - land, county lines, city limits                 (Met Council)
+     - lakes + the Mississippi                         (DNR via Met Council)
+     - the road skeleton                               (MnDOT class 1-4)
+     - electric transmission + distribution, substations,
+       and every mapped power plant                    (OpenStreetMap, ODbL)
+     - sanitary: the regional interceptors by type, lift stations,
+       treatment plants, sewersheds                    (MCES)
+     - storm: every Minneapolis catch basin            (City of Minneapolis)
+     - drinking water plants                           (OSM)
+     - data centers + the 511 Building carrier hotel   (OSM + PeeringDB)
+   External requests happen only for the aerial basemap: USGS tiles, plus
+   the MnGeo state composite for house-level sharpness when zoomed in.
+   Groups the data cannot cover are said out loud in the layer card. */
 (function () {
   'use strict';
 
@@ -19,54 +21,93 @@
   if (!HOST) return;
   var CANVAS = HOST.querySelector('canvas');
   var STATUS = HOST.querySelector('.um-status');
-  var TIP = HOST.querySelector('.um-tip');
   var SHED = HOST.querySelector('.um-shed');
   var SCALE = HOST.querySelector('.um-scale');
   var STAGE = HOST.querySelector('.um-stage');
+  var PANEL = HOST.querySelector('.um-panel');
   var ctx = CANVAS.getContext('2d');
 
-  // ---- palette (the dig-paint code, matched to the page tokens) ----
+  // ---- palette ----
   var C = {
     land: '#2a322b',
     county: 'rgba(232,226,214,0.10)', city: 'rgba(232,226,214,0.22)',
     water: '#26343b',
     road12: 'rgba(232,226,214,0.34)', road3: 'rgba(232,226,214,0.20)', road4: 'rgba(232,226,214,0.11)',
-    kv345: 'rgba(196,126,112,0.95)', kv200: 'rgba(190,124,110,0.85)', kv100: 'rgba(184,121,109,0.72)', kvLow: 'rgba(184,121,109,0.5)', gridMinor: 'rgba(184,121,109,0.34)',
     sub: 'rgba(184,121,109,0.60)',
-    sewerLive: 'rgba(111,154,108,0.95)', sewerGhost: 'rgba(111,154,108,0.34)',
     lift: 'rgba(111,154,108,0.85)',
+    inlet: 'rgba(143,179,199,0.8)',
     shed: 'rgba(111,154,108,0.045)', shedLine: 'rgba(111,154,108,0.10)', shedHi: 'rgba(111,154,108,0.13)',
-    tplant: '#dfc288',  tplantGhost: 'rgba(223,194,136,0.38)',
+    tplant: '#dfc288', tplantGhost: 'rgba(223,194,136,0.38)',
+    ww: '#8fb3c7',
     dc: '#cf9f78',
-    sel: '#ede0c0',
+    sel: '#ede0c0', hov: '#f5f1ea',
     label: 'rgba(245,241,234,0.92)', labelHalo: 'rgba(30,36,32,0.85)',
     mark: '#d4c4a0'
   };
-  // power plants, colored by fuel (plant:source)
   var FUEL = {
     hydro: '#8fb3c7', nuclear: '#b79bc4', gas: '#dfc288', oil: '#cf9f78',
     coal: '#b8796d', waste: '#cf9f78', solar: '#ece5d3', wind: '#9ec79a',
     biomass: '#6f9a6c', battery: '#b79bc4'
   };
+  // Line styles per basemap: satellite gets brighter cores; both get a dark
+  // casing under every utility line so the network reads over anything.
+  function lineStyles() {
+    if (SAT.on) return {
+      case_: 'rgba(8,12,9,0.9)',
+      kv345: { c: '#e8a48e', w: 2.6 }, kv200: { c: '#e09a86', w: 2.0 }, kv100: { c: '#d59079', w: 1.5 }, kvLow: { c: '#c48774', w: 1.0 }, minor: { c: 'rgba(214,150,132,0.8)', w: 0.9 },
+      sewer: { c: '#93cf8b', w: 2.3 }, siphon: { c: '#93cf8b', w: 2.5 }, ghost: { c: 'rgba(147,207,139,0.4)', w: 1.1 }
+    };
+    return {
+      case_: 'rgba(16,21,17,0.8)',
+      kv345: { c: '#cd8b78', w: 2.4 }, kv200: { c: '#c48371', w: 1.9 }, kv100: { c: '#b8796d', w: 1.4 }, kvLow: { c: 'rgba(184,121,109,0.6)', w: 0.95 }, minor: { c: 'rgba(184,121,109,0.42)', w: 0.8 },
+      sewer: { c: '#7fb27a', w: 2.0 }, siphon: { c: '#7fb27a', w: 2.2 }, ghost: { c: 'rgba(111,154,108,0.38)', w: 1.0 }
+    };
+  }
 
-  // ---- aerial imagery: USGS The National Map, public domain, loaded
-  // only while the satellite basemap is switched on ----
+  // ---- aerial imagery ----
+  // Base: USGS The National Map (public domain), tiles to z16.
+  // Sharp overlay: the MnGeo Minnesota composite image service, fetched one
+  // viewport-sized image at a time once you zoom past ~z14. Both load only
+  // while the satellite basemap is on.
   var SAT = { on: false, cache: new Map(), maxTiles: 350 };
   function tileURL(z, x, y) { return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/' + z + '/' + y + '/' + x; }
   function tileGet(z, x, y) {
     var k = z + '/' + x + '/' + y;
     var t = SAT.cache.get(k);
     if (t) return t;
-    if (SAT.cache.size > SAT.maxTiles) {
-      var drop = SAT.cache.keys().next().value;
-      SAT.cache.delete(drop);
-    }
+    if (SAT.cache.size > SAT.maxTiles) SAT.cache.delete(SAT.cache.keys().next().value);
     t = { img: new Image(), ok: false, dead: false };
     t.img.onload = function () { t.ok = true; requestDraw(); };
     t.img.onerror = function () { t.dead = true; };
     t.img.src = tileURL(z, x, y);
     SAT.cache.set(k, t);
     return t;
+  }
+  var HQ = { img: null, box: null, pending: null, timer: null };
+  var WORLD_M = 40075016.686;
+  function hqRefresh() {
+    if (!SAT.on || view.z < 14.2) return;
+    if (HQ.timer) clearTimeout(HQ.timer);
+    HQ.timer = setTimeout(function () {
+      var s = scale();
+      var wpx = Math.min(2200, Math.round(W * DPR)), hpx = Math.min(2200, Math.round(H * DPR));
+      var x0 = view.x - (W / 2) / s, x1 = view.x + (W / 2) / s;
+      var y0 = view.y - (H / 2) / s, y1 = view.y + (H / 2) / s;
+      var mx0 = (x0 - 0.5) * WORLD_M, mx1 = (x1 - 0.5) * WORLD_M;
+      var my0 = (0.5 - y1) * WORLD_M, my1 = (0.5 - y0) * WORLD_M;
+      var url = 'https://imageserver.gisdata.mn.gov/cgi-bin/mncomp?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=mncomp&STYLES=&CRS=EPSG:3857' +
+        '&BBOX=' + mx0.toFixed(1) + ',' + my0.toFixed(1) + ',' + mx1.toFixed(1) + ',' + my1.toFixed(1) +
+        '&WIDTH=' + wpx + '&HEIGHT=' + hpx + '&FORMAT=image/jpeg';
+      var img = new Image();
+      HQ.pending = img;
+      img.onload = function () {
+        if (HQ.pending !== img) return;
+        HQ.img = img; HQ.box = { x0: x0, x1: x1, y0: y0, y1: y1 };
+        requestDraw();
+      };
+      img.onerror = function () { if (HQ.pending === img) HQ.pending = null; };
+      img.src = url;
+    }, 380);
   }
   function drawTiles() {
     var zi = Math.max(3, Math.min(16, Math.floor(view.z + 0.4)));
@@ -82,7 +123,13 @@
         try { ctx.drawImage(t.img, px, py, ts + 0.6, ts + 0.6); } catch (err) {}
       }
     }
-    // a light scrim keeps the colored lines readable over imagery
+    // the sharp state overlay, reprojected from its captured view
+    if (HQ.img && HQ.box && view.z >= 14.2) {
+      var b = HQ.box;
+      var px0 = (b.x0 - view.x) * s + W / 2, py0 = (b.y0 - view.y) * s + H / 2;
+      var pw = (b.x1 - b.x0) * s, ph = (b.y1 - b.y0) * s;
+      try { ctx.drawImage(HQ.img, px0, py0, pw, ph); } catch (err) {}
+    }
     ctx.fillStyle = view.z < 13 ? 'rgba(30,36,32,0.22)' : 'rgba(30,36,32,0.10)';
     ctx.fillRect(0, 0, W, H);
   }
@@ -102,16 +149,17 @@
     tplants: 'assets/map/plants.json',
     sewersheds: 'assets/map/sewersheds.json',
     waterworks: 'assets/map/waterworks.json',
-    comms: 'assets/map/comms.json'
+    comms: 'assets/map/comms.json',
+    inlets: 'assets/map/inlets.json'
   };
   var L = {};
-  var on = { roads: true, grid: true, pplants: true, sewer: true };
+  // the honest groups: gas exists only as a disabled row in the card
+  var on = { san: true, storm: true, water: true, elec: true, pplants: true, comms: true, roads: true };
 
-  // ---- landmarks (hand-checked, deliberately few) ----
   var MARKS = [
-    { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike', kind: 'mark',
+    { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike', group: null,
       blurb: 'The only major waterfall on the Mississippi, artificial since 1880. Under the river just upstream sits the concrete dike the Army Corps finished in 1876, up to 40 feet deep and 1,850 feet across, built after the Eastman tunnel collapse nearly unzipped the falls.' },
-    { lon: -93.25458, lat: 44.97141, name: 'The 511 Building', kind: 'mark',
+    { lon: -93.25458, lat: 44.97141, name: 'The 511 Building', group: 'comms',
       blurb: 'The metro\'s carrier hotel: the old warehouse at 511 11th Ave S where the region\'s networks physically interconnect. MICE, the Midwest Internet Cooperative Exchange, peers 158 networks here (Cologix MIN1, per PeeringDB). If your packet crosses town, odds are it passes through this building.' }
   ];
 
@@ -121,14 +169,12 @@
   function lonOf(x) { return x * 360 - 180; }
   function latOf(y) { var n = Math.PI - 2 * Math.PI * y; return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))); }
 
-  // view: center in world units + zoom (px per world unit = 256 * 2^z).
-  // The zoom is computed on first sizing so the metro fits any stage width.
-  var MINZ = 9.2, MAXZ = 16.8;
+  var MINZ = 9.2, MAXZ = 17.6;
   var view = { x: mx(-93.166), y: my(44.963), z: 10.9 };
   var HOME = { x: view.x, y: view.y, z: view.z };
   var fitted = false;
   function fitZoom() {
-    var span = mx(-92.72) - mx(-93.72);   // the metro east-west, with margin
+    var span = mx(-92.72) - mx(-93.72);
     var z = Math.log2(W / (span * 256));
     view.z = HOME.z = Math.max(9.4, Math.min(11.4, z));
     fitted = true;
@@ -139,7 +185,6 @@
     }
   }
   var W = 0, H = 0, DPR = 1;
-
   function scale() { return 256 * Math.pow(2, view.z); }
   function toPx(x, y) { var s = scale(); return [ (x - view.x) * s + W / 2, (y - view.y) * s + H / 2 ]; }
 
@@ -204,39 +249,22 @@
     ctx.stroke(); ctx.setLineDash([]);
   }
 
-  // Line styles per basemap. Satellite gets brighter cores; both get a dark
-  // casing under every utility line so they read over any background.
-  function lineStyles() {
-    if (SAT.on) return {
-      case_: 'rgba(8,12,9,0.9)',
-      kv345: { c: '#e8a48e', w: 2.6 }, kv200: { c: '#e09a86', w: 2.0 }, kv100: { c: '#d59079', w: 1.5 }, kvLow: { c: '#c48774', w: 1.0 }, minor: { c: 'rgba(214,150,132,0.8)', w: 0.9 },
-      sewer: { c: '#93cf8b', w: 2.3 }, siphon: { c: '#93cf8b', w: 2.5 }, ghost: { c: 'rgba(147,207,139,0.4)', w: 1.1 }
-    };
-    return {
-      case_: 'rgba(16,21,17,0.8)',
-      kv345: { c: '#cd8b78', w: 2.4 }, kv200: { c: '#c48371', w: 1.9 }, kv100: { c: '#b8796d', w: 1.4 }, kvLow: { c: 'rgba(184,121,109,0.6)', w: 0.95 }, minor: { c: 'rgba(184,121,109,0.42)', w: 0.8 },
-      sewer: { c: '#7fb27a', w: 2.0 }, siphon: { c: '#7fb27a', w: 2.2 }, ghost: { c: 'rgba(111,154,108,0.38)', w: 1.0 }
-    };
-  }
-
-  var shedPick = null; // name of the tapped sewershed
+  var shedPick = null;
+  var HOVL = null;   // hovered line {seg, meta}
   function draw() {
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     var s = scale(), cx = view.x, cy = view.y;
 
-    // basemap: drawn vectors, or aerial imagery
     if (SAT.on) drawTiles();
-    // land
     if (!SAT.on && L.counties) {
       ctx.beginPath();
       L.counties.forEach(function (seg) { tracePath(seg, s, cx, cy); ctx.closePath(); });
       ctx.fillStyle = C.land; ctx.fill();
       ctx.strokeStyle = C.county; ctx.lineWidth = 1; ctx.stroke();
     }
-    // sewersheds: the quiet answer to "where does my flush go"
-    if (!SAT.on && on.sewer && L.sheds) {
+    if (!SAT.on && on.san && L.sheds) {
       Object.keys(L.sheds).forEach(function (name) {
         ctx.beginPath();
         L.sheds[name].forEach(function (seg) { if (visible(seg, cx, cy, s)) { tracePath(seg, s, cx, cy); ctx.closePath(); } });
@@ -245,24 +273,21 @@
         if (name === shedPick) { ctx.strokeStyle = C.shedLine; ctx.lineWidth = 1.2; ctx.stroke(); }
       });
     }
-    // water
     if (!SAT.on && L.water) {
       ctx.beginPath();
       for (var i = 0; i < L.water.length; i++) { if (visible(L.water[i], cx, cy, s)) { tracePath(L.water[i], s, cx, cy); ctx.closePath(); } }
       ctx.fillStyle = C.water; ctx.fill();
     }
-    // city limits
     if (!SAT.on && L.cities) strokeBucket(L.cities, C.city, 1.1, [5, 4]);
-    // roads by class
     if (!SAT.on && on.roads && L.roads) {
       strokeBucket(L.roads.r4, C.road4, 0.6);
       strokeBucket(L.roads.r3, C.road3, 0.8);
       strokeBucket(L.roads.r12, C.road12, 1.25);
     }
-    // the grid: distribution feeders come in on zoom; transmission always,
-    // drawn thin to thick by voltage class, cased so it reads anywhere
+
     var LS = lineStyles();
-    if (on.grid) {
+    // electric
+    if (on.elec) {
       if (L.powerminor && view.z > 10.4) strokeBucket(L.powerminor, LS.minor.c, LS.minor.w, null, LS.case_);
       if (L.grid) {
         strokeBucket(L.grid.low, LS.kvLow.c, LS.kvLow.w, null, LS.case_);
@@ -282,15 +307,14 @@
         });
       }
     }
-    // sewers: gravity solid, forcemains long-dashed (pumped), siphons dotted
-    if (on.sewer && L.interceptors) {
+    // sanitary
+    if (on.san && L.interceptors) {
       strokeBucket(L.interceptors.ghost, LS.ghost.c, LS.ghost.w, [3, 4]);
       strokeBucket(L.interceptors.g, LS.sewer.c, LS.sewer.w, null, LS.case_);
       strokeBucket(L.interceptors.f, LS.sewer.c, LS.sewer.w, [8, 4], LS.case_);
       strokeBucket(L.interceptors.s, LS.siphon.c, LS.siphon.w, [2, 3], LS.case_);
     }
-    // lift stations
-    if (on.sewer && L.lifts && view.z > 10.3) {
+    if (on.san && L.lifts && view.z > 10.3) {
       ctx.fillStyle = C.lift;
       L.lifts.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
@@ -298,8 +322,18 @@
         ctx.beginPath(); ctx.arc(p[0], p[1], 2.2, 0, 6.2832); ctx.fill();
       });
     }
+    // storm inlets (Minneapolis)
+    if (on.storm && L.inlets && view.z > 12.6) {
+      ctx.fillStyle = C.inlet;
+      var r2 = view.z > 14.5 ? 2.2 : 1.4;
+      L.inlets.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -4 || p[0] > W + 4 || p[1] < -4 || p[1] > H + 4) return;
+        ctx.fillRect(p[0] - r2 / 2, p[1] - r2 / 2, r2, r2);
+      });
+    }
     // treatment plants
-    if (on.sewer && L.tplants) {
+    if (on.san && L.tplants) {
       L.tplants.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
         if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
@@ -317,20 +351,20 @@
         if (view.z > 9.9) label(pt.p.name, p[0], p[1] - 9, 5);
       });
     }
-    // drinking-water plants
-    if (on.sewer && L.ww) {
+    // drinking water plants
+    if (on.water && L.ww) {
       L.ww.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
         if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
-        ctx.strokeStyle = '#8fb3c7'; ctx.lineWidth = 1.6;
+        ctx.strokeStyle = C.ww; ctx.lineWidth = 1.6;
         ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, 6.2832); ctx.stroke();
         ctx.fillStyle = 'rgba(143,179,199,0.5)';
         ctx.beginPath(); ctx.arc(p[0], p[1], 1.4, 0, 6.2832); ctx.fill();
         if (view.z > 10.8) label(pt.p.name, p[0], p[1] - 8, 3);
       });
     }
-    // data centers: where the fiber physically meets
-    if (on.grid && L.dc) {
+    // data centers
+    if (on.comms && L.dc) {
       L.dc.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
         if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
@@ -342,16 +376,15 @@
         if (view.z > 11.2) label(pt.p.name, p[0], p[1] - 8, 2);
       });
     }
-    // power plants, sized by megawatts, colored by fuel
+    // power plants
     if (on.pplants && L.pplants) {
       L.pplants.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
         if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
         var mw = pt.p.mw || 0;
-        if (!mw && view.z < 10.6) return;   // tiny unrated plants only up close
+        if (!mw && view.z < 10.6) return;
         var r = mw ? Math.max(2.6, Math.min(11, 2 + Math.sqrt(mw) * 0.42)) : 2.4;
-        var col = FUEL[pt.p.src] || C.mark;
-        ctx.fillStyle = col;
+        ctx.fillStyle = FUEL[pt.p.src] || C.mark;
         ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 6.2832); ctx.fill();
         ctx.strokeStyle = 'rgba(30,36,32,0.9)'; ctx.lineWidth = 1.3;
         ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 6.2832); ctx.stroke();
@@ -360,6 +393,7 @@
     }
     // landmarks
     MARKS.forEach(function (m) {
+      if (m.group && !on[m.group]) return;
       var p = toPx(mx(m.lon), my(m.lat));
       if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
       ctx.strokeStyle = C.mark; ctx.lineWidth = 1.3;
@@ -368,6 +402,14 @@
       ctx.beginPath(); ctx.arc(p[0], p[1], 1.6, 0, 6.2832); ctx.fill();
       if (view.z > 10.4) label(m.name, p[0], p[1] - 11, 6);
     });
+    // hovered line highlight
+    if (HOVL) {
+      ctx.beginPath();
+      tracePath(HOVL.seg, s, cx, cy);
+      ctx.strokeStyle = LS.case_; ctx.lineWidth = (HOVL.meta.w || 2) + 4.2; ctx.stroke();
+      ctx.strokeStyle = C.hov; ctx.lineWidth = (HOVL.meta.w || 2) + 1.4;
+      ctx.setLineDash(HOVL.meta.dash || []); ctx.stroke(); ctx.setLineDash([]);
+    }
     // selection ring
     if (SEL && SEL.x !== undefined) {
       var sp = toPx(SEL.x, SEL.y);
@@ -401,9 +443,9 @@
   function drawScale() {
     if (!SCALE) return;
     var lat = latOf(view.y) * Math.PI / 180;
-    var metersPerPx = 40075016.686 * Math.cos(lat) / scale();
+    var metersPerPx = WORLD_M * Math.cos(lat) / scale();
     var milesPerPx = metersPerPx / 1609.344;
-    var steps = [0.25, 0.5, 1, 2, 5, 10, 20, 50];
+    var steps = [0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50];
     var target = 90 * milesPerPx, mi = steps[0];
     for (var i = 0; i < steps.length; i++) { if (steps[i] <= target) mi = steps[i]; }
     SCALE.textContent = mi + ' mi';
@@ -432,7 +474,9 @@
   // ---- interaction ----
   var hashTimer = null;
   function noteMoved() {
-    hideTip(); if (SHED) SHED.hidden = true; shedPick = null;
+    if (SHED) SHED.hidden = true; shedPick = null;
+    HOVL = null;
+    hqRefresh();
     if (hashTimer) clearTimeout(hashTimer);
     hashTimer = setTimeout(function () {
       try { history.replaceState(null, '', '#map=' + view.z.toFixed(2) + '/' + latOf(view.y).toFixed(4) + '/' + lonOf(view.x).toFixed(4) + (SAT.on ? '/sat' : '')); } catch (err) {}
@@ -461,7 +505,6 @@
       var pts = Array.from(pointers.values());
       pinch = { d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), z: view.z };
     }
-    hideTip();
   });
   CANVAS.addEventListener('pointermove', function (e) {
     var prev = pointers.get(e.pointerId);
@@ -512,10 +555,7 @@
   });
 
   // ---- the inspector ----
-  var PANEL = HOST.querySelector('.um-panel');
   var SEL = null;
-  // Curated depth for the flagship facilities. Numbers come from the layer
-  // data itself or from facts already sourced in the essay above.
   var FACTS = {
     'Metro': 'The one that started it all: opened 1938 at Pig\'s Eye as the first major-metro sewage plant on the Mississippi. Today it treats about 225 million gallons a day, roughly half the wastewater the whole state produces, for a service population over two million.',
     'Blue Lake': 'One of the regional system\'s two big southwest plants, serving the Minnesota River side of the metro.',
@@ -536,6 +576,7 @@
     ww: 'A drinking-water treatment plant: the clean half of the water cycle, upstream of every tap it serves.',
     dc: 'A data center: one of the buildings where the metro\'s fiber physically terminates and networks exchange traffic.',
     sub: 'A substation: where transmission voltage steps down toward neighborhood feeders.',
+    inlet: 'A storm inlet: the grate at the curb. Everything that goes down it reaches a lake or the river with no treatment plant in between.',
     pplant: { nuclear: 'Splits uranium to boil water.', coal: 'Burns coal, the old backbone.', gas: 'Burns natural gas, the system\'s flexible middle.', oil: 'An oil or dual-fuel peaker, run when demand spikes.', hydro: 'Spins on falling river water, the oldest power here.', waste: 'Burns garbage and sells the heat.', solar: 'A solar array.', wind: 'A wind site.', biomass: 'Burns plant matter.', battery: 'A grid battery.' }
   };
   function mwText(mw) { return mw ? (mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW') : null; }
@@ -554,17 +595,34 @@
     PANEL.querySelector('.um-pclose').addEventListener('click', closePanel);
     var fb = PANEL.querySelector('[data-pa="fly"]'), sb = PANEL.querySelector('[data-pa="sat"]');
     if (fb) fb.addEventListener('click', function () { flyTo(lonOf(sel.x), latOf(sel.y), 15.4); });
-    if (sb) sb.addEventListener('click', function () { setBase(true); flyTo(lonOf(sel.x), latOf(sel.y), 16.2); });
+    if (sb) sb.addEventListener('click', function () { setBase(true); flyTo(lonOf(sel.x), latOf(sel.y), 16.4); });
     requestDraw();
   }
   function closePanel() { if (PANEL) PANEL.hidden = true; SEL = null; requestDraw(); }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
 
-  // distance from a screen point to the nearest visible segment in buckets
-  function lineAt(px, py, buckets) {
+  // ---- line hit testing (shared by hover + tap) ----
+  function lineBuckets() {
+    var LS = lineStyles(), out = [];
+    if (on.elec && L.grid) {
+      out.push({ segs: L.grid.k345, meta: { name: '345 kV transmission line', kindLabel: 'Electric · backbone', color: LS.kv345.c, w: LS.kv345.w, blurb: 'The metro\'s highest-voltage tier: the long-haul lines that move bulk power between plants and the region.' } });
+      out.push({ segs: L.grid.k200, meta: { name: '230 kV transmission line', kindLabel: 'Electric', color: LS.kv200.c, w: LS.kv200.w, blurb: 'Heavy regional transmission.' } });
+      out.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'Electric', color: LS.kv100.c, w: LS.kv100.w, blurb: 'The workhorse tier that rings the cities and feeds the big substations.' } });
+      out.push({ segs: L.grid.low, meta: { name: 'Sub-100 kV line', kindLabel: 'Electric', color: LS.kvLow.c, w: LS.kvLow.w, blurb: 'Lower-voltage subtransmission, the step before neighborhood feeders.' } });
+      if (view.z > 10.4 && L.powerminor) out.push({ segs: L.powerminor, meta: { name: 'Distribution feeder', kindLabel: 'Electric · local', color: LS.minor.c, w: LS.minor.w, blurb: 'A local feeder on its way to the poles and pad transformers. OSM maps only some of these; the full street-level grid is Xcel\'s and is not public.' } });
+    }
+    if (on.san && L.interceptors) {
+      out.push({ segs: L.interceptors.f, meta: { name: 'Forcemain interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, dash: [8, 4], blurb: 'A pressurized sewer: where gravity runs out, lift-station pumps shove the flow uphill through these.' } });
+      out.push({ segs: L.interceptors.s, meta: { name: 'Siphon crossing', kindLabel: 'Sanitary sewer', color: LS.siphon.c, w: LS.siphon.w, dash: [2, 3], blurb: 'An inverted siphon: the pipe dives under a river or obstacle and pressure pushes the flow up the far side.' } });
+      out.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, blurb: 'The default sewer: a tunnel laid on a steady downhill grade, flowing to the plant on slope alone. These are the regional trunk lines; the smaller street mains that feed them are not published.' } });
+      out.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'Sanitary sewer · ghost', color: LS.ghost.c, w: LS.ghost.w, dash: [3, 4], blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
+    }
+    return out;
+  }
+  function lineAt(px, py) {
     var s = scale(), cx = view.x, cy = view.y;
     var best = null, bd = 7;
-    buckets.forEach(function (bk) {
+    lineBuckets().forEach(function (bk) {
       bk.segs.forEach(function (seg) {
         if (!visible(seg, cx, cy, s)) return;
         var xs = seg.xs, ys = seg.ys, n = seg.n;
@@ -584,62 +642,75 @@
     return best;
   }
 
-  // ---- hit testing ----
+  // ---- point hit testing ----
   function nearestPoint(e) {
     var rect = CANVAS.getBoundingClientRect();
     var px = e.clientX - rect.left, py = e.clientY - rect.top;
     var best = null, bd = 15;
-    function test(x, y, name, sel) {
+    function test(x, y, sel) {
       var p = toPx(x, y), d = Math.hypot(p[0] - px, p[1] - py);
-      if (d < bd) { bd = d; sel.x = x; sel.y = y; best = { px2: p[0], py2: p[1], name: name, sel: sel }; }
+      if (d < bd) { bd = d; sel.x = x; sel.y = y; best = { sel: sel }; }
     }
     if (on.pplants && L.pplants) L.pplants.forEach(function (pt) {
       var mw = pt.p.mw, nm = pt.p.name === 'unnamed plant' ? 'Power plant' : pt.p.name;
       var facts = [['fuel', pt.p.src]]; if (mw) facts.push(['output', mwText(mw)]);
-      test(pt.x, pt.y, nm + ' · ' + pt.p.src + (mw ? ' · ' + mwText(mw) : ''),
-        { kind: 'pplant', kindLabel: 'Power plant · ' + pt.p.src, color: FUEL[pt.p.src] || C.mark, name: nm, facts: facts,
-          blurb: FACTS[pt.p.name] || (KINDBLURB.pplant[pt.p.src] || '') });
+      test(pt.x, pt.y, { kind: 'pplant', kindLabel: 'Power plant · ' + pt.p.src, color: FUEL[pt.p.src] || C.mark, name: nm, facts: facts, blurb: FACTS[pt.p.name] || (KINDBLURB.pplant[pt.p.src] || '') });
     });
-    if (on.sewer && L.tplants) L.tplants.forEach(function (pt) {
+    if (on.san && L.tplants) L.tplants.forEach(function (pt) {
       var ghost = pt.p.k === 'ghost';
-      var t = pt.p.name + (ghost ? ' (closed' : ' (wastewater'); t += pt.p.yr ? ', ' + pt.p.yr + ')' : ')';
-      var facts = []; if (pt.p.yr) facts.push([ghost ? 'opened' : 'opened', String(pt.p.yr)]);
-      test(pt.x, pt.y, t,
-        { kind: 'tplant', kindLabel: ghost ? 'Closed treatment plant' : 'Wastewater treatment plant', color: C.tplant, name: pt.p.name, facts: facts,
-          blurb: FACTS[pt.p.name] || (ghost ? KINDBLURB.tplantGhost : KINDBLURB.tplant) });
+      var facts = []; if (pt.p.yr) facts.push(['opened', String(pt.p.yr)]);
+      test(pt.x, pt.y, { kind: 'tplant', kindLabel: ghost ? 'Closed treatment plant' : 'Wastewater treatment plant', color: C.tplant, name: pt.p.name, facts: facts, blurb: FACTS[pt.p.name] || (ghost ? KINDBLURB.tplantGhost : KINDBLURB.tplant) });
     });
-    if (on.sewer && L.ww) L.ww.forEach(function (pt) {
-      test(pt.x, pt.y, pt.p.name + ' (drinking water)',
-        { kind: 'ww', kindLabel: 'Drinking-water plant', color: '#8fb3c7', name: pt.p.name, facts: [], blurb: FACTS[pt.p.name] || KINDBLURB.ww });
+    if (on.water && L.ww) L.ww.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'ww', kindLabel: 'Drinking-water plant', color: C.ww, name: pt.p.name, facts: [], blurb: FACTS[pt.p.name] || KINDBLURB.ww });
     });
-    if (on.grid && L.dc) L.dc.forEach(function (pt) {
-      test(pt.x, pt.y, pt.p.name + ' (data center)',
-        { kind: 'dc', kindLabel: 'Data center', color: C.dc, name: pt.p.name, facts: [], blurb: FACTS[pt.p.name] || KINDBLURB.dc });
+    if (on.comms && L.dc) L.dc.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'dc', kindLabel: 'Data center', color: C.dc, name: pt.p.name, facts: [], blurb: FACTS[pt.p.name] || KINDBLURB.dc });
     });
-    if (on.grid && L.subs && view.z > 10.6) L.subs.forEach(function (pt) {
+    if (on.elec && L.subs && view.z > 10.6) L.subs.forEach(function (pt) {
       if (!pt.p.name && !pt.p.kv) return;
       var nm = pt.p.name || 'Substation';
       var facts = []; if (pt.p.kv) facts.push(['voltage', pt.p.kv + ' kV']);
-      test(pt.x, pt.y, nm + (pt.p.kv ? ' · ' + pt.p.kv + ' kV' : ''),
-        { kind: 'sub', kindLabel: 'Substation', color: C.kv100, name: nm, facts: facts, blurb: KINDBLURB.sub });
+      test(pt.x, pt.y, { kind: 'sub', kindLabel: 'Substation', color: C.sub, name: nm, facts: facts, blurb: KINDBLURB.sub });
+    });
+    if (on.storm && L.inlets && view.z > 13.6) L.inlets.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'inlet', kindLabel: 'Storm inlet · Minneapolis', color: C.inlet, name: 'Storm inlet', facts: [], blurb: KINDBLURB.inlet });
     });
     MARKS.forEach(function (m) {
-      test(mx(m.lon), my(m.lat), m.name,
-        { kind: 'mark', kindLabel: 'Landmark', color: C.mark, name: m.name, facts: [], blurb: m.blurb });
+      if (m.group && !on[m.group]) return;
+      test(mx(m.lon), my(m.lat), { kind: 'mark', kindLabel: 'Landmark', color: C.mark, name: m.name, facts: [], blurb: m.blurb });
     });
     return { best: best, px: px, py: py };
   }
+
   var FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  var hoverName = null;
+  var hoverName = null, lastLineCheck = 0;
   function hover(e) {
     var r = nearestPoint(e);
     if (r.best) {
       CANVAS.style.cursor = 'pointer';
+      if (HOVL) { HOVL = null; requestDraw(); }
       if (FINE && r.best.sel.name !== hoverName) {
         hoverName = r.best.sel.name;
         openPanel(r.best.sel);
       }
-    } else {
+      return;
+    }
+    // line hover, throttled: highlight it and open its card
+    var now = Date.now();
+    if (now - lastLineCheck > 90) {
+      lastLineCheck = now;
+      var lh = lineAt(r.px, r.py);
+      if (lh) {
+        CANVAS.style.cursor = 'pointer';
+        if (!HOVL || HOVL.seg !== lh.seg) { HOVL = lh; requestDraw(); }
+        if (FINE && lh.meta.name !== hoverName) {
+          hoverName = lh.meta.name;
+          openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb });
+        }
+        return;
+      }
+      if (HOVL) { HOVL = null; requestDraw(); }
       CANVAS.style.cursor = 'grab';
       hoverName = null;
     }
@@ -647,25 +718,10 @@
   function tap(e) {
     var r = nearestPoint(e);
     if (r.best) { openPanel(r.best.sel); return; }
-    // a line under the finger?
-    var lineBuckets = [];
-    if (on.grid && L.grid) {
-      lineBuckets.push({ segs: L.grid.k345, meta: { name: '345 kV transmission line', kindLabel: 'The grid · backbone', color: C.kv345, blurb: 'The metro\'s highest-voltage tier: the long-haul lines that move bulk power between plants and the region.' } });
-      lineBuckets.push({ segs: L.grid.k200, meta: { name: '230 kV transmission line', kindLabel: 'The grid', color: C.kv200, blurb: 'Heavy regional transmission.' } });
-      lineBuckets.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'The grid', color: C.kv100, blurb: 'The workhorse tier that rings the cities and feeds the big substations.' } });
-      lineBuckets.push({ segs: L.grid.low, meta: { name: 'Sub-100 kV line', kindLabel: 'The grid', color: C.kvLow, blurb: 'Lower-voltage subtransmission, the step before neighborhood feeders.' } });
-      if (view.z > 10.4 && L.powerminor) lineBuckets.push({ segs: L.powerminor, meta: { name: 'Distribution feeder', kindLabel: 'The grid · local', color: C.gridMinor, blurb: 'A local feeder on its way to the poles and pad transformers.' } });
-    }
-    if (on.sewer && L.interceptors) {
-      lineBuckets.push({ segs: L.interceptors.f, meta: { name: 'Forcemain interceptor', kindLabel: 'The sewer system', color: C.sewerLive, blurb: 'A pressurized sewer: where gravity runs out, lift-station pumps shove the flow uphill through these.' } });
-      lineBuckets.push({ segs: L.interceptors.s, meta: { name: 'Siphon crossing', kindLabel: 'The sewer system', color: C.sewerLive, blurb: 'An inverted siphon: the pipe dives under a river or obstacle and pressure pushes the flow up the far side.' } });
-      lineBuckets.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'The sewer system', color: C.sewerLive, blurb: 'The default sewer: a tunnel laid on a steady downhill grade, flowing to the plant on slope alone.' } });
-      lineBuckets.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'The sewer system · ghost', color: C.sewerGhost, blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
-    }
-    var lh = lineAt(r.px, r.py, lineBuckets);
-    if (lh) { hideTip(); openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }); return; }
-    // no dot under the finger: answer the ground question instead
-    if (!on.sewer || !L.sheds || !SHED) return;
+    var lh = lineAt(r.px, r.py);
+    if (lh) { HOVL = lh; openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }); requestDraw(); return; }
+    // open ground: which plant does this spot drain to?
+    if (!on.san || !L.sheds || !SHED) return;
     var s = scale();
     var wx = view.x + (r.px - W / 2) / s, wy = view.y + (r.py - H / 2) / s;
     var found = null;
@@ -691,34 +747,19 @@
     }
     requestDraw();
   }
-  function hideTip() { if (TIP) TIP.hidden = true; CANVAS.style.cursor = 'grab'; }
 
-  // controls
+  // ---- controls ----
   HOST.querySelectorAll('[data-um-toggle]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var k = btn.getAttribute('data-um-toggle');
+      if (!(k in on)) return;
       on[k] = !on[k];
       btn.setAttribute('aria-pressed', on[k] ? 'true' : 'false');
-      if (k === 'sewer' && !on.sewer && SHED) { SHED.hidden = true; shedPick = null; }
+      if (k === 'san' && !on.san && SHED) { SHED.hidden = true; shedPick = null; }
+      HOVL = null;
       requestDraw();
     });
   });
-  var zin = HOST.querySelector('[data-um-zoom="in"]'), zout = HOST.querySelector('[data-um-zoom="out"]'), zhome = HOST.querySelector('[data-um-zoom="home"]'), zfull = HOST.querySelector('[data-um-zoom="full"]');
-  if (zin) zin.addEventListener('click', function () { zoomAt(W / 2, H / 2, 0.6); });
-  if (zout) zout.addEventListener('click', function () { zoomAt(W / 2, H / 2, -0.6); });
-  if (zhome) zhome.addEventListener('click', function () { view.x = HOME.x; view.y = HOME.y; view.z = HOME.z; noteMoved(); requestDraw(); });
-  if (zfull) {
-    if (!STAGE.requestFullscreen) { zfull.hidden = true; }
-    else {
-      zfull.addEventListener('click', function () {
-        if (document.fullscreenElement) document.exitFullscreen();
-        else STAGE.requestFullscreen();
-      });
-      document.addEventListener('fullscreenchange', function () { setTimeout(resize, 60); });
-    }
-  }
-
-  // ---- basemap switch: the corner thumbnail always previews the OTHER map ----
   var baseThumb = HOST.querySelector('[data-um-basethumb]');
   function setBase(sat) {
     SAT.on = !!sat;
@@ -732,7 +773,6 @@
   }
   if (baseThumb) baseThumb.addEventListener('click', function () { setBase(!SAT.on); });
 
-  // ---- fly-to presets ----
   var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var flyRaf = null;
   function flyTo(lon, lat, z2) {
@@ -761,9 +801,23 @@
     var v = placesSel.value.split(',');
     flyTo(+v[0], +v[1], +v[2]);
   });
-  // the layers card starts open on wide screens, collapsed on phones
   var layersCard = HOST.querySelector('.um-layers');
   if (layersCard && window.matchMedia && window.matchMedia('(min-width: 701px)').matches) layersCard.setAttribute('open', '');
+
+  var zin = HOST.querySelector('[data-um-zoom="in"]'), zout = HOST.querySelector('[data-um-zoom="out"]'), zhome = HOST.querySelector('[data-um-zoom="home"]'), zfull = HOST.querySelector('[data-um-zoom="full"]');
+  if (zin) zin.addEventListener('click', function () { zoomAt(W / 2, H / 2, 0.6); });
+  if (zout) zout.addEventListener('click', function () { zoomAt(W / 2, H / 2, -0.6); });
+  if (zhome) zhome.addEventListener('click', function () { view.x = HOME.x; view.y = HOME.y; view.z = HOME.z; noteMoved(); requestDraw(); });
+  if (zfull) {
+    if (!STAGE.requestFullscreen) { zfull.hidden = true; }
+    else {
+      zfull.addEventListener('click', function () {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else STAGE.requestFullscreen();
+      });
+      document.addEventListener('fullscreenchange', function () { setTimeout(resize, 60); });
+    }
+  }
 
   // ---- data load (lazy) ----
   var started = false;
@@ -804,6 +858,7 @@
       if (r.tplants) L.tplants = pack(r.tplants, 'points');
       if (r.waterworks) L.ww = pack(r.waterworks, 'points');
       if (r.comms) L.dc = pack(r.comms, 'points');
+      if (r.inlets) L.inlets = pack(r.inlets, 'points');
       if (r.sewersheds) {
         var shedSegs = pack(r.sewersheds); L.sheds = {};
         shedSegs.forEach(function (sg) {
@@ -824,8 +879,6 @@
     }, { rootMargin: '600px 0px' });
     io.observe(HOST);
   } else { start(); }
-  // Belt and suspenders: environments where IO never fires (some embedded
-  // webviews throttle the rendering pipeline) still get the map.
   window.addEventListener('scroll', function onFirstScroll() {
     window.removeEventListener('scroll', onFirstScroll);
     start();

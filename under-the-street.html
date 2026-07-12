@@ -118,6 +118,9 @@
   .um-lrow b { font-family: var(--font-body); font-weight: 600; font-size: 0.86rem; color: var(--text); display: block; }
   .um-lrow span { grid-column: 2; font-family: var(--font-body); font-size: 0.72rem; color: var(--text-faint); }
   .um-lrow[aria-pressed="false"] { opacity: 0.38; }
+  .um-lrow-off { opacity: 0.45; cursor: default; }
+  .um-lrow-off:hover { background: none; }
+  .um-lrow-off b::after { content: " (not mappable)"; font-weight: 400; font-size: 0.72rem; color: var(--text-faint); }
   .um-places-l { display: block; padding: 0.55rem 0.9rem 0.7rem; border-top: 1px solid var(--rule); font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
   .um-places { display: block; width: 100%; margin-top: 0.4rem; font-family: var(--font-body); font-size: 0.86rem; color: var(--text); background: #272e28; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 0.45rem 0.5rem; }
   .um-keyd { border-top: 1px solid var(--rule); }
@@ -246,9 +249,13 @@
             <details class="um-card um-layers">
               <summary>The real lines</summary>
               <div class="um-lrows">
-                <button class="um-lrow" type="button" data-um-toggle="sewer" aria-pressed="true" style="--pc:var(--mark-sewer)"><i></i><b>Sewer + water</b><span>interceptors by type, plants, sewersheds</span></button>
-                <button class="um-lrow" type="button" data-um-toggle="grid" aria-pressed="true" style="--pc:var(--mark-elec)"><i></i><b>The grid</b><span>every line by voltage, substations, fiber hubs</span></button>
+                <button class="um-lrow" type="button" data-um-toggle="san" aria-pressed="true" style="--pc:var(--mark-sewer)"><i></i><b>Sanitary sewer</b><span>regional interceptors by type, plants, sewersheds; street mains aren't published</span></button>
+                <button class="um-lrow" type="button" data-um-toggle="storm" aria-pressed="true" style="--pc:var(--mark-storm)"><i></i><b>Storm drains</b><span>every Minneapolis inlet (zoom in); St. Paul publishes none, pipes not public</span></button>
+                <button class="um-lrow" type="button" data-um-toggle="water" aria-pressed="true" style="--pc:#8fb3c7"><i></i><b>Drinking water</b><span>treatment plants; the mains maps are access-gated</span></button>
+                <button class="um-lrow" type="button" data-um-toggle="elec" aria-pressed="true" style="--pc:var(--mark-elec)"><i></i><b>Electric</b><span>every OSM line by voltage, substations; Xcel's street grid isn't public</span></button>
                 <button class="um-lrow" type="button" data-um-toggle="pplants" aria-pressed="true" style="--pc:#ece5d3"><i></i><b>Power plants</b><span>all 172, sized by megawatts</span></button>
+                <button class="um-lrow" type="button" data-um-toggle="comms" aria-pressed="true" style="--pc:var(--mark-comms)"><i></i><b>Fiber + data centers</b><span>where the networks physically meet; route maps aren't public</span></button>
+                <button class="um-lrow um-lrow-off" type="button" disabled style="--pc:var(--mark-gas)"><i></i><b>Gas</b><span>no public map exists, at any price</span></button>
                 <button class="um-lrow" type="button" data-um-toggle="roads" aria-pressed="true" style="--pc:#8f9184"><i></i><b>Roads</b><span>context only</span></button>
               </div>
               <label class="um-places-l">Fly to
@@ -276,6 +283,7 @@
             <span class="um-ki"><i class="kl" style="border-top:1px dashed rgba(111,154,108,0.45)"></i>abandoned, a ghost</span>
             <span class="um-ki"><i class="kd" style="--kc:#dfc288"></i>treatment plant</span>
             <span class="um-ki"><i class="kd kr" style="--kc:#8fb3c7"></i>drinking water</span>
+            <span class="um-ki"><i class="kd ksq" style="--kc:rgba(143,179,199,0.8)"></i>storm inlet (Mpls)</span>
             <span class="um-ki"><i class="kd kdia" style="--kc:#cf9f78"></i>data center</span>
             <span class="um-ki"><i class="kd ksq" style="--kc:rgba(184,121,109,0.7)"></i>substation</span>
             <span class="um-ki"><i class="kd" style="--kc:#b79bc4"></i>nuclear</span>
@@ -302,7 +310,7 @@
           <span class="um-scale" aria-hidden="true"></span>
           <p class="um-shed" hidden></p>
         </div>
-        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Drinking-water plants and data centers, OSM; the 511 Building interconnection, PeeringDB. Line differences are real: transmission is drawn by voltage class, sewers by how they move (gravity, pumped forcemain, or siphon). Gas mains and street-level electric drops are not here because those maps are not public. The satellite basemap is USGS aerial imagery (The National Map, public domain) and loads from usgs.gov only while switched on. Drag, pinch, hover or tap anything for its story, or tap open ground to see which plant your flush drains to.</p>
+        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Drinking-water plants and data centers, OSM; the 511 Building interconnection, PeeringDB. Line differences are real: transmission is drawn by voltage class, sewers by how they move (gravity, pumped forcemain, or siphon). Gas mains and street-level electric drops are not here because those maps are not public. Storm inlets, City of Minneapolis open data (St. Paul does not publish its inlets, and no metro city publishes its street-level pipes; the water utilities gate their mains maps). The satellite basemap is USGS aerial imagery (The National Map, public domain), sharpened up close by the MnGeo Minnesota composite image service; both load only while satellite is switched on. Drag, pinch, hover or tap anything for its story, or tap open ground to see which plant your flush drains to.</p>
       </section>
 
       <section class="layer" id="street" style="--lc:var(--accent)">
@@ -464,6 +472,8 @@
   </script>
   <script src="js/under-map.js" defer></script>
   <script src="js/backtotop.js"></script>
+
+
 
 
 
