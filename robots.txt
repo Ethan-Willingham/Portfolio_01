@@ -1,0 +1,12 @@
+# ethanwillingham.com
+# Everything is crawlable except the site's own editing and publishing tools.
+
+User-agent: *
+Disallow: /edit.html
+Disallow: /blog-edit.html
+Disallow: /post-builder.html
+Disallow: /sfx-publish.html
+Disallow: /sfx-test.html
+Disallow: /sfx-prompts.html
+
+Sitemap: https://ethanwillingham.com/sitemap.xml
