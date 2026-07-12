@@ -47,6 +47,44 @@
     biomass: '#6f9a6c', battery: '#b79bc4'
   };
 
+  // ---- aerial imagery: USGS The National Map, public domain, loaded
+  // only while the satellite basemap is switched on ----
+  var SAT = { on: false, cache: new Map(), maxTiles: 350 };
+  function tileURL(z, x, y) { return 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/' + z + '/' + y + '/' + x; }
+  function tileGet(z, x, y) {
+    var k = z + '/' + x + '/' + y;
+    var t = SAT.cache.get(k);
+    if (t) return t;
+    if (SAT.cache.size > SAT.maxTiles) {
+      var drop = SAT.cache.keys().next().value;
+      SAT.cache.delete(drop);
+    }
+    t = { img: new Image(), ok: false, dead: false };
+    t.img.onload = function () { t.ok = true; requestDraw(); };
+    t.img.onerror = function () { t.dead = true; };
+    t.img.src = tileURL(z, x, y);
+    SAT.cache.set(k, t);
+    return t;
+  }
+  function drawTiles() {
+    var zi = Math.max(3, Math.min(16, Math.floor(view.z + 0.4)));
+    var n = Math.pow(2, zi), s = scale(), ts = s / n;
+    var x0 = Math.floor((view.x - (W / 2) / s) * n), x1 = Math.floor((view.x + (W / 2) / s) * n);
+    var y0 = Math.floor((view.y - (H / 2) / s) * n), y1 = Math.floor((view.y + (H / 2) / s) * n);
+    for (var ty = y0; ty <= y1; ty++) {
+      for (var tx = x0; tx <= x1; tx++) {
+        if (tx < 0 || ty < 0 || tx >= n || ty >= n) continue;
+        var t = tileGet(zi, tx, ty);
+        if (!t.ok || t.dead) continue;
+        var px = (tx / n - view.x) * s + W / 2, py = (ty / n - view.y) * s + H / 2;
+        try { ctx.drawImage(t.img, px, py, ts + 0.6, ts + 0.6); } catch (err) {}
+      }
+    }
+    // a light scrim keeps the colored lines readable over imagery
+    ctx.fillStyle = view.z < 13 ? 'rgba(30,36,32,0.22)' : 'rgba(30,36,32,0.10)';
+    ctx.fillRect(0, 0, W, H);
+  }
+
   // ---- layer registry ----
   var FILES = {
     counties: 'assets/map/counties.json',
@@ -60,7 +98,8 @@
     interceptors: 'assets/map/interceptors.json',
     lifts: 'assets/map/lifts.json',
     tplants: 'assets/map/plants.json',
-    sewersheds: 'assets/map/sewersheds.json'
+    sewersheds: 'assets/map/sewersheds.json',
+    waterworks: 'assets/map/waterworks.json'
   };
   var L = {};
   var on = { roads: true, grid: true, pplants: true, sewer: true };
@@ -78,7 +117,7 @@
 
   // view: center in world units + zoom (px per world unit = 256 * 2^z).
   // The zoom is computed on first sizing so the metro fits any stage width.
-  var MINZ = 9.2, MAXZ = 15.5;
+  var MINZ = 9.2, MAXZ = 16.8;
   var view = { x: mx(-93.166), y: my(44.963), z: 10.9 };
   var HOME = { x: view.x, y: view.y, z: view.z };
   var fitted = false;
@@ -87,8 +126,11 @@
     var z = Math.log2(W / (span * 256));
     view.z = HOME.z = Math.max(9.4, Math.min(11.4, z));
     fitted = true;
-    var m = (location.hash || '').match(/#map=([\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)/);
-    if (m) { view.z = Math.max(MINZ, Math.min(MAXZ, +m[1])); view.y = my(+m[2]); view.x = mx(+m[3]); }
+    var m = (location.hash || '').match(/#map=([\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)(\/sat)?/);
+    if (m) {
+      view.z = Math.max(MINZ, Math.min(MAXZ, +m[1])); view.y = my(+m[2]); view.x = mx(+m[3]);
+      if (m[4]) setBase(true);
+    }
   }
   var W = 0, H = 0, DPR = 1;
 
@@ -159,15 +201,17 @@
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     var s = scale(), cx = view.x, cy = view.y;
 
+    // basemap: drawn vectors, or aerial imagery
+    if (SAT.on) drawTiles();
     // land
-    if (L.counties) {
+    if (!SAT.on && L.counties) {
       ctx.beginPath();
       L.counties.forEach(function (seg) { tracePath(seg, s, cx, cy); ctx.closePath(); });
       ctx.fillStyle = C.land; ctx.fill();
       ctx.strokeStyle = C.county; ctx.lineWidth = 1; ctx.stroke();
     }
     // sewersheds: the quiet answer to "where does my flush go"
-    if (on.sewer && L.sheds) {
+    if (!SAT.on && on.sewer && L.sheds) {
       Object.keys(L.sheds).forEach(function (name) {
         ctx.beginPath();
         L.sheds[name].forEach(function (seg) { if (visible(seg, cx, cy, s)) { tracePath(seg, s, cx, cy); ctx.closePath(); } });
@@ -177,15 +221,15 @@
       });
     }
     // water
-    if (L.water) {
+    if (!SAT.on && L.water) {
       ctx.beginPath();
       for (var i = 0; i < L.water.length; i++) { if (visible(L.water[i], cx, cy, s)) { tracePath(L.water[i], s, cx, cy); ctx.closePath(); } }
       ctx.fillStyle = C.water; ctx.fill();
     }
     // city limits
-    if (L.cities) strokeBucket(L.cities, C.city, 1.1, [5, 4]);
+    if (!SAT.on && L.cities) strokeBucket(L.cities, C.city, 1.1, [5, 4]);
     // roads by class
-    if (on.roads && L.roads) {
+    if (!SAT.on && on.roads && L.roads) {
       strokeBucket(L.roads.r4, C.road4, 0.6);
       strokeBucket(L.roads.r3, C.road3, 0.8);
       strokeBucket(L.roads.r12, C.road12, 1.25);
@@ -237,6 +281,18 @@
         ctx.strokeStyle = 'rgba(30,36,32,0.9)'; ctx.lineWidth = 1.4;
         ctx.beginPath(); ctx.arc(p[0], p[1], 4.2, 0, 6.2832); ctx.stroke();
         if (view.z > 9.9) label(pt.p.name, p[0], p[1] - 9, 5);
+      });
+    }
+    // drinking-water plants
+    if (on.sewer && L.ww) {
+      L.ww.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -60 || p[0] > W + 60 || p[1] < -30 || p[1] > H + 30) return;
+        ctx.strokeStyle = '#8fb3c7'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, 6.2832); ctx.stroke();
+        ctx.fillStyle = 'rgba(143,179,199,0.5)';
+        ctx.beginPath(); ctx.arc(p[0], p[1], 1.4, 0, 6.2832); ctx.fill();
+        if (view.z > 10.8) label(pt.p.name, p[0], p[1] - 8, 3);
       });
     }
     // power plants, sized by megawatts, colored by fuel
@@ -321,7 +377,7 @@
     hideTip(); if (SHED) SHED.hidden = true; shedPick = null;
     if (hashTimer) clearTimeout(hashTimer);
     hashTimer = setTimeout(function () {
-      try { history.replaceState(null, '', '#map=' + view.z.toFixed(2) + '/' + latOf(view.y).toFixed(4) + '/' + lonOf(view.x).toFixed(4)); } catch (err) {}
+      try { history.replaceState(null, '', '#map=' + view.z.toFixed(2) + '/' + latOf(view.y).toFixed(4) + '/' + lonOf(view.x).toFixed(4) + (SAT.on ? '/sat' : '')); } catch (err) {}
     }, 500);
   }
   function clampView() {
@@ -416,6 +472,7 @@
       t += pt.p.yr ? ', ' + pt.p.yr + ')' : ')';
       test(pt.x, pt.y, t);
     });
+    if (on.sewer && L.ww) L.ww.forEach(function (pt) { test(pt.x, pt.y, pt.p.name + ' (drinking water)'); });
     MARKS.forEach(function (m) { test(mx(m.lon), my(m.lat), m.name); });
     return { best: best, px: px, py: py };
   }
@@ -489,6 +546,43 @@
     }
   }
 
+  // ---- basemap switch ----
+  var baseBtns = HOST.querySelectorAll('[data-um-base]');
+  function setBase(sat) {
+    SAT.on = !!sat;
+    baseBtns.forEach(function (b2) {
+      b2.setAttribute('aria-pressed', (b2.getAttribute('data-um-base') === 'sat') === SAT.on ? 'true' : 'false');
+    });
+    noteMoved(); requestDraw();
+  }
+  baseBtns.forEach(function (b2) {
+    b2.addEventListener('click', function () { setBase(b2.getAttribute('data-um-base') === 'sat'); });
+  });
+
+  // ---- fly-to presets ----
+  var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var flyRaf = null;
+  function flyTo(lon, lat, z2) {
+    if (flyRaf) cancelAnimationFrame(flyRaf);
+    var tx = mx(lon), ty = my(lat), tz = Math.max(MINZ, Math.min(MAXZ, z2));
+    if (REDUCE) { view.x = tx; view.y = ty; view.z = tz; clampView(); noteMoved(); requestDraw(); return; }
+    var fx = view.x, fy = view.y, fz = view.z, t0 = performance.now(), DUR = 800;
+    function step(now) {
+      var t = Math.min(1, (now - t0) / DUR);
+      var e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      view.x = fx + (tx - fx) * e; view.y = fy + (ty - fy) * e; view.z = fz + (tz - fz) * e;
+      clampView(); requestDraw();
+      if (t < 1) flyRaf = requestAnimationFrame(step); else { flyRaf = null; noteMoved(); }
+    }
+    flyRaf = requestAnimationFrame(step);
+  }
+  HOST.querySelectorAll('[data-um-fly]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var v = btn.getAttribute('data-um-fly').split(',');
+      flyTo(+v[0], +v[1], +v[2]);
+    });
+  });
+
   // ---- data load (lazy) ----
   var started = false;
   function start() {
@@ -517,6 +611,7 @@
       }
       if (r.lifts) L.lifts = pack(r.lifts, 'points');
       if (r.tplants) L.tplants = pack(r.tplants, 'points');
+      if (r.waterworks) L.ww = pack(r.waterworks, 'points');
       if (r.sewersheds) {
         var shedSegs = pack(r.sewersheds); L.sheds = {};
         shedSegs.forEach(function (sg) {

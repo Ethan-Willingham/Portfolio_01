@@ -100,6 +100,19 @@
   .um-toggle::before { content: ""; width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--pc); }
   .um-toggle[aria-pressed="false"] { opacity: 0.42; }
   .um-toggle:hover { border-color: var(--pc); color: var(--text); }
+  .um-base { display: inline-flex; margin-left: auto; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+  .um-base button { font-family: var(--font-mono); font-size: 0.73rem; letter-spacing: 0.04em; background: none; border: none; color: var(--text-dim); padding: 0.34rem 0.85rem; cursor: pointer; }
+  .um-base button[aria-pressed="true"] { background: var(--accent); color: #1e2420; }
+  .um-fly-row { margin-top: 0.15rem; }
+  .um-fly { font-family: var(--font-mono); font-size: 0.73rem; letter-spacing: 0.03em; color: var(--text-dim); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 0.28rem 0.75rem; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
+  .um-fly:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .um-fuels { display: inline-flex; align-items: center; gap: 0.28rem; margin-left: auto; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.03em; color: var(--text-faint); flex-wrap: wrap; }
+  .um-fuels i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--fc); display: inline-block; margin-left: 0.45rem; }
+  @media (max-width: 700px) {
+    .um-fuels { display: none; }
+    .um-fly, .um-base button, .um-toggle { font-size: 0.68rem; }
+    .um-fly { padding: 0.24rem 0.6rem; }
+  }
   .um-stage { position: relative; height: clamp(440px, 74vh, 820px); background: #272e28; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
   .um-stage canvas { position: absolute; inset: 0; touch-action: none; cursor: grab; }
   .um-stage canvas:active { cursor: grabbing; }
@@ -183,6 +196,18 @@
           <button class="um-toggle" data-um-toggle="grid" aria-pressed="true" style="--pc:var(--mark-elec)">the grid</button>
           <button class="um-toggle" data-um-toggle="pplants" aria-pressed="true" style="--pc:#ece5d3">power plants</button>
           <button class="um-toggle" data-um-toggle="roads" aria-pressed="true" style="--pc:#8f9184">roads</button>
+          <span class="um-base" role="group" aria-label="Basemap">
+            <button type="button" data-um-base="drawn" aria-pressed="true">drawn</button><button type="button" data-um-base="sat" aria-pressed="false">satellite</button>
+          </span>
+        </div>
+        <div class="um-bar um-fly-row">
+          <span class="um-k">Fly to</span>
+          <button class="um-fly" type="button" data-um-fly="-93.2570,44.9806,15.6">the falls + dike</button>
+          <button class="um-fly" type="button" data-um-fly="-93.04547,44.92526,14.9">Metro sewage plant</button>
+          <button class="um-fly" type="button" data-um-fly="-93.8426,45.33094,15.2">Monticello nuclear</button>
+          <button class="um-fly" type="button" data-um-fly="-93.2577,44.9738,15.8">US Bank Stadium</button>
+          <button class="um-fly" type="button" data-um-fly="-93.27868,45.04322,15.4">Mpls water works</button>
+          <span class="um-fuels" aria-hidden="true"><i style="--fc:#b79bc4"></i>nuclear <i style="--fc:#b8796d"></i>coal <i style="--fc:#dfc288"></i>gas <i style="--fc:#8fb3c7"></i>hydro <i style="--fc:#cf9f78"></i>waste <i style="--fc:#ece5d3"></i>solar</span>
         </div>
         <div class="um-stage">
           <canvas tabindex="0" aria-label="Map canvas. Drag to pan, scroll or pinch to zoom; arrow keys pan, plus and minus zoom, 0 resets."></canvas>
@@ -197,7 +222,7 @@
             <button type="button" data-um-zoom="full" aria-label="Fullscreen">&#x2922;</button>
           </div>
         </div>
-        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Gas mains and street-level electric drops are not here because those maps are not public. Drag, pinch, tap a dot for its facts, or tap open ground to see which plant your flush drains to.</p>
+        <p class="um-credit">Every line is real: the regional interceptor sewers, live and abandoned, plus lift stations, treatment plants, and the sewersheds they serve, from the Met Council (MCES); roads, MnDOT; lakes and the river, DNR/Met Council; transmission and distribution lines, substations, and every mapped power plant (sized by megawatts, colored by fuel) &copy; OpenStreetMap contributors (ODbL). Drinking-water plants, OSM. Gas mains and street-level electric drops are not here because those maps are not public. The satellite basemap is USGS aerial imagery (The National Map, public domain) and loads from usgs.gov only while switched on. Drag, pinch, tap a dot for its facts, or tap open ground to see which plant your flush drains to.</p>
       </section>
 
       <section class="layer" id="street" style="--lc:var(--accent)">
