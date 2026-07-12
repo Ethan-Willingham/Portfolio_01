@@ -25,12 +25,19 @@
   <meta property="og:title" content="The Third Thing">
   <meta property="og:description" content="Nature, nurture, and the one thing that is actually yours. The science of both, seen through profoundly well trained service dogs, and the place the dog runs out.">
   <meta property="og:type" content="article">
-  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/archive/the-third-thing/the-third-thing.html">
+  <meta property="og:image" content="https://ethanwillingham.com/archive/the-third-thing/assets/thumbs/third-thing.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/archive/the-third-thing/assets/thumbs/third-thing.jpg">
+  <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <!-- fonts come only from style.css: the site's three self-hosted faces. no foreign web fonts. -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
   <style>
   /* ============================================================
      THE THIRD THING, on nature, nurture, and the self
@@ -65,7 +72,7 @@
 
   /* slim reading-progress bar */
   .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
-  /* hidden on mobile (this archived post links a non-existent local style.css, so the rule lives here too) */
+  /* hidden on mobile (duplicated from style.css so the page also stands alone) */
   @media (max-width: 700px) { .reading-progress { display: none; } }
 
   /* ============================ COVER ============================ */
@@ -391,6 +398,6 @@
     }
   })();
   </script>
-  <script src="js/backtotop.js"></script>
+  <script src="/js/backtotop.js"></script>
 </body>
 </html>
