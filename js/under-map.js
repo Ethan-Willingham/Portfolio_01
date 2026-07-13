@@ -41,7 +41,7 @@
     ww: '#8fb3c7',
     dc: '#cf9f78',
     hydrant: '#d9978c', tower: '#8fb3c7',
-    gas: '#dfc288', steam: '#cf9f78',
+    gas: '#dfc288',
     bstream: '#8fb3c7',
     bdepth0: '#6f9a6c', bdepth1: '#dfc288', bdepth2: '#cf9f78', bdepth3: '#b8796d',
     bedrock: 'rgba(183,155,196,0.18)', bedrockLn: 'rgba(183,155,196,0.5)', fault: 'rgba(183,155,196,0.55)',
@@ -166,7 +166,7 @@
   var on = {
     san: true, storm: true, water: true, elec: true, pplants: true, comms: true, roads: true,
     hydrants: true, towers: true,          // water, extra
-    gas: true, steam: true,                // pipelines
+    gas: true,                             // pipelines (gas transmission)
     bstreams: true,                        // buried creeks
     dams: true, exch: true,                // charm
     meters: false, pavement: false,        // off by default
@@ -174,7 +174,7 @@
   };
 
   // Lazy layer registry: file + geometry kind, loaded on demand. A toggle maps
-  // to a load key via TOGLOAD (gas + steam share one pipelines file).
+  // to a load key via TOGLOAD (gas transmission comes from the pipelines file).
   var LAZY = {
     hydr:    { file: 'assets/map/hydrants.json',     kind: 'points' },
     towers:  { file: 'assets/map/watertowers.json',  kind: 'points' },
@@ -191,7 +191,7 @@
   };
   // toggle key -> the load key(s) it needs
   var TOGLOAD = {
-    hydrants: ['hydr'], towers: ['towers'], gas: ['pipes'], steam: ['pipes'],
+    hydrants: ['hydr'], towers: ['towers'], gas: ['pipes'],
     bstreams: ['bstream'], dams: ['dams'], exch: ['exch'], meters: ['meters'],
     pavement: ['pave'], bdepth: ['bdepth'], bedrock: ['bedrock', 'bfault'], wells: ['wells']
   };
@@ -406,12 +406,9 @@
         });
       }
     }
-    // gas transmission + steam (pipelines). Distribution mains stay unpublished;
-    // these are the high-pressure feeders and the downtown district-heat lines.
-    if ((on.gas || on.steam) && L.pipes) {
-      if (on.gas) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 'g'; }), C.gas, 1.8, null, LS.case_);
-      if (on.steam) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 's'; }), C.steam, 1.6, [7, 4], LS.case_);
-    }
+    // gas transmission (pipelines). Distribution mains stay unpublished; these
+    // are the high-pressure feeders that web across to the city gate stations.
+    if (on.gas && L.pipes) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 'g'; }), C.gas, 1.8, null, LS.case_);
     // buried streams: creeks and brooks now running underground in storm
     // tunnels and culverts. Ghost-blue dashes, water where it shouldn't be.
     if (on.bstreams && L.bstream) strokeBucket(L.bstream, C.bstream, 1.7, [6, 4], LS.case_);
@@ -756,7 +753,6 @@
     hydrant: 'A fire hydrant: the water distribution network surfacing. The mains it taps are not published, but every hydrant marks where they run.',
     tower: 'A water tower: elevated storage that holds the system\'s pressure steady, and its only presence on the skyline.',
     gas: 'A gas transmission main: the high-pressure lines that feed the city gate stations. The distribution mains under your street stay unpublished.',
-    steam: 'A steam or hot-water district-heating main: buried pipe that heats a cluster of downtown buildings from a central plant.',
     bstream: 'A buried watercourse: a creek or stream running underground in a storm tunnel or culvert. Some were open water before the city grew over them.',
     dam: 'A dam or lock on the river: where the falls were tamed and the barges are lifted.',
     exch: 'A telephone exchange: the older copper central offices, the fiber era\'s inheritance from the phone network.',
@@ -813,7 +809,6 @@
       out.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'Sanitary sewer · ghost', color: LS.ghost.c, w: LS.ghost.w, dash: [3, 4], blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
     }
     if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, img: 'gas', blurb: KINDBLURB.gas } });
-    if (on.steam && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 's'; }), meta: { name: 'District-heat main', kindLabel: 'Steam / hot water', color: C.steam, w: 1.6, dash: [7, 4], blurb: KINDBLURB.steam } });
     if (on.bstreams && L.bstream) out.push({ segs: L.bstream, meta: { name: 'Buried watercourse', kindLabel: 'Storm · buried creek', color: C.bstream, w: 1.7, dash: [6, 4], blurb: KINDBLURB.bstream } });
     if (on.pavement && L.pave) {
       out.push({ segs: L.pave.filter(function (s) { return s.p.pci < 40; }), meta: { name: 'Street in poor condition', kindLabel: 'Pavement · PCI under 40', color: '#b8796d', w: 1.5, blurb: 'A Minneapolis street scored poor on the Pavement Condition Index (0 to 100). The city prioritizes repaving by this score; frost heave is the slow enemy.' } });
