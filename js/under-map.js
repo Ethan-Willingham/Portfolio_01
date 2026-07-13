@@ -40,6 +40,13 @@
     tplant: '#dfc288', tplantGhost: 'rgba(223,194,136,0.38)',
     ww: '#8fb3c7',
     dc: '#cf9f78',
+    hydrant: '#d9978c', tower: '#8fb3c7',
+    gas: '#dfc288', steam: '#cf9f78',
+    bstream: '#8fb3c7',
+    bdepth0: '#6f9a6c', bdepth1: '#dfc288', bdepth2: '#cf9f78', bdepth3: '#b8796d',
+    bedrock: 'rgba(183,155,196,0.18)', bedrockLn: 'rgba(183,155,196,0.5)', fault: 'rgba(183,155,196,0.55)',
+    well: 'rgba(164,162,147,0.7)',
+    dam: '#8fb3c7', exch: '#cf9f78', pave: '#8f9184',
     sel: '#ede0c0', hov: '#f5f1ea',
     label: 'rgba(245,241,234,0.92)', labelHalo: 'rgba(30,36,32,0.85)',
     mark: '#d4c4a0'
@@ -153,8 +160,54 @@
     inlets: 'assets/map/inlets.json'
   };
   var L = {};
-  // the honest groups: gas exists only as a disabled row in the card
-  var on = { san: true, storm: true, water: true, elec: true, pplants: true, comms: true, roads: true };
+  // the honest groups. The original set is on by default; the newer granular
+  // layers each get their own toggle. Heavy/optional ones default off so they
+  // neither clutter the first view nor load until asked for.
+  var on = {
+    san: true, storm: true, water: true, elec: true, pplants: true, comms: true, roads: true,
+    hydrants: true, towers: true,          // water, extra
+    gas: false, steam: false,              // pipelines (wired batch 2)
+    bstreams: false,                       // buried creeks (wired batch 3)
+    dams: false, exch: false,              // charm (wired batch 5)
+    meters: false, pavement: false,        // off by default
+    bdepth: false, bedrock: false, wells: false  // the rock, off by default
+  };
+
+  // Lazy layer registry: file + geometry kind, loaded on demand. A toggle maps
+  // to a load key via TOGLOAD (gas + steam share one pipelines file).
+  var LAZY = {
+    hydr:    { file: 'assets/map/hydrants.json',     kind: 'points' },
+    towers:  { file: 'assets/map/watertowers.json',  kind: 'points' },
+    pipes:   { file: 'assets/map/pipelines.json',    kind: 'lines' },
+    bstream: { file: 'assets/map/streamsug.json',    kind: 'lines' },
+    dams:    { file: 'assets/map/damslocks.json',    kind: 'points' },
+    exch:    { file: 'assets/map/exchanges.json',    kind: 'points' },
+    meters:  { file: 'assets/map/meters.json',       kind: 'points' },
+    pave:    { file: 'assets/map/pavement.json',     kind: 'lines' },
+    bdepth:  { file: 'assets/map/bedrockdepth.json', kind: 'points' },
+    bedrock: { file: 'assets/map/bedrock.json',      kind: 'polys' },
+    bfault:  { file: 'assets/map/bedrockfaults.json',kind: 'lines' },
+    wells:   { file: 'assets/map/wells.json',        kind: 'points' }
+  };
+  // toggle key -> the load key(s) it needs
+  var TOGLOAD = {
+    hydrants: ['hydr'], towers: ['towers'], gas: ['pipes'], steam: ['pipes'],
+    bstreams: ['bstream'], dams: ['dams'], exch: ['exch'], meters: ['meters'],
+    pavement: ['pave'], bdepth: ['bdepth'], bedrock: ['bedrock', 'bfault'], wells: ['wells']
+  };
+  var loading = {};
+  function ensureLayer(k) {
+    var cfg = LAZY[k];
+    if (!cfg || L[k] || loading[k]) return;
+    loading[k] = true;
+    fetch(cfg.file).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (j) L[k] = pack(j, cfg.kind === 'points' ? 'points' : undefined);
+      loading[k] = false; requestDraw();
+    }).catch(function () { loading[k] = false; });
+  }
+  function ensureActive() {
+    Object.keys(TOGLOAD).forEach(function (tk) { if (on[tk]) TOGLOAD[tk].forEach(ensureLayer); });
+  }
 
   var MARKS = [
     { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike', group: null,
@@ -361,6 +414,29 @@
         ctx.fillStyle = 'rgba(143,179,199,0.5)';
         ctx.beginPath(); ctx.arc(p[0], p[1], 1.4, 0, 6.2832); ctx.fill();
         if (view.z > 10.8) label(pt.p.name, p[0], p[1] - 8, 3);
+      });
+    }
+    // hydrants (Minneapolis): the gated water mains, surfacing. 8,000 dots, so
+    // only past a close zoom, else the city turns to mush.
+    if (on.hydrants && L.hydr && view.z > 12.4) {
+      ctx.fillStyle = C.hydrant;
+      var hr = view.z > 14.2 ? 2.1 : 1.35;
+      for (var hi = 0; hi < L.hydr.length; hi++) {
+        var hp = toPx(L.hydr[hi].x, L.hydr[hi].y);
+        if (hp[0] < -4 || hp[0] > W + 4 || hp[1] < -4 || hp[1] > H + 4) continue;
+        ctx.beginPath(); ctx.arc(hp[0], hp[1], hr, 0, 6.2832); ctx.fill();
+      }
+    }
+    // water towers: the system pressure made visible
+    if (on.towers && L.towers && view.z > 10.1) {
+      L.towers.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -20 || p[0] > W + 20 || p[1] < -20 || p[1] > H + 20) return;
+        ctx.strokeStyle = C.tower; ctx.lineWidth = 1.6;
+        ctx.fillStyle = 'rgba(143,179,199,0.32)';
+        ctx.beginPath(); ctx.arc(p[0], p[1] - 2.4, 3.1, 0, 6.2832); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p[0], p[1] + 0.6); ctx.lineTo(p[0], p[1] + 4.4); ctx.stroke();
+        if (view.z > 12.2) label(pt.p.name || 'Water tower', p[0], p[1] - 8, 1);
       });
     }
     // data centers
@@ -577,6 +653,14 @@
     dc: 'A data center: one of the buildings where the metro\'s fiber physically terminates and networks exchange traffic.',
     sub: 'A substation: where transmission voltage steps down toward neighborhood feeders.',
     inlet: 'A storm inlet: the grate at the curb. Everything that goes down it reaches a lake or the river with no treatment plant in between.',
+    hydrant: 'A fire hydrant: the water distribution network surfacing. The mains it taps are not published, but every hydrant marks where they run.',
+    tower: 'A water tower: elevated storage that holds the system\'s pressure steady, and its only presence on the skyline.',
+    gas: 'A gas transmission main: the high-pressure lines that feed the city gate stations. The distribution mains under your street stay unpublished.',
+    steam: 'A steam or hot-water district-heating main: buried pipe that heats a cluster of downtown buildings from a central plant.',
+    bstream: 'A buried watercourse: a creek or stream running underground in a storm tunnel or culvert. Some were open water before the city grew over them.',
+    dam: 'A dam or lock on the river: where the falls were tamed and the barges are lifted.',
+    exch: 'A telephone exchange: the older copper central offices, the fiber era\'s inheritance from the phone network.',
+    well: 'A drilled well, logged in the state\'s County Well Index. Its depth records how far down the usable ground goes here.',
     pplant: { nuclear: 'Splits uranium to boil water.', coal: 'Burns coal, the old backbone.', gas: 'Burns natural gas, the system\'s flexible middle.', oil: 'An oil or dual-fuel peaker, run when demand spikes.', hydro: 'Spins on falling river water, the oldest power here.', waste: 'Burns garbage and sells the heat.', solar: 'A solar array.', wind: 'A wind site.', biomass: 'Burns plant matter.', battery: 'A grid battery.' }
   };
   function mwText(mw) { return mw ? (mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW') : null; }
@@ -676,6 +760,12 @@
     if (on.storm && L.inlets && view.z > 13.6) L.inlets.forEach(function (pt) {
       test(pt.x, pt.y, { kind: 'inlet', kindLabel: 'Storm inlet · Minneapolis', color: C.inlet, name: 'Storm inlet', facts: [], blurb: KINDBLURB.inlet });
     });
+    if (on.hydrants && L.hydr && view.z > 13.2) L.hydr.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'hydrant', kindLabel: 'Fire hydrant · Minneapolis', color: C.hydrant, name: 'Fire hydrant', facts: pt.p.yr ? [['installed', String(pt.p.yr)]] : [], blurb: KINDBLURB.hydrant });
+    });
+    if (on.towers && L.towers) L.towers.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'tower', kindLabel: 'Water tower', color: C.tower, name: pt.p.name || 'Water tower', facts: [], blurb: KINDBLURB.tower });
+    });
     MARKS.forEach(function (m) {
       if (m.group && !on[m.group]) return;
       test(mx(m.lon), my(m.lat), { kind: 'mark', kindLabel: 'Landmark', color: C.mark, name: m.name, facts: [], blurb: m.blurb });
@@ -755,6 +845,7 @@
       if (!(k in on)) return;
       on[k] = !on[k];
       btn.setAttribute('aria-pressed', on[k] ? 'true' : 'false');
+      if (on[k] && TOGLOAD[k]) TOGLOAD[k].forEach(ensureLayer);  // fetch on first enable
       if (k === 'san' && !on.san && SHED) { SHED.hidden = true; shedPick = null; }
       HOVL = null;
       requestDraw();
@@ -823,6 +914,7 @@
   var started = false;
   function start() {
     if (started) return; started = true;
+    ensureActive();  // pull the default-on granular layers alongside the core set
     if (STATUS) STATUS.textContent = 'loading the real lines…';
     function grab(url) {
       return fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.json(); }).catch(function () { return null; });
