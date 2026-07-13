@@ -317,6 +317,27 @@
       ctx.fillStyle = C.land; ctx.fill();
       ctx.strokeStyle = C.county; ctx.lineWidth = 1; ctx.stroke();
     }
+    // --- the rock: background surfaces under everything (drawn map only) ---
+    if (!SAT.on && on.bedrock && L.bedrock) {
+      for (var bri = 0; bri < L.bedrock.length; bri++) {
+        var bseg = L.bedrock[bri];
+        if (!visible(bseg, cx, cy, s)) continue;
+        ctx.fillStyle = (bseg.p.u || '').charAt(0) === 'C' ? 'rgba(223,194,136,0.16)' : 'rgba(183,155,196,0.17)';
+        ctx.beginPath(); tracePath(bseg, s, cx, cy); ctx.closePath(); ctx.fill();
+      }
+    }
+    if (!SAT.on && on.bedrock && L.bfault) strokeBucket(L.bfault, C.fault, 0.8, [4, 3]);
+    if (!SAT.on && on.bdepth && L.bdepth && view.z < 13.6) {
+      var cellPx = Math.max(4, (0.004 / 360) * s * 1.5), chalf = cellPx / 2;
+      for (var dpi = 0; dpi < L.bdepth.length; dpi++) {
+        var dc = L.bdepth[dpi];
+        var dpx = (dc.x - cx) * s + W / 2, dpy = (dc.y - cy) * s + H / 2;
+        if (dpx < -cellPx || dpx > W + cellPx || dpy < -cellPx || dpy > H + cellPx) continue;
+        var dft = dc.p.ft;
+        ctx.fillStyle = dft < 50 ? 'rgba(223,194,136,0.42)' : dft < 150 ? 'rgba(207,159,120,0.42)' : dft < 300 ? 'rgba(184,121,109,0.44)' : 'rgba(183,155,196,0.48)';
+        ctx.fillRect(dpx - chalf, dpy - chalf, cellPx, cellPx);
+      }
+    }
     if (!SAT.on && on.san && L.sheds) {
       Object.keys(L.sheds).forEach(function (name) {
         ctx.beginPath();
@@ -448,6 +469,15 @@
         ctx.beginPath(); ctx.moveTo(p[0], p[1] + 0.5); ctx.lineTo(p[0], p[1] + 3); ctx.stroke();
         if (view.z > 12.6) label(pt.p.name || 'Water tower', p[0], p[1] - 7, 1);
       });
+    }
+    // water wells (decimated sample): where the usable ground has been drilled
+    if (on.wells && L.wells && view.z > 11.4) {
+      ctx.fillStyle = C.well;
+      for (var wi = 0; wi < L.wells.length; wi++) {
+        var wp = toPx(L.wells[wi].x, L.wells[wi].y);
+        if (wp[0] < -4 || wp[0] > W + 4 || wp[1] < -4 || wp[1] > H + 4) continue;
+        ctx.beginPath(); ctx.arc(wp[0], wp[1], 1.3, 0, 6.2832); ctx.fill();
+      }
     }
     // data centers
     if (on.comms && L.dc) {
@@ -778,6 +808,10 @@
     });
     if (on.towers && L.towers) L.towers.forEach(function (pt) {
       test(pt.x, pt.y, { kind: 'tower', kindLabel: 'Water tower', color: C.tower, name: pt.p.name || 'Water tower', facts: [], blurb: KINDBLURB.tower });
+    });
+    if (on.wells && L.wells && view.z > 12.2) L.wells.forEach(function (pt) {
+      var wf = []; if (pt.p.d) wf.push(['drilled', pt.p.d + ' ft']); if (pt.p.a) wf.push(['aquifer', pt.p.a]);
+      test(pt.x, pt.y, { kind: 'well', kindLabel: 'Drilled well', color: C.well, name: 'Drilled well', facts: wf, blurb: KINDBLURB.well });
     });
     MARKS.forEach(function (m) {
       if (m.group && !on[m.group]) return;
