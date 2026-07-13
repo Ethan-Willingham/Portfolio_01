@@ -590,7 +590,7 @@
       '<p class="um-pk" style="--pk:' + (sel.color || '#d4c4a0') + '">' + sel.kindLabel + '</p>' +
       '<h4>' + sel.name + '</h4>' + rows +
       (sel.blurb ? '<p class="um-pblurb">' + sel.blurb + '</p>' : '') +
-      (sel.x !== undefined ? '<div class="um-pact"><button data-pa="fly">Fly closer</button><button data-pa="sat">See it from above</button></div>' : '');
+      (sel.x !== undefined ? '<div class="um-pact"><button class="um-b1" data-pa="fly">Fly closer</button><button class="um-b2" data-pa="sat">See it from above</button></div>' : '');
     PANEL.hidden = false;
     PANEL.querySelector('.um-pclose').addEventListener('click', closePanel);
     var fb = PANEL.querySelector('[data-pa="fly"]'), sb = PANEL.querySelector('[data-pa="sat"]');
