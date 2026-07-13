@@ -126,6 +126,10 @@
   .hb-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
   .hb-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
 
+  /* keystone numbering, in the bar and the jump index */
+  .hb-idx { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.02em; margin-right: 0.55em; }
+  .hb-gridnum { opacity: 0.5; margin-right: 0.5em; font-variant-numeric: tabular-nums; }
+
   /* source */
   .hb-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
   .hb-he-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem; }
@@ -138,10 +142,9 @@
   .hb-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
   .hb-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
   .hb-note-k:first-child { margin-top: 0; }
-  .hb-note-gist, .hb-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .hb-note-gist em, .hb-note-read em, .hb-splits em { font-style: italic; color: var(--text-bright); }
-  .hb-note-gist b, .hb-splits b, .hb-note-read b { font-weight: 600; color: var(--text-bright); }
-  .hb-note-read { color: var(--text-dim); font-style: italic; }
+  .hb-note-gist { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .hb-note-gist em, .hb-splits em { font-style: italic; color: var(--text-bright); }
+  .hb-note-gist b, .hb-splits b { font-weight: 600; color: var(--text-bright); }
   .hb-splits { margin: 0; }
   .hb-splits dt { margin: 0.7rem 0 0.15rem; line-height: 1.5; }
   .hb-splits dt .hb-dt-he { font-family: var(--he-font); font-size: 1.2rem; color: var(--text-bright); }

@@ -71,7 +71,7 @@
     var p = P[cur], note = NOTES[p.id] || {}, sec = section(p.sec);
     var total = p.v.length, sel = selection(p);
 
-    $('hb-ref').textContent = p.ref;
+    $('hb-ref').innerHTML = '<span class="hb-idx">' + (cur + 1) + '</span>' + esc(p.ref);
     $('hb-title').textContent = note.title ? note.title : (p.label || '');
     $('hb-count').innerHTML = 'showing <b>' + sel.length + '</b> of ' + total +
       ' translation' + (total === 1 ? '' : 's');
@@ -124,9 +124,6 @@
           '</dt><dd>' + s.note + '</dd>';
       }).join('') + '</dl>';
     }
-    if (note.read) {
-      h += '<p class="hb-note-k">My read</p><p class="hb-note-read">' + note.read + '</p>';
-    }
     h += '</div>';
     return h;
   }
@@ -153,7 +150,7 @@
       row.className = 'hb-gridrow';
       items.forEach(function (p) {
         var b = document.createElement('button');
-        b.textContent = p.label;
+        b.innerHTML = '<span class="hb-gridnum">' + (P.indexOf(p) + 1) + '</span>' + esc(p.label);
         b.setAttribute('data-p', p.id);
         b.onclick = (function (id) {
           return function () { pop.hidden = true; go(indexOfId(id), 'scroll'); };
