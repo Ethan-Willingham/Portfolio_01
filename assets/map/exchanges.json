@@ -1,0 +1,11 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","properties":{"name":"Great River Endodontics"},"geometry":{"type":"Point","coordinates":[-93.80471,45.28598]}},
+{"type":"Feature","properties":{"name":"CenturyLink"},"geometry":{"type":"Point","coordinates":[-93.03619,45.16947]}},
+{"type":"Feature","properties":{"name":"Telephone exchange","addr":"795 Jefferson Avenue"},"geometry":{"type":"Point","coordinates":[-93.13346,44.93095]}},
+{"type":"Feature","properties":{"name":"Telephone exchange","addr":"6287 32nd Street North"},"geometry":{"type":"Point","coordinates":[-92.97855,44.99346]}},
+{"type":"Feature","properties":{"name":"Telephone exchange","addr":"124 East Maple Street"},"geometry":{"type":"Point","coordinates":[-92.62452,44.85897]}},
+{"type":"Feature","properties":{"name":"Telephone exchange","addr":"1346 County Road V"},"geometry":{"type":"Point","coordinates":[-92.74161,45.05682]}},
+{"type":"Feature","properties":{"name":"Telephone exchange","addr":"510 Halsey Lane"},"geometry":{"type":"Point","coordinates":[-93.28657,44.84267]}},
+{"type":"Feature","properties":{"name":"CenturyLink Fiber Hut"},"geometry":{"type":"Point","coordinates":[-92.69116,45.33002]}},
+{"type":"Feature","properties":{"name":"CenturyLink"},"geometry":{"type":"Point","coordinates":[-93.10689,45.04177]}}
+]}
