@@ -45,7 +45,7 @@
     bstream: '#8fb3c7',
     bdepth0: '#6f9a6c', bdepth1: '#dfc288', bdepth2: '#cf9f78', bdepth3: '#b8796d',
     bedrock: 'rgba(183,155,196,0.18)', bedrockLn: 'rgba(183,155,196,0.5)', fault: 'rgba(183,155,196,0.55)',
-    well: 'rgba(164,162,147,0.7)',
+    well: '#d8cdb8',
     dam: '#8fb3c7', exch: '#cf9f78', pave: '#8f9184',
     sel: '#ede0c0', hov: '#f5f1ea',
     label: 'rgba(245,241,234,0.92)', labelHalo: 'rgba(30,36,32,0.85)',
@@ -317,26 +317,32 @@
       ctx.fillStyle = C.land; ctx.fill();
       ctx.strokeStyle = C.county; ctx.lineWidth = 1; ctx.stroke();
     }
-    // --- the rock: background surfaces under everything (drawn map only) ---
-    if (!SAT.on && on.bedrock && L.bedrock) {
+    // --- the rock: background surfaces, tinted over the drawn map OR the
+    // aerial. Alpha runs a little stronger over satellite so they still read
+    // against bright imagery, softer over the dark map so lines stay legible.
+    if (on.bedrock && L.bedrock) {
+      ctx.globalAlpha = SAT.on ? 0.34 : 0.17;
       for (var bri = 0; bri < L.bedrock.length; bri++) {
         var bseg = L.bedrock[bri];
         if (!visible(bseg, cx, cy, s)) continue;
-        ctx.fillStyle = (bseg.p.u || '').charAt(0) === 'C' ? 'rgba(223,194,136,0.16)' : 'rgba(183,155,196,0.17)';
+        ctx.fillStyle = (bseg.p.u || '').charAt(0) === 'C' ? '#dfc288' : '#b79bc4';
         ctx.beginPath(); tracePath(bseg, s, cx, cy); ctx.closePath(); ctx.fill();
       }
+      ctx.globalAlpha = 1;
     }
-    if (!SAT.on && on.bedrock && L.bfault) strokeBucket(L.bfault, C.fault, 0.8, [4, 3]);
-    if (!SAT.on && on.bdepth && L.bdepth && view.z < 13.6) {
+    if (on.bedrock && L.bfault) strokeBucket(L.bfault, SAT.on ? 'rgba(216,181,226,0.8)' : C.fault, SAT.on ? 1.1 : 0.8, [4, 3]);
+    if (on.bdepth && L.bdepth && view.z < 13.6) {
       var cellPx = Math.max(4, (0.004 / 360) * s * 1.5), chalf = cellPx / 2;
+      ctx.globalAlpha = SAT.on ? 0.58 : 0.46;
       for (var dpi = 0; dpi < L.bdepth.length; dpi++) {
         var dc = L.bdepth[dpi];
         var dpx = (dc.x - cx) * s + W / 2, dpy = (dc.y - cy) * s + H / 2;
         if (dpx < -cellPx || dpx > W + cellPx || dpy < -cellPx || dpy > H + cellPx) continue;
         var dft = dc.p.ft;
-        ctx.fillStyle = dft < 50 ? 'rgba(223,194,136,0.42)' : dft < 150 ? 'rgba(207,159,120,0.42)' : dft < 300 ? 'rgba(184,121,109,0.44)' : 'rgba(183,155,196,0.48)';
+        ctx.fillStyle = dft < 50 ? '#dfc288' : dft < 150 ? '#cf9f78' : dft < 300 ? '#b8796d' : '#b79bc4';
         ctx.fillRect(dpx - chalf, dpy - chalf, cellPx, cellPx);
       }
+      ctx.globalAlpha = 1;
     }
     if (!SAT.on && on.san && L.sheds) {
       Object.keys(L.sheds).forEach(function (name) {
@@ -476,13 +482,15 @@
         if (view.z > 12.6) label(pt.p.name || 'Water tower', p[0], p[1] - 7, 1);
       });
     }
-    // water wells (decimated sample): where the usable ground has been drilled
+    // water wells (decimated sample): where the usable ground has been drilled.
+    // A bright dot with a dark rim so it reads on the dark map and the aerial.
     if (on.wells && L.wells && view.z > 11.4) {
-      ctx.fillStyle = C.well;
+      var wr = view.z > 13.2 ? 2.6 : 2.0;
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(24,29,25,0.85)'; ctx.fillStyle = C.well;
       for (var wi = 0; wi < L.wells.length; wi++) {
         var wp = toPx(L.wells[wi].x, L.wells[wi].y);
-        if (wp[0] < -4 || wp[0] > W + 4 || wp[1] < -4 || wp[1] > H + 4) continue;
-        ctx.beginPath(); ctx.arc(wp[0], wp[1], 1.3, 0, 6.2832); ctx.fill();
+        if (wp[0] < -6 || wp[0] > W + 6 || wp[1] < -6 || wp[1] > H + 6) continue;
+        ctx.beginPath(); ctx.arc(wp[0], wp[1], wr, 0, 6.2832); ctx.fill(); ctx.stroke();
       }
     }
     // data centers
@@ -511,11 +519,11 @@
     }
     // MCES flow meters on the interceptors
     if (on.meters && L.meters && view.z > 11.3) {
-      ctx.fillStyle = 'rgba(111,154,108,0.9)';
+      ctx.fillStyle = '#7eb27a'; ctx.strokeStyle = 'rgba(24,29,25,0.85)'; ctx.lineWidth = 0.9;
       L.meters.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
         if (p[0] < -8 || p[0] > W + 8 || p[1] < -8 || p[1] > H + 8) return;
-        ctx.beginPath(); ctx.arc(p[0], p[1], 1.8, 0, 6.2832); ctx.fill();
+        ctx.beginPath(); ctx.arc(p[0], p[1], 2.1, 0, 6.2832); ctx.fill(); ctx.stroke();
       });
     }
     // dams + locks on the river: the tamed falls
@@ -874,6 +882,37 @@
     return { best: best, px: px, py: py };
   }
 
+  // ---- background-surface hit testing (the rock) ----
+  // Lowest priority, checked only after points and lines miss. Depth uses an
+  // O(1) grid-hash so hovering 18k cells never lags; geology is point-in-poly
+  // with a bbox pre-filter. Returns a ready-to-open inspector selection.
+  var bdepthMap = null;
+  function surfaceAt(px, py) {
+    var s = scale();
+    var wx = view.x + (px - W / 2) / s, wy = view.y + (py - H / 2) / s;
+    var lon = lonOf(wx), lat = latOf(wy);
+    if (on.bdepth && L.bdepth && view.z < 13.6) {
+      if (!bdepthMap) {
+        bdepthMap = new Map();
+        L.bdepth.forEach(function (pt) { bdepthMap.set(Math.floor(lonOf(pt.x) / 0.004) + ',' + Math.floor(latOf(pt.y) / 0.004), pt.p.ft); });
+      }
+      var ft = bdepthMap.get(Math.floor(lon / 0.004) + ',' + Math.floor(lat / 0.004));
+      if (ft != null) return { kind: 'bdepth', kindLabel: 'Depth to bedrock', color: ft < 50 ? '#dfc288' : ft < 150 ? '#cf9f78' : ft < 300 ? '#b8796d' : '#b79bc4', name: 'About ' + ft + ' ft to rock', facts: [], blurb: 'The median depth to bedrock here, from the wells drilled nearby. Shallow near the river and the falls where the rock nears the surface, deep under the thick glacial till.' };
+    }
+    if (on.bedrock && L.bedrock) {
+      for (var i = 0; i < L.bedrock.length; i++) {
+        var seg = L.bedrock[i], b = seg.b;
+        if (wx < b[0] || wx > b[2] || wy < b[1] || wy > b[3]) continue;
+        var xs = seg.xs, ys = seg.ys, n = seg.n, cross = 0;
+        for (var a = 0, j = n - 1; a < n; j = a++) {
+          if ((ys[a] > wy) !== (ys[j] > wy) && wx < (xs[j] - xs[a]) * (wy - ys[a]) / (ys[j] - ys[a]) + xs[a]) cross++;
+        }
+        if (cross % 2 === 1) return { kind: 'bedrock', kindLabel: 'Bedrock at the surface', color: (seg.p.u || '').charAt(0) === 'C' ? '#dfc288' : '#b79bc4', name: seg.p.d || seg.p.u || 'Bedrock unit', facts: seg.p.u ? [['unit', seg.p.u]] : [], blurb: 'The rock unit that sits at the top of bedrock here, under the glacial soil. Cambrian layers are the older sandstones; Ordovician are the younger limestones and the St. Peter sandstone the sewers tunnel through.' };
+      }
+    }
+    return null;
+  }
+
   var FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   var hoverName = null, lastLineCheck = 0;
   function hover(e) {
@@ -902,6 +941,13 @@
         return;
       }
       if (HOVL) { HOVL = null; requestDraw(); }
+      // background surface (rock): depth or geology, only over open ground
+      var sf = (on.bdepth || on.bedrock) ? surfaceAt(r.px, r.py) : null;
+      if (sf) {
+        CANVAS.style.cursor = 'pointer';
+        if (FINE && sf.name !== hoverName) { hoverName = sf.name; openPanel(sf); }
+        return;
+      }
       CANVAS.style.cursor = 'grab';
       hoverName = null;
     }
@@ -911,6 +957,9 @@
     if (r.best) { openPanel(r.best.sel); return; }
     var lh = lineAt(r.px, r.py);
     if (lh) { HOVL = lh; openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }); requestDraw(); return; }
+    // background surface (rock): depth or geology, tapped on open ground
+    var sf = (on.bdepth || on.bedrock) ? surfaceAt(r.px, r.py) : null;
+    if (sf) { openPanel(sf); return; }
     // open ground: which plant does this spot drain to?
     if (!on.san || !L.sheds || !SHED) return;
     var s = scale();
