@@ -14,11 +14,11 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // The stat. Counted 2026-07-12: 19 archived, 12 still live on the homepage.
-  // (weather.html entered the count when it was archived; it had never had a homepage card.)
-  var ARCHIVED = 19;
+  // The stat. Counted 2026-07-13: 20 archived, 11 still live on the homepage.
+  // (under-the-street.html was promoted to the homepage, then archived the next day.)
+  var ARCHIVED = 20;
   var TOTAL = 31;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 61
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 65
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +
