@@ -167,7 +167,7 @@
     san: true, storm: true, water: true, elec: true, pplants: true, comms: true, roads: true,
     hydrants: true, towers: true,          // water, extra
     gas: true, steam: true,                // pipelines
-    bstreams: false,                       // buried creeks (wired batch 3)
+    bstreams: true,                        // buried creeks
     dams: false, exch: false,              // charm (wired batch 5)
     meters: false, pavement: false,        // off by default
     bdepth: false, bedrock: false, wells: false  // the rock, off by default
@@ -366,6 +366,9 @@
       if (on.gas) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 'g'; }), C.gas, 1.8, null, LS.case_);
       if (on.steam) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 's'; }), C.steam, 1.6, [7, 4], LS.case_);
     }
+    // buried streams: creeks and brooks now running underground in storm
+    // tunnels and culverts. Ghost-blue dashes, water where it shouldn't be.
+    if (on.bstreams && L.bstream) strokeBucket(L.bstream, C.bstream, 1.7, [6, 4], LS.case_);
     // sanitary
     if (on.san && L.interceptors) {
       strokeBucket(L.interceptors.ghost, LS.ghost.c, LS.ghost.w, [3, 4]);
@@ -710,6 +713,7 @@
     }
     if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, blurb: KINDBLURB.gas } });
     if (on.steam && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 's'; }), meta: { name: 'District-heat main', kindLabel: 'Steam / hot water', color: C.steam, w: 1.6, dash: [7, 4], blurb: KINDBLURB.steam } });
+    if (on.bstreams && L.bstream) out.push({ segs: L.bstream, meta: { name: 'Buried watercourse', kindLabel: 'Storm · buried creek', color: C.bstream, w: 1.7, dash: [6, 4], blurb: KINDBLURB.bstream } });
     return out;
   }
   function lineAt(px, py) {
