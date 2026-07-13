@@ -29,9 +29,9 @@
 
   // ---- palette ----
   var C = {
-    land: '#2a322b',
-    county: 'rgba(232,226,214,0.10)', city: 'rgba(232,226,214,0.22)',
-    water: '#26343b',
+    land: '#151a17',
+    county: 'rgba(232,226,214,0.12)', city: 'rgba(232,226,214,0.26)',
+    water: '#20303a',
     road12: 'rgba(232,226,214,0.34)', road3: 'rgba(232,226,214,0.20)', road4: 'rgba(232,226,214,0.11)',
     sub: 'rgba(184,121,109,0.60)',
     lift: 'rgba(111,154,108,0.85)',
@@ -751,8 +751,10 @@
     pplant: { nuclear: 'Splits uranium to boil water.', coal: 'Burns coal, the old backbone.', gas: 'Burns natural gas, the system\'s flexible middle.', oil: 'An oil or dual-fuel peaker, run when demand spikes.', hydro: 'Spins on falling river water, the oldest power here.', waste: 'Burns garbage and sells the heat.', solar: 'A solar array.', wind: 'A wind site.', biomass: 'Burns plant matter.', battery: 'A grid battery.' }
   };
   function mwText(mw) { return mw ? (mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW') : null; }
-  function openPanel(sel) {
+  var pinned = false;   // true when opened by a tap/click; hover-opened cards auto-close
+  function openPanel(sel, viaHover) {
     if (!PANEL) return;
+    pinned = !viaHover;
     SEL = sel;
     var rows = '';
     (sel.facts || []).forEach(function (f2) { rows += '<div class="um-prow"><span>' + f2[0] + '</span><b>' + f2[1] + '</b></div>'; });
@@ -769,8 +771,12 @@
     if (sb) sb.addEventListener('click', function () { setBase(true); flyTo(lonOf(sel.x), latOf(sel.y), 16.4); });
     requestDraw();
   }
-  function closePanel() { if (PANEL) PANEL.hidden = true; SEL = null; requestDraw(); }
+  function closePanel() { if (PANEL) PANEL.hidden = true; SEL = null; pinned = false; hoverName = null; requestDraw(); }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+  // leaving the map entirely dismisses a hover-opened card (but not a pinned one).
+  // Moving from the canvas onto the inspector card stays inside the stage, so
+  // reading the card never closes it.
+  if (STAGE) STAGE.addEventListener('pointerleave', function () { if (!pinned) closePanel(); });
 
   // ---- line hit testing (shared by hover + tap) ----
   function lineBuckets() {
@@ -922,7 +928,7 @@
       if (HOVL) { HOVL = null; requestDraw(); }
       if (FINE && r.best.sel.name !== hoverName) {
         hoverName = r.best.sel.name;
-        openPanel(r.best.sel);
+        openPanel(r.best.sel, true);
       }
       return;
     }
@@ -936,7 +942,7 @@
         if (!HOVL || HOVL.seg !== lh.seg) { HOVL = lh; requestDraw(); }
         if (FINE && lh.meta.name !== hoverName) {
           hoverName = lh.meta.name;
-          openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb });
+          openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }, true);
         }
         return;
       }
@@ -945,11 +951,12 @@
       var sf = (on.bdepth || on.bedrock) ? surfaceAt(r.px, r.py) : null;
       if (sf) {
         CANVAS.style.cursor = 'pointer';
-        if (FINE && sf.name !== hoverName) { hoverName = sf.name; openPanel(sf); }
+        if (FINE && sf.name !== hoverName) { hoverName = sf.name; openPanel(sf, true); }
         return;
       }
       CANVAS.style.cursor = 'grab';
-      hoverName = null;
+      // hovered onto open ground: dismiss a hover-opened card, keep a pinned one
+      if (!pinned && SEL) closePanel(); else hoverName = null;
     }
   }
   function tap(e) {
