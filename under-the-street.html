@@ -101,8 +101,8 @@
   .um-stage { position: relative; width: min(1160px, calc(100% - 3rem)); margin: 0 auto;
     height: clamp(440px, calc(100vh - 12rem), 630px);
     height: clamp(440px, calc(100svh - 12rem), 630px);
-    background: #0f1311; border: 1px solid rgba(232,226,214,0.16); border-radius: 16px; overflow: hidden;
-    box-shadow: 0 1px 0 rgba(232,226,214,0.05), 0 3px 10px rgba(0,0,0,0.4), 0 30px 70px rgba(0,0,0,0.5); }
+    background: #100e0b; border: 1px solid rgba(232,226,214,0.14); border-radius: 16px; overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(232,226,214,0.07), 0 3px 12px rgba(0,0,0,0.45), 0 34px 80px rgba(0,0,0,0.55); }
   .um-stage canvas { position: absolute; inset: 0; touch-action: none; cursor: grab; }
   .um-stage canvas:active { cursor: grabbing; }
   .um-stage canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -110,9 +110,9 @@
   .um-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: var(--font-body); font-size: 0.85rem; color: var(--text-faint); margin: 0; pointer-events: none; }
 
   /* the shared glass surface */
-  .um-card { background: rgba(24,29,25,0.82); -webkit-backdrop-filter: blur(14px) saturate(1.15); backdrop-filter: blur(14px) saturate(1.15);
-    border: 1px solid rgba(232,226,214,0.09); border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(232,226,214,0.05), 0 2px 6px rgba(0,0,0,0.30), 0 16px 40px rgba(0,0,0,0.38); }
+  .um-card { background: rgba(21,19,15,0.86); -webkit-backdrop-filter: blur(16px) saturate(1.05); backdrop-filter: blur(16px) saturate(1.05);
+    border: 1px solid rgba(232,226,214,0.10); border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(232,226,214,0.06), 0 2px 6px rgba(0,0,0,0.34), 0 16px 40px rgba(0,0,0,0.42); }
   .ummap :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* left: the layers card */
@@ -157,7 +157,7 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a4a293' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 10px auto; transition: background-color 0.15s ease, border-color 0.15s ease; }
   .um-places:hover { background-color: rgba(232,226,214,0.11); }
-  .um-places option { background: #1e2420; color: var(--text); }
+  .um-places option { background: #17140f; color: var(--text); }
 
   /* legend */
   .um-keyd { border-top: 1px solid rgba(232,226,214,0.07); margin-top: 0.4rem; }
@@ -177,7 +177,7 @@
   /* right: the inspector card */
   .um-panel { position: absolute; top: 0.9rem; right: 0.9rem; width: min(316px, calc(100% - 5.2rem)); max-height: calc(100% - 12.5rem); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(232,226,214,0.22) transparent; z-index: 6; padding: 1rem 1.05rem 1.05rem; transition: opacity 0.22s ease, transform 0.22s ease; }
   @starting-style { .um-panel { opacity: 0; transform: translateY(8px) scale(0.98); } }
-  .um-pimg { position: relative; margin: -1rem -1.05rem 0.7rem; overflow: hidden; background: #0c0f0d; border-radius: 18px 18px 0 0; }
+  .um-pimg { position: relative; margin: -1rem -1.05rem 0.7rem; overflow: hidden; background: #0c0b09; border-radius: 18px 18px 0 0; }
   .um-pimg img { display: block; width: 100%; height: 132px; object-fit: cover; }
   .um-pcredit { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.1rem 0.7rem 0.3rem; background: linear-gradient(to top, rgba(8,11,9,0.82), rgba(8,11,9,0)); font-family: var(--font-body); font-size: 0.58rem; letter-spacing: 0.01em; color: rgba(245,241,234,0.72); }
   .um-panel h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--text-bright); margin: 0.3rem 1.5rem 0.55rem 0; }
@@ -207,7 +207,7 @@
   .um-zoom button + button { border-top: 1px solid rgba(232,226,214,0.08); }
 
   /* bottom left: the basemap tile, always previewing the other map */
-  .um-basethumb { position: absolute; left: 0.9rem; bottom: 0.9rem; z-index: 3; width: 92px; padding: 0; border: 1px solid rgba(232,226,214,0.14); border-radius: 14px; overflow: hidden; cursor: pointer; background: #1e2420; box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.35); transition: border-color 0.15s ease, transform 0.12s ease; }
+  .um-basethumb { position: absolute; left: 0.9rem; bottom: 0.9rem; z-index: 3; width: 92px; padding: 0; border: 1px solid rgba(232,226,214,0.14); border-radius: 14px; overflow: hidden; cursor: pointer; background: #17140f; box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.35); transition: border-color 0.15s ease, transform 0.12s ease; }
   .um-basethumb:hover { border-color: rgba(232,226,214,0.34); }
   .um-basethumb:active { transform: scale(0.97); }
   .um-basethumb img { display: block; width: 100%; height: 60px; object-fit: cover; }

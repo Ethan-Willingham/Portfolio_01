@@ -29,9 +29,9 @@
 
   // ---- palette ----
   var C = {
-    land: '#151a17',
+    land: '#15130f',
     county: 'rgba(232,226,214,0.12)', city: 'rgba(232,226,214,0.26)',
-    water: '#20303a',
+    water: '#1f2f39',
     road12: 'rgba(232,226,214,0.34)', road3: 'rgba(232,226,214,0.20)', road4: 'rgba(232,226,214,0.11)',
     sub: 'rgba(184,121,109,0.60)',
     lift: 'rgba(111,154,108,0.85)',
@@ -48,7 +48,7 @@
     well: '#d8cdb8',
     dam: '#8fb3c7', exch: '#cf9f78', pave: '#8f9184',
     sel: '#ede0c0', hov: '#f5f1ea',
-    label: 'rgba(245,241,234,0.92)', labelHalo: 'rgba(30,36,32,0.85)',
+    label: 'rgba(245,241,234,0.92)', labelHalo: 'rgba(18,16,12,0.88)',
     mark: '#d4c4a0'
   };
   var FUEL = {
