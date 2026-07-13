@@ -209,6 +209,19 @@
     Object.keys(TOGLOAD).forEach(function (tk) { if (on[tk]) TOGLOAD[tk].forEach(ensureLayer); });
   }
 
+  // hover-card images: real photos in assets/map/img/ (Wikimedia Commons,
+  // PD/CC; per-image credits load from credits.json). Named features match by
+  // name; generic types set sel.img directly in the hit-test.
+  var IMG_BY_NAME = {
+    'St. Anthony Falls + the 1876 dike': 'falls', 'The 511 Building': '511',
+    'Monticello Nuclear Generating Plant': 'pp-monticello', 'Prairie Island Nuclear Generating Plant': 'pp-prairie',
+    'Allen S. King Power Plant': 'pp-king', 'Covanta Hennepin Energy': 'pp-herc', 'Sherco Power': 'pp-sherco',
+    'Coon Rapids Dam': 'dam-coon', 'Lock and dam (Mississippi)': 'dam-ford',
+    'Highland Park Water Tower': 'tower-highland', "Witch's Hat Tower": 'tower-witchhat'
+  };
+  var CREDITS = null;
+  function imgKey(sel) { return (IMG_BY_NAME[sel.name] || sel.img) || null; }  // specific name wins over generic type
+
   var MARKS = [
     { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike', group: null,
       blurb: 'The only major waterfall on the Mississippi, artificial since 1880. Under the river just upstream sits the concrete dike the Army Corps finished in 1876, up to 40 feet deep and 1,850 feet across, built after the Eastman tunnel collapse nearly unzipped the falls.' },
@@ -758,8 +771,13 @@
     SEL = sel;
     var rows = '';
     (sel.facts || []).forEach(function (f2) { rows += '<div class="um-prow"><span>' + f2[0] + '</span><b>' + f2[1] + '</b></div>'; });
+    var ik = imgKey(sel), imgHtml = '';
+    if (ik && CREDITS && CREDITS[ik]) {
+      var cr = CREDITS[ik];
+      imgHtml = '<div class="um-pimg"><img src="assets/map/img/' + ik + '.webp" alt="" loading="lazy"><span class="um-pcredit">' + cr.by + ' · ' + cr.lic + '</span></div>';
+    }
     PANEL.innerHTML =
-      '<button class="um-pclose" aria-label="Close">&times;</button>' +
+      '<button class="um-pclose" aria-label="Close">&times;</button>' + imgHtml +
       '<p class="um-pk" style="--pk:' + (sel.color || '#d4c4a0') + '">' + sel.kindLabel + '</p>' +
       '<h4>' + sel.name + '</h4>' + rows +
       (sel.blurb ? '<p class="um-pblurb">' + sel.blurb + '</p>' : '') +
@@ -782,11 +800,11 @@
   function lineBuckets() {
     var LS = lineStyles(), out = [];
     if (on.elec && L.grid) {
-      out.push({ segs: L.grid.k345, meta: { name: '345 kV transmission line', kindLabel: 'Electric · backbone', color: LS.kv345.c, w: LS.kv345.w, blurb: 'The metro\'s highest-voltage tier: the long-haul lines that move bulk power between plants and the region.' } });
-      out.push({ segs: L.grid.k200, meta: { name: '230 kV transmission line', kindLabel: 'Electric', color: LS.kv200.c, w: LS.kv200.w, blurb: 'Heavy regional transmission.' } });
-      out.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'Electric', color: LS.kv100.c, w: LS.kv100.w, blurb: 'The workhorse tier that rings the cities and feeds the big substations.' } });
-      out.push({ segs: L.grid.low, meta: { name: 'Sub-100 kV line', kindLabel: 'Electric', color: LS.kvLow.c, w: LS.kvLow.w, blurb: 'Lower-voltage subtransmission, the step before neighborhood feeders.' } });
-      if (view.z > 10.4 && L.powerminor) out.push({ segs: L.powerminor, meta: { name: 'Distribution feeder', kindLabel: 'Electric · local', color: LS.minor.c, w: LS.minor.w, blurb: 'A local feeder on its way to the poles and pad transformers. OSM maps only some of these; the full street-level grid is Xcel\'s and is not public.' } });
+      out.push({ segs: L.grid.k345, meta: { name: '345 kV transmission line', kindLabel: 'Electric · backbone', color: LS.kv345.c, w: LS.kv345.w, img: 'line-hv', blurb: 'The metro\'s highest-voltage tier: the long-haul lines that move bulk power between plants and the region.' } });
+      out.push({ segs: L.grid.k200, meta: { name: '230 kV transmission line', kindLabel: 'Electric', color: LS.kv200.c, w: LS.kv200.w, img: 'line-hv', blurb: 'Heavy regional transmission.' } });
+      out.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'Electric', color: LS.kv100.c, w: LS.kv100.w, img: 'line-hv', blurb: 'The workhorse tier that rings the cities and feeds the big substations.' } });
+      out.push({ segs: L.grid.low, meta: { name: 'Sub-100 kV line', kindLabel: 'Electric', color: LS.kvLow.c, w: LS.kvLow.w, img: 'line-hv', blurb: 'Lower-voltage subtransmission, the step before neighborhood feeders.' } });
+      if (view.z > 10.4 && L.powerminor) out.push({ segs: L.powerminor, meta: { name: 'Distribution feeder', kindLabel: 'Electric · local', color: LS.minor.c, w: LS.minor.w, img: 'line-dist', blurb: 'A local feeder on its way to the poles and pad transformers. OSM maps only some of these; the full street-level grid is Xcel\'s and is not public.' } });
     }
     if (on.san && L.interceptors) {
       out.push({ segs: L.interceptors.f, meta: { name: 'Forcemain interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, dash: [8, 4], blurb: 'A pressurized sewer: where gravity runs out, lift-station pumps shove the flow uphill through these.' } });
@@ -794,7 +812,7 @@
       out.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, blurb: 'The default sewer: a tunnel laid on a steady downhill grade, flowing to the plant on slope alone. These are the regional trunk lines; the smaller street mains that feed them are not published.' } });
       out.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'Sanitary sewer · ghost', color: LS.ghost.c, w: LS.ghost.w, dash: [3, 4], blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
     }
-    if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, blurb: KINDBLURB.gas } });
+    if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, img: 'gas', blurb: KINDBLURB.gas } });
     if (on.steam && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 's'; }), meta: { name: 'District-heat main', kindLabel: 'Steam / hot water', color: C.steam, w: 1.6, dash: [7, 4], blurb: KINDBLURB.steam } });
     if (on.bstreams && L.bstream) out.push({ segs: L.bstream, meta: { name: 'Buried watercourse', kindLabel: 'Storm · buried creek', color: C.bstream, w: 1.7, dash: [6, 4], blurb: KINDBLURB.bstream } });
     if (on.pavement && L.pave) {
@@ -856,16 +874,16 @@
       if (!pt.p.name && !pt.p.kv) return;
       var nm = pt.p.name || 'Substation';
       var facts = []; if (pt.p.kv) facts.push(['voltage', pt.p.kv + ' kV']);
-      test(pt.x, pt.y, { kind: 'sub', kindLabel: 'Substation', color: C.sub, name: nm, facts: facts, blurb: KINDBLURB.sub });
+      test(pt.x, pt.y, { kind: 'sub', kindLabel: 'Substation', color: C.sub, name: nm, facts: facts, blurb: KINDBLURB.sub, img: 'substation' });
     });
     if (on.storm && L.inlets && view.z > 13.6) L.inlets.forEach(function (pt) {
       test(pt.x, pt.y, { kind: 'inlet', kindLabel: 'Storm inlet · Minneapolis', color: C.inlet, name: 'Storm inlet', facts: [], blurb: KINDBLURB.inlet });
     });
     if (on.hydrants && L.hydr && view.z > 13.2) L.hydr.forEach(function (pt) {
-      test(pt.x, pt.y, { kind: 'hydrant', kindLabel: 'Fire hydrant · Minneapolis', color: C.hydrant, name: 'Fire hydrant', facts: pt.p.yr ? [['installed', String(pt.p.yr)]] : [], blurb: KINDBLURB.hydrant });
+      test(pt.x, pt.y, { kind: 'hydrant', kindLabel: 'Fire hydrant · Minneapolis', color: C.hydrant, name: 'Fire hydrant', facts: pt.p.yr ? [['installed', String(pt.p.yr)]] : [], blurb: KINDBLURB.hydrant, img: 'hydrant' });
     });
     if (on.towers && L.towers) L.towers.forEach(function (pt) {
-      test(pt.x, pt.y, { kind: 'tower', kindLabel: 'Water tower', color: C.tower, name: pt.p.name || 'Water tower', facts: [], blurb: KINDBLURB.tower });
+      test(pt.x, pt.y, { kind: 'tower', kindLabel: 'Water tower', color: C.tower, name: pt.p.name || 'Water tower', facts: [], blurb: KINDBLURB.tower, img: 'tower-witchhat' });
     });
     if (on.wells && L.wells && view.z > 12.2) L.wells.forEach(function (pt) {
       var wf = []; if (pt.p.d) wf.push(['drilled', pt.p.d + ' ft']); if (pt.p.a) wf.push(['aquifer', pt.p.a]);
@@ -942,7 +960,7 @@
         if (!HOVL || HOVL.seg !== lh.seg) { HOVL = lh; requestDraw(); }
         if (FINE && lh.meta.name !== hoverName) {
           hoverName = lh.meta.name;
-          openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }, true);
+          openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb, img: lh.meta.img }, true);
         }
         return;
       }
@@ -963,7 +981,7 @@
     var r = nearestPoint(e);
     if (r.best) { openPanel(r.best.sel); return; }
     var lh = lineAt(r.px, r.py);
-    if (lh) { HOVL = lh; openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb }); requestDraw(); return; }
+    if (lh) { HOVL = lh; openPanel({ kind: 'line', kindLabel: lh.meta.kindLabel, color: lh.meta.color, name: lh.meta.name, facts: [], blurb: lh.meta.blurb, img: lh.meta.img }); requestDraw(); return; }
     // background surface (rock): depth or geology, tapped on open ground
     var sf = (on.bdepth || on.bedrock) ? surfaceAt(r.px, r.py) : null;
     if (sf) { openPanel(sf); return; }
@@ -1072,6 +1090,7 @@
   function start() {
     if (started) return; started = true;
     ensureActive();  // pull the default-on granular layers alongside the core set
+    fetch('assets/map/img/credits.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (c) { if (c) CREDITS = c; }).catch(function () {});
     if (STATUS) STATUS.textContent = 'loading the real lines…';
     function grab(url) {
       return fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.json(); }).catch(function () { return null; });
