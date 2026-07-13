@@ -168,7 +168,7 @@
     hydrants: true, towers: true,          // water, extra
     gas: true, steam: true,                // pipelines
     bstreams: true,                        // buried creeks
-    dams: false, exch: false,              // charm (wired batch 5)
+    dams: true, exch: true,                // charm
     meters: false, pavement: false,        // off by default
     bdepth: false, bedrock: false, wells: false  // the rock, off by default
   };
@@ -358,6 +358,12 @@
       strokeBucket(L.roads.r3, C.road3, 0.8);
       strokeBucket(L.roads.r12, C.road12, 1.25);
     }
+    // street condition (Minneapolis pavement): colored by PCI, worst to best
+    if (on.pavement && L.pave && view.z > 11.2) {
+      strokeBucket(L.pave.filter(function (s) { return s.p.pci < 40; }), 'rgba(184,121,109,0.85)', 1.5);
+      strokeBucket(L.pave.filter(function (s) { return s.p.pci >= 40 && s.p.pci < 70; }), 'rgba(223,194,136,0.8)', 1.5);
+      strokeBucket(L.pave.filter(function (s) { return s.p.pci >= 70; }), 'rgba(158,199,154,0.8)', 1.5);
+    }
 
     var LS = lineStyles();
     // electric
@@ -490,6 +496,39 @@
         ctx.closePath(); ctx.fill();
         ctx.strokeStyle = 'rgba(30,36,32,0.9)'; ctx.lineWidth = 1.1; ctx.stroke();
         if (view.z > 11.2) label(pt.p.name, p[0], p[1] - 8, 2);
+      });
+    }
+    // telephone exchanges: the old copper central offices, comms family
+    if (on.exch && L.exch && view.z > 10.4) {
+      ctx.fillStyle = C.exch;
+      L.exch.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -20 || p[0] > W + 20 || p[1] < -20 || p[1] > H + 20) return;
+        ctx.fillRect(p[0] - 2.4, p[1] - 2.4, 4.8, 4.8);
+        ctx.strokeStyle = 'rgba(30,36,32,0.9)'; ctx.lineWidth = 1; ctx.strokeRect(p[0] - 2.4, p[1] - 2.4, 4.8, 4.8);
+        if (view.z > 11.8) label(pt.p.name, p[0], p[1] - 6, 2);
+      });
+    }
+    // MCES flow meters on the interceptors
+    if (on.meters && L.meters && view.z > 11.3) {
+      ctx.fillStyle = 'rgba(111,154,108,0.9)';
+      L.meters.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -8 || p[0] > W + 8 || p[1] < -8 || p[1] > H + 8) return;
+        ctx.beginPath(); ctx.arc(p[0], p[1], 1.8, 0, 6.2832); ctx.fill();
+      });
+    }
+    // dams + locks on the river: the tamed falls
+    if (on.dams && L.dams && view.z > 9.4) {
+      L.dams.forEach(function (pt) {
+        var p = toPx(pt.x, pt.y);
+        if (p[0] < -20 || p[0] > W + 20 || p[1] < -20 || p[1] > H + 20) return;
+        ctx.fillStyle = C.dam;
+        ctx.beginPath();
+        ctx.moveTo(p[0], p[1] - 4); ctx.lineTo(p[0] + 4, p[1]); ctx.lineTo(p[0], p[1] + 4); ctx.lineTo(p[0] - 4, p[1]);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(30,36,32,0.9)'; ctx.lineWidth = 1.1; ctx.stroke();
+        if (view.z > 10.8) label(pt.p.name, p[0], p[1] - 8, 4);
       });
     }
     // power plants
@@ -744,6 +783,11 @@
     if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, blurb: KINDBLURB.gas } });
     if (on.steam && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 's'; }), meta: { name: 'District-heat main', kindLabel: 'Steam / hot water', color: C.steam, w: 1.6, dash: [7, 4], blurb: KINDBLURB.steam } });
     if (on.bstreams && L.bstream) out.push({ segs: L.bstream, meta: { name: 'Buried watercourse', kindLabel: 'Storm · buried creek', color: C.bstream, w: 1.7, dash: [6, 4], blurb: KINDBLURB.bstream } });
+    if (on.pavement && L.pave) {
+      out.push({ segs: L.pave.filter(function (s) { return s.p.pci < 40; }), meta: { name: 'Street in poor condition', kindLabel: 'Pavement · PCI under 40', color: '#b8796d', w: 1.5, blurb: 'A Minneapolis street scored poor on the Pavement Condition Index (0 to 100). The city prioritizes repaving by this score; frost heave is the slow enemy.' } });
+      out.push({ segs: L.pave.filter(function (s) { return s.p.pci >= 40 && s.p.pci < 70; }), meta: { name: 'Street in fair condition', kindLabel: 'Pavement · PCI 40 to 70', color: '#dfc288', w: 1.5, blurb: 'A Minneapolis street scored fair on the Pavement Condition Index.' } });
+      out.push({ segs: L.pave.filter(function (s) { return s.p.pci >= 70; }), meta: { name: 'Street in good condition', kindLabel: 'Pavement · PCI 70+', color: '#9ec79a', w: 1.5, blurb: 'A Minneapolis street scored good on the Pavement Condition Index, recently built or resurfaced.' } });
+    }
     return out;
   }
   function lineAt(px, py) {
@@ -812,6 +856,16 @@
     if (on.wells && L.wells && view.z > 12.2) L.wells.forEach(function (pt) {
       var wf = []; if (pt.p.d) wf.push(['drilled', pt.p.d + ' ft']); if (pt.p.a) wf.push(['aquifer', pt.p.a]);
       test(pt.x, pt.y, { kind: 'well', kindLabel: 'Drilled well', color: C.well, name: 'Drilled well', facts: wf, blurb: KINDBLURB.well });
+    });
+    if (on.exch && L.exch) L.exch.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'exch', kindLabel: 'Telephone exchange', color: C.exch, name: pt.p.name || 'Telephone exchange', facts: [], blurb: KINDBLURB.exch });
+    });
+    if (on.dams && L.dams) L.dams.forEach(function (pt) {
+      test(pt.x, pt.y, { kind: 'dam', kindLabel: pt.p.lock ? 'Lock' : 'Dam', color: C.dam, name: pt.p.name, facts: [], blurb: KINDBLURB.dam });
+    });
+    if (on.meters && L.meters && view.z > 11.5) L.meters.forEach(function (pt) {
+      var mf = []; if (pt.p.i) mf.push(['interceptor', pt.p.i]);
+      test(pt.x, pt.y, { kind: 'meter', kindLabel: 'Flow meter · MCES', color: '#6f9a6c', name: 'Sewer flow meter', facts: mf, blurb: 'A regional flow meter on an interceptor, where the Met Council measures how much is moving through the system.' });
     });
     MARKS.forEach(function (m) {
       if (m.group && !on[m.group]) return;

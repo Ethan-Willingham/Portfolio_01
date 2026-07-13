@@ -67,9 +67,14 @@ if (want('hydrants')) { console.log('hydrants'); points('hydrants.geojson', 'hyd
 if (want('watertowers')) { console.log('watertowers'); points('watertowers.geojson', 'watertowers.json',
   p => (p.name ? { name: p.name } : {})); }
 
-// dams + locks: keep names
+// dams + locks: keep names; the river locks come tagged only "Mississippi
+// River", which reads wrong on a marker, so relabel those.
 if (want('damslocks')) { console.log('damslocks'); points('damslocks.geojson', 'damslocks.json',
-  p => ({ name: p.name || (p.lock === 'yes' ? 'Lock' : 'Dam'), lock: p.lock === 'yes' ? 1 : 0 })); }
+  p => {
+    var nm = p.name || (p.lock === 'yes' ? 'Lock' : 'Dam');
+    if (nm === 'Mississippi River') nm = p.lock === 'yes' ? 'Lock and dam (Mississippi)' : 'Dam on the Mississippi';
+    return { name: nm, lock: p.lock === 'yes' ? 1 : 0 };
+  }); }
 
 // telephone exchanges
 if (want('exchanges')) { console.log('exchanges'); points('exchanges.geojson', 'exchanges.json',
@@ -118,9 +123,10 @@ if (want('pipelines')) {
 if (want('streamsug')) { console.log('streamsug'); vector('streams-underground.geojson', 'streamsug.json',
   { simplify: 30, mapProps: p => ({ name: p.name || undefined, t: p.t }) }); }
 
-// pavement condition: keep PCI where present; simplify hard (12k segs)
+// pavement condition: only the PCI-scored segments (the rest just duplicate
+// roads.json); simplify hard. Cuts ~12k segs to the ~3.5k that carry a score.
 if (want('pavement')) { console.log('pavement'); vector('pavement.geojson', 'pavement.json',
-  { simplify: 12, mapProps: p => (p.pci != null ? { pci: p.pci } : {}) }); }
+  { simplify: 12, filter: p => p.pci != null, mapProps: p => ({ pci: p.pci }) }); }
 
 // bedrock geology polygons: simplify HARD (8MB source). MAPLABEL = unit code
 // (e.g. "Osp" St. Peter, "Op" Platteville); DESCRIPTN = the plain description.
