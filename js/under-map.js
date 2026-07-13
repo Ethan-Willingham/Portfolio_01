@@ -166,7 +166,7 @@
   var on = {
     san: true, storm: true, water: true, elec: true, pplants: true, comms: true, roads: true,
     hydrants: true, towers: true,          // water, extra
-    gas: false, steam: false,              // pipelines (wired batch 2)
+    gas: true, steam: true,                // pipelines
     bstreams: false,                       // buried creeks (wired batch 3)
     dams: false, exch: false,              // charm (wired batch 5)
     meters: false, pavement: false,        // off by default
@@ -360,6 +360,12 @@
         });
       }
     }
+    // gas transmission + steam (pipelines). Distribution mains stay unpublished;
+    // these are the high-pressure feeders and the downtown district-heat lines.
+    if ((on.gas || on.steam) && L.pipes) {
+      if (on.gas) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 'g'; }), C.gas, 1.8, null, LS.case_);
+      if (on.steam) strokeBucket(L.pipes.filter(function (s) { return s.p.k === 's'; }), C.steam, 1.6, [7, 4], LS.case_);
+    }
     // sanitary
     if (on.san && L.interceptors) {
       strokeBucket(L.interceptors.ghost, LS.ghost.c, LS.ghost.w, [3, 4]);
@@ -427,16 +433,17 @@
         ctx.beginPath(); ctx.arc(hp[0], hp[1], hr, 0, 6.2832); ctx.fill();
       }
     }
-    // water towers: the system pressure made visible
-    if (on.towers && L.towers && view.z > 10.1) {
+    // water towers: the one above-ground element, kept quiet so the buried
+    // network stays the story. A small tank on a stalk, past a mid zoom.
+    if (on.towers && L.towers && view.z > 11.2) {
+      ctx.strokeStyle = C.tower; ctx.lineWidth = 1.3;
+      ctx.fillStyle = 'rgba(143,179,199,0.22)';
       L.towers.forEach(function (pt) {
         var p = toPx(pt.x, pt.y);
         if (p[0] < -20 || p[0] > W + 20 || p[1] < -20 || p[1] > H + 20) return;
-        ctx.strokeStyle = C.tower; ctx.lineWidth = 1.6;
-        ctx.fillStyle = 'rgba(143,179,199,0.32)';
-        ctx.beginPath(); ctx.arc(p[0], p[1] - 2.4, 3.1, 0, 6.2832); ctx.fill(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(p[0], p[1] + 0.6); ctx.lineTo(p[0], p[1] + 4.4); ctx.stroke();
-        if (view.z > 12.2) label(pt.p.name || 'Water tower', p[0], p[1] - 8, 1);
+        ctx.beginPath(); ctx.arc(p[0], p[1] - 1.6, 2.2, 0, 6.2832); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p[0], p[1] + 0.5); ctx.lineTo(p[0], p[1] + 3); ctx.stroke();
+        if (view.z > 12.6) label(pt.p.name || 'Water tower', p[0], p[1] - 7, 1);
       });
     }
     // data centers
@@ -701,6 +708,8 @@
       out.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, blurb: 'The default sewer: a tunnel laid on a steady downhill grade, flowing to the plant on slope alone. These are the regional trunk lines; the smaller street mains that feed them are not published.' } });
       out.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'Sanitary sewer · ghost', color: LS.ghost.c, w: LS.ghost.w, dash: [3, 4], blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
     }
+    if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, blurb: KINDBLURB.gas } });
+    if (on.steam && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 's'; }), meta: { name: 'District-heat main', kindLabel: 'Steam / hot water', color: C.steam, w: 1.6, dash: [7, 4], blurb: KINDBLURB.steam } });
     return out;
   }
   function lineAt(px, py) {
