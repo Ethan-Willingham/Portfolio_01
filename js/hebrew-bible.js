@@ -112,7 +112,10 @@
     }
     var h = '<div class="hb-note-card">';
     if (note.gist) {
-      h += '<p class="hb-note-k">What it says</p><p class="hb-note-gist">' + note.gist + '</p>';
+      h += '<p class="hb-note-k">What it says</p>';
+      h += note.gist.split('\n\n').map(function (g) {
+        return '<p class="hb-note-gist">' + g + '</p>';
+      }).join('');
     }
     if (note.splits && note.splits.length) {
       h += '<p class="hb-note-k">Where the translators split</p>';

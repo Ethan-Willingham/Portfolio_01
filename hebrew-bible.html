@@ -179,6 +179,14 @@
   .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
   .src-list li { margin-bottom: 0.5em; }
   .src-list b { color: var(--text); font-weight: 600; }
+  /* the source colophon collapses into a dropdown */
+  .src-drop { margin: 0; }
+  .src-drop-s { cursor: pointer; list-style: none; display: inline-flex; align-items: baseline; gap: 0.55em; margin: 0; }
+  .src-drop-s::-webkit-details-marker { display: none; }
+  .src-drop-s::before { content: "\276F"; color: var(--accent); font-size: 0.68em; transition: transform .25s var(--ease); display: inline-block; }
+  .src-drop[open] .src-drop-s::before { transform: rotate(90deg); }
+  .src-drop-s:hover { color: var(--accent); }
+  .src-drop-body { margin-top: 1.3rem; }
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
@@ -261,7 +269,9 @@
     <!-- ============================ COLOPHON ============================ -->
     <hr class="u-divider">
     <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
+      <details class="src-drop">
+      <summary class="sechead src-drop-s">Where the text comes from</summary>
+      <div class="src-drop-body">
       <p>Every translation here is reproduced verbatim, not paraphrased. The Hebrew and most of the English I pulled with scripts from clean digital editions and checked line by line. Robert Alter, whose translation is not posted online as one clean text, I quote only where I could verify his exact wording against a published source, on the passages where his rendering most earns a place. The one change to any quotation is curly quotation marks turned straight, to match the rest of the site. Where a translator uses a dash, it is theirs, not mine.</p>
       <ul class="src-list">
         <li><b>The Hebrew</b> is the vocalized Masoretic text, with vowel points but without the cantillation marks, served by <a href="https://www.sefaria.org">Sefaria</a>. The Talmud passage is in its original Aramaic.</li>
@@ -271,6 +281,8 @@
       </ul>
       <p>The breakdowns are mine. They lean on the standard scholarship and the classical Jewish commentators, Rashi and Ibn Ezra and the rabbis of the Talmud and the Midrash, and where the Jewish reading of a verse parts from the familiar Christian one, I have tried to lay both out plainly and fairly rather than smooth the difference over.</p>
       <p style="font-size:0.92rem; color:var(--text-faint);">The photograph on the homepage card is an open Torah scroll, the handwritten parchment from which the Five Books are chanted aloud in synagogue, with a silver pointer (a <em>yad</em>) resting in front so no finger touches the text. Jewish Museum and Tolerance Center, Moscow; public domain (CC0), via Wikimedia Commons.</p>
+      </div>
+      </details>
     </section>
   </main>
 
