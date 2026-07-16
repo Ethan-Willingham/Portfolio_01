@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.06';
+  var GAME_VERSION = 'v26.07';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -169,7 +169,11 @@
        ?multitown=1  wide 4-town world      ?combat=1  enemies + turret
        ?nmz=1        No Man's Zone courses   ?board=1   the Trade Board
        ?jello=1      jello/slime bodies      ?oil=1     oil seams + pump
-       ?refine=1     ore-refinement catalog  ?bath=1    bathhouse heat (B1)
+       ?refine=1     ore-refinement catalog  ?bath=1    the banya (WIP)
+
+     ENABLE_BATH is the one flag with a PLAYER-FACING switch as well:
+     pause > Options > Banya, persisted as 'sluice.opt.banya' and read
+     below. Default is still off, so a fresh profile boots unchanged.
      ============================================================ */
   var SINGLE_TOWN        = true;   // one coherent town; false = the wide 4-town world
   var ENABLE_COMBAT      = false;  // enemies, missiles, flak, the rig auto-turret
@@ -178,7 +182,7 @@
   var ENABLE_JELLO       = true;   // squishy jello / slime soft bodies — LIVE (v25.59): rare buried slimes cushion big falls
   var ENABLE_OIL         = false;  // underground oil seams + the oil pump upgrade
   var ENABLE_REFINEMENT  = false;  // the (never-finished) ore-refinement item catalog
-  var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): B1 water heat, in progress
+  var ENABLE_BATH        = false;  // BATHHOUSE (docs/game/BATHHOUSE_PLAN.md): the banya, in progress; player switch in Options
   // Per-load URL overrides for spot-checking a disabled system (see above).
   try {
     var _ffq = (window.location && window.location.search) || '';
@@ -192,6 +196,13 @@
     if (/[?&]oil=1/.test(_ffq))       ENABLE_OIL = true;
     if (/[?&]refine=1/.test(_ffq))    ENABLE_REFINEMENT = true;
     if (/[?&]bath=1/.test(_ffq))      ENABLE_BATH = true;
+  } catch (e) {}
+  // The banya's player switch (pause > Options > Banya). Read HERE, not in
+  // 052-options.js, because it must be settled before 072-bath.js evaluates
+  // its boot block; ?bath=1 above already won, so the dev override still
+  // beats a stored 'off'. 052 owns writing this key + the live flip.
+  try {
+    if (!ENABLE_BATH && localStorage.getItem('sluice.opt.banya') === '1') ENABLE_BATH = true;
   } catch (e) {}
 
   var TILE = 32;
@@ -5754,8 +5765,14 @@
   //                              sources to honour
   // Persisted keys (all under 'sluice.opt.'): sfxvol (0..1), gfx
   // ('performance'|'balanced'|'extreme'), shake (0..1), dmgflash ('1'|'0'),
-  // lowflash ('1'|'0'). Unset keys keep the shipped defaults and apply nothing,
-  // so a fresh profile boots exactly as before this fragment existed.
+  // lowflash ('1'|'0'), banya ('1'|'0'). Unset keys keep the shipped defaults
+  // and apply nothing, so a fresh profile boots exactly as before this
+  // fragment existed.
+  //
+  // 'banya' is the one key deliberately NOT in OPT_KEYS: 010-constants.js
+  // reads it at boot instead, because ENABLE_BATH must be settled before
+  // 072-bath.js evaluates (and so ?bath=1 can still win over a stored 'off').
+  // This fragment owns writing it and the LIVE flip below.
   (function buildPlayerOptions() {
     var OPT_PREFIX = 'sluice.opt.';
 
@@ -5825,6 +5842,17 @@
         // The one full-screen flash with a lever today: storm lightning
         // (weatherTune.lightning, registered in the 'weather' gm group).
         optGmSet('weather.lightning', opts.lowFlash ? 0 : 1);
+      } else if (key === 'banya') {
+        // The bathhouse (docs/game/BATHHOUSE_PLAN.md). Every ENABLE_BATH
+        // consumer is a per-frame gate and the tower's site is picked
+        // lazily post-worldgen, so this flips LIVE: the banya appears in
+        // town on the next frame, no reload, no new game. Switching it off
+        // from inside the scene has to leave first, or the world stays
+        // frozen behind a scene whose frame hook no longer runs.
+        var bathOn = optTruthy(val);
+        if (!bathOn && typeof bathMode !== 'undefined' && bathMode &&
+            typeof bathExit === 'function') bathExit();
+        ENABLE_BATH = bathOn;
       }
     }
 

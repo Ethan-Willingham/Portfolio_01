@@ -38,10 +38,13 @@ panel tokens) and the three fonts; otherwise they do not overlap.
 
 > **The game is a deliberately SIMPLE single-town mining sandbox.** Multi-town world, combat +
 > the rig auto-turret, No Man's Zone obstacle courses, the cross-town Trade Board, underground
-> oil, ore refinement, and the in-progress bathhouse are **intentionally disabled** behind a
-> central feature-flag block (`js/sluice/010-constants.js`). They are NOT bugs and NOT missing
+> oil, and ore refinement are **intentionally disabled** behind a central feature-flag block
+> (`js/sluice/010-constants.js`). They are NOT bugs and NOT missing
 > features; do not re-enable a flag without asking the owner. Each can be spot-checked per
 > page-load with a URL param (e.g. `?multitown=1`, `?combat=1`); see the flag block.
+> (The in-progress **banya** is still flag-off by default, but since v26.07 it is the one flag
+> with a player-facing switch: pause > Options > Banya, persisted as `sluice.opt.banya` and read
+> at boot by the flag block. It flips live; `?bath=1` remains the dev override and still wins.)
 > (Jello/slime soft bodies used to be on this list but are **LIVE** in production,
 > `ENABLE_JELLO = true` since v25.59: rare buried slimes that cushion big falls.)
 

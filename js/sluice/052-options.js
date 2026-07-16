@@ -18,8 +18,14 @@
   //                              sources to honour
   // Persisted keys (all under 'sluice.opt.'): sfxvol (0..1), gfx
   // ('performance'|'balanced'|'extreme'), shake (0..1), dmgflash ('1'|'0'),
-  // lowflash ('1'|'0'). Unset keys keep the shipped defaults and apply nothing,
-  // so a fresh profile boots exactly as before this fragment existed.
+  // lowflash ('1'|'0'), banya ('1'|'0'). Unset keys keep the shipped defaults
+  // and apply nothing, so a fresh profile boots exactly as before this
+  // fragment existed.
+  //
+  // 'banya' is the one key deliberately NOT in OPT_KEYS: 010-constants.js
+  // reads it at boot instead, because ENABLE_BATH must be settled before
+  // 072-bath.js evaluates (and so ?bath=1 can still win over a stored 'off').
+  // This fragment owns writing it and the LIVE flip below.
   (function buildPlayerOptions() {
     var OPT_PREFIX = 'sluice.opt.';
 
@@ -89,6 +95,17 @@
         // The one full-screen flash with a lever today: storm lightning
         // (weatherTune.lightning, registered in the 'weather' gm group).
         optGmSet('weather.lightning', opts.lowFlash ? 0 : 1);
+      } else if (key === 'banya') {
+        // The bathhouse (docs/game/BATHHOUSE_PLAN.md). Every ENABLE_BATH
+        // consumer is a per-frame gate and the tower's site is picked
+        // lazily post-worldgen, so this flips LIVE: the banya appears in
+        // town on the next frame, no reload, no new game. Switching it off
+        // from inside the scene has to leave first, or the world stays
+        // frozen behind a scene whose frame hook no longer runs.
+        var bathOn = optTruthy(val);
+        if (!bathOn && typeof bathMode !== 'undefined' && bathMode &&
+            typeof bathExit === 'function') bathExit();
+        ENABLE_BATH = bathOn;
       }
     }
 

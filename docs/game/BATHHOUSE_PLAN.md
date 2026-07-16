@@ -426,6 +426,26 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-11 (Fable; v26.07): THE PLAYER SWITCH. The banya is no longer
+  dev-only: pause > Options > Banya (default Off, so a fresh profile boots
+  exactly as before). Persisted as 'sluice.opt.banya' next to the other
+  'sluice.opt.*' keys. It flips LIVE, no reload and no new game, because
+  every ENABLE_BATH consumer is a per-frame gate and bathPickSite() is
+  lazy + cached post-worldgen; the tower appears in town on the next frame.
+  Wiring, deliberately split: 010-constants.js READS the key at boot (it
+  must be settled before 072-bath.js evaluates its export block, and this
+  keeps ?bath=1 winning over a stored 'off'), so 'banya' is the one key
+  NOT in 052-options.js's OPT_KEYS boot loop; 052 owns the write + the
+  live flip (switching off from inside the scene calls bathExit() first,
+  or the world stays frozen behind a scene whose hook no longer runs);
+  grand-motherload.html has the segmented row + a one-line note. Verified
+  headless: default off, click On persists '1' and the tower appears live,
+  reload boots with it on (__bath exported = ENABLE_BATH true at boot),
+  click Off removes the tower live from the same camera, click On restores
+  it, zero console errors. KNOWN GAP: toggling ON live does not export the
+  window.__bath dev handles (that block is boot-gated); they appear on the
+  next reload, which the persisted key makes automatic.
+
 - 2026-07-11 (Fable; v26.06): TRUE SCALE. Owner: same pixels, but the water
   should behave like a body of water many times larger ("not levers, a true
   proper scale"). This is dynamic similarity: the read of size is the

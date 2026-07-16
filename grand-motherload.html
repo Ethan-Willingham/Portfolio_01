@@ -222,6 +222,13 @@
       border-color: var(--d-accent);
       color: #0d0a04;
     }
+    /* One-line footnote under an option row that needs a word of context. */
+    #game-pause .pause-opt-note {
+      margin: -0.3em 0 0;
+      font-size: 0.6rem;
+      line-height: 1.5;
+      opacity: 0.62;
+    }
     /* OPTIONS pane: a second page inside the same pause card. The card swaps
        pages via the .show-options class; the controls persist to 'sluice.opt.*'
        through window.SluiceOptions (js/sluice/052-options.js). */
@@ -584,6 +591,13 @@
                       <button id="gm-lowflash-off" type="button">Off</button>
                       <button id="gm-lowflash-on" type="button">On</button>
                     </div>
+                    <div class="pause-opt">
+                      <span class="pause-vol-label">Banya</span>
+                      <button id="gm-banya-off" type="button">Off</button>
+                      <button id="gm-banya-on" type="button">On</button>
+                    </div>
+                    <p class="pause-opt-note">The banya is half built. Switch it on and a bathhouse
+                      appears in town: walk in for hot water, steam, and slimes taking a soak.</p>
                     <button id="gm-opt-back" class="pause-secondary" type="button">Back</button>
                   </div>
                 </div>
@@ -757,10 +771,10 @@
       });
     })();
   </script>
-  <script src="js/liquid-wgpu.js?v=v26.06"></script>
-  <script src="js/smoke-wgpu.js?v=v26.06"></script>
-  <script src="js/jello-wgpu.js?v=v26.06"></script>
-  <script src="js/audio.js?v=v26.06"></script>
+  <script src="js/liquid-wgpu.js?v=v26.07"></script>
+  <script src="js/smoke-wgpu.js?v=v26.07"></script>
+  <script src="js/jello-wgpu.js?v=v26.07"></script>
+  <script src="js/audio.js?v=v26.07"></script>
   <script>
     // Pause-screen volume slider -> SluiceAudio master, persisted across sessions.
     (function () {
@@ -850,9 +864,12 @@
       ]);
       wireSeg('dmgflash', '1', [['gm-dmgflash-on', '1'], ['gm-dmgflash-off', '0']]);
       wireSeg('lowflash', '0', [['gm-lowflash-off', '0'], ['gm-lowflash-on', '1']]);
+      // The banya (ENABLE_BATH). Default off = the shipped flag; 052-options.js
+      // flips it live, and 010-constants.js re-reads the key at boot.
+      wireSeg('banya', '0', [['gm-banya-off', '0'], ['gm-banya-on', '1']]);
     })();
 
   </script>
-  <script src="js/sluice.js?v=v26.06"></script>
+  <script src="js/sluice.js?v=v26.07"></script>
 </body>
 </html>
