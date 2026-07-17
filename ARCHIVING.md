@@ -54,6 +54,14 @@ Let `<slug>` be the post's basename (e.g. `seven-habits`).
 
 7. **Remove the homepage card.** Delete the post's whole
    `<li class="article-list-item ...">...</li>` block from `index.html`.
+   **If the post is a collection member instead** (it has no homepage card):
+   delete its `live(...)` line from `HUBS` in `tools/gen-hubs.mjs`, then run
+   `node tools/gen-hubs.mjs`, `node tools/wrap-picture.mjs <the hubs> boring-stuff.html index.html`,
+   and `node tools/gen-post-nav.mjs` (that last one re-stamps the surviving
+   members' "Next in ..." endcaps so none of them points at the dead root URL).
+   Also delete the generated `<!-- endcap nav ... --> <nav class="u-next">...</nav>`
+   block from the MOVED page itself; an archived post is no longer in the
+   collection, so it should not advertise a next post in it.
 
 8. **Add the card to `archive.html`.** The shelf is HAND-AUTHORED: copy an existing
    `<li class="article-list-item ...">` block, point it at the archive URL and the
