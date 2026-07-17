@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# voice-lint.sh - keep em dashes and high-confidence LLM tells out of committed site content.
+# voice-lint.sh - keep em dashes and high-confidence empty-writing tells out of committed site content.
 #
 # Runs from a git pre-commit hook, so it scans the STAGED versions of *.html and *.md
 # (exactly what is about to ship). Hard violations block the commit; soft tells warn only.
-# The rules mirror VOICE.md section 5 (the kill-list). Enable once per checkout with:
+# The rules mirror the mechanical subset of VOICE.md section 7 (symptoms of empty
+# writing). Enable once per checkout with:
 #   git config core.hooksPath tools/githooks
 #
 # Bypass in a genuine exception with: git commit --no-verify
@@ -70,13 +71,13 @@ while IFS= read -r f; do
   if ! skip_tells "$f"; then
     ph=$(printf '%s\n' "$content" | grep -niE "$HARD_PHRASES" || true)
     if [ -n "$ph" ]; then
-      echo "BLOCK  $f  (LLM tell phrase; see the VOICE.md kill-list)"
+      echo "BLOCK  $f  (empty-writing symptom; see VOICE.md section 7)"
       printf '%s\n' "$ph" | sed 's/^/    line /'
       hard_fail=1
     fi
     sw=$(printf '%s\n' "$content" | grep -niE "(${SOFT_WORDS})|${SOFT_PHRASES}" || true)
     if [ -n "$sw" ]; then
-      echo "warn   $f  (possible LLM tell, check it in context)"
+      echo "warn   $f  (possible empty-writing symptom, check it in context)"
       printf '%s\n' "$sw" | sed 's/^/    line /'
     fi
   fi
