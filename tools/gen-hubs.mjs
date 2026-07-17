@@ -4,10 +4,14 @@
    Idempotent: safe to re-run any time, e.g. after flipping a member from soon to
    live. Run from the repo root: node tools/gen-hubs.mjs   Then re-run
    tools/wrap-picture.mjs on the hubs + shelf + index.html to restore the WebP
-   <picture> wrapping, and tools/build-search-index.mjs. No em dashes. */
+   <picture> wrapping, and tools/build-search-index.mjs. No em dashes.
+   Also the source of truth for collection membership: tools/gen-post-nav.mjs
+   imports HUBS/SHELF from here to stamp each member post's endcap nav, so
+   importing this module must stay side-effect free (writes run only when the
+   file is executed directly, see the isMain guard at the bottom). */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /* Members carry an era (the "measurement" shown beside the title: when the text
@@ -126,8 +130,12 @@ const HUBS = [
 const SHELF = {
   path: 'boring-stuff',
   title: 'Boring Stuff',
+  /* the HOMEPAGE card (owner reimaged it 2026-07-12: the Admont library, not
+     the vegetables; keep this in sync with index.html or a re-run reverts it) */
   thumb: 'boring-stuff.jpg',
-  alt: 'A market display crowded with tomatoes, peppers, cucumbers, melon, watermelon, strawberries, salad, and cut fruit.',
+  credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
+  alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
+  cardDesc: 'the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.',
   hubOrder: ['inner-life', 'staying-alive', 'philosophy', 'religion', 'power-story-love', 'career'],
   singles: [
     {
@@ -143,7 +151,10 @@ const SHELF = {
 const ordered = (members) => [...members].sort((a, b) => (a.soon ? 1 : 0) - (b.soon ? 1 : 0) || a.year - b.year);
 
 /* ---- render a hub page ----------------------------------------------------- */
-const memberCard = (m) => m.soon
+/* the first card's image is above the fold, so it loads eager (site convention:
+   first image eager, the rest lazy); ordered() puts live before soon, so index
+   0 always has a thumb */
+const memberCard = (m, i) => m.soon
   ? `        <li class="article-list-item">
           <div class="article-item is-soon">
             <span class="article-item-era">${m.era}</span>
@@ -153,7 +164,7 @@ const memberCard = (m) => m.soon
         </li>`
   : `        <li class="article-list-item fade-in">
           <a class="article-item" href="${m.href}">
-            <span class="article-item-thumb"><img src="assets/thumbs/${m.thumb}" width="600" height="400" loading="lazy" decoding="async" alt=""></span>
+            <span class="article-item-thumb"><img src="assets/thumbs/${m.thumb}" width="600" height="400" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" alt=""></span>
             <span class="article-item-era">${m.era}</span>
             <h2 class="article-item-title">${m.title}</h2>
             <p class="article-item-description">${m.desc}</p>
@@ -190,11 +201,13 @@ const hubPage = (h) => `<!DOCTYPE html>
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
             <input class="hs-input" type="search" data-search-scope="${h.slug}" placeholder="Search this collection only" aria-label="Search ${h.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <span class="hs-hint" aria-hidden="true">Search<kbd class="hs-kbd">/</kbd></span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
         <span class="hs-links">
           <a class="hs-about" href="/">Home</a>
+          <a class="hs-about" href="boring-stuff.html">Shelf</a>
           <a class="hs-about" href="about.html">About</a>
         </span>
       </div>
@@ -224,9 +237,9 @@ if (shelfHubs.some((h) => !h)) throw new Error('SHELF.hubOrder names a missing h
 const shelfCount = shelfHubs.reduce((sum, h) => sum + liveCount(h), 0) + SHELF.singles.length;
 const shelfLead = `${shelfCount} posts that are more like vegetables than candy.`;
 
-const shelfHubCard = (h) => `        <li class="article-list-item fade-in">
+const shelfHubCard = (h, i) => `        <li class="article-list-item fade-in">
           <a class="article-item is-collection" href="${h.slug}.html">
-            <span class="article-item-thumb"><img src="assets/thumbs/${h.card.thumb}" width="600" height="400" loading="lazy" decoding="async" alt="${h.card.alt}"></span>
+            <span class="article-item-thumb"><img src="assets/thumbs/${h.card.thumb}" width="600" height="400" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" alt="${h.card.alt}"></span>
             <span class="article-item-date">Collection &middot; ${liveCount(h)} posts</span>
             <h2 class="article-item-title">${h.title}</h2>
             <p class="article-item-description">${h.card.desc}</p>
@@ -272,6 +285,7 @@ const shelfPage = () => `<!DOCTYPE html>
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
             <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search this shelf only" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <span class="hs-hint" aria-hidden="true">Search<kbd class="hs-kbd">/</kbd></span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
@@ -300,10 +314,6 @@ ${shelfHubs.map(shelfHubCard).concat(SHELF.singles.map(shelfSingleCard)).join('\
 </html>
 `;
 
-HUBS.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + liveCount(h) + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
-writeFileSync(join(ROOT, SHELF.path + '.html'), shelfPage());
-console.log('wrote', SHELF.path + '.html', '(' + shelfCount + ' posts in ' + shelfHubs.length + ' collections + ' + SHELF.singles.length + ' single)');
-
 /* ---- homepage surgery: drop shelf posts + old hub/shelf cards, then add the
    one Boring Stuff shelf card. REMOVE includes the shelf path so re-running
    never doubles it. ---------------------------------------------------------- */
@@ -316,24 +326,35 @@ const REMOVE = new Set([
 const shelfHomeCard = () => `        <li class="article-list-item fade-in" data-keywords="boring stuff vegetables essays guides collections inner life health philosophy religion sacred books stories career management warehouse customer success psychiatry dsm">
           <a class="article-item is-collection" href="${SHELF.path}.html">
             <span class="article-item-thumb">
-              <!-- thumbnail: Fresh cut fruits and vegetables, Peggy Greb, U.S. Department of Agriculture, public domain, via Wikimedia Commons. -->
+              <!-- ${SHELF.credit} -->
               <img src="assets/thumbs/${SHELF.thumb}" width="600" height="400" loading="eager" decoding="async" alt="${SHELF.alt}">
             </span>
             <span class="article-item-date">Shelf &middot; ${shelfCount} posts</span>
             <h2 class="article-item-title">${SHELF.title}</h2>
-            <p class="article-item-description">${shelfLead}</p>
+            <p class="article-item-description">${SHELF.cardDesc}</p>
           </a>
         </li>`;
 
-let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
-const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
-let removed = 0;
-const keptLis = allLis.filter((li) => {
-  const href = (li.match(/href="([^"]+)"/) || [])[1];
-  if (href && REMOVE.has(href)) { removed++; return false; }
-  return true;
-});
-const newList = shelfHomeCard() + '\n' + keptLis.join('\n');
-idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
-writeFileSync(join(ROOT, 'index.html'), idx);
-console.log('homepage: removed ' + removed + ' shelf post/old-hub cards, kept ' + keptLis.length + ', added 1 shelf card');
+/* ---- run the generation only when executed directly (node tools/gen-hubs.mjs),
+   never as an import side effect (gen-post-nav.mjs imports the data above). --- */
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  HUBS.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + liveCount(h) + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
+  writeFileSync(join(ROOT, SHELF.path + '.html'), shelfPage());
+  console.log('wrote', SHELF.path + '.html', '(' + shelfCount + ' posts in ' + shelfHubs.length + ' collections + ' + SHELF.singles.length + ' single)');
+
+  let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
+  const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
+  let removed = 0;
+  const keptLis = allLis.filter((li) => {
+    const href = (li.match(/href="([^"]+)"/) || [])[1];
+    if (href && REMOVE.has(href)) { removed++; return false; }
+    return true;
+  });
+  const newList = shelfHomeCard() + '\n' + keptLis.join('\n');
+  idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
+  writeFileSync(join(ROOT, 'index.html'), idx);
+  console.log('homepage: removed ' + removed + ' shelf post/old-hub cards, kept ' + keptLis.length + ', added 1 shelf card');
+}
+
+export { HUBS, SHELF, ordered, liveCount };

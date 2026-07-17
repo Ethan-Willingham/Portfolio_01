@@ -220,6 +220,16 @@ Default is a single column with hairline rules. For a **short** glossary (roughl
 <hr class="u-divider">
 ```
 
+### Endcap next-post nav - `.u-next` (generated)
+```html
+<nav class="u-next" aria-label="Keep reading"><p class="u-next-k">Next in Staying Alive</p><p class="u-next-t"><a class="u-next-link" href="#">The Other Hours</a></p><p class="u-next-more"><a href="#">All 6 posts in Staying Alive</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p></nav>
+```
+The quiet exit at the end of every collection post: the next post in the
+collection (wrapping at the end), then the collection and Home. Do not write it
+by hand; `tools/gen-post-nav.mjs` stamps it into each member post between
+`</main>` and the footer, from the membership data in `tools/gen-hubs.mjs`.
+Re-run that tool after adding, removing, or reordering a collection member.
+
 ### Interactive demo panel - `.pillbar` (Pillbar)
 For posts with a live demo. Wire the slider/buttons up in the post's own JS.
 ```html

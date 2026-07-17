@@ -52,8 +52,11 @@ function buildSections(post, file) {
   if (!existsSync(file)) return;
   let html = readFileSync(file, 'utf8');
   // work inside <main> when present, else <body>; drop heavy/non-content blocks
+  // (.u-next is the generated endcap nav; its next-post titles are chrome, not
+  // content, and must not make every collection member match its siblings)
   html = (html.match(/<main[\s\S]*?<\/main>/i) || html.match(/<body[\s\S]*?<\/body>/i) || [html])[0]
     .replace(/<(script|style|noscript|template|svg)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<nav class="u-next"[\s\S]*?<\/nav>/gi, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ');
 
   // find every heading, its anchor id (own id, else nearest preceding id="..."),

@@ -93,6 +93,13 @@
     .home-search.is-open .hs-input { max-width: 680px; opacity: 1; }
     .hs-input::placeholder { color: var(--text-faint); }
     .hs-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+    /* the rest-state hint: a quiet "Search" label beside the magnifier (so the
+       collapsed field is discoverable as search), plus the / key on real
+       keyboards. Hidden once the field is open; the placeholder takes over. */
+    .hs-hint { flex: none; display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); white-space: nowrap; }
+    .hs-kbd { display: none; font-family: var(--font-mono); font-size: 0.66rem; line-height: 1; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 4px; padding: 0.16rem 0.34rem; }
+    @media (hover: hover) and (pointer: fine) { .hs-kbd { display: inline-block; } }
+    .home-search.is-open .hs-hint { display: none; }
     /* About + Archive: quiet links at the right end of the rule, no pill, split
        by a hairline so they read as a pair. */
     .hs-links { margin-left: auto; display: inline-flex; align-items: center; gap: 0.85rem; }
@@ -228,6 +235,7 @@
           <label class="hs-field">
             <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
             <input class="hs-input" type="search" placeholder="Search every post" aria-label="Search every post" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
+            <span class="hs-hint" aria-hidden="true">Search<kbd class="hs-kbd">/</kbd></span>
           </label>
           <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
         </div>
@@ -247,9 +255,9 @@
               <!-- thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons. -->
               <picture><source type="image/webp" srcset="assets/thumbs/boring-stuff.webp"><img src="assets/thumbs/boring-stuff.jpg" width="600" height="400" loading="eager" decoding="async" alt="The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco."></picture>
             </span>
-            <span class="article-item-date">Shelf &middot; 50 posts</span>
+            <span class="article-item-date">Shelf &middot; 51 posts</span>
             <h2 class="article-item-title">Boring Stuff</h2>
-            <p class="article-item-description">Fifty of the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.</p>
+            <p class="article-item-description">the more substantial posts: philosophy, health, the mind, the great books, spirituality, and the craft of work.</p>
           </a>
         </li>
 <li class="article-list-item fade-in" data-keywords="physics modern physics relativity special relativity general relativity quantum mechanics quantum physics einstein albert einstein niels bohr werner heisenberg erwin schrodinger schrodinger's cat speed of light constancy of light michelson morley time dilation moving clocks gps satellite muon length contraction simultaneity e=mc2 mass energy equivalence rest energy curved spacetime gravity geodesic equivalence principle bowling ball trampoline eddington 1919 eclipse gravitational lensing einstein ring cosmic horseshoe black hole event horizon m87 event horizon telescope eht gravitational waves ligo gw150914 pound rebka nist atomic clock double slit experiment wave particle duality interference photon electron de broglie davisson germer superposition measurement problem decoherence copenhagen wavefunction collapse uncertainty principle conjugate variables fourier quantum tunneling fusion entanglement epr paradox spooky action at a distance bell theorem bell inequality chsh local hidden variables nobel prize 2022 alain aspect john clauser anton zeilinger no-communication theorem faster than light quantum gravity string theory loop quantum gravity solvay conference field guide analogy beginners hawking radiation black hole evaporation time travel kononenko andromeda lookback flash memory proton quarks">
@@ -260,7 +268,7 @@
             </span>
             <time class="article-item-date" datetime="2026-06-20">20 Jun 2026</time>
             <h2 class="article-item-title">The Physics That Sounds Made Up</h2>
-            <p class="article-item-description">time bends, a single particle goes through two doors at once, and two specks of matter can share one fate across a galaxy. a beginner's field guide to the two theories that broke common sense, relativity and quantum mechanics, one strange idea at a time, with honest analogies and a lot of pictures.</p>
+            <p class="article-item-description">time bends, a single particle goes through two doors at once, and two specks of matter can share one fate across a galaxy. A beginner's field guide to the two theories that broke common sense, relativity and quantum mechanics, one strange idea at a time, with honest analogies and a lot of pictures.</p>
           </a>
         </li>
 <li class="article-list-item fade-in" data-keywords="body extremes medicine rare disease neurology brain pain pleasure ecstasy sleep superpower uncanny mind gene nav1.7 strange conditions field guide agony">
@@ -271,7 +279,7 @@
             </span>
             <time class="article-item-date" datetime="2026-06-18">18 Jun 2026</time>
             <h2 class="article-item-title">The Far Side of the Body</h2>
-            <p class="article-item-description">a field guide to the human body at the ends of its range, from agony and ecstasy to strange sleep and real superpowers. the same gene that means a life on fire, turned the other way, means a life with no pain at all.</p>
+            <p class="article-item-description">a field guide to the human body at the ends of its range, from agony and ecstasy to strange sleep and real superpowers. The same gene that means a life on fire, turned the other way, means a life with no pain at all.</p>
           </a>
         </li>
 <li class="article-list-item fade-in" data-keywords="planets age birthday solar system space astronomy calculator mars jupiter saturn">
@@ -377,6 +385,9 @@
       <div class="site-footer-inner">
         <a href="/">&copy; 2026 Ethan Willingham</a>
         <span class="ftr-links">
+          <a href="boring-stuff.html">Shelf</a>
+          <a href="archive.html">Archive</a>
+          <a href="about.html">About</a>
           <a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a>
         </span>
       </div>
