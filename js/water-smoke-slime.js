@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.2';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.3';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -602,6 +602,11 @@
             // a lower threshold + wider splat fuses them into one body.
             liquidWGPU.setRenderParam('SURFACE_THRESH', 1.25);
             liquidWGPU.setRenderParam('SURFACE_RSCALE', 2.1);
+            // Per-particle proof dots, ON by default (owner call): every
+            // troubleshooting video shows the actual particles, not just
+            // the surface field. The engine draws them as an extra pass
+            // over the normal render.
+            liquidWGPU.setRenderParam('DBG_PARTICLES', 1);
           }
           applyGravity();
           applyTimescale();
@@ -8039,7 +8044,40 @@
       }
       var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
       var dbg = (window.__cdb && bi === 0) ? { t: toyFrameNo, dvy: 0, phi: 0, np: 0 } : null;
-      var buoyA = -JELLO_GRAVITY * (1 + BUOY_BETA) * dt;   // times phi per point
+      // Body real velocity (for entry physics below).
+      var bvx = 0, bvy = 0;
+      for (var vi = 0; vi < n; vi++) { bvx += px[vi] - ox[vi]; bvy += py[vi] - oy[vi]; }
+      bvx = bvx / n * invV; bvy = bvy / n * invV;
+      var bSpd = Math.sqrt(bvx * bvx + bvy * bvy);
+      // ENTRY DISPLACEMENT (the owner's frame-by-frame: water used to be
+      // swallowed in place under a plunging ball — razor-cut surface, no
+      // crater, no crown, foam pockets INSIDE the footprint, then vertical
+      // spray. The guest kernel PINS cells it covers, so the swept band
+      // never accumulates outward momentum. Fix: while a body is actively
+      // submerging at speed, fire small wakes at its leading-rim FLANKS
+      // through the explosion channel, which the grid kernel integrates as
+      // real radial impulse: the water ahead is shoved out and aside, and
+      // the crater + crown + lateral sheets exist because the momentum
+      // actually went somewhere.)
+      var probeGrew = probe > (b._wetPrev || 0) + Math.max(2, b.n * 0.02);
+      b._wetPrev = probe;
+      if (bSpd > 240 && probeGrew && (toyFrameNo - (b._entryWakeF || 0)) >= 2) {
+        b._entryWakeF = toyFrameNo;
+        var mnx = bvx / bSpd, mny = bvy / bSpd;
+        var bR = (b.bboxR - b.bboxL) * 0.5;
+        var lead = 0.55, flank = 0.72;
+        var blast = Math.min(620, 200 + bSpd * 0.5);
+        pushWake(b.cx + mnx * bR * lead - mny * bR * flank,
+                 b.cy + mny * bR * lead + mnx * bR * flank, bR * 0.9, blast);
+        pushWake(b.cx + mnx * bR * lead + mny * bR * flank,
+                 b.cy + mny * bR * lead - mnx * bR * flank, bR * 0.9, blast);
+      }
+      // Inertia-honest buoyancy: a fast-moving body PENETRATES first and
+      // floats second (the instant full-strength lift made the surface a
+      // trampoline: balls skipped on a skin-tight notch instead of
+      // carving a crater).
+      var buoyScale = 1 / (1 + bSpd / 260);
+      var buoyA = -JELLO_GRAVITY * (1 + BUOY_BETA) * dt * buoyScale;   // times phi per point
       var rampInv = 1 / (TILE * 2.0);                      // surface straddle ramp, ~16 px
                                                            // (wider = softer response to lapping
                                                            // waves; 10 px made lift jerk per wave)
