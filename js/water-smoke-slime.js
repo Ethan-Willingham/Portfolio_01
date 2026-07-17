@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.3';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.4';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -579,7 +579,7 @@
             liquidWGPU.setSimParam('GRID_VISC', 0.08);
             liquidWGPU.setSimParam('DAMPING', 0.9985);
             liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
-            liquidWGPU.setSimParam('AIR_DRAG', 0.985);
+            liquidWGPU.setSimParam('AIR_DRAG', 0.99);
             liquidWGPU.setSimParam('AERATION_COEFF', 5);
             // Fresh CPU mirror for the slime coupling: the default cadence
             // (every 20 runFrames) is built for oil suction; the per-point
@@ -7862,6 +7862,42 @@
     grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null;
   }
 
+  /* ---- Sleeping-droplet sweep -----------------------------------------
+   * A particle that falls asleep while resting on a slime SKIPS
+   * integration: no gravity, no motion. When the slime then moves or
+   * jiggles, the droplet hangs in space exactly where it slept (owner
+   * footage: "some water doesn't move at all and stays in place on top
+   * of the slime"). Every 4th frame, wake any sleeping particle inside
+   * an AWAKE body's halo; droplets on genuinely sleeping slimes stay
+   * parked, which is physical. ---- */
+  function wakeSleepersOnBodies() {
+    if (typeof jelloBodies === 'undefined' || !jelloBodies.length) return;
+    if (waterState !== 'on' || liquidCount === 0) return;
+    var boxes = [];
+    for (var bi = 0; bi < jelloBodies.length; bi++) {
+      var b = jelloBodies[bi];
+      if (!b || b.sleeping || b.frozen) continue;
+      if (!isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
+      boxes.push(b.bboxL - 14, b.bboxT - 14, b.bboxR + 14, b.bboxB + 14);
+    }
+    if (!boxes.length) return;
+    var nB = boxes.length, woke = 0;
+    for (var i = 0; i < liquidCount; i++) {
+      if (!liquidSleeping[i]) continue;
+      var x = liquidX[i], y = liquidY[i];
+      for (var k = 0; k < nB; k += 4) {
+        if (x >= boxes[k] && x <= boxes[k + 2] && y >= boxes[k + 1] && y <= boxes[k + 3]) {
+          liquidSleeping[i] = 0; liquidFrozen[i] = 0; liquidRestFrames[i] = 0;
+          if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+          else liquidOpsOverflow = true;
+          woke++;
+          break;
+        }
+      }
+    }
+    if (woke) liquidMutationSeq++;
+  }
+
   /* ---- Water <-> slime coupling, rewritten (v2) -----------------------
    * Per lattice point, two forces, applied with the engine's own
    * real-velocity convention (bathImpulse: o -= dv * H, scaled by the
@@ -8059,18 +8095,45 @@
       // real radial impulse: the water ahead is shoved out and aside, and
       // the crater + crown + lateral sheets exist because the momentum
       // actually went somewhere.)
+      // Tuned twice against owner frame bursts: the first cut used
+      // bomb-adjacent blasts at the waterline flanks, and the surface
+      // layer between them got squeezed THROUGH the body and rocketed
+      // out of the crown ("like a bullet hit the water"). Now the wake
+      // centers sit OUTBOARD of the body (impulse at the body edge points
+      // away, not across) and deeper along the motion, at splash scale.
       var probeGrew = probe > (b._wetPrev || 0) + Math.max(2, b.n * 0.02);
+      if (probe < 2) b._entryShots = 0;          // out of water: next entry gets a fresh budget
       b._wetPrev = probe;
-      if (bSpd > 240 && probeGrew && (toyFrameNo - (b._entryWakeF || 0)) >= 2) {
+      if (bSpd > 240 && probeGrew && (b._entryShots || 0) < 4 &&
+          (toyFrameNo - (b._entryWakeF || 0)) >= 3) {
         b._entryWakeF = toyFrameNo;
+        b._entryShots = (b._entryShots || 0) + 1;
         var mnx = bvx / bSpd, mny = bvy / bSpd;
         var bR = (b.bboxR - b.bboxL) * 0.5;
-        var lead = 0.55, flank = 0.72;
-        var blast = Math.min(620, 200 + bSpd * 0.5);
+        var lead = 0.75, flank = 1.05;
+        // Depth-scaled: a thin sheet cannot absorb a deep-pool impulse
+        // (a shallow-pool drop launched half the pool over the walls);
+        // shallow entries shove low and sideways instead. Depth = wet
+        // rows straight down from the local surface at the body's column
+        // (bbox wet-cell counts lie for thin wide sheets).
+        var dCol = Math.max(0, Math.min(gridW - 1, (b.cx / TILE) | 0));
+        var dSurf = poolSurfaceAt(dCol, (b.cy / TILE) | 0);
+        var depthRows = 0;
+        if (dSurf < Infinity) {
+          var dr0 = (dSurf / TILE) | 0;
+          for (var dr = dr0; dr < gridH && depthRows < 12; dr++) {
+            var dIdx = dr * gridW + dCol;
+            if (walls[dIdx] || waterCellCount[dIdx] < WATER_CELL_WET * 0.6) break;
+            depthRows++;
+          }
+        }
+        var depthK = depthRows / 9;
+        if (depthK > 1) depthK = 1; else if (depthK < 0.25) depthK = 0.25;
+        var blast = Math.min(300, 90 + bSpd * 0.28) * depthK;
         pushWake(b.cx + mnx * bR * lead - mny * bR * flank,
-                 b.cy + mny * bR * lead + mnx * bR * flank, bR * 0.9, blast);
+                 b.cy + mny * bR * lead + mnx * bR * flank, bR * 0.55, blast);
         pushWake(b.cx + mnx * bR * lead + mny * bR * flank,
-                 b.cy + mny * bR * lead - mnx * bR * flank, bR * 0.9, blast);
+                 b.cy + mny * bR * lead - mnx * bR * flank, bR * 0.55, blast);
       }
       // Inertia-honest buoyancy: a fast-moving body PENETRATES first and
       // floats second (the instant full-strength lift made the surface a
@@ -8668,6 +8731,7 @@
     updateLiquidToy(dt);
     buildWaterCells();
     jelloWaterCoupleTick(dt);
+    if ((toyFrameNo & 3) === 0) wakeSleepersOnBodies();
     updateJello(dt);
     if (window.__cdb && window.__cdb.length && jelloBodies.length) {
       var dbgB = jelloBodies[0];
