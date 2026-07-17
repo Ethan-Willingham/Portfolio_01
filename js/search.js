@@ -98,7 +98,10 @@
         if (firstSec < 0) { var ph = sec.textLC.indexOf(q); if (ph >= 0) { firstSec = si; firstPos = ph; } }
       }
       if (count < 1) continue;
-      var score = (titleCount > 0 ? 10000 : 0) + headHits * 40 + count + p.recency * 3;
+      // A title hit owns the top. A heading hit is only a nudge: kept below
+      // the weight of a few body hits, so the visible per-post match counts
+      // read as (near) sorted instead of looking shuffled.
+      var score = (titleCount > 0 ? 10000 : 0) + headHits * 4 + count + p.recency * 3;
       hits.push({ post: p, count: count, score: score, firstSec: firstSec, firstPos: firstPos });
     }
     hits.sort(function (a, b) { return (a.post.archived ? 1 : 0) - (b.post.archived ? 1 : 0) || b.score - a.score; });
@@ -206,5 +209,13 @@
     if (e.key === '/' && !typing) { e.preventDefault(); input.focus(); }
   });
 
-  if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2500 }); else setTimeout(load, 1500);
+  // Idle-prefetch the index (so the first keystroke is instant) only where the
+  // connection is likely unmetered: desktop-class pointers, and never against
+  // an explicit Save-Data signal. Phones skip the ~600 KB prefetch and load it
+  // on first focus (or the / shortcut) instead.
+  var conn = navigator.connection || {};
+  var prefetch = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches && !conn.saveData;
+  if (prefetch) {
+    if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2500 }); else setTimeout(load, 1500);
+  }
 })();
