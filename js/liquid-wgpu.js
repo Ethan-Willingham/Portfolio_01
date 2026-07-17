@@ -4272,11 +4272,17 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
     // jets, so: cells overlapped on the LEADING side pick up sideways
     // velocity scaled by body speed, and eviction pointing out the
     // TRAILING side (the crown) is redirected sideways instead.
+    // v26.11 — the authored "lateral sheet jet" is GONE. The collide
+    // kernel now sweeps particles out of the silhouette (impermeable
+    // moving boundary), so entry displacement comes from the pinned
+    // face velocity + continuity alone, like every other splash in the
+    // sim. Only the direction correction survives: while the body moves
+    // fast, eviction pointing out the TRAILING side (the crown) is
+    // redirected laterally so decompression cannot lift water over a
+    // plunging body.
     let gmvx = gB.z;
     let gmvy = gB.w;
     let gspd = sqrt(gmvx * gmvx + gmvy * gmvy);
-    var latVX : f32 = 0.0;
-    var latVY : f32 = 0.0;
     if (gspd > 120.0) {
       let mvnx = gmvx / gspd;
       let mvny = gmvy / gspd;
@@ -4284,21 +4290,13 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       var laty = mvnx;
       let sideD = (wx - gA.x) * latx + (wy - gA.y) * laty;
       if (sideD < 0.0) { latx = -latx; laty = -laty; }
-      let gk = clamp((gspd - 120.0) / 300.0, 0.0, 1.0);
       if (gox * mvnx + goy * mvny < -0.35) {
         gox = latx;                     // crown eviction becomes lateral
         goy = laty;
       }
-      let lead = (wx - gA.x) * mvnx + (wy - gA.y) * mvny;
-      if (lead > 0.0) {
-        let jspd = min(gspd, 700.0);    // sheet jets cap out: a pointer slam
-                                        // must not hose the whole box
-        latVX = latx * jspd * 0.5 * gk; // leading-side lateral sheet jet
-        latVY = laty * jspd * 0.5 * gk;
-      }
     }
-    cellVelX[c] = bestVX + gox * min(gdep, 10.0) * GUEST_PUSH + latVX;
-    cellVelY[c] = bestVY + goy * min(gdep, 10.0) * GUEST_PUSH + latVY;
+    cellVelX[c] = bestVX + gox * min(gdep, 10.0) * GUEST_PUSH;
+    cellVelY[c] = bestVY + goy * min(gdep, 10.0) * GUEST_PUSH;
   }
 
   // --- rocket-plume wake — per-nozzle cone push along the exhaust dir ---
@@ -5359,45 +5357,25 @@ fn pointInMiner(x : f32, y : f32) -> bool {
   return false;
 }
 
-// v26.05 — the guest silhouettes are solid to particles exactly like the
-// miner: a particle can never take residence inside a slime. The contact
-// rolls back + reflects + bumps aeration through the same solidRing path,
-// so foam forms at the contact line of a moving body for free. Point-in-
-// ring over the uploaded deforming silhouette, bbox-rejected first; with
-// no guests (the whole world) this is three compares and out.
-fn pointInGuestAny(x : f32, y : f32) -> bool {
-  for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
-    let gA = gameP.guests[gi * 2];
-    let gB = gameP.guests[gi * 2 + 1];
-    if (gB.x < 0.5) { continue; }
-    if (abs(x - gA.x) > gA.z + 2.0 || abs(y - gA.y) > gA.w + 2.0) { continue; }
-    let gn = i32(gB.y);
-    let gBase = gi * ${GS_RING};
-    var inside = false;
-    var gj = gn - 1;
-    for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
-      let pa = gameP.guestPts[gBase + gk];
-      let pb = gameP.guestPts[gBase + gj];
-      if (((pa.y > y) != (pb.y > y)) &&
-          (x < (pb.x - pa.x) * (y - pa.y) / (pb.y - pa.y) + pa.x)) {
-        inside = !inside;
-      }
-      gj = gk;
-    }
-    if (inside) { return true; }
-  }
-  return false;
-}
+// v26.11 — guests left the terrain probe. v26.05 ran them through the
+// solidRing rollback+reflect path, which is correct for STATIC solids
+// only: when a fast-moving ring sweeps over a still particle, the
+// particle's own previous position is inside too, the r-sized nudges
+// cannot clear a body-sized overlap, and the particle rides INSIDE the
+// silhouette until the body passes (a visible through-path), exiting at
+// the grid's pinned face velocity (the crown-cannon blowback). Guests
+// are handled by the dedicated sweep block in main() instead.
 
 // liquidSolidAt — the 4-point probe ring at radius r. Mirrors the CPU
 // liquidSolidAt: each ring point is solid if it is in a solid tile OR
-// inside the miner silhouette (Stage 8 — the miner half is now ported)
-// OR inside a guest's deforming silhouette (v26.05).
+// inside the miner silhouette (Stage 8 — the miner half is now ported).
+// Guests are NOT here (v26.11): a deforming moving boundary needs the
+// sweep treatment in main(), not static rollback.
 fn solidRing(x : f32, y : f32, r : f32) -> bool {
-  if (terrainSolidAt(x,     y + r) || pointInMiner(x,     y + r) || pointInGuestAny(x,     y + r)) { return true; }
-  if (terrainSolidAt(x - r, y    ) || pointInMiner(x - r, y    ) || pointInGuestAny(x - r, y    )) { return true; }
-  if (terrainSolidAt(x + r, y    ) || pointInMiner(x + r, y    ) || pointInGuestAny(x + r, y    )) { return true; }
-  if (terrainSolidAt(x,     y - r) || pointInMiner(x,     y - r) || pointInGuestAny(x,     y - r)) { return true; }
+  if (terrainSolidAt(x,     y + r) || pointInMiner(x,     y + r)) { return true; }
+  if (terrainSolidAt(x - r, y    ) || pointInMiner(x - r, y    )) { return true; }
+  if (terrainSolidAt(x + r, y    ) || pointInMiner(x + r, y    )) { return true; }
+  if (terrainSolidAt(x,     y - r) || pointInMiner(x,     y - r)) { return true; }
   return false;
 }
 
@@ -5481,6 +5459,130 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       // (1,1)
       if (!nudged) { nx = x + step; ny = y + step;
         if (!solidRing(nx, ny, r)) { x = nx; y = ny; nudged = true; } }
+    }
+  }
+
+  // --- guest sweep (v26.11) — guests are IMPERMEABLE moving boundaries.
+  // Any particle inside a ring is projected OUT to the nearest surface
+  // point and its velocity clamped so it never approaches the face
+  // (tangential slip stays). That is the piston a moving solid owes the
+  // fluid: freshly swept particles sit nearest the LEADING face and get
+  // carried ahead of it; droplets landing on a crown stay outside and
+  // simply rest. Nothing about a splash is authored here — continuity
+  // routes the displaced volume around the body. The projection refuses
+  // to enter terrain or the miner (squeeze case: a slime on the floor);
+  // velocity still clamps so the pocket drains through GUEST_PUSH cells.
+  for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
+    let gA = gameP.guests[gi * 2];
+    let gB = gameP.guests[gi * 2 + 1];
+    if (gB.x < 0.5) { continue; }
+    if (abs(x - gA.x) > gA.z + 2.0 || abs(y - gA.y) > gA.w + 2.0) { continue; }
+    let gn = i32(gB.y);
+    let gBase = gi * ${GS_RING};
+    var ginside = false;
+    var gj = gn - 1;
+    for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
+      let pa = gameP.guestPts[gBase + gk];
+      let pb = gameP.guestPts[gBase + gj];
+      if (((pa.y > y) != (pb.y > y)) &&
+          (x < (pb.x - pa.x) * (y - pa.y) / (pb.y - pa.y) + pa.x)) {
+        ginside = !ginside;
+      }
+      gj = gk;
+    }
+    if (!ginside) { continue; }
+    // Nearest surface point + the local face velocity lerped on that edge.
+    var gD2 : f32 = 1e9;
+    var gPX : f32 = x; var gPY : f32 = y;
+    var gFVX : f32 = 0.0; var gFVY : f32 = 0.0;
+    gj = gn - 1;
+    for (var ge : i32 = 0; ge < gn; ge = ge + 1) {
+      let pa = gameP.guestPts[gBase + ge];
+      let pb = gameP.guestPts[gBase + gj];
+      let ex = pb.x - pa.x;
+      let ey = pb.y - pa.y;
+      let el2 = max(ex * ex + ey * ey, 1e-6);
+      let et = clamp(((x - pa.x) * ex + (y - pa.y) * ey) / el2, 0.0, 1.0);
+      let qx = pa.x + ex * et;
+      let qy = pa.y + ey * et;
+      let dq2 = (x - qx) * (x - qx) + (y - qy) * (y - qy);
+      if (dq2 < gD2) {
+        gD2 = dq2;
+        gPX = qx; gPY = qy;
+        gFVX = pa.z + (pb.z - pa.z) * et;
+        gFVY = pa.w + (pb.w - pa.w) * et;
+      }
+      gj = ge;
+    }
+    let gdep = sqrt(gD2);
+    // Skin dead-band: the ring is resampled every frame and its verts
+    // jiggle a px or two at rest (XPBD surface jitter). Projecting on
+    // EVERY overlap made the boundary a 186 Hz vibrator doing real work
+    // on the pool (a floating body wore a shell of energized droplets
+    // and fountained forever). Contact shallower than the skin is free;
+    // a real sweep buries particles far deeper within one substep.
+    if (gdep <= 1.5) { continue; }
+    var gnx : f32 = 0.0; var gny : f32 = -1.0;
+    if (gdep > 0.001) {
+      gnx = (gPX - x) / gdep;
+      gny = (gPY - y) / gdep;
+    }
+    // Velocity: strip any component approaching the face.
+    let gvn = (vx - gFVX) * gnx + (vy - gFVY) * gny;
+    if (gvn < 0.0) {
+      vx = vx - gnx * gvn;
+      vy = vy - gny * gvn;
+    }
+    // Position: out to just past the surface (0.5 px — inside the skin,
+    // so the next substep does NOT re-project it; the old r-sized skin
+    // offset was itself a teleport pump). If the nearest exit is
+    // blocked by terrain/miner (the floor pinch under a settling body),
+    // exit through the nearest OPEN edge instead: water squeezed under
+    // a ball squirts out along the floor sideways. Without this the
+    // pocket compresses to many times rest density and discharges up
+    // through the crown as a geyser when the body squashes.
+    var gtx = gPX + gnx * 0.5;
+    var gty = gPY + gny * 0.5;
+    if (!terrainSolidAt(gtx, gty) && !pointInMiner(gtx, gty)) {
+      x = gtx;
+      y = gty;
+    } else {
+      var oD2 : f32 = 1e9;
+      gj = gn - 1;
+      for (var go : i32 = 0; go < gn; go = go + 1) {
+        let pa = gameP.guestPts[gBase + go];
+        let pb = gameP.guestPts[gBase + gj];
+        gj = go;
+        let mx = (pa.x + pb.x) * 0.5;
+        let my = (pa.y + pb.y) * 0.5;
+        let ddx = mx - x;
+        let ddy = my - y;
+        let dd2 = ddx * ddx + ddy * ddy;
+        if (dd2 >= oD2 || dd2 < 1e-6) { continue; }
+        let dl = sqrt(dd2);
+        let ox2 = mx + ddx / dl * 0.5;
+        let oy2 = my + ddy / dl * 0.5;
+        if (terrainSolidAt(ox2, oy2) || pointInMiner(ox2, oy2)) { continue; }
+        oD2 = dd2;
+        gtx = ox2; gty = oy2;
+        gnx = ddx / dl; gny = ddy / dl;
+        gFVX = (pa.z + pb.z) * 0.5;
+        gFVY = (pa.w + pb.w) * 0.5;
+      }
+      if (oD2 < 1e9) {
+        x = gtx;
+        y = gty;
+        // Re-clamp along the actual exit direction.
+        let gvn2 = (vx - gFVX) * gnx + (vy - gFVY) * gny;
+        if (gvn2 < 0.0) {
+          vx = vx - gnx * gvn2;
+          vy = vy - gny * gvn2;
+        }
+      }
+    }
+    // Foam on real hits only, not on ring-resample skin jitter.
+    if (gvn < -40.0 || gdep > 3.0) {
+      aux[i].y = min(1.0, aux[i].y + 0.12);
     }
   }
 

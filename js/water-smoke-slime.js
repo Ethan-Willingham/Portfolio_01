@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.4';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.5';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -412,7 +412,15 @@
     // Eight slots since engine v26.09 (GS_MAX_GUESTS), wettest bodies
     // first: a slime in the pool displaces; a dry one can wait.
     if (typeof jelloBodies !== 'undefined' && jelloBodies.length) {
-      var ih = 1 / ((typeof jelloStepH === 'number' && jelloStepH > 0) ? jelloStepH : (1 / 240));
+      // Real velocity = (p - o) * TIMESCALE / H (the same live conversion
+      // jelloWaterCoupleTick uses). The first draft used 1/H flat, which
+      // DOUBLED every reported face velocity (TS = 0.5): harmless while
+      // faces only pinned grid cells, but fatal once the v26.11 sweep
+      // started handing particles the face velocity directly — a 300 px/s
+      // bob tossed crown droplets at 600 and the fountain never ended.
+      var gts = (typeof JELLO_TIMESCALE === 'number' && JELLO_TIMESCALE >= 0.02) ? JELLO_TIMESCALE : 0.5;
+      var gH = (typeof jelloStepH === 'number' && jelloStepH > 0) ? jelloStepH : (1 / 240);
+      var ih = gts / gH;
       var order = jelloBodies.slice().sort(function (a, bb2) {
         return (bb2._wetCells || 0) - (a._wetCells || 0);
       });
@@ -7963,6 +7971,8 @@
   var BUOY_BETA = 0.24;         // extra lift beyond gravity-cancel at phi 1 (floats ~4/5 submerged)
   var DRAG_K = 8;               // 1/s pull toward the local water velocity at phi 1
   var COUPLE_DV_CAP = 340;      // px/s of velocity change per frame, per axis
+  var RAM_L = 340;              // form-drag length scale, px: entry speed decays
+                                // over ~RAM_L of submerged travel (decel = v*v/RAM_L)
   var SURF_RATE = 12;           // px/s cap on measured-surface motion (the anti-splash-chase;
                                 //   real fills raise a column ~3 px/s, bob-splash needs ~60)
 
@@ -8085,56 +8095,11 @@
       for (var vi = 0; vi < n; vi++) { bvx += px[vi] - ox[vi]; bvy += py[vi] - oy[vi]; }
       bvx = bvx / n * invV; bvy = bvy / n * invV;
       var bSpd = Math.sqrt(bvx * bvx + bvy * bvy);
-      // ENTRY DISPLACEMENT (the owner's frame-by-frame: water used to be
-      // swallowed in place under a plunging ball — razor-cut surface, no
-      // crater, no crown, foam pockets INSIDE the footprint, then vertical
-      // spray. The guest kernel PINS cells it covers, so the swept band
-      // never accumulates outward momentum. Fix: while a body is actively
-      // submerging at speed, fire small wakes at its leading-rim FLANKS
-      // through the explosion channel, which the grid kernel integrates as
-      // real radial impulse: the water ahead is shoved out and aside, and
-      // the crater + crown + lateral sheets exist because the momentum
-      // actually went somewhere.)
-      // Tuned twice against owner frame bursts: the first cut used
-      // bomb-adjacent blasts at the waterline flanks, and the surface
-      // layer between them got squeezed THROUGH the body and rocketed
-      // out of the crown ("like a bullet hit the water"). Now the wake
-      // centers sit OUTBOARD of the body (impulse at the body edge points
-      // away, not across) and deeper along the motion, at splash scale.
-      var probeGrew = probe > (b._wetPrev || 0) + Math.max(2, b.n * 0.02);
-      if (probe < 2) b._entryShots = 0;          // out of water: next entry gets a fresh budget
-      b._wetPrev = probe;
-      if (bSpd > 240 && probeGrew && (b._entryShots || 0) < 4 &&
-          (toyFrameNo - (b._entryWakeF || 0)) >= 3) {
-        b._entryWakeF = toyFrameNo;
-        b._entryShots = (b._entryShots || 0) + 1;
-        var mnx = bvx / bSpd, mny = bvy / bSpd;
-        var bR = (b.bboxR - b.bboxL) * 0.5;
-        var lead = 0.75, flank = 1.05;
-        // Depth-scaled: a thin sheet cannot absorb a deep-pool impulse
-        // (a shallow-pool drop launched half the pool over the walls);
-        // shallow entries shove low and sideways instead. Depth = wet
-        // rows straight down from the local surface at the body's column
-        // (bbox wet-cell counts lie for thin wide sheets).
-        var dCol = Math.max(0, Math.min(gridW - 1, (b.cx / TILE) | 0));
-        var dSurf = poolSurfaceAt(dCol, (b.cy / TILE) | 0);
-        var depthRows = 0;
-        if (dSurf < Infinity) {
-          var dr0 = (dSurf / TILE) | 0;
-          for (var dr = dr0; dr < gridH && depthRows < 12; dr++) {
-            var dIdx = dr * gridW + dCol;
-            if (walls[dIdx] || waterCellCount[dIdx] < WATER_CELL_WET * 0.6) break;
-            depthRows++;
-          }
-        }
-        var depthK = depthRows / 9;
-        if (depthK > 1) depthK = 1; else if (depthK < 0.25) depthK = 0.25;
-        var blast = Math.min(300, 90 + bSpd * 0.28) * depthK;
-        pushWake(b.cx + mnx * bR * lead - mny * bR * flank,
-                 b.cy + mny * bR * lead + mnx * bR * flank, bR * 0.55, blast);
-        pushWake(b.cx + mnx * bR * lead + mny * bR * flank,
-                 b.cy + mny * bR * lead - mnx * bR * flank, bR * 0.55, blast);
-      }
+      // v3.5 — the authored entry wakes are GONE. The engine's guest
+      // sweep (liquid-wgpu v26.11) makes the ring an impermeable moving
+      // boundary: water is carried ahead of the leading face and routed
+      // around the body by continuity, so the crater, crown, and lateral
+      // sheets emerge from the boundary itself, at physical scale.
       // Inertia-honest buoyancy: a fast-moving body PENETRATES first and
       // floats second (the instant full-strength lift made the surface a
       // trampoline: balls skipped on a skin-tight notch instead of
@@ -8188,6 +8153,23 @@
           var kv = 1 - Math.exp(-1.8 * phi * dt);
           dvx += -vpx * kv;
           dvy += -vpy * kv;
+          // v3.5 RAM DRAG, Newton's third law for the plunge. The guest
+          // boundary (liquid-wgpu v26.11) carries water ahead of the
+          // leading face at body speed; with one-way coupling the body
+          // never felt the reaction, so it plowed at constant speed and
+          // pumped momentum into the pool every frame, and the pool
+          // answered with a screen-height jet up the entry cavity.
+          // Quadratic form drag with length scale RAM_L: a real ball
+          // sheds its entry speed within a couple of body lengths of
+          // water. It opposes the point's own velocity, so it can only
+          // remove energy (no splash-chasing feedback), and at bob
+          // speeds (<60 px/s) it is off entirely.
+          var pspd = Math.sqrt(vpx * vpx + vpy * vpy);
+          if (pspd > 60) {
+            var kr = 1 - Math.exp(-(pspd / RAM_L) * phi * dt);
+            dvx += -vpx * kr;
+            dvy += -vpy * kr;
+          }
         }
         if (dSum >= 1.5 && phi > 0) {
           // SUBMERGED points drag toward the local flow. Two guards keep
@@ -8731,7 +8713,13 @@
     updateLiquidToy(dt);
     buildWaterCells();
     jelloWaterCoupleTick(dt);
-    if ((toyFrameNo & 3) === 0) wakeSleepersOnBodies();
+    if (toyFrameNo % 30 === 0) wakeSleepersOnBodies();   // sparse: every WAKE op
+      // bumps the mutation seq, and a seq moving every 4th frame starves the
+      // GPU->CPU mirror (readbacks discard on any in-flight mutation). The
+      // stale mirror then re-reports the same particles sleeping forever, a
+      // deadlock that also froze the coupling's surface + flow data. At 30
+      // frames the worst frozen-droplet latency is a quarter second and the
+      // mirror breathes between sweeps.
     updateJello(dt);
     if (window.__cdb && window.__cdb.length && jelloBodies.length) {
       var dbgB = jelloBodies[0];
