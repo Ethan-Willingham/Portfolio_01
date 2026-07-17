@@ -46,16 +46,17 @@ function stamp(file, endcap, backHref, backLabel) {
   const lineStart = html.lastIndexOf('\n', foot) + 1;
   html = html.slice(0, lineStart) + endcap + html.slice(lineStart);
 
-  // 2) point the top back link at the collection instead of Home
-  const before = html;
+  // 2) point the top back link at the collection instead of Home (a no-op
+  // rewrite on an already-pointed link is fine; only a MISSING link is worth
+  // reporting)
+  const hasBack = /<a[^>]*class="post-back/.test(html);
   html = html
     .replace(/(<a\s+href=")[^"]*("\s+class="post-back[^"]*")/g, `$1${backHref}$2`)
     .replace(/(<a\s+class="post-back[^"]*"\s+href=")[^"]*(")/g, `$1${backHref}$2`)
     .replace(/(<a[^>]*class="post-back[^"]*"[^>]*>\s*<span class="pb-label">)[^<]*(<\/span>)/g, `$1${esc(backLabel)}$2`);
-  const backTouched = html !== before;
 
   writeFileSync(path, html);
-  return `ok ${file}${backTouched ? '' : ' (no post-back link found)'}`;
+  return `ok ${file}${hasBack ? '' : ' (no post-back link found)'}`;
 }
 
 const report = [];

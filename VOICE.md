@@ -83,7 +83,12 @@ The stated fear is hate comments on HN. The defense is restraint plus verifiable
 never a Silicon Valley makeover.
 
 - **The title says exactly what the post delivers.** No overclaiming, no listicle or "you
-  won't believe" framing. Set it identical across the card, `<title>`, `og:title`, and h1.
+  won't believe" framing. Titles run two-tier: the hub or homepage card may carry a short
+  set label (Plato; The Quran; Big Enough) so a collection reads as a set, while the page
+  carries the full title with the hook (Plato's Cave and the Death of Socrates; The Quran,
+  Side by Side; Big Enough: How Much Muscle Is Actually Worth Building). The page's
+  `<title>`, `og:title`, and h1 always stay identical to each other; the full page title is
+  the one that gets shared or submitted, so it is the one that must carry the scent.
 - **Source every number; link the primary source.** Assume the first commenter will check the
   methodology, the sample size, and the control.
 - **Steelman, then answer.** State the strongest counterargument yourself before a commenter
