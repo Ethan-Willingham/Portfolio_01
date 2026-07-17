@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1NS9QT1HEM');</script>
+  <script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","wo3l78g9ld");</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water, Smoke, and Slime</title>
+  <meta name="description" content="A browser physics toy: GPU water, soft-body slimes, and fluid smoke in one box. Draw walls and everything collides with them.">
+  <meta property="og:title" content="Water, Smoke, and Slime">
+  <meta property="og:description" content="A browser physics toy: GPU water, soft-body slimes, and fluid smoke in one box. Draw walls and everything collides with them.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/water-smoke-slime.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/water-smoke-slime.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/water-smoke-slime.jpg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Water, Smoke, and Slime wears the shared site shell; everything below
+       is the toy panel and its instrument bar, on the --d-* panel tokens the
+       Sluice game shell already uses. */
+
+    .toy-breakout {
+      /* Break out of the 780px reading column without transforms (the shared
+         .fade-in animation owns `transform`, so translateX would be clobbered). */
+      width: min(1120px, calc(100vw - 1.6rem));
+      margin: 1.9rem calc((100% - min(1120px, 100vw - 1.6rem)) / 2) 1.1rem;
+    }
+
+    .toy-viewport {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    .toy-stage {
+      position: relative;
+      transform-origin: 0 0;
+      background: #1d2420;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px var(--d-rule), inset 0 14px 34px rgba(0,0,0,0.25);
+    }
+    .toy-stage canvas {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    #toy-canvas { z-index: 2; }
+    #toy-input {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      cursor: crosshair;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toy-readout {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      z-index: 9;
+      font-family: var(--d-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      color: var(--d-text-dim);
+      background: rgba(24, 29, 25, 0.72);
+      border: 1px solid var(--d-rule);
+      border-radius: 6px;
+      padding: 0.22rem 0.5rem;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toy-fallback[hidden] { display: none; }
+    .toy-fallback {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      font-family: var(--font-body);
+      color: var(--d-text-dim);
+      background: #1d2420;
+    }
+    .toy-fallback p { max-width: 34rem; line-height: 1.6; }
+
+    /* ---- Instrument bar ---- */
+    .toy-bar {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 1.1rem;
+      background: var(--d-bg-raised);
+      border: 1px solid var(--d-rule);
+      border-radius: 10px;
+      padding: 0.55rem 0.8rem;
+    }
+    .toy-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .toy-tools { gap: 0.3rem; }
+    .tb {
+      appearance: none;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--d-text-dim);
+      font-family: var(--d-mono);
+      font-size: 0.56rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 0.42rem 0.5rem 0.34rem;
+      min-width: 52px;
+      cursor: pointer;
+    }
+    .tb svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .tb:hover { color: var(--d-text-bright); border-color: var(--d-rule); }
+    .tb.is-on {
+      color: #20261f;
+      background: var(--d-accent);
+      border-color: var(--d-accent);
+    }
+    .tb.is-dead { opacity: 0.32; pointer-events: none; }
+
+    .toy-slider {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 108px;
+    }
+    .toy-slider label {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--d-mono);
+      font-size: 0.56rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--d-text-dim);
+    }
+    .toy-slider label b { color: var(--d-text); font-weight: 400; }
+    .toy-slider input[type="range"] {
+      width: 100%;
+      accent-color: var(--d-accent);
+      height: 18px;
+      margin: 0;
+      background: transparent;
+    }
+
+    .toy-chip {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--d-rule-strong);
+      border-radius: 999px;
+      color: var(--d-text-dim);
+      font-family: var(--d-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.66rem;
+      cursor: pointer;
+    }
+    .toy-chip:hover { color: var(--d-text-bright); border-color: var(--d-text-dim); }
+    .toy-chip.is-on { color: #20261f; background: var(--d-accent); border-color: var(--d-accent); }
+    .toy-sep { width: 1px; align-self: stretch; background: var(--d-rule); }
+
+    .toy-hint {
+      margin: 0.55rem 0.2rem 0;
+      font-family: var(--d-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.05em;
+      color: var(--text-faint);
+      text-align: center;
+    }
+    .toy-nowater {
+      margin: 0.55rem 0.2rem 0;
+      font-family: var(--d-mono);
+      font-size: 0.66rem;
+      color: var(--warn);
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .toy-bar { gap: 0.45rem 0.7rem; padding: 0.5rem 0.55rem; }
+      .tb { min-width: 44px; padding: 0.36rem 0.3rem 0.3rem; }
+      .toy-slider { min-width: 86px; flex: 1 1 86px; }
+      .toy-sep { display: none; }
+    }
+
+    /* Prose column below the toy uses the standard shell. */
+    .toy-prose { margin-top: 2.6rem; }
+    .toy-prose h2 { margin-top: 2.4rem; }
+  </style>
+</head>
+<body>
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <div class="site-wrapper">
+    <a href="/" class="post-back"><span class="pb-label">Home</span></a>
+
+    <header class="u-hero fade-in">
+      <h1 class="u-title">Water, Smoke, and Slime</h1>
+      <p class="u-dek">A physics toy. GPU water, soft-body slimes, and real fluid smoke share one box, and you can draw the walls they all collide with.</p>
+      <p class="u-meta">A playable demo <span class="u-sep">/</span> <b>three engines</b> from my mining game <span class="u-sep">/</span> WebGPU + WebGL</p>
+    </header>
+
+    <section class="toy-breakout fade-in" id="toy">
+      <div class="toy-viewport" id="toy-viewport">
+        <div class="toy-stage" id="toy-stage">
+          <canvas id="toy-canvas"></canvas>
+          <div class="toy-readout" id="toy-readout">booting…</div>
+          <div class="toy-fallback" id="toy-fallback" hidden>
+            <p>This toy needs a browser with WebGL (for the smoke and slimes) and, for the water, WebGPU: current Chrome or Edge, Safari 26, or recent Firefox. Nothing here runs on a server; it is all in-page JavaScript.</p>
+          </div>
+          <div id="toy-input"></div>
+        </div>
+      </div>
+
+      <div class="toy-bar" id="toy-bar">
+        <div class="toy-group toy-tools" role="group" aria-label="Tools">
+          <button class="tb" data-tool="draw" title="Draw walls (1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5l1.2-4.2L16.4 4.6l3 3L8.7 18.3 4.5 19.5z"/><path d="M14.2 6.8l3 3"/></svg>
+            draw
+          </button>
+          <button class="tb" data-tool="erase" title="Erase walls (2)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20h9"/><path d="M5.2 14.2l8-8a2 2 0 012.8 0l2.3 2.3a2 2 0 010 2.8l-8 8H7.5l-2.3-2.3a2 2 0 010-2.8z"/><path d="M10.5 8.9l4.6 4.6"/></svg>
+            erase
+          </button>
+          <button class="tb" data-tool="water" title="Pour water (3)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c2.9 3.6 5.8 7 5.8 10.2a5.8 5.8 0 01-11.6 0C6.2 10.2 9.1 6.8 12 3.2z"/></svg>
+            water
+          </button>
+          <button class="tb" data-tool="smoke" title="Blow smoke (4)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 13c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 17.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/></svg>
+            smoke
+          </button>
+          <button class="tb" data-tool="slime" title="Drop a slime (5)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c4.4 0 7.5 3.2 7.5 7.2 0 4.4-3.4 7.8-7.5 7.8s-7.5-3.4-7.5-7.8c0-4 3.1-7.2 7.5-7.2z"/><circle cx="9.4" cy="10.6" r="0.7" fill="currentColor" stroke="none"/><circle cx="14.6" cy="10.6" r="0.7" fill="currentColor" stroke="none"/></svg>
+            slime
+          </button>
+          <button class="tb" data-tool="poke" title="Poke and drag (6)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l12.5 8-5.4 1.4 3 6.1-2.8 1.4-3-6.2-4.3 3.4z"/></svg>
+            poke
+          </button>
+        </div>
+
+        <div class="toy-sep" aria-hidden="true"></div>
+
+        <div class="toy-group">
+          <div class="toy-slider">
+            <label>gravity <b id="toy-grav-val">1.00g</b></label>
+            <input id="toy-grav" type="range" min="0" max="200" value="100" step="5" aria-label="Gravity">
+          </div>
+          <div class="toy-slider">
+            <label>time <b id="toy-time-val">100%</b></label>
+            <input id="toy-time" type="range" min="5" max="100" value="100" step="5" aria-label="Time scale">
+          </div>
+          <div class="toy-slider">
+            <label>brush <b id="toy-brush-val">16px</b></label>
+            <input id="toy-brush" type="range" min="8" max="44" value="16" step="2" aria-label="Brush size">
+          </div>
+        </div>
+
+        <div class="toy-sep" aria-hidden="true"></div>
+
+        <div class="toy-group" role="group" aria-label="Scenes">
+          <button class="toy-chip" data-scene="falls">falls</button>
+          <button class="toy-chip" data-scene="zerog">zero-g</button>
+          <button class="toy-chip" data-scene="chimney">chimney</button>
+          <button class="toy-chip" data-scene="spa">spa</button>
+          <button class="toy-chip" id="toy-clear" title="Empty box">clear</button>
+        </div>
+      </div>
+
+      <p class="toy-hint">draw walls · pour water · drop slimes · poke everything · slow the clock</p>
+      <p class="toy-nowater" id="toy-nowater" hidden>No WebGPU in this browser, so the water is off. The smoke and slimes still run. Water works in current Chrome and Edge, Safari 26, and recent Firefox.</p>
+    </section>
+
+    <main class="post-body toy-prose fade-in">
+      <p class="u-lead">The pool this page boots with is about 27,000 particles, simulated in compute shaders on your GPU. The slimes are soft bodies solved on your CPU. The smoke is a third simulation, a grid fluid running in WebGL. The three of them share exactly one thing: a grid of 8-pixel cells that says solid or not. Draw a wall and all three feel it.</p>
+
+      <p>Everything here was pulled from <a class="u-link" href="grand-motherload.html">Sluice</a>, the little mining game that lives on this site, where the water floods dug tunnels, the smoke is diesel exhaust, and the slimes are rare buried creatures that cushion a bad fall. This page is those three systems with the game stripped away and a pencil put in your hand.</p>
+
+      <h2 class="u-h2">The water</h2>
+      <p>The water is the game's fluid solver, byte for byte. It is an MLS-MPM sim (<a class="u-link" href="https://yzhu.io/publication/mpmmls2018siggraph/">Hu et al. 2018</a>; <a class="u-link" href="https://nialltl.neocities.org/articles/mpm_guide.html">nialltl's guide</a> is the friendliest walk-through): particles splat mass and momentum onto a grid, the grid resolves pressure, particles gather velocity back and move. All of it runs as WebGPU compute, advancing in fixed 1/120-second substeps (several per frame, so the physics is identical at 60 and 120 Hz), and the grid work only touches 16-by-16-cell blocks that contain water, so the cost scales with how wet the box is. The page allows 100,000 particles on desktop and 40,000 on a phone.</p>
+      <p>A min-separation pass shoves over-packed particles apart each substep, because particle water that is allowed to over-pack builds pressure spikes and pops. The kernels also carry a per-particle sleep system, and in practice the shipped tuning barely uses it: the weakly-compressible pressure model keeps a settled pool faintly breathing (I measured a still pool for half a minute, and not one particle dozed off). The real savings are the sparse grid and the fact that the page parks the whole loop when the toy scrolls off screen. The pressure tuning follows <a class="u-link" href="https://oimo.io/works/water/">saharan's water demo</a>.</p>
+      <p>This is the one engine with a hardware requirement: no WebGPU, no water. The smoke and the slimes run anyway.</p>
+
+      <h2 class="u-h2">The slimes</h2>
+      <p>Each slime is a lattice of 20 to 130 points, depending on its size, solved on the CPU. Distance constraints hold it together, solved with XPBD (<a class="u-link" href="https://mmacklin.com/xpbd.pdf">Macklin, Müller, Chentanez 2016</a>) as three tiny sub-iterations inside each 1/240-second step, because many small solves make a stiffness that survives any frame rate. A shape-matching pull (<a class="u-link" href="https://matthias-research.github.io/pages/publications/MeshlessDeformations_SIG05.pdf">Müller et al. 2005</a>) remembers the round rest shape, and a gas-pressure term holds the area, which is why a squashed slime bulges at the sides instead of shrinking.</p>
+      <p>Slime-on-slime contact runs inside the same substep loop through a count-sort spatial hash, the approach in <a class="u-link" href="https://mmacklin.com/uppfrta_preprint.pdf">Macklin et al.'s unified particle physics</a>. Running contact per substep instead of once per frame is the difference between blobs that stack and blobs that jitter and merge. The game learned that the hard way.</p>
+      <p>Drop one in a pool and it floats. Each frame the toy builds a small map of the water (density and mean flow per 8-pixel cell) and reads each body a pool-local waterline: the level in the columns beside it, walked so that a wall or an air gap ends the pool, which is what keeps a slime from feeling water on another floor or behind a drawn barrier. Every lattice point below that line trades gravity for lift, and every submerged point takes drag toward the local flow. That one rule set covers a lot: currents carry a floater, a waterfall shoves a slime down instead of levitating it, a plunge damps itself out, and in zero-g a thrown blob of water drags a slime along with it. Net lift runs about a quarter beyond gravity, so slimes ride mostly submerged, like dense gel. The coupling is one-way on purpose. These forces never push the water; the push the water feels comes from the boundary rings below. The game tried honest two-way coupling once, spent three versions on it, and reverted the whole thing.</p>
+
+      <h2 class="u-h2">The smoke</h2>
+      <p>The smoke is the oldest method on the page: a classic Eulerian grid fluid in WebGL, based on <a class="u-link" href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov's much-copied demo</a>. Velocity advects itself, 25 Jacobi iterations per frame make the field incompressible, vorticity confinement restores the curl the coarse grid smears away, and what you actually see is a dye field carried along by all of it.</p>
+      <p>The drawn walls are rasterized into its obstacle mask whenever they change, and so are the slime outlines and the water itself (any 8-pixel cell holding about a quarter of rest density counts as solid to the smoke). A plume will split around a blob that is wobbling in real time, and bank off the surface of a pool.</p>
+
+      <h2 class="u-h2">One dumb grid</h2>
+      <p>There is no shared physics library underneath. There is one flat array of 8-pixel cells. The water kernels read it packed as a bitmask, the slime solver probes it point by point, the smoke receives it as a texture. Drawing a line edits all three simulations at once, which is why the page feels like one world instead of three separate demos.</p>
+      <p>The direct couplings between engines are thinner, and here is the honest list. Water lifts and drags every slime, per lattice point. The eight wettest slime outlines are handed to the water solver as moving boundaries, resampled to 20 vertices each, so rain piles on a slime and slides off as it wobbles, and a raft of floaters visibly displaces the pool. Smoke banks off slime silhouettes and off water. Beyond the eight tracked outlines water falls straight through a slime, and nothing pushes the smoke back. Nobody has complained yet.</p>
+
+      <h2 class="u-h2">Worth trying</h2>
+      <ul>
+        <li>Slide gravity to zero while the falls are running. Water already in flight keeps its momentum and drifts into floating blobs; the trickle becomes a chain of pearls. Then try 2g.</li>
+        <li>Set time to 15 percent and poke the pool, hard. The crown splash is the whole reason the slider exists.</li>
+        <li>Draw a bowl under the spout, let it fill, then erase the bowl's floor. Erasing wakes the sleeping water above it.</li>
+        <li>Open the spa scene and drop a slime from the very top of the box. It plunges, surfaces, and bobs its way calm.</li>
+      </ul>
+
+      <p>There is no framework and no build step; the page is static files, and view source shows all of it, including the mistakes. If you want the version with fuel and consequences, it is called <a class="u-link key" href="grand-motherload.html">Sluice</a> and it is free forever.</p>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <a href="/">&copy; 2026 Ethan Willingham</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
+       tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
+  <script src="js/liquid-wgpu.js?v=v26.10"></script>
+  <script src="js/water-smoke-slime.js?v=3.2"></script>
+  <script src="js/main.js"></script>
+  <script src="js/backtotop.js"></script>
+</body>
+</html>
