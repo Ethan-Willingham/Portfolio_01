@@ -275,6 +275,8 @@ var SluiceAudio = (function () {
   var sfxLastPick = {};           // key -> last pool index (never the same twice in a row)
   var buffers = {};               // name -> AudioBuffer (present only once loaded)
   var disabled = false, loadStarted = false;
+  var userGestured = false;       // true after the first real pointer/key gesture
+  var trackRequested = {};        // name -> true once its fetch has been issued
   var enabled = true, masterVol = MASTER_HEADROOM;
 
   var music = {
@@ -297,7 +299,7 @@ var SluiceAudio = (function () {
   }
 
   function ensure() {
-    if (ctx) { if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} } return ctx; }
+    if (ctx) { if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} } if (userGestured) loadAll(); return ctx; }
     if (disabled || !supported()) { disabled = true; return null; }
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -324,7 +326,12 @@ var SluiceAudio = (function () {
       musicBus.connect(musicDuck); musicDuck.connect(depthFilter);
       depthFilter.connect(fallFilter); fallFilter.connect(nightLP); nightLP.connect(master);
 
-      loadAll();
+      // The full music library is ~38 MB, so it only downloads after the
+      // player's first real gesture (see unlock). Pre-gesture (page load) we
+      // warm exactly ONE surface track, so the town theme is decoded and ready
+      // the moment the intro is dismissed; the pool/underground players
+      // already re-check every few seconds as the rest of the files land.
+      if (userGestured) loadAll(); else loadTrack(TOWN_POOL[0]);
       // re-establish whatever context was requested before the gesture
       if (music.mode) { var m = music.mode, id = music.townId; music.mode = null; setMusic(m, { townId: id }); }
     } catch (e) { disabled = true; ctx = null; }
@@ -332,7 +339,7 @@ var SluiceAudio = (function () {
   }
   function mkLP(hz) { var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = hz; f.Q.value = 0.7; return f; }
 
-  function unlock() { ensure(); }
+  function unlock() { userGestured = true; ensure(); }
   if (typeof window !== 'undefined') {
     ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
       window.addEventListener(ev, unlock, { passive: true });
@@ -340,17 +347,20 @@ var SluiceAudio = (function () {
   }
 
   // ===== asset loading (graceful: never throws, skips missing) ==============
+  function loadTrack(name) {
+    if (!ctx || typeof fetch === 'undefined' || !MANIFEST[name] || trackRequested[name]) return;
+    trackRequested[name] = true;
+    fetch(DIR + MANIFEST[name]).then(function (r) {
+      return r.ok ? r.arrayBuffer() : null;              // missing -> skip
+    }).then(function (ab) {
+      if (!ab) return;
+      ctx.decodeAudioData(ab, function (buf) { buffers[name] = buf; }, function () {});
+    }).catch(function () {});                            // swallow everything
+  }
   function loadAll() {
     if (loadStarted || !ctx || typeof fetch === 'undefined') return;
     loadStarted = true;
-    Object.keys(MANIFEST).forEach(function (name) {
-      fetch(DIR + MANIFEST[name]).then(function (r) {
-        return r.ok ? r.arrayBuffer() : null;            // missing -> skip
-      }).then(function (ab) {
-        if (!ab) return;
-        ctx.decodeAudioData(ab, function (buf) { buffers[name] = buf; }, function () {});
-      }).catch(function () {});                          // swallow everything
-    });
+    Object.keys(MANIFEST).forEach(loadTrack);
     loadAllSfx();
   }
   function has(name) { return !!buffers[name]; }
