@@ -46,6 +46,13 @@
 @font-face { font-family: 'Commit Mono'; font-style: italic; font-weight: 400; font-display: swap; src: url('assets/fonts/commit_mono_italic.woff2') format('woff2'); }
 
 :root {
+  /* The site is dark by construction, so say so: color-scheme makes native UI
+     (scrollbars, form controls) render dark on Windows/Linux instead of stock
+     light gray against the green, and scrollbar-color tunes them to the
+     palette (Firefox, plus Chromium 121+). macOS overlay scrollbars never
+     showed the problem, which is exactly why it went unnoticed. */
+  color-scheme: dark;
+  scrollbar-color: #5a675c #262e28;
   --bg:              #303931;
   --bg-raised:       #1e2420;
   --text:            #E8E2D6;
@@ -87,6 +94,22 @@ body {
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 ::selection { background: var(--selection-bg); color: var(--selection-text); }
+
+/* Keyboard focus: one site-wide gold ring for anything interactive that has no
+   crafted focus state of its own. :where() keeps specificity at zero, so the
+   bespoke rules (.article-item, .post-back, .hs-about, the pillbar) still win. */
+:where(a, button, summary, input, [tabindex]):focus-visible {
+  outline: 2px solid rgba(212, 196, 160, 0.55);
+  outline-offset: 2px;
+}
+
+/* Touch ergonomics: the .chapters section-pill strips (14 posts style the chips
+   inline at ~31px tall) get a taller tap box on coarse pointers only. The
+   !important is load-bearing: each post's inline <style> loads after this file
+   and would win otherwise. Desktop rendering is untouched. */
+@media (pointer: coarse) {
+  .chapters a { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; }
+}
 
 /* Reading progress */
 .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 60ms linear; pointer-events: none; }
@@ -1049,6 +1072,7 @@ body:not(:has(.site-wrapper)) .site-footer-inner { padding-left: var(--gutter); 
 }
 
 @media print {
+  :root { color-scheme: light; }
   body { background: #fff; color: #222; }
   .reading-progress, .site-nav-links, .site-footer,
   .demo-wrapper, .globe-wrapper, .pl-wrapper, .game-wrapper { display: none; }

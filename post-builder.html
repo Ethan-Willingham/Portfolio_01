@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
   <!-- Private builder. Keep it out of search + off the public site; the only real
        protection is the password-locked GitHub key, not this tag. -->
   <meta name="robots" content="noindex, nofollow">
@@ -468,7 +469,7 @@
     head.className = 'pb-block-head';
     head.innerHTML = `<span class="pb-block-type"><span class="pb-grip" title="Drag to reorder" draggable="true">⠿</span>${meta.label}</span>`;
     const ctl = document.createElement('div'); ctl.className = 'pb-block-ctl';
-    ctl.innerHTML = '<button data-act="up" title="Move up">↑</button><button data-act="down" title="Move down">↓</button><button data-act="dup" title="Duplicate">⎘</button><button class="del" data-act="del" title="Delete">✕</button>';
+    ctl.innerHTML = '<button data-act="up" title="Move up">↑</button><button data-act="down" title="Move down">↓</button><button data-act="dup" title="Duplicate">⧉</button><button class="del" data-act="del" title="Delete">×</button>';
     head.appendChild(ctl);
     card.appendChild(head);
     ctl.addEventListener('click', e => {
@@ -637,7 +638,7 @@
         fields.appendChild(node);
       });
       row.appendChild(fields);
-      const del = mkBtn('✕', () => { b.items.splice(ii,1); change(); renderEditor(); }); del.className = 'pb-itemdel be-quiet';
+      const del = mkBtn('×', () => { b.items.splice(ii,1); change(); renderEditor(); }); del.className = 'pb-itemdel be-quiet';
       row.appendChild(del); list.appendChild(row);
     });
     wrap.appendChild(list);
@@ -660,7 +661,7 @@
       sel.value = it.grade || ''; sel.addEventListener('change', () => { it.grade = sel.value; change(); });
       gr.innerHTML = '<label>Grade</label>'; gr.appendChild(sel); fields.appendChild(gr);
       row.appendChild(fields);
-      const del = mkBtn('✕', () => { b.items.splice(ii,1); change(); renderEditor(); }); del.className = 'be-quiet';
+      const del = mkBtn('×', () => { b.items.splice(ii,1); change(); renderEditor(); }); del.className = 'be-quiet';
       row.appendChild(del); list.appendChild(row);
     });
     wrap.appendChild(list);
@@ -704,7 +705,7 @@
     '<button data-cmd="ft-head" title="Heading font">Aa</button>' +
     '<button data-cmd="ft-mono" title="Mono font">M</button>' +
     '<span class="sep"></span>' +
-    '<button data-cmd="clear" title="Clear formatting">⌫</button>';
+    '<button data-cmd="clear" title="Clear formatting">Tx</button>';
   rtt.addEventListener('mousedown', e => e.preventDefault());   // keep the selection
   rtt.addEventListener('click', e => {
     const cmd = e.target.closest('button')?.getAttribute('data-cmd'); if (!cmd) return;

@@ -10,15 +10,8 @@
     gtag('js', new Date());
     gtag('config', 'G-1NS9QT1HEM');
   </script>
-  <!-- Microsoft Clarity -->
-  <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "wo3l78g9ld");
-  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
   <title>Ethan Willingham</title>
   <meta name="description" content="Ethan Willingham makes interactive things about chaos, the body, math, and old paintings.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -107,6 +100,7 @@
       flex: none; font-family: var(--font-body); font-size: 0.82rem;
       color: var(--text-dim); text-decoration: none; white-space: nowrap;
       transition: color 0.2s ease;
+      padding-block: 0.55rem; margin-block: -0.55rem; /* 40px tap box, zero layout shift */
     }
     .hs-links .hs-about + .hs-about { padding-left: 0.85rem; border-left: 1px solid var(--rule); }
     .hs-about:hover { color: var(--text-bright); }

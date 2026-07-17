@@ -176,6 +176,7 @@ const hubPage = (h) => `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
   <title>${h.title} | Ethan Willingham</title>
   <meta name="description" content="${h.lead}">
   <meta property="og:title" content="${h.title}">
@@ -260,6 +261,7 @@ const shelfPage = () => `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
   <title>${SHELF.title} | Ethan Willingham</title>
   <meta name="description" content="${shelfLead}">
   <meta property="og:title" content="${SHELF.title}">
