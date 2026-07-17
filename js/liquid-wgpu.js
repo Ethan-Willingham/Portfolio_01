@@ -438,10 +438,24 @@
   var LIQUID_MINER_TRACK_R = 20.5, LIQUID_MINER_TRACK_B = 25.0;
   var GS_MAX_NOZZLES = 4;            // rocket-plume nozzle cap (game uses 2)
   var GS_MAX_EXPLOSIONS = 8;         // explosion-wake cap per frame
-  var GS_MAX_GUESTS = 3;             // v26.04 — bath-guest moving boundaries
+  var GS_MAX_GUESTS = 8;             // v26.04 — bath-guest moving boundaries
+                                     // v26.09 — 3 -> 8: the physics-toy page
+                                     // registers every wet slime as a moving
+                                     // boundary; the banya still registers <= 3.
+                                     // Layout below is DERIVED from these
+                                     // constants (no magic lane numbers), so
+                                     // this is the only line to touch.
+  // GameParams guest-lane layout, derived (v26.09): 15 legacy vec4 lanes
+  // (player/rocket/counts/nozzles/explosions = f32 lanes 0..59), then 2 meta
+  // vec4 per guest, then GS_RING ring vec4 per guest. writeGameParams and
+  // the buffer allocation read these; the WGSL struct interpolates the same
+  // constants, so JS and GPU can never disagree on the layout.
+  var GS_META_BASE = 60;             // f32 lane where guest meta begins
   var GS_RING = 20;                  // v26.05 — ring vertices per guest (the
                                      // EXACT deforming silhouette, resampled
                                      // from the jello boundary each frame)
+  var GS_RING_BASE = GS_META_BASE + GS_MAX_GUESTS * 8;               // rings start after the meta
+  var GS_PARAM_LANES = GS_RING_BASE + GS_MAX_GUESTS * GS_RING * 4;   // total f32 lanes
 
   var GRID_MAX_CELLS = 1 << 21;      // 2,097,152 — hard cap on grid cells
   var WG = 256;                       // compute workgroup size
@@ -670,12 +684,12 @@
     // and a single writeBuffer pushes it before the per-frame GPU chain.
     instance.gameParamsBuf = dev.createBuffer({
       label: 'liquid.gameParams',
-      size: 1296,
+      size: GS_PARAM_LANES * 4,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    // 81 vec4 lanes: 15 legacy + 6 guest meta + 60 guest ring vertices
-    // (v26.05 exact-silhouette guest boundaries).
-    instance.gameParamsHost = new Float32Array(324);
+    // 15 legacy vec4 lanes + guest meta + guest ring vertices, sized from
+    // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
+    instance.gameParamsHost = new Float32Array(GS_PARAM_LANES);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
     // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
     // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
@@ -1062,10 +1076,11 @@
         gh[28 + e * 4 + 2] = ex[e].r || 0;
         gh[28 + e * 4 + 3] = ex[e].blastScale || 0;
       }
-      // guests meta lanes 60-83 + ring vertices lanes 84-323 (v26.05):
-      // per guest, meta = (cx, cy, hw, hh) + (active, ringN, _, _); ring =
-      // up to GS_RING x (x, y, vx, vy). A guest without a valid ring is
-      // skipped entirely (the kernels only ever walk real silhouettes).
+      // guests meta from lane GS_META_BASE + ring vertices from GS_RING_BASE
+      // (v26.05; layout derived since v26.09): per guest, meta = (cx, cy,
+      // hw, hh) + (active, ringN, _, _); ring = up to GS_RING x (x, y, vx,
+      // vy). A guest without a valid ring is skipped entirely (the kernels
+      // only ever walk real silhouettes).
       var gu = gs.guests || [];
       var guN = gu.length;
       if (guN > GS_MAX_GUESTS) guN = GS_MAX_GUESTS;
@@ -1074,13 +1089,18 @@
         var ptN = pts ? (pts.length >> 2) : 0;
         if (ptN < 3) continue;
         if (ptN > GS_RING) ptN = GS_RING;
-        gh[60 + q * 8]     = gu[q].x || 0;
-        gh[60 + q * 8 + 1] = gu[q].y || 0;
-        gh[60 + q * 8 + 2] = gu[q].hw || 0;
-        gh[60 + q * 8 + 3] = gu[q].hh || 0;
-        gh[60 + q * 8 + 4] = 1;
-        gh[60 + q * 8 + 5] = ptN;
-        var base = 84 + q * GS_RING * 4;
+        gh[GS_META_BASE + q * 8]     = gu[q].x || 0;
+        gh[GS_META_BASE + q * 8 + 1] = gu[q].y || 0;
+        gh[GS_META_BASE + q * 8 + 2] = gu[q].hw || 0;
+        gh[GS_META_BASE + q * 8 + 3] = gu[q].hh || 0;
+        gh[GS_META_BASE + q * 8 + 4] = 1;
+        gh[GS_META_BASE + q * 8 + 5] = ptN;
+        // v26.10 — guest mean velocity (motion-aware lateral eviction in
+        // the grid kernel). Hosts that do not set mvx/mvy get zeros and
+        // the kernel's v26.05 nearest-edge behavior, unchanged.
+        gh[GS_META_BASE + q * 8 + 6] = gu[q].mvx || 0;
+        gh[GS_META_BASE + q * 8 + 7] = gu[q].mvy || 0;
+        var base = GS_RING_BASE + q * GS_RING * 4;
         for (var pk = 0; pk < ptN * 4; pk++) gh[base + pk] = pts[pk] || 0;
       }
       // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, playerVx, playerVy).
@@ -4242,8 +4262,43 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       gox = (bestPX - wx) / gdep;
       goy = (bestPY - wy) / gdep;
     }
-    cellVelX[c] = bestVX + gox * min(gdep, 10.0) * GUEST_PUSH;
-    cellVelY[c] = bestVY + goy * min(gdep, 10.0) * GUEST_PUSH;
+    // v26.10 — MOTION-AWARE eviction. gB.zw carries the guest's mean
+    // velocity (zero for the banya until its driver packs it; everything
+    // below is then inert and the v26.05 behavior is byte-identical).
+    // A fast body used to evict overlapped water toward the NEAREST edge
+    // regardless of travel: on water entry the side films snapped shut
+    // over the crown, so drops teleported ABOVE a plunging ball on the
+    // first contact frame. Real entry displacement is lateral sheet
+    // jets, so: cells overlapped on the LEADING side pick up sideways
+    // velocity scaled by body speed, and eviction pointing out the
+    // TRAILING side (the crown) is redirected sideways instead.
+    let gmvx = gB.z;
+    let gmvy = gB.w;
+    let gspd = sqrt(gmvx * gmvx + gmvy * gmvy);
+    var latVX : f32 = 0.0;
+    var latVY : f32 = 0.0;
+    if (gspd > 120.0) {
+      let mvnx = gmvx / gspd;
+      let mvny = gmvy / gspd;
+      var latx = -mvny;
+      var laty = mvnx;
+      let sideD = (wx - gA.x) * latx + (wy - gA.y) * laty;
+      if (sideD < 0.0) { latx = -latx; laty = -laty; }
+      let gk = clamp((gspd - 120.0) / 300.0, 0.0, 1.0);
+      if (gox * mvnx + goy * mvny < -0.35) {
+        gox = latx;                     // crown eviction becomes lateral
+        goy = laty;
+      }
+      let lead = (wx - gA.x) * mvnx + (wy - gA.y) * mvny;
+      if (lead > 0.0) {
+        let jspd = min(gspd, 700.0);    // sheet jets cap out: a pointer slam
+                                        // must not hose the whole box
+        latVX = latx * jspd * 0.5 * gk; // leading-side lateral sheet jet
+        latVY = laty * jspd * 0.5 * gk;
+      }
+    }
+    cellVelX[c] = bestVX + gox * min(gdep, 10.0) * GUEST_PUSH + latVX;
+    cellVelY[c] = bestVY + goy * min(gdep, 10.0) * GUEST_PUSH + latVY;
   }
 
   // --- rocket-plume wake — per-nozzle cone push along the exhaust dir ---
