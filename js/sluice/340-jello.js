@@ -275,6 +275,7 @@
   var JELLO_ORIENT_MOVE     =  0.35;  // max correction per point, in lattice spacings
   var JELLO_RECOVER_SHAPE   =  0.022; // per-substep rigid rest pull after an external grab
   var JELLO_TERRAIN_EJECT   =  0.45;  // max rigid terrain-containment move, in spacings
+  var jelloDirectGrabActive = false;  // snapshots every contact participant while the demo holds one body
 
   function jelloRecomputeMaterial() {
     // Lever insurance: E <= 0 flips the XPBD compliances negative (constraint denominators
@@ -4192,12 +4193,13 @@
   // entire 8px tile and finish in open space on the far side. Clean-path cost is
   // paid only during the short resilience window.
   function jelloResilienceStepBegin(b) {
-    if (!b._grabbed && !(b._recoverT > 0)) return false;
+    if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive) return false;
     if (!b._guardPX || b._guardPX.length < b.n) {
       b._guardPX = new Float64Array(b.px.length);
       b._guardPY = new Float64Array(b.py.length);
     }
     for (var i = 0; i < b.n; i++) { b._guardPX[i] = b.px[i]; b._guardPY[i] = b.py[i]; }
+    b._guardHadFold = jelloHasOrientationFold(b);
     return true;
   }
 
@@ -4384,14 +4386,29 @@
   // then the ordinary contact solve gets one clean pose to push against.
   function jelloRejectGrabAfterContact(b, active, nActive) {
     if (!b._grabbed || !b._guardPX) return false;
-    if (jelloHasOrientationFold(b)) return jelloRestoreResilienceSnapshot(b, 'topology');
+    var heldFold = jelloHasOrientationFold(b);
+    var offender = null, reason = '';
     for (var i = 0; i < nActive; i++) {
       var other = active[i];
       if (other === b || other._melting) continue;
+      jelloRingBBox(b); jelloRingBBox(other);
+      if (b._cbR <= other._cbL || b._cbL >= other._cbR ||
+          b._cbB <= other._cbT || b._cbT >= other._cbB) continue;
+      var peerFold = !other._guardHadFold && jelloHasOrientationFold(other);
       if (jelloRingsCrossProper(b, other) ||
           jelloCentroidInsideDeep(b, other) || jelloCentroidInsideDeep(other, b)) {
-        return jelloRestoreResilienceSnapshot(b, 'slime');
+        offender = other; reason = 'slime'; break;
       }
+      if (peerFold) { offender = other; reason = 'peer-topology'; break; }
+    }
+    if (heldFold || offender) {
+      jelloRestoreResilienceSnapshot(b, heldFold ? 'topology' : reason);
+      // Contact separation is symmetric. If it made the other body invalid,
+      // restoring only the held one leaves the peer carrying the fold. Every
+      // body was snapshotted while a grab was active, so roll the pair back as
+      // one failed contact event.
+      if (offender && offender._guardPX) jelloRestoreResilienceSnapshot(offender, reason);
+      return true;
     }
     return false;
   }
@@ -5399,6 +5416,10 @@
       active[active.length] = b;
     }
     var nActive = active.length;
+    jelloDirectGrabActive = false;
+    for (var gai = 0; gai < nActive; gai++) {
+      if (active[gai]._grabbed) { jelloDirectGrabActive = true; break; }
+    }
 
     // DISSOLVE (v25.53): count dense water near each body, advance any
     // in-flight melt/burst. Runs BEFORE the fpx snapshot so a melt-woken
@@ -5447,6 +5468,15 @@
     var _phInternal = 0, _phContact = 0, _phTail = 0, _phT0 = 0;
     for (step = 0; step < totalSteps; step++) {
       if (devMode) _phT0 = performance.now();
+      // Sleeping bodies still participate in contact and can be woken by the
+      // held body after their internal step was skipped. Give those static
+      // participants a fresh rollback pose too; never reuse an old snapshot.
+      if (jelloDirectGrabActive) {
+        for (ai = 0; ai < nActive; ai++) {
+          b = active[ai];
+          if (!b._solve || b.sleeping) jelloResilienceStepBegin(b);
+        }
+      }
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve && !b.sleeping) jelloBodyInternalSubstep(b, h); }
       if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
@@ -5459,7 +5489,7 @@
       // discard the attempted grip step when contact made the pose illegal.
       for (ai = 0; ai < nActive; ai++) {
         b = active[ai];
-        if (b._solve && b._grabbed) {
+        if (b._solve && b._grabbed && b._grabApplied) {
           // Contact can also press a legal ring around terrain after the body's
           // internal terrain pass. That is the same failed-input case.
           jelloRejectTerrainInside(b);

@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.16';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.17';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2229,6 +2229,7 @@
   var JELLO_ORIENT_MOVE     =  0.35;  // max correction per point, in lattice spacings
   var JELLO_RECOVER_SHAPE   =  0.022; // per-substep rigid rest pull after an external grab
   var JELLO_TERRAIN_EJECT   =  0.45;  // max rigid terrain-containment move, in spacings
+  var jelloDirectGrabActive = false;  // snapshots every contact participant while the demo holds one body
 
   function jelloRecomputeMaterial() {
     // Lever insurance: E <= 0 flips the XPBD compliances negative (constraint denominators
@@ -6146,12 +6147,13 @@
   // entire 8px tile and finish in open space on the far side. Clean-path cost is
   // paid only during the short resilience window.
   function jelloResilienceStepBegin(b) {
-    if (!b._grabbed && !(b._recoverT > 0)) return false;
+    if (!b._grabbed && !(b._recoverT > 0) && !jelloDirectGrabActive) return false;
     if (!b._guardPX || b._guardPX.length < b.n) {
       b._guardPX = new Float64Array(b.px.length);
       b._guardPY = new Float64Array(b.py.length);
     }
     for (var i = 0; i < b.n; i++) { b._guardPX[i] = b.px[i]; b._guardPY[i] = b.py[i]; }
+    b._guardHadFold = jelloHasOrientationFold(b);
     return true;
   }
 
@@ -6338,14 +6340,29 @@
   // then the ordinary contact solve gets one clean pose to push against.
   function jelloRejectGrabAfterContact(b, active, nActive) {
     if (!b._grabbed || !b._guardPX) return false;
-    if (jelloHasOrientationFold(b)) return jelloRestoreResilienceSnapshot(b, 'topology');
+    var heldFold = jelloHasOrientationFold(b);
+    var offender = null, reason = '';
     for (var i = 0; i < nActive; i++) {
       var other = active[i];
       if (other === b || other._melting) continue;
+      jelloRingBBox(b); jelloRingBBox(other);
+      if (b._cbR <= other._cbL || b._cbL >= other._cbR ||
+          b._cbB <= other._cbT || b._cbT >= other._cbB) continue;
+      var peerFold = !other._guardHadFold && jelloHasOrientationFold(other);
       if (jelloRingsCrossProper(b, other) ||
           jelloCentroidInsideDeep(b, other) || jelloCentroidInsideDeep(other, b)) {
-        return jelloRestoreResilienceSnapshot(b, 'slime');
+        offender = other; reason = 'slime'; break;
       }
+      if (peerFold) { offender = other; reason = 'peer-topology'; break; }
+    }
+    if (heldFold || offender) {
+      jelloRestoreResilienceSnapshot(b, heldFold ? 'topology' : reason);
+      // Contact separation is symmetric. If it made the other body invalid,
+      // restoring only the held one leaves the peer carrying the fold. Every
+      // body was snapshotted while a grab was active, so roll the pair back as
+      // one failed contact event.
+      if (offender && offender._guardPX) jelloRestoreResilienceSnapshot(offender, reason);
+      return true;
     }
     return false;
   }
@@ -7353,6 +7370,10 @@
       active[active.length] = b;
     }
     var nActive = active.length;
+    jelloDirectGrabActive = false;
+    for (var gai = 0; gai < nActive; gai++) {
+      if (active[gai]._grabbed) { jelloDirectGrabActive = true; break; }
+    }
 
     // DISSOLVE (v25.53): count dense water near each body, advance any
     // in-flight melt/burst. Runs BEFORE the fpx snapshot so a melt-woken
@@ -7401,6 +7422,15 @@
     var _phInternal = 0, _phContact = 0, _phTail = 0, _phT0 = 0;
     for (step = 0; step < totalSteps; step++) {
       if (devMode) _phT0 = performance.now();
+      // Sleeping bodies still participate in contact and can be woken by the
+      // held body after their internal step was skipped. Give those static
+      // participants a fresh rollback pose too; never reuse an old snapshot.
+      if (jelloDirectGrabActive) {
+        for (ai = 0; ai < nActive; ai++) {
+          b = active[ai];
+          if (!b._solve || b.sleeping) jelloResilienceStepBegin(b);
+        }
+      }
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve && !b.sleeping) jelloBodyInternalSubstep(b, h); }
       if (devMode) { var _phT1 = performance.now(); _phInternal += _phT1 - _phT0; _phT0 = _phT1; }
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
@@ -7413,7 +7443,7 @@
       // discard the attempted grip step when contact made the pose illegal.
       for (ai = 0; ai < nActive; ai++) {
         b = active[ai];
-        if (b._solve && b._grabbed) {
+        if (b._solve && b._grabbed && b._grabApplied) {
           // Contact can also press a legal ring around terrain after the body's
           // internal terrain pass. That is the same failed-input case.
           jelloRejectTerrainInside(b);
@@ -8346,6 +8376,7 @@
   var grabIdx = null, grabOffX = null, grabOffY = null;
   var grabTargetX = 0, grabTargetY = 0, grabSolveX = 0, grabSolveY = 0;
   var grabPrevSolveX = 0, grabPrevSolveY = 0;
+  var grabInputX = 0, grabInputY = 0, grabInputSerial = 0, grabBlockedSerial = -1;
   var JELLO_GRAB_TARGET_STEP = 0.55;   // maximum handle travel, in lattice spacings per substep
   var JELLO_GRAB_POINT_STEP = 0.28;    // maximum selected-point correction per substep
   var JELLO_GRAB_STIFF = 0.30;
@@ -8417,6 +8448,7 @@
       grabTargetX = grabSolveX = wx;
       grabTargetY = grabSolveY = wy;
       grabPrevSolveX = wx; grabPrevSolveY = wy;
+      grabInputX = wx; grabInputY = wy; grabInputSerial++; grabBlockedSerial = -1;
       b._grabbed = true;
       b._recoverT = 0;
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
@@ -8431,6 +8463,9 @@
     if (jelloBodies.indexOf(b) < 0 || b._melting) { jelloGrabEnd(); return; }
     b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     b._plyMs = performance.now();      // crowd-drain freshness stamp (see updateJello)
+    if (Math.abs(wx - grabInputX) + Math.abs(wy - grabInputY) > 0.25) {
+      grabInputX = wx; grabInputY = wy; grabInputSerial++;
+    }
     grabTargetX = wx;
     grabTargetY = wy;
   }
@@ -8441,6 +8476,12 @@
   // patch of lattice across a platform and making the crossed state permanent.
   function jelloGrabSubstep(b, h) {
     if (b !== grabBody || !grabIdx || !grabIdx.length) return;
+    b._grabApplied = 0;
+    // Once a contact rejects an input sample, holding the cursor still must not
+    // retry the same illegal solve hundreds of times per second. A new pointer
+    // position re-arms the grip; a stationary blocked grip is genuinely still.
+    if (grabBlockedSerial === grabInputSerial) return;
+    b._grabApplied = 1;
     var spacing = Math.max(1, b.spacing || 1);
     grabPrevSolveX = grabSolveX; grabPrevSolveY = grabSolveY;
     var hdx = grabTargetX - grabSolveX, hdy = grabTargetY - grabSolveY;
@@ -8456,6 +8497,7 @@
     }
     if (jelloGrabClipPath(grabSolveX, grabSolveY, nextX, nextY, spacing)) {
       nextX = grabClipX; nextY = grabClipY; b._grabBlocked = 1;
+      grabBlockedSerial = grabInputSerial;
     } else b._grabBlocked = 0;
     grabSolveX = nextX; grabSolveY = nextY;
     // A local particle-only grip can pull the skin through the core before the
@@ -8492,6 +8534,7 @@
   function jelloGrabRejectStep(b, reason) {
     if (b !== grabBody) return;
     grabSolveX = grabPrevSolveX; grabSolveY = grabPrevSolveY;
+    grabBlockedSerial = grabInputSerial;
     b._grabBlocked = 1;
     b._grabBlockReason = reason || '';
   }
@@ -8500,12 +8543,14 @@
     var b = grabBody;
     if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
       b._grabbed = false;
+      b._grabApplied = 0;
       b._grabBlocked = 0;
       b._recoverT = Math.max(b._recoverT || 0, JELLO_GRAB_RECOVER);
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     }
     grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null;
     grabPrevSolveX = grabPrevSolveY = 0;
+    grabBlockedSerial = -1;
   }
 
   /* ---- Sleeping-droplet sweep -----------------------------------------
