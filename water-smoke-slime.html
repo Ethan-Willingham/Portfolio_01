@@ -152,6 +152,7 @@
       gap: 2px;
       min-width: 108px;
     }
+    .toy-slider--feel { min-width: 128px; }
     .toy-slider label {
       display: flex;
       justify-content: space-between;
@@ -207,6 +208,7 @@
       .toy-bar { gap: 0.45rem 0.7rem; padding: 0.5rem 0.55rem; }
       .tb { min-width: 44px; padding: 0.36rem 0.3rem 0.3rem; }
       .toy-slider { min-width: 86px; flex: 1 1 86px; }
+      .toy-slider--feel { min-width: 118px; flex-basis: 118px; }
       .toy-sep { display: none; }
     }
 
@@ -239,7 +241,7 @@
       </div>
 
       <div class="toy-bar" id="toy-bar">
-        <div class="toy-group toy-tools" role="group" aria-label="Tools">
+        <div class="toy-group toy-tools" role="group" aria-label="Tools and overlays">
           <button class="tb" data-tool="draw" title="Draw walls (1)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5l1.2-4.2L16.4 4.6l3 3L8.7 18.3 4.5 19.5z"/><path d="M14.2 6.8l3 3"/></svg>
             draw
@@ -264,6 +266,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l12.5 8-5.4 1.4 3 6.1-2.8 1.4-3-6.2-4.3 3.4z"/></svg>
             poke
           </button>
+          <button class="tb is-on" id="toy-particles" type="button" title="Toggle water particle debug dots" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="1.5"/><circle cx="15.5" cy="6" r="1.5"/><circle cx="11" cy="12.5" r="1.5"/><circle cx="18" cy="14" r="1.5"/><circle cx="6" cy="17" r="1.5"/></svg>
+            particles
+          </button>
         </div>
 
         <div class="toy-sep" aria-hidden="true"></div>
@@ -281,6 +287,10 @@
             <label>brush <b id="toy-brush-val">16px</b></label>
             <input id="toy-brush" type="range" min="8" max="44" value="16" step="2" aria-label="Brush size">
           </div>
+          <div class="toy-slider toy-slider--feel">
+            <label>water <b id="toy-flow-val">very watery</b></label>
+            <input id="toy-flow" type="range" min="0" max="100" value="100" step="1" aria-label="Water consistency, very goopy to very watery" aria-valuetext="very watery">
+          </div>
         </div>
 
         <div class="toy-sep" aria-hidden="true"></div>
@@ -294,7 +304,7 @@
         </div>
       </div>
 
-      <p class="toy-hint">draw walls · pour water · drop slimes · poke everything · slow the clock</p>
+      <p class="toy-hint">draw walls · pour water · tune its flow · toggle particles · poke everything</p>
       <p class="toy-nowater" id="toy-nowater" hidden>No WebGPU in this browser, so the water is off. The smoke and slimes still run. Water works in current Chrome and Edge, Safari 26, and recent Firefox.</p>
     </section>
 
@@ -345,7 +355,7 @@
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
   <script src="js/liquid-wgpu.js?v=v26.15"></script>
-  <script src="js/water-smoke-slime.js?v=v3.9"></script>
+  <script src="js/water-smoke-slime.js?v=v3.10"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>

@@ -462,14 +462,19 @@ before a host can retune uniforms. Stage 5 reports up to four particles as
 opposite sides of the hard 3 px/s sleep threshold; identity bits or any other
 flag mismatch still fail the boot check.
 
-The standalone v3.9 host uses `GRID_VISC = 0.02`, `DAMPING = 1.0`,
+The standalone v3.10 host's **very watery** endpoint uses
+`GRID_VISC = 0.02`, `DAMPING = 1.0`,
 `WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996`. It does not change
 `LIQUID_GRAVITY`, pressure, the fixed 1/120-second quantum, or the 1.55 playback
 timescale. Stability continues to come from `LIQUID_PRESSURE_MAX_DV`, the
 density cap, min-separation pass, pre-advection CFL cap, swept terrain
-collision, and the v26.14 guest-union collision. `?honeybaseline=1` restores
-the v3.8 GPU-effective damping/motion values (`0.992` / `0.97`) plus the old
-demo viscosity and air drag for A/B timing; it is not a production mode.
+collision, and the v26.14 guest-union collision. Its new consistency slider
+uses the cubic weight `(1 - t)^3` to interpolate toward a deliberately extreme
+goopy endpoint: `GRID_VISC = 0.65`, `DAMPING = 0.992`,
+`WATER_MOTION_SCALE = 0.97`, and `AIR_DRAG = 0.99`. Pressure, gravity, timestep,
+and every stability guard remain fixed across the slider. The toolbar's
+**particles** button only switches the existing `DBG_PARTICLES` proof-dot
+render pass; it never changes simulation state.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

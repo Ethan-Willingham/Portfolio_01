@@ -49,13 +49,17 @@
  * v3.9 flow contract: keep the fixed 1/120-second solver and every stability
  * guard, repair the shared engine's live damping/motion setters, remove the
  * demo host's extra per-step body drag, cut its grid viscosity, and relax
- * separated-droplet air drag. ?honeybaseline=1 restores the v3.8 GPU-effective
- * tune for direct A/B checks.
+ * separated-droplet air drag.
+ *
+ * v3.10 controls: the particle proof-dot pass has a visible toggle, and the
+ * water consistency slider moves from the old compounded-drag feel to the
+ * v3.9 raw-motion tune without touching pressure, gravity, collision, or the
+ * fixed-step stability contract.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.9';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.10';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -120,10 +124,12 @@
   function rocketExhaustDir() { return { x: 0, y: 1 }; }
   function playerLocalToWorld() { return { x: 0, y: 0 }; }
 
-  // ---- Sliders (the only three) ----------------------------------------
+  // ---- Instrument state ------------------------------------------------
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
   var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
+  var waterFeel = 1;   // 0..1, very goopy to v3.9 raw-motion water
+  var debugParticles = true;
 
   /* ==== THE SHARED WALL GRID ============================================
    * One Uint8Array, one probe. tileAt(r,c) is the exact single choke point
@@ -635,7 +641,7 @@
         if (liquidWGPU.simActive) {
           waterState = 'on';
           if (liquidWGPU.setSimParam) {
-            // v3.9: DAMPING and WATER_MOTION_SCALE used to update legacy
+            // v3.9/v3.10: DAMPING and WATER_MOTION_SCALE used to update legacy
             // scalars while the GPU read boot-frozen material-table values.
             // Its effective 0.992 * 0.97 keep-factor compounded at roughly
             // 186 substeps per wall second, retaining under 0.1% of carried
@@ -644,13 +650,7 @@
             // smoothing and enough air drag to stop ballistic orphan spray,
             // but let the pressure limiter, density cap, anti-clump, CFL cap
             // and swept collision own stability.
-            var honeyBaseline = /[?&]honeybaseline=1(?:&|$)/.test(
-              (window.location && window.location.search) || '');
-            liquidWGPU.setSimParam('CALM', 0);
-            liquidWGPU.setSimParam('GRID_VISC', honeyBaseline ? 0.08 : 0.02);
-            liquidWGPU.setSimParam('DAMPING', honeyBaseline ? 0.992 : 1.0);
-            liquidWGPU.setSimParam('WATER_MOTION_SCALE', honeyBaseline ? 0.97 : 1.0);
-            liquidWGPU.setSimParam('AIR_DRAG', honeyBaseline ? 0.99 : 0.996);
+            applyWaterFeel();
             liquidWGPU.setSimParam('AERATION_COEFF', 5);
             // Fresh CPU mirror for the slime coupling: the default cadence
             // (every 20 runFrames) is built for oil suction; the per-point
@@ -673,11 +673,9 @@
             // a lower threshold + wider splat fuses them into one body.
             liquidWGPU.setRenderParam('SURFACE_THRESH', 1.25);
             liquidWGPU.setRenderParam('SURFACE_RSCALE', 2.1);
-            // Per-particle proof dots, ON by default (owner call): every
-            // troubleshooting video shows the actual particles, not just
-            // the surface field. The engine draws them as an extra pass
-            // over the normal render.
-            liquidWGPU.setRenderParam('DBG_PARTICLES', 1);
+            // Per-particle proof dots remain on by default. v3.10 exposes
+            // the existing extra render pass as a visible toolbar toggle.
+            applyParticleDebug();
           }
           applyGravity();
           applyTimescale();
@@ -8429,17 +8427,64 @@
     JELLO_TIMESCALE = 0.5 * t;
   }
 
-  var gravInput = null, timeInput = null, brushInput = null;
+  function waterFeelName(t) {
+    if (t < 0.16) return 'very goopy';
+    if (t < 0.38) return 'goopy';
+    if (t < 0.66) return 'fluid';
+    if (t < 0.88) return 'watery';
+    return 'very watery';
+  }
+
+  function applyWaterFeel() {
+    if (!liquidWGPU || !liquidWGPU.setSimParam) return;
+    var t = Math.max(0, Math.min(1, waterFeel));
+    // Most of the slider is useful water; the cubic syrup weight reserves
+    // the far-left end for the deliberately extreme compounded drag. The
+    // far-right values are byte-for-byte the stable v3.9 host tune.
+    var syrup = Math.pow(1 - t, 3);
+    liquidWGPU.setSimParam('CALM', 0);
+    liquidWGPU.setSimParam('GRID_VISC', 0.02 + 0.63 * syrup);
+    liquidWGPU.setSimParam('DAMPING', 1.0 - 0.008 * syrup);
+    liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0 - 0.03 * syrup);
+    liquidWGPU.setSimParam('AIR_DRAG', 0.996 - 0.006 * syrup);
+  }
+
+  function applyParticleDebug() {
+    if (liquidWGPU && liquidWGPU.setRenderParam) {
+      liquidWGPU.setRenderParam('DBG_PARTICLES', debugParticles ? 1 : 0);
+    }
+  }
+
+  function syncParticleUI() {
+    var btn = document.getElementById('toy-particles');
+    if (!btn) return;
+    btn.classList.toggle('is-on', debugParticles);
+    btn.setAttribute('aria-pressed', debugParticles ? 'true' : 'false');
+  }
+
+  function setParticleDebug(on) {
+    debugParticles = !!on;
+    applyParticleDebug();
+    syncParticleUI();
+  }
+
+  var gravInput = null, timeInput = null, brushInput = null, flowInput = null;
   function syncSliderUI() {
     if (gravInput) gravInput.value = String(Math.round(gravMul * 100));
     if (timeInput) timeInput.value = String(Math.round(timeMul * 100));
     if (brushInput) brushInput.value = String(brushR);
+    if (flowInput) {
+      flowInput.value = String(Math.round(waterFeel * 100));
+      flowInput.setAttribute('aria-valuetext', waterFeelName(waterFeel));
+    }
     var gv = document.getElementById('toy-grav-val');
     var tv = document.getElementById('toy-time-val');
     var bv = document.getElementById('toy-brush-val');
+    var fv = document.getElementById('toy-flow-val');
     if (gv) gv.textContent = gravMul === 0 ? 'zero-g' : gravMul.toFixed(2) + 'g';
     if (tv) tv.textContent = Math.round(timeMul * 100) + '%';
     if (bv) bv.textContent = Math.round(brushR) + 'px';
+    if (fv) fv.textContent = waterFeelName(waterFeel);
   }
 
   function wireUI() {
@@ -8461,6 +8506,11 @@
     gravInput = document.getElementById('toy-grav');
     timeInput = document.getElementById('toy-time');
     brushInput = document.getElementById('toy-brush');
+    flowInput = document.getElementById('toy-flow');
+    var particlesBtn = document.getElementById('toy-particles');
+    if (particlesBtn) particlesBtn.addEventListener('click', function () {
+      setParticleDebug(!debugParticles);
+    });
     if (gravInput) gravInput.addEventListener('input', function () {
       gravMul = Math.max(0, Math.min(2, (+gravInput.value || 0) / 100));
       applyGravity(); syncSliderUI();
@@ -8473,12 +8523,17 @@
       brushR = Math.max(8, Math.min(44, +brushInput.value || 16));
       syncSliderUI();
     });
+    if (flowInput) flowInput.addEventListener('input', function () {
+      waterFeel = Math.max(0, Math.min(1, (+flowInput.value || 0) / 100));
+      applyWaterFeel(); syncSliderUI();
+    });
     window.addEventListener('keydown', function (e) {
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       var map = { '1': 'draw', '2': 'erase', '3': 'water', '4': 'smoke', '5': 'slime', '6': 'poke' };
       if (map[e.key]) setTool(map[e.key]);
     });
     setTool('draw');
+    syncParticleUI();
     syncSliderUI();
   }
 
@@ -8834,6 +8889,12 @@
     if (chip) chip.hidden = waterState !== 'off';
     var wbtn = document.querySelector('#toy-bar [data-tool="water"]');
     if (wbtn && waterState === 'off') wbtn.classList.add('is-dead');
+    var pbtn = document.getElementById('toy-particles');
+    if (pbtn) {
+      pbtn.disabled = waterState === 'off';
+      pbtn.classList.toggle('is-dead', waterState === 'off');
+    }
+    if (flowInput) flowInput.disabled = waterState === 'off';
     updateReadout();
   }
 
@@ -8878,7 +8939,8 @@
           water: liquidCount, slimes: jelloBodies.length, jelloPoints: jelloCount,
           fps: Math.round(fpsEMA), waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
-          scene: currentScene, tool: tool
+          scene: currentScene, tool: tool,
+          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles
         };
       },
       scene: scene,
@@ -8894,6 +8956,8 @@
         if (k === 'gravity') { gravMul = +v; applyGravity(); syncSliderUI(); }
         else if (k === 'time') { timeMul = +v; applyTimescale(); syncSliderUI(); }
         else if (k === 'brush') { brushR = +v; syncSliderUI(); }
+        else if (k === 'flow') { waterFeel = Math.max(0, Math.min(1, +v || 0)); applyWaterFeel(); syncSliderUI(); }
+        else if (k === 'particles') { setParticleDebug(!!v); }
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },
