@@ -39,6 +39,7 @@
       // touch after returning to the tab might look like a continuation
       // of a touch the OS already cancelled, and the d-pad would lock on.
       dpadTouchId = null;
+      shopTapCandidate = null;
       shopDrag = null;
       if (itemWheel.open) closeItemWheel(false);
     }
@@ -143,6 +144,15 @@
   // To pull this off we remember which touch identifier is currently driving
   // the d-pad. dpad updates only respond to that specific touch.
   var dpadTouchId = null;
+
+  // v26.20 — a press that lands ON the shop building but INSIDE the d-pad zone
+  // is ambiguous: a sustained HOLD means "drive/thrust" (must not open the
+  // shop, per isInDpadZone), but a quick TAP means "enter the shop". We can
+  // only tell the two apart on release, so a candidate press is parked here and
+  // resolved in processPointerUp (short + low-movement release still on the
+  // building => enter). This is what restores tap-to-enter on short landscape
+  // phones where the whole building sits under the d-pad disc.
+  var shopTapCandidate = null;
 
   function handleTouchStart(e) {
     e.preventDefault();
@@ -276,6 +286,18 @@
     // and a diagonal (up + L/R) thrusts and rotates at once. It always fed the
     // same moveU/moveL/moveR as the pad (see 080), so flight feel is unchanged.
     if (isInDpadZone(x, y)) {
+      // v26.20 — if this press also lands on the shop building, remember it as a
+      // tap candidate. We still claim it as a d-pad touch below (so a HOLD drives
+      // immediately and feels identical), but processPointerUp will re-interpret
+      // a quick, low-movement release as "enter the shop" instead. This is the
+      // only shop-entry path on a short landscape phone, where the building sits
+      // entirely under the d-pad and the press-down path (above) is suppressed.
+      if (UI_NEW && shopState === 'closed' && !gameOver && !gameWon) {
+        var swx = x / worldScale + cam.x, swy = y / worldScale + cam.y;
+        if (isPointOnShop(swx, swy)) {
+          shopTapCandidate = { id: id, x: x, y: y, t: performance.now() };
+        }
+      }
       dpadTouchId = id;
       updateDpad(x, y);
     }
@@ -296,15 +318,33 @@
   function isInDpadZone(x, y) {
     // Single dpad anchored to the bottom-right corner (see resize() for the
     // DPAD_CX/DPAD_CY definitions). Returning true here suppresses the
-    // shop-tap fallback so players can hold the d-pad while parked next to
-    // the building without the shop opening underneath.
+    // shop-tap-DOWN fallback so players can HOLD the d-pad while parked next to
+    // the building without the shop opening underneath. (A quick TAP on the
+    // building is still honored on release via shopTapCandidate, so this only
+    // gates the press-down path.)
+    //
+    // The d-pad is drawn (140) and driven (updateDpad) ONLY on mobile, so on
+    // desktop there is nothing to hold: suppressing a real mouse click there
+    // just ate legitimate shop clicks. v26.20 — bail on desktop.
+    if (!isMobile) return false;
+    // Match the ACTUAL d-pad footprint: updateDpad's touch radius and the drawn
+    // disc are both DPAD_SIZE * 0.85. The old full-DPAD_SIZE circle reached ~18%
+    // past the visible ring, and on a short landscape viewport that oversized
+    // ring swallowed the whole station building, killing tap-to-enter.
     var lDx = x - DPAD_CX, lDy = y - DPAD_CY;
-    if (Math.sqrt(lDx * lDx + lDy * lDy) < DPAD_SIZE) return true;
-    return false;
+    var r = DPAD_SIZE * 0.85;
+    return (lDx * lDx + lDy * lDy) < r * r;
   }
+
   function processPointerMove(x, y, id) {
     touch.x = x;
     touch.y = y;
+    // v26.20 — a drag past a small threshold means this press became a
+    // drive/aim gesture, not a tap-to-enter; drop the shop-tap candidate.
+    if (shopTapCandidate && id === shopTapCandidate.id) {
+      var tdx = x - shopTapCandidate.x, tdy = y - shopTapCandidate.y;
+      if (tdx * tdx + tdy * tdy > 14 * 14) shopTapCandidate = null;
+    }
     if (itemWheel.open && id === itemWheel.pointerId) {
       updateItemWheelHover(x, y);
       return;
@@ -342,6 +382,21 @@
     if (id === undefined || id === dpadTouchId) {
       dpadTouchId = null;
       dpad.left = dpad.right = dpad.up = dpad.down = false;
+    }
+    // v26.20 — resolve a shop-tap candidate: a quick, low-movement release still
+    // on the building enters the shop even though the press began inside the
+    // d-pad zone. A sustained HOLD blows the time budget (or a drag blows the
+    // move budget, see processPointerMove) and never reaches here, so the d-pad
+    // hold-to-drive gesture stays suppressed exactly as before. Runs AFTER the
+    // d-pad clear above so driving stops before the shop opens.
+    if (shopTapCandidate && shopTapCandidate.id === id) {
+      var held = performance.now() - shopTapCandidate.t;
+      if (held <= 350 && UI_NEW && shopState === 'closed' && !gameOver && !gameWon) {
+        var cwx = shopTapCandidate.x / worldScale + cam.x;
+        var cwy = shopTapCandidate.y / worldScale + cam.y;
+        if (isPointOnShop(cwx, cwy)) enterShopFloor();
+      }
+      shopTapCandidate = null;
     }
     // touch.active mirrors "is the mouse currently held" semantics on
     // desktop. Always clear on mouse-up; on touch, only clear when no
