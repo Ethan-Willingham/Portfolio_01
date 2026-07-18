@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.27';
+  var GAME_VERSION = 'v26.28';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -55402,6 +55402,11 @@
     }
     for (var i = 0; i < b.n; i++) { b._guardPX[i] = b.px[i]; b._guardPY[i] = b.py[i]; }
     b._guardHadFold = jelloHasOrientationFold(b);
+    b._guardRejectedStep = false;
+    if (b._grabbed) {
+      b._grabRejectNX = 0; b._grabRejectNY = 0;
+      b._grabRejectBody = null;
+    }
     return true;
   }
 
@@ -55421,6 +55426,7 @@
     }
     b._guardRejects = (b._guardRejects | 0) + 1;
     b._guardRejectReason = reason || '';
+    b._guardRejectedStep = true;
     if (typeof jelloGrabRejectStep === 'function') jelloGrabRejectStep(b, reason);
     return true;
   }
@@ -55498,7 +55504,15 @@
     // While held, containment is a failed input, not a state to repair. Roll
     // back before this substep can be rendered. Recovery retains a continuous
     // rigid eject for legacy poses that predate the guard.
-    if (b._grabbed && jelloRestoreResilienceSnapshot(b, 'terrain')) {
+    if (b._grabbed) {
+      var rnx = bestX - nearX, rny = bestY - nearY;
+      var rnl = Math.sqrt(rnx * rnx + rny * rny);
+      if (rnl > 1e-6) {
+        b._grabRejectNX = rnx / rnl;
+        b._grabRejectNY = rny / rnl;
+      }
+    }
+    if (b._grabbed && b._grabApplied && jelloRestoreResilienceSnapshot(b, 'terrain')) {
       b._terrainInside = 0;
       b._terrainRejects = (b._terrainRejects | 0) + 1;
       return 2;
@@ -55604,6 +55618,18 @@
       if (peerFold) { offender = other; reason = 'peer-topology'; break; }
     }
     if (heldFold || offender) {
+      if (offender) {
+        var bcx = (b._cbL + b._cbR) * 0.5, bcy = (b._cbT + b._cbB) * 0.5;
+        var ocx = (offender._cbL + offender._cbR) * 0.5;
+        var ocy = (offender._cbT + offender._cbB) * 0.5;
+        var ndx = ocx - bcx, ndy = ocy - bcy;
+        var ndl = Math.sqrt(ndx * ndx + ndy * ndy);
+        if (ndl > 1e-6) {
+          b._grabRejectNX = ndx / ndl;
+          b._grabRejectNY = ndy / ndl;
+        }
+        b._grabRejectBody = offender;
+      }
       jelloRestoreResilienceSnapshot(b, heldFold ? 'topology' : reason);
       // Contact separation is symmetric. If it made the other body invalid,
       // restoring only the held one leaves the peer carrying the fold. Every
@@ -56697,6 +56723,9 @@
           jelloRejectTerrainInside(b);
           jelloResilienceStepEnd(b);
           jelloRejectGrabAfterContact(b, active, nActive);
+          if (!b._guardRejectedStep && typeof jelloGrabAcceptStep === 'function') {
+            jelloGrabAcceptStep(b);
+          }
         }
       }
       // World re-collide AFTER contact + containment: those passes move points without
