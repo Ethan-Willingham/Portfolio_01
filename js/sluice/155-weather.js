@@ -6,10 +6,10 @@
   //                individually-baked cloud sprites (billow-fbm field × a
   //                cumulus envelope: wavy flat base, lumpy domed crown, baked
   //                volumetric top-light + silver rim) is scattered across
-  //                world-anchored altitude LANES by a deterministic hash
-  //                lattice — every cloud has its own position, variant, scale,
-  //                flip and fade, so the sky has discrete, non-repeating
-  //                clouds instead of strips. Sprites are RECOLOURED each
+  //                one continuous 2D hash field over (x, altitude) — every
+  //                cloud has its own position, height, variant, scale, flip
+  //                and fade, nothing sits in a row, and the sky has discrete,
+  //                non-repeating clouds instead of strips. Sprites are RECOLOURED each
   //                lighting bucket from the live atmospheric-scatter cache
   //                (atmosHorizonRGB / atmosZenithRGB / atmosDayWeight in 150),
   //                so clouds catch the Volcanic sunset grade and go
@@ -33,7 +33,7 @@
   // ----- Feel / look levers (gm 'weather' group; see TUNING.md §5.4) -----
   // deckDensity / deckAltScale / deckThin keep their deck-era NAMES (the sky
   // presets in 380 dial them) but now shape the instanced-cloud field:
-  // instance density, lane altitudes, and high-lane thinning toward space.
+  // instance density, field altitudes, and high-altitude thinning toward space.
   var weatherTune = {
     enabled:    1,     // master on/off
     driftScale: 1.0,   // surfaceWind → cloud-drift multiplier
@@ -50,8 +50,8 @@
     morphSpeed: 0.0,   // 0 = clouds hold their shape (drift only); >0 = slow billow morph
     precipMode: 0,     // 0 auto (snow in the cold spawn biome) / 1 force rain / 2 force snow
     veil:       1.0,   // overcast/storm stratus-sheet strength
-    deckDensity:  1.0, // cloud-instance density across every lane
-    deckAltScale: 1.0, // multiplies every lane altitude — clouds ride higher / lower
+    deckDensity:  1.0, // cloud-instance density across the whole field
+    deckAltScale: 1.0, // multiplies every cloud altitude — the field rides higher / lower
     deckThin:     0.50 // fade rate toward space (higher = thinner up high, 0 = solid to the top)
   };
 
@@ -81,7 +81,7 @@
     mood: 1, moodT: 30,
     cov: 0.30, dark: 0.04, pcp: 0.0, wind: 0.0,    // live eased values
     tcov: 0.30, tdark: 0.04, tpcp: 0.0, twind: 0.0, // targets
-    laneDrift: null,                                 // per-lane wind drift (world px)
+    driftAccum: 0,                                   // wind-drift integral (world px; rows scale it)
     veilDrift: 0,
     morph: 0,                                        // billow morph phase
     flash: 0, flashT: 8, dbl: 0                      // lightning
@@ -176,33 +176,39 @@
   var cloudLightBucket = -999999;
   var cloudMorphBucket = -999999;
 
-  // ----- Altitude LANES — the world-anchored cloud field you fly THROUGH -----
-  // Each lane is a horizontal register of POSSIBLE cloud slots (hash lattice,
-  // cell width cellW): slot k holds a cloud iff hash(k) clears the live
-  // coverage, so the same slots fill and empty smoothly as weather changes and
-  // the field is infinite + non-repeating with zero storage. A lane's VERTICAL
-  // screen position tracks its world altitude (parallax 1) — climbing slides
-  // each lane down past you and you fly through the layers, size locked (the
-  // deck-era expand/contract bug stays dodged: sprites have fixed world size).
-  // Horizontal motion = per-lane camera parallax (hPar: higher = farther/
-  // slower) + accumulated wind drift; alt jitter breaks any visible rows.
-  //   s0..s1 — per-instance scale range   dens — lane fill bias vs coverage
-  var CLOUD_LANES = [
-    { alt: 160,  jit: 34,  cls: 1, cellW: 240, hPar: 0.46, drift: 1.00, s0: 0.55, s1: 0.85, dens: 1.02, seed: 101 },
-    { alt: 248,  jit: 60,  cls: 2, cellW: 400, hPar: 0.55, drift: 0.88, s0: 0.85, s1: 1.20, dens: 0.94, seed: 202 },
-    { alt: 430,  jit: 85,  cls: 1, cellW: 320, hPar: 0.64, drift: 0.74, s0: 0.75, s1: 1.10, dens: 0.95, seed: 303 },
-    { alt: 660,  jit: 115, cls: 2, cellW: 440, hPar: 0.72, drift: 0.60, s0: 1.00, s1: 1.40, dens: 0.95, seed: 404 },
-    { alt: 950,  jit: 145, cls: 1, cellW: 330, hPar: 0.79, drift: 0.47, s0: 0.80, s1: 1.15, dens: 0.95, seed: 505 },
-    { alt: 1320, jit: 185, cls: 2, cellW: 440, hPar: 0.85, drift: 0.36, s0: 1.05, s1: 1.45, dens: 0.90, seed: 606 },
-    { alt: 1780, jit: 225, cls: 0, cellW: 380, hPar: 0.89, drift: 0.26, s0: 0.85, s1: 1.25, dens: 0.85, seed: 707 },
-    { alt: 2350, jit: 285, cls: 0, cellW: 420, hPar: 0.92, drift: 0.18, s0: 1.00, s1: 1.50, dens: 0.80, seed: 808 },
-    { alt: 3050, jit: 345, cls: 0, cellW: 460, hPar: 0.94, drift: 0.12, s0: 1.10, s1: 1.60, dens: 0.72, seed: 909 }
-  ];
-  // The HORIZON lane — tiny far puffs hugging the ridgeline for the resting
-  // view's depth cue. Drawn first (farthest), fades out on a climb (once you
-  // are airborne the "distant weather on the horizon" framing stops applying).
-  var CLOUD_HORIZON_LANE =
-    { alt: 130,  jit: 26,  cls: 1, cellW: 190, hPar: 0.93, drift: 0.30, s0: 0.22, s1: 0.40, dens: 1.15, seed: 55 };
+  // ----- The cloud FIELD — a continuous-altitude scatter you fly THROUGH -----
+  // v26.38: the LANES this replaced (fixed altitudes + small jitter) still read
+  // as horizontal rows of clouds, the same defect as the decks one level up.
+  // Now ONE 2D hash lattice covers (x, altitude): rows of cells from just
+  // above the ridge to the top of the weather (CLOUD_ROWS), and
+  // slot (k, j) hashes whether it holds a cloud and WHERE inside the cell —
+  // full-cell jitter in BOTH axes, so cloud altitude is CONTINUOUS and nothing
+  // can line up. Every look property is a smooth function of the cloud's OWN
+  // altitude (inline in the draw walk): near the ridge clouds are small, pale
+  // and far (the valley-distance depth cue that used to be a special horizon
+  // lane), the low-mid sky carries full-size cumulus, cirrus wisps take over
+  // past ~1.7k via a dithered blend, and density thins toward space. Vertical
+  // screen position tracks true world altitude (parallax 1) — you fly through
+  // the field, sizes locked (the deck-era expand/contract bug stays dodged:
+  // sprites have fixed world size). Horizontal MOTION (camera parallax hPar +
+  // wind drift) is shared per ROW so cell enumeration stays consistent under
+  // any camera x and unbounded drift accumulation; ~14 motion planes read as
+  // smooth depth while POSITIONS stay continuous. Coverage fills and empties
+  // the same slots low-hash-first, so weather changes fade individual clouds.
+  // Rows follow a geometric progression — short/narrow cells low (the sky is
+  // bottom-heavy and the resting view needs the candidates), tall/wide cells
+  // high (space thins out). Altitude stays continuous: full-height jitter
+  // inside each row and the rows abut, so no boundary can show.
+  var CLOUD_FIELD_SEED = 7351;
+  var CLOUD_ROWS = (function () {
+    var rows = [], lo = 60, h = 120, w = 200;
+    while (lo < 3400) {
+      rows.push({ lo: lo, h: h, w: w });
+      lo += h; h = Math.round(h * 1.26); w = Math.round(w * 1.13);
+    }
+    return rows;   // 10 rows, 60 → ~4250 world px above the surface
+  })();
+  var CLOUD_ALT_TOP = CLOUD_ROWS[CLOUD_ROWS.length - 1].lo + CLOUD_ROWS[CLOUD_ROWS.length - 1].h;
 
   // ----- Overcast stratus VEIL — one continuous sheet, eases in cov ≳ 0.7 -----
   // The deliberate "solid grey day" reading comes from a single soft repeating
@@ -389,7 +395,7 @@
   // precip lands on the ground line yet falls freely down dug shafts and
   // holes. Render-only: drops never touch the liquid sim (the v24.125
   // resting-calm baseline stays locked). Positions + speeds are world px;
-  // the draw projects through cam + dpr*worldScale like the cloud lanes.
+  // the draw projects through cam + dpr*worldScale like the cloud field.
   var PRECIP_CAP = 1100;
   var PRECIP_MARGIN = 140;     // off-view spawn/cull margin, world px
   var precipParts = null, precipActive = 0;
@@ -475,13 +481,6 @@
     } catch (e) {}
   }
 
-  function weatherEnsureLanes() {
-    if (weather.laneDrift) return;
-    weather.laneDrift = [];
-    for (var i = 0; i < CLOUD_LANES.length; i++) weather.laneDrift.push(0);
-    weather.hzDrift = 0;
-  }
-
   function updateWeather(dt) {
     if (!weatherTune.enabled) return;
     if (!precipParts) weatherInitPrecip();
@@ -499,17 +498,14 @@
     weather.wind += (weather.twind - weather.wind) * ke(6);
     if (weatherTune.morphSpeed > 0) weather.morph += dt * weatherTune.morphSpeed;
 
-    // cloud drift — base breeze + surfaceWind; accumulated per LANE (high
-    // clouds crawl, low clouds scud — see CLOUD_LANES[i].drift).
+    // cloud drift — base breeze + surfaceWind, integrated ONCE; each field row
+    // scales the shared integral by its own drift factor at draw (high clouds
+    // crawl, low clouds scud) so relative motion stays deterministic.
     var sw = (typeof surfaceWind !== 'undefined') ? surfaceWind.current : 0;
     var windPxS = (weatherTune.baseDrift + Math.abs(sw) * 90 * (1 + weather.wind * 1.3)) *
                   (sw < 0 ? -1 : 1) * weatherTune.driftScale;
     if (sw === 0) windPxS = weatherTune.baseDrift * weatherTune.driftScale;
-    weatherEnsureLanes();
-    for (var i = 0; i < CLOUD_LANES.length; i++) {
-      weather.laneDrift[i] += windPxS * CLOUD_LANES[i].drift * dt;
-    }
-    weather.hzDrift += windPxS * CLOUD_HORIZON_LANE.drift * dt;
+    weather.driftAccum += windPxS * dt;
     weather.veilDrift += windPxS * 0.30 * dt;
 
     // lightning (storm only)
@@ -564,33 +560,64 @@
     }
   }
 
-  // Draw every visible cloud in ONE lane (the hash lattice walk). Far lanes
-  // are drawn before near ones by the caller.
-  function weatherDrawLane(L, laneDriftPx, laneA, cw, skyBottomPx, e, ws, surfaceY, altScale, swell) {
-    if (laneA <= 0.01) return;
-    var C = CLOUD_CLASSES[L.cls];
-    var shift = cam.x * (1 - L.hPar) - laneDriftPx;     // world px, lane-parallax space
-    var viewW = cw / ws;
-    var k0 = Math.floor((shift - 460) / L.cellW);
-    var k1 = Math.floor((shift + viewW + 460) / L.cellW);
+  // Draw every visible cloud in ONE row of the field. Far (high) rows are
+  // drawn before near (low) ones by the caller.
+  // One row of the field: shared row MOTION (hPar/drift → `shift`), continuous
+  // per-cloud everything else. All randomness keys on (k, j*101 + off) so no
+  // two uses collide and the field is deterministic forever.
+  function weatherDrawFieldRow(j, cw, skyBottomPx, e, ws, surfaceY, altScale, thin, swell, globalA) {
+    var R = CLOUD_ROWS[j];
+    var jy = j * 101;
+    var rowMid = R.lo + R.h * 0.5;
+    var hParRow, driftRow;
+    if (j === 0) {
+      // the ridge row doubles as the valley-distance backdrop: far and slow
+      hParRow = 0.88; driftRow = 0.30;
+    } else {
+      var tm = wClamp01((rowMid - 360) / 2800);
+      hParRow = 0.52 + 0.42 * Math.pow(tm, 0.8);
+      driftRow = 1.0 - 0.85 * Math.pow(tm, 0.9);
+    }
+    var shift = cam.x * (1 - hParRow) - weather.driftAccum * driftRow;
+    var k0 = Math.floor((shift - 520) / R.w);
+    var k1 = Math.floor((shift + cw / ws + 520) / R.w);
     for (var k = k0; k <= k1; k++) {
-      var h0 = wHash(k, 11, L.seed);
-      var aFade = wClamp01((e * L.dens - h0) / 0.07);   // clouds fade in low-hash first
+      var h0 = wHash(k, jy + 11, CLOUD_FIELD_SEED);
+      // continuous altitude: anywhere inside this cell
+      var alt = R.lo + wHash(k, jy + 29, CLOUD_FIELD_SEED) * R.h;
+      var tA = wClamp01((alt - 150) / (CLOUD_ALT_TOP - 150));   // 0 low → 1 top of the field
+      var dens = 1 - 0.35 * tA * tA;                    // the sky empties toward space (cell area already grows)
+      var aFade = wClamp01((e * dens - h0) / 0.07);     // clouds fade in low-hash first
       if (aFade <= 0.01) continue;
-      var vi = (wHash(k, 23, L.seed) * 977 | 0) % CLOUD_VARIANTS;
-      var S = cloudSprites[L.cls][vi];
+      var fadeA = 1 - thin * Math.pow(tA, 1.2);         // deckThin: high clouds thin out
+      if (fadeA <= 0.01) continue;
+      // class by altitude with a dithered blend: big+mid low, mid-heavy middle,
+      // cirrus from ~1.55k fully by ~2k
+      var cls;
+      var cirrusW = wSmooth(wClamp01((alt - 1550) / 450));
+      if (wHash(k, jy + 59, CLOUD_FIELD_SEED) < cirrusW) cls = 0;
+      else cls = (wHash(k, jy + 47, CLOUD_FIELD_SEED) < 0.55 - 0.30 * wClamp01((alt - 400) / 900)) ? 2 : 1;
+      var vi = (wHash(k, jy + 23, CLOUD_FIELD_SEED) * 977 | 0) % CLOUD_VARIANTS;
+      var S = cloudSprites[cls][vi];
       if (!S || !S.ready) continue;
-      var scale = (L.s0 + (L.s1 - L.s0) * wHash(k, 67, L.seed)) * swell;
+      var C = CLOUD_CLASSES[cls];
+      // size runs its whole small → big progression INSIDE the resting view
+      // (tiny puffs at the ridge, full cumulus by ~330), so no height reads as
+      // "the one size"; cirrus streaks widen with height instead
+      var valley = 1 - wSmooth(wClamp01((alt - 70) / 160));
+      var sBase = (cls === 0) ? 0.9 + 0.5 * wClamp01((alt - 1500) / 1800)
+                              : 0.34 + 0.72 * wSmooth(wClamp01((alt - 60) / 280));
+      var scale = sBase * (0.72 + 0.56 * wHash(k, jy + 67, CLOUD_FIELD_SEED)) * swell;
       var wW = C.worldW * scale;
       var wH = wW * C.th / C.tw;
-      var cX = (k + 0.5 + (wHash(k, 37, L.seed) - 0.5) * 0.72) * L.cellW;
-      var alt = (L.alt + (wHash(k, 53, L.seed) - 0.5) * 2 * L.jit) * altScale;
-      var sx = (cX - shift) * ws - wW * ws * 0.5;
-      var top = (surfaceY - alt - cam.y) * ws - wH * ws * 0.5;
+      var x0 = (k + 0.08 + 0.84 * wHash(k, jy + 41, CLOUD_FIELD_SEED)) * R.w;
+      var sx = (x0 - shift) * ws - wW * ws * 0.5;
+      var top = (surfaceY - alt * altScale - cam.y) * ws - wH * ws * 0.5;
       var wPx = wW * ws, hPx = wH * ws;
       if (top >= skyBottomPx || top + hPx <= 0 || sx + wPx <= 0 || sx >= cw) continue;
-      ctx.globalAlpha = wClamp01(laneA * aFade * C.alpha * (0.80 + 0.20 * wHash(k, 97, L.seed)));
-      if (wHash(k, 83, L.seed) < 0.5) {
+      ctx.globalAlpha = wClamp01(globalA * fadeA * aFade * C.alpha * (1 - 0.28 * valley) *
+                                 (0.80 + 0.20 * wHash(k, jy + 97, CLOUD_FIELD_SEED)));
+      if (wHash(k, jy + 83, CLOUD_FIELD_SEED) < 0.5) {
         ctx.save();
         ctx.translate(sx + wPx, top);
         ctx.scale(-1, 1);
@@ -607,7 +634,6 @@
     if (!weatherTune.enabled || PERF_DISABLE_WEATHER) return;
     if (weather.cov < 0.02 || cw <= 0 || ch <= 0) return;
     if (!cloudSprites) weatherInitSprites();
-    weatherEnsureLanes();
 
     // STAGE 1 — bake one dirty sprite per frame (the whole cast is ready in
     // ~13 frames at boot; a softness/rim lever move or morph re-runs it).
@@ -675,7 +701,7 @@
     var surfaceY = SKY_ROWS * TILE;
     var globalA = weatherTune.layerAlpha;
     var altScale = weatherTune.deckAltScale, thin = weatherTune.deckThin;
-    var e = weather.cov * 1.06 * weatherTune.deckDensity;   // lane fill level
+    var e = weather.cov * 1.06 * weatherTune.deckDensity;   // field fill level
     var swell = 1 + weather.cov * 0.18;                     // heavy skies fatten each cloud
     var playerAlt = Math.max(0, surfaceY - (cam.y + (ch / ws) * 0.5));
     ctx.save();
@@ -703,15 +729,15 @@
       ctx.fillRect(0, 0, cw, skyBottomPx);
     }
 
-    // The horizon garnish lane (farthest), then the flight lanes high → low so
-    // near/low clouds overlap on top.
-    var hz = CLOUD_HORIZON_LANE;
-    var hzA = globalA * 0.78 * (1 - wClamp01(playerAlt / 900));   // far puffs sit paler (aerial perspective)
-    weatherDrawLane(hz, weather.hzDrift || 0, hzA, cw, skyBottomPx, e, ws, surfaceY, altScale, swell);
-    var nL = CLOUD_LANES.length;
-    for (var li = nL - 1; li >= 0; li--) {
-      var laneA = globalA * (1 - (li / (nL - 1)) * thin);
-      weatherDrawLane(CLOUD_LANES[li], weather.laneDrift[li], laneA, cw, skyBottomPx, e, ws, surfaceY, altScale, swell);
+    // Walk the field rows top (far) → bottom (near) so low clouds overlap on
+    // top. Row-level screen culling keeps the walk to the 2-4 rows in view.
+    var rowMargin = 340 * ws;   // worst-case half-sprite overhang, device px
+    for (var j = CLOUD_ROWS.length - 1; j >= 0; j--) {
+      var R = CLOUD_ROWS[j];
+      var rowTopPx = (surfaceY - (R.lo + R.h) * altScale - cam.y) * ws - rowMargin;
+      var rowBotPx = (surfaceY - R.lo * altScale - cam.y) * ws + rowMargin;
+      if (rowTopPx >= skyBottomPx || rowBotPx <= 0) continue;
+      weatherDrawFieldRow(j, cw, skyBottomPx, e, ws, surfaceY, altScale, thin, swell, globalA);
     }
     ctx.restore();
   }
