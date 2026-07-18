@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.33';
+  var GAME_VERSION = 'v26.34';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -28893,14 +28893,23 @@
   /* ====== WEATHER: clouds, precipitation, storms ====== */
   // Full dynamic above-ground weather. Three subsystems share one mood-driven
   // state machine:
-  //   1. Clouds  — cached billow-fbm cloud bands, 2-3 parallax layers, baked
-  //                volumetric lighting (top-light + silver-lining rim) RECOLOURED
-  //                each lighting bucket from the live atmospheric-scatter cache
-  //                (atmosHorizonRGB / atmosZenithRGB / atmosDayWeight in 150).
-  //                So clouds catch the Volcanic sunset grade and go moon-silver
-  //                at night for free, with zero shader risk. Drawn screen-locked
-  //                inside drawNightSkyToScreen (clipped to the sky), behind the
-  //                mountains, drifting on surfaceWind.
+  //   1. Clouds  — INSTANCED cumulus sprites (v26.20, replaced the tiled deck
+  //                strips that read as horizontal bands). A small pool of
+  //                individually-baked cloud sprites (billow-fbm field × a
+  //                cumulus envelope: wavy flat base, lumpy domed crown, baked
+  //                volumetric top-light + silver rim) is scattered across
+  //                world-anchored altitude LANES by a deterministic hash
+  //                lattice — every cloud has its own position, variant, scale,
+  //                flip and fade, so the sky has discrete, non-repeating
+  //                clouds instead of strips. Sprites are RECOLOURED each
+  //                lighting bucket from the live atmospheric-scatter cache
+  //                (atmosHorizonRGB / atmosZenithRGB / atmosDayWeight in 150),
+  //                so clouds catch the Volcanic sunset grade and go
+  //                moon-silver at night for free, with zero shader risk.
+  //                Overcast/storm additionally ease in ONE continuous high
+  //                stratus VEIL (a soft sheet, not a strip stack). Drawn
+  //                inside drawNightSkyToScreen (clipped to the sky), behind
+  //                the mountains, drifting on surfaceWind.
   //   2. Precip  — WORLD-anchored rain streaks / snow flakes, wind-skewed,
   //                pooled. Drops live at world positions (the field stays put
   //                while the camera moves) and die on the first solid tile,
@@ -28909,11 +28918,14 @@
   //
   // Idiomatic to the engine: like the sky and the mountain strips, the heavy
   // noise bake is cached and rebuilt on a bucket, the per-frame cost is a few
-  // smoothed drawImage blits. BACKGROUND_STYLE.md §15 documents the deviation
-  // from strict pixel-dither discipline (clouds are smooth-upscaled, matching
-  // the GL sky) that "gorgeous, overdone" buys us.
+  // dozen smoothed drawImage blits. BACKGROUND_STYLE.md §15 documents the
+  // deviation from strict pixel-dither discipline (clouds are smooth-upscaled,
+  // matching the GL sky) that "gorgeous, overdone" buys us.
 
   // ----- Feel / look levers (gm 'weather' group; see TUNING.md §5.4) -----
+  // deckDensity / deckAltScale / deckThin keep their deck-era NAMES (the sky
+  // presets in 380 dial them) but now shape the instanced-cloud field:
+  // instance density, lane altitudes, and high-lane thinning toward space.
   var weatherTune = {
     enabled:    1,     // master on/off
     driftScale: 1.0,   // surfaceWind → cloud-drift multiplier
@@ -28926,16 +28938,13 @@
     shadow:     1.0,   // cloud-base brightness scale (lower = moodier)
     contrast:   1.0,   // cloud internal contrast
     layerAlpha: 1.0,   // global cloud opacity
-    softness:   1.0,   // coverage-edge feather (puff hardness)
+    softness:   1.0,   // cloud-edge feather (puff hardness; re-bakes on change)
     morphSpeed: 0.0,   // 0 = clouds hold their shape (drift only); >0 = slow billow morph
     precipMode: 0,     // 0 auto (snow in the cold spawn biome) / 1 force rain / 2 force snow
-    // ---- Cloud DECK shape (v24.48) — the world-anchored CLOUD_DECKS stack
-    // replaced the old screen band (cloudTop/cloudHeight, removed). These three
-    // reshape the whole stack LIVE at draw time (no rebuild), so the sky presets
-    // can dial it: thin high cirrus, low ceilings, towering stacks, etc.
-    deckDensity:  1.0, // global cloud opacity across every deck
-    deckAltScale: 1.0, // multiplies every deck altitude — clouds ride higher / lower
-    deckThin:     0.66 // fade rate toward space (higher = thinner up high, 0 = solid to the top)
+    veil:       1.0,   // overcast/storm stratus-sheet strength
+    deckDensity:  1.0, // cloud-instance density across every lane
+    deckAltScale: 1.0, // multiplies every lane altitude — clouds ride higher / lower
+    deckThin:     0.50 // fade rate toward space (higher = thinner up high, 0 = solid to the top)
   };
 
   // ----- Mood table: targets the sim eases toward -----
@@ -28964,7 +28973,8 @@
     mood: 1, moodT: 30,
     cov: 0.30, dark: 0.04, pcp: 0.0, wind: 0.0,    // live eased values
     tcov: 0.30, tdark: 0.04, tpcp: 0.0, twind: 0.0, // targets
-    drift: [0, 0, 0],                               // per-layer x drift (px)
+    laneDrift: null,                                 // per-lane wind drift (world px)
+    veilDrift: 0,
     morph: 0,                                        // billow morph phase
     flash: 0, flashT: 8, dbl: 0                      // lightning
   };
@@ -28980,15 +28990,16 @@
     return weatherCold() ? 'snow' : 'rain';
   }
 
-  // ----- Periodic billow-fbm (seamless in X so cloud tiles tile cleanly) -----
+  // ----- Value-noise base (wrapped in X; sprites zero their borders anyway) -----
   function wHash(ix, iy, seed) {
     var n = Math.imul(ix, 374761393) ^ Math.imul(iy, 668265263) ^ Math.imul(seed, 0x9E3779B1);
     n = Math.imul(n ^ (n >>> 13), 1274126177);
     return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
   }
   function wSmooth(t) { return t * t * (3 - 2 * t); }
-  // Value noise, lattice wrapped mod `px` in X (Y is free — the band fades top
-  // and bottom so it never needs to wrap).
+  function wClamp01(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+  // Value noise, lattice wrapped mod `px` in X (Y is free — the envelopes fade
+  // top and bottom so it never needs to wrap).
   function wVal(gx, gy, px, seed) {
     var ix0 = Math.floor(gx), iy0 = Math.floor(gy);
     var fx = gx - ix0, fy = gy - iy0;
@@ -29002,8 +29013,8 @@
     var b = v01 + (v11 - v01) * sx;
     return a + (b - a) * sy;
   }
-  // Billow fbm in [0,1]. u ∈ [0,1) across tile width; ny = py/TW (square cells).
-  // Periodic in u so the cloud tile repeats seamlessly across the screen.
+  // Billow fbm in [0,1]. u ∈ [0,1) across tile width; ny in the same scale.
+  // Periodic in u so the veil tile repeats seamlessly across the screen.
   function wBillow(u, ny, baseCells, seed, oct) {
     var amp = 0.55, sum = 0, norm = 0;
     for (var o = 0; o < oct; o++) {
@@ -29025,164 +29036,200 @@
     return sum / norm;
   }
   // Domain-warped billow — the warp shears the noise into organic, lobed cloud
-  // masses instead of uniform round blobs. Both terms are periodic in u, so the
-  // tile still wraps seamlessly. `mz` is the morph offset (0 unless morphing).
-  function wCloudField(u, ny, L, mz) {
-    var n2 = ny + mz;
-    var wx = (wFbm(u, n2, L.cells, L.seed + 555, 2) - 0.5) * CLOUD_WARP;
-    var wy = (wFbm(u, n2, L.cells, L.seed + 911, 2) - 0.5) * CLOUD_WARP;
-    return wBillow(u + wx, n2 + wy, L.cells, L.seed, CLOUD_OCT);
+  // masses instead of uniform round blobs.
+  var CLOUD_WARP = 0.14;
+  function wCloudField(u, vv, cells, oct, seed) {
+    var wx = (wFbm(u, vv, cells, seed + 555, 2) - 0.5) * CLOUD_WARP;
+    var wy = (wFbm(u, vv, cells, seed + 911, 2) - 0.5) * CLOUD_WARP;
+    return wBillow(u + wx, vv + wy, cells, seed, oct);
   }
 
-  // ----- Cloud layer caches -----
-  // Far → near. Bigger `cells` = smaller / more numerous puffs (further away).
-  // `scrW` = on-screen tile width as a fraction of canvas width; kept modest so
-  // the upscale stays gentle (the v1 blur came from a 200px tile blown up ~10x).
-  // envC/envW place each layer's band within the tile (far high+thin, near
-  // low+tall) to stack depth; all sit in the upper sky so flying never clips.
-  var CLOUD_LAYERS = [
-    { cells: 4, seed: 7001, envC: 0.32, envW: 0.66, scrW: 0.42, drift: 0.42, dense: 1.00, contrast: 0.88 },
-    { cells: 3, seed: 3307, envC: 0.50, envW: 0.72, scrW: 0.58, drift: 0.66, dense: 1.12, contrast: 0.98 },
-    { cells: 2, seed: 9209, envC: 0.66, envW: 0.78, scrW: 0.74, drift: 1.00, dense: 1.24, contrast: 1.08 }
+  // ----- Cloud sprite pool -----
+  // Three appearance CLASSES × CLOUD_VARIANTS seeds = the whole sky's cast.
+  // Each sprite is ONE cloud (not a tile): field × cumulus envelope, thresholded
+  // to a solid-core / soft-edge mass, with a baked top-light march + silver rim.
+  // Per-instance flips + scales + alpha jitter keep repeats unreadable.
+  //   aniso   — vertical noise-frequency multiplier (>1 = horizontally-streaked
+  //             wisps; the cirrus class)
+  //   dome    — crown height as a fraction of tile height
+  //   baseV   — the flat cloud BASE line (fraction of tile height from the top)
+  //   worldW  — on-screen footprint at scale 1 (world px; height follows tw:th)
+  var CLOUD_CLASSES = [
+    { tw: 240, th: 64,  cells: 5, oct: 4, aniso: 2.6, dome: 0.34, baseV: 0.60, worldW: 340,
+      lightNS: 3, lightStep: 2, lightAbsorb: 0.24, contrast: 0.78, alpha: 0.66, cirrus: true,  baseSeed: 41011 },
+    { tw: 208, th: 112, cells: 3, oct: 5, aniso: 1.0, dome: 0.64, baseV: 0.72, worldW: 218,
+      lightNS: 6, lightStep: 3, lightAbsorb: 0.56, contrast: 0.96, alpha: 0.92, cirrus: false, baseSeed: 52021 },
+    { tw: 320, th: 160, cells: 4, oct: 5, aniso: 1.0, dome: 0.72, baseV: 0.74, worldW: 350,
+      lightNS: 10, lightStep: 3, lightAbsorb: 0.62, contrast: 1.06, alpha: 1.00, cirrus: false, baseSeed: 63031 }
   ];
-  // Higher-res tiles than v1 (was 200x130) so the on-screen upscale is ~2-4x,
-  // not ~10x. The fbm FIELD is baked ONCE (coverage-independent) so the higher
-  // resolution costs nothing per weather change — only the cheap shade re-runs.
-  var CLOUD_TW = 480, CLOUD_TH = 288, CLOUD_OCT = 5, CLOUD_WARP = 0.12;
-  // Top-light march: NS density samples straight up the field give bright sunlit
-  // crowns fading to a shadowed base — the volume cue that reads as "3D cloud".
-  var CLOUD_LIGHT_NS = 7, CLOUD_LIGHT_STEP = 3, CLOUD_LIGHT_ABSORB = 0.42;
-  var cloudTiles = null;
+  var CLOUD_VARIANTS = 4;          // seeds per class
+  var cloudSprites = null;         // [class][variant] = { color, ctx, img, lum, den, ready, dirty }
+  var cloudBakeKey = -1;           // softness/rim bake-lever bucket → re-bake on change
   var cloudLightBucket = -999999;
   var cloudMorphBucket = -999999;
 
-  // ----- Cloud DECKS (v24.47) — world-anchored altitude bands you fly THROUGH -----
-  // v1 drew the three baked tiles in ONE fixed screen band (top half of the
-  // viewport). That wasted clouds behind the mountains, and the band faded out
-  // on a climb — so flying up you passed the clouds once and the sky went empty.
-  //
-  // Now the same three baked tiles (the `tile` index below) are STAMPED at a
-  // stack of fixed WORLD altitudes. Each deck's VERTICAL screen position tracks
-  // its world altitude (parallax 1), so climbing slides each deck down past you
-  // — you fly THROUGH the layers. Horizontal motion gets per-deck parallax
-  // (hPar: higher = farther/slower) + wind drift. Crucially each deck is drawn
-  // at a FIXED WORLD SIZE (worldW × worldH), so cloud SIZE never changes with
-  // altitude — the screen-band v1 was pinned precisely to dodge the old
-  // expand/contract bug (BACKGROUND_STYLE §15); fixed world size dodges it too.
-  //
-  // The stack runs from just above the ridgeline (so nothing is wasted behind
-  // the mountains) up toward space, thinning (alpha) as it climbs. Built lazily
-  // because CLOUD_LAYERS (the tile bakes) must exist first.
-  var CLOUD_DECK_BASE   = 170;   // lowest deck altitude (world px above surface) — clears the mountains
-  var CLOUD_DECK_N      = 10;    // number of decks stacked surface → near-space
-  var CLOUD_DECK_GAP0   = 120;   // first gap between decks (world px)
-  var CLOUD_DECK_GROWTH = 1.34;  // each gap this much larger than the last (dense low, sparse high)
-  var CLOUD_DECKS = null;
-  function buildCloudDecks() {
-    var decks = [], alt = CLOUD_DECK_BASE, gap = CLOUD_DECK_GAP0, n = Math.max(1, CLOUD_DECK_N | 0);
-    for (var i = 0; i < n; i++) {
-      var f = (n > 1) ? i / (n - 1) : 0;                 // 0 at the bottom → 1 at the top of the stack
-      decks.push({
-        tile:   i % CLOUD_LAYERS.length,                 // cycle the 3 baked appearances for variety
-        alt:    Math.round(alt),                         // world px above the surface
-        hPar:   0.55 + f * 0.40,                         // horizontal parallax: 0.55 low/near → 0.95 high/far
-        worldW: 560 + i * 52,                            // fixed world footprint (no expand/contract)
-        worldH: 165 + i * 9,
-        f:      f,                                       // 0 (low) → 1 (top of stack); drives live thinning at draw
-        drift:  1 - f * 0.80                             // high clouds crawl, low clouds scud
-      });
-      alt += gap; gap *= CLOUD_DECK_GROWTH;
-    }
-    return decks;
-  }
-  function weatherEnsureDecks() {
-    if (CLOUD_DECKS) return;
-    CLOUD_DECKS = buildCloudDecks();
-    weather.deckDrift = [];
-    for (var i = 0; i < CLOUD_DECKS.length; i++) weather.deckDrift.push(0);
-  }
+  // ----- Altitude LANES — the world-anchored cloud field you fly THROUGH -----
+  // Each lane is a horizontal register of POSSIBLE cloud slots (hash lattice,
+  // cell width cellW): slot k holds a cloud iff hash(k) clears the live
+  // coverage, so the same slots fill and empty smoothly as weather changes and
+  // the field is infinite + non-repeating with zero storage. A lane's VERTICAL
+  // screen position tracks its world altitude (parallax 1) — climbing slides
+  // each lane down past you and you fly through the layers, size locked (the
+  // deck-era expand/contract bug stays dodged: sprites have fixed world size).
+  // Horizontal motion = per-lane camera parallax (hPar: higher = farther/
+  // slower) + accumulated wind drift; alt jitter breaks any visible rows.
+  //   s0..s1 — per-instance scale range   dens — lane fill bias vs coverage
+  var CLOUD_LANES = [
+    { alt: 160,  jit: 34,  cls: 1, cellW: 240, hPar: 0.46, drift: 1.00, s0: 0.55, s1: 0.85, dens: 1.02, seed: 101 },
+    { alt: 248,  jit: 60,  cls: 2, cellW: 400, hPar: 0.55, drift: 0.88, s0: 0.85, s1: 1.20, dens: 0.94, seed: 202 },
+    { alt: 430,  jit: 85,  cls: 1, cellW: 320, hPar: 0.64, drift: 0.74, s0: 0.75, s1: 1.10, dens: 0.95, seed: 303 },
+    { alt: 660,  jit: 115, cls: 2, cellW: 440, hPar: 0.72, drift: 0.60, s0: 1.00, s1: 1.40, dens: 0.95, seed: 404 },
+    { alt: 950,  jit: 145, cls: 1, cellW: 330, hPar: 0.79, drift: 0.47, s0: 0.80, s1: 1.15, dens: 0.95, seed: 505 },
+    { alt: 1320, jit: 185, cls: 2, cellW: 440, hPar: 0.85, drift: 0.36, s0: 1.05, s1: 1.45, dens: 0.90, seed: 606 },
+    { alt: 1780, jit: 225, cls: 0, cellW: 380, hPar: 0.89, drift: 0.26, s0: 0.85, s1: 1.25, dens: 0.85, seed: 707 },
+    { alt: 2350, jit: 285, cls: 0, cellW: 420, hPar: 0.92, drift: 0.18, s0: 1.00, s1: 1.50, dens: 0.80, seed: 808 },
+    { alt: 3050, jit: 345, cls: 0, cellW: 460, hPar: 0.94, drift: 0.12, s0: 1.10, s1: 1.60, dens: 0.72, seed: 909 }
+  ];
+  // The HORIZON lane — tiny far puffs hugging the ridgeline for the resting
+  // view's depth cue. Drawn first (farthest), fades out on a climb (once you
+  // are airborne the "distant weather on the horizon" framing stops applying).
+  var CLOUD_HORIZON_LANE =
+    { alt: 130,  jit: 26,  cls: 1, cellW: 190, hPar: 0.93, drift: 0.30, s0: 0.22, s1: 0.40, dens: 1.15, seed: 55 };
 
-  function weatherInitTiles() {
-    cloudTiles = [];
-    for (var i = 0; i < CLOUD_LAYERS.length; i++) {
-      var c = document.createElement('canvas');
-      c.width = CLOUD_TW; c.height = CLOUD_TH;
-      var cx = c.getContext('2d');
-      cloudTiles.push({
-        field: new Float32Array(CLOUD_TW * CLOUD_TH),   // raw warped-billow, baked once
-        lum: new Uint8ClampedArray(CLOUD_TW * CLOUD_TH),
-        den: new Uint8ClampedArray(CLOUD_TW * CLOUD_TH),
-        color: c, ctx: cx, img: cx.createImageData(CLOUD_TW, CLOUD_TH),
-        pat: null,   // repeating CanvasPattern snapshot of `color` (rebuilt after every recolour)
-        ready: false, fieldDirty: true, shadeDirty: true, recolorDirty: true, coverBucket: -1
-      });
-    }
-  }
+  // ----- Overcast stratus VEIL — one continuous sheet, eases in cov ≳ 0.7 -----
+  // The deliberate "solid grey day" reading comes from a single soft repeating
+  // tile stretched over the whole sky + a top-weighted gradient (denser aloft),
+  // NOT from stacking strips. Fades with player altitude so a high climb
+  // breaks out above the weather into clear sky.
+  var VEIL_TW = 480, VEIL_TH = 288;
+  var VEIL_WORLD_W = 1150;         // world px per horizontal repeat
+  var VEIL_ALT_FADE0 = 2000, VEIL_ALT_FADE1 = 3600;   // player alt → veil gone
+  var veilTile = null;             // { color, ctx, img, lum, den, ready, dirty }
 
-  // STAGE 1 (rare — once per layer, or when morphing): bake the raw warped-billow
-  // field. This is the expensive fbm work; it is coverage-INDEPENDENT, so a
-  // weather change never re-runs it (only the cheap shade pass below).
-  function weatherBakeField(li) {
-    var L = CLOUD_LAYERS[li], T = cloudTiles[li], f = T.field;
-    var mz = weather.morph * 0.5, idx = 0;
-    for (var py = 0; py < CLOUD_TH; py++) {
-      var ny = py / CLOUD_TW;
-      for (var px = 0; px < CLOUD_TW; px++, idx++) {
-        f[idx] = wCloudField(px / CLOUD_TW, ny, L, mz);
+  function weatherInitSprites() {
+    cloudSprites = [];
+    for (var ci = 0; ci < CLOUD_CLASSES.length; ci++) {
+      var C = CLOUD_CLASSES[ci], row = [];
+      for (var vi = 0; vi < CLOUD_VARIANTS; vi++) {
+        var c = document.createElement('canvas');
+        c.width = C.tw; c.height = C.th;
+        var cx = c.getContext('2d');
+        row.push({
+          lum: new Uint8ClampedArray(C.tw * C.th),
+          den: new Uint8ClampedArray(C.tw * C.th),
+          color: c, ctx: cx, img: cx.createImageData(C.tw, C.th),
+          ready: false, dirty: true, recolorDirty: false
+        });
       }
+      cloudSprites.push(row);
     }
-    T.fieldDirty = false;
-    T.shadeDirty = true;
+    var v = document.createElement('canvas');
+    v.width = VEIL_TW; v.height = VEIL_TH;
+    var vctx = v.getContext('2d');
+    veilTile = {
+      lum: new Uint8ClampedArray(VEIL_TW * VEIL_TH),
+      den: new Uint8ClampedArray(VEIL_TW * VEIL_TH),
+      color: v, ctx: vctx, img: vctx.createImageData(VEIL_TW, VEIL_TH),
+      pat: null, ready: false, dirty: true, recolorDirty: false
+    };
   }
 
-  // STAGE 2 (on coverage change): from the baked field, derive density (alpha)
-  // and a baked luminance = ambient + sun·(top-light self-shadow) + silver rim.
-  function weatherShadeLayer(li) {
-    var L = CLOUD_LAYERS[li], T = cloudTiles[li], f = T.field;
-    var cov = Math.max(0, Math.min(1, weather.cov)) * L.dense;
-    var thresh = 0.86 - cov * 0.42;   // HIGH so only field PEAKS become cloud → discrete masses with clear-sky gaps (not a flat haze sheet)
-    var feather = 0.05 + 0.06 * weatherTune.softness;   // defined-but-soft edges
-    var halfW = L.envW * 0.5;
-    var envTop = L.envC - halfW, envBot = L.envC + halfW;
+  // Bake ONE cloud sprite: cumulus envelope × warped billow field → density,
+  // then a straight-up light march (exp self-shadow → bright crowns, shaded
+  // base) + silver rim → luminance. Coverage-independent: weather changes
+  // never re-bake; only softness/rim lever moves or morphing do.
+  function weatherBakeSprite(ci, vi) {
+    var C = CLOUD_CLASSES[ci], S = cloudSprites[ci][vi];
+    var tw = C.tw, th = C.th;
+    var seed = C.baseSeed + vi * 7919;
+    var mz = weather.morph * 0.5;
+    var feather = 0.06 + 0.055 * weatherTune.softness;
     var rim = weatherTune.rimGlow;
-    var idx = 0;
-    for (var py = 0; py < CLOUD_TH; py++) {
-      var ef = py / CLOUD_TH;
-      var env = wSmooth(Math.max(0, Math.min(1, (ef - envTop) / halfW))) *
-                wSmooth(Math.max(0, Math.min(1, (envBot - ef) / halfW)));
-      // The deck fill samples the tile as a repeating pattern, which wraps in Y
-      // as well as X — keep the wrap rows empty so the bottom row can never
-      // bleed into a deck's top edge.
-      if (py === 0 || py === CLOUD_TH - 1) env = 0;
-      for (var px = 0; px < CLOUD_TW; px++, idx++) {
-        if (env <= 0.001) { T.lum[idx] = 0; T.den[idx] = 0; continue; }
-        // env biases the THRESHOLD (clouds thin toward the band edges) instead of
-        // dimming density, so cloud cores within the band stay fully OPAQUE.
-        var threshEff = thresh + (1 - env) * 0.62;
-        var dRaw = (f[idx] - threshEff) / feather;
-        dRaw = dRaw < 0 ? 0 : (dRaw > 1 ? 1 : dRaw);
-        var d = dRaw * dRaw * (3 - 2 * dRaw);           // smoothstep → solid cores, soft edges
-        if (d <= 0.003) { T.lum[idx] = 0; T.den[idx] = 0; continue; }
-        // top-light: accumulate cloud density directly above → exp self-shadow,
-        // so crowns are bright and the underside falls into soft shadow.
-        var occ = 0;
-        for (var k = 1; k <= CLOUD_LIGHT_NS; k++) {
-          var py2 = py - k * CLOUD_LIGHT_STEP;
-          if (py2 < 0) break;
-          var u2 = (f[py2 * CLOUD_TW + px] - thresh) / feather;
-          if (u2 > 0) occ += (u2 > 1 ? 1 : u2);
+    // envelope silhouette params (per-sprite hashes)
+    var u0 = 0.06 + 0.10 * wHash(vi, 1, seed);
+    var u1 = 0.94 - 0.10 * wHash(vi, 2, seed);
+    var d = new Float32Array(tw * th);
+    var px, py, idx = 0;
+    for (py = 0; py < th; py++) {
+      var v = py / th;
+      var vv = (py / tw) * C.aniso + mz;
+      for (px = 0; px < tw; px++, idx++) {
+        var u = px / tw;
+        var edge = wSmooth(wClamp01(Math.min(u - u0, u1 - u) / 0.13));
+        if (edge <= 0.002) { d[idx] = 0; continue; }
+        var E;
+        if (C.cirrus) {
+          // wispy streak: a wavy centre-line with a soft gaussian belly
+          var mid = 0.42 + (wVal(u * 5, 7.7, 9999, seed + 31) - 0.5) * 0.34;
+          var g = (v - mid) / 0.30;
+          E = edge * Math.exp(-g * g);
+        } else {
+          // cumulus: wavy flat base, lumpy domed crown
+          var vb = C.baseV + (wVal(u * 7, 3.5, 9999, seed + 913) - 0.5) * 0.09;
+          if (v >= vb) {
+            E = edge * (1 - wSmooth(wClamp01((v - vb) / 0.07)));
+          } else {
+            var crown = 0.35 + 0.65 * wBillow(u, 0.31, 4, seed + 77, 3);
+            var rise = (vb - v) / (C.dome * crown * (0.35 + 0.65 * edge));
+            E = edge * (1 - wSmooth(wClamp01((rise - 0.72) / 0.28)));
+            // cauliflower carve — bites notches out of the crown, fades to
+            // nothing at the flat base so the underside stays coherent
+            var ch2 = wClamp01((vb - v) / C.dome);
+            var carve = wBillow(u, v * (C.tw / C.th) * 0.8, 6, seed + 241, 2);
+            E *= 1 - 0.38 * ch2 * (1 - carve);
+          }
         }
-        var light = Math.exp(-occ * CLOUD_LIGHT_ABSORB);
-        // silver lining: thin density edges glow
-        var edge = wSmooth(Math.max(0, Math.min(1, d / 0.14))) *
-                   (1 - wSmooth(Math.max(0, Math.min(1, (d - 0.14) / 0.5))));
-        var lum = 0.30 + 0.62 * light + rim * 0.30 * edge;
-        lum = lum < 0 ? 0 : (lum > 1 ? 1 : lum);
-        T.lum[idx] = (lum * 255) | 0;
-        T.den[idx] = (d * 255) | 0;
+        if (E <= 0.003) { d[idx] = 0; continue; }
+        var F = wCloudField(u, vv, C.cells, C.oct, seed);
+        var dr = (F * E - 0.36) / feather;
+        dr = wClamp01(dr);
+        d[idx] = dr * dr * (3 - 2 * dr);   // smoothstep → solid cores, soft edges
       }
     }
-    T.shadeDirty = false;
+    // light march + rim → lum/den bytes
+    idx = 0;
+    for (py = 0; py < th; py++) {
+      for (px = 0; px < tw; px++, idx++) {
+        var dd = d[idx];
+        if (dd <= 0.003) { S.lum[idx] = 0; S.den[idx] = 0; continue; }
+        var occ = 0;
+        for (var k = 1; k <= C.lightNS; k++) {
+          var py2 = py - k * C.lightStep;
+          if (py2 < 0) break;
+          occ += d[py2 * tw + px];
+        }
+        var light = Math.exp(-occ * C.lightAbsorb);
+        var eg = wSmooth(wClamp01(dd / 0.14)) * (1 - wSmooth(wClamp01((dd - 0.14) / 0.5)));
+        var lum = 0.27 + 0.65 * light + rim * 0.30 * eg;
+        S.lum[idx] = (wClamp01(lum) * 255) | 0;
+        S.den[idx] = (dd * 255) | 0;
+      }
+    }
+    S.dirty = false;
+    S.recolorDirty = true;
+    S.ready = true;
+  }
+
+  // Bake the stratus veil tile: broad soft translucency variation (NOT
+  // thresholded masses — it is a sheet), matte lighting, seamless in X.
+  function weatherBakeVeil() {
+    var T = veilTile, idx = 0;
+    for (var py = 0; py < VEIL_TH; py++) {
+      var ny = py / VEIL_TW;
+      // seamless in Y too: crossfade the last rows back into the first
+      var yFade = Math.min(1, (VEIL_TH - 1 - py) / 46);
+      for (var px = 0; px < VEIL_TW; px++, idx++) {
+        var u = px / VEIL_TW;
+        var F = wBillow(u, ny, 3, 60607, 4);
+        if (yFade < 1) {
+          var F0 = wBillow(u, (py - VEIL_TH) / VEIL_TW, 3, 60607, 4);
+          F = F0 + (F - F0) * yFade;
+        }
+        T.den[idx] = ((0.62 + 0.38 * F) * 242) | 0;
+        T.lum[idx] = ((0.52 + 0.34 * F) * 255) | 0;
+      }
+    }
+    T.dirty = false;
     T.recolorDirty = true;
     T.ready = true;
   }
@@ -29205,12 +29252,10 @@
     return _wp;
   }
   function wRGBA(c, alpha) { return 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + alpha.toFixed(3) + ')'; }
-  // Recolour a baked layer to the current sky lighting. Cheap (tile-sized); runs
-  // when the lighting bucket or the structure changes, not every frame.
-  function weatherRecolorLayer(li, hi, sh) {
-    var T = cloudTiles[li], L = CLOUD_LAYERS[li];
+  // Recolour a baked lum/den pair to the current sky lighting. Cheap
+  // (sprite-sized); runs when the lighting bucket changes, not every frame.
+  function weatherRecolorTile(T, hi, sh, ct) {
     var data = T.img.data, lum = T.lum, den = T.den;
-    var ct = weatherTune.contrast * L.contrast;
     for (var i = 0, p = 0; i < lum.length; i++, p += 4) {
       var a = den[i];
       if (a === 0) { data[p + 3] = 0; continue; }
@@ -29223,8 +29268,11 @@
       data[p + 3] = a;
     }
     T.ctx.putImageData(T.img, 0, 0);
-    T.pat = null;   // patterns snapshot the canvas at createPattern — stale now
+    if (T.pat !== undefined) T.pat = null;   // patterns snapshot the canvas — stale now
     T.recolorDirty = false;
+  }
+  function weatherRecolorSprite(ci, vi, hi, sh) {
+    weatherRecolorTile(cloudSprites[ci][vi], hi, sh, weatherTune.contrast * CLOUD_CLASSES[ci].contrast);
   }
 
   // ----- Precip pool (world-anchored, world px) -----
@@ -29233,7 +29281,7 @@
   // precip lands on the ground line yet falls freely down dug shafts and
   // holes. Render-only: drops never touch the liquid sim (the v24.125
   // resting-calm baseline stays locked). Positions + speeds are world px;
-  // the draw projects through cam + dpr*worldScale like the cloud decks.
+  // the draw projects through cam + dpr*worldScale like the cloud lanes.
   var PRECIP_CAP = 1100;
   var PRECIP_MARGIN = 140;     // off-view spawn/cull margin, world px
   var precipParts = null, precipActive = 0;
@@ -29319,6 +29367,13 @@
     } catch (e) {}
   }
 
+  function weatherEnsureLanes() {
+    if (weather.laneDrift) return;
+    weather.laneDrift = [];
+    for (var i = 0; i < CLOUD_LANES.length; i++) weather.laneDrift.push(0);
+    weather.hzDrift = 0;
+  }
+
   function updateWeather(dt) {
     if (!weatherTune.enabled) return;
     if (!precipParts) weatherInitPrecip();
@@ -29336,16 +29391,18 @@
     weather.wind += (weather.twind - weather.wind) * ke(6);
     if (weatherTune.morphSpeed > 0) weather.morph += dt * weatherTune.morphSpeed;
 
-    // cloud drift — base breeze + surfaceWind; accumulated per DECK (high
-    // clouds crawl, low clouds scud — see CLOUD_DECKS[i].drift).
+    // cloud drift — base breeze + surfaceWind; accumulated per LANE (high
+    // clouds crawl, low clouds scud — see CLOUD_LANES[i].drift).
     var sw = (typeof surfaceWind !== 'undefined') ? surfaceWind.current : 0;
     var windPxS = (weatherTune.baseDrift + Math.abs(sw) * 90 * (1 + weather.wind * 1.3)) *
                   (sw < 0 ? -1 : 1) * weatherTune.driftScale;
     if (sw === 0) windPxS = weatherTune.baseDrift * weatherTune.driftScale;
-    weatherEnsureDecks();
-    for (var i = 0; i < CLOUD_DECKS.length; i++) {
-      weather.deckDrift[i] += windPxS * CLOUD_DECKS[i].drift * dt;
+    weatherEnsureLanes();
+    for (var i = 0; i < CLOUD_LANES.length; i++) {
+      weather.laneDrift[i] += windPxS * CLOUD_LANES[i].drift * dt;
     }
+    weather.hzDrift += windPxS * CLOUD_HORIZON_LANE.drift * dt;
+    weather.veilDrift += windPxS * 0.30 * dt;
 
     // lightning (storm only)
     weather.flash *= Math.exp(-dt * 7.5);
@@ -29399,37 +29456,71 @@
     }
   }
 
+  // Draw every visible cloud in ONE lane (the hash lattice walk). Far lanes
+  // are drawn before near ones by the caller.
+  function weatherDrawLane(L, laneDriftPx, laneA, cw, skyBottomPx, e, ws, surfaceY, altScale, swell) {
+    if (laneA <= 0.01) return;
+    var C = CLOUD_CLASSES[L.cls];
+    var shift = cam.x * (1 - L.hPar) - laneDriftPx;     // world px, lane-parallax space
+    var viewW = cw / ws;
+    var k0 = Math.floor((shift - 460) / L.cellW);
+    var k1 = Math.floor((shift + viewW + 460) / L.cellW);
+    for (var k = k0; k <= k1; k++) {
+      var h0 = wHash(k, 11, L.seed);
+      var aFade = wClamp01((e * L.dens - h0) / 0.07);   // clouds fade in low-hash first
+      if (aFade <= 0.01) continue;
+      var vi = (wHash(k, 23, L.seed) * 977 | 0) % CLOUD_VARIANTS;
+      var S = cloudSprites[L.cls][vi];
+      if (!S || !S.ready) continue;
+      var scale = (L.s0 + (L.s1 - L.s0) * wHash(k, 67, L.seed)) * swell;
+      var wW = C.worldW * scale;
+      var wH = wW * C.th / C.tw;
+      var cX = (k + 0.5 + (wHash(k, 37, L.seed) - 0.5) * 0.72) * L.cellW;
+      var alt = (L.alt + (wHash(k, 53, L.seed) - 0.5) * 2 * L.jit) * altScale;
+      var sx = (cX - shift) * ws - wW * ws * 0.5;
+      var top = (surfaceY - alt - cam.y) * ws - wH * ws * 0.5;
+      var wPx = wW * ws, hPx = wH * ws;
+      if (top >= skyBottomPx || top + hPx <= 0 || sx + wPx <= 0 || sx >= cw) continue;
+      ctx.globalAlpha = wClamp01(laneA * aFade * C.alpha * (0.80 + 0.20 * wHash(k, 97, L.seed)));
+      if (wHash(k, 83, L.seed) < 0.5) {
+        ctx.save();
+        ctx.translate(sx + wPx, top);
+        ctx.scale(-1, 1);
+        ctx.drawImage(S.color, 0, 0, wPx, hPx);
+        ctx.restore();
+      } else {
+        ctx.drawImage(S.color, sx, top, wPx, hPx);
+      }
+    }
+  }
+
   // ----- Draw: clouds (called from drawNightSkyToScreen, sky-clipped) -----
   function drawWeatherClouds(cw, ch, skyBottomPx) {
     if (!weatherTune.enabled || PERF_DISABLE_WEATHER) return;
     if (weather.cov < 0.02 || cw <= 0 || ch <= 0) return;
-    // No global altitude fade any more — the decks ARE the altitude response:
-    // climbing slides each deck down past you and reveals the higher ones,
-    // thinning toward space. Underground the sky pass never calls this, and the
-    // sky clip in drawNightSkyToScreen trims any deck that dips below the horizon.
-    if (!cloudTiles) weatherInitTiles();
-    weatherEnsureDecks();
+    if (!cloudSprites) weatherInitSprites();
+    weatherEnsureLanes();
 
-    // STAGE 1 — bake one dirty FIELD per frame. The field is coverage-independent,
-    // so this only runs at first show (3 frames) or when morphing (opt-in).
+    // STAGE 1 — bake one dirty sprite per frame (the whole cast is ready in
+    // ~13 frames at boot; a softness/rim lever move or morph re-runs it).
+    var bakeKey = Math.round(weatherTune.softness * 8) * 97 + Math.round(weatherTune.rimGlow * 8);
     var morphB = Math.round(weather.morph * 4);
-    if (morphB !== cloudMorphBucket) {
+    if (bakeKey !== cloudBakeKey || morphB !== cloudMorphBucket) {
+      cloudBakeKey = bakeKey;
       cloudMorphBucket = morphB;
-      if (weatherTune.morphSpeed > 0) for (var m = 0; m < cloudTiles.length; m++) cloudTiles[m].fieldDirty = true;
+      for (var mc = 0; mc < cloudSprites.length; mc++) {
+        for (var mv = 0; mv < CLOUD_VARIANTS; mv++) cloudSprites[mc][mv].dirty = true;
+      }
     }
-    for (var b = 0; b < cloudTiles.length; b++) {
-      if (cloudTiles[b].fieldDirty) { weatherBakeField(b); break; }
+    var baked = false;
+    for (var bc = 0; bc < cloudSprites.length && !baked; bc++) {
+      for (var bv = 0; bv < CLOUD_VARIANTS && !baked; bv++) {
+        if (cloudSprites[bc][bv].dirty) { weatherBakeSprite(bc, bv); baked = true; }
+      }
     }
-    // STAGE 2 — coverage bucket → re-shade (cheap); one dirty layer per frame.
-    var covB = Math.round(weather.cov * 14);
-    for (var i = 0; i < cloudTiles.length; i++) {
-      if (cloudTiles[i].coverBucket !== covB) { cloudTiles[i].shadeDirty = true; cloudTiles[i].coverBucket = covB; }
-    }
-    for (var s = 0; s < cloudTiles.length; s++) {
-      if (cloudTiles[s].shadeDirty && !cloudTiles[s].fieldDirty) { weatherShadeLayer(s); break; }
-    }
+    if (!baked && veilTile.dirty) weatherBakeVeil();
 
-    // lighting colours from the live atmospheric-scatter cache (150)
+    // STAGE 2 — recolour on lighting-bucket change (amortised, 4 tiles/frame)
     var elev = (typeof computeSunElevation === 'function') ? computeSunElevation(timeOfDay) : 0;
     var sElev = Math.sin(elev);
     var dayW = Math.max(0, Math.min(1, (typeof atmosDayWeight !== 'undefined') ? atmosDayWeight : 0));
@@ -29453,53 +29544,66 @@
       sh = wMix(sh, wp.stormBase, dk * 0.6);
       for (var c = 0; c < 3; c++) { hi[c] *= weatherTune.highlight; sh[c] *= weatherTune.shadow; }
       _wLastHi = hi; _wLastSh = sh;
-      for (var r = 0; r < cloudTiles.length; r++) {
-        if (cloudTiles[r].ready) weatherRecolorLayer(r, hi, sh);
-      }
-    } else {
-      for (var rr = 0; rr < cloudTiles.length; rr++) {
-        if (cloudTiles[rr].ready && cloudTiles[rr].recolorDirty) {
-          // a freshly baked layer needs its colour even mid-bucket — reuse last
-          weatherRecolorLayer(rr, _wLastHi || [230, 230, 235], _wLastSh || [40, 44, 60]);
+      for (var rc = 0; rc < cloudSprites.length; rc++) {
+        for (var rv = 0; rv < CLOUD_VARIANTS; rv++) {
+          if (cloudSprites[rc][rv].ready) cloudSprites[rc][rv].recolorDirty = true;
         }
       }
+      if (veilTile.ready) veilTile.recolorDirty = true;
+    }
+    var recolorBudget = 4;
+    var lastHi = _wLastHi || [230, 230, 235], lastSh = _wLastSh || [40, 44, 60];
+    for (var qc = 0; qc < cloudSprites.length && recolorBudget > 0; qc++) {
+      for (var qv = 0; qv < CLOUD_VARIANTS && recolorBudget > 0; qv++) {
+        var Q = cloudSprites[qc][qv];
+        if (Q.ready && Q.recolorDirty) { weatherRecolorSprite(qc, qv, lastHi, lastSh); recolorBudget--; }
+      }
+    }
+    if (recolorBudget > 0 && veilTile.ready && veilTile.recolorDirty) {
+      weatherRecolorTile(veilTile, lastHi, lastSh, weatherTune.contrast * 0.6);
     }
 
-    // ----- Stamp the decks, high/far → low/near so nearer decks overlap on top.
-    // Each deck is a baked tile placed at a fixed WORLD altitude (surfaceY-alt),
-    // so its vertical screen position tracks true altitude (parallax 1) and you
-    // fly THROUGH it. Footprint is a fixed WORLD size (worldW × worldH) → cloud
-    // size never drifts with altitude (no expand/contract). Horizontal = camera
-    // parallax (far/high decks barely shift) + accumulated wind drift, tiled.
-    //
-    // Tiling rides a repeating CanvasPattern (one transformed fillRect per
-    // deck), NOT abutted drawImage stamps: the noise wraps seamlessly, but a
-    // stamp's bilinear edge filters against transparency instead of the
-    // neighbouring repeat, which drew a hard vertical seam line every wPx
-    // (v24.127 fix). Same idiom as the biome wall fills in 140.
     var ws = dpr * worldScale;
     var surfaceY = SKY_ROWS * TILE;
-    var globalA = weatherTune.layerAlpha * weatherTune.deckDensity;
+    var globalA = weatherTune.layerAlpha;
     var altScale = weatherTune.deckAltScale, thin = weatherTune.deckThin;
+    var e = weather.cov * 1.06 * weatherTune.deckDensity;   // lane fill level
+    var swell = 1 + weather.cov * 0.18;                     // heavy skies fatten each cloud
+    var playerAlt = Math.max(0, surfaceY - (cam.y + (ch / ws) * 0.5));
     ctx.save();
     ctx.imageSmoothingEnabled = true;
-    for (var di = CLOUD_DECKS.length - 1; di >= 0; di--) {
-      var D = CLOUD_DECKS[di];
-      var T = cloudTiles[D.tile];
-      if (!T || !T.ready) continue;
-      var deckA = 1 - D.f * thin;                                 // live thinning toward space
-      if (deckA <= 0.01) continue;
-      var hPx = D.worldH * ws;
-      var topPx = (surfaceY - D.alt * altScale - cam.y) * ws - hPx * 0.5;   // deck top, device px
-      if (topPx >= skyBottomPx || topPx + hPx <= 0) continue;     // below the horizon clip / above screen → cull
-      var wPx = Math.max(48, D.worldW * ws);
-      var shiftPx = cam.x * (1 - D.hPar) * ws - weather.deckDrift[di];
-      var off = ((shiftPx % wPx) + wPx) % wPx;
-      ctx.globalAlpha = Math.max(0, Math.min(1, globalA * deckA));
-      if (!T.pat) T.pat = ctx.createPattern(T.color, 'repeat');
-      T.pat.setTransform(new DOMMatrix([wPx / CLOUD_TW, 0, 0, hPx / CLOUD_TH, -off, topPx]));
-      ctx.fillStyle = T.pat;
-      ctx.fillRect(0, topPx, cw, hPx);
+
+    // Overcast/storm stratus veil — behind every cumulus, one continuous sheet.
+    var veilA = wSmooth(wClamp01((weather.cov - 0.66) / 0.24)) * weatherTune.veil *
+                wClamp01(1 - (playerAlt - VEIL_ALT_FADE0) / (VEIL_ALT_FADE1 - VEIL_ALT_FADE0));
+    if (veilA > 0.01 && veilTile.ready) {
+      var vwPx = VEIL_WORLD_W * ws;
+      var vShift = (cam.x * 0.10 - weather.veilDrift) * ws;
+      var vOff = ((vShift % vwPx) + vwPx) % vwPx;
+      ctx.globalAlpha = wClamp01(veilA * globalA * 0.95);
+      if (!veilTile.pat) veilTile.pat = ctx.createPattern(veilTile.color, 'repeat');
+      veilTile.pat.setTransform(new DOMMatrix([vwPx / VEIL_TW, 0, 0, (skyBottomPx * 1.02) / VEIL_TH, -vOff, 0]));
+      ctx.fillStyle = veilTile.pat;
+      ctx.fillRect(0, 0, cw, skyBottomPx);
+      // top-weighted density: the sheet is heavier aloft, lighter at the horizon
+      var vg = ctx.createLinearGradient(0, 0, 0, skyBottomPx);
+      var shC = _wLastSh || [70, 74, 86];
+      vg.addColorStop(0, wRGBA(shC, wClamp01(veilA * globalA * 0.40)));
+      vg.addColorStop(1, wRGBA(shC, 0));
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, cw, skyBottomPx);
+    }
+
+    // The horizon garnish lane (farthest), then the flight lanes high → low so
+    // near/low clouds overlap on top.
+    var hz = CLOUD_HORIZON_LANE;
+    var hzA = globalA * 0.78 * (1 - wClamp01(playerAlt / 900));   // far puffs sit paler (aerial perspective)
+    weatherDrawLane(hz, weather.hzDrift || 0, hzA, cw, skyBottomPx, e, ws, surfaceY, altScale, swell);
+    var nL = CLOUD_LANES.length;
+    for (var li = nL - 1; li >= 0; li--) {
+      var laneA = globalA * (1 - (li / (nL - 1)) * thin);
+      weatherDrawLane(CLOUD_LANES[li], weather.laneDrift[li], laneA, cw, skyBottomPx, e, ws, surfaceY, altScale, swell);
     }
     ctx.restore();
   }
@@ -35334,7 +35438,7 @@
   // 5s is generous — it covers full dye dissipation at the default DENSITY_-
   // DISSIPATION so a real plume never freezes mid-air.
   var smokeAwakeT = 0;
-  var SMOKE_IDLE_HOLD = 8.0;
+  var SMOKE_IDLE_HOLD = 5.0;
   // v23.32 — obstacle dirty-flag state (gated by PERF_SMOKE_OBSTACLE_DIRTY).
   // The collision mask only changes when the camera/screen pans or the terrain/
   // jello/blasts could have. NaN/-1 sentinels force a repaint on the first frame.
@@ -35372,7 +35476,7 @@
   var SMOKE_WATER_FLOW_EVERY = 4;
   var SMOKE_WATER_FLOW_BIN = 16;
   var SMOKE_WATER_FLOW_MIN_VY = 55;
-  var SMOKE_WATER_FLOW_MIN_N = 2;
+  var SMOKE_WATER_FLOW_MIN_N = 3;
   var SMOKE_WATER_FLOW_MAX_SPLATS = 5;
   // Keep the waterfall legible without pinning the whole plume to it.
   var SMOKE_WATER_FLOW_FORCE = 0.16;
@@ -35383,7 +35487,6 @@
   var smokeWaterFlowVX = null;
   var smokeWaterFlowVY = null;
   var smokeWaterFlowCandidates = [];
-  var smokeWaterFlowSelected = [];
   var smokeWaterFlowSplats = 0;
   // v25.47 — dev debug handle (window.__bombs pattern): lets a headless
   // harness read the obstacle mask + the water-stamp state directly.
@@ -36241,33 +36344,12 @@
     for (var bi = 0; bi < nBins; bi++) {
       if (smokeWaterFlowCount[bi] >= SMOKE_WATER_FLOW_MIN_N) candidates.push(bi);
     }
-    // Rank by mean speed, not particle count. Then keep samples at least
-    // one bin apart so the impulses cover the fall instead of flickering
-    // between adjacent dense cells.
-    candidates.sort(function (a, b) {
-      return smokeWaterFlowVY[b] / smokeWaterFlowCount[b] -
-        smokeWaterFlowVY[a] / smokeWaterFlowCount[a];
-    });
-    var selected = smokeWaterFlowSelected;
-    selected.length = 0;
-    for (var ck = 0; ck < candidates.length && selected.length < SMOKE_WATER_FLOW_MAX_SPLATS; ck++) {
-      var pick = candidates[ck];
-      var pickX = pick % binsW, pickY = (pick / binsW) | 0;
-      var nearPick = false;
-      for (var sk = 0; sk < selected.length; sk++) {
-        var prior = selected[sk];
-        if (Math.abs(pickX - prior % binsW) <= 1 &&
-            Math.abs(pickY - ((prior / binsW) | 0)) <= 1) {
-          nearPick = true; break;
-        }
-      }
-      if (!nearPick) selected.push(pick);
-    }
+    candidates.sort(function (a, b) { return smokeWaterFlowVY[b] - smokeWaterFlowVY[a]; });
 
-    var limit = selected.length;
+    var limit = Math.min(SMOKE_WATER_FLOW_MAX_SPLATS, candidates.length);
     var flowSplat = smokeDriver.splatVelocity || null;
     for (var k = 0; k < limit; k++) {
-      var ci = selected[k];
+      var ci = candidates[k];
       var n = smokeWaterFlowCount[ci];
       var bx = ci % binsW, by = (ci / binsW) | 0;
       var wx = domainX + (bx + 0.5) * BIN;
@@ -57483,66 +57565,6 @@
     }
   }
 
-  // Material-space marbling. The former glass fill had no asymmetric feature
-  // that revealed orientation, so a round body could physically rotate while
-  // looking parked. These filaments and inclusions live in the body's best-fit
-  // rest-space transform. They rotate and squash with the lattice, never with
-  // the screen, and their deterministic layout cannot shimmer or re-roll.
-  function jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR) {
-    if (!isFinite(b.shM00 + b.shM01 + b.shM10 + b.shM11 + scx + scy + maxR)) return;
-    var tr = b.rMaxR || maxR;
-    if (!(tr > 4)) return;
-    var seed = ((Math.floor(b.hue) * 131 + b.n * 977) | 0) + 7409;
-    var flip = jelloFuzzHash(seed) < 0.5 ? -1 : 1;
-    ctx.save();
-    ctx.translate(scx, scy);
-    ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
-    ctx.lineCap = 'round';
-
-    ctx.lineWidth = Math.max(1.1, tr * 0.050);
-    ctx.strokeStyle = 'hsla(' + (hue + 16) + ',' + jelloClampPct(82 * satMul) + '%,' +
-      jelloClampPct(84 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
-    ctx.beginPath();
-    ctx.moveTo(-tr * 0.58, -tr * 0.12 * flip);
-    ctx.bezierCurveTo(-tr * 0.24, -tr * 0.48 * flip,
-                      tr * 0.10,  tr * 0.28 * flip,
-                      tr * 0.52, -tr * 0.04 * flip);
-    ctx.stroke();
-    ctx.lineWidth = Math.max(0.8, tr * 0.028);
-    ctx.strokeStyle = 'hsla(' + (hue - 14) + ',' + jelloClampPct(64 * satMul) + '%,' +
-      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.22).toFixed(3) + ')';
-    ctx.beginPath();
-    ctx.moveTo(-tr * 0.34, tr * 0.35 * flip);
-    ctx.bezierCurveTo(-tr * 0.06, tr * 0.14 * flip,
-                      tr * 0.18, tr * 0.48 * flip,
-                      tr * 0.43, tr * 0.24 * flip);
-    ctx.stroke();
-
-    // A small irregular inclusion cluster makes a full turn unmistakable.
-    // Radial fades keep it organic and avoid the old debug-particle look.
-    for (var mi = 0; mi < 4; mi++) {
-      var ma = (0.55 + mi * 1.71 + jelloFuzzHash(seed + mi * 7) * 0.48) * flip;
-      var md = tr * (0.20 + jelloFuzzHash(seed + mi * 7 + 1) * 0.38);
-      var mx = Math.cos(ma) * md, my = Math.sin(ma) * md;
-      var mr = tr * (0.068 + jelloFuzzHash(seed + mi * 7 + 2) * 0.055);
-      var mg = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
-      if (mi & 1) {
-        mg.addColorStop(0, 'hsla(' + (hue + 20) + ',100%,' +
-          jelloClampPct(88 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')');
-        mg.addColorStop(1, 'hsla(' + (hue + 20) + ',100%,' +
-          jelloClampPct(88 + lightAdd) + '%,0)');
-      } else {
-        mg.addColorStop(0, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
-          jelloClampPct(24 + lightAdd) + '%,' + (alpha * 0.28).toFixed(3) + ')');
-        mg.addColorStop(1, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
-          jelloClampPct(24 + lightAdd) + '%,0)');
-      }
-      ctx.fillStyle = mg;
-      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.2831853); ctx.fill();
-    }
-    ctx.restore();
-  }
-
   function jelloDrawBody(b) {
     if (b.ringN < 3) return;
     // A non-finite bbox must never reach the canvas: createLinearGradient/createRadialGradient
@@ -57641,9 +57663,6 @@
     g.addColorStop(1,   'hsla(' + (hue - 6) + ',' + jelloClampPct(80 * satMul) + '%,' + jelloClampPct(36 + lightAdd) + '%,' + (alpha * 0.68).toFixed(3) + ')');
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
-
-    // A material-locked asymmetric pattern makes body rotation readable.
-    if (shadeOn) jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
@@ -58817,6 +58836,7 @@
         softness:    { min: 0.2, max: 3 },
         morphSpeed:  { min: 0, max: 1 },
         precipMode:  { min: 0, max: 2, step: 1 },
+        veil:         { min: 0, max: 1.5 },
         deckDensity:  { min: 0, max: 1.5 },
         deckAltScale: { min: 0.6, max: 2.4 },
         deckThin:     { min: 0, max: 1.2 }
@@ -62027,7 +62047,7 @@
           values: { 'weather.enabled': 1, 'weather.MOOD': -1, 'weather.driftScale': 1, 'weather.baseDrift': 6,
             'weather.rimGlow': 1, 'weather.highlight': 1, 'weather.shadow': 1, 'weather.contrast': 1,
             'weather.layerAlpha': 1, 'weather.softness': 1, 'weather.morphSpeed': 0,
-            'weather.deckDensity': 1.0, 'weather.deckAltScale': 1.0, 'weather.deckThin': 0.66,
+            'weather.deckDensity': 1.0, 'weather.deckAltScale': 1.0, 'weather.deckThin': 0.5,
             'haze.maxA': 0.72, 'haze.floorA': 0.45,
             'weather.precipMode': 0, 'weather.precipRate': 1, 'weather.precipSpeed': 1,
             'weather.lightning': 1 } },
@@ -62083,7 +62103,7 @@
           values: { 'weather.MOOD': 2, 'weather.driftScale': 1.0, 'weather.baseDrift': 6, 'weather.rimGlow': 2.4,
             'weather.highlight': 1.55, 'weather.shadow': 0.8, 'weather.contrast': 1.35, 'weather.layerAlpha': 1.05,
             'weather.softness': 0.9, 'weather.morphSpeed': 0,
-            'weather.deckDensity': 1.0, 'weather.deckAltScale': 1.0, 'weather.deckThin': 0.66,
+            'weather.deckDensity': 1.0, 'weather.deckAltScale': 1.0, 'weather.deckThin': 0.5,
             'haze.maxA': 0.76, 'haze.floorA': 0.5 } },
         'golden hour': { cat: 'clouds', desc: 'Warm soft low-sun glow on scattered clouds',
           values: { 'weather.MOOD': 1, 'weather.driftScale': 1.0, 'weather.baseDrift': 6, 'weather.rimGlow': 1.9,

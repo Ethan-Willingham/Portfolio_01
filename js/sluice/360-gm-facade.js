@@ -147,6 +147,7 @@
         softness:    { min: 0.2, max: 3 },
         morphSpeed:  { min: 0, max: 1 },
         precipMode:  { min: 0, max: 2, step: 1 },
+        veil:         { min: 0, max: 1.5 },
         deckDensity:  { min: 0, max: 1.5 },
         deckAltScale: { min: 0.6, max: 2.4 },
         deckThin:     { min: 0, max: 1.2 }

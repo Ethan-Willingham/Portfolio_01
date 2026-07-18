@@ -702,7 +702,7 @@ The 8 documented levers live in the `Resolution config` block (grep
 | `moonPhase` step | `1/8 per day` | — | Moon-phase progression |
 
 ## 5.4 Weather — clouds / precip / storms · grep `weatherTune` · tier `live` (the `weather` gm group)
-Clouds + rain/snow + lightning (`js/sluice/155-weather.js`). A mood machine drives the SIM (coverage / precip / wind); these are the LOOK levers. Dev **N** force-cycles the mood; `PERF_DISABLE_WEATHER` / PERF ISO "no weather" / `weather.enabled` gate it. See BACKGROUND_STYLE §15. The cloud bake itself (`CLOUD_TW/TH/OCT`, the `CLOUD_LAYERS` table) is an `edit`-tier code change in 155, not a live lever. Boot lever: `?wmood=N` (0 clear … 5 storm) locks the mood from the first frame with values snapped — the weather twin of `?wdbg=`, for screenshot harnesses.
+Clouds + rain/snow + lightning (`js/sluice/155-weather.js`). A mood machine drives the SIM (coverage / precip / wind); these are the LOOK levers. Dev **N** force-cycles the mood; `PERF_DISABLE_WEATHER` / PERF ISO "no weather" / `weather.enabled` gate it. See BACKGROUND_STYLE §15. v26.21 replaced the tiled deck strips with INSTANCED cumulus sprites: the sprite pool (`CLOUD_CLASSES` × `CLOUD_VARIANTS`), the altitude registers (`CLOUD_LANES`, `CLOUD_HORIZON_LANE`) and the overcast sheet consts (`VEIL_*`) are `edit`-tier code changes in 155, not live levers. Boot levers for screenshot harnesses: `?wmood=N` (0 clear … 5 storm) locks the mood from the first frame with values snapped (the weather twin of `?wdbg=`); pair with `?tod=` and `?alt=` (§5.5) for time-of-day and altitude.
 
 **One-click presets (L panel).** The `L` panel's PRESETS section has two weather button groups (defined in `380-gm-presets-boot.js`): **`weather`** flips the sky TYPE (clear / fair / cloudy / overcast / rainfall / snowfall / thunderstorm / blizzard / dynamic) by setting `weather.MOOD` (+ precip), leaving the look dials alone; **`clouds`** are full cloud-LOOK swaps (puffy cumulus, wispy cirrus, dramatic sunset, moody overcast, soft & dreamy, fast front, golden hour, plus `cloud defaults` to reset). Pick a TYPE for cover, then a LOOK, then fine-tune the dials. All also reachable from the console via `gm.preset('name')` / `gm.presetList('weather'|'clouds')`.
 | Lever | Now | Range | Effect |
@@ -715,11 +715,13 @@ Clouds + rain/snow + lightning (`js/sluice/155-weather.js`). A mood machine driv
 | `weather.highlight` | `1` | 0–2 | Sunlit cloud-face brightness |
 | `weather.shadow` | `1` | 0–2 | Cloud-base brightness (lower = moodier) |
 | `weather.contrast` | `1` | 0.2–2.5 | Cloud internal contrast |
-| `weather.rimGlow` | `1` | 0–3 | Silver-lining edge brightness |
-| `weather.softness` | `1` | 0.2–3 | Coverage-edge feather (puff hardness) |
-| `weather.morphSpeed` | `0` | 0–1 | Cloud shape-morph rate (0 = drift only) |
-| `weather.cloudTop` | `0.0` | -0.3–0.6 | Cloud band top, fraction of screen height (FIXED screen pos) |
-| `weather.cloudHeight` | `0.5` | 0.2–1.5 | Cloud band height, fraction of screen height. Default <= the ~0.55 surface horizon so the band sits above it and the sky clip never bites during flight. Constant by design so flying never rescales clouds (screen-pinned, not horizon-sized) |
+| `weather.rimGlow` | `1` | 0–3 | Silver-lining edge brightness (baked; a move re-bakes the sprite pool, one sprite per frame) |
+| `weather.softness` | `1` | 0.2–3 | Cloud-edge feather / puff hardness (baked; a move re-bakes like rimGlow) |
+| `weather.morphSpeed` | `0` | 0–1 | Cloud shape-morph rate (0 = shapes hold, drift only; >0 re-bakes the pool round-robin on a morph bucket) |
+| `weather.veil` | `1` | 0–1.5 | Overcast/storm stratus-sheet strength (eases in above ~0.7 coverage; fades out on a high climb) |
+| `weather.deckDensity` | `1` | 0–1.5 | Cloud-instance density across every lane (deck-era NAME kept for preset compat) |
+| `weather.deckAltScale` | `1` | 0.6–2.4 | Multiplies every lane altitude — the whole field rides higher / lower |
+| `weather.deckThin` | `0.5` | 0–1.2 | High-lane alpha fade toward space (0 = solid to the top of the stack) |
 | `weather.precipRate` | `1` | 0–3 | Precip particle-count multiplier |
 | `weather.precipSpeed` | `1` | 0.2–3 | Precip fall-speed multiplier |
 | `weather.precipMode` | `0` | 0/1/2 | 0 auto (snow in cold spawn biome) / 1 rain / 2 snow |
