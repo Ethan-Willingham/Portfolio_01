@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.38';
+  var GAME_VERSION = 'v26.39';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -12669,18 +12669,29 @@
     ctx.fillText('Н', cx - 62, gy - 56);
     ctx.fillText('Я', cx - 62, gy - 34);
 
-    // Door (v26.37, owner direction): a FELT CURTAIN in two halves that
-    // GATHERS open, theater-tieback style, replacing the v26.31 sliding
-    // plank leaf (owner: not a vertical edge with only horizontal motion).
-    // Each half's inner edge is a curve: fuller along the (pelmet-hidden)
-    // rod, sweeping out to a pinch at tieback height (~2/3 down), then the
-    // skirt kicks back toward center at the floor, hem lifting slightly as
-    // the fabric is pulled aside. Three nested fold layers per half darken
-    // toward the jamb; a copper tie band fades in over the pinch. Behind
-    // it, the same warm-shadow hall glow (light pools low, lintel dark).
+    // Door (v26.39, owner: "way more attention and detail"): the FELT
+    // CURTAIN detail pass. Two halves gather open theater-tieback style
+    // on bathDoorT (smoothstepped): fuller along the pelmet-hidden rod,
+    // a swag bowing toward center to a pinch at 0.66 height, a skirt
+    // kicking back with a slight hem lift. PIXEL_ART.md applied: ONE
+    // hue-shifted FELT ramp (cool-plum shadow end, warm highlight,
+    // saturation peaking at base), FOUR fold bands per half at uneven
+    // fractions with per-band bow/pinch jitter (anti-banding), seams
+    // embossed as dark+light line pairs (no coloring-book outlines),
+    // shadows as explicit ramp[0] pixels, a wavy hem (dark selout) that
+    // sways under a pixel, a warm rim on the inner edge scaling with
+    // the hall light, a BRASS tieback (left-biased glint, top-left
+    // light) with a hanging tassel, and jamb AO where the fabric tucks
+    // into the frame. The hall behind gets floorboard seams in the lamp
+    // pool; the pelmet gains a top light, gather stripes, under-scallop
+    // shadow and brass drop tassels; a pale nalichnik casing + crown
+    // frames the door in the tower's own window language (win()).
     var dw = banyaDoorX1 - banyaDoorX0;
     var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
     var cxD = (banyaDoorX0 + banyaDoorX1) / 2;
+    var FELT0 = '#3a1f1e', FELT1 = '#572d26', FELT2 = '#8a4a3a',
+        FELT3 = '#a55f42', FELT4 = '#c17a4e';
+    var BRS0 = '#5c3010', BRS1 = '#a06020', BRS2 = '#e8b040';
     ctx.fillStyle = '#14100e';
     ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh);
     if (bathDoorT > 0.04) {
@@ -12691,71 +12702,161 @@
           (bathDoorT * (0.05 + 0.4 * dwarm)).toFixed(3) + ')';
         ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + dry, dw - 2, 2);
       }
-      // The oil lamp's pool on the floorboards deep inside.
+      // The oil lamp's pool, with floorboard seams catching the light.
       ctx.fillStyle = 'rgba(236,176,98,' + (bathDoorT * 0.30).toFixed(3) + ')';
       ctx.fillRect(banyaDoorX0 + 3, BANYA_DOOR_Y0 + dh - 7, dw - 6, 4);
+      ctx.fillStyle = 'rgba(90,46,20,' + (bathDoorT * 0.55).toFixed(3) + ')';
+      ctx.fillRect(banyaDoorX0 + 4, BANYA_DOOR_Y0 + dh - 9, dw - 8, 1);
+      ctx.fillRect(banyaDoorX0 + 4, BANYA_DOOR_Y0 + dh - 5, dw - 8, 1);
     }
-    // Fabric motion eases (smoothstep) so the gather starts and settles
-    // soft. Distances are measured from the door CENTER toward the jamb;
-    // -1 at closed overlaps the halves one pixel so no seam light leaks.
+    // Fabric geometry. Distances run from the door CENTER toward the
+    // jamb; -1 at closed overlaps the halves a pixel so no light leaks.
     var ct = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);
     var cHalf = dw / 2;
-    var cdT  = -1 + (13 + 1) * ct;    // inner edge along the rod
-    var cdTi = -1 + (18 + 1) * ct;    // the tieback pinch (closest to jamb)
-    var cdB  = -1 + (15 + 1) * ct;    // hem corner (skirt kicks back in)
-    var cBow = 5 * ct;                // swag belly bowing toward center
+    var cdT  = -1 + 14 * ct;          // inner edge along the rod
+    var cdTi = -1 + 19 * ct;          // the tieback pinch (nearest the jamb)
+    var cdB  = -1 + 16 * ct;          // hem corner (skirt kicks back in)
     var yTie = BANYA_DOOR_Y0 + dh * 0.66;
     var yBot = BANYA_DOOR_Y0 + dh - 5 * ct;
-    function curtainPath(dir, dT, dTi, dB) {
-      var jx = cxD + dir * cHalf;
-      ctx.beginPath();
-      ctx.moveTo(jx, BANYA_DOOR_Y0);
-      ctx.lineTo(cxD + dir * dT, BANYA_DOOR_Y0);
-      ctx.quadraticCurveTo(cxD + dir * ((dT + dTi) / 2 - cBow),
-        (BANYA_DOOR_Y0 + yTie) / 2 + 4, cxD + dir * dTi, yTie);
+    // Four fold bands at uneven fractions of the remaining width (base
+    // widest, per the flat-face rule); jitter breaks concentric edges.
+    var bandFr  = [0, 0.20, 0.56, 0.82];
+    var bandCol = [FELT3, FELT2, FELT1, FELT0];
+    function bandD(d, bk) { return d + bandFr[bk] * (cHalf - d); }
+    // Inner-edge trace, rod to hem corner. Each band bows a touch more
+    // and pins its tieback a pixel off its neighbours; the open swag
+    // breathes about a third of a pixel so tied fabric never sits dead.
+    function curtainEdge(dir, bk, asMove, off) {
+      var dT = bandD(cdT, bk) - off, dTi = bandD(cdTi, bk) - off,
+          dB = bandD(cdB, bk) - off;
+      var bow = (5 + 0.8 * bk) * ct + 0.35 * ct * Math.sin(t * 0.8 + dir * 1.7);
+      var yT2 = yTie + ((bk * 7) % 5) - 2;
+      if (asMove) ctx.moveTo(cxD + dir * dT, BANYA_DOOR_Y0);
+      else        ctx.lineTo(cxD + dir * dT, BANYA_DOOR_Y0);
+      ctx.quadraticCurveTo(cxD + dir * ((dT + dTi) / 2 - bow),
+        (BANYA_DOOR_Y0 + yT2) / 2 + 4, cxD + dir * dTi, yT2);
       ctx.quadraticCurveTo(cxD + dir * (dTi + 1.5),
-        (yTie + yBot) / 2, cxD + dir * dB, yBot);
-      ctx.lineTo(jx, BANYA_DOOR_Y0 + dh);
-      ctx.closePath();
+        (yT2 + yBot) / 2, cxD + dir * dB, yBot);
+    }
+    // Wavy hem from the band's hem corner back to the jamb floor line;
+    // the wave phase drifts slowly, so the hem sways.
+    function curtainHem(dir, bk) {
+      var jx = cxD + dir * cHalf, fy = BANYA_DOOR_Y0 + dh;
+      var hx = cxD + dir * bandD(cdB, bk), hy = yBot;
+      for (var hs = 1; hs <= 3; hs++) {
+        var nx = hx + (jx - hx) * hs / 3;
+        var ny = hy + (fy - hy) * hs / 3;
+        var mx = hx + (jx - hx) * (hs - 0.5) / 3;
+        var my = hy + (fy - hy) * (hs - 0.5) / 3;
+        ctx.quadraticCurveTo(mx,
+          my - (1.6 + 0.8 * Math.sin(mx * 0.55 + dir * 2.1 + t * 1.15)),
+          nx, ny);
+      }
     }
     ctx.save();
     ctx.beginPath(); ctx.rect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh); ctx.clip();
-    var foldCols = ['#8a4a3a', '#703a2d', '#542b21'];
-    var foldFrac = [0, 0.42, 0.72];
     for (var cs = 0; cs < 2; cs++) {
       var cDir = cs === 0 ? -1 : 1;
-      for (var cf = 0; cf < 3; cf++) {
-        var ffr = foldFrac[cf];
-        ctx.fillStyle = foldCols[cf];
-        curtainPath(cDir,
-          cdT  + ffr * (cHalf - cdT),
-          cdTi + ffr * (cHalf - cdTi),
-          cdB  + ffr * (cHalf - cdB));
+      var jxS = cxD + cDir * cHalf;
+      // Band fills, lit inner band first, deep jamb band last.
+      for (var cb = 0; cb < 4; cb++) {
+        ctx.fillStyle = bandCol[cb];
+        ctx.beginPath();
+        ctx.moveTo(jxS, BANYA_DOOR_Y0);
+        curtainEdge(cDir, cb, false, 0);
+        curtainHem(cDir, cb);
+        ctx.closePath();
         ctx.fill();
       }
-      // Copper tie band across the gathered bunch at the pinch.
+      // Embossed fold seams: a ramp[0] crease plus a 1px lit line on
+      // the brighter side (value-step seams, not outlines).
+      ctx.lineWidth = 1.2;
+      for (var sm = 1; sm < 4; sm++) {
+        ctx.strokeStyle = FELT0;
+        ctx.beginPath(); curtainEdge(cDir, sm, true, 0); ctx.stroke();
+        if (sm < 3) {
+          ctx.strokeStyle = sm === 1 ? FELT4 : FELT3;
+          ctx.beginPath(); curtainEdge(cDir, sm, true, 1.3); ctx.stroke();
+        }
+      }
+      // Hem selout in ramp[0] (the fabric's shadow side).
+      ctx.strokeStyle = FELT0; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cxD + cDir * cdB, yBot);
+      curtainHem(cDir, 0);
+      ctx.stroke();
+      // Warm rim on the inner edge: the hall's lamp catching the felt.
+      ctx.strokeStyle = 'rgba(255,196,124,' + (0.12 + 0.32 * ct).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); curtainEdge(cDir, 0, true, 0); ctx.stroke();
+      // Brass tieback across the bunch + a hanging tassel.
       if (ct > 0.55) {
         var cAl = (ct - 0.55) / 0.45;
-        var bw = cHalf - cdTi + 1;
-        var bx0 = cDir < 0 ? cxD - cHalf : cxD + cdTi - 1;
+        var tbw = cHalf - cdTi + 1;
+        var tbx = cDir < 0 ? cxD - cHalf : cxD + cdTi - 1;
         ctx.globalAlpha = cAl;
-        ctx.fillStyle = '#4e2a21';
-        ctx.fillRect(bx0, yTie - 2, bw, 4);
-        ctx.fillStyle = '#b5723a';
-        ctx.fillRect(bx0, yTie - 1, bw, 1);
+        ctx.fillStyle = BRS0; ctx.fillRect(tbx, yTie - 3, tbw, 6);
+        ctx.fillStyle = BRS1; ctx.fillRect(tbx, yTie - 2, tbw, 3);
+        ctx.fillStyle = BRS2; ctx.fillRect(tbx + 1, yTie - 2, 2, 1);
+        var tsx = Math.round(cxD + cDir * (cdTi + (cHalf - cdTi) * 0.5));
+        ctx.fillStyle = FELT0; ctx.fillRect(tsx, yTie + 3, 1, 3);
+        ctx.fillStyle = BRS1; ctx.fillRect(tsx - 1, yTie + 6, 3, 3);
+        ctx.fillStyle = BRS2; ctx.fillRect(tsx - 1, yTie + 6, 1, 1);
+        ctx.fillStyle = BRS0;
+        ctx.fillRect(tsx - 1, yTie + 9, 1, 4);
+        ctx.fillRect(tsx + 1, yTie + 9, 1, 4);
+        ctx.fillStyle = BRS1; ctx.fillRect(tsx, yTie + 9, 1, 5);
         ctx.globalAlpha = 1;
       }
     }
+    // AO where the fabric tucks into the frame (explicit ramp[0]).
+    ctx.fillStyle = FELT0;
+    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, 1, dh);
+    ctx.fillRect(banyaDoorX1 - 1, BANYA_DOOR_Y0, 1, dh);
     ctx.restore();
-    // Felt flap valance over the lintel.
-    ctx.fillStyle = '#8a4a3a';
+    // Felt pelmet over the lintel: top light, gather stripes, scallop
+    // with an under-shadow, and brass drop tassels at the dips.
+    ctx.fillStyle = FELT2;
     ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, 32);
-    ctx.strokeStyle = '#6e3a2c'; ctx.lineWidth = 3;
+    ctx.fillStyle = FELT3;
+    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, 1);
+    ctx.fillStyle = FELT1;
+    for (var pgx = banyaDoorX0 + 7; pgx < banyaDoorX1 - 3; pgx += 10)
+      ctx.fillRect(pgx, BANYA_DOOR_Y0 + 3, 1, 26);
+    ctx.strokeStyle = FELT0; ctx.lineWidth = 1;      // scallop cast shadow
+    ctx.beginPath();
+    ctx.moveTo(banyaDoorX0, BANYA_DOOR_Y0 + 34);
+    ctx.quadraticCurveTo(banyaDoorX0 + 11, BANYA_DOOR_Y0 + 42, banyaDoorX0 + 22, BANYA_DOOR_Y0 + 34);
+    ctx.quadraticCurveTo(banyaDoorX0 + 33, BANYA_DOOR_Y0 + 42, banyaDoorX1, BANYA_DOOR_Y0 + 34);
+    ctx.stroke();
+    ctx.strokeStyle = FELT1; ctx.lineWidth = 3;      // the scallop edge
     ctx.beginPath();
     ctx.moveTo(banyaDoorX0, BANYA_DOOR_Y0 + 32);
     ctx.quadraticCurveTo(banyaDoorX0 + 11, BANYA_DOOR_Y0 + 40, banyaDoorX0 + 22, BANYA_DOOR_Y0 + 32);
     ctx.quadraticCurveTo(banyaDoorX0 + 33, BANYA_DOOR_Y0 + 40, banyaDoorX1, BANYA_DOOR_Y0 + 32);
     ctx.stroke();
+    ctx.fillStyle = BRS1;                            // drop tassels at the dips
+    ctx.fillRect(banyaDoorX0 + 10, BANYA_DOOR_Y0 + 37, 2, 4);
+    ctx.fillRect(banyaDoorX0 + 32, BANYA_DOOR_Y0 + 37, 2, 4);
+    ctx.fillStyle = BRS2;
+    ctx.fillRect(banyaDoorX0 + 10, BANYA_DOOR_Y0 + 37, 1, 1);
+    ctx.fillRect(banyaDoorX0 + 32, BANYA_DOOR_Y0 + 37, 1, 1);
+    // Nalichnik casing: the pale carved door surround, in the same
+    // language as the tower's window casings: side boards standing on
+    // the step, a head board, and the little crown peak.
+    ctx.fillStyle = '#d68a5a';
+    ctx.fillRect(banyaDoorX0 - 5, BANYA_DOOR_Y0 - 4, 4, dh - 2);
+    ctx.fillRect(banyaDoorX1 + 1, BANYA_DOOR_Y0 - 4, 4, dh - 2);
+    ctx.fillRect(banyaDoorX0 - 5, BANYA_DOOR_Y0 - 8, dw + 10, 5);
+    ctx.beginPath();
+    ctx.moveTo(cxD - 8, BANYA_DOOR_Y0 - 8);
+    ctx.lineTo(cxD, BANYA_DOOR_Y0 - 14);
+    ctx.lineTo(cxD + 8, BANYA_DOOR_Y0 - 8);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a5427';                      // carved shadow lines
+    ctx.fillRect(banyaDoorX0 - 2, BANYA_DOOR_Y0 - 4, 1, dh - 2);
+    ctx.fillRect(banyaDoorX1 + 1, BANYA_DOOR_Y0 - 4, 1, dh - 2);
+    ctx.fillRect(banyaDoorX0 - 5, BANYA_DOOR_Y0 - 4, dw + 10, 1);
     lantern(banyaDoorX0 - 11, BANYA_DOOR_Y0 - 2);
 
     // Lived-in props: a bench on the GROUND beside the tower, and a rain
@@ -12770,7 +12871,7 @@
     ctx.fillStyle = '#1f4f9e';
     ctx.beginPath(); ctx.ellipse(cx + 76, gy - 40, 7, 2.5, 0, 0, 6.283); ctx.fill();
 
-    // Warm spill on the door step while the leaf is open (drawShopDoorGlow
+    // Warm spill on the door step while the curtain is open (drawShopDoorGlow
     // pattern at plinth size; subtle, the door is the invitation).
     if (bathDoorT > 0.01) {
       var sp = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);   // smoothstep
@@ -12796,7 +12897,7 @@
       ctx.fillStyle = 'rgba(224,176,96,' + pa + ')';
       ctx.font = '12px "Commit Mono", monospace';
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('enter', (banyaDoorX0 + banyaDoorX1) / 2, BANYA_DOOR_Y0 - 10);
+      ctx.fillText('enter', (banyaDoorX0 + banyaDoorX1) / 2, BANYA_DOOR_Y0 - 20);
     }
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }

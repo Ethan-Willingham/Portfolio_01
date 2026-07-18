@@ -429,6 +429,28 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-18 (Fable; v26.39): CURTAIN DETAIL PASS (owner: "way more
+  attention and detail"). PIXEL_ART.md applied to the v26.37 curtain: one
+  hue-shifted FELT ramp (#3a1f1e/#572d26/#8a4a3a/#a55f42/#c17a4e, cool
+  shadow end, warm highlight, saturation peaking at base) replacing the
+  flat 3-tone darkening; FOUR fold bands at uneven fractions (0/.20/.56/
+  .82) with per-band bow and tieback jitter so edges are not concentric
+  (the bible's anti-banding fix); fold seams embossed as a ramp[0] crease
+  plus a 1px lit line on the brighter side (no interior outlines); a wavy
+  hem built from three quadratic dips with a slow phase drift (sways
+  under a pixel) and a ramp[0] selout; a warm rim stroke on the inner
+  edge scaling with the hall light; the tie became a BRASS band (gold
+  ramp #5c3010/#a06020/#e8b040, glint left-biased for the top-left light
+  law) with a hanging tassel (cord, head, glint, three-tick fringe); jamb
+  AO as explicit ramp[0] columns (the rgba-black anti-pattern removed);
+  floorboard seams in the lamp pool behind; the pelmet gained a 1px top
+  light, FELT1 gather stripes, a 1px ramp[0] under-scallop shadow and two
+  brass drop tassels at the dips; and the whole door got a pale NALICHNIK
+  casing (side boards standing on the step, head board, crown peak,
+  #d68a5a/#8a5427) matching win()'s window surrounds. The 'enter' hint
+  moved up to BANYA_DOOR_Y0-20 to clear the crown. Geometry, ramp rates
+  and all entry mechanics unchanged from v26.31/v26.37.
+
 - 2026-07-18 (Fable; v26.37): THE DOOR IS A CURTAIN (owner reference image,
   same session as v26.31). The v26.31 sliding plank leaf read as a rigid
   vertical edge in pure horizontal motion; the owner wants a theater-
