@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.23';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.24';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1764,6 +1764,7 @@
   var smokeQuadVerts = null;
   var smokePaintedVersion = -1;
   var smokePaintedJello = false;
+  var SMOKE_IDLE_HOLD = 15;
   var SMOKE_COL = { r: 0.20, g: 0.185, b: 0.165 };   // warm gray, light enough to read on the dark box
   var SMOKE_WATER_FLOW_MIN_VY = 55;
   // Keep the waterfall legible without pinning the whole plume to it.
@@ -1772,6 +1773,13 @@
   var SMOKE_WATER_FLOW_RADIUS = 0.085;
   var smokeWaterFlowTick = 0;
   var smokeWaterFlowCandidates = [];
+  var smokeWaterFlowSelected = [];
+  var smokeWaterFlowNext = [];
+  var smokeWaterFlowBinsW = Math.ceil(gridW / 2);
+  var smokeWaterFlowBinsH = Math.ceil(gridH / 2);
+  var smokeWaterFlowCount = new Uint16Array(smokeWaterFlowBinsW * smokeWaterFlowBinsH);
+  var smokeWaterFlowVX = new Float32Array(smokeWaterFlowCount.length);
+  var smokeWaterFlowVY = new Float32Array(smokeWaterFlowCount.length);
   var smokeWaterFlowSplats = 0;
 
   function bootSmoke() {
@@ -1804,7 +1812,7 @@
 
   function smokePuff(wx, wy, dvx, dvy, col, rad) {
     if (!smokeActive) return;
-    smokeAwakeT = 5;
+    smokeAwakeT = SMOKE_IDLE_HOLD;
     SmokeFluid.splat(wx / worldW, 1 - wy / worldH, dvx, dvy, col || SMOKE_COL, rad || 0.013);
   }
 
@@ -1882,25 +1890,67 @@
     smokeWaterFlowTick++;
     if (smokeWaterFlowTick < 4 || !waterCellsAny || !SmokeFluid.splatVelocity) return;
     smokeWaterFlowTick = 0;
+    smokeWaterFlowCount.fill(0);
+    smokeWaterFlowVX.fill(0);
+    smokeWaterFlowVY.fill(0);
+    // The shared water map is 8 px. Aggregate 2x2 cells so a thinning
+    // stream does not blink off whenever particles straddle cell edges.
+    for (var wi = 0; wi < waterCellCount.length; wi++) {
+      var wn = waterCellCount[wi];
+      if (!wn) continue;
+      var wc = wi % gridW, wr = (wi / gridW) | 0;
+      var wbi = (wr >> 1) * smokeWaterFlowBinsW + (wc >> 1);
+      smokeWaterFlowCount[wbi] += wn;
+      smokeWaterFlowVX[wbi] += waterCellVX[wi];
+      smokeWaterFlowVY[wbi] += waterCellVY[wi];
+    }
     var candidates = smokeWaterFlowCandidates;
     candidates.length = 0;
-    for (var idx = 0; idx < waterCellCount.length; idx++) {
-      var n = waterCellCount[idx];
-      if (n >= 3 && waterCellVY[idx] / n > SMOKE_WATER_FLOW_MIN_VY) candidates.push(idx);
+    for (var idx = 0; idx < smokeWaterFlowCount.length; idx++) {
+      var n = smokeWaterFlowCount[idx];
+      if (n >= 1 && smokeWaterFlowVY[idx] / n > SMOKE_WATER_FLOW_MIN_VY) candidates.push(idx);
     }
-    candidates.sort(function (a, b) { return waterCellVY[b] - waterCellVY[a]; });
-    var limit = Math.min(5, candidates.length);
+    candidates.sort(function (a, b) {
+      return smokeWaterFlowVY[b] / smokeWaterFlowCount[b] -
+        smokeWaterFlowVY[a] / smokeWaterFlowCount[a];
+    });
+    var previous = smokeWaterFlowSelected;
+    var selected = smokeWaterFlowNext;
+    selected.length = 0;
+    for (var pk = 0; pk < previous.length && selected.length < 5; pk++) {
+      var held = previous[pk];
+      var heldN = smokeWaterFlowCount[held];
+      if (heldN < 1 || smokeWaterFlowVY[held] / heldN <= SMOKE_WATER_FLOW_MIN_VY) continue;
+      selected.push(held);
+    }
+    for (var ck = 0; ck < candidates.length && selected.length < 5; ck++) {
+      var pick = candidates[ck];
+      var pickX = pick % smokeWaterFlowBinsW;
+      var pickY = (pick / smokeWaterFlowBinsW) | 0;
+      var nearPick = false;
+      for (var sk = 0; sk < selected.length; sk++) {
+        var prior = selected[sk];
+        if (Math.abs(pickX - prior % smokeWaterFlowBinsW) <= 1 &&
+            Math.abs(pickY - ((prior / smokeWaterFlowBinsW) | 0)) <= 1) {
+          nearPick = true; break;
+        }
+      }
+      if (!nearPick) selected.push(pick);
+    }
+    smokeWaterFlowSelected = selected;
+    smokeWaterFlowNext = previous;
+    var limit = selected.length;
     for (var k = 0; k < limit; k++) {
-      var ci = candidates[k];
-      var count = waterCellCount[ci];
-      var col = ci % gridW, row = (ci / gridW) | 0;
-      var avx = waterCellVX[ci] / count;
-      var avy = waterCellVY[ci] / count;
+      var ci = selected[k];
+      var count = smokeWaterFlowCount[ci];
+      var col = ci % smokeWaterFlowBinsW, row = (ci / smokeWaterFlowBinsW) | 0;
+      var avx = smokeWaterFlowVX[ci] / count;
+      var avy = smokeWaterFlowVY[ci] / count;
       var fx = Math.max(-65, Math.min(65, avx * SMOKE_WATER_FLOW_FORCE));
       var fy = -Math.min(80, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
       var radius = SMOKE_WATER_FLOW_RADIUS + Math.min(0.018, count * 0.0012);
-      SmokeFluid.splatVelocity((col + 0.5) * TILE / worldW,
-        1 - (row + 0.5) * TILE / worldH, fx, fy, radius);
+      SmokeFluid.splatVelocity((col * 2 + 1) * TILE / worldW,
+        1 - (row * 2 + 1) * TILE / worldH, fx, fy, radius);
       smokeWaterFlowSplats++;
     }
   }

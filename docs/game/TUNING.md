@@ -137,10 +137,11 @@ drive how blurry the smoke reads** — see the deblur recipe in §9.
 | `DISPLAY_FS` 5-tap reconstruction | on | fixed | v26.24: the display samples the dye centre plus four neighbours. The sim grid stays unchanged, but its square lobes are blended before compositing. WebGL and WebGPU use the same weights |
 | obstacle filter + feather | on | fixed | v26.24: the 8-px mask is linearly filtered and the visible cutout fades across its edge. Physics still uses the hard alpha threshold |
 | `SMOKE_WATER_OBSTACLE` | `1` | 0/1 | v26.24: slow, dense water is painted into the obstacle mask from the liquid CPU mirror, so smoke banks off pond surfaces. Fast falling bins get only the passable rim stamp because the velocity coupling below handles them. This removes the old 8-px staircase that erased smoke along a waterfall. Never `drawImage` the WebGPU water canvas here: the update phase reads a cleared texture and the render phase causes a GPU sync stall |
-| `SMOKE_WATER_FLOW` | `1` | 0/1 | Master for water-to-smoke momentum. The strongest falling 16-px bins inject velocity into smoke every four frames. gm `smoke.WATER_FLOW` |
+| `SMOKE_WATER_FLOW` | `1` | 0/1 | Master for water-to-smoke momentum. Falling water is aggregated into 16-px bins every four frames; five speed-ranked samples are kept at least one bin apart so coverage stays distributed along the fall. Valid prior samples remain anchored between readbacks. A single fast water particle keeps a bin eligible, while the 55 px/s speed gate rejects pools, preventing thin streams from blinking off or hopping between 8-px cell boundaries. gm `smoke.WATER_FLOW` |
 | `SMOKE_WATER_FLOW_FORCE` | `0.16` | 0.05–0.6 | Fraction of mean water velocity handed to smoke. The horizontal impulse is capped at 65 and downward impulse at 80 so a waterfall visibly pulls a plume without pinning it. gm `smoke.WATER_FLOW_FORCE` |
 | `SMOKE_WATER_FLOW_MIN_VY` | `55` | 20–180 | Minimum downward water speed in px/s before a bin entrains smoke. gm `smoke.WATER_FLOW_MIN_VY` |
 | `SMOKE_WATER_FLOW_RADIUS` | `0.085` | 0.015–0.1 | Gaussian radius of each velocity-only impulse. The influence extends beyond the visible water column to model the sleeve of air a real fall entrains. gm `smoke.WATER_FLOW_RADIUS` |
+| smoke idle hold | game `8s`, demo `15s` | fixed | v26.36/v3.24: keeps the solver and water coupling alive until the last visible dye has dissipated. The demo previously hard-cleared a still-visible plume at exactly five seconds |
 
 ## 1.3 `fireplaceTune` — station chimney smoke · tier `live`
 

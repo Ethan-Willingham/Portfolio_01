@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.35';
+  var GAME_VERSION = 'v26.36';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -35435,10 +35435,10 @@
   // dye-splat site (the diesel emit below + the chimney emit in fragment 170).
   // While it is >0 the sim steps; once it lapses the field has fully dissipated
   // so the per-frame step + world-lock scroll are skipped until the next splat.
-  // 5s is generous — it covers full dye dissipation at the default DENSITY_-
-  // DISSIPATION so a real plume never freezes mid-air.
+  // Eight seconds covers full dye dissipation at the default tuning, so a
+  // real plume never freezes mid-air.
   var smokeAwakeT = 0;
-  var SMOKE_IDLE_HOLD = 5.0;
+  var SMOKE_IDLE_HOLD = 8.0;
   // v23.32 — obstacle dirty-flag state (gated by PERF_SMOKE_OBSTACLE_DIRTY).
   // The collision mask only changes when the camera/screen pans or the terrain/
   // jello/blasts could have. NaN/-1 sentinels force a repaint on the first frame.
@@ -35476,7 +35476,7 @@
   var SMOKE_WATER_FLOW_EVERY = 4;
   var SMOKE_WATER_FLOW_BIN = 16;
   var SMOKE_WATER_FLOW_MIN_VY = 55;
-  var SMOKE_WATER_FLOW_MIN_N = 3;
+  var SMOKE_WATER_FLOW_MIN_N = 1;
   var SMOKE_WATER_FLOW_MAX_SPLATS = 5;
   // Keep the waterfall legible without pinning the whole plume to it.
   var SMOKE_WATER_FLOW_FORCE = 0.16;
@@ -35487,6 +35487,8 @@
   var smokeWaterFlowVX = null;
   var smokeWaterFlowVY = null;
   var smokeWaterFlowCandidates = [];
+  var smokeWaterFlowSelected = [];
+  var smokeWaterFlowNext = [];
   var smokeWaterFlowSplats = 0;
   // v25.47 — dev debug handle (window.__bombs pattern): lets a headless
   // harness read the obstacle mask + the water-stamp state directly.
@@ -36344,12 +36346,46 @@
     for (var bi = 0; bi < nBins; bi++) {
       if (smokeWaterFlowCount[bi] >= SMOKE_WATER_FLOW_MIN_N) candidates.push(bi);
     }
-    candidates.sort(function (a, b) { return smokeWaterFlowVY[b] - smokeWaterFlowVY[a]; });
+    // Rank by mean speed, not particle count. Then keep samples at least
+    // one bin apart so the impulses cover the fall instead of flickering
+    // between adjacent dense cells.
+    candidates.sort(function (a, b) {
+      return smokeWaterFlowVY[b] / smokeWaterFlowCount[b] -
+        smokeWaterFlowVY[a] / smokeWaterFlowCount[a];
+    });
+    var previous = smokeWaterFlowSelected;
+    var selected = smokeWaterFlowNext;
+    selected.length = 0;
+    // Keep prior sample positions while they still contain valid falling
+    // water. This gives the force field temporal continuity instead of
+    // choosing a new set of cells on every readback.
+    for (var pk = 0; pk < previous.length && selected.length < SMOKE_WATER_FLOW_MAX_SPLATS; pk++) {
+      var held = previous[pk];
+      var heldN = smokeWaterFlowCount[held];
+      if (heldN < SMOKE_WATER_FLOW_MIN_N ||
+          smokeWaterFlowVY[held] / heldN <= SMOKE_WATER_FLOW_MIN_VY) continue;
+      selected.push(held);
+    }
+    for (var ck = 0; ck < candidates.length && selected.length < SMOKE_WATER_FLOW_MAX_SPLATS; ck++) {
+      var pick = candidates[ck];
+      var pickX = pick % binsW, pickY = (pick / binsW) | 0;
+      var nearPick = false;
+      for (var sk = 0; sk < selected.length; sk++) {
+        var prior = selected[sk];
+        if (Math.abs(pickX - prior % binsW) <= 1 &&
+            Math.abs(pickY - ((prior / binsW) | 0)) <= 1) {
+          nearPick = true; break;
+        }
+      }
+      if (!nearPick) selected.push(pick);
+    }
+    smokeWaterFlowSelected = selected;
+    smokeWaterFlowNext = previous;
 
-    var limit = Math.min(SMOKE_WATER_FLOW_MAX_SPLATS, candidates.length);
+    var limit = selected.length;
     var flowSplat = smokeDriver.splatVelocity || null;
     for (var k = 0; k < limit; k++) {
-      var ci = candidates[k];
+      var ci = selected[k];
       var n = smokeWaterFlowCount[ci];
       var bx = ci % binsW, by = (ci / binsW) | 0;
       var wx = domainX + (bx + 0.5) * BIN;
