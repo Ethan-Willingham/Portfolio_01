@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.24';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.25';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -7884,63 +7884,49 @@
     }
   }
 
-  // Material-space marbling. The former glass fill had no asymmetric feature
-  // that revealed orientation, so a round body could physically rotate while
-  // looking parked. These filaments and inclusions live in the body's best-fit
-  // rest-space transform. They rotate and squash with the lattice, never with
-  // the screen, and their deterministic layout cannot shimmer or re-roll.
-  function jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR) {
-    if (!isFinite(b.shM00 + b.shM01 + b.shM10 + b.shM11 + scx + scy + maxR)) return;
-    var tr = b.rMaxR || maxR;
-    if (!(tr > 4)) return;
-    var seed = ((Math.floor(b.hue) * 131 + b.n * 977) | 0) + 7409;
-    var flip = jelloFuzzHash(seed) < 0.5 ? -1 : 1;
+  // The visible texture is the actual live spring lattice. Drawing its current
+  // point positions makes the whole material reveal rotation, shear, stretch,
+  // and squash without a decorative animation or the large debug-particle
+  // circles. Shear braces sit behind structural edges; tiny joint pins make the
+  // topology readable without swelling the body's collision silhouette.
+  function jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha) {
+    if (!b.sA || !b.sB || !(b.springN > 0)) return;
+    var px = b.px, py = b.py, sA = b.sA, sB = b.sB, sType = b.sType;
+    var spacing = b.spacing || (TILE / JELLO_NPT);
     ctx.save();
-    ctx.translate(scx, scy);
-    ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    ctx.lineWidth = Math.max(1.1, tr * 0.050);
-    ctx.strokeStyle = 'hsla(' + (hue + 16) + ',' + jelloClampPct(82 * satMul) + '%,' +
-      jelloClampPct(84 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
+    // Diagonal/shear braces first, then the stronger structural lattice.
+    ctx.strokeStyle = 'hsla(' + (hue - 10) + ',' + jelloClampPct(54 * satMul) + '%,' +
+      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.14).toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.42, spacing * 0.075);
     ctx.beginPath();
-    ctx.moveTo(-tr * 0.58, -tr * 0.12 * flip);
-    ctx.bezierCurveTo(-tr * 0.24, -tr * 0.48 * flip,
-                      tr * 0.10,  tr * 0.28 * flip,
-                      tr * 0.52, -tr * 0.04 * flip);
-    ctx.stroke();
-    ctx.lineWidth = Math.max(0.8, tr * 0.028);
-    ctx.strokeStyle = 'hsla(' + (hue - 14) + ',' + jelloClampPct(64 * satMul) + '%,' +
-      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.22).toFixed(3) + ')';
-    ctx.beginPath();
-    ctx.moveTo(-tr * 0.34, tr * 0.35 * flip);
-    ctx.bezierCurveTo(-tr * 0.06, tr * 0.14 * flip,
-                      tr * 0.18, tr * 0.48 * flip,
-                      tr * 0.43, tr * 0.24 * flip);
-    ctx.stroke();
-
-    // A small irregular inclusion cluster makes a full turn unmistakable.
-    // Radial fades keep it organic and avoid the old debug-particle look.
-    for (var mi = 0; mi < 4; mi++) {
-      var ma = (0.55 + mi * 1.71 + jelloFuzzHash(seed + mi * 7) * 0.48) * flip;
-      var md = tr * (0.20 + jelloFuzzHash(seed + mi * 7 + 1) * 0.38);
-      var mx = Math.cos(ma) * md, my = Math.sin(ma) * md;
-      var mr = tr * (0.068 + jelloFuzzHash(seed + mi * 7 + 2) * 0.055);
-      var mg = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
-      if (mi & 1) {
-        mg.addColorStop(0, 'hsla(' + (hue + 20) + ',100%,' +
-          jelloClampPct(88 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')');
-        mg.addColorStop(1, 'hsla(' + (hue + 20) + ',100%,' +
-          jelloClampPct(88 + lightAdd) + '%,0)');
-      } else {
-        mg.addColorStop(0, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
-          jelloClampPct(24 + lightAdd) + '%,' + (alpha * 0.28).toFixed(3) + ')');
-        mg.addColorStop(1, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
-          jelloClampPct(24 + lightAdd) + '%,0)');
-      }
-      ctx.fillStyle = mg;
-      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.2831853); ctx.fill();
+    for (var s = 0; s < b.springN; s++) {
+      if (!sType || !sType[s]) continue;
+      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
     }
+    ctx.stroke();
+
+    ctx.strokeStyle = 'hsla(' + (hue + 12) + ',' + jelloClampPct(74 * satMul) + '%,' +
+      jelloClampPct(78 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.58, spacing * 0.105);
+    ctx.beginPath();
+    for (s = 0; s < b.springN; s++) {
+      if (sType && sType[s]) continue;
+      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
+    }
+    ctx.stroke();
+
+    var jointR = Math.max(0.42, Math.min(0.9, spacing * 0.105));
+    ctx.fillStyle = 'hsla(' + (hue + 18) + ',' + jelloClampPct(82 * satMul) + '%,' +
+      jelloClampPct(86 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')';
+    ctx.beginPath();
+    for (var p = 0; p < b.n; p++) {
+      ctx.moveTo(px[p] + jointR, py[p]);
+      ctx.arc(px[p], py[p], jointR, 0, 6.2831853);
+    }
+    ctx.fill();
     ctx.restore();
   }
 
@@ -8043,8 +8029,8 @@
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
 
-    // A material-locked asymmetric pattern makes body rotation readable.
-    if (shadeOn) jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR);
+    // The complete live lattice is the material texture, not a debug overlay.
+    jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
@@ -8517,27 +8503,29 @@
   }
 
   var grabBody = null;
-  var grabIdx = null, grabOffX = null, grabOffY = null, grabWeight = null;
+  var grabIdx = null, grabOffX = null, grabOffY = null, grabWeight = null, grabRing = null;
+  var grabAnchor = -1;
   var grabTargetX = 0, grabTargetY = 0, grabSolveX = 0, grabSolveY = 0;
   var grabPrevSolveX = 0, grabPrevSolveY = 0;
   var grabAttemptDX = 0, grabAttemptDY = 0;
   var grabBlockNX = 0, grabBlockNY = 0, grabBlockReason = '', grabBlockBody = null;
-  var grabBlockTravel = 0, grabStepScale = 1, grabGripBlend = 1, grabSpin = 0, grabAttemptRot = 0;
+  var grabBlockTravel = 0, grabStepScale = 1, grabGripBlend = 1, grabSpin = 0;
   var grabFitC = 1, grabFitS = 0, grabFitCX = 0, grabFitCY = 0, grabFitOCX = 0, grabFitOCY = 0;
-  var grabPivotX = 0, grabPivotY = 0, grabPrevPivotX = 0, grabPrevPivotY = 0;
+  var grabAcceptedCX = 0, grabAcceptedCY = 0, grabAcceptedAngle = 0;
+  var grabReleaseVX = 0, grabReleaseVY = 0, grabReleaseOmega = 0;
+  var grabLastH = JELLO_H, grabLastMotionMs = 0;
   var JELLO_GRAB_HANDLE_SPEED = 3600;  // px/s, independent of solver/substep count
   var JELLO_GRAB_HANDLE_STEP = 2.0;    // swept guard still bounds one step to two lattice spacings
-  var JELLO_GRAB_POINT_STEP = 0.34;    // maximum selected-point correction per substep
-  var JELLO_GRAB_STIFF = 0.28;
-  var JELLO_GRAB_BODY_FOLLOW = 0.72;   // centre grabs translate; edge tangents spend more motion on rotation
-  var JELLO_GRAB_RADIAL_FOLLOW = 0.72;
-  var JELLO_GRAB_TANGENT_FOLLOW = 0.04;
-  var JELLO_GRAB_ROTATE = 0.96;        // angular share of handle travel around the persistent pinch pivot
-  var JELLO_GRAB_ROTATE_STEP = 0.13;   // radians per substep; topology guard remains the final authority
-  var JELLO_GRAB_PICK_POINTS = 12;     // a fingertip-sized patch, not the old quarter-body grab
-  var JELLO_GRAB_HISTORY = 0.90;       // retain a small, bounded release velocity
-  var JELLO_GRAB_TRANSLATE_HISTORY = 0.98; // circular hand travel should not launch the centre of mass
-  var JELLO_GRAB_SPIN_HISTORY = 0.82;  // more angular history survives so a released sling keeps turning
+  var JELLO_GRAB_POINT_STEP = 0.46;    // maximum anchor correction per substep
+  var JELLO_GRAB_STIFF = 0.46;
+  var JELLO_GRAB_RING_WEIGHT = [1, 0.30, 0.09, 0.027]; // anchor, then graph-adjacent falloff shells
+  var JELLO_GRAB_HISTORY = 0.96;       // keep the held patch controlled; release velocity is explicit below
+  var JELLO_GRAB_ANGULAR_FOLLOW = 0.30; // tangential hand speed accelerates rigid angular velocity
+  var JELLO_GRAB_RELEASE_BLEND = 0.82;
+  var JELLO_GRAB_RELEASE_SPEED = 1650; // px/s centre-of-mass cap
+  var JELLO_GRAB_RELEASE_POINT = 1900; // px/s cap after angular velocity is added
+  var JELLO_GRAB_RELEASE_OMEGA = 18;   // rad/s
+  var JELLO_GRAB_RELEASE_FRESH = 180;  // ms; holding still cancels a stale fling
   var JELLO_GRAB_RECOVER = 1.35;       // seconds of gentle rest-shape recovery after release
   var grabClipX = 0, grabClipY = 0, grabClipNX = 0, grabClipNY = 0;
 
@@ -8570,6 +8558,47 @@
     grabOffY[slot] = -grabFitS * dx + grabFitC * dy;
   }
 
+  // Build a geodesic fingertip around one lattice node. Graph distance, not a
+  // screen-space radius, decides influence: the anchor is exact, its spring
+  // neighbours receive 30%, then 9%, then 2.7%. This gives the surrounding
+  // material enough continuity to avoid a needle-like tear without turning a
+  // visible quarter of the slime into one rigid handle.
+  function jelloGrabBuildPatch(b, anchor, hx, hy) {
+    var adj = new Array(b.n);
+    for (var i = 0; i < b.n; i++) adj[i] = [];
+    for (var s = 0; s < b.springN; s++) {
+      if (b.sType && b.sType[s]) continue; // structural neighbours only, not diagonal braces
+      var a = b.sA[s], z = b.sB[s];
+      adj[a].push(z); adj[z].push(a);
+    }
+    var depth = new Int16Array(b.n);
+    depth.fill(-1);
+    var queue = new Int32Array(b.n), q0 = 0, q1 = 0;
+    depth[anchor] = 0; queue[q1++] = anchor;
+    var idx = [], ox = [], oy = [], wt = [], rings = [];
+    while (q0 < q1) {
+      var pi = queue[q0++], ring = depth[pi];
+      if (!jelloGrabClipPath(hx, hy, b.px[pi], b.py[pi], b.spacing)) {
+        var dx = b.px[pi] - hx, dy = b.py[pi] - hy;
+        idx.push(pi);
+        ox.push(grabFitC * dx + grabFitS * dy);
+        oy.push(-grabFitS * dx + grabFitC * dy);
+        wt.push(JELLO_GRAB_RING_WEIGHT[ring]);
+        rings.push(ring);
+      }
+      if (ring + 1 >= JELLO_GRAB_RING_WEIGHT.length) continue;
+      var nbr = adj[pi];
+      for (var ni = 0; ni < nbr.length; ni++) {
+        var next = nbr[ni];
+        if (depth[next] >= 0) continue;
+        depth[next] = ring + 1;
+        queue[q1++] = next;
+      }
+    }
+    grabAnchor = anchor;
+    grabIdx = idx; grabOffX = ox; grabOffY = oy; grabWeight = wt; grabRing = rings;
+  }
+
   function jelloGrabClearBlock() {
     grabBlockNX = 0; grabBlockNY = 0;
     grabBlockReason = ''; grabBlockBody = null; grabBlockTravel = 0;
@@ -8578,11 +8607,11 @@
   function jelloGrabRebaseGrip(b) {
     if (!b || !grabIdx) return;
     jelloGrabFit(b);
-    grabPivotX = grabPrevPivotX = grabFitCX;
-    grabPivotY = grabPrevPivotY = grabFitCY;
     for (var i = 0; i < grabIdx.length; i++) {
       jelloGrabStoreOffset(b, i, grabIdx[i], grabSolveX, grabSolveY);
     }
+    grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
+    grabAcceptedAngle = Math.atan2(grabFitS, grabFitC);
     grabGripBlend = 0;
   }
 
@@ -8669,41 +8698,21 @@
         }
         if (best > pad * pad) continue;
       }
-      var R = Math.max(8, b.spacing * 4.2);
-      var candidates = [];
+      // One nearest visible lattice node is the real anchor. The patch grows
+      // from that node through spring adjacency with exponential ring falloff.
+      var anchor = -1, anchorD2 = 1e18;
       for (var pi = 0; pi < b.n; pi++) {
         var ddx = b.px[pi] - wx, ddy = b.py[pi] - wy;
-        if (ddx * ddx + ddy * ddy <= R * R &&
+        var pd2 = ddx * ddx + ddy * ddy;
+        if (pd2 < anchorD2 &&
             !jelloGrabClipPath(wx, wy, b.px[pi], b.py[pi], b.spacing)) {
-          candidates.push({ i: pi, d2: ddx * ddx + ddy * ddy });
+          anchor = pi; anchorD2 = pd2;
         }
       }
-      candidates.sort(function (a, z) { return a.d2 - z.d2; });
-      if (candidates.length > JELLO_GRAB_PICK_POINTS) candidates.length = JELLO_GRAB_PICK_POINTS;
-      if (!candidates.length) {
-        var bi2 = 0, bd = 1e9;
-        for (var pj = 0; pj < b.n; pj++) {
-          var ex = b.px[pj] - wx, ey = b.py[pj] - wy;
-          var e2 = ex * ex + ey * ey;
-          if (e2 < bd && !jelloGrabClipPath(wx, wy, b.px[pj], b.py[pj], b.spacing)) {
-            bd = e2; bi2 = pj;
-          }
-        }
-        if (!(bd < 1e9)) continue;
-        candidates.push({ i: bi2, d2: bd });
-      }
+      if (anchor < 0) continue;
       jelloGrabFit(b);
-      var idx = [], ox = [], oy = [], wt = [];
-      for (var gi = 0; gi < candidates.length; gi++) {
-        var cand = candidates[gi], gp = cand.i;
-        var gox = b.px[gp] - wx, goy = b.py[gp] - wy;
-        idx.push(gp);
-        ox.push(grabFitC * gox + grabFitS * goy);
-        oy.push(-grabFitS * gox + grabFitC * goy);
-        wt.push(Math.max(0.35, 1 - Math.sqrt(cand.d2) / Math.max(1, R)));
-      }
+      jelloGrabBuildPatch(b, anchor, wx, wy);
       grabBody = b;
-      grabIdx = idx; grabOffX = ox; grabOffY = oy; grabWeight = wt;
       grabTargetX = grabSolveX = wx;
       grabTargetY = grabSolveY = wy;
       grabPrevSolveX = wx; grabPrevSolveY = wy;
@@ -8711,8 +8720,10 @@
       grabStepScale = 1;
       grabGripBlend = 1;
       grabSpin = 0;
-      grabPivotX = grabPrevPivotX = grabFitCX;
-      grabPivotY = grabPrevPivotY = grabFitCY;
+      grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
+      grabAcceptedAngle = Math.atan2(grabFitS, grabFitC);
+      grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
+      grabLastMotionMs = 0;
       jelloGrabClearBlock();
       b._grabbed = true;
       b._recoverT = 0;
@@ -8739,7 +8750,7 @@
   function jelloGrabSubstep(b, h) {
     if (b !== grabBody || !grabIdx || !grabIdx.length) return;
     b._grabApplied = 1;
-    grabAttemptRot = 0;
+    grabLastH = h;
     var spacing = Math.max(1, b.spacing || 1);
     grabPrevSolveX = grabSolveX; grabPrevSolveY = grabSolveY;
     var hdx = grabTargetX - grabSolveX, hdy = grabTargetY - grabSolveY;
@@ -8796,67 +8807,49 @@
       b._grabApplied = 0;
       return;
     }
-    // The grip is a positional impulse at a material point. Radial handle
-    // travel mostly translates the body. Tangential travel at an edge splits
-    // into translation and a rigid angular correction, the same linear/angular
-    // decomposition a real off-centre impulse produces. Shape solving supplies
-    // the soft lag around that rigid seed; topology guards can still reject the
-    // whole attempt before render.
-    jelloGrabFit(b);
-    // The pivot follows real centroid drift slowly, but it is not rebuilt from
-    // the deformed body every substep. Rebuilding it made the inferred torque
-    // axis wander and could cancel a hand-drawn circle from one run to the next.
-    grabPivotX += (grabFitCX - grabPivotX) * 0.08;
-    grabPivotY += (grabFitCY - grabPivotY) * 0.08;
-    grabPrevPivotX = grabPivotX; grabPrevPivotY = grabPivotY;
     var stepDX = grabSolveX - grabPrevSolveX, stepDY = grabSolveY - grabPrevSolveY;
-    var bodyDX = stepDX, bodyDY = stepDY, rot = 0;
-    if (!contactMode) {
-      var armX = grabPrevSolveX - grabPivotX, armY = grabPrevSolveY - grabPivotY;
-      var nextArmX = grabSolveX - grabPivotX, nextArmY = grabSolveY - grabPivotY;
-      var arm2 = armX * armX + armY * armY;
-      var nextArm2 = nextArmX * nextArmX + nextArmY * nextArmY;
-      if (arm2 > spacing * spacing * 4 && nextArm2 > spacing * spacing * 4) {
-        var armLen = Math.sqrt(arm2);
-        var radialK = (stepDX * armX + stepDY * armY) / armLen;
-        var radialX = armX / armLen * radialK, radialY = armY / armLen * radialK;
-        var tangentX = stepDX - radialX, tangentY = stepDY - radialY;
-        var radialFollow = JELLO_GRAB_RADIAL_FOLLOW +
-          (1 - JELLO_GRAB_RADIAL_FOLLOW) * (1 - grabGripBlend);
-        var tangentFollow = JELLO_GRAB_TANGENT_FOLLOW +
-          (1 - JELLO_GRAB_TANGENT_FOLLOW) * (1 - grabGripBlend);
-        bodyDX = radialX * radialFollow + tangentX * tangentFollow;
-        bodyDY = radialY * radialFollow + tangentY * tangentFollow;
-        var turnCross = armX * nextArmY - armY * nextArmX;
-        var turnDot = armX * nextArmX + armY * nextArmY;
-        rot = Math.atan2(turnCross, turnDot) * JELLO_GRAB_ROTATE * grabGripBlend;
-        if (rot > JELLO_GRAB_ROTATE_STEP) rot = JELLO_GRAB_ROTATE_STEP;
-        else if (rot < -JELLO_GRAB_ROTATE_STEP) rot = -JELLO_GRAB_ROTATE_STEP;
-      } else {
-        var centreFollow = JELLO_GRAB_BODY_FOLLOW +
-          (1 - JELLO_GRAB_BODY_FOLLOW) * (1 - grabGripBlend);
-        bodyDX *= centreFollow; bodyDY *= centreFollow;
-      }
-    }
-    if (bodyDX !== 0 || bodyDY !== 0 || rot !== 0) {
-      var rotC = Math.cos(rot), rotS = Math.sin(rot);
-      var oldRot = rot * JELLO_GRAB_SPIN_HISTORY;
-      var oldC = Math.cos(oldRot), oldS = Math.sin(oldRot);
+    // A contact tangent is already collision-approved, so translate the body
+    // coherently and velocity-free along it. Open-space motion never receives
+    // a whole-body positional transform: the weighted lattice pinch below is
+    // the only driver, which is what makes an edge grab feel local.
+    if (contactMode) {
       for (var bp = 0; bp < b.n; bp++) {
-        var prx = b.px[bp] - grabFitCX, pry = b.py[bp] - grabFitCY;
-        var orx = b.ox[bp] - grabFitOCX, ory = b.oy[bp] - grabFitOCY;
-        b.px[bp] = grabFitCX + rotC * prx - rotS * pry + bodyDX;
-        b.py[bp] = grabFitCY + rotS * prx + rotC * pry + bodyDY;
-        b.ox[bp] = grabFitOCX + oldC * orx - oldS * ory + bodyDX * JELLO_GRAB_TRANSLATE_HISTORY;
-        b.oy[bp] = grabFitOCY + oldS * orx + oldC * ory + bodyDY * JELLO_GRAB_TRANSLATE_HISTORY;
+        b.px[bp] += stepDX; b.py[bp] += stepDY;
+        b.ox[bp] += stepDX; b.oy[bp] += stepDY;
       }
-      grabAttemptRot = rot;
-      grabSpin += rot;
-      grabPivotX += bodyDX; grabPivotY += bodyDY;
+      return;
     }
-    if (contactMode) return;
     if (grabGripBlend < 1e-4) return;
     jelloGrabFit(b);
+
+    // A point force creates torque. Match a fraction of the hand's angular
+    // speed in the VELOCITY field only, leaving every position to the local
+    // patch and the soft-body solver. This supplies responsive acceleration
+    // without bringing back the broad, rigid positional grab.
+    if (Math.abs(stepDX) + Math.abs(stepDY) > 1e-7) {
+      var armX = grabPrevSolveX - grabFitCX, armY = grabPrevSolveY - grabFitCY;
+      var arm2 = armX * armX + armY * armY;
+      if (arm2 > spacing * spacing * 2 && h > 1e-6) {
+        var targetOmega = (armX * stepDY - armY * stepDX) / (arm2 * h);
+        if (targetOmega > JELLO_GRAB_RELEASE_OMEGA) targetOmega = JELLO_GRAB_RELEASE_OMEGA;
+        else if (targetOmega < -JELLO_GRAB_RELEASE_OMEGA) targetOmega = -JELLO_GRAB_RELEASE_OMEGA;
+        var angularMomentum = 0, inertia = 0;
+        for (var av = 0; av < b.n; av++) {
+          var arx = b.px[av] - grabFitCX, ary = b.py[av] - grabFitCY;
+          var avx = (b.px[av] - b.ox[av]) / h;
+          var avy = (b.py[av] - b.oy[av]) / h;
+          angularMomentum += arx * avy - ary * avx;
+          inertia += arx * arx + ary * ary;
+        }
+        var currentOmega = inertia > 1e-8 ? angularMomentum / inertia : 0;
+        var addOmega = (targetOmega - currentOmega) * JELLO_GRAB_ANGULAR_FOLLOW * grabGripBlend;
+        for (av = 0; av < b.n; av++) {
+          arx = b.px[av] - grabFitCX; ary = b.py[av] - grabFitCY;
+          b.ox[av] += ary * addOmega * h;
+          b.oy[av] -= arx * addOmega * h;
+        }
+      }
+    }
     var pointCap = spacing * JELLO_GRAB_POINT_STEP * Math.max(0.25, grabStepScale);
     var pointStiff = JELLO_GRAB_STIFF * (0.5 + 0.5 * grabStepScale) * grabGripBlend;
     for (var i = 0; i < grabIdx.length; i++) {
@@ -8881,10 +8874,7 @@
   // without waiting for a new pointer event.
   function jelloGrabRejectStep(b, reason) {
     if (b !== grabBody) return;
-    grabSpin -= grabAttemptRot;
-    grabAttemptRot = 0;
     grabSolveX = grabPrevSolveX; grabSolveY = grabPrevSolveY;
-    grabPivotX = grabPrevPivotX; grabPivotY = grabPrevPivotY;
     var hasNormal = b._grabRejectNX * b._grabRejectNX +
                     b._grabRejectNY * b._grabRejectNY > 1e-8;
     var refX = grabAttemptDX, refY = grabAttemptDY;
@@ -8993,12 +8983,72 @@
     return null;
   }
 
+  function jelloGrabCaptureMotion(b) {
+    jelloGrabFit(b);
+    var angle = Math.atan2(grabFitS, grabFitC);
+    var da = angle - grabAcceptedAngle;
+    while (da > Math.PI) da -= 6.2831853;
+    while (da < -Math.PI) da += 6.2831853;
+    var moved = Math.abs(grabAttemptDX) + Math.abs(grabAttemptDY) > 1e-7;
+    if (moved && grabLastH > 1e-6) {
+      var svx = (grabFitCX - grabAcceptedCX) / grabLastH;
+      var svy = (grabFitCY - grabAcceptedCY) / grabLastH;
+      var somega = da / grabLastH;
+      var blend = 0.24;
+      grabReleaseVX += (svx - grabReleaseVX) * blend;
+      grabReleaseVY += (svy - grabReleaseVY) * blend;
+      grabReleaseOmega += (somega - grabReleaseOmega) * blend;
+      grabLastMotionMs = performance.now();
+    }
+    grabSpin += da;
+    grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
+    grabAcceptedAngle = angle;
+  }
+
+  // Positional constraints are deliberately quiet while held. On a fresh
+  // release, convert the accepted centre and angle motion into one bounded
+  // rigid velocity field. Internal damping preserves rigid motion, so the
+  // slime now carries a real fling and spin instead of dying at pointer-up.
+  function jelloGrabApplyRelease(b) {
+    if (!grabLastMotionMs || performance.now() - grabLastMotionMs > JELLO_GRAB_RELEASE_FRESH) return;
+    var vx = grabReleaseVX, vy = grabReleaseVY, omega = grabReleaseOmega;
+    if (!isFinite(vx + vy + omega)) return;
+    var speed = Math.sqrt(vx * vx + vy * vy);
+    if (speed > JELLO_GRAB_RELEASE_SPEED && speed > 1e-9) {
+      var ls = JELLO_GRAB_RELEASE_SPEED / speed; vx *= ls; vy *= ls;
+    }
+    if (omega > JELLO_GRAB_RELEASE_OMEGA) omega = JELLO_GRAB_RELEASE_OMEGA;
+    else if (omega < -JELLO_GRAB_RELEASE_OMEGA) omega = -JELLO_GRAB_RELEASE_OMEGA;
+    if (grabBlockReason) {
+      var inward = vx * grabBlockNX + vy * grabBlockNY;
+      if (inward > 0) { vx -= grabBlockNX * inward; vy -= grabBlockNY * inward; }
+    }
+    jelloGrabFit(b);
+    var h = grabLastH > 1e-6 ? grabLastH : JELLO_H;
+    var keep = 1 - JELLO_GRAB_RELEASE_BLEND;
+    for (var i = 0; i < b.n; i++) {
+      var rx = b.px[i] - grabFitCX, ry = b.py[i] - grabFitCY;
+      var desiredX = vx - omega * ry, desiredY = vy + omega * rx;
+      var currentX = (b.px[i] - b.ox[i]) / h;
+      var currentY = (b.py[i] - b.oy[i]) / h;
+      var outX = currentX * keep + desiredX * JELLO_GRAB_RELEASE_BLEND;
+      var outY = currentY * keep + desiredY * JELLO_GRAB_RELEASE_BLEND;
+      var ps = Math.sqrt(outX * outX + outY * outY);
+      if (ps > JELLO_GRAB_RELEASE_POINT && ps > 1e-9) {
+        var psc = JELLO_GRAB_RELEASE_POINT / ps; outX *= psc; outY *= psc;
+      }
+      b.ox[i] = b.px[i] - outX * h;
+      b.oy[i] = b.py[i] - outY * h;
+    }
+  }
+
   // The shared solver invokes this only after the full body, terrain, and
   // body-body pass accepted the attempted substep. It is the safe place to
   // retire a contact normal: doing it on raw cursor movement caused the old
   // stop/retry/stop latch and its visible pauses.
   function jelloGrabAcceptStep(b) {
     if (b !== grabBody) return;
+    jelloGrabCaptureMotion(b);
     grabStepScale += (1 - grabStepScale) * 0.12;
     if (!grabBlockReason) grabGripBlend += (1 - grabGripBlend) * 0.18;
     if (!grabBlockReason) {
@@ -9025,20 +9075,22 @@
   function jelloGrabEnd() {
     var b = grabBody;
     if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
+      jelloGrabApplyRelease(b);
       b._grabbed = false;
       b._grabApplied = 0;
       b._grabBlocked = 0;
       b._recoverT = Math.max(b._recoverT || 0, JELLO_GRAB_RECOVER);
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     }
-    grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null; grabWeight = null;
+    grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null; grabWeight = null; grabRing = null;
+    grabAnchor = -1;
     grabPrevSolveX = grabPrevSolveY = 0;
     grabAttemptDX = grabAttemptDY = 0;
     grabStepScale = 1;
     grabGripBlend = 1;
     grabSpin = 0;
-    grabAttemptRot = 0;
-    grabPivotX = grabPivotY = grabPrevPivotX = grabPrevPivotY = 0;
+    grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
+    grabLastMotionMs = 0;
     jelloGrabClearBlock();
   }
 
@@ -9047,6 +9099,8 @@
   if (typeof window !== 'undefined') {
     window.__slimeGrab = function () {
       var body = null, folds = 0, crossings = 0, checksum = 0;
+      var ringCounts = [0, 0, 0, 0];
+      if (grabRing) for (var gri = 0; gri < grabRing.length; gri++) ringCounts[grabRing[gri]]++;
       if (grabBody) {
         for (var i = 0; i < grabBody.n; i++) {
           checksum += grabBody.px[i] * (i + 1) + grabBody.py[i] * (i + 3);
@@ -9087,10 +9141,14 @@
         stepScale: grabStepScale,
         gripBlend: grabGripBlend,
         selected: grabIdx ? grabIdx.length : 0,
+        anchor: grabAnchor,
+        indices: grabIdx ? grabIdx.slice() : [],
+        ringCounts: ringCounts,
+        weights: grabWeight ? grabWeight.slice() : [],
         spin: grabSpin,
-        attemptRot: grabAttemptRot,
-        pivotX: grabPivotX,
-        pivotY: grabPivotY,
+        releaseVX: grabReleaseVX,
+        releaseVY: grabReleaseVY,
+        releaseOmega: grabReleaseOmega,
         attemptX: grabAttemptDX, attemptY: grabAttemptDY,
         applied: grabBody ? !!grabBody._grabApplied : false,
         guardReason: grabBody ? (grabBody._guardRejectReason || '') : '',

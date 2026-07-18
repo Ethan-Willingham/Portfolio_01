@@ -5878,63 +5878,49 @@
     }
   }
 
-  // Material-space marbling. The former glass fill had no asymmetric feature
-  // that revealed orientation, so a round body could physically rotate while
-  // looking parked. These filaments and inclusions live in the body's best-fit
-  // rest-space transform. They rotate and squash with the lattice, never with
-  // the screen, and their deterministic layout cannot shimmer or re-roll.
-  function jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR) {
-    if (!isFinite(b.shM00 + b.shM01 + b.shM10 + b.shM11 + scx + scy + maxR)) return;
-    var tr = b.rMaxR || maxR;
-    if (!(tr > 4)) return;
-    var seed = ((Math.floor(b.hue) * 131 + b.n * 977) | 0) + 7409;
-    var flip = jelloFuzzHash(seed) < 0.5 ? -1 : 1;
+  // The visible texture is the actual live spring lattice. Drawing its current
+  // point positions makes the whole material reveal rotation, shear, stretch,
+  // and squash without a decorative animation or the large debug-particle
+  // circles. Shear braces sit behind structural edges; tiny joint pins make the
+  // topology readable without swelling the body's collision silhouette.
+  function jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha) {
+    if (!b.sA || !b.sB || !(b.springN > 0)) return;
+    var px = b.px, py = b.py, sA = b.sA, sB = b.sB, sType = b.sType;
+    var spacing = b.spacing || (TILE / JELLO_NPT);
     ctx.save();
-    ctx.translate(scx, scy);
-    ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    ctx.lineWidth = Math.max(1.1, tr * 0.050);
-    ctx.strokeStyle = 'hsla(' + (hue + 16) + ',' + jelloClampPct(82 * satMul) + '%,' +
-      jelloClampPct(84 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
+    // Diagonal/shear braces first, then the stronger structural lattice.
+    ctx.strokeStyle = 'hsla(' + (hue - 10) + ',' + jelloClampPct(54 * satMul) + '%,' +
+      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.14).toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.42, spacing * 0.075);
     ctx.beginPath();
-    ctx.moveTo(-tr * 0.58, -tr * 0.12 * flip);
-    ctx.bezierCurveTo(-tr * 0.24, -tr * 0.48 * flip,
-                      tr * 0.10,  tr * 0.28 * flip,
-                      tr * 0.52, -tr * 0.04 * flip);
-    ctx.stroke();
-    ctx.lineWidth = Math.max(0.8, tr * 0.028);
-    ctx.strokeStyle = 'hsla(' + (hue - 14) + ',' + jelloClampPct(64 * satMul) + '%,' +
-      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.22).toFixed(3) + ')';
-    ctx.beginPath();
-    ctx.moveTo(-tr * 0.34, tr * 0.35 * flip);
-    ctx.bezierCurveTo(-tr * 0.06, tr * 0.14 * flip,
-                      tr * 0.18, tr * 0.48 * flip,
-                      tr * 0.43, tr * 0.24 * flip);
-    ctx.stroke();
-
-    // A small irregular inclusion cluster makes a full turn unmistakable.
-    // Radial fades keep it organic and avoid the old debug-particle look.
-    for (var mi = 0; mi < 4; mi++) {
-      var ma = (0.55 + mi * 1.71 + jelloFuzzHash(seed + mi * 7) * 0.48) * flip;
-      var md = tr * (0.20 + jelloFuzzHash(seed + mi * 7 + 1) * 0.38);
-      var mx = Math.cos(ma) * md, my = Math.sin(ma) * md;
-      var mr = tr * (0.068 + jelloFuzzHash(seed + mi * 7 + 2) * 0.055);
-      var mg = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
-      if (mi & 1) {
-        mg.addColorStop(0, 'hsla(' + (hue + 20) + ',100%,' +
-          jelloClampPct(88 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')');
-        mg.addColorStop(1, 'hsla(' + (hue + 20) + ',100%,' +
-          jelloClampPct(88 + lightAdd) + '%,0)');
-      } else {
-        mg.addColorStop(0, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
-          jelloClampPct(24 + lightAdd) + '%,' + (alpha * 0.28).toFixed(3) + ')');
-        mg.addColorStop(1, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
-          jelloClampPct(24 + lightAdd) + '%,0)');
-      }
-      ctx.fillStyle = mg;
-      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.2831853); ctx.fill();
+    for (var s = 0; s < b.springN; s++) {
+      if (!sType || !sType[s]) continue;
+      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
     }
+    ctx.stroke();
+
+    ctx.strokeStyle = 'hsla(' + (hue + 12) + ',' + jelloClampPct(74 * satMul) + '%,' +
+      jelloClampPct(78 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.58, spacing * 0.105);
+    ctx.beginPath();
+    for (s = 0; s < b.springN; s++) {
+      if (sType && sType[s]) continue;
+      ctx.moveTo(px[sA[s]], py[sA[s]]); ctx.lineTo(px[sB[s]], py[sB[s]]);
+    }
+    ctx.stroke();
+
+    var jointR = Math.max(0.42, Math.min(0.9, spacing * 0.105));
+    ctx.fillStyle = 'hsla(' + (hue + 18) + ',' + jelloClampPct(82 * satMul) + '%,' +
+      jelloClampPct(86 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')';
+    ctx.beginPath();
+    for (var p = 0; p < b.n; p++) {
+      ctx.moveTo(px[p] + jointR, py[p]);
+      ctx.arc(px[p], py[p], jointR, 0, 6.2831853);
+    }
+    ctx.fill();
     ctx.restore();
   }
 
@@ -6037,8 +6023,8 @@
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
 
-    // A material-locked asymmetric pattern makes body rotation readable.
-    if (shadeOn) jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR);
+    // The complete live lattice is the material texture, not a debug overlay.
+    jelloDrawMaterialLattice(b, hue, satMul, lightAdd, alpha);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
