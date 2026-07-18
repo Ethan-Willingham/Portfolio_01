@@ -241,7 +241,7 @@ these are LIVE since v14.25 — the `water` gm group (L panel) pushes them via
 `setRenderParam`, no reload needed. `edit²`.
 | Lever | Now | Range | Effect |
 |---|---|---|---|
-| `LIQUID_DROPLETS` `edit²` | `1` | 0/1 | v25.32 — visible-droplet pass (GPU surface renderer only): every low-neighbour-support water particle draws as a small hard drop (~1.4 world px, size fixed, never density-scaled, so the v24.162 giant-disc bug cannot return), fading out as support rises (nb 8→14) and the merged body field takes over. Fixes "particles render but are invisible" (lone peaks sit under the surface threshold); spray reads as spray. gm `water.DROPLETS`; boot A/B `?wdbg=DROPLETS:0`. The CPU/WebGL fallback already draws all particles |
+| `LIQUID_DROPLETS` `edit²` | `1` | 0/1 | v26.16 field-coverage droplet pass (GPU surface renderer only): each water particle samples the completed density field at its post-step screen position. A centre already covered by the composite gets no extra draw; uncovered spray and thin sheets draw as small hard drops (~2 world px, fixed size, lightly foam-tinted for dark terrain). This replaces the v25.32 pre-step neighbour guess, which could classify a fast sheet as supported before it spread apart and leave it rejected by both render paths. Interior particles remain hidden beneath the fused surface. gm `water.DROPLETS`; boot A/B `?wdbg=DROPLETS:0`. The CPU/WebGL fallback already draws all particles |
 | `LIQUID_WATER_R / _G / _B` | `0.365 / 0.780 / 0.933` | 0–1 | Water base colour |
 | `LIQUID_WATER_FOAM_R / _G / _B` | `1.0 / 1.0 / 1.0` | 0–1 | Foam colour (water lerps base→foam by aeration) |
 | `LIQUID_WATER_ALPHA` | `0.70` | 0.4–1.0 | Water particle opacity |
@@ -462,7 +462,7 @@ before a host can retune uniforms. Stage 5 reports up to four particles as
 opposite sides of the hard 3 px/s sleep threshold; identity bits or any other
 flag mismatch still fail the boot check.
 
-The standalone v3.10 host's **very watery** endpoint uses
+The standalone v3.11 host's **very watery** endpoint uses
 `GRID_VISC = 0.02`, `DAMPING = 1.0`,
 `WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996`. It does not change
 `LIQUID_GRAVITY`, pressure, the fixed 1/120-second quantum, or the 1.55 playback
@@ -475,6 +475,15 @@ goopy endpoint: `GRID_VISC = 0.65`, `DAMPING = 0.992`,
 and every stability guard remain fixed across the slider. The toolbar's
 **particles** button only switches the existing `DBG_PARTICLES` proof-dot
 render pass; it never changes simulation state.
+
+The standalone host now also runs the Sluice orphan-retirement guard every 30
+frames. A non-frozen particle with fewer than 24 particles in its 3 by 3 set
+of 16 px buckets is retired once it is slower than 6 px/s, or after eight
+sweeps (four seconds) if it remains fast and isolated. Joining a supported
+stream or pool resets the dwell. This cleanup is host-side because it uses the
+async CPU mirror and REMOVE mutation ops; it is not part of the shared WebGPU
+solver. The game keeps its fuller orphan wake, hang test, and housekeeping
+accounting in `070-collision-liquids.js`.
 
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone

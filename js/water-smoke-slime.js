@@ -55,11 +55,16 @@
  * water consistency slider moves from the old compounded-drag feel to the
  * v3.9 raw-motion tune without touching pressure, gravity, collision, or the
  * fixed-step stability contract.
+ *
+ * v3.11 visibility contract: the normal droplet pass reads actual rendered
+ * field coverage, so fast sheets cannot fall between the surface and droplet
+ * paths. A guarded orphan sweep also retires small isolated clusters that do
+ * not rejoin water, instead of simulating them forever.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.10';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.11';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -279,6 +284,9 @@
   var liquidSleeping = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidFrozen = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidRestFrames = new Uint16Array(LIQUID_MAX_PARTICLES);
+  var liquidOrphanDwell = new Uint8Array(LIQUID_MAX_PARTICLES);
+  var LIQUID_ORPHAN_DWELL_TICKS = 8;  // 8 half-second sweeps = 4 s for fast spray
+  var liquidOrphanTick = 0;
 
   var liquidCount = 0;
   var liquidMutationSeq = 0;
@@ -302,6 +310,7 @@
     liquidSleeping[id] = 0;
     liquidFrozen[id] = 0;
     liquidRestFrames[id] = 0;
+    liquidOrphanDwell[id] = 0;
     if (liquidOps.length < LIQUID_OPS_MAX) {
       liquidOps.push(1, x, y, vx || 0, vy || 0, liquidType[id], liquidOrigin[id]);
     } else liquidOpsOverflow = true;
@@ -329,9 +338,50 @@
       liquidSleeping[i] = liquidSleeping[last];
       liquidFrozen[i] = liquidFrozen[last];
       liquidRestFrames[i] = liquidRestFrames[last];
+      liquidOrphanDwell[i] = liquidOrphanDwell[last];
     }
     liquidMutationSeq++;
     liquidCount--;
+  }
+
+  /* Small isolated clusters should either merge back into visible water or
+   * leave the simulation. Every 30 frames, use the async CPU mirror to count
+   * support in the same 16 px neighbourhood as Sluice. Slow isolated residue
+   * retires immediately; moving spray gets four seconds to land or rejoin.
+   * Real streams and pools reset their dwell because they have ample support. */
+  function retireLiquidOrphans() {
+    liquidOrphanTick++;
+    if (liquidOrphanTick < 30 || !liquidCount) return;
+    liquidOrphanTick = 0;
+    var buckets = new Map();
+    var i, key;
+    for (i = 0; i < liquidCount; i++) {
+      if (liquidFrozen[i]) continue;
+      key = ((liquidX[i] / 16) | 0) * 100003 + ((liquidY[i] / 16) | 0);
+      buckets.set(key, (buckets.get(key) || 0) + 1);
+    }
+    for (i = liquidCount - 1; i >= 0; i--) {
+      if (liquidFrozen[i]) continue;
+      var cx = (liquidX[i] / 16) | 0;
+      var cy = (liquidY[i] / 16) | 0;
+      var nearby = 0;
+      for (var ox = -1; ox <= 1; ox++) {
+        for (var oy = -1; oy <= 1; oy++) {
+          nearby += buckets.get((cx + ox) * 100003 + (cy + oy)) || 0;
+        }
+      }
+      if (nearby >= 24) {
+        liquidOrphanDwell[i] = 0;
+        continue;
+      }
+      var dwell = liquidOrphanDwell[i] + 1;
+      if (dwell > 250) dwell = 250;
+      liquidOrphanDwell[i] = dwell;
+      var vx = liquidVX[i], vy = liquidVY[i];
+      if (vx * vx + vy * vy < 36 || dwell >= LIQUID_ORPHAN_DWELL_TICKS) {
+        removeLiquidParticle(i);
+      }
+    }
   }
 
   // Waking is a real op (type 4) so the change reaches the GPU-resident rows.
@@ -766,6 +816,8 @@
 
   function clearLiquid() {
     liquidCount = 0;
+    liquidOrphanDwell.fill(0);
+    liquidOrphanTick = 0;
     liquidMutationSeq++;
     liquidOps.length = 0;
     liquidOpsOverflow = true;    // force one full GPU re-upload (of nothing)
@@ -8830,6 +8882,7 @@
 
     toolTick(dt);
     emittersTick(dt);
+    retireLiquidOrphans();
     updateLiquidToy(dt);
     buildWaterCells();
     jelloWaterCoupleTick(dt);

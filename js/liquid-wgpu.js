@@ -6562,26 +6562,23 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
 }
 `;
 
-  /* ---- WGSL — DROPLET pass (v25.32) ----------------------------------
+  /* ---- WGSL — DROPLET pass (v26.16) ----------------------------------
    * "It is dumb to render particles but not have them visible" (the
-   * owner). The v24.162 threshold makes a LONE particle's field peak
-   * (~1.0) invisible — right against the old fat-disc bug, wrong as
-   * "water that exists but cannot be seen". This pass draws every
-   * low-support water particle as a SMALL hard droplet (~1.4 world px,
-   * never density-scaled, so the giant-disc failure mode is impossible
-   * by construction), fading out as neighbour support rises and the
-   * merged field takes over (nb 8 -> 14). Spray reads as spray, strays
-   * are visible little drops, the body is untouched. Water only; the
-   * legacy disc renderer already draws everything. gm water.DROPLETS.
+   * owner). The old pass guessed visibility from PRE-STEP neighbour count.
+   * A fast sheet could count as supported, separate during G2P, then miss
+   * the merged surface threshold while the droplet pass also culled it.
+   * This pass now samples the ACTUAL post-render density field at each
+   * particle centre. A particle whose centre is already covered by the
+   * composite gets no extra draw; one in a thin sheet, spray, or isolation
+   * gets a SMALL hard droplet (~2 world px, never density-scaled). The two
+   * render paths are complementary by construction, without drawing dots
+   * through the interior of a pool. Water only; the legacy disc renderer
+   * already draws everything. gm water.DROPLETS.
    * ------------------------------------------------------------------ */
   var WGSL_SURFACE_DROPLETS = /* wgsl */ `
 @group(0) @binding(1) var<storage, read> pos  : array<vec4<f32>>;
-@group(0) @binding(2) var<storage, read> aux  : array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read> flag : array<u32>;
-struct GParams { c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32, c6:u32, c7:u32 };
-@group(0) @binding(4) var<uniform> gpc : GParams;
-@group(0) @binding(5) var<storage, read> cellCnt : array<u32>;
-const NB_CELL : f32 = ${LIQUID_CELL_DEFAULT};
+@group(0) @binding(4) var fieldTex : texture_2d<f32>;
 
 struct VOut {
   @builtin(position) pos   : vec4<f32>,
@@ -6610,36 +6607,27 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let frozen = (fl >> 5u) & 1u;
   let isOil  = (fl & 3u) == 1u;
   if (frozen != 0u || isOil) { return out; }
-  // Neighbour support at the PRE-STEP position (aux.zw), same lookup as
-  // the field pass (v24.180: the grid counts were built pre-move).
-  let gpx = aux[iid].z;
-  let gpy = aux[iid].w;
-  let cgx = i32(floor(gpx / NB_CELL)) - bitcast<i32>(gpc.originX);
-  let cgy = i32(floor(gpy / NB_CELL)) - bitcast<i32>(gpc.originY);
-  let gw = i32(gpc.gridW);
-  let gh = i32(gpc.gridH);
-  var nb : u32 = 99u;                 // off-grid: treat as supported (no droplet)
-  if (cgx >= 1 && cgy >= 1 && cgx < gw - 1 && cgy < gh - 1) {
-    nb = 0u;
-    for (var ddy = -1; ddy <= 1; ddy = ddy + 1) {
-      let rowb = (cgy + ddy) * gw + cgx;
-      nb = nb + cellCnt[u32(rowb - 1)] + cellCnt[u32(rowb)] + cellCnt[u32(rowb + 1)];
-    }
-    if (nb == 0u) { nb = 99u; }       // stale grid (boot) — no droplet
-  }
-  // Fade out as the merged field takes over (body edge); interior culled.
-  let a = 1.0 - smoothstep(8.0, 14.0, f32(nb));
-  if (a <= 0.01) { return out; }
   let p = pos[iid];
-  let pointSize = max(1.4 * rp.dpws, 1.6);   // ~1.4 world px, never density-scaled
-  let halfPx = pointSize * 0.5;
   let scrX = (p.x - rp.camX) * rp.dpws;
   let scrY = (p.y - rp.camY) * rp.dpws;
+  if (scrX < 0.0 || scrY < 0.0 || scrX >= rp.canvasW || scrY >= rp.canvasH) { return out; }
+  let dims = vec2<i32>(textureDimensions(fieldTex));
+  let samplePx = clamp(vec2<i32>(floor(vec2<f32>(scrX, scrY) + 0.5)),
+                       vec2<i32>(0), dims - vec2<i32>(1));
+  let field = textureLoad(fieldTex, samplePx, 0);
+  let surfaceA = smoothstep(rp.surf.x - max(rp.surf.y, 0.001),
+                            rp.surf.x + max(rp.surf.y, 0.001), field.r);
+  // Fully exposed centres get a full drop. Fade through partially covered
+  // film so the pass fills holes without stippling an already solid body.
+  let a = 1.0 - smoothstep(0.25, 0.70, surfaceA);
+  if (a <= 0.01) { return out; }
+  let pointSize = max(2.0 * rp.dpws, 2.2);   // ~2 world px, never density-scaled
+  let halfPx = pointSize * 0.5;
   let c = corner(vid);
   out.pos = vec4<f32>((scrX + c.x * halfPx) / (rp.canvasW * 0.5) - 1.0,
                       1.0 - (scrY + c.y * halfPx) / (rp.canvasH * 0.5), 0.0, 1.0);
   out.uv = c;
-  out.alpha = a * 0.85 * rp.waterColor.a;
+  out.alpha = a * 0.92 * rp.waterColor.a;
   return out;
 }
 
@@ -6648,8 +6636,10 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let r2 = dot(in.uv, in.uv);
   if (r2 >= 1.0) { discard; }
   let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha;
-  // Base water colour, premultiplied (the pass blends one / 1-src-alpha).
-  return vec4<f32>(rp.waterColor.rgb * a, a);
+  // A trace of foam tint keeps a two-pixel airborne drop legible against
+  // dark terrain while preserving the base-water identity.
+  let dropRGB = mix(rp.waterColor.rgb, rp.waterFoam.rgb, 0.22);
+  return vec4<f32>(dropRGB * a, a);
 }
 `;
 
@@ -7788,14 +7778,23 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       try { console.log('LiquidWGPU Stage 7b: surface-render pipeline build failed (' + ((eSurf && eSurf.message) || eSurf) + '); legacy disc renderer stays.'); } catch (_) {}
     }
 
-    // --- v25.32 droplet pass pipeline (visible strays/spray) ---
-    // Reuses bgl + renderBG like the dots overlay. A build failure only
-    // loses the droplets, never the surface renderer.
+    // --- v26.16 field-coverage droplet pipeline (visible strays/spray) ---
+    // Its own layout adds the completed density field as a vertex-stage
+    // texture. A build failure only loses droplets, never the surface path.
     try {
+      instance.surfDropletBGL = dev.createBindGroupLayout({
+        label: 'liquid.surfDropletBGL',
+        entries: [
+          { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+          { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
+          { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
+          { binding: 4, visibility: GPUShaderStage.VERTEX, texture: { sampleType: 'unfilterable-float' } }
+        ]
+      });
       var dropMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
       instance.surfDropletPipeline = dev.createRenderPipeline({
         label: 'liquid.surfDroplets',
-        layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
+        layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfDropletBGL] }),
         vertex: { module: dropMod, entryPoint: 'vs' },
         fragment: {
           module: dropMod,
@@ -7812,6 +7811,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       });
     } catch (eDrop) {
       instance.surfDropletPipeline = null;
+      instance.surfDropletBGL = null;
       try { console.log('LiquidWGPU: droplet pipeline build failed (' + ((eDrop && eDrop.message) || eDrop) + ')'); } catch (_) {}
     }
   }
@@ -7840,6 +7840,20 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
           { binding: 1, resource: instance.surfTexView }
         ]
       });
+      if (instance.surfDropletBGL) {
+        instance.surfDropletBG = instance.device.createBindGroup({
+          label: 'liquid.surfDropletBG',
+          layout: instance.surfDropletBGL,
+          entries: [
+            { binding: 0, resource: { buffer: instance.renderParamsBuf } },
+            { binding: 1, resource: { buffer: instance.buf.pos } },
+            { binding: 3, resource: { buffer: instance.buf.flag } },
+            { binding: 4, resource: instance.surfTexView }
+          ]
+        });
+      } else {
+        instance.surfDropletBG = null;
+      }
       return true;
     } catch (eTex) {
       instance.surfReady = false;
@@ -7967,11 +7981,10 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       }
       pass.end();
     }
-    // v25.32 — DROPLET pass: every low-support water particle draws as a
-    // small visible droplet over the composite (surface path only; the
-    // legacy disc renderer already draws all particles). Skipped entirely
-    // when off — zero cost.
-    if (useSurface && LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline && count > 0) {
+    // v26.16: particles not covered by the actual field composite draw as
+    // small visible droplets. Interior particles remain surface-only.
+    if (useSurface && LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline &&
+        instance.surfDropletBG && count > 0) {
       var dropPass = enc.beginRenderPass({
         label: 'liquid.dropletPass',
         colorAttachments: [{
@@ -7981,7 +7994,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         }]
       });
       dropPass.setPipeline(instance.surfDropletPipeline);
-      dropPass.setBindGroup(0, instance.renderBG);
+      dropPass.setBindGroup(0, instance.surfDropletBG);
       dropPass.draw(6, count);
       dropPass.end();
     }
@@ -8970,7 +8983,9 @@ fn main() {
       surfReady: false,         // v24.113 — surface-render pipelines built (Stage 7b)
       surfFieldPipeline: null,  // v24.113 — particle -> density-field splat pipeline
       surfCompositePipeline: null, // v24.113 — field -> canvas threshold composite
-      surfDropletPipeline: null,   // v25.32 — visible strays/spray droplet pass
+      surfDropletPipeline: null,   // v26.16 — field-coverage droplet pass
+      surfDropletBGL: null,        // v26.16 — params + particles + density field
+      surfDropletBG: null,         // v26.16 — rebuilt with the field texture
       surfCompositeBGL: null,   // v24.113 — composite bind-group layout
       surfCompositeBG: null,    // v24.113 — composite bind group (rebuilt with the texture)
       surfTex: null,            // v24.113 — offscreen rgba16float density field
