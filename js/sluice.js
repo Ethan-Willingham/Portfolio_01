@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.34';
+  var GAME_VERSION = 'v26.35';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -57565,6 +57565,66 @@
     }
   }
 
+  // Material-space marbling. The former glass fill had no asymmetric feature
+  // that revealed orientation, so a round body could physically rotate while
+  // looking parked. These filaments and inclusions live in the body's best-fit
+  // rest-space transform. They rotate and squash with the lattice, never with
+  // the screen, and their deterministic layout cannot shimmer or re-roll.
+  function jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR) {
+    if (!isFinite(b.shM00 + b.shM01 + b.shM10 + b.shM11 + scx + scy + maxR)) return;
+    var tr = b.rMaxR || maxR;
+    if (!(tr > 4)) return;
+    var seed = ((Math.floor(b.hue) * 131 + b.n * 977) | 0) + 7409;
+    var flip = jelloFuzzHash(seed) < 0.5 ? -1 : 1;
+    ctx.save();
+    ctx.translate(scx, scy);
+    ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
+    ctx.lineCap = 'round';
+
+    ctx.lineWidth = Math.max(1.1, tr * 0.050);
+    ctx.strokeStyle = 'hsla(' + (hue + 16) + ',' + jelloClampPct(82 * satMul) + '%,' +
+      jelloClampPct(84 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.moveTo(-tr * 0.58, -tr * 0.12 * flip);
+    ctx.bezierCurveTo(-tr * 0.24, -tr * 0.48 * flip,
+                      tr * 0.10,  tr * 0.28 * flip,
+                      tr * 0.52, -tr * 0.04 * flip);
+    ctx.stroke();
+    ctx.lineWidth = Math.max(0.8, tr * 0.028);
+    ctx.strokeStyle = 'hsla(' + (hue - 14) + ',' + jelloClampPct(64 * satMul) + '%,' +
+      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.22).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.moveTo(-tr * 0.34, tr * 0.35 * flip);
+    ctx.bezierCurveTo(-tr * 0.06, tr * 0.14 * flip,
+                      tr * 0.18, tr * 0.48 * flip,
+                      tr * 0.43, tr * 0.24 * flip);
+    ctx.stroke();
+
+    // A small irregular inclusion cluster makes a full turn unmistakable.
+    // Radial fades keep it organic and avoid the old debug-particle look.
+    for (var mi = 0; mi < 4; mi++) {
+      var ma = (0.55 + mi * 1.71 + jelloFuzzHash(seed + mi * 7) * 0.48) * flip;
+      var md = tr * (0.20 + jelloFuzzHash(seed + mi * 7 + 1) * 0.38);
+      var mx = Math.cos(ma) * md, my = Math.sin(ma) * md;
+      var mr = tr * (0.068 + jelloFuzzHash(seed + mi * 7 + 2) * 0.055);
+      var mg = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
+      if (mi & 1) {
+        mg.addColorStop(0, 'hsla(' + (hue + 20) + ',100%,' +
+          jelloClampPct(88 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')');
+        mg.addColorStop(1, 'hsla(' + (hue + 20) + ',100%,' +
+          jelloClampPct(88 + lightAdd) + '%,0)');
+      } else {
+        mg.addColorStop(0, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
+          jelloClampPct(24 + lightAdd) + '%,' + (alpha * 0.28).toFixed(3) + ')');
+        mg.addColorStop(1, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
+          jelloClampPct(24 + lightAdd) + '%,0)');
+      }
+      ctx.fillStyle = mg;
+      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.2831853); ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function jelloDrawBody(b) {
     if (b.ringN < 3) return;
     // A non-finite bbox must never reach the canvas: createLinearGradient/createRadialGradient
@@ -57663,6 +57723,9 @@
     g.addColorStop(1,   'hsla(' + (hue - 6) + ',' + jelloClampPct(80 * satMul) + '%,' + jelloClampPct(36 + lightAdd) + '%,' + (alpha * 0.68).toFixed(3) + ')');
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
+
+    // A material-locked asymmetric pattern makes body rotation readable.
+    if (shadeOn) jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
