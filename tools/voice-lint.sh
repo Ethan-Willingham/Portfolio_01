@@ -58,6 +58,17 @@ while IFS= read -r f; do
     hard_fail=1
   fi
 
+  # Same rule, entity-encoded. The literal-character check above only sees the raw
+  # UTF-8 bytes, so HTML entities for the em/en dash (named, decimal, or hex) slip
+  # past it, and that is how encoded dashes had leaked into live pages. Block every
+  # spelling: &mdash; &ndash; &#8212; &#8211; &#x2014; &#x2013; (case-insensitive x).
+  edash=$(printf '%s\n' "$content" | grep -niE '&mdash;|&ndash;|&#8212;|&#8211;|&#x201[34];' || true)
+  if [ -n "$edash" ]; then
+    echo "BLOCK  $f  (entity-encoded em/en dash; use commas, periods, parens, \"to\", or &middot;)"
+    printf '%s\n' "$edash" | sed 's/^/    line /'
+    hard_fail=1
+  fi
+
   # Emojis and pictographs. Hard block (owner rule, 2026-07-11). Covers the emoji
   # planes plus the BMP symbol/dingbat blocks LLMs reach for. Three long-standing
   # text glyphs stay allowed: check 2713, star 2605, pick 26CF.
