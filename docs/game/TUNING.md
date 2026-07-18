@@ -138,7 +138,7 @@ drive how blurry the smoke reads** — see the deblur recipe in §9.
 | obstacle filter + feather | on | fixed | v26.24: the 8-px mask is linearly filtered and the visible cutout fades across its edge. Physics still uses the hard alpha threshold |
 | `SMOKE_WATER_OBSTACLE` | `1` | 0/1 | v26.24: slow, dense water is painted into the obstacle mask from the liquid CPU mirror, so smoke banks off pond surfaces. Fast falling bins get only the passable rim stamp because the velocity coupling below handles them. This removes the old 8-px staircase that erased smoke along a waterfall. Never `drawImage` the WebGPU water canvas here: the update phase reads a cleared texture and the render phase causes a GPU sync stall |
 | `SMOKE_WATER_FLOW` | `1` | 0/1 | Master for water-to-smoke momentum. The strongest falling 16-px bins inject velocity into smoke every four frames. gm `smoke.WATER_FLOW` |
-| `SMOKE_WATER_FLOW_FORCE` | `0.24` | 0.05–0.6 | Fraction of mean water velocity handed to smoke. gm `smoke.WATER_FLOW_FORCE` |
+| `SMOKE_WATER_FLOW_FORCE` | `0.10` | 0.05–0.6 | Fraction of mean water velocity handed to smoke. The horizontal impulse is capped at 45 and downward impulse at 55 so a waterfall bends a plume without pinning it. gm `smoke.WATER_FLOW_FORCE` |
 | `SMOKE_WATER_FLOW_MIN_VY` | `55` | 20–180 | Minimum downward water speed in px/s before a bin entrains smoke. gm `smoke.WATER_FLOW_MIN_VY` |
 | `SMOKE_WATER_FLOW_RADIUS` | `0.042` | 0.015–0.1 | Gaussian radius of each velocity-only impulse. gm `smoke.WATER_FLOW_RADIUS` |
 
