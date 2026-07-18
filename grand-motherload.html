@@ -96,7 +96,7 @@
     #game-intro {
       position: absolute;
       inset: 0;
-      background: #1a1008;
+      background: #10131a;   /* gunmetal night, matches the v26.20 UI skin */
       z-index: 10;
       opacity: 1;
       transition: opacity 0.5s ease;
@@ -104,8 +104,9 @@
     }
 
     /* === Pause overlay (v17.82) — covers the canvas while the loop is
-       halted on focus loss. Frontier-Soviet console look, reusing the
-       site's --d-* tokens. === */
+       halted on focus loss. Gunmetal + Brass skin (v26.20): the site's
+       --d-* tokens are overridden HERE, scoped to the overlay, so the
+       card flips with the game theme without touching style.css. === */
     #game-pause {
       position: absolute;
       inset: 0;
@@ -113,10 +114,16 @@
       display: none;               /* JS toggles .is-visible */
       align-items: center;
       justify-content: center;
-      background: rgba(13,10,4,0.72);
+      background: rgba(8,10,14,0.74);
       -webkit-backdrop-filter: blur(2px);
       backdrop-filter: blur(2px);
       font-family: var(--d-mono);
+      --d-bg-raised: #252a33;      /* UIT_PANEL */
+      --d-rule: #313845;
+      --d-rule-strong: #3d4655;
+      --d-accent: #d9ad3f;         /* UIT_GOLD */
+      --d-text-bright: #eee1b8;    /* UIT_TEXT */
+      --d-text-dim: #8590a0;       /* UIT_DIM */
     }
     #game-pause.is-visible { display: flex; }
     #game-pause .pause-card {
@@ -764,10 +771,10 @@
       });
     })();
   </script>
-  <script src="js/liquid-wgpu.js?v=v26.19"></script>
-  <script src="js/smoke-wgpu.js?v=v26.19"></script>
-  <script src="js/jello-wgpu.js?v=v26.19"></script>
-  <script src="js/audio.js?v=v26.19"></script>
+  <script src="js/liquid-wgpu.js?v=v26.20"></script>
+  <script src="js/smoke-wgpu.js?v=v26.20"></script>
+  <script src="js/jello-wgpu.js?v=v26.20"></script>
+  <script src="js/audio.js?v=v26.20"></script>
   <script>
     // Pause-screen volume slider -> SluiceAudio master, persisted across sessions.
     (function () {
@@ -863,6 +870,6 @@
     })();
 
   </script>
-  <script src="js/sluice.js?v=v26.19"></script>
+  <script src="js/sluice.js?v=v26.20"></script>
 </body>
 </html>

@@ -632,9 +632,9 @@
     var fh = bh - pad * 2 - 6;
 
     // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(fx, fy, fw, 1);
     ctx.fillRect(fx, fy, 1, fh);
     ctx.fillStyle = '#000000';
@@ -1066,9 +1066,9 @@
     var fh = bh - pad * 2 - 6;
 
     // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(fx, fy, fw, 1);
     ctx.fillRect(fx, fy, 1, fh);
     ctx.fillStyle = '#000000';
@@ -1246,12 +1246,12 @@
     var cx = bx + (bw >> 1);
     var cy = by + (bh >> 1) + 4;   // optical centre, below the label line
     // Recessed dark steel housing (matches the other instruments' bezels).
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(cx - 6, cy - 6, 12, 12);
     ctx.fillStyle = '#000000';
     ctx.fillRect(cx - 6, cy - 6, 12, 1);
     ctx.fillRect(cx - 6, cy - 6, 1, 12);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(cx - 6, cy + 5, 12, 1);
     ctx.fillRect(cx + 5, cy - 6, 1, 12);
     var lit = false, core, halo, spec;
@@ -1296,9 +1296,9 @@
     var fh = bh - pad * 2 - 6;
 
     // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(fx, fy, fw, 1);
     ctx.fillRect(fx, fy, 1, fh);
     ctx.fillStyle = '#000000';
@@ -1676,8 +1676,8 @@
     ctx.globalAlpha = base * srClamp(age / 120, 0, 1);
 
     // ---- outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410'; ctx.fillRect(hx, hy, hw, hh);
-    ctx.fillStyle = '#332820'; ctx.fillRect(hx, hy, hw, 1); ctx.fillRect(hx, hy, 1, hh);
+    ctx.fillStyle = '#14171d'; ctx.fillRect(hx, hy, hw, hh);
+    ctx.fillStyle = '#2a3140'; ctx.fillRect(hx, hy, hw, 1); ctx.fillRect(hx, hy, 1, hh);
     ctx.fillStyle = '#000000'; ctx.fillRect(hx, hy + hh - 1, hw, 1); ctx.fillRect(hx + hw - 1, hy, 1, hh);
     // ---- bronze inset ring ----
     var rxi = hx + 2, ryi = hy + 2, rwi = hw - 4, rhi = hh - 4;

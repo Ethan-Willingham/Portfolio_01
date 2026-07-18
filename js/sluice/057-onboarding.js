@@ -229,7 +229,7 @@
     ctx.globalAlpha = a * 0.92;
 
     // Plate + caution-gold border
-    ctx.fillStyle = 'rgba(12,9,6,0.88)';
+    ctx.fillStyle = 'rgba(10,12,17,0.88)';
     roundRect(ctx, panelX, panelY, panelW, panelH, 4, true);
     ctx.globalAlpha = a * 0.55;
     ctx.strokeStyle = BLD.goldBright;

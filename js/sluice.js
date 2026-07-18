@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.19';
+  var GAME_VERSION = 'v26.20';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -2083,16 +2083,35 @@
   // (32 px = 1 m, then m/s → MPH × 2.237). Terminal fall (~740 px/s) ≈ 52 MPH.
   var SPEEDO_MPH_MAX = 80;
   // Material colours from UI_STYLE.md §4.1.
-  var UIMAT_PLATE_BASE       = '#3d3a35';
-  var UIMAT_PLATE_HIGHLIGHT  = '#4f4c46';
-  var UIMAT_PLATE_SHADOW     = '#2a2724';
-  var UIMAT_RIVET_CORE       = '#52504a';
-  var UIMAT_RIVET_RIM        = '#2a2724';
-  var UIMAT_WELD             = '#5a5750';
-  var UIMAT_BAY_RECESS       = '#2e2c28';
-  var UIMAT_BAY_RECESS_DARK  = '#1f1d1a';
-  var UIMAT_BAY_RECESS_LIGHT = '#3a3833';
-  var UI_OUTLINE             = '#1a0a05';   // same as BLD.outline
+  // v26.20 — GUNMETAL + BRASS, the owner-picked UI skin (store-theme-lab).
+  // Cold desaturated blue-gray steel for every chrome surface; brass, gold
+  // and the fixed signal colors stay warm ("cold machine, warm lit dials").
+  // Same value structure as the old warm grays, hue moved to ~220.
+  var UIMAT_PLATE_BASE       = '#333a44';
+  var UIMAT_PLATE_HIGHLIGHT  = '#46505c';
+  var UIMAT_PLATE_SHADOW     = '#232933';
+  var UIMAT_RIVET_CORE       = '#4e5a68';
+  var UIMAT_RIVET_RIM        = '#232933';
+  var UIMAT_WELD             = '#566372';
+  var UIMAT_BAY_RECESS       = '#272e38';
+  var UIMAT_BAY_RECESS_DARK  = '#1a2028';
+  var UIMAT_BAY_RECESS_LIGHT = '#333c48';
+  var UI_OUTLINE             = '#0c0d10';   // near-black, cooled with the plates
+  // Theme tokens for the UI kit (245) and any DOM chrome. One block to
+  // re-skin: panels, insets, text tiers, the action gold, money, danger.
+  var UIT_PANEL     = '#252a33';   // modal/panel field
+  var UIT_PANEL_SEL = '#323947';   // selected row / active tab / raised chip
+  var UIT_INSET     = '#14181f';   // recessed wells (lists, art stages)
+  var UIT_INSET_DK  = '#0d1015';   // deepest recess shade
+  var UIT_EDGE      = '#0a0c10';   // panel outlines
+  var UIT_TEXT      = '#eee1b8';   // titles / stencil cream (warm on purpose)
+  var UIT_BODY      = '#c9c7b8';   // body + secondary text
+  var UIT_DIM       = '#8590a0';   // dim labels (cool, sits in the field hue)
+  var UIT_GOLD      = '#d9ad3f';   // the one action accent
+  var UIT_GOLD_HI   = '#ffe066';   // accent hover
+  var UIT_GOLD_TEXT = '#241a08';   // dark text on gold
+  var UIT_MONEY     = '#e8c052';   // prices / cash
+  var UIT_RED       = '#ec7058';   // shortfall / denied text (AA on the field)
   // v11.54 — responsive fold. consoleStacked() is true when the single bay
   // row is wider than the viewport; the console then folds into 2 rows,
   // CONSOLE_ROW_STACKED tall per row. consoleStackCols() is the per-row count
@@ -6392,7 +6411,7 @@
     ctx.globalAlpha = a * 0.92;
 
     // Plate + caution-gold border
-    ctx.fillStyle = 'rgba(12,9,6,0.88)';
+    ctx.fillStyle = 'rgba(10,12,17,0.88)';
     roundRect(ctx, panelX, panelY, panelW, panelH, 4, true);
     ctx.globalAlpha = a * 0.55;
     ctx.strokeStyle = BLD.goldBright;
@@ -6653,7 +6672,7 @@
 
     // Plate + lamp-coloured border
     ctx.globalAlpha = a * 0.92;
-    ctx.fillStyle = 'rgba(12,9,6,0.88)';
+    ctx.fillStyle = 'rgba(10,12,17,0.88)';
     roundRect(ctx, panelX, panelY, panelW, panelH, 4, true);
     ctx.globalAlpha = a * 0.55;
     ctx.strokeStyle = lampCol;
@@ -39127,9 +39146,9 @@
     var fh = bh - pad * 2 - 6;
 
     // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(fx, fy, fw, 1);
     ctx.fillRect(fx, fy, 1, fh);
     ctx.fillStyle = '#000000';
@@ -39561,9 +39580,9 @@
     var fh = bh - pad * 2 - 6;
 
     // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(fx, fy, fw, 1);
     ctx.fillRect(fx, fy, 1, fh);
     ctx.fillStyle = '#000000';
@@ -39741,12 +39760,12 @@
     var cx = bx + (bw >> 1);
     var cy = by + (bh >> 1) + 4;   // optical centre, below the label line
     // Recessed dark steel housing (matches the other instruments' bezels).
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(cx - 6, cy - 6, 12, 12);
     ctx.fillStyle = '#000000';
     ctx.fillRect(cx - 6, cy - 6, 12, 1);
     ctx.fillRect(cx - 6, cy - 6, 1, 12);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(cx - 6, cy + 5, 12, 1);
     ctx.fillRect(cx + 5, cy - 6, 1, 12);
     var lit = false, core, halo, spec;
@@ -39791,9 +39810,9 @@
     var fh = bh - pad * 2 - 6;
 
     // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#332820';
+    ctx.fillStyle = '#2a3140';
     ctx.fillRect(fx, fy, fw, 1);
     ctx.fillRect(fx, fy, 1, fh);
     ctx.fillStyle = '#000000';
@@ -40171,8 +40190,8 @@
     ctx.globalAlpha = base * srClamp(age / 120, 0, 1);
 
     // ---- outer dark steel bezel ----
-    ctx.fillStyle = '#1a1410'; ctx.fillRect(hx, hy, hw, hh);
-    ctx.fillStyle = '#332820'; ctx.fillRect(hx, hy, hw, 1); ctx.fillRect(hx, hy, 1, hh);
+    ctx.fillStyle = '#14171d'; ctx.fillRect(hx, hy, hw, hh);
+    ctx.fillStyle = '#2a3140'; ctx.fillRect(hx, hy, hw, 1); ctx.fillRect(hx, hy, 1, hh);
     ctx.fillStyle = '#000000'; ctx.fillRect(hx, hy + hh - 1, hw, 1); ctx.fillRect(hx + hw - 1, hy, 1, hh);
     // ---- bronze inset ring ----
     var rxi = hx + 2, ryi = hy + 2, rwi = hw - 4, rhi = hh - 4;
@@ -43659,9 +43678,9 @@
     ctx.imageSmoothingEnabled = true;
     ctx.globalAlpha = strength;
     ctx.drawImage(ukFizzB.c, 0, 0, bw, bh, 0, 0, viewW, playH);
-    // Warm dim so panel text pops without going to black.
+    // Cool night dim; the warm world glows through it.
     ctx.globalAlpha = 1;
-    ctx.fillStyle = 'rgba(12,9,6,' + (0.50 * strength).toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(9,11,16,' + (0.50 * strength).toFixed(3) + ')';
     ctx.fillRect(0, 0, viewW, playH);
     // Vignette (cached radial gradient) pulls the eye to the center.
     if (!ukVig || ukVig.w !== viewW || ukVig.h !== playH) {
@@ -43679,16 +43698,16 @@
   }
 
   // ---- drawing primitives ------------------------------------------------
-  // The modal surface: solid warm plate, dark outline, one top light line,
-  // small brass corner ticks. Deliberately quiet; the content is the show.
+  // The modal surface: solid gunmetal plate, dark outline, one warm top
+  // light line, small brass corner ticks. Quiet; the content is the show.
   function ukPanelBox(x, y, w, h) {
     ctx.fillStyle = 'rgba(0,0,0,0.34)';
     ctx.fillRect(x - 5, y - 1, w + 10, h + 9);
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(x + 1, y + 4, w, h + 1);
-    ctx.fillStyle = '#0b0906';
+    ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
-    ctx.fillStyle = '#2b241b';
+    ctx.fillStyle = UIT_PANEL;
     ctx.fillRect(x, y, w, h);
     ctx.fillStyle = 'rgba(255,216,150,0.09)';
     ctx.fillRect(x, y, w, 1);
@@ -43703,9 +43722,9 @@
   }
   // A recessed dark niche (art stages, list wells).
   function ukInset(x, y, w, h) {
-    ctx.fillStyle = '#0d0a07';
+    ctx.fillStyle = UIT_INSET_DK;
     ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = '#17120c';
+    ctx.fillStyle = UIT_INSET;
     ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(x + 1, y + 1, w - 2, 2);
@@ -43764,9 +43783,9 @@
     for (var i = 0; i < max; i++) {
       var px = x + i * (pw + gap);
       var on = i < cur;
-      ctx.fillStyle = '#0b0906';
+      ctx.fillStyle = UIT_EDGE;
       ctx.fillRect(px - 1, y - 1, pw + 2, h + 2);
-      ctx.fillStyle = on ? '#d8ac3e' : '#241e15';
+      ctx.fillStyle = on ? UIT_GOLD : UIT_INSET;
       ctx.fillRect(px, y, pw, h);
       if (on) {
         ctx.fillStyle = '#ffe9a0';
@@ -43777,22 +43796,22 @@
   // The one button. kind: 'gold' (primary) | 'lock' (disabled with reason).
   function ukButton(r, label, kind, hover, pressT, px) {
     var squish = pressT > 0 ? 2 : 0;
-    ctx.fillStyle = '#0b0906';
+    ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(r.x - 1, r.y - 1 + squish, r.w + 2, r.h + 2 - squish);
     if (kind === 'gold') {
-      ctx.fillStyle = hover ? '#ffdf66' : '#d8ac3e';
+      ctx.fillStyle = hover ? UIT_GOLD_HI : UIT_GOLD;
       ctx.fillRect(r.x, r.y + squish, r.w, r.h - squish);
       ctx.fillStyle = 'rgba(255,255,255,0.22)';
       ctx.fillRect(r.x, r.y + squish, r.w, 2);
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
       ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3);
-      nsText(label, r.x + r.w / 2, r.y + squish + (r.h - squish - px) / 2, px, '#241608', 'center');
+      nsText(label, r.x + r.w / 2, r.y + squish + (r.h - squish - px) / 2, px, UIT_GOLD_TEXT, 'center');
     } else {
-      ctx.fillStyle = '#241d15';
+      ctx.fillStyle = UIT_INSET;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(r.x, r.y, r.w, 2);
-      var lockCol = (kind === 'short') ? '#d05a48' : '#7a7060';
+      var lockCol = (kind === 'short') ? UIT_RED : UIT_DIM;
       nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px, lockCol, 'center');
     }
   }
@@ -43953,19 +43972,19 @@
     var cy = L.y + Math.round(L.headH / 2);
     // title
     var tpx = Math.round(15 * us);
-    nsText(ukModal.title, L.x + L.pad + 2, cy - Math.round(tpx / 2), tpx, '#f0d894');
+    nsText(ukModal.title, L.x + L.pad + 2, cy - Math.round(tpx / 2), tpx, UIT_TEXT);
     // close button (top-right square)
     var cw = Math.max(34, Math.round(30 * us));
     var cr = { x: L.x + L.w - cw - Math.round(7 * us), y: L.y + Math.round((L.headH - cw) / 2), w: cw, h: cw };
     var chov = (ukHover === 'uk:close');
-    ctx.fillStyle = '#0b0906';
+    ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(cr.x - 1, cr.y - 1, cr.w + 2, cr.h + 2);
-    ctx.fillStyle = chov ? '#4a3b22' : '#332a1d';
+    ctx.fillStyle = chov ? '#3d4655' : UIT_PANEL_SEL;
     ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
     ctx.fillStyle = 'rgba(255,216,150,0.10)';
     ctx.fillRect(cr.x, cr.y, cr.w, 1);
     var xc = cr.x + cr.w / 2, yc = cr.y + cr.h / 2, arm = Math.round(cr.w * 0.20);
-    ctx.fillStyle = chov ? '#ffdf9a' : '#c9b184';
+    ctx.fillStyle = chov ? UIT_GOLD_HI : UIT_BODY;
     for (var o = -arm; o <= arm; o++) {
       ctx.fillRect(xc + o - 1, yc + o - 1, 2, 2);
       ctx.fillRect(xc + o - 1, yc - o - 1, 2, 2);
@@ -43996,11 +44015,11 @@
       var active = (def.id === ukState.tab);
       var hov = (ukHover === 'uk:tab:' + def.id);
       if (active) {
-        ctx.fillStyle = '#382e1e';
+        ctx.fillStyle = UIT_PANEL_SEL;
         ctx.fillRect(rx, ty, rw, th);
         ctx.fillStyle = 'rgba(255,216,150,0.08)';
         ctx.fillRect(rx, ty, rw, 1);
-        ctx.fillStyle = '#d8ac3e';
+        ctx.fillStyle = UIT_GOLD;
         ctx.fillRect(rx, ty + th - 3, rw, 3);
       } else if (hov) {
         ctx.fillStyle = 'rgba(255,216,150,0.05)';
@@ -44008,7 +44027,7 @@
       }
       var px = Math.round(9.5 * us);
       nsText(def.label, rx + rw / 2, ty + (th - px) / 2, px,
-             active ? '#f0d894' : (hov ? '#bda878' : '#8a7a58'), 'center');
+             active ? UIT_TEXT : (hov ? UIT_BODY : UIT_DIM), 'center');
       UK_HIT.push({ id: 'uk:tab:' + def.id, x: rx, y: ty - 4, w: rw, h: th + 8 });
     }
   }
@@ -44020,7 +44039,7 @@
     ukInset(L.listX, L.listY, L.listW, L.listH);
     if (n === 0) {
       ukMono('Nothing here yet.', L.listX + L.listW / 2, L.listY + L.listH / 2,
-             Math.max(10, Math.round(11 * us)), '#7a7060', 'center');
+             Math.max(10, Math.round(11 * us)), UIT_DIM, 'center');
       return;
     }
     var ideal = Math.round(54 * us);
@@ -44046,9 +44065,9 @@
       var selected = (it.key === selKey);
       var hov = (ukHover === 'uk:item:' + it.key);
       if (selected) {
-        ctx.fillStyle = '#3a3020';
+        ctx.fillStyle = UIT_PANEL_SEL;
         ctx.fillRect(L.listX + 1, ry, L.listW - 2, rowH);
-        ctx.fillStyle = '#d8ac3e';
+        ctx.fillStyle = UIT_GOLD;
         ctx.fillRect(L.listX + 1, ry, 3, rowH);
       } else if (hov) {
         ctx.fillStyle = 'rgba(255,216,150,0.05)';
@@ -44073,16 +44092,16 @@
       var nw = nsTextW(it.name, npx);
       if (nw > nameMaxW && nw > 0) npx = Math.max(6, npx * nameMaxW / nw);
       if (it.sub) {
-        nsText(it.name, tx0, ry + Math.round(rowH * 0.24) - Math.round(npx / 2) + 2, npx, selected ? '#f0dfae' : '#cdbd92');
-        ukMono(it.sub, tx0, ry + Math.round(rowH * 0.74) + 3, subPx, selected ? '#a89468' : '#7d7058');
+        nsText(it.name, tx0, ry + Math.round(rowH * 0.24) - Math.round(npx / 2) + 2, npx, selected ? UIT_TEXT : UIT_BODY);
+        ukMono(it.sub, tx0, ry + Math.round(rowH * 0.74) + 3, subPx, UIT_DIM);
       } else {
-        nsText(it.name, tx0, ry + Math.round((rowH - npx) / 2), npx, selected ? '#f0dfae' : '#cdbd92');
+        nsText(it.name, tx0, ry + Math.round((rowH - npx) / 2), npx, selected ? UIT_TEXT : UIT_BODY);
       }
       // price, right-aligned
       if (it.priceLabel) {
-        var pc = '#8a7a58';
-        if (it.priceTier === 'gold') pc = '#e8c052';
-        else if (it.priceTier === 'red') pc = '#d05a48';
+        var pc = UIT_DIM;
+        if (it.priceTier === 'gold') pc = UIT_MONEY;
+        else if (it.priceTier === 'red') pc = UIT_RED;
         nsText(it.priceLabel, L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx, pc, 'right');
       }
       // hairline between rows
@@ -44101,7 +44120,7 @@
       var thumbY = L.listY + (L.listH - thumbH) * (ukState.scroll / ukState.scrollMax);
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.fillRect(trackX, L.listY + 2, 3, L.listH - 4);
-      ctx.fillStyle = '#6a5a34';
+      ctx.fillStyle = '#5c6675';
       ctx.fillRect(trackX, thumbY, 3, thumbH);
     }
   }
@@ -44183,21 +44202,21 @@
       var bdPx = Math.max(9, Math.round(9.5 * us));
       var bdW = ukMonoW(it.badge, bdPx, true) + Math.round(12 * us);
       var bdH = bdPx + Math.round(8 * us);
-      ctx.fillStyle = 'rgba(10,8,5,0.82)';
+      ctx.fillStyle = 'rgba(8,10,14,0.85)';
       ctx.fillRect(x + w - bdW - 4, artY + 4, bdW, bdH);
-      ctx.fillStyle = '#d8ac3e';
+      ctx.fillStyle = UIT_GOLD;
       ctx.fillRect(x + w - bdW - 4, artY + 4, 2, bdH);
-      ukMono(it.badge, x + w - 4 - bdW / 2 + 1, artY + 4 + bdH - Math.round(5 * us), bdPx, '#f0dfae', 'center', true);
+      ukMono(it.badge, x + w - 4 - bdW / 2 + 1, artY + 4 + bdH - Math.round(5 * us), bdPx, UIT_TEXT, 'center', true);
     }
 
     // name
     var dnw = nsTextW(it.name, namePx);
     var maxNameW = w - Math.round(12 * us);
     var dnpx = (dnw > maxNameW && dnw > 0) ? Math.max(7, namePx * maxNameW / dnw) : namePx;
-    nsText(it.name, x + w / 2, nameY + Math.round((nameH - dnpx) / 2), dnpx, '#f0d894', 'center');
+    nsText(it.name, x + w / 2, nameY + Math.round((nameH - dnpx) / 2), dnpx, UIT_TEXT, 'center');
     // state line
     if (it.state) {
-      ukMono(it.state, x + w / 2, subY + subH - Math.round(4 * us), subPx, '#9a8a64', 'center');
+      ukMono(it.state, x + w / 2, subY + subH - Math.round(4 * us), subPx, UIT_DIM, 'center');
     }
     // pips
     if (it.pips) {
@@ -44209,22 +44228,22 @@
       var sLabPx = Math.max(9, Math.round(9.5 * us));
       var valPx = Math.round(11 * us);
       var sY = statY + Math.round(6 * us);
-      ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, '#8a7a58', 'center');
+      ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, UIT_DIM, 'center');
       // '▸' is the one arrow glyph in STENCIL_FONT ('>' has no bitmap).
       var valStr = it.stat.next ? (it.stat.cur + ' ▸ ' + it.stat.next) : it.stat.cur;
       var deltaStr = it.stat.delta ? ('  ' + it.stat.delta) : '';
       var vw = nsTextW(valStr, valPx);
       var dw = deltaStr ? nsTextW(deltaStr, Math.round(valPx * 0.8)) : 0;
       var startX = x + w / 2 - (vw + dw) / 2;
-      nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, '#eadfb8');
+      nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, UIT_TEXT);
       if (deltaStr) {
-        nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + Math.round(valPx * 0.14), Math.round(valPx * 0.8), '#e8c052');
+        nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + Math.round(valPx * 0.14), Math.round(valPx * 0.8), UIT_MONEY);
       }
     }
     // description
     if (descLines > 0 && it.desc) {
       ukMonoWrap(it.desc, x + w / 2, descY + descPx + Math.round(2 * us),
-                 w - pad * 2, descPx, descLineH, '#b3a582', descLines);
+                 w - pad * 2, descPx, descLineH, UIT_BODY, descLines);
     }
     // action button
     if (it.act) {

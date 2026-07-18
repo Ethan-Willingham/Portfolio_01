@@ -749,16 +749,35 @@
   // (32 px = 1 m, then m/s → MPH × 2.237). Terminal fall (~740 px/s) ≈ 52 MPH.
   var SPEEDO_MPH_MAX = 80;
   // Material colours from UI_STYLE.md §4.1.
-  var UIMAT_PLATE_BASE       = '#3d3a35';
-  var UIMAT_PLATE_HIGHLIGHT  = '#4f4c46';
-  var UIMAT_PLATE_SHADOW     = '#2a2724';
-  var UIMAT_RIVET_CORE       = '#52504a';
-  var UIMAT_RIVET_RIM        = '#2a2724';
-  var UIMAT_WELD             = '#5a5750';
-  var UIMAT_BAY_RECESS       = '#2e2c28';
-  var UIMAT_BAY_RECESS_DARK  = '#1f1d1a';
-  var UIMAT_BAY_RECESS_LIGHT = '#3a3833';
-  var UI_OUTLINE             = '#1a0a05';   // same as BLD.outline
+  // v26.20 — GUNMETAL + BRASS, the owner-picked UI skin (store-theme-lab).
+  // Cold desaturated blue-gray steel for every chrome surface; brass, gold
+  // and the fixed signal colors stay warm ("cold machine, warm lit dials").
+  // Same value structure as the old warm grays, hue moved to ~220.
+  var UIMAT_PLATE_BASE       = '#333a44';
+  var UIMAT_PLATE_HIGHLIGHT  = '#46505c';
+  var UIMAT_PLATE_SHADOW     = '#232933';
+  var UIMAT_RIVET_CORE       = '#4e5a68';
+  var UIMAT_RIVET_RIM        = '#232933';
+  var UIMAT_WELD             = '#566372';
+  var UIMAT_BAY_RECESS       = '#272e38';
+  var UIMAT_BAY_RECESS_DARK  = '#1a2028';
+  var UIMAT_BAY_RECESS_LIGHT = '#333c48';
+  var UI_OUTLINE             = '#0c0d10';   // near-black, cooled with the plates
+  // Theme tokens for the UI kit (245) and any DOM chrome. One block to
+  // re-skin: panels, insets, text tiers, the action gold, money, danger.
+  var UIT_PANEL     = '#252a33';   // modal/panel field
+  var UIT_PANEL_SEL = '#323947';   // selected row / active tab / raised chip
+  var UIT_INSET     = '#14181f';   // recessed wells (lists, art stages)
+  var UIT_INSET_DK  = '#0d1015';   // deepest recess shade
+  var UIT_EDGE      = '#0a0c10';   // panel outlines
+  var UIT_TEXT      = '#eee1b8';   // titles / stencil cream (warm on purpose)
+  var UIT_BODY      = '#c9c7b8';   // body + secondary text
+  var UIT_DIM       = '#8590a0';   // dim labels (cool, sits in the field hue)
+  var UIT_GOLD      = '#d9ad3f';   // the one action accent
+  var UIT_GOLD_HI   = '#ffe066';   // accent hover
+  var UIT_GOLD_TEXT = '#241a08';   // dark text on gold
+  var UIT_MONEY     = '#e8c052';   // prices / cash
+  var UIT_RED       = '#ec7058';   // shortfall / denied text (AA on the field)
   // v11.54 — responsive fold. consoleStacked() is true when the single bay
   // row is wider than the viewport; the console then folds into 2 rows,
   // CONSOLE_ROW_STACKED tall per row. consoleStackCols() is the per-row count
