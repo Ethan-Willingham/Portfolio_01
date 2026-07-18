@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.18';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.20';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1767,7 +1767,7 @@
   var SMOKE_COL = { r: 0.20, g: 0.185, b: 0.165 };   // warm gray, light enough to read on the dark box
   var SMOKE_WATER_FLOW_MIN_VY = 55;
   // Keep the waterfall legible without pinning the whole plume to it.
-  var SMOKE_WATER_FLOW_FORCE = 0.10;
+  var SMOKE_WATER_FLOW_FORCE = 0.16;
   var SMOKE_WATER_FLOW_RADIUS = 0.042;
   var smokeWaterFlowTick = 0;
   var smokeWaterFlowCandidates = [];
@@ -1895,8 +1895,8 @@
       var col = ci % gridW, row = (ci / gridW) | 0;
       var avx = waterCellVX[ci] / count;
       var avy = waterCellVY[ci] / count;
-      var fx = Math.max(-45, Math.min(45, avx * SMOKE_WATER_FLOW_FORCE));
-      var fy = -Math.min(55, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
+      var fx = Math.max(-65, Math.min(65, avx * SMOKE_WATER_FLOW_FORCE));
+      var fy = -Math.min(80, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
       var radius = SMOKE_WATER_FLOW_RADIUS + Math.min(0.018, count * 0.0012);
       SmokeFluid.splatVelocity((col + 0.5) * TILE / worldW,
         1 - (row + 0.5) * TILE / worldH, fx, fy, radius);

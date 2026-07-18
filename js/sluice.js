@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.28';
+  var GAME_VERSION = 'v26.29';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -35282,7 +35282,7 @@
   var SMOKE_WATER_FLOW_MIN_N = 3;
   var SMOKE_WATER_FLOW_MAX_SPLATS = 5;
   // Keep the waterfall legible without pinning the whole plume to it.
-  var SMOKE_WATER_FLOW_FORCE = 0.10;
+  var SMOKE_WATER_FLOW_FORCE = 0.16;
   var SMOKE_WATER_FLOW_RADIUS = 0.042;
   var smokeWaterFlowTick = 0;
   var smokeWaterFlowCount = null;
@@ -36160,8 +36160,8 @@
       if (!uv.inView) continue;
       var avx = smokeWaterFlowVX[ci] / n;
       var avy = smokeWaterFlowVY[ci] / n;
-      var fx = Math.max(-45, Math.min(45, avx * SMOKE_WATER_FLOW_FORCE));
-      var fy = -Math.min(55, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
+      var fx = Math.max(-65, Math.min(65, avx * SMOKE_WATER_FLOW_FORCE));
+      var fy = -Math.min(80, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
       var radius = SMOKE_WATER_FLOW_RADIUS + Math.min(0.018, n * 0.0012);
       if (flowSplat) flowSplat.call(smokeDriver, uv.uvX, uv.uvY, fx, fy, radius);
       else smokeDriver.splat(uv.uvX, uv.uvY, fx, fy, SMOKE_ZERO_COL, radius);
