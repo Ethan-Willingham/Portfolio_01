@@ -276,6 +276,7 @@
       var nl = C.lobes0 + ((wHash(vi, 3, seed) * (C.lobes1 - C.lobes0 + 1)) | 0);
       var dom = (nl * (0.30 + 0.40 * wHash(vi, 5, seed))) | 0;
       var hCap = C.baseV - 0.04;                             // never clip the tower at the tile top
+      var lcx = [], lr = [], lh = [], maxH = 0, extLo = 1, extHi = 0;
       for (var li = 0; li < nl; li++) {
         var ft = (nl > 1) ? li / (nl - 1) : 0.5;
         var cx = uc + (ft - 0.5) * totW * (0.82 + 0.16 * wHash(vi, 7 + li, seed));
@@ -284,11 +285,26 @@
                               : 0.15 + 0.10 * wHash(vi, 20 + li, seed));
         var hh = C.dome * (isDom ? 0.88 + 0.24 * wHash(vi, 40 + li, seed)
                                  : 0.38 + 0.42 * wHash(vi, 40 + li, seed));
-        if (hh > hCap) hh = hCap;
-        var pA = Math.max(0, Math.round((cx - r) * tw)), pB = Math.min(tw - 1, Math.round((cx + r) * tw));
+        lcx.push(cx); lr.push(r); lh.push(hh);
+        if (hh > maxH) maxH = hh;
+        if (cx - r < extLo) extLo = cx - r;
+        if (cx + r > extHi) extHi = cx + r;
+      }
+      // Fit the whole layout INSIDE the tile: lobes placed past the canvas
+      // edge were guillotined into hard vertical cuts, and per-lobe height
+      // clamping flattened tall crowns into plateaus. Remap x (compressing
+      // radii with the layout) and scale every height together instead.
+      var sf = Math.min(1, 0.92 / (extHi - extLo));
+      var x0map = 0.5 - (extHi - extLo) * sf * 0.5;
+      var hs = Math.min(1, hCap / maxH);
+      for (li = 0; li < nl; li++) {
+        var cx2 = x0map + (lcx[li] - extLo) * sf;
+        var r2 = lr[li] * sf;
+        var hh2 = lh[li] * hs;
+        var pA = Math.max(0, Math.round((cx2 - r2) * tw)), pB = Math.min(tw - 1, Math.round((cx2 + r2) * tw));
         for (px = pA; px <= pB; px++) {
-          var dd2 = (px / tw - cx) / r;
-          var cap = hh * Math.sqrt(Math.max(0, 1 - dd2 * dd2));
+          var dd2 = (px / tw - cx2) / r2;
+          var cap = hh2 * Math.sqrt(Math.max(0, 1 - dd2 * dd2));
           if (cap > topAllow[px]) topAllow[px] = cap;
         }
       }
@@ -604,11 +620,11 @@
   // Draw every visible cloud in ONE row of the field. Far (high) rows are
   // drawn before near (low) ones by the caller.
   // One row of the field: shared row MOTION (hPar/drift → `shift`), continuous
-  // per-cloud everything else. All randomness keys on (k, j*101 + off) so no
+  // per-cloud everything else. All randomness keys on (k, j*257 + off) so no
   // two uses collide and the field is deterministic forever.
   function weatherDrawFieldRow(j, cw, skyBottomPx, e, ws, surfaceY, altScale, thin, swell, globalA) {
     var R = CLOUD_ROWS[j];
-    var jy = j * 101;
+    var jy = j * 257;
     var rowMid = R.lo + R.h * 0.5;
     var hParRow, driftRow;
     if (j === 0) {
@@ -628,14 +644,47 @@
       var alt = R.lo + wHash(k, jy + 29, CLOUD_FIELD_SEED) * R.h;
       var tA = wClamp01((alt - 150) / (CLOUD_ALT_TOP - 150));   // 0 low → 1 top of the field
       var dens = 1 - 0.35 * tA * tA;                    // the sky empties toward space (cell area already grows)
-      var aFade = wClamp01((e * dens - h0) / 0.07);     // clouds fade in low-hash first
-      if (aFade <= 0.01) continue;
+      // large-scale CLUSTER noise (~4-cell wavelength, correlated across
+      // neighbouring rows): clouds bunch into banks with real gaps between the
+      // groups. An even one-per-cell spread reads as countable cloud UNITS.
+      var clus = wSmooth(wVal(k * 0.26, j * 1.7, 99991, CLOUD_FIELD_SEED + 13));
+      var eEff = e * dens * (0.50 + 1.05 * clus);
       var fadeA = 1 - thin * Math.pow(tA, 1.2);         // deckThin: high clouds thin out
       if (fadeA <= 0.01) continue;
+      var cirrusW = wSmooth(wClamp01((alt - 1550) / 450));
+      var valley = 1 - wSmooth(wClamp01((alt - 70) / 160));
+      var sBaseCum = 0.34 + 0.72 * wSmooth(wClamp01((alt - 60) / 280));
+      // ---- FRAGMENTS: up to two independent small shreds per cell, alive a
+      // hair below the main threshold too — loose ragged bits between and
+      // around the big masses are what make the sky read as cloudINESS
+      // instead of placed objects.
+      for (var si = 0; si < 2; si++) {
+        var sy2 = jy + 103 + si * 16;
+        var hsE = wHash(k, sy2, CLOUD_FIELD_SEED);
+        var aS = wClamp01((eEff * 0.85 - hsE) / 0.06);
+        if (aS <= 0.01) continue;
+        var clsS = (wHash(k, sy2 + 1, CLOUD_FIELD_SEED) < cirrusW) ? 0 : 1;
+        var SS = cloudSprites[clsS][(wHash(k, sy2 + 2, CLOUD_FIELD_SEED) * 977 | 0) % CLOUD_VARIANTS];
+        if (!SS || !SS.ready) continue;
+        var CS = CLOUD_CLASSES[clsS];
+        var sBaseS = (clsS === 0) ? 0.9 + 0.5 * wClamp01((alt - 1500) / 1800) : sBaseCum;
+        var wWS = CS.worldW * sBaseS * (0.30 + 0.28 * wHash(k, sy2 + 3, CLOUD_FIELD_SEED)) * swell;
+        var wHS = wWS * (CS.th / CS.tw) * (0.86 + 0.28 * wHash(k, sy2 + 4, CLOUD_FIELD_SEED));
+        var xS = (k + 0.5 + (wHash(k, sy2 + 5, CLOUD_FIELD_SEED) - 0.5) * 1.8) * R.w;
+        var altS = alt + (wHash(k, sy2 + 6, CLOUD_FIELD_SEED) - 0.5) * 0.9 * R.h;
+        var sxS = (xS - shift) * ws - wWS * ws * 0.5;
+        var topS = (surfaceY - altS * altScale - cam.y) * ws - wHS * ws * 0.5;
+        var wPxS = wWS * ws, hPxS = wHS * ws;
+        if (topS >= skyBottomPx || topS + hPxS <= 0 || sxS + wPxS <= 0 || sxS >= cw) continue;
+        ctx.globalAlpha = wClamp01(globalA * fadeA * aS * CS.alpha * (1 - 0.28 * valley) *
+                                   (0.82 + 0.12 * wHash(k, sy2 + 8, CLOUD_FIELD_SEED)));
+        ctx.drawImage(SS.color, sxS, topS, wPxS, hPxS);
+      }
+      var aFade = wClamp01((eEff - h0) / 0.07);         // clouds fade in low-hash first
+      if (aFade <= 0.01) continue;
       // class by altitude with a dithered blend: big+mid low, mid-heavy middle,
       // cirrus from ~1.55k fully by ~2k
       var cls;
-      var cirrusW = wSmooth(wClamp01((alt - 1550) / 450));
       if (wHash(k, jy + 59, CLOUD_FIELD_SEED) < cirrusW) cls = 0;
       else cls = (wHash(k, jy + 47, CLOUD_FIELD_SEED) < 0.55 - 0.30 * wClamp01((alt - 400) / 900)) ? 2 : 1;
       var vi = (wHash(k, jy + 23, CLOUD_FIELD_SEED) * 977 | 0) % CLOUD_VARIANTS;
@@ -644,11 +693,12 @@
       var C = CLOUD_CLASSES[cls];
       // size runs its whole small → big progression INSIDE the resting view
       // (tiny puffs at the ridge, full cumulus by ~330), so no height reads as
-      // "the one size"; cirrus streaks widen with height instead
-      var valley = 1 - wSmooth(wClamp01((alt - 70) / 160));
-      var sBase = (cls === 0) ? 0.9 + 0.5 * wClamp01((alt - 1500) / 1800)
-                              : 0.34 + 0.72 * wSmooth(wClamp01((alt - 60) / 280));
-      var scale = sBase * (0.72 + 0.56 * wHash(k, jy + 67, CLOUD_FIELD_SEED)) * swell;
+      // "the one size"; cirrus streaks widen with height instead. The jitter
+      // is SMALL-BIASED (h²): mostly modest clouds, the odd giant — a sky of
+      // same-sized clouds counts as units.
+      var sBase = (cls === 0) ? 0.9 + 0.5 * wClamp01((alt - 1500) / 1800) : sBaseCum;
+      var sj = wHash(k, jy + 67, CLOUD_FIELD_SEED);
+      var scale = sBase * (0.52 + 0.95 * sj * sj) * swell;
       var wW = C.worldW * scale;
       // per-cloud aspect squash — same sprite reads squat or towering
       var wH = wW * (C.th / C.tw) * (0.86 + 0.28 * wHash(k, jy + 73, CLOUD_FIELD_SEED));
@@ -662,11 +712,11 @@
       // overlap (repeated arc seams); merged solid masses read as one cloud
       var instA = wClamp01(globalA * fadeA * aFade * C.alpha * (1 - 0.28 * valley) *
                            (0.90 + 0.10 * wHash(k, jy + 97, CLOUD_FIELD_SEED)));
-      // ~45% of cumulus are COMPOSITES: a second, smaller variant stamped
+      // ~1 in 3 cumulus are COMPOSITES: a second, smaller variant stamped
       // beside the main mass with their bases aligned — combinatorial variety
       // from the same pool, so repeats stop being findable
       var hComp = wHash(k, jy + 71, CLOUD_FIELD_SEED);
-      if (cls !== 0 && hComp < 0.45) {
+      if (cls !== 0 && hComp < 0.32) {
         var S2 = cloudSprites[cls][(vi + 1 + ((hComp * 16) | 0)) % CLOUD_VARIANTS];
         if (S2 && S2.ready) {
           var sc2 = 0.48 + 0.22 * wHash(k, jy + 79, CLOUD_FIELD_SEED);
