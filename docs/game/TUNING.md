@@ -140,7 +140,7 @@ drive how blurry the smoke reads** — see the deblur recipe in §9.
 | `SMOKE_WATER_FLOW` | `1` | 0/1 | Master for water-to-smoke momentum. The strongest falling 16-px bins inject velocity into smoke every four frames. gm `smoke.WATER_FLOW` |
 | `SMOKE_WATER_FLOW_FORCE` | `0.16` | 0.05–0.6 | Fraction of mean water velocity handed to smoke. The horizontal impulse is capped at 65 and downward impulse at 80 so a waterfall visibly pulls a plume without pinning it. gm `smoke.WATER_FLOW_FORCE` |
 | `SMOKE_WATER_FLOW_MIN_VY` | `55` | 20–180 | Minimum downward water speed in px/s before a bin entrains smoke. gm `smoke.WATER_FLOW_MIN_VY` |
-| `SMOKE_WATER_FLOW_RADIUS` | `0.042` | 0.015–0.1 | Gaussian radius of each velocity-only impulse. gm `smoke.WATER_FLOW_RADIUS` |
+| `SMOKE_WATER_FLOW_RADIUS` | `0.085` | 0.015–0.1 | Gaussian radius of each velocity-only impulse. The influence extends beyond the visible water column to model the sleeve of air a real fall entrains. gm `smoke.WATER_FLOW_RADIUS` |
 
 ## 1.3 `fireplaceTune` — station chimney smoke · tier `live`
 

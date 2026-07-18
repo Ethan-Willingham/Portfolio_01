@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.20';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.21';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1768,7 +1768,8 @@
   var SMOKE_WATER_FLOW_MIN_VY = 55;
   // Keep the waterfall legible without pinning the whole plume to it.
   var SMOKE_WATER_FLOW_FORCE = 0.16;
-  var SMOKE_WATER_FLOW_RADIUS = 0.042;
+  // The falling column entrains a wider sleeve of surrounding air.
+  var SMOKE_WATER_FLOW_RADIUS = 0.085;
   var smokeWaterFlowTick = 0;
   var smokeWaterFlowCandidates = [];
   var smokeWaterFlowSplats = 0;

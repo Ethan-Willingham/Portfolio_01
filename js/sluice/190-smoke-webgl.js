@@ -983,7 +983,8 @@
   var SMOKE_WATER_FLOW_MAX_SPLATS = 5;
   // Keep the waterfall legible without pinning the whole plume to it.
   var SMOKE_WATER_FLOW_FORCE = 0.16;
-  var SMOKE_WATER_FLOW_RADIUS = 0.042;
+  // The falling column entrains a wider sleeve of surrounding air.
+  var SMOKE_WATER_FLOW_RADIUS = 0.085;
   var smokeWaterFlowTick = 0;
   var smokeWaterFlowCount = null;
   var smokeWaterFlowVX = null;
