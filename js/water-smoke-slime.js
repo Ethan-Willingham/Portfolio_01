@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.25';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.26';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -76,6 +76,7 @@
   var stage = document.getElementById('toy-stage');
   var viewport = document.getElementById('toy-viewport');
   var canvas = document.getElementById('toy-canvas');
+  var debugCanvas = document.getElementById('toy-debug-canvas');
   if (!stage || !viewport || !canvas) return;
 
   var isMobile = (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) ||
@@ -97,6 +98,12 @@
   canvas.width = Math.round(worldW * dpr);
   canvas.height = Math.round(worldH * dpr);
   var ctx = canvas.getContext('2d');
+  var debugCtx = null;
+  if (debugCanvas) {
+    debugCanvas.width = Math.round(worldW * dpr);
+    debugCanvas.height = Math.round(worldH * dpr);
+    debugCtx = debugCanvas.getContext('2d');
+  }
 
   var fitScale = 1;
   function fitStage() {
@@ -139,6 +146,8 @@
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
   var waterFeel = 1;   // 0..1, very goopy to v3.9 raw-motion water
   var debugParticles = true;
+  var debugGrab = false;
+  var grabDebugLast = null;
 
   /* ==== THE SHARED WALL GRID ============================================
    * One Uint8Array, one probe. tileAt(r,c) is the exact single choke point
@@ -9072,9 +9081,41 @@
     }
   }
 
+  function jelloGrabSaveDebugSample(b) {
+    if (!debugGrab || !b || !grabIdx || !grabIdx.length) return grabDebugLast;
+    var counts = [0, 0, 0, 0];
+    var anchorError = 0, maxError = 0;
+    for (var i = 0; i < grabIdx.length; i++) {
+      var ring = grabRing ? grabRing[i] : 0;
+      if (ring < 0 || ring > 3) ring = 3;
+      counts[ring]++;
+      var goalX = grabSolveX + grabFitC * grabOffX[i] - grabFitS * grabOffY[i];
+      var goalY = grabSolveY + grabFitS * grabOffX[i] + grabFitC * grabOffY[i];
+      var pi = grabIdx[i];
+      var err = Math.hypot(goalX - b.px[pi], goalY - b.py[pi]);
+      if (err > maxError) maxError = err;
+      if (pi === grabAnchor) anchorError = err;
+    }
+    grabDebugLast = {
+      t: performance.now(),
+      reason: grabBlockReason || b._grabBlockReason || 'free',
+      applied: b._grabApplied ? 'applied' : 'body free',
+      cursorGap: Math.hypot(grabTargetX - grabSolveX, grabTargetY - grabSolveY),
+      anchorError: anchorError, maxError: maxError,
+      anchor: grabAnchor, shells: counts.join('/'),
+      step: grabStepScale, grip: grabGripBlend,
+      nx: grabBlockNX, ny: grabBlockNY,
+      rejects: b._guardRejects | 0,
+      releaseMag: Math.hypot(grabReleaseVX, grabReleaseVY),
+      releaseOmega: grabReleaseOmega
+    };
+    return grabDebugLast;
+  }
+
   function jelloGrabEnd() {
     var b = grabBody;
     if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
+      jelloGrabSaveDebugSample(b);
       jelloGrabApplyRelease(b);
       b._grabbed = false;
       b._grabApplied = 0;
@@ -9700,6 +9741,23 @@
     syncParticleUI();
   }
 
+  function syncGrabDebugUI() {
+    var btn = document.getElementById('toy-grab-debug');
+    if (!btn) return;
+    btn.classList.toggle('is-on', debugGrab);
+    btn.setAttribute('aria-pressed', debugGrab ? 'true' : 'false');
+  }
+
+  function setGrabDebug(on) {
+    debugGrab = !!on;
+    syncGrabDebugUI();
+    if (!debugGrab && debugCtx) {
+      grabDebugLast = null;
+      debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+      debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+    }
+  }
+
   var gravInput = null, timeInput = null, brushInput = null, flowInput = null;
   function syncSliderUI() {
     if (gravInput) gravInput.value = String(Math.round(gravMul * 100));
@@ -9743,6 +9801,10 @@
     if (particlesBtn) particlesBtn.addEventListener('click', function () {
       setParticleDebug(!debugParticles);
     });
+    var grabDebugBtn = document.getElementById('toy-grab-debug');
+    if (grabDebugBtn) grabDebugBtn.addEventListener('click', function () {
+      setGrabDebug(!debugGrab);
+    });
     if (gravInput) gravInput.addEventListener('input', function () {
       gravMul = Math.max(0, Math.min(2, (+gravInput.value || 0) / 100));
       applyGravity(); syncSliderUI();
@@ -9763,9 +9825,12 @@
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       var map = { '1': 'draw', '2': 'erase', '3': 'water', '4': 'smoke', '5': 'slime', '6': 'poke' };
       if (map[e.key]) setTool(map[e.key]);
+      if ((e.key === 'd' || e.key === 'D') && !e.repeat &&
+          !e.metaKey && !e.ctrlKey && !e.altKey) setGrabDebug(!debugGrab);
     });
     setTool('draw');
     syncParticleUI();
+    syncGrabDebugUI();
     syncSliderUI();
   }
 
@@ -10027,6 +10092,227 @@
     ctx.restore();
   }
 
+  // A read-only picture of the entire grab controller. This deliberately
+  // lives on its own top canvas: water and smoke cannot cover the evidence,
+  // and switching it off removes both the draw cost and every diagnostic
+  // mark. The raw cursor, legal proxy and point targets are different things;
+  // showing all three is what makes a large visible grab error explainable.
+  function drawGrabDebug() {
+    if (!debugCtx || !debugCanvas) return;
+    if (!debugGrab) return;
+    var g = debugCtx;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.save();
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+
+    var C_RAW = '#deb9cf';
+    var C_PROXY = '#8fb3c7';
+    var C_ANCHOR = '#dfc288';
+    var C_GOOD = '#9ec79a';
+    var C_BLOCK = '#d9978c';
+    var C_TEXT = '#e8e2d6';
+    var C_DIM = '#b8b2a2';
+    var C_RULE = '#5a675c';
+    var ringColor = ['#f5f1ea', '#dfc288', '#8fb3c7', '#b79bc4'];
+
+    function line(x0, y0, x1, y1, color, width, dash) {
+      g.strokeStyle = color; g.lineWidth = width || 1;
+      g.setLineDash(dash || []);
+      g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+      g.setLineDash([]);
+    }
+    function cross(x, y, r, color, width) {
+      line(x - r, y, x + r, y, color, width || 1.5);
+      line(x, y - r, x, y + r, color, width || 1.5);
+    }
+    function diamond(x, y, r, color, fill) {
+      g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y);
+      g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath();
+      if (fill) { g.fillStyle = color; g.fill(); }
+      g.strokeStyle = color; g.lineWidth = 1.5; g.stroke();
+    }
+    function arrow(x0, y0, x1, y1, color, label) {
+      var dx = x1 - x0, dy = y1 - y0;
+      var dl = Math.sqrt(dx * dx + dy * dy);
+      if (!(dl > 0.5)) return;
+      var ux = dx / dl, uy = dy / dl;
+      line(x0, y0, x1, y1, color, 1.6);
+      line(x1, y1, x1 - ux * 7 - uy * 4, y1 - uy * 7 + ux * 4, color, 1.6);
+      line(x1, y1, x1 - ux * 7 + uy * 4, y1 - uy * 7 - ux * 4, color, 1.6);
+      if (label) {
+        g.fillStyle = color;
+        g.font = '9px "Commit Mono", monospace';
+        g.fillText(label, x1 + 5, y1 - 5);
+      }
+    }
+    function label(text, x, y, color) {
+      g.fillStyle = color || C_TEXT;
+      g.font = '9px "Commit Mono", monospace';
+      g.fillText(text, x, y);
+    }
+    function n1(v) { return isFinite(v) ? v.toFixed(1) : 'n/a'; }
+
+    // Raw input is visible even before a body is acquired.
+    if (pointerIn || pointerDown) {
+      g.strokeStyle = C_RAW; g.lineWidth = 1.6;
+      g.beginPath(); g.arc(px, py, 8, 0, 6.2831853); g.stroke();
+      cross(px, py, 12, C_RAW, 1.2);
+      label('RAW CURSOR', px + 11, py - 10, C_RAW);
+    }
+
+    var body = grabBody;
+    var active = !!(body && grabIdx && grabIdx.length);
+    var cursorGap = active ? Math.hypot(grabTargetX - grabSolveX, grabTargetY - grabSolveY) : 0;
+    var anchorError = 0, maxError = 0;
+    var ringCounts = [0, 0, 0, 0];
+    var anchorGoalX = grabSolveX, anchorGoalY = grabSolveY;
+    var anchorX = anchorGoalX, anchorY = anchorGoalY;
+
+    if (active) {
+      var gapColor = cursorGap > Math.max(2, body.spacing * 0.5) ? C_BLOCK : C_GOOD;
+      line(grabTargetX, grabTargetY, grabSolveX, grabSolveY, gapColor, 1.4, [6, 4]);
+      diamond(grabSolveX, grabSolveY, 7, C_PROXY, false);
+      cross(grabSolveX, grabSolveY, 4, C_PROXY, 1.2);
+      label('LEGAL PROXY', grabSolveX + 10, grabSolveY + 15, C_PROXY);
+
+      // Every selected point gets both its current position and its controller
+      // target. The short connecting line is the actual positional error the
+      // compliant pinch is trying to close, not an inferred visual radius.
+      for (var gi = grabIdx.length - 1; gi >= 0; gi--) {
+        var pi = grabIdx[gi];
+        var ring = grabRing ? grabRing[gi] : 0;
+        if (ring < 0 || ring > 3) ring = 3;
+        ringCounts[ring]++;
+        var goalX = grabSolveX + grabFitC * grabOffX[gi] - grabFitS * grabOffY[gi];
+        var goalY = grabSolveY + grabFitS * grabOffX[gi] + grabFitC * grabOffY[gi];
+        var ex = goalX - body.px[pi], ey = goalY - body.py[pi];
+        var err = Math.sqrt(ex * ex + ey * ey);
+        if (err > maxError) maxError = err;
+        var color = ringColor[ring];
+        g.globalAlpha = ring === 0 ? 0.95 : 0.34 + (3 - ring) * 0.12;
+        line(body.px[pi], body.py[pi], goalX, goalY, color, ring === 0 ? 1.8 : 0.8);
+        g.beginPath();
+        g.arc(goalX, goalY, ring === 0 ? 4.5 : 2.2, 0, 6.2831853);
+        g.strokeStyle = color; g.lineWidth = 1; g.stroke();
+        g.beginPath();
+        g.arc(body.px[pi], body.py[pi], ring === 0 ? 4.5 : Math.max(1.7, 3.4 - ring * 0.45), 0, 6.2831853);
+        g.fillStyle = color; g.fill();
+        if (pi === grabAnchor) {
+          anchorGoalX = goalX; anchorGoalY = goalY;
+          anchorX = body.px[pi]; anchorY = body.py[pi]; anchorError = err;
+        }
+      }
+      g.globalAlpha = 1;
+      diamond(anchorGoalX, anchorGoalY, 6, C_ANCHOR, false);
+      label('ANCHOR GOAL', anchorGoalX + 9, anchorGoalY - 8, C_ANCHOR);
+      g.strokeStyle = C_TEXT; g.lineWidth = 2;
+      g.beginPath(); g.arc(anchorX, anchorY, 6, 0, 6.2831853); g.stroke();
+      label('CURRENT ANCHOR', anchorX + 9, anchorY + 14, C_TEXT);
+
+      // The material pivot makes torque and release rotation legible.
+      var cx = isFinite(grabFitCX) ? grabFitCX : body.cx;
+      var cy = isFinite(grabFitCY) ? grabFitCY : body.cy;
+      g.strokeStyle = C_ANCHOR; g.lineWidth = 1.2;
+      g.beginPath(); g.arc(cx, cy, 10, 0, 6.2831853); g.stroke();
+      cross(cx, cy, 5, C_ANCHOR, 1);
+      label('BODY PIVOT', cx + 12, cy - 8, C_ANCHOR);
+
+      // Contact geometry. The normal points toward the obstruction; the
+      // perpendicular dashed line is the legal tangent the proxy can follow.
+      if (grabBlockReason && grabBlockNX * grabBlockNX + grabBlockNY * grabBlockNY > 1e-8) {
+        arrow(grabSolveX, grabSolveY,
+              grabSolveX + grabBlockNX * 48, grabSolveY + grabBlockNY * 48,
+              C_BLOCK, 'BLOCK NORMAL');
+        var tx = -grabBlockNY, ty = grabBlockNX;
+        line(grabSolveX - tx * 38, grabSolveY - ty * 38,
+             grabSolveX + tx * 38, grabSolveY + ty * 38,
+             C_PROXY, 1, [4, 4]);
+        label('LEGAL TANGENT', grabSolveX + tx * 40 + 4, grabSolveY + ty * 40, C_PROXY);
+      }
+
+      // Enlarge the accepted substep so a 1 to 2 px solver move is visible.
+      if (Math.abs(grabAttemptDX) + Math.abs(grabAttemptDY) > 1e-5) {
+        arrow(grabSolveX, grabSolveY,
+              grabSolveX + grabAttemptDX * 8, grabSolveY + grabAttemptDY * 8,
+              C_GOOD, 'STEP x8');
+      }
+      var releaseSpeed = Math.hypot(grabReleaseVX, grabReleaseVY);
+      if (releaseSpeed > 1) {
+        var releaseScale = Math.min(0.10, 80 / releaseSpeed);
+        arrow(cx, cy, cx + grabReleaseVX * releaseScale, cy + grabReleaseVY * releaseScale,
+              C_GOOD, 'RELEASE');
+      }
+      jelloGrabSaveDebugSample(body);
+    }
+
+    var lastVisible = !active && grabDebugLast &&
+                      performance.now() - grabDebugLast.t < 5000;
+
+    // Fixed panel: exact numbers stay readable when labels overlap a small or
+    // badly deformed body. Compact screens receive the same facts split over
+    // more lines instead of shrinking the type into illegibility.
+    var compact = worldW < 560;
+    var panelX = 8, panelY = 8, panelW = Math.min(compact ? 310 : 520, worldW - 16);
+    var panelH = compact ? 120 : 108;
+    g.globalAlpha = 0.94;
+    g.fillStyle = 'rgba(30,36,32,0.92)';
+    g.fillRect(panelX, panelY, panelW, panelH);
+    g.globalAlpha = 1;
+    g.strokeStyle = C_RULE; g.lineWidth = 1;
+    g.strokeRect(panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1);
+    g.font = (compact ? '8px' : '10px') + ' "Commit Mono", monospace';
+    g.fillStyle = C_TEXT;
+    g.fillText('GRAB DEBUG  ' + (active ? 'ACTIVE' : lastVisible ? 'LAST RELEASE' : 'IDLE'),
+               panelX + 10, panelY + 16);
+
+    if (!active && !lastVisible) {
+      g.fillStyle = C_DIM;
+      g.fillText('Choose POKE, then press and hold a slime.', panelX + 10, panelY + 35);
+      g.fillText('The overlay is read-only. Physics is unchanged.', panelX + 10, panelY + 52);
+    } else {
+      var data = grabDebugLast;
+      var lines;
+      if (compact) {
+        lines = [
+          'state ' + data.reason + '  ' + data.applied,
+          'cursor gap ' + n1(data.cursorGap) + 'px',
+          'anchor error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
+          'anchor #' + data.anchor + '  shells ' + data.shells,
+          'step ' + n1(data.step) + '  grip ' + n1(data.grip) + '  rejects ' + data.rejects,
+          'release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
+        ];
+      } else {
+        lines = [
+          'state ' + data.reason + '  ' + data.applied + '  cursor gap ' + n1(data.cursorGap) + 'px',
+          'anchor #' + data.anchor + '  error ' + n1(data.anchorError) + 'px  max point error ' + n1(data.maxError) + 'px',
+          'shells 0/1/2/3: ' + data.shells + '  step ' + n1(data.step) + '  grip ' + n1(data.grip),
+          'normal ' + n1(data.nx) + ',' + n1(data.ny) + '  rejects ' + data.rejects +
+            '  release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
+        ];
+      }
+      g.fillStyle = C_DIM;
+      var lineH = compact ? 14 : 17;
+      for (var li = 0; li < lines.length; li++) {
+        g.fillText(lines[li], panelX + 10, panelY + 34 + li * lineH);
+      }
+    }
+
+    // Small color key, kept at the panel's foot and useful even while idle.
+    var legendY = panelY + panelH - 10;
+    var legend = [[C_RAW, 'raw'], [C_PROXY, 'proxy'], [C_ANCHOR, 'goal'], [C_TEXT, 'anchor']];
+    var lx = panelX + 10;
+    g.font = '8px "Commit Mono", monospace';
+    for (var lg = 0; lg < legend.length; lg++) {
+      g.fillStyle = legend[lg][0]; g.fillRect(lx, legendY - 6, 6, 6);
+      g.fillText(legend[lg][1], lx + 9, legendY);
+      lx += compact ? 57 : 67;
+    }
+    g.restore();
+  }
+
   function render() {
     bakeWalls();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -10036,6 +10322,7 @@
     drawJelloBlobs();
     drawCursor();
     drawLiquidToy();
+    drawGrabDebug();
   }
 
   function updateReadout() {
@@ -10053,6 +10340,7 @@
     // Headless/browser probe for the water-to-smoke handoff. Kept out of
     // the visible readout so the toy stays compact.
     readoutEl.setAttribute('data-smoke-water-flow-splats', String(smokeWaterFlowSplats));
+    readoutEl.setAttribute('data-grab-debug', debugGrab ? 'on' : 'off');
   }
 
   function frame(tNow) {
@@ -10176,7 +10464,8 @@
           fps: Math.round(fpsEMA), waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
           scene: currentScene, tool: tool,
-          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles
+          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
+          debugGrab: debugGrab
         };
       },
       scene: scene,
@@ -10194,6 +10483,7 @@
         else if (k === 'brush') { brushR = +v; syncSliderUI(); }
         else if (k === 'flow') { waterFeel = Math.max(0, Math.min(1, +v || 0)); applyWaterFeel(); syncSliderUI(); }
         else if (k === 'particles') { setParticleDebug(!!v); }
+        else if (k === 'grabDebug') { setGrabDebug(!!v); }
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },

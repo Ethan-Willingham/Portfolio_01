@@ -58,6 +58,7 @@
       display: block;
     }
     #toy-canvas { z-index: 2; }
+    #toy-debug-canvas { z-index: 7; pointer-events: none; }
     #toy-input {
       position: absolute;
       inset: 0;
@@ -232,6 +233,7 @@
       <div class="toy-viewport" id="toy-viewport">
         <div class="toy-stage" id="toy-stage">
           <canvas id="toy-canvas"></canvas>
+          <canvas id="toy-debug-canvas" aria-hidden="true"></canvas>
           <div class="toy-readout" id="toy-readout">booting…</div>
           <div class="toy-fallback" id="toy-fallback" hidden>
             <p>This toy needs a browser with WebGL (for the smoke and slimes) and, for the water, WebGPU: current Chrome or Edge, Safari 26, or recent Firefox. Nothing here runs on a server; it is all in-page JavaScript.</p>
@@ -269,6 +271,10 @@
           <button class="tb is-on" id="toy-particles" type="button" title="Toggle water particle debug dots" aria-pressed="true">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="1.5"/><circle cx="15.5" cy="6" r="1.5"/><circle cx="11" cy="12.5" r="1.5"/><circle cx="18" cy="14" r="1.5"/><circle cx="6" cy="17" r="1.5"/></svg>
             particles
+          </button>
+          <button class="tb" id="toy-grab-debug" type="button" title="Show the complete slime grab diagnostic (D)" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="2"/><circle cx="17" cy="7" r="2"/><circle cx="17" cy="17" r="2"/><path d="M9 11l6-3M9 13l6 3M17 9v6"/><path d="M4 4v3M2.5 5.5h3M20 17v3M18.5 18.5h3"/></svg>
+            grab debug
           </button>
         </div>
 
@@ -330,6 +336,7 @@
       <p>Version 3.19 replaces that latch with a constrained proxy. At a tile face it removes only the motion aimed into the wall, preserving motion along the wall and away from it. A blocked, stationary cursor applies no grab force, so gravity, shape solving, and collision keep running. Moving away rebases the held patch to the live body and fades the local grip back in. If the lattice starts to fold in open space, the proxy temporarily slows instead of pretending it hit a wall. In the real-pointer stress test, a held shelf contact stopped adding rejections, wall slides responded immediately, and a cross-screen drag closed its cursor gap within the test's 320-millisecond window. Both slimes stayed at zero folded cells and zero crossed outlines.</p>
       <p>Version 3.25 makes that pinch local. One lattice node is held at full strength; its three rings of structural neighbors receive 30, 9, and 2.7 percent. The rest of the body moves because its springs transmit the force, not because the controller rotates every point as one block. Tangential hand motion accelerates angular velocity, while a fresh release converts accepted center and angle motion into bounded linear and rotational velocity. In three real-pointer runs, one cursor circle turned the body 7.60 to 7.62 radians. Release carried another 0.61 radians over 260 milliseconds. Straight flicks traveled 44 to 50 pixels after pointer-up and were still moving at 323 to 375 pixels per second.</p>
       <p>The visible texture is now the solver itself. Every structural spring, faint diagonal shear brace, and tiny joint is drawn at its current lattice position, clipped inside the gel. The pattern covers the whole slime and shows its real rotation, stretch, shear, and squash. There is no separate texture animation to drift away from the physics.</p>
+      <p>Version 3.26 adds a grab diagnostic for the cases where the hand and slime disagree. Its separate overlay shows the raw cursor, the collision-safe proxy, the exact anchor and weighted graph shells, every point's current constraint target, the body pivot, contact normal and tangent, accepted motion, predicted release velocity, and the live cursor gap. The last numeric sample stays for five seconds after release so there is time to read it. The overlay only reads solver state and costs nothing while switched off.</p>
       <p>The structure freeze had one more cause. On first contact, a rejected pose was tested against the previous wall normal, which was still zero. A real wall collision could therefore be mistaken for an open-space fold and retried at every substep, producing the same restored pose until the mouse moved. Version 3.23 probes in the rejected direction and rebases the pinch immediately after contact. In ten stationary-pointer samples, the rejection counter stopped while the body kept producing new legal poses and gravity carried it along the wall.</p>
       <p>Slime-on-slime contact runs inside the same substep loop through a count-sort spatial hash, the approach in <a class="u-link" href="https://mmacklin.com/uppfrta_preprint.pdf">Macklin et al.'s unified particle physics</a>. Running contact per substep instead of once per frame is the difference between blobs that stack and blobs that jitter and merge. The game learned that the hard way.</p>
       <p>Drop one in a pool and it floats. Each frame the toy builds a small map of the water (density and mean flow per 8-pixel cell) and reads each body a pool-local waterline: the level in the columns beside it, walked so that a wall or an air gap ends the pool, which is what keeps a slime from feeling water on another floor or behind a drawn barrier. Every lattice point below that line trades gravity for lift, and every submerged point takes drag toward the local flow. That one rule set covers a lot: currents carry a floater, a waterfall shoves a slime down instead of levitating it, a plunge damps itself out, and in zero-g a thrown blob of water drags a slime along with it. Net lift runs about a quarter beyond gravity, so slimes ride mostly submerged, like dense gel. The coupling is one-way on purpose. These forces never push the water; the push the water feels comes from the boundary rings below. The game tried honest two-way coupling once, spent three versions on it, and reverted the whole thing.</p>
@@ -363,7 +370,7 @@
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
   <script src="js/liquid-wgpu.js?v=v26.41"></script>
-  <script src="js/water-smoke-slime.js?v=v3.25"></script>
+  <script src="js/water-smoke-slime.js?v=v3.26"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
