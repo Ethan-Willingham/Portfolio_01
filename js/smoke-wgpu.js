@@ -443,11 +443,19 @@ struct U { useObstacle : f32 };
 @group(0) @binding(3) var uObstacle : texture_2d<f32>;
 @fragment
 fn fs(@location(0) vUv : vec2<f32>) -> @location(0) vec4<f32> {
-  var c = textureSampleLevel(uTexture, samp, vUv, 0.0).rgb;
-  var a = max(c.r, max(c.g, c.b));
-  if (u.useObstacle > 0.5 && textureSampleLevel(uObstacle, samp, vUv, 0.0).a > 0.5) {
-    a = 0.0;
+  var texel = vec2<f32>(1.0) / vec2<f32>(textureDimensions(uTexture));
+  var cc = textureSampleLevel(uTexture, samp, vUv, 0.0).rgb;
+  var lc = textureSampleLevel(uTexture, samp, vUv - vec2<f32>(texel.x, 0.0), 0.0).rgb;
+  var rc = textureSampleLevel(uTexture, samp, vUv + vec2<f32>(texel.x, 0.0), 0.0).rgb;
+  var tc = textureSampleLevel(uTexture, samp, vUv + vec2<f32>(0.0, texel.y), 0.0).rgb;
+  var bc = textureSampleLevel(uTexture, samp, vUv - vec2<f32>(0.0, texel.y), 0.0).rgb;
+  var c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;
+  var obstacle = 0.0;
+  if (u.useObstacle > 0.5) {
+    obstacle = textureSampleLevel(uObstacle, samp, vUv, 0.0).a;
   }
+  c = c * (1.0 - smoothstep(0.35, 0.85, obstacle));
+  var a = max(c.r, max(c.g, c.b));
   return vec4<f32>(c, a);
 }
 `;
@@ -1060,6 +1068,37 @@ fn fs() -> @location(0) vec4<f32> {
     return true;
   }
 
+  /* ---- splatVelocity(instance, uvX, uvY, dx, dy, splatRadius) ------
+   * One-pass force injection for water-to-smoke momentum transfer. It
+   * shares the same Gaussian and radius convention as splat(), without
+   * paying for a second full-screen dye pass whose colour would be zero.
+   * -------------------------------------------------------------------- */
+  function splatVelocity(instance, uvX, uvY, dx, dy, splatRadius) {
+    if (!instance.available || !instance.pipelinesReady || !instance.texturesReady) return false;
+    var aspect = 1.0;
+    if (instance.renderCanvas && instance.renderCanvas.height > 0) {
+      aspect = instance.renderCanvas.width / instance.renderCanvas.height;
+    } else if (instance.dyeH > 0) {
+      aspect = instance.dyeW / instance.dyeH;
+    }
+    if (!(aspect > 0)) aspect = 1.0;
+
+    var rad = (splatRadius != null) ? splatRadius : instance.config.SPLAT_RADIUS;
+    if (rad == null) rad = 0.22;
+    var radius = correctRadius(rad / 100.0, aspect);
+    var hv = instance.uniforms.splatVel.host;
+    hv[0] = uvX; hv[1] = uvY;
+    hv[4] = dx; hv[5] = dy; hv[6] = 0.0;
+    hv[7] = aspect; hv[8] = radius;
+
+    var enc = instance.device.createCommandEncoder({ label: 'smoke.splatVelocity' });
+    runPass(instance, enc, instance.pipes.splatVel, instance.uniforms.splatVel,
+            [instance.tex.velocity.read()], instance.tex.velocity.write());
+    instance.tex.velocity.swap();
+    instance.queue.submit([enc.finish()]);
+    return true;
+  }
+
   /* ---- scroll(instance, dxCamFrac, dyCamFrac) ------------------------
    * Port of the WebGL SmokeFluid scroll(): the world-lock pass. When the
    * camera pans, the smoke field is shifted by the same UV fraction so
@@ -1437,6 +1476,9 @@ fn fs() -> @location(0) vec4<f32> {
       // splatRadius optional. Dormant — nothing in the game calls this.
       splat: function (uvX, uvY, dx, dy, color, splatRadius) {
         return splat(instance, uvX, uvY, dx, dy, color, splatRadius);
+      },
+      splatVelocity: function (uvX, uvY, dx, dy, splatRadius) {
+        return splatVelocity(instance, uvX, uvY, dx, dy, splatRadius);
       },
       // Render the current dye field to the webgpu output canvas
       // (instance.renderCanvas) through the display shader. Dormant —

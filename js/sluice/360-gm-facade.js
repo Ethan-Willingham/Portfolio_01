@@ -535,6 +535,24 @@
           function (v) { SMOKE_WATER_OBSTACLE = v ? 1 : 0; },
           0, 1, 1);
       }
+      if (typeof SMOKE_WATER_FLOW !== 'undefined') {
+        gmRegisterLever('smoke.WATER_FLOW', 'smoke', 'WATER_FLOW (water drives smoke)',
+          function () { return SMOKE_WATER_FLOW; },
+          function (v) { SMOKE_WATER_FLOW = v ? 1 : 0; },
+          0, 1, 1);
+        gmRegisterLever('smoke.WATER_FLOW_FORCE', 'smoke', 'WATER_FLOW_FORCE',
+          function () { return SMOKE_WATER_FLOW_FORCE; },
+          function (v) { SMOKE_WATER_FLOW_FORCE = v; },
+          0.05, 0.6, 0.01);
+        gmRegisterLever('smoke.WATER_FLOW_MIN_VY', 'smoke', 'WATER_FLOW_MIN_VY',
+          function () { return SMOKE_WATER_FLOW_MIN_VY; },
+          function (v) { SMOKE_WATER_FLOW_MIN_VY = v; },
+          20, 180, 5);
+        gmRegisterLever('smoke.WATER_FLOW_RADIUS', 'smoke', 'WATER_FLOW_RADIUS',
+          function () { return SMOKE_WATER_FLOW_RADIUS; },
+          function (v) { SMOKE_WATER_FLOW_RADIUS = v; },
+          0.015, 0.1, 0.005);
+      }
 
       // Water LOOK levers (v14.25) — the WebGPU water's rendered colour +
       // opacity + particle size. These are LIVE: each set() reassigns the

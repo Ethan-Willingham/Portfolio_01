@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.14';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.15';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1238,12 +1238,13 @@
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'void main () {\n' +
-      '  vec3 c = texture2D(uTexture, vUv).rgb;\n' +
-      '#ifdef SHADING\n' +
+      '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
       '  vec3 rc = texture2D(uTexture, vR).rgb;\n' +
       '  vec3 tc = texture2D(uTexture, vT).rgb;\n' +
       '  vec3 bc = texture2D(uTexture, vB).rgb;\n' +
+      '  vec3 c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;\n' +
+      '#ifdef SHADING\n' +
       '  float dx = length(rc) - length(lc);\n' +
       '  float dy = length(tc) - length(bc);\n' +
       '  vec3 n = normalize(vec3(dx, dy, length(texelSize)));\n' +
@@ -1251,10 +1252,9 @@
       '  float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);\n' +
       '  c *= diffuse;\n' +
       '#endif\n' +
+      '  float obstacle = useObstacle > 0.5 ? texture2D(uObstacle, vUv).a : 0.0;\n' +
+      '  c *= 1.0 - smoothstep(0.35, 0.85, obstacle);\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
-      '  if (useObstacle > 0.5 && texture2D(uObstacle, vUv).a > 0.5) {\n' +
-      '    a = 0.0;\n' +
-      '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
   
@@ -1335,8 +1335,10 @@
       if (obstacleTexture) return;
       obstacleTexture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      // The solver still thresholds alpha for collision, but a filtered
+      // mask keeps the 8 px cells from appearing as square cutouts.
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       // 1x1 transparent default — no obstacles until setObstacleAlpha runs.
@@ -1604,8 +1606,9 @@
       dye.swap();
     }
   
-    // Inject density (color) and velocity at uvX,uvY ∈ [0,1].
-    function splat (uvX, uvY, dx, dy, color, splatRadius) {
+    // Inject velocity without copying the dye field through a second pass.
+    // Falling water uses this to entrain the air around it.
+    function splatVelocity (uvX, uvY, dx, dy, splatRadius) {
       if (!ready) return;
       var rad = splatRadius != null ? splatRadius : config.SPLAT_RADIUS;
       var aspect = canvas.width / canvas.height;
@@ -1618,6 +1621,13 @@
       gl.uniform1f(splatProgram.uniforms.radius, radius);
       blit(velocity.write);
       velocity.swap();
+    }
+
+    // Inject density (color) and velocity at uvX,uvY in [0,1].
+    function splat (uvX, uvY, dx, dy, color, splatRadius) {
+      if (!ready) return;
+      splatVelocity(uvX, uvY, dx, dy, splatRadius);
+      splatProgram.bind();
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
       blit(dye.write);
@@ -1683,9 +1693,8 @@
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       displayMaterial.bind();
-      var w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
-      if (config.SHADING && displayMaterial.uniforms.texelSize)
-        gl.uniform2f(displayMaterial.uniforms.texelSize, 1.0 / w, 1.0 / h);
+      if (displayMaterial.uniforms.texelSize)
+        gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
       if (displayMaterial.uniforms.uObstacle != null) {
         gl.uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
@@ -1725,6 +1734,7 @@
       init: init,
       step: step,
       splat: splat,
+      splatVelocity: splatVelocity,
       clear: clear,
       scroll: scroll,
       render: render,
@@ -1755,6 +1765,12 @@
   var smokePaintedVersion = -1;
   var smokePaintedJello = false;
   var SMOKE_COL = { r: 0.20, g: 0.185, b: 0.165 };   // warm gray, light enough to read on the dark box
+  var SMOKE_WATER_FLOW_MIN_VY = 55;
+  var SMOKE_WATER_FLOW_FORCE = 0.24;
+  var SMOKE_WATER_FLOW_RADIUS = 0.042;
+  var smokeWaterFlowTick = 0;
+  var smokeWaterFlowCandidates = [];
+  var smokeWaterFlowSplats = 0;
 
   function bootSmoke() {
     if (typeof WebGLRenderingContext === 'undefined') return;
@@ -1790,6 +1806,15 @@
     SmokeFluid.splat(wx / worldW, 1 - wy / worldH, dvx, dvy, col || SMOKE_COL, rad || 0.013);
   }
 
+  function smokeCellObstacle(idx) {
+    if (walls[idx]) return true;
+    var n = waterCellCount[idx];
+    if (n < WATER_CELL_WET) return false;
+    // Slow pool water is a boundary. A falling stream is handled as moving
+    // air below, so treating it as a solid square would erase the plume.
+    return waterCellVY[idx] / n <= SMOKE_WATER_FLOW_MIN_VY;
+  }
+
   // Wall runs + slime rings -> NDC triangles into the obstacle mask.
   function smokeRepaintObstacle() {
     var maxVerts = gridH * 24 + 4096;
@@ -1805,9 +1830,9 @@
       var off = r * gridW;
       var c = 0;
       while (c < gridW) {
-        if (!(walls[off + c] || waterCellCount[off + c] >= WATER_CELL_WET)) { c++; continue; }
+        if (!smokeCellObstacle(off + c)) { c++; continue; }
         var c0 = c;
-        while (c < gridW && (walls[off + c] || waterCellCount[off + c] >= WATER_CELL_WET)) c++;
+        while (c < gridW && smokeCellObstacle(off + c)) c++;
         if (n + 12 > v.length) break;
         var u0 = (c0 * TILE) * invW * 2 - 1;
         var u1 = (c * TILE) * invW * 2 - 1;
@@ -1851,6 +1876,33 @@
   }
 
   var smokeObstacleTick = 0;
+  function smokeWaterFlowCouple() {
+    smokeWaterFlowTick++;
+    if (smokeWaterFlowTick < 4 || !waterCellsAny || !SmokeFluid.splatVelocity) return;
+    smokeWaterFlowTick = 0;
+    var candidates = smokeWaterFlowCandidates;
+    candidates.length = 0;
+    for (var idx = 0; idx < waterCellCount.length; idx++) {
+      var n = waterCellCount[idx];
+      if (n >= 3 && waterCellVY[idx] / n > SMOKE_WATER_FLOW_MIN_VY) candidates.push(idx);
+    }
+    candidates.sort(function (a, b) { return waterCellVY[b] - waterCellVY[a]; });
+    var limit = Math.min(5, candidates.length);
+    for (var k = 0; k < limit; k++) {
+      var ci = candidates[k];
+      var count = waterCellCount[ci];
+      var col = ci % gridW, row = (ci / gridW) | 0;
+      var avx = waterCellVX[ci] / count;
+      var avy = waterCellVY[ci] / count;
+      var fx = Math.max(-90, Math.min(90, avx * SMOKE_WATER_FLOW_FORCE));
+      var fy = -Math.min(120, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
+      var radius = SMOKE_WATER_FLOW_RADIUS + Math.min(0.018, count * 0.0012);
+      SmokeFluid.splatVelocity((col + 0.5) * TILE / worldW,
+        1 - (row + 0.5) * TILE / worldH, fx, fy, radius);
+      smokeWaterFlowSplats++;
+    }
+  }
+
   function smokeFrame(dt) {
     if (!smokeActive) return;
     if (smokeAwakeT <= 0) {
@@ -1876,6 +1928,7 @@
         (waterCellsAny && (smokeObstacleTick % 6) === 0)) {
       smokeRepaintObstacle();
     }
+    smokeWaterFlowCouple();
     SmokeFluid.step(dt * timeMul);
     SmokeFluid.displayPass();
   }
@@ -9181,6 +9234,9 @@
     parts.push(backend);
     parts.push(TOY_VERSION);
     readoutEl.textContent = parts.join(' · ');
+    // Headless/browser probe for the water-to-smoke handoff. Kept out of
+    // the visible readout so the toy stays compact.
+    readoutEl.setAttribute('data-smoke-water-flow-splats', String(smokeWaterFlowSplats));
   }
 
   function frame(tNow) {
@@ -9325,7 +9381,10 @@
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },
-      smoke: function () { return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive }; },
+      smoke: function () {
+        return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
+          waterFlowSplats: smokeWaterFlowSplats };
+      },
       poke: function (x, y, vx, vy, R, ms) {
         R = R || 20;
         var pts = new Array(POKE_PTS * 4);

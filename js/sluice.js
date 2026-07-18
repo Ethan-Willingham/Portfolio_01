@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.23';
+  var GAME_VERSION = 'v26.24';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -34697,12 +34697,13 @@
       'uniform vec2 texelSize;\n' +
       'uniform float useObstacle;\n' +
       'void main () {\n' +
-      '  vec3 c = texture2D(uTexture, vUv).rgb;\n' +
-      '#ifdef SHADING\n' +
+      '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
       '  vec3 rc = texture2D(uTexture, vR).rgb;\n' +
       '  vec3 tc = texture2D(uTexture, vT).rgb;\n' +
       '  vec3 bc = texture2D(uTexture, vB).rgb;\n' +
+      '  vec3 c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;\n' +
+      '#ifdef SHADING\n' +
       '  float dx = length(rc) - length(lc);\n' +
       '  float dy = length(tc) - length(bc);\n' +
       '  vec3 n = normalize(vec3(dx, dy, length(texelSize)));\n' +
@@ -34710,10 +34711,9 @@
       '  float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);\n' +
       '  c *= diffuse;\n' +
       '#endif\n' +
+      '  float obstacle = useObstacle > 0.5 ? texture2D(uObstacle, vUv).a : 0.0;\n' +
+      '  c *= 1.0 - smoothstep(0.35, 0.85, obstacle);\n' +
       '  float a = max(c.r, max(c.g, c.b));\n' +
-      '  if (useObstacle > 0.5 && texture2D(uObstacle, vUv).a > 0.5) {\n' +
-      '    a = 0.0;\n' +
-      '  }\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
   
@@ -34794,8 +34794,10 @@
       if (obstacleTexture) return;
       obstacleTexture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, obstacleTexture);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      // The solver still thresholds alpha for collision, but a filtered
+      // mask keeps the 8 px cells from appearing as square cutouts.
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       // 1x1 transparent default — no obstacles until setObstacleAlpha runs.
@@ -35063,8 +35065,9 @@
       dye.swap();
     }
   
-    // Inject density (color) and velocity at uvX,uvY ∈ [0,1].
-    function splat (uvX, uvY, dx, dy, color, splatRadius) {
+    // Inject velocity without copying the dye field through a second pass.
+    // Falling water uses this to entrain the air around it.
+    function splatVelocity (uvX, uvY, dx, dy, splatRadius) {
       if (!ready) return;
       var rad = splatRadius != null ? splatRadius : config.SPLAT_RADIUS;
       var aspect = canvas.width / canvas.height;
@@ -35077,6 +35080,13 @@
       gl.uniform1f(splatProgram.uniforms.radius, radius);
       blit(velocity.write);
       velocity.swap();
+    }
+
+    // Inject density (color) and velocity at uvX,uvY in [0,1].
+    function splat (uvX, uvY, dx, dy, color, splatRadius) {
+      if (!ready) return;
+      splatVelocity(uvX, uvY, dx, dy, splatRadius);
+      splatProgram.bind();
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
       blit(dye.write);
@@ -35142,9 +35152,8 @@
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       displayMaterial.bind();
-      var w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
-      if (config.SHADING && displayMaterial.uniforms.texelSize)
-        gl.uniform2f(displayMaterial.uniforms.texelSize, 1.0 / w, 1.0 / h);
+      if (displayMaterial.uniforms.texelSize)
+        gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
       gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
       if (displayMaterial.uniforms.uObstacle != null) {
         gl.uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
@@ -35184,6 +35193,7 @@
       init: init,
       step: step,
       splat: splat,
+      splatVelocity: splatVelocity,
       clear: clear,
       scroll: scroll,
       render: render,
@@ -35261,6 +35271,24 @@
   var SMOKE_OBST_WATER_EVERY = 8;
   var smokeObstDbgSrc = 'unset';     // dev probe: water-stamp source last repaint
   var smokeObstWaterBins = null;     // v25.47 — reusable per-bin particle counts (water mask pass)
+  var smokeObstWaterVY = null;       // falling-water classifier for the mask
+  // Fast water entrains the surrounding air. The CPU mirror is binned every
+  // few frames and the strongest falling cells inject velocity, not dye, into
+  // the smoke field. Slow pool water remains a collision boundary.
+  var SMOKE_WATER_FLOW = 1;
+  var SMOKE_WATER_FLOW_EVERY = 4;
+  var SMOKE_WATER_FLOW_BIN = 16;
+  var SMOKE_WATER_FLOW_MIN_VY = 55;
+  var SMOKE_WATER_FLOW_MIN_N = 3;
+  var SMOKE_WATER_FLOW_MAX_SPLATS = 5;
+  var SMOKE_WATER_FLOW_FORCE = 0.24;
+  var SMOKE_WATER_FLOW_RADIUS = 0.042;
+  var smokeWaterFlowTick = 0;
+  var smokeWaterFlowCount = null;
+  var smokeWaterFlowVX = null;
+  var smokeWaterFlowVY = null;
+  var smokeWaterFlowCandidates = [];
+  var smokeWaterFlowSplats = 0;
   // v25.47 — dev debug handle (window.__bombs pattern): lets a headless
   // harness read the obstacle mask + the water-stamp state directly.
   var smokeObstDbgPaints = 0, smokeObstDbgFinishes = 0, smokeObstDbgStamps = 0;
@@ -35274,6 +35302,8 @@
           smokeActive: (typeof smokeFluidActive !== 'undefined') ? !!smokeFluidActive : null,
           awakeT: (typeof smokeAwakeT !== 'undefined') ? smokeAwakeT : null,
           waterLever: SMOKE_WATER_OBSTACLE,
+          waterFlow: SMOKE_WATER_FLOW,
+          waterFlowSplats: smokeWaterFlowSplats,
           liquidCount: (typeof liquidCount !== 'undefined') ? liquidCount : -1,
           wgpuRenderActive: (typeof liquidWGPU !== 'undefined' && liquidWGPU) ? !!liquidWGPU.renderActive : null,
           screenW: screenW, screenH: screenH,
@@ -36028,9 +36058,11 @@
       var nBins = binsW * binsH;
       if (!smokeObstWaterBins || smokeObstWaterBins.length < nBins) {
         smokeObstWaterBins = new Uint8Array(Math.max(nBins, 16384));
+        smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
       }
       var bins = smokeObstWaterBins;
       bins.fill(0, 0, nBins);
+      smokeObstWaterVY.fill(0, 0, nBins);
       var domR = domainX + smokeFluidDomainWorldW;
       var domB = domainY + smokeFluidDomainWorldH;
       for (var wi = 0; wi < liquidCount; wi++) {
@@ -36039,6 +36071,7 @@
         if (wx < domainX || wx >= domR || wy < domainY || wy >= domB) continue;
         var bi = ((wy - domainY) / BIN | 0) * binsW + ((wx - domainX) / BIN | 0);
         if (bins[bi] < 255) bins[bi]++;
+        smokeObstWaterVY[bi] += liquidVY[wi];
       }
       // Rest density is ~41 particles per 8x8 bin (655/tile). Solid from
       // ~60% of rest; rim/spray from ~25%.
@@ -36050,6 +36083,11 @@
           var rowB = by * binsW;
           for (var bx = 0; bx < binsW; bx++) {
             var bn = bins[rowB + bx];
+            var falling = bn > 0 && smokeObstWaterVY[rowB + bx] / bn > SMOKE_WATER_FLOW_MIN_VY;
+            // A moving waterfall is air-driving flow, not a wall. Give it
+            // only the passable rim stamp below so the plume is carried down
+            // instead of erased in an 8 px staircase.
+            if (pass === 0 && falling) continue;
             if (bn >= lo && bn < hi) {
               oc.fillRect(bx * bw, by * bh, bw + 0.5, bh + 0.5);
             }
@@ -36063,6 +36101,71 @@
     var _opu0 = performance.now();
     smokeDriver.setObstacleAlpha(smokeFluidObstacleCanvas);
     perfMark('update.smokeObstacleUpload', _opu0);
+  }
+
+  // Hand the strongest downward water motion to the smoke velocity field.
+  // This is deliberately sparse: five one-pass Gaussian impulses every four
+  // frames are enough because the smoke solver advects and preserves them.
+  function smokeWaterFlowCouple() {
+    if (!SMOKE_WATER_FLOW || !smokeDriver || liquidCount <= 0) return;
+    smokeWaterFlowTick++;
+    if (smokeWaterFlowTick < SMOKE_WATER_FLOW_EVERY) return;
+    smokeWaterFlowTick = 0;
+
+    var BIN = SMOKE_WATER_FLOW_BIN;
+    var binsW = Math.ceil(smokeFluidDomainWorldW / BIN);
+    var binsH = Math.ceil(smokeFluidDomainWorldH / BIN);
+    var nBins = binsW * binsH;
+    if (!smokeWaterFlowCount || smokeWaterFlowCount.length < nBins) {
+      var cap = Math.max(nBins, 16384);
+      smokeWaterFlowCount = new Uint16Array(cap);
+      smokeWaterFlowVX = new Float32Array(cap);
+      smokeWaterFlowVY = new Float32Array(cap);
+    }
+    smokeWaterFlowCount.fill(0, 0, nBins);
+    smokeWaterFlowVX.fill(0, 0, nBins);
+    smokeWaterFlowVY.fill(0, 0, nBins);
+
+    var domainX = cam.x - smokeFluidMarginWorldX;
+    var domainY = cam.y - smokeFluidMarginWorldY;
+    var domR = domainX + smokeFluidDomainWorldW;
+    var domB = domainY + smokeFluidDomainWorldH;
+    for (var i = 0; i < liquidCount; i++) {
+      if (liquidFrozen[i] || liquidType[i] !== 0 || liquidVY[i] <= SMOKE_WATER_FLOW_MIN_VY) continue;
+      var x = liquidX[i], y = liquidY[i];
+      if (x < domainX || x >= domR || y < domainY || y >= domB) continue;
+      var idx = ((y - domainY) / BIN | 0) * binsW + ((x - domainX) / BIN | 0);
+      smokeWaterFlowCount[idx]++;
+      smokeWaterFlowVX[idx] += liquidVX[i];
+      smokeWaterFlowVY[idx] += liquidVY[i];
+    }
+
+    var candidates = smokeWaterFlowCandidates;
+    candidates.length = 0;
+    for (var bi = 0; bi < nBins; bi++) {
+      if (smokeWaterFlowCount[bi] >= SMOKE_WATER_FLOW_MIN_N) candidates.push(bi);
+    }
+    candidates.sort(function (a, b) { return smokeWaterFlowVY[b] - smokeWaterFlowVY[a]; });
+
+    var limit = Math.min(SMOKE_WATER_FLOW_MAX_SPLATS, candidates.length);
+    var flowSplat = smokeDriver.splatVelocity || null;
+    for (var k = 0; k < limit; k++) {
+      var ci = candidates[k];
+      var n = smokeWaterFlowCount[ci];
+      var bx = ci % binsW, by = (ci / binsW) | 0;
+      var wx = domainX + (bx + 0.5) * BIN;
+      var wy = domainY + (by + 0.5) * BIN;
+      var uv = smokeFluidWorldToUV(wx, wy);
+      if (!uv.inView) continue;
+      var avx = smokeWaterFlowVX[ci] / n;
+      var avy = smokeWaterFlowVY[ci] / n;
+      var fx = Math.max(-90, Math.min(90, avx * SMOKE_WATER_FLOW_FORCE));
+      var fy = -Math.min(120, (avy - SMOKE_WATER_FLOW_MIN_VY) * SMOKE_WATER_FLOW_FORCE);
+      var radius = SMOKE_WATER_FLOW_RADIUS + Math.min(0.018, n * 0.0012);
+      if (flowSplat) flowSplat.call(smokeDriver, uv.uvX, uv.uvY, fx, fy, radius);
+      else smokeDriver.splat(uv.uvX, uv.uvY, fx, fy, SMOKE_ZERO_COL, radius);
+      smokeWaterFlowSplats++;
+    }
   }
 
   // Splat dye + velocity at the rig's exhaust mouth. Rates are per-frame;
@@ -36252,6 +36355,9 @@
       var _us4 = performance.now();
       smokeFluidEmit(dt);
       perfMark('update.smokeEmit', _us4);
+      var _usFlow = performance.now();
+      if (smokeRunPre || smokeAwakeT > 0) smokeWaterFlowCouple();
+      perfMark('update.smokeWaterFlow', _usFlow);
       // Count the idle timer down after emit (the diesel emit may have just
       // refreshed it this frame) and gate the expensive sim step on it.
       if (smokeAwakeT > 0) smokeAwakeT -= dt;
@@ -36423,7 +36529,6 @@
     ctx.fill();
     ctx.restore();
   }
-
   // ====== ROCKET PLUME ======
   // Independent from the diesel exhaust fluid sim. Procedural flame core,
   // additive sparks, normal-blend smoke wake, and a ground-impact wash that
@@ -58442,6 +58547,24 @@
           function () { return SMOKE_WATER_OBSTACLE; },
           function (v) { SMOKE_WATER_OBSTACLE = v ? 1 : 0; },
           0, 1, 1);
+      }
+      if (typeof SMOKE_WATER_FLOW !== 'undefined') {
+        gmRegisterLever('smoke.WATER_FLOW', 'smoke', 'WATER_FLOW (water drives smoke)',
+          function () { return SMOKE_WATER_FLOW; },
+          function (v) { SMOKE_WATER_FLOW = v ? 1 : 0; },
+          0, 1, 1);
+        gmRegisterLever('smoke.WATER_FLOW_FORCE', 'smoke', 'WATER_FLOW_FORCE',
+          function () { return SMOKE_WATER_FLOW_FORCE; },
+          function (v) { SMOKE_WATER_FLOW_FORCE = v; },
+          0.05, 0.6, 0.01);
+        gmRegisterLever('smoke.WATER_FLOW_MIN_VY', 'smoke', 'WATER_FLOW_MIN_VY',
+          function () { return SMOKE_WATER_FLOW_MIN_VY; },
+          function (v) { SMOKE_WATER_FLOW_MIN_VY = v; },
+          20, 180, 5);
+        gmRegisterLever('smoke.WATER_FLOW_RADIUS', 'smoke', 'WATER_FLOW_RADIUS',
+          function () { return SMOKE_WATER_FLOW_RADIUS; },
+          function (v) { SMOKE_WATER_FLOW_RADIUS = v; },
+          0.015, 0.1, 0.005);
       }
 
       // Water LOOK levers (v14.25) — the WebGPU water's rendered colour +

@@ -331,11 +331,11 @@
 
       <h2 class="u-h2">The smoke</h2>
       <p>The smoke is the oldest method on the page: a classic Eulerian grid fluid in WebGL, based on <a class="u-link" href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov's much-copied demo</a>. Velocity advects itself, 25 Jacobi iterations per frame make the field incompressible, vorticity confinement restores the curl the coarse grid smears away, and what you actually see is a dye field carried along by all of it.</p>
-      <p>The drawn walls are rasterized into its obstacle mask whenever they change, and so are the slime outlines and the water itself (any 8-pixel cell holding about a quarter of rest density counts as solid to the smoke). A plume will split around a blob that is wobbling in real time, and bank off the surface of a pool.</p>
+      <p>The drawn walls are rasterized into its obstacle mask whenever they change, and so are the slime outlines and slow, dense water. A plume will split around a blob that is wobbling in real time and bank off the surface of a pool. Fast water works differently: the toy averages its speed in 8-pixel cells and feeds the strongest falling cells into the smoke's velocity field, so a waterfall drags a plume down with it instead of cutting a square hole through it.</p>
 
       <h2 class="u-h2">One dumb grid</h2>
       <p>There is no shared physics library underneath. There is one flat array of 8-pixel cells. The water kernels read it packed as a bitmask, the slime solver probes it point by point, the smoke receives it as a texture. Drawing a line edits all three simulations at once, which is why the page feels like one world instead of three separate demos.</p>
-      <p>The direct couplings between engines are thinner, and here is the honest list. Water lifts and drags every slime, per lattice point. The eight wettest slime outlines are handed to the water solver as moving boundaries, resampled to 20 vertices each, so rain piles on a slime and slides off as it wobbles, and a raft of floaters visibly displaces the pool. Selected outlines retain stable solver slots, and touching outlines become one exterior boundary. Smoke banks off slime silhouettes and off water. Beyond the eight tracked outlines water falls straight through a slime, and nothing pushes the smoke back. Nobody has complained yet.</p>
+      <p>The direct couplings between engines are thinner, and here is the honest list. Water lifts and drags every slime, per lattice point. The eight wettest slime outlines are handed to the water solver as moving boundaries, resampled to 20 vertices each, so rain piles on a slime and slides off as it wobbles, and a raft of floaters visibly displaces the pool. Selected outlines retain stable solver slots, and touching outlines become one exterior boundary. Smoke banks off slime silhouettes and slow water; fast falling water pushes the smoke down. Beyond the eight tracked outlines, water still falls straight through a slime.</p>
 
       <h2 class="u-h2">Worth trying</h2>
       <ul>
@@ -357,8 +357,8 @@
 
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
-  <script src="js/liquid-wgpu.js?v=v26.23"></script>
-  <script src="js/water-smoke-slime.js?v=v3.14"></script>
+  <script src="js/liquid-wgpu.js?v=v26.24"></script>
+  <script src="js/water-smoke-slime.js?v=v3.15"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>
