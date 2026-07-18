@@ -426,6 +426,26 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-17 (Codex; v26.13): MOVING-BOUNDARY TRANSPORT INVARIANT. The
+  owner's standalone-demo recording showed a fast-dragged slime scattering
+  real water particles across the entire box in one frame, including apparent
+  wall crossings. This was not another pressure or damping problem. Guest
+  boundary velocities entered `gridWake` in world px/s, but its `cellVel`
+  fields store cell displacement per 1/120 s substep. The missing
+  `stepDt / CELL` conversion amplified guest-driven displacement by about
+  300x. G2P then integrated that displacement before applying `MAX_VEL`, so
+  the old cap only cleaned the stored velocity after the teleport. Finally,
+  terrain collision tested only the landing point, which made a particle that
+  cleared the far face of a wall look legal. The shared water engine now
+  converts guest motion at the unit boundary, caps gathered displacement
+  before position integration, scales APIC's affine term with the same cap,
+  and sweeps the complete particle ring from its previous position to its
+  candidate position. Guest poses also get one immutable uniform per water
+  substep, rewound from the live ring velocities, so a multi-substep frame no
+  longer presents the final slime pose repeatedly. CPU fallback plus Stage 5/6
+  references mirror the cap and sweep. The permanent regression lives in
+  `TUNING.md` section 2.9 and in the standalone demo's fast POKE test.
+
 - 2026-07-11 (Fable; v26.07): THE PLAYER SWITCH. The banya is no longer
   dev-only: pause > Options > Banya (default Off, so a fresh profile boots
   exactly as before). Persisted as 'sluice.opt.banya' next to the other

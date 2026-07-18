@@ -34,12 +34,18 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-16 from the game source at v26.07.
+ * Assembled 2026-07-17 from the game source at v26.13.
+ *
+ * v3.7 transport contract: guest poses and every ring velocity are world
+ * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
+ * displacement per fixed water substep, interpolates the pose for each
+ * batched substep, caps travel before integration, and sweeps the resulting
+ * particle path against terrain. Do not pre-convert these host values.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.6';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.7';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 

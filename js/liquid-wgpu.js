@@ -456,6 +456,11 @@
                                      // from the jello boundary each frame)
   var GS_RING_BASE = GS_META_BASE + GS_MAX_GUESTS * 8;               // rings start after the meta
   var GS_PARAM_LANES = GS_RING_BASE + GS_MAX_GUESTS * GS_RING * 4;   // total f32 lanes
+  // v26.13 — one immutable GameParams uniform per fixed water substep.
+  // A single buffer cannot be rewritten between command buffers that are
+  // batched into one queue.submit: every pass would see the final write.
+  // Five tiny buffers let each pass bind its own interpolated guest pose.
+  var GS_FRAME_SLOTS = LIQUID_MAX_SUBSTEPS;
 
   var GRID_MAX_CELLS = 1 << 21;      // 2,097,152 — hard cap on grid cells
   var WG = 256;                       // compute workgroup size
@@ -678,18 +683,24 @@
     instance.paramsHost = new Uint32Array(paramsAB);
     instance.paramsHostF = new Float32Array(paramsAB);
     // Stage 8 — GameParams uniform: the live game state the grid-update
-    // wake kernels + the collide miner test read each frame. 15 vec4 =
-    // 240 bytes (see the WGSL_GAME_PARAMS banner for the lane layout).
-    // gameParamsHost is the f32 staging view; writeGameParams() fills it
-    // and a single writeBuffer pushes it before the per-frame GPU chain.
-    instance.gameParamsBuf = dev.createBuffer({
-      label: 'liquid.gameParams',
-      size: GS_PARAM_LANES * 4,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-    });
+    // wake kernels + the collide miner test read each frame. Each buffer is
+    // GS_PARAM_LANES*4 bytes (see the WGSL_GAME_PARAMS banner for the lane
+    // layout). Each immutable slot carries the interpolated guest pose for
+    // one fixed substep; writeGameParams() fills every slot before the
+    // per-frame GPU chain.
+    instance.gameParamsBufs = [];
+    for (var gpb = 0; gpb < GS_FRAME_SLOTS; gpb++) {
+      instance.gameParamsBufs.push(dev.createBuffer({
+        label: 'liquid.gameParams.' + gpb,
+        size: GS_PARAM_LANES * 4,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+      }));
+    }
+    // Slot zero stays aliased for the standalone stage harnesses.
+    instance.gameParamsBuf = instance.gameParamsBufs[0];
     // 15 legacy vec4 lanes + guest meta + guest ring vertices, sized from
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
-    instance.gameParamsHost = new Float32Array(GS_PARAM_LANES);
+    instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
     // constants every compute kernel reads. 8 vec4 = 128 bytes (v24.173 added
     // g2pC; see the WGSL_SIM_PARAMS banner for the lane layout). simParamsHost
@@ -1023,24 +1034,35 @@
 
   /* ---- Stage 8 — game-coupled state upload ----------------------------
    * writeGameParams: ask the game (the getGameState hook) for the live
-   * player pose, rocket-plume state and active-explosion list, pack it
-   * into the gameParamsHost f32 staging array (the WGSL_GAME_PARAMS lane
-   * layout) and writeBuffer it to the GameParams uniform. Run once per
-   * frame before the GPU chain so the grid-update wake kernels + the
-   * collide miner test see the current frame's game state.
+   * player, rocket, explosion and guest state, then pack one interpolated
+   * guest pose per fixed substep into immutable GameParams uniforms. Run
+   * once per frame before the GPU chain so grid-update and collision see
+   * the right game state for each batched substep.
    *
    * The hook returns plain JS (no GPU types); the CPU side does the
    * t-gating + blast-scale precompute so the kernels stay branch-light.
    * If the hook is absent or returns nothing, the uniform is zeroed —
    * every kernel's game-coupled path then no-ops (active flags are 0).
    * -------------------------------------------------------------------- */
-  function writeGameParams(instance) {
-    var gh = instance.gameParamsHost;
-    if (!gh) return;
-    for (var z = 0; z < gh.length; z++) gh[z] = 0;
+  function writeGameParams(instance, subSteps) {
+    var allGh = instance.gameParamsHost;
+    var bufs = instance.gameParamsBufs;
+    if (!allGh || !bufs) return;
+    var slots = subSteps | 0;
+    if (slots < 1) slots = 1;
+    if (slots > GS_FRAME_SLOTS) slots = GS_FRAME_SLOTS;
     var hook = instance.liquid && instance.liquid.getGameState;
     var gs = (typeof hook === 'function') ? hook() : null;
-    if (gs) {
+    for (var slot = 0; slot < GS_FRAME_SLOTS; slot++) {
+      var gh = allGh.subarray(slot * GS_PARAM_LANES, (slot + 1) * GS_PARAM_LANES);
+      gh.fill(0);
+      // The host supplies the latest ring pose plus world-px/s face
+      // velocities. Rewind the early water substeps along those velocities
+      // so a batched frame sees a moving boundary, not the final pose N
+      // times. Extra unused slots hold the final pose for harness calls.
+      var liveSlot = slot < slots ? slot : slots - 1;
+      var backTime = (slots - 1 - liveSlot) * (instance.stepDt || LIQUID_SUBSTEP_DT);
+      if (gs) {
       // player vec4 — lanes 0-3: (active, worldX, worldY, dir).
       var pl = gs.player;
       if (pl && pl.active) {
@@ -1089,23 +1111,40 @@
         var ptN = pts ? (pts.length >> 2) : 0;
         if (ptN < 3) continue;
         if (ptN > GS_RING) ptN = GS_RING;
-        gh[GS_META_BASE + q * 8]     = gu[q].x || 0;
-        gh[GS_META_BASE + q * 8 + 1] = gu[q].y || 0;
-        gh[GS_META_BASE + q * 8 + 2] = gu[q].hw || 0;
-        gh[GS_META_BASE + q * 8 + 3] = gu[q].hh || 0;
-        gh[GS_META_BASE + q * 8 + 4] = 1;
-        gh[GS_META_BASE + q * 8 + 5] = ptN;
         // v26.10 — guest mean velocity (motion-aware lateral eviction in
-        // the grid kernel). Hosts that do not set mvx/mvy get zeros and
-        // the kernel's v26.05 nearest-edge behavior, unchanged.
-        var gmvx = gu[q].mvx || 0;
-        var gmvy = gu[q].mvy || 0;
+        // the grid kernel). v26.13 derives it from the face velocities for
+        // hosts that omit mvx/mvy, which also gives substep interpolation a
+        // coherent centre path for the banya and direct-pointer guest.
+        var hasMean = typeof gu[q].mvx === 'number' && isFinite(gu[q].mvx) &&
+                      typeof gu[q].mvy === 'number' && isFinite(gu[q].mvy);
+        var gmvx = hasMean ? gu[q].mvx : 0;
+        var gmvy = hasMean ? gu[q].mvy : 0;
+        if (!hasMean) {
+          for (var pm = 0; pm < ptN; pm++) {
+            var pmBase = pm * 4;
+            var pmvx = pts[pmBase + 2] || 0;
+            var pmvy = pts[pmBase + 3] || 0;
+            var pmSp2 = pmvx * pmvx + pmvy * pmvy;
+            if (LIQUID_MAX_VEL > 0 && pmSp2 > LIQUID_MAX_VEL * LIQUID_MAX_VEL) {
+              var pmSc = LIQUID_MAX_VEL / Math.sqrt(pmSp2);
+              pmvx *= pmSc; pmvy *= pmSc;
+            }
+            gmvx += pmvx; gmvy += pmvy;
+          }
+          gmvx /= ptN; gmvy /= ptN;
+        }
         var gmSp2 = gmvx * gmvx + gmvy * gmvy;
         var gmMax = LIQUID_MAX_VEL;
         if (gmMax > 0 && gmSp2 > gmMax * gmMax) {
           var gmSc = gmMax / Math.sqrt(gmSp2);
           gmvx *= gmSc; gmvy *= gmSc;
         }
+        gh[GS_META_BASE + q * 8]     = (gu[q].x || 0) - gmvx * backTime;
+        gh[GS_META_BASE + q * 8 + 1] = (gu[q].y || 0) - gmvy * backTime;
+        gh[GS_META_BASE + q * 8 + 2] = gu[q].hw || 0;
+        gh[GS_META_BASE + q * 8 + 3] = gu[q].hh || 0;
+        gh[GS_META_BASE + q * 8 + 4] = 1;
+        gh[GS_META_BASE + q * 8 + 5] = ptN;
         gh[GS_META_BASE + q * 8 + 6] = gmvx;
         gh[GS_META_BASE + q * 8 + 7] = gmvy;
         var base = GS_RING_BASE + q * GS_RING * 4;
@@ -1118,8 +1157,8 @@
             var gvSc = gmMax / Math.sqrt(gvSp2);
             gvx *= gvSc; gvy *= gvSc;
           }
-          gh[base + pBase]     = pts[pBase] || 0;
-          gh[base + pBase + 1] = pts[pBase + 1] || 0;
+          gh[base + pBase]     = (pts[pBase] || 0) - gvx * backTime;
+          gh[base + pBase + 1] = (pts[pBase + 1] || 0) - gvy * backTime;
           gh[base + pBase + 2] = gvx;
           gh[base + pBase + 3] = gvy;
         }
@@ -1135,8 +1174,9 @@
         gh[10] = pl.vx || 0;
         gh[11] = pl.vy || 0;
       }
+      }
+      instance.queue.writeBuffer(bufs[slot], 0, gh);
     }
-    instance.queue.writeBuffer(instance.gameParamsBuf, 0, gh);
   }
 
   /* ---- Per-material property table (material-id generalization) ------
@@ -2557,6 +2597,19 @@
         gv11 = fr(gv11 * refMotion);
       }
 
+      // v26.13 — mirror the kernel's pre-advection CFL cap. MAX_VEL is
+      // world px/s; vx/vy are cell displacement for this substep.
+      if (!oilG && LIQUID_MAX_VEL > 0) {
+        var maxDispR = fr(fr(fr(LIQUID_MAX_VEL) * dt) * inv);
+        var move2R = fr(fr(vx * vx) + fr(vy * vy));
+        if (move2R > fr(maxDispR * maxDispR)) {
+          var moveScR = fr(maxDispR / fr(Math.sqrt(move2R)));
+          vx = fr(vx * moveScR); vy = fr(vy * moveScR);
+          gv00 = fr(gv00 * moveScR); gv01 = fr(gv01 * moveScR);
+          gv10 = fr(gv10 * moveScR); gv11 = fr(gv11 * moveScR);
+        }
+      }
+
       // World-bounds clamp; re-derive vx/vy as the clamped displacement.
       var npx = fr(Math.max(minX, fr(Math.min(maxX, fr(glx + vx)))));
       var npy = fr(Math.max(minY, fr(Math.min(maxY, fr(gly + vy)))));
@@ -3062,9 +3115,29 @@
         // falls back to the current x on a 0 prev — mirror that.
         var prevX = g2pAux[qi + 2] !== 0 ? g2pAux[qi + 2] : x;
         var prevY = g2pAux[qi + 3] !== 0 ? g2pAux[qi + 3] : y;
-        if (solidRing(x, y, rC)) {
-          x = prevX;
-          y = prevY;
+        // v26.13 — bit-faithful reference for the kernel's swept segment
+        // collision. All arithmetic that feeds a probe is rounded to f32.
+        var moveDXR = fr(x - prevX);
+        var moveDYR = fr(y - prevY);
+        var moveDistR = fr(Math.sqrt(fr(fr(moveDXR * moveDXR) + fr(moveDYR * moveDYR))));
+        var moveHitR = false;
+        if (moveDistR > 0.001) {
+          var moveStepR = fr(Math.max(0.75, fr(rC * 0.75)));
+          var moveNR = Math.min(128, Math.max(1, Math.ceil(fr(moveDistR / moveStepR))));
+          var clearXR = prevX, clearYR = prevY;
+          for (var moveIR = 1; moveIR <= moveNR; moveIR++) {
+            var mtR = fr(moveIR / moveNR);
+            var sampleXR = fr(prevX + fr(moveDXR * mtR));
+            var sampleYR = fr(prevY + fr(moveDYR * mtR));
+            if (solidRing(sampleXR, sampleYR, rC)) {
+              x = clearXR; y = clearYR; moveHitR = true; break;
+            }
+            clearXR = sampleXR; clearYR = sampleYR;
+          }
+        } else if (solidRing(x, y, rC)) {
+          x = prevX; y = prevY; moveHitR = true;
+        }
+        if (moveHitR) {
           vx = fr(vx * (-bounce));
           vy = fr(vy * (-bounce));
           if (solidRing(x, y, rC)) {
@@ -4316,8 +4389,15 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
         goy = laty;
       }
     }
-    cellVelX[c] = bestVX + gox * min(gdep, 10.0) * GUEST_PUSH;
-    cellVelY[c] = bestVY + goy * min(gdep, 10.0) * GUEST_PUSH;
+    // Grid velocity is displacement in CELLS PER SUBSTEP. Guest face
+    // velocities and GUEST_PUSH are world px/s, just like the player,
+    // rocket and explosion inputs below, so they must cross the same unit
+    // boundary. v26.05 assigned px/s directly here: at 120 Hz and CELL=2.5
+    // that amplified a fast face by 300x and teleported particles before
+    // G2P's old post-advection speed cap could see them.
+    let guestToGrid = stepDt / CELL;
+    cellVelX[c] = (bestVX + gox * min(gdep, 10.0) * GUEST_PUSH) * guestToGrid;
+    cellVelY[c] = (bestVY + goy * min(gdep, 10.0) * GUEST_PUSH) * guestToGrid;
   }
 
   // --- rocket-plume wake — per-nozzle cone push along the exhaust dir ---
@@ -5118,6 +5198,27 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     gv11 = gv11 * motion;
   }
 
+  // v26.13 — CFL/transport invariant. vx/vy are grid-cell displacement
+  // for THIS substep, so cap them before they are added to position. The
+  // old MAX_VEL block ran only after npx/npy were committed; it limited
+  // the velocity stored for the next step but allowed the current step to
+  // teleport arbitrarily far. Scale the affine term with the same factor
+  // when the gathered field is clipped so APIC cannot re-inject the
+  // discarded extreme gradient on the next P2G pass.
+  if (!oil && sp.g2pC.x > 0.0) {
+    let maxDisp = sp.g2pC.x * gp.stepDt * gp.invCell;
+    let move2 = vx * vx + vy * vy;
+    if (move2 > maxDisp * maxDisp) {
+      let moveSc = maxDisp / sqrt(move2);
+      vx = vx * moveSc;
+      vy = vy * moveSc;
+      gv00 = gv00 * moveSc;
+      gv01 = gv01 * moveSc;
+      gv10 = gv10 * moveSc;
+      gv11 = gv11 * moveSc;
+    }
+  }
+
   // World-bounds clamp on the new grid-unit position (CPU minX/maxX/minY/
   // maxY). vx/vy are then re-derived as the clamped displacement.
   let minX = 1.0 + 1e-3;
@@ -5462,11 +5563,46 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let prevX = select(x, auxv.z, auxv.z != 0.0);
   let prevY = select(y, auxv.w, auxv.w != 0.0);
 
-  // Common case is exactly one probe. On a hit: roll back, reflect the
-  // velocity, bump aeration, and only then run the second probe + nudges.
-  if (solidRing(x, y, r)) {
+  // v26.13 — continuous terrain/miner collision. Endpoint-only probing
+  // accepted a particle that started before a thin wall and landed clear
+  // on its far side. March the complete ring along the G2P segment at
+  // sub-radius spacing, stopping at the last clear sample. MAX_VEL keeps
+  // normal water to a handful of samples; the 128 ceiling is a corruption
+  // backstop for uncapped oil/non-finite recovery paths.
+  var moveHit = false;
+  let moveDX = x - prevX;
+  let moveDY = y - prevY;
+  let moveDist = sqrt(moveDX * moveDX + moveDY * moveDY);
+  if (moveDist > 0.001) {
+    let moveStep = max(0.75, r * 0.75);
+    let moveN = min(128.0, max(1.0, ceil(moveDist / moveStep)));
+    var moveI : f32 = 1.0;
+    var clearX = prevX;
+    var clearY = prevY;
+    loop {
+      if (moveI > moveN) { break; }
+      let mt = moveI / moveN;
+      let sampleX = prevX + moveDX * mt;
+      let sampleY = prevY + moveDY * mt;
+      if (solidRing(sampleX, sampleY, r)) {
+        x = clearX;
+        y = clearY;
+        moveHit = true;
+        break;
+      }
+      clearX = sampleX;
+      clearY = sampleY;
+      moveI = moveI + 1.0;
+    }
+  } else if (solidRing(x, y, r)) {
     x = prevX;
     y = prevY;
+    moveHit = true;
+  }
+
+  // On a hit: reflect velocity, bump aeration, then nudge only if the
+  // rollback/last-clear point was already embedded by moving geometry.
+  if (moveHit) {
     vx = vx * (-bounce);
     vy = vy * (-bounce);
     aux[i].y = min(1.0, auxv.y + 0.12);
@@ -6683,28 +6819,32 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       layout: pBgl,
       entries: pBgEntries
     });
-    var uBgEntries = [
-      { binding: 0, resource: { buffer: instance.paramsBuf } },
-      { binding: 1, resource: { buffer: instance.buf.cellMass } },
-      { binding: 2, resource: { buffer: instance.buf.cellOilMass } },
-      { binding: 3, resource: { buffer: instance.buf.cellVX } },
-      { binding: 4, resource: { buffer: instance.buf.cellVY } },
-      { binding: 5, resource: { buffer: instance.buf.cellDVX } },
-      { binding: 6, resource: { buffer: instance.buf.cellDVY } },
-      { binding: 7, resource: { buffer: instance.buf.cellVelX } },
-      { binding: 8, resource: { buffer: instance.buf.cellVelY } },
-      { binding: 9, resource: { buffer: instance.gameParamsBuf } },
-      { binding: 10, resource: { buffer: instance.simParamsBuf } }
-    ];
-    if (instance.sparseCapable) {
-      uBgEntries.push({ binding: 11, resource: { buffer: instance.buf.blockList } });
+    instance.gridUpdateBGs = [];
+    for (var gbs = 0; gbs < GS_FRAME_SLOTS; gbs++) {
+      var uBgEntries = [
+        { binding: 0, resource: { buffer: instance.paramsBuf } },
+        { binding: 1, resource: { buffer: instance.buf.cellMass } },
+        { binding: 2, resource: { buffer: instance.buf.cellOilMass } },
+        { binding: 3, resource: { buffer: instance.buf.cellVX } },
+        { binding: 4, resource: { buffer: instance.buf.cellVY } },
+        { binding: 5, resource: { buffer: instance.buf.cellDVX } },
+        { binding: 6, resource: { buffer: instance.buf.cellDVY } },
+        { binding: 7, resource: { buffer: instance.buf.cellVelX } },
+        { binding: 8, resource: { buffer: instance.buf.cellVelY } },
+        { binding: 9, resource: { buffer: instance.gameParamsBufs[gbs] } },
+        { binding: 10, resource: { buffer: instance.simParamsBuf } }
+      ];
+      if (instance.sparseCapable) {
+        uBgEntries.push({ binding: 11, resource: { buffer: instance.buf.blockList } });
+      }
+      uBgEntries.push({ binding: 12, resource: { buffer: instance.buf.terrainMask } });
+      instance.gridUpdateBGs.push(dev.createBindGroup({
+        label: 'liquid.gridUpdateBG.' + gbs,
+        layout: uBgl,
+        entries: uBgEntries
+      }));
     }
-    uBgEntries.push({ binding: 12, resource: { buffer: instance.buf.terrainMask } });
-    instance.gridUpdateBG = dev.createBindGroup({
-      label: 'liquid.gridUpdateBG',
-      layout: uBgl,
-      entries: uBgEntries
-    });
+    instance.gridUpdateBG = instance.gridUpdateBGs[0];
 
     // --- grid-boundary layout (v14.3): uniform + 5 storage buffers + the
     //     v14.26 SimParams uniform (binding 6). The tile-boundary
@@ -6803,7 +6943,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
    *                 friction on the resolved velocity (v14.3)
    * Assumes runP2G() already populated cellMass/cellOilMass/cellAeration/
    * cellVX/cellVY for the current grid. */
-  function runGrid2(instance) {
+  function runGrid2(instance, substepSlot) {
     if (!instance.grid2Ready) return;
     var g = instance.grid;
     if (!g || g.cells <= 0) return;
@@ -6850,7 +6990,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // 3. gridUpdate — per cell: resolve velocity + gravity. v15.0 sparse:
     //    active blocks only (indirect); massy cells only exist there.
     cp.setPipeline(sparse ? P.gridUpdateSparse : P.gridUpdate);
-    cp.setBindGroup(0, instance.gridUpdateBG);
+    var gridUpdateBG = instance.gridUpdateBGs && instance.gridUpdateBGs[substepSlot | 0];
+    cp.setBindGroup(0, gridUpdateBG || instance.gridUpdateBG);
     if (sparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
     else { cp.dispatchWorkgroups(cellGroups); }
 
@@ -7023,19 +7164,23 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         }
       })
     };
-    instance.collideBG = dev.createBindGroup({
-      label: 'liquid.collideBG',
-      layout: bgl,
-      entries: [
-        { binding: 0, resource: { buffer: instance.paramsBuf } },
-        { binding: 1, resource: { buffer: instance.buf.pos } },
-        { binding: 2, resource: { buffer: instance.buf.aux } },
-        { binding: 3, resource: { buffer: instance.buf.flag } },
-        { binding: 4, resource: { buffer: instance.buf.terrainMask } },
-        { binding: 5, resource: { buffer: instance.gameParamsBuf } },
-        { binding: 6, resource: { buffer: instance.simParamsBuf } }
-      ]
-    });
+    instance.collideBGs = [];
+    for (var cbs = 0; cbs < GS_FRAME_SLOTS; cbs++) {
+      instance.collideBGs.push(dev.createBindGroup({
+        label: 'liquid.collideBG.' + cbs,
+        layout: bgl,
+        entries: [
+          { binding: 0, resource: { buffer: instance.paramsBuf } },
+          { binding: 1, resource: { buffer: instance.buf.pos } },
+          { binding: 2, resource: { buffer: instance.buf.aux } },
+          { binding: 3, resource: { buffer: instance.buf.flag } },
+          { binding: 4, resource: { buffer: instance.buf.terrainMask } },
+          { binding: 5, resource: { buffer: instance.gameParamsBufs[cbs] } },
+          { binding: 6, resource: { buffer: instance.simParamsBuf } }
+        ]
+      }));
+    }
+    instance.collideBG = instance.collideBGs[0];
     instance.collideReady = true;
 
     // v24.185 — min-separation (anti-clump) pipeline. Reuses the count-sort grid
@@ -7111,7 +7256,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
    * positions + stashed the pre-step position into aux.zw, and that
    * computeTerrainBounds() + uploadTerrainMask() have pushed the tile rect
    * + mask. Chained as the final kernel of the per-frame step. */
-  function runCollide(instance) {
+  function runCollide(instance, substepSlot) {
     if (!instance.collideReady) return;
     var count = instance.uploadedCount | 0;
     if (count <= 0) return;
@@ -7122,7 +7267,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     var enc = dev.createCommandEncoder({ label: 'liquid.runCollide' });
     var cp = enc.beginComputePass({ label: 'liquid.collide' });
     cp.setPipeline(instance.collidePipe.collide);
-    cp.setBindGroup(0, instance.collideBG);
+    var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
+    cp.setBindGroup(0, collideBG || instance.collideBG);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     cp.end();
     liquidSubmit(instance, enc);
@@ -8080,7 +8226,7 @@ fn main() {
       return;
     }
     // 4. Live game state for the wake kernels + the collide miner test.
-    writeGameParams(instance);
+    writeGameParams(instance, subSteps);
     // v14.31 — pull the live camera active-region box from the game's
     // getView hook. computeGridBounds + the kernels' per-particle guard
     // cull water outside it. A missing/degenerate box falls back to the
@@ -8139,9 +8285,9 @@ fn main() {
       buildGrid(instance, ss > 0);
       runDeclump(instance);   // v24.185 — min-separation, after the fresh grid
       runP2G(instance);
-      runGrid2(instance);
+      runGrid2(instance, ss);
       runG2P(instance);
-      runCollide(instance);
+      runCollide(instance, ss);
     }
     // v15.0 — clear the LAST sub-step's active blocks while this frame's
     // grid mapping still holds (sparse path only; no-op dense).
@@ -8481,6 +8627,7 @@ fn main() {
       paramsHost: null,
       paramsHostF: null,    // f32 view aliasing paramsHost's ArrayBuffer
       gameParamsBuf: null,  // GameParams uniform — game-coupled state (Stage 8)
+      gameParamsBufs: null, // one immutable GameParams uniform per substep (v26.13)
       gameParamsHost: null, // f32 staging view for GameParams (Stage 8)
       simParamsBuf: null,   // SimParams uniform — live fluid-feel physics (v14.26)
       simParamsHost: null,  // f32 staging view for SimParams (v14.26)
@@ -8497,11 +8644,13 @@ fn main() {
       grid2Pipe: null,      // pressure + grid-update pipelines (Stage 4)
       pressureBG: null,     // pressure bind group (Stage 4)
       gridUpdateBG: null,   // grid-update bind group (Stage 4)
+      gridUpdateBGs: null,  // per-substep guest-pose bind groups (v26.13)
       gridBoundaryBG: null, // grid-boundary bind group (Stage 4b, v14.3)
       g2pPipe: null,        // G2P compute pipeline (Stage 5)
       g2pBG: null,          // G2P bind group (Stage 5)
       collidePipe: null,    // collide compute pipeline (Stage 6)
       collideBG: null,      // collide bind group (Stage 6)
+      collideBGs: null,     // per-substep guest-pose bind groups (v26.13)
       renderCanvas: null,   // liquidWGPUCanvas — the <canvas> (Stage 7)
       renderCtx: null,      // its webgpu context (Stage 7)
       renderFormat: null,   // preferred canvas format (Stage 7)
@@ -8867,7 +9016,11 @@ fn main() {
           }
         }
         if (instance.paramsBuf) { try { instance.paramsBuf.destroy(); } catch (_) {} }
-        if (instance.gameParamsBuf) { try { instance.gameParamsBuf.destroy(); } catch (_) {} }
+        if (instance.gameParamsBufs) {
+          for (var gb = 0; gb < instance.gameParamsBufs.length; gb++) {
+            try { instance.gameParamsBufs[gb].destroy(); } catch (_) {}
+          }
+        }
         if (instance.simParamsBuf) { try { instance.simParamsBuf.destroy(); } catch (_) {} }
         if (instance.renderParamsBuf) { try { instance.renderParamsBuf.destroy(); } catch (_) {} }
         // Stage 8 — the readback mirror buffers. Unmap any in-flight map

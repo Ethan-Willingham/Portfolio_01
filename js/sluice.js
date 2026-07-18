@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.12';
+  var GAME_VERSION = 'v26.13';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -9422,6 +9422,23 @@
         gv11 *= liquidMotionEff;
       }
 
+      // v26.13 — the velocity ceiling is a transport invariant, so apply
+      // it while vx/vy are still this substep's grid-cell displacement.
+      // The old clamp below ran after liquidX/Y were committed and could
+      // only limit the NEXT step after a one-frame teleport. Scale APIC's
+      // affine term with the clipped field so the discarded gradient does
+      // not return through the following P2G pass.
+      if (!oil && LIQUID_MAX_VEL > 0) {
+        var maxDisp = LIQUID_MAX_VEL * stepDt / LIQUID_CELL;
+        var move2 = vx * vx + vy * vy;
+        if (move2 > maxDisp * maxDisp) {
+          var moveSc = maxDisp / Math.sqrt(move2);
+          vx *= moveSc; vy *= moveSc;
+          gv00 *= moveSc; gv01 *= moveSc;
+          gv10 *= moveSc; gv11 *= moveSc;
+        }
+      }
+
       var npx = Math.max(minX, Math.min(maxX, liquidLX[i] + vx));
       var npy = Math.max(minY, Math.min(maxY, liquidLY[i] + vy));
       vx = npx - liquidLX[i];
@@ -9690,14 +9707,33 @@
     var vx = liquidVX[i], vy = liquidVY[i];
     if (!isFinite(x) || !isFinite(y) || !isFinite(vx) || !isFinite(vy)) return false;
 
-    // v10.89 — only run the second collision probe when the first
-    // actually hit (and we rolled back). Pre-v10.89 it ran every
-    // frame on every particle = 4 wasted tile lookups per common-
-    // case particle, doubling liquidMoveParticle cost when a pool
-    // wakes up. Common case is now exactly one solidAt probe.
-    if (liquidSolidAt(x, y, r)) {
-      x = liquidPrevX[i] || x;
-      y = liquidPrevY[i] || y;
+    // v26.13 — sweep the complete particle ring from the pre-G2P pose to
+    // the new pose. Endpoint-only collision let a particle land clear on
+    // the far side of a thin wall. The pre-advection MAX_VEL invariant
+    // keeps this to a handful of probes for water; 128 is a corruption
+    // backstop for the uncapped oil path.
+    var prevX = liquidPrevX[i] || x;
+    var prevY = liquidPrevY[i] || y;
+    var moveDX = x - prevX, moveDY = y - prevY;
+    var moveDist = Math.sqrt(moveDX * moveDX + moveDY * moveDY);
+    var moveHit = false;
+    if (moveDist > 0.001) {
+      var moveStep = Math.max(0.75, r * 0.75);
+      var moveN = Math.min(128, Math.max(1, Math.ceil(moveDist / moveStep)));
+      var clearX = prevX, clearY = prevY;
+      for (var moveI = 1; moveI <= moveN; moveI++) {
+        var mt = moveI / moveN;
+        var sampleX = prevX + moveDX * mt;
+        var sampleY = prevY + moveDY * mt;
+        if (liquidSolidAt(sampleX, sampleY, r)) {
+          x = clearX; y = clearY; moveHit = true; break;
+        }
+        clearX = sampleX; clearY = sampleY;
+      }
+    } else if (liquidSolidAt(x, y, r)) {
+      x = prevX; y = prevY; moveHit = true;
+    }
+    if (moveHit) {
       vx *= -bounce;
       vy *= -bounce;
       liquidAeration[i] = Math.min(1, liquidAeration[i] + 0.12);
@@ -11347,7 +11383,6 @@
       }
     }
   }
-
   /* ==== BANYA (v25.77): the other half of the game, first stone ==========
      Flag-gated (ENABLE_BATH, ?bath=1). Plan: docs/game/BATHHOUSE_PLAN.md
      (section 0 pivot, B-D11, stages B6/B8). This fragment owns BOTH halves

@@ -418,6 +418,35 @@ Dawn validates buffer usage per compute pass, so the GPU-written dispatch
 args live in `blockMeta` (storage) and are copied 16 bytes into
 `blockDispatch` (INDIRECT-only, never bound as storage) between passes.
 
+**v26.13 moving-boundary transport contract (read before touching guests,
+G2P, or collision):** the host reports every guest centre and ring velocity in
+world pixels per second. `cellVelX/Y`, including the values written by
+`gridWake`, are grid-cell displacement for one fixed substep. The conversion at
+that boundary is therefore `worldVelocity * stepDt / CELL`. Never assign a
+guest's px/s velocity directly to a grid cell. With `CELL = 2.5` and a 1/120 s
+step, doing so amplifies its displacement by 300x.
+
+Three guards make that unit rule a complete transport invariant. First, G2P
+applies `LIQUID_MAX_VEL * stepDt * invCell` to its gathered displacement BEFORE
+adding it to particle position, and scales the APIC affine matrix with the same
+factor. A cap after `npx/npy` is too late to stop the current step. Second, the
+collision kernel sweeps the full particle ring from the previous position in
+`aux.zw` to the candidate position at sub-radius spacing, stopping at the last
+clear sample. An endpoint-only collision test accepts a particle that crosses a
+thin wall and lands clear beyond it. Third, one immutable GameParams uniform is
+written per possible water substep. Early slots rewind the latest guest centre
+and each ring vertex by their world velocity, so a batched frame sees the body
+move through time instead of seeing its final pose repeated. Rewriting one
+uniform between command buffers does not work because every pass in the queued
+submit can observe the last write.
+
+Keep the CPU fallback and the Stage 5/6 CPU references bit-faithful to the
+pre-advection cap and swept collision. Regression repro: in the standalone
+`water-smoke-slime.html` falls scene, enable particle debug, hold POKE, and whip
+the submerged slime across the pool. No particle may cross the box in one frame
+or appear beyond a drawn wall, and the boot log must contain no Stage 5/6
+`FAIL`.
+
 ## 2.10 Stability — the giant-particle / runaway fix (v24.169-186) ✓ SOLVED
 
 The months-long water saga ("popcorn", "infinite energetic mass", "giant
