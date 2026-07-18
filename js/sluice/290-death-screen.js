@@ -584,20 +584,21 @@
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    // Camera-push backdrop — only over the playfield, NOT the console.
-    // v11.26: the toolbar at the bottom must stay fully lit while shopping
-    // (per user feedback). Clip the dim to the room area above the console.
-    var ch = consoleHeight();
-    var roomBottom = viewH - ch;
-    var dim = 0.62 * (shopEnterT < 1 ? shopEnterT : 1);
-    ctx.fillStyle = 'rgba(0,0,0,' + dim.toFixed(3) + ')';
-    ctx.fillRect(0, 0, viewW, roomBottom);
     if (USE_NEW_SHOP_UI) {
+      // v26.18 — the UI kit paints its own fizzed-world backdrop (blur +
+      // dim + vignette over the playfield only, console untouched); the
+      // old flat dim would double-darken it. The board page fills opaque.
       newShopDraw();
-    } else if (shopState === 'floor') {
-      drawShopRoom();
     } else {
-      drawShopSubPage();
+      // Legacy walk-up shop: camera-push dim over the playfield, NOT the
+      // console (v11.26: the toolbar must stay fully lit while shopping).
+      var ch = consoleHeight();
+      var roomBottom = viewH - ch;
+      var dim = 0.62 * (shopEnterT < 1 ? shopEnterT : 1);
+      ctx.fillStyle = 'rgba(0,0,0,' + dim.toFixed(3) + ')';
+      ctx.fillRect(0, 0, viewW, roomBottom);
+      if (shopState === 'floor') drawShopRoom();
+      else drawShopSubPage();
     }
     ctx.restore();
   }

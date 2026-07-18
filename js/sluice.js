@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.17';
+  var GAME_VERSION = 'v26.18';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -40387,42 +40387,20 @@
   }
 
   // ========================================================================
-  // v14.1 — SHOP UI REDESIGN  (USE_NEW_SHOP_UI feature flag)
+  // SHOP ARCHITECTURE  (USE_NEW_SHOP_UI feature flag)
   // ========================================================================
-  // GOAL: AAA-standard shop — addictive, juicy, themed (Peggle / Persona 5
-  // / Hades / Diablo-4 vendors / RuneScape Grand Exchange as references).
-  // The Board is the headline new feature: a frontier-town Trade Board
-  // (commodity exchange) built from scratch.
-  //
-  // ARCHITECTURE — the redesign is gated behind ONE flag:
-  //   USE_NEW_SHOP_UI = true   → fully procedural, responsive new shop:
-  //       newShopDrawHub()      — 3-station hub, per-station identity,
-  //                               idle anims, hover events, click zoom.
-  //       newShopDrawWorkshop() — upgrades, "just out of reach" feedback,
-  //                               dramatic buy fx, number tooltips.
-  //       newShopDrawShelf()    — consumables, stacked-stock art, flourish.
-  //       newShopDrawBoard()    — Trade Board: commodity market list +
-  //                               telegraph ticker + pinned notices.
+  //   USE_NEW_SHOP_UI = true   → v26.18 STORE: one catalog modal on the
+  //       shared UI kit (245) floating over the fizzed-out live world.
+  //       Spec + pointer routing in 250, workshop items in 270, shelf
+  //       items in 280. newShopDrawBoard() (260) is the flag-off Trade
+  //       Board's bespoke page, reached as a MARKET tab when its flag
+  //       is on.
   //   USE_NEW_SHOP_UI = false  → the EXACT pre-v14.1 shop is restored:
   //       drawShopRoom() sprite hub, drawWorkshopSubPage(),
   //       drawShelfSubPage(), board = "COMING SOON". The old code paths
   //       are untouched and still branch-reachable — flip the flag false
-  //       to revert instantly.
-  //
-  // RESPONSIVE: the new shop has NO sprite dependency. Layout is computed
-  // every frame from viewW/viewH and adapts to aspect ratio — the Board's
-  // market/notices split stacks vertically on a portrait phone and sits
-  // side-by-side on landscape/desktop. Touch targets are finger-sized;
-  // fonts scale with a uiScale() factor.
-  //
-  // PERFORMANCE: new animation state reuses the shared shop timers where
-  // possible; particle systems are capped (board paper-shreds <= 60).
-  // Target 60fps. Pure-canvas, no new DOM, no new files, no deps.
-  //
-  // SAVE COMPAT: the one cross-cutting change is player.tradeGoods = {}
-  // in init() (forward-compatible inventory the Board writes to). Older
-  // saves missing it default to {}. Nothing else outside the shop is
-  // touched.
+  //       to revert instantly. Everything from here to the "NEW SHOP"
+  //       banner in 240 belongs to that legacy path.
   // ========================================================================
   var USE_NEW_SHOP_UI = true;
 
@@ -43125,22 +43103,17 @@
   // ########################################################################
   // ##  v14.1 — NEW SHOP UI  (USE_NEW_SHOP_UI === true)                   ##
   // ########################################################################
-  // A fully procedural, responsive shop. No sprite background. Three
-  // stations — WORKSHOP, SHELF, BOARD — reached from a hub. The BOARD is a
-  // brand-new Trade Board (commodity exchange). Everything below is dead
-  // code when USE_NEW_SHOP_UI is false; the legacy paths above run instead.
-  //
-  // Layout model: every frame newShopMetrics() recomputes a `M` struct from
-  // viewW / viewH. `M.portrait` flips the Board to a stacked layout. uiScale
-  // scales fonts + touch targets. Nothing is cached against a fixed canvas.
+  // v26.18: the shop itself is the STORE catalog modal on the UI kit (245,
+  // spec + routing in 250, item builders in 270/280). What remains here is
+  // the shared plumbing both it and the flag-off Trade Board page use:
+  // metrics, stencil text, particles, the money chip, the board's back
+  // arrow, and the per-frame dispatch. Everything below is dead code when
+  // USE_NEW_SHOP_UI is false; the legacy paths above run instead.
   // ########################################################################
 
   // ---- Shared new-shop state -------------------------------------------
   var nsRoomT       = 0;     // running clock (seconds) for idle animations
-  var nsView        = 'hub'; // 'hub' | 'workshop' | 'shelf' | 'board'
-  var nsTransition  = { from: null, to: null, t: 0, dur: 0 }; // station-entry zoom
-  var nsHubHover    = null;  // hovered station id on the hub
-  var nsHubLiftT    = { workshop: 0, shelf: 0, board: 0 }; // hover lift eases
+  var nsHubHover    = null;  // hovered chrome id on the board page ('nsback', 'bb:*')
   var nsBackRecoilT = 0;     // back-arrow recoil-shoot animation (counts down)
   var nsExitFadeT   = 0;     // black fade on shop exit (counts down)
   var nsMoneyPulseT = 0;     // gold pulse after any cash change
@@ -43162,12 +43135,6 @@
   var nsBoardRollFx    = {};     // per-key digit-roll animation {key:t}
   var nsBoardNoticeIdx = [];     // which notices are pinned this shop-open
   var nsBoardEnterT    = 0;      // board sub-page entrance progress
-  var nsWorkshopEnterT = 0;
-  var nsShelfEnterT    = 0;
-  var nsHubEnterT      = 0;
-  var nsWorkBuyFx      = { key: null, t: 0 };  // workshop buy pulse
-  var nsShelfBuyFx     = { key: null, t: 0, lastUnit: false };
-  var nsEdgePulseT     = 0;      // screen-edge gold pulse on a workshop buy
   // Drag-scroll bookkeeping (board market list)
   var nsDrag = { active: false, id: null, startY: 0, startScroll: 0, moved: 0, pendingRow: null };
   // Buy/sell hit rects, repopulated each frame
@@ -43511,40 +43478,27 @@
 
   // ---- Main dispatch ----------------------------------------------------
   // Called once per frame from drawShopFloor() when USE_NEW_SHOP_UI is on.
+  // 'floor' = the store catalog modal (UI kit, 245/250). 'board' = the
+  // flag-off Trade Board's bespoke full page (260). The old per-counter
+  // 'workshop'/'shelf' page states are retired; normalize them to 'floor'.
   function newShopDraw() {
     var dt = 1 / 60;
     nsRoomT += dt;
-    // Sync nsView with the legacy shopState so existing exit/proximity
-    // logic still drives "closed". shopState 'floor' maps to our 'hub'.
-    if (shopState === 'floor' && nsView !== 'hub') nsView = 'hub';
-    if (shopState === 'workshop') nsView = 'workshop';
-    if (shopState === 'shelf') nsView = 'shelf';
-    if (shopState === 'board') nsView = 'board';
+    if (shopState === 'workshop' || shopState === 'shelf') shopState = 'floor';
 
     // Global timers
     if (nsBackRecoilT > 0) nsBackRecoilT -= dt;
     if (nsExitFadeT > 0) nsExitFadeT -= dt;
     if (nsMoneyPulseT > 0) nsMoneyPulseT -= dt;
-    if (nsEdgePulseT > 0) nsEdgePulseT -= dt;
-    if (nsWorkBuyFx.t > 0) nsWorkBuyFx.t -= dt;
-    if (nsShelfBuyFx.t > 0) nsShelfBuyFx.t -= dt;
-    if (nsTransition.t > 0) nsTransition.t -= dt;
     nsTickParticles(dt);
 
     NS_HIT = [];
     var M = nsMetrics();
 
-    // Station-entry zoom transition: render the destination page, then
-    // a zoom-in mask over it. The hub fades/blurs under it.
     if (shopState === 'floor') {
-      nsHubEnterT = Math.min(1, nsHubEnterT + dt / 0.22);
-      newShopDrawHub(M);
-    } else if (shopState === 'workshop') {
-      nsWorkshopEnterT = Math.min(1, nsWorkshopEnterT + dt / 0.24);
-      newShopDrawWorkshop(M);
-    } else if (shopState === 'shelf') {
-      nsShelfEnterT = Math.min(1, nsShelfEnterT + dt / 0.24);
-      newShopDrawShelf(M);
+      storeModalEnsure();
+      ukCatalogDraw(M);
+      nsDrawParticles();
     } else if (shopState === 'board') {
       nsBoardEnterT = Math.min(1, nsBoardEnterT + dt / 0.26);
       newShopDrawBoard(M);
@@ -43557,34 +43511,28 @@
     }
   }
 
-  // Reset per-station entrance + selection state when a station is entered.
+  // Enter a bespoke station page. Only the Trade Board still has one; the
+  // workshop and shelf live as tabs inside the store modal (250).
   function nsEnterStation(id) {
-    if (id === 'board' && !ENABLE_TRADE_BOARD) return;   // Trade Board disabled: unreachable
-    shopState = id;
-    nsView = id;
-    if (id === 'workshop') nsWorkshopEnterT = 0;
-    if (id === 'shelf') nsShelfEnterT = 0;
-    if (id === 'board') {
-      nsBoardEnterT = 0;
-      nsBoardSel = null;
-      nsBoardScroll = 0;
-      nsBoardRollPrices();
-    }
-    nsTransition = { from: 'hub', to: id, t: 0.28, dur: 0.28 };
+    if (id !== 'board' || !ENABLE_TRADE_BOARD) return;
+    shopState = 'board';
+    nsBoardEnterT = 0;
+    nsBoardSel = null;
+    nsBoardScroll = 0;
+    nsBoardRollPrices();
   }
+  // Back from the board page to the store modal.
   function nsLeaveToHub() {
     shopState = 'floor';
-    nsView = 'hub';
-    nsHubEnterT = 0;
     nsBackRecoilT = 0.26;
     nsBoardSel = null;
   }
   // Leave the shop entirely: fade to black + set the rig down on the deck.
   function nsExitShop() {
+    ukCatalogReset();   // direct exits (board Escape path) skip the kit's close anim
     nsExitFadeT = 0.22;
     shopState = 'closed';
     sfxPlay('ui-open', { rate: 0.89 });   // the same thunk ~2 semitones down = close (§2.11)
-    nsView = 'hub';
     shopDoorT = 0;
     if (typeof player !== 'undefined' && player) {
       var stationCx = nearestTownStationCol() * TILE + TILE / 2;
@@ -43597,442 +43545,928 @@
       if (typeof player.renderX !== 'undefined') { player.renderX = player.x; player.renderY = player.y; }
     }
   }
-  // One persistent corner control: on a sub-page it pops to the hub, on the
-  // hub it exits the shop. Press it twice from a sub-page to leave entirely.
+  // One escape/back control: the store modal animates closed (its onClose
+  // runs nsExitShop); the board page pops back to the store modal.
   function nsBackOrExit() {
-    if (shopState === 'floor') nsExitShop();
-    else nsLeaveToHub();
+    if (shopState === 'floor') {
+      if (ukModal) ukCatalogClose();
+      else nsExitShop();
+    } else {
+      nsLeaveToHub();
+    }
   }
 
-  // ====================================================================
-  //  HUB — three stations, each with a unique identity + idle animation.
-  // ====================================================================
-  // Returns the three station rects + the leave rect, laid out responsively:
-  // a row on landscape/desktop, a column on a portrait phone.
-  function nsHubLayout(M) {
-    var us = M.us;
-    var areaTop = M.headerBottom + Math.round(10 * us);
-    var areaH = M.bottom - areaTop - M.pad;
-    var gap = Math.round(14 * us);
-    // Trade Board hidden when ENABLE_TRADE_BOARD is off -> two counters fill the row.
-    var n = ENABLE_TRADE_BOARD ? 3 : 2;
-    var stations;
-    if (M.portrait) {
-      // Column: stacked station cards filling the content area.
-      var colTop = areaTop;
-      var colH = (areaH - gap * (n - 1)) / n;
-      var colW = M.cw;
-      stations = [
-        { id: 'workshop', x: M.cx, y: colTop, w: colW, h: colH },
-        { id: 'shelf',    x: M.cx, y: colTop + (colH + gap), w: colW, h: colH }
-      ];
-      if (ENABLE_TRADE_BOARD) stations.push({ id: 'board', x: M.cx, y: colTop + (colH + gap) * 2, w: colW, h: colH });
-      return { stations: stations };
+  // ########################################################################
+  // ##  UI KIT (uk) -- the reusable overlay system                        ##
+  // ########################################################################
+  // v26.18 -- One shared system for every full-screen popup the game needs:
+  // the station store today, and any future surface where the player views,
+  // buys, sells, stores, or combines things. Two layers:
+  //
+  //   1. THE FIZZ. While a modal is up, the live world keeps rendering
+  //      underneath and the kit draws it back blurred, dimmed, and
+  //      vignetted (a two-step downscale/upscale through offscreen
+  //      canvases; no ctx.filter, so it works everywhere). The playfield
+  //      reads as "the world, out of focus"; the console stays sharp.
+  //
+  //   2. THE CATALOG MODAL. A generic tabs + list + detail + one-action
+  //      panel driven entirely by a spec object. Pages never draw their
+  //      own chrome; they build item descriptors and the kit renders,
+  //      hit-tests, animates, and fires the shared purchase fx.
+  //
+  // Opening a new popup elsewhere in the game is:
+  //
+  //   ukCatalogOpen({
+  //     id:    'myThing',
+  //     title: 'MY THING',
+  //     tabs:  [{ id: 'a', label: 'TAB A', build: buildItemsFn }],
+  //     onClose: function () { ... }        // fired after the close anim
+  //   });
+  //
+  // where buildItemsFn() returns an array of items:
+  //
+  //   { key: 'drill',                 // stable id (selection + fx)
+  //     name: 'CARBIDE DRILL',        // stencil caps, list + detail
+  //     sub: 'LV 2 / 6',              // small mono line in the list row
+  //     icon: function (cx, cy, px),  // draws the art at center/size
+  //     state: 'INSTALLED . LV 2',    // small mono line under the detail name
+  //     badge: 'x3',                  // corner tag on the detail art stage
+  //     pips: { cur: 2, max: 6 },     // optional tier pips
+  //     stat: { label: 'POWER', cur: 'LV 2', next: 'LV 3', delta: '+1' },
+  //     desc: 'One plain sentence about what it does.',
+  //     priceLabel: '$900',           // right side of the list row
+  //     priceTier: 'gold',            // 'gold' | 'red' | 'dim'
+  //     act: { label: 'BUY  $900', enabled: true,
+  //            reason: 'SHORT $220', reasonKind: 'short' },
+  //     onAct: function (item) { return { ok: true, float: '+DRILL' }; } }
+  //
+  // A tab may carry open:fn instead of build:fn to hand control to a
+  // bespoke page (the flag-gated Trade Board uses this).
+  //
+  // Input enters through ukPointerDown/Move/Up/Wheel and ukCatalogKeys
+  // (arrows + enter + tab cycling); the shop routes its existing
+  // newShopPointer* entry points here. All state is kit-local; the only
+  // shared pieces are the ns* particle pools and the money chip from 240.
+
+  // ---- kit state ---------------------------------------------------------
+  var ukModal    = null;   // active spec, null = closed
+  var ukState    = null;   // { tab, sel:{tabId:key}, items, scroll, scrollMax, lastMoney }
+  var ukOpenT    = 0;      // entrance progress 0..1
+  var ukCloseT   = -1;     // -1 idle; >= 0 counts the close anim down
+  var ukHover    = null;   // hovered hit id
+  var ukPress    = null;   // { id, x, y, moved, pointer } from pointer-down
+  var ukDeniedT  = 0;      // action-button shake after a blocked click
+  var ukArtPopT  = 0;      // detail-art pop after a successful action
+  var ukListDrag = null;   // { pointer, startY, startScroll, moved }
+  var UK_HIT     = [];     // per-frame hit rects { id, x, y, w, h }
+  var ukFizzA    = null;   // downscale chain step 1 { c, x, w, h }
+  var ukFizzB    = null;   // downscale chain step 2
+  var ukVig      = null;   // cached vignette { w, h, grad }
+  var ukLayoutC  = null;   // layout cache for the current frame
+
+  function ukHitAt(x, y) {
+    for (var i = UK_HIT.length - 1; i >= 0; i--) {
+      var r = UK_HIT[i];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r;
     }
-    // Landscape / desktop: side-by-side cards filling the content area.
-    var rowH = areaH;
-    var sw = (M.cw - gap * (n - 1)) / n;
-    stations = [
-      { id: 'workshop', x: M.cx, y: areaTop, w: sw, h: rowH },
-      { id: 'shelf',    x: M.cx + (sw + gap), y: areaTop, w: sw, h: rowH }
-    ];
-    if (ENABLE_TRADE_BOARD) stations.push({ id: 'board', x: M.cx + (sw + gap) * 2, y: areaTop, w: sw, h: rowH });
-    return { stations: stations };
+    return null;
   }
 
-  function newShopDrawHub(M) {
-    var us = M.us;
-    // Backdrop — warm dim interior with a soft vignette + lamp flicker.
-    var flick = 0.92 + 0.08 * Math.sin(nsRoomT * 7.3) * Math.sin(nsRoomT * 2.1);
-    var bgGrad = ctx.createRadialGradient(viewW / 2, M.bottom * 0.36, 40,
-                                          viewW / 2, M.bottom * 0.5, Math.max(viewW, M.bottom) * 0.75);
-    bgGrad.addColorStop(0, 'rgba(58,44,30,' + (0.96).toFixed(2) + ')');
-    bgGrad.addColorStop(1, '#140f0a');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, viewW, M.bottom);
-    // Floor band
-    ctx.fillStyle = '#241a12';
-    ctx.fillRect(0, M.bottom - Math.round(40 * us), viewW, Math.round(40 * us));
-    ctx.fillStyle = 'rgba(255,200,110,' + (0.05 * flick).toFixed(3) + ')';
-    ctx.fillRect(0, M.bottom - Math.round(40 * us), viewW, 2);
-
-    // Title banner + subtitle
-    var ban = nsBanner(M, 'TRADING POST', '#7a2620');
-    nsText('CHOOSE A COUNTER', viewW / 2, ban.bottom + Math.round(8 * us),
-           Math.round(8 * us), '#9a8358', 'center');
-
-    var lay = nsHubLayout(M);
-    // Hover lift eases (drive off the actual station list, not a fixed 3)
-    for (var e = 0; e < lay.stations.length; e++) {
-      var ek = lay.stations[e].id;
-      var tgt = (nsHubHover === ek) ? 1 : 0;
-      nsHubLiftT[ek] = nsApproach(nsHubLiftT[ek], tgt, (1 / 60) / 0.13);
+  // ---- the fizz: blurred + dimmed live world ----------------------------
+  function ukFizzLayer(prev, w, h) {
+    if (prev && prev.w === w && prev.h === h) return prev;
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    var x = c.getContext('2d');
+    x.imageSmoothingEnabled = true;
+    return { c: c, x: x, w: w, h: h };
+  }
+  function ukFizzDraw(strength) {
+    if (strength <= 0.01) return;
+    var playH = viewH - consoleHeight();
+    if (playH < 8) return;
+    // Downscale the freshly-rendered world twice (1/4 then 1/8), then
+    // stretch it back with bilinear sampling. Reads as a soft frost.
+    var srcW = canvas.width;
+    var srcH = Math.max(1, Math.min(canvas.height, Math.round(playH * dpr)));
+    var aw = Math.max(1, Math.round(viewW / 4)), ah = Math.max(1, Math.round(playH / 4));
+    var bw = Math.max(1, Math.round(viewW / 8)), bh = Math.max(1, Math.round(playH / 8));
+    ukFizzA = ukFizzLayer(ukFizzA, aw, ah);
+    ukFizzB = ukFizzLayer(ukFizzB, bw, bh);
+    ukFizzA.x.drawImage(canvas, 0, 0, srcW, srcH, 0, 0, aw, ah);
+    ukFizzB.x.drawImage(ukFizzA.c, 0, 0, aw, ah, 0, 0, bw, bh);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalAlpha = strength;
+    ctx.drawImage(ukFizzB.c, 0, 0, bw, bh, 0, 0, viewW, playH);
+    // Warm dim so panel text pops without going to black.
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(12,9,6,' + (0.50 * strength).toFixed(3) + ')';
+    ctx.fillRect(0, 0, viewW, playH);
+    // Vignette (cached radial gradient) pulls the eye to the center.
+    if (!ukVig || ukVig.w !== viewW || ukVig.h !== playH) {
+      var g = ctx.createRadialGradient(viewW / 2, playH * 0.46, Math.min(viewW, playH) * 0.32,
+                                       viewW / 2, playH * 0.5, Math.max(viewW, playH) * 0.72);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,0.42)');
+      ukVig = { w: viewW, h: playH, grad: g };
     }
-    var hubEase = nsEaseOut(nsHubEnterT);
-    for (var i = 0; i < lay.stations.length; i++) {
-      var st = lay.stations[i];
-      // Staggered entrance: each card drops in slightly after the last.
-      var localT = Math.max(0, Math.min(1, (nsHubEnterT - i * 0.06) / 0.7));
-      var le = nsEaseOut(localT);
-      var slide = (1 - le) * 26 * us;
-      ctx.save();
-      ctx.globalAlpha = le;
-      ctx.translate(0, slide);
-      nsDrawStationCard(st, M, le);
-      ctx.restore();
-      NS_HIT.push({ kind: 'station', id: st.id, x: st.x, y: st.y, w: st.w, h: st.h });
-    }
-    // Hub hover particles + the money chip ride on top. The chip sits
-    // top-right in the reserved header band, below the banner.
-    nsDrawHubParticles();
-    nsDrawMoneyChip(M.cx + M.cw, M.bannerBottom + Math.round(4 * us), us, 'right');
-    // Persistent corner control — reads EXIT on the hub (leaves the shop).
-    nsDrawBackArrow(M);
+    ctx.globalAlpha = strength;
+    ctx.fillStyle = ukVig.grad;
+    ctx.fillRect(0, 0, viewW, playH);
+    ctx.restore();
+    ctx.imageSmoothingEnabled = false;
   }
 
-  function nsDrawHubParticles() {
-    for (var i = 0; i < nsHubParticles.length; i++) {
-      var p = nsHubParticles[i];
-      var a = Math.min(1, p.t / p.ttl * 1.6);
-      if (p.kind === 'paper') {
-        ctx.fillStyle = 'rgba(231,214,164,' + a.toFixed(3) + ')';
-        ctx.fillRect(p.x, p.y, 3, 4);
-      } else if (p.kind === 'spark') {
-        ctx.fillStyle = 'rgba(255,' + (180 + Math.floor(60 * a)) + ',90,' + a.toFixed(3) + ')';
-        ctx.fillRect(p.x, p.y, 2, 2);
+  // ---- drawing primitives ------------------------------------------------
+  // The modal surface: solid warm plate, dark outline, one top light line,
+  // small brass corner ticks. Deliberately quiet; the content is the show.
+  function ukPanelBox(x, y, w, h) {
+    ctx.fillStyle = 'rgba(0,0,0,0.34)';
+    ctx.fillRect(x - 5, y - 1, w + 10, h + 9);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(x + 1, y + 4, w, h + 1);
+    ctx.fillStyle = '#0b0906';
+    ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    ctx.fillStyle = '#2b241b';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(255,216,150,0.09)';
+    ctx.fillRect(x, y, w, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillRect(x, y + h - 2, w, 2);
+    // brass ticks in each corner
+    ctx.fillStyle = '#8a6a30';
+    ctx.fillRect(x + 3, y + 3, 8, 2); ctx.fillRect(x + 3, y + 3, 2, 8);
+    ctx.fillRect(x + w - 11, y + 3, 8, 2); ctx.fillRect(x + w - 5, y + 3, 2, 8);
+    ctx.fillRect(x + 3, y + h - 5, 8, 2); ctx.fillRect(x + 3, y + h - 11, 2, 8);
+    ctx.fillRect(x + w - 11, y + h - 5, 8, 2); ctx.fillRect(x + w - 5, y + h - 11, 2, 8);
+  }
+  // A recessed dark niche (art stages, list wells).
+  function ukInset(x, y, w, h) {
+    ctx.fillStyle = '#0d0a07';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#17120c';
+    ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(x + 1, y + 1, w - 2, 2);
+  }
+  // Commit Mono text. Stencil caps carry titles and prices; mono carries
+  // sentences and small state lines, which stay readable at small sizes.
+  function ukMono(str, x, y, px, color, align, bold) {
+    ctx.save();
+    ctx.font = (bold ? 'bold ' : '') + px + 'px ' + UI_FONT;
+    ctx.fillStyle = color;
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(str, Math.round(x), Math.round(y));
+    ctx.restore();
+  }
+  function ukMonoW(str, px, bold) {
+    ctx.save();
+    ctx.font = (bold ? 'bold ' : '') + px + 'px ' + UI_FONT;
+    var w = ctx.measureText(str).width;
+    ctx.restore();
+    return w;
+  }
+  // Word-wrapped centered mono block. Returns the number of lines drawn.
+  function ukMonoWrap(str, cx, y, maxW, px, lineH, color, maxLines) {
+    if (!str) return 0;
+    ctx.save();
+    ctx.font = px + 'px ' + UI_FONT;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    var words = str.split(' ');
+    var line = '';
+    var lines = [];
+    for (var i = 0; i < words.length; i++) {
+      var probe = line ? line + ' ' + words[i] : words[i];
+      if (ctx.measureText(probe).width > maxW && line) {
+        lines.push(line);
+        line = words[i];
+        if (lines.length >= maxLines) break;
       } else {
-        ctx.fillStyle = 'rgba(255,232,150,' + a.toFixed(3) + ')';
-        ctx.fillRect(p.x, p.y, 2, 2);
-        ctx.fillStyle = 'rgba(255,255,230,' + (a * 0.8).toFixed(3) + ')';
-        ctx.fillRect(p.x, p.y, 1, 1);
+        line = probe;
+      }
+    }
+    if (lines.length < maxLines && line) lines.push(line);
+    for (var j = 0; j < lines.length; j++) {
+      ctx.fillText(lines[j], Math.round(cx), Math.round(y + j * lineH));
+    }
+    ctx.restore();
+    return lines.length;
+  }
+  // Tier pips: filled = owned levels.
+  function ukPips(x, y, w, h, cur, max) {
+    if (max < 1) max = 1;
+    var gap = 3;
+    var pw = (w - gap * (max - 1)) / max;
+    for (var i = 0; i < max; i++) {
+      var px = x + i * (pw + gap);
+      var on = i < cur;
+      ctx.fillStyle = '#0b0906';
+      ctx.fillRect(px - 1, y - 1, pw + 2, h + 2);
+      ctx.fillStyle = on ? '#d8ac3e' : '#241e15';
+      ctx.fillRect(px, y, pw, h);
+      if (on) {
+        ctx.fillStyle = '#ffe9a0';
+        ctx.fillRect(px, y, pw, 1);
       }
     }
   }
+  // The one button. kind: 'gold' (primary) | 'lock' (disabled with reason).
+  function ukButton(r, label, kind, hover, pressT, px) {
+    var squish = pressT > 0 ? 2 : 0;
+    ctx.fillStyle = '#0b0906';
+    ctx.fillRect(r.x - 1, r.y - 1 + squish, r.w + 2, r.h + 2 - squish);
+    if (kind === 'gold') {
+      ctx.fillStyle = hover ? '#ffdf66' : '#d8ac3e';
+      ctx.fillRect(r.x, r.y + squish, r.w, r.h - squish);
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.fillRect(r.x, r.y + squish, r.w, 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3);
+      nsText(label, r.x + r.w / 2, r.y + squish + (r.h - squish - px) / 2, px, '#241608', 'center');
+    } else {
+      ctx.fillStyle = '#241d15';
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(r.x, r.y, r.w, 2);
+      var lockCol = (kind === 'short') ? '#d05a48' : '#7a7060';
+      nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px, lockCol, 'center');
+    }
+  }
 
-  // ---- Station card — distinct identity + idle anim + hover event ------
+  // ---- catalog modal: open / close / rebuild ----------------------------
+  function ukCatalogOpen(spec) {
+    ukModal = spec;
+    ukState = { tab: spec.tab || spec.tabs[0].id, sel: {}, items: [],
+                scroll: 0, scrollMax: 0, lastMoney: null };
+    ukOpenT = 0; ukCloseT = -1;
+    ukHover = null; ukPress = null; ukListDrag = null;
+    ukDeniedT = 0; ukArtPopT = 0;
+    ukRebuildItems();
+  }
+  function ukCatalogClose() {
+    if (!ukModal || ukCloseT >= 0) return;
+    ukCloseT = 0.15;
+  }
+  // Hard reset with no animation (external code closed the surface).
+  function ukCatalogReset() {
+    ukModal = null; ukState = null;
+    ukOpenT = 0; ukCloseT = -1;
+    ukListDrag = null; ukPress = null;
+  }
+  function ukTabDef(id) {
+    if (!ukModal) return null;
+    for (var i = 0; i < ukModal.tabs.length; i++) {
+      if (ukModal.tabs[i].id === id) return ukModal.tabs[i];
+    }
+    return null;
+  }
+  function ukSelectedItem() {
+    if (!ukState) return null;
+    var key = ukState.sel[ukState.tab];
+    for (var i = 0; i < ukState.items.length; i++) {
+      if (ukState.items[i].key === key) return ukState.items[i];
+    }
+    return null;
+  }
+  function ukRebuildItems() {
+    var tab = ukTabDef(ukState.tab);
+    ukState.items = (tab && tab.build) ? tab.build() : [];
+    var key = ukState.sel[ukState.tab];
+    var have = false;
+    for (var i = 0; i < ukState.items.length; i++) {
+      if (ukState.items[i].key === key) { have = true; break; }
+    }
+    if (!have && ukState.items.length) ukState.sel[ukState.tab] = ukState.items[0].key;
+  }
+  function ukSwitchTab(id) {
+    if (!ukState || ukState.tab === id) return;
+    var def = ukTabDef(id);
+    if (!def) return;
+    if (def.open) { def.open(); return; }   // bespoke page takes over
+    ukState.tab = id;
+    ukState.scroll = 0;
+    ukRebuildItems();
+  }
+
+  // ---- layout ------------------------------------------------------------
+  function ukLayout(M) {
+    var us = M.us;
+    var mx = Math.round((M.portrait ? 7 : 24) * us);
+    var my = Math.round((M.portrait ? 7 : 16) * us);
+    var w = Math.min(viewW - mx * 2, Math.round(660 * us));
+    var h = Math.min(M.bottom - my * 2, Math.round(620 * us));
+    var x = Math.round((viewW - w) / 2);
+    // Portrait: anchor to the bottom so the top band stays clear for the
+    // radio bubble (which deliberately draws over the shop) and the
+    // action button sits in thumb reach. Landscape/desktop: centered.
+    var y = M.portrait ? (M.bottom - my - h) : Math.round((M.bottom - h) / 2);
+    var pad = Math.round(12 * us);
+    var headH = Math.round(44 * us);
+    var tabH = (ukModal.tabs.length > 1) ? Math.max(34, Math.round(36 * us)) : 0;
+    var bodyX = x + pad;
+    var bodyY = y + headH + tabH + Math.round(8 * us);
+    var bodyW = w - pad * 2;
+    var bodyH = y + h - pad - bodyY;
+    var L = { us: us, x: x, y: y, w: w, h: h, pad: pad, headH: headH, tabH: tabH,
+              bodyX: bodyX, bodyY: bodyY, bodyW: bodyW, bodyH: bodyH };
+    if (M.portrait) {
+      L.detailH = Math.min(Math.round(bodyH * 0.55), Math.round(300 * us));
+      L.listX = bodyX; L.listY = bodyY;
+      L.listW = bodyW; L.listH = bodyH - L.detailH - Math.round(8 * us);
+      L.detX = bodyX; L.detY = L.listY + L.listH + Math.round(8 * us);
+      L.detW = bodyW;
+    } else {
+      var gap = Math.round(12 * us);
+      L.listX = bodyX; L.listY = bodyY;
+      L.listW = Math.round(bodyW * 0.46) - Math.round(gap / 2);
+      L.listH = bodyH;
+      L.detX = bodyX + L.listW + gap; L.detY = bodyY;
+      L.detW = bodyW - L.listW - gap;
+      L.detailH = bodyH;
+    }
+    return L;
+  }
+
+  // ---- draw --------------------------------------------------------------
+  function ukCatalogDraw(M) {
+    if (!ukModal) return;
+    var dt = 1 / 60;
+    if (ukCloseT >= 0) {
+      ukCloseT -= dt;
+      if (ukCloseT <= 0) {
+        var done = ukModal.onClose;
+        ukCatalogReset();
+        if (done) done();
+        return;
+      }
+    } else if (ukOpenT < 1) {
+      ukOpenT = Math.min(1, ukOpenT + dt / 0.20);
+    }
+    if (ukDeniedT > 0) ukDeniedT -= dt;
+    if (ukArtPopT > 0) ukArtPopT -= dt;
+    if (money !== ukState.lastMoney) {
+      ukState.lastMoney = money;
+      ukRebuildItems();
+    }
+
+    var prog = (ukCloseT >= 0) ? Math.max(0, ukCloseT / 0.15) : nsEaseOut(ukOpenT);
+    UK_HIT.length = 0;
+    ukFizzDraw(prog);
+    UK_HIT.push({ id: 'uk:backdrop', x: 0, y: 0, w: viewW, h: M.bottom });
+
+    var L = ukLayout(M);
+    ukLayoutC = L;
+    // Inert zone over the panel body: a stray tap between widgets must do
+    // nothing, not fall through to the tap-out-to-close backdrop.
+    UK_HIT.push({ id: 'uk:panel', x: L.x - 2, y: L.y - 2, w: L.w + 4, h: L.h + 4 });
+    ctx.save();
+    ctx.globalAlpha = prog;
+    ctx.translate(0, (1 - prog) * Math.round(12 * L.us));
+
+    ukPanelBox(L.x, L.y, L.w, L.h);
+    ukDrawHeader(L);
+    if (L.tabH > 0) ukDrawTabs(L);
+    ukDrawList(L);
+    ukDrawDetail(L);
+
+    ctx.restore();
+    if (ukCloseT < 0) ukCatalogKeys();
+  }
+
+  function ukDrawHeader(L) {
+    var us = L.us;
+    var cy = L.y + Math.round(L.headH / 2);
+    // title
+    var tpx = Math.round(15 * us);
+    nsText(ukModal.title, L.x + L.pad + 2, cy - Math.round(tpx / 2), tpx, '#f0d894');
+    // close button (top-right square)
+    var cw = Math.max(34, Math.round(30 * us));
+    var cr = { x: L.x + L.w - cw - Math.round(7 * us), y: L.y + Math.round((L.headH - cw) / 2), w: cw, h: cw };
+    var chov = (ukHover === 'uk:close');
+    ctx.fillStyle = '#0b0906';
+    ctx.fillRect(cr.x - 1, cr.y - 1, cr.w + 2, cr.h + 2);
+    ctx.fillStyle = chov ? '#4a3b22' : '#332a1d';
+    ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+    ctx.fillStyle = 'rgba(255,216,150,0.10)';
+    ctx.fillRect(cr.x, cr.y, cr.w, 1);
+    var xc = cr.x + cr.w / 2, yc = cr.y + cr.h / 2, arm = Math.round(cr.w * 0.20);
+    ctx.fillStyle = chov ? '#ffdf9a' : '#c9b184';
+    for (var o = -arm; o <= arm; o++) {
+      ctx.fillRect(xc + o - 1, yc + o - 1, 2, 2);
+      ctx.fillRect(xc + o - 1, yc - o - 1, 2, 2);
+    }
+    UK_HIT.push({ id: 'uk:close', x: cr.x - 4, y: cr.y - 4, w: cr.w + 8, h: cr.h + 8 });
+    // money chip, right-aligned against the close button
+    var chipH = Math.round(28 * us);
+    nsDrawMoneyChip(cr.x - Math.round(10 * us), L.y + Math.round((L.headH - chipH) / 2), us, 'right');
+    // hairline under the header
+    ctx.fillStyle = 'rgba(0,0,0,0.42)';
+    ctx.fillRect(L.x + 1, L.y + L.headH, L.w - 2, 2);
+    ctx.fillStyle = 'rgba(255,216,150,0.05)';
+    ctx.fillRect(L.x + 1, L.y + L.headH + 2, L.w - 2, 1);
+  }
+
+  function ukDrawTabs(L) {
+    var us = L.us;
+    var n = ukModal.tabs.length;
+    var tx = L.x + L.pad;
+    var tw = L.w - L.pad * 2;
+    var ty = L.y + L.headH + Math.round(6 * us);
+    var th = L.tabH - Math.round(6 * us);
+    var each = Math.floor(tw / n);
+    for (var i = 0; i < n; i++) {
+      var def = ukModal.tabs[i];
+      var rx = tx + i * each;
+      var rw = (i === n - 1) ? (tw - each * (n - 1)) : each;
+      var active = (def.id === ukState.tab);
+      var hov = (ukHover === 'uk:tab:' + def.id);
+      if (active) {
+        ctx.fillStyle = '#382e1e';
+        ctx.fillRect(rx, ty, rw, th);
+        ctx.fillStyle = 'rgba(255,216,150,0.08)';
+        ctx.fillRect(rx, ty, rw, 1);
+        ctx.fillStyle = '#d8ac3e';
+        ctx.fillRect(rx, ty + th - 3, rw, 3);
+      } else if (hov) {
+        ctx.fillStyle = 'rgba(255,216,150,0.05)';
+        ctx.fillRect(rx, ty, rw, th);
+      }
+      var px = Math.round(9.5 * us);
+      nsText(def.label, rx + rw / 2, ty + (th - px) / 2, px,
+             active ? '#f0d894' : (hov ? '#bda878' : '#8a7a58'), 'center');
+      UK_HIT.push({ id: 'uk:tab:' + def.id, x: rx, y: ty - 4, w: rw, h: th + 8 });
+    }
+  }
+
+  function ukDrawList(L) {
+    var us = L.us;
+    var items = ukState.items;
+    var n = items.length;
+    ukInset(L.listX, L.listY, L.listW, L.listH);
+    if (n === 0) {
+      ukMono('Nothing here yet.', L.listX + L.listW / 2, L.listY + L.listH / 2,
+             Math.max(10, Math.round(11 * us)), '#7a7060', 'center');
+      return;
+    }
+    var ideal = Math.round(54 * us);
+    var rowH = Math.max(Math.max(40, Math.round(40 * us)), Math.min(ideal, Math.floor(L.listH / n)));
+    if (rowH < 44 && L.listH / n < 44) rowH = 44;   // touch floor; overflow scrolls
+    var totalH = rowH * n;
+    ukState.scrollMax = Math.max(0, totalH - L.listH);
+    if (ukState.scroll > ukState.scrollMax) ukState.scroll = ukState.scrollMax;
+    if (ukState.scroll < 0) ukState.scroll = 0;
+
+    // The list body is one big drag-to-scroll zone; rows are pushed after
+    // it, and ukHitAt scans backwards, so a row always wins over the zone.
+    UK_HIT.push({ id: 'uk:list', x: L.listX, y: L.listY, w: L.listW, h: L.listH });
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(L.listX + 1, L.listY + 1, L.listW - 2, L.listH - 2);
+    ctx.clip();
+    var selKey = ukState.sel[ukState.tab];
+    for (var i = 0; i < n; i++) {
+      var it = items[i];
+      var ry = L.listY + i * rowH - Math.round(ukState.scroll);
+      if (ry + rowH < L.listY || ry > L.listY + L.listH) continue;
+      var selected = (it.key === selKey);
+      var hov = (ukHover === 'uk:item:' + it.key);
+      if (selected) {
+        ctx.fillStyle = '#3a3020';
+        ctx.fillRect(L.listX + 1, ry, L.listW - 2, rowH);
+        ctx.fillStyle = '#d8ac3e';
+        ctx.fillRect(L.listX + 1, ry, 3, rowH);
+      } else if (hov) {
+        ctx.fillStyle = 'rgba(255,216,150,0.05)';
+        ctx.fillRect(L.listX + 1, ry, L.listW - 2, rowH);
+      }
+      // icon well
+      var iw = rowH - Math.round(12 * us);
+      if (iw > Math.round(44 * us)) iw = Math.round(44 * us);
+      var ix = L.listX + Math.round(8 * us);
+      var iy = ry + Math.round((rowH - iw) / 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(ix, iy, iw, iw);
+      if (it.icon) it.icon(ix + iw / 2, iy + iw / 2, iw * 0.82);
+      // name + sub
+      var namePx = Math.round(8.5 * us);
+      var subPx = Math.max(9, Math.round(9.5 * us));
+      var tx0 = ix + iw + Math.round(9 * us);
+      var pricePx = Math.round(8.5 * us);
+      var priceW = it.priceLabel ? nsTextW(it.priceLabel, pricePx) : 0;
+      var nameMaxW = (L.listX + L.listW - Math.round(10 * us) - priceW - Math.round(8 * us)) - tx0;
+      var npx = namePx;
+      var nw = nsTextW(it.name, npx);
+      if (nw > nameMaxW && nw > 0) npx = Math.max(6, npx * nameMaxW / nw);
+      if (it.sub) {
+        nsText(it.name, tx0, ry + Math.round(rowH * 0.24) - Math.round(npx / 2) + 2, npx, selected ? '#f0dfae' : '#cdbd92');
+        ukMono(it.sub, tx0, ry + Math.round(rowH * 0.74) + 3, subPx, selected ? '#a89468' : '#7d7058');
+      } else {
+        nsText(it.name, tx0, ry + Math.round((rowH - npx) / 2), npx, selected ? '#f0dfae' : '#cdbd92');
+      }
+      // price, right-aligned
+      if (it.priceLabel) {
+        var pc = '#8a7a58';
+        if (it.priceTier === 'gold') pc = '#e8c052';
+        else if (it.priceTier === 'red') pc = '#d05a48';
+        nsText(it.priceLabel, L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx, pc, 'right');
+      }
+      // hairline between rows
+      if (i < n - 1) {
+        ctx.fillStyle = 'rgba(0,0,0,0.38)';
+        ctx.fillRect(L.listX + 1, ry + rowH - 1, L.listW - 2, 1);
+      }
+      UK_HIT.push({ id: 'uk:item:' + it.key, x: L.listX, y: Math.max(L.listY, ry), w: L.listW,
+                    h: Math.min(rowH, L.listY + L.listH - ry) });
+    }
+    ctx.restore();
+    // scrollbar
+    if (ukState.scrollMax > 0) {
+      var trackX = L.listX + L.listW - 4;
+      var thumbH = Math.max(18, L.listH * (L.listH / totalH));
+      var thumbY = L.listY + (L.listH - thumbH) * (ukState.scroll / ukState.scrollMax);
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(trackX, L.listY + 2, 3, L.listH - 4);
+      ctx.fillStyle = '#6a5a34';
+      ctx.fillRect(trackX, thumbY, 3, thumbH);
+    }
+  }
+
+  function ukDrawDetail(L) {
+    var us = L.us;
+    var it = ukSelectedItem();
+    if (!it) return;
+    var x = L.detX, w = L.detW;
+    var pad = Math.round(10 * us);
+    var bottom = L.detY + L.detailH;
+
+    // Stack from the bottom: action button, reason, desc, stat, pips,
+    // state, name. The art stage takes whatever is left on top.
+    var btnH = Math.max(44, Math.round(44 * us));
+    var btnY = bottom - btnH;
+    var cursorY = btnY - Math.round(8 * us);
+
+    var descPx = Math.max(10, Math.round(10.5 * us));
+    var descLineH = Math.round(descPx * 1.45);
+    var descLines = it.desc ? 2 : 0;
+    if (it.desc && L.detailH > Math.round(300 * us)) descLines = 3;
+    var descH = descLines > 0 ? descLines * descLineH + Math.round(4 * us) : 0;
+    var descY = cursorY - descH;
+
+    var statH = it.stat ? Math.round(30 * us) : 0;
+    var statY = descY - statH;
+
+    var pipsH = it.pips ? Math.round(8 * us) : 0;
+    var pipsPad = it.pips ? Math.round(8 * us) : 0;
+    var pipsY = statY - pipsH - pipsPad;
+
+    var subPx = Math.max(9, Math.round(10 * us));
+    var subH = it.state ? Math.round(16 * us) : Math.round(4 * us);
+    var subY = pipsY - subH;
+
+    var namePx = Math.round(12 * us);
+    var nameH = Math.round(18 * us);
+    var nameY = subY - nameH;
+
+    var artY = L.detY;
+    var artH = nameY - Math.round(8 * us) - artY;
+    var artMin = Math.round(54 * us);
+    if (artH < artMin) {
+      // squeeze: drop the description first, then shrink the art floor
+      if (descH > 0) {
+        var reclaim = descH;
+        descH = 0; descLines = 0;
+        artH += reclaim;
+        nameY += reclaim; subY += reclaim; pipsY += reclaim; statY += reclaim; descY = statY;
+      }
+      if (artH < Math.round(40 * us)) artH = Math.round(40 * us);
+    }
+
+    // art stage
+    ukInset(x, artY, w, artH);
+    var acx = x + w / 2, acy = artY + artH / 2;
+    // warm banded halo behind the art (stepped alpha, pixel-friendly)
+    var haloR = Math.min(w, artH) * 0.44;
+    for (var hb = 4; hb >= 1; hb--) {
+      var hf = hb / 4;
+      ctx.fillStyle = 'rgba(255,204,110,' + (0.10 * (1 - hf) * (1 - hf) + 0.012).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(acx, acy, haloR * 0.3 + haloR * 0.7 * hf, 0, Math.PI * 2); ctx.fill();
+    }
+    // Absolute cap: the item painters were drawn for chip-to-card sizes;
+    // stretching them past ~190 px starts to read as flat slabs.
+    var artSize = Math.min(w - Math.round(40 * us), artH - Math.round(20 * us), 190);
+    var idle = Math.sin(nsRoomT * 1.6) * 2 * us;
+    var pop = ukArtPopT > 0 ? 1 + 0.07 * Math.sin((ukArtPopT / 0.22) * Math.PI) : 1;
+    if (it.icon) {
+      ctx.save();
+      ctx.translate(acx, acy + idle);
+      ctx.scale(pop, pop);
+      it.icon(0, 0, artSize);
+      ctx.restore();
+    }
+    // stock corner badge on the art stage
+    if (it.badge) {
+      var bdPx = Math.max(9, Math.round(9.5 * us));
+      var bdW = ukMonoW(it.badge, bdPx, true) + Math.round(12 * us);
+      var bdH = bdPx + Math.round(8 * us);
+      ctx.fillStyle = 'rgba(10,8,5,0.82)';
+      ctx.fillRect(x + w - bdW - 4, artY + 4, bdW, bdH);
+      ctx.fillStyle = '#d8ac3e';
+      ctx.fillRect(x + w - bdW - 4, artY + 4, 2, bdH);
+      ukMono(it.badge, x + w - 4 - bdW / 2 + 1, artY + 4 + bdH - Math.round(5 * us), bdPx, '#f0dfae', 'center', true);
+    }
+
+    // name
+    var dnw = nsTextW(it.name, namePx);
+    var maxNameW = w - Math.round(12 * us);
+    var dnpx = (dnw > maxNameW && dnw > 0) ? Math.max(7, namePx * maxNameW / dnw) : namePx;
+    nsText(it.name, x + w / 2, nameY + Math.round((nameH - dnpx) / 2), dnpx, '#f0d894', 'center');
+    // state line
+    if (it.state) {
+      ukMono(it.state, x + w / 2, subY + subH - Math.round(4 * us), subPx, '#9a8a64', 'center');
+    }
+    // pips
+    if (it.pips) {
+      var pw = Math.min(w - pad * 2, Math.round(190 * us));
+      ukPips(x + (w - pw) / 2, pipsY, pw, pipsH, it.pips.cur, it.pips.max);
+    }
+    // stat delta
+    if (it.stat) {
+      var sLabPx = Math.max(9, Math.round(9.5 * us));
+      var valPx = Math.round(11 * us);
+      var sY = statY + Math.round(6 * us);
+      ukMono(it.stat.label, x + w / 2, sY + sLabPx - 2, sLabPx, '#8a7a58', 'center');
+      // '▸' is the one arrow glyph in STENCIL_FONT ('>' has no bitmap).
+      var valStr = it.stat.next ? (it.stat.cur + ' ▸ ' + it.stat.next) : it.stat.cur;
+      var deltaStr = it.stat.delta ? ('  ' + it.stat.delta) : '';
+      var vw = nsTextW(valStr, valPx);
+      var dw = deltaStr ? nsTextW(deltaStr, Math.round(valPx * 0.8)) : 0;
+      var startX = x + w / 2 - (vw + dw) / 2;
+      nsText(valStr, startX, sY + sLabPx + Math.round(4 * us), valPx, '#eadfb8');
+      if (deltaStr) {
+        nsText(deltaStr, startX + vw, sY + sLabPx + Math.round(4 * us) + Math.round(valPx * 0.14), Math.round(valPx * 0.8), '#e8c052');
+      }
+    }
+    // description
+    if (descLines > 0 && it.desc) {
+      ukMonoWrap(it.desc, x + w / 2, descY + descPx + Math.round(2 * us),
+                 w - pad * 2, descPx, descLineH, '#b3a582', descLines);
+    }
+    // action button
+    if (it.act) {
+      var shake = ukDeniedT > 0 ? Math.round(Math.sin(ukDeniedT * 44) * 3) : 0;
+      var br = { x: x + pad + shake, y: btnY, w: w - pad * 2, h: btnH };
+      var bpx = Math.round(11 * us);
+      var pressT = (ukPress && ukPress.id === 'uk:act') ? 1 : 0;
+      if (it.act.enabled) {
+        ukButton(br, it.act.label, 'gold', ukHover === 'uk:act', pressT, bpx);
+      } else {
+        var reason = it.act.reason || it.act.label;
+        var kind = (it.act.reasonKind === 'short') ? 'short' : 'lock';
+        ukButton(br, reason, kind, false, 0, Math.round(9.5 * us));
+      }
+      UK_HIT.push({ id: 'uk:act', x: br.x, y: br.y, w: br.w, h: br.h });
+    }
+  }
+
+  // ---- shared action plumbing -------------------------------------------
+  function ukFireAction() {
+    var it = ukSelectedItem();
+    if (!it || !it.act) return;
+    var L = ukLayoutC;
+    var bx = L ? L.detX + L.detW / 2 : viewW / 2;
+    var by = L ? L.detY + L.detailH - Math.round(22 * L.us) : viewH / 2;
+    if (!it.act.enabled) {
+      ukDeniedT = 0.24;
+      nsSpawnCoins(bx, by, 3, true);
+      sfxPlay('ui-denied');
+      return;
+    }
+    var res = it.onAct ? it.onAct(it) : null;
+    if (res && res.ok) {
+      ukArtPopT = 0.22;
+      nsSpawnCoins(bx, by, 10);
+      if (res.float && L) {
+        nsSpawnFloater(res.float, L.detX + L.detW / 2, L.detY + Math.round(26 * L.us), '#ffe79a', 12);
+      }
+      ukRebuildItems();
+    } else {
+      ukDeniedT = 0.24;
+    }
+  }
+
+  // ---- input -------------------------------------------------------------
+  function ukPointerDown(x, y, id) {
+    if (!ukModal || ukCloseT >= 0) return true;
+    var hit = ukHitAt(x, y);
+    var hid = hit ? hit.id : null;
+    ukPress = { id: hid, x: x, y: y, moved: 0, pointer: id };
+    if (!hid) return true;
+    if (hid === 'uk:close') { ukCatalogClose(); return true; }
+    if (hid.indexOf('uk:tab:') === 0) { ukSwitchTab(hid.slice(7)); return true; }
+    if (hid === 'uk:act') { ukFireAction(); return true; }
+    if (hid.indexOf('uk:item:') === 0) {
+      ukState.sel[ukState.tab] = hid.slice(8);
+      ukListDrag = { pointer: id, startY: y, startScroll: ukState.scroll, moved: 0 };
+      return true;
+    }
+    if (hid === 'uk:list') {
+      ukListDrag = { pointer: id, startY: y, startScroll: ukState.scroll, moved: 0 };
+      return true;
+    }
+    // 'uk:backdrop': close on release if it stays a tap
+    return true;
+  }
+  function ukPointerMove(x, y) {
+    if (!ukModal) return;
+    var hit = ukHitAt(x, y);
+    ukHover = hit ? hit.id : null;
+  }
+  function ukPointerDrag(x, y, id) {
+    if (!ukModal) return;
+    if (ukPress && ukPress.pointer === id) {
+      ukPress.moved = Math.max(ukPress.moved, Math.abs(y - ukPress.y) + Math.abs(x - ukPress.x));
+    }
+    if (ukListDrag && ukListDrag.pointer === id) {
+      var dy = y - ukListDrag.startY;
+      ukListDrag.moved = Math.max(ukListDrag.moved, Math.abs(dy));
+      ukState.scroll = ukListDrag.startScroll - dy;
+      if (ukState.scroll < 0) ukState.scroll = 0;
+      if (ukState.scroll > ukState.scrollMax) ukState.scroll = ukState.scrollMax;
+    }
+  }
+  function ukPointerUp(id) {
+    if (!ukModal) return;
+    if (ukPress && ukPress.pointer === id) {
+      if (ukPress.id === 'uk:backdrop' && ukPress.moved < 10) ukCatalogClose();
+      ukPress = null;
+    }
+    if (ukListDrag && ukListDrag.pointer === id) ukListDrag = null;
+  }
+  function ukWheel(d) {
+    if (!ukModal) return false;
+    ukState.scroll += d;
+    if (ukState.scroll < 0) ukState.scroll = 0;
+    if (ukState.scroll > ukState.scrollMax) ukState.scroll = ukState.scrollMax;
+    return true;
+  }
+
+  // Keyboard: arrows move the selection, left/right cycle tabs, enter acts.
+  // Escape stays with the game loop (it owns the back/exit path).
+  function ukCatalogKeys() {
+    if (!ukState) return;
+    var items = ukState.items;
+    var idx = -1;
+    var selKey = ukState.sel[ukState.tab];
+    for (var i = 0; i < items.length; i++) if (items[i].key === selKey) { idx = i; break; }
+    var moved = false;
+    if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+      keys['ArrowDown'] = keys['s'] = keys['S'] = false;
+      if (idx < items.length - 1) { idx++; moved = true; }
+    }
+    if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+      keys['ArrowUp'] = keys['w'] = keys['W'] = false;
+      if (idx > 0) { idx--; moved = true; }
+    }
+    if (moved && idx >= 0 && items[idx]) {
+      ukState.sel[ukState.tab] = items[idx].key;
+      // keep the selection on screen
+      var L = ukLayoutC;
+      if (L) {
+        var n = items.length;
+        var rowH = ukState.scrollMax > 0 ? (L.listH + ukState.scrollMax) / n : L.listH / Math.max(1, n);
+        var top = idx * rowH, bot = top + rowH;
+        if (top < ukState.scroll) ukState.scroll = top;
+        if (bot > ukState.scroll + L.listH) ukState.scroll = bot - L.listH;
+      }
+    }
+    var tabDir = 0;
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) { keys['ArrowRight'] = keys['d'] = keys['D'] = false; tabDir = 1; }
+    if (keys['ArrowLeft'] || keys['a'] || keys['A']) { keys['ArrowLeft'] = keys['a'] = keys['A'] = false; tabDir = -1; }
+    if (tabDir !== 0 && ukModal.tabs.length > 1) {
+      var ti = 0;
+      for (var t = 0; t < ukModal.tabs.length; t++) if (ukModal.tabs[t].id === ukState.tab) { ti = t; break; }
+      var nt = (ti + tabDir + ukModal.tabs.length) % ukModal.tabs.length;
+      // skip bespoke-page tabs on keyboard cycling
+      if (!ukModal.tabs[nt].open) ukSwitchTab(ukModal.tabs[nt].id);
+    }
+    if (keys['Enter'] || keys[' '] || keys['Space'] || keys['Spacebar']) {
+      keys['Enter'] = keys[' '] = keys['Space'] = keys['Spacebar'] = false;
+      ukFireAction();
+    }
+  }
+
+  // ====================================================================
+  //  STORE -- the station shop, rebuilt on the shared UI kit (245).
+  // ====================================================================
+  // v26.18: the old three-counter hub (station cards, per-counter pages,
+  // two-level navigation) is gone. Entering the shop opens ONE catalog
+  // modal over the fizzed-out world: WORKSHOP and SUPPLIES tabs, a
+  // scannable item list, a detail pane, one action button. The item
+  // builders live beside their data in 270 (workshop) and 280 (shelf).
+  // The flag-off Trade Board page (260) is untouched; when its flag is
+  // on it appears as a MARKET tab that hands off to the bespoke page.
+
+  // Kept for 260-shop-board, whose wood backboard reads the board tint.
   var NS_STATION_INFO = {
     workshop: { title: 'WORKSHOP', tag: 'Upgrade your rig',  accent: '#c87a32', plate: '#3a2d20' },
     shelf:    { title: 'SUPPLIES', tag: 'Stock consumables', accent: '#3f8a55', plate: '#23332a' },
     board:    { title: 'TRADE BOARD', tag: 'Buy & sell goods', accent: '#b8923a', plate: '#34291a' }
   };
-  function nsDrawStationCard(st, M, ease) {
-    var us = M.us;
-    var info = NS_STATION_INFO[st.id];
-    var lift = nsHubLiftT[st.id] || 0;
-    var hov = lift > 0.02;
-    var liftPx = lift * 7 * us;
-    var x = st.x, y = st.y - liftPx, w = st.w, h = st.h;
 
-    // Hover glow halo behind the card
-    if (lift > 0.01) {
-      var hg = ctx.createRadialGradient(x + w / 2, y + h / 2, 10, x + w / 2, y + h / 2, w * 0.72);
-      hg.addColorStop(0, 'rgba(255,210,120,' + (0.3 * lift).toFixed(3) + ')');
-      hg.addColorStop(1, 'rgba(255,210,120,0)');
-      ctx.fillStyle = hg;
-      ctx.fillRect(x - 20, y - 20, w + 40, h + 40);
+  // Last tab the player was on, restored on the next visit this session.
+  var storeLastTab = 'workshop';
+
+  function storeSpec() {
+    var tabs = [
+      { id: 'workshop', label: 'WORKSHOP', build: nsWorkshopTabItems },
+      { id: 'shelf',    label: 'SUPPLIES', build: nsShelfTabItems }
+    ];
+    if (ENABLE_TRADE_BOARD) {
+      tabs.push({ id: 'board', label: 'MARKET', open: function () { nsEnterStation('board'); } });
     }
-    // Drop shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(x + 4, y + 6 + liftPx, w, h);
-    // Card body — riveted plate with the station's plate tint
-    nsPanel(x, y, w, h, info.plate, '#544638', '#1c1611');
-    // Inner warm rim light
-    var rim = ctx.createLinearGradient(x, y, x, y + h);
-    rim.addColorStop(0, 'rgba(255,205,120,' + (0.12 + 0.1 * lift).toFixed(3) + ')');
-    rim.addColorStop(0.4, 'rgba(255,205,120,0)');
-    ctx.fillStyle = rim;
-    ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
-    // Corner brass brackets
-    drawBrassCornerL(x + 3, y + 3, false, false);
-    drawBrassCornerL(x + w - 15, y + 3, true, false);
-    drawBrassCornerL(x + 3, y + h - 15, false, true);
-    drawBrassCornerL(x + w - 15, y + h - 15, true, true);
-
-    // Identity stage — the upper ~58% of the card holds the signature art.
-    var stageH = Math.round(h * 0.58);
-    var stageCX = x + w / 2;
-    var stageCY = y + Math.round(h * 0.30);
-    // dark inset niche for the art
-    var niX = x + Math.round(12 * us), niY = y + Math.round(10 * us);
-    var niW = w - Math.round(24 * us), niH = stageH - Math.round(14 * us);
-    ctx.fillStyle = '#120d09';
-    ctx.fillRect(niX, niY, niW, niH);
-    ctx.fillStyle = '#0a0705';
-    ctx.fillRect(niX + 2, niY + 2, niW - 4, niH - 4);
-    // niche glow on hover
-    if (lift > 0.01) {
-      var ng = ctx.createRadialGradient(niX + niW / 2, niY + niH / 2, 6, niX + niW / 2, niY + niH / 2, niW * 0.62);
-      ng.addColorStop(0, 'rgba(255,210,130,' + (0.26 * lift).toFixed(3) + ')');
-      ng.addColorStop(1, 'rgba(255,210,130,0)');
-      ctx.fillStyle = ng;
-      ctx.fillRect(niX + 2, niY + 2, niW - 4, niH - 4);
-    }
-    // Per-station signature scene
-    var artCX = niX + niW / 2, artCY = niY + niH / 2;
-    if (st.id === 'workshop') nsDrawWorkshopIdentity(artCX, artCY, niW, niH, us, lift);
-    else if (st.id === 'shelf') nsDrawShelfIdentity(artCX, artCY, niW, niH, us, lift);
-    else nsDrawBoardIdentity(artCX, artCY, niW, niH, us, lift);
-
-    // Nameplate (brass) — the station title
-    var npH = Math.round(26 * us);
-    var npY = niY + niH + Math.round(8 * us);
-    var npX = niX, npW = niW;
-    ctx.fillStyle = '#0c0a07';
-    ctx.fillRect(npX - 1, npY - 1, npW + 2, npH + 2);
-    ctx.fillStyle = '#4a3618';
-    ctx.fillRect(npX, npY, npW, npH);
-    ctx.fillStyle = hov ? '#a07c40' : '#7a5a2c';
-    ctx.fillRect(npX + 2, npY + 2, npW - 4, npH - 4);
-    ctx.fillStyle = '#a07c40';
-    ctx.fillRect(npX + 2, npY + 2, npW - 4, 2);
-    var tpx = Math.round(13 * us);
-    nsText(info.title, npX + npW / 2, npY + (npH - tpx) / 2, tpx, '#231507', 'center');
-
-    // Tagline
-    nsText(info.tag, x + w / 2, npY + npH + Math.round(7 * us), Math.round(7.5 * us),
-           hov ? '#d8b878' : '#8c7850', 'center');
-
-    // Hover "ENTER" chevron — pulses
-    if (lift > 0.3) {
-      var pa = 0.5 + 0.5 * Math.sin(nsRoomT * 6);
-      var cy2 = y + h - Math.round(13 * us);
-      ctx.globalAlpha = lift * (0.55 + 0.45 * pa);
-      nsText('ENTER >', x + w / 2, cy2, Math.round(7 * us), info.accent, 'center');
-      ctx.globalAlpha = 1;
-    }
+    return {
+      id: 'store',
+      title: 'STATION STORE',
+      tabs: tabs,
+      tab: storeLastTab,
+      onClose: nsExitShop
+    };
+  }
+  function storeModalEnsure() {
+    if (!ukModal) ukCatalogOpen(storeSpec());
   }
 
-  // ---- Station identity scenes -----------------------------------------
-  // WORKSHOP: tools floating + bobbing above an anvil, with a steam wisp.
-  function nsDrawWorkshopIdentity(cx, cy, w, h, us, lift) {
-    var scl = Math.min(w, h) / 130;
-    // Anvil silhouette at the base
-    var anW = 56 * scl, anH = 30 * scl;
-    var anX = cx - anW / 2, anY = cy + h * 0.16;
-    ctx.fillStyle = '#0a0806';
-    ctx.fillRect(anX - 2, anY - 2, anW + 4, anH + 4);
-    ctx.fillStyle = '#3b3530';
-    ctx.fillRect(anX, anY + anH * 0.42, anW, anH * 0.34);          // body
-    ctx.fillRect(anX + anW * 0.30, anY + anH * 0.74, anW * 0.4, anH * 0.26); // foot
-    ctx.beginPath();                                                // horn
-    ctx.moveTo(anX, anY + anH * 0.42);
-    ctx.lineTo(anX - anW * 0.22, anY + anH * 0.5);
-    ctx.lineTo(anX, anY + anH * 0.62);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#55504a';
-    ctx.fillRect(anX, anY + anH * 0.42, anW, 3 * scl);             // top face
-    // Steam wisp rising — sine-wobbled column
-    var stp = (nsRoomT * 0.6) % 1;
-    for (var s = 0; s < 5; s++) {
-      var sp = (stp + s / 5) % 1;
-      var sy = anY - sp * h * 0.5;
-      var sx = cx + Math.sin(sp * 6 + nsRoomT * 2) * 7 * scl;
-      var sa = (1 - sp) * 0.32;
-      ctx.fillStyle = 'rgba(220,210,200,' + sa.toFixed(3) + ')';
-      var sr = (2 + sp * 5) * scl;
-      ctx.fillRect(sx - sr / 2, sy - sr / 2, sr, sr);
-    }
-    // Three tools bob above the anvil, each at its own phase.
-    var bob = function (i) { return Math.sin(nsRoomT * 1.7 + i * 2.1) * 4 * scl; };
-    // Tool 1: wrench (left)
-    var t1x = cx - 30 * scl, t1y = cy - h * 0.16 + bob(0);
-    nsToolWrench(t1x, t1y, 22 * scl);
-    // Tool 2: drill bit (center, slightly higher)
-    var t2x = cx, t2y = cy - h * 0.24 + bob(1);
-    drawDrillUpgradeSprite(t2x, t2y, 30 * scl, 3);
-    // Tool 3: hammer (right)
-    var t3x = cx + 30 * scl, t3y = cy - h * 0.16 + bob(2);
-    nsToolHammer(t3x, t3y, 24 * scl);
-    // Soft sparks drifting off the anvil when hovered
-    if (lift > 0.5 && Math.random() < 0.3) {
-      nsHubParticles.push({
-        x: anX + anW * (0.2 + Math.random() * 0.6), y: anY + anH * 0.4,
-        vx: (Math.random() - 0.5) * 1.5, vy: -1 - Math.random(),
-        t: 0.5, ttl: 0.5, kind: 'spark'
-      });
-    }
-  }
-  function nsToolWrench(cx, cy, sz) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(-0.5);
-    var sw = sz * 0.16;
-    ctx.fillStyle = '#0a0806';
-    ctx.fillRect(-sw / 2 - 1, -sz / 2 - 1, sw + 2, sz + 2);
-    ctx.fillStyle = '#8a8a82';
-    ctx.fillRect(-sw / 2, -sz / 2, sw, sz);                 // shaft
-    ctx.fillStyle = '#b6b6ac';
-    ctx.fillRect(-sw / 2, -sz / 2, 1.5, sz);
-    // open-end head
-    ctx.fillStyle = '#0a0806';
-    ctx.beginPath(); ctx.arc(0, -sz / 2, sz * 0.26, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#8a8a82';
-    ctx.beginPath(); ctx.arc(0, -sz / 2, sz * 0.20, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#120d09';
-    ctx.fillRect(-sz * 0.1, -sz / 2 - sz * 0.24, sz * 0.2, sz * 0.16);
-    // ring head
-    ctx.fillStyle = '#0a0806';
-    ctx.beginPath(); ctx.arc(0, sz / 2, sz * 0.24, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#8a8a82';
-    ctx.beginPath(); ctx.arc(0, sz / 2, sz * 0.18, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#120d09';
-    ctx.beginPath(); ctx.arc(0, sz / 2, sz * 0.09, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-  function nsToolHammer(cx, cy, sz) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(0.45);
-    var hw = sz * 0.14;
-    // handle (wood)
-    ctx.fillStyle = '#0a0806';
-    ctx.fillRect(-hw / 2 - 1, -sz * 0.1, hw + 2, sz * 0.62);
-    ctx.fillStyle = '#7a4e26';
-    ctx.fillRect(-hw / 2, -sz * 0.1, hw, sz * 0.6);
-    ctx.fillStyle = '#9a6838';
-    ctx.fillRect(-hw / 2, -sz * 0.1, 1.5, sz * 0.6);
-    // steel head
-    var headW = sz * 0.5, headH = sz * 0.24;
-    ctx.fillStyle = '#0a0806';
-    ctx.fillRect(-headW / 2 - 1, -sz * 0.34 - 1, headW + 2, headH + 2);
-    ctx.fillStyle = '#6e6e66';
-    ctx.fillRect(-headW / 2, -sz * 0.34, headW, headH);
-    ctx.fillStyle = '#9a9a90';
-    ctx.fillRect(-headW / 2, -sz * 0.34, headW, 2);
-    ctx.fillStyle = '#4a4a44';
-    ctx.fillRect(-headW / 2, -sz * 0.34 + headH - 2, headW, 2);
-    ctx.restore();
-  }
-  // SHELF: three product silhouettes glowing on stepped shelves.
-  function nsDrawShelfIdentity(cx, cy, w, h, us, lift) {
-    var scl = Math.min(w, h) / 130;
-    // Two wooden shelf boards
-    var bW = w * 0.82, bX = cx - bW / 2;
-    var sh1 = cy - h * 0.02, sh2 = cy + h * 0.24;
-    for (var b = 0; b < 2; b++) {
-      var by = b === 0 ? sh1 : sh2;
-      ctx.fillStyle = '#0a0806';
-      ctx.fillRect(bX - 2, by - 2, bW + 4, 8 * scl + 2);
-      ctx.fillStyle = '#5a3a22';
-      ctx.fillRect(bX, by, bW, 8 * scl);
-      ctx.fillStyle = '#7a5230';
-      ctx.fillRect(bX, by, bW, 2);
-      ctx.fillStyle = '#3a2416';
-      ctx.fillRect(bX, by + 8 * scl - 2, bW, 2);
-    }
-    // Products: glowing silhouettes sitting on the shelves.
-    var glow = 0.4 + 0.6 * lift;
-    var pulse = 0.6 + 0.4 * Math.sin(nsRoomT * 2.4);
-    function prod(px, py, kind, ci) {
-      // glow halo
-      var gr = ctx.createRadialGradient(px, py, 2, px, py, 16 * scl);
-      gr.addColorStop(0, 'rgba(' + ci + ',' + (0.3 * glow * pulse).toFixed(3) + ')');
-      gr.addColorStop(1, 'rgba(' + ci + ',0)');
-      ctx.fillStyle = gr;
-      ctx.fillRect(px - 18 * scl, py - 18 * scl, 36 * scl, 36 * scl);
-      drawConsumableIconBig(kind, px, py - 4 * scl, 26 * scl);
-    }
-    prod(cx - w * 0.26, sh1 - 2 * scl, 'teleporter', '200,160,255');
-    prod(cx + w * 0.04, sh1 - 2 * scl, 'bombLarge',  '255,120,70');
-    prod(cx + w * 0.04, sh2 - 2 * scl, 'balloon',    '255,210,90');
-    prod(cx - w * 0.26, sh2 - 2 * scl, 'reserveFuel','255,200,80');
-  }
-  // BOARD: a mini bulletin board with paper notices that flutter.
-  function nsDrawBoardIdentity(cx, cy, w, h, us, lift) {
-    var scl = Math.min(w, h) / 130;
-    // mini wood backboard
-    var bw = w * 0.72, bh = h * 0.66;
-    nsWoodBacking(cx - bw / 2, cy - bh / 2, bw, bh, NS_STATION_INFO.board);
-    // three small papers, each fluttering on its own phase
-    for (var i = 0; i < 3; i++) {
-      var ph = nsRoomT * 1.6 + i * 2.0;
-      var flut = Math.sin(ph) * 2.4 * scl;
-      var pw = bw * 0.26, phh = bh * 0.42;
-      var px = cx - bw * 0.28 + i * (bw * 0.28);
-      var py = cy - bh * 0.12 + (i % 2) * (bh * 0.06) + flut;
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(Math.sin(ph) * 0.06 + (i - 1) * 0.05);
-      nsPaper(-pw / 2, -phh / 2, pw, phh, i + 3);
-      // ink lines
-      ctx.fillStyle = 'rgba(60,42,24,0.5)';
-      for (var ln = 0; ln < 3; ln++) ctx.fillRect(-pw / 2 + 4 * scl, -phh / 2 + (5 + ln * 5) * scl, pw - 8 * scl, 1.4 * scl);
-      ctx.restore();
-      nsNail(px, py - phh / 2 + 3 * scl);
-      // a corner curling up when hovered → rustle particles
-      if (lift > 0.5 && Math.random() < 0.12) {
-        nsHubParticles.push({
-          x: px + (Math.random() - 0.5) * pw, y: py,
-          vx: (Math.random() - 0.5) * 1.2, vy: -0.4 - Math.random() * 0.6,
-          t: 0.7, ttl: 0.7, kind: 'paper'
-        });
-      }
-    }
-  }
-
-  // ---- Pointer dispatch -------------------------------------------------
+  // Topmost-last hit test over the board page's NS_HIT rects (the kit's
+  // own widgets use UK_HIT + ukHitAt instead).
   function nsHitAt(x, y) {
-    // Topmost-last: NS_HIT is pushed in draw order, so iterate backwards.
     for (var i = NS_HIT.length - 1; i >= 0; i--) {
       var r = NS_HIT[i];
       if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r;
     }
     return null;
   }
+
+  // ---- Pointer dispatch (entry points wired from 050-input) ------------
   function newShopPointerDown(x, y, id) {
     if (id === undefined) id = 'mouse';
-    // Corner button is live on every screen: BACK on a sub-page (pop to hub),
-    // EXIT on the hub (leave the shop). Press it twice from a sub-page to go out.
-    var ba = nsBackArrowRect(nsMetrics());
-    if (x >= ba.x && x <= ba.x + ba.w && y >= ba.y && y <= ba.y + ba.h) {
-      nsBackOrExit();
-      return true;
+    if (shopState === 'board') {
+      // Bespoke Trade Board page: brass back arrow + its own hit kinds.
+      var ba = nsBackArrowRect(nsMetrics());
+      if (x >= ba.x && x <= ba.x + ba.w && y >= ba.y && y <= ba.y + ba.h) {
+        nsBackOrExit();
+        return true;
+      }
+      return nsBoardPointerDown(x, y, nsHitAt(x, y), id);
     }
-    var hit = nsHitAt(x, y);
-    if (shopState === 'floor') {
-      if (hit && hit.kind === 'station') { nsEnterStation(hit.id); return true; }
-      return true;   // floor eats the click
-    }
-    // Sub-pages
-    if (shopState === 'workshop') return nsWorkshopPointerDown(x, y, hit);
-    if (shopState === 'shelf') return nsShelfPointerDown(x, y, hit);
-    if (shopState === 'board') return nsBoardPointerDown(x, y, hit, id);
+    ukPointerDown(x, y, id);
+    if (ukState) storeLastTab = ukState.tab;
     return true;
   }
   function newShopPointerMove(x, y) {
-    var hit = nsHitAt(x, y);
-    nsHubHover = null;
-    nsBoardHover = null;
-    var ba = nsBackArrowRect(nsMetrics());
-    if (x >= ba.x && x <= ba.x + ba.w && y >= ba.y && y <= ba.y + ba.h) nsHubHover = 'nsback';
-    if (!hit) return;
-    if (hit.kind === 'station') nsHubHover = hit.id;
-    else if (hit.kind === 'wsitem') nsHubHover = 'ws:' + hit.id;
-    else if (hit.kind === 'shitem') nsHubHover = 'sh:' + hit.id;
-    else if (hit.kind === 'boardrow') nsBoardHover = hit.id;
-    else if (hit.kind === 'boardbtn') nsHubHover = 'bb:' + hit.id;
+    if (shopState === 'board') {
+      var hit = nsHitAt(x, y);
+      nsHubHover = null;
+      nsBoardHover = null;
+      var ba = nsBackArrowRect(nsMetrics());
+      if (x >= ba.x && x <= ba.x + ba.w && y >= ba.y && y <= ba.y + ba.h) nsHubHover = 'nsback';
+      if (!hit) return;
+      if (hit.kind === 'boardrow') nsBoardHover = hit.id;
+      else if (hit.kind === 'boardbtn') nsHubHover = 'bb:' + hit.id;
+      return;
+    }
+    ukPointerMove(x, y);
   }
   function newShopPointerDrag(x, y, id) {
-    // Board market list drag-to-scroll.
-    if (shopState === 'board' && nsDrag.active && nsDrag.id === id) {
-      var dy = y - nsDrag.startY;
-      nsDrag.moved = Math.max(nsDrag.moved, Math.abs(dy));
-      nsBoardScroll = nsDrag.startScroll - dy;
-      if (nsBoardScroll < 0) nsBoardScroll = 0;
-      if (nsBoardScroll > nsBoardScrollMax) nsBoardScroll = nsBoardScrollMax;
+    if (shopState === 'board') {
+      if (nsDrag.active && nsDrag.id === id) {
+        var dy = y - nsDrag.startY;
+        nsDrag.moved = Math.max(nsDrag.moved, Math.abs(dy));
+        nsBoardScroll = nsDrag.startScroll - dy;
+        if (nsBoardScroll < 0) nsBoardScroll = 0;
+        if (nsBoardScroll > nsBoardScrollMax) nsBoardScroll = nsBoardScrollMax;
+      }
+      return;
     }
+    ukPointerDrag(x, y, id);
   }
   function newShopPointerUp(id) {
     var di = (id === undefined) ? 'mouse' : id;
-    if (nsDrag.active && nsDrag.id === di) {
-      nsDrag.active = false;
-      // Commit a pending row toggle only if this was a tap, not a drag.
-      if (shopState === 'board' && nsDrag.pendingRow && nsDrag.moved < 6) {
-        nsBoardSel = (nsBoardSel === nsDrag.pendingRow) ? null : nsDrag.pendingRow;
-        nsBoardQty = 1;
+    if (shopState === 'board') {
+      if (nsDrag.active && nsDrag.id === di) {
+        nsDrag.active = false;
+        if (nsDrag.pendingRow && nsDrag.moved < 6) {
+          nsBoardSel = (nsBoardSel === nsDrag.pendingRow) ? null : nsDrag.pendingRow;
+          nsBoardQty = 1;
+        }
+        nsDrag.pendingRow = null;
       }
-      nsDrag.pendingRow = null;
+      return;
     }
+    ukPointerUp(di);
   }
   function newShopWheel(d) {
     if (shopState === 'board') {
@@ -44041,7 +44475,7 @@
       if (nsBoardScroll > nsBoardScrollMax) nsBoardScroll = nsBoardScrollMax;
       return true;
     }
-    return false;
+    return ukWheel(d);
   }
 
   // ====================================================================
@@ -45861,9 +46295,13 @@
     else marketModel.applyBuy(st, nsMarketTown(), good, qty);
   }
   // ====================================================================
-  //  WORKSHOP — rig upgrades with "just out of reach" feedback.
+  //  WORKSHOP -- rig upgrades as catalog items for the UI kit (245).
   // ====================================================================
-  // Number helpers — concrete current → next values for the tooltips.
+  // The data + number helpers survive from the old page; the rendering
+  // is gone. nsWorkshopTabItems() builds the item descriptors the kit
+  // renders in the store modal (see 250 for the spec, 245 for the kit).
+
+  // Number helpers -- concrete current -> next values for the stat block.
   function nsUpgFuelAt(lv) {
     var caps = [0, 30, 55, 85, 120, 165, 220];
     if (lv >= caps.length) return caps[caps.length - 1];
@@ -45882,7 +46320,7 @@
       o.statLabel = '';
       if (it.key === 'heat') { o.cur = lvl >= 1 ? 'INSTALLED' : 'NOT FITTED'; o.next = 'INSTALLED'; }
       else if (it.key === 'vert') { o.cur = lvl >= 1 ? 'INSTALLED' : 'NOT FITTED'; o.next = 'INSTALLED'; }
-      else if (it.key === 'shield') { o.cur = lvl === 0 ? 'NONE' : (lvl === 1 ? 'MK 1' : 'MK 2'); o.next = lvl === 0 ? 'MK 1' : 'MK 2'; }
+      else if (it.key === 'shield') { o.cur = lvl === 0 ? 'NONE' : (lvl === 1 ? 'MK 1' : 'MK 2'); o.next = lvl === 0 ? 'MK 1' : 'MK 2'; o.statLabel = 'SHIELD'; }
       else if (it.key === 'pump') {
         var tanks = [0, 24, 58, 120];
         o.cur = lvl === 0 ? 'NONE' : tanks[lvl] + ' GAL';
@@ -45915,13 +46353,6 @@
     }
     return o;
   }
-  // Affordability tier: 'afford' | 'close' | 'far' | 'maxed' — drives glow.
-  function nsAffordTier(cost, maxed) {
-    if (maxed) return 'maxed';
-    if (devMode || money >= cost) return 'afford';
-    if (money >= cost * 0.6) return 'close';
-    return 'far';
-  }
 
   var NS_WORKSHOP_ITEMS = [
     { key: 'drill',  name: 'DRILL',          levelKey: 'drillLevel',  costs: shop.drill,  isSpecial: false, section: 0 },
@@ -45938,310 +46369,119 @@
   // Hide it from the workshop (one flag away from coming back).
   if (!ENABLE_OIL) NS_WORKSHOP_ITEMS = NS_WORKSHOP_ITEMS.filter(function (it) { return it.key !== 'pump'; });
 
-  function newShopDrawWorkshop(M) {
-    var us = M.us;
-    // Backdrop — workshop is warm orange-lit
-    ctx.fillStyle = '#16100a';
-    ctx.fillRect(0, 0, viewW, M.bottom);
-    var bg = ctx.createRadialGradient(viewW / 2, M.bottom * 0.42, 30, viewW / 2, M.bottom * 0.5, viewW * 0.7);
-    bg.addColorStop(0, 'rgba(70,46,22,0.55)');
-    bg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, viewW, M.bottom);
-
-    var ent = nsEaseOut(nsWorkshopEnterT);
-    ctx.save();
-    ctx.globalAlpha = ent;
-    ctx.translate(0, (1 - ent) * 22 * us);
-    nsBanner(M, 'WORKSHOP', '#8a4a1c');
-
-    // grid area — starts below the banner + money chip header band.
-    var top = M.headerBottom + Math.round(6 * us);
-    var areaH = M.bottom - top - M.pad;
-    // Responsive columns: 4 on wide, 3 on medium, 2 on narrow/portrait.
-    var cols = 4;
-    if (viewW < 760) cols = 3;
-    if (viewW < 540 || M.portrait) cols = 2;
-    var gap = Math.round(9 * us);
-    var cellW = (M.cw - gap * (cols - 1)) / cols;
-    var rows = Math.ceil(NS_WORKSHOP_ITEMS.length / cols);
-    // Cell height fits the area exactly — never clamped above areaH so the
-    // grid can't overflow into the console. The cell internals scale to
-    // whatever height results (see nsDrawWorkshopCell).
-    var cellH = (areaH - gap * (rows - 1)) / rows;
-    if (cellH > Math.round(168 * us)) cellH = Math.round(168 * us);
-    for (var i = 0; i < NS_WORKSHOP_ITEMS.length; i++) {
-      var it = NS_WORKSHOP_ITEMS[i];
-      var col = i % cols, row = Math.floor(i / cols);
-      var cx0 = M.cx + col * (cellW + gap);
-      var cy0 = top + row * (cellH + gap);
-      // staggered entrance
-      var lt = Math.max(0, Math.min(1, (nsWorkshopEnterT - i * 0.035) / 0.7));
-      ctx.save();
-      ctx.globalAlpha = ent * nsEaseOut(lt);
-      ctx.translate(0, (1 - nsEaseOut(lt)) * 16 * us);
-      nsDrawWorkshopCell(it, cx0, cy0, cellW, cellH, M);
-      ctx.restore();
+  // One plain sentence per part: what it does, not its numbers (the stat
+  // block above the button carries the numbers).
+  function nsWorkshopDesc(def, info) {
+    var k = def.key;
+    if (k === 'drill') {
+      if (info.maxed) return 'Nothing in the ground can stop it.';
+      var unlocks = { 3: 'uranium and tanzanite', 4: 'diamond', 5: 'painite', 6: 'unobtanium' };
+      var u = unlocks[info.lvl + 1];
+      return u ? 'Cuts faster and unlocks ' + u + '.' : 'Cuts through rock faster.';
     }
-    ctx.restore();
-
-    // Edge gold pulse on a successful buy — drawn over the page.
-    if (nsEdgePulseT > 0) {
-      var ep = nsEdgePulseT / 0.5;
-      var ew = Math.round(70 * us) * ep;
-      var lg = ctx.createLinearGradient(0, 0, ew, 0);
-      lg.addColorStop(0, 'rgba(255,224,130,' + (0.5 * ep).toFixed(3) + ')');
-      lg.addColorStop(1, 'rgba(255,224,130,0)');
-      ctx.fillStyle = lg;
-      ctx.fillRect(0, 0, ew, M.bottom);
-      var rg = ctx.createLinearGradient(viewW, 0, viewW - ew, 0);
-      rg.addColorStop(0, 'rgba(255,224,130,' + (0.5 * ep).toFixed(3) + ')');
-      rg.addColorStop(1, 'rgba(255,224,130,0)');
-      ctx.fillStyle = rg;
-      ctx.fillRect(viewW - ew, 0, ew, M.bottom);
-    }
-
-    nsDrawParticles();
-    // tooltip for the hovered item
-    nsDrawWorkshopTooltip(M);
-    nsDrawMoneyChip(M.cx + M.cw, M.bannerBottom + Math.round(4 * us), us, 'right');
-    nsDrawBackArrow(M);
+    if (k === 'fuel') return 'A bigger tank. Longer dives before the gauge forces you home.';
+    if (k === 'hull') return 'Thicker plating. Shrugs off harder landings and hotter rock.';
+    if (k === 'cargo') return 'More slots in the hold. Haul more ore per trip.';
+    if (k === 'booster') return 'Stronger climb thrust underground. Get back up faster.';
+    if (k === 'heat') return 'A heating coil for the drill. Required to break permafrost below 200 m.';
+    if (k === 'shield') return info.lvl === 0
+      ? 'Ablative plating. Halves magma damage below 270 m.'
+      : 'A second ablative layer. Full magma immunity.';
+    if (k === 'vert') return 'A swivel mount. Hold Up against a ceiling to drill straight up.';
+    if (k === 'pump') return 'Sucks underground oil into a sellable tank.';
+    return '';
   }
 
-  function nsDrawWorkshopCell(it, x, y, w, h, M) {
-    var us = M.us;
-    var info = nsUpgInfo(it);
-    var tier = nsAffordTier(info.nextCost, info.maxed);
-    var hovered = (nsHubHover === 'ws:' + it.key);
-    var buying = (nsWorkBuyFx.key === it.key && nsWorkBuyFx.t > 0);
-    var buyP = buying ? nsWorkBuyFx.t / 0.4 : 0;
-    // "just out of reach" — close items glow softly, far items dim down.
-    var glowAmt = 0;
-    if (tier === 'afford') glowAmt = 0.55 + (hovered ? 0.45 : 0);
-    else if (tier === 'close') glowAmt = 0.35 + 0.15 * (0.5 + 0.5 * Math.sin(nsRoomT * 4));
-    var dim = (tier === 'far') ? 0.6 : 1;
-
-    // buy bounce
-    var bounce = buying ? -Math.sin(buyP * Math.PI) * 5 * us : 0;
-    y += bounce;
-
-    // glow halo
-    if (glowAmt > 0.01) {
-      var hg = ctx.createRadialGradient(x + w / 2, y + h / 2, 8, x + w / 2, y + h / 2, w * 0.7);
-      hg.addColorStop(0, 'rgba(255,205,110,' + (0.3 * glowAmt).toFixed(3) + ')');
-      hg.addColorStop(1, 'rgba(255,205,110,0)');
-      ctx.fillStyle = hg;
-      ctx.fillRect(x - 14, y - 14, w + 28, h + 28);
+  function nsWorkshopTabItems() {
+    var items = [];
+    for (var i = 0; i < NS_WORKSHOP_ITEMS.length; i++) {
+      items.push(nsWorkshopItem(NS_WORKSHOP_ITEMS[i]));
     }
-    ctx.globalAlpha = dim;
-    // body
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(x + 3, y + 4, w, h);
-    nsPanel(x, y, w, h, '#33271b', '#4e3f2d', '#1c140c');
-    drawBrassCornerL(x + 3, y + 3, false, false);
-    drawBrassCornerL(x + w - 15, y + 3, true, false);
-    drawBrassCornerL(x + 3, y + h - 15, false, true);
-    drawBrassCornerL(x + w - 15, y + h - 15, true, true);
+    return items;
+  }
+  function nsWorkshopItem(def) {
+    var info = nsUpgInfo(def);
+    var afford = !info.maxed && (devMode || money >= info.nextCost);
+    var ownedBinary = def.isSpecial && (def.key === 'heat' || def.key === 'vert');
 
-    // layout: icon niche / nameplate / pips / buy button. Sizes scale
-    // down on short cells so the bottom block always fits inside `h`.
-    var pad = Math.max(4, Math.round(Math.min(8 * us, h * 0.07)));
-    var btnH = Math.max(Math.round(18 * us), Math.round(Math.min(28 * us, h * 0.22)));
-    var npH = Math.max(Math.round(11 * us), Math.round(Math.min(15 * us, h * 0.12)));
-    var pipH = Math.round(7 * us);
-    var bottomH = npH + Math.round(3 * us) + pipH + Math.round(4 * us) + btnH + pad;
-    var niY = y + pad, niX = x + pad;
-    var niW = w - pad * 2;
-    var niH = h - pad - bottomH;
-    if (niH < Math.round(24 * us)) niH = Math.round(24 * us);
-    ctx.fillStyle = '#120d09';
-    ctx.fillRect(niX, niY, niW, niH);
-    ctx.fillStyle = '#0a0705';
-    ctx.fillRect(niX + 2, niY + 2, niW - 4, niH - 4);
-    if (glowAmt > 0.01) {
-      var ng = ctx.createRadialGradient(niX + niW / 2, niY + niH / 2, 4, niX + niW / 2, niY + niH / 2, niW * 0.6);
-      ng.addColorStop(0, 'rgba(255,210,120,' + (0.26 * glowAmt).toFixed(3) + ')');
-      ng.addColorStop(1, 'rgba(255,210,120,0)');
-      ctx.fillStyle = ng;
-      ctx.fillRect(niX + 2, niY + 2, niW - 4, niH - 4);
-    }
-    // icon — drill levels show iconLevel+1 preview when not maxed
+    // The drill sells its NEXT tier by name; everything else keeps its name.
     var iconLevel = info.lvl;
-    if (it.key === 'drill') iconLevel = info.maxed ? info.lvl : info.lvl + 1;
-    var iconSize = Math.min(niW - Math.round(14 * us), niH - Math.round(12 * us));
-    // gentle idle float on the icon
-    var fl = Math.sin(nsRoomT * 1.8 + it.key.length) * 2 * us;
-    drawUpgradeIconBig(it.key, niX + niW / 2, niY + niH / 2 + fl, iconSize, iconLevel);
-    // owned-pip badge top-left of niche
-    if (info.lvl > 0) {
-      var bpx = Math.round(7 * us);
-      var bstr = it.isSpecial && (it.key === 'heat' || it.key === 'vert') ? 'OWNED' : ('LV' + info.lvl);
-      ctx.fillStyle = 'rgba(20,14,8,0.8)';
-      ctx.fillRect(niX + 3, niY + 3, nsTextW(bstr, bpx) + 6, bpx + 5);
-      nsText(bstr, niX + 6, niY + 5, bpx, '#d4b878');
+    var name = def.name;
+    if (def.key === 'drill') {
+      iconLevel = info.maxed ? info.lvl : info.lvl + 1;
+      name = drillTierShortName(iconLevel);
     }
 
-    // nameplate
-    var npY = niY + niH + Math.round(3 * us);
-    var npName = it.name;
-    if (it.key === 'drill') npName = drillTierShortName(iconLevel);
-    ctx.fillStyle = '#0c0a07';
-    ctx.fillRect(niX - 1, npY - 1, niW + 2, npH + 2);
-    ctx.fillStyle = '#4a3618';
-    ctx.fillRect(niX, npY, niW, npH);
-    ctx.fillStyle = hovered ? '#a07c40' : '#7a5a2c';
-    ctx.fillRect(niX + 1, npY + 1, niW - 2, npH - 2);
-    var nmpx = Math.round(8 * us);
-    var nmw = nsTextW(npName, nmpx);
-    if (nmw > niW - 6) nmpx = nmpx * (niW - 6) / nmw;
-    nsText(npName, niX + niW / 2, npY + (npH - nmpx) / 2, nmpx, '#231507', 'center');
-
-    // pip strip
-    var pipY = npY + npH + Math.round(4 * us);
-    nsDrawPips(niX, pipY, niW, pipH, info.pipsCur, info.pipsMax);
-
-    // BUY button
-    var btnY = pipY + pipH + Math.round(4 * us);
-    var canBuy = (tier === 'afford');
-    var squish = buying ? Math.floor(buyP * 3) : 0;
-    ctx.fillStyle = '#0c0a07';
-    ctx.fillRect(niX - 1, btnY - 1 + squish, niW + 2, btnH + 2 - squish);
-    var bodyCol;
-    if (info.maxed) bodyCol = '#2f2a23';
-    else if (tier === 'afford') bodyCol = hovered ? '#ffe068' : '#d4a838';
-    else if (tier === 'close') bodyCol = '#7a6a3a';
-    else bodyCol = '#4a4238';
-    ctx.fillStyle = bodyCol;
-    ctx.fillRect(niX, btnY + squish, niW, btnH - squish);
-    if (!info.maxed && tier === 'afford') {
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(niX, btnY + squish, niW, 2);
-    }
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(niX, btnY + btnH - 3, niW, 3);
-    var blbl, bcol;
-    if (info.maxed) {
-      blbl = (it.key === 'heat' || it.key === 'vert') ? 'OWNED' : 'MAX';
-      bcol = '#7d756a';
+    // List sub-line + detail state line.
+    var sub, state = null;
+    if (ownedBinary) {
+      sub = info.lvl >= 1 ? 'Installed' : 'Not fitted';
+      state = info.lvl >= 1 ? 'INSTALLED' : 'NOT FITTED';
     } else {
-      blbl = '$' + info.nextCost.toLocaleString();
-      bcol = (tier === 'afford') ? '#241608' : '#cdbf9a';
+      sub = 'LV ' + info.lvl + ' / ' + info.pipsMax;
+      if (info.maxed) state = 'FULLY UPGRADED';
     }
-    var blpx = Math.round(10 * us);
-    nsText(blbl, niX + niW / 2, btnY + squish + (btnH - squish - blpx) / 2, blpx, bcol, 'center');
 
-    NS_HIT.push({ kind: 'wsitem', id: it.key, x: x, y: y - bounce, w: w, h: h });
-    ctx.globalAlpha = 1;
-  }
-
-  // Brass tier-pip strip — filled pips = current level.
-  function nsDrawPips(x, y, w, h, cur, max) {
-    if (max < 1) max = 1;
-    var gap = 2;
-    var pw = (w - gap * (max - 1)) / max;
-    for (var i = 0; i < max; i++) {
-      var px = x + i * (pw + gap);
-      var on = i < cur;
-      ctx.fillStyle = '#0c0a07';
-      ctx.fillRect(px - 1, y - 1, pw + 2, h + 2);
-      ctx.fillStyle = on ? '#e0b84a' : '#2c2620';
-      ctx.fillRect(px, y, pw, h);
-      if (on) {
-        ctx.fillStyle = '#fff0b0';
-        ctx.fillRect(px, y, pw, 1);
+    // Stat block: current -> next, with a +delta when both are numbers.
+    var stat = null;
+    if (info.statLabel) {
+      stat = { label: info.statLabel, cur: '' + info.cur, next: info.maxed ? null : '' + info.next };
+      if (!info.maxed && typeof info.cur === 'number' && typeof info.next === 'number') {
+        stat.delta = '+' + (info.next - info.cur);
       }
+      if (info.maxed) stat.cur = info.cur + '  (MAX)';
     }
-  }
 
-  // Hover tooltip — concrete current → next numbers.
-  function nsDrawWorkshopTooltip(M) {
-    if (!nsHubHover || nsHubHover.indexOf('ws:') !== 0) return;
-    var key = nsHubHover.slice(3);
-    var it = null;
-    for (var i = 0; i < NS_WORKSHOP_ITEMS.length; i++) {
-      if (NS_WORKSHOP_ITEMS[i].key === key) { it = NS_WORKSHOP_ITEMS[i]; break; }
+    var priceLabel, priceTier, act;
+    if (info.maxed) {
+      priceLabel = ownedBinary ? 'OWNED' : 'MAX';
+      priceTier = 'dim';
+      act = { label: 'MAX', enabled: false, reason: ownedBinary ? 'INSTALLED' : 'MAX LEVEL' };
+    } else {
+      priceLabel = '$' + info.nextCost.toLocaleString();
+      priceTier = afford ? 'gold' : 'red';
+      act = afford
+        ? { label: 'BUY  ' + priceLabel, enabled: true }
+        : { label: priceLabel, enabled: false,
+            reason: 'SHORT $' + (info.nextCost - money).toLocaleString(), reasonKind: 'short' };
     }
-    if (!it) return;
-    var hr = null;
-    for (var j = 0; j < NS_HIT.length; j++) {
-      if (NS_HIT[j].kind === 'wsitem' && NS_HIT[j].id === key) { hr = NS_HIT[j]; break; }
-    }
-    if (!hr) return;
-    var info = nsUpgInfo(it);
-    var us = M.us;
-    // Build the lines
-    var line1 = info.statLabel ? info.statLabel + ':' : '';
-    var line2 = info.maxed ? ('' + info.cur + '  (MAX)') : ('' + info.cur + '  >  ' + info.next);
-    var tpx = Math.round(8 * us);
-    var hpx = Math.round(8.5 * us);
-    var w1 = line1 ? nsTextW(line1, hpx) : 0;
-    var w2 = nsTextW(line2, tpx);
-    var tw = Math.max(w1, w2) + Math.round(16 * us);
-    var th = Math.round((line1 ? 32 : 22) * us);
-    var tx = hr.x + hr.w / 2 - tw / 2;
-    var ty = hr.y - th - Math.round(6 * us);
-    if (tx < M.cx) tx = M.cx;
-    if (tx + tw > M.cx + M.cw) tx = M.cx + M.cw - tw;
-    if (ty < M.cy + Math.round(40 * us)) ty = hr.y + hr.h + Math.round(6 * us);
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(tx + 2, ty + 3, tw, th);
-    nsPanel(tx, ty, tw, th, '#241a10', '#3e3020', '#140d07');
-    var lineY = ty + Math.round(5 * us);
-    if (line1) {
-      nsText(line1, tx + Math.round(8 * us), lineY, hpx, '#caa84a');
-      lineY += Math.round(11 * us);
-    }
-    nsText(line2, tx + Math.round(8 * us), lineY, tpx, '#e8dcc0');
-  }
 
-  function nsWorkshopPointerDown(x, y, hit) {
-    if (!hit || hit.kind !== 'wsitem') return true;
-    var it = null;
-    for (var i = 0; i < NS_WORKSHOP_ITEMS.length; i++) {
-      if (NS_WORKSHOP_ITEMS[i].key === hit.id) { it = NS_WORKSHOP_ITEMS[i]; break; }
-    }
-    if (!it) return true;
-    var info = nsUpgInfo(it);
-    var tier = nsAffordTier(info.nextCost, info.maxed);
-    if (tier !== 'afford') {
-      // not affordable / maxed — fail feedback
-      nsSpawnCoins(hit.x + hit.w / 2, hit.y + hit.h * 0.7, 3, true);
-      nsWorkBuyFx = { key: it.key, t: 0.2 };
-      sfxPlay('ui-denied');
-      return true;
-    }
-    var before = money;
-    buildShopItems();
-    var shopItem = null;
-    for (var s = 0; s < shopItems.length; s++) {
-      if (shopItems[s].key === it.key) { shopItem = shopItems[s]; break; }
-    }
-    if (shopItem) buyUpgrade(shopItem);
-    var success = (money < before) || devMode;
-    if (success) {
-      nsWorkBuyFx = { key: it.key, t: 0.4 };
-      nsEdgePulseT = 0.5;
-      nsSpawnCoins(hit.x + hit.w / 2, hit.y + hit.h * 0.7, 10);
-      var fname = it.name;
-      if (it.key === 'drill') {
-        var ni = nsUpgInfo(it);
-        fname = drillTierShortName(ni.maxed ? ni.lvl : ni.lvl);
+    return {
+      key: def.key,
+      name: name,
+      sub: sub,
+      state: state,
+      icon: function (cx, cy, px) { drawUpgradeIconBig(def.key, cx, cy, px, iconLevel); },
+      pips: { cur: info.pipsCur, max: info.pipsMax },
+      stat: stat,
+      desc: nsWorkshopDesc(def, info),
+      priceLabel: priceLabel,
+      priceTier: priceTier,
+      act: act,
+      onAct: function () {
+        var before = money;
+        buildShopItems();
+        var si = null;
+        for (var s = 0; s < shopItems.length; s++) {
+          if (shopItems[s].key === def.key) { si = shopItems[s]; break; }
+        }
+        if (si) buyUpgrade(si);
+        var ok = devMode || money < before;
+        if (!ok) return { ok: false };
+        return { ok: true, float: '+ ' + name };
       }
-      nsSpawnFloater('+ ' + fname, hit.x + hit.w / 2, hit.y + Math.round(10 * nsMetrics().us), '#ffe79a', 12);
-      // (audio: buyUpgrade fired the ui-confirm tink — §2.11, no bespoke tool-clink)
-    }
-    return true;
+    };
   }
 
   // ====================================================================
-  //  SHELF — consumables with stacked-stock art + last-unit flourish.
+  //  SHELF -- consumables as catalog items for the UI kit (245).
   // ====================================================================
   var NS_SHELF_ITEMS = [
     { key: 'teleporter', name: 'TELEPORTER',   hotkey: 'T' },
     { key: 'balloon',    name: 'ROVER BALLOON',hotkey: 'B' },
     { key: 'bombSmall',  name: 'SMALL CHARGE', hotkey: '1' },
     { key: 'bombLarge',  name: 'LARGE CHARGE', hotkey: '2' },
-    { key: 'reserveFuel',name: 'RESERVE FUEL', hotkey: 'AUTO', maxCount: 4 }
+    { key: 'reserveFuel',name: 'RESERVE FUEL', hotkey: null, maxCount: 4 }
   ];
   function nsShelfCount(key) {
     if (key === 'teleporter') return teleporters;
@@ -46253,243 +46493,81 @@
   }
   function nsShelfCost(key) { return shop[key]; }
 
-  function newShopDrawShelf(M) {
-    var us = M.us;
-    ctx.fillStyle = '#0e130f';
-    ctx.fillRect(0, 0, viewW, M.bottom);
-    var bg = ctx.createRadialGradient(viewW / 2, M.bottom * 0.42, 30, viewW / 2, M.bottom * 0.5, viewW * 0.7);
-    bg.addColorStop(0, 'rgba(34,56,40,0.5)');
-    bg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, viewW, M.bottom);
-
-    var ent = nsEaseOut(nsShelfEnterT);
-    ctx.save();
-    ctx.globalAlpha = ent;
-    ctx.translate(0, (1 - ent) * 22 * us);
-    nsBanner(M, 'SUPPLY SHELF', '#2e6a44');
-
-    var top = M.headerBottom + Math.round(6 * us);
-    var areaH = M.bottom - top - M.pad;
-    var cols = 5;
-    if (viewW < 820) cols = 4;
-    if (viewW < 620) cols = 3;
-    if (viewW < 440 || M.portrait) cols = 2;
-    var gap = Math.round(9 * us);
-    var cellW = (M.cw - gap * (cols - 1)) / cols;
-    var rows = Math.ceil(NS_SHELF_ITEMS.length / cols);
-    // Fit the area exactly so the grid never spills into the console.
-    var cellH = (areaH - gap * (rows - 1)) / rows;
-    if (cellH > Math.round(176 * us)) cellH = Math.round(176 * us);
-    for (var i = 0; i < NS_SHELF_ITEMS.length; i++) {
-      var it = NS_SHELF_ITEMS[i];
-      var col = i % cols, row = Math.floor(i / cols);
-      var cx0 = M.cx + col * (cellW + gap);
-      var cy0 = top + row * (cellH + gap);
-      var lt = Math.max(0, Math.min(1, (nsShelfEnterT - i * 0.045) / 0.7));
-      ctx.save();
-      ctx.globalAlpha = ent * nsEaseOut(lt);
-      ctx.translate(0, (1 - nsEaseOut(lt)) * 16 * us);
-      nsDrawShelfCell(it, cx0, cy0, cellW, cellH, M);
-      ctx.restore();
-    }
-    ctx.restore();
-    nsDrawParticles();
-    nsDrawMoneyChip(M.cx + M.cw, M.bannerBottom + Math.round(4 * us), us, 'right');
-    nsDrawBackArrow(M);
+  // What it does + how to fire it. Usage phrasing follows the platform,
+  // same as buildShopItems() does for the legacy descriptions.
+  function nsShelfDesc(def) {
+    var use = def.hotkey
+      ? (isMobile ? 'Tap its chip in the HUD to use it.' : 'Press ' + def.hotkey + ' to use it.')
+      : '';
+    var k = def.key;
+    if (k === 'teleporter') return 'A one-way warp back to the station. ' + use;
+    if (k === 'balloon') return 'Giant airbags. Drop from any height and bounce off the bottom unhurt. ' + use;
+    if (k === 'bombSmall') return 'A single charge. Blasts one tile under the rig. ' + use;
+    if (k === 'bombLarge') return 'A full bundle. Blasts a 3x3 hole. ' + use;
+    if (k === 'reserveFuel') return 'Auto-deploys the instant the main tank runs dry. Hold up to 4.';
+    return '';
   }
 
-  function nsDrawShelfCell(it, x, y, w, h, M) {
-    var us = M.us;
-    var count = nsShelfCount(it.key);
-    var cost = nsShelfCost(it.key);
-    var atCap = !!it.maxCount && count >= it.maxCount;
-    var canBuy = !atCap && (devMode || money >= cost);
-    var hovered = (nsHubHover === 'sh:' + it.key);
-    var buying = (nsShelfBuyFx.key === it.key && nsShelfBuyFx.t > 0);
-    var buyP = buying ? nsShelfBuyFx.t / 0.5 : 0;
-    var lastUnit = buying && nsShelfBuyFx.lastUnit;
-    var bounce = buying ? -Math.sin(buyP * Math.PI) * (lastUnit ? 9 : 5) * us : 0;
-    y += bounce;
-
-    var glowAmt = canBuy ? (0.4 + (hovered ? 0.45 : 0)) : 0;
-    if (glowAmt > 0.01) {
-      // Banded halo (stepped alpha, no smooth gradient — pixel discipline).
-      var gc = lastUnit ? '255,240,150' : '120,200,140';
-      var ghx = x + w / 2, ghy = y + h / 2, ghr = w * 0.7;
-      for (var ghb = 5; ghb >= 1; ghb--) {
-        var ghf = ghb / 5;
-        ctx.fillStyle = 'rgba(' + gc + ',' + (0.3 * glowAmt * (1 - ghf) * (1 - ghf)).toFixed(3) + ')';
-        ctx.beginPath(); ctx.arc(ghx, ghy, 8 + (ghr - 8) * ghf, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(x + 3, y + 4, w, h);
-    nsPanel(x, y, w, h, '#243026', '#3a4a3a', '#141a14');
-    drawBrassCornerL(x + 3, y + 3, false, false);
-    drawBrassCornerL(x + w - 15, y + 3, true, false);
-    drawBrassCornerL(x + 3, y + h - 15, false, true);
-    drawBrassCornerL(x + w - 15, y + h - 15, true, true);
-
-    // Sizes scale down on short cells so the bottom block always fits.
-    var pad = Math.max(4, Math.round(Math.min(8 * us, h * 0.06)));
-    var btnH = Math.max(Math.round(18 * us), Math.round(Math.min(28 * us, h * 0.20)));
-    var npH = Math.max(Math.round(11 * us), Math.round(Math.min(15 * us, h * 0.11)));
-    var stkH = Math.max(Math.round(10 * us), Math.round(Math.min(13 * us, h * 0.10)));
-    var bottomH = npH + Math.round(3 * us) + stkH + Math.round(4 * us) + btnH + pad;
-    var niX = x + pad, niY = y + pad, niW = w - pad * 2;
-    var niH = h - pad - bottomH;
-    if (niH < Math.round(24 * us)) niH = Math.round(24 * us);
-    ctx.fillStyle = '#0c1109';
-    ctx.fillRect(niX, niY, niW, niH);
-    ctx.fillStyle = '#070b06';
-    ctx.fillRect(niX + 2, niY + 2, niW - 4, niH - 4);
-    if (glowAmt > 0.01) {
-      // Banded niche glow, clipped to the niche interior.
-      ctx.save();
-      ctx.beginPath(); ctx.rect(niX + 2, niY + 2, niW - 4, niH - 4); ctx.clip();
-      var ngx = niX + niW / 2, ngy = niY + niH / 2, ngr = niW * 0.6;
-      for (var ngb = 4; ngb >= 1; ngb--) {
-        var ngf = ngb / 4;
-        ctx.fillStyle = 'rgba(150,220,160,' + (0.22 * glowAmt * (1 - ngf) * (1 - ngf)).toFixed(3) + ')';
-        ctx.beginPath(); ctx.arc(ngx, ngy, 4 + (ngr - 4) * ngf, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.restore();
-    }
-    // Stacked-stock art: many owned → draw a small back-stack of icons.
-    var stackN = Math.min(3, Math.max(0, count - 1));
-    var baseSize = Math.min(niW - Math.round(16 * us), niH - Math.round(14 * us));
-    var fl = Math.sin(nsRoomT * 1.9 + it.key.length) * 1.6 * us;
-    for (var s = stackN; s >= 1; s--) {
-      ctx.save();
-      ctx.globalAlpha = 0.32 - s * 0.06;
-      ctx.translate(s * 5 * us, s * 4 * us + fl);
-      drawConsumableIconBig(it.key, niX + niW / 2, niY + niH / 2, baseSize * 0.86);
-      ctx.restore();
-    }
-    drawConsumableIconBig(it.key, niX + niW / 2, niY + niH / 2 + fl, baseSize);
-    // last-unit flourish star-burst
-    if (lastUnit) {
-      var fp = 1 - buyP;
-      ctx.strokeStyle = 'rgba(255,240,160,' + (1 - fp).toFixed(3) + ')';
-      ctx.lineWidth = 2;
-      for (var r = 0; r < 6; r++) {
-        var ra = r / 6 * Math.PI * 2 + nsRoomT;
-        var r0 = baseSize * 0.4 * fp, r1 = baseSize * (0.5 + 0.3 * fp);
-        ctx.beginPath();
-        ctx.moveTo(niX + niW / 2 + Math.cos(ra) * r0, niY + niH / 2 + Math.sin(ra) * r0);
-        ctx.lineTo(niX + niW / 2 + Math.cos(ra) * r1, niY + niH / 2 + Math.sin(ra) * r1);
-        ctx.stroke();
-      }
-    }
-
-    // Pinned paper price tag — the shelf's "price pinned beside the item".
-    if (!atCap) {
-      var tgPx = Math.round(8 * us);
-      var tgStr = '$' + cost.toLocaleString();
-      var tgW = nsTextW(tgStr, tgPx) + Math.round(10 * us);
-      var tgH = tgPx + Math.round(7 * us);
-      var tgX = niX + niW - tgW - Math.round(4 * us);
-      var tgY = niY + Math.round(4 * us);
-      ctx.fillStyle = '#1a0a05';
-      ctx.fillRect(tgX + Math.round(tgW / 2) - 1, tgY - Math.round(3 * us), 2, Math.round(3 * us));
-      ctx.fillStyle = '#0c0a07';
-      ctx.fillRect(tgX - 1, tgY - 1, tgW + 2, tgH + 2);
-      ctx.fillStyle = '#e8d098';
-      ctx.fillRect(tgX, tgY, tgW, tgH);
-      ctx.fillStyle = '#bfa46a';
-      ctx.fillRect(tgX, tgY + tgH - 1, tgW, 1);
-      nsText(tgStr, tgX + tgW / 2, tgY + (tgH - tgPx) / 2, tgPx, canBuy ? '#231507' : '#8a1e16', 'center');
-    }
-
-    // nameplate
-    var npY = niY + niH + Math.round(3 * us);
-    ctx.fillStyle = '#0c0a07';
-    ctx.fillRect(niX - 1, npY - 1, niW + 2, npH + 2);
-    ctx.fillStyle = '#4a3618';
-    ctx.fillRect(niX, npY, niW, npH);
-    ctx.fillStyle = hovered ? '#a07c40' : '#7a5a2c';
-    ctx.fillRect(niX + 1, npY + 1, niW - 2, npH - 2);
-    var nmpx = Math.round(8 * us);
-    var nmw = nsTextW(it.name, nmpx);
-    if (nmw > niW - 6) nmpx = nmpx * (niW - 6) / nmw;
-    nsText(it.name, niX + niW / 2, npY + (npH - nmpx) / 2, nmpx, '#231507', 'center');
-
-    // stock counter with tick-down ghost
-    var stkY = npY + npH + Math.round(4 * us);
-    ctx.fillStyle = '#0c0a07';
-    ctx.fillRect(niX - 1, stkY - 1, niW + 2, stkH + 2);
-    ctx.fillStyle = '#0e1810';
-    ctx.fillRect(niX, stkY, niW, stkH);
-    var stkStr = 'STOCK x' + count + '   [' + it.hotkey + ']';
-    nsText(stkStr, niX + niW / 2, stkY + (stkH - Math.round(7 * us)) / 2, Math.round(7 * us),
-           count > 0 ? '#5fc070' : '#6a7a68', 'center');
-
-    // BUY button
-    var btnY = stkY + stkH + Math.round(4 * us);
-    var squish = buying ? Math.floor(buyP * 3) : 0;
-    ctx.fillStyle = '#0c0a07';
-    ctx.fillRect(niX - 1, btnY - 1 + squish, niW + 2, btnH + 2 - squish);
-    var bodyCol;
-    if (atCap) bodyCol = '#2f2a23';
-    else if (canBuy) bodyCol = hovered ? '#ffe068' : '#d4a838';
-    else bodyCol = '#4a4238';
-    ctx.fillStyle = bodyCol;
-    ctx.fillRect(niX, btnY + squish, niW, btnH - squish);
-    if (canBuy && !atCap) {
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(niX, btnY + squish, niW, 2);
-    }
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(niX, btnY + btnH - 3, niW, 3);
-    var blbl = atCap ? 'FULL' : 'BUY';
-    var bcol = (canBuy && !atCap) ? '#241608' : (atCap ? '#7d756a' : '#cdbf9a');
-    var blpx = Math.round(10 * us);
-    nsText(blbl, niX + niW / 2, btnY + squish + (btnH - squish - blpx) / 2, blpx, bcol, 'center');
-
-    NS_HIT.push({ kind: 'shitem', id: it.key, x: x, y: y - bounce, w: w, h: h });
-  }
-
-  function nsShelfPointerDown(x, y, hit) {
-    if (!hit || hit.kind !== 'shitem') return true;
-    var it = null;
+  function nsShelfTabItems() {
+    var items = [];
     for (var i = 0; i < NS_SHELF_ITEMS.length; i++) {
-      if (NS_SHELF_ITEMS[i].key === hit.id) { it = NS_SHELF_ITEMS[i]; break; }
+      items.push(nsShelfItem(NS_SHELF_ITEMS[i]));
     }
-    if (!it) return true;
-    var count = nsShelfCount(it.key);
-    var cost = nsShelfCost(it.key);
-    var atCap = !!it.maxCount && count >= it.maxCount;
-    if (atCap || (!devMode && money < cost)) {
-      nsSpawnCoins(hit.x + hit.w / 2, hit.y + hit.h * 0.7, 3, true);
-      nsShelfBuyFx = { key: it.key, t: 0.2, lastUnit: false };
-      sfxPlay('ui-denied');
-      return true;
+    return items;
+  }
+  function nsShelfItem(def) {
+    var count = nsShelfCount(def.key);
+    var cost = nsShelfCost(def.key);
+    var atCap = !!def.maxCount && count >= def.maxCount;
+    var afford = !atCap && (devMode || money >= cost);
+
+    var sub = def.maxCount
+      ? ('In hold x' + count + ' / ' + def.maxCount)
+      : ('In hold x' + count);
+    var priceLabel, priceTier, act;
+    if (atCap) {
+      priceLabel = 'FULL';
+      priceTier = 'dim';
+      act = { label: 'FULL', enabled: false, reason: 'HOLD FULL' };
+    } else {
+      priceLabel = '$' + cost.toLocaleString();
+      priceTier = afford ? 'gold' : 'red';
+      act = afford
+        ? { label: 'BUY  ' + priceLabel, enabled: true }
+        : { label: priceLabel, enabled: false,
+            reason: 'SHORT $' + (cost - money).toLocaleString(), reasonKind: 'short' };
     }
-    var before = money;
-    buildShopItems();
-    var shopItem = null;
-    for (var s = 0; s < shopItems.length; s++) {
-      if (shopItems[s].key === it.key) { shopItem = shopItems[s]; break; }
-    }
-    if (shopItem) buyUpgrade(shopItem);
-    var success = (money < before) || devMode;
-    if (success) {
-      // "last unit" = buying the final stockable reserve-fuel tank.
-      var lastUnit = !!it.maxCount && nsShelfCount(it.key) >= it.maxCount;
-      nsShelfBuyFx = { key: it.key, t: 0.5, lastUnit: lastUnit };
-      var us = nsMetrics().us;
-      nsSpawnCoins(hit.x + hit.w / 2, hit.y + hit.h * 0.7, lastUnit ? 16 : 9);
-      nsSpawnFloater('+1  ' + it.name, hit.x + hit.w / 2, hit.y + Math.round(10 * us),
-                     lastUnit ? '#fff0a0' : '#7be08a', lastUnit ? 13 : 11);
-      // (audio: buyUpgrade fired the ui-confirm tink — §2.11, no bespoke
-      // shelf-thunk; the last-unit flourish stays visual-only)
-    }
-    return true;
+
+    return {
+      key: def.key,
+      name: def.name,
+      sub: sub,
+      state: def.hotkey ? (isMobile ? 'HUD CHIP' : 'HOTKEY  ' + def.hotkey) : 'AUTOMATIC',
+      badge: count > 0 ? 'x' + count : null,
+      icon: function (cx, cy, px) { drawConsumableIconBig(def.key, cx, cy, px); },
+      stat: null,
+      desc: nsShelfDesc(def),
+      priceLabel: priceLabel,
+      priceTier: priceTier,
+      act: act,
+      onAct: function () {
+        var before = money;
+        var beforeCount = nsShelfCount(def.key);
+        buildShopItems();
+        var si = null;
+        for (var s = 0; s < shopItems.length; s++) {
+          if (shopItems[s].key === def.key) { si = shopItems[s]; break; }
+        }
+        if (si) buyUpgrade(si);
+        var ok = nsShelfCount(def.key) > beforeCount || (!devMode && money < before);
+        if (!ok) return { ok: false };
+        return { ok: true, float: '+1 ' + def.name };
+      }
+    };
   }
 
   // ########################################################################
-  // ##  NEW SHOP — end of new shop module                                 ##
+  // ##  NEW SHOP -- end of new shop module                                ##
   // ########################################################################
 
   // ========================================================================
@@ -47078,20 +47156,21 @@
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    // Camera-push backdrop — only over the playfield, NOT the console.
-    // v11.26: the toolbar at the bottom must stay fully lit while shopping
-    // (per user feedback). Clip the dim to the room area above the console.
-    var ch = consoleHeight();
-    var roomBottom = viewH - ch;
-    var dim = 0.62 * (shopEnterT < 1 ? shopEnterT : 1);
-    ctx.fillStyle = 'rgba(0,0,0,' + dim.toFixed(3) + ')';
-    ctx.fillRect(0, 0, viewW, roomBottom);
     if (USE_NEW_SHOP_UI) {
+      // v26.18 — the UI kit paints its own fizzed-world backdrop (blur +
+      // dim + vignette over the playfield only, console untouched); the
+      // old flat dim would double-darken it. The board page fills opaque.
       newShopDraw();
-    } else if (shopState === 'floor') {
-      drawShopRoom();
     } else {
-      drawShopSubPage();
+      // Legacy walk-up shop: camera-push dim over the playfield, NOT the
+      // console (v11.26: the toolbar must stay fully lit while shopping).
+      var ch = consoleHeight();
+      var roomBottom = viewH - ch;
+      var dim = 0.62 * (shopEnterT < 1 ? shopEnterT : 1);
+      ctx.fillStyle = 'rgba(0,0,0,' + dim.toFixed(3) + ')';
+      ctx.fillRect(0, 0, viewW, roomBottom);
+      if (shopState === 'floor') drawShopRoom();
+      else drawShopSubPage();
     }
     ctx.restore();
   }
@@ -57131,8 +57210,8 @@
       keys['z'] = keys['Z'] = false;
       toggleZoom();
     }
-    // ESC backs out of the new shop one level (sub-page -> hub -> closed),
-    // mirroring the corner button: press it twice from a sub-page to leave.
+    // ESC backs out of the shop one level: store modal -> closed (animated
+    // via the UI kit), board page -> store modal. Mirrors the X button.
     if (keys['Escape'] && UI_NEW && shopState !== 'closed') {
       keys['Escape'] = false;
       nsBackOrExit();

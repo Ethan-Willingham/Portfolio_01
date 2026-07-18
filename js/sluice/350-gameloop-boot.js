@@ -312,8 +312,8 @@
       keys['z'] = keys['Z'] = false;
       toggleZoom();
     }
-    // ESC backs out of the new shop one level (sub-page -> hub -> closed),
-    // mirroring the corner button: press it twice from a sub-page to leave.
+    // ESC backs out of the shop one level: store modal -> closed (animated
+    // via the UI kit), board page -> store modal. Mirrors the X button.
     if (keys['Escape'] && UI_NEW && shopState !== 'closed') {
       keys['Escape'] = false;
       nsBackOrExit();

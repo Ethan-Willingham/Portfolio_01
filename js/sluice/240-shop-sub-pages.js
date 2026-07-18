@@ -1328,22 +1328,17 @@
   // ########################################################################
   // ##  v14.1 — NEW SHOP UI  (USE_NEW_SHOP_UI === true)                   ##
   // ########################################################################
-  // A fully procedural, responsive shop. No sprite background. Three
-  // stations — WORKSHOP, SHELF, BOARD — reached from a hub. The BOARD is a
-  // brand-new Trade Board (commodity exchange). Everything below is dead
-  // code when USE_NEW_SHOP_UI is false; the legacy paths above run instead.
-  //
-  // Layout model: every frame newShopMetrics() recomputes a `M` struct from
-  // viewW / viewH. `M.portrait` flips the Board to a stacked layout. uiScale
-  // scales fonts + touch targets. Nothing is cached against a fixed canvas.
+  // v26.18: the shop itself is the STORE catalog modal on the UI kit (245,
+  // spec + routing in 250, item builders in 270/280). What remains here is
+  // the shared plumbing both it and the flag-off Trade Board page use:
+  // metrics, stencil text, particles, the money chip, the board's back
+  // arrow, and the per-frame dispatch. Everything below is dead code when
+  // USE_NEW_SHOP_UI is false; the legacy paths above run instead.
   // ########################################################################
 
   // ---- Shared new-shop state -------------------------------------------
   var nsRoomT       = 0;     // running clock (seconds) for idle animations
-  var nsView        = 'hub'; // 'hub' | 'workshop' | 'shelf' | 'board'
-  var nsTransition  = { from: null, to: null, t: 0, dur: 0 }; // station-entry zoom
-  var nsHubHover    = null;  // hovered station id on the hub
-  var nsHubLiftT    = { workshop: 0, shelf: 0, board: 0 }; // hover lift eases
+  var nsHubHover    = null;  // hovered chrome id on the board page ('nsback', 'bb:*')
   var nsBackRecoilT = 0;     // back-arrow recoil-shoot animation (counts down)
   var nsExitFadeT   = 0;     // black fade on shop exit (counts down)
   var nsMoneyPulseT = 0;     // gold pulse after any cash change
@@ -1365,12 +1360,6 @@
   var nsBoardRollFx    = {};     // per-key digit-roll animation {key:t}
   var nsBoardNoticeIdx = [];     // which notices are pinned this shop-open
   var nsBoardEnterT    = 0;      // board sub-page entrance progress
-  var nsWorkshopEnterT = 0;
-  var nsShelfEnterT    = 0;
-  var nsHubEnterT      = 0;
-  var nsWorkBuyFx      = { key: null, t: 0 };  // workshop buy pulse
-  var nsShelfBuyFx     = { key: null, t: 0, lastUnit: false };
-  var nsEdgePulseT     = 0;      // screen-edge gold pulse on a workshop buy
   // Drag-scroll bookkeeping (board market list)
   var nsDrag = { active: false, id: null, startY: 0, startScroll: 0, moved: 0, pendingRow: null };
   // Buy/sell hit rects, repopulated each frame
@@ -1714,40 +1703,27 @@
 
   // ---- Main dispatch ----------------------------------------------------
   // Called once per frame from drawShopFloor() when USE_NEW_SHOP_UI is on.
+  // 'floor' = the store catalog modal (UI kit, 245/250). 'board' = the
+  // flag-off Trade Board's bespoke full page (260). The old per-counter
+  // 'workshop'/'shelf' page states are retired; normalize them to 'floor'.
   function newShopDraw() {
     var dt = 1 / 60;
     nsRoomT += dt;
-    // Sync nsView with the legacy shopState so existing exit/proximity
-    // logic still drives "closed". shopState 'floor' maps to our 'hub'.
-    if (shopState === 'floor' && nsView !== 'hub') nsView = 'hub';
-    if (shopState === 'workshop') nsView = 'workshop';
-    if (shopState === 'shelf') nsView = 'shelf';
-    if (shopState === 'board') nsView = 'board';
+    if (shopState === 'workshop' || shopState === 'shelf') shopState = 'floor';
 
     // Global timers
     if (nsBackRecoilT > 0) nsBackRecoilT -= dt;
     if (nsExitFadeT > 0) nsExitFadeT -= dt;
     if (nsMoneyPulseT > 0) nsMoneyPulseT -= dt;
-    if (nsEdgePulseT > 0) nsEdgePulseT -= dt;
-    if (nsWorkBuyFx.t > 0) nsWorkBuyFx.t -= dt;
-    if (nsShelfBuyFx.t > 0) nsShelfBuyFx.t -= dt;
-    if (nsTransition.t > 0) nsTransition.t -= dt;
     nsTickParticles(dt);
 
     NS_HIT = [];
     var M = nsMetrics();
 
-    // Station-entry zoom transition: render the destination page, then
-    // a zoom-in mask over it. The hub fades/blurs under it.
     if (shopState === 'floor') {
-      nsHubEnterT = Math.min(1, nsHubEnterT + dt / 0.22);
-      newShopDrawHub(M);
-    } else if (shopState === 'workshop') {
-      nsWorkshopEnterT = Math.min(1, nsWorkshopEnterT + dt / 0.24);
-      newShopDrawWorkshop(M);
-    } else if (shopState === 'shelf') {
-      nsShelfEnterT = Math.min(1, nsShelfEnterT + dt / 0.24);
-      newShopDrawShelf(M);
+      storeModalEnsure();
+      ukCatalogDraw(M);
+      nsDrawParticles();
     } else if (shopState === 'board') {
       nsBoardEnterT = Math.min(1, nsBoardEnterT + dt / 0.26);
       newShopDrawBoard(M);
@@ -1760,34 +1736,28 @@
     }
   }
 
-  // Reset per-station entrance + selection state when a station is entered.
+  // Enter a bespoke station page. Only the Trade Board still has one; the
+  // workshop and shelf live as tabs inside the store modal (250).
   function nsEnterStation(id) {
-    if (id === 'board' && !ENABLE_TRADE_BOARD) return;   // Trade Board disabled: unreachable
-    shopState = id;
-    nsView = id;
-    if (id === 'workshop') nsWorkshopEnterT = 0;
-    if (id === 'shelf') nsShelfEnterT = 0;
-    if (id === 'board') {
-      nsBoardEnterT = 0;
-      nsBoardSel = null;
-      nsBoardScroll = 0;
-      nsBoardRollPrices();
-    }
-    nsTransition = { from: 'hub', to: id, t: 0.28, dur: 0.28 };
+    if (id !== 'board' || !ENABLE_TRADE_BOARD) return;
+    shopState = 'board';
+    nsBoardEnterT = 0;
+    nsBoardSel = null;
+    nsBoardScroll = 0;
+    nsBoardRollPrices();
   }
+  // Back from the board page to the store modal.
   function nsLeaveToHub() {
     shopState = 'floor';
-    nsView = 'hub';
-    nsHubEnterT = 0;
     nsBackRecoilT = 0.26;
     nsBoardSel = null;
   }
   // Leave the shop entirely: fade to black + set the rig down on the deck.
   function nsExitShop() {
+    ukCatalogReset();   // direct exits (board Escape path) skip the kit's close anim
     nsExitFadeT = 0.22;
     shopState = 'closed';
     sfxPlay('ui-open', { rate: 0.89 });   // the same thunk ~2 semitones down = close (§2.11)
-    nsView = 'hub';
     shopDoorT = 0;
     if (typeof player !== 'undefined' && player) {
       var stationCx = nearestTownStationCol() * TILE + TILE / 2;
@@ -1800,10 +1770,14 @@
       if (typeof player.renderX !== 'undefined') { player.renderX = player.x; player.renderY = player.y; }
     }
   }
-  // One persistent corner control: on a sub-page it pops to the hub, on the
-  // hub it exits the shop. Press it twice from a sub-page to leave entirely.
+  // One escape/back control: the store modal animates closed (its onClose
+  // runs nsExitShop); the board page pops back to the store modal.
   function nsBackOrExit() {
-    if (shopState === 'floor') nsExitShop();
-    else nsLeaveToHub();
+    if (shopState === 'floor') {
+      if (ukModal) ukCatalogClose();
+      else nsExitShop();
+    } else {
+      nsLeaveToHub();
+    }
   }
 

@@ -90,7 +90,8 @@ wired-but-empty SFX), save/respawn, the Great Seam endgame chamber, the Mineral 
 | `040-init-resize-resolution.js` | `init()`, `resize()`, fuel/cargo/hull/climb formulas |
 | `047-save.js` | save/respawn (`SAVE_VERSION`) |
 | `060-shop-logic.js` | buy/sell logic, `drillBlockReason` (the heat/drill gates), the auto-sell reveal |
-| `250/270/280-shop-*.js` | the station hub + Workshop + Supply Shelf pages |
+| `245-ui-kit.js` | the reusable modal kit: fizzed-world backdrop + the catalog modal (tabs/list/detail/action) |
+| `250/270/280-shop-*.js` | the STORE modal spec + routing (250) and its workshop/shelf item builders (270/280) |
 | `080-update-camera.js` | movement, drilling, fuel burn, the one flight integrator, the SFX shims |
 | `350-gameloop-boot.js` | the game loop + boot |
 | `360-gm-facade.js` / `370-gm-panel.js` | `window.gm` live tuning (toggle `L` in dev) |

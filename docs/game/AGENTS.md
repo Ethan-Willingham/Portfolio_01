@@ -149,12 +149,13 @@ The game is split across **fragment files in `js/sluice/`** so a session can ope
 | `200-rocket-plume.js` | Rocket plume particles (jetpack exhaust) |
 | `210-player.js` | Drill animation update loop, `drawPlayerShadow`, `drawPlayer` |
 | `220-rover-console.js` | Rover-balloon visuals, Console instruments (gauges) |
-| `230-shop-frame.js` | `SHOP UI REDESIGN`: shop room + modal frame + consumable icons |
-| `240-shop-sub-pages.js` | Legacy boxed shop sub-pages (v11.28 WORKSHOP/SHELF cards) + hub intro |
-| `250-shop-hub.js` | Station `HUB` (three stations + idle animations) |
-| `260-shop-board.js` | `TRADE BOARD` page |
-| `270-shop-workshop.js` | `WORKSHOP` page (hub) |
-| `280-shop-shelf.js` | `SUPPLY SHELF` page (hub) |
+| `230-shop-frame.js` | Legacy sprite shop room (flag-off) + consumable icon painters |
+| `240-shop-sub-pages.js` | Shared shop plumbing: metrics, particles, money chip, board back arrow, `newShopDraw` dispatch (+ legacy sub-pages, flag-off) |
+| `245-ui-kit.js` | `UI KIT (uk)`: the reusable overlay system. Fizzed-world backdrop (blur + dim + vignette) plus the generic tabs/list/detail/action catalog modal every popup (store today, storage/combine/sell tomorrow) builds on. Read its header comment before adding a popup. |
+| `250-shop-hub.js` | `STORE`: the station shop's catalog spec + pointer routing on the kit |
+| `260-shop-board.js` | `TRADE BOARD` bespoke page (flag-off; MARKET tab hands off to it) |
+| `270-shop-workshop.js` | Workshop upgrade data + item builders for the store modal |
+| `280-shop-shelf.js` | Supply-shelf consumable data + item builders for the store modal |
 | `290-death-screen.js` | Death screen plate (`drawDeathScreen`) |
 | `295-collection-ledger.js` | GREAT SEAM + MINERAL LEDGER: `drawGreatSeam` renderer, `seamExtract` extraction + EXPEDITION COMPLETE plate, `ledgerData`/`ledgerRecordOre`/`drawLedger` (toggle: C key in normal play) |
 | `300-item-wheel.js` | Item radial wheel (`drawItemWheel` + button) |

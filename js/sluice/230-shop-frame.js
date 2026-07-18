@@ -1,40 +1,18 @@
   // ========================================================================
-  // v14.1 — SHOP UI REDESIGN  (USE_NEW_SHOP_UI feature flag)
+  // SHOP ARCHITECTURE  (USE_NEW_SHOP_UI feature flag)
   // ========================================================================
-  // GOAL: AAA-standard shop — addictive, juicy, themed (Peggle / Persona 5
-  // / Hades / Diablo-4 vendors / RuneScape Grand Exchange as references).
-  // The Board is the headline new feature: a frontier-town Trade Board
-  // (commodity exchange) built from scratch.
-  //
-  // ARCHITECTURE — the redesign is gated behind ONE flag:
-  //   USE_NEW_SHOP_UI = true   → fully procedural, responsive new shop:
-  //       newShopDrawHub()      — 3-station hub, per-station identity,
-  //                               idle anims, hover events, click zoom.
-  //       newShopDrawWorkshop() — upgrades, "just out of reach" feedback,
-  //                               dramatic buy fx, number tooltips.
-  //       newShopDrawShelf()    — consumables, stacked-stock art, flourish.
-  //       newShopDrawBoard()    — Trade Board: commodity market list +
-  //                               telegraph ticker + pinned notices.
+  //   USE_NEW_SHOP_UI = true   → v26.18 STORE: one catalog modal on the
+  //       shared UI kit (245) floating over the fizzed-out live world.
+  //       Spec + pointer routing in 250, workshop items in 270, shelf
+  //       items in 280. newShopDrawBoard() (260) is the flag-off Trade
+  //       Board's bespoke page, reached as a MARKET tab when its flag
+  //       is on.
   //   USE_NEW_SHOP_UI = false  → the EXACT pre-v14.1 shop is restored:
   //       drawShopRoom() sprite hub, drawWorkshopSubPage(),
   //       drawShelfSubPage(), board = "COMING SOON". The old code paths
   //       are untouched and still branch-reachable — flip the flag false
-  //       to revert instantly.
-  //
-  // RESPONSIVE: the new shop has NO sprite dependency. Layout is computed
-  // every frame from viewW/viewH and adapts to aspect ratio — the Board's
-  // market/notices split stacks vertically on a portrait phone and sits
-  // side-by-side on landscape/desktop. Touch targets are finger-sized;
-  // fonts scale with a uiScale() factor.
-  //
-  // PERFORMANCE: new animation state reuses the shared shop timers where
-  // possible; particle systems are capped (board paper-shreds <= 60).
-  // Target 60fps. Pure-canvas, no new DOM, no new files, no deps.
-  //
-  // SAVE COMPAT: the one cross-cutting change is player.tradeGoods = {}
-  // in init() (forward-compatible inventory the Board writes to). Older
-  // saves missing it default to {}. Nothing else outside the shop is
-  // touched.
+  //       to revert instantly. Everything from here to the "NEW SHOP"
+  //       banner in 240 belongs to that legacy path.
   // ========================================================================
   var USE_NEW_SHOP_UI = true;
 
