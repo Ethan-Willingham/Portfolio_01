@@ -68,11 +68,15 @@
  * v3.27 grab-tether contract: rejection may move the collision-safe proxy
  * back to the restored body, but it never rewrites the fingertip's canonical
  * lattice offsets. The anchor goal therefore stays attached to the proxy.
+ *
+ * v3.28 progress contract: an open-space topology rejection rolls back to the
+ * last legal proxy, then searches with smaller transport and grip gain. During
+ * a short force-free heal the proxy may still reach a real collision plane.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.27';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.28';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -8523,12 +8527,16 @@
   var grabAttemptDX = 0, grabAttemptDY = 0;
   var grabBlockNX = 0, grabBlockNY = 0, grabBlockReason = '', grabBlockBody = null;
   var grabBlockTravel = 0, grabStepScale = 1, grabGripBlend = 1, grabSpin = 0;
+  var grabTopologyStreak = 0, grabTopologyCooldown = 0, grabTopologyAccepts = 0;
+  var grabTopologyMinRatio = 1, grabRejectBase = 0;
   var grabFitC = 1, grabFitS = 0, grabFitCX = 0, grabFitCY = 0, grabFitOCX = 0, grabFitOCY = 0;
   var grabAcceptedCX = 0, grabAcceptedCY = 0, grabAcceptedAngle = 0;
   var grabReleaseVX = 0, grabReleaseVY = 0, grabReleaseOmega = 0;
   var grabLastH = JELLO_H, grabLastMotionMs = 0;
   var JELLO_GRAB_HANDLE_SPEED = 3600;  // px/s, independent of solver/substep count
   var JELLO_GRAB_HANDLE_STEP = 2.0;    // swept guard still bounds one step to two lattice spacings
+  var JELLO_GRAB_BACKOFF_MIN = 0.012;  // a rejected proxy can search below the former 0.12 floor
+  var JELLO_GRAB_TOPOLOGY_GRIP = 0.02; // gentle first correction after a force-free heal
   var JELLO_GRAB_POINT_STEP = 0.46;    // maximum anchor correction per substep
   var JELLO_GRAB_STIFF = 0.46;
   var JELLO_GRAB_RING_WEIGHT = [1, 0.30, 0.09, 0.027]; // anchor, then graph-adjacent falloff shells
@@ -8611,6 +8619,28 @@
     grabBlockReason = ''; grabBlockBody = null; grabBlockTravel = 0;
   }
 
+  function jelloGrabResetTopologyRecovery() {
+    grabTopologyStreak = 0;
+    grabTopologyCooldown = 0;
+    grabTopologyAccepts = 0;
+    grabTopologyMinRatio = 1;
+  }
+
+  function jelloGrabMinOrientationRatio(b) {
+    if (!b || !b.triHealthOnly || !(b.triN > 0)) return 1;
+    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    var minRatio = 1e18;
+    for (var t = 0; t < b.triN; t++) {
+      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
+      var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
+      var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
+      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var ratio = (e1x * e2y - e1y * e2x) * detInv;
+      if (ratio < minRatio) minRatio = ratio;
+    }
+    return minRatio === 1e18 ? 1 : minRatio;
+  }
+
   function jelloGrabAnchorSlot() {
     if (!grabIdx) return -1;
     for (var i = 0; i < grabIdx.length; i++) {
@@ -8619,9 +8649,9 @@
     return -1;
   }
 
-  // Rejection cancels positional debt by moving the collision-safe proxy back
-  // underneath the restored anchor. The material-space offsets are the user's
-  // original fingertip geometry and must remain immutable for the whole grab.
+  // Contact rejection cancels positional debt by moving the collision-safe
+  // proxy back underneath the restored anchor. The material-space offsets are
+  // the user's original fingertip geometry and remain immutable for the grab.
   // Recomputing them here turns any cursor separation into a hidden long arm:
   // the debug proxy can sit under the cursor while the anchor goal stays with
   // the slime. Keeping the offsets canonical makes that impossible.
@@ -8651,6 +8681,7 @@
   function jelloGrabReleaseBlock(b) {
     jelloGrabRebaseGrip(b);
     grabStepScale = 1;
+    jelloGrabResetTopologyRecovery();
     jelloGrabClearBlock();
   }
 
@@ -8757,6 +8788,8 @@
       grabAcceptedAngle = Math.atan2(grabFitS, grabFitC);
       grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
       grabLastMotionMs = 0;
+      grabRejectBase = b._guardRejects | 0;
+      jelloGrabResetTopologyRecovery();
       jelloGrabClearBlock();
       b._grabbed = true;
       b._recoverT = 0;
@@ -8829,6 +8862,25 @@
     b._grabBlocked = grabBlockReason ? 1 : 0;
     grabSolveX = nextX; grabSolveY = nextY;
 
+    // A topology rejection means the lattice needs a few ordinary solver
+    // steps without another local point force. The proxy still advances and
+    // remains swept against terrain. That is important at a platform lip: it
+    // lets the handle reach the real tile face and become a normal path block
+    // instead of retrying an internal fold forever just before the wall.
+    if (grabTopologyCooldown > 0) {
+      grabTopologyMinRatio = jelloGrabMinOrientationRatio(b);
+      if (grabBlockReason === 'path') {
+        jelloGrabResetTopologyRecovery();
+      } else {
+        if (grabTopologyMinRatio >= JELLO_ORIENT_TARGET * 0.5) grabTopologyCooldown--;
+        else if (grabTopologyCooldown < 2) grabTopologyCooldown = 2;
+        b._grabApplied = 0;
+        b._grabBlocked = 1;
+        b._grabBlockReason = 'topology-relax';
+        return;
+      }
+    }
+
     // At contact the handle is an active unilateral constraint, not a spring
     // that should keep pulling the selected skin behind the obstacle. With no
     // legal tangent step, apply no grab correction at all: integration,
@@ -8852,7 +8904,13 @@
       }
       return;
     }
-    if (grabGripBlend < 1e-4) return;
+    if (grabGripBlend < 1e-4) {
+      // Seed the next substep without pretending this force-free step moved
+      // the body. Topology recovery re-enters far below the old fixed 18% jump.
+      grabGripBlend = grabTopologyStreak > 0 ? JELLO_GRAB_TOPOLOGY_GRIP : 0.08;
+      b._grabApplied = 0;
+      return;
+    }
     jelloGrabFit(b);
 
     // A point force creates torque. Match a fraction of the hand's angular
@@ -8883,7 +8941,13 @@
         }
       }
     }
-    var pointCap = spacing * JELLO_GRAB_POINT_STEP * Math.max(0.25, grabStepScale);
+    // Normal manipulation keeps the established quarter-scale point floor.
+    // Topology recovery must be allowed to search below it or a large target
+    // error always saturates at the same 0.92px correction and can livelock.
+    var pointScale = grabTopologyStreak > 0
+                   ? Math.max(JELLO_GRAB_BACKOFF_MIN, grabStepScale)
+                   : Math.max(0.25, grabStepScale);
+    var pointCap = spacing * JELLO_GRAB_POINT_STEP * pointScale;
     var pointStiff = JELLO_GRAB_STIFF * (0.5 + 0.5 * grabStepScale) * grabGripBlend;
     for (var i = 0; i < grabIdx.length; i++) {
       var pi = grabIdx[i];
@@ -8945,14 +9009,24 @@
         }
         grabStepScale = 1;
       } else {
-        jelloGrabRebaseGrip(b);
+        // This is a legal-step search, not a contact rebase. The shared guard
+        // already restored the body and grabSolve was rolled back above. Keep
+        // that last legal proxy, preserve the canonical fingertip offsets, and
+        // search again with less transport and much less local point force.
+        grabTopologyStreak++;
+        grabTopologyAccepts = 0;
+        grabTopologyCooldown = Math.min(24, 3 + grabTopologyStreak * 2);
+        grabTopologyMinRatio = jelloGrabMinOrientationRatio(b);
+        grabGripBlend = 0;
         jelloGrabClearBlock();
-        grabStepScale = Math.max(0.12, grabStepScale * 0.5);
+        grabStepScale = Math.max(JELLO_GRAB_BACKOFF_MIN, grabStepScale * 0.45);
+        grabAttemptDX = grabAttemptDY = 0;
         b._grabBlocked = 1;
         b._grabBlockReason = 'topology-backoff';
         return;
       }
     }
+    jelloGrabResetTopologyRecovery();
     var nx = hasNormal ? b._grabRejectNX : refX;
     var ny = hasNormal ? b._grabRejectNY : refY;
     // A contained tile sample can be nearest to the far side of a deeply
@@ -9082,9 +9156,20 @@
   function jelloGrabAcceptStep(b) {
     if (b !== grabBody) return;
     jelloGrabCaptureMotion(b);
-    grabStepScale += (1 - grabStepScale) * 0.12;
-    if (!grabBlockReason) grabGripBlend += (1 - grabGripBlend) * 0.18;
+    var topologyRecovering = grabTopologyStreak > 0;
+    grabStepScale += (1 - grabStepScale) * (topologyRecovering ? 0.04 : 0.12);
     if (!grabBlockReason) {
+      grabGripBlend += (1 - grabGripBlend) * (topologyRecovering ? 0.025 : 0.18);
+    }
+    if (!grabBlockReason) {
+      if (topologyRecovering) {
+        grabTopologyAccepts++;
+        // Roughly 150 ms of accepted, force-bearing substeps proves the local
+        // search has escaped. Restore the normal responsive gains only then.
+        if (grabTopologyAccepts >= 36 && grabGripBlend > 0.45) {
+          jelloGrabResetTopologyRecovery();
+        }
+      }
       if (grabStepScale > 0.995) grabStepScale = 1;
       b._grabBlocked = 0;
       b._grabBlockReason = '';
@@ -9132,7 +9217,11 @@
       anchor: grabAnchor, shells: counts.join('/'),
       step: grabStepScale, grip: grabGripBlend,
       nx: grabBlockNX, ny: grabBlockNY,
-      rejects: b._guardRejects | 0,
+      rejects: Math.max(0, (b._guardRejects | 0) - grabRejectBase),
+      rejectTotal: b._guardRejects | 0,
+      retry: grabTopologyStreak,
+      cooldown: grabTopologyCooldown,
+      minRatio: grabTopologyMinRatio,
       releaseMag: Math.hypot(grabReleaseVX, grabReleaseVY),
       releaseOmega: grabReleaseOmega
     };
@@ -9159,6 +9248,8 @@
     grabSpin = 0;
     grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
     grabLastMotionMs = 0;
+    grabRejectBase = 0;
+    jelloGrabResetTopologyRecovery();
     jelloGrabClearBlock();
   }
 
@@ -9233,6 +9324,10 @@
         guardReason: grabBody ? (grabBody._guardRejectReason || '') : '',
         terrainAlive: grabBody && grabBlockReason === 'terrain' ? jelloGrabTerrainContactAlive(grabBody) : false,
         rejects: grabBody ? (grabBody._guardRejects | 0) : 0,
+        grabRejects: grabBody ? Math.max(0, (grabBody._guardRejects | 0) - grabRejectBase) : 0,
+        topologyRetry: grabTopologyStreak,
+        topologyCooldown: grabTopologyCooldown,
+        minOrientationRatio: grabTopologyMinRatio,
         body: body,
         bodies: jelloBodies.map(function (b) {
           return { cx: b.cx, cy: b.cy, left: b.bboxL, top: b.bboxT,
@@ -10294,7 +10389,7 @@
     // more lines instead of shrinking the type into illegibility.
     var compact = worldW < 560;
     var panelX = 8, panelY = 8, panelW = Math.min(compact ? 310 : 520, worldW - 16);
-    var panelH = compact ? 120 : 108;
+    var panelH = compact ? 142 : 108;
     g.globalAlpha = 0.94;
     g.fillStyle = 'rgba(30,36,32,0.92)';
     g.fillRect(panelX, panelY, panelW, panelH);
@@ -10319,15 +10414,17 @@
           'cursor gap ' + n1(data.cursorGap) + 'px  goal arm ' + n1(data.goalArm) + 'px',
           'anchor error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
           'anchor #' + data.anchor + '  shells ' + data.shells,
-          'step ' + n1(data.step) + '  grip ' + n1(data.grip) + '  rejects ' + data.rejects,
+          'step ' + n1(data.step) + '  grip ' + n1(data.grip) + '  retry ' + data.retry + '/' + data.cooldown,
+          'rejects ' + data.rejects + '  orient ' + n1(data.minRatio),
           'release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
         ];
       } else {
         lines = [
           'state ' + data.reason + '  ' + data.applied + '  cursor gap ' + n1(data.cursorGap) + 'px',
           'anchor #' + data.anchor + '  arm ' + n1(data.goalArm) + 'px  error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
-          'shells 0/1/2/3: ' + data.shells + '  step ' + n1(data.step) + '  grip ' + n1(data.grip),
-          'normal ' + n1(data.nx) + ',' + n1(data.ny) + '  rejects ' + data.rejects +
+          'shells 0/1/2/3: ' + data.shells + '  step ' + n1(data.step) + '  grip ' + n1(data.grip) +
+            '  retry ' + data.retry + '/' + data.cooldown,
+          'normal ' + n1(data.nx) + ',' + n1(data.ny) + '  rejects ' + data.rejects + '  orient ' + n1(data.minRatio) +
             '  release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
         ];
       }
@@ -10382,6 +10479,9 @@
     readoutEl.setAttribute('data-pointer-down', pointerDown ? 'true' : 'false');
     readoutEl.setAttribute('data-pointer-x', px.toFixed(2));
     readoutEl.setAttribute('data-pointer-y', py.toFixed(2));
+    readoutEl.setAttribute('data-slime-centers', jelloBodies.slice(0, 8).map(function (b) {
+      return b.cx.toFixed(2) + ',' + b.cy.toFixed(2);
+    }).join(';'));
     var debugData = debugGrab ? grabDebugLast : null;
     readoutEl.setAttribute('data-grab-active', grabBody ? 'true' : 'false');
     readoutEl.setAttribute('data-grab-state', debugData ? debugData.reason : 'idle');
@@ -10389,6 +10489,9 @@
     readoutEl.setAttribute('data-grab-cursor-gap', debugData ? debugData.cursorGap.toFixed(2) : '0');
     readoutEl.setAttribute('data-grab-goal-arm', debugData ? debugData.goalArm.toFixed(2) : '0');
     readoutEl.setAttribute('data-grab-anchor-error', debugData ? debugData.anchorError.toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-retry', debugData ? String(debugData.retry) : '0');
+    readoutEl.setAttribute('data-grab-cooldown', debugData ? String(debugData.cooldown) : '0');
+    readoutEl.setAttribute('data-grab-min-orientation', debugData ? debugData.minRatio.toFixed(4) : '1');
   }
 
   function frame(tNow) {
