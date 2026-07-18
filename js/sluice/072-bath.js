@@ -3,9 +3,12 @@
      (section 0 pivot, B-D11, stages B6/B8). This fragment owns BOTH halves
      of the B6 slice:
 
-     EXTERIOR: a tall banya tower drawn on the town surface (cols 26-32,
-     left of the station, near the first pond). Walk the rig into the door,
-     or click/tap the building while near it, to enter.
+     EXTERIOR: a tall banya tower drawn on the town surface (deck-relative
+     siting, v25.78). Entry works like the shop (v26.31): the plank door
+     slides open as the rig approaches (bathDoorT, the shopDoorT pattern),
+     and getting in is deliberate: click/tap the tower whenever it is on
+     screen (processPointerDown in 050, beside isPointOnShop), or park at
+     the door and press Enter/E. The old walk-in auto-enter is gone.
 
      INTERIOR: its own SCENE, built as an off-map pocket room deep in the
      bedrock fill (rows 600-613, far below the 400 m mineable town). Entering
@@ -139,7 +142,7 @@
 
   var bathMode = false;        // true while inside the scene
   var bathRoomReady = false;   // room carved + water spawned + heat armed
-  var bathDoorArm = true;      // walk-in re-arms only after leaving the rect
+  var bathDoorT = 0;           // door-open progress 0..1 (shopDoorT pattern)
   var bathFading = false;      // transition lock
   var bathFadeEl = null;       // DOM fade overlay
   var bathPromptT = 0;         // pulse clock for the door hint
@@ -362,6 +365,7 @@
         bathScrollT = 1e9;   // enter at the BOTTOM floor
         bathCamY = -1;       // snap, no cross-tower pan on the first frame
         bathMode = true;
+        bathDoorT = 1;       // step back out through an open door
         // Steam era (v25.85): drop the world's stale smoke, retune the
         // fluid for steam, and book the first guest's arrival.
         try { if (typeof clearAllSmokeVisuals === 'function') clearAllSmokeVisuals(); } catch (e2) {}
@@ -370,7 +374,6 @@
         if (!bathGuests.length) bathGuestTimer = 1.6;
       } else {
         bathMode = false;
-        bathDoorArm = false;   // must step off the door before it re-arms
         bathScalePop();
         bathSteamPop();
         bathGuestColliders.length = 0;   // no stale fluid boundaries outside
@@ -398,10 +401,27 @@
     bathPromptT += dt;
     if (!bathMode) {
       if (!bathPickSite()) return false;
+      // v26.31 (owner): entry works like the shop. The plank door slides
+      // open as the rig approaches (same ramp rates as shopDoorT, 350) and
+      // getting in is DELIBERATE: tap/click the tower (050) or park at the
+      // door and press Enter/E/P (the shop's drive-up keys). The old
+      // walk-in auto-enter swallowed drive-bys.
+      var dcx = (banyaDoorX0 + banyaDoorX1) / 2;
+      var dcy = (BANYA_DOOR_Y0 + BANYA_DOOR_Y1) / 2;
+      var nearDoor = Math.abs((player.x + PLAYER_W / 2) - dcx) < TILE * 4 &&
+                     Math.abs((player.y + PLAYER_H / 2) - dcy) < TILE * 4;
+      if (nearDoor) bathDoorT = Math.min(1, bathDoorT + dt / 0.35);
+      else          bathDoorT = Math.max(0, bathDoorT - dt / 0.45);
       var over = player.x < banyaDoorX1 && player.x + PLAYER_W > banyaDoorX0 &&
                  player.y < BANYA_DOOR_Y1 && player.y + PLAYER_H > BANYA_DOOR_Y0;
-      if (over && bathDoorArm && !bathFading) bathEnter();
-      else if (!over) bathDoorArm = true;
+      var grounded = !(typeof player.onGround === 'boolean' && !player.onGround);
+      var pressEnter = !!(keys['Enter'] || keys['e'] || keys['E'] ||
+                          keys['p'] || keys['P']);
+      if (over && grounded && pressEnter && !bathFading) {
+        keys['Enter'] = false; keys['e'] = false; keys['E'] = false;
+        keys['p'] = false; keys['P'] = false;
+        bathEnter();
+      }
       return false;
     }
     if (keys['Escape']) { keys['Escape'] = false; bathExit(); }
@@ -940,10 +960,11 @@
     bathScrollT = (F.fr - 4) * TILE + 16 - bathViewH / 2;
   }
 
-  // ---- Pointer: outside, tap the tower (near it) to enter. Inside, DRAG
-  // (mouse or finger) scrolls the tower, the wheel scrolls it, and a TAP
-  // (movement under 10 css px) on the ВЫХОД door leaves. One code path for
-  // touch and mouse via pointer events. -------------------------------------
+  // ---- Pointer: outside, tapping the tower enters via processPointerDown
+  // (050, beside the shop's isPointOnShop, so the d-pad exclusion and shop
+  // gates apply once). Inside, DRAG (mouse or finger) scrolls the tower, the
+  // wheel scrolls it, and a TAP (movement under 10 css px) on the ВЫХОД door
+  // leaves. One code path for touch and mouse via pointer events. -----------
   var bathPtrDown = false, bathPtrX = 0, bathPtrY = 0, bathPtrMoved = 0;
   function bathClientToWorld(e) {
     var rct = canvas.getBoundingClientRect();
@@ -959,16 +980,19 @@
     if (bathMode) {
       bathPtrDown = true; bathPtrX = e.clientX; bathPtrY = e.clientY;
       bathPtrMoved = 0;
-      return;
     }
-    // Outside: the whole tower is the button, but only when the rig is near.
-    if (!bathPickSite()) return;
-    var p = bathClientToWorld(e);
-    if (!p) return;
-    var dx = (player.x + PLAYER_W / 2) - (banyaX + BANYA_W / 2);
-    if (Math.abs(dx) > 9 * TILE) return;
-    if (p.x >= banyaX - 8 && p.x <= banyaX + BANYA_W + 8 &&
-        p.y >= SKY_ROWS * TILE - 480 && p.y <= SKY_ROWS * TILE) bathEnter();
+    // Outside: entering by tap lives in processPointerDown (050).
+  }
+  // World-coord hit test for the tower, the shop's isPointOnShop pattern:
+  // generous bbox (the flared first eave is the widest part at cx +-104),
+  // no proximity gate. If the tower is on screen and you click it, you
+  // bathe. Called from processPointerDown (050) so the d-pad exclusion and
+  // the shop-state/game-over gates apply in one place.
+  function isPointOnBanya(wx, wy) {
+    if (!ENABLE_BATH || bathMode || bathFading || !bathPickSite()) return false;
+    var cx = banyaX + BANYA_W / 2;
+    var gy = SKY_ROWS * TILE;
+    return wx >= cx - 110 && wx <= cx + 110 && wy >= gy - 480 && wy <= gy;
   }
   function bathPointerMove(e) {
     if (!bathMode || !bathPtrDown) return;
@@ -1176,23 +1200,61 @@
     ctx.fillText('Н', cx - 62, gy - 56);
     ctx.fillText('Я', cx - 62, gy - 34);
 
-    // Door: dark opening + felt flap + step lantern.
+    // Door (v26.31): a heavy plank leaf that slides open as the rig nears
+    // (bathDoorT, the shop's double-door pattern), revealing a lamp-lit
+    // hall: light pools low, the lintel stays dark (the shop's v15.1
+    // warm-shadow doorway, not a beacon). The felt flap valance hangs over
+    // the lintel year-round (banya tradition, plan section 2), so it draws
+    // AFTER the leaf. Hinge plates are gone: this leaf slides, not swings.
+    var dw = banyaDoorX1 - banyaDoorX0;
+    var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
     ctx.fillStyle = '#14100e';
-    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, banyaDoorX1 - banyaDoorX0, 80);
+    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh);
+    if (bathDoorT > 0.04) {
+      for (var dry = 2; dry < dh - 2; dry += 2) {
+        var df = dry / (dh - 3), dwarm = df * df;   // quadratic: top stays dark
+        ctx.fillStyle = 'rgba(' + ((148 + 88 * dwarm) | 0) + ',' +
+          ((66 + 78 * dwarm) | 0) + ',' + ((26 + 40 * dwarm) | 0) + ',' +
+          (bathDoorT * (0.05 + 0.4 * dwarm)).toFixed(3) + ')';
+        ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + dry, dw - 2, 2);
+      }
+      // The oil lamp's pool on the floorboards deep inside.
+      ctx.fillStyle = 'rgba(236,176,98,' + (bathDoorT * 0.30).toFixed(3) + ')';
+      ctx.fillRect(banyaDoorX0 + 3, BANYA_DOOR_Y0 + dh - 7, dw - 6, 4);
+    }
+    // The leaf slides LEFT behind the log wall, clipped to the opening.
+    var slide = Math.round((dw - 4) * bathDoorT);
+    if (slide < dw) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh); ctx.clip();
+      var lfx = banyaDoorX0 - slide;
+      ctx.fillStyle = '#6e4526'; ctx.fillRect(lfx, BANYA_DOOR_Y0, dw, dh);
+      ctx.fillStyle = '#54381f';                    // plank seams
+      for (var pkx = lfx + 10; pkx < lfx + dw; pkx += 11)
+        ctx.fillRect(pkx, BANYA_DOOR_Y0, 2, dh);
+      ctx.fillStyle = '#4a5560';                    // iron straps
+      ctx.fillRect(lfx + 3, BANYA_DOOR_Y0 + 44, dw - 6, 4);
+      ctx.fillRect(lfx + 3, BANYA_DOOR_Y0 + dh - 14, dw - 6, 4);
+      ctx.fillStyle = '#8a95a0';                    // strap rivets
+      for (var rvx = lfx + 6; rvx < lfx + dw - 4; rvx += 9) {
+        ctx.fillRect(rvx, BANYA_DOOR_Y0 + 45, 2, 2);
+        ctx.fillRect(rvx, BANYA_DOOR_Y0 + dh - 13, 2, 2);
+      }
+      ctx.strokeStyle = '#8a95a0'; ctx.lineWidth = 2;   // iron ring handle
+      ctx.beginPath(); ctx.arc(lfx + dw - 8, BANYA_DOOR_Y0 + 52, 3, 0, 6.283); ctx.stroke();
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';           // leading-edge shadow
+      ctx.fillRect(lfx + dw - 2, BANYA_DOOR_Y0, 2, dh);
+      ctx.restore();
+    }
+    // Felt flap valance over the lintel.
     ctx.fillStyle = '#8a4a3a';
-    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, banyaDoorX1 - banyaDoorX0, 32);
+    ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, 32);
     ctx.strokeStyle = '#6e3a2c'; ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(banyaDoorX0, BANYA_DOOR_Y0 + 32);
     ctx.quadraticCurveTo(banyaDoorX0 + 11, BANYA_DOOR_Y0 + 40, banyaDoorX0 + 22, BANYA_DOOR_Y0 + 32);
     ctx.quadraticCurveTo(banyaDoorX0 + 33, BANYA_DOOR_Y0 + 40, banyaDoorX1, BANYA_DOOR_Y0 + 32);
     ctx.stroke();
-    // Iron door handle + hinge plates on the jamb.
-    ctx.strokeStyle = '#8a95a0'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(banyaDoorX1 - 8, BANYA_DOOR_Y0 + 52, 3, 0, 6.283); ctx.stroke();
-    ctx.fillStyle = '#4a5560';
-    ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + 40, 3, 6);
-    ctx.fillRect(banyaDoorX0 + 1, BANYA_DOOR_Y0 + 62, 3, 6);
     lantern(banyaDoorX0 - 11, BANYA_DOOR_Y0 - 2);
 
     // Lived-in props: a bench on the GROUND beside the tower, and a rain
@@ -1207,9 +1269,28 @@
     ctx.fillStyle = '#1f4f9e';
     ctx.beginPath(); ctx.ellipse(cx + 76, gy - 40, 7, 2.5, 0, 0, 6.283); ctx.fill();
 
-    // Walk-in hint when the rig is near.
-    var near = Math.abs((player.x + PLAYER_W / 2) - (banyaX + BANYA_W / 2)) < 9 * TILE;
-    if (near && !bathMode) {
+    // Warm spill on the door step while the leaf is open (drawShopDoorGlow
+    // pattern at plinth size; subtle, the door is the invitation).
+    if (bathDoorT > 0.01) {
+      var sp = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);   // smoothstep
+      var sdx = (banyaDoorX0 + banyaDoorX1) / 2;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      var spillRows = [
+        { dy: -6, hw: 14, a: 0.10, c: '255,214,138' },
+        { dy: -4, hw: 20, a: 0.08, c: '252,176,88' },
+        { dy: -2, hw: 26, a: 0.05, c: '246,156,70' }
+      ];
+      for (var spi = 0; spi < spillRows.length; spi++) {
+        var srw = spillRows[spi];
+        ctx.fillStyle = 'rgba(' + srw.c + ',' + (srw.a * sp).toFixed(3) + ')';
+        ctx.fillRect(sdx - srw.hw, gy + srw.dy, srw.hw * 2, 2);
+      }
+      ctx.restore();
+    }
+
+    // Entry hint once the door has swung open (tap the tower or press E).
+    if (bathDoorT > 0.35 && !bathMode) {
       var pa = 0.55 + 0.35 * Math.sin(bathPromptT * 4);
       ctx.fillStyle = 'rgba(224,176,96,' + pa + ')';
       ctx.font = '12px "Commit Mono", monospace';
@@ -1528,7 +1609,8 @@
                       dbg: function () { var g = bathGuests[0]; return JSON.stringify({ steam: bathDbg, uv: (typeof smokeFluidWorldToUV === 'function' ? smokeFluidWorldToUV(1100, 19560) : null), camY: Math.round(cam.y), guests: bathGuests.length, bodies: (typeof jelloBodies !== 'undefined' ? jelloBodies.length : -1), g: g ? { st: g.st, cx: Math.round(g.b.cx || -1), cy: Math.round(g.b.cy || -1), bb: [Math.round(g.b.bboxL), Math.round(g.b.bboxT), Math.round(g.b.bboxR), Math.round(g.b.bboxB)], vy: Math.round(g.b.vy || 0), slp: !!g.b.sleeping, tgt: Math.round(g.cx) } : null, solid: (function () { var out = []; for (var cc = 28; cc <= 33; cc++) { var t612 = world[612][cc], t613 = world[613][cc]; out.push(cc + ':' + (t612 ? t612.type[0] : '.') + (t613 ? t613.type[0] : '.')); } out.push('jws@' + (g ? Math.round(g.b.cx) : 0) + ',' + (g ? Math.round(g.b.bboxB + 4) : 0) + '=' + (g && typeof jelloWorldSolidAt === 'function' ? jelloWorldSolidAt(g.b.cx, g.b.bboxB + 4) : '?')); return out.join(' '); })() }); },
                       night: function (v) { bathNightOverride = (v === undefined || v === null) ? -1 : +v; },
                       warp: bathWarp,
-                      get mode() { return bathMode; } };
+                      get mode() { return bathMode; },
+                      get doorT() { return bathDoorT; } };
     try {
       canvas.addEventListener('pointerdown', bathPointer);
       canvas.addEventListener('pointermove', bathPointerMove);

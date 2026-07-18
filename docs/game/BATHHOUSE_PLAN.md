@@ -16,11 +16,14 @@ architectural decision at line-level precision for Opus/Sonnet execution). The
 conversational design treatment lives in that session; this doc is self-sufficient.
 
 Status: **B1 SHIPPED (v25.56/57); B6+B8 SLICE SHIPPED (v25.77)**: the banya
-tower stands in the town (dynamically sited clear of the lakes), walk-in or
-click-to-enter swaps to the interior scene (off-map pocket room per B-D11,
-scene-owned zoom fitting any canvas, HUD/smoke layers hidden inside, hot tub 1
-convecting with the B1 tint beside cold tub 2, tap-the-door/ESC exit). Try:
-`?bath=1`, then `__bath.warp()` + walk right into the door. Next = owner
+tower stands in the town (dynamically sited clear of the lakes) and swaps to
+the interior scene (off-map pocket room per B-D11, scene-owned zoom fitting
+any canvas, HUD/smoke layers hidden inside, hot tub 1 convecting with the B1
+tint beside cold tub 2, tap-the-door/ESC exit). Entry is SHOP-STYLE since
+v26.31 (owner, 2026-07-18): the plank door slides open as the rig approaches
+and you click/tap the tower or park at the door and press Enter/E; the old
+walk-in auto-enter is gone (see the Deviation log). Try: `?bath=1`, then
+`__bath.warp()` + walk right up to the door and press E. Next = owner
 feel-check of the slice, then B2 (the steam system) and the HOSE (B6 rest).
 v25.77 slice lessons, recorded so nobody re-learns them: surface LAKES vary per
 seed so the site must be picked post-worldgen; the world viewport EXCLUDES the
@@ -425,6 +428,30 @@ Maps onto the stage board: room/fixtures/pointer = B6; queue, requests, pacing,
 supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
+
+- 2026-07-18 (Fable; v26.31): SHOP-STYLE ENTRY (owner call). The v25.77
+  walk-in auto-enter (rig overlaps the door rect, teleport inside) swallowed
+  drive-bys, so it is gone. The banya now enters exactly like the station
+  shop: a new `bathDoorT` ramps 0..1 as the rig nears the door (same 0.35s/
+  0.45s rates as `shopDoorT`), the door art became a sliding plank leaf
+  (iron straps + ring handle; the felt valance stays over the lintel, hinge
+  plates deleted because the leaf slides) revealing the shop's v15.1
+  warm-shadow interior glow plus a small step spill, and getting in is
+  deliberate: tap/click the tower whenever it is on screen (the hit test
+  moved into `processPointerDown` in 050 beside `isPointOnShop`, so the
+  d-pad exclusion and shop-state gates apply once; `isPointOnBanya` in 072
+  self-gates on ENABLE_BATH/bathMode/bathFading) or park at the door and
+  press Enter/E/P (the shop's drive-up keys, consumed on entry; grounded
+  check mirrors `playerInShopEntryArea`). The 'enter' hint now keys off the
+  open door (`bathDoorT > 0.35`) instead of a 9-tile radius, and
+  `__bath.doorT` is a dev getter for the ramp. Bonus fix caught by the
+  headless run: the 050 keydown handler owned Escape whenever no SHOP was
+  up, so Escape inside the bath scene PAUSED the frozen world instead of
+  exiting (the caption promises ESC leaves). The handler now defers to the
+  keys[] pollers while `bathMode && !gamePaused`, like the shop-open case;
+  the !gamePaused clause matters because auto-pause (blur) can fire inside
+  the scene, the bath poll freezes with the loop, and a deferred Escape
+  would then be a dead key: paused Escape stays handler-owned and resumes.
 
 - 2026-07-17 (Codex; v26.13): MOVING-BOUNDARY TRANSPORT INVARIANT. The
   owner's standalone-demo recording showed a fast-dragged slime scattering

@@ -7,8 +7,14 @@
       // open, leave Escape to the game loop's shop-close handler (it polls keys[]);
       // only own Escape when nothing else does. !e.repeat so holding the key can't
       // flicker pause/resume. pauseGame/resumeGame are hoisted below in setupInput.
+      // v26.31 — the RUNNING banya scene defers the same way (bathFrame
+      // polls keys[] and exits); before this, Escape inside the bath PAUSED
+      // the frozen world instead of leaving, despite the scene caption
+      // promising ESC. While paused the handler still owns Escape (the
+      // bath's poll is frozen, so deferring there would dead-key resume).
       if (e.key === 'Escape' && !e.repeat) {
-        var shopUp = (UI_NEW && shopState !== 'closed') || shopOpen;
+        var shopUp = (UI_NEW && shopState !== 'closed') || shopOpen ||
+                     (typeof bathMode !== 'undefined' && bathMode && !gamePaused);
         if (!shopUp) {
           keys['Escape'] = false;   // consumed here — don't double-handle in the loop
           if (gamePaused) resumeGame(); else pauseGame();
@@ -274,6 +280,11 @@
       var wx = x / worldScale + cam.x;
       var wy = y / worldScale + cam.y;
       if (isPointOnShop(wx, wy)) { enterShopFloor(); return; }
+      // v26.31 — the banya tower enters the same way (072-bath.js owns the
+      // hit test + fade; inert unless ENABLE_BATH).
+      if (typeof isPointOnBanya === 'function' && isPointOnBanya(wx, wy)) {
+        bathEnter(); return;
+      }
     }
 
     // Anything else inside the d-pad zone becomes a d-pad touch. We
