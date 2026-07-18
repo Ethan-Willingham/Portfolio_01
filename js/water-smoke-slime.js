@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.15';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.16';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2227,7 +2227,7 @@
   var JELLO_ORIENT_MIN      = -0.005; // det(F) below this is a real mirror fold
   var JELLO_ORIENT_TARGET   =  0.015; // small legal area restored by one projection
   var JELLO_ORIENT_MOVE     =  0.35;  // max correction per point, in lattice spacings
-  var JELLO_RECOVER_SHAPE   =  0.012; // per-substep rigid rest pull after an external grab
+  var JELLO_RECOVER_SHAPE   =  0.022; // per-substep rigid rest pull after an external grab
   var JELLO_TERRAIN_EJECT   =  0.45;  // max rigid terrain-containment move, in spacings
 
   function jelloRecomputeMaterial() {
@@ -6155,6 +6155,26 @@
     return true;
   }
 
+  // Reject an invalid manipulation substep atomically. This is deliberately
+  // different from healing a bad pose after it becomes visible: every point
+  // returns to the legal start-of-substep snapshot, Verlet history follows it,
+  // and the demo's virtual grip rolls back to the same instant. The cursor may
+  // keep moving, but the grip stays parked at the obstacle until room exists.
+  function jelloRestoreResilienceSnapshot(b, reason) {
+    var sx = b._guardPX, sy = b._guardPY;
+    if (!sx) return false;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    for (var i = 0; i < b.n; i++) {
+      var dx = sx[i] - px[i], dy = sy[i] - py[i];
+      px[i] = sx[i]; py[i] = sy[i];
+      ox[i] += dx; oy[i] += dy;
+    }
+    b._guardRejects = (b._guardRejects | 0) + 1;
+    b._guardRejectReason = reason || '';
+    if (typeof jelloGrabRejectStep === 'function') jelloGrabRejectStep(b, reason);
+    return true;
+  }
+
   function jelloResilienceStepEnd(b) {
     var sx = b._guardPX, sy = b._guardPY;
     if (!sx) return;
@@ -6204,24 +6224,42 @@
     var c0 = Math.floor(minX / TILE), c1 = Math.floor(maxX / TILE);
     var r0 = Math.floor(minY / TILE), r1 = Math.floor(maxY / TILE);
     var bestD2 = 0, bestX = 0, bestY = 0, nearX = 0, nearY = 0;
+    var probes = [0.5, 0.25, 0.75];
     for (var r = r0; r <= r1; r++) {
       for (var c = c0; c <= c1; c++) {
         if (tileAt(r, c) === null) continue;
-        var sx = (c + 0.5) * TILE, sy = (r + 0.5) * TILE;
-        if (!jelloPointInRing(b, sx, sy)) continue;
-        var near = jelloNearestOnRing(b, sx, sy);
-        var ndx = sx - near.x, ndy = sy - near.y, d2 = ndx * ndx + ndy * ndy;
-        if (d2 > bestD2) {
-          bestD2 = d2; bestX = sx; bestY = sy; nearX = near.x; nearY = near.y;
+        // Centre plus four inset quadrant probes catch a ledge before its centre
+        // is deeply swallowed. Every probe is safely inside the solid tile, so
+        // ordinary surface contact cannot trip this test.
+        for (var pr = 0; pr < 5; pr++) {
+          var fx = pr === 0 ? probes[0] : probes[pr & 1 ? 1 : 2];
+          var fy = pr === 0 ? probes[0] : probes[pr <= 2 ? 1 : 2];
+          var sx = (c + fx) * TILE, sy = (r + fy) * TILE;
+          if (!jelloPointInRing(b, sx, sy)) continue;
+          var near = jelloNearestOnRing(b, sx, sy);
+          var ndx = sx - near.x, ndy = sy - near.y, d2 = ndx * ndx + ndy * ndy;
+          if (d2 > bestD2) {
+            bestD2 = d2; bestX = sx; bestY = sy; nearX = near.x; nearY = near.y;
+          }
         }
       }
     }
     if (!(bestD2 > 1e-8)) { b._terrainInside = 0; return 0; }
-    var dx = cx - bestX, dy = cy - bestY;
+    // While held, containment is a failed input, not a state to repair. Roll
+    // back before this substep can be rendered. Recovery retains a continuous
+    // rigid eject for legacy poses that predate the guard.
+    if (b._grabbed && jelloRestoreResilienceSnapshot(b, 'terrain')) {
+      b._terrainInside = 0;
+      b._terrainRejects = (b._terrainRejects | 0) + 1;
+      return 2;
+    }
+    // Move the nearest boundary toward and past the enclosed solid sample. The
+    // old centroid-away direction could aim into a second wall, get swept back,
+    // and make progress only when shape recovery changed the centroid later.
+    var dx = bestX - nearX, dy = bestY - nearY;
     var dl = Math.sqrt(dx * dx + dy * dy);
     if (!(dl > 1e-6)) {
-      // Centred exactly on the obstacle: take the shortest ring exit.
-      dx = bestX - nearX; dy = bestY - nearY;
+      dx = cx - bestX; dy = cy - bestY;
       dl = Math.sqrt(dx * dx + dy * dy);
       if (!(dl > 1e-6)) { dx = 0; dy = -1; dl = 1; }
     }
@@ -6236,6 +6274,80 @@
     b._terrainInside = 1;
     b._terrainEjects = (b._terrainEjects | 0) + 1;
     return 1;
+  }
+
+  function jelloHasOrientationFold(b) {
+    if (!b.triHealthOnly || !(b.triN > 0)) return false;
+    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    for (var t = 0; t < b.triN; t++) {
+      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
+      var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
+      var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
+      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      if ((e1x * e2y - e1y * e2x) * detInv < JELLO_ORIENT_MIN) return true;
+    }
+    return false;
+  }
+
+  function jelloSegmentsCrossProper(ax, ay, bx, by, cx, cy, dx, dy) {
+    if (Math.max(ax, bx) <= Math.min(cx, dx) || Math.max(cx, dx) <= Math.min(ax, bx) ||
+        Math.max(ay, by) <= Math.min(cy, dy) || Math.max(cy, dy) <= Math.min(ay, by)) return false;
+    var abC = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    var abD = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
+    var cdA = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx);
+    var cdB = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
+    var eps = 1e-5;
+    return ((abC > eps && abD < -eps) || (abC < -eps && abD > eps)) &&
+           ((cdA > eps && cdB < -eps) || (cdA < -eps && cdB > eps));
+  }
+
+  // Point containment misses the exact failure created by a hard drag: two
+  // polygon edges can cross while every sampled boundary point remains outside
+  // the other body. Test proper edge crossings after the normal contact pass.
+  // Touching and collinear edges are legal, only a true crossing rejects input.
+  function jelloRingsCrossProper(A, B) {
+    if (!(A.ringN >= 3 && B.ringN >= 3)) return false;
+    jelloRingBBox(A); jelloRingBBox(B);
+    if (A._cbR <= B._cbL || A._cbL >= B._cbR || A._cbB <= B._cbT || A._cbT >= B._cbB) return false;
+    var ar = A.ring, br = B.ring, apx = A.px, apy = A.py, bpx = B.px, bpy = B.py;
+    for (var ai = 0; ai < A.ringN; ai++) {
+      var ai0 = ar[ai], ai1 = ar[(ai + 1) % A.ringN];
+      var ax = apx[ai0], ay = apy[ai0], bx = apx[ai1], by = apy[ai1];
+      for (var bi = 0; bi < B.ringN; bi++) {
+        var bi0 = br[bi], bi1 = br[(bi + 1) % B.ringN];
+        if (jelloSegmentsCrossProper(ax, ay, bx, by,
+                                     bpx[bi0], bpy[bi0], bpx[bi1], bpy[bi1])) return true;
+      }
+    }
+    return false;
+  }
+
+  function jelloCentroidInsideDeep(A, B) {
+    var cx = 0, cy = 0;
+    for (var i = 0; i < A.n; i++) { cx += A.px[i]; cy += A.py[i]; }
+    cx /= A.n; cy /= A.n;
+    if (!jelloPointInRing(B, cx, cy)) return false;
+    var near = jelloNearestOnRing(B, cx, cy);
+    var dx = near.x - cx, dy = near.y - cy;
+    return dx * dx + dy * dy > 16;   // same 4px deep-merge margin as jelloUnmergeBodies
+  }
+
+  // Runs after global slime contact and ring containment. Those constraints
+  // used to be able to fold a body after its own resilience guard had already
+  // finished. A bad direct-manipulation substep is now rejected before render,
+  // then the ordinary contact solve gets one clean pose to push against.
+  function jelloRejectGrabAfterContact(b, active, nActive) {
+    if (!b._grabbed || !b._guardPX) return false;
+    if (jelloHasOrientationFold(b)) return jelloRestoreResilienceSnapshot(b, 'topology');
+    for (var i = 0; i < nActive; i++) {
+      var other = active[i];
+      if (other === b || other._melting) continue;
+      if (jelloRingsCrossProper(b, other) ||
+          jelloCentroidInsideDeep(b, other) || jelloCentroidInsideDeep(other, b)) {
+        return jelloRestoreResilienceSnapshot(b, 'slime');
+      }
+    }
+    return false;
   }
   // ----- Shade fit: best-fit rotation + area-preserved linear transform, standalone ----
   // The same math as jelloShapeMatch's fit, minus the point pulls. Only runs when the
@@ -6594,8 +6706,11 @@
     // BRIEF pinch (a hard crush can sliver a corner for a few frames), then engage on
     // anything that PERSISTS, regardless of how few tris (the old `inv > 3` count gate
     // let a stuck 1-3-tri fold ride forever = the owner's frozen cone).
+    var directGuard = !!(b._grabbed || b._recoverT > 0);
+    var healGrace = directGuard ? 0 : JELLO_HEAL_GRACE;
+    var healRamp = directGuard ? 3 : JELLO_HEAL_RAMP;
     b._invFrames = (b._invFrames | 0) + 1;
-    if (b._invFrames <= JELLO_HEAL_GRACE) { b._invHard = false; return; }
+    if (b._invFrames <= healGrace) { b._invHard = false; return; }
     b._invHard = true;
     // UNFOLD: a strong pull toward the RIGIDLY-ROTATED rest pose. The polar
     // rotation has det +1 by construction, so this is a globally COHERENT unfold
@@ -6609,7 +6724,7 @@
     // lingers — while a body that only just dipped a corner negative (sev tiny, dur
     // ~0) still gets a whisper, never a force-square of healthy squash.
     var sev = (inv / nT) / 0.15; if (sev > 1) sev = 1;
-    var dur = (b._invFrames - JELLO_HEAL_GRACE) / JELLO_HEAL_RAMP; if (dur > 1) dur = 1;
+    var dur = (b._invFrames - healGrace) / healRamp; if (dur > 1) dur = 1;
     var _hb = JELLO_SHAPE_BETA;
     JELLO_SHAPE_BETA = 0;
     // VELOCITY-FREE since v25.18: the unfold used to move px only, so the whole
@@ -6622,6 +6737,7 @@
     // unfold purely positional: same per-frame correction, zero injected energy.
     jelloContactAlloc();
     var hpull = JELLO_HEAL_PULL * (sev > dur ? sev : dur);
+    if (directGuard && hpull < JELLO_HEAL_PULL) hpull = JELLO_HEAL_PULL;
     // STUCK-FOLD SNAP (v25.18): a velocity-free pull can be resisted FOREVER by the
     // fold-stable distance constraints — the limit cycle (pull in, springs pull
     // back) kept folded cubes visibly wiggling and locked awake (_invHard blocks
@@ -6632,7 +6748,7 @@
     // substep's world collide resolves any wall overlap the snap leaves. Still
     // velocity-free, so it adds no energy, and the clock re-arms so it can only
     // fire once per failed second.
-    if (b._invFrames > JELLO_HEAL_GRACE + JELLO_HEAL_RAMP + 60) {
+    if (!directGuard && b._invFrames > JELLO_HEAL_GRACE + JELLO_HEAL_RAMP + 60) {
       hpull = 1.0;
       b._invFrames = JELLO_HEAL_GRACE + 1;
       // ACCEPT a CONFINED fold after three failed snaps (v25.26): a body wedged
@@ -7290,6 +7406,21 @@
       if (JELLO_CONTACT && nActive > 1) jelloContactsThisFrame += jelloContactSolve(active, nActive, contactCell);
       if (devMode) { var _phT2 = performance.now(); _phContact += _phT2 - _phT0; _phT0 = _phT2; }
       jelloContainBodies(active, nActive);   // boundary-containment backstop (no ring ever inside another)
+      // Direct manipulation has a stricter contract than ordinary collision:
+      // the frame may never expose a crossed ring or mirrored cell and rely on
+      // the one-second emergency heal to clean it later. Contact is the final
+      // mover in the coupled solve, so validate the held body HERE and atomically
+      // discard the attempted grip step when contact made the pose illegal.
+      for (ai = 0; ai < nActive; ai++) {
+        b = active[ai];
+        if (b._solve && b._grabbed) {
+          // Contact can also press a legal ring around terrain after the body's
+          // internal terrain pass. That is the same failed-input case.
+          jelloRejectTerrainInside(b);
+          jelloResilienceStepEnd(b);
+          jelloRejectGrabAfterContact(b, active, nActive);
+        }
+      }
       // World re-collide AFTER contact + containment: those passes move points without
       // seeing tiles, so a pressed pile could park points inside a wall until the NEXT
       // substep (far-side pop-outs / welds). One cheap pass closes the gap.
@@ -8214,9 +8345,11 @@
   var grabBody = null;
   var grabIdx = null, grabOffX = null, grabOffY = null;
   var grabTargetX = 0, grabTargetY = 0, grabSolveX = 0, grabSolveY = 0;
-  var JELLO_GRAB_TARGET_STEP = 1.25;   // maximum handle travel, in lattice spacings per substep
-  var JELLO_GRAB_POINT_STEP = 0.65;    // maximum selected-point correction per substep
-  var JELLO_GRAB_STIFF = 0.38;
+  var grabPrevSolveX = 0, grabPrevSolveY = 0;
+  var JELLO_GRAB_TARGET_STEP = 0.55;   // maximum handle travel, in lattice spacings per substep
+  var JELLO_GRAB_POINT_STEP = 0.28;    // maximum selected-point correction per substep
+  var JELLO_GRAB_STIFF = 0.30;
+  var JELLO_GRAB_BODY_FOLLOW = 0.55;   // carry the mass with the grip instead of stretching only its skin
   var JELLO_GRAB_HISTORY = 0.90;       // retain a small, bounded release velocity
   var JELLO_GRAB_RECOVER = 1.35;       // seconds of gentle rest-shape recovery after release
   var grabClipX = 0, grabClipY = 0;
@@ -8283,6 +8416,7 @@
       grabIdx = idx; grabOffX = ox; grabOffY = oy;
       grabTargetX = grabSolveX = wx;
       grabTargetY = grabSolveY = wy;
+      grabPrevSolveX = wx; grabPrevSolveY = wy;
       b._grabbed = true;
       b._recoverT = 0;
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
@@ -8308,6 +8442,7 @@
   function jelloGrabSubstep(b, h) {
     if (b !== grabBody || !grabIdx || !grabIdx.length) return;
     var spacing = Math.max(1, b.spacing || 1);
+    grabPrevSolveX = grabSolveX; grabPrevSolveY = grabSolveY;
     var hdx = grabTargetX - grabSolveX, hdy = grabTargetY - grabSolveY;
     var hd = Math.sqrt(hdx * hdx + hdy * hdy);
     var handleCap = spacing * JELLO_GRAB_TARGET_STEP;
@@ -8323,6 +8458,20 @@
       nextX = grabClipX; nextY = grabClipY; b._grabBlocked = 1;
     } else b._grabBlocked = 0;
     grabSolveX = nextX; grabSolveY = nextY;
+    // A local particle-only grip can pull the skin through the core before the
+    // rest of a soft lattice catches up. Carry most of the handle displacement
+    // through every point first, then let the selected patch supply the soft
+    // local deformation. Collisions still squash the body, but input no longer
+    // creates a long, fold-prone tether.
+    var bodyDX = (grabSolveX - grabPrevSolveX) * JELLO_GRAB_BODY_FOLLOW;
+    var bodyDY = (grabSolveY - grabPrevSolveY) * JELLO_GRAB_BODY_FOLLOW;
+    if (bodyDX !== 0 || bodyDY !== 0) {
+      for (var bp = 0; bp < b.n; bp++) {
+        b.px[bp] += bodyDX; b.py[bp] += bodyDY;
+        b.ox[bp] += bodyDX * JELLO_GRAB_HISTORY;
+        b.oy[bp] += bodyDY * JELLO_GRAB_HISTORY;
+      }
+    }
     var pointCap = spacing * JELLO_GRAB_POINT_STEP;
     for (var i = 0; i < grabIdx.length; i++) {
       var pi = grabIdx[i];
@@ -8336,6 +8485,17 @@
     }
   }
 
+  // Called by the shared solver when terrain, a mirrored cell, or another
+  // slime made this manipulation substep illegal. The body has already been
+  // restored to its substep snapshot; roll the virtual grip back with it so the
+  // next solve presses against the contact instead of accumulating penetration.
+  function jelloGrabRejectStep(b, reason) {
+    if (b !== grabBody) return;
+    grabSolveX = grabPrevSolveX; grabSolveY = grabPrevSolveY;
+    b._grabBlocked = 1;
+    b._grabBlockReason = reason || '';
+  }
+
   function jelloGrabEnd() {
     var b = grabBody;
     if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
@@ -8345,6 +8505,7 @@
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     }
     grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null;
+    grabPrevSolveX = grabPrevSolveY = 0;
   }
 
   /* ---- Sleeping-droplet sweep -----------------------------------------
