@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.22';
+  var GAME_VERSION = 'v26.23';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -51370,6 +51370,7 @@
   var JELLO_ORIENT_TARGET   =  0.015; // small legal area restored by one projection
   var JELLO_ORIENT_MOVE     =  0.35;  // max correction per point, in lattice spacings
   var JELLO_RECOVER_SHAPE   =  0.012; // per-substep rigid rest pull after an external grab
+  var JELLO_TERRAIN_EJECT   =  0.45;  // max rigid terrain-containment move, in spacings
 
   function jelloRecomputeMaterial() {
     // Lever insurance: E <= 0 flips the XPBD compliances negative (constraint denominators
@@ -55162,6 +55163,7 @@
       jelloCollideRingEdges(b);
     }
     if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (resilienceGuard) jelloRejectTerrainInside(b);
     if (resilienceGuard) jelloResilienceStepEnd(b);
   }
   // ----- Internal (constraint-space) damping: per-edge relative-velocity bleed --------
@@ -55320,6 +55322,62 @@
       }
     }
     b._guardHits = hits;
+  }
+
+  // Particle collision alone cannot stop a tile from entering the empty space
+  // BETWEEN legal lattice points. A hard grab can then wrap the closed ring
+  // around a ledge: no point is in solid, yet the obstacle is inside the slime
+  // and the body hangs from it. During direct manipulation/recovery only, scan
+  // solid tile centres inside the live ring and move the WHOLE body away from
+  // the deepest one. The rigid, velocity-free shift preserves the deformation
+  // and cannot pump energy; the following swept-point guard keeps the escape
+  // path legal. Ordinary Sluice bodies never enter this path.
+  function jelloRejectTerrainInside(b) {
+    if (!b._grabbed && !(b._recoverT > 0)) return 0;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy, n = b.n;
+    var minX = 1e18, minY = 1e18, maxX = -1e18, maxY = -1e18, cx = 0, cy = 0;
+    for (var i = 0; i < n; i++) {
+      var x = px[i], y = py[i];
+      cx += x; cy += y;
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    cx /= n; cy /= n;
+    var c0 = Math.floor(minX / TILE), c1 = Math.floor(maxX / TILE);
+    var r0 = Math.floor(minY / TILE), r1 = Math.floor(maxY / TILE);
+    var bestD2 = 0, bestX = 0, bestY = 0, nearX = 0, nearY = 0;
+    for (var r = r0; r <= r1; r++) {
+      for (var c = c0; c <= c1; c++) {
+        if (tileAt(r, c) === null) continue;
+        var sx = (c + 0.5) * TILE, sy = (r + 0.5) * TILE;
+        if (!jelloPointInRing(b, sx, sy)) continue;
+        var near = jelloNearestOnRing(b, sx, sy);
+        var ndx = sx - near.x, ndy = sy - near.y, d2 = ndx * ndx + ndy * ndy;
+        if (d2 > bestD2) {
+          bestD2 = d2; bestX = sx; bestY = sy; nearX = near.x; nearY = near.y;
+        }
+      }
+    }
+    if (!(bestD2 > 1e-8)) { b._terrainInside = 0; return 0; }
+    var dx = cx - bestX, dy = cy - bestY;
+    var dl = Math.sqrt(dx * dx + dy * dy);
+    if (!(dl > 1e-6)) {
+      // Centred exactly on the obstacle: take the shortest ring exit.
+      dx = bestX - nearX; dy = bestY - nearY;
+      dl = Math.sqrt(dx * dx + dy * dy);
+      if (!(dl > 1e-6)) { dx = 0; dy = -1; dl = 1; }
+    }
+    var move = Math.sqrt(bestD2) + 0.5;
+    var cap = (b.spacing || (TILE / JELLO_NPT)) * JELLO_TERRAIN_EJECT;
+    if (move > cap) move = cap;
+    dx = dx / dl * move; dy = dy / dl * move;
+    for (i = 0; i < n; i++) {
+      px[i] += dx; py[i] += dy;
+      ox[i] += dx; oy[i] += dy;
+    }
+    b._terrainInside = 1;
+    b._terrainEjects = (b._terrainEjects | 0) + 1;
+    return 1;
   }
   // ----- Shade fit: best-fit rotation + area-preserved linear transform, standalone ----
   // The same math as jelloShapeMatch's fit, minus the point pulls. Only runs when the

@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.13';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.14';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2175,6 +2175,7 @@
   var JELLO_ORIENT_TARGET   =  0.015; // small legal area restored by one projection
   var JELLO_ORIENT_MOVE     =  0.35;  // max correction per point, in lattice spacings
   var JELLO_RECOVER_SHAPE   =  0.012; // per-substep rigid rest pull after an external grab
+  var JELLO_TERRAIN_EJECT   =  0.45;  // max rigid terrain-containment move, in spacings
 
   function jelloRecomputeMaterial() {
     // Lever insurance: E <= 0 flips the XPBD compliances negative (constraint denominators
@@ -5967,6 +5968,7 @@
       jelloCollideRingEdges(b);
     }
     if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (resilienceGuard) jelloRejectTerrainInside(b);
     if (resilienceGuard) jelloResilienceStepEnd(b);
   }
   // ----- Internal (constraint-space) damping: per-edge relative-velocity bleed --------
@@ -6125,6 +6127,62 @@
       }
     }
     b._guardHits = hits;
+  }
+
+  // Particle collision alone cannot stop a tile from entering the empty space
+  // BETWEEN legal lattice points. A hard grab can then wrap the closed ring
+  // around a ledge: no point is in solid, yet the obstacle is inside the slime
+  // and the body hangs from it. During direct manipulation/recovery only, scan
+  // solid tile centres inside the live ring and move the WHOLE body away from
+  // the deepest one. The rigid, velocity-free shift preserves the deformation
+  // and cannot pump energy; the following swept-point guard keeps the escape
+  // path legal. Ordinary Sluice bodies never enter this path.
+  function jelloRejectTerrainInside(b) {
+    if (!b._grabbed && !(b._recoverT > 0)) return 0;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy, n = b.n;
+    var minX = 1e18, minY = 1e18, maxX = -1e18, maxY = -1e18, cx = 0, cy = 0;
+    for (var i = 0; i < n; i++) {
+      var x = px[i], y = py[i];
+      cx += x; cy += y;
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    cx /= n; cy /= n;
+    var c0 = Math.floor(minX / TILE), c1 = Math.floor(maxX / TILE);
+    var r0 = Math.floor(minY / TILE), r1 = Math.floor(maxY / TILE);
+    var bestD2 = 0, bestX = 0, bestY = 0, nearX = 0, nearY = 0;
+    for (var r = r0; r <= r1; r++) {
+      for (var c = c0; c <= c1; c++) {
+        if (tileAt(r, c) === null) continue;
+        var sx = (c + 0.5) * TILE, sy = (r + 0.5) * TILE;
+        if (!jelloPointInRing(b, sx, sy)) continue;
+        var near = jelloNearestOnRing(b, sx, sy);
+        var ndx = sx - near.x, ndy = sy - near.y, d2 = ndx * ndx + ndy * ndy;
+        if (d2 > bestD2) {
+          bestD2 = d2; bestX = sx; bestY = sy; nearX = near.x; nearY = near.y;
+        }
+      }
+    }
+    if (!(bestD2 > 1e-8)) { b._terrainInside = 0; return 0; }
+    var dx = cx - bestX, dy = cy - bestY;
+    var dl = Math.sqrt(dx * dx + dy * dy);
+    if (!(dl > 1e-6)) {
+      // Centred exactly on the obstacle: take the shortest ring exit.
+      dx = bestX - nearX; dy = bestY - nearY;
+      dl = Math.sqrt(dx * dx + dy * dy);
+      if (!(dl > 1e-6)) { dx = 0; dy = -1; dl = 1; }
+    }
+    var move = Math.sqrt(bestD2) + 0.5;
+    var cap = (b.spacing || (TILE / JELLO_NPT)) * JELLO_TERRAIN_EJECT;
+    if (move > cap) move = cap;
+    dx = dx / dl * move; dy = dy / dl * move;
+    for (i = 0; i < n; i++) {
+      px[i] += dx; py[i] += dy;
+      ox[i] += dx; oy[i] += dy;
+    }
+    b._terrainInside = 1;
+    b._terrainEjects = (b._terrainEjects | 0) + 1;
+    return 1;
   }
   // ----- Shade fit: best-fit rotation + area-preserved linear transform, standalone ----
   // The same math as jelloShapeMatch's fit, minus the point pulls. Only runs when the
@@ -8108,9 +8166,29 @@
   var JELLO_GRAB_STIFF = 0.38;
   var JELLO_GRAB_HISTORY = 0.90;       // retain a small, bounded release velocity
   var JELLO_GRAB_RECOVER = 1.35;       // seconds of gentle rest-shape recovery after release
+  var grabClipX = 0, grabClipY = 0;
+
+  // Clip a virtual grip segment against terrain, writing the last legal point
+  // to grabClipX/Y. The grip is a straight connection through open space: it
+  // cannot reach through a wall or bend around a ledge while the cursor is on
+  // the far side. The same probe filters selected particles at grab start.
+  function jelloGrabClipPath(x0, y0, x1, y1, spacing) {
+    grabClipX = x0; grabClipY = y0;
+    var dx = x1 - x0, dy = y1 - y0, d = Math.sqrt(dx * dx + dy * dy);
+    if (!(d > 1e-8)) return false;
+    var stride = Math.min(1, Math.max(0.35, (spacing || JELLO_DISC_PITCH) * 0.25));
+    var steps = Math.ceil(d / stride);
+    for (var q = 1; q <= steps; q++) {
+      var f = q / steps, x = x0 + dx * f, y = y0 + dy * f;
+      if (jelloWorldSolidAt(x, y)) return true;
+      grabClipX = x; grabClipY = y;
+    }
+    return false;
+  }
 
   function jelloGrabStart(wx, wy) {
     jelloGrabEnd();
+    if (jelloWorldSolidAt(wx, wy)) return false;
     for (var bi = jelloBodies.length - 1; bi >= 0; bi--) {
       var b = jelloBodies[bi];
       var pad = 18;
@@ -8131,7 +8209,8 @@
       var idx = [], ox = [], oy = [];
       for (var pi = 0; pi < b.n; pi++) {
         var ddx = b.px[pi] - wx, ddy = b.py[pi] - wy;
-        if (ddx * ddx + ddy * ddy <= R * R) {
+        if (ddx * ddx + ddy * ddy <= R * R &&
+            !jelloGrabClipPath(wx, wy, b.px[pi], b.py[pi], b.spacing)) {
           idx.push(pi); ox.push(ddx); oy.push(ddy);
         }
       }
@@ -8140,8 +8219,11 @@
         for (var pj = 0; pj < b.n; pj++) {
           var ex = b.px[pj] - wx, ey = b.py[pj] - wy;
           var e2 = ex * ex + ey * ey;
-          if (e2 < bd) { bd = e2; bi2 = pj; }
+          if (e2 < bd && !jelloGrabClipPath(wx, wy, b.px[pj], b.py[pj], b.spacing)) {
+            bd = e2; bi2 = pj;
+          }
         }
+        if (!(bd < 1e9)) continue;
         idx.push(bi2); ox.push(b.px[bi2] - wx); oy.push(b.py[bi2] - wy);
       }
       grabBody = b;
@@ -8176,13 +8258,18 @@
     var hdx = grabTargetX - grabSolveX, hdy = grabTargetY - grabSolveY;
     var hd = Math.sqrt(hdx * hdx + hdy * hdy);
     var handleCap = spacing * JELLO_GRAB_TARGET_STEP;
+    var nextX, nextY;
     if (hd > handleCap && hd > 1e-9) {
-      grabSolveX += hdx * handleCap / hd;
-      grabSolveY += hdy * handleCap / hd;
+      nextX = grabSolveX + hdx * handleCap / hd;
+      nextY = grabSolveY + hdy * handleCap / hd;
     } else {
-      grabSolveX = grabTargetX;
-      grabSolveY = grabTargetY;
+      nextX = grabTargetX;
+      nextY = grabTargetY;
     }
+    if (jelloGrabClipPath(grabSolveX, grabSolveY, nextX, nextY, spacing)) {
+      nextX = grabClipX; nextY = grabClipY; b._grabBlocked = 1;
+    } else b._grabBlocked = 0;
+    grabSolveX = nextX; grabSolveY = nextY;
     var pointCap = spacing * JELLO_GRAB_POINT_STEP;
     for (var i = 0; i < grabIdx.length; i++) {
       var pi = grabIdx[i];
@@ -8200,6 +8287,7 @@
     var b = grabBody;
     if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
       b._grabbed = false;
+      b._grabBlocked = 0;
       b._recoverT = Math.max(b._recoverT || 0, JELLO_GRAB_RECOVER);
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     }
