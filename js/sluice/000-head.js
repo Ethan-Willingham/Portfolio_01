@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.13';
+  var GAME_VERSION = 'v26.14';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -146,4 +146,3 @@
   // slimes are the cushion). Landing ON a slime fully negates the hull damage (see 080). Flip
   // the gm lever 'jello.FALL_IMPACT_FX' (top of the L panel) to mute it for physics testing.
   var FALL_IMPACT_FX = true;
-

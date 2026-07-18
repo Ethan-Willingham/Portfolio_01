@@ -4105,6 +4105,149 @@ const PLAYER_H      : f32 = ${LIQUID_PLAYER_H};
 const CELL : f32 = ${LIQUID_CELL_DEFAULT};
 `;
 
+  /* Shared guest geometry for the grid wake and particle collision. The
+   * previous kernels each walked guests inline and therefore let array order
+   * become physics when rings touched. These helpers make containment and
+   * candidate tie-breaking identical in both stages. */
+  var WGSL_GUEST_GEOMETRY = /* wgsl */ `
+fn guestContainsPoint(gi : i32, px : f32, py : f32) -> bool {
+  let gA = gameP.guests[gi * 2];
+  let gB = gameP.guests[gi * 2 + 1];
+  if (gB.x < 0.5) { return false; }
+  if (abs(px - gA.x) > gA.z + 4.0 || abs(py - gA.y) > gA.w + 4.0) {
+    return false;
+  }
+  let gn = i32(gB.y);
+  let gBase = gi * ${GS_RING};
+  var inside = false;
+  var gj = gn - 1;
+  for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
+    let pa = gameP.guestPts[gBase + gk];
+    let pb = gameP.guestPts[gBase + gj];
+    if (((pa.y > py) != (pb.y > py)) &&
+        (px < (pb.x - pa.x) * (py - pa.y) / (pb.y - pa.y) + pa.x)) {
+      inside = !inside;
+    }
+    gj = gk;
+  }
+  return inside;
+}
+
+fn guestAnyContainsPoint(px : f32, py : f32) -> bool {
+  for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
+    if (guestContainsPoint(gi, px, py)) { return true; }
+  }
+  return false;
+}
+
+// A geometry-first lexicographic tie-break makes an exact or symmetric
+// overlap choose the same exterior face under every guest-slot permutation.
+fn guestCandidateWins(d2 : f32, qx : f32, qy : f32,
+                      fvx : f32, fvy : f32,
+                      bestD2 : f32, bestQX : f32, bestQY : f32,
+                      bestFVX : f32, bestFVY : f32) -> bool {
+  let eps = 0.0001;
+  if (d2 < bestD2 - eps) { return true; }
+  if (abs(d2 - bestD2) > eps) { return false; }
+  if (qx < bestQX - eps) { return true; }
+  if (abs(qx - bestQX) > eps) { return false; }
+  if (qy < bestQY - eps) { return true; }
+  if (abs(qy - bestQY) > eps) { return false; }
+  if (fvx < bestFVX - eps) { return true; }
+  if (abs(fvx - bestFVX) > eps) { return false; }
+  return fvy < bestFVY - eps;
+}
+`;
+
+  // CPU reference for the overlap invariant. This is intentionally small and
+  // independent of the live arrays: three intersecting 20-gons are projected
+  // under every slot permutation. It catches a return to sequential/last-slot
+  // semantics before the GPU path is allowed to call itself healthy in logs.
+  function runGuestUnionOrderRegression() {
+    function contains(g, x, y) {
+      var inside = false;
+      var j = g.length - 1;
+      for (var i = 0; i < g.length; i++) {
+        var a = g[i], b = g[j];
+        if (((a[1] > y) !== (b[1] > y)) &&
+            x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) {
+          inside = !inside;
+        }
+        j = i;
+      }
+      return inside;
+    }
+    function anyContains(gs, x, y) {
+      for (var i = 0; i < gs.length; i++) if (contains(gs[i], x, y)) return true;
+      return false;
+    }
+    function wins(c, b) {
+      if (!b) return true;
+      var eps = 0.0001;
+      var keys = ['d2', 'qx', 'qy', 'vx', 'vy'];
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (c[k] < b[k] - eps) return true;
+        if (Math.abs(c[k] - b[k]) > eps) return false;
+      }
+      return false;
+    }
+    function project(gs, x, y) {
+      var best = null;
+      for (var gi = 0; gi < gs.length; gi++) {
+        var g = gs[gi];
+        if (!contains(g, x, y)) continue;
+        var j = g.length - 1;
+        for (var i = 0; i < g.length; i++) {
+          var a = g[i], b = g[j];
+          j = i;
+          var ex = b[0] - a[0], ey = b[1] - a[1];
+          var el2 = Math.max(ex * ex + ey * ey, 1e-6);
+          var et = Math.max(0, Math.min(1,
+            ((x - a[0]) * ex + (y - a[1]) * ey) / el2));
+          var qx = a[0] + ex * et, qy = a[1] + ey * et;
+          var dx = qx - x, dy = qy - y, d2 = dx * dx + dy * dy;
+          if (d2 < 1e-6) continue;
+          var dl = Math.sqrt(d2);
+          var tx = qx + dx / dl * 0.5, ty = qy + dy / dl * 0.5;
+          if (anyContains(gs, tx, ty)) continue;
+          var c = {
+            d2: d2, qx: qx, qy: qy,
+            vx: a[2] + (b[2] - a[2]) * et,
+            vy: a[3] + (b[3] - a[3]) * et,
+            tx: tx, ty: ty
+          };
+          if (wins(c, best)) best = c;
+        }
+      }
+      return best;
+    }
+    function ring(cx, cy, r, vx, vy) {
+      var out = [];
+      for (var i = 0; i < GS_RING; i++) {
+        var a = Math.PI * 2 * i / GS_RING;
+        out.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r, vx, vy]);
+      }
+      return out;
+    }
+    var base = [ring(-10, 0, 22, -4, 1), ring(10, 0, 22, 3, -2),
+                ring(0, 12, 22, 1, 2)];
+    var orders = [[0, 1, 2], [0, 2, 1], [1, 0, 2],
+                  [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+    var ref = null;
+    for (var p = 0; p < orders.length; p++) {
+      var gs = [base[orders[p][0]], base[orders[p][1]], base[orders[p][2]]];
+      var got = project(gs, 0, 0);
+      if (!got || anyContains(gs, got.tx, got.ty)) return false;
+      if (!ref) ref = got;
+      else if (Math.abs(got.tx - ref.tx) > 1e-6 ||
+               Math.abs(got.ty - ref.ty) > 1e-6 ||
+               Math.abs(got.vx - ref.vx) > 1e-6 ||
+               Math.abs(got.vy - ref.vy) > 1e-6) return false;
+    }
+    return true;
+  }
+
   /* ---- v14.26 — live-tunable sim physics uniform ---------------------
    * The fluid-feel physics constants used to be string-baked into the
    * compute kernels as WGSL `const`s (interpolated at module load), so a
@@ -4296,42 +4439,28 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
     }
   }
 
-  // --- guest wake (v26.05) — bath guests are EXACT moving boundaries ---
-  // A cell inside a guest's deforming ring is pinned to the LOCAL surface
-  // velocity of the nearest ring edge (lerped between its two vertices),
-  // plus a depth-scaled outward decompression. That is the textbook
-  // kinematic no-slip boundary: a plunging face drives its cells at
-  // plunge speed (the crown erupts by continuity), a trailing face drags,
-  // a rotating or squishing body transfers its true local motion, and a
-  // still soaker is rigid, shedding real ripples when it bobs. Nothing
-  // about a splash is authored: the v26.04 box (whose oversized eject
-  // evacuated water past the visible edge) is gone.
+  // --- guest wake (v26.14): touching rings form one solid union. ---
+  // First find the nearest face of each ring that contains this cell. If
+  // that face exits into another guest, search every edge of the containing
+  // rings and choose the closest point on the UNION exterior. The old loop
+  // assigned cell velocity once per guest, so the last slot won and changing
+  // host order periodically inverted the constraint. This block writes one
+  // order-independent boundary condition exactly once.
+  var guestInsideCount : i32 = 0;
+  var bestD2 : f32 = 1e9;
+  var bestPX : f32 = wx; var bestPY : f32 = wy;
+  var bestVX : f32 = 0.0; var bestVY : f32 = 0.0;
+  var bestGI : i32 = -1;
   for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
-    let gA = gameP.guests[gi * 2];
+    if (!guestContainsPoint(gi, wx, wy)) { continue; }
+    guestInsideCount = guestInsideCount + 1;
     let gB = gameP.guests[gi * 2 + 1];
-    if (gB.x < 0.5) { continue; }
-    if (abs(wx - gA.x) > gA.z + 4.0 || abs(wy - gA.y) > gA.w + 4.0) { continue; }
     let gn = i32(gB.y);
     let gBase = gi * ${GS_RING};
-    // Point-in-ring (crossing test over the true silhouette).
-    var ginside = false;
     var gj = gn - 1;
-    for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
-      let pa = gameP.guestPts[gBase + gk];
-      let pb = gameP.guestPts[gBase + gj];
-      if (((pa.y > wy) != (pb.y > wy)) &&
-          (wx < (pb.x - pa.x) * (wy - pa.y) / (pb.y - pa.y) + pa.x)) {
-        ginside = !ginside;
-      }
-      gj = gk;
-    }
-    if (!ginside) { continue; }
-    // Nearest ring edge: outward direction (inside point -> closest edge
-    // point), depth, and the LOCAL surface velocity at that spot.
-    var bestD2 : f32 = 1e9;
-    var bestPX : f32 = wx; var bestPY : f32 = wy;
-    var bestVX : f32 = 0.0; var bestVY : f32 = 0.0;
-    gj = gn - 1;
+    var ringD2 : f32 = 1e9;
+    var ringPX : f32 = wx; var ringPY : f32 = wy;
+    var ringVX : f32 = 0.0; var ringVY : f32 = 0.0;
     for (var ge : i32 = 0; ge < gn; ge = ge + 1) {
       let pa = gameP.guestPts[gBase + ge];
       let pb = gameP.guestPts[gBase + gj];
@@ -4341,39 +4470,102 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       let et = clamp(((wx - pa.x) * ex + (wy - pa.y) * ey) / el2, 0.0, 1.0);
       let qx = pa.x + ex * et;
       let qy = pa.y + ey * et;
+      let fvx = pa.z + (pb.z - pa.z) * et;
+      let fvy = pa.w + (pb.w - pa.w) * et;
       let dq2 = (wx - qx) * (wx - qx) + (wy - qy) * (wy - qy);
-      if (dq2 < bestD2) {
-        bestD2 = dq2;
-        bestPX = qx; bestPY = qy;
-        bestVX = pa.z + (pb.z - pa.z) * et;
-        bestVY = pa.w + (pb.w - pa.w) * et;
+      if (guestCandidateWins(dq2, qx, qy, fvx, fvy,
+                             ringD2, ringPX, ringPY, ringVX, ringVY)) {
+        ringD2 = dq2;
+        ringPX = qx; ringPY = qy;
+        ringVX = fvx; ringVY = fvy;
       }
       gj = ge;
     }
+    if (guestCandidateWins(ringD2, ringPX, ringPY, ringVX, ringVY,
+                           bestD2, bestPX, bestPY, bestVX, bestVY)) {
+      bestD2 = ringD2;
+      bestPX = ringPX; bestPY = ringPY;
+      bestVX = ringVX; bestVY = ringVY;
+      bestGI = gi;
+    }
+  }
+
+  var needGuestUnion = guestInsideCount > 1;
+  if (bestGI >= 0 && bestD2 > 1e-6) {
+    let preDep = sqrt(bestD2);
+    let preNX = (bestPX - wx) / preDep;
+    let preNY = (bestPY - wy) / preDep;
+    if (guestAnyContainsPoint(bestPX + preNX * 0.5,
+                              bestPY + preNY * 0.5)) {
+      needGuestUnion = true;
+    }
+  }
+
+  if (needGuestUnion) {
+    var unionD2 : f32 = 1e9;
+    var unionPX : f32 = wx; var unionPY : f32 = wy;
+    var unionVX : f32 = 0.0; var unionVY : f32 = 0.0;
+    var unionGI : i32 = -1;
+    for (var ui : i32 = 0; ui < ${GS_MAX_GUESTS}; ui = ui + 1) {
+      if (!guestContainsPoint(ui, wx, wy)) { continue; }
+      let uB = gameP.guests[ui * 2 + 1];
+      let un = i32(uB.y);
+      let uBase = ui * ${GS_RING};
+      var uj = un - 1;
+      for (var ue : i32 = 0; ue < un; ue = ue + 1) {
+        let pa = gameP.guestPts[uBase + ue];
+        let pb = gameP.guestPts[uBase + uj];
+        uj = ue;
+        let ex = pb.x - pa.x;
+        let ey = pb.y - pa.y;
+        let el2 = max(ex * ex + ey * ey, 1e-6);
+        let et = clamp(((wx - pa.x) * ex + (wy - pa.y) * ey) / el2, 0.0, 1.0);
+        let qx = pa.x + ex * et;
+        let qy = pa.y + ey * et;
+        let ddx = qx - wx;
+        let ddy = qy - wy;
+        let dq2 = ddx * ddx + ddy * ddy;
+        if (dq2 < 1e-6) { continue; }
+        let dl = sqrt(dq2);
+        let nx = ddx / dl;
+        let ny = ddy / dl;
+        // Reject a face hidden inside any other slime. Only an exterior
+        // sample can define the union boundary.
+        if (guestAnyContainsPoint(qx + nx * 0.5, qy + ny * 0.5)) { continue; }
+        let fvx = pa.z + (pb.z - pa.z) * et;
+        let fvy = pa.w + (pb.w - pa.w) * et;
+        if (guestCandidateWins(dq2, qx, qy, fvx, fvy,
+                               unionD2, unionPX, unionPY, unionVX, unionVY)) {
+          unionD2 = dq2;
+          unionPX = qx; unionPY = qy;
+          unionVX = fvx; unionVY = fvy;
+          unionGI = ui;
+        }
+      }
+    }
+    // A valid union exterior should always exist for a finite collection of
+    // closed rings. Keep the deterministic nearest-ring fallback if corrupt
+    // geometry defeats the search so the cell still receives a safe bound.
+    if (unionGI >= 0) {
+      bestD2 = unionD2;
+      bestPX = unionPX; bestPY = unionPY;
+      bestVX = unionVX; bestVY = unionVY;
+      bestGI = unionGI;
+    }
+  }
+
+  if (bestGI >= 0) {
+    let gA = gameP.guests[bestGI * 2];
+    let gB = gameP.guests[bestGI * 2 + 1];
     let gdep = sqrt(bestD2);
     var gox : f32 = 0.0; var goy : f32 = -1.0;
     if (gdep > 0.001) {
       gox = (bestPX - wx) / gdep;
       goy = (bestPY - wy) / gdep;
     }
-    // v26.10 — MOTION-AWARE eviction. gB.zw carries the guest's mean
-    // velocity (zero for the banya until its driver packs it; everything
-    // below is then inert and the v26.05 behavior is byte-identical).
-    // A fast body used to evict overlapped water toward the NEAREST edge
-    // regardless of travel: on water entry the side films snapped shut
-    // over the crown, so drops teleported ABOVE a plunging ball on the
-    // first contact frame. Real entry displacement is lateral sheet
-    // jets, so: cells overlapped on the LEADING side pick up sideways
-    // velocity scaled by body speed, and eviction pointing out the
-    // TRAILING side (the crown) is redirected sideways instead.
-    // v26.11 — the authored "lateral sheet jet" is GONE. The collide
-    // kernel now sweeps particles out of the silhouette (impermeable
-    // moving boundary), so entry displacement comes from the pinned
-    // face velocity + continuity alone, like every other splash in the
-    // sim. Only the direction correction survives: while the body moves
-    // fast, eviction pointing out the TRAILING side (the crown) is
-    // redirected laterally so decompression cannot lift water over a
-    // plunging body.
+    // Motion-aware eviction survives as a direction correction only. While
+    // a guest moves fast, a trailing/crown exit becomes lateral so the
+    // decompression term cannot lift water over a plunging body.
     let gmvx = gB.z;
     let gmvy = gB.w;
     let gspd = sqrt(gmvx * gmvx + gmvy * gmvy);
@@ -4385,16 +4577,12 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
       let sideD = (wx - gA.x) * latx + (wy - gA.y) * laty;
       if (sideD < 0.0) { latx = -latx; laty = -laty; }
       if (gox * mvnx + goy * mvny < -0.35) {
-        gox = latx;                     // crown eviction becomes lateral
+        gox = latx;
         goy = laty;
       }
     }
-    // Grid velocity is displacement in CELLS PER SUBSTEP. Guest face
-    // velocities and GUEST_PUSH are world px/s, just like the player,
-    // rocket and explosion inputs below, so they must cross the same unit
-    // boundary. v26.05 assigned px/s directly here: at 120 Hz and CELL=2.5
-    // that amplified a fast face by 300x and teleported particles before
-    // G2P's old post-advection speed cap could see them.
+    // Cell velocity is displacement in grid cells per fixed substep; face
+    // velocity and decompression are world px/s.
     let guestToGrid = stepDt / CELL;
     cellVelX[c] = (bestVX + gox * min(gdep, 10.0) * GUEST_PUSH) * guestToGrid;
     cellVelY[c] = (bestVY + goy * min(gdep, 10.0) * GUEST_PUSH) * guestToGrid;
@@ -5645,40 +5833,27 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let terrainVX = vx; let terrainVY = vy;
   var guestProjected = false;
 
-  // --- guest sweep (v26.11) — guests are IMPERMEABLE moving boundaries.
-  // Any particle inside a ring is projected OUT to the nearest surface
-  // point and its velocity clamped so it never approaches the face
-  // (tangential slip stays). That is the piston a moving solid owes the
-  // fluid: freshly swept particles sit nearest the LEADING face and get
-  // carried ahead of it; droplets landing on a crown stay outside and
-  // simply rest. Nothing about a splash is authored here — continuity
-  // routes the displaced volume around the body. The projection refuses
-  // to enter terrain or the miner (squeeze case: a slime on the floor);
-  // velocity still clamps so the pocket drains through GUEST_PUSH cells.
+  // --- guest sweep (v26.14): collide against the UNION exterior. ---
+  // Collect the nearest face from every ring containing this particle, then
+  // validate that its projected point is outside every active guest. If the
+  // nearest face is hidden inside a touching neighbour, search all candidate
+  // edges and choose the shortest terrain-clear route to the union exterior.
+  // One projection and one velocity constraint are applied, so guest array
+  // order cannot change the result.
+  var guestInsideCount : i32 = 0;
+  var gD2 : f32 = 1e9;
+  var gPX : f32 = x; var gPY : f32 = y;
+  var gFVX : f32 = 0.0; var gFVY : f32 = 0.0;
   for (var gi : i32 = 0; gi < ${GS_MAX_GUESTS}; gi = gi + 1) {
-    let gA = gameP.guests[gi * 2];
+    if (!guestContainsPoint(gi, x, y)) { continue; }
+    guestInsideCount = guestInsideCount + 1;
     let gB = gameP.guests[gi * 2 + 1];
-    if (gB.x < 0.5) { continue; }
-    if (abs(x - gA.x) > gA.z + 2.0 || abs(y - gA.y) > gA.w + 2.0) { continue; }
     let gn = i32(gB.y);
     let gBase = gi * ${GS_RING};
-    var ginside = false;
     var gj = gn - 1;
-    for (var gk : i32 = 0; gk < gn; gk = gk + 1) {
-      let pa = gameP.guestPts[gBase + gk];
-      let pb = gameP.guestPts[gBase + gj];
-      if (((pa.y > y) != (pb.y > y)) &&
-          (x < (pb.x - pa.x) * (y - pa.y) / (pb.y - pa.y) + pa.x)) {
-        ginside = !ginside;
-      }
-      gj = gk;
-    }
-    if (!ginside) { continue; }
-    // Nearest surface point + the local face velocity lerped on that edge.
-    var gD2 : f32 = 1e9;
-    var gPX : f32 = x; var gPY : f32 = y;
-    var gFVX : f32 = 0.0; var gFVY : f32 = 0.0;
-    gj = gn - 1;
+    var ringD2 : f32 = 1e9;
+    var ringPX : f32 = x; var ringPY : f32 = y;
+    var ringFVX : f32 = 0.0; var ringFVY : f32 = 0.0;
     for (var ge : i32 = 0; ge < gn; ge = ge + 1) {
       let pa = gameP.guestPts[gBase + ge];
       let pb = gameP.guestPts[gBase + gj];
@@ -5688,86 +5863,157 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       let et = clamp(((x - pa.x) * ex + (y - pa.y) * ey) / el2, 0.0, 1.0);
       let qx = pa.x + ex * et;
       let qy = pa.y + ey * et;
+      let fvx = pa.z + (pb.z - pa.z) * et;
+      let fvy = pa.w + (pb.w - pa.w) * et;
       let dq2 = (x - qx) * (x - qx) + (y - qy) * (y - qy);
-      if (dq2 < gD2) {
-        gD2 = dq2;
-        gPX = qx; gPY = qy;
-        gFVX = pa.z + (pb.z - pa.z) * et;
-        gFVY = pa.w + (pb.w - pa.w) * et;
+      if (guestCandidateWins(dq2, qx, qy, fvx, fvy,
+                             ringD2, ringPX, ringPY, ringFVX, ringFVY)) {
+        ringD2 = dq2;
+        ringPX = qx; ringPY = qy;
+        ringFVX = fvx; ringFVY = fvy;
       }
       gj = ge;
     }
-    let gdep = sqrt(gD2);
-    // Skin dead-band: the ring is resampled every frame and its verts
-    // jiggle a px or two at rest (XPBD surface jitter). Projecting on
-    // EVERY overlap made the boundary a 186 Hz vibrator doing real work
-    // on the pool (a floating body wore a shell of energized droplets
-    // and fountained forever). Contact shallower than the skin is free;
-    // a real sweep buries particles far deeper within one substep.
-    if (gdep <= 1.5) { continue; }
+    if (guestCandidateWins(ringD2, ringPX, ringPY, ringFVX, ringFVY,
+                           gD2, gPX, gPY, gFVX, gFVY)) {
+      gD2 = ringD2;
+      gPX = ringPX; gPY = ringPY;
+      gFVX = ringFVX; gFVY = ringFVY;
+    }
+  }
+
+  if (guestInsideCount > 0) {
+    var gdep = sqrt(gD2);
     var gnx : f32 = 0.0; var gny : f32 = -1.0;
     if (gdep > 0.001) {
       gnx = (gPX - x) / gdep;
       gny = (gPY - y) / gdep;
     }
-    // Velocity: strip any component approaching the face.
-    let gvn = (vx - gFVX) * gnx + (vy - gFVY) * gny;
-    if (gvn < 0.0) {
-      vx = vx - gnx * gvn;
-      vy = vy - gny * gvn;
-    }
-    // Position: out to just past the surface (0.5 px — inside the skin,
-    // so the next substep does NOT re-project it; the old r-sized skin
-    // offset was itself a teleport pump). If the nearest exit is
-    // blocked by terrain/miner (the floor pinch under a settling body),
-    // exit through the nearest OPEN edge instead: water squeezed under
-    // a ball squirts out along the floor sideways. Without this the
-    // pocket compresses to many times rest density and discharges up
-    // through the crown as a geyser when the body squashes.
     var gtx = gPX + gnx * 0.5;
     var gty = gPY + gny * 0.5;
-    if (guestExitClear(x, y, gtx, gty, r)) {
-      x = gtx;
-      y = gty;
-      guestProjected = true;
-    } else {
+    var canProject = gdep > 0.001 &&
+                     !guestAnyContainsPoint(gtx, gty) &&
+                     guestExitClear(x, y, gtx, gty, r);
+
+    if (!canProject) {
+      // The nearest face is either internal to the union or blocked by
+      // terrain/miner. Search exact closest points on every edge belonging
+      // to a ring that contains the original particle.
+      var uD2 : f32 = 1e9;
+      var uPX : f32 = x; var uPY : f32 = y;
+      var uFVX : f32 = 0.0; var uFVY : f32 = 0.0;
+      for (var ui : i32 = 0; ui < ${GS_MAX_GUESTS}; ui = ui + 1) {
+        if (!guestContainsPoint(ui, x, y)) { continue; }
+        let uB = gameP.guests[ui * 2 + 1];
+        let un = i32(uB.y);
+        let uBase = ui * ${GS_RING};
+        var uj = un - 1;
+        for (var ue : i32 = 0; ue < un; ue = ue + 1) {
+          let pa = gameP.guestPts[uBase + ue];
+          let pb = gameP.guestPts[uBase + uj];
+          uj = ue;
+          let ex = pb.x - pa.x;
+          let ey = pb.y - pa.y;
+          let el2 = max(ex * ex + ey * ey, 1e-6);
+          let et = clamp(((x - pa.x) * ex + (y - pa.y) * ey) / el2, 0.0, 1.0);
+          let qx = pa.x + ex * et;
+          let qy = pa.y + ey * et;
+          let ddx = qx - x;
+          let ddy = qy - y;
+          let dd2 = ddx * ddx + ddy * ddy;
+          if (dd2 < 1e-6) { continue; }
+          let dl = sqrt(dd2);
+          let tx = qx + ddx / dl * 0.5;
+          let ty = qy + ddy / dl * 0.5;
+          if (guestAnyContainsPoint(tx, ty) ||
+              !guestExitClear(x, y, tx, ty, r)) { continue; }
+          let fvx = pa.z + (pb.z - pa.z) * et;
+          let fvy = pa.w + (pb.w - pa.w) * et;
+          if (guestCandidateWins(dd2, qx, qy, fvx, fvy,
+                                 uD2, uPX, uPY, uFVX, uFVY)) {
+            uD2 = dd2;
+            uPX = qx; uPY = qy;
+            uFVX = fvx; uFVY = fvy;
+          }
+        }
+      }
+      if (uD2 < 1e9) {
+        gD2 = uD2;
+        gPX = uPX; gPY = uPY;
+        gFVX = uFVX; gFVY = uFVY;
+        gdep = sqrt(gD2);
+        gnx = (gPX - x) / gdep;
+        gny = (gPY - y) / gdep;
+        gtx = gPX + gnx * 0.5;
+        gty = gPY + gny * 0.5;
+        canProject = true;
+      }
+    }
+
+    if (!canProject) {
+      // A floor pinch can block the closest point on every edge. Retry the
+      // edge midpoints, which mirrors the old squeeze escape but rejects
+      // every midpoint hidden inside another guest.
       var oD2 : f32 = 1e9;
-      gj = gn - 1;
-      for (var go : i32 = 0; go < gn; go = go + 1) {
-        let pa = gameP.guestPts[gBase + go];
-        let pb = gameP.guestPts[gBase + gj];
-        gj = go;
-        let mx = (pa.x + pb.x) * 0.5;
-        let my = (pa.y + pb.y) * 0.5;
-        let ddx = mx - x;
-        let ddy = my - y;
-        let dd2 = ddx * ddx + ddy * ddy;
-        if (dd2 >= oD2 || dd2 < 1e-6) { continue; }
-        let dl = sqrt(dd2);
-        let ox2 = mx + ddx / dl * 0.5;
-        let oy2 = my + ddy / dl * 0.5;
-        if (!guestExitClear(x, y, ox2, oy2, r)) { continue; }
-        oD2 = dd2;
-        gtx = ox2; gty = oy2;
-        gnx = ddx / dl; gny = ddy / dl;
-        gFVX = (pa.z + pb.z) * 0.5;
-        gFVY = (pa.w + pb.w) * 0.5;
+      for (var oi : i32 = 0; oi < ${GS_MAX_GUESTS}; oi = oi + 1) {
+        if (!guestContainsPoint(oi, x, y)) { continue; }
+        let oB = gameP.guests[oi * 2 + 1];
+        let on = i32(oB.y);
+        let oBase = oi * ${GS_RING};
+        var oj = on - 1;
+        for (var oe : i32 = 0; oe < on; oe = oe + 1) {
+          let pa = gameP.guestPts[oBase + oe];
+          let pb = gameP.guestPts[oBase + oj];
+          oj = oe;
+          let mx = (pa.x + pb.x) * 0.5;
+          let my = (pa.y + pb.y) * 0.5;
+          let ddx = mx - x;
+          let ddy = my - y;
+          let dd2 = ddx * ddx + ddy * ddy;
+          if (dd2 < 1e-6) { continue; }
+          let dl = sqrt(dd2);
+          let tx = mx + ddx / dl * 0.5;
+          let ty = my + ddy / dl * 0.5;
+          if (guestAnyContainsPoint(tx, ty) ||
+              !guestExitClear(x, y, tx, ty, r)) { continue; }
+          let fvx = (pa.z + pb.z) * 0.5;
+          let fvy = (pa.w + pb.w) * 0.5;
+          if (guestCandidateWins(dd2, mx, my, fvx, fvy,
+                                 oD2, gPX, gPY, gFVX, gFVY)) {
+            oD2 = dd2;
+            gPX = mx; gPY = my;
+            gFVX = fvx; gFVY = fvy;
+          }
+        }
       }
       if (oD2 < 1e9) {
+        gD2 = oD2;
+        gdep = sqrt(gD2);
+        gnx = (gPX - x) / gdep;
+        gny = (gPY - y) / gdep;
+        gtx = gPX + gnx * 0.5;
+        gty = gPY + gny * 0.5;
+        canProject = true;
+      }
+    }
+
+    // Skin dead-band: a contact shallower than 1.5 px is ring-resample
+    // jitter, not a meaningful sweep. Deeper overlaps receive one union
+    // face constraint and, if a clear exterior was found, one projection.
+    if (gdep > 1.5) {
+      let gvn = (vx - gFVX) * gnx + (vy - gFVY) * gny;
+      if (gvn < 0.0) {
+        vx = vx - gnx * gvn;
+        vy = vy - gny * gvn;
+      }
+      if (canProject) {
         x = gtx;
         y = gty;
         guestProjected = true;
-        // Re-clamp along the actual exit direction.
-        let gvn2 = (vx - gFVX) * gnx + (vy - gFVY) * gny;
-        if (gvn2 < 0.0) {
-          vx = vx - gnx * gvn2;
-          vy = vy - gny * gvn2;
-        }
       }
-    }
-    // Foam on real hits only, not on ring-resample skin jitter.
-    if (gvn < -40.0 || gdep > 3.0) {
-      aux[i].y = min(1.0, aux[i].y + 0.12);
+      if (gvn < -40.0 || gdep > 3.0) {
+        aux[i].y = min(1.0, aux[i].y + 0.12);
+      }
     }
   }
 
@@ -6765,6 +7011,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
       gridUpdate: uPipe('liquid.gridUpdate',
         WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
         WGSL_GAME_PARAMS + gameBindGrid +
+        WGSL_GUEST_GEOMETRY +
         WGSL_SIM_PARAMS + simBind(10) +
         WGSL_WAKE_TERRAIN + WGSL_GRID_WAKE +
         WGSL_GRID_UPDATE)
@@ -6776,6 +7023,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         instance.grid2Pipe.gridUpdateSparse = uPipe('liquid.gridUpdateSparse',
           WGSL_GRID2_PRELUDE + WGSL_GRIDUPDATE_BUFS +
           WGSL_GAME_PARAMS + gameBindGrid +
+          WGSL_GUEST_GEOMETRY +
           WGSL_SIM_PARAMS + simBind(10) +
           WGSL_WAKE_TERRAIN + WGSL_GRID_WAKE +
           WGSL_GRID_UPDATE_HELPERS + sparseListBind(11) +
@@ -7158,6 +7406,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
           // (6) so WGSL_COLLIDE can read the live per-fluid restitution.
           module: dev.createShaderModule({
             code: WGSL_GAME_PARAMS + WGSL_COLLIDE_PRELUDE +
+                  WGSL_GUEST_GEOMETRY +
                   WGSL_SIM_PARAMS + simBind(6) + WGSL_COLLIDE
           }),
           entryPoint: 'main'
@@ -8410,6 +8659,16 @@ fn main() {
   // max storage-buffer / buffer limits. Mirrors js/particle-life.js.
   // Resolves true on success, false on any failure (CPU fallback).
   function initDevice(instance) {
+    var guestUnionOK = runGuestUnionOrderRegression();
+    try {
+      console.log('LiquidWGPU guest union: ' +
+        (guestUnionOK ? 'OK, 6 slot permutations agree.' :
+          'FAIL, slot order changes the overlap result.'));
+    } catch (_) {}
+    if (!guestUnionOK) {
+      instance.failed = true;
+      return Promise.resolve(false);
+    }
     return navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })
       .then(function (adapter) {
         if (!adapter) throw new Error('no WebGPU adapter');
@@ -8438,6 +8697,14 @@ fn main() {
       .then(function (device) {
         instance.device = device;
         instance.queue = device.queue;
+        // Surface asynchronous shader/bind validation instead of leaving a
+        // boot self-test waiting forever on an invalid command buffer.
+        device.addEventListener('uncapturederror', function (ev) {
+          try {
+            console.error('LiquidWGPU WebGPU validation: ' +
+              ((ev && ev.error && ev.error.message) || 'unknown error'));
+          } catch (_) {}
+        });
         instance.deviceReady = true;
         instance.available = true;
         // A lost device permanently drops the GPU path; the game falls

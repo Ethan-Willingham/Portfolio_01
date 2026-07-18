@@ -34,18 +34,22 @@
  * rasterised from the same runs. Draw a line and all three
  * engines feel it.
  *
- * Assembled 2026-07-17 from the game source at v26.13.
+ * Assembled 2026-07-17 from the game source at v26.14.
  *
  * v3.7 transport contract: guest poses and every ring velocity are world
  * px and world px/s. liquid-wgpu.js alone converts them to grid-cell
  * displacement per fixed water substep, interpolates the pose for each
  * batched substep, caps travel before integration, and sweeps the resulting
  * particle path against terrain. Do not pre-convert these host values.
+ *
+ * v3.8 overlap contract: the eight selected slime bodies keep stable guest
+ * slots while their wet-cell rankings fluctuate. Touching rings are one
+ * collision union in liquid-wgpu.js, never a sequential list of solids.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.7';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.8';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -399,9 +403,17 @@
   // ---- Pokes and wakes the water feels --------------------------------
   // toyWakes ride the game's explosion channel (a bounded radial impulse
   // in the grid kernel). The poke pointer and the wettest live slimes ride
-  // the guest channel (exact moving boundaries, up to 3).
+  // the guest channel (exact moving boundaries, up to 8).
   var toyWakes = [];        // {cx, cy, r, blastScale, t0}
   var pokeGuest = null;     // {x, y, hw, hh, pts}
+  // Stable GPU boundary slots. Wet-cell counts fluctuate as the surface
+  // rasterizer and soft-body ring breathe, so sorting the guest array every
+  // frame made touching slimes exchange identities in GameParams. The GPU
+  // then solved the same geometry in a different order and the trapped water
+  // visibly filled, cleared, and snapped back. Keep selected bodies in their
+  // existing slot; wetness only decides membership when more than eight are
+  // eligible. Holes are preserved with inactive placeholders below.
+  var liquidGuestSlots = new Array(8);
 
   function pushWake(cx, cy, r, blast) {
     toyWakes.push({ cx: cx, cy: cy, r: r, blastScale: blast, t0: performance.now() });
@@ -409,15 +421,51 @@
   }
 
   function buildGuests() {
-    var out = null;
-    if (pokeGuest) { out = [pokeGuest]; }
     // Slime silhouettes as moving fluid boundaries: the same registration
     // the game's bathhouse guests use (072-bath.js v26.05) — the ordered
     // boundary ring resampled to <= 20 verts, each carrying its Verlet
     // velocity, so poured water piles on a slime instead of passing through.
-    // Eight slots since engine v26.09 (GS_MAX_GUESTS), wettest bodies
-    // first: a slime in the pool displaces; a dry one can wait.
+    // Eight slots since engine v26.09 (GS_MAX_GUESTS). The eight wettest
+    // eligible bodies are selected, but a selected body's slot is stable.
+    var order = [];
     if (typeof jelloBodies !== 'undefined' && jelloBodies.length) {
+      order = jelloBodies.filter(function (b0) {
+        return b0 && !b0._melting && b0.ringN >= 3 && b0.ring &&
+          isFinite(b0.bboxL + b0.bboxR + b0.bboxT + b0.bboxB);
+      }).sort(function (a, bb2) {
+        return (bb2._wetCells || 0) - (a._wetCells || 0);
+      });
+      if (order.length > 8) order.length = 8;
+    }
+    // Clear bodies that left the wettest-eight set, then put new entrants
+    // into real empty slots. Existing members never move just because their
+    // wet-cell ranking changed.
+    for (var si = 0; si < liquidGuestSlots.length; si++) {
+      if (order.indexOf(liquidGuestSlots[si]) < 0) liquidGuestSlots[si] = null;
+    }
+    for (var oi = 0; oi < order.length; oi++) {
+      if (liquidGuestSlots.indexOf(order[oi]) >= 0) continue;
+      for (var sf = 0; sf < liquidGuestSlots.length; sf++) {
+        if (!liquidGuestSlots[sf]) { liquidGuestSlots[sf] = order[oi]; break; }
+      }
+    }
+
+    var pokeSlot = -1;
+    if (pokeGuest) {
+      // POKE is an ephemeral boundary. Give it a free slot without shifting
+      // any slime; at full capacity it temporarily owns the last slot, which
+      // matches the old seven-slimes-plus-pointer limit while held.
+      for (var ps = 0; ps < liquidGuestSlots.length; ps++) {
+        if (!liquidGuestSlots[ps]) { pokeSlot = ps; break; }
+      }
+      if (pokeSlot < 0) pokeSlot = liquidGuestSlots.length - 1;
+    }
+
+    var out = new Array(8);
+    var any = false;
+    for (var os = 0; os < out.length; os++) out[os] = { pts: null };
+    if (pokeSlot >= 0) { out[pokeSlot] = pokeGuest; any = true; }
+    if (order.length) {
       // Real velocity = (p - o) * TIMESCALE / H (the same live conversion
       // jelloWaterCoupleTick uses). The first draft used 1/H flat, which
       // DOUBLED every reported face velocity (TS = 0.5): harmless while
@@ -427,14 +475,9 @@
       var gts = (typeof JELLO_TIMESCALE === 'number' && JELLO_TIMESCALE >= 0.02) ? JELLO_TIMESCALE : 0.5;
       var gH = (typeof jelloStepH === 'number' && jelloStepH > 0) ? jelloStepH : (1 / 240);
       var ih = gts / gH;
-      var order = jelloBodies.slice().sort(function (a, bb2) {
-        return (bb2._wetCells || 0) - (a._wetCells || 0);
-      });
-      for (var i = 0; i < order.length; i++) {
-        if (out && out.length >= 8) break;
-        var b = order[i];
-        if (!b || b._melting || b.ringN < 3 || !b.ring) continue;
-        if (!isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
+      for (var i = 0; i < liquidGuestSlots.length; i++) {
+        var b = liquidGuestSlots[i];
+        if (!b || i === pokeSlot) continue;
         var rn = b.ringN | 0;
         var take = rn < 20 ? rn : 20;
         var pts = new Array(take * 4);
@@ -480,17 +523,17 @@
         // the largest disc (r 46 + render outset) with margin.
         var ghw = (b.bboxR - b.bboxL) / 2 + 3;
         var ghh = (b.bboxB - b.bboxT) / 2 + 3;
-        if (!out) out = [];
-        out.push({
+        out[i] = {
           x: (b.bboxL + b.bboxR) / 2, y: (b.bboxT + b.bboxB) / 2,
           hw: ghw < 8 ? 8 : (ghw > 64 ? 64 : ghw),
           hh: ghh < 8 ? 8 : (ghh > 64 ? 64 : ghh),
           mvx: mvxSum / take, mvy: mvySum / take,   // v26.10 lateral-eviction lanes
           pts: pts
-        });
+        };
+        any = true;
       }
     }
-    return out;
+    return any ? out : null;
   }
 
   function getGameStateToy() {
@@ -8614,9 +8657,14 @@
       wallRect(W * 0.20, H * 0.44, W * 0.20 + TILE * 2, H);
       wallRect(W * 0.80 - TILE * 2, H * 0.44, W * 0.80, H);
       fillPoolRect(W * 0.20 + TILE * 2.5, H * 0.72, W * 0.80 - TILE * 2.5, H - TILE * 1.5);
-      spawnSlimeAt(W * 0.36, H * 0.675, 28);
-      spawnSlimeAt(W * 0.47, H * 0.66, 32);
-      spawnSlimeAt(W * 0.64, H * 0.675, 26);
+      // URL-only regression pose: three intersecting silhouettes reproduce
+      // the old fill-and-snap bug without a timing-sensitive pointer drag.
+      // Normal visitors keep the wider spa composition.
+      var overlapTest = /[?&]guestoverlap=1(?:&|$)/.test(
+        (window.location && window.location.search) || '');
+      spawnSlimeAt(W * (overlapTest ? 0.43 : 0.36), H * 0.675, 28);
+      spawnSlimeAt(W * (overlapTest ? 0.48 : 0.47), H * 0.66, 32);
+      spawnSlimeAt(W * (overlapTest ? 0.535 : 0.64), H * 0.675, 26);
       emitters.push({ kind: 'water', x: W * 0.56, y: H * 0.07, vx: 0, vy: 130, rate: 240, acc: 0, cap: 84000 });
       var steam = { r: 0.32, g: 0.32, b: 0.31 };
       emitters.push({ kind: 'smoke', x: W * 0.205 + TILE, y: H * 0.44 - 4, phase: 0, col: steam, liftK: 0.62 });

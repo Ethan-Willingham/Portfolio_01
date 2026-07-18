@@ -447,6 +447,36 @@ the submerged slime across the pool. No particle may cross the box in one frame
 or appear beyond a drawn wall, and the boot log must contain no Stage 5/6
 `FAIL`.
 
+**v26.14 guest-union contract (read before touching boundary ordering or guest
+collision):** guest array order is bookkeeping, never physics. The standalone
+host keeps each selected slime in a stable one-of-eight slot while wet-cell
+rankings fluctuate, preserving holes as inactive GameParams entries. The banya
+registry already follows stable `bathGuests` order.
+
+At the grid boundary, all rings containing a cell are collected before writing
+velocity. If a nearest face is hidden inside a touching neighbour, the kernel
+selects the closest face on the combined exterior and writes exactly one
+boundary condition. At particle collision, the same containment and geometric
+tie-break choose one terrain-clear projection to that combined exterior. Never
+restore a per-guest assignment or sequential projection loop. In an overlap,
+the last slot would win again and a harmless ranking change could alternate
+between two different cavities.
+
+The common path stays cheap: a point whose nearest face already exits the union
+uses the single-face fast path. The full edge search runs only where outlines
+actually overlap or terrain blocks the nearest exit. `guestExitClear` still
+sweeps the particle ring across the complete correction, so union projection
+cannot cross a wall.
+
+Regression: boot logs must report `LiquidWGPU guest union: OK, 6 slot
+permutations agree.` This CPU reference projects one point through three
+intersecting 20-gons under all six array permutations and gates GPU init on an
+identical result outside every ring. For a live repro, load
+`water-smoke-slime.html?guestoverlap=1`, open the spa scene, and watch the three
+touching slimes for at least 20 seconds. Their cavities may move with the bodies
+and incoming water, but must not fill and snap back periodically. Stage 4, 5,
+and 6 boot tests must remain `OK` and WebGPU must reach Stage 8 live.
+
 ## 2.10 Stability — the giant-particle / runaway fix (v24.169-186) ✓ SOLVED
 
 The months-long water saga ("popcorn", "infinite energetic mass", "giant
