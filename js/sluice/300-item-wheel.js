@@ -356,8 +356,8 @@
   // motion" rule. Each draw fn paints the LEFT cap in local space (outer edge at
   // x, inner edge toward the body at x+w); drawConsoleCap mirrors it for the
   // right cap. Keep these byte-aligned with endcap-lab.html (the design bench).
-  var CAP_STYLES = ['old', 'flute', 'star', 'bracket', 'glass', 'rosette', 'gauges'];
-  var consoleCapStyleId = 1;             // default: Fluted Pilaster (set 0 for the original)
+  var CAP_STYLES = ['old', 'flute', 'star', 'bracket', 'glass', 'rosette', 'gauges', 'gunmetal'];
+  var consoleCapStyleId = 7;             // v26.43 default: Machined Gunmetal (endcap.STYLE lever picks others)
   var CAP = {
     plate: UIMAT_PLATE_BASE, plateHi: UIMAT_PLATE_HIGHLIGHT, plateSh: UIMAT_PLATE_SHADOW,
     bay: UIMAT_BAY_RECESS, bayDark: UIMAT_BAY_RECESS_DARK, bayLite: UIMAT_BAY_RECESS_LIGHT,
@@ -517,6 +517,28 @@
     }
     drawBrassBolt(cx, (slots[0] + slots[1]) >> 1); drawBrassBolt(cx, (slots[1] + slots[2]) >> 1);
   }
+  // --- 7: Machined Gunmetal (v26.43 default) — the quiet cap for the
+  // gunmetal cluster. No brass, no flutes: the plate shell, two horizontal
+  // relief grooves, one recessed round port ringed like the instrument
+  // apertures, and two flush screws. The caps just terminate the rail and
+  // let the lit instruments carry the design.
+  function capGunmetal(x, y, w, h, t) {
+    capShell(x, y, w, h);
+    var cx = x + (w >> 1), cy = y + (h >> 1);
+    function groove(gy) {
+      capPx(x + 3, gy, w - 6, 1, CAP.plateSh);
+      capPx(x + 3, gy + 1, w - 6, 1, CAP.plateHi);
+    }
+    groove(y + 8);
+    groove(y + h - 10);
+    var r = Math.min(7, (w >> 1) - 3);
+    capDisc(cx, cy, r + 2, function (dx, dy, edge) { return edge ? CAP.outline : null; });
+    capDisc(cx, cy, r + 1, function (dx, dy, edge) { return edge ? ((dx + dy >= 0) ? CAP.plateHi : CAP.plateSh) : null; });
+    capDisc(cx, cy, r, function (dx, dy, edge) { return edge ? CAP.bayDark : '#0d1015'; });
+    capPx(cx - (r >> 1) - 1, cy - (r >> 1) - 1, 2, 1, 'rgba(220,235,255,0.10)');
+    drawConsoleRivet(cx - 1, y + 15);
+    drawConsoleRivet(cx - 1, y + h - 17);
+  }
   function capDispatch(style, x, y, w, h, t) {
     if (style === 'flute') capFlute(x, y, w, h, t);
     else if (style === 'star') capStarMedallion(x, y, w, h, t);
@@ -524,6 +546,7 @@
     else if (style === 'glass') capGlass(x, y, w, h, t);
     else if (style === 'rosette') capRosette(x, y, w, h, t);
     else if (style === 'gauges') capGauges(x, y, w, h, t);
+    else if (style === 'gunmetal') capGunmetal(x, y, w, h, t);
   }
   // ---- End cap dispatcher: classic (style 0) or one of the ornate styles ----
   function drawConsoleCap(x, y, w, h, side) {
@@ -599,8 +622,9 @@
   // edges to read as part of the rig chassis.
   function drawConsoleSideWing(x, w, y, h, isLeftSide) {
     if (w <= 0) return;
-    // Slightly darker plate body
-    ctx.fillStyle = '#2a2724';   // UIMAT_PLATE_SHADOW level
+    // Slightly darker plate body (v26.43: cooled to the gunmetal tokens —
+    // this was the last warm-gray slab on the rail)
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
     ctx.fillRect(x, y, w, h);
     // Top weld + highlight
     ctx.fillStyle = UIMAT_WELD;
@@ -608,7 +632,7 @@
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
     ctx.fillRect(x, y + 1, w, 1);
     // Bottom shadow + outline
-    ctx.fillStyle = '#1a0a05';
+    ctx.fillStyle = UIMAT_BAY_RECESS_DARK;
     ctx.fillRect(x, y + h - 2, w, 1);
     ctx.fillStyle = UI_OUTLINE;
     ctx.fillRect(x, y + h - 1, w, 1);
@@ -639,28 +663,17 @@
   var consoleFrameKey = '';
   var consoleBayLayout = [];
 
-  function drawConsoleBayRecess(bx, by, bw, bh) {
-    ctx.fillStyle = UIMAT_BAY_RECESS;
-    ctx.fillRect(bx, by, bw, bh);
-    // Inner shadow (top + left = recessed)
-    ctx.fillStyle = UIMAT_BAY_RECESS_DARK;
-    ctx.fillRect(bx, by, bw, 1);
-    ctx.fillRect(bx, by, 1, bh);
-    // Inner highlight (bottom + right)
-    ctx.fillStyle = UIMAT_BAY_RECESS_LIGHT;
-    ctx.fillRect(bx, by + bh - 1, bw, 1);
-    ctx.fillRect(bx + bw - 1, by, 1, bh);
-  }
+  // (v26.43: drawConsoleBayRecess is gone. The bays no longer sit in their
+  // own recessed panels; each instrument cuts its window straight into the
+  // plate via instrWindow (220), so the rail reads as one milled panel.)
 
   function drawConsoleInstrument(bay, bx, by, bw, bh) {
     if (bay.id === 'fuel')         drawFuelGauge(bx, by, bw, bh);
-    else if (bay.id === 'reserve') drawReserveFuel(bx, by, bw, bh);
     else if (bay.id === 'speed')   drawSpeedDisplay(bx, by, bw, bh);
     else if (bay.id === 'hull')    drawHullPlates(bx, by, bw, bh);
     else if (bay.id === 'cargo')   drawCargoBay(bx, by, bw, bh);
     else if (bay.id === 'cash')    drawCashDisplay(bx, by, bw, bh);
     else if (bay.id === 'depth')   drawDepthDisplay(bx, by, bw, bh);
-    else if (bay.id === 'sys')     drawSysAnnunciator(bx, by, bw, bh);
   }
 
   // Draws the static console structure onto `ctx` (the caller points ctx at
@@ -696,6 +709,9 @@
       drawConsoleRivet(rx, rivetBottomY);
     }
     // ---- Bays: one row of all bays, or two rows when folded ----
+    // v26.43: no per-bay recess panels and no vertical weld seams between
+    // bays. Each instrument cuts its own window into the plate (instrWindow
+    // in 220), so the plate runs unbroken behind the whole rail.
     var bayInset = 6;
     if (!R.stacked) {
       var bayX = bx0 + CONSOLE_BODY_PAD - 4;
@@ -705,16 +721,7 @@
         var bay = CONSOLE_BAYS[b];
         var ibx = bayX + bayInset / 2, iby = bayTop + 2;
         var ibw = bay.w - bayInset, ibh = bayH - 4;
-        drawConsoleBayRecess(ibx, iby, ibw, ibh);
         consoleBayLayout.push({ bay: bay, bx: ibx, by: iby, bw: ibw, bh: ibh });
-        // Vertical weld seam to the right of this bay (unless last)
-        if (b < CONSOLE_BAYS.length - 1) {
-          var seamX = bayX + bay.w;
-          ctx.fillStyle = UIMAT_PLATE_SHADOW;
-          ctx.fillRect(seamX, by0 + 4, 1, bh0 - 8);
-          ctx.fillStyle = UIMAT_WELD;
-          ctx.fillRect(seamX + 1, by0 + 4, 1, bh0 - 8);
-        }
         bayX += bay.w;
       }
     } else {
@@ -729,23 +736,8 @@
         var slotY = by0 + row * rowH;
         var sbx = slotX + bayInset / 2, sby = slotY + 6;
         var sbw = uniformW - bayInset, sbh = rowH - 12;
-        drawConsoleBayRecess(sbx, sby, sbw, sbh);
         consoleBayLayout.push({ bay: CONSOLE_BAYS[sb], bx: sbx, by: sby, bw: sbw, bh: sbh });
-        // Vertical weld seam between columns
-        if (col < cols - 1) {
-          var vsX = slotX + uniformW;
-          ctx.fillStyle = UIMAT_PLATE_SHADOW;
-          ctx.fillRect(vsX, slotY + 4, 1, rowH - 8);
-          ctx.fillStyle = UIMAT_WELD;
-          ctx.fillRect(vsX + 1, slotY + 4, 1, rowH - 8);
-        }
       }
-      // Horizontal weld seam between the two rows
-      var hsY = by0 + rowH;
-      ctx.fillStyle = UIMAT_PLATE_SHADOW;
-      ctx.fillRect(bx0 + 4, hsY - 1, bw0 - 8, 1);
-      ctx.fillStyle = UIMAT_WELD;
-      ctx.fillRect(bx0 + 4, hsY, bw0 - 8, 1);
     }
   }
 

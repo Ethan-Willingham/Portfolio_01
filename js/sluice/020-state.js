@@ -733,15 +733,17 @@
   var CONSOLE_HEIGHT_MOBILE_PORTRAIT = 88;
   // Bay widths in CSS pixels, left to right. Remaining canvas width is
   // the "free zone" (radial-wheel anchor per §8.2).
+  // v26.43 — six bays. The reserve rack folded into the FUEL bay (spare-tank
+  // pips beside the dial) and the SAVE bay collapsed into an annunciator lamp
+  // inside the CASH window, so the cluster reads as one instrument rail
+  // instead of eight boxes.
   var CONSOLE_BAYS = [
-    { id: 'reserve', w: 92  },
-    { id: 'fuel',    w: 92  },
-    { id: 'speed',   w: 92  },
+    { id: 'fuel',    w: 116 },
+    { id: 'speed',   w: 84  },
     { id: 'hull',    w: 92  },
     { id: 'cargo',   w: 110 },
     { id: 'depth',   w: 92  },
-    { id: 'sys',     w: 56  },   // v24.126: SAVE annunciator lamp (state in 047, draw in 220)
-    { id: 'cash',    w: 110 }
+    { id: 'cash',    w: 116 }   // wide enough that a $9XX,XXX balance keeps the big stencil
   ];
   // Reference top speed (MPH) for the SPEED readout's colour zones: the number
   // is amber up to 60% of this, orange to 82%, red above (fall-damage
@@ -820,7 +822,7 @@
   // is sized to the bay set + padding + caps, leaving the side strips of
   // the bottom playfield visible (so the player can see Earth on either
   // side of the toolbar).
-  var CONSOLE_CAP_W = 32;
+  var CONSOLE_CAP_W = 24;   // v26.43: slimmed with the gunmetal cap redesign (was 32)
   var CONSOLE_BODY_PAD = 8;
   var CONSOLE_MIN_BODY_W = 120;  // floor so a tiny viewport never makes bays negative
   function consoleRect() {

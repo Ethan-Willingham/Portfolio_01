@@ -1,5 +1,5 @@
   // ---- Instrument cache (v25.31) ----
-  // The static console FRAME has been cached since v11; the 8 live instruments
+  // The static console FRAME has been cached since v11; the live instruments
   // still repainted every frame (harness-ranked #1 CPU bucket in every scene:
   // 1.8-2.3ms/frame at 4x throttle). They now paint into this offscreen layer
   // and each bay repaints ONLY when its VALUE SIGNATURE changes. A signature
@@ -19,11 +19,18 @@
       var toSurf = (typeof getFuelToSurface === 'function') ? getFuelToSurface() : 0;
       var blink = ff < 0.15 ? (Math.floor(performance.now() / 250) & 1)
                 : ff < 0.30 ? (Math.floor(performance.now() / 500) & 1) : -1;
-      s = ((ff * 512) | 0) + ',' + ((toSurf * 8) | 0) + ',' + (player && player.fuel >= toSurf ? 1 : 0) + ',' + blink;
-    } else if (id === 'reserve') {
-      s = '' + ((typeof reserveFuel === 'number') ? reserveFuel : 0);
+      // v26.43: the reserve rack lives in this bay now, so its count is
+      // part of the fuel signature.
+      s = ((ff * 512) | 0) + ',' + ((toSurf * 8) | 0) + ',' + (player && player.fuel >= toSurf ? 1 : 0) + ',' + blink +
+          ',' + ((typeof reserveFuel === 'number') ? reserveFuel : 0);
     } else if (id === 'speed') {
-      s = '' + ((speedoMphSmooth * 8) | 0);
+      // v26.43: the redline lamp blinks in the caution/critical bands, so the
+      // blink phase joins the signature (same floor(now/period) the lamp uses).
+      var sMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
+      var sFrac = speedoMphSmooth / sMax;
+      var sBlink = sFrac >= 0.82 ? (Math.floor(performance.now() / 250) & 1)
+                 : sFrac >= 0.60 ? (Math.floor(performance.now() / 500) & 1) : -1;
+      s = ((speedoMphSmooth * 8) | 0) + ',' + sBlink;
     } else if (id === 'hull') {
       var mh = (typeof getMaxHull === 'function') ? getMaxHull() : 100;
       s = ((typeof player !== 'undefined' && player) ? player.hull : 0) + '/' + mh;
@@ -40,14 +47,15 @@
     } else if (id === 'cash') {
       var dm = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
       var pu = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.ceil(Math.min(1, cashPunch) * 32) : 0;
-      s = Math.round(dm) + ',' + pu;
+      // v26.43: the SAVE annunciator lives in the cash window now, so its
+      // state (fail blink phase / info fade step / off) joins the signature.
+      var sv = (typeof saveLampFailT === 'number' && saveLampFailT > 0) ? 'F' + ((saveLampFailT % 1) < 0.5 ? 1 : 0)
+             : (typeof saveLampT === 'number' && saveLampT > 0) ? 'S' + Math.ceil(Math.min(1, saveLampT / 0.5) * 32)
+             : 'off';
+      s = Math.round(dm) + ',' + pu + ',' + sv;
     } else if (id === 'depth') {
       s = '' + ((typeof player !== 'undefined' && player && typeof SKY_ROWS === 'number')
         ? Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0) : 0);
-    } else if (id === 'sys') {
-      s = (typeof saveLampFailT === 'number' && saveLampFailT > 0) ? 'F' + ((saveLampFailT % 1) < 0.5 ? 1 : 0)
-        : (typeof saveLampT === 'number' && saveLampT > 0) ? 'S' + Math.ceil(Math.min(1, saveLampT / 0.5) * 32)
-        : 'off';
     } else s = 'x';
     return s;
   }

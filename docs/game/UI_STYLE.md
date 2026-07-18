@@ -60,15 +60,21 @@ Outline grammar: 1-px `BLD.outline` along all four edges. Inside corners have a 
 
 ### 3.3 Bays
 
-The console is divided into named **bays** by 2-px-wide vertical weld seams. Each bay holds one instrument and is sized for it. v11 launch bays:
+> **v26.43 amendment.** The vertical weld seams and the per-bay recess panels
+> are gone: the plate runs unbroken behind the whole rail and each instrument
+> cuts its own dark-glass window into it (`instrWindow` in 220). Bays are now
+> a layout concept, not a visible frame.
+
+Each bay holds one instrument and is sized for it. The v26.43 cluster:
 
 | Bay | Width | Instrument | Notes |
 |---|---|---|---|
-| Fuel | 92 px | Needle gauge | Half-circle, 0–F like a real diesel fuel meter |
+| Fuel | 116 px | Needle dial + reserve rack | Dark-face half-dial, E–F; the old RESERVE bay lives on as 4 spare-tank pips on its right edge |
+| Speed | 84 px | Lit number | MPH behind glass; amber, warming orange → red toward fall-damage speeds |
 | Hull | 92 px | Plate grid | Grid of armor tiles (6 at level 1, +3 per Hull Plating tier to 24); tiles drop as damaged |
 | Cargo | 110 px | Bay window | Looks INTO a cargo hold; you see the actual ore inside |
-| Depth | 92 px | Dial wheel | Rotating drum showing rolled-up depth tick marks |
-| (free) | rest | Reserved | For future instruments — do not fill speculatively |
+| Depth | 92 px | Dial wheel | Rotating drums showing metres |
+| Cash | 116 px | Lit number | Balance in money gold; hosts the SAVE annunciator lamp (top-left of the glass; the old SYS bay) |
 
 Bays are added by inserting a new bay **between existing bays**, never appended after. The free area on the right is the future-expansion zone and the home of the radial-wheel anchor (§8.2).
 
@@ -86,6 +92,13 @@ These materials are the only valid surfaces for UI elements. Any UI element must
 
 The base material for the console, hull plates, large frames.
 
+> **v26.20 amendment (Gunmetal + Brass).** The plate tones moved from these
+> warm grays to the cold blue-gray `UIMAT_*` tokens in `020-state.js`
+> (`UIMAT_PLATE_BASE #333a44`, `_HIGHLIGHT #46505c`, `_SHADOW #232933`,
+> rivet/weld/recess partners alongside). Same value structure, hue ~220.
+> The tokens are the source of truth; the hexes below are the v11 originals,
+> kept for the record. Never hardcode a plate hex; use the tokens.
+
 - **Base tone:** `#3d3a35` (matte industrial grey, mid-value)
 - **Highlight:** `#4f4c46` (1-px top + left edges)
 - **Shadow:** `#2a2724` (1-px bottom + right edges)
@@ -94,16 +107,31 @@ The base material for the console, hull plates, large frames.
 
 Used for: console frame, hull plates, shop counter front, depot wall plates.
 
+### 4.1b Instrument glass (v26.43)
+
+The console instruments retired etched brass for **dark glass in a machined
+aperture**: a 1-px `UI_OUTLINE` cut, a 1-px gunmetal step (shadow top lip,
+lit bottom lip, recessed), then near-black glass (`UIT_INSET_DK`) with the
+§4.4 top-edge reflection. All reading light comes from within: amber
+`#d4a838` for readings, money gold for the balance, the §6 signal colours
+for lamps and zones. "Cold machine, warm lit dials."
+
 ### 4.2 Etched brass
 
 Smaller instruments and dials. Read as old machined components.
+
+> **v26.43 amendment.** The console instruments no longer use brass anywhere:
+> faces, rims, brushed scan lines and the fluted end caps are all gone
+> (owner call: no bronze with vertical lines). Brass survives off-console:
+> in-world signage, the shop, the sell-reveal finale board, and small warm
+> accents like the lit reserve-tank pips.
 
 - **Base tone:** `#7a5a2c`
 - **Highlight rim:** `#9c7a3e` (1-px)
 - **Shadow rim:** `#4f3a1b` (1-px)
 - **Etched line / numerals:** `#1f1408` (the same family as `BLD.outline`)
 
-Used for: gauge faces, dial rims, depth wheel ticks.
+Used for: in-world signage, the finale flap board, warm accent pips.
 
 ### 4.3 Lamp glass
 
@@ -160,6 +188,15 @@ Already specified in BUILDING_STYLE for the foundation panels. Reuse those tones
 ## 5. Instrument grammar
 
 The five instrument types. New instrument types must be proposed and added here before being built.
+
+> **v26.43 re-skin.** Every console instrument now renders on the §4.1b
+> instrument-glass material instead of etched brass: dark face, light-print
+> ticks (`#d8d2c4` family), amber readings, dim cool legends (`#454f5c`,
+> reads as etched glass). The mechanics below (needle behaviour, plate
+> zones, drum peeks, the fuel-home marker) are unchanged. Corner "powered"
+> lamps are gone (a lamp that is always green is noise, §6); the only lamps
+> left are state-driven (fuel warning, speed redline, the SAVE annunciator
+> in the CASH glass).
 
 ### 5.1 Needle gauge
 

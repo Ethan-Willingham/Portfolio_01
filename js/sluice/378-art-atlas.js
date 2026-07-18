@@ -152,10 +152,11 @@
     reg('drawCargoBay',        typeof drawCargoBay === 'function', typeof drawCargoBay === 'function' ? drawCargoBay : null);
     reg('drawDepthDisplay',    typeof drawDepthDisplay === 'function', typeof drawDepthDisplay === 'function' ? drawDepthDisplay : null);
     reg('drawCashDisplay',     typeof drawCashDisplay === 'function', typeof drawCashDisplay === 'function' ? drawCashDisplay : null);
-    reg('drawReserveFuel',     typeof drawReserveFuel === 'function', typeof drawReserveFuel === 'function' ? drawReserveFuel : null);
-    reg('drawHexBolt',         typeof drawHexBolt === 'function', typeof drawHexBolt === 'function' ? drawHexBolt : null);
     reg('drawWarningLamp',     typeof drawWarningLamp === 'function', typeof drawWarningLamp === 'function' ? drawWarningLamp : null);
-    reg('drawFuelCanister',    typeof drawFuelCanister === 'function', typeof drawFuelCanister === 'function' ? drawFuelCanister : null);
+    // v26.43: drawReserveFuel / drawFuelCanister / drawHexBolt died with the
+    // brass cluster; the reserve rack is pips inside the FUEL bay now.
+    reg('drawReservePip',      typeof drawReservePip === 'function', typeof drawReservePip === 'function' ? drawReservePip : null);
+    reg('instrWindow',         typeof instrWindow === 'function', typeof instrWindow === 'function' ? instrWindow : null);
     // UI pixel art
     reg('drawConsumableIconBig', typeof drawConsumableIconBig === 'function', typeof drawConsumableIconBig === 'function' ? drawConsumableIconBig : null);
     reg('drawWheelItemIcon',     typeof drawWheelItemIcon === 'function', typeof drawWheelItemIcon === 'function' ? drawWheelItemIcon : null);

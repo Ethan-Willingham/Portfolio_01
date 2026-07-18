@@ -280,12 +280,25 @@
 
   // ===== v11.5 — Console primitives + helpers =====
 
-  // Small hex bolt for the corner of any instrument (3×3 px).
-  function drawHexBolt(x, y) {
-    ctx.fillStyle = UI_OUTLINE;
-    ctx.fillRect(x - 1, y - 1, 3, 3);
-    ctx.fillStyle = UIMAT_RIVET_CORE;
-    ctx.fillRect(x, y, 1, 1);
+  // v26.43 — the shared instrument aperture: a dark glass window recessed
+  // into the gunmetal plate through a machined 2-px step. Every boxed
+  // readout (speed / hull / cargo / depth / cash) opens with one of these,
+  // so the cluster reads as one milled panel with lit windows instead of
+  // eight framed boxes. Returns the inner glass rect.
+  function instrWindow(x, y, w, h) {
+    ctx.fillStyle = UI_OUTLINE;                 // milled cut line
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;         // step ring: shadowed top lip,
+    ctx.fillRect(x + 1, y + 1, w - 2, 1);       // lit bottom lip = recessed
+    ctx.fillRect(x + 1, y + 1, 1, h - 2);
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+    ctx.fillRect(x + 1, y + h - 2, w - 2, 1);
+    ctx.fillRect(x + w - 2, y + 2, 1, h - 3);
+    ctx.fillStyle = UIT_INSET_DK;               // the glass
+    ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+    ctx.fillStyle = 'rgba(220,235,255,0.09)';   // §4.4: top-edge reflection only
+    ctx.fillRect(x + 2, y + 2, w - 4, 1);
+    return { x: x + 2, y: y + 2, w: w - 4, h: h - 4 };
   }
 
   // Warning lamp per §4.3. state ∈ 'critical' | 'caution' | 'info' | 'off'.
@@ -345,276 +358,197 @@
     drawStencilText(text, bx + Math.floor((bw - wS) / 2), by + 2, s, '#d8d2c4');
   }
 
-  // Four corner bolts inside a bay's inner rect.
-  function drawBayBolts(bx, by, bw, bh) {
-    drawHexBolt(bx + 2,        by + 2);
-    drawHexBolt(bx + bw - 3,   by + 2);
-    drawHexBolt(bx + 2,        by + bh - 3);
-    drawHexBolt(bx + bw - 3,   by + bh - 3);
-  }
+  // (v26.43: the four per-bay corner bolts are gone. Six bays x four bolts
+  // was a field of dots; the frame's edge rivets carry the industrial read.)
 
   // ===== v11.4 — Console instruments (UI_STYLE.md §5) =====
 
-  // §5.1 Needle gauge — fully dressed. Multi-ring brass bezel,
-  // colored zone scale arc (green/amber/red per §6 amendment),
-  // numerated ticks at 25/50/75, pressure-relief screw, brass wear
-  // marks, glass dome with two highlight arcs, status lamp.
+  // §5.1 Fuel dial + reserve rack, one bay (v26.43). The brass-era needle
+  // gauge is retired; this is a dark-face half-dial behind glass, the one
+  // round instrument on the rail, so it anchors the cluster's left end.
+  // Keeps the green/amber/red margin arc (§6 amendment), the light-print
+  // ticks, and the fuel-to-climb-home marker. The old RESERVE bay folds in
+  // as a column of spare-tank pips on the right edge: lit amber when a tank
+  // is racked, a dark socket when not (§4.3: silence is OK).
   function drawFuelGauge(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'FUEL');
-    drawBayBolts(bx, by, bw, bh);
-    var cx = bx + bw / 2;
-    var cy = by + bh - 8;
-    // Floor at 8 so the inner-most arc (rad - 4) can't go negative when the
-    // bay is laid out tiny (e.g. a near-zero viewport during a resize
-    // transient). A negative arc radius throws and floods the console.
-    var rad = Math.max(8, Math.min(bw * 0.42, bh * 0.66));
+    var pipZone = 16;                     // right-edge column for the reserve rack
+    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
+    var cx = bx + 3 + Math.round((bw - 6 - pipZone) / 2);
+    var cy = win.y + win.h - 5;
+    // Floor at 8 so the inner arcs stay positive through resize transients.
+    var rad = Math.max(8, Math.min((bw - pipZone) * 0.44, bh * 0.58));
 
-    // -------- Multi-ring bezel --------
-    // Outer dark steel ring
-    ctx.fillStyle = '#1a1408';
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad + 3, Math.PI - 0.05, 0.05);
-    ctx.closePath();
-    ctx.fill();
-    // Bronze/brass bezel
-    ctx.fillStyle = '#5a4220';
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad + 1, Math.PI - 0.03, 0.03);
-    ctx.closePath();
-    ctx.fill();
-    // Brass face
-    ctx.fillStyle = '#7a5a2c';
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad, Math.PI, 0);
-    ctx.closePath();
-    ctx.fill();
-
-    // Brass wear marks (5 fixed diagonal scratches — deterministic)
-    var scratches = [
-      [-rad * 0.55,  rad * 0.18, -rad * 0.45,  rad * 0.05],
-      [-rad * 0.20, -rad * 0.30, -rad * 0.10, -rad * 0.42],
-      [ rad * 0.10, -rad * 0.20,  rad * 0.20, -rad * 0.10],
-      [ rad * 0.45,  rad * 0.10,  rad * 0.55, -rad * 0.05],
-      [-rad * 0.05,  rad * 0.20,  rad * 0.05,  rad * 0.10]
-    ];
-    ctx.strokeStyle = 'rgba(40,28,12,0.35)';
+    // -------- Machined bezel ring + dial face --------
+    ctx.strokeStyle = UI_OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, rad + 2, Math.PI - 0.04, 0.04); ctx.stroke();
+    ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT;
     ctx.lineWidth = 1;
-    for (var sc = 0; sc < scratches.length; sc++) {
-      var s = scratches[sc];
-      ctx.beginPath();
-      ctx.moveTo(cx + s[0], cy + s[1]);
-      ctx.lineTo(cx + s[2], cy + s[3]);
-      ctx.stroke();
-    }
+    ctx.beginPath(); ctx.arc(cx, cy, rad + 2.5, Math.PI + 0.28, Math.PI + 0.85); ctx.stroke();
+    ctx.fillStyle = '#0a0d12';
+    ctx.beginPath(); ctx.arc(cx, cy, rad + 1, Math.PI, 0); ctx.closePath(); ctx.fill();
 
-    // -------- Colored zone scale arc (green / amber / red) --------
-    // Painted as a thin band INSIDE the rim, leaving room for ticks.
-    function drawZoneArc(from, to, color) {
+    // -------- Margin arc: green / amber / red, printed not glowing --------
+    function zoneArc(from, to, color) {
       ctx.beginPath();
-      ctx.arc(cx, cy, rad - 4, Math.PI + Math.PI * from, Math.PI + Math.PI * to);
-      ctx.lineWidth = 3;
+      ctx.arc(cx, cy, rad - 3, Math.PI + Math.PI * from, Math.PI + Math.PI * to);
+      ctx.lineWidth = 2;
       ctx.strokeStyle = color;
       ctx.stroke();
     }
-    // Dark neon backing — paints a black ring under the glow so the
-    // tube reads as glass, not paint
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad - 4, Math.PI, 0);
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#0a0604';
-    ctx.stroke();
-    ctx.restore();
-    // Old-neon glow — soft, slightly hazy, dialed down so the brass
-    // gauge still reads as the dominant material.
-    ctx.save();
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = 'rgba(255,80,60,0.6)';
-    drawZoneArc(0.00, 0.15, '#c83820');
-    ctx.shadowColor = 'rgba(255,180,60,0.55)';
-    drawZoneArc(0.15, 0.30, '#c88828');
-    ctx.shadowColor = 'rgba(80,200,100,0.5)';
-    drawZoneArc(0.30, 1.00, '#3a9050');
-    ctx.restore();
-    // Warm-tinted core line — hints at lit gas inside the tube without
-    // going pure white.
-    function drawZoneCore(from, to, color) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, rad - 4, Math.PI + Math.PI * from, Math.PI + Math.PI * to);
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    }
-    drawZoneCore(0.00, 0.15, 'rgba(255,170,140,0.85)');
-    drawZoneCore(0.15, 0.30, 'rgba(255,210,150,0.80)');
-    drawZoneCore(0.30, 1.00, 'rgba(180,240,180,0.75)');
-    // Hatched overlay on critical for extra emphasis
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, rad - 2, Math.PI, Math.PI + Math.PI * 0.15);
-    ctx.closePath();
-    ctx.clip();
-    ctx.fillStyle = 'rgba(255,80,40,0.18)';
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeStyle = 'rgba(20,4,2,0.55)';
-    ctx.lineWidth = 1;
-    for (var hl = -bh; hl < bw + bh; hl += 3) {
-      ctx.beginPath();
-      ctx.moveTo(bx + hl, by);
-      ctx.lineTo(bx + hl + bh, by + bh);
-      ctx.stroke();
-    }
-    ctx.restore();
+    zoneArc(0.00, 0.15, '#c2402c');
+    zoneArc(0.15, 0.30, '#c08a28');
+    zoneArc(0.30, 1.00, '#3f9052');
 
-    // -------- Inner brass-rim line --------
-    ctx.strokeStyle = '#b88c4a';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad - 0.5, Math.PI + 0.10, Math.PI + 0.75);
-    ctx.stroke();
-    ctx.strokeStyle = '#4f3a1b';
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad - 0.5, -0.65, -0.10);
-    ctx.stroke();
-
-    // -------- Tick marks + numerals --------
+    // -------- Ticks: light print on the dark face --------
     var maxFuelLocal = (typeof maxFuel === 'number' && maxFuel > 0) ? maxFuel : 30;
     var fuelFrac = (typeof player !== 'undefined' && player) ? Math.max(0, Math.min(1, player.fuel / maxFuelLocal)) : 0;
-    ctx.strokeStyle = '#1f1408';
     for (var t = 0; t <= 4; t++) {
       var ang = Math.PI + Math.PI * (t / 4);
-      ctx.lineWidth = (t === 0 || t === 4) ? 1.7 : 1.2;
-      var x0 = cx + Math.cos(ang) * (rad - 7);
-      var y0 = cy + Math.sin(ang) * (rad - 7);
-      var x1 = cx + Math.cos(ang) * (rad - 11);
-      var y1 = cy + Math.sin(ang) * (rad - 11);
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.strokeStyle = 'rgba(216,210,196,0.85)';
+      ctx.lineWidth = (t === 0 || t === 4) ? 1.6 : 1.1;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(ang) * (rad - 6), cy + Math.sin(ang) * (rad - 6));
+      ctx.lineTo(cx + Math.cos(ang) * (rad - 10), cy + Math.sin(ang) * (rad - 10));
+      ctx.stroke();
       if (t < 4) {
+        ctx.strokeStyle = 'rgba(216,210,196,0.30)';
+        ctx.lineWidth = 1;
         for (var st = 1; st <= 3; st++) {
           var sang = Math.PI + Math.PI * ((t + st / 4) / 4);
-          ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(sang) * (rad - 7), cy + Math.sin(sang) * (rad - 7));
-          ctx.lineTo(cx + Math.cos(sang) * (rad - 9), cy + Math.sin(sang) * (rad - 9));
+          ctx.moveTo(cx + Math.cos(sang) * (rad - 6), cy + Math.sin(sang) * (rad - 6));
+          ctx.lineTo(cx + Math.cos(sang) * (rad - 8.5), cy + Math.sin(sang) * (rad - 8.5));
           ctx.stroke();
         }
       }
     }
-    // E / F at the ends, scale-1 numerals (25 / 50 / 75) at the major ticks
-    drawStencilText('E', cx + Math.cos(Math.PI) * (rad - 16) - 2, cy + Math.sin(Math.PI) * (rad - 16) - 3, 1, '#1f1408');
-    drawStencilText('F', cx + Math.cos(0) * (rad - 16) - 2, cy + Math.sin(0) * (rad - 16) - 3, 1, '#1f1408');
+    drawStencilText('E', cx - rad + 13, cy - 8, 1, 'rgba(216,210,196,0.55)');
+    drawStencilText('F', cx + rad - 17, cy - 8, 1, 'rgba(216,210,196,0.55)');
 
-    // -------- Needle with shadow + colored tip --------
+    // -------- Needle: cream with a red tip over a 1-px drop shadow --------
     var needleAng = Math.PI + Math.PI * fuelFrac;
     var nLen = rad - 6;
     var nx = cx + Math.cos(needleAng) * nLen;
     var ny = cy + Math.sin(needleAng) * nLen;
-    // Drop shadow
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(cx + 1, cy + 1); ctx.lineTo(nx + 1, ny + 1); ctx.stroke();
-    // Main needle
-    ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = '#e8e0cc';
+    ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
-    // Red tip on the last 3 px (mirrors hull's critical-zone red)
-    var tipStartFrac = Math.max(0, (nLen - 3) / nLen);
-    var tipX0 = cx + Math.cos(needleAng) * (nLen - 3);
-    var tipY0 = cy + Math.sin(needleAng) * (nLen - 3);
-    ctx.strokeStyle = '#ff4030';
+    var tipX0 = cx + Math.cos(needleAng) * (nLen - 4);
+    var tipY0 = cy + Math.sin(needleAng) * (nLen - 4);
+    ctx.strokeStyle = '#ff5436';
     ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(tipX0, tipY0); ctx.lineTo(nx, ny); ctx.stroke();
     ctx.lineCap = 'butt';
 
-    // -------- Hub (brass screw with slot) --------
-    ctx.fillStyle = '#3a3833';
-    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#52504a';
-    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#7a7770';
-    ctx.fillRect(cx - 2, cy - 2, 1, 1);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(cx - 1, cy - 1, 2, 2);
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(cx - 2, cy, 4, 1);
+    // -------- Hub: flush steel --------
+    ctx.fillStyle = UI_OUTLINE;
+    ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
+    ctx.fillRect(cx - 1, cy - 2, 1, 1);
 
-    // -------- Pressure-relief screw at top --------
-    drawHexBolt(cx, cy - rad + 4);
-
-    // -------- Glass dome (two highlight arcs + bottom rim) --------
-    ctx.strokeStyle = 'rgba(230,245,255,0.55)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad - 1, Math.PI + 0.20, Math.PI + 0.65);
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(230,245,255,0.22)';
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad - 4, Math.PI + 0.30, Math.PI + 0.55);
-    ctx.stroke();
-    // Bottom-rim glint (subtle)
-    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad - 1, -0.4, -0.15);
-    ctx.stroke();
-
-    // -------- "Fuel to climb home" marker --------
-    // A little notch that slides along the gauge as depth changes — it
-    // marks the fuel needed to fly back up to the surface (getFuelToSurface
-    // bakes in a safety buffer). Keep the needle above it and you can make
-    // it home; the notch turns red when you can't.
+    // -------- "Fuel to climb home" marker (kept from v24) --------
+    // The notch slides along the dial as depth changes; keep the needle above
+    // it and you can make it back. Turns red the moment you can't.
     var toSurface = getFuelToSurface();
     if (toSurface > 0.5) {
       var markFrac = Math.min(1, toSurface / maxFuelLocal);
       var mAng = Math.PI + Math.PI * markFrac;
       var mCos = Math.cos(mAng), mSin = Math.sin(mAng);
       var mCol = player.fuel >= toSurface ? '#bfe9ff' : '#ff5436';
-      // Dark backing so the notch reads on any zone colour.
       ctx.lineCap = 'round';
-      ctx.strokeStyle = '#0a0604';
+      ctx.strokeStyle = '#05070a';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(cx + mCos * (rad - 1.5), cy + mSin * (rad - 1.5));
-      ctx.lineTo(cx + mCos * (rad - 10),  cy + mSin * (rad - 10));
+      ctx.moveTo(cx + mCos * (rad - 1), cy + mSin * (rad - 1));
+      ctx.lineTo(cx + mCos * (rad - 9), cy + mSin * (rad - 9));
       ctx.stroke();
-      // Colored core.
       ctx.strokeStyle = mCol;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(cx + mCos * (rad - 2.5), cy + mSin * (rad - 2.5));
-      ctx.lineTo(cx + mCos * (rad - 9),   cy + mSin * (rad - 9));
+      ctx.moveTo(cx + mCos * (rad - 2), cy + mSin * (rad - 2));
+      ctx.lineTo(cx + mCos * (rad - 8), cy + mSin * (rad - 8));
       ctx.stroke();
       ctx.lineCap = 'butt';
-      // Bead just outside the rim — the head of the marker.
-      ctx.fillStyle = '#0a0604';
+      ctx.fillStyle = '#05070a';
       ctx.beginPath();
-      ctx.arc(cx + mCos * (rad + 1.5), cy + mSin * (rad + 1.5), 2.6, 0, Math.PI * 2);
+      ctx.arc(cx + mCos * (rad + 2), cy + mSin * (rad + 2), 2.6, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = mCol;
       ctx.beginPath();
-      ctx.arc(cx + mCos * (rad + 1.5), cy + mSin * (rad + 1.5), 1.7, 0, Math.PI * 2);
+      ctx.arc(cx + mCos * (rad + 2), cy + mSin * (rad + 2), 1.6, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // -------- Status lamp top-right --------
+    // -------- Glass: one top-left reflection arc (§4.4) --------
+    ctx.strokeStyle = 'rgba(220,235,255,0.13)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, rad - 1.5, Math.PI + 0.22, Math.PI + 0.62); ctx.stroke();
+
+    // -------- Warning lamp (top-left of the glass) --------
     var lampState = 'off';
     if (fuelFrac < 0.15)      lampState = 'critical';
     else if (fuelFrac < 0.30) lampState = 'caution';
-    drawWarningLamp(bx + bw - 8, by + 12, lampState);
+    drawWarningLamp(win.x + 6, win.y + 6, lampState);
+
+    // -------- Reserve rack: spare-tank pips down the right edge --------
+    var have = (typeof reserveFuel === 'number') ? reserveFuel : 0;
+    var n = (typeof RESERVE_FUEL_MAX === 'number') ? RESERVE_FUEL_MAX : 4;
+    var pgap = 2;
+    var ph = Math.min(10, Math.floor((win.h - 6 - (n - 1) * pgap) / n));
+    var pw = 9;
+    var px0 = win.x + win.w - pw - 3;
+    var py0 = win.y + Math.max(3, Math.round((win.h - (n * (ph + pgap) - pgap)) / 2));
+    for (var i = 0; i < n; i++) {
+      drawReservePip(px0, py0 + i * (ph + pgap), pw, ph, i < have);
+    }
   }
 
-  // §5.1b Speed readout — a lit numeric window (same brass-face + recessed
-  // display construction as the CASH / DEPTH bays, so the three digital
-  // readouts read as a family). Shows the rig's total speed (|velocity|) as a
-  // big centred MPH number, converted exactly as the 'FELL n MPH' fall readout
-  // does (32 px = 1 m, m/s → MPH), so the two always agree. The number is eased
+  // One reserve-tank pip for the FUEL bay: a tiny jerry can, lit amber when
+  // racked, a dark socket when empty.
+  function drawReservePip(x, y, w, h, filled) {
+    var capW = 3, capH = 2;
+    var capX = x + ((w - capW) >> 1);
+    if (!filled) {
+      ctx.fillStyle = '#080a0e';
+      ctx.fillRect(x, y + capH, w, h - capH);
+      ctx.fillRect(capX, y, capW, capH);
+      ctx.fillStyle = '#232933';
+      ctx.fillRect(x, y + capH, w, 1);
+      ctx.fillStyle = '#12161c';
+      ctx.fillRect(x + 1, y + capH + 1, w - 2, h - capH - 2);
+      return;
+    }
+    ctx.fillStyle = '#6f4d16';
+    ctx.fillRect(capX, y, capW, capH);
+    ctx.fillStyle = '#e0a838';
+    ctx.fillRect(x, y + capH, w, h - capH);
+    ctx.fillStyle = '#ffd35c';
+    ctx.fillRect(x, y + capH, w, 1);
+    ctx.fillRect(x, y + capH, 1, h - capH);
+    ctx.fillStyle = '#9c6d1c';
+    ctx.fillRect(x, y + h - 1, w, 1);
+    ctx.fillRect(x + w - 1, y + capH, 1, h - capH);
+    ctx.fillStyle = 'rgba(60,40,8,0.55)';
+    ctx.fillRect(x + 1, y + capH + ((h - capH) >> 1), w - 2, 1);
+  }
+
+  // §5.1b Speed readout — the rig's |velocity| as a big lit MPH number
+  // behind glass, converted exactly as the 'FELL n MPH' fall readout does
+  // (32 px = 1 m, m/s → MPH) so the two always agree. The number is eased
   // toward the reading so it ticks instead of strobing, and it warms amber →
-  // orange → red as you climb into fall-damage territory (the little corner
-  // lamp echoes it).
+  // orange → red as you climb into fall-damage territory; the corner lamp
+  // echoes it and stays dark below the caution band (§6: silence is OK).
   var speedoMphSmooth = 0;
   // Per-frame speedo ease (v25.31): runs from drawConsole EVERY frame, cache
-  // hit or not — see the note inside drawSpeedDisplay.
+  // hit or not — an ease inside the cached draw freezes on cache hits.
   function consoleTickSpeedo() {
     var spd = (typeof player !== 'undefined' && player)
       ? Math.sqrt(player.vx * player.vx + player.vy * player.vy) : 0;
@@ -624,127 +558,29 @@
   }
   function drawSpeedDisplay(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'SPEED');
-    drawBayBolts(bx, by, bw, bh);
-    var pad = 5;
-    var fx = bx + pad;
-    var fy = by + pad + 6;
-    var fw = bw - pad * 2;
-    var fh = bh - pad * 2 - 6;
-
-    // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#14171d';
-    ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#2a3140';
-    ctx.fillRect(fx, fy, fw, 1);
-    ctx.fillRect(fx, fy, 1, fh);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(fx, fy + fh - 1, fw, 1);
-    ctx.fillRect(fx + fw - 1, fy, 1, fh);
-
-    // ---- Bronze inset ring ----
-    var bxi = fx + 2, byi = fy + 2, bwi = fw - 4, bhi = fh - 4;
-    ctx.fillStyle = '#5a3e1c';
-    ctx.fillRect(bxi, byi, bwi, bhi);
-    ctx.fillStyle = '#8a6428';
-    ctx.fillRect(bxi, byi, bwi, 1);
-    ctx.fillStyle = '#3a2810';
-    ctx.fillRect(bxi, byi + bhi - 1, bwi, 1);
-
-    // ---- Brushed brass face ----
-    var ax = bxi + 1, ay = byi + 1, aw = bwi - 2, ah = bhi - 2;
-    ctx.fillStyle = '#7a5a2c';
-    ctx.fillRect(ax, ay, aw, ah);
-    for (var sx = ax + 1; sx < ax + aw - 1; sx += 3) {
-      ctx.fillStyle = 'rgba(160,124,64,0.18)';
-      ctx.fillRect(sx, ay + 1, 1, ah - 2);
-    }
-    for (var sx2 = ax + 2; sx2 < ax + aw - 1; sx2 += 5) {
-      ctx.fillStyle = 'rgba(48,32,12,0.22)';
-      ctx.fillRect(sx2, ay + 1, 1, ah - 2);
-    }
-    ctx.fillStyle = '#a07c40';
-    ctx.fillRect(ax, ay, aw, 1);
-    ctx.fillRect(ax, ay, 1, ah);
-    ctx.fillStyle = '#4f3a1b';
-    ctx.fillRect(ax, ay + ah - 1, aw, 1);
-    ctx.fillRect(ax + aw - 1, ay, 1, ah);
-
-    // Corner screws on the brass plate
-    function speedScrew(cx, cy) {
-      ctx.fillStyle = '#1a1006';
-      ctx.fillRect(cx - 1, cy - 1, 3, 3);
-      ctx.fillStyle = '#9c7a40';
-      ctx.fillRect(cx, cy, 1, 1);
-    }
-    speedScrew(ax + 2, ay + 2);
-    speedScrew(ax + aw - 3, ay + 2);
-
-    // ---- Live value: speedoMphSmooth, eased ONCE PER FRAME by
-    // consoleTickSpeedo() (v25.31) — the ease used to live here, but the
-    // instrument cache skips this draw on unchanged frames and an ease inside
-    // the draw would freeze the needle the moment it stopped being called.
-    // The tick runs from drawConsole every frame regardless of cache hits. ----
+    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
     var spdMax = (typeof SPEEDO_MPH_MAX === 'number' && SPEEDO_MPH_MAX > 0) ? SPEEDO_MPH_MAX : 80;
     var spdFrac = Math.max(0, Math.min(1, speedoMphSmooth / spdMax));
-
-    // ---- Recessed display window ----
-    var hasStencil = ah >= 40;
-    var winX = ax + 4;
-    var winY = ay + 6;
-    var winW = aw - 8;
-    var winH = ah - 6 - (hasStencil ? 11 : 4);
-    ctx.fillStyle = '#0e0a04';
-    ctx.fillRect(winX, winY, winW, winH);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(winX, winY, winW, 1);
-    ctx.fillRect(winX, winY, 1, winH);
-    ctx.fillStyle = '#241808';
-    ctx.fillRect(winX, winY + winH - 1, winW, 1);
-    ctx.fillRect(winX + winW - 1, winY, 1, winH);
-
-    // ---- MPH number — big, centred, warms with speed ----
-    // Amber is the readout colour (matches DEPTH's #d4a838); gold #ffd24a is
-    // reserved for money, so it is deliberately not used here. The number shifts
-    // to orange then red as speed enters fall-damage territory.
     var numCol = '#d4a838';
     if (spdFrac >= 0.82)      numCol = '#ff5436';
     else if (spdFrac >= 0.60) numCol = '#f0902a';
     var mphStr = '' + Math.round(speedoMphSmooth);
-    // Largest stencil scale (3 → 2 → 1) that fits the window in both axes.
+    var hasLegend = win.h >= 40;
+    var numH = win.h - (hasLegend ? 10 : 0);
+    // Largest stencil scale (3 → 2 → 1) that fits the glass in both axes.
     var scale = 3;
-    if (stencilTextWidth(mphStr, scale) > winW - 8 || 7 * scale > winH - 4) scale = 2;
-    if (stencilTextWidth(mphStr, scale) > winW - 8 || 7 * scale > winH - 4) scale = 1;
+    if (stencilTextWidth(mphStr, scale) > win.w - 10 || 7 * scale > numH - 4) scale = 2;
+    if (stencilTextWidth(mphStr, scale) > win.w - 10 || 7 * scale > numH - 4) scale = 1;
     var tw = stencilTextWidth(mphStr, scale);
-    var tx = winX + Math.floor((winW - tw) / 2);
-    if (tx < winX + 3) tx = winX + 3;
-    var ty = winY + Math.floor((winH - 7 * scale) / 2);
-    drawStencilText(mphStr, tx, ty, scale, numCol);
-
-    // Glass sheen across the top of the window
-    ctx.fillStyle = 'rgba(220,235,255,0.14)';
-    ctx.fillRect(winX + 1, winY + 1, winW - 2, 1);
-
-    // ---- Bottom stencil label ----
-    if (hasStencil) {
-      var stencil = 'MPH';
-      var stW = stencilTextWidth(stencil, 1);
-      if (stW <= aw - 4) {
-        drawStencilText(stencil, ax + Math.floor((aw - stW) / 2), ay + ah - 9, 1, '#3a2810');
-      }
+    drawStencilText(mphStr, win.x + Math.floor((win.w - tw) / 2),
+      win.y + Math.floor((numH - 7 * scale) / 2) + 1, scale, numCol);
+    if (hasLegend) {
+      var lgW = stencilTextWidth('MPH', 1);
+      drawStencilText('MPH', win.x + Math.floor((win.w - lgW) / 2), win.y + win.h - 10, 1, '#454f5c');
     }
-
-    // ---- Tiny status lamp (upper-right) — green, warming to red at redline ----
-    var lampX = ax + aw - 6;
-    var lampY = ay + 4;
-    var lampCol = '#40c060', lampHi = 'rgba(180,255,200,0.55)';
-    if (spdFrac >= 0.82)      { lampCol = '#ff5436'; lampHi = 'rgba(255,200,180,0.6)'; }
-    else if (spdFrac >= 0.60) { lampCol = '#f0a02a'; lampHi = 'rgba(255,225,170,0.55)'; }
-    ctx.fillStyle = '#1a0a05';
-    ctx.fillRect(lampX - 1, lampY - 1, 4, 4);
-    ctx.fillStyle = lampCol;
-    ctx.fillRect(lampX, lampY, 2, 2);
-    ctx.fillStyle = lampHi;
-    ctx.fillRect(lampX, lampY, 1, 1);
+    // Redline lamp: dark until the caution band (no green "OK" light, §6).
+    var lampState = spdFrac >= 0.82 ? 'critical' : (spdFrac >= 0.60 ? 'caution' : 'off');
+    drawWarningLamp(win.x + win.w - 6, win.y + 6, lampState);
   }
 
   // §5.2 Plate counter — positional health zones (UI_STYLE.md §5.2 +
@@ -755,7 +591,7 @@
   // remaining margin; no master warning lamp needed.
   function drawHullPlates(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'HULL');
-    drawBayBolts(bx, by, bw, bh);
+    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);   // v26.43 aperture
     // v25.71 — the hull gauge is a GRID of armor tiles, and the tile COUNT tracks
     // the Hull Plating upgrade: a stock rig has HULL_PLATE_BASE tiles and each tier
     // bolts on HULL_PLATE_STEP more, so a maxed hull reads as a visibly denser slab
@@ -783,12 +619,12 @@
       else                            return { base: '#e83a26', hi: '#ff7060', sh: '#7a2418' };
     }
 
-    // Fit N tiles into the bay: the largest square tile (<=11 px) whose wrapped
-    // rows all clear the HULL label + corner bolts. Small counts stay chunky in
-    // one or two rows; a maxed hull packs into a denser multi-row grid.
+    // Fit N tiles into the glass: the largest square tile (<=11 px) whose
+    // wrapped rows fit the window. Small counts stay chunky in one or two
+    // rows; a maxed hull packs into a denser multi-row grid.
     var gap = 1;
-    var availW = bw - 8;
-    var availH = Math.max(6, bh - 16);            // band below the HULL label
+    var availW = win.w - 8;
+    var availH = Math.max(6, win.h - 6);
     var tile = 4, cols = 1, rows = n;
     for (var t = 11; t >= 4; t--) {
       var c = Math.max(1, Math.floor((availW + gap) / (t + gap)));
@@ -798,18 +634,9 @@
     }
     var gridW = cols * (tile + gap) - gap;
     var gridH = rows * (tile + gap) - gap;
-    var gx0 = bx + Math.round((bw - gridW) / 2);
-    var gy0 = (by + 12) + Math.max(0, Math.round((availH - gridH) / 2));
-
-    // Recessed metal backing (destroyed tiles show this through).
-    ctx.fillStyle = '#0e0c0a';
-    ctx.fillRect(gx0 - 3, gy0 - 3, gridW + 6, gridH + 6);
-    ctx.fillStyle = '#1a1612';
-    ctx.fillRect(gx0 - 3, gy0 - 3, gridW + 6, 1);
-    ctx.fillRect(gx0 - 3, gy0 - 3, 1, gridH + 6);
-    ctx.fillStyle = '#2a2520';
-    ctx.fillRect(gx0 - 3, gy0 + gridH + 2, gridW + 6, 1);
-    ctx.fillRect(gx0 + gridW + 2, gy0 - 3, 1, gridH + 6);
+    var gx0 = win.x + Math.round((win.w - gridW) / 2);
+    var gy0 = win.y + 3 + Math.max(0, Math.round((availH - gridH) / 2));
+    // (Destroyed tiles show the dark glass of the aperture through.)
 
     for (var i = 0; i < n; i++) {
       var stage;
@@ -862,33 +689,13 @@
     }
     var lblStr = cargoVal > 0 ? ('CARGO  $' + cargoVal.toLocaleString()) : 'CARGO';
     drawBayLabel(bx, by, bw, lblStr);
-    drawBayBolts(bx, by, bw, bh);
-    var pad = 3;
-    var fx = bx + pad;
-    var fy = by + pad + 6;
-    var fw = bw - pad * 2;
-    var fh = bh - pad * 2 - 6;
-
-    // Brass frame
-    ctx.fillStyle = '#7a5a2c';
-    ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#a07c40';
-    ctx.fillRect(fx, fy, fw, 1);
-    ctx.fillRect(fx, fy, 1, fh);
-    ctx.fillStyle = '#4f3a1b';
-    ctx.fillRect(fx, fy + fh - 1, fw, 1);
-    ctx.fillRect(fx + fw - 1, fy, 1, fh);
-
-    // Inner dark interior
-    var ix = fx + 3;
-    var iy = fy + 3;
-    var iw = fw - 6;
-    var ih = fh - 6;
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(ix, iy, iw, ih);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(ix, iy + ih - 1, iw, 1);
-    ctx.fillRect(ix + iw - 1, iy, 1, ih);
+    // v26.43 — the hold sits behind the shared aperture glass; the brass
+    // chamber frame is gone.
+    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
+    var ix = win.x + 1;
+    var iy = win.y + 1;
+    var iw = win.w - 2;
+    var ih = win.h - 2;
 
     // Decide grid: pick cols/rows that produce roughly square cells
     // and fill the chamber. Aim cell ratio close to 1.
@@ -1011,12 +818,8 @@
       }
     }
 
-    // Glass cover highlight (1-px at top of chamber)
-    ctx.fillStyle = 'rgba(220,235,255,0.18)';
-    ctx.fillRect(ix + 1, iy + 1, iw - 2, 1);
-
     // Hover tooltip — names the ore under the cursor. Drawn above the
-    // bay so it never overlaps the slots; brass-framed to match.
+    // bay so it never overlaps the slots; steel-framed to match.
     if (hoverOre) {
       ctx.save();
       var tipName = hoverOre.label || 'Ore';
@@ -1035,7 +838,7 @@
       var tipY = Math.round(by - 4 - tipH);
       ctx.fillStyle = 'rgba(8,8,10,0.96)';
       ctx.fillRect(tipX, tipY, tipW, tipH);
-      ctx.fillStyle = '#a07c40';
+      ctx.fillStyle = UIMAT_WELD;
       ctx.fillRect(tipX, tipY, tipW, 1);
       ctx.fillRect(tipX, tipY + tipH - 1, tipW, 1);
       ctx.fillRect(tipX, tipY, 1, tipH);
@@ -1046,74 +849,19 @@
       ctx.fillStyle = '#f4ead0';
       ctx.fillText(tipName, tipX + tipPad, tipY + 13);
       ctx.font = '8px ' + UI_FONT;
-      ctx.fillStyle = '#b89a6a';
+      ctx.fillStyle = UIT_DIM;
       ctx.fillText(tipSub, tipX + tipPad, tipY + 24);
       ctx.restore();
     }
   }
 
-  // §5.4 Dial wheel — proper rotating-drum treatment. Four digit drums
-  // each in their own brass slot, with peeks of the adjacent digits
-  // ghosted at top/bottom for the cylindrical-wheel illusion. Trailing
-  // "M" suffix in stencil gold.
+  // §5.4 Depth odometer — four rolling drums behind glass. The drum slots,
+  // ghost digit peeks and the odometer rim survive from v11; the brass face
+  // around them is gone, so the drums sit straight in the dark window like
+  // a counter set into the panel.
   function drawDepthDisplay(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'DEPTH');
-    drawBayBolts(bx, by, bw, bh);
-    var pad = 5;
-    var fx = bx + pad;
-    var fy = by + pad + 6;
-    var fw = bw - pad * 2;
-    var fh = bh - pad * 2 - 6;
-
-    // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#14171d';
-    ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#2a3140';
-    ctx.fillRect(fx, fy, fw, 1);
-    ctx.fillRect(fx, fy, 1, fh);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(fx, fy + fh - 1, fw, 1);
-    ctx.fillRect(fx + fw - 1, fy, 1, fh);
-
-    // ---- Bronze inset ring ----
-    var bxi = fx + 2, byi = fy + 2, bwi = fw - 4, bhi = fh - 4;
-    ctx.fillStyle = '#5a3e1c';
-    ctx.fillRect(bxi, byi, bwi, bhi);
-    ctx.fillStyle = '#8a6428';
-    ctx.fillRect(bxi, byi, bwi, 1);
-    ctx.fillStyle = '#3a2810';
-    ctx.fillRect(bxi, byi + bhi - 1, bwi, 1);
-
-    // ---- Brushed brass face ----
-    var ax = bxi + 1, ay = byi + 1, aw = bwi - 2, ah = bhi - 2;
-    ctx.fillStyle = '#7a5a2c';
-    ctx.fillRect(ax, ay, aw, ah);
-    // Vertical brushed-metal scan lines (subtle)
-    for (var sx = ax + 1; sx < ax + aw - 1; sx += 3) {
-      ctx.fillStyle = 'rgba(160,124,64,0.18)';
-      ctx.fillRect(sx, ay + 1, 1, ah - 2);
-    }
-    for (var sx2 = ax + 2; sx2 < ax + aw - 1; sx2 += 5) {
-      ctx.fillStyle = 'rgba(48,32,12,0.22)';
-      ctx.fillRect(sx2, ay + 1, 1, ah - 2);
-    }
-    // Face rim highlight + shadow
-    ctx.fillStyle = '#a07c40';
-    ctx.fillRect(ax, ay, aw, 1);
-    ctx.fillRect(ax, ay, 1, ah);
-    ctx.fillStyle = '#4f3a1b';
-    ctx.fillRect(ax, ay + ah - 1, aw, 1);
-    ctx.fillRect(ax + aw - 1, ay, 1, ah);
-
-    // Corner screws on the brass plate
-    function depthScrew(cx, cy) {
-      ctx.fillStyle = '#1a1006';
-      ctx.fillRect(cx - 1, cy - 1, 3, 3);
-      ctx.fillStyle = '#9c7a40';
-      ctx.fillRect(cx, cy, 1, 1);
-    }
-    depthScrew(ax + 2, ay + 2);
-    depthScrew(ax + aw - 3, ay + 2);
+    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
 
     // Depth metres
     var depthM = 0;
@@ -1123,318 +871,156 @@
     var sDepth = depthM.toFixed(0);
     while (sDepth.length < 4) sDepth = '0' + sDepth;
 
-    // Drum slot geometry
+    // Drum slot geometry. v25.63: drop to scale 1 when the scale-2 cluster
+    // won't fit the narrow portrait-stacked bay.
     var drumGap = 1;
     var nDigits = 4;
-    // v25.63 — fit the odometer to the brass face. On the narrow portrait-stacked
-    // bay the scale-2 four-drum cluster (65px + bezel) was wider than the face, so
-    // the last digit was crushed against the frame. Drop to scale 1 (45px) when
-    // the full cluster + its chrome bezel won't fit the available width `aw`.
     var scale = 2;
-    if ((5 * scale + 4) * nDigits + drumGap * (nDigits - 1) + 6 > aw) scale = 1;
+    if ((5 * scale + 4) * nDigits + drumGap * (nDigits - 1) + 6 > win.w) scale = 1;
     var digitW = 5 * scale;
     var drumW = digitW + 4;
     var totalDrums = drumW * nDigits + drumGap * (nDigits - 1);
-    // Suffix "M" is rendered at scale 1 below the drums, not inline,
-    // so reserve no horizontal room for it here. This lets the drums
-    // center cleanly in the brass face.
-    var totalW = totalDrums;
-    var drumStartX = ax + Math.floor((aw - totalW) / 2);
+    var hasLegend = win.h >= 40;
     var drumH = 7 * scale + 6;
-    // Lift drums up a touch to leave room for manufacturer stencil at bottom
-    var drumY = ay + Math.floor((ah - drumH) / 2) - 2;
+    var drumStartX = win.x + Math.floor((win.w - totalDrums) / 2);
+    var drumY = win.y + Math.floor((win.h - (hasLegend ? 10 : 0) - drumH) / 2) + 1;
 
-    // Chrome cluster bezel around the whole drum row
-    var clX = drumStartX - 3;
-    var clY = drumY - 2;
-    var clW = totalDrums + 6;
-    var clH = drumH + 4;
-    ctx.fillStyle = '#0a0604';
-    ctx.fillRect(clX, clY, clW, clH);
-    ctx.fillStyle = '#3a2e1c';
-    ctx.fillRect(clX, clY, clW, 1);
-    ctx.fillRect(clX, clY, 1, clH);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(clX, clY + clH - 1, clW, 1);
-    ctx.fillRect(clX + clW - 1, clY, 1, clH);
-
-    // Per-digit drum
+    // Per-digit drum: recessed near-black slot, amber digit, dim peeks of
+    // the neighbouring digits top + bottom for the rolling-cylinder read.
     for (var d = 0; d < nDigits; d++) {
       var dx = drumStartX + d * (drumW + drumGap);
-      // Dark recessed slot
-      ctx.fillStyle = '#0e0a04';
+      ctx.fillStyle = '#0a0a0c';
       ctx.fillRect(dx, drumY, drumW, drumH);
-      // Inner shadow (top + left)
       ctx.fillStyle = '#000000';
       ctx.fillRect(dx, drumY, drumW, 1);
       ctx.fillRect(dx, drumY, 1, drumH);
-      // Inner highlight (bottom + right) — sells the recess
-      ctx.fillStyle = '#241808';
+      ctx.fillStyle = '#1c222b';
       ctx.fillRect(dx, drumY + drumH - 1, drumW, 1);
       ctx.fillRect(dx + drumW - 1, drumY, 1, drumH);
 
       var ch = sDepth.charAt(d);
       var digit = parseInt(ch, 10);
-      // Centre digit
       var cdx = dx + Math.floor((drumW - digitW) / 2);
       var cdy = drumY + Math.floor((drumH - 7 * scale) / 2);
       drawStencilText(ch, cdx, cdy, scale, '#d4a838');
 
-      // Peek of digit above (dim) — shows last row at top of slot
       var above = String((digit + 9) % 10);
       ctx.save();
       ctx.beginPath();
       ctx.rect(dx + 1, drumY + 1, drumW - 2, 3);
       ctx.clip();
-      drawStencilText(above, cdx, cdy - 7 * scale - 2, scale, 'rgba(212, 168, 56, 0.32)');
+      drawStencilText(above, cdx, cdy - 7 * scale - 2, scale, 'rgba(212, 168, 56, 0.30)');
       ctx.restore();
 
-      // Peek of digit below (dim) — shows first row at bottom of slot
       var below = String((digit + 1) % 10);
       ctx.save();
       ctx.beginPath();
       ctx.rect(dx + 1, drumY + drumH - 4, drumW - 2, 3);
       ctx.clip();
-      drawStencilText(below, cdx, cdy + 7 * scale + 2, scale, 'rgba(212, 168, 56, 0.32)');
+      drawStencilText(below, cdx, cdy + 7 * scale + 2, scale, 'rgba(212, 168, 56, 0.30)');
       ctx.restore();
 
-      // Glass sheen — diagonal-ish highlight: top band + bright-left strip
-      ctx.fillStyle = 'rgba(220,235,255,0.22)';
+      // Glass sheen on the slot
+      ctx.fillStyle = 'rgba(220,235,255,0.16)';
       ctx.fillRect(dx + 1, drumY + 1, drumW - 2, 1);
-      ctx.fillStyle = 'rgba(220,235,255,0.10)';
-      ctx.fillRect(dx + 1, drumY + 2, 1, drumH - 3);
-      // Bottom rim glint
-      ctx.fillStyle = 'rgba(255,210,120,0.10)';
-      ctx.fillRect(dx + 1, drumY + drumH - 2, drumW - 2, 1);
     }
 
-    // Thousands separator rim (like an odometer)
+    // Odometer rim between drums (steel, not brass)
     var sepX = drumStartX + drumW * 2 + drumGap;
-    ctx.fillStyle = '#c89048';
+    ctx.fillStyle = UIMAT_WELD;
     ctx.fillRect(sepX - 1, drumY - 1, 1, drumH + 2);
 
-    // Bottom row: "METRES · TYPE-D" stencil at scale 1, centered.
-    var stencil = 'METRES · TYPE-D';
-    var stWidth = stencilTextWidth(stencil, 1);
-    if (stWidth > aw - 4) {
-      stencil = 'METRES';
-      stWidth = stencilTextWidth(stencil, 1);
-    }
-    var stX = ax + Math.floor((aw - stWidth) / 2);
-    var stY = ay + ah - 9;
-    drawStencilText(stencil, stX, stY, 1, '#3a2810');
-
-    // Tiny status lamp (powered) at upper-right of brass face
-    var lampX = ax + aw - 6;
-    var lampY = ay + 4;
-    ctx.fillStyle = '#1a0a05';
-    ctx.fillRect(lampX - 1, lampY - 1, 4, 4);
-    ctx.fillStyle = '#40c060';
-    ctx.fillRect(lampX, lampY, 2, 2);
-    ctx.fillStyle = 'rgba(180,255,200,0.55)';
-    ctx.fillRect(lampX, lampY, 1, 1);
-  }
-
-  // §4.3/§6 SAVE annunciator (the 'sys' bay, v24.126). A single status lamp
-  // in a recessed steel housing: dark when idle (silence is OK, §10.7),
-  // steady info-blue for ~3 s after each successful save write, hard 1 Hz
-  // caution blink while writes are failing. State lives in 047-save.js
-  // (saveLampT / saveLampFailT, decayed in saveTick).
-  function drawSysAnnunciator(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'SAVE');
-    drawBayBolts(bx, by, bw, bh);
-    var cx = bx + (bw >> 1);
-    var cy = by + (bh >> 1) + 4;   // optical centre, below the label line
-    // Recessed dark steel housing (matches the other instruments' bezels).
-    ctx.fillStyle = '#14171d';
-    ctx.fillRect(cx - 6, cy - 6, 12, 12);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(cx - 6, cy - 6, 12, 1);
-    ctx.fillRect(cx - 6, cy - 6, 1, 12);
-    ctx.fillStyle = '#2a3140';
-    ctx.fillRect(cx - 6, cy + 5, 12, 1);
-    ctx.fillRect(cx + 5, cy - 6, 1, 12);
-    var lit = false, core, halo, spec;
-    if (saveLampFailT > 0) {
-      // Caution: hard 0/1 blink at 1 Hz per §4.3, no fade.
-      lit = (saveLampFailT % 1) < 0.5;
-      core = '#ffb030'; halo = '#b06010'; spec = '#ffe0a0';
-    } else if (saveLampT > 0) {
-      // Info: steady while lit, short fade tail at the very end.
-      lit = true;
-      core = '#4080ff'; halo = '#1c3a80'; spec = '#cfe0ff';
-    }
-    if (lit) {
-      ctx.save();
-      ctx.globalAlpha = (saveLampFailT > 0) ? 1 : Math.min(1, saveLampT / 0.5);
-      ctx.fillStyle = halo;
-      ctx.fillRect(cx - 3, cy - 3, 7, 7);   // 1-px halo ring
-      ctx.fillStyle = core;
-      ctx.fillRect(cx - 2, cy - 2, 5, 5);   // lamp dome
-      ctx.fillStyle = spec;
-      ctx.fillRect(cx - 1, cy - 1, 1, 1);   // specular point
-      ctx.restore();
-    } else {
-      ctx.fillStyle = '#2a2a2a';            // unlit halo (§4.3)
-      ctx.fillRect(cx - 3, cy - 3, 7, 7);
-      ctx.fillStyle = '#1a1a1a';            // unlit core
-      ctx.fillRect(cx - 2, cy - 2, 5, 5);
+    // Etched-glass legend under the drums
+    if (hasLegend) {
+      var lgW = stencilTextWidth('METRES', 1);
+      drawStencilText('METRES', win.x + Math.floor((win.w - lgW) / 2), win.y + win.h - 10, 1, '#454f5c');
     }
   }
 
-  // §5.5 Cash readout — brass-faced instrument with a recessed dark
-  // display window. The player's balance is shown right-aligned in gold
-  // stencil; the type size drops a notch once the number gets long so
-  // late-game six-figure totals never clip the window.
+  // (v26.43: the SAVE annunciator bay is gone; the lamp lives in the CASH
+  // window now, drawn in drawCashDisplay. State stays in 047-save.js.)
+
+  // §5.5 Cash readout — the balance in money gold behind glass, right-
+  // aligned. Shows displayMoney (the eased odometer) so a dock sale counts
+  // up beat-by-beat; the per-card payout punch (cashPunch, set in srFireBeat,
+  // decayed in update()) washes the window, flashes the figure warm-white
+  // and pulses the rim. The SAVE bay (v24.126) collapsed into the annunciator
+  // lamp in this window's top-left corner: dark when idle (§10.7 silence),
+  // steady info-blue for ~3 s after each save write, hard 1 Hz caution blink
+  // while writes fail. Lamp state lives in 047-save.js.
   function drawCashDisplay(bx, by, bw, bh) {
     drawBayLabel(bx, by, bw, 'CASH');
-    drawBayBolts(bx, by, bw, bh);
-    var pad = 5;
-    var fx = bx + pad;
-    var fy = by + pad + 6;
-    var fw = bw - pad * 2;
-    var fh = bh - pad * 2 - 6;
+    var win = instrWindow(bx + 3, by + 11, bw - 6, bh - 14);
+    var hasLegend = win.h >= 40;
 
-    // ---- Outer dark steel bezel ----
-    ctx.fillStyle = '#14171d';
-    ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#2a3140';
-    ctx.fillRect(fx, fy, fw, 1);
-    ctx.fillRect(fx, fy, 1, fh);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(fx, fy + fh - 1, fw, 1);
-    ctx.fillRect(fx + fw - 1, fy, 1, fh);
-
-    // ---- Bronze inset ring ----
-    var bxi = fx + 2, byi = fy + 2, bwi = fw - 4, bhi = fh - 4;
-    ctx.fillStyle = '#5a3e1c';
-    ctx.fillRect(bxi, byi, bwi, bhi);
-    ctx.fillStyle = '#8a6428';
-    ctx.fillRect(bxi, byi, bwi, 1);
-    ctx.fillStyle = '#3a2810';
-    ctx.fillRect(bxi, byi + bhi - 1, bwi, 1);
-
-    // ---- Brushed brass face ----
-    var ax = bxi + 1, ay = byi + 1, aw = bwi - 2, ah = bhi - 2;
-    ctx.fillStyle = '#7a5a2c';
-    ctx.fillRect(ax, ay, aw, ah);
-    for (var sx = ax + 1; sx < ax + aw - 1; sx += 3) {
-      ctx.fillStyle = 'rgba(160,124,64,0.18)';
-      ctx.fillRect(sx, ay + 1, 1, ah - 2);
-    }
-    for (var sx2 = ax + 2; sx2 < ax + aw - 1; sx2 += 5) {
-      ctx.fillStyle = 'rgba(48,32,12,0.22)';
-      ctx.fillRect(sx2, ay + 1, 1, ah - 2);
-    }
-    ctx.fillStyle = '#a07c40';
-    ctx.fillRect(ax, ay, aw, 1);
-    ctx.fillRect(ax, ay, 1, ah);
-    ctx.fillStyle = '#4f3a1b';
-    ctx.fillRect(ax, ay + ah - 1, aw, 1);
-    ctx.fillRect(ax + aw - 1, ay, 1, ah);
-
-    // Corner screws on the brass plate
-    function cashScrew(cx, cy) {
-      ctx.fillStyle = '#1a1006';
-      ctx.fillRect(cx - 1, cy - 1, 3, 3);
-      ctx.fillStyle = '#9c7a40';
-      ctx.fillRect(cx, cy, 1, 1);
-    }
-    cashScrew(ax + 2, ay + 2);
-    cashScrew(ax + aw - 3, ay + 2);
-
-    // ---- Recessed display window ----
-    // A bottom strip is reserved for the "BALANCE" stencil only when the
-    // brass face is tall enough; the short mobile-landscape console drops
-    // the stencil and lets the window use the extra height.
-    var hasStencil = ah >= 40;
-    var winX = ax + 4;
-    var winY = ay + 6;
-    var winW = aw - 8;
-    var winH = ah - 6 - (hasStencil ? 11 : 4);
-    ctx.fillStyle = '#0e0a04';
-    ctx.fillRect(winX, winY, winW, winH);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(winX, winY, winW, 1);
-    ctx.fillRect(winX, winY, 1, winH);
-    ctx.fillStyle = '#241808';
-    ctx.fillRect(winX, winY + winH - 1, winW, 1);
-    ctx.fillRect(winX + winW - 1, winY, 1, winH);
-
-    // Per-card highlight wash: each payout beat lights the recessed window gold so
-    // the counter visibly reacts as every card lands. cashPunch is set per beat
-    // (graded by ore tier) in srFireBeat and decays in update(); the number flash
-    // + a gold rim pulse follow below.
+    // Payout wash — each beat lights the glass gold
     var punch = (typeof cashPunch === 'number' && cashPunch > 0) ? Math.min(1, cashPunch) : 0;
     if (punch > 0.01) {
-      ctx.fillStyle = 'rgba(255,226,122,' + (0.32 * punch).toFixed(3) + ')';
-      ctx.fillRect(winX, winY, winW, winH);
+      ctx.fillStyle = 'rgba(255,226,122,' + (0.30 * punch).toFixed(3) + ')';
+      ctx.fillRect(win.x, win.y, win.w, win.h);
     }
 
-    // ---- Balance value — right-aligned gold stencil ----
-    // Shows displayMoney (the eased odometer), not money, so a dock sale counts
-    // up beat-by-beat instead of snapping. displayMoney tracks money 1:1 the
-    // rest of the time; fall back to money if the lever isn't in scope yet.
     var bankShown = (typeof displayMoney === 'number' && isFinite(displayMoney)) ? displayMoney : money;
     var cashAmt = (typeof bankShown === 'number' && isFinite(bankShown)) ? Math.floor(bankShown) : 0;
     var cashStr = '$' + cashAmt.toLocaleString();
-    // Largest stencil scale that fits the window; drops to 1 for long
-    // numbers so the readout never clips.
-    var scale = stencilTextWidth(cashStr, 2) <= winW - 8 ? 2 : 1;
-    // v25.63 — final guard: on a narrow portrait bay a 7-figure balance can still
-    // overflow at scale 1; shrink to a fractional scale that fits so it never clips.
-    if (stencilTextWidth(cashStr, scale) > winW - 6) {
-      scale = Math.max(0.6, (winW - 6) / stencilTextWidth(cashStr, 1));
+    var numH = win.h - (hasLegend ? 10 : 0);
+    // Largest stencil scale that fits; fractional floor so a 7-figure
+    // balance never clips the narrow portrait bay (v25.63).
+    var scale = stencilTextWidth(cashStr, 2) <= win.w - 6 ? 2 : 1;
+    if (stencilTextWidth(cashStr, scale) > win.w - 8) {
+      scale = Math.max(0.6, (win.w - 8) / stencilTextWidth(cashStr, 1));
     }
     var tw = stencilTextWidth(cashStr, scale);
-    var tx = winX + winW - 4 - tw;
-    if (tx < winX + 3) tx = winX + 3;
-    var ty = winY + Math.floor((winH - 7 * scale) / 2);
+    var tx = win.x + win.w - 5 - tw;
+    if (tx < win.x + 4) tx = win.x + 4;
+    var ty = win.y + Math.floor((numH - 7 * scale) / 2) + 1;
     drawStencilText(cashStr, tx, ty, scale, '#ffd24a');
-    // Per-card highlight: each payout beat flashes the readout warm-white over
-    // the gold, then a gold rim pulse frames the window (cashPunch is set per
-    // beat in srFireBeat, graded by tier, and decays in update()). The finale
-    // beat lands at full strength.
     if (punch > 0.01) {
       ctx.globalAlpha = punch;
       drawStencilText(cashStr, tx, ty, scale, '#fff4d0');
       ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(255,210,74,' + (0.60 * punch).toFixed(3) + ')';
-      ctx.fillRect(winX, winY, winW, 1);
-      ctx.fillRect(winX, winY + winH - 1, winW, 1);
-      ctx.fillRect(winX, winY, 1, winH);
-      ctx.fillRect(winX + winW - 1, winY, 1, winH);
+      ctx.fillStyle = 'rgba(255,210,74,' + (0.55 * punch).toFixed(3) + ')';
+      ctx.fillRect(win.x, win.y, win.w, 1);
+      ctx.fillRect(win.x, win.y + win.h - 1, win.w, 1);
+      ctx.fillRect(win.x, win.y, 1, win.h);
+      ctx.fillRect(win.x + win.w - 1, win.y, 1, win.h);
+    }
+    if (hasLegend) {
+      var lgW = stencilTextWidth('BALANCE', 1);
+      drawStencilText('BALANCE', win.x + Math.floor((win.w - lgW) / 2), win.y + win.h - 10, 1, '#454f5c');
     }
 
-    // Glass sheen across the top of the window
-    ctx.fillStyle = 'rgba(220,235,255,0.14)';
-    ctx.fillRect(winX + 1, winY + 1, winW - 2, 1);
-
-    // ---- Bottom stencil label ----
-    if (hasStencil) {
-      var stencil = 'BALANCE';
-      var stW = stencilTextWidth(stencil, 1);
-      if (stW <= aw - 4) {
-        drawStencilText(stencil, ax + Math.floor((aw - stW) / 2), ay + ah - 9, 1, '#3a2810');
-      }
+    // ---- SAVE annunciator (top-left corner of the glass, §4.3) ----
+    var scx = win.x + 6, scy = win.y + 6;
+    ctx.fillStyle = UI_OUTLINE;
+    ctx.fillRect(scx - 3, scy - 3, 7, 7);
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(scx - 2, scy - 2, 5, 5);
+    var lit = false, core, halo, lampA = 1;
+    if (typeof saveLampFailT === 'number' && saveLampFailT > 0) {
+      lit = (saveLampFailT % 1) < 0.5;          // hard 1 Hz caution blink
+      core = '#ffb030'; halo = '#b06010';
+    } else if (typeof saveLampT === 'number' && saveLampT > 0) {
+      lit = true;                                // steady info, short fade tail
+      core = '#4080ff'; halo = '#1c3a80';
+      lampA = Math.min(1, saveLampT / 0.5);
+    }
+    if (lit) {
+      ctx.save();
+      ctx.globalAlpha = lampA;
+      ctx.fillStyle = halo; ctx.fillRect(scx - 2, scy - 2, 5, 5);
+      ctx.fillStyle = core; ctx.fillRect(scx - 1, scy - 1, 3, 3);
+      ctx.fillStyle = '#cfe0ff'; ctx.fillRect(scx, scy, 1, 1);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(scx - 1, scy - 1, 3, 3);
     }
 
-    // Tiny status lamp (powered) at upper-right of brass face
-    var lampX = ax + aw - 6;
-    var lampY = ay + 4;
-    ctx.fillStyle = '#1a0a05';
-    ctx.fillRect(lampX - 1, lampY - 1, 4, 4);
-    ctx.fillStyle = '#40c060';
-    ctx.fillRect(lampX, lampY, 2, 2);
-    ctx.fillStyle = 'rgba(180,255,200,0.55)';
-    ctx.fillRect(lampX, lampY, 1, 1);
-
-    // v25.37 — the dock-sale reveal used to render here ("hung off the CASH
-    // bay"), but the v25.31 console instrument cache swaps ctx to an offscreen
-    // console layer and repaints this bay only when its value signature changes,
-    // which trapped the reveal in the bottom console strip and froze it between
-    // cash ticks. It now draws every frame in the full-screen HUD pass
-    // (140-render-maindraw.js, right after drawConsole()).
+    // v25.37 — the dock-sale reveal draws in the full-screen HUD pass
+    // (140-render-maindraw.js, right after drawConsole()), never here: the
+    // instrument cache repaints this bay only on value changes and would
+    // freeze an animation drawn from inside it.
   }
 
   // ----- Auto-sell reveal renderer (the floaters style from autosell-lab.html) -----
@@ -1803,91 +1389,5 @@
     // on-screen so it reads as the closing summary hovering over the dock.
     srDrawFinale();
     ctx.restore();
-  }
-
-  // §5.6 Reserve-fuel rack — deliberately NOT a gauge. Four jerry-can
-  // pips in a dark steel recess: each lights amber when a spare tank is
-  // aboard and reads as an empty socket when it isn't. Distinct at a
-  // glance from the brass needle fuel gauge in the neighbouring bay.
-  function drawReserveFuel(bx, by, bw, bh) {
-    drawBayLabel(bx, by, bw, 'RESERVE');
-    drawBayBolts(bx, by, bw, bh);
-    var pad = 4;
-    var fx = bx + pad;
-    var fy = by + pad + 6;
-    var fw = bw - pad * 2;
-    var fh = bh - pad * 2 - 6;
-
-    // Dark steel recess — the matte backdrop sets the canisters apart
-    // from the brass instruments around it.
-    ctx.fillStyle = '#15110b';
-    ctx.fillRect(fx, fy, fw, fh);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(fx, fy, fw, 1);
-    ctx.fillRect(fx, fy, 1, fh);
-    ctx.fillStyle = '#2f2718';
-    ctx.fillRect(fx, fy + fh - 1, fw, 1);
-    ctx.fillRect(fx + fw - 1, fy, 1, fh);
-
-    var have = (typeof reserveFuel === 'number') ? reserveFuel : 0;
-    var n = RESERVE_FUEL_MAX;
-    var gap = 3;
-    var slotW = Math.floor((fw - gap * (n + 1)) / n);
-    var slotH = fh - gap * 2;
-    var usedW = slotW * n + gap * (n + 1);
-    var startX = fx + Math.floor((fw - usedW) / 2) + gap;
-    var slotY = fy + gap;
-    for (var i = 0; i < n; i++) {
-      drawFuelCanister(startX + i * (slotW + gap), slotY, slotW, slotH, i < have);
-    }
-  }
-
-  // One reserve-tank pip for drawReserveFuel(): a little jerry can, lit
-  // amber when stocked, a dim empty socket when not.
-  function drawFuelCanister(x, y, w, h, filled) {
-    x = Math.round(x); y = Math.round(y);
-    w = Math.round(w); h = Math.round(h);
-    var capW = Math.max(3, Math.round(w * 0.42));
-    var capH = Math.max(2, Math.round(h * 0.13));
-    var capX = x + Math.round((w - capW) / 2);
-    var bodyY = y + capH;
-    var bodyH = h - capH;
-
-    if (!filled) {
-      // Empty socket — recessed dark slot with a faint canister ghost.
-      ctx.fillStyle = '#0a0805';
-      ctx.fillRect(x, bodyY, w, bodyH);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(x, bodyY, w, 1);
-      ctx.fillRect(x, bodyY, 1, bodyH);
-      ctx.fillStyle = '#241d12';
-      ctx.fillRect(x, bodyY + bodyH - 1, w, 1);
-      ctx.fillRect(x + w - 1, bodyY, 1, bodyH);
-      ctx.fillRect(capX, y, capW, capH);
-      ctx.fillStyle = '#0a0805';
-      ctx.fillRect(capX + 1, y + 1, capW - 2, Math.max(1, capH - 1));
-      return;
-    }
-
-    // Filled — amber jerry can.
-    ctx.fillStyle = '#6f4d16';                       // cap nub
-    ctx.fillRect(capX, y, capW, capH);
-    ctx.fillStyle = '#a87c22';
-    ctx.fillRect(capX, y, capW, 1);
-    ctx.fillStyle = '#e0a838';                       // body
-    ctx.fillRect(x, bodyY, w, bodyH);
-    ctx.fillStyle = '#ffd35c';                       // top + left highlight
-    ctx.fillRect(x, bodyY, w, 1);
-    ctx.fillRect(x, bodyY, 1, bodyH);
-    ctx.fillStyle = '#9c6d1c';                       // bottom + right shade
-    ctx.fillRect(x, bodyY + bodyH - 1, w, 1);
-    ctx.fillRect(x + w - 1, bodyY, 1, bodyH);
-    // Pressed jerry-can brace lines
-    ctx.fillStyle = 'rgba(60,40,8,0.55)';
-    ctx.fillRect(x + 1, bodyY + Math.round(bodyH * 0.34), w - 2, 1);
-    ctx.fillRect(x + 1, bodyY + Math.round(bodyH * 0.66), w - 2, 1);
-    // Glint
-    ctx.fillStyle = 'rgba(255,244,200,0.7)';
-    ctx.fillRect(x + 2, bodyY + 2, 1, Math.max(1, Math.round(bodyH * 0.28)));
   }
 
