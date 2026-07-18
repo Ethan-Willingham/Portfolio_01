@@ -64,11 +64,15 @@
  * v3.12 honest-footprint contract: dense water uses a compact field support
  * instead of wide per-particle halos, while thin water stays visible through
  * the coverage droplet pass. Both paths clip against collision terrain.
+ *
+ * v3.27 grab-tether contract: rejection may move the collision-safe proxy
+ * back to the restored body, but it never rewrites the fingertip's canonical
+ * lattice offsets. The anchor goal therefore stays attached to the proxy.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.26';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.27';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -8561,12 +8565,6 @@
     grabFitCX = cx; grabFitCY = cy; grabFitOCX = ocx; grabFitOCY = ocy;
   }
 
-  function jelloGrabStoreOffset(b, slot, pi, hx, hy) {
-    var dx = b.px[pi] - hx, dy = b.py[pi] - hy;
-    grabOffX[slot] = grabFitC * dx + grabFitS * dy;
-    grabOffY[slot] = -grabFitS * dx + grabFitC * dy;
-  }
-
   // Build a geodesic fingertip around one lattice node. Graph distance, not a
   // screen-space radius, decides influence: the anchor is exact, its spring
   // neighbours receive 30%, then 9%, then 2.7%. This gives the surrounding
@@ -8613,12 +8611,38 @@
     grabBlockReason = ''; grabBlockBody = null; grabBlockTravel = 0;
   }
 
+  function jelloGrabAnchorSlot() {
+    if (!grabIdx) return -1;
+    for (var i = 0; i < grabIdx.length; i++) {
+      if (grabIdx[i] === grabAnchor) return i;
+    }
+    return -1;
+  }
+
+  // Rejection cancels positional debt by moving the collision-safe proxy back
+  // underneath the restored anchor. The material-space offsets are the user's
+  // original fingertip geometry and must remain immutable for the whole grab.
+  // Recomputing them here turns any cursor separation into a hidden long arm:
+  // the debug proxy can sit under the cursor while the anchor goal stays with
+  // the slime. Keeping the offsets canonical makes that impossible.
   function jelloGrabRebaseGrip(b) {
     if (!b || !grabIdx) return;
     jelloGrabFit(b);
-    for (var i = 0; i < grabIdx.length; i++) {
-      jelloGrabStoreOffset(b, i, grabIdx[i], grabSolveX, grabSolveY);
+    var slot = jelloGrabAnchorSlot();
+    if (slot >= 0) {
+      var armX = grabFitC * grabOffX[slot] - grabFitS * grabOffY[slot];
+      var armY = grabFitS * grabOffX[slot] + grabFitC * grabOffY[slot];
+      var anchorX = b.px[grabAnchor], anchorY = b.py[grabAnchor];
+      var solveX = anchorX - armX, solveY = anchorY - armY;
+      // A severely compressed anchor can put that ideal proxy just inside a
+      // tile. Stop at the last legal point without changing the canonical arm.
+      if (jelloGrabClipPath(anchorX, anchorY, solveX, solveY, b.spacing)) {
+        solveX = grabClipX; solveY = grabClipY;
+      }
+      grabSolveX = grabPrevSolveX = solveX;
+      grabSolveY = grabPrevSolveY = solveY;
     }
+    grabAttemptDX = grabAttemptDY = 0;
     grabAcceptedCX = grabFitCX; grabAcceptedCY = grabFitCY;
     grabAcceptedAngle = Math.atan2(grabFitS, grabFitC);
     grabGripBlend = 0;
@@ -9084,7 +9108,7 @@
   function jelloGrabSaveDebugSample(b) {
     if (!debugGrab || !b || !grabIdx || !grabIdx.length) return grabDebugLast;
     var counts = [0, 0, 0, 0];
-    var anchorError = 0, maxError = 0;
+    var anchorError = 0, maxError = 0, goalArm = 0;
     for (var i = 0; i < grabIdx.length; i++) {
       var ring = grabRing ? grabRing[i] : 0;
       if (ring < 0 || ring > 3) ring = 3;
@@ -9094,14 +9118,17 @@
       var pi = grabIdx[i];
       var err = Math.hypot(goalX - b.px[pi], goalY - b.py[pi]);
       if (err > maxError) maxError = err;
-      if (pi === grabAnchor) anchorError = err;
+      if (pi === grabAnchor) {
+        anchorError = err;
+        goalArm = Math.hypot(goalX - grabSolveX, goalY - grabSolveY);
+      }
     }
     grabDebugLast = {
       t: performance.now(),
       reason: grabBlockReason || b._grabBlockReason || 'free',
       applied: b._grabApplied ? 'applied' : 'body free',
       cursorGap: Math.hypot(grabTargetX - grabSolveX, grabTargetY - grabSolveY),
-      anchorError: anchorError, maxError: maxError,
+      anchorError: anchorError, maxError: maxError, goalArm: goalArm,
       anchor: grabAnchor, shells: counts.join('/'),
       step: grabStepScale, grip: grabGripBlend,
       nx: grabBlockNX, ny: grabBlockNY,
@@ -9141,8 +9168,17 @@
     window.__slimeGrab = function () {
       var body = null, folds = 0, crossings = 0, checksum = 0;
       var ringCounts = [0, 0, 0, 0];
+      var goalArm = 0, anchorError = 0;
       if (grabRing) for (var gri = 0; gri < grabRing.length; gri++) ringCounts[grabRing[gri]]++;
       if (grabBody) {
+        var anchorSlot = jelloGrabAnchorSlot();
+        if (anchorSlot >= 0) {
+          var anchorGoalX = grabSolveX + grabFitC * grabOffX[anchorSlot] - grabFitS * grabOffY[anchorSlot];
+          var anchorGoalY = grabSolveY + grabFitS * grabOffX[anchorSlot] + grabFitC * grabOffY[anchorSlot];
+          goalArm = Math.hypot(anchorGoalX - grabSolveX, anchorGoalY - grabSolveY);
+          anchorError = Math.hypot(anchorGoalX - grabBody.px[grabAnchor],
+                                   anchorGoalY - grabBody.py[grabAnchor]);
+        }
         for (var i = 0; i < grabBody.n; i++) {
           checksum += grabBody.px[i] * (i + 1) + grabBody.py[i] * (i + 3);
         }
@@ -9183,6 +9219,8 @@
         gripBlend: grabGripBlend,
         selected: grabIdx ? grabIdx.length : 0,
         anchor: grabAnchor,
+        goalArm: goalArm,
+        anchorError: anchorError,
         indices: grabIdx ? grabIdx.slice() : [],
         ringCounts: ringCounts,
         weights: grabWeight ? grabWeight.slice() : [],
@@ -10278,7 +10316,7 @@
       if (compact) {
         lines = [
           'state ' + data.reason + '  ' + data.applied,
-          'cursor gap ' + n1(data.cursorGap) + 'px',
+          'cursor gap ' + n1(data.cursorGap) + 'px  goal arm ' + n1(data.goalArm) + 'px',
           'anchor error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
           'anchor #' + data.anchor + '  shells ' + data.shells,
           'step ' + n1(data.step) + '  grip ' + n1(data.grip) + '  rejects ' + data.rejects,
@@ -10287,7 +10325,7 @@
       } else {
         lines = [
           'state ' + data.reason + '  ' + data.applied + '  cursor gap ' + n1(data.cursorGap) + 'px',
-          'anchor #' + data.anchor + '  error ' + n1(data.anchorError) + 'px  max point error ' + n1(data.maxError) + 'px',
+          'anchor #' + data.anchor + '  arm ' + n1(data.goalArm) + 'px  error ' + n1(data.anchorError) + 'px  max ' + n1(data.maxError) + 'px',
           'shells 0/1/2/3: ' + data.shells + '  step ' + n1(data.step) + '  grip ' + n1(data.grip),
           'normal ' + n1(data.nx) + ',' + n1(data.ny) + '  rejects ' + data.rejects +
             '  release ' + n1(data.releaseMag) + 'px/s  ' + n1(data.releaseOmega) + 'rad/s'
@@ -10341,6 +10379,16 @@
     // the visible readout so the toy stays compact.
     readoutEl.setAttribute('data-smoke-water-flow-splats', String(smokeWaterFlowSplats));
     readoutEl.setAttribute('data-grab-debug', debugGrab ? 'on' : 'off');
+    readoutEl.setAttribute('data-pointer-down', pointerDown ? 'true' : 'false');
+    readoutEl.setAttribute('data-pointer-x', px.toFixed(2));
+    readoutEl.setAttribute('data-pointer-y', py.toFixed(2));
+    var debugData = debugGrab ? grabDebugLast : null;
+    readoutEl.setAttribute('data-grab-active', grabBody ? 'true' : 'false');
+    readoutEl.setAttribute('data-grab-state', debugData ? debugData.reason : 'idle');
+    readoutEl.setAttribute('data-grab-rejects', debugData ? String(debugData.rejects) : '0');
+    readoutEl.setAttribute('data-grab-cursor-gap', debugData ? debugData.cursorGap.toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-goal-arm', debugData ? debugData.goalArm.toFixed(2) : '0');
+    readoutEl.setAttribute('data-grab-anchor-error', debugData ? debugData.anchorError.toFixed(2) : '0');
   }
 
   function frame(tNow) {
