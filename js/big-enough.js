@@ -1,16 +1,14 @@
 /* ============================================================
    big-enough.js
    Self-contained behavior for the natural-hypertrophy field guide.
-   Three independent pieces, each in its own guarded block so one
-   failing can never break the others:
+   Three independent pieces, each in its own guarded block:
      1. scroll-reveal + chart animations (respects reduced-motion)
-     2. the right-rail contents nav + scrollspy
-     3. the two interactive tools (protein target, cost-of-the-last-%)
-   No em dashes anywhere.
+     2. the protein target tool
+     3. the weekly-volume tool
    ============================================================ */
 (function () {
   'use strict';
-  var reduce = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- 1. REVEAL + CHART ANIMATION ---------- */
   (function () {
@@ -75,40 +73,42 @@
     calc();
   })();
 
-  /* ---------- 3b. COST-OF-THE-LAST-PERCENT TOOL ---------- */
+  /* ---------- 3b. WEEKLY VOLUME TOOL ---------- */
   (function () {
     var slider = document.getElementById('dr-slider');
     if (!slider) return;
-    var pctEl = document.getElementById('dr-pct');
-    var yearsEl = document.getElementById('dr-years');
+    var setsEl = document.getElementById('dr-sets');
+    var bandEl = document.getElementById('dr-band');
     var verdictEl = document.getElementById('dr-verdict');
     var dot = document.getElementById('dr-dot');
     var vline = document.getElementById('dr-vline');
-    var TAU = 1.1;
-    var X0 = 70, PXY = 71.25, XMAX = 660; // years axis: 0yr at x=70, 8yr at x=640, clamp 660
-    var years90 = -TAU * Math.log(0.10); // ~2.53
+    var X0 = 35, XMAX = 320;
 
     function update() {
-      var p = parseInt(slider.value, 10);
-      var f = p / 100;
-      var years = -TAU * Math.log(1 - f);
-      var x = Math.min(XMAX, X0 + years * PXY);
-      var y = 250 - 2 * p;
-      pctEl.textContent = p + '%';
-      yearsEl.textContent = years.toFixed(1) + (years >= 1.95 && years < 2.05 ? ' years' : (Math.abs(years - 1) < 0.05 ? ' year' : ' years'));
-      if (dot) { dot.setAttribute('cx', x.toFixed(1)); dot.setAttribute('cy', y.toFixed(1)); }
-      if (vline) { vline.setAttribute('x1', x.toFixed(1)); vline.setAttribute('x2', x.toFixed(1)); vline.setAttribute('y1', y.toFixed(1)); }
-
-      var v;
-      if (p <= 80) {
-        v = 'Cheap and fast. You are on the steep, generous part of the curve, where every month of training pays you back in visible muscle.';
-      } else if (p <= 92) {
-        v = 'The smart stopping point. You have nearly all the muscle, and you got it for a fraction of what the final stretch would cost.';
-      } else {
-        var extra = (years - years90);
-        v = 'Steep price. Getting from 90% to ' + p + '% alone adds about <b>' + extra.toFixed(1) +
-            ' more years</b> of dedicated training, for a sliver of muscle almost no one would notice.';
+      var sets = parseInt(slider.value, 10);
+      var x = X0 + (sets / 30) * (XMAX - X0);
+      setsEl.textContent = sets + (sets === 1 ? ' set' : ' sets');
+      if (dot) dot.setAttribute('cx', x.toFixed(1));
+      if (vline) {
+        vline.setAttribute('x1', x.toFixed(1));
+        vline.setAttribute('x2', x.toFixed(1));
       }
+
+      var label, v;
+      if (sets < 5) {
+        label = 'Low weekly dose';
+        v = 'This may build muscle, especially for a novice, but it sits below the volume current reviews associate with larger average hypertrophy.';
+      } else if (sets < 10) {
+        label = 'Productive dose';
+        v = 'A time-efficient amount that can build muscle. If growth is the priority and recovery is good, more weekly work may help.';
+      } else if (sets < 20) {
+        label = 'High-return range';
+        v = 'A defensible hypertrophy range for many lifters. More sets can still add growth, but the average return per set gets smaller.';
+      } else {
+        label = 'Smaller-return range';
+        v = 'Higher volume can still work. Evidence is thinner at the far end, and the added fatigue makes individual recovery and progress the deciding tests.';
+      }
+      bandEl.textContent = label;
       verdictEl.innerHTML = v;
     }
     slider.addEventListener('input', update);
