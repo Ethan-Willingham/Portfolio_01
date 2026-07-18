@@ -103,6 +103,83 @@
     }
     return items;
   }
+
+  // ---- DRILL TIERS: the first pushed level (kit stack, 245) -------------
+  // The §16.2 tier ladder, finally built: every tier from rusty junk to
+  // the void helix as one browsable list. The one buyable rung is the
+  // next tier; everything deeper reads as aspiration with its price.
+  function nsDrillTierDesc(tier) {
+    var d = [
+      'Rusty, dull, and patched. The junk you start with.',
+      'The clean shop-built rotary drill. A real tool.',
+      'Pale carbide teeth and brass precision hardware. Unlocks uranium and tanzanite.',
+      'Dark gunmetal and six blocky jaw teeth. Unlocks diamond.',
+      'A quarry-grade bore crowned with cut diamonds. Unlocks painite.',
+      'Violet plasma seams over engineered steel. Unlocks unobtanium.',
+      'The void helix. Nothing in the ground can stop it.'
+    ];
+    return d[tier - 1] || '';
+  }
+  function nsDrillLadderItems() {
+    var items = [];
+    var lvl = upgrades.drillLevel || 1;
+    var maxTier = shop.drill.length;
+    for (var t = 1; t <= maxTier; t++) {
+      items.push(nsDrillLadderRung(t, lvl, maxTier));
+    }
+    return items;
+  }
+  function nsDrillLadderRung(tier, lvl, maxTier) {
+    var isCurrent = tier === lvl;
+    var isOwned = tier < lvl;
+    var isNext = tier === lvl + 1;
+    var cost = tier > lvl ? shop.drill[tier - 1] : 0;
+    var afford = isNext && (devMode || money >= cost);
+    var state, priceLabel, priceTier, act = null;
+    if (isCurrent) {
+      state = 'MOUNTED ON THE RIG';
+      priceLabel = 'MOUNTED'; priceTier = 'dim';
+    } else if (isOwned) {
+      state = 'OUTGROWN';
+      priceLabel = 'OWNED'; priceTier = 'dim';
+    } else if (isNext) {
+      state = 'NEXT UP';
+      priceLabel = '$' + cost.toLocaleString();
+      priceTier = afford ? 'gold' : 'red';
+      act = afford
+        ? { label: 'BUY  ' + priceLabel, enabled: true }
+        : { label: priceLabel, enabled: false,
+            reason: 'SHORT $' + (cost - money).toLocaleString(), reasonKind: 'short' };
+    } else {
+      state = 'LOCKED';
+      priceLabel = '$' + cost.toLocaleString(); priceTier = 'dim';
+      act = { label: 'LOCKED', enabled: false, reason: 'BUY TIER ' + (tier - 1) + ' FIRST' };
+    }
+    return {
+      key: 'drilltier' + tier,
+      name: drillTierShortName(tier),
+      sub: 'Tier ' + tier + ' of ' + maxTier,
+      state: state,
+      icon: function (cx, cy, px) { drawUpgradeIconBig('drill', cx, cy, px, tier); },
+      stat: { label: 'POWER', cur: 'LV ' + tier },
+      desc: nsDrillTierDesc(tier),
+      priceLabel: priceLabel,
+      priceTier: priceTier,
+      act: act,
+      onAct: function () {
+        var before = money;
+        buildShopItems();
+        var si = null;
+        for (var s = 0; s < shopItems.length; s++) {
+          if (shopItems[s].key === 'drill') { si = shopItems[s]; break; }
+        }
+        if (si) buyUpgrade(si);
+        var ok = devMode || money < before;
+        if (!ok) return { ok: false };
+        return { ok: true, float: '+ ' + drillTierShortName(tier) };
+      }
+    };
+  }
   function nsWorkshopItem(def) {
     var info = nsUpgInfo(def);
     var afford = !info.maxed && (devMode || money >= info.nextCost);
@@ -150,7 +227,7 @@
             reason: 'SHORT $' + (info.nextCost - money).toLocaleString(), reasonKind: 'short' };
     }
 
-    return {
+    var it = {
       key: def.key,
       name: name,
       sub: sub,
@@ -175,5 +252,11 @@
         return { ok: true, float: '+ ' + name };
       }
     };
+    // The drill carries the first pushed level: the full tier ladder.
+    if (def.key === 'drill') {
+      it.children = { title: 'DRILL TIERS', build: nsDrillLadderItems };
+      it.childLabel = 'VIEW ALL ' + shop.drill.length + ' TIERS';
+    }
+    return it;
   }
 

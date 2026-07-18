@@ -1770,10 +1770,12 @@
       if (typeof player.renderX !== 'undefined') { player.renderX = player.x; player.renderY = player.y; }
     }
   }
-  // One escape/back control: the store modal animates closed (its onClose
-  // runs nsExitShop); the board page pops back to the store modal.
+  // One escape/back control: inside a pushed catalog level it pops one
+  // level; at the root the store modal animates closed (its onClose runs
+  // nsExitShop); the board page pops back to the store modal.
   function nsBackOrExit() {
     if (shopState === 'floor') {
+      if (ukModal && ukStackDepth() > 0) { ukPop(); return; }
       if (ukModal) ukCatalogClose();
       else nsExitShop();
     } else {

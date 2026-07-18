@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.31';
+  var GAME_VERSION = 'v26.33';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -35334,7 +35334,7 @@
   // 5s is generous — it covers full dye dissipation at the default DENSITY_-
   // DISSIPATION so a real plume never freezes mid-air.
   var smokeAwakeT = 0;
-  var SMOKE_IDLE_HOLD = 5.0;
+  var SMOKE_IDLE_HOLD = 8.0;
   // v23.32 — obstacle dirty-flag state (gated by PERF_SMOKE_OBSTACLE_DIRTY).
   // The collision mask only changes when the camera/screen pans or the terrain/
   // jello/blasts could have. NaN/-1 sentinels force a repaint on the first frame.
@@ -35372,7 +35372,7 @@
   var SMOKE_WATER_FLOW_EVERY = 4;
   var SMOKE_WATER_FLOW_BIN = 16;
   var SMOKE_WATER_FLOW_MIN_VY = 55;
-  var SMOKE_WATER_FLOW_MIN_N = 3;
+  var SMOKE_WATER_FLOW_MIN_N = 2;
   var SMOKE_WATER_FLOW_MAX_SPLATS = 5;
   // Keep the waterfall legible without pinning the whole plume to it.
   var SMOKE_WATER_FLOW_FORCE = 0.16;
@@ -35383,6 +35383,7 @@
   var smokeWaterFlowVX = null;
   var smokeWaterFlowVY = null;
   var smokeWaterFlowCandidates = [];
+  var smokeWaterFlowSelected = [];
   var smokeWaterFlowSplats = 0;
   // v25.47 — dev debug handle (window.__bombs pattern): lets a headless
   // harness read the obstacle mask + the water-stamp state directly.
@@ -36240,12 +36241,33 @@
     for (var bi = 0; bi < nBins; bi++) {
       if (smokeWaterFlowCount[bi] >= SMOKE_WATER_FLOW_MIN_N) candidates.push(bi);
     }
-    candidates.sort(function (a, b) { return smokeWaterFlowVY[b] - smokeWaterFlowVY[a]; });
+    // Rank by mean speed, not particle count. Then keep samples at least
+    // one bin apart so the impulses cover the fall instead of flickering
+    // between adjacent dense cells.
+    candidates.sort(function (a, b) {
+      return smokeWaterFlowVY[b] / smokeWaterFlowCount[b] -
+        smokeWaterFlowVY[a] / smokeWaterFlowCount[a];
+    });
+    var selected = smokeWaterFlowSelected;
+    selected.length = 0;
+    for (var ck = 0; ck < candidates.length && selected.length < SMOKE_WATER_FLOW_MAX_SPLATS; ck++) {
+      var pick = candidates[ck];
+      var pickX = pick % binsW, pickY = (pick / binsW) | 0;
+      var nearPick = false;
+      for (var sk = 0; sk < selected.length; sk++) {
+        var prior = selected[sk];
+        if (Math.abs(pickX - prior % binsW) <= 1 &&
+            Math.abs(pickY - ((prior / binsW) | 0)) <= 1) {
+          nearPick = true; break;
+        }
+      }
+      if (!nearPick) selected.push(pick);
+    }
 
-    var limit = Math.min(SMOKE_WATER_FLOW_MAX_SPLATS, candidates.length);
+    var limit = selected.length;
     var flowSplat = smokeDriver.splatVelocity || null;
     for (var k = 0; k < limit; k++) {
-      var ci = candidates[k];
+      var ci = selected[k];
       var n = smokeWaterFlowCount[ci];
       var bx = ci % binsW, by = (ci / binsW) | 0;
       var wx = domainX + (bx + 0.5) * BIN;
@@ -43819,10 +43841,12 @@
       if (typeof player.renderX !== 'undefined') { player.renderX = player.x; player.renderY = player.y; }
     }
   }
-  // One escape/back control: the store modal animates closed (its onClose
-  // runs nsExitShop); the board page pops back to the store modal.
+  // One escape/back control: inside a pushed catalog level it pops one
+  // level; at the root the store modal animates closed (its onClose runs
+  // nsExitShop); the board page pops back to the store modal.
   function nsBackOrExit() {
     if (shopState === 'floor') {
+      if (ukModal && ukStackDepth() > 0) { ukPop(); return; }
       if (ukModal) ukCatalogClose();
       else nsExitShop();
     } else {
@@ -43877,6 +43901,28 @@
   // A tab may carry open:fn instead of build:fn to hand control to a
   // bespoke page (the flag-gated Trade Board uses this).
   //
+  // LEVELS (v26.21). The catalog is a navigation STACK, the drill-down
+  // grammar of every good console menu: tabs hold the root list, and any
+  // level can open a deeper one. Two declarative doors down:
+  //
+  //   item.kind = 'folder'                    // the whole row is a door:
+  //   item.children = { title, build }        // tap descends immediately,
+  //                                           // chevron on the row's right
+  //
+  //   item.children + item.childLabel         // normal buyable item with a
+  //                                           // secondary ghost button in
+  //                                           // the detail pane (for tier
+  //                                           // ladders, variants, "view
+  //                                           // more" surfaces)
+  //
+  // While deep, the tab strip becomes a breadcrumb (BACK chip + trail,
+  // e.g. "WORKSHOP ▸ DRILL TIERS"), content slides in from the side,
+  // Escape / the B button / ArrowLeft pop ONE level, the X still closes
+  // the whole modal, and buying inside a level refreshes every level.
+  // Bespoke flows (combine pickers) can call ukPush({title, build}) /
+  // ukPop() directly. Sub-level items may omit act entirely
+  // (informational rows render without the action button).
+  //
   // Input enters through ukPointerDown/Move/Up/Wheel and ukCatalogKeys
   // (arrows + enter + tab cycling); the shop routes its existing
   // newShopPointer* entry points here. All state is kit-local; the only
@@ -43897,6 +43943,7 @@
   var ukFizzB    = null;   // downscale chain step 2
   var ukVig      = null;   // cached vignette { w, h, grad }
   var ukLayoutC  = null;   // layout cache for the current frame
+  var ukSlide    = { t: 0, dir: 0 };   // level-change slide (1 = from right)
 
   function ukHitAt(x, y) {
     for (var i = UK_HIT.length - 1; i >= 0; i--) {
@@ -44061,6 +44108,15 @@
       ctx.fillStyle = 'rgba(0,0,0,0.30)';
       ctx.fillRect(r.x, r.y + r.h - 3, r.w, 3);
       nsText(label, r.x + r.w / 2, r.y + squish + (r.h - squish - px) / 2, px, UIT_GOLD_TEXT, 'center');
+    } else if (kind === 'ghost') {
+      // Secondary affordance: hollow, brass-edged, quiet next to the gold.
+      ctx.fillStyle = hover ? 'rgba(255,216,150,0.08)' : 'rgba(0,0,0,0.18)';
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.strokeStyle = hover ? UIT_GOLD : '#8a6a30';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+      nsText(label, r.x + r.w / 2, r.y + (r.h - px) / 2, px,
+             hover ? UIT_GOLD_HI : UIT_TEXT, 'center');
     } else {
       ctx.fillStyle = UIT_INSET;
       ctx.fillRect(r.x, r.y, r.w, r.h);
@@ -44075,10 +44131,11 @@
   function ukCatalogOpen(spec) {
     ukModal = spec;
     ukState = { tab: spec.tab || spec.tabs[0].id, sel: {}, items: [],
-                scroll: 0, scrollMax: 0, lastMoney: null };
+                scroll: 0, scrollMax: 0, lastMoney: null, stack: [] };
     ukOpenT = 0; ukCloseT = -1;
     ukHover = null; ukPress = null; ukListDrag = null;
     ukDeniedT = 0; ukArtPopT = 0;
+    ukSlide = { t: 0, dir: 0 };
     ukRebuildItems();
   }
   function ukCatalogClose() {
@@ -44098,11 +44155,58 @@
     }
     return null;
   }
+  // ---- the level stack ---------------------------------------------------
+  // Root level = the active tab's items; ukPush opens deeper levels (a
+  // folder's contents, a tier ladder, a picker). Selection lives per
+  // level; the shared scroll is saved on push and restored on pop.
+  function ukTopLevel() {
+    if (!ukState || !ukState.stack.length) return null;
+    return ukState.stack[ukState.stack.length - 1];
+  }
+  function ukStackDepth() { return ukState ? ukState.stack.length : 0; }
+  function ukCurItems() {
+    var top = ukTopLevel();
+    return top ? top.items : (ukState ? ukState.items : []);
+  }
+  function ukCurSel() {
+    var top = ukTopLevel();
+    return top ? top.sel : ukState.sel[ukState.tab];
+  }
+  function ukCurSetSel(key) {
+    var top = ukTopLevel();
+    if (top) top.sel = key; else ukState.sel[ukState.tab] = key;
+  }
+  function ukFirstSelectable(items) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind !== 'folder') return items[i].key;
+    }
+    return null;
+  }
+  function ukPush(spec) {
+    if (!ukState || !spec) return;
+    var lv = { title: spec.title || '', build: spec.build || null,
+               items: [], sel: null, savedScroll: ukState.scroll };
+    lv.items = lv.build ? lv.build() : (spec.items || []);
+    lv.sel = ukFirstSelectable(lv.items);
+    ukState.stack.push(lv);
+    ukState.scroll = 0;
+    ukSlide = { t: 1, dir: 1 };
+  }
+  function ukPop() {
+    if (!ukState || !ukState.stack.length) return false;
+    var lv = ukState.stack.pop();
+    ukState.scroll = lv.savedScroll || 0;
+    ukSlide = { t: 1, dir: -1 };
+    ukRebuildItems();   // a purchase inside the level may have aged the parent
+    return true;
+  }
+
   function ukSelectedItem() {
     if (!ukState) return null;
-    var key = ukState.sel[ukState.tab];
-    for (var i = 0; i < ukState.items.length; i++) {
-      if (ukState.items[i].key === key) return ukState.items[i];
+    var items = ukCurItems();
+    var key = ukCurSel();
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].key === key) return items[i];
     }
     return null;
   }
@@ -44114,7 +44218,18 @@
     for (var i = 0; i < ukState.items.length; i++) {
       if (ukState.items[i].key === key) { have = true; break; }
     }
-    if (!have && ukState.items.length) ukState.sel[ukState.tab] = ukState.items[0].key;
+    if (!have && ukState.items.length) ukState.sel[ukState.tab] = ukFirstSelectable(ukState.items);
+    // Refresh every open level from its builder so prices, states, and
+    // ownership stay live after a purchase anywhere in the stack.
+    for (var s = 0; s < ukState.stack.length; s++) {
+      var lv = ukState.stack[s];
+      if (lv.build) lv.items = lv.build();
+      var ok = false;
+      for (var j = 0; j < lv.items.length; j++) {
+        if (lv.items[j].key === lv.sel) { ok = true; break; }
+      }
+      if (!ok && lv.items.length) lv.sel = ukFirstSelectable(lv.items);
+    }
   }
   function ukSwitchTab(id) {
     if (!ukState || ukState.tab === id) return;
@@ -44123,6 +44238,7 @@
     if (def.open) { def.open(); return; }   // bespoke page takes over
     ukState.tab = id;
     ukState.scroll = 0;
+    ukState.stack.length = 0;
     ukRebuildItems();
   }
 
@@ -44151,7 +44267,10 @@
     var y = M.portrait ? (M.bottom - my - h) : Math.round((M.bottom - h) / 2);
     var pad = Math.round(12 * us);
     var headH = Math.round(44 * us);
-    var tabH = (ukModal.tabs.length > 1) ? Math.max(34, Math.round(36 * us)) : 0;
+    // The strip under the header holds the tab row at the root and the
+    // breadcrumb (BACK + trail) inside a pushed level.
+    var tabH = (ukModal.tabs.length > 1 || ukStackDepth() > 0)
+      ? Math.max(34, Math.round(36 * us)) : 0;
     var bodyX = x + pad;
     var bodyY = y + headH + tabH + Math.round(8 * us);
     var bodyW = w - pad * 2;
@@ -44193,6 +44312,7 @@
     }
     if (ukDeniedT > 0) ukDeniedT -= dt;
     if (ukArtPopT > 0) ukArtPopT -= dt;
+    if (ukSlide.t > 0) ukSlide.t = Math.max(0, ukSlide.t - dt / 0.16);
     if (money !== ukState.lastMoney) {
       ukState.lastMoney = money;
       ukRebuildItems();
@@ -44214,12 +44334,68 @@
 
     ukPanelBox(L.x, L.y, L.w, L.h);
     ukDrawHeader(L);
-    if (L.tabH > 0) ukDrawTabs(L);
+    if (L.tabH > 0) {
+      if (ukStackDepth() > 0) ukDrawCrumb(L);
+      else ukDrawTabs(L);
+    }
+    // Level content slides in sideways on push/pop (the drill-down
+    // spatial cue), clipped to the panel so nothing pokes out of it.
+    var slid = ukSlide.t > 0;
+    if (slid) {
+      var se = nsEaseOut(1 - ukSlide.t);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(L.x, L.bodyY - 2, L.w, L.bodyH + Math.round(4 * L.us));
+      ctx.clip();
+      ctx.globalAlpha = prog * (0.3 + 0.7 * se);
+      ctx.translate(Math.round((1 - se) * 30 * L.us) * ukSlide.dir, 0);
+    }
     ukDrawList(L);
     ukDrawDetail(L);
+    if (slid) ctx.restore();
 
     ctx.restore();
     if (ukCloseT < 0) ukCatalogKeys();
+  }
+
+  // Breadcrumb strip: a BACK chip on the left, the trail beside it
+  // ("WORKSHOP ▸ DRILL TIERS"). Replaces the tab row while deep.
+  function ukDrawCrumb(L) {
+    var us = L.us;
+    var tx = L.x + L.pad;
+    var ty = L.y + L.headH + Math.round(6 * us);
+    var th = L.tabH - Math.round(6 * us);
+    var bw = Math.max(56, Math.round(64 * us));
+    var hov = (ukHover === 'uk:back');
+    ctx.fillStyle = UIT_EDGE;
+    ctx.fillRect(tx - 1, ty - 1, bw + 2, th + 2);
+    ctx.fillStyle = hov ? '#3d4655' : UIT_PANEL_SEL;
+    ctx.fillRect(tx, ty, bw, th);
+    ctx.fillStyle = 'rgba(255,216,150,0.08)';
+    ctx.fillRect(tx, ty, bw, 1);
+    // left-pointing chevron, drawn like the close X (no '<' stencil glyph)
+    var cxx = tx + Math.round(10 * us), cyy = Math.round(ty + th / 2);
+    var arm = Math.max(4, Math.round(4.5 * us));
+    ctx.fillStyle = hov ? UIT_GOLD_HI : UIT_BODY;
+    for (var a = 0; a < arm; a++) {
+      ctx.fillRect(cxx + a, cyy - a - 1, 2, 2);
+      ctx.fillRect(cxx + a, cyy + a - 1, 2, 2);
+    }
+    var bpx = Math.round(8.5 * us);
+    nsText('BACK', cxx + arm + Math.round(6 * us), ty + Math.round((th - bpx) / 2), bpx,
+           hov ? UIT_TEXT : UIT_BODY);
+    UK_HIT.push({ id: 'uk:back', x: tx - 4, y: ty - 4, w: bw + 8, h: th + 8 });
+    // trail
+    var tabDef = ukTabDef(ukState.tab);
+    var trail = tabDef ? tabDef.label : '';
+    for (var i = 0; i < ukState.stack.length; i++) {
+      trail += (trail ? ' ▸ ' : '') + (ukState.stack[i].title || '');
+    }
+    var tpx = Math.round(8.5 * us);
+    var maxW = L.w - L.pad * 2 - bw - Math.round(14 * us);
+    var tw = nsTextW(trail, tpx);
+    if (tw > maxW && tw > 0) tpx = Math.max(6, tpx * maxW / tw);
+    nsText(trail, tx + bw + Math.round(10 * us), ty + Math.round((th - tpx) / 2), tpx, UIT_DIM);
   }
 
   function ukDrawHeader(L) {
@@ -44289,7 +44465,7 @@
 
   function ukDrawList(L) {
     var us = L.us;
-    var items = ukState.items;
+    var items = ukCurItems();
     var n = items.length;
     ukInset(L.listX, L.listY, L.listW, L.listH);
     if (n === 0) {
@@ -44312,12 +44488,13 @@
     ctx.beginPath();
     ctx.rect(L.listX + 1, L.listY + 1, L.listW - 2, L.listH - 2);
     ctx.clip();
-    var selKey = ukState.sel[ukState.tab];
+    var selKey = ukCurSel();
     for (var i = 0; i < n; i++) {
       var it = items[i];
       var ry = L.listY + i * rowH - Math.round(ukState.scroll);
       if (ry + rowH < L.listY || ry > L.listY + L.listH) continue;
-      var selected = (it.key === selKey);
+      var isFolder = (it.kind === 'folder');
+      var selected = !isFolder && (it.key === selKey);
       var hov = (ukHover === 'uk:item:' + it.key);
       if (selected) {
         ctx.fillStyle = UIT_PANEL_SEL;
@@ -44352,8 +44529,11 @@
       } else {
         nsText(it.name, tx0, ry + Math.round((rowH - npx) / 2), npx, selected ? UIT_TEXT : UIT_BODY);
       }
-      // price, right-aligned
-      if (it.priceLabel) {
+      // right side: folders get the descend chevron, items their price
+      if (isFolder) {
+        nsText('▸', L.listX + L.listW - Math.round(10 * us), ry + Math.round((rowH - pricePx) / 2), pricePx,
+               hov ? UIT_GOLD_HI : UIT_DIM, 'right');
+      } else if (it.priceLabel) {
         var pc = UIT_DIM;
         if (it.priceTier === 'gold') pc = UIT_MONEY;
         else if (it.priceTier === 'red') pc = UIT_RED;
@@ -44388,11 +44568,15 @@
     var pad = Math.round(10 * us);
     var bottom = L.detY + L.detailH;
 
-    // Stack from the bottom: action button, reason, desc, stat, pips,
-    // state, name. The art stage takes whatever is left on top.
-    var btnH = Math.max(44, Math.round(44 * us));
+    // Stack from the bottom: action button, drill-in ghost button, desc,
+    // stat, pips, state, name. The art stage takes whatever is left on
+    // top. Informational rows (no act) give their button space back.
+    var btnH = it.act ? Math.max(44, Math.round(44 * us)) : 0;
     var btnY = bottom - btnH;
-    var cursorY = btnY - Math.round(8 * us);
+    var childBtnH = it.children ? Math.max(34, Math.round(34 * us)) : 0;
+    var childGap = it.children ? Math.round(6 * us) : 0;
+    var childY = btnY - childGap - childBtnH;
+    var cursorY = childY - Math.round(8 * us);
 
     var descPx = Math.max(10, Math.round(10.5 * us));
     var descLineH = Math.round(descPx * 1.45);
@@ -44500,6 +44684,13 @@
       ukMonoWrap(it.desc, x + w / 2, descY + descPx + Math.round(2 * us),
                  w - pad * 2, descPx, descLineH, UIT_BODY, descLines);
     }
+    // secondary drill-in (ghost) sits above the action button
+    if (it.children) {
+      var gr = { x: x + pad, y: childY, w: w - pad * 2, h: childBtnH };
+      ukButton(gr, (it.childLabel || 'MORE') + '  ▸', 'ghost',
+               ukHover === 'uk:child', 0, Math.round(9 * us));
+      UK_HIT.push({ id: 'uk:child', x: gr.x, y: gr.y, w: gr.w, h: gr.h });
+    }
     // action button
     if (it.act) {
       var shake = ukDeniedT > 0 ? Math.round(Math.sin(ukDeniedT * 44) * 3) : 0;
@@ -44551,10 +44742,25 @@
     ukPress = { id: hid, x: x, y: y, moved: 0, pointer: id };
     if (!hid) return true;
     if (hid === 'uk:close') { ukCatalogClose(); return true; }
+    if (hid === 'uk:back') { ukPop(); return true; }
     if (hid.indexOf('uk:tab:') === 0) { ukSwitchTab(hid.slice(7)); return true; }
     if (hid === 'uk:act') { ukFireAction(); return true; }
+    if (hid === 'uk:child') {
+      var sel = ukSelectedItem();
+      if (sel && sel.children) ukPush(sel.children);
+      return true;
+    }
     if (hid.indexOf('uk:item:') === 0) {
-      ukState.sel[ukState.tab] = hid.slice(8);
+      var key = hid.slice(8);
+      var items = ukCurItems();
+      for (var fi = 0; fi < items.length; fi++) {
+        if (items[fi].key === key && items[fi].kind === 'folder') {
+          // Folder rows are doors: tapping descends immediately.
+          if (items[fi].children) ukPush(items[fi].children);
+          return true;
+        }
+      }
+      ukCurSetSel(key);
       ukListDrag = { pointer: id, startY: y, startScroll: ukState.scroll, moved: 0 };
       return true;
     }
@@ -44603,21 +44809,28 @@
   // Escape stays with the game loop (it owns the back/exit path).
   function ukCatalogKeys() {
     if (!ukState) return;
-    var items = ukState.items;
+    var items = ukCurItems();
     var idx = -1;
-    var selKey = ukState.sel[ukState.tab];
+    var selKey = ukCurSel();
     for (var i = 0; i < items.length; i++) if (items[i].key === selKey) { idx = i; break; }
     var moved = false;
+    // Arrow selection walks non-folder rows (folder rows are pointer
+    // doors; keyboard reaches depth through ArrowRight on items with
+    // children, which today covers every shipped level).
     if (keys['ArrowDown'] || keys['s'] || keys['S']) {
       keys['ArrowDown'] = keys['s'] = keys['S'] = false;
-      if (idx < items.length - 1) { idx++; moved = true; }
+      for (var d = idx + 1; d < items.length; d++) {
+        if (items[d].kind !== 'folder') { idx = d; moved = true; break; }
+      }
     }
     if (keys['ArrowUp'] || keys['w'] || keys['W']) {
       keys['ArrowUp'] = keys['w'] = keys['W'] = false;
-      if (idx > 0) { idx--; moved = true; }
+      for (var u = idx - 1; u >= 0; u--) {
+        if (items[u].kind !== 'folder') { idx = u; moved = true; break; }
+      }
     }
     if (moved && idx >= 0 && items[idx]) {
-      ukState.sel[ukState.tab] = items[idx].key;
+      ukCurSetSel(items[idx].key);
       // keep the selection on screen
       var L = ukLayoutC;
       if (L) {
@@ -44631,17 +44844,30 @@
     var tabDir = 0;
     if (keys['ArrowRight'] || keys['d'] || keys['D']) { keys['ArrowRight'] = keys['d'] = keys['D'] = false; tabDir = 1; }
     if (keys['ArrowLeft'] || keys['a'] || keys['A']) { keys['ArrowLeft'] = keys['a'] = keys['A'] = false; tabDir = -1; }
-    if (tabDir !== 0 && ukModal.tabs.length > 1) {
-      var ti = 0;
-      for (var t = 0; t < ukModal.tabs.length; t++) if (ukModal.tabs[t].id === ukState.tab) { ti = t; break; }
-      var nt = (ti + tabDir + ukModal.tabs.length) % ukModal.tabs.length;
-      // skip bespoke-page tabs on keyboard cycling
-      if (!ukModal.tabs[nt].open) ukSwitchTab(ukModal.tabs[nt].id);
+    if (ukStackDepth() > 0) {
+      // Deep in a level: right descends further (when possible), left pops.
+      if (tabDir === 1) {
+        var selDeep = ukSelectedItem();
+        if (selDeep && selDeep.children) ukPush(selDeep.children);
+      } else if (tabDir === -1) {
+        ukPop();
+      }
+    } else if (tabDir !== 0) {
+      // Root: left/right always cycle the tabs (never hijacked).
+      ukCycleTab(tabDir);
     }
     if (keys['Enter'] || keys[' '] || keys['Space'] || keys['Spacebar']) {
       keys['Enter'] = keys[' '] = keys['Space'] = keys['Spacebar'] = false;
       ukFireAction();
     }
+  }
+  function ukCycleTab(dir) {
+    if (ukModal.tabs.length < 2) return;
+    var ti = 0;
+    for (var t = 0; t < ukModal.tabs.length; t++) if (ukModal.tabs[t].id === ukState.tab) { ti = t; break; }
+    var nt = (ti + dir + ukModal.tabs.length) % ukModal.tabs.length;
+    // skip bespoke-page tabs on keyboard cycling
+    if (!ukModal.tabs[nt].open) ukSwitchTab(ukModal.tabs[nt].id);
   }
 
   // ====================================================================
@@ -46684,6 +46910,83 @@
     }
     return items;
   }
+
+  // ---- DRILL TIERS: the first pushed level (kit stack, 245) -------------
+  // The §16.2 tier ladder, finally built: every tier from rusty junk to
+  // the void helix as one browsable list. The one buyable rung is the
+  // next tier; everything deeper reads as aspiration with its price.
+  function nsDrillTierDesc(tier) {
+    var d = [
+      'Rusty, dull, and patched. The junk you start with.',
+      'The clean shop-built rotary drill. A real tool.',
+      'Pale carbide teeth and brass precision hardware. Unlocks uranium and tanzanite.',
+      'Dark gunmetal and six blocky jaw teeth. Unlocks diamond.',
+      'A quarry-grade bore crowned with cut diamonds. Unlocks painite.',
+      'Violet plasma seams over engineered steel. Unlocks unobtanium.',
+      'The void helix. Nothing in the ground can stop it.'
+    ];
+    return d[tier - 1] || '';
+  }
+  function nsDrillLadderItems() {
+    var items = [];
+    var lvl = upgrades.drillLevel || 1;
+    var maxTier = shop.drill.length;
+    for (var t = 1; t <= maxTier; t++) {
+      items.push(nsDrillLadderRung(t, lvl, maxTier));
+    }
+    return items;
+  }
+  function nsDrillLadderRung(tier, lvl, maxTier) {
+    var isCurrent = tier === lvl;
+    var isOwned = tier < lvl;
+    var isNext = tier === lvl + 1;
+    var cost = tier > lvl ? shop.drill[tier - 1] : 0;
+    var afford = isNext && (devMode || money >= cost);
+    var state, priceLabel, priceTier, act = null;
+    if (isCurrent) {
+      state = 'MOUNTED ON THE RIG';
+      priceLabel = 'MOUNTED'; priceTier = 'dim';
+    } else if (isOwned) {
+      state = 'OUTGROWN';
+      priceLabel = 'OWNED'; priceTier = 'dim';
+    } else if (isNext) {
+      state = 'NEXT UP';
+      priceLabel = '$' + cost.toLocaleString();
+      priceTier = afford ? 'gold' : 'red';
+      act = afford
+        ? { label: 'BUY  ' + priceLabel, enabled: true }
+        : { label: priceLabel, enabled: false,
+            reason: 'SHORT $' + (cost - money).toLocaleString(), reasonKind: 'short' };
+    } else {
+      state = 'LOCKED';
+      priceLabel = '$' + cost.toLocaleString(); priceTier = 'dim';
+      act = { label: 'LOCKED', enabled: false, reason: 'BUY TIER ' + (tier - 1) + ' FIRST' };
+    }
+    return {
+      key: 'drilltier' + tier,
+      name: drillTierShortName(tier),
+      sub: 'Tier ' + tier + ' of ' + maxTier,
+      state: state,
+      icon: function (cx, cy, px) { drawUpgradeIconBig('drill', cx, cy, px, tier); },
+      stat: { label: 'POWER', cur: 'LV ' + tier },
+      desc: nsDrillTierDesc(tier),
+      priceLabel: priceLabel,
+      priceTier: priceTier,
+      act: act,
+      onAct: function () {
+        var before = money;
+        buildShopItems();
+        var si = null;
+        for (var s = 0; s < shopItems.length; s++) {
+          if (shopItems[s].key === 'drill') { si = shopItems[s]; break; }
+        }
+        if (si) buyUpgrade(si);
+        var ok = devMode || money < before;
+        if (!ok) return { ok: false };
+        return { ok: true, float: '+ ' + drillTierShortName(tier) };
+      }
+    };
+  }
   function nsWorkshopItem(def) {
     var info = nsUpgInfo(def);
     var afford = !info.maxed && (devMode || money >= info.nextCost);
@@ -46731,7 +47034,7 @@
             reason: 'SHORT $' + (info.nextCost - money).toLocaleString(), reasonKind: 'short' };
     }
 
-    return {
+    var it = {
       key: def.key,
       name: name,
       sub: sub,
@@ -46756,6 +47059,12 @@
         return { ok: true, float: '+ ' + name };
       }
     };
+    // The drill carries the first pushed level: the full tier ladder.
+    if (def.key === 'drill') {
+      it.children = { title: 'DRILL TIERS', build: nsDrillLadderItems };
+      it.childLabel = 'VIEW ALL ' + shop.drill.length + ' TIERS';
+    }
+    return it;
   }
 
   // ====================================================================
@@ -57174,6 +57483,66 @@
     }
   }
 
+  // Material-space marbling. The former glass fill had no asymmetric feature
+  // that revealed orientation, so a round body could physically rotate while
+  // looking parked. These filaments and inclusions live in the body's best-fit
+  // rest-space transform. They rotate and squash with the lattice, never with
+  // the screen, and their deterministic layout cannot shimmer or re-roll.
+  function jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR) {
+    if (!isFinite(b.shM00 + b.shM01 + b.shM10 + b.shM11 + scx + scy + maxR)) return;
+    var tr = b.rMaxR || maxR;
+    if (!(tr > 4)) return;
+    var seed = ((Math.floor(b.hue) * 131 + b.n * 977) | 0) + 7409;
+    var flip = jelloFuzzHash(seed) < 0.5 ? -1 : 1;
+    ctx.save();
+    ctx.translate(scx, scy);
+    ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
+    ctx.lineCap = 'round';
+
+    ctx.lineWidth = Math.max(1.1, tr * 0.050);
+    ctx.strokeStyle = 'hsla(' + (hue + 16) + ',' + jelloClampPct(82 * satMul) + '%,' +
+      jelloClampPct(84 + lightAdd) + '%,' + (alpha * 0.27).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.moveTo(-tr * 0.58, -tr * 0.12 * flip);
+    ctx.bezierCurveTo(-tr * 0.24, -tr * 0.48 * flip,
+                      tr * 0.10,  tr * 0.28 * flip,
+                      tr * 0.52, -tr * 0.04 * flip);
+    ctx.stroke();
+    ctx.lineWidth = Math.max(0.8, tr * 0.028);
+    ctx.strokeStyle = 'hsla(' + (hue - 14) + ',' + jelloClampPct(64 * satMul) + '%,' +
+      jelloClampPct(28 + lightAdd) + '%,' + (alpha * 0.22).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.moveTo(-tr * 0.34, tr * 0.35 * flip);
+    ctx.bezierCurveTo(-tr * 0.06, tr * 0.14 * flip,
+                      tr * 0.18, tr * 0.48 * flip,
+                      tr * 0.43, tr * 0.24 * flip);
+    ctx.stroke();
+
+    // A small irregular inclusion cluster makes a full turn unmistakable.
+    // Radial fades keep it organic and avoid the old debug-particle look.
+    for (var mi = 0; mi < 4; mi++) {
+      var ma = (0.55 + mi * 1.71 + jelloFuzzHash(seed + mi * 7) * 0.48) * flip;
+      var md = tr * (0.20 + jelloFuzzHash(seed + mi * 7 + 1) * 0.38);
+      var mx = Math.cos(ma) * md, my = Math.sin(ma) * md;
+      var mr = tr * (0.068 + jelloFuzzHash(seed + mi * 7 + 2) * 0.055);
+      var mg = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
+      if (mi & 1) {
+        mg.addColorStop(0, 'hsla(' + (hue + 20) + ',100%,' +
+          jelloClampPct(88 + lightAdd) + '%,' + (alpha * 0.32).toFixed(3) + ')');
+        mg.addColorStop(1, 'hsla(' + (hue + 20) + ',100%,' +
+          jelloClampPct(88 + lightAdd) + '%,0)');
+      } else {
+        mg.addColorStop(0, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
+          jelloClampPct(24 + lightAdd) + '%,' + (alpha * 0.28).toFixed(3) + ')');
+        mg.addColorStop(1, 'hsla(' + (hue - 12) + ',' + jelloClampPct(72 * satMul) + '%,' +
+          jelloClampPct(24 + lightAdd) + '%,0)');
+      }
+      ctx.fillStyle = mg;
+      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.2831853); ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function jelloDrawBody(b) {
     if (b.ringN < 3) return;
     // A non-finite bbox must never reach the canvas: createLinearGradient/createRadialGradient
@@ -57272,6 +57641,9 @@
     g.addColorStop(1,   'hsla(' + (hue - 6) + ',' + jelloClampPct(80 * satMul) + '%,' + jelloClampPct(36 + lightAdd) + '%,' + (alpha * 0.68).toFixed(3) + ')');
     ctx.fillStyle = g;
     ctx.fillRect(el, et, ew, eh);
+
+    // A material-locked asymmetric pattern makes body rotation readable.
+    if (shadeOn) jelloDrawMaterialTexture(b, hue, satMul, lightAdd, alpha, scx, scy, maxR);
 
     // ---- 4. Moving internal caustics (living shimmer). ----
     if (shimmer > 0.001) {
