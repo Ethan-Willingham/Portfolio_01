@@ -324,6 +324,7 @@
 
       <h2 class="u-h2">The slimes</h2>
       <p>Each slime is a lattice of 20 to 130 points, depending on its size, solved on the CPU. Distance constraints hold it together, solved with XPBD (<a class="u-link" href="https://mmacklin.com/xpbd.pdf">Macklin, Müller, Chentanez 2016</a>) as three tiny sub-iterations inside each 1/240-second step, because many small solves make a stiffness that survives any frame rate. A shape-matching pull (<a class="u-link" href="https://matthias-research.github.io/pages/publications/MeshlessDeformations_SIG05.pdf">Müller et al. 2005</a>) remembers the round rest shape, and a gas-pressure term holds the area, which is why a squashed slime bulges at the sides instead of shrinking.</p>
+      <p>The direct grab used to move a patch of points once per rendered frame, by as much as 14 pixels. The lattice pitch here is 8 pixels. A quick pull could therefore carry points across a whole wall before collision ran, and the next frame accepted the folded lattice as its starting shape. The grab is now a compliant constraint inside every physics substep. Each selected point advances by at most 0.65 of a lattice spacing per substep, sweeps through the terrain, and belongs to a triangle mesh that rejects mirrored cells. Release gives the body 1.35 seconds of velocity-free rest-shape recovery. The slime can still squash and stretch while held, but the solver no longer treats an accidental fold as a new anatomy.</p>
       <p>Slime-on-slime contact runs inside the same substep loop through a count-sort spatial hash, the approach in <a class="u-link" href="https://mmacklin.com/uppfrta_preprint.pdf">Macklin et al.'s unified particle physics</a>. Running contact per substep instead of once per frame is the difference between blobs that stack and blobs that jitter and merge. The game learned that the hard way.</p>
       <p>Drop one in a pool and it floats. Each frame the toy builds a small map of the water (density and mean flow per 8-pixel cell) and reads each body a pool-local waterline: the level in the columns beside it, walked so that a wall or an air gap ends the pool, which is what keeps a slime from feeling water on another floor or behind a drawn barrier. Every lattice point below that line trades gravity for lift, and every submerged point takes drag toward the local flow. That one rule set covers a lot: currents carry a floater, a waterfall shoves a slime down instead of levitating it, a plunge damps itself out, and in zero-g a thrown blob of water drags a slime along with it. Net lift runs about a quarter beyond gravity, so slimes ride mostly submerged, like dense gel. The coupling is one-way on purpose. These forces never push the water; the push the water feels comes from the boundary rings below. The game tried honest two-way coupling once, spent three versions on it, and reverted the whole thing.</p>
 
@@ -355,8 +356,8 @@
 
   <!-- The water engine is the game's file, shared byte for byte; the ?v= stamp
        tracks GAME_VERSION (tools/toy-engine-sync.mjs enforces the match). -->
-  <script src="js/liquid-wgpu.js?v=v26.21"></script>
-  <script src="js/water-smoke-slime.js?v=v3.12"></script>
+  <script src="js/liquid-wgpu.js?v=v26.22"></script>
+  <script src="js/water-smoke-slime.js?v=v3.13"></script>
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
 </body>

@@ -68,7 +68,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.12';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.13';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2162,6 +2162,20 @@
   // needs (~1.4) so it only catches the runaway extrusion.
   var JELLO_MAX_STRETCH    = 1.6;
 
+  // ---- Resilience / topology guard --------------------------------------
+  // Distance + volume constraints do not know which side of an edge a point
+  // belongs on. A hard local shove can therefore mirror a triangle while
+  // keeping every spring near its rest length, a zero-energy PBD fold. The
+  // production tile lattice already carries a triangle mesh for inversion
+  // healing; the round/dev builders install a health-only mesh below. This
+  // very-low signed-area barrier touches only those health meshes and only
+  // after a cell has actually crossed orientation. Ordinary squash bottoms
+  // out well above it, so the soft feel is unchanged.
+  var JELLO_ORIENT_MIN      = -0.005; // det(F) below this is a real mirror fold
+  var JELLO_ORIENT_TARGET   =  0.015; // small legal area restored by one projection
+  var JELLO_ORIENT_MOVE     =  0.35;  // max correction per point, in lattice spacings
+  var JELLO_RECOVER_SHAPE   =  0.012; // per-substep rigid rest pull after an external grab
+
   function jelloRecomputeMaterial() {
     // Lever insurance: E <= 0 flips the XPBD compliances negative (constraint denominators
     // can cross zero = blow-up) and NU >= 0.5 divides LAMBDA by zero. The gm slider clamps
@@ -2911,6 +2925,52 @@
     }
   }
 
+  // Install a triangle HEALTH mesh from the spring graph. The round and
+  // equilateral builders are already fully triangulated by their springs, but
+  // historically did not retain explicit triangle topology, so the inversion
+  // healer had no way to see a mirrored cell. Enumerating local 3-cycles is a
+  // one-time build cost. The mesh is marked health-only so switching the dev
+  // solver to FEM still falls back to XPBD for these special bodies, preserving
+  // their established material feel.
+  function jelloInstallSpringHealthMesh(b) {
+    var n = b.n, adj = new Array(n), edge = Object.create(null), i;
+    for (i = 0; i < n; i++) adj[i] = [];
+    for (var s = 0; s < b.springN; s++) {
+      var ea = b.sA[s], eb = b.sB[s];
+      if (ea === eb) continue;
+      var lo = ea < eb ? ea : eb, hi = ea < eb ? eb : ea;
+      var ek = lo * n + hi;
+      if (edge[ek]) continue;
+      edge[ek] = 1;
+      adj[ea].push(eb); adj[eb].push(ea);
+    }
+    var ta = [], tb = [], tc = [], dm = [], area = [];
+    for (i = 0; i < n; i++) {
+      var ai = adj[i];
+      for (var u = 0; u < ai.length; u++) {
+        var j = ai[u]; if (j <= i) continue;
+        for (var v = u + 1; v < ai.length; v++) {
+          var k = ai[v]; if (k <= i || k === j) continue;
+          var j0 = j < k ? j : k, k0 = j < k ? k : j;
+          if (!edge[j0 * n + k0]) continue;
+          var m00 = b.rx[j0] - b.rx[i], m01 = b.rx[k0] - b.rx[i];
+          var m10 = b.ry[j0] - b.ry[i], m11 = b.ry[k0] - b.ry[i];
+          var det = m00 * m11 - m01 * m10;
+          if (det < 1e-6 && det > -1e-6) continue;
+          var inv = 1 / det;
+          ta.push(i); tb.push(j0); tc.push(k0);
+          dm.push(m11 * inv, -m01 * inv, -m10 * inv, m00 * inv);
+          area.push(Math.abs(det) * 0.5);
+        }
+      }
+    }
+    b.triA = Int32Array.from(ta); b.triB = Int32Array.from(tb); b.triC = Int32Array.from(tc);
+    b.triDmInv = Float32Array.from(dm); b.triRestArea = Float32Array.from(area);
+    b.triN = ta.length;
+    b.triLambda = new Float32Array(b.triN * 2);
+    b.triHealthOnly = true;
+  }
+
   // ===== Build a soft body from a set of tile cells ================
   // cells: array of {r, c}. Returns the body (also pushed to jelloBodies),
   // or null if the budget is exhausted / the cluster is empty.
@@ -3157,6 +3217,7 @@
     b.triDmInv = Float32Array.from(triDm); b.triRestArea = Float32Array.from(triArea);
     b.triN = triA.length;
     b.triLambda = new Float32Array(b.triN * 2);   // [deviatoric, hydrostatic] per triangle
+    b.triHealthOnly = false;
 
     jelloComputeRest(b);
     jelloShadeAnchors(b);   // physics-anchored shading: pick the lighting's lattice anchors
@@ -3316,6 +3377,7 @@
     b.springN = sA.length;
     b.sLambda = new Float32Array(b.springN);   // XPBD per-constraint multipliers (reset each substep)
     b.tris = null;                              // FEM triangle mesh (built lazily on first fem use)
+    jelloInstallSpringHealthMesh(b);             // orientation health; FEM still falls back to XPBD
 
     // Ring: apex -> down the left side -> along the base -> up the right side — three
     // straight runs of edge points (clean 60° / flat / 60°, no stairs).
@@ -3437,6 +3499,7 @@
     b.springN = sA.length;
     b.sLambda = new Float32Array(b.springN);   // XPBD per-constraint multipliers (reset each substep)
     b.tris = null;                              // no FEM mesh (fem falls back to XPBD)
+    jelloInstallSpringHealthMesh(b);             // round bodies must be able to detect/recover folds
 
     // Ring: the outer ring's points, already a closed loop in angular order.
     var ring = [];
@@ -4766,7 +4829,7 @@
     // the pen wall). After the third acceptance grant the fold is proven
     // load-bearing: sleep it AS IS (sleep skips the solve, so the fight stops;
     // any disturbance wakes it into fresh heal cycles).
-    if ((stillSq < JELLO_SLEEP_VSQ && !b._invHard) || b._forceSleep) {   // never sleep mid-MANGLE (v24.154; the heal keeps working it)
+    if (((stillSq < JELLO_SLEEP_VSQ && !b._invHard && !b._grabbed && !(b._recoverT > 0))) || b._forceSleep) {   // never sleep mid-mangle or mid-recovery
       b.sleepFrames++;
       if (b.sleepFrames > JELLO_SLEEP_FRAMES || b._forceSleep) {
         b._forceSleep = false;
@@ -5870,7 +5933,11 @@
   // once-per-frame pass that fights the solver. h is the substep dt (JELLO_H/K).
   function jelloBodyInternalSubstep(b, h) {
     var m = JELLO_SOLVER, ci;
+    var resilienceGuard = jelloResilienceStepBegin(b);
     jelloIntegrate(b, h);
+    // The public physics toy installs this optional compliant pointer grip.
+    // The game has no direct mouse grab, so the typeof branch is a clean no-op.
+    if (typeof jelloGrabSubstep === 'function') jelloGrabSubstep(b, h);
     jelloPlayerCouple(b, h);
     if (m === 'pbd') {
       for (var it = 0; it < JELLO_ITERS; it++) {
@@ -5878,6 +5945,7 @@
         jelloPressure(b);
         jelloShapeMatch(b, JELLO_SHAPE_STIFF);
         jelloStrainLimit(b);
+        jelloLimitOrientation(b);
         for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
         jelloCollideRingEdges(b);
       }
@@ -5886,11 +5954,20 @@
       if (m === 'fem') jelloSolveFEM(b, h); else jelloSolveXPBD(b, h);
       if (JELLO_XPBD_SHAPE > 0) jelloShapeMatch(b, JELLO_XPBD_SHAPE);
       jelloStrainLimit(b);
+      jelloLimitOrientation(b);
       for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
       jelloCollideRingEdges(b);
       if (JELLO_INT_DAMP > 0) jelloDampInternal(b, h);   // wobble decay (internal modes only)
     }
+    if (!b._grabbed && b._recoverT > 0) {
+      jelloRecoverShape(b);
+      jelloStrainLimit(b);
+      jelloLimitOrientation(b);
+      for (ci = 0; ci < b.n; ci++) { jelloCollidePointWorld(b, ci, h); jelloClampWorld(b, ci); }
+      jelloCollideRingEdges(b);
+    }
     if (JELLO_XSPH > 0) jelloViscosityXSPH(b, JELLO_XSPH);   // viscous ooze + relative-motion damping
+    if (resilienceGuard) jelloResilienceStepEnd(b);
   }
   // ----- Internal (constraint-space) damping: per-edge relative-velocity bleed --------
   // For every spring, remove a fraction f = JELLO_INT_DAMP * h of the RELATIVE velocity
@@ -5946,6 +6023,108 @@
         px[i1] -= ox2; py[i1] -= oy2;
       }
     }
+  }
+
+  // A unilateral signed-area projection for the health-only meshes used by
+  // round/dev bodies. Springs constrain edge lengths, not orientation, so a
+  // reflected triangle is otherwise a perfectly valid equilibrium. Corrections
+  // co-move Verlet history, making the repair velocity-free: it removes broken
+  // geometry without turning recovery into a launch impulse.
+  function jelloLimitOrientation(b) {
+    if (!b.triHealthOnly || !(b.triN > 0)) return 0;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    var maxMove = (b.spacing || (TILE / JELLO_NPT)) * JELLO_ORIENT_MOVE;
+    var fixed = 0;
+    for (var t = 0; t < b.triN; t++) {
+      var i0 = TA[t], i1 = TB[t], i2 = TC[t];
+      var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
+      var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
+      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var ratio = (e1x * e2y - e1y * e2x) * detInv;
+      if (!(ratio < JELLO_ORIENT_MIN)) continue;
+      var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
+      var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
+      var g2x = (py[i0] - py[i1]) * detInv, g2y = (px[i1] - px[i0]) * detInv;
+      var den = g0x * g0x + g0y * g0y + g1x * g1x + g1y * g1y + g2x * g2x + g2y * g2y;
+      if (!(den > 1e-12)) continue;
+      var dl = (JELLO_ORIENT_TARGET - ratio) / den;
+      var c0x = dl * g0x, c0y = dl * g0y;
+      var c1x = dl * g1x, c1y = dl * g1y;
+      var c2x = dl * g2x, c2y = dl * g2y;
+      var largest = Math.max(Math.hypot(c0x, c0y), Math.hypot(c1x, c1y), Math.hypot(c2x, c2y));
+      if (largest > maxMove && largest > 1e-9) {
+        var sc = maxMove / largest;
+        c0x *= sc; c0y *= sc; c1x *= sc; c1y *= sc; c2x *= sc; c2y *= sc;
+      }
+      px[i0] += c0x; py[i0] += c0y; ox[i0] += c0x; oy[i0] += c0y;
+      px[i1] += c1x; py[i1] += c1y; ox[i1] += c1x; oy[i1] += c1y;
+      px[i2] += c2x; py[i2] += c2y; ox[i2] += c2x; oy[i2] += c2y;
+      fixed++;
+    }
+    b._orientFixes = fixed;
+    return fixed;
+  }
+
+  // Temporary, rigid rest-shape memory after a direct external grab. Normal
+  // play keeps the shipped 0.005 affine-blended shape pull. Only the short
+  // release window uses beta=0, and the correction is velocity-free, so the
+  // slime re-forms without becoming globally stiffer or springing across a room.
+  function jelloRecoverShape(b) {
+    if (b._grabbed || !(b._recoverT > 0) || !(JELLO_RECOVER_SHAPE > 0)) return;
+    jelloContactAlloc();
+    var sx = jelloVAccX, sy = jelloVAccY, n = b.n;
+    for (var i = 0; i < n; i++) { sx[i] = b.px[i]; sy[i] = b.py[i]; }
+    var oldBeta = JELLO_SHAPE_BETA;
+    JELLO_SHAPE_BETA = 0;
+    jelloShapeMatch(b, JELLO_RECOVER_SHAPE);
+    JELLO_SHAPE_BETA = oldBeta;
+    for (i = 0; i < n; i++) {
+      b.ox[i] += b.px[i] - sx[i];
+      b.oy[i] += b.py[i] - sy[i];
+    }
+  }
+
+  // While a body is directly manipulated or recovering, retain the position at
+  // the start of every solver substep and sweep to the result. This closes the
+  // endpoint-only hole where a constraint correction could leap across an
+  // entire 8px tile and finish in open space on the far side. Clean-path cost is
+  // paid only during the short resilience window.
+  function jelloResilienceStepBegin(b) {
+    if (!b._grabbed && !(b._recoverT > 0)) return false;
+    if (!b._guardPX || b._guardPX.length < b.n) {
+      b._guardPX = new Float64Array(b.px.length);
+      b._guardPY = new Float64Array(b.py.length);
+    }
+    for (var i = 0; i < b.n; i++) { b._guardPX[i] = b.px[i]; b._guardPY[i] = b.py[i]; }
+    return true;
+  }
+
+  function jelloResilienceStepEnd(b) {
+    var sx = b._guardPX, sy = b._guardPY;
+    if (!sx) return;
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var stride = Math.min(1, Math.max(0.35, (b.spacing || 2) * 0.35));
+    var hits = 0;
+    for (var i = 0; i < b.n; i++) {
+      var x0 = sx[i], y0 = sy[i];
+      if (jelloWorldSolidAt(x0, y0)) continue;
+      var dx = px[i] - x0, dy = py[i] - y0, dist = Math.sqrt(dx * dx + dy * dy);
+      if (!(dist > stride)) continue;
+      var steps = Math.ceil(dist / stride), lastX = x0, lastY = y0;
+      for (var q = 1; q <= steps; q++) {
+        var f = q / steps, nx = x0 + dx * f, ny = y0 + dy * f;
+        if (jelloWorldSolidAt(nx, ny)) {
+          var cx = lastX - px[i], cy = lastY - py[i];
+          px[i] = lastX; py[i] = lastY;
+          ox[i] += cx; oy[i] += cy;
+          hits++;
+          break;
+        }
+        lastX = nx; lastY = ny;
+      }
+    }
+    b._guardHits = hits;
   }
   // ----- Shade fit: best-fit rotation + area-preserved linear transform, standalone ----
   // The same math as jelloShapeMatch's fit, minus the point pulls. Only runs when the
@@ -6180,7 +6359,7 @@
   // substep loop; lambdas reset per substep. A body with no triangle mesh falls back to XPBD.
   function jelloSolveFEM(b, h) {
     var nT = b.triN | 0;
-    if (!nT) { jelloSolveXPBD(b, h); return; }
+    if (!nT || b.triHealthOnly) { jelloSolveXPBD(b, h); return; }
     var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC;
     var Dm = b.triDmInv, RA = b.triRestArea, TL = b.triLambda;
     var devC = JELLO_FEM_DEV_COMPLIANCE, volC = JELLO_FEM_VOL_COMPLIANCE, invh2 = 1 / (h * h);
@@ -7032,6 +7211,10 @@
       // Unfold any inverted lattice cells BEFORE the sleep evaluation, so a
       // mangled body can neither persist nor doze off mid-fold (v24.154).
       if (b._solve && !b.sleeping) jelloInversionHeal(b);
+      if (!b._grabbed && b._recoverT > 0) {
+        b._recoverT -= dt;
+        if (b._recoverT < 0) b._recoverT = 0;
+      }
       // Crowd calm (see the JELLO_CROWD_CALM banner): sustained heavy contact means
       // the pile is squeezed with nowhere to go; drain the churn so it parks still
       // instead of vibrating at the VMAX clamp. Velocity-domain only (ox toward px).
@@ -7876,6 +8059,7 @@
     b.springN = sA.length;
     b.sLambda = new Float32Array(b.springN);
     b.tris = null;
+    jelloInstallSpringHealthMesh(b);             // keep the toy override topology-aware too
 
     var ring = [];
     for (var rk0 = 0; rk0 < ringCount[M]; rk0++) ring.push(ringStart[M] + rk0);
@@ -7918,6 +8102,12 @@
 
   var grabBody = null;
   var grabIdx = null, grabOffX = null, grabOffY = null;
+  var grabTargetX = 0, grabTargetY = 0, grabSolveX = 0, grabSolveY = 0;
+  var JELLO_GRAB_TARGET_STEP = 1.25;   // maximum handle travel, in lattice spacings per substep
+  var JELLO_GRAB_POINT_STEP = 0.65;    // maximum selected-point correction per substep
+  var JELLO_GRAB_STIFF = 0.38;
+  var JELLO_GRAB_HISTORY = 0.90;       // retain a small, bounded release velocity
+  var JELLO_GRAB_RECOVER = 1.35;       // seconds of gentle rest-shape recovery after release
 
   function jelloGrabStart(wx, wy) {
     jelloGrabEnd();
@@ -7956,6 +8146,10 @@
       }
       grabBody = b;
       grabIdx = idx; grabOffX = ox; grabOffY = oy;
+      grabTargetX = grabSolveX = wx;
+      grabTargetY = grabSolveY = wy;
+      b._grabbed = true;
+      b._recoverT = 0;
       b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
       return true;
     }
@@ -7968,23 +8162,47 @@
     if (jelloBodies.indexOf(b) < 0 || b._melting) { jelloGrabEnd(); return; }
     b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
     b._plyMs = performance.now();      // crowd-drain freshness stamp (see updateJello)
-    var h = (typeof jelloStepH === 'number' && jelloStepH > 0) ? jelloStepH : (1 / 240);
-    // cap 14 px/frame (~1700 px/s at 120 Hz): a slam stays a slam without
-    // injecting rig-impossible speeds into the guest boundary.
-    var k = 0.4, cap = 14;
+    grabTargetX = wx;
+    grabTargetY = wy;
+  }
+
+  // The pointer only moves a target. The actual constraint is solved inside
+  // each physics substep, after the collision sweep has recorded its legal
+  // starting positions. This prevents one rendered frame from teleporting a
+  // patch of lattice across a platform and making the crossed state permanent.
+  function jelloGrabSubstep(b, h) {
+    if (b !== grabBody || !grabIdx || !grabIdx.length) return;
+    var spacing = Math.max(1, b.spacing || 1);
+    var hdx = grabTargetX - grabSolveX, hdy = grabTargetY - grabSolveY;
+    var hd = Math.sqrt(hdx * hdx + hdy * hdy);
+    var handleCap = spacing * JELLO_GRAB_TARGET_STEP;
+    if (hd > handleCap && hd > 1e-9) {
+      grabSolveX += hdx * handleCap / hd;
+      grabSolveY += hdy * handleCap / hd;
+    } else {
+      grabSolveX = grabTargetX;
+      grabSolveY = grabTargetY;
+    }
+    var pointCap = spacing * JELLO_GRAB_POINT_STEP;
     for (var i = 0; i < grabIdx.length; i++) {
       var pi = grabIdx[i];
-      var dx = (wx + grabOffX[i] - b.px[pi]) * k;
-      var dy = (wy + grabOffY[i] - b.py[pi]) * k;
-      if (dx > cap) dx = cap; else if (dx < -cap) dx = -cap;
-      if (dy > cap) dy = cap; else if (dy < -cap) dy = -cap;
+      var dx = (grabSolveX + grabOffX[i] - b.px[pi]) * JELLO_GRAB_STIFF;
+      var dy = (grabSolveY + grabOffY[i] - b.py[pi]) * JELLO_GRAB_STIFF;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d > pointCap && d > 1e-9) { dx *= pointCap / d; dy *= pointCap / d; }
       b.px[pi] += dx; b.py[pi] += dy;
-      b.ox[pi] += dx * 0.82; b.oy[pi] += dy * 0.82;   // ~18% carries as velocity
-      if (jelloWorldSolidAt(b.px[pi], b.py[pi])) jelloCollidePointWorld(b, pi, h);
+      b.ox[pi] += dx * JELLO_GRAB_HISTORY;
+      b.oy[pi] += dy * JELLO_GRAB_HISTORY;
     }
   }
 
   function jelloGrabEnd() {
+    var b = grabBody;
+    if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
+      b._grabbed = false;
+      b._recoverT = Math.max(b._recoverT || 0, JELLO_GRAB_RECOVER);
+      b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
+    }
     grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null;
   }
 
