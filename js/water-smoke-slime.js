@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.5';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.6';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -437,9 +437,15 @@
           var ri = b.ring[((k * rn) / take) | 0];
           var pvx = (b.px[ri] - b.ox[ri]) * ih;
           var pvy = (b.py[ri] - b.oy[ri]) * ih;
-          if (pvx > 900) pvx = 900; else if (pvx < -900) pvx = -900;
-          if (pvy > 900) pvy = 900; else if (pvy < -900) pvy = -900;
-          var spd = Math.abs(pvx) > Math.abs(pvy) ? Math.abs(pvx) : Math.abs(pvy);
+          // Match the water solver's vector speed cap before the boundary
+          // reaches either the grid or particle sweep. The shared engine
+          // repeats this centrally for every host, but keeping the toy's
+          // source honest makes the dead-band below read the same velocity.
+          var spd = Math.sqrt(pvx * pvx + pvy * pvy);
+          if (spd > 600) {
+            var psc = 600 / spd;
+            pvx *= psc; pvy *= psc; spd = 600;
+          }
           if (spd > vMax) vMax = spd;
           mvxSum += pvx; mvySum += pvy;
           pts[k * 4] = b.px[ri];
@@ -8216,7 +8222,6 @@
    * are applied per FRAME in toolTick so rates are framerate-honest; the
    * pointer handlers only track state. ==== */
   var tool = 'draw';
-  var lastPokeWakeMs = 0;
   var pointerDown = false, pointerIn = false;
   var pointerId = -1;
   var px = 0, py = 0;            // current world position
@@ -8246,8 +8251,12 @@
     px = lastPaintX = w.x; py = lastPaintY = w.y;
     pvx = 0; pvy = 0; lastMoveT = performance.now();
     if (tool === 'poke') {
-      jelloGrabStart(px, py);
-      pushWake(px, py, 40, 300);
+      // A grabbed slime is already the water's moving boundary. Registering
+      // the pointer circle and an explosion wake at the same place made one
+      // gesture inject momentum three times. Wake the local water, but let
+      // the slime silhouette provide the only displacement.
+      if (jelloGrabStart(px, py)) wakeLiquidNear(px, py, 100);
+      else pushWake(px, py, 40, 300);
     } else if (tool === 'slime') {
       slimeGhost = { x: px, y: py };
     }
@@ -8288,7 +8297,10 @@
 
   var POKE_PTS = 14;
   function updatePokeGuest() {
-    if (!(pointerDown && tool === 'poke')) { pokeGuest = null; return; }
+    // When dragging a slime, its ring is the only physical obstacle. The
+    // pointer guest remains useful for stirring water directly in empty
+    // space, but overlapping both boundaries caused double projections.
+    if (!(pointerDown && tool === 'poke') || grabBody) { pokeGuest = null; return; }
     var R = Math.max(16, brushR);
     var vx = Math.max(-700, Math.min(700, pvx));
     var vy = Math.max(-700, Math.min(700, pvy));
@@ -8327,15 +8339,6 @@
         SMOKE_COL, 0.010 * Math.max(0.6, brushR / 16));
     } else if (tool === 'poke') {
       jelloGrabTick(px, py);
-      // Fast drags splash: small wake pulses ride the explosion channel so
-      // stirring a pool actually churns it (the guest boundary alone is a
-      // gentle displacement).
-      var pokeSpeed = Math.sqrt(pvx * pvx + pvy * pvy);
-      var nowPk = performance.now();
-      if (pokeSpeed > 260 && nowPk - lastPokeWakeMs > 90) {
-        lastPokeWakeMs = nowPk;
-        pushWake(px, py, 26 + brushR * 0.6, 300);
-      }
       if (smokeActive && smokeAwakeT > 0 && (pvx !== 0 || pvy !== 0)) {
         SmokeFluid.splat(px / worldW, 1 - py / worldH,
           Math.max(-420, Math.min(420, pvx * 0.34)),

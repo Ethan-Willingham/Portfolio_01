@@ -1098,10 +1098,31 @@
         // v26.10 — guest mean velocity (motion-aware lateral eviction in
         // the grid kernel). Hosts that do not set mvx/mvy get zeros and
         // the kernel's v26.05 nearest-edge behavior, unchanged.
-        gh[GS_META_BASE + q * 8 + 6] = gu[q].mvx || 0;
-        gh[GS_META_BASE + q * 8 + 7] = gu[q].mvy || 0;
+        var gmvx = gu[q].mvx || 0;
+        var gmvy = gu[q].mvy || 0;
+        var gmSp2 = gmvx * gmvx + gmvy * gmvy;
+        var gmMax = LIQUID_MAX_VEL;
+        if (gmMax > 0 && gmSp2 > gmMax * gmMax) {
+          var gmSc = gmMax / Math.sqrt(gmSp2);
+          gmvx *= gmSc; gmvy *= gmSc;
+        }
+        gh[GS_META_BASE + q * 8 + 6] = gmvx;
+        gh[GS_META_BASE + q * 8 + 7] = gmvy;
         var base = GS_RING_BASE + q * GS_RING * 4;
-        for (var pk = 0; pk < ptN * 4; pk++) gh[base + pk] = pts[pk] || 0;
+        for (var pk = 0; pk < ptN; pk++) {
+          var pBase = pk * 4;
+          var gvx = pts[pBase + 2] || 0;
+          var gvy = pts[pBase + 3] || 0;
+          var gvSp2 = gvx * gvx + gvy * gvy;
+          if (gmMax > 0 && gvSp2 > gmMax * gmMax) {
+            var gvSc = gmMax / Math.sqrt(gvSp2);
+            gvx *= gvSc; gvy *= gvSc;
+          }
+          gh[base + pBase]     = pts[pBase] || 0;
+          gh[base + pBase + 1] = pts[pBase + 1] || 0;
+          gh[base + pBase + 2] = gvx;
+          gh[base + pBase + 3] = gvy;
+        }
       }
       // counts vec4 — lanes 8-11: (nozzleCount, explosionCount, playerVx, playerVy).
       gh[8] = nozN;
@@ -5379,6 +5400,25 @@ fn solidRing(x : f32, y : f32, r : f32) -> bool {
   return false;
 }
 
+// v26.12 — a guest projection is a collision correction, not a teleport.
+// Test the whole particle ring along the correction segment at <= r spacing.
+// Checking only the destination let a fast/deformed guest choose a clear
+// point across an 8 px wall, after the normal terrain pass had already run.
+fn guestExitClear(x0 : f32, y0 : f32, x1 : f32, y1 : f32, r : f32) -> bool {
+  let dx = x1 - x0;
+  let dy = y1 - y0;
+  let dist = sqrt(dx * dx + dy * dy);
+  let steps = max(1.0, ceil(dist / max(1.0, r)));
+  var s : f32 = 1.0;
+  loop {
+    if (s > steps) { break; }
+    let t = s / steps;
+    if (solidRing(x0 + dx * t, y0 + dy * t, r)) { return false; }
+    s = s + 1.0;
+  }
+  return true;
+}
+
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
@@ -5462,6 +5502,13 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     }
   }
 
+  // Preserve the terrain-resolved state. Guest correction runs after the
+  // terrain pass, so any rejected correction must return here, not to the
+  // pre-G2P position that may itself be on the wrong side of a wall.
+  let terrainX = x; let terrainY = y;
+  let terrainVX = vx; let terrainVY = vy;
+  var guestProjected = false;
+
   // --- guest sweep (v26.11) — guests are IMPERMEABLE moving boundaries.
   // Any particle inside a ring is projected OUT to the nearest surface
   // point and its velocity clamped so it never approaches the face
@@ -5543,9 +5590,10 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // through the crown as a geyser when the body squashes.
     var gtx = gPX + gnx * 0.5;
     var gty = gPY + gny * 0.5;
-    if (!terrainSolidAt(gtx, gty) && !pointInMiner(gtx, gty)) {
+    if (guestExitClear(x, y, gtx, gty, r)) {
       x = gtx;
       y = gty;
+      guestProjected = true;
     } else {
       var oD2 : f32 = 1e9;
       gj = gn - 1;
@@ -5562,7 +5610,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         let dl = sqrt(dd2);
         let ox2 = mx + ddx / dl * 0.5;
         let oy2 = my + ddy / dl * 0.5;
-        if (terrainSolidAt(ox2, oy2) || pointInMiner(ox2, oy2)) { continue; }
+        if (!guestExitClear(x, y, ox2, oy2, r)) { continue; }
         oD2 = dd2;
         gtx = ox2; gty = oy2;
         gnx = ddx / dl; gny = ddy / dl;
@@ -5572,6 +5620,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
       if (oD2 < 1e9) {
         x = gtx;
         y = gty;
+        guestProjected = true;
         // Re-clamp along the actual exit direction.
         let gvn2 = (vx - gFVX) * gnx + (vy - gFVY) * gny;
         if (gvn2 < 0.0) {
@@ -5583,6 +5632,27 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // Foam on real hits only, not on ring-resample skin jitter.
     if (gvn < -40.0 || gdep > 3.0) {
       aux[i].y = min(1.0, aux[i].y + 0.12);
+    }
+  }
+
+  // v26.12 — guests used to run after both safety nets: the terrain pass
+  // and G2P's MAX_VEL clamp. Reassert both invariants after every guest has
+  // had its turn. This also catches overlapping guest rings without letting
+  // the second projection strand a particle inside terrain.
+  if (guestProjected && solidRing(x, y, r)) {
+    x = terrainX; y = terrainY;
+    vx = terrainVX; vy = terrainVY;
+  }
+  if ((fl & 3u) != 1u) {
+    let guestMaxVel = sp.g2pC.x;
+    if (guestMaxVel > 0.0) {
+      let guestSp2 = vx * vx + vy * vy;
+      let guestMax2 = guestMaxVel * guestMaxVel;
+      if (guestSp2 > guestMax2) {
+        let guestSc = guestMaxVel / sqrt(guestSp2);
+        vx = vx * guestSc;
+        vy = vy * guestSc;
+      }
     }
   }
 
