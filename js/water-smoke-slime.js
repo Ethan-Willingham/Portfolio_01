@@ -45,11 +45,17 @@
  * v3.8 overlap contract: the eight selected slime bodies keep stable guest
  * slots while their wet-cell rankings fluctuate. Touching rings are one
  * collision union in liquid-wgpu.js, never a sequential list of solids.
+ *
+ * v3.9 flow contract: keep the fixed 1/120-second solver and every stability
+ * guard, repair the shared engine's live damping/motion setters, remove the
+ * demo host's extra per-step body drag, cut its grid viscosity, and relax
+ * separated-droplet air drag. ?honeybaseline=1 restores the v3.8 GPU-effective
+ * tune for direct A/B checks.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.8';   // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.9';   // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -629,20 +635,22 @@
         if (liquidWGPU.simActive) {
           waterState = 'on';
           if (liquidWGPU.setSimParam) {
-            // The toy's water FEEL diverges from the game here, on purpose.
-            // The game ships the raw zero-dissipation config (visc 0, damp
-            // 1.0), tuned for small dark cave ponds; in this big bright box
-            // that config reads as not-water (owner footage: pools shatter
-            // into chunks that simmer forever, films bead into ball
-            // chains). A little viscosity + damping + air drag makes
-            // sloshes decay and splashes arc wet. All live setSimParam
-            // levers, A/B'd headlessly on the slam scenario; the engine
-            // file stays byte-shared with the game.
+            // v3.9: DAMPING and WATER_MOTION_SCALE used to update legacy
+            // scalars while the GPU read boot-frozen material-table values.
+            // Its effective 0.992 * 0.97 keep-factor compounded at roughly
+            // 186 substeps per wall second, retaining under 0.1% of carried
+            // momentum after one second. The fixed setter lets this host use
+            // the intended raw 1.0 / 1.0 transfer. Keep a trace of grid
+            // smoothing and enough air drag to stop ballistic orphan spray,
+            // but let the pressure limiter, density cap, anti-clump, CFL cap
+            // and swept collision own stability.
+            var honeyBaseline = /[?&]honeybaseline=1(?:&|$)/.test(
+              (window.location && window.location.search) || '');
             liquidWGPU.setSimParam('CALM', 0);
-            liquidWGPU.setSimParam('GRID_VISC', 0.08);
-            liquidWGPU.setSimParam('DAMPING', 0.9985);
-            liquidWGPU.setSimParam('WATER_MOTION_SCALE', 1.0);
-            liquidWGPU.setSimParam('AIR_DRAG', 0.99);
+            liquidWGPU.setSimParam('GRID_VISC', honeyBaseline ? 0.08 : 0.02);
+            liquidWGPU.setSimParam('DAMPING', honeyBaseline ? 0.992 : 1.0);
+            liquidWGPU.setSimParam('WATER_MOTION_SCALE', honeyBaseline ? 0.97 : 1.0);
+            liquidWGPU.setSimParam('AIR_DRAG', honeyBaseline ? 0.99 : 0.996);
             liquidWGPU.setSimParam('AERATION_COEFF', 5);
             // Fresh CPU mirror for the slime coupling: the default cadence
             // (every 20 runFrames) is built for oil suction; the per-point

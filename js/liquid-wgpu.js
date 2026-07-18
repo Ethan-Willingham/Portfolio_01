@@ -2461,16 +2461,12 @@
     var minY = fr(fr(-400 * instance.worldTile) / CELL);
     var maxY = fr(fr(fr(instance.worldTotalRows + 1) * instance.worldTile) / CELL);
     var invStep = fr(1 / dt);
-    // v24.174 LOCKSTEP FIX — the G2P kernel reads waterMotionScale + damping
-    // from the SimParams uniform (sp.g2pA.x/.y/.z), and writeSimParams fills
-    // those lanes from LIQUID_MATS (water = row 0, oil = row 1), NOT the live
-    // LIQUID_* scalars. The game's liquidStateTick pushes calm-blended
-    // DAMPING / WATER_MOTION_SCALE every frame (RAW mode pushes 1.0) via
-    // setSimParam, which updates ONLY the scalars — so the kernel keeps running
-    // on the boot-frozen MATS values while the scalars drift away. Mirror the
-    // kernel's ACTUAL source here (fr() == the f32 uniform lane the kernel sees),
-    // exactly as GRAVITY/OIL_GRAVITY already do, or the reference diverges the
-    // instant any of those levers retunes (the Stage-5 velocity FAIL).
+    // v24.174/v26.15 LOCKSTEP: the G2P kernel reads waterMotionScale +
+    // damping from SimParams (sp.g2pA.x/.y/.z), and writeSimParams fills those
+    // lanes from LIQUID_MATS (water = row 0, oil = row 1), not the legacy
+    // LIQUID_* scalars. The live setters now update both sources. Mirror the
+    // kernel's material-row source here (fr() == the f32 uniform lane the
+    // kernel sees), exactly as GRAVITY/OIL_GRAVITY already do.
     var refMotion = fr(LIQUID_MATS[0].motionScale);
     var refDampW  = fr(LIQUID_MATS[0].damping);
     var refDampO  = fr(LIQUID_MATS[1].damping);
@@ -2758,16 +2754,19 @@
     var L = instance.liquid;
     if (!L) {
       try { console.log('LiquidWGPU Stage 5: no liquid arrays wired — G2P kernel built, self-test skipped.'); } catch (_) {}
-      return;
+      instance.stage5Done = Promise.resolve();
+      return instance.stage5Done;
     }
     if (!instance.g2pReady) {
       try { console.log('LiquidWGPU Stage 5: G2P pipeline unavailable — self-test skipped.'); } catch (_) {}
-      return;
+      instance.stage5Done = Promise.resolve();
+      return instance.stage5Done;
     }
     var count = uploadParticles(instance);
     if (count === 0) {
       try { console.log('LiquidWGPU Stage 5: 0 live particles — G2P self-test deferred.'); } catch (_) {}
-      return;
+      instance.stage5Done = Promise.resolve();
+      return instance.stage5Done;
     }
     // Freeze every input the P2G + pressure + grid-update + G2P reads,
     // BEFORE any further CPU step can move a particle.
@@ -2802,7 +2801,11 @@
     var refAerP = R.refAerP, refSleep = R.refSleep, refRest = R.refRest;
     var g2pAwake = R.g2pAwake;
 
-    Promise.all([
+    // v26.15: keep this continuation visible to readyPromise. Host pages
+    // retune the live SimParams as soon as readyPromise resolves; previously
+    // that could happen while this readback was still comparing the boot
+    // uniforms, producing a one-particle sleep-threshold false FAIL.
+    instance.stage5Done = Promise.all([
       readbackBuffer(instance, instance.buf.pos,    count * 16),
       readbackBuffer(instance, instance.buf.affine, count * 16),
       readbackBuffer(instance, instance.buf.aux,    count * 16),
@@ -2815,7 +2818,8 @@
 
       var maxPosDiff = 0, maxVelDiff = 0, maxAffineDiff = 0, maxAerDiff = 0;
       var maxRefVelMag = 0;
-      var flagFails = 0, worstP = -1, worstWhat = '';
+      var flagFails = 0, identityFlagFails = 0, sleepThresholdTies = 0;
+      var worstP = -1, worstWhat = '';
       for (var p = 0; p < count; p++) {
         var q = p * 4;
         // pos.xy = new position; pos.zw = new velocity.
@@ -2839,14 +2843,28 @@
         if (dA3 > maxAffineDiff) maxAffineDiff = dA3;
         var dAer = Math.abs(gAux[q + 1] - refAerP[p]);
         if (dAer > maxAerDiff) maxAerDiff = dAer;
-        // flag — sleeping[4] + restFrames[8:23] must match exactly;
-        // type[0:1]+origin[2:3] are carried through unchanged.
+        // flag: type/origin must match exactly. Sleeping/restFrames also
+        // match except for a narrow f32 threshold tie: GPU and reference
+        // velocities may differ within the accepted numeric tolerance but
+        // land on opposite sides of the hard |v| < 3 sleep comparison.
         var f = gFlag[p];
-        if ((f & 3) !== snap.type[p] ||
-            ((f >> 2) & 3) !== snap.origin[p] ||
-            ((f >> 4) & 1) !== refSleep[p] ||
-            ((f >> 8) & 0xffff) !== refRest[p]) {
+        var identityWrong = (f & 3) !== snap.type[p] ||
+          ((f >> 2) & 3) !== snap.origin[p];
+        var sleepWrong = ((f >> 4) & 1) !== refSleep[p] ||
+          ((f >> 8) & 0xffff) !== refRest[p];
+        if (identityWrong || sleepWrong) {
           flagFails++;
+          if (identityWrong) {
+            identityFlagFails++;
+          } else {
+            var gpuVSq = Math.fround(Math.fround(gPos[q + 2] * gPos[q + 2]) +
+              Math.fround(gPos[q + 3] * gPos[q + 3]));
+            var refVSq = Math.fround(Math.fround(refVXp[p] * refVXp[p]) +
+              Math.fround(refVYp[p] * refVYp[p]));
+            if ((gpuVSq < LIQUID_SLEEP_VSQ) !== (refVSq < LIQUID_SLEEP_VSQ)) {
+              sleepThresholdTies++;
+            }
+          }
           if (worstWhat === '' || worstWhat.indexOf('flag') < 0) {
             worstP = p; worstWhat = 'flag';
           }
@@ -2879,7 +2897,8 @@
         fail = 'affine diff ' + maxAffineDiff.toFixed(5) + ' (gpu vs CPU reference)';
       } else if (maxAerDiff >= aerTol) {
         fail = 'aeration diff ' + maxAerDiff.toFixed(5) + ' (gpu vs CPU reference)';
-      } else if (flagFails > 0) {
+      } else if (identityFlagFails > 0 ||
+                 flagFails > sleepThresholdTies || sleepThresholdTies > 4) {
         fail = flagFails + ' particles with wrong sleeping/restFrames flag';
       }
 
@@ -2896,12 +2915,15 @@
             ', maxVelDiff=' + maxVelDiff.toFixed(6) + '/tol' + velTol.toFixed(4) +
             ', maxAffineDiff=' + maxAffineDiff.toFixed(6) +
             ' (' + g2pAwake + ' awake, peak|v|=' + maxRefVelMag.toFixed(1) +
-            ', maxAerDiff=' + maxAerDiff.toFixed(6) + ', grid ' + g.w + 'x' + g.h + ').');
+            ', maxAerDiff=' + maxAerDiff.toFixed(6) +
+            (sleepThresholdTies ? ', sleepTie=' + sleepThresholdTies : '') +
+            ', grid ' + g.w + 'x' + g.h + ').');
         } catch (_) {}
       }
     }).catch(function (e) {
       try { console.log('LiquidWGPU Stage 5: self-test error — ' + ((e && e.message) || e)); } catch (_) {}
     });
+    return instance.stage5Done;
   }
 
   /* ---- Stage 6 verification — terrain collision ------------------------
@@ -8841,7 +8863,13 @@ fn main() {
           }
           return true;
         };
-        return Promise.resolve(instance.stage6Done).then(goLive, goLive);
+        // v26.15: Stage 5 also owns an async readback. Do not resolve the
+        // public readyPromise, or let a host retune live uniforms, until both
+        // verification continuations have finished.
+        return Promise.all([
+          Promise.resolve(instance.stage5Done),
+          Promise.resolve(instance.stage6Done)
+        ]).then(goLive, goLive);
       })
       .catch(function (err) {
         instance.failed = true;
@@ -8957,6 +8985,7 @@ fn main() {
       frozenCount: -1,       // v17.89 — off-screen tally from the last readback
       readbackTick: 0,       // v14.5 — runFrame counter gating the readback cadence
       readbackSeq: 0,        // v24.109 — mutation seq at the last readback kick (apply discards on mismatch)
+      stage5Done: null,      // v26.15, Stage 5 readback promise; readyPromise waits before host retuning
       stage6Done: null,      // v24.112 — Stage 6 self-test continuation promise; Stage 8 go-live waits on it
       opsBuf: null,          // v24.109 — mutation-op stream buffer (Stage 8b)
       opsParamsBuf: null,    // v24.109 — {opsLen, startCount} uniform
@@ -9097,8 +9126,12 @@ fn main() {
             case 'AERATION_COEFF':         LIQUID_AERATION_COEFF = v; break;
             case 'OIL_AERATION_COEFF':     LIQUID_OIL_AERATION_COEFF = v; break;
             // damping / motion
-            case 'DAMPING':              LIQUID_DAMPING = v; break;
-            case 'OIL_DAMPING':          LIQUID_OIL_DAMPING = v; break;
+            // v26.15: writeSimParams sources these three lanes from the
+            // material table, so updating only the legacy scalar left the GPU
+            // frozen at its boot damping/motion values. That made every live
+            // RAW/lively push a no-op on WebGPU while CPU fallback obeyed it.
+            case 'DAMPING':              LIQUID_DAMPING = v; if (LIQUID_MATS && LIQUID_MATS[0]) LIQUID_MATS[0].damping = v; break;
+            case 'OIL_DAMPING':          LIQUID_OIL_DAMPING = v; if (LIQUID_MATS && LIQUID_MATS[1]) LIQUID_MATS[1].damping = v; break;
             case 'GRID_VISC':            LIQUID_GRID_VISC = v; break;
             case 'DECLUMP_ON':           LIQUID_DECLUMP_ON = v ? 1 : 0; break;   // v24.185 anti-clump on/off
             // v24.173 Old-Faithful — speed cap + speed-gated burst damp (g2pC)
@@ -9140,7 +9173,7 @@ fn main() {
             // v24.120 debug kit — CPU-mirror refresh cadence in frames (not
             // a SimParams lane; the DBG_DRAW overlay samples the mirror)
             case 'DBG_READBACK_EVERY':   LIQUID_READBACK_EVERY = Math.max(2, Math.min(120, v | 0)); break;
-            case 'WATER_MOTION_SCALE':   LIQUID_WATER_MOTION_SCALE = v; break;
+            case 'WATER_MOTION_SCALE':   LIQUID_WATER_MOTION_SCALE = v; if (LIQUID_MATS && LIQUID_MATS[0]) LIQUID_MATS[0].motionScale = v; break;
             // grid-boundary — wall bounce + floor/wall friction (water + oil)
             case 'WALL_BOUNCE_IN':       LIQUID_WALL_BOUNCE_IN = v; break;
             case 'WALL_BOUNCE_EDGE':     LIQUID_WALL_BOUNCE_EDGE = v; break;

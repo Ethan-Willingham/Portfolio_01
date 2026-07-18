@@ -447,6 +447,30 @@ the submerged slime across the pool. No particle may cross the box in one frame
 or appear beyond a drawn wall, and the boot log must contain no Stage 5/6
 `FAIL`.
 
+**v26.15 live-flow contract:** `writeSimParams()` reads water damping and motion
+scale from `LIQUID_MATS[0]`, but `setSimParam('DAMPING')` and
+`setSimParam('WATER_MOTION_SCALE')` used to update only the older module
+scalars. WebGPU therefore ignored every lively/raw push and stayed at its boot
+values, `0.992 * 0.97`, while the CPU fallback obeyed the controls. At roughly
+186 fixed substeps per wall second, that stack retained less than 0.1% of
+carried momentum after one second. This was the foundational honey behavior.
+The setters now update the material row that feeds the GPU uniform, matching
+the already-correct live gravity setter and restoring CPU/GPU parity. The
+public `readyPromise` also waits for both Stage 5 and Stage 6 async verification
+before a host can retune uniforms. Stage 5 reports up to four particles as
+`sleepTie` when the otherwise-within-tolerance GPU and CPU velocities land on
+opposite sides of the hard 3 px/s sleep threshold; identity bits or any other
+flag mismatch still fail the boot check.
+
+The standalone v3.9 host uses `GRID_VISC = 0.02`, `DAMPING = 1.0`,
+`WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996`. It does not change
+`LIQUID_GRAVITY`, pressure, the fixed 1/120-second quantum, or the 1.55 playback
+timescale. Stability continues to come from `LIQUID_PRESSURE_MAX_DV`, the
+density cap, min-separation pass, pre-advection CFL cap, swept terrain
+collision, and the v26.14 guest-union collision. `?honeybaseline=1` restores
+the v3.8 GPU-effective damping/motion values (`0.992` / `0.97`) plus the old
+demo viscosity and air drag for A/B timing; it is not a production mode.
+
 **v26.14 guest-union contract (read before touching boundary ordering or guest
 collision):** guest array order is bookkeeping, never physics. The standalone
 host keeps each selected slime in a stable one-of-eight slot while wet-cell
