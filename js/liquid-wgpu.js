@@ -404,7 +404,7 @@
   var LIQUID_SURFACE_RENDER  = 1;     // 1 = field+threshold compositing, 0 = legacy discs
   var LIQUID_SURFACE_THRESH  = 1.8;   // v24.162 — raised from 0.85: a lone particle's metaball peak is ~1.0, so THRESH-SOFT=1.0 makes single particles invisible while bodies (field >> 1) stay solid. edit2 sluice 010
   var LIQUID_SURFACE_SOFT    = 0.8;   // v24.162 — was 0.35 (lower edge = one-particle peak)
-  var LIQUID_SURFACE_RSCALE  = 1.7;   // splat radius multiplier vs the legacy disc size
+  var LIQUID_SURFACE_RSCALE  = 0.9;   // v26.17 honest footprint: body support spans ~2 rest spacings, not a 10px halo
   var LIQUID_DROPLETS        = 1;     // v25.32 — visible-droplet pass for low-support particles
                                       // (strays/spray render as small drops instead of nothing;
                                       // the fat-disc bug is impossible: droplet size is fixed,
@@ -6509,10 +6509,29 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
 
   var WGSL_SURFACE_COMPOSITE = /* wgsl */ `
 @group(0) @binding(1) var fieldTex : texture_2d<f32>;
+struct TerrainParams {
+  c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32,
+  stepDt:f32, invCell:f32,
+  worldCols:f32, worldTile:f32, worldRows:f32, _pad0:f32,
+  tileOrigC:u32, tileOrigR:u32, tileW:u32, tileH:u32,
+  region:vec4<f32>,
+};
+@group(0) @binding(2) var<uniform> tp : TerrainParams;
+@group(0) @binding(3) var<storage, read> compositeTerrainMask : array<u32>;
 
 struct VOut {
   @builtin(position) pos : vec4<f32>,
 };
+
+fn compositeTerrainSolid(wp : vec2<f32>) -> bool {
+  if (tp.worldTile <= 0.0) { return false; }
+  let tc = i32(floor(wp.x / tp.worldTile)) - bitcast<i32>(tp.tileOrigC);
+  let tr = i32(floor(wp.y / tp.worldTile)) - bitcast<i32>(tp.tileOrigR);
+  if (tc < 0 || tr < 0 || tc >= i32(tp.tileW) || tr >= i32(tp.tileH)) { return false; }
+  let idx = u32(tr) * tp.tileW + u32(tc);
+  let word = compositeTerrainMask[idx >> 5u];
+  return ((word >> (idx & 31u)) & 1u) != 0u;
+}
 
 @vertex
 fn vs(@builtin(vertex_index) vid : u32) -> VOut {
@@ -6533,6 +6552,12 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   let aWaterEdge = smoothstep(t - s, t + s, f.r);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
   if (aWaterEdge <= 0.001 && aOilEdge <= 0.001) { discard; }
+  // Clip the finished surface once per visible pixel. This uses the exact
+  // bitmask collision reads, without paying a storage lookup for every
+  // overlapping particle splat fragment.
+  let wp = vec2<f32>(rp.camX + in.pos.x / max(rp.dpws, 0.001),
+                     rp.camY + in.pos.y / max(rp.dpws, 0.001));
+  if (compositeTerrainSolid(wp)) { discard; }
   // Water tint: foam fraction from the aeration-weighted channel.
   // v24.150 — foam needs a real BODY behind it; v24.152 softened (0.6t to
   // 1.6t) now that foam is light BLUE, not white: turbulence tint shows in
@@ -6570,7 +6595,8 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
    * This pass now samples the ACTUAL post-render density field at each
    * particle centre. A particle whose centre is already covered by the
    * composite gets no extra draw; one in a thin sheet, spray, or isolation
-   * gets a SMALL hard droplet (~2 world px, never density-scaled). The two
+   * gets a compact velocity-aligned mark (~2 px wide and up to 8 px long,
+   * never density-scaled). The two
    * render paths are complementary by construction, without drawing dots
    * through the interior of a pool. Water only; the legacy disc renderer
    * already draws everything. gm water.DROPLETS.
@@ -6579,12 +6605,32 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
 @group(0) @binding(1) var<storage, read> pos  : array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read> flag : array<u32>;
 @group(0) @binding(4) var fieldTex : texture_2d<f32>;
+struct TerrainParams {
+  c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32,
+  stepDt:f32, invCell:f32,
+  worldCols:f32, worldTile:f32, worldRows:f32, _pad0:f32,
+  tileOrigC:u32, tileOrigR:u32, tileW:u32, tileH:u32,
+  region:vec4<f32>,
+};
+@group(0) @binding(5) var<uniform> tp : TerrainParams;
+@group(0) @binding(6) var<storage, read> dropTerrainMask : array<u32>;
 
 struct VOut {
   @builtin(position) pos   : vec4<f32>,
   @location(0)       uv    : vec2<f32>,
   @location(1)       alpha : f32,
+  @location(2)       world : vec2<f32>,
 };
+
+fn dropletTerrainSolid(wp : vec2<f32>) -> bool {
+  if (tp.worldTile <= 0.0) { return false; }
+  let tc = i32(floor(wp.x / tp.worldTile)) - bitcast<i32>(tp.tileOrigC);
+  let tr = i32(floor(wp.y / tp.worldTile)) - bitcast<i32>(tp.tileOrigR);
+  if (tc < 0 || tr < 0 || tc >= i32(tp.tileW) || tr >= i32(tp.tileH)) { return false; }
+  let idx = u32(tr) * tp.tileW + u32(tc);
+  let word = dropTerrainMask[idx >> 5u];
+  return ((word >> (idx & 31u)) & 1u) != 0u;
+}
 
 fn corner(vid : u32) -> vec2<f32> {
   var c = vec2<f32>(-1.0, -1.0);
@@ -6603,6 +6649,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   out.pos = vec4<f32>(0.0, 0.0, 0.0, 1.0);
   out.uv  = vec2<f32>(0.0, 0.0);
   out.alpha = 0.0;
+  out.world = vec2<f32>(0.0, 0.0);
   let fl = flag[iid];
   let frozen = (fl >> 5u) & 1u;
   let isOil  = (fl & 3u) == 1u;
@@ -6621,18 +6668,31 @@ fn vs(@builtin(vertex_index)   vid : u32,
   // film so the pass fills holes without stippling an already solid body.
   let a = 1.0 - smoothstep(0.25, 0.70, surfaceA);
   if (a <= 0.01) { return out; }
-  let pointSize = max(2.0 * rp.dpws, 2.2);   // ~2 world px, never density-scaled
-  let halfPx = pointSize * 0.5;
+  // Slow drops stay compact. Moving spray becomes a short ellipse aligned
+  // with its real velocity. This connects a narrow pour visually without
+  // restoring wide circular halos.
+  let speed = length(p.zw);
+  var along = vec2<f32>(0.0, 1.0);
+  if (speed > 0.5) { along = p.zw / speed; }
+  let across = vec2<f32>(-along.y, along.x);
+  let widthPx = max(2.0 * rp.dpws, 2.2);
+  let lengthWorld = 2.2 + 5.8 * clamp(speed / 240.0, 0.0, 1.0);
+  let lengthPx = max(lengthWorld * rp.dpws, widthPx);
+  let halfW = widthPx * 0.5;
+  let halfL = lengthPx * 0.5;
   let c = corner(vid);
-  out.pos = vec4<f32>((scrX + c.x * halfPx) / (rp.canvasW * 0.5) - 1.0,
-                      1.0 - (scrY + c.y * halfPx) / (rp.canvasH * 0.5), 0.0, 1.0);
+  let devOff = across * c.x * halfW + along * c.y * halfL;
+  out.pos = vec4<f32>((scrX + devOff.x) / (rp.canvasW * 0.5) - 1.0,
+                      1.0 - (scrY + devOff.y) / (rp.canvasH * 0.5), 0.0, 1.0);
   out.uv = c;
   out.alpha = a * 0.92 * rp.waterColor.a;
+  out.world = p.xy + devOff / max(rp.dpws, 0.001);
   return out;
 }
 
 @fragment
 fn fs(in : VOut) -> @location(0) vec4<f32> {
+  if (dropletTerrainSolid(in.world)) { discard; }
   let r2 = dot(in.uv, in.uv);
   if (r2 >= 1.0) { discard; }
   let a = smoothstep(0.0, 0.45, 1.0 - r2) * in.alpha;
@@ -7751,7 +7811,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         label: 'liquid.surfCompositeBGL',
         entries: [
           { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-          { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } }
+          { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } },
+          { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+          { binding: 3, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
         ]
       });
       var compMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_COMPOSITE });
@@ -7788,7 +7850,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
           { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
           { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
           { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
-          { binding: 4, visibility: GPUShaderStage.VERTEX, texture: { sampleType: 'unfilterable-float' } }
+          { binding: 4, visibility: GPUShaderStage.VERTEX, texture: { sampleType: 'unfilterable-float' } },
+          { binding: 5, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+          { binding: 6, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
         ]
       });
       var dropMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
@@ -7837,7 +7901,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         layout: instance.surfCompositeBGL,
         entries: [
           { binding: 0, resource: { buffer: instance.renderParamsBuf } },
-          { binding: 1, resource: instance.surfTexView }
+          { binding: 1, resource: instance.surfTexView },
+          { binding: 2, resource: { buffer: instance.paramsBuf } },
+          { binding: 3, resource: { buffer: instance.buf.terrainMask } }
         ]
       });
       if (instance.surfDropletBGL) {
@@ -7848,7 +7914,9 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
             { binding: 0, resource: { buffer: instance.renderParamsBuf } },
             { binding: 1, resource: { buffer: instance.buf.pos } },
             { binding: 3, resource: { buffer: instance.buf.flag } },
-            { binding: 4, resource: instance.surfTexView }
+            { binding: 4, resource: instance.surfTexView },
+            { binding: 5, resource: { buffer: instance.paramsBuf } },
+            { binding: 6, resource: { buffer: instance.buf.terrainMask } }
           ]
         });
       } else {

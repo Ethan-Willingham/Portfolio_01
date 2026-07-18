@@ -241,7 +241,7 @@ these are LIVE since v14.25 — the `water` gm group (L panel) pushes them via
 `setRenderParam`, no reload needed. `edit²`.
 | Lever | Now | Range | Effect |
 |---|---|---|---|
-| `LIQUID_DROPLETS` `edit²` | `1` | 0/1 | v26.16 field-coverage droplet pass (GPU surface renderer only): each water particle samples the completed density field at its post-step screen position. A centre already covered by the composite gets no extra draw; uncovered spray and thin sheets draw as small hard drops (~2 world px, fixed size, lightly foam-tinted for dark terrain). This replaces the v25.32 pre-step neighbour guess, which could classify a fast sheet as supported before it spread apart and leave it rejected by both render paths. Interior particles remain hidden beneath the fused surface. gm `water.DROPLETS`; boot A/B `?wdbg=DROPLETS:0`. The CPU/WebGL fallback already draws all particles |
+| `LIQUID_DROPLETS` `edit²` | `1` | 0/1 | v26.16 field-coverage droplet pass (GPU surface renderer only): each water particle samples the completed density field at its post-step screen position. A centre already covered by the composite gets no extra draw. v26.17 renders uncovered water as a narrow velocity-aligned ellipse, about 2 world px wide and 2.2 to 8 px long, lightly foam-tinted and terrain-clipped. Fast marks overlap into thin directional strands instead of round confetti. Interior particles remain hidden beneath the fused surface. gm `water.DROPLETS`; boot A/B `?wdbg=DROPLETS:0`. The CPU/WebGL fallback already draws all particles |
 | `LIQUID_WATER_R / _G / _B` | `0.365 / 0.780 / 0.933` | 0–1 | Water base colour |
 | `LIQUID_WATER_FOAM_R / _G / _B` | `1.0 / 1.0 / 1.0` | 0–1 | Foam colour (water lerps base→foam by aeration) |
 | `LIQUID_WATER_ALPHA` | `0.70` | 0.4–1.0 | Water particle opacity |
@@ -258,9 +258,9 @@ discs). Live gm levers (`water` group):
 | Lever | Now | Range | Effect |
 |---|---|---|---|
 | `LIQUID_SURFACE_RENDER` | `1` | 0/1 | 1 = field + threshold compositing, 0 = legacy per-particle discs |
-| `LIQUID_SURFACE_THRESH` | `0.85` | 0.2–2.5 | Field value where fluid turns visible — ↑ shrinks the body, kills lone droplets |
-| `LIQUID_SURFACE_SOFT` | `0.35` | 0.05–1 | Smoothstep half-width (edge anti-aliasing / meniscus softness) |
-| `LIQUID_SURFACE_RSCALE` | `1.7` | 1–3 | Splat radius vs the disc size — ↑ merges blobs sooner, rounder surface |
+| `LIQUID_SURFACE_THRESH` | `1.8` | 0.5–3 | Field value where fluid turns visible. A lone peak is about 1, while a supported body is several times higher |
+| `LIQUID_SURFACE_SOFT` | `0.8` | 0.1–1.5 | Smoothstep half-width for edge anti-aliasing |
+| `LIQUID_SURFACE_RSCALE` | `0.9` | 0.5–2 | v26.17 compact support radius vs disc size. Dense water bridges about two rest spacings without a wide painted halo |
 
 Non-constant render math (tunable but hardcoded in function bodies): the
 soft-disc falloff `a = clamp(1 - dot(uv,uv), 0, 1)`; the `0.85` size base
@@ -462,7 +462,7 @@ before a host can retune uniforms. Stage 5 reports up to four particles as
 opposite sides of the hard 3 px/s sleep threshold; identity bits or any other
 flag mismatch still fail the boot check.
 
-The standalone v3.11 host's **very watery** endpoint uses
+The standalone v3.12 host's **very watery** endpoint uses
 `GRID_VISC = 0.02`, `DAMPING = 1.0`,
 `WATER_MOTION_SCALE = 1.0`, and `AIR_DRAG = 0.996`. It does not change
 `LIQUID_GRAVITY`, pressure, the fixed 1/120-second quantum, or the 1.55 playback
@@ -475,6 +475,17 @@ goopy endpoint: `GRID_VISC = 0.65`, `DAMPING = 0.992`,
 and every stability guard remain fixed across the slider. The toolbar's
 **particles** button only switches the existing `DBG_PARTICLES` proof-dot
 render pass; it never changes simulation state.
+
+**v26.17 honest render footprint:** the old `SURFACE_RSCALE = 1.7` shared
+default, and especially the standalone host's `2.1` override, painted a wide
+circle around every supported particle. At a ledge those circles merged into a
+swollen clump before the flow became fixed-size droplets, and near terrain the
+paint could extend through a wall even though the particle centre collided
+correctly. The shared scale is now `0.9`; `THRESH = 1.8` still rejects a lone
+field peak, while the v26.16 coverage pass owns thin sheets and spray. The
+field composite and droplet fragments also read the collision terrain bitmask
+and discard solid-tile pixels. This is a rendering-only contract: no position,
+collision radius, pressure, or flow value changed.
 
 The standalone host now also runs the Sluice orphan-retirement guard every 30
 frames. A non-frozen particle with fewer than 24 particles in its 3 by 3 set

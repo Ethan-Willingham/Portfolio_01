@@ -306,21 +306,21 @@
   // particle's 1.0 bump crossed it and drew a disc. Raised so the lower
   // smoothstep edge (THRESH-SOFT = 1.0) sits ABOVE one particle's peak: lone
   // particles fall below visibility and vanish, bodies (field >> 1) stay fully
-  // solid (size kept at 1.8 so the interior field is high — no static-TV, that
-  // was caused by SHRINKING size in v24.154, not by threshold). edit2 liquid-wgpu.js.
+  // solid. v26.17 keeps the 1.8 particle-size multiplier but reduces the
+  // separate field support scale: the old wide kernel made ledges swell and
+  // painted beyond collision terrain. edit2 liquid-wgpu.js.
   var LIQUID_SURFACE_THRESH = 1.8;    // v24.162 — was 0.85; one particle (peak ~1.0) now invisible
   var LIQUID_SURFACE_SOFT = 0.8;      // v24.162 — was 0.35; lower edge THRESH-SOFT=1.0 = exactly one-particle peak
-  var LIQUID_SURFACE_RSCALE = 1.7;
-  // v25.32 — DROPLET PASS ("it is dumb to render particles but not have
-  // them visible", the owner). The v24.162 threshold keeps a LONE particle
-  // invisible (its metaball peak ~1.0 sits under the visibility edge) —
-  // right against the old fat-disc bug, wrong as invisible-but-physical
-  // water. The GPU surface renderer now draws every low-neighbour-support
-  // water particle as a small hard droplet (~1.4 world px, size fixed,
-  // never density-scaled, so the giant-disc failure mode cannot come
-  // back), fading out as support rises and the merged body field takes
-  // over. Spray reads as spray; strays are visible drops; bodies are
-  // untouched; the CPU/WebGL fallback already draws all particles.
+  var LIQUID_SURFACE_RSCALE = 0.9;    // v26.17 compact support, about two rest spacings
+  // v26.16 DROPLET PASS ("it is dumb to render particles but not have
+  // them visible", the owner). The v24.162 threshold keeps a lone field
+  // peak invisible, while the GPU renderer draws each particle not already
+  // covered by the completed surface field as a fixed-size drop. v26.17
+  // clips both paths to collision terrain. Each uncovered particle becomes
+  // a narrow velocity-aligned ellipse (~2 world px wide and 2.2 to 8 px long,
+  // never density-scaled), so spray stays visible without bringing the giant
+  // disc failure back. Body interiors remain one fused surface; the CPU/WebGL
+  // fallback already draws all particles.
   // gm water.DROPLETS (1 = on); boot A/B ?wdbg=DROPLETS:0.
   // edit² with js/liquid-wgpu.js (module twin + WGSL_SURFACE_DROPLETS).
   var LIQUID_DROPLETS = 1;
@@ -566,4 +566,3 @@
     }
     return LAYERS[LAYERS.length - 1];
   }
-

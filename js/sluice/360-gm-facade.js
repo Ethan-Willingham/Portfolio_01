@@ -671,7 +671,7 @@
         gmRegisterLever('water.LIQUID_SURFACE_RSCALE', 'water', 'LIQUID_SURFACE_RSCALE',
           function () { return LIQUID_SURFACE_RSCALE; },
           function (v) { LIQUID_SURFACE_RSCALE = v; gmSetWaterLook('SURFACE_RSCALE', v); },
-          1, 3, undefined);
+          0.5, 2, undefined);
       }
 
       // Water PHYSICS levers (v14.26) — the WebGPU water SIM's fluid-feel
@@ -2263,4 +2263,3 @@
     } catch (gmErr) {
       try { console.warn('gm: tuning facade failed to initialise:', gmErr); } catch (_) {}
     }
-

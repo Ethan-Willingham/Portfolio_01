@@ -60,11 +60,15 @@
  * field coverage, so fast sheets cannot fall between the surface and droplet
  * paths. A guarded orphan sweep also retires small isolated clusters that do
  * not rejoin water, instead of simulating them forever.
+ *
+ * v3.12 honest-footprint contract: dense water uses a compact field support
+ * instead of wide per-particle halos, while thin water stays visible through
+ * the coverage droplet pass. Both paths clip against collision terrain.
  * ============================================================ */
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v3.11';  // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v3.12';  // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -718,11 +722,12 @@
             liquidWGPU.setRenderParam('WATER_FOAM_G', 0.78);
             liquidWGPU.setRenderParam('WATER_FOAM_B', 0.82);
             liquidWGPU.setRenderParam('WATER_ALPHA', 0.86);
-            // Film fusion: the game's droplet-biased surface threshold made
-            // thin sheets render as chains of beads at the toy's 1:1 scale;
-            // a lower threshold + wider splat fuses them into one body.
-            liquidWGPU.setRenderParam('SURFACE_THRESH', 1.25);
-            liquidWGPU.setRenderParam('SURFACE_RSCALE', 2.1);
+            // v3.12: keep a lone field peak below visibility and give dense
+            // water only enough support to bridge about two rest spacings.
+            // Thin sheets belong to the fixed-size droplet pass, not a wide
+            // halo that makes ledges swell and terrain collision look false.
+            liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8);
+            liquidWGPU.setRenderParam('SURFACE_RSCALE', 0.9);
             // Per-particle proof dots remain on by default. v3.10 exposes
             // the existing extra render pass as a visible toolbar toggle.
             applyParticleDebug();
