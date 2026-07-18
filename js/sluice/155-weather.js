@@ -4,7 +4,8 @@
   //   1. Clouds  — INSTANCED cumulus sprites (v26.20, replaced the tiled deck
   //                strips that read as horizontal bands). A small pool of
   //                individually-baked cloud sprites (billow-fbm field × a
-  //                cumulus envelope: wavy flat base, lumpy domed crown, baked
+  //                LOBED cumulus mound: overlapping elliptical lobes with one
+  //                dominant tower, tapered rounded ends, wavy flat base, baked
   //                volumetric top-light + silver rim) is scattered across
   //                one continuous 2D hash field over (x, altitude) — every
   //                cloud has its own position, height, variant, scale, flip
@@ -165,12 +166,12 @@
   var CLOUD_CLASSES = [
     { tw: 240, th: 64,  cells: 5, oct: 4, aniso: 2.6, dome: 0.34, baseV: 0.60, worldW: 340,
       lightNS: 3, lightStep: 2, lightAbsorb: 0.24, contrast: 0.78, alpha: 0.66, cirrus: true,  baseSeed: 41011 },
-    { tw: 208, th: 112, cells: 3, oct: 5, aniso: 1.0, dome: 0.64, baseV: 0.72, worldW: 218,
-      lightNS: 6, lightStep: 3, lightAbsorb: 0.56, contrast: 0.96, alpha: 0.92, cirrus: false, baseSeed: 52021 },
-    { tw: 320, th: 160, cells: 4, oct: 5, aniso: 1.0, dome: 0.72, baseV: 0.74, worldW: 350,
+    { tw: 208, th: 112, cells: 3, oct: 5, aniso: 1.0, dome: 0.64, baseV: 0.72, worldW: 218, lobes0: 3, lobes1: 4,
+      lightNS: 6, lightStep: 3, lightAbsorb: 0.56, contrast: 0.96, alpha: 0.97, cirrus: false, baseSeed: 52021 },
+    { tw: 320, th: 160, cells: 4, oct: 5, aniso: 1.0, dome: 0.72, baseV: 0.74, worldW: 350, lobes0: 4, lobes1: 6,
       lightNS: 10, lightStep: 3, lightAbsorb: 0.62, contrast: 1.06, alpha: 1.00, cirrus: false, baseSeed: 63031 }
   ];
-  var CLOUD_VARIANTS = 4;          // seeds per class
+  var CLOUD_VARIANTS = 8;          // seeds per class
   var cloudSprites = null;         // [class][variant] = { color, ctx, img, lum, den, ready, dirty }
   var cloudBakeKey = -1;           // softness/rim bake-lever bucket → re-bake on change
   var cloudLightBucket = -999999;
@@ -259,38 +260,78 @@
     var mz = weather.morph * 0.5;
     var feather = 0.06 + 0.055 * weatherTune.softness;
     var rim = weatherTune.rimGlow;
-    // envelope silhouette params (per-sprite hashes)
-    var u0 = 0.06 + 0.10 * wHash(vi, 1, seed);
-    var u1 = 0.94 - 0.10 * wHash(vi, 2, seed);
+    var px, py, u, idx = 0;
+    // ---- Silhouette: a MOUND of overlapping elliptical LOBES (one dominant
+    // tower + smaller flanks, all hashed per sprite), not a slab. The lobes
+    // give a convex lumpy outline with tapered rounded ends and a base that
+    // exists only under the mass — the slab-era sprites read as rectangles.
+    // topAllow[px] = crown height the lobes permit above the base line;
+    // baseSoft[px] = base presence, fading past the outermost lobes.
+    var topAllow = null, baseSoft = null;
+    if (!C.cirrus) {
+      topAllow = new Float32Array(tw);
+      baseSoft = new Float32Array(tw);
+      var totW = 0.88 - 0.22 * wHash(vi, 4, seed);           // whole-sprite width varies per seed
+      var uc = 0.5 + (wHash(vi, 6, seed) - 0.5) * 0.10;      // slight off-centre mass
+      var nl = C.lobes0 + ((wHash(vi, 3, seed) * (C.lobes1 - C.lobes0 + 1)) | 0);
+      var dom = (nl * (0.30 + 0.40 * wHash(vi, 5, seed))) | 0;
+      var hCap = C.baseV - 0.04;                             // never clip the tower at the tile top
+      for (var li = 0; li < nl; li++) {
+        var ft = (nl > 1) ? li / (nl - 1) : 0.5;
+        var cx = uc + (ft - 0.5) * totW * (0.82 + 0.16 * wHash(vi, 7 + li, seed));
+        var isDom = (li === dom);
+        var r = totW * (isDom ? 0.30 + 0.08 * wHash(vi, 20 + li, seed)
+                              : 0.15 + 0.10 * wHash(vi, 20 + li, seed));
+        var hh = C.dome * (isDom ? 0.88 + 0.24 * wHash(vi, 40 + li, seed)
+                                 : 0.38 + 0.42 * wHash(vi, 40 + li, seed));
+        if (hh > hCap) hh = hCap;
+        var pA = Math.max(0, Math.round((cx - r) * tw)), pB = Math.min(tw - 1, Math.round((cx + r) * tw));
+        for (px = pA; px <= pB; px++) {
+          var dd2 = (px / tw - cx) / r;
+          var cap = hh * Math.sqrt(Math.max(0, 1 - dd2 * dd2));
+          if (cap > topAllow[px]) topAllow[px] = cap;
+        }
+      }
+      for (px = 0; px < tw; px++) {
+        baseSoft[px] = wSmooth(wClamp01(topAllow[px] / (C.dome * 0.30)));
+      }
+    }
     var d = new Float32Array(tw * th);
-    var px, py, idx = 0;
     for (py = 0; py < th; py++) {
       var v = py / th;
       var vv = (py / tw) * C.aniso + mz;
       for (px = 0; px < tw; px++, idx++) {
-        var u = px / tw;
-        var edge = wSmooth(wClamp01(Math.min(u - u0, u1 - u) / 0.13));
-        if (edge <= 0.002) { d[idx] = 0; continue; }
+        u = px / tw;
         var E;
         if (C.cirrus) {
-          // wispy streak: a wavy centre-line with a soft gaussian belly
+          // wispy streak: wavy centre-line, lumpy belly, ends PINCHED to
+          // nothing (the constant-width era read as long rectangles)
+          var u0 = 0.05 + 0.08 * wHash(vi, 1, seed);
+          var u1 = 0.95 - 0.08 * wHash(vi, 2, seed);
+          var tSpan = (u - u0) / (u1 - u0);
+          if (tSpan <= 0 || tSpan >= 1) { d[idx] = 0; continue; }
+          var pinch = Math.pow(Math.sin(Math.PI * tSpan), 0.55);
           var mid = 0.42 + (wVal(u * 5, 7.7, 9999, seed + 31) - 0.5) * 0.34;
-          var g = (v - mid) / 0.30;
-          E = edge * Math.exp(-g * g);
+          var wdt = 0.30 * (0.40 + 0.60 * wBillow(u, 0.71, 4, seed + 57, 2)) * pinch;
+          if (wdt < 0.015) { d[idx] = 0; continue; }
+          var g = (v - mid) / wdt;
+          E = pinch * Math.exp(-g * g);
         } else {
-          // cumulus: wavy flat base, lumpy domed crown
+          var ta = topAllow[px];
+          if (ta <= 0.004) { d[idx] = 0; continue; }
           var vb = C.baseV + (wVal(u * 7, 3.5, 9999, seed + 913) - 0.5) * 0.09;
           if (v >= vb) {
-            E = edge * (1 - wSmooth(wClamp01((v - vb) / 0.07)));
+            E = baseSoft[px] * (1 - wSmooth(wClamp01((v - vb) / 0.07)));
           } else {
-            var crown = 0.35 + 0.65 * wBillow(u, 0.31, 4, seed + 77, 3);
-            var rise = (vb - v) / (C.dome * crown * (0.35 + 0.65 * edge));
-            E = edge * (1 - wSmooth(wClamp01((rise - 0.72) / 0.28)));
+            // the lobes carry the shape; billow only ruffles the crown line
+            var crown = 0.72 + 0.28 * wBillow(u, 0.31, 4, seed + 77, 3);
+            var rise = (vb - v) / (ta * crown);
+            E = baseSoft[px] * (1 - wSmooth(wClamp01((rise - 0.70) / 0.30)));
             // cauliflower carve — bites notches out of the crown, fades to
             // nothing at the flat base so the underside stays coherent
             var ch2 = wClamp01((vb - v) / C.dome);
             var carve = wBillow(u, v * (C.tw / C.th) * 0.8, 6, seed + 241, 2);
-            E *= 1 - 0.38 * ch2 * (1 - carve);
+            E *= 1 - 0.34 * ch2 * (1 - carve);
           }
         }
         if (E <= 0.003) { d[idx] = 0; continue; }
@@ -609,14 +650,35 @@
                               : 0.34 + 0.72 * wSmooth(wClamp01((alt - 60) / 280));
       var scale = sBase * (0.72 + 0.56 * wHash(k, jy + 67, CLOUD_FIELD_SEED)) * swell;
       var wW = C.worldW * scale;
-      var wH = wW * C.th / C.tw;
+      // per-cloud aspect squash — same sprite reads squat or towering
+      var wH = wW * (C.th / C.tw) * (0.86 + 0.28 * wHash(k, jy + 73, CLOUD_FIELD_SEED));
       var x0 = (k + 0.08 + 0.84 * wHash(k, jy + 41, CLOUD_FIELD_SEED)) * R.w;
       var sx = (x0 - shift) * ws - wW * ws * 0.5;
       var top = (surfaceY - alt * altScale - cam.y) * ws - wH * ws * 0.5;
       var wPx = wW * ws, hPx = wH * ws;
-      if (top >= skyBottomPx || top + hPx <= 0 || sx + wPx <= 0 || sx >= cw) continue;
-      ctx.globalAlpha = wClamp01(globalA * fadeA * aFade * C.alpha * (1 - 0.28 * valley) *
-                                 (0.80 + 0.20 * wHash(k, jy + 97, CLOUD_FIELD_SEED)));
+      // cull with side margins wide enough for a composite companion stamp
+      if (top >= skyBottomPx || top + hPx <= 0 || sx + wPx * 1.7 <= 0 || sx - wPx * 0.7 >= cw) continue;
+      // cores stay near-opaque: translucent cumulus TERRACE where they
+      // overlap (repeated arc seams); merged solid masses read as one cloud
+      var instA = wClamp01(globalA * fadeA * aFade * C.alpha * (1 - 0.28 * valley) *
+                           (0.90 + 0.10 * wHash(k, jy + 97, CLOUD_FIELD_SEED)));
+      // ~45% of cumulus are COMPOSITES: a second, smaller variant stamped
+      // beside the main mass with their bases aligned — combinatorial variety
+      // from the same pool, so repeats stop being findable
+      var hComp = wHash(k, jy + 71, CLOUD_FIELD_SEED);
+      if (cls !== 0 && hComp < 0.45) {
+        var S2 = cloudSprites[cls][(vi + 1 + ((hComp * 16) | 0)) % CLOUD_VARIANTS];
+        if (S2 && S2.ready) {
+          var sc2 = 0.48 + 0.22 * wHash(k, jy + 79, CLOUD_FIELD_SEED);
+          var w2 = wPx * sc2, h2 = hPx * sc2;
+          var side = (wHash(k, jy + 89, CLOUD_FIELD_SEED) < 0.5) ? -1 : 1;
+          var dx2 = side * wPx * (0.36 + 0.20 * wHash(k, jy + 91, CLOUD_FIELD_SEED));
+          var dy2 = C.baseV * (hPx - h2);   // bases share the same air-mass line
+          ctx.globalAlpha = instA * 0.9;
+          ctx.drawImage(S2.color, sx + dx2, top + dy2, w2, h2);
+        }
+      }
+      ctx.globalAlpha = instA;
       if (wHash(k, jy + 83, CLOUD_FIELD_SEED) < 0.5) {
         ctx.save();
         ctx.translate(sx + wPx, top);
@@ -636,7 +698,7 @@
     if (!cloudSprites) weatherInitSprites();
 
     // STAGE 1 — bake one dirty sprite per frame (the whole cast is ready in
-    // ~13 frames at boot; a softness/rim lever move or morph re-runs it).
+    // ~25 frames at boot; a softness/rim lever move or morph re-runs it).
     var bakeKey = Math.round(weatherTune.softness * 8) * 97 + Math.round(weatherTune.rimGlow * 8);
     var morphB = Math.round(weather.morph * 4);
     if (bakeKey !== cloudBakeKey || morphB !== cloudMorphBucket) {
