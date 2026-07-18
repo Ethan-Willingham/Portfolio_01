@@ -299,8 +299,19 @@
     var us = M.us;
     var mx = Math.round((M.portrait ? 7 : 24) * us);
     var my = Math.round((M.portrait ? 7 : 16) * us);
-    var w = Math.min(viewW - mx * 2, Math.round(660 * us));
-    var h = Math.min(M.bottom - my * 2, Math.round(620 * us));
+    // The modal is a card floating IN the fizzed world, not a takeover:
+    // on landscape/desktop it stays under ~72% of the width and ~84% of
+    // the playfield height so the blurred world clearly frames it.
+    // Portrait keeps near-full width (phones need every column) and its
+    // height cap already leaves a generous fizz band up top.
+    var w, h;
+    if (M.portrait) {
+      w = Math.min(viewW - mx * 2, Math.round(660 * us));
+      h = Math.min(M.bottom - my * 2, Math.round(620 * us));
+    } else {
+      w = Math.min(viewW - mx * 2, Math.round(560 * us), Math.round(viewW * 0.72));
+      h = Math.min(M.bottom - my * 2, Math.round(480 * us), Math.round(M.bottom * 0.84));
+    }
     var x = Math.round((viewW - w) / 2);
     // Portrait: anchor to the bottom so the top band stays clear for the
     // radio bubble (which deliberately draws over the shop) and the
