@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.36';
+  var GAME_VERSION = 'v26.37';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -11472,11 +11472,12 @@
      of the B6 slice:
 
      EXTERIOR: a tall banya tower drawn on the town surface (deck-relative
-     siting, v25.78). Entry works like the shop (v26.31): the plank door
-     slides open as the rig approaches (bathDoorT, the shopDoorT pattern),
-     and getting in is deliberate: click/tap the tower whenever it is on
-     screen (processPointerDown in 050, beside isPointOnShop), or park at
-     the door and press Enter/E. The old walk-in auto-enter is gone.
+     siting, v25.78). Entry works like the shop (v26.31): a felt CURTAIN
+     gathers open theater-tieback style as the rig approaches (bathDoorT,
+     the shopDoorT ramp; curtain art v26.37), and getting in is deliberate:
+     click/tap the tower whenever it is on screen (processPointerDown in
+     050, beside isPointOnShop), or park at the door and press Enter/E.
+     The old walk-in auto-enter is gone.
 
      INTERIOR: its own SCENE, built as an off-map pocket room deep in the
      bedrock fill (rows 600-613, far below the 400 m mineable town). Entering
@@ -11869,11 +11870,11 @@
     bathPromptT += dt;
     if (!bathMode) {
       if (!bathPickSite()) return false;
-      // v26.31 (owner): entry works like the shop. The plank door slides
-      // open as the rig approaches (same ramp rates as shopDoorT, 350) and
-      // getting in is DELIBERATE: tap/click the tower (050) or park at the
-      // door and press Enter/E/P (the shop's drive-up keys). The old
-      // walk-in auto-enter swallowed drive-bys.
+      // v26.31 (owner): entry works like the shop. The felt curtain
+      // gathers open as the rig approaches (same ramp rates as shopDoorT,
+      // 350) and getting in is DELIBERATE: tap/click the tower (050) or
+      // park at the door and press Enter/E/P (the shop's drive-up keys).
+      // The old walk-in auto-enter swallowed drive-bys.
       var dcx = (banyaDoorX0 + banyaDoorX1) / 2;
       var dcy = (BANYA_DOOR_Y0 + BANYA_DOOR_Y1) / 2;
       var nearDoor = Math.abs((player.x + PLAYER_W / 2) - dcx) < TILE * 4 &&
@@ -12668,14 +12669,18 @@
     ctx.fillText('Н', cx - 62, gy - 56);
     ctx.fillText('Я', cx - 62, gy - 34);
 
-    // Door (v26.31): a heavy plank leaf that slides open as the rig nears
-    // (bathDoorT, the shop's double-door pattern), revealing a lamp-lit
-    // hall: light pools low, the lintel stays dark (the shop's v15.1
-    // warm-shadow doorway, not a beacon). The felt flap valance hangs over
-    // the lintel year-round (banya tradition, plan section 2), so it draws
-    // AFTER the leaf. Hinge plates are gone: this leaf slides, not swings.
+    // Door (v26.37, owner direction): a FELT CURTAIN in two halves that
+    // GATHERS open, theater-tieback style, replacing the v26.31 sliding
+    // plank leaf (owner: not a vertical edge with only horizontal motion).
+    // Each half's inner edge is a curve: fuller along the (pelmet-hidden)
+    // rod, sweeping out to a pinch at tieback height (~2/3 down), then the
+    // skirt kicks back toward center at the floor, hem lifting slightly as
+    // the fabric is pulled aside. Three nested fold layers per half darken
+    // toward the jamb; a copper tie band fades in over the pinch. Behind
+    // it, the same warm-shadow hall glow (light pools low, lintel dark).
     var dw = banyaDoorX1 - banyaDoorX0;
     var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
+    var cxD = (banyaDoorX0 + banyaDoorX1) / 2;
     ctx.fillStyle = '#14100e';
     ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh);
     if (bathDoorT > 0.04) {
@@ -12690,30 +12695,58 @@
       ctx.fillStyle = 'rgba(236,176,98,' + (bathDoorT * 0.30).toFixed(3) + ')';
       ctx.fillRect(banyaDoorX0 + 3, BANYA_DOOR_Y0 + dh - 7, dw - 6, 4);
     }
-    // The leaf slides LEFT behind the log wall, clipped to the opening.
-    var slide = Math.round((dw - 4) * bathDoorT);
-    if (slide < dw) {
-      ctx.save();
-      ctx.beginPath(); ctx.rect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh); ctx.clip();
-      var lfx = banyaDoorX0 - slide;
-      ctx.fillStyle = '#6e4526'; ctx.fillRect(lfx, BANYA_DOOR_Y0, dw, dh);
-      ctx.fillStyle = '#54381f';                    // plank seams
-      for (var pkx = lfx + 10; pkx < lfx + dw; pkx += 11)
-        ctx.fillRect(pkx, BANYA_DOOR_Y0, 2, dh);
-      ctx.fillStyle = '#4a5560';                    // iron straps
-      ctx.fillRect(lfx + 3, BANYA_DOOR_Y0 + 44, dw - 6, 4);
-      ctx.fillRect(lfx + 3, BANYA_DOOR_Y0 + dh - 14, dw - 6, 4);
-      ctx.fillStyle = '#8a95a0';                    // strap rivets
-      for (var rvx = lfx + 6; rvx < lfx + dw - 4; rvx += 9) {
-        ctx.fillRect(rvx, BANYA_DOOR_Y0 + 45, 2, 2);
-        ctx.fillRect(rvx, BANYA_DOOR_Y0 + dh - 13, 2, 2);
-      }
-      ctx.strokeStyle = '#8a95a0'; ctx.lineWidth = 2;   // iron ring handle
-      ctx.beginPath(); ctx.arc(lfx + dw - 8, BANYA_DOOR_Y0 + 52, 3, 0, 6.283); ctx.stroke();
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';           // leading-edge shadow
-      ctx.fillRect(lfx + dw - 2, BANYA_DOOR_Y0, 2, dh);
-      ctx.restore();
+    // Fabric motion eases (smoothstep) so the gather starts and settles
+    // soft. Distances are measured from the door CENTER toward the jamb;
+    // -1 at closed overlaps the halves one pixel so no seam light leaks.
+    var ct = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);
+    var cHalf = dw / 2;
+    var cdT  = -1 + (13 + 1) * ct;    // inner edge along the rod
+    var cdTi = -1 + (18 + 1) * ct;    // the tieback pinch (closest to jamb)
+    var cdB  = -1 + (15 + 1) * ct;    // hem corner (skirt kicks back in)
+    var cBow = 5 * ct;                // swag belly bowing toward center
+    var yTie = BANYA_DOOR_Y0 + dh * 0.66;
+    var yBot = BANYA_DOOR_Y0 + dh - 5 * ct;
+    function curtainPath(dir, dT, dTi, dB) {
+      var jx = cxD + dir * cHalf;
+      ctx.beginPath();
+      ctx.moveTo(jx, BANYA_DOOR_Y0);
+      ctx.lineTo(cxD + dir * dT, BANYA_DOOR_Y0);
+      ctx.quadraticCurveTo(cxD + dir * ((dT + dTi) / 2 - cBow),
+        (BANYA_DOOR_Y0 + yTie) / 2 + 4, cxD + dir * dTi, yTie);
+      ctx.quadraticCurveTo(cxD + dir * (dTi + 1.5),
+        (yTie + yBot) / 2, cxD + dir * dB, yBot);
+      ctx.lineTo(jx, BANYA_DOOR_Y0 + dh);
+      ctx.closePath();
     }
+    ctx.save();
+    ctx.beginPath(); ctx.rect(banyaDoorX0, BANYA_DOOR_Y0, dw, dh); ctx.clip();
+    var foldCols = ['#8a4a3a', '#703a2d', '#542b21'];
+    var foldFrac = [0, 0.42, 0.72];
+    for (var cs = 0; cs < 2; cs++) {
+      var cDir = cs === 0 ? -1 : 1;
+      for (var cf = 0; cf < 3; cf++) {
+        var ffr = foldFrac[cf];
+        ctx.fillStyle = foldCols[cf];
+        curtainPath(cDir,
+          cdT  + ffr * (cHalf - cdT),
+          cdTi + ffr * (cHalf - cdTi),
+          cdB  + ffr * (cHalf - cdB));
+        ctx.fill();
+      }
+      // Copper tie band across the gathered bunch at the pinch.
+      if (ct > 0.55) {
+        var cAl = (ct - 0.55) / 0.45;
+        var bw = cHalf - cdTi + 1;
+        var bx0 = cDir < 0 ? cxD - cHalf : cxD + cdTi - 1;
+        ctx.globalAlpha = cAl;
+        ctx.fillStyle = '#4e2a21';
+        ctx.fillRect(bx0, yTie - 2, bw, 4);
+        ctx.fillStyle = '#b5723a';
+        ctx.fillRect(bx0, yTie - 1, bw, 1);
+        ctx.globalAlpha = 1;
+      }
+    }
+    ctx.restore();
     // Felt flap valance over the lintel.
     ctx.fillStyle = '#8a4a3a';
     ctx.fillRect(banyaDoorX0, BANYA_DOOR_Y0, dw, 32);

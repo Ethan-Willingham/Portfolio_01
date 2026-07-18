@@ -429,6 +429,22 @@ supply, payment, ramp = B7; exterior + transition = B8.
 
 ## 9. Deviation log (append-only)
 
+- 2026-07-18 (Fable; v26.37): THE DOOR IS A CURTAIN (owner reference image,
+  same session as v26.31). The v26.31 sliding plank leaf read as a rigid
+  vertical edge in pure horizontal motion; the owner wants a theater-
+  tieback curtain silhouette. New renderer in drawBanyaExterior: two felt
+  halves whose inner edges are curves parameterized by bathDoorT
+  (smoothstepped): fuller along the rod (hidden behind the pelmet
+  valance), a swag that bows toward center then sweeps out to a pinch at
+  0.66 door height, a skirt that kicks back toward center with a slight
+  hem lift, three nested fold layers per half darkening toward the jamb
+  (layer edges at fixed fractions of the remaining width, so folds
+  compress as the fabric gathers), and a copper tie band fading in over
+  the bunch past ct 0.55. Closed halves overlap the center seam 1 px so
+  no glow leaks. Felt palette threads the existing banya colors (base
+  #8a4a3a = the valance felt, folds #703a2d/#542b21, tie #b5723a copper).
+  Entry mechanics (v26.31 tap/E/Escape) untouched.
+
 - 2026-07-18 (Fable; v26.31): SHOP-STYLE ENTRY (owner call). The v25.77
   walk-in auto-enter (rig overlaps the door rect, teleport inside) swallowed
   drive-bys, so it is gone. The banya now enters exactly like the station
