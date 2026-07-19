@@ -68,7 +68,7 @@
   .tao-layer-tag b { color: var(--accent); font-weight: 400; }
   .tao-layer-tag::after { display: none; }
   .tao-h2 { max-width: 22ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
-  .tao-intro { max-width: 49ch; margin: 1rem auto 0; font-size: 1.22rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+  .tao-intro { max-width: 52ch; margin: 1rem auto 0; font-size: 1.22rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
   .tao-plain { max-width: var(--tao-copy); margin: 2.6rem auto 0; }
   .tao-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
   .tao-plain p:last-child { margin-bottom: 0; }
@@ -79,7 +79,7 @@
   .tao { max-width: var(--measure); margin: clamp(2.4rem, 5vw, 3.4rem) auto 0; scroll-margin-top: 4.5rem; }
 
   /* floating chapter capsule */
-  .tao-bar { position: sticky; top: .75rem; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .35rem; padding: .5rem .55rem; margin-bottom: 1.2rem; background: color-mix(in srgb, var(--bg) 86%, #f5f1ea 6%); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--rule-strong); border-radius: 20px; box-shadow: 0 16px 34px -20px rgba(0, 0, 0, .55), 0 2px 10px -6px rgba(0, 0, 0, .35); }
+  .tao-bar { position: sticky; top: .75rem; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem .35rem; padding: .5rem .55rem; margin-bottom: 1.2rem; background: color-mix(in srgb, var(--bg) 86%, #f5f1ea 6%); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--rule-strong); border-radius: 20px; box-shadow: 0 16px 34px -20px rgba(0, 0, 0, .55), 0 2px 10px -6px rgba(0, 0, 0, .35); }
   .tao-step { display: flex; align-items: center; gap: .15rem; min-width: 0; }
   .tao-nav { flex: none; width: 2.1rem; height: 2.1rem; border: none; border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 .15rem; font-family: var(--font-heading); font-size: 1.45rem; line-height: 1; transition: background .18s, color .18s; }
   .tao-nav:hover:not(:disabled) { background: rgba(255, 255, 255, .07); color: var(--accent-hover); }
@@ -88,7 +88,7 @@
   .tao-jump:hover { background: rgba(255, 255, 255, .06); }
   .tao-jump #tao-chno { font-family: var(--font-heading); font-size: 1.14rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; }
   .tao-jump #tao-title { font-family: var(--font-heading); font-style: italic; font-size: .86rem; line-height: 1.25; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-  .tao-count { flex: none; margin-left: auto; margin-right: .55rem; font-family: var(--font-mono); font-size: .66rem; letter-spacing: .04em; color: var(--text-faint); }
+  .tao-count { position: absolute; right: 1.05rem; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-size: .66rem; letter-spacing: .04em; color: var(--text-faint); }
   .tao-count b { color: var(--accent); font-weight: 400; }
 
   .tao-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin: 0 0 1.2rem; padding: .85rem; border: 1px solid var(--rule-strong); border-radius: 16px; background: color-mix(in srgb, var(--bg) 92%, #f5f1ea 4%); box-shadow: 0 16px 34px -20px rgba(0, 0, 0, .5); }
@@ -136,9 +136,9 @@
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
     .tao-layer { padding-block: 3.4rem; }
-    .tao-bar { top: .5rem; gap: .45rem .3rem; padding: .45rem .5rem; border-radius: 17px; }
+    .tao-bar { top: .5rem; gap: .3rem .3rem; padding: .45rem .5rem .5rem; border-radius: 17px; }
     .tao-jump { width: min(56vw, 13.5rem); }
-    .tao-count { flex-basis: 100%; margin: 0 .35rem .15rem; order: 4; }
+    .tao-count { position: static; transform: none; flex-basis: 100%; text-align: center; margin: 0; }
     .tao-grid { grid-template-columns: repeat(7, 1fr); }
     .tao-v { padding-left: 0.9rem; }
   }
@@ -153,7 +153,7 @@
   <header class="u-hero tao-hero tao-shell">
     <h1 class="u-title">The Tao Te Ching</h1>
     <p class="u-dek">Eighty-one short chapters about water, valleys, and doing less, written some twenty-five centuries ago. Each one broken down in plain language, then read against every English translation I could find.</p>
-    <p class="u-meta">An interactive reader <span class="u-sep">/</span> <b>81 chapters</b> <span class="u-sep">/</span> <b>139 translators</b> <span class="u-sep">/</span> <b>3,087</b> verbatim renderings</p>
+    <p class="u-meta">An interactive reader <span class="u-sep">/</span> <b>81 chapters</b> <span class="u-sep">/</span> <b>139 translators</b></p>
     <span class="tao-scroll" aria-hidden="true">scroll</span>
   </header>
 
@@ -162,7 +162,8 @@
       <p class="tao-layer-tag"><b>01</b> Summary</p>
       <h2 class="tao-h2" id="summary-title">The Tao Te Ching, in plain English</h2>
       <div class="tao-plain">
-        <p>The Tao Te Ching is one of the most translated books ever written, after the Bible, and the translations do not agree. Not on the wording. Not on the grammar. Sometimes not even on the subject of a sentence. Lao Tzu, if he existed, set down about five thousand Chinese characters some twenty-five centuries ago, and classical Chinese has no tenses, almost no punctuation, and one word can be a noun, a verb, or an adjective depending on where it sits. Each translator has to decide what every line means before they can write it in English, and they decide differently. None of them is wrong, exactly. That spread is the subject of this page.</p>
+        <p>The Tao Te Ching is one of the most translated books ever written, after the Bible, and the translations do not agree. Not on the wording. Not on the grammar. Sometimes not even on the subject of a sentence.</p>
+        <p>Lao Tzu, if he existed, set down about five thousand Chinese characters some twenty-five centuries ago, and classical Chinese has no tenses, almost no punctuation, and one word can be a noun, a verb, or an adjective depending on where it sits. Each translator has to decide what every line means before they can write it in English, and they decide differently. None of them is wrong, exactly. That spread is the subject of this page.</p>
         <p>Strip the mystery away and the book itself is 81 short chapters, few longer than a page, credited to Lao Tzu, a name that just means Old Master and may not belong to any one person. The book never argues. It states, in compressed images, water, valleys, bellows, wheels, uncarved wood, and leaves the connecting to you.</p>
         <p>Its one big claim: beneath the world of named things sits something nameless that everything comes from and runs on, and life goes best when you work with its grain instead of against it. The book calls it the Tao, the Way. It opens by saying the Way cannot be put into words, then keeps gesturing at it for eighty more chapters, mostly by pointing at what it is not.</p>
         <p>The practical teaching is <em>wu wei</em>, usually rendered non-action, which does not mean lying down. It means effort without friction: act while things are still small, stop when the work is done, do not force, do not fuss, do not grip. The book&rsquo;s favorite teacher is water, which fights nothing, settles into the low places everyone else avoids, and wears down stone.</p>
@@ -176,7 +177,7 @@
     <section class="tao-layer tao-shell" id="reader" aria-labelledby="reader-title">
       <p class="tao-layer-tag"><b>02</b> The reader</p>
       <h2 class="tao-h2" id="reader-title">All 81 chapters, side by side</h2>
-      <p class="tao-intro">Each chapter opens with what it says in plain English, my own distillation from reading every version below against the others; a summary, not a translation. Then the translations themselves, the famous ones first, down to the fragments. Arrows or your keyboard to move.</p>
+      <p class="tao-intro">Each chapter opens with what it says in plain English, my own distillation of every version below; a summary, not a translation. Then the translations themselves, famous first, down to the fragments. Arrows or your keyboard to move.</p>
 
       <div class="tao" id="tao">
         <div class="tao-bar">
