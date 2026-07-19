@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.className += ' js';</script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1NS9QT1HEM');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
+  <title>The Quran: 114 Chapters, One Speaker</title>
+  <meta name="description" content="The Quran's story, its central ideas, what history can confirm, how securely the text survived, and the hard parts. A reading guide written by Claude.">
+  <meta property="og:title" content="The Quran: 114 Chapters, One Speaker">
+  <meta property="og:description" content="The Quran&rsquo;s story, its central ideas, what history can confirm, how securely the text survived, and the difficult parts a serious reader should not miss. Written by Claude.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/quran-claude.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/quran-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/quran-og.jpg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --torah-measure: 760px;
+      --torah-copy: 64ch;
+      --torah-frame: 58rem;
+      --torah-tint: rgba(245, 241, 234, .045);
+      --torah-hair: rgba(212, 196, 160, .20);
+    }
+    body.torah-page { padding-inline: 0; overflow-x: hidden; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .torah-shell { width: 100%; max-width: var(--torah-frame); margin: 0 auto; padding-inline: var(--gutter); }
+    .torah-page .post-back { display: block; width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-left: var(--gutter); padding-right: var(--gutter); }
+    .torah-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 4rem); max-width: 61rem; padding-block: clamp(4.5rem, 11svh, 7rem); text-align: center; }
+    .torah-hero .u-title { max-width: 10ch; margin-inline: auto; font-size: clamp(3.7rem, 12vw, 7.5rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+    .torah-hero .u-dek { max-width: 49ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+    .torah-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+    .torah-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
+    .torah-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    .torah-layer:last-of-type { padding-bottom: clamp(2.6rem, 5svh, 3.4rem); }
+    #summary { padding-top: clamp(4.5rem, 8svh, 6.5rem); }
+    .torah-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+    .torah-layer-tag b { color: var(--accent); font-weight: 400; }
+    .torah-layer-tag::after { display: none; }
+    .torah-h2 { max-width: 22ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+    .torah-intro { max-width: 49ch; margin: 1rem auto 0; font-size: 1.22rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+    .torah-plain { max-width: var(--torah-copy); margin: 2.6rem auto 0; }
+    .torah-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
+    .torah-plain p:last-child { margin-bottom: 0; }
+    .torah-plain p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+    .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--torah-copy); margin: 2.6rem auto 0; }
+    .torah-context { padding-top: 1rem; border-top: 1px solid var(--torah-hair); }
+    .torah-context h3 { margin: 0 0 .75rem; font-family: var(--font-heading); font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
+    .torah-context p { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.7; color: var(--text); }
+    .torah-context p:last-child { margin-bottom: 0; }
+    .torah-context a, .torah-page .u-textcheck a, .torah-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
+    .torah-context a:hover, .torah-page .u-textcheck a:hover, .torah-sources a:hover { color: var(--accent-hover); }
+    .torah-page .u-textcheck { max-width: var(--torah-copy); margin: clamp(2.8rem, 6vw, 4.4rem) auto 0; }
+
+    .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding: 1.35rem 1.4rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
+    .torah-convergence h3 { margin: 0; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
+    .torah-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
+    .torah-convergence a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
+
+    .concept-list { max-width: var(--torah-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
+    .torah-concept { scroll-margin-top: 1rem; border-bottom: 1px solid var(--rule); }
+    .torah-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
+    .torah-concept > summary::-webkit-details-marker { display: none; }
+    .concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .concept-statement { display: block; font-family: var(--font-heading); font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+    .concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
+    .concept-mark::before { content: "+"; }
+    .torah-concept[open] { margin-block: 1.1rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212, 196, 160, .045); }
+    .torah-concept[open] .concept-mark::before { content: "−"; }
+    /* An open card detaches into a floating panel; the flat hairline it would
+       otherwise touch (previous row's bottom, or the list's top rule) retires so
+       the rounded gold-edged panel never butts against a straight rule. */
+    .torah-concept:not([open]):has(+ .torah-concept[open]) { border-bottom-color: transparent; }
+    .concept-list:has(> .torah-concept[open]:first-child) { border-top-color: transparent; }
+    .concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
+    .concept-role { max-width: 61ch; margin: 0; font-size: 1.14rem; line-height: 1.72; color: var(--text); }
+    .refrain { margin-top: 2rem; }
+    .refrain-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .refrain-head span:last-child { color: var(--text-faint); }
+    .verse-stack { border-top: 1px solid var(--rule); }
+    .verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+    .verse q { font-family: var(--font-heading); font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
+    .verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
+    .hard-reading { max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding-top: clamp(3.5rem, 7vw, 5rem); border-top: 1px solid var(--accent); }
+    .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 2.2rem; }
+    .hard-item { padding: 1.1rem 1.15rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
+    .hard-item h3 { margin: 0 0 .5rem; font-family: var(--font-heading); font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
+    .hard-item p { margin: 0; font-size: .94rem; line-height: 1.62; color: var(--text-dim); }
+    .torah-sources { max-width: var(--torah-copy); margin: 3rem auto 0; }
+    .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
+    .torah-sources li { break-inside: avoid; }
+    .torah-page .u-next, .torah-page .site-footer-inner { width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; }
+    .torah-page .site-footer-inner { font-family: var(--font-body); }
+
+    @media (max-width: 720px) {
+      .torah-context-grid, .hard-reading-grid { grid-template-columns: 1fr; }
+      .torah-convergence { grid-template-columns: 1fr; gap: .7rem; }
+      .torah-sources .u-collapse-list { columns: 1; }
+    }
+    @media (max-width: 560px) {
+      .torah-layer { padding-block: 3.4rem; }
+      #summary { padding-top: 3.4rem; }
+      .torah-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
+      .concept-body { padding: .1rem 0 3rem 2.9rem; }
+      .verse { grid-template-columns: 1fr; gap: .45rem; }
+      .verse cite { text-align: left; }
+      .refrain-head { display: block; }
+      .refrain-head span { display: block; }
+      .refrain-head span:last-child { margin-top: .25rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body class="torah-page">
+  <div class="reading-progress" id="readingProgress"></div>
+  <a href="religion.html" class="post-back"><span class="pb-label">The Sacred Books</span></a>
+
+  <header class="u-hero torah-hero torah-shell">
+    <h1 class="u-title">The Quran</h1>
+    <p class="u-dek">One continuous reading of Islam&rsquo;s scripture: how it arrived, the ideas holding it together, what history can confirm, how securely the words survived, and the difficult parts a serious reader should not miss.</p>
+    <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>Written by Claude</b> <span class="u-sep">/</span> 16 sources <span class="u-sep">/</span> 22 min read</p>
+    <span class="torah-scroll" aria-hidden="true">scroll</span>
+  </header>
+
+  <main>
+    <section class="torah-layer torah-shell" id="summary" aria-labelledby="summary-title">
+      <p class="torah-layer-tag"><b>01</b> Summary</p>
+      <h2 class="torah-h2" id="summary-title">The Quran, in plain English</h2>
+      <div class="torah-plain">
+        <p>The Quran does not present itself as a book about God. It presents itself as God talking. One voice speaks from the first page to the last, in the first person, and Muslims hold that the voice is God&rsquo;s own, delivered a few lines at a time to one man in western Arabia between 610 and 632. The book&rsquo;s name says how it worked: <em>qur&rsquo;an</em> is Arabic for the recitation. It was spoken before it was ever a book, and most of the people who love it still meet it out loud.</p>
+        <p>The man was Muhammad, a merchant of Mecca, a caravan and pilgrimage town in the desert hills of what is now Saudi Arabia. At about forty he had a habit of retreating to a cave on a hill outside town. Tradition puts the first moment there, in the year 610: a presence, later identified as the angel Gabriel, seizes him and commands, Read. He answers that he cannot. The command comes again, and then the first lines arrive, the ones now printed as the opening of chapter 96: &ldquo;Read: In the name of thy Lord Who createth.&rdquo; Muhammad runs home shaking and asks his wife Khadija to cover him with a cloak. That scene, like nearly everything about his life, comes from books written down about two centuries later; the second layer below sorts out what stands on which ground.</p>
+        <p>The messages keep coming for twenty-three years, usually a passage at a time, often in answer to whatever was happening: a question, a dispute, a battle, a scandal. Muhammad recites each new piece aloud; followers learn it by heart, and some scratch it onto whatever takes ink or a knife, palm stalks, flat bones, leather. None of this struck the first audience as fragile. Arabia in 610 ran on memorized poetry the way Rome ran on inscriptions, and the Quran is built for the ear it was aimed at: rhymed, rhythmic, designed to be carried in the head.</p>
+        <p>The early message has four notes, and the short Meccan chapters hammer all four. There is one God, which in a town whose shrine, the cube-shaped Kaaba, housed the idols of many tribes (tradition counts 360) was an attack on the pilgrim economy as much as on theology. The dead will be raised and judged, one by one. The comfortable owe the orphan and the beggar. And towns that ignored their prophets before are sand now. Mecca&rsquo;s establishment answered with mockery, then boycott, then persecution, and after twelve years the movement was still small and getting dangerous to belong to.</p>
+        <p>In 622 the movement moved. An oasis town two hundred miles north, later called Medina, invited Muhammad to arbitrate its feuds, and the Muslims slipped out of Mecca in small groups. The migration is called the hijra, and Islam dates its calendar from that year rather than from anyone&rsquo;s birth: year one is the year the community got a home. The revelations change register with the move. In Mecca they had been short and thunderous, all judgment and mercy; in Medina, where Muhammad was suddenly running a city, they turn long and legal: marriage, divorce, inheritance, contracts, debt, war, treaties. The difference is visible on the page, and it is why the finished book holds both hymn and statute.</p>
+        <p>Eight years of war with Mecca follow, and the Quran keeps arriving through all of it: the outnumbered win at Badr in 624, a defeat at Uhud the next year, a failed siege of Medina. In 630 Mecca surrenders without a fight. Muhammad rides in, has the idols smashed, and rededicates the Kaaba to the one God, which in the Quran&rsquo;s telling is restoration, not conquest: it says Abraham and his son Ishmael raised the shrine&rsquo;s foundations in the first place. Two years later, after one farewell pilgrimage, he dies in Medina, with most of Arabia inside the new faith.</p>
+        <p>He leaves no book. At his death the Quran exists in trained memories and scattered private writings, and tradition says the fragility showed within a year, when a battle killed enough memorizers that the first caliph, Abu Bakr, ordered everything gathered. A generation later the third caliph, Uthman, had a standard copy made, sent duplicates to the garrison cities, and ordered variant collections burned. Both stories come from hadith, reports about the prophet&rsquo;s era written down roughly two centuries on, so the details are tradition rather than record. What is not tradition is the result: surviving manuscript pages, some radiocarbon-dated to within decades of Muhammad&rsquo;s lifetime, already carry essentially the text Muslims read today.</p>
+        <p>Open the finished book and the first surprise is the order. The Quran is 114 chapters, called suras, holding 6,236 verses in the standard count, and after a seven-verse opening prayer the chapters run roughly longest to shortest. Chapter 2 fills about forty pages; the chapters at the back are a few lines each. The arrangement is not chronological, and it actually runs time roughly backwards: the long legal Medina material sits up front and the earliest Meccan chapters sit at the end. A good first pass is to start at the back, where the book is youngest, shortest, and loudest, and read toward the front. The whole thing is shorter than the New Testament, about the length of the four gospels and Acts together.</p>
+        <p>The second surprise is the voice. There is no narrator. God speaks throughout, usually as a royal We, and the reader is mostly overhearing: God addresses Muhammad, or the believers, or the doubters, or everyone at once. Hundreds of passages open with the instruction &ldquo;Say,&rdquo; followed by the words Muhammad is to deliver, so even the prophet&rsquo;s lines arrive dictated. Stories come as allusions rather than narratives: Moses appears in dozens of chapters, yet the book never sits down and tells his story from the beginning, because the first audience already knew it. The Quran assumes you know the Bible&rsquo;s cast, and then argues about what their stories meant.</p>
+        <p>It plants itself deliberately inside that older family. Adam, Noah, Abraham, Moses, David, Jonah, Job, Mary, and Jesus are all here; Moses is named more than anyone else, and Mary more often than in the New Testament, with a chapter carrying her name. Jesus in the Quran is born of a virgin, works miracles, and is called the Messiah, but he is a prophet, not God&rsquo;s son, and in the Quran&rsquo;s account he was not crucified. Where the books differ, the Quran&rsquo;s claim is that it confirms what the earlier scriptures originally said and corrects what their keepers changed. Jews and Christians read the same overlap in the opposite direction. That disagreement is fourteen centuries old, and this guide does not pretend to settle it.</p>
+        <p>One more thing before the layers below: strictly speaking, for Muslims, only the Arabic is the Quran. The book treats its own language as part of the miracle and dares doubters to produce anything like it, so a translation is not scripture; the English convert Marmaduke Pickthall titled his 1930 version The Meaning of the Glorious Koran on exactly that logic. Every quotation below is Pickthall&rsquo;s public-domain rendering, and each one is, by Muslim lights, one remove from the real thing. The Torah and the Gospels are also translated books in English hands, but neither tradition makes the original language itself the miracle. This one does.</p>
+        <p>What happened next fills other books: within a century of the death, the community ran from Spain to the Indus. Today roughly a quarter of the world is Muslim, on course in Pew&rsquo;s projections for three billion people by 2060, and the book still works the way it started, out loud. Through Ramadan, mosques the world over recite it in nightly installments, a thirtieth per night, finishing the whole text by the month&rsquo;s end, from memory.</p>
+      </div>
+    </section>
+
+    <section class="torah-layer torah-shell" id="context" aria-labelledby="context-title">
+      <p class="torah-layer-tag"><b>02</b> Context and transmission</p>
+      <h2 class="torah-h2" id="context-title">What can actually be known</h2>
+      <div class="torah-context-grid">
+        <article class="torah-context">
+          <h3>What is actually confirmed</h3>
+          <p>Muhammad existed. A Greek tract written within about two years of his death, the Doctrina Jacobi, already complains of a prophet arisen among the Arabs; coins and inscriptions naming him follow within decades. Fred Donner&rsquo;s <a href="https://www.hup.harvard.edu/books/9780674064140">Muhammad and the Believers</a> walks through the early documentary evidence.</p>
+          <p>The text itself is early. Parchment of the <a href="https://www.birmingham.ac.uk/facilities/cadbury/birmingham-quran-mingana-collection/birmingham-quran/what-is">Birmingham Quran folios</a> radiocarbon-dates to 568-645 CE at 95 percent confidence, a window overlapping Muhammad&rsquo;s own lifetime, and several other substantial codices sit within Islam&rsquo;s first century; <a href="https://corpuscoranicum.de/en">Corpus Coranicum</a> catalogs them. Their consonantal text is essentially the one printed today. No other major scripture has physical copies this close to its origin.</p>
+        </article>
+        <article class="torah-context">
+          <h3>What is reconstructed, not confirmed</h3>
+          <p>The biography. The cave, the cloak, the persecution, the battle numbers: the earliest surviving life of Muhammad, Ibn Ishaq&rsquo;s, reaches us edited by Ibn Hisham roughly two centuries after the death, and the hadith collections are of similar distance. The first-revelation scene is <a href="https://sunnah.com/bukhari:3">Bukhari 3</a>; the collection under Abu Bakr and the standard copy under Uthman are <a href="https://sunnah.com/bukhari:4986">Bukhari 4986</a>. None of it is necessarily false. None of it is contemporary either.</p>
+          <p>The internal chronology. Which chapters are Meccan and which Medinan, and what event occasioned which verse, is scholarly and traditional reconstruction; the book itself is not arranged in time and almost never dates itself. Even 610 and 632 rest on the late sources, with only the broad outline anchored from outside.</p>
+        </article>
+      </div>
+
+      <aside class="u-textcheck" aria-labelledby="textcheck-title">
+        <div class="u-textcheck-head">
+          <div>
+            <p class="u-textcheck-k">How safely did this reach us?</p>
+            <h3 class="u-textcheck-verdict" id="textcheck-title">The book is early. The story around it is late.</h3>
+          </div>
+          <p class="u-textcheck-rule">Three questions, because one confidence score would lie.</p>
+        </div>
+        <div class="u-textcheck-rows">
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Early witnesses</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Exceptional</span><span class="u-textcheck-scale" data-level="4" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">Manuscript pages survive from within decades of Muhammad&rsquo;s life, some on parchment that may predate his death. The Bible&rsquo;s witnesses trail its events by centuries; here the gap nearly closes. Radiocarbon dates the skin, though, not the ink.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Arabic wording</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong, not letter-perfect</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">The consonantal skeleton has been stable since the first Islamic century, helped by Uthman&rsquo;s standard copy and his burn order for rivals. Canonical readings still differ in small ways (Hafs and Warsh split over king versus master at 1:4), and the Sanaa palimpsest&rsquo;s erased lower text differs more. The page read almost everywhere today is the 1924 Cairo edition, in the Hafs reading.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">English meaning</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">The weak link, by design</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">Islam holds the Arabic itself inimitable, so every translation is an interpretation by its own admission. The rhyme and rhythm do not survive, and load-bearing words such as <em>taqwa</em>, <em>sabr</em>, and <em>kufr</em> each cover more ground than any one English word.</p>
+          </div>
+        </div>
+        <p class="u-textcheck-foot">Verdict based on the <a href="https://www.birmingham.ac.uk/facilities/cadbury/birmingham-quran-mingana-collection/birmingham-quran/what-is">Birmingham folios</a>, Sadeghi and Goudarzi&rsquo;s edition of the <a href="https://doi.org/10.1515/islam-2011-0025">Sanaa palimpsest</a>, and the manuscript catalog at <a href="https://corpuscoranicum.de/en">Corpus Coranicum</a>. This measures transmission, not whether its claims are true.</p>
+      </aside>
+    </section>
+
+    <section class="torah-layer torah-shell" id="concepts" aria-labelledby="concepts-title">
+      <p class="torah-layer-tag"><b>03</b> Expand the concepts</p>
+      <h2 class="torah-h2" id="concepts-title">Twelve ideas the Quran keeps repeating</h2>
+      <p class="torah-intro">Each entry gives the claim, what it actually means, and several places the text says it.</p>
+
+      <div class="concept-list">
+        <details class="torah-concept" id="tawhid">
+          <summary><span class="concept-n">01</span><span><span class="concept-statement">God is one, and nothing shares the office.</span><span class="concept-place">Sura 112 and the Throne Verse</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role"><em>Tawhid</em>, the oneness of God, is the claim every other page leans on. It means no pantheon, no son, no rival dark power, no priest who owns access, and no worship for anything created; the gravest sin the book names is <em>shirk</em>, assigning God a partner. Sura 112 states the doctrine in four lines so compact that tradition says they weigh a third of the whole book. The faith is entered by saying it: there is no god but God, and Muhammad is His messenger, the shahada, whispered to newborns and spoken to convert. The Throne Verse below is the tradition&rsquo;s favorite portrait of what the One is like, honored in hadith as the greatest verse in the Quran, and observant Muslims recite it after each of the day&rsquo;s five prayers.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>Say: He is Allah, the One! Allah, the eternally Besought of all! He begetteth not nor was begotten. And there is none comparable unto Him.</q><cite>Quran 112:1-4</cite></p>
+              <p class="verse"><q>Allah! There is no deity save Him, the Alive, the Eternal. Neither slumber nor sleep overtaketh Him ... His throne includeth the heavens and the earth, and He is never weary of preserving them.</q><cite>Quran 2:255</cite></p>
+              <p class="verse"><q>If there were therein gods beside Allah, then verily both (the heavens and the earth) had been disordered.</q><cite>Quran 21:22</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="recitation">
+          <summary><span class="concept-n">02</span><span><span class="concept-statement">The miracle is the book itself.</span><span class="concept-place">The recitation, about itself</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Islam&rsquo;s founding miracle is not a healing or a parted sea; it is this text, and the text says so itself. It calls itself the Reminder, guarantees its own preservation, and issues a standing dare: gather everyone you like and produce one chapter of the like. The dare, the doctrine of <em>i&rsquo;jaz</em> or inimitability, is a faith claim, and outsiders do not concede it. The practice built on it, though, is plainly real. The book says it was made easy to remember, and Muslims answered by memorizing it: a hafiz is a person who carries all 6,236 verses word-perfect, whole schools exist to train them, and children still finish the feat before their voices change. No other book is stored in living human memory at anything near that scale.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>Read: In the name of thy Lord Who createth.</q><cite>Quran 96:1</cite></p>
+              <p class="verse"><q>Verily, though mankind and the jinn should assemble to produce the like of this Qur&rsquo;an, they could not produce the like thereof though they were helpers one of another.</q><cite>Quran 17:88</cite></p>
+              <p class="verse"><q>Lo! We, even We, reveal the Reminder, and lo! We verily are its Guardian.</q><cite>Quran 15:9</cite></p>
+              <p class="verse"><q>And in truth We have made the Qur&rsquo;an easy to remember; but is there any that remembereth?</q><cite>Quran 54:17</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="prophets">
+          <summary><span class="concept-n">03</span><span><span class="concept-statement">One message, many messengers, and this is the last.</span><span class="concept-place">Adam to Muhammad, one line</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Quran&rsquo;s history of religion is a relay. God has sent the same core message with messenger after messenger, Adam, Noah, Abraham, Moses, Jesus, and others unnamed, to every people in its own tongue; people keep losing or bending the deliveries; Muhammad is the final runner, the Seal of the Prophets. That is why a practicing Muslim will say, without any strain, that they believe in Moses and in Jesus. It is also exactly where the religions collide: where the Quran differs from the Torah and the Gospels, Islam holds the older books were corrupted in transmission, which Jews and Christians do not accept about their own scripture. The relay also runs through the body. The pilgrimage every able Muslim owes once, the hajj, walks Abraham&rsquo;s family&rsquo;s steps around the shrine the Quran says Abraham himself raised.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>We believe in Allah and that which is revealed unto us and that which was revealed unto Abraham, and Ishmael, and Isaac, and Jacob ... and that which Moses and Jesus received ... We make no distinction between any of them.</q><cite>Quran 2:136</cite></p>
+              <p class="verse"><q>He hath revealed unto thee (Muhammad) the Scripture with truth, confirming that which was (revealed) before it, even as He revealed the Torah and the Gospel.</q><cite>Quran 3:3</cite></p>
+              <p class="verse"><q>Muhammad is not the father of any man among you, but he is the messenger of Allah and the Seal of the Prophets.</q><cite>Quran 33:40</cite></p>
+              <p class="verse"><q>For each We have appointed a divine law and a traced-out way. Had Allah willed He could have made you one community ... So vie one with another in good works.</q><cite>Quran 5:48</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="mercy">
+          <summary><span class="concept-n">04</span><span><span class="concept-statement">Mercy is God&rsquo;s leading attribute.</span><span class="concept-place">The Bismillah, 113 doors out of 114</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Before God is judge, king, or creator here, he is merciful, and the book makes the point structurally: 113 of its 114 chapters open with the same line, In the name of Allah, the Beneficent, the Merciful, two mercy-titles built on the same Arabic root as the word for womb. A practicing Muslim says that line, the Bismillah, before eating, before traveling, before starting nearly anything, so the claim that mercy comes first gets rehearsed dozens of times a day. The book&rsquo;s own arithmetic leans the same way: punishment is threatened for cause, but mercy, God says, embraces all things, he has prescribed it for Himself, and the prophet is sent as nothing but a mercy for the peoples.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>In the name of Allah, the Beneficent, the Merciful. Praise be to Allah, Lord of the Worlds, the Beneficent, the Merciful.</q><cite>Quran 1:1-3</cite></p>
+              <p class="verse"><q>I smite with My punishment whom I will, and My mercy embraceth all things.</q><cite>Quran 7:156</cite></p>
+              <p class="verse"><q>He hath prescribed for Himself mercy, that He may bring you all together to the Day of Resurrection.</q><cite>Quran 6:12</cite></p>
+              <p class="verse"><q>We sent thee not save as a mercy for the peoples.</q><cite>Quran 21:107</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="judgment">
+          <summary><span class="concept-n">05</span><span><span class="concept-statement">Every soul carries its own ledger.</span><span class="concept-place">The Last Day, on nearly every page</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">After oneness, the book&rsquo;s most repeated idea is accountability: life is a test with a marking day at the end, and the grading is individual. No clergy stands between; no one inherits guilt; no one can carry yours. The image the Quran reaches for is bureaucratic on purpose, a record fastened to your own neck, handed to you open on the Day with the instruction to read it yourself, your own soul sufficing as auditor. The unit of account is the atom&rsquo;s weight, good and ill alike. For the practicing Muslim it is the working assumption underneath the five daily prayers, and it is why the funeral prayer asks mercy for the dead rather than issuing the mourners&rsquo; own verdict.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>And whoso doeth good an atom&rsquo;s weight will see it then, and whoso doeth ill an atom&rsquo;s weight will see it then.</q><cite>Quran 99:7-8</cite></p>
+              <p class="verse"><q>Read thy Book. Thy soul sufficeth as reckoner against thee this day.</q><cite>Quran 17:14</cite></p>
+              <p class="verse"><q>Who hath created life and death that He may try you which of you is best in conduct.</q><cite>Quran 67:2</cite></p>
+              <p class="verse"><q>Every soul will taste of death ... The life of this world is but comfort of illusion.</q><cite>Quran 3:185</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="signs">
+          <summary><span class="concept-n">06</span><span><span class="concept-statement">Verse and evidence share one word.</span><span class="concept-place">Ayat, on the horizons</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Quran&rsquo;s word for its own verses, <em>ayat</em>, signs, is also its word for what nature shows you: rain, camels, the alternation of night and day. That double meaning is the book&rsquo;s theory of knowledge. It rarely argues for God&rsquo;s existence; it points, and asks why you are not looking. The pointing is aimed at ordinary observation, a herder&rsquo;s animals and weather, not at scholars, and the tradition took the hint in both directions, into contemplation and into the sciences the medieval Muslim world funded. Modern pamphlets that mine these verses for previews of embryology or cosmology are a newer move, and this guide leaves them alone. The verses ask for attention, not a laboratory.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>We shall show them Our portents on the horizons and within themselves until it will be manifest unto them that it is the Truth.</q><cite>Quran 41:53</cite></p>
+              <p class="verse"><q>Lo! In the creation of the heavens and the earth and (in) the difference of night and day are tokens (of His Sovereignty) for men of understanding.</q><cite>Quran 3:190</cite></p>
+              <p class="verse"><q>Will they not regard the camels, how they are created? And the heaven, how it is raised? And the hills, how they are set up? And the earth, how it is spread?</q><cite>Quran 88:17-20</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="prayer">
+          <summary><span class="concept-n">07</span><span><span class="concept-statement">Worship is remembrance on a schedule.</span><span class="concept-place">Salat, at fixed times</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Quran&rsquo;s cure for forgetting God is not stronger feeling. It is a calendar: worship at fixed times hath been enjoined on the believers. Out of that line and the prophet&rsquo;s practice come the five daily prayers, dawn, noon, afternoon, sunset, and night, which structure a Muslim day anywhere on earth, and every prayer cycle recites the seven-verse opening chapter, the Fatiha, so a practicing Muslim says it at least seventeen times a day. The stated point is <em>dhikr</em>, remembrance, and the book names the payoff plainly: hearts find rest in it. Prayer here is maintenance rather than mood. You do not wait to feel like it; you keep the appointment, and the feeling follows the practice.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>Lo! I, even I, am Allah, There is no Allah save Me. So serve Me and establish worship for My remembrance.</q><cite>Quran 20:14</cite></p>
+              <p class="verse"><q>Remember Allah, standing, sitting and reclining ... Worship at fixed times hath been enjoined on the believers.</q><cite>Quran 4:103</cite></p>
+              <p class="verse"><q>Verily in the remembrance of Allah do hearts find rest!</q><cite>Quran 13:28</cite></p>
+              <p class="verse"><q>Worship preserveth from lewdness and iniquity, but verily remembrance of Allah is more important.</q><cite>Quran 29:45</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="charity">
+          <summary><span class="concept-n">08</span><span><span class="concept-statement">Wealth carries the poor&rsquo;s claim on it.</span><span class="concept-place">Zakat, welded to prayer</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Dozens of times, the command to pray arrives welded to a second command: pay the poor-due. Zakat is not charity as mood; it is a levy, in settled practice about 2.5 percent of held wealth every year, owed to the poor as their right, and the Quran&rsquo;s definition of righteousness runs straight through money: not which direction you face to pray, but belief plus wealth given, for love of Him, to kin, orphans, the needy, the traveler, the one who asks, and the freeing of slaves. The short Meccan chapters push it to the edge of the definition of faith itself: the one who calls religion a lie, Sura 107 says, is the one who shoves away the orphan. What you hold, you hold with a lien on it.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>Establish worship, and pay the poor-due; and whatever of good ye send before (you) for your souls, ye will find it with Allah.</q><cite>Quran 2:110</cite></p>
+              <p class="verse"><q>It is not righteousness that ye turn your faces to the East and the West; but righteous is he who ... giveth wealth, for love of Him, to kinsfolk and to orphans and the needy and the wayfarer and to those who ask, and to set slaves free.</q><cite>Quran 2:177</cite></p>
+              <p class="verse"><q>The likeness of those who spend their wealth in Allah&rsquo;s way is as the likeness of a grain which groweth seven ears, in every ear a hundred grains.</q><cite>Quran 2:261</cite></p>
+              <p class="verse"><q>Hast thou observed him who belieth religion? That is he who repelleth the orphan, and urgeth not the feeding of the needy.</q><cite>Quran 107:1-3</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="sabr">
+          <summary><span class="concept-n">09</span><span><span class="concept-statement">Hardship arrives paired with ease.</span><span class="concept-place">Sura 94, said twice on purpose</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role"><em>Sabr</em>, usually translated patience, is closer to holding position: staying at your post through what you cannot change without dropping either effort or hope. The book&rsquo;s signature consolation makes its promise twice in a row, identically, and the doubling is what Muslims quote it for; tradition reads it as one hardship that can never outnumber its two eases. The other working line is a guarantee of scale: God tasks no soul beyond its scope, from the verses traditionally recited before sleep. In lived Islam none of this is framed calligraphy on a wall. It is what people actually say to each other in hospital corridors and at gravesides, alongside the reflex phrases, God willing, praise be to God, that keep ordinary speech pointed at the same posture.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>O ye who believe! Seek help in steadfastness and prayer. Lo! Allah is with the steadfast.</q><cite>Quran 2:153</cite></p>
+              <p class="verse"><q>But lo! with hardship goeth ease, lo! with hardship goeth ease.</q><cite>Quran 94:5-6</cite></p>
+              <p class="verse"><q>Allah tasketh not a soul beyond its scope.</q><cite>Quran 2:286</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="justice">
+          <summary><span class="concept-n">10</span><span><span class="concept-statement">Justice binds you against yourself first.</span><span class="concept-place">Witnesses for God</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Quran aims its justice commands at the hardest cases on purpose. Stand for justice as a witness for God even against yourself, your parents, your kin, says one verse; the next chapter adds the wartime case, do not let hatred of a people push you into wronging them, which is justice for enemies, demanded from a community then at war. The market gets the same blunt treatment: an entire sura opens, Woe unto the defrauders, the people who demand full measure when buying and give short measure when selling. This is the thread a practicing Muslim hears most regularly of all: by long custom, Friday sermons across the world close on the verse below that begins, Lo! Allah enjoineth justice and kindness.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>O ye who believe! Be ye staunch in justice, witnesses for Allah, even though it be against yourselves or (your) parents or (your) kindred.</q><cite>Quran 4:135</cite></p>
+              <p class="verse"><q>Let not hatred of any people seduce you that ye deal not justly. Deal justly, that is nearer to your duty.</q><cite>Quran 5:8</cite></p>
+              <p class="verse"><q>Lo! Allah enjoineth justice and kindness, and giving to kinsfolk, and forbiddeth lewdness and abomination and wickedness.</q><cite>Quran 16:90</cite></p>
+              <p class="verse"><q>Woe unto the defrauders: those who when they take the measure from mankind demand it full, but if they measure unto them or weight for them, they cause them loss.</q><cite>Quran 83:1-3</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="taqwa">
+          <summary><span class="concept-n">11</span><span><span class="concept-statement">Rank among people is by conduct, not blood.</span><span class="concept-place">Ramadan&rsquo;s stated purpose</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role"><em>Taqwa</em>, rendered warding off evil in Pickthall and God-consciousness elsewhere, is the Quran&rsquo;s master virtue: living as if watched, because you are. It is what fasting is for, by the fasting verse&rsquo;s own grammar, prescribed so that ye may ward off evil, and once a year hundreds of millions of people run that experiment together, no food or drink from first light to sunset for the month of Ramadan. Taqwa is also the book&rsquo;s only ranking of human beings. The verse Muslims quote against racism was aimed first at tribal Arabia: one origin, then nations and tribes so that ye may know one another, and the noblest among you is the best in conduct. Lineage, wealth, and race are data. Taqwa is the score.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>O ye who believe! Fasting is prescribed for you, even as it was prescribed for those before you, that ye may ward off (evil).</q><cite>Quran 2:183</cite></p>
+              <p class="verse"><q>O mankind! Lo! We have created you male and female, and have made you nations and tribes that ye may know one another. Lo! the noblest of you, in the sight of Allah, is the best in conduct.</q><cite>Quran 49:13</cite></p>
+              <p class="verse"><q>Whosoever keepeth his duty to Allah, Allah will appoint a way out for him, and will provide for him from (a quarter) whence he hath no expectation.</q><cite>Quran 65:2-3</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="return">
+          <summary><span class="concept-n">12</span><span><span class="concept-statement">The door back stays open to the last breath.</span><span class="concept-place">Tawbah, the turning</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">There is no original sin here. Adam eats, repents, and is forgiven on the spot, and every person after him starts clean, answerable only for their own ledger. What remains is <em>tawbah</em>, turning back, and the Quran&rsquo;s widest-armed line about it is addressed precisely to the people furthest gone: O My slaves who have been prodigal to their own hurt! Despair not of the mercy of Allah, Who forgiveth all sins. Muslims often call that the most hopeful verse in the book. The practice is <em>astaghfirullah</em>, I seek God&rsquo;s forgiveness, said reflexively through the day by the devout, with no confessor required; the transaction runs directly between the soul and God&rsquo;s mercy.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Quran keeps saying it</span><span>Excerpts from Pickthall (1930)</span></p><div class="verse-stack">
+              <p class="verse"><q>Say: O My slaves who have been prodigal to their own hurt! Despair not of the mercy of Allah, Who forgiveth all sins. Lo! He is the Forgiving, the Merciful.</q><cite>Quran 39:53</cite></p>
+              <p class="verse"><q>Yet whoso doeth evil or wrongeth his own soul, then seeketh pardon of Allah, will find Allah Forgiving, Merciful.</q><cite>Quran 4:110</cite></p>
+              <p class="verse"><q>Then Adam received from his Lord words (of revelation), and He relented toward him. Lo! He is the relenting, the Merciful.</q><cite>Quran 2:37</cite></p>
+            </div></div>
+          </div>
+        </details>
+      </div>
+
+      <aside class="torah-convergence">
+        <h3>Where Muslim teachers converge</h3>
+        <p>Sunni scholarship at the <a href="https://yaqeeninstitute.org/">Yaqeen Institute</a>, the Shia library at <a href="https://www.al-islam.org/">Al-Islam.org</a>, and the academic commentary of <a href="https://openlibrary.org/works/OL17509956W">The Study Quran</a> disagree about authority, law, and history, sometimes bitterly. Their accounts of the book still meet on the same spine: one God without partners, mercy leading his self-description, one prophetic line ending in Muhammad, a judgment each soul faces alone, prayer and charity as the practice, taqwa as the measure, and the door of return never closed. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
+      </aside>
+
+      <section class="hard-reading" aria-labelledby="hard-title">
+        <p class="torah-layer-tag"><b>Do not skip</b> The hard parts</p>
+        <h2 class="torah-h2" id="hard-title">Fighting, patriarchy, slavery, punishment</h2>
+        <div class="hard-reading-grid">
+          <article class="hard-item"><h3>Fighting is commanded</h3><p>The Quran regulates war and also orders it. &ldquo;Fight in the way of Allah against those who fight against you, but begin not hostilities&rdquo; (2:190) shares the book with the ninth sura&rsquo;s &ldquo;slay the idolaters wherever ye find them&rdquo; (9:5), aimed at treaty-breaking Mecca, and its command to fight the People of the Book until they pay a tribute tax (9:29). The famous &ldquo;no compulsion in religion&rdquo; (2:256) is also here, and the tradition itself splits on how these sit together: many classical jurists ruled the sword verses abrogate the tolerant ones; many modern scholars rule the war verses are bound to their seventh-century context. Both are readings. The verses are the text.</p></article>
+          <article class="hard-item"><h3>The legal world is patriarchal</h3><p>&ldquo;Men are in charge of women&rdquo; (4:34), and the same verse permits striking a defiant wife, which Pickthall renders &ldquo;scourge them.&rdquo; A daughter inherits half a son&rsquo;s share (4:11); in financial disputes it takes two women&rsquo;s testimony to stand where one man&rsquo;s does (2:282); a man may hold four wives (4:3). Reinterpretation of nearly every clause exists, some of it centuries old, but any account that says the Quran&rsquo;s law treats men and women identically is false.</p></article>
+          <article class="hard-item"><h3>Slavery is regulated, not abolished</h3><p>Freeing a slave is high righteousness here (2:177, 90:13) and a prescribed penance for several sins, and zakat funds can buy freedom. Enslaved concubinage is also plainly permitted, the recurring &ldquo;those whom your right hands possess&rdquo; (4:3, 23:6), and no verse abolishes the institution. Muslim abolition arrived by later argument, as Christian abolition did, against readings the text had left available.</p></article>
+          <article class="hard-item"><h3>Punishment is corporal now and vivid after</h3><p>The thief&rsquo;s hand is cut (5:38); adultery draws a hundred lashes, with pity explicitly disallowed (24:2); and hell is described with a thoroughness the mercy chapters never cancel, down to skins renewed so the burning can continue (4:56). Jurists hedged the earthly penalties with strict evidence rules almost immediately, but the sentences themselves are scripture.</p></article></div>
+      </section>
+
+      <details class="u-collapse torah-sources">
+        <summary class="u-collapse-s">Sources and what they support</summary>
+        <ol class="u-collapse-list">
+          <li><b>Opening summary.</b> The Kaaba raised by Abraham and Ishmael is <a href="https://quran.com/2/127">2:127</a>, Mary&rsquo;s chapter is <a href="https://quran.com/19">Sura 19</a>, the denial of the crucifixion is <a href="https://quran.com/4/157">4:157</a>, and the standing challenge to produce a chapter like it is <a href="https://quran.com/2/23">2:23</a>. The 6,236-verse figure is the standard Kufan count behind the Cairo text.</li>
+          <li><b>Quotation text.</b> All Quran excerpts are Marmaduke Pickthall&rsquo;s public-domain translation, The Meaning of the Glorious Koran (1930), pulled verse by verse from <a href="https://alquran.cloud/">AlQuran Cloud</a> and checked against <a href="https://tanzil.net">Tanzil</a>. Ellipses only shorten verses; they do not join words into a new claim.</li>
+          <li><b>Life and story.</b> The traditional dates (610, 622, 632) and every biographical scene rest on sources compiled roughly two centuries later, Ibn Ishaq&rsquo;s life via Ibn Hisham and the hadith collections: the cave scene is <a href="https://sunnah.com/bukhari:3">Bukhari 3</a>, the collection and standardization of the text <a href="https://sunnah.com/bukhari:4986">Bukhari 4986</a>, and Sura 112 weighing a third of the Quran <a href="https://sunnah.com/bukhari:5015">Bukhari 5015</a>. Fred Donner&rsquo;s <a href="https://www.hup.harvard.edu/books/9780674064140">Muhammad and the Believers</a> covers the earliest outside evidence, including the Doctrina Jacobi&rsquo;s prophet among the Arabs within about two years of the death.</li>
+          <li><b>Manuscripts.</b> The radiocarbon window is the University of Birmingham&rsquo;s <a href="https://www.birmingham.ac.uk/facilities/cadbury/birmingham-quran-mingana-collection/birmingham-quran/what-is">own account of its folios</a>; the Sanaa palimpsest&rsquo;s variant lower text is <a href="https://doi.org/10.1515/islam-2011-0025">Sadeghi and Goudarzi&rsquo;s edition</a>; <a href="https://corpuscoranicum.de/en">Corpus Coranicum</a> catalogs the early witnesses.</li>
+          <li><b>Readings.</b> The canonical readings, the Hafs and Warsh differences including king versus master at 1:4, and the 1924 Cairo edition&rsquo;s dominance: <a href="https://www.islamic-awareness.org/quran/text/qiraat/hafs">Islamic Awareness</a>.</li>
+          <li><b>Practice.</b> The five pillars, zakat&rsquo;s 2.5 percent, and the Ramadan fast: <a href="https://www.khanacademy.org/humanities/ap-art-history/introduction-cultures-religions-apah/islam-apah/a/the-five-pillars-of-islam">Khan Academy&rsquo;s overview</a>. Seventeen daily Fatihas is the arithmetic of the five prayers&rsquo; obligatory cycles.</li>
+          <li><b>Demographics.</b> A quarter of the world and the three-billion projection: <a href="https://www.pewresearch.org/religion/2015/04/02/muslims/">Pew Research Center</a>.</li>
+          <li><b>Authorship of this guide.</b> Written by Claude (Anthropic&rsquo;s AI), at the site owner&rsquo;s request, as one of two parallel guides to the same book; a companion page by GPT is its counterpart. Same layered format as the Torah guide on this site.</li>
+        </ol>
+      </details>
+
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <a href="/">&copy; 2026 Ethan Willingham</a>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>
