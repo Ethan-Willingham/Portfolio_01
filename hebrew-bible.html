@@ -47,12 +47,6 @@
     .torah-plain { max-width: 56ch; margin: 1.5rem 0 0; }
     .torah-plain p { margin: 0 0 1.05em; font-family: var(--font-heading); font-size: clamp(1.16rem, 2.8vw, 1.48rem); line-height: 1.58; color: var(--text-bright); text-wrap: pretty; }
     .torah-plain p:last-child { margin-bottom: 0; }
-    .torah-review-note { max-width: 56ch; margin: 1.25rem 0 0; padding: .72rem .85rem; border-left: 2px solid var(--accent); background: var(--s-gold-tint); font-family: var(--font-mono); font-size: .68rem; line-height: 1.55; color: var(--text-dim); }
-    .torah-review { color: inherit; background: var(--s-gold-tint-2); border-radius: .16em; box-shadow: inset 0 -1px var(--s-gold-hair); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: .04em .12em; margin-inline: -.12em; }
-    .torah-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin: clamp(2.4rem, 5vw, 3.7rem) 0; border-block: 1px solid var(--rule); background: var(--rule); }
-    .torah-fact { min-width: 0; padding: 1.1rem 1rem; background: var(--bg); }
-    .torah-fact b { display: block; font-family: var(--font-heading); font-size: 1.45rem; line-height: 1.1; color: var(--accent); }
-    .torah-fact span { display: block; margin-top: .35rem; font-size: .72rem; line-height: 1.35; color: var(--text-dim); }
     .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 5vw, 3.6rem); margin-top: 2.2rem; }
     .torah-context h3 { margin: 0 0 .65rem; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.25; color: var(--text-bright); }
     .torah-context p { margin: 0 0 1rem; font-size: .98rem; line-height: 1.65; color: var(--text); }
@@ -61,24 +55,6 @@
     .torah-context a:hover, .torah-page .u-textcheck a:hover, .torah-sources a:hover { color: var(--accent-hover); }
     .torah-page .u-textcheck { margin-top: clamp(2.6rem, 6vw, 4.4rem); }
 
-    .book-map { margin-top: clamp(2.2rem, 5vw, 3.4rem); border-top: 1px solid var(--rule); }
-    .book-row { display: grid; grid-template-columns: 3.2rem minmax(7.5rem, .65fr) minmax(0, 2fr); gap: 1rem; align-items: baseline; padding: 1.4rem 0; border-bottom: 1px solid var(--rule); }
-    .book-n { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; color: var(--accent); }
-    .book-title { font-family: var(--font-heading); font-size: 1.35rem; line-height: 1.2; color: var(--text-bright); }
-    .book-role { margin: 0; font-size: .98rem; line-height: 1.55; color: var(--text-dim); }
-    .book-role strong { color: var(--text); font-weight: 600; }
-    .map-key { margin: 1rem 0 0; font-family: var(--font-mono); font-size: .72rem; line-height: 1.55; letter-spacing: .035em; color: var(--text-faint); }
-
-    .concept-index { margin-top: clamp(2.3rem, 5vw, 3.8rem); }
-    .concept-group { display: grid; grid-template-columns: 9rem 1fr; gap: 1.5rem; padding: 1.2rem 0; border-top: 1px solid var(--rule); }
-    .concept-group:last-child { border-bottom: 1px solid var(--rule); }
-    .concept-group-k { margin: .22rem 0 0; font-family: var(--font-mono); font-size: .66rem; line-height: 1.4; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
-    .concept-group ol { list-style: none; margin: 0; padding: 0; }
-    .concept-index a { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .75rem; align-items: baseline; padding: .48rem .3rem; color: var(--text); text-decoration: none; border-radius: 6px; }
-    .concept-index a:hover { background: var(--row-hover); color: var(--text-bright); }
-    .concept-index .ix-n { font-family: var(--font-mono); font-size: .67rem; color: var(--accent); }
-    .concept-index .ix-title { font-family: var(--font-heading); font-size: 1.04rem; line-height: 1.35; }
-    .concept-index .ix-book { font-family: var(--font-mono); font-size: .62rem; color: var(--text-faint); }
     .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; margin-top: 2.4rem; padding: 1.4rem 0; border-block: 1px solid var(--s-gold-hair); }
     .torah-convergence h3 { margin: 0; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
     .torah-convergence p { margin: 0; font-size: .95rem; line-height: 1.65; color: var(--text); }
@@ -120,20 +96,13 @@
     .hard-item { padding: 1.25rem 0; border-bottom: 1px solid var(--rule); }
     .hard-item h3 { margin: 0 0 .45rem; font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-bright); }
     .hard-item p { margin: 0; font-size: .88rem; line-height: 1.6; color: var(--text-dim); }
-    .torah-close { max-width: 48ch; margin: clamp(3.6rem, 8vw, 6rem) 0 0; font-family: var(--font-heading); font-size: clamp(1.35rem, 3.5vw, 1.8rem); line-height: 1.48; color: var(--text-bright); }
-    .torah-close small { display: block; margin-top: 1rem; font-family: var(--font-body); font-size: .56em; line-height: 1.6; color: var(--text-dim); }
     .torah-sources { margin-top: 3rem; }
     .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
     .torah-sources li { break-inside: avoid; }
     .torah-page .u-next, .torah-page .site-footer-inner { max-width: var(--torah-measure); }
 
     @media (max-width: 720px) {
-      .torah-facts { grid-template-columns: repeat(2, 1fr); }
       .torah-context-grid, .why-cut, .hard-reading-grid { grid-template-columns: 1fr; }
-      .book-row { grid-template-columns: 2.5rem 1fr; gap: .25rem .8rem; }
-      .book-role { grid-column: 2; }
-      .concept-group { grid-template-columns: 1fr; gap: .45rem; }
-      .concept-group-k { margin: 0; }
       .torah-convergence { grid-template-columns: 1fr; gap: .7rem; }
       .torah-sources .u-collapse-list { columns: 1; }
     }
@@ -142,8 +111,6 @@
       .torah-hero { padding-top: .45rem; }
       .torah-hero .u-title { font-size: clamp(3.15rem, 17vw, 4.8rem); }
       .torah-layer { padding-block: 3.4rem; }
-      .concept-index a { grid-template-columns: 2rem 1fr; }
-      .concept-index .ix-book { grid-column: 2; }
       .torah-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
       .concept-body { padding: .1rem 0 3rem 2.9rem; }
       .verse { grid-template-columns: 1fr; gap: .45rem; }
@@ -170,16 +137,15 @@
     <section class="torah-layer torah-shell" id="summary" aria-labelledby="summary-title">
       <p class="torah-layer-tag"><b>01</b> Summary</p>
       <h2 class="torah-h2" id="summary-title">The Torah, in plain English</h2>
-      <p class="torah-review-note">Temporary review highlight: the gold passages are the latest refinements. Once you approve them, this marker comes off.</p>
       <div class="torah-plain">
         <p>The Torah begins with a good world that human beings repeatedly damage through mistrust, violence, and the misuse of power. God answers by choosing one man. Genesis introduces him as Abram, later renamed Abraham: 75 years old, married to Sarai, childless, and living in Haran, a town near the modern Turkey-Syria border. His father had left Ur, in what is now Iraq, aiming for Canaan, and stopped in Haran instead. That is most of what the text gives us. Why him, it never says. How the first message arrived, it never describes either: no dream, no fire, no visible figure. And the message names no destination: leave your country and your father&rsquo;s house &ldquo;unto the land that I will show thee.&rdquo; Abram goes, finishing the trip his father abandoned.</p>
         <p>The promise is that this childless man&rsquo;s family will become a great nation, one through which &ldquo;all the families of the earth&rdquo; will be blessed. The address comes only on arrival. Abram walks some 400 miles down the caravan roads into Canaan, roughly today&rsquo;s Israel and the Palestinian territories, and there God speaks again: this country, the one he is standing in, will one day belong to his descendants. Not soon, and not to him. Abraham will own nothing here beyond the burial cave he buys with silver, and God tells him his descendants must first spend four hundred years as mistreated foreigners in a country not their own.</p>
         <p>None of this is presented as a command to recruit or convert everyone. The clearest explanation given is that Abraham must teach his household to practice righteousness and justice, so that his family&rsquo;s life with God becomes a source of good beyond the family. Exactly how, it never spells out.</p>
         <p>That country not their own turns out to be Egypt, and the road into it runs through a family crime. Abraham&rsquo;s great-grandson Joseph is sold to slave traders by his own jealous brothers and resold in Egypt, where he rises, by reading the dreams of Pharaoh, Egypt&rsquo;s king, to chief administrator of the kingdom. When the famine he predicted arrives, his brothers come to buy grain from the brother they sold, and Pharaoh invites the whole family, about seventy people, to settle in the delta&rsquo;s best grazing land. Abraham&rsquo;s descendants enter Egypt as honored guests.</p>
         <p>They stay, by the text&rsquo;s count, 430 years, and the seventy grow into a nation now called the Israelites. Then Exodus opens with a cold line: &ldquo;there arose a new king over Egypt, who knew not Joseph.&rdquo; The new Pharaoh decides this immigrant population has grown too large to trust in a war, enslaves it in place on forced construction labor, and, when the numbers keep growing anyway, orders every newborn Israelite boy drowned in the Nile. One mother hides her baby in a basket on that same river. Pharaoh&rsquo;s daughter finds him, and he grows up in the palace as Moses.</p>
-        <p>Moses kills an overseer he catches beating an Israelite slave and flees the country. Decades later the call comes, and unlike Abraham&rsquo;s it gets a full scene: from a bush that burns without burning up, God sends him back to lead the slaves out. <mark class="torah-review">The text says Moses is 80 when he returns to Egypt and begins confronting Pharaoh.</mark> After ten plagues, they leave through a parted sea. Exodus counts 600,000 men on foot, plus women and children, which taken literally is a crowd of two million or more. Historians&rsquo; estimates run from a few thousand people down to none at all, and Richard Elliott Friedman has argued the group was really one tribe, the Levites; two million is the number the text commits to. The Torah treats this as one rescue, not a promise that Abraham&rsquo;s descendants can never be enslaved again.</p>
+        <p>Moses kills an overseer he catches beating an Israelite slave and flees the country. Decades later the call comes, and unlike Abraham&rsquo;s it gets a full scene: from a bush that burns without burning up, God sends him back to lead the slaves out. The text says Moses is 80 when he returns to Egypt and begins confronting Pharaoh. After ten plagues, they leave through a parted sea. Exodus counts 600,000 men on foot, plus women and children, which taken literally is a crowd of two million or more. Historians&rsquo; estimates run from a few thousand people down to none at all, and Richard Elliott Friedman has argued the group was really one tribe, the Levites; two million is the number the text commits to. The Torah treats this as one rescue, not a promise that Abraham&rsquo;s descendants can never be enslaved again.</p>
         <p>Seven weeks after the escape, they camp at Mount Sinai. No one today can place that mountain with confidence; the traditional site, Jebel Musa, stands near the southern tip of the Sinai Peninsula, inside modern Egypt, roughly 250 desert miles from the delta region where they had been slaves. The whole camp, however many they were, stands at the base, behind a boundary line Moses is told to mark off; touching the mountain is a capital offense. The communication starts fully public: the mountain smokes and shakes, and everyone hears a voice out of the fire speak the opening commandments. It terrifies them, and they beg Moses to do the listening from then on.</p>
-        <p>So Moses becomes the go-between, climbing up and down the mountain with words in both directions. What the two sides are making is a covenant, a binding relationship with promises and obligations: God stays present among this people and will bring them into the land ahead, and they live by his law. <mark class="torah-review">The law&rsquo;s headline terms are the Ten Commandments, spoken to the whole camp while Mount Sinai burned and smoked.</mark> The two stone tablets Moses finally spends forty days on the mountain receiving are those same ten engraved in rock, the deal&rsquo;s permanent copy.</p>
+        <p>So Moses becomes the go-between, climbing up and down the mountain with words in both directions. What the two sides are making is a covenant, a binding relationship with promises and obligations: God stays present among this people and will bring them into the land ahead, and they live by his law. The law&rsquo;s headline terms are the Ten Commandments, spoken to the whole camp while Mount Sinai burned and smoked. The two stone tablets Moses finally spends forty days on the mountain receiving are those same ten engraved in rock, the deal&rsquo;s permanent copy.</p>
         <p>The rest of the laws cover worship, courts, work, debt, property, farming, rest, bodies, families, and care for people who can easily be exploited. A question beneath many of them is concrete: if former slaves gain land and power, will they remember Egypt and refuse to reproduce it? The people agree to all of it. Then, before Moses is even back down with the tablets, they break the deal&rsquo;s first term, no other gods and no idols, by casting the Golden Calf, a gold idol of a young bull, and hailing it as the god that freed them. Moses walks into camp, sees it, and smashes the tablets, the written copy of a deal already broken. Then he pleads, God relents, the tablets are cut a second time, and the Torah has its pattern: failure, consequence, forgiveness, another chance.</p>
         <p>They stay camped at Sinai about a year, then pack up and march for Canaan through the wilderness. Wilderness here does not mean woods. Picture bare granite mountains and tan gravel plains under hard sun, an area about the size of West Virginia without a single permanent river: no carpet of grass, just thorn scrub, scattered acacia trees, dry streambeds that run green for a few weeks after a rare rain, and water at a handful of springs. It can feed passing goat herds, never farms, and it is nearly empty then as now except for nomadic herders.</p>
         <p>The camp crossing it really is tents, an organized tent city pitched in a fixed layout by tribe. At its center stands the thing that makes &ldquo;God stays present&rdquo; literal: the Tabernacle, a portable tent-temple built at Sinai to a blueprint God dictated, its inner room holding a gold-covered chest with the stone tablets inside. Over it rests a pillar of cloud, lit like fire at night, God&rsquo;s visible presence and the camp&rsquo;s marching orders: while the cloud stays put, they stay; when it lifts, they pack up and follow it.</p>
@@ -188,13 +154,6 @@
         <p>When the forty years are up, the camp on the plains of Moab, in today&rsquo;s Jordan, holds mostly the children of the people who marched out of Egypt. Across the Jordan River is the promised country itself: a region of many towns and peoples, not a single city, the same land Abraham had lived in as a foreigner back in Genesis. The plan is permanent settlement, and the instruction, spoken by God through Moses, is conquest: cross, drive out the peoples living there, and divide the land among the twelve tribes. Those peoples were never at Sinai and are bound by none of its rules; the Torah instead calls their removal a judgment on their own practices, and tells Israel plainly that it is not being rewarded for virtue. A land already home to others, taken on command, is one of the Torah&rsquo;s hardest moral problems.</p>
         <p>Moses does not cross. In a farewell speech he frames the choice ahead in national, long-term terms: keep the covenant and Israel lives long in the land, abandon it and Israel is ruined and expelled from it. That is the speech&rsquo;s &ldquo;life and death, the blessing and the curse.&rdquo; Then he hands command to Joshua, one of the two scouts who had said go, climbs Mount Nebo, looks across at Canaan, and dies at 120. The Torah ends at the river, with nobody across and the choice still open; whether Israel keeps the covenant, and keeps the land, is left to the books that follow.</p>
         <p>Those books exist. The next one, Joshua, narrates the invasion, and the ones after it follow the covenant through judges, kings, and eventual exile. Jewish tradition keeps them on a lower shelf than these five, though. The Hebrew Bible runs in three tiers, Torah, then Prophets, then Writings, and Joshua sits in the second: fully scripture, read and revered, but below the Torah in authority and not a source of law the way the five books are. Only the Torah is read straight through, start to finish, in synagogue every year. Christians shelve the same books differently: a Christian Bible treats Joshua and the histories after it as scripture at full rank, chapters of one continuous story.</p>
-      </div>
-
-      <div class="torah-facts" aria-label="Torah at a glance">
-        <p class="torah-fact"><b>5</b><span>books, copied as one Torah scroll</span></p>
-        <p class="torah-fact"><b>54</b><span>weekly portions in the annual cycle</span></p>
-        <p class="torah-fact"><b>5,845</b><span>verses, the text&rsquo;s numbered lines, in the traditional count</span></p>
-        <p class="torah-fact"><b>3rd c. BCE</b><span>five-book form securely attested by then</span></p>
       </div>
 
       <div class="torah-context-grid">
@@ -239,70 +198,15 @@
       </aside>
     </section>
 
-    <section class="torah-layer torah-shell" id="book-map" aria-labelledby="book-map-title">
-      <p class="torah-layer-tag"><b>02</b> The five-book map</p>
-      <h2 class="torah-h2" id="book-map-title">Each book changes the problem</h2>
-      <p class="torah-intro">The Torah is easier to hold when each scroll has one job. Read straight through, the motion is world, family, people, presence, failure, and one last choice.</p>
-      <div class="book-map">
-        <article class="book-row"><span class="book-n">01</span><h3 class="book-title">Genesis</h3><p class="book-role"><strong>World becomes family.</strong> Creation keeps collapsing into blame, violence, and empire. God answers by choosing Abraham&rsquo;s family to carry blessing and justice outward.</p></article>
-        <article class="book-row"><span class="book-n">02</span><h3 class="book-title">Exodus</h3><p class="book-role"><strong>Family becomes people.</strong> God hears slaves, breaks Pharaoh&rsquo;s power, makes a covenant at Sinai, and comes to dwell among the people. They break the covenant before Moses gets down the mountain.</p></article>
-        <article class="book-row"><span class="book-n">03</span><h3 class="book-title">Leviticus</h3><p class="book-role"><strong>Presence becomes a way of life.</strong> Sacrifice, purity, atonement, food, sex, farming, wages, and love of neighbor all answer one question: how can ordinary life survive near holiness?</p></article>
-        <article class="book-row"><span class="book-n">04</span><h3 class="book-title">Numbers</h3><p class="book-role"><strong>Freedom becomes a test.</strong> A freed people still thinks like slaves. Fear, appetite, nostalgia, rebellion, and failed leadership cost a generation the land.</p></article>
-        <article class="book-row"><span class="book-n">05</span><h3 class="book-title">Deuteronomy</h3><p class="book-role"><strong>Memory becomes choice.</strong> Moses retells the law for people who did not leave Egypt themselves. Remember, teach, love, and choose. He dies outside the land, so the ending stays open.</p></article>
-      </div>
-      <p class="map-key">The structural center is not a famous saying. It is the long Sinai section from Exodus 19 through Numbers 10, where liberation is turned into covenant, sanctuary, law, and a camp organized around sacred presence.</p>
-    </section>
-
-    <section class="torah-layer torah-shell" id="argument" aria-labelledby="argument-title">
-      <p class="torah-layer-tag"><b>03</b> The argument</p>
-      <h2 class="torah-h2" id="argument-title">Twelve ideas hold the whole thing up</h2>
-      <p class="torah-intro">These are not the most shareable verses. They are the ideas that explain why whole sections exist, why later books keep looking backward, and why Jewish tradition keeps returning to them.</p>
-
-      <nav class="concept-index" aria-label="Index of the Torah's load-bearing ideas">
-        <div class="concept-group">
-          <p class="concept-group-k">The human problem</p>
-          <ol>
-            <li><a href="#image"><span class="ix-n">01</span><span class="ix-title">Every human life carries divine worth</span><span class="ix-book">Genesis</span></a></li>
-            <li><a href="#failure"><span class="ix-n">02</span><span class="ix-title">The same human failure keeps changing clothes</span><span class="ix-book">Genesis</span></a></li>
-          </ol>
-        </div>
-        <div class="concept-group">
-          <p class="concept-group-k">The calling</p>
-          <ol>
-            <li><a href="#blessing"><span class="ix-n">03</span><span class="ix-title">Election is a job: carry blessing and justice</span><span class="ix-book">Genesis</span></a></li>
-            <li><a href="#exodus"><span class="ix-n">04</span><span class="ix-title">God hears slaves, and memory becomes obligation</span><span class="ix-book">Exodus</span></a></li>
-            <li><a href="#covenant"><span class="ix-n">05</span><span class="ix-title">Freedom becomes covenant, not independence</span><span class="ix-book">Exodus</span></a></li>
-          </ol>
-        </div>
-        <div class="concept-group">
-          <p class="concept-group-k">The practice</p>
-          <ol>
-            <li><a href="#presence"><span class="ix-n">06</span><span class="ix-title">Liberation aims at presence, not merely escape</span><span class="ix-book">Exodus, Leviticus</span></a></li>
-            <li><a href="#holiness"><span class="ix-n">07</span><span class="ix-title">Holiness joins ritual to ordinary ethics</span><span class="ix-book">Leviticus</span></a></li>
-            <li><a href="#limits"><span class="ix-n">08</span><span class="ix-title">Rest, land, wealth, and power need limits</span><span class="ix-book">All five</span></a></li>
-            <li><a href="#love"><span class="ix-n">09</span><span class="ix-title">Love is loyalty practiced until it becomes memory</span><span class="ix-book">Deuteronomy</span></a></li>
-          </ol>
-        </div>
-        <div class="concept-group">
-          <p class="concept-group-k">The return</p>
-          <ol>
-            <li><a href="#mercy"><span class="ix-n">10</span><span class="ix-title">Failure is judged, but it does not have the last word</span><span class="ix-book">Exodus, Deuteronomy</span></a></li>
-            <li><a href="#wilderness"><span class="ix-n">11</span><span class="ix-title">Leaving slavery is faster than learning freedom</span><span class="ix-book">Numbers</span></a></li>
-            <li><a href="#choice"><span class="ix-n">12</span><span class="ix-title">The Torah ends before the answer</span><span class="ix-book">Deuteronomy</span></a></li>
-          </ol>
-        </div>
-      </nav>
+    <section class="torah-layer torah-shell" id="concepts" aria-labelledby="concepts-title">
+      <p class="torah-layer-tag"><b>04</b> Expand the concepts</p>
+      <h2 class="torah-h2" id="concepts-title">Open any idea and watch it recur</h2>
+      <p class="torah-intro">Each entry gives the claim, its place in the Torah&rsquo;s argument, several places the text says it, and the reason Jewish readers treat it as load-bearing.</p>
 
       <aside class="torah-convergence">
         <h3>Where modern Jewish teachers converge</h3>
         <p><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Jonathan Sacks</a> in Orthodox Judaism, teachers at the Conservative movement&rsquo;s <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a>, and <a href="https://reformjudaism.org/blog/passover-2024-three-central-messages-pesach">Reform teachers</a> disagree about revelation, law, authorship, gender, and much more. Yet their accounts repeatedly meet on the same spine: every person bears God&rsquo;s image, Exodus makes freedom a responsibility, covenant joins a people to service, the stranger tests justice, holiness reaches daily life, and study keeps the choice alive. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
       </aside>
-    </section>
-
-    <section class="torah-layer torah-shell" id="concepts" aria-labelledby="concepts-title">
-      <p class="torah-layer-tag"><b>04</b> Expand the concepts</p>
-      <h2 class="torah-h2" id="concepts-title">Open any idea and watch it recur</h2>
-      <p class="torah-intro">Each entry gives the claim, its place in the Torah&rsquo;s argument, several places the text says it, and the reason Jewish readers treat it as load-bearing.</p>
 
       <div class="concept-list">
         <details class="torah-concept" id="image">
@@ -477,7 +381,6 @@
       <section class="hard-reading" aria-labelledby="hard-title">
         <p class="torah-layer-tag"><b>Do not skip</b> The hard parts</p>
         <h2 class="torah-h2" id="hard-title">The Torah does not become honest by being cleaned up</h2>
-        <p class="torah-intro">Its moral breakthroughs live beside institutions and commands a modern reader should not excuse. Later Jewish interpretation often limits, redirects, or argues with these texts. It does not make them absent.</p>
         <div class="hard-reading-grid">
           <article class="hard-item"><h3>Slavery is limited, not abolished</h3><p>The Exodus makes slavery the founding evil, yet the Torah still permits servitude. Israelite debt servants receive release and kinship protections. Leviticus 25:44-46 permits permanent, inheritable slavery of foreigners. Any account that says the Torah simply ended slavery is false.</p></article>
           <article class="hard-item"><h3>The legal world is patriarchal</h3><p>Women act with courage and intelligence throughout the narratives, but most law assumes male household authority. Marriage, vows, inheritance, priesthood, and sexual rules do not distribute power equally.</p></article>
@@ -485,8 +388,6 @@
           <article class="hard-item"><h3>The laws do not always agree</h3><p>Parallel laws sometimes give different rules or reasons. Sabbath itself is grounded in creation in Exodus and slavery in Deuteronomy. That plurality is evidence of the Torah&rsquo;s layered composition, and also part of the tradition&rsquo;s long argument.</p></article>
         </div>
       </section>
-
-      <p class="torah-close">Remember that power began with a cry from slaves. Put limits around work, wealth, appetite, and rule. Make holiness visible in ordinary treatment. When the covenant breaks, return and repair. Then choose life, knowing the choice is never made only once.<small>Hillel&rsquo;s famous one-foot summary ends with the words that protect every short summary from becoming a substitute: &ldquo;The rest is commentary. Go and study.&rdquo;</small></p>
 
       <details class="u-collapse torah-sources">
         <summary class="u-collapse-s">Sources and what they support</summary>
@@ -496,7 +397,6 @@
           <li><b>Five books and the Hexateuch.</b> <a href="https://www.thetorah.com/article/why-is-the-torah-divided-into-five-books">The five-book division</a> and <a href="https://www.thetorah.com/article/is-the-torah-a-pentateuch-or-hexateuch">Pentateuch or Hexateuch</a>.</li>
           <li><b>Early text.</b> The <a href="https://academic.oup.com/reference/62341/reference-article-abstract/561720572">Oxford account of the Septuagint</a>, the <a href="https://www.deadseascrolls.org.il/learn-about-the-scrolls/introduction?locale=en_US">Israel Antiquities Authority</a>, and Emanuel Tov on <a href="https://www.thetorah.com/article/do-we-know-the-original-text-of-the-torah">reconstructing early Torah text</a>.</li>
           <li><b>Divisions.</b> <a href="https://www.jewishencyclopedia.com/articles/14682-verse-division">Verse divisions</a>, <a href="https://www.jewishencyclopedia.com/articles/11904-parashah">weekly portions</a>, and the physical <a href="https://www.jewishencyclopedia.com/articles/13358-scroll-of-the-law">Torah scroll</a>.</li>
-          <li><b>Structural center.</b> <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a> on Exodus 19 through Numbers 10 as the Torah&rsquo;s central unit.</li>
           <li><b>Jewish summaries.</b> Hillel in <a href="https://www.sefaria.org/Shabbat.31a.6">Shabbat 31a</a>, Rabbi Akiva in <a href="https://www.sefaria.org/Sifra%2C_Kedoshim%2C_Chapter_4.12">Sifra</a>, and Ben Azzai in <a href="https://www.sefaria.org/Genesis_Rabbah.24.7">Genesis Rabbah</a>.</li>
           <li><b>Quotation text.</b> All biblical excerpts are from the public-domain <a href="https://www.sefaria.org/texts/Tanakh">JPS 1917 translation</a>, checked against Sefaria&rsquo;s digital text. Ellipses only shorten verses; they do not join words into a new claim.</li>
           <li><b>Homepage photograph.</b> An open Torah scroll with a silver pointer, Jewish Museum and Tolerance Center, Moscow, public domain via Wikimedia Commons.</li>
