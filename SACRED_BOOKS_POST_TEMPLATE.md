@@ -50,6 +50,8 @@ Title the hard section as a plain noun list naming its cards, the Torah page's p
 ## Page mechanics
 
 - Preserve the site's 20-pixel mobile gutter through `var(--gutter)`.
+- Keep section-divider hairlines inside the post frame, never full viewport width. The Torah is the reference: center the rule at the frame width and retain one gutter on narrow screens.
+- Give both `.u-next` and `.site-footer-inner` the post measure and automatic inline margins. Without that page-specific rule, the footer line spans the viewport and the copyright falls back to the left gutter.
 - Use the shared color tokens and established component kit.
 - Keep sources collapsed and count unique external source URLs for the header.
 - Recalculate reading time after structural edits. The selected Quran post has 27 sources and a 25-minute estimate.
