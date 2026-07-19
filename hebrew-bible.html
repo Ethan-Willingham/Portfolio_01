@@ -31,20 +31,20 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-    :root { --torah-measure: 920px; }
+    :root { --torah-measure: 760px; }
     body.torah-page { padding-inline: 0; overflow-x: hidden; }
-    .torah-shell { width: min(100%, calc(var(--torah-measure) + 2 * var(--gutter))); margin: 0 auto; padding-inline: var(--gutter); }
-    .torah-page .post-back { display: block; width: min(100%, calc(var(--torah-measure) + 2 * var(--gutter))); margin: 0 auto; padding: 2.5rem var(--gutter) 1.4rem; }
-    .torah-hero { padding-top: clamp(.8rem, 2.5vw, 1.7rem); padding-bottom: clamp(2.5rem, 5vw, 3.8rem); }
-    .torah-hero .u-title { max-width: 12ch; font-size: clamp(3.25rem, 12vw, 6.7rem); }
-    .torah-hero .u-dek { max-width: 46ch; }
+    .torah-shell { width: 100%; max-width: var(--torah-measure); margin: 0 auto; padding-inline: var(--gutter); }
+    .torah-page .post-back { display: block; width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+    .torah-hero { padding-top: 1rem; padding-bottom: 0; }
+    .torah-hero .u-dek { max-width: 42ch; }
     .torah-layer { position: relative; padding-block: clamp(3.3rem, 6vw, 5rem); border-top: 1px solid var(--rule); }
+    #summary { padding-top: clamp(2rem, 4vw, 3rem); border-top: 0; }
     .torah-layer-tag { display: flex; align-items: center; gap: .8rem; margin: 0 0 1.2rem; font-family: var(--font-mono); font-size: .68rem; line-height: 1.3; letter-spacing: .15em; text-transform: uppercase; color: var(--text-faint); }
     .torah-layer-tag b { color: var(--accent); font-weight: 400; }
     .torah-layer-tag::after { content: ""; width: 2.2rem; height: 1px; background: var(--rule); }
     .torah-h2 { max-width: 18ch; margin: 0; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.015em; color: var(--text-bright); text-wrap: balance; }
     .torah-intro { max-width: 62ch; margin: 1rem 0 0; font-size: 1.08rem; line-height: 1.65; color: var(--text-dim); }
-    .torah-plain { max-width: 56ch; margin: 1.5rem 0 0; }
+    .torah-plain { margin: 1.5rem 0 0; }
     .torah-plain p { margin: 0 0 1.05em; font-family: var(--font-heading); font-size: clamp(1.16rem, 2.8vw, 1.48rem); line-height: 1.58; color: var(--text-bright); text-wrap: pretty; }
     .torah-plain p:last-child { margin-bottom: 0; }
     .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 5vw, 3.6rem); margin-top: 2.2rem; }
@@ -99,7 +99,7 @@
     .torah-sources { margin-top: 3rem; }
     .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
     .torah-sources li { break-inside: avoid; }
-    .torah-page .u-next, .torah-page .site-footer-inner { max-width: var(--torah-measure); }
+    .torah-page .u-next, .torah-page .site-footer-inner { width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; }
 
     @media (max-width: 720px) {
       .torah-context-grid, .why-cut, .hard-reading-grid { grid-template-columns: 1fr; }
@@ -107,10 +107,8 @@
       .torah-sources .u-collapse-list { columns: 1; }
     }
     @media (max-width: 560px) {
-      .torah-page .post-back { padding-top: 1.5rem; }
-      .torah-hero { padding-top: .45rem; }
-      .torah-hero .u-title { font-size: clamp(3.15rem, 17vw, 4.8rem); }
       .torah-layer { padding-block: 3.4rem; }
+      #summary { padding-top: 2rem; }
       .torah-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
       .concept-body { padding: .1rem 0 3rem 2.9rem; }
       .verse { grid-template-columns: 1fr; gap: .45rem; }
@@ -129,6 +127,7 @@
   <header class="u-hero torah-hero torah-shell">
     <h1 class="u-title">The Torah</h1>
     <p class="u-dek">One continuous reading of Genesis through Deuteronomy: the story, the ideas holding it together, what history can confirm, how securely the words survived, and the difficult parts a serious reader should not miss.</p>
+    <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>39 sources</b> <span class="u-sep">/</span> 23 min read</p>
   </header>
 
   <main>
