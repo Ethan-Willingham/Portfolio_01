@@ -1,9 +1,9 @@
 /* ============================================================
    The Tao Te Ching, side by side.
-   Interactive explorer: pick any of the 81 chapters, read the
-   Chinese source, then compare every English translation in the
-   corpus, with a plain-language breakdown of what the chapter
-   says and where the translators split.
+   Interactive explorer: pick any of the 81 chapters, begin with
+   one plain-language distillation, then compare every English
+   translation in the corpus. The stack makes disagreements
+   visible without turning the opening into translator notes.
 
    Data: window.TAO (js/tao-data.js)  -> {translators, order, chapters}
    Notes: window.TAO_NOTES (js/tao-notes.js) -> per-chapter commentary
@@ -103,7 +103,7 @@
 
   function noteHtml(note) {
     if (!note.plain) {
-      return '<p class="tao-note-soon">A plain-language version of this chapter is on the way. For now, compare the renderings below.</p>';
+      return '<p class="tao-note-error">The plain-English opening for this chapter did not load. The translations are still available below.</p>';
     }
     return '<div class="tao-note">' +
       '<p class="tao-note-k">In plain English</p>' +

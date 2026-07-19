@@ -93,12 +93,38 @@ Not every path takes the same engine. There are four.
 
 ### A. The Translation Stack
 The Tao Te Ching format. For old texts that exist in many translations and break
-naturally into short units (verse, chapter, aphorism). Each unit gets: the
-source line, a plain breakdown of what it is doing and where the translators
-split, then the translations stacked. The breakdown is the product, the
-translations are the evidence.
+naturally into short units (verse, chapter, aphorism). Each unit gets one short
+title, one plain-English distillation, then the translations stacked. The
+distillation is the product and the stack is the evidence. Let the different
+renderings show their disagreement instead of turning the opening into a report
+about translators.
 Use for: Dhammapada, Analects, Bhagavad Gita, Guru Granth Sahib, Hebrew Bible,
 New Testament, Quran.
+
+**The finished Tao reference, locked 2026-07-19.** Study the live page and its
+three scripts before carrying this format to another book.
+
+- Open with one continuous, book-level explanation in plain English. It tells a
+  new reader what the whole book is doing before the interactive reader begins.
+- The reader's sticky capsule holds previous, chapter title, next, and the live
+  translation count. Clicking the title opens the complete numbered chapter
+  grid. Arrow keys move between chapters and the URL hash preserves the current
+  one.
+- Every chapter has a `title` and `plain` entry in the separate notes file. The
+  title feeds the capsule. The plain text appears under one quiet `In plain
+  English` label, with no box, sub-sections, source-language block, or translator
+  commentary. A fallback may protect against a load failure, but no shipped
+  chapter is intentionally left unfinished.
+- The translations follow in three tiers: the famous ones first, then the
+  lesser-known complete translations, then partial renderings. Keep chronology
+  inside each tier and show its count. The reader should meet the versions people
+  actually own before the archival long tail.
+- The Tao page deliberately removed its Chinese block. A source-language block
+  that the target reader cannot evaluate adds ceremony, not understanding. Keep
+  one only when the next book and its audience make it genuinely useful.
+- The visual anatomy is two sections: book-level summary, then reader. Preserve
+  the centered series shell, floating capsule, unboxed commentary, framed
+  hairlines, 20-pixel mobile gutter, and centered endcap and footer.
 
 ### B. The One-Reading Walk
 For an old text where one modern translation is itself the achievement, and the
