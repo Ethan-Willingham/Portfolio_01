@@ -31,48 +31,59 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-    :root { --torah-measure: 760px; }
-    body.torah-page { padding-inline: 0; overflow-x: hidden; }
-    .torah-shell { width: 100%; max-width: var(--torah-measure); margin: 0 auto; padding-inline: var(--gutter); }
-    .torah-page .post-back { display: block; width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; padding-left: var(--gutter); padding-right: var(--gutter); }
-    .torah-hero { padding-top: 1rem; padding-bottom: 0; }
-    .torah-hero .u-dek { max-width: 42ch; }
-    .torah-layer { position: relative; padding-block: clamp(3.3rem, 6vw, 5rem); border-top: 1px solid var(--rule); }
-    #summary { padding-top: clamp(2rem, 4vw, 3rem); border-top: 0; }
-    .torah-layer-tag { display: flex; align-items: center; gap: .8rem; margin: 0 0 1.2rem; font-family: var(--font-mono); font-size: .68rem; line-height: 1.3; letter-spacing: .15em; text-transform: uppercase; color: var(--text-faint); }
+    :root {
+      --torah-measure: 760px;
+      --torah-copy: 64ch;
+      --torah-frame: 58rem;
+      --torah-tint: rgba(245, 241, 234, .045);
+      --torah-hair: rgba(212, 196, 160, .20);
+    }
+    body.torah-page { padding-inline: 0; overflow-x: hidden; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .torah-shell { width: 100%; max-width: var(--torah-frame); margin: 0 auto; padding-inline: var(--gutter); }
+    .torah-page .post-back { display: block; width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-left: var(--gutter); padding-right: var(--gutter); }
+    .torah-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 4rem); max-width: 61rem; padding-block: clamp(4.5rem, 11svh, 7rem); text-align: center; }
+    .torah-hero .u-title { max-width: 10ch; margin-inline: auto; font-size: clamp(3.7rem, 12vw, 7.5rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+    .torah-hero .u-dek { max-width: 49ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+    .torah-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+    .torah-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
+    .torah-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    #summary { padding-top: clamp(4.5rem, 8svh, 6.5rem); }
+    .torah-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
     .torah-layer-tag b { color: var(--accent); font-weight: 400; }
-    .torah-layer-tag::after { content: ""; width: 2.2rem; height: 1px; background: var(--rule); }
-    .torah-h2 { max-width: 18ch; margin: 0; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.015em; color: var(--text-bright); text-wrap: balance; }
-    .torah-intro { max-width: 62ch; margin: 1rem 0 0; font-size: 1.08rem; line-height: 1.65; color: var(--text-dim); }
-    .torah-plain { margin: 1.5rem 0 0; }
-    .torah-plain p { margin: 0 0 1.05em; font-family: var(--font-heading); font-size: clamp(1.16rem, 2.8vw, 1.48rem); line-height: 1.58; color: var(--text-bright); text-wrap: pretty; }
+    .torah-layer-tag::after { display: none; }
+    .torah-h2 { max-width: 22ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+    .torah-intro { max-width: 49ch; margin: 1rem auto 0; font-size: 1.22rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+    .torah-plain { max-width: var(--torah-copy); margin: 2.6rem auto 0; }
+    .torah-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
     .torah-plain p:last-child { margin-bottom: 0; }
-    .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 5vw, 3.6rem); margin-top: 2.2rem; }
-    .torah-context h3 { margin: 0 0 .65rem; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.25; color: var(--text-bright); }
-    .torah-context p { margin: 0 0 1rem; font-size: .98rem; line-height: 1.65; color: var(--text); }
+    .torah-plain p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+    .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: var(--torah-copy); margin: 2.6rem auto 0; }
+    .torah-context { padding: 1.35rem 1.4rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
+    .torah-context h3 { margin: 0 0 .75rem; font-family: var(--font-heading); font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
+    .torah-context p { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.7; color: var(--text); }
     .torah-context p:last-child { margin-bottom: 0; }
     .torah-context a, .torah-page .u-textcheck a, .torah-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
     .torah-context a:hover, .torah-page .u-textcheck a:hover, .torah-sources a:hover { color: var(--accent-hover); }
-    .torah-page .u-textcheck { margin-top: clamp(2.6rem, 6vw, 4.4rem); }
+    .torah-page .u-textcheck { max-width: var(--torah-copy); margin: clamp(2.8rem, 6vw, 4.4rem) auto 0; }
 
-    .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; margin-top: 2.4rem; padding: 1.4rem 0; border-block: 1px solid var(--s-gold-hair); }
+    .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--torah-copy); margin: 2.6rem auto 0; padding: 1.35rem 1.4rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
     .torah-convergence h3 { margin: 0; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
-    .torah-convergence p { margin: 0; font-size: .95rem; line-height: 1.65; color: var(--text); }
+    .torah-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
     .torah-convergence a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
 
-    .concept-list { margin-top: clamp(2.4rem, 6vw, 4.2rem); border-top: 1px solid var(--rule); }
+    .concept-list { max-width: var(--torah-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
     .torah-concept { scroll-margin-top: 1rem; border-bottom: 1px solid var(--rule); }
-    .torah-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 5.5rem; padding: 1.3rem .2rem; cursor: pointer; }
+    .torah-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem .2rem; cursor: pointer; }
     .torah-concept > summary::-webkit-details-marker { display: none; }
     .concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
-    .concept-statement { display: block; font-family: var(--font-heading); font-size: clamp(1.2rem, 3vw, 1.55rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .concept-statement { display: block; font-family: var(--font-heading); font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
     .concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
     .concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
     .concept-mark::before { content: "+"; }
-    .torah-concept[open] { background: linear-gradient(90deg, var(--s-gold-tint), transparent 72%); }
+    .torah-concept[open] { background: var(--torah-tint); box-shadow: inset 2px 0 var(--accent); }
     .torah-concept[open] .concept-mark::before { content: "−"; }
     .concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
-    .concept-role { max-width: 61ch; margin: 0; font-size: 1.05rem; line-height: 1.72; color: var(--text); }
+    .concept-role { max-width: 61ch; margin: 0; font-size: 1.14rem; line-height: 1.72; color: var(--text); }
     .refrain { margin-top: 2rem; }
     .refrain-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
     .refrain-head span:last-child { color: var(--text-faint); }
@@ -80,8 +91,8 @@
     .verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
     .verse q { font-family: var(--font-heading); font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
     .verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
-    .why-cut { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.3rem; margin-top: 2rem; }
-    .why-item { margin: 0; padding-top: .75rem; border-top: 2px solid var(--rule); font-size: .8rem; line-height: 1.55; color: var(--text-dim); }
+    .why-cut { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2rem; }
+    .why-item { margin: 0; padding: .9rem .95rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; font-size: .84rem; line-height: 1.55; color: var(--text-dim); }
     .why-item b { display: block; margin-bottom: .35rem; font-family: var(--font-mono); font-size: .62rem; line-height: 1.35; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
     .why-item a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--rule); }
     .why-item a:hover { color: var(--accent-hover); }
@@ -91,15 +102,16 @@
     .translation-note summary::before { content: "+ "; }
     .translation-note[open] summary::before { content: "− "; }
     .translation-note p { max-width: 64ch; margin: .8rem 0 0; font-size: .9rem; line-height: 1.65; color: var(--text-dim); }
-    .hard-reading { margin-top: clamp(3.3rem, 8vw, 6rem); padding-top: clamp(2.8rem, 6vw, 4rem); border-top: 1px solid var(--accent); }
-    .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 2rem; margin-top: 1.8rem; border-top: 1px solid var(--rule); }
-    .hard-item { padding: 1.25rem 0; border-bottom: 1px solid var(--rule); }
-    .hard-item h3 { margin: 0 0 .45rem; font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-bright); }
-    .hard-item p { margin: 0; font-size: .88rem; line-height: 1.6; color: var(--text-dim); }
-    .torah-sources { margin-top: 3rem; }
+    .hard-reading { max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding-top: clamp(3.5rem, 7vw, 5rem); border-top: 1px solid var(--accent); }
+    .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 2.2rem; }
+    .hard-item { padding: 1.1rem 1.15rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
+    .hard-item h3 { margin: 0 0 .5rem; font-family: var(--font-heading); font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
+    .hard-item p { margin: 0; font-size: .94rem; line-height: 1.62; color: var(--text-dim); }
+    .torah-sources { max-width: var(--torah-copy); margin: 3rem auto 0; }
     .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
     .torah-sources li { break-inside: avoid; }
     .torah-page .u-next, .torah-page .site-footer-inner { width: 100%; max-width: var(--torah-measure); margin-left: auto; margin-right: auto; }
+    .torah-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
       .torah-context-grid, .why-cut, .hard-reading-grid { grid-template-columns: 1fr; }
@@ -108,7 +120,7 @@
     }
     @media (max-width: 560px) {
       .torah-layer { padding-block: 3.4rem; }
-      #summary { padding-top: 2rem; }
+      #summary { padding-top: 3.4rem; }
       .torah-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
       .concept-body { padding: .1rem 0 3rem 2.9rem; }
       .verse { grid-template-columns: 1fr; gap: .45rem; }
@@ -128,6 +140,7 @@
     <h1 class="u-title">The Torah</h1>
     <p class="u-dek">One continuous reading of Genesis through Deuteronomy: the story, the ideas holding it together, what history can confirm, how securely the words survived, and the difficult parts a serious reader should not miss.</p>
     <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>39 sources</b> <span class="u-sep">/</span> 23 min read</p>
+    <span class="torah-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main>
