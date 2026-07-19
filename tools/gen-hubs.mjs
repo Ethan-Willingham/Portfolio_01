@@ -28,10 +28,10 @@ const HUBS = [
   {
     slug: 'religion', title: 'The Sacred Books',
     card: { thumb: 'guru-granth-sahib.jpg', alt: 'An illuminated page of the Guru Granth Sahib, with Gurmukhi script framed by orange, blue, and gold flowers.',
-      desc: 'The ten books billions live by, each in its own language against the great English translations, with the keystones broken down where the translators split.' },
-    lead: 'The books billions live by, laid out oldest first, from the Hebrew Bible to the Guru Granth Sahib. Each scripture in its own language against the great English translations.',
+      desc: 'The books billions live by, opened on their own terms: the ideas that hold each one together, original-language context where it changes the meaning, and honest notes on translation.' },
+    lead: 'The books billions live by, laid out oldest first, from the Torah to the Guru Granth Sahib. Each post looks for the ideas that carry the book, with original-language context where English materially changes them.',
     members: [
-      live('hebrew-bible.html', 'The Hebrew Bible', 'hebrew-bible.jpg', 'c. 600 BCE', -600, "The Jewish scriptures, and the root of all three Western religions: creation, the exodus from Egypt, the law, and the prophets' demand for justice. Read here the way Judaism reads it, through argument and never alone."),
+      live('hebrew-bible.html', 'The Torah', 'hebrew-bible.jpg', 'five books', -600, "Genesis through Deuteronomy as one argument: a good world damaged, a people freed from slavery, freedom bound to covenant, holiness brought into ordinary life, and the choice left open. Includes a five-book map, twelve load-bearing ideas, the hard parts, and an honest transmission check."),
       live('analects.html', 'The Analects of Confucius', 'analects.jpg', 'c. 450 BCE', -450, "The sayings Confucius's students wrote down, the book that shaped Chinese, Korean, and Japanese life for two thousand years. Less about gods than about how to be a decent person: family, learning, and treating others as you would want to be treated."),
       live('tao-te-ching.html', 'The Tao Te Ching', 'tao-te-ching.jpg', 'c. 400 BCE', -400, "Taoism's founding book, written in China about 2,500 years ago: 81 short, riddling poems on living in harmony with the Tao, the nameless way behind all things. The most translated book after the Bible, here in two dozen English versions at once."),
       live('zhuangzi.html', 'The Zhuangzi', 'zhuangzi.jpg', 'c. 300 BCE', -300, "The other great Taoist classic, and the funny one. Wild little stories that puncture our certainty, like the man who dreams he is a butterfly and wakes unsure which he is, walked in Brook Ziporyn's translation."),

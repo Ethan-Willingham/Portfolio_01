@@ -215,6 +215,26 @@ Default is a single column with hairline rules. For a **short** glossary (roughl
 <details class="u-collapse"><summary class="u-collapse-s">Sources</summary><ol class="u-collapse-list"><li><b>Name.</b> <a href="#">link</a></li></ol></details>
 ```
 
+### Sacred-text transmission check - `.u-textcheck`
+
+Use this near the top of a sacred-text post. Never collapse manuscript survival,
+wording stability, and English translation into one percentage. The rails are
+qualitative: `data-level="2"`, `3`, or `4` fills that many of four segments, while
+the written grade carries the actual claim.
+
+```html
+<aside class="u-textcheck" aria-labelledby="textcheck-title">
+  <div class="u-textcheck-head">
+    <div><p class="u-textcheck-k">How safely did this reach us?</p><h3 class="u-textcheck-verdict" id="textcheck-title">The story is secure. Some sentences are not.</h3></div>
+    <p class="u-textcheck-rule">Three questions, because one score would lie.</p>
+  </div>
+  <div class="u-textcheck-rows">
+    <div class="u-textcheck-row"><span class="u-textcheck-name">Early witnesses</span><span class="u-textcheck-read"><span class="u-textcheck-grade">Strong</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span><p class="u-textcheck-note">What survives and how early it is.</p></div>
+  </div>
+  <p class="u-textcheck-foot">State the limits and link the evidence here.</p>
+</aside>
+```
+
 ### Dividers - `.u-divider`
 ```html
 <hr class="u-divider">

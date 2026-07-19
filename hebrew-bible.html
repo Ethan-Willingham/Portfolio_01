@@ -13,268 +13,471 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Hebrew Bible, Side by Side</title>
-  <meta name="description" content="The keystone passages of the Tanakh, the Jewish Bible, in the pointed Hebrew and stacked across the best English translations, with a plain breakdown of what each one says and where the translators split. Read the Jewish way: through the argument, never alone.">
-  <meta property="og:title" content="The Hebrew Bible, Side by Side">
-  <meta property="og:description" content="Genesis opens on three words every translator thinks they know. One says 'In the beginning God created.' The modern ones say the sentence does not start there at all. The Tanakh read the Jewish way, keystone by keystone, in the Hebrew and a stack of English translations.">
+  <title>The Torah: Five Books, One Argument</title>
+  <meta name="description" content="The Torah as one complete argument: a 100-word summary, a map of all five books, twelve load-bearing ideas, the hard parts, and an honest check on manuscripts and translation.">
+  <meta property="og:title" content="The Torah: Five Books, One Argument">
+  <meta property="og:description" content="A plain map of what Genesis through Deuteronomy are trying to make of freedom, power, failure, holiness, and a people asked to remember.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/hebrew-bible.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hebrew-bible-og.jpg">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/torah-og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hebrew-bible-og.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/torah-og.jpg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-  /* ============================================================
-     THE HEBREW BIBLE, SIDE BY SIDE
-     An interactive reader: the keystone passages of the Tanakh,
-     the pointed Hebrew source, a transliteration, a plain
-     breakdown of each, and the best English translations stacked.
-     Sits in the site shell (forest green, parchment, Century
-     Supra / Segoe UI / Commit Mono). The Hebrew source needs a
-     face with full nikkud; it is set right-to-left. Everything
-     else stays on the three site fonts. No em dashes.
-     ============================================================ */
-  :root {
-    --measure: 840px;                 /* reading column */
-    --he-font: "Taamey Frank CLM","Frank Ruhl Libre","SBL Hebrew","Ezra SIL","Times New Roman","David","Arial Hebrew",serif;
-    --early:  #cf9f78;                 /* era accents, from the site categorical set */
-    --mid:    #bc9d65;
-    --modern: #9ec79a;
-    --ease: cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  html { overflow-x: hidden; }
-  body { overflow-x: hidden; }
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+    :root { --torah-measure: 920px; }
+    body.torah-page { padding-inline: 0; overflow-x: hidden; }
+    .torah-shell { width: min(100%, calc(var(--torah-measure) + 2 * var(--gutter))); margin: 0 auto; padding-inline: var(--gutter); }
+    .torah-page .post-back { display: block; width: min(100%, calc(var(--torah-measure) + 2 * var(--gutter))); margin: 0 auto; padding: 2.5rem var(--gutter) 1.4rem; }
+    .torah-hero { padding-top: clamp(.8rem, 2.5vw, 1.7rem); padding-bottom: clamp(2.5rem, 5vw, 3.8rem); }
+    .torah-hero .u-title { max-width: 12ch; font-size: clamp(3.25rem, 12vw, 6.7rem); }
+    .torah-hero .u-dek { max-width: 46ch; }
+    .torah-layer { position: relative; padding-block: clamp(3.3rem, 6vw, 5rem); border-top: 1px solid var(--rule); }
+    .torah-layer-tag { display: flex; align-items: center; gap: .8rem; margin: 0 0 1.2rem; font-family: var(--font-mono); font-size: .68rem; line-height: 1.3; letter-spacing: .15em; text-transform: uppercase; color: var(--text-faint); }
+    .torah-layer-tag b { color: var(--accent); font-weight: 400; }
+    .torah-layer-tag::after { content: ""; width: 2.2rem; height: 1px; background: var(--rule); }
+    .torah-h2 { max-width: 18ch; margin: 0; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.015em; color: var(--text-bright); text-wrap: balance; }
+    .torah-intro { max-width: 62ch; margin: 1rem 0 0; font-size: 1.08rem; line-height: 1.65; color: var(--text-dim); }
+    .torah-100 { max-width: 42ch; margin: 1.5rem 0 0; font-family: var(--font-heading); font-size: clamp(1.35rem, 3.6vw, 1.85rem); line-height: 1.48; color: var(--text-bright); text-wrap: pretty; }
+    .torah-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin: clamp(2.4rem, 5vw, 3.7rem) 0; border-block: 1px solid var(--rule); background: var(--rule); }
+    .torah-fact { min-width: 0; padding: 1.1rem 1rem; background: var(--bg); }
+    .torah-fact b { display: block; font-family: var(--font-heading); font-size: 1.45rem; line-height: 1.1; color: var(--accent); }
+    .torah-fact span { display: block; margin-top: .35rem; font-size: .72rem; line-height: 1.35; color: var(--text-dim); }
+    .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 5vw, 3.6rem); margin-top: 2.2rem; }
+    .torah-context h3 { margin: 0 0 .65rem; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.25; color: var(--text-bright); }
+    .torah-context p { margin: 0 0 1rem; font-size: .98rem; line-height: 1.65; color: var(--text); }
+    .torah-context p:last-child { margin-bottom: 0; }
+    .torah-context a, .torah-page .u-textcheck a, .torah-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
+    .torah-context a:hover, .torah-page .u-textcheck a:hover, .torah-sources a:hover { color: var(--accent-hover); }
+    .torah-page .u-textcheck { margin-top: clamp(2.6rem, 6vw, 4.4rem); }
 
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
+    .book-map { margin-top: clamp(2.2rem, 5vw, 3.4rem); border-top: 1px solid var(--rule); }
+    .book-row { display: grid; grid-template-columns: 3.2rem minmax(7.5rem, .65fr) minmax(0, 2fr); gap: 1rem; align-items: baseline; padding: 1.4rem 0; border-bottom: 1px solid var(--rule); }
+    .book-n { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; color: var(--accent); }
+    .book-title { font-family: var(--font-heading); font-size: 1.35rem; line-height: 1.2; color: var(--text-bright); }
+    .book-role { margin: 0; font-size: .98rem; line-height: 1.55; color: var(--text-dim); }
+    .book-role strong { color: var(--text); font-weight: 600; }
+    .map-key { margin: 1rem 0 0; font-family: var(--font-mono); font-size: .72rem; line-height: 1.55; letter-spacing: .035em; color: var(--text-faint); }
 
-  /* ---------- INTRO ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
-  .sec strong { font-weight: 600; color: var(--text-bright); }
-  .sec em { font-style: italic; }
-  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
-  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .he-inline { font-family: var(--he-font); font-style: normal; color: var(--text-bright); }
-  .tl-inline { font-style: italic; color: var(--text-dim); }
+    .concept-index { margin-top: clamp(2.3rem, 5vw, 3.8rem); }
+    .concept-group { display: grid; grid-template-columns: 9rem 1fr; gap: 1.5rem; padding: 1.2rem 0; border-top: 1px solid var(--rule); }
+    .concept-group:last-child { border-bottom: 1px solid var(--rule); }
+    .concept-group-k { margin: .22rem 0 0; font-family: var(--font-mono); font-size: .66rem; line-height: 1.4; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+    .concept-group ol { list-style: none; margin: 0; padding: 0; }
+    .concept-index a { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .75rem; align-items: baseline; padding: .48rem .3rem; color: var(--text); text-decoration: none; border-radius: 6px; }
+    .concept-index a:hover { background: var(--row-hover); color: var(--text-bright); }
+    .concept-index .ix-n { font-family: var(--font-mono); font-size: .67rem; color: var(--accent); }
+    .concept-index .ix-title { font-family: var(--font-heading); font-size: 1.04rem; line-height: 1.35; }
+    .concept-index .ix-book { font-family: var(--font-mono); font-size: .62rem; color: var(--text-faint); }
+    .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; margin-top: 2.4rem; padding: 1.4rem 0; border-block: 1px solid var(--s-gold-hair); }
+    .torah-convergence h3 { margin: 0; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
+    .torah-convergence p { margin: 0; font-size: .95rem; line-height: 1.65; color: var(--text); }
+    .torah-convergence a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
 
-  /* the opening "fan": one line of Hebrew, many Englishes */
-  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-he { font-family: var(--he-font); font-size: clamp(1.7rem, 5.4vw, 2.6rem); color: var(--text-bright); line-height: 1.7; padding: 1.3rem 1.5rem 0.3rem; direction: rtl; text-align: right; }
-  .fan-tl.fan-tl { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--accent); padding: 0 1.5rem 0.2rem; }
-  .fan-he small, .fan-cap.fan-cap { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); }
-  .fan-cap.fan-cap { padding: 0 1.5rem 0.7rem; }
-  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
-  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
-  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
-  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  @media (min-width: 680px){
-    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
-    .fan-list .who { text-align: right; }
-  }
+    .concept-list { margin-top: clamp(2.4rem, 6vw, 4.2rem); border-top: 1px solid var(--rule); }
+    .torah-concept { scroll-margin-top: 1rem; border-bottom: 1px solid var(--rule); }
+    .torah-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 5.5rem; padding: 1.3rem .2rem; cursor: pointer; }
+    .torah-concept > summary::-webkit-details-marker { display: none; }
+    .concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .concept-statement { display: block; font-family: var(--font-heading); font-size: clamp(1.2rem, 3vw, 1.55rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+    .concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
+    .concept-mark::before { content: "+"; }
+    .torah-concept[open] { background: linear-gradient(90deg, var(--s-gold-tint), transparent 72%); }
+    .torah-concept[open] .concept-mark::before { content: "−"; }
+    .concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
+    .concept-role { max-width: 61ch; margin: 0; font-size: 1.05rem; line-height: 1.72; color: var(--text); }
+    .refrain { margin-top: 2rem; }
+    .refrain-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .refrain-head span:last-child { color: var(--text-faint); }
+    .verse-stack { border-top: 1px solid var(--rule); }
+    .verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+    .verse q { font-family: var(--font-heading); font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
+    .verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
+    .why-cut { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.3rem; margin-top: 2rem; }
+    .why-item { margin: 0; padding-top: .75rem; border-top: 2px solid var(--rule); font-size: .8rem; line-height: 1.55; color: var(--text-dim); }
+    .why-item b { display: block; margin-bottom: .35rem; font-family: var(--font-mono); font-size: .62rem; line-height: 1.35; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+    .why-item a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--rule); }
+    .why-item a:hover { color: var(--accent-hover); }
+    .translation-note { margin-top: 1.6rem; border-left: 2px solid var(--s-gold-hair); padding-left: 1rem; }
+    .translation-note summary { list-style: none; cursor: pointer; font-family: var(--font-mono); font-size: .68rem; line-height: 1.5; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+    .translation-note summary::-webkit-details-marker { display: none; }
+    .translation-note summary::before { content: "+ "; }
+    .translation-note[open] summary::before { content: "− "; }
+    .translation-note p { max-width: 64ch; margin: .8rem 0 0; font-size: .9rem; line-height: 1.65; color: var(--text-dim); }
+    .hard-reading { margin-top: clamp(3.3rem, 8vw, 6rem); padding-top: clamp(2.8rem, 6vw, 4rem); border-top: 1px solid var(--accent); }
+    .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 2rem; margin-top: 1.8rem; border-top: 1px solid var(--rule); }
+    .hard-item { padding: 1.25rem 0; border-bottom: 1px solid var(--rule); }
+    .hard-item h3 { margin: 0 0 .45rem; font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-bright); }
+    .hard-item p { margin: 0; font-size: .88rem; line-height: 1.6; color: var(--text-dim); }
+    .torah-close { max-width: 48ch; margin: clamp(3.6rem, 8vw, 6rem) 0 0; font-family: var(--font-heading); font-size: clamp(1.35rem, 3.5vw, 1.8rem); line-height: 1.48; color: var(--text-bright); }
+    .torah-close small { display: block; margin-top: 1rem; font-family: var(--font-body); font-size: .56em; line-height: 1.6; color: var(--text-dim); }
+    .torah-sources { margin-top: 3rem; }
+    .torah-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
+    .torah-sources li { break-inside: avoid; }
+    .torah-page .u-next, .torah-page .site-footer-inner { max-width: var(--torah-measure); }
 
-  /* ---------- THE EXPLORER ---------- */
-  .hb { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
-  .hb-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .hb-step { display: flex; align-items: center; gap: 0.4rem; }
-  .hb-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
-  .hb-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
-  .hb-nav:disabled { opacity: 0.3; cursor: default; }
-  .hb-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; text-align: left; }
-  .hb-jump:hover { background: rgba(255,255,255,0.05); }
-  .hb-jump #hb-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
-  .hb-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
-  .hb-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
-  .hb-views button:hover { color: var(--text-bright); }
-  .hb-views button.is-on { background: var(--accent); color: #2a3128; }
-  .hb-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
-  .hb-count b { color: var(--accent); font-weight: 400; }
-
-  /* the keystone index, grouped by section of the Tanakh */
-  .hb-grid { margin: 0 0 1rem; padding: 0.9rem 1rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 62vh; overflow-y: auto; }
-  .hb-grid[hidden] { display: none; }
-  .hb-gridsec { margin-bottom: 0.85rem; }
-  .hb-gridsec:last-child { margin-bottom: 0; }
-  .hb-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; color: var(--text-faint); margin: 0 0 0.45rem; text-transform: uppercase; }
-  .hb-gridlabel span { font-family: var(--he-font); color: var(--accent); margin-right: 0.55em; letter-spacing: 0; font-size: 0.95rem; }
-  .hb-gridlabel em { font-style: italic; text-transform: none; letter-spacing: 0.02em; opacity: 0.8; }
-  .hb-gridrow { display: flex; flex-wrap: wrap; gap: 5px; }
-  .hb-grid button { font-family: var(--font-body); font-size: 0.82rem; padding: 0.42em 0.8em; border: 1px solid var(--rule-strong); border-radius: 999px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
-  .hb-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
-  .hb-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
-
-  /* keystone numbering, in the bar and the jump index */
-  .hb-idx { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.02em; margin-right: 0.55em; }
-  .hb-gridnum { opacity: 0.5; margin-right: 0.5em; font-variant-numeric: tabular-nums; }
-
-  /* source */
-  .hb-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
-  .hb-he-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem; }
-  .hb-he-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; margin-left: 0.4em; }
-  .hb-he { font-family: var(--he-font); font-size: clamp(1.35rem, 4vw, 1.9rem); line-height: 1.95; color: var(--text-bright); margin: 0; direction: rtl; text-align: right; text-wrap: pretty; }
-  .hb-translit { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; letter-spacing: 0.01em; color: var(--text-dim); font-style: normal; margin: 0.85rem 0 0; padding-top: 0.7rem; border-top: 1px solid var(--rule); }
-
-  /* commentary */
-  .hb-notes { margin: 1rem 0 0; }
-  .hb-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
-  .hb-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
-  .hb-note-k:first-child { margin-top: 0; }
-  .hb-note-gist { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .hb-note-gist em, .hb-splits em { font-style: italic; color: var(--text-bright); }
-  .hb-note-gist b, .hb-splits b { font-weight: 600; color: var(--text-bright); }
-  .hb-splits { margin: 0; }
-  .hb-splits dt { margin: 0.7rem 0 0.15rem; line-height: 1.5; }
-  .hb-splits dt .hb-dt-he { font-family: var(--he-font); font-size: 1.2rem; color: var(--text-bright); }
-  .hb-splits dt .hb-dt-tl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); letter-spacing: 0.01em; }
-  .hb-splits dt .hb-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; }
-  .hb-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
-  .hb-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
-
-  /* translations */
-  .hb-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
-  .hb-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .hb-v:last-child { border-bottom: 1px solid var(--rule); }
-  .hb-early  { border-left-color: var(--early); }
-  .hb-mid    { border-left-color: var(--mid); }
-  .hb-modern { border-left-color: var(--modern); }
-  .hb-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
-  .hb-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
-  .hb-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
-  .hb-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.62; color: var(--text); white-space: normal; }
-  .hb-vt .hb-br { display: block; height: 0.6em; }
-  .hb-empty { color: var(--text-faint); font-style: italic; }
-
-  /* fade the explorer in once data lands */
-  .hb .hb-body { opacity: 0; transition: opacity .4s var(--ease); }
-  .hb.hb-ready .hb-body { opacity: 1; }
-  .hb-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
-  .hb.hb-ready .hb-loading { display: none; }
-
-  /* ---------- closing / colophon ---------- */
-  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
-  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
-  /* the source colophon collapses into a dropdown */
-  .src-drop { margin: 0; }
-  .src-drop-s { cursor: pointer; list-style: none; display: inline-flex; align-items: baseline; gap: 0.55em; margin: 0; }
-  .src-drop-s::-webkit-details-marker { display: none; }
-  .src-drop-s::before { content: "\276F"; color: var(--accent); font-size: 0.68em; transition: transform .25s var(--ease); display: inline-block; }
-  .src-drop[open] .src-drop-s::before { transform: rotate(90deg); }
-  .src-drop-s:hover { color: var(--accent); }
-  .src-drop-body { margin-top: 1.3rem; }
-
-  /* ---------- mobile ---------- */
-  @media (max-width: 560px){
-    body { padding-left: 0; padding-right: 0; }
-    .fan-he { font-size: 1.5rem; padding: 1.1rem 1rem 0.3rem; }
-    .fan-tl.fan-tl, .fan-cap.fan-cap { padding-left: 1rem; padding-right: 1rem; }
-    .fan-list li { padding: 0.65rem 1rem; }
-    .fan-list .e { font-size: 1.02rem; }
-    .hb-bar { gap: 0.55rem 0.7rem; }
-    .hb-count { margin-left: 0; flex-basis: 100%; }
-    .hb-source, .hb-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
-    .hb-v { padding-left: 0.9rem; }
-  }
+    @media (max-width: 720px) {
+      .torah-facts { grid-template-columns: repeat(2, 1fr); }
+      .torah-context-grid, .why-cut, .hard-reading-grid { grid-template-columns: 1fr; }
+      .book-row { grid-template-columns: 2.5rem 1fr; gap: .25rem .8rem; }
+      .book-role { grid-column: 2; }
+      .concept-group { grid-template-columns: 1fr; gap: .45rem; }
+      .concept-group-k { margin: 0; }
+      .torah-convergence { grid-template-columns: 1fr; gap: .7rem; }
+      .torah-sources .u-collapse-list { columns: 1; }
+    }
+    @media (max-width: 560px) {
+      .torah-page .post-back { padding-top: 1.5rem; }
+      .torah-hero { padding-top: .45rem; }
+      .torah-hero .u-title { font-size: clamp(3.15rem, 17vw, 4.8rem); }
+      .torah-layer { padding-block: 3.4rem; }
+      .concept-index a { grid-template-columns: 2rem 1fr; }
+      .concept-index .ix-book { grid-column: 2; }
+      .torah-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
+      .concept-body { padding: .1rem 0 3rem 2.9rem; }
+      .verse { grid-template-columns: 1fr; gap: .45rem; }
+      .verse cite { text-align: left; }
+      .refrain-head { display: block; }
+      .refrain-head span { display: block; }
+      .refrain-head span:last-child { margin-top: .25rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
-<body>
-  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+<body class="torah-page">
+  <div class="reading-progress" id="readingProgress"></div>
+  <a href="religion.html" class="post-back"><span class="pb-label">The Sacred Books</span></a>
 
-  <a href="religion.html" class="post-back ll-back"><span class="pb-label">The Sacred Books</span></a>
-
-  <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The Hebrew Bible, side by side</h1>
-    <p class="hero-dek">Genesis opens on three words every translator thinks they know. One says <em>In the beginning God created</em>. The modern ones say the sentence does not start there at all. Here is the Tanakh, the Jewish Bible, read the Jewish way: through the argument, never alone.</p>
-    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>17 keystones</b> of the Tanakh <span class="sep">/</span> <b>seven translations</b> stacked verbatim <span class="sep">/</span> Hebrew, transliteration, breakdown</p>
+  <header class="u-hero torah-hero torah-shell">
+    <p class="u-eyebrow">Five books, one unfinished story</p>
+    <h1 class="u-title">The Torah</h1>
+    <p class="u-dek">A plain map of what Genesis through Deuteronomy are trying to make of freedom, power, failure, and a people asked to be holy.</p>
+    <p class="u-meta"><b>Genesis to Deuteronomy</b><span>Five ancient scrolls</span><span>Twelve load-bearing ideas</span></p>
   </header>
 
   <main>
-    <!-- ============================ INTRO ============================ -->
-    <section class="sec">
-      <!-- PROSE: first draft, to be run through the write-post VOICE.md self-edit pass before shipping -->
-      <p class="lede">A man comes to the sage Hillel and offers to convert to Judaism on one condition: teach him the whole Torah while he stands on one foot. Hillel does it in a breath. <em>What is hateful to you, do not do to your neighbor. That is the whole Torah. The rest is commentary. Now go and learn.</em></p>
-      <p>The line everyone quotes is the golden rule in the middle. The line that tells you how Jews actually read this book is the one at the end: <em>go and learn</em>. The whole Torah fits on one foot, and it also takes a lifetime, because the summary comes with homework attached. The Hebrew Bible is not a book you read alone. For two thousand years it has been read the way Hillel read it, inside an argument about what it means, the written text and the spoken tradition that unfolds it treated as one thing.</p>
-      <p>You can see why the argument never settles in the very first sentence. Three words open the book.</p>
+    <section class="torah-layer torah-shell" id="summary" aria-labelledby="summary-title">
+      <p class="torah-layer-tag"><b>01</b> Summary</p>
+      <h2 class="torah-h2" id="summary-title">The Torah in 100 words</h2>
+      <p class="torah-100">The Torah begins with a good world humans repeatedly damage. God chooses one family to carry blessing outward, frees its descendants from slavery, and binds them into a people responsible for holiness, justice, memory, and one another. Freedom is not the finish. The people must learn how to live with power, land, appetite, fear, and a God who wants to dwell among them. They fail almost immediately, then fail again. Covenant survives through judgment, mercy, repair, and renewal. Moses dies before the people enter the land. The book closes with its choice still open: life or death, blessing or curse.</p>
 
-      <div class="fan">
-        <p class="fan-he" lang="he" dir="rtl">בְּרֵאשִׁית בָּרָא אֱלֹהִים</p>
-        <p class="fan-tl">b&rsquo;reshit bara Elohim</p>
-        <p class="fan-cap">Genesis 1:1, the first three words &middot; a finished act, or the start of a sentence still in motion</p>
-        <ul class="fan-list">
-          <li><span class="e">In the beginning God created the heaven and the earth.</span><span class="who">KJV, 1611</span></li>
-          <li><span class="e">In the beginning God created the heaven and the earth.</span><span class="who">JPS, 1917</span></li>
-          <li><span class="e">When God began to create heaven and earth&hellip;</span><span class="who">NJPS, 1985</span></li>
-          <li><span class="e">When God began to create heaven and earth&hellip;</span><span class="who">Alter, 2018</span></li>
-          <li><span class="e">At the beginning of God&rsquo;s creating of the heavens and the earth&hellip;</span><span class="who">Fox, 1995</span></li>
-          <li><span class="e">In the beginning of God&rsquo;s preparing the heavens and the earth&hellip;</span><span class="who">Young, 1898</span></li>
-        </ul>
+      <div class="torah-facts" aria-label="Torah at a glance">
+        <p class="torah-fact"><b>5</b><span>books, copied as one Torah scroll</span></p>
+        <p class="torah-fact"><b>54</b><span>weekly portions in the annual cycle</span></p>
+        <p class="torah-fact"><b>5,845</b><span>verses in the traditional count</span></p>
+        <p class="torah-fact"><b>3rd c. BCE</b><span>five-book form securely attested by then</span></p>
       </div>
 
-      <p>Same three words. Two of these translators give you a finished act: in the beginning, God created, full stop, the universe made from nothing in a single clean instant. The others say the Hebrew will not sit still like that. The first word, <span class="he-inline">בְּרֵאשִׁית</span>, is not quite <em>in the beginning</em>; it is closer to <em>in the beginning of</em>, the start of a longer clause, so the sentence really opens <em>when God began to create</em>, and drops you into a world already half-made, with a wind over dark water. Rashi, the great medieval commentator, said as much a thousand years ago. The first three words, and the translators are already a whole theology apart. That spread is the subject of this page.</p>
-      <p>Below are the keystones of the Tanakh, the Jewish name for the Bible: an acronym for its three parts, <em>Torah</em> (the teaching, the five books of Moses), <em>Nevi&rsquo;im</em> (the prophets), and <em>Ketuvim</em> (the writings). These are not the most quoted verses. They are the load-bearing ones, the passages the rest of the tradition leans on, plus the one Talmud story that frames the whole thing. For each you get the pointed Hebrew, a transliteration so you can hear it, a plain breakdown of what it is doing and where the translators part ways, and then the English versions stacked. Use the arrows or your keyboard to move between them.</p>
+      <div class="torah-context-grid">
+        <article class="torah-context">
+          <h3>What is actually confirmed</h3>
+          <p>The Torah is five books in Biblical Hebrew. Separate treatment of the five books in the ancient Greek translation shows that the division is older than Christianity, and likely reflects the practical size of scrolls. The Greek Torah was translated in the third century BCE. Hebrew fragments from the Dead Sea Scrolls begin in the last centuries BCE. Whatever earlier stages produced it, the whole Torah was in circulation centuries before Jesus.</p>
+          <p>A synagogue Torah scroll still presents it as one continuous document with four book breaks and smaller paragraph spaces. It has no modern chapter or verse numbers. Jewish verse divisions are old, but their numerals came later. The chapters used today came through the medieval Latin Bible and were adopted in printed Hebrew Bibles because shared coordinates are useful. The older Jewish reading map is the cycle of 54 weekly portions.</p>
+        </article>
+        <article class="torah-context">
+          <h3>What is reconstructed, not confirmed</h3>
+          <p>Jewish tradition attributes the Torah to Moses. The Torah itself never names the author of the whole work, and its final chapter narrates Moses&rsquo; death. Modern scholars broadly agree that the text combines older sources, laws, stories, and editorial layers. They do not agree on a final headcount. The famous four-source model is influential, not a confirmed list of four authors.</p>
+          <p>The &ldquo;six books&rdquo; idea is different. Some scholars read Genesis through Joshua as a literary <em>Hexateuch</em> because the land promise reaches its narrative completion in Joshua. That is a theory about the work&rsquo;s scope, not evidence that six independent originals were later pasted together. The safest account of purpose is also modest: different parts did different jobs, while the final form gives a people an origin story, a covenant charter, and a way to carry identity beyond any one king, temple, or piece of land.</p>
+        </article>
+      </div>
+
+      <aside class="u-textcheck" aria-labelledby="textcheck-title">
+        <div class="u-textcheck-head">
+          <div>
+            <p class="u-textcheck-k">How safely did this reach us?</p>
+            <h3 class="u-textcheck-verdict" id="textcheck-title">The story is secure. Some sentences are not.</h3>
+          </div>
+          <p class="u-textcheck-rule">Three questions, because one confidence score would lie.</p>
+        </div>
+        <div class="u-textcheck-rows">
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Early witnesses</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">The Greek Torah was translated in the third century BCE, and Hebrew Qumran fragments let us compare copies more than 2,000 years old. No author&rsquo;s original survives.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Hebrew wording</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong, not perfect</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">The Masoretic tradition preserves a remarkably stable base. The Samaritan Torah, Greek Torah, and Qumran copies also preserve real variants. A few change a law or sentence meaningfully.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">English meaning</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Plot strong, key words mixed</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">Creation, exodus, covenant, law, failure, and journey survive translation. Hebrew wordplay, compressed grammar, and words such as <em>torah</em>, <em>nefesh</em>, and <em>chesed</em> never arrive without loss.</p>
+          </div>
+        </div>
+        <p class="u-textcheck-foot">Verdict based on the <a href="https://www.deadseascrolls.org.il/learn-about-the-scrolls/introduction?locale=en_US">Dead Sea Scrolls</a>, the history of the <a href="https://academic.oup.com/reference/62341/reference-article-abstract/561720572">Greek Pentateuch</a>, and Emanuel Tov&rsquo;s account of the <a href="https://www.thetorah.com/article/do-we-know-the-original-text-of-the-torah">surviving Torah text families</a>. This measures transmission, not whether its claims are true.</p>
+      </aside>
     </section>
 
-    <!-- ============================ EXPLORER ============================ -->
-    <section class="hb" id="hb">
-      <div class="hb-bar">
-        <div class="hb-step">
-          <button class="hb-nav" id="hb-prev" aria-label="Previous passage">&lsaquo;</button>
-          <button class="hb-jump" id="hb-jump" aria-label="Jump to a passage"><span id="hb-ref">Genesis 1:1</span><span id="hb-title"></span></button>
-          <button class="hb-nav" id="hb-next" aria-label="Next passage">&rsaquo;</button>
-        </div>
-        <div class="hb-views" id="hb-views" role="group" aria-label="How many translations to show">
-          <button data-view="key" class="is-on">Key</button>
-          <button data-view="all">All</button>
-        </div>
-        <div class="hb-count" id="hb-count"></div>
+    <section class="torah-layer torah-shell" id="book-map" aria-labelledby="book-map-title">
+      <p class="torah-layer-tag"><b>02</b> The five-book map</p>
+      <h2 class="torah-h2" id="book-map-title">Each book changes the problem</h2>
+      <p class="torah-intro">The Torah is easier to hold when each scroll has one job. Read straight through, the motion is world, family, people, presence, failure, and one last choice.</p>
+      <div class="book-map">
+        <article class="book-row"><span class="book-n">01</span><h3 class="book-title">Genesis</h3><p class="book-role"><strong>World becomes family.</strong> Creation keeps collapsing into blame, violence, and empire. God answers by choosing Abraham&rsquo;s family to carry blessing and justice outward.</p></article>
+        <article class="book-row"><span class="book-n">02</span><h3 class="book-title">Exodus</h3><p class="book-role"><strong>Family becomes people.</strong> God hears slaves, breaks Pharaoh&rsquo;s power, makes a covenant at Sinai, and comes to dwell among the people. They break the covenant before Moses gets down the mountain.</p></article>
+        <article class="book-row"><span class="book-n">03</span><h3 class="book-title">Leviticus</h3><p class="book-role"><strong>Presence becomes a way of life.</strong> Sacrifice, purity, atonement, food, sex, farming, wages, and love of neighbor all answer one question: how can ordinary life survive near holiness?</p></article>
+        <article class="book-row"><span class="book-n">04</span><h3 class="book-title">Numbers</h3><p class="book-role"><strong>Freedom becomes a test.</strong> A freed people still thinks like slaves. Fear, appetite, nostalgia, rebellion, and failed leadership cost a generation the land.</p></article>
+        <article class="book-row"><span class="book-n">05</span><h3 class="book-title">Deuteronomy</h3><p class="book-role"><strong>Memory becomes choice.</strong> Moses retells the law for people who did not leave Egypt themselves. Remember, teach, love, and choose. He dies outside the land, so the ending stays open.</p></article>
       </div>
-
-      <div class="hb-grid" id="hb-gridpop" hidden aria-label="Keystone index, grouped by section of the Tanakh"></div>
-
-      <div class="hb-body">
-        <div class="hb-source" id="hb-source"></div>
-        <div class="hb-notes" id="hb-notes"></div>
-        <div class="hb-versions" id="hb-versions"></div>
-      </div>
-      <div class="hb-loading">loading the translations&hellip;</div>
-      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The Hebrew and the translations are plain text in <code>js/hebrew-bible-data.js</code>.</p></noscript>
+      <p class="map-key">The structural center is not a famous saying. It is the long Sinai section from Exodus 19 through Numbers 10, where liberation is turned into covenant, sanctuary, law, and a camp organized around sacred presence.</p>
     </section>
 
-    <!-- ============================ COLOPHON ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <details class="src-drop">
-      <summary class="sechead src-drop-s">Where the text comes from</summary>
-      <div class="src-drop-body">
-      <p>Every translation here is reproduced verbatim, not paraphrased. The Hebrew and most of the English I pulled with scripts from clean digital editions and checked line by line. Robert Alter, whose translation is not posted online as one clean text, I quote only where I could verify his exact wording against a published source, on the passages where his rendering most earns a place. The one change to any quotation is curly quotation marks turned straight, to match the rest of the site. Where a translator uses a dash, it is theirs, not mine.</p>
-      <ul class="src-list">
-        <li><b>The Hebrew</b> is the vocalized Masoretic text, with vowel points but without the cantillation marks, served by <a href="https://www.sefaria.org">Sefaria</a>. The Talmud passage is in its original Aramaic.</li>
-        <li><b>JPS 1917</b>, the first English Tanakh by a Jewish committee, with the <b>King James Version</b> (1611) and <b>Young&rsquo;s Literal Translation</b> (1898), are in the public domain.</li>
-        <li><b>NJPS</b> (the 1985 Jewish Publication Society <em>Tanakh</em>), the <b>Koren Jerusalem Bible</b> (1962), <b>Everett Fox</b>&rsquo;s <em>The Five Books of Moses</em> (1995, the Torah only), and <b>Robert Alter</b>&rsquo;s <em>The Hebrew Bible</em> (2018) are in copyright, quoted here for comparison and study with every translator named.</li>
-        <li><b>The Hillel story</b> is the Babylonian Talmud, <em>Shabbat</em> 31a, in the Koren-Steinsaltz English (Sefaria) and the older Soncino, with the Aramaic alongside.</li>
-      </ul>
-      <p>The breakdowns are mine. They lean on the standard scholarship and the classical Jewish commentators, Rashi and Ibn Ezra and the rabbis of the Talmud and the Midrash, and where the Jewish reading of a verse parts from the familiar Christian one, I have tried to lay both out plainly and fairly rather than smooth the difference over.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">The photograph on the homepage card is an open Torah scroll, the handwritten parchment from which the Five Books are chanted aloud in synagogue, with a silver pointer (a <em>yad</em>) resting in front so no finger touches the text. Jewish Museum and Tolerance Center, Moscow; public domain (CC0), via Wikimedia Commons.</p>
+    <section class="torah-layer torah-shell" id="argument" aria-labelledby="argument-title">
+      <p class="torah-layer-tag"><b>03</b> The argument</p>
+      <h2 class="torah-h2" id="argument-title">Twelve ideas hold the whole thing up</h2>
+      <p class="torah-intro">These are not the most shareable verses. They are the ideas that explain why whole sections exist, why later books keep looking backward, and why Jewish tradition keeps returning to them.</p>
+
+      <nav class="concept-index" aria-label="Index of the Torah's load-bearing ideas">
+        <div class="concept-group">
+          <p class="concept-group-k">The human problem</p>
+          <ol>
+            <li><a href="#image"><span class="ix-n">01</span><span class="ix-title">Every human life carries divine worth</span><span class="ix-book">Genesis</span></a></li>
+            <li><a href="#failure"><span class="ix-n">02</span><span class="ix-title">The same human failure keeps changing clothes</span><span class="ix-book">Genesis</span></a></li>
+          </ol>
+        </div>
+        <div class="concept-group">
+          <p class="concept-group-k">The calling</p>
+          <ol>
+            <li><a href="#blessing"><span class="ix-n">03</span><span class="ix-title">Election is a job: carry blessing and justice</span><span class="ix-book">Genesis</span></a></li>
+            <li><a href="#exodus"><span class="ix-n">04</span><span class="ix-title">God hears slaves, and memory becomes obligation</span><span class="ix-book">Exodus</span></a></li>
+            <li><a href="#covenant"><span class="ix-n">05</span><span class="ix-title">Freedom becomes covenant, not independence</span><span class="ix-book">Exodus</span></a></li>
+          </ol>
+        </div>
+        <div class="concept-group">
+          <p class="concept-group-k">The practice</p>
+          <ol>
+            <li><a href="#presence"><span class="ix-n">06</span><span class="ix-title">Liberation aims at presence, not merely escape</span><span class="ix-book">Exodus, Leviticus</span></a></li>
+            <li><a href="#holiness"><span class="ix-n">07</span><span class="ix-title">Holiness joins ritual to ordinary ethics</span><span class="ix-book">Leviticus</span></a></li>
+            <li><a href="#limits"><span class="ix-n">08</span><span class="ix-title">Rest, land, wealth, and power need limits</span><span class="ix-book">All five</span></a></li>
+            <li><a href="#love"><span class="ix-n">09</span><span class="ix-title">Love is loyalty practiced until it becomes memory</span><span class="ix-book">Deuteronomy</span></a></li>
+          </ol>
+        </div>
+        <div class="concept-group">
+          <p class="concept-group-k">The return</p>
+          <ol>
+            <li><a href="#mercy"><span class="ix-n">10</span><span class="ix-title">Failure is judged, but it does not have the last word</span><span class="ix-book">Exodus, Deuteronomy</span></a></li>
+            <li><a href="#wilderness"><span class="ix-n">11</span><span class="ix-title">Leaving slavery is faster than learning freedom</span><span class="ix-book">Numbers</span></a></li>
+            <li><a href="#choice"><span class="ix-n">12</span><span class="ix-title">The Torah ends before the answer</span><span class="ix-book">Deuteronomy</span></a></li>
+          </ol>
+        </div>
+      </nav>
+
+      <aside class="torah-convergence">
+        <h3>Where modern Jewish teachers converge</h3>
+        <p><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Jonathan Sacks</a> in Orthodox Judaism, teachers at the Conservative movement&rsquo;s <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a>, and <a href="https://reformjudaism.org/blog/passover-2024-three-central-messages-pesach">Reform teachers</a> disagree about revelation, law, authorship, gender, and much more. Yet their accounts repeatedly meet on the same spine: every person bears God&rsquo;s image, Exodus makes freedom a responsibility, covenant joins a people to service, the stranger tests justice, holiness reaches daily life, and study keeps the choice alive. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
+      </aside>
+    </section>
+
+    <section class="torah-layer torah-shell" id="concepts" aria-labelledby="concepts-title">
+      <p class="torah-layer-tag"><b>04</b> Expand the concepts</p>
+      <h2 class="torah-h2" id="concepts-title">Open any idea and watch it recur</h2>
+      <p class="torah-intro">Each entry gives the claim, its place in the Torah&rsquo;s argument, several places the text says it, and the reason Jewish readers treat it as load-bearing.</p>
+
+      <div class="concept-list">
+        <details class="torah-concept" id="image">
+          <summary><span class="concept-n">01</span><span><span class="concept-statement">Every human life carries divine worth.</span><span class="concept-place">Genesis 1, 5, and 9</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Genesis gives the royal language of God&rsquo;s &ldquo;image&rdquo; to humanity as such, male and female, not only to a king, priest, Israelite, or righteous person. The next chapters make that status survive exile from Eden, murder, and flood. Human beings can become violent without becoming disposable.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>And God created man in His own image, in the image of God created He him; male and female created He them.</q><cite>Genesis 1:27</cite></p>
+              <p class="verse"><q>Male and female created He them, and blessed them, and called their name Adam.</q><cite>Genesis 5:2</cite></p>
+              <p class="verse"><q>Whoso sheddeth man&rsquo;s blood, by man shall his blood be shed; for in the image of God made He man.</q><cite>Genesis 9:6</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>The idea appears before Abraham and is repeated after the flood, so it belongs to humanity, not one covenant alone.</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Genesis_Rabbah.24.7">Ben Azzai</a> called the shared human genealogy an even greater principle than loving one&rsquo;s neighbor.</p><p class="why-item"><b>Modern reading</b>Sacks and Reform teachers both use the image of God as the ground of equal dignity, despite major theological differences.</p></div>
+            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Adam</em> first means the human or humankind, not a man whose proper name happens to be Adam. Translations that begin with &ldquo;man&rdquo; can make a universal claim sound male before the Hebrew does.</p></details>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="failure">
+          <summary><span class="concept-n">02</span><span><span class="concept-statement">The same human failure keeps changing clothes.</span><span class="concept-place">Eden, Cain, flood, Babel</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Genesis 3 through 11 is not a loose pile of childhood stories. Each episode enlarges one pattern: desire crosses a limit, responsibility is dodged, violence spreads, and people try to secure a name or future on their own terms. The Torah diagnoses the problem before it introduces Abraham as an answer.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>The woman whom Thou gavest to be with me, she gave me of the tree, and I did eat.</q><cite>Genesis 3:12</cite></p>
+              <p class="verse"><q>Am I my brother&rsquo;s keeper? ... the voice of thy brother&rsquo;s blood crieth unto Me from the ground.</q><cite>Genesis 4:9-10</cite></p>
+              <p class="verse"><q>Every imagination of the thoughts of his heart was only evil continually.</q><cite>Genesis 6:5</cite></p>
+              <p class="verse"><q>Let us make us a name; lest we be scattered abroad upon the face of the whole earth.</q><cite>Genesis 11:4</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>The four stories escalate from one couple to siblings, a whole society, and an organized civilization.</p><p class="why-item"><b>Tradition</b>Jewish interpretation usually reads Adam and Eve as the beginning of moral struggle, not as a doctrine that every child inherits Adam&rsquo;s guilt.</p><p class="why-item"><b>Modern reading</b>Across Jewish movements, these chapters are read as accounts of agency, appetite, blame, violence, and the human capacity to choose again.</p></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="blessing">
+          <summary><span class="concept-n">03</span><span><span class="concept-statement">Election is a job: carry blessing and justice.</span><span class="concept-place">The Abraham cycle</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">After nations try to make their own name at Babel, God promises to make Abraham&rsquo;s name great. The contrast matters. Abraham&rsquo;s family is not chosen as a prize for being better. It is chosen so other families can be blessed, and Genesis later defines Abraham&rsquo;s way as righteousness and justice.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>I will bless thee, and make thy name great; and be thou a blessing ... in thee shall all the families of the earth be blessed.</q><cite>Genesis 12:2-3</cite></p>
+              <p class="verse"><q>They may keep the way of the LORD, to do righteousness and justice.</q><cite>Genesis 18:19</cite></p>
+              <p class="verse"><q>In thy seed shall all the nations of the earth be blessed.</q><cite>Genesis 22:18</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Blessing to the other families is stated at Abraham&rsquo;s first call and repeated at major covenant turns.</p><p class="why-item"><b>Tradition</b>Genesis 18 ties Abraham&rsquo;s household directly to <em>tzedakah</em> and <em>mishpat</em>, righteousness and justice.</p><p class="why-item"><b>Modern reading</b><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Sacks</a> reads chosenness as service: a particular people carrying a universal responsibility.</p></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="exodus">
+          <summary><span class="concept-n">04</span><span><span class="concept-statement">God hears slaves, and memory becomes obligation.</span><span class="concept-place">Exodus retold in every later book</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Exodus is the Torah&rsquo;s master political memory. God&rsquo;s first public act for Israel is not giving law but hearing forced labor. That rescue then becomes the reason Israel must give rest, fair judgment, food, clothing, and love to people with less power. Memory is turned into law.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>God heard their groaning, and God remembered His covenant ... And God saw the children of Israel.</q><cite>Exodus 2:24-25</cite></p>
+              <p class="verse"><q>I have surely seen the affliction of My people ... and have heard their cry.</q><cite>Exodus 3:7</cite></p>
+              <p class="verse"><q>A stranger shalt thou not wrong, neither shalt thou oppress him; for ye were strangers in the land of Egypt.</q><cite>Exodus 22:20</cite></p>
+              <p class="verse"><q>Love ye therefore the stranger; for ye were strangers in the land of Egypt.</q><cite>Deuteronomy 10:19</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Creation explains Sabbath once. Deuteronomy explains it again through slavery: servants rest because Israel remembers being forced to work.</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Bava_Metzia.59b.14">The Talmud</a> says the Torah warns about wronging the stranger 36 times, or by another count 46.</p><p class="why-item"><b>Modern reading</b>Orthodox, Conservative, and Reform teachers all treat Exodus as freedom joined to responsibility for the vulnerable.</p></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="covenant">
+          <summary><span class="concept-n">05</span><span><span class="concept-statement">Freedom becomes covenant, not independence.</span><span class="concept-place">Sinai and the plains of Moab</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Pharaoh&rsquo;s opposite is not a life with no claims. Israel leaves service to Pharaoh for service to a covenant. At Sinai, freedom becomes a public vocation: hear, keep, teach, judge, worship, and become a kingdom of priests. Deuteronomy renews that bond with children, workers, immigrants, and even generations not yet present.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>If ye will hearken unto My voice indeed, and keep My covenant ... ye shall be unto Me a kingdom of priests, and a holy nation.</q><cite>Exodus 19:5-6</cite></p>
+              <p class="verse"><q>All that the LORD hath spoken will we do, and obey.</q><cite>Exodus 24:7</cite></p>
+              <p class="verse"><q>Neither with you only do I make this covenant ... but ... also with him that is not here with us this day.</q><cite>Deuteronomy 29:13-14</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>The long center of the Torah, Exodus 19 through Numbers 10, is the construction of covenant life.</p><p class="why-item"><b>Tradition</b>Jewish practice treats commandments as the relationship&rsquo;s content, not as a legal obstacle that the story later discards.</p><p class="why-item"><b>Modern reading</b><a href="https://www.jtsa.edu/torah/freedom-through-torah-2/">JTS</a> and Sacks both describe Torah as the discipline that turns release from domination into responsible freedom.</p></div>
+            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Torah</em> means teaching or instruction before it means a statute book. <em>Segullah</em> in Exodus 19 is a treasured possession, not proof that other peoples have no value. &ldquo;Kingdom of priests&rdquo; describes a task between God and the world as much as a status.</p></details>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="presence">
+          <summary><span class="concept-n">06</span><span><span class="concept-statement">Liberation aims at presence, not merely escape.</span><span class="concept-place">Tabernacle, sacrifice, purity, atonement</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Tabernacle instructions can feel like the plot stops for furniture. They are the plot. Exodus states the purpose of rescue twice: God brought Israel out in order to dwell among them. Leviticus then asks how a camp containing birth, death, blood, disease, conflict, and wrongdoing can live around that presence without treating it as ordinary.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>Let them make Me a sanctuary, that I may dwell among them.</q><cite>Exodus 25:8</cite></p>
+              <p class="verse"><q>I ... brought them forth out of the land of Egypt, that I may dwell among them.</q><cite>Exodus 29:46</cite></p>
+              <p class="verse"><q>The cloud covered the tent of meeting, and the glory of the LORD filled the tabernacle.</q><cite>Exodus 40:34</cite></p>
+              <p class="verse"><q>On this day shall atonement be made for you, to cleanse you.</q><cite>Leviticus 16:30</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Nearly half the Torah is organized around Sinai and the sanctuary, far more space than any single ethical maxim receives.</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Ramban_on_Exodus%2C_Introduction.2">Ramban</a> says redemption is not complete until the divine presence rests among Israel.</p><p class="why-item"><b>Modern reading</b><a href="https://www.jtsa.edu/torah/what-god-wants-from-us/">JTS</a> likewise reads Exodus 29 as the book&rsquo;s own statement of why liberation happened.</p></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="holiness">
+          <summary><span class="concept-n">07</span><span><span class="concept-statement">Holiness joins ritual to ordinary ethics.</span><span class="concept-place">The whole of Leviticus, concentrated in chapter 19</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Leviticus does not replace sacrifice and purity with kindness. It refuses to separate them. The same command to be holy governs food, the sanctuary, harvest edges, wages, courts, disability, sexuality, family, neighbor, and immigrant. The holy is what happens when every zone of life is placed under a claim.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>Sanctify yourselves therefore, and be ye holy; for I am holy.</q><cite>Leviticus 11:44</cite></p>
+              <p class="verse"><q>Thou shalt not curse the deaf, nor put a stumbling-block before the blind ... thou shalt love thy neighbour as thyself.</q><cite>Leviticus 19:14, 18</cite></p>
+              <p class="verse"><q>The stranger that sojourneth with you shall be unto you as the home-born ... and thou shalt love him as thyself.</q><cite>Leviticus 19:34</cite></p>
+              <p class="verse"><q>Ye shall be holy unto Me ... and [I] have set you apart from the peoples.</q><cite>Leviticus 20:26</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Leviticus 19 deliberately alternates ritual and social commands, closing them with the same words: &ldquo;I am the LORD.&rdquo;</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Sifra%2C_Kedoshim%2C_Chapter_4.12">Rabbi Akiva</a> calls love of neighbor a great principle. Hillel turns the negative form into a one-foot summary, then says to study the rest.</p><p class="why-item"><b>Modern reading</b>Jewish teachers across movements return to neighbor and stranger while also disagreeing sharply over which ritual laws remain binding.</p></div>
+            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Re&rsquo;a</em> can mean neighbor, fellow, or companion. <em>Ger</em> is not a tourist passing through; it is a resident outsider living without the protection of ancestral land and clan. &ldquo;Immigrant&rdquo; often carries the social force better than the old &ldquo;stranger.&rdquo;</p></details>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="limits">
+          <summary><span class="concept-n">08</span><span><span class="concept-statement">Rest, land, wealth, and power need limits.</span><span class="concept-place">Sabbath, sabbatical year, Jubilee</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">The Torah builds interruption into the calendar and economy. Work stops every seventh day. Fields rest every seventh year. Debt servitude and land accumulation meet release rules. These laws are not modern equality, and they do not abolish slavery. They do insist that no Israelite owner is absolute because time, land, and people finally belong to God.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>God blessed the seventh day, and hallowed it; because that in it He rested from all His work.</q><cite>Genesis 2:3</cite></p>
+              <p class="verse"><q>Thy man-servant and thy maid-servant may rest as well as thou. And thou shalt remember that thou was a servant in the land of Egypt.</q><cite>Deuteronomy 5:14-15</cite></p>
+              <p class="verse"><q>Proclaim liberty throughout the land unto all the inhabitants thereof; it shall be a jubilee unto you.</q><cite>Leviticus 25:10</cite></p>
+              <p class="verse"><q>The land shall not be sold in perpetuity; for the land is Mine.</q><cite>Leviticus 25:23</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Sabbath is the only institution grounded once in creation and again in liberation from slavery.</p><p class="why-item"><b>Tradition</b>Shabbat became one of Judaism&rsquo;s most durable practices. Jubilee remained a radical legal horizon even when its full historical observance was doubtful.</p><p class="why-item"><b>Modern reading</b><a href="https://www.jtsa.edu/torah/creation-and-liberation/">JTS</a> reads the two Sabbath explanations together: imitate God&rsquo;s rest and refuse Pharaoh&rsquo;s world.</p></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="love">
+          <summary><span class="concept-n">09</span><span><span class="concept-statement">Love is loyalty practiced until it becomes memory.</span><span class="concept-place">The Shema and Deuteronomy&rsquo;s teaching program</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Deuteronomy commands love, then immediately gives it a schedule and a place: speak the words morning and night, at home and on the road, to children, on the hand, and at the door. Love here is not private intensity. It is attention, loyalty, teaching, and repeated action strong enough to outlive the generation that saw Egypt.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>Hear, O Israel: the LORD our God, the LORD is one. And thou shalt love the LORD thy God with all thy heart.</q><cite>Deuteronomy 6:4-5</cite></p>
+              <p class="verse"><q>Thou shalt teach them diligently unto thy children ... when thou liest down, and when thou risest up.</q><cite>Deuteronomy 6:7</cite></p>
+              <p class="verse"><q>What doth the LORD thy God require of thee, but ... to walk in all His ways, and to love Him?</q><cite>Deuteronomy 10:12</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Deuteronomy repeats heart, love, teach, remember, and today until covenant becomes a daily formation of attention.</p><p class="why-item"><b>Tradition</b>The Mishnah opens by asking when the evening Shema is recited. The text&rsquo;s first life is scheduled practice, not abstract creed.</p><p class="why-item"><b>Modern reading</b>Every major Jewish movement retains the Shema as a central statement, even where they disagree about the obligations surrounding it.</p></div>
+            <details class="translation-note"><summary>When English changes the idea</summary><p>The Hebrew of Deuteronomy 6:4 can support &ldquo;the LORD is one&rdquo; or &ldquo;the LORD alone.&rdquo; The first stresses God&rsquo;s unity. The second stresses Israel&rsquo;s exclusive loyalty. Jewish interpretation has heard both in the same six words.</p></details>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="mercy">
+          <summary><span class="concept-n">10</span><span><span class="concept-statement">Failure is judged, but it does not have the last word.</span><span class="concept-place">Golden Calf, spies, return</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Israel breaks the covenant almost as soon as it is made. The Torah does not solve that by pretending failure is harmless. Consequences remain, sometimes severe. It keeps covenant alive through divine mercy, Moses&rsquo; intercession, atonement, and <em>teshuvah</em>, the possibility of turning back after exile and disaster.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>The LORD ... merciful and gracious, long-suffering, and abundant in goodness and truth.</q><cite>Exodus 34:6</cite></p>
+              <p class="verse"><q>Pardon, I pray Thee, the iniquity of this people according unto the greatness of Thy lovingkindness.</q><cite>Numbers 14:19</cite></p>
+              <p class="verse"><q>Thou shalt return unto the LORD thy God ... with all thy heart, and with all thy soul.</q><cite>Deuteronomy 30:2</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>Exodus 34 follows the Golden Calf and becomes the language Moses reuses after the spies. Mercy is learned through breach.</p><p class="why-item"><b>Tradition</b>The <a href="https://www.sefaria.org/Rosh_Hashanah.17b.5">Thirteen Attributes</a> drawn from Exodus 34 are recited throughout the season of repentance and on fast days.</p><p class="why-item"><b>Modern reading</b>Across Jewish movements, <em>teshuvah</em> is understood less as feeling sorry than as return, repair, confession, and changed action.</p></div>
+            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Teshuvah</em> comes from the ordinary verb &ldquo;return.&rdquo; &ldquo;Repentance&rdquo; can make it sound like an inward emotion. Exodus 34 also holds mercy beside consequences across generations. Translations cannot make that tension disappear, and neither should a summary.</p></details>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="wilderness">
+          <summary><span class="concept-n">11</span><span><span class="concept-statement">Leaving slavery is faster than learning freedom.</span><span class="concept-place">The wilderness generation in Numbers</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Numbers is what happens after a liberation story ends too early. The people are physically out of Egypt but still ruled by hunger, fear, rumor, nostalgia, and mistrust. Even Moses fails under pressure. The generation that experienced rescue cannot imagine living freely in the land, so the next generation must inherit the unfinished work.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>We remember the fish, which we were wont to eat in Egypt for nought ... but now our soul is dried away.</q><cite>Numbers 11:5-6</cite></p>
+              <p class="verse"><q>We were in our own sight as grasshoppers, and so we were in their sight.</q><cite>Numbers 13:33</cite></p>
+              <p class="verse"><q>Let us make a captain, and let us return into Egypt.</q><cite>Numbers 14:4</cite></p>
+              <p class="verse"><q>Because ye believed not in Me ... ye shall not bring this assembly into the land.</q><cite>Numbers 20:12</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>The spies are the turning point. The rest of Numbers clears away one generation and prepares another.</p><p class="why-item"><b>Tradition</b>The Passover command to see oneself as having left Egypt is repeated annually because freedom is not treated as a completed ancestor&rsquo;s event.</p><p class="why-item"><b>Modern reading</b><a href="https://rabbisacks.org/covenant-conversation/bamidbar-numbers/an-introduction-to-numbers/">Sacks</a> makes the physical and mental journeys the key to Numbers: Egypt can be left before slavery leaves the mind.</p></div>
+          </div>
+        </details>
+
+        <details class="torah-concept" id="choice">
+          <summary><span class="concept-n">12</span><span><span class="concept-statement">The Torah ends before the answer.</span><span class="concept-place">Moses&rsquo; last speech and death</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <div class="concept-body">
+            <p class="concept-role">Deuteronomy retells the Torah to people who must live it without Moses. The command is near, teachable, and possible, but not automatic. Moses can see the land and cannot enter it. The Torah therefore ends at a threshold. The reader stands with the next generation and must decide whether memory will become action.</p>
+            <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
+              <p class="verse"><q>Thou shalt remember all the way which the LORD thy God hath led thee these forty years in the wilderness.</q><cite>Deuteronomy 8:2</cite></p>
+              <p class="verse"><q>The word is very nigh unto thee, in thy mouth, and in thy heart, that thou mayest do it.</q><cite>Deuteronomy 30:14</cite></p>
+              <p class="verse"><q>I have set before thee life and death, the blessing and the curse; therefore choose life.</q><cite>Deuteronomy 30:19</cite></p>
+              <p class="verse"><q>I have caused thee to see it with thine eyes, but thou shalt not go over thither.</q><cite>Deuteronomy 34:4</cite></p>
+            </div></div>
+            <div class="why-cut"><p class="why-item"><b>Text</b>The promised destination lies outside the five books. That makes obedience in the next chapter a reader&rsquo;s problem, not a finished triumph.</p><p class="why-item"><b>Tradition</b>On Simchat Torah, communities read Moses&rsquo; death and immediately begin Genesis again. Completion becomes return to study.</p><p class="why-item"><b>Modern reading</b>Jewish readings differ about law and revelation, but they share the habit Deuteronomy demands: transmit, argue, practice, and choose again.</p></div>
+          </div>
+        </details>
       </div>
+
+      <section class="hard-reading" aria-labelledby="hard-title">
+        <p class="torah-layer-tag"><b>Do not skip</b> The hard parts</p>
+        <h2 class="torah-h2" id="hard-title">The Torah does not become honest by being cleaned up</h2>
+        <p class="torah-intro">Its moral breakthroughs live beside institutions and commands a modern reader should not excuse. Later Jewish interpretation often limits, redirects, or argues with these texts. It does not make them absent.</p>
+        <div class="hard-reading-grid">
+          <article class="hard-item"><h3>Slavery is limited, not abolished</h3><p>The Exodus makes slavery the founding evil, yet the Torah still permits servitude. Israelite debt servants receive release and kinship protections. Leviticus 25:44-46 permits permanent, inheritable slavery of foreigners. Any account that says the Torah simply ended slavery is false.</p></article>
+          <article class="hard-item"><h3>The legal world is patriarchal</h3><p>Women act with courage and intelligence throughout the narratives, but most law assumes male household authority. Marriage, vows, inheritance, priesthood, and sexual rules do not distribute power equally.</p></article>
+          <article class="hard-item"><h3>Some violence is commanded</h3><p>Flood, collective punishment, the Golden Calf killings, and conquest commands place divine authority beside extreme violence. Jewish interpreters have narrowed some commands or removed their practical target, but the textual problem remains.</p></article>
+          <article class="hard-item"><h3>The laws do not always agree</h3><p>Parallel laws sometimes give different rules or reasons. Sabbath itself is grounded in creation in Exodus and slavery in Deuteronomy. That plurality is evidence of the Torah&rsquo;s layered composition, and also part of the tradition&rsquo;s long argument.</p></article>
+        </div>
+      </section>
+
+      <p class="torah-close">Remember that power began with a cry from slaves. Put limits around work, wealth, appetite, and rule. Make holiness visible in ordinary treatment. When the covenant breaks, return and repair. Then choose life, knowing the choice is never made only once.<small>Hillel&rsquo;s famous one-foot summary ends with the words that protect every short summary from becoming a substitute: &ldquo;The rest is commentary. Go and study.&rdquo;</small></p>
+
+      <details class="u-collapse torah-sources">
+        <summary class="u-collapse-s">Sources and what they support</summary>
+        <ol class="u-collapse-list">
+          <li><b>Composition.</b> <a href="https://oyc.yale.edu/religious-studies/rlst-145/lecture-12">Yale Open Courses</a> for composite formation and the final literary work; <a href="https://www.thetorah.com/article/beyond-sinai-and-sources-the-torah-in-its-final-form">Tammi Schneider</a> for what the Torah does and does not say about authorship.</li>
+          <li><b>Five books and the Hexateuch.</b> <a href="https://www.thetorah.com/article/why-is-the-torah-divided-into-five-books">The five-book division</a> and <a href="https://www.thetorah.com/article/is-the-torah-a-pentateuch-or-hexateuch">Pentateuch or Hexateuch</a>.</li>
+          <li><b>Early text.</b> The <a href="https://academic.oup.com/reference/62341/reference-article-abstract/561720572">Oxford account of the Septuagint</a>, the <a href="https://www.deadseascrolls.org.il/learn-about-the-scrolls/introduction?locale=en_US">Israel Antiquities Authority</a>, and Emanuel Tov on <a href="https://www.thetorah.com/article/do-we-know-the-original-text-of-the-torah">reconstructing early Torah text</a>.</li>
+          <li><b>Divisions.</b> <a href="https://www.jewishencyclopedia.com/articles/14682-verse-division">Verse divisions</a>, <a href="https://www.jewishencyclopedia.com/articles/11904-parashah">weekly portions</a>, and the physical <a href="https://www.jewishencyclopedia.com/articles/13358-scroll-of-the-law">Torah scroll</a>.</li>
+          <li><b>Structural center.</b> <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a> on Exodus 19 through Numbers 10 as the Torah&rsquo;s central unit.</li>
+          <li><b>Jewish summaries.</b> Hillel in <a href="https://www.sefaria.org/Shabbat.31a.6">Shabbat 31a</a>, Rabbi Akiva in <a href="https://www.sefaria.org/Sifra%2C_Kedoshim%2C_Chapter_4.12">Sifra</a>, and Ben Azzai in <a href="https://www.sefaria.org/Genesis_Rabbah.24.7">Genesis Rabbah</a>.</li>
+          <li><b>Quotation text.</b> All biblical excerpts are from the public-domain <a href="https://www.sefaria.org/texts/Tanakh">JPS 1917 translation</a>, checked against Sefaria&rsquo;s digital text. Ellipses only shorten verses; they do not join words into a new claim.</li>
+          <li><b>Homepage photograph.</b> An open Torah scroll with a silver pointer, Jewish Museum and Tolerance Center, Moscow, public domain via Wikimedia Commons.</li>
+        </ol>
       </details>
     </section>
   </main>
@@ -286,15 +489,13 @@
     <p class="u-next-more"><a href="religion.html">All 11 posts in The Sacred Books</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+    <div class="site-footer-inner">
       <a href="/">&copy; 2026 Ethan Willingham</a>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/hebrew-bible-notes.js" defer></script>
-  <script src="js/hebrew-bible-data.js" defer></script>
   <script src="js/hebrew-bible.js" defer></script>
 </body>
 </html>

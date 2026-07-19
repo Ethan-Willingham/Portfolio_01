@@ -90,6 +90,34 @@
 .u-collapse-s{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:.7em; font-family: var(--font-heading); font-size:1.12rem; font-weight:700; color: var(--text-bright); padding:18px 0; } .u-collapse-s::-webkit-details-marker{ display:none; }
 .u-collapse-s::before{ content:"\276F"; color: var(--accent); font-size:.9em; transition: transform .25s ease; } .u-collapse[open] .u-collapse-s::before{ transform: rotate(90deg); }
 .u-collapse .u-collapse-list{ margin:0; padding:16px 0 18px 1.4em; border-top:1px solid var(--s-divide); color: var(--text-dim); font-size:.96rem; line-height:1.65; } .u-collapse .u-collapse-list li{ margin-bottom:.7em; } .u-collapse .u-collapse-list b{ color: var(--text-bright); } .u-collapse .u-collapse-list a{ color: var(--accent); }
+
+/* .u-textcheck - a reusable transmission confidence readout for sacred texts.
+   It deliberately separates manuscript evidence, source wording, and translation.
+   The segmented rails are qualitative, not invented numerical precision. */
+.u-textcheck{ margin:0; padding:clamp(20px,3vw,28px); border:1px solid var(--s-gold-hair); border-radius:18px; background:var(--s-gold-tint); box-shadow:var(--s-shadow-gold); }
+.u-textcheck-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; padding-bottom:1.1rem; border-bottom:1px solid var(--s-gold-hair); }
+.u-textcheck-k{ margin:0 0 .35rem; font-family:var(--font-mono); font-size:.68rem; line-height:1.35; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+.u-textcheck-verdict{ margin:0; max-width:24ch; font-family:var(--font-heading); font-size:clamp(1.25rem,2.7vw,1.55rem); line-height:1.25; color:var(--text-bright); }
+.u-textcheck-rule{ margin:.2rem 0 0; max-width:23ch; font-size:.78rem; line-height:1.45; color:var(--text-dim); text-align:right; }
+.u-textcheck-rows{ margin:0; }
+.u-textcheck-row{ display:grid; grid-template-columns:minmax(7.5rem,.8fr) minmax(7rem,.7fr) minmax(12rem,1.6fr); gap:1rem; align-items:center; padding:1rem 0; border-bottom:1px solid var(--s-divide); }
+.u-textcheck-row:last-child{ border-bottom:0; padding-bottom:0; }
+.u-textcheck-name{ font-family:var(--font-heading); font-size:1rem; font-weight:700; line-height:1.25; color:var(--text-bright); }
+.u-textcheck-read{ display:flex; flex-direction:column; gap:.5rem; }
+.u-textcheck-grade{ font-family:var(--font-mono); font-size:.67rem; line-height:1.35; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+.u-textcheck-scale{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; height:4px; }
+.u-textcheck-scale i{ display:block; border-radius:999px; background:var(--rule); }
+.u-textcheck-scale[data-level="2"] i:nth-child(-n+2),
+.u-textcheck-scale[data-level="3"] i:nth-child(-n+3),
+.u-textcheck-scale[data-level="4"] i{ background:var(--accent); }
+.u-textcheck-note{ margin:0; font-size:.84rem; line-height:1.5; color:var(--text-dim); }
+.u-textcheck-foot{ margin:1rem 0 0; padding-top:1rem; border-top:1px solid var(--s-gold-hair); font-size:.78rem; line-height:1.5; color:var(--text-dim); }
+@media(max-width:640px){
+  .u-textcheck-head{ display:block; }
+  .u-textcheck-rule{ margin-top:.65rem; max-width:none; text-align:left; }
+  .u-textcheck-row{ grid-template-columns:1fr minmax(7rem,.75fr); gap:.55rem 1rem; }
+  .u-textcheck-note{ grid-column:1 / -1; }
+}
 /* .u-kpis / .u-kpi - dashboard readout. LEGACY: kept for big-enough (its only user); not offered for new posts or the archive migration. */
 .u-kpis{ display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:16px; } .u-kpi{ background: var(--s-surface); border:1px solid var(--s-hair); border-radius:18px; padding:24px 22px; box-shadow: var(--s-shadow-2); display:flex; flex-direction:column; gap:.3em; }
 .u-kpi-lbl{ font-family: var(--font-mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color: var(--text-dim); } .u-kpi-val{ font-family: var(--font-heading); font-size: clamp(2.2rem,5vw,2.8rem); font-weight:700; line-height:1; color: var(--text-bright); margin:.1em 0; } .u-kpi-sub{ font-size:.86rem; line-height:1.4; color: var(--text-dim); }
