@@ -4416,6 +4416,14 @@
       if (peerFold) { offender = other; reason = 'peer-topology'; break; }
     }
     if (heldFold || offender) {
+      // The public toy can request a zero-force topology projection here. It
+      // has already line-searched its pointer correction to zero, so rolling
+      // the entire legal snapshot back would only reject the ordinary contact
+      // solve forever. Sluice has no direct pointer grab and therefore never
+      // installs this optional hook.
+      if (heldFold && !offender &&
+          typeof jelloGrabResolveTopologyStep === 'function' &&
+          jelloGrabResolveTopologyStep(b)) return false;
       if (offender) {
         var bcx = (b._cbL + b._cbR) * 0.5, bcy = (b._cbT + b._cbB) * 0.5;
         var ocx = (offender._cbL + offender._cbR) * 0.5;

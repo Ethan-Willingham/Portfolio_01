@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v26.43';
+  var GAME_VERSION = 'v26.44';
   // ---- Debug toggles ----
   // Per-subsystem A/B switches kept from the v11/v12 perf-optimization
   // sessions. All default OFF (false = the subsystem runs normally); flip
@@ -55913,6 +55913,14 @@
       if (peerFold) { offender = other; reason = 'peer-topology'; break; }
     }
     if (heldFold || offender) {
+      // The public toy can request a zero-force topology projection here. It
+      // has already line-searched its pointer correction to zero, so rolling
+      // the entire legal snapshot back would only reject the ordinary contact
+      // solve forever. Sluice has no direct pointer grab and therefore never
+      // installs this optional hook.
+      if (heldFold && !offender &&
+          typeof jelloGrabResolveTopologyStep === 'function' &&
+          jelloGrabResolveTopologyStep(b)) return false;
       if (offender) {
         var bcx = (b._cbL + b._cbR) * 0.5, bcy = (b._cbT + b._cbB) * 0.5;
         var ocx = (offender._cbL + offender._cbR) * 0.5;
