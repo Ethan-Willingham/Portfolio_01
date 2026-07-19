@@ -14,7 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Torah: Five Books, One Argument</title>
-  <meta name="description" content="The Torah as one complete argument: a 100-word summary, a map of all five books, twelve load-bearing ideas, the hard parts, and an honest check on manuscripts and translation.">
+  <meta name="description" content="The Torah as one complete argument: a plain-language orientation, a map of all five books, twelve load-bearing ideas, the hard parts, and an honest check on manuscripts and translation.">
   <meta property="og:title" content="The Torah: Five Books, One Argument">
   <meta property="og:description" content="A plain map of what Genesis through Deuteronomy are trying to make of freedom, power, failure, holiness, and a people asked to remember.">
   <meta property="og:type" content="article">
@@ -44,9 +44,15 @@
     .torah-layer-tag::after { content: ""; width: 2.2rem; height: 1px; background: var(--rule); }
     .torah-h2 { max-width: 18ch; margin: 0; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.015em; color: var(--text-bright); text-wrap: balance; }
     .torah-intro { max-width: 62ch; margin: 1rem 0 0; font-size: 1.08rem; line-height: 1.65; color: var(--text-dim); }
-    .torah-plain { max-width: 56ch; margin: 1.5rem 0 0; }
-    .torah-plain p { margin: 0 0 1.05em; font-family: var(--font-heading); font-size: clamp(1.16rem, 2.8vw, 1.48rem); line-height: 1.58; color: var(--text-bright); text-wrap: pretty; }
-    .torah-plain p:last-child { margin-bottom: 0; }
+    .torah-story { list-style: none; max-width: 68ch; margin: 2rem 0 0; padding: 0; border-top: 1px solid var(--rule); }
+    .torah-story-step { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.2rem); padding: clamp(1.6rem, 4vw, 2.3rem) 0; border-bottom: 1px solid var(--rule); }
+    .torah-story-k { margin: .15rem 0 0; font-family: var(--font-mono); font-size: .64rem; line-height: 1.45; letter-spacing: .11em; text-transform: uppercase; color: var(--text-faint); }
+    .torah-story-k b { display: block; margin-bottom: .35rem; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1; letter-spacing: 0; color: var(--accent); font-weight: 400; }
+    .torah-story-copy h3 { margin: 0 0 .75rem; font-family: var(--font-heading); font-size: clamp(1.35rem, 3.4vw, 1.8rem); line-height: 1.2; color: var(--text-bright); text-wrap: balance; }
+    .torah-story-copy > p { margin: 0 0 .9rem; font-size: 1.03rem; line-height: 1.7; color: var(--text); }
+    .torah-story-copy > p:last-child { margin-bottom: 0; }
+    .torah-story-note { margin-top: 1.1rem !important; padding: .9rem 1rem; border-left: 2px solid var(--s-gold-hair); background: linear-gradient(90deg, var(--s-gold-tint), transparent); font-size: .88rem !important; line-height: 1.62 !important; color: var(--text-dim) !important; }
+    .torah-story-note b { display: block; margin-bottom: .25rem; font-family: var(--font-mono); font-size: .62rem; line-height: 1.35; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
     .torah-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin: clamp(2.4rem, 5vw, 3.7rem) 0; border-block: 1px solid var(--rule); background: var(--rule); }
     .torah-fact { min-width: 0; padding: 1.1rem 1rem; background: var(--bg); }
     .torah-fact b { display: block; font-family: var(--font-heading); font-size: 1.45rem; line-height: 1.1; color: var(--accent); }
@@ -140,6 +146,8 @@
       .torah-hero { padding-top: .45rem; }
       .torah-hero .u-title { font-size: clamp(3.15rem, 17vw, 4.8rem); }
       .torah-layer { padding-block: 3.4rem; }
+      .torah-story-step { grid-template-columns: 1fr; gap: .65rem; }
+      .torah-story-k b { display: inline; margin: 0 .45rem 0 0; font-family: var(--font-mono); font-size: inherit; }
       .concept-index a { grid-template-columns: 2rem 1fr; }
       .concept-index .ix-book { grid-column: 2; }
       .torah-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
@@ -168,12 +176,51 @@
     <section class="torah-layer torah-shell" id="summary" aria-labelledby="summary-title">
       <p class="torah-layer-tag"><b>01</b> Summary</p>
       <h2 class="torah-h2" id="summary-title">The Torah, in plain English</h2>
-      <div class="torah-plain">
-        <p>The Torah begins with a good world that human beings repeatedly damage through mistrust, violence, and the misuse of power. God then calls Abraham and promises to make his family into a people through whom all the earth&rsquo;s families will be blessed. The Torah does not present this as a command to recruit or convert everyone. Its clearest explanation is that Abraham must teach his household to practice righteousness and justice. His family&rsquo;s life with God is meant to become a source of good beyond the family, although the Torah never gives one simple explanation of exactly how.</p>
-        <p>Generations later, Abraham&rsquo;s descendants are called the Israelites. Pharaoh, Egypt&rsquo;s king, enslaves them. God sends Moses, an Israelite who grew up in Pharaoh&rsquo;s household, to lead that enslaved population out of Egypt. This is one particular rescue in the story, not a guarantee that anyone with Israelite ancestry can never be enslaved. At Mount Sinai, after the escape, God and the Israelites make a covenant. Here that means a binding relationship with promises and obligations, which the people explicitly agree to. God will remain present among them, and they agree to live by his teaching.</p>
-        <p>The laws that follow cover worship, courts, work, debt, property, farming, rest, bodies, families, and care for people who can easily be exploited. A question beneath many of them is concrete: if former slaves gain land and power, will they remember Egypt and refuse to reproduce it? The Israelites agree to this way of life, then break the agreement almost immediately by worshiping the Golden Calf. They keep failing in the wilderness, and even Moses fails. They never become perfect. The relationship continues through consequences, forgiveness, repeated instruction, and chances to return.</p>
-        <p>Forty years after Egypt, a new generation camps outside Canaan, the land where Abraham had lived and that God promised his family. They are going there to become a settled people with their own institutions, but Canaan is already inhabited, which makes the land story one of the Torah&rsquo;s hardest moral problems. Moses dies before they cross the border. In his final speech, &ldquo;life and blessing&rdquo; means keeping the covenant and flourishing in the land. &ldquo;Death and curse&rdquo; means abandoning it and losing that life. This choice comes at the end, not the beginning, and the Torah closes before its long-term result is known.</p>
-      </div>
+      <ol class="torah-story" aria-label="The Torah's story in five stages">
+        <li class="torah-story-step">
+          <p class="torah-story-k"><b>01</b> Haran</p>
+          <div class="torah-story-copy">
+            <h3>A 75-year-old childless traveler is called</h3>
+            <p>Genesis first calls him Abram and later renames him Abraham. He is 75, married to the childless Sarai, and leaving Haran with his nephew Lot and household. His family had come from Ur, in modern Iraq. Haran is near today&rsquo;s Turkey-Syria border. The text gives no childhood, occupation, or reason he was chosen.</p>
+            <p>God tells him to leave his country and family, then promises descendants, land, a great name, and a future in which other families are blessed through him. He is never told to convert them. Later, Genesis connects his role to teaching his household righteousness and justice. It leaves the wider mechanism unexplained.</p>
+            <p class="torah-story-note"><b>How did the first contact happen?</b>Genesis says only that God &ldquo;said to Abram.&rdquo; It names no voice, dream, or visible figure. Later meetings take different forms. This first one is not described.</p>
+          </div>
+        </li>
+        <li class="torah-story-step">
+          <p class="torah-story-k"><b>02</b> Egypt</p>
+          <div class="torah-story-copy">
+            <h3>One enslaved population leaves Egypt</h3>
+            <p>Generations later, Abraham&rsquo;s family has become the Israelites, and Pharaoh has enslaved them. Moses is an Israelite adopted into Pharaoh&rsquo;s household who later flees and becomes a shepherd. God calls to him from a bush that burns without being consumed and sends him back to lead the slaves out. After plagues and an escape through the sea, that population is free. The episode does not promise permanent freedom to everyone with Israelite ancestry.</p>
+            <p class="torah-story-note"><b>How many people?</b>Exodus says about 600,000 men left, besides children and a &ldquo;mixed multitude.&rdquo; Adding women and children implies roughly two million people or more. Archaeology does not support a migration through Sinai on that scale. The text&rsquo;s number is clear. The historical headcount is unknown.</p>
+          </div>
+        </li>
+        <li class="torah-story-step">
+          <p class="torah-story-k"><b>03</b> Sinai</p>
+          <div class="torah-story-copy">
+            <h3>A public agreement at an unidentified mountain</h3>
+            <p>The Israelites reach Sinai roughly six weeks after leaving Egypt. The route and mountain cannot be securely placed on a modern map. Jebel Musa in the southern Sinai Peninsula is the traditional site, identified centuries later. The starting point is also uncertain, so an exact distance from Egypt would be invented precision.</p>
+            <p>Moses carries messages between God and the camp. The encounter brings cloud, thunder, lightning, a horn blast, smoke, fire, and a shaking mountain. Exodus says the people hear God speak with Moses. Deuteronomy says they hear a voice but see no form. Exactly what the crowd heard, and by what physical means, remains unclear.</p>
+            <p>They make a covenant, a binding relationship with promises and duties, which they explicitly accept. God will treat them as his people and remain among them. They accept laws covering worship, courts, work, debt, property, farming, families, and care for vulnerable people.</p>
+          </div>
+        </li>
+        <li class="torah-story-step">
+          <p class="torah-story-k"><b>04</b> Wilderness</p>
+          <div class="torah-story-copy">
+            <h3>&ldquo;Wilderness&rdquo; does not mean woods</h3>
+            <p>While Moses is still on Sinai, Aaron makes the Golden Calf, a gold image of a young bull. The people declare that it brought them from Egypt and sacrifice before it. Moses returns and smashes the covenant tablets. The agreement has barely been accepted before it is broken.</p>
+            <p>The Hebrew &ldquo;wilderness&rdquo; means uncultivated, sparsely settled country, often dry grazing land, desert, or steppe. The Israelites live in a moving camp of tents, not a forest. They panic over food and water, challenge Moses, and refuse to enter Canaan after scouts report fortified cities. That generation is condemned to die before entry, making the journey forty years. Even Moses is barred after failing to follow an instruction during a water crisis.</p>
+          </div>
+        </li>
+        <li class="torah-story-step">
+          <p class="torah-story-k"><b>05</b> Moab</p>
+          <div class="torah-story-copy">
+            <h3>The next generation reaches the border</h3>
+            <p>Forty years after the escape, mostly the slaves&rsquo; children camp on the plains of Moab, in modern Jordan, east of the Jordan River and opposite Jericho. They are not outside Abraham&rsquo;s city. Canaan is a region with many towns and peoples, which Abraham traveled through after leaving Haran.</p>
+            <p>The Israelites intend to cross the river, take Canaan, divide it among their tribes, and settle there. Numbers commands them to drive out the inhabitants. Deuteronomy contains harsher commands to destroy particular Canaanite peoples. This is conquest, not peaceful relocation, and the land promise remains one of the Torah&rsquo;s hardest moral problems.</p>
+            <p>Moses dies in Moab after seeing Canaan from a mountain. First he renews the covenant and tells the new generation to cross. His &ldquo;life and blessing&rdquo; speech concerns what happens afterward. Loyalty means a durable society in the land. Abandonment means ruin, defeat, and removal. The long-term result is the nation&rsquo;s future, not an agreement surviving in one city. The Torah ends at the river. Joshua, the next biblical book and not part of the Torah, narrates the conquest.</p>
+          </div>
+        </li>
+      </ol>
 
       <div class="torah-facts" aria-label="Torah at a glance">
         <p class="torah-fact"><b>5</b><span>books, copied as one Torah scroll</span></p>
@@ -229,7 +276,7 @@
       <h2 class="torah-h2" id="book-map-title">Each book changes the problem</h2>
       <p class="torah-intro">The Torah is easier to hold when each scroll has one job. Read straight through, the motion is world, family, people, presence, failure, and one last choice.</p>
       <div class="book-map">
-        <article class="book-row"><span class="book-n">01</span><h3 class="book-title">Genesis</h3><p class="book-role"><strong>World becomes family.</strong> Creation keeps collapsing into blame, violence, and empire. God answers by choosing Abraham&rsquo;s family to carry blessing and justice outward.</p></article>
+        <article class="book-row"><span class="book-n">01</span><h3 class="book-title">Genesis</h3><p class="book-role"><strong>World becomes family.</strong> Creation keeps collapsing into blame, violence, and empire. God promises Abraham a family that must practice justice and become a source of good beyond itself.</p></article>
         <article class="book-row"><span class="book-n">02</span><h3 class="book-title">Exodus</h3><p class="book-role"><strong>Family becomes people.</strong> God hears slaves, breaks Pharaoh&rsquo;s power, makes a covenant at Sinai, and comes to dwell among the people. They break the covenant before Moses gets down the mountain.</p></article>
         <article class="book-row"><span class="book-n">03</span><h3 class="book-title">Leviticus</h3><p class="book-role"><strong>Presence becomes a way of life.</strong> Sacrifice, purity, atonement, food, sex, farming, wages, and love of neighbor all answer one question: how can ordinary life survive near holiness?</p></article>
         <article class="book-row"><span class="book-n">04</span><h3 class="book-title">Numbers</h3><p class="book-role"><strong>Freedom becomes a test.</strong> A freed people still thinks like slaves. Fear, appetite, nostalgia, rebellion, and failed leadership cost a generation the land.</p></article>
@@ -254,7 +301,7 @@
         <div class="concept-group">
           <p class="concept-group-k">The calling</p>
           <ol>
-            <li><a href="#blessing"><span class="ix-n">03</span><span class="ix-title">Election is a job: carry blessing and justice</span><span class="ix-book">Genesis</span></a></li>
+            <li><a href="#blessing"><span class="ix-n">03</span><span class="ix-title">Being chosen is a responsibility, not a reward</span><span class="ix-book">Genesis</span></a></li>
             <li><a href="#exodus"><span class="ix-n">04</span><span class="ix-title">God hears slaves, and memory becomes obligation</span><span class="ix-book">Exodus</span></a></li>
             <li><a href="#covenant"><span class="ix-n">05</span><span class="ix-title">Freedom becomes covenant, not independence</span><span class="ix-book">Exodus</span></a></li>
           </ol>
@@ -319,9 +366,9 @@
         </details>
 
         <details class="torah-concept" id="blessing">
-          <summary><span class="concept-n">03</span><span><span class="concept-statement">Election is a job: carry blessing and justice.</span><span class="concept-place">The Abraham cycle</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
+          <summary><span class="concept-n">03</span><span><span class="concept-statement">Being chosen is a responsibility, not a reward.</span><span class="concept-place">The Abraham cycle</span></span><span class="concept-mark" aria-hidden="true"></span></summary>
           <div class="concept-body">
-            <p class="concept-role">After nations try to make their own name at Babel, God promises to make Abraham&rsquo;s name great. The contrast matters. Abraham&rsquo;s family is not chosen as a prize for being better. It is chosen so other families can be blessed, and Genesis later defines Abraham&rsquo;s way as righteousness and justice.</p>
+            <p class="concept-role">After nations try to make their own name at Babel, God promises to make Abraham&rsquo;s name great. Abraham is not told to convert the world. The text says other families will be blessed through him, then says he must teach his household righteousness and justice. It does not give one simple explanation of how those facts connect.</p>
             <div class="refrain"><p class="refrain-head"><span>The Torah keeps saying it</span><span>Excerpts from JPS 1917</span></p><div class="verse-stack">
               <p class="verse"><q>I will bless thee, and make thy name great; and be thou a blessing ... in thee shall all the families of the earth be blessed.</q><cite>Genesis 12:2-3</cite></p>
               <p class="verse"><q>They may keep the way of the LORD, to do righteousness and justice.</q><cite>Genesis 18:19</cite></p>
@@ -481,6 +528,9 @@
           <li><b>Early text.</b> The <a href="https://academic.oup.com/reference/62341/reference-article-abstract/561720572">Oxford account of the Septuagint</a>, the <a href="https://www.deadseascrolls.org.il/learn-about-the-scrolls/introduction?locale=en_US">Israel Antiquities Authority</a>, and Emanuel Tov on <a href="https://www.thetorah.com/article/do-we-know-the-original-text-of-the-torah">reconstructing early Torah text</a>.</li>
           <li><b>Divisions.</b> <a href="https://www.jewishencyclopedia.com/articles/14682-verse-division">Verse divisions</a>, <a href="https://www.jewishencyclopedia.com/articles/11904-parashah">weekly portions</a>, and the physical <a href="https://www.jewishencyclopedia.com/articles/13358-scroll-of-the-law">Torah scroll</a>.</li>
           <li><b>Structural center.</b> <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a> on Exodus 19 through Numbers 10 as the Torah&rsquo;s central unit.</li>
+          <li><b>Opening chronology.</b> The underlying passages are <a href="https://www.sefaria.org/Genesis.11.27-12.9">Genesis 11:27 through 12:9</a>, <a href="https://www.sefaria.org/Exodus.3.1-4.17">Exodus 3 through 4</a>, <a href="https://www.sefaria.org/Exodus.12.37-42">Exodus 12:37-42</a>, <a href="https://www.sefaria.org/Exodus.19.1-20.23">Exodus 19 through 20</a>, <a href="https://www.sefaria.org/Numbers.14.20-45">Numbers 14:20-45</a>, <a href="https://www.sefaria.org/Numbers.33.48-56">Numbers 33:48-56</a>, <a href="https://www.sefaria.org/Deuteronomy.30.15-20">Deuteronomy 30:15-20</a>, and <a href="https://www.sefaria.org/Deuteronomy.34">Deuteronomy 34</a>.</li>
+          <li><b>Places and numbers.</b> <a href="https://yalebiblestudy.org/courses/exodus/lessons/passover-study-guide/">Yale Bible Study</a> on the implied Exodus population, archaeologist Aren Maeir on the <a href="https://www.thetorah.com/article/archaeological-perspective-shavuot">missing route and unidentified Sinai</a>, the Environment &amp; Society Portal on the Hebrew <a href="https://www.environmentandsociety.org/exhibitions/wilderness-babel/midbar-arabah-and-eremos-biblical-wilderness"><em>midbar</em></a>, and <a href="https://academic.oup.com/reference/62376/reference-article-abstract/554973288">Oxford</a> on Deuteronomy&rsquo;s setting in Moab.</li>
+          <li><b>What was heard at Sinai.</b> Exodus describes a public encounter, but its details do not line up into one simple report. <a href="https://www.thetorah.com/article/what-did-the-people-hear-at-mount-sinai">Benjamin Sommer</a> maps the competing readings.</li>
           <li><b>Jewish summaries.</b> Hillel in <a href="https://www.sefaria.org/Shabbat.31a.6">Shabbat 31a</a>, Rabbi Akiva in <a href="https://www.sefaria.org/Sifra%2C_Kedoshim%2C_Chapter_4.12">Sifra</a>, and Ben Azzai in <a href="https://www.sefaria.org/Genesis_Rabbah.24.7">Genesis Rabbah</a>.</li>
           <li><b>Quotation text.</b> All biblical excerpts are from the public-domain <a href="https://www.sefaria.org/texts/Tanakh">JPS 1917 translation</a>, checked against Sefaria&rsquo;s digital text. Ellipses only shorten verses; they do not join words into a new claim.</li>
           <li><b>Homepage photograph.</b> An open Torah scroll with a silver pointer, Jewish Museum and Tolerance Center, Moscow, public domain via Wikimedia Commons.</li>
