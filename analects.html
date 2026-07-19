@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Analects of Confucius, Side by Side</title>
-  <meta name="description" content="The whole of the Analects in the original Chinese, then every English translation I could gather stacked against each other, with a plain breakdown of the keystone chapters and where the translators split.">
+  <meta name="description" content="All 503 passages of the Analects in plain English, each followed by the received Chinese and every English translation I could gather, stacked side by side.">
   <meta property="og:title" content="The Analects of Confucius, Side by Side">
-  <meta property="og:description" content="Confucius was asked for one word to live by for life. He said shu, reciprocity: do not impose on others what you do not want. One translator calls the book's central virtue benevolence, another humaneness, another Goodness, another 'authoritative conduct.' The whole book, the Chinese source, and a stack of translations, broken apart chapter by chapter.">
+  <meta property="og:description" content="Five hundred and three fragments about learning, ritual, government, friendship, grief, and the lifelong work of becoming decent. Each one in plain English, then the Chinese and every translation I could gather, stacked.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/analects.html">
@@ -33,240 +33,174 @@
   <style>
   /* ============================================================
      THE ANALECTS OF CONFUCIUS, SIDE BY SIDE
-     An interactive reader: ~500 chapters in 20 books, the Chinese
-     source, and every English translation in the corpus, with a
-     plain breakdown of the keystone chapters. Sits in the site
-     shell (forest green, parchment, Century Supra / Segoe UI /
-     Commit Mono). The Chinese source needs a CJK fallback face;
-     everything else stays on the three site fonts. No em dashes.
+     The completed Translation Stack: 503 passages, each opened in
+     plain English, followed by the received Chinese and every
+     English translation in the corpus. No unfinished units.
      ============================================================ */
   :root {
-    --measure: 840px;                 /* reading column */
-    --zh-font: "Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
-    --early:  #cf9f78;                 /* era accents, from the site categorical set */
-    --mid:    #bc9d65;
+    --measure: 820px;
+    --ana-frame: 58rem;
+    --ana-copy: 64ch;
+    --zh-font: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+    --early: #cf9f78;
+    --mid: #bc9d65;
     --modern: #9ec79a;
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
   }
-  html { overflow-x: hidden; }
-  /* the site shell (style.css) puts a horizontal gutter on <body>; every block
-     here adds its own var(--gutter), so zero the body one or they stack to a
-     double gutter on phones (40px instead of 20px). */
-  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+  html { overflow-x: clip; }
+  body.ana-page { padding-inline: 0; overflow-x: clip; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  .ana-shell { width: 100%; max-width: var(--ana-frame); margin: 0 auto; padding-inline: var(--gutter); }
+  .ana-page .post-back { display: block; width: 100%; max-width: var(--measure); margin-left: auto; margin-right: auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
+  .ana-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 4rem); max-width: 61rem; padding-block: clamp(4.5rem, 11svh, 7rem); text-align: center; }
+  .ana-hero .u-title { max-width: 14ch; margin-inline: auto; font-size: clamp(3.25rem, 9.8vw, 6.35rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+  .ana-hero .u-dek { max-width: 50ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+  .ana-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+  .ana-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
 
-  /* ---------- INTRO ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
-  .sec strong { font-weight: 600; color: var(--text-bright); }
-  .sec em { font-style: italic; }
-  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
-  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .zh-inline { font-family: var(--zh-font); font-style: normal; color: var(--text-bright); letter-spacing: 0.04em; }
+  /* ---------- LAYERS ---------- */
+  .ana-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+  .ana-layer:last-of-type { padding-bottom: clamp(2.6rem, 5svh, 3.4rem); }
+  .ana-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+  .ana-layer-tag b { color: var(--accent); font-weight: 400; }
+  .ana-h2 { max-width: 24ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+  .ana-intro { max-width: 55ch; margin: 1rem auto 0; font-size: 1.22rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+  .ana-plain { max-width: var(--ana-copy); margin: 2.6rem auto 0; }
+  .ana-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
+  .ana-plain p:last-child { margin-bottom: 0; }
+  .ana-plain p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+  .ana-plain em { font-style: italic; color: var(--text-bright); }
+  .ana-plain a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: .18em; }
 
-  /* the opening "fan": one line of Chinese, many Englishes */
-  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-zh { font-family: var(--zh-font); font-size: clamp(1.7rem, 5.4vw, 2.5rem); color: var(--text-bright); letter-spacing: 0.08em; padding: 1.3rem 1.5rem 0.5rem; line-height: 1.5; }
-  .fan-zh small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.8rem; }
-  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
-  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
-  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
-  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  @media (min-width: 680px){
-    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
-    .fan-list .who { text-align: right; }
-  }
-
-  /* ---------- THE EXPLORER ---------- */
-  .ana { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
-  .ana-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .ana-step { display: flex; align-items: center; gap: 0.4rem; }
-  .ana-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
-  .ana-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
-  .ana-nav:disabled { opacity: 0.3; cursor: default; }
-  .ana-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; }
-  .ana-jump:hover { background: rgba(255,255,255,0.05); }
-  .ana-jump #ana-chno { font-variant-numeric: tabular-nums; }
-  .ana-jump #ana-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
-  .ana-keys { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
-  .ana-keys button { font-family: var(--font-heading); font-size: 1.1rem; line-height: 1; width: 1.5rem; height: 1.5rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.1rem; }
-  .ana-keys button:hover { border-color: var(--accent); color: var(--accent-hover); }
-  .ana-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
-  .ana-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
-  .ana-views button:hover { color: var(--text-bright); }
-  .ana-views button.is-on { background: var(--accent); color: #2a3128; }
-  .ana-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
+  /* ---------- THE READER ---------- */
+  .ana { max-width: var(--measure); margin: clamp(2.4rem, 5vw, 3.4rem) auto 0; scroll-margin-top: 4.5rem; }
+  .ana-bar { position: sticky; top: .75rem; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem .35rem; padding: .5rem .55rem; margin-bottom: 1.2rem; background: color-mix(in srgb, var(--bg) 86%, #f5f1ea 6%); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--rule-strong); border-radius: 20px; box-shadow: 0 16px 34px -20px rgba(0, 0, 0, .55), 0 2px 10px -6px rgba(0, 0, 0, .35); }
+  .ana-step { display: flex; align-items: center; gap: .15rem; min-width: 0; }
+  .ana-nav { flex: none; width: 2.1rem; height: 2.1rem; border: none; border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 .15rem; font-family: var(--font-heading); font-size: 1.45rem; line-height: 1; transition: background .18s, color .18s; }
+  .ana-nav:hover:not(:disabled) { background: rgba(255, 255, 255, .07); color: var(--accent-hover); }
+  .ana-nav:disabled { opacity: .28; cursor: default; }
+  .ana-jump { display: flex; flex-direction: column; align-items: center; gap: .05rem; width: 18rem; padding: .3rem .7rem; border: none; border-radius: 13px; background: transparent; cursor: pointer; text-align: center; transition: background .18s; }
+  .ana-jump:hover { background: rgba(255, 255, 255, .06); }
+  .ana-jump #ana-chno { font-family: var(--font-heading); font-size: 1.14rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; }
+  .ana-jump #ana-title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-style: italic; font-size: .86rem; line-height: 1.25; color: var(--text-dim); }
+  .ana-count { position: absolute; right: 1.05rem; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-size: .66rem; letter-spacing: .04em; color: var(--text-faint); }
   .ana-count b { color: var(--accent); font-weight: 400; }
 
-  /* the chapter index, grouped by book */
-  .ana-grid { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 60vh; overflow-y: auto; }
+  .ana-grid { margin: 0 0 1.2rem; padding: .9rem; max-height: 62vh; overflow-y: auto; border: 1px solid var(--rule-strong); border-radius: 16px; background: color-mix(in srgb, var(--bg) 92%, #f5f1ea 4%); box-shadow: 0 16px 34px -20px rgba(0, 0, 0, .5); }
   .ana-grid[hidden] { display: none; }
-  .ana-gridsec { margin-bottom: 0.7rem; }
-  .ana-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 0.35rem; text-transform: uppercase; }
-  .ana-gridlabel span { font-family: var(--zh-font); color: var(--accent); margin-right: 0.5em; text-transform: none; letter-spacing: 0.04em; }
+  .ana-gridsec + .ana-gridsec { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--rule); }
+  .ana-gridlabel { margin: 0 0 .45rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.3; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint); }
+  .ana-gridlabel span { margin-right: .5em; font-family: var(--zh-font); text-transform: none; letter-spacing: .04em; color: var(--accent); }
   .ana-gridrow { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
-  .ana-grid button { font-family: var(--font-mono); font-size: 0.72rem; aspect-ratio: 1; border: 1px solid transparent; border-radius: 6px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; position: relative; }
-  .ana-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
+  .ana-grid button { position: relative; aspect-ratio: 1; border: 1px solid transparent; border-radius: 8px; background: rgba(255, 255, 255, .03); color: var(--text-dim); cursor: pointer; font-family: var(--font-mono); font-size: .72rem; transition: background .15s, color .15s, border-color .15s; }
+  .ana-grid button:hover { background: rgba(255, 255, 255, .09); color: var(--text-bright); }
   .ana-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
-  .ana-grid button.has-note { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-  .ana-grid button.has-note::after { content: ""; position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
-  .ana-grid button.has-note.is-cur::after { background: #2a3128; }
 
-  /* source */
-  .ana-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
-  .ana-zh-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
-  .ana-zh-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
-  .ana-zh { font-family: var(--zh-font); font-size: clamp(1.4rem, 4vw, 1.95rem); line-height: 1.85; color: var(--text-bright); letter-spacing: 0.06em; margin: 0; text-wrap: pretty; }
+  /* passage opening */
+  .ana-notes { margin: 1.7rem 0 0; }
+  .ana-note-k { margin: 0 0 .6rem; font-family: var(--font-heading); font-weight: 700; font-size: 1.02rem; letter-spacing: .11em; text-transform: uppercase; color: var(--accent); }
+  .ana-note-text { max-width: 64ch; margin: 0; font-family: var(--font-heading); font-size: 1.24rem; line-height: 1.7; color: var(--text); text-wrap: pretty; }
+  .ana-note-text em { font-style: italic; color: var(--text-bright); }
+  .ana-note-error { margin: 0; padding: .2rem 0 0; font-family: var(--font-body); font-size: .98rem; font-style: italic; color: var(--text-faint); }
 
-  /* commentary */
-  .ana-notes { margin: 1rem 0 0; }
-  .ana-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
-  .ana-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
-  .ana-note-k:first-child { margin-top: 0; }
-  .ana-note-gist, .ana-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .ana-note-gist em, .ana-note-read em, .ana-splits em { font-style: italic; color: var(--text-bright); }
-  .ana-note-gist b, .ana-splits b { font-weight: 600; color: var(--text-bright); }
-  .ana-note-read { color: var(--text-dim); font-style: italic; }
-  .ana-splits { margin: 0; }
-  .ana-splits dt { font-family: var(--zh-font); font-size: 1.25rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.04em; }
-  .ana-splits dt .ana-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
-  .ana-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
-  .ana-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
-  .ana-keylink { font-family: inherit; font-style: italic; font-size: inherit; color: var(--accent); background: none; border: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 0; cursor: pointer; }
-  .ana-keylink:hover { color: var(--accent-hover); }
+  /* received Chinese */
+  .ana-source { margin-top: 2.2rem; padding: 1.15rem 0 1.2rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--accent); }
+  .ana-source-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 0 0 .55rem; }
+  .ana-source-head b { font-family: var(--font-heading); font-size: 1.12rem; font-weight: 400; color: var(--text-bright); }
+  .ana-source-head a { color: inherit; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: .18em; }
+  .ana-source-head span { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .04em; color: var(--text-faint); }
+  .ana-zh { margin: 0; font-family: var(--zh-font); font-size: clamp(1.28rem, 3.4vw, 1.72rem); line-height: 1.78; letter-spacing: .04em; color: var(--text); text-wrap: pretty; }
 
-  /* translations */
-  .ana-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
+  /* translation tiers */
+  .ana-tier { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 3.4rem 0 .7rem; }
+  .ana-tier b { font-family: var(--font-heading); font-weight: 700; font-size: 1.32rem; letter-spacing: -.01em; color: var(--text-bright); }
+  .ana-tier span { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .06em; color: var(--accent); }
+  .ana-versions { margin: 0; display: grid; gap: 0; }
   .ana-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .ana-v:last-child { border-bottom: 1px solid var(--rule); }
-  .ana-early  { border-left-color: var(--early); }
-  .ana-mid    { border-left-color: var(--mid); }
+  .ana-early { border-left-color: var(--early); }
+  .ana-mid { border-left-color: var(--mid); }
   .ana-modern { border-left-color: var(--modern); }
-  .ana-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
-  .ana-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
-  .ana-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
+  .ana-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; }
+  .ana-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -.01em; }
+  .ana-vy { flex: none; font-family: var(--font-mono); font-size: .74rem; letter-spacing: .05em; color: var(--text-faint); }
   .ana-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
-  .ana-vt .ana-br { display: block; height: 0.6em; }
-  .ana-empty { color: var(--text-faint); font-style: italic; }
+  .ana-vt .ana-br { display: block; height: .6em; }
 
-  /* fade the explorer in once data lands */
   .ana .ana-body { opacity: 0; transition: opacity .4s var(--ease); }
   .ana.ana-ready .ana-body { opacity: 1; }
-  .ana-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
+  .ana-loading { padding: 2rem 0; text-align: center; font-family: var(--font-mono); font-size: .8rem; color: var(--text-faint); }
   .ana.ana-ready .ana-loading { display: none; }
 
-  /* ---------- closing / colophon ---------- */
-  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
-  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
+  /* ---------- endcap alignment ---------- */
+  .ana-page .u-next, .ana-page .site-footer-inner { width: 100%; max-width: var(--measure); margin-left: auto; margin-right: auto; }
+  .ana-page .site-footer-inner { font-family: var(--font-body); }
 
-  /* ---------- mobile ---------- */
-  @media (max-width: 560px){
-    .fan-zh { font-size: 1.5rem; padding: 1.1rem 1rem 0.4rem; letter-spacing: 0.05em; }
-    .fan-list li { padding: 0.65rem 1rem; }
-    .fan-list .e { font-size: 1.02rem; }
-    .ana-bar { gap: 0.55rem 0.7rem; }
-    .ana-count { margin-left: 0; flex-basis: 100%; }
-    .ana-source, .ana-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
-    .ana-v { padding-left: 0.9rem; }
+  @media (max-width: 560px) {
+    .ana-layer { padding-block: 3.4rem; }
+    .ana-bar { top: .5rem; gap: .3rem; padding: .45rem .5rem .5rem; border-radius: 17px; }
+    .ana-jump { width: min(58vw, 14rem); }
+    .ana-count { position: static; transform: none; flex-basis: 100%; margin: 0; text-align: center; }
     .ana-gridrow { grid-template-columns: repeat(8, 1fr); }
+    .ana-source, .ana-v { padding-left: .9rem; }
   }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
-<body>
+<body class="ana-page">
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
-  <a href="religion.html" class="post-back ll-back"><span class="pb-label">The Sacred Books</span></a>
+  <a href="religion.html" class="post-back"><span class="pb-label">The Sacred Books</span></a>
 
-  <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The Analects of Confucius, side by side</h1>
-    <p class="hero-dek">Asked for one word to live by for the rest of your life, Confucius gave the golden rule backwards: <em>do not</em> do to others what you would hate done to you. The book turns on a handful of words like that, and no two translators render them the same way.</p>
-    <p class="hero-meta"><span>An interactive reader</span> <span class="sep">/</span> <span><b>503 chapters</b>, 20 books</span> <span class="sep">/</span> <span><b>Chinese source</b> plus stacked translations</span> <span class="sep">/</span> <span>verbatim, not paraphrased</span></p>
+  <header class="u-hero ana-hero ana-shell">
+    <h1 class="u-title">The Analects of Confucius, Side by Side</h1>
+    <p class="u-dek">Five hundred and three fragments about learning, ritual, government, friendship, grief, and the lifelong work of becoming decent. Each one broken down in plain language, then read against the original Chinese and every English translation I could gather.</p>
+    <p class="u-meta">An interactive reader <span class="u-sep">/</span> <b>503 passages</b> <span class="u-sep">/</span> <b>20 books</b> <span class="u-sep">/</span> <b>7 translators</b></p>
+    <span class="ana-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main>
-    <!-- ============================ INTRO ============================ -->
-    <section class="sec">
-      <p class="lede">You already know the golden rule: treat others the way you want to be treated. Twenty-five centuries before anyone phrased it that way, Confucius was asked to name a single word a person could practice for a whole life. He gave its mirror image.</p>
-      <p>The word was <span class="zh-inline">恕</span>, <em>shu</em>, which translators render as reciprocity, or consideration, or putting yourself in the other person's place. Then he unpacked it in eight characters: <span class="zh-inline">己所不欲，勿施於人</span>. Do not do to others what you would not want done to you. Not the warm, do-good version. The colder, harder one: start by not doing harm. Here are six readers crossing those same eight characters.</p>
-
-      <div class="fan">
-        <p class="fan-zh">己所不欲，勿施於人<small>Book 15, chapter 24 &middot; the one word he named to live by, unpacked</small></p>
-        <ul class="fan-list">
-          <li><span class="e">What you do not want done to yourself, do not do to others.</span><span class="who">Legge, 1893</span></li>
-          <li><span class="e">Never do to others what you would not like them to do to you.</span><span class="who">Waley, 1938</span></li>
-          <li><span class="e">Do not impose on others what you yourself do not desire.</span><span class="who">Lau, 1979</span></li>
-          <li><span class="e">What you don't like done to yourself, don't do to others.</span><span class="who">Muller, 1990</span></li>
-          <li><span class="e">Do not impose on others what you yourself do not want.</span><span class="who">Ames &amp; Rosemont, 1998</span></li>
-          <li><span class="e">Do not impose upon others what you yourself do not desire.</span><span class="who">Slingerland, 2003</span></li>
-        </ul>
+    <section class="ana-layer ana-shell" id="summary" aria-labelledby="summary-title">
+      <p class="ana-layer-tag"><b>01</b> Summary</p>
+      <h2 class="ana-h2" id="summary-title">The Analects, in plain English</h2>
+      <div class="ana-plain">
+        <p>The Analects is 503 scraps of conversation, not a book Confucius wrote. Some are one sentence. Some are scenes: a student asks the same question another student asked and gets the opposite answer; a stable burns and Confucius asks whether anyone was hurt, not about the horses; his favorite student dies and the calm teacher loses control of his grief.</p>
+        <p><a href="https://plato.stanford.edu/entries/confucius/">Confucius, Master Kong, lived from 551 to 479 BCE</a> in the small state of Lu, while the old Zhou political order was coming apart. He taught, held minor offices, traveled between courts looking for a ruler willing to use him, and died without seeing his program tried at scale. The speaking voice is usually his, but the hands preserving it belonged to students and later followers.</p>
+        <p>The traditional account says his first and second generation disciples assembled the sayings. The honest answer is less tidy. The collection grew through different branches of the school and reached something like its received form over the next few centuries. <a href="https://plato.stanford.edu/entries/confucius/#SourForConfLifeThou">Early China had competing versions, including a 22-book text.</a> The 20 books here are the version that survived. Scholars still argue over how much gives us the historical man's own words.</p>
+        <p>The project running through those fragments is <em>self-cultivation</em>: turn an ordinary person into a <em>junzi</em>, someone exemplary enough to be trusted with a family, a friendship, or a government. Learning begins the work. Repeated practice makes it settle. Confucius says he started at fifteen and reached the point where desire stopped crossing the moral line at seventy. No revelation. Fifty-five years of training.</p>
+        <p>The book's largest word is <em>ren</em>. Benevolence, humaneness, goodness, and authoritative conduct are all real translations, and none is large enough. Confucius defines it differently depending on who asks: master yourself and return to ritual; love others; help them stand where you want to stand; do not impose on them what you would not want yourself. It is less a feeling than the quality of a person whose relationships have become reliably good.</p>
+        <p>The machinery that builds it is <em>li</em>, ritual. That includes sacrifices and court ceremony, but also how to sit on a mat, receive a guest, mourn a parent, correct a friend, dress for an occasion, and leave a room. Confucius bets that repeated outward form can train inward desire. Law may stop a person from stealing. Good ritual, good company, and a good ruler are supposed to make stealing feel shameful before a guard arrives.</p>
+        <p>That is also his politics. A ruler's character spreads like wind over grass. Promote upright people and the public learns what the state honors. Take more than you need and theft appears below. Confucius trusts moral example more than punishment, which is powerful when the ruler is good and dangerously thin protection when the ruler is not.</p>
+        <p>The hard parts belong to the book too. It defends hierarchy, gives fathers and rulers strong presumptions, praises a son for hiding a father's theft, and contains a contemptuous line about women and servants. Confucius can be flexible with ritual and generous about education, then fiercely nostalgic for inherited rank. Reading him honestly means keeping those claims in the room with the golden rule.</p>
+        <p><a href="https://plato.stanford.edu/entries/confucius/#ConfChinPhilSymbTradCult">From the twelfth century onward, the Analects sat inside the Four Books curriculum</a> that shaped elite education across East Asia. Its endurance did not make its key words easier to move into English. <em>Junzi</em> becomes gentleman, superior man, noble person, or exemplary person. <em>Li</em> becomes ritual, propriety, rites, or good form. Stack the translations and you can see every English Confucius being built from those choices.</p>
       </div>
-
-      <p>Same eight characters. Most land in nearly the same place, which is the point: when the Chinese is plain, the translators agree, and you can trust the line. The trouble starts with the words that have no English. The book's highest virtue, <span class="zh-inline">仁</span> <em>ren</em>, is benevolence to Legge, Goodness to Waley, humaneness to Watson and Chin, and <em>authoritative conduct</em> to Ames and Rosemont. Its ideal person, <span class="zh-inline">君子</span> <em>junzi</em>, is a gentleman, a superior man, or an exemplary person depending on who you read. Those are the places this page is built for.</p>
-
-      <p>The Analects is not a book Confucius wrote. It is fragments his students wrote down, and their students after them, over a couple of centuries: short scenes that almost all begin <span class="zh-inline">子曰</span>, <em>the Master said</em>. It reads less like scripture than like a notebook kept by people who did not want to forget how he talked. Confucius himself claimed to be inventing nothing. <em>I transmit but do not create</em>, he said (7.1); he thought he was just handing on what the old sages already knew.</p>
-
-      <p>Below is the whole book, all 20 books and roughly 500 short chapters, in the order the tradition fixed them. For each one you get the Chinese, then every English version I could gather, stacked so you can read them against each other. For the keystone chapters, the ones the rest of the book leans on, there is a plain-language breakdown of what it is doing and where the translators part ways. The gold-dotted chapters in the index are the ones with a breakdown. Use the arrows or your keyboard to move around.</p>
     </section>
 
-    <!-- ============================ EXPLORER ============================ -->
-    <section class="ana" id="ana">
-      <div class="ana-bar">
-        <div class="ana-step">
-          <button class="ana-nav" id="ana-prev" aria-label="Previous chapter">&lsaquo;</button>
-          <button class="ana-jump" id="ana-jump" aria-label="Jump to a chapter"><span id="ana-chno">1.1</span><span id="ana-title"></span></button>
-          <button class="ana-nav" id="ana-next" aria-label="Next chapter">&rsaquo;</button>
+    <section class="ana-layer ana-shell" id="reader" aria-labelledby="reader-title">
+      <p class="ana-layer-tag"><b>02</b> The reader</p>
+      <h2 class="ana-h2" id="reader-title">All 503 passages, side by side</h2>
+      <p class="ana-intro">Each passage opens with what it says in plain English, my own distillation rather than another translation. Then comes the received Chinese and every English version in the corpus, the famous editions first and the fragments last. Arrows or your keyboard to move.</p>
+
+      <div class="ana" id="ana">
+        <div class="ana-bar">
+          <div class="ana-step">
+            <button class="ana-nav" id="ana-prev" aria-label="Previous passage">&lsaquo;</button>
+            <button class="ana-jump" id="ana-jump" aria-label="Jump to a passage" aria-controls="ana-gridpop" aria-expanded="false"><span id="ana-chno">Book 1, passage 1</span><span id="ana-title"></span></button>
+            <button class="ana-nav" id="ana-next" aria-label="Next passage">&rsaquo;</button>
+          </div>
+          <div class="ana-count" id="ana-count"></div>
         </div>
-        <div class="ana-keys" aria-label="Jump between keystone chapters">
-          <button id="ana-keyprev" aria-label="Previous keystone chapter">&lsaquo;</button>
-          keystones
-          <button id="ana-keynext" aria-label="Next keystone chapter">&rsaquo;</button>
+
+        <div class="ana-grid" id="ana-gridpop" hidden aria-label="Passage index, grouped by book"></div>
+
+        <div class="ana-body">
+          <div class="ana-notes" id="ana-notes"></div>
+          <div class="ana-source" id="ana-source"></div>
+          <div class="ana-versions" id="ana-versions"></div>
         </div>
-        <div class="ana-views" id="ana-views" role="group" aria-label="How many translations to show">
-          <button data-view="key" class="is-on">Key</button>
-          <button data-view="complete">Complete</button>
-          <button data-view="all">All</button>
-        </div>
-        <div class="ana-count" id="ana-count"></div>
+        <div class="ana-loading">loading the translations&hellip;</div>
+        <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and translations are plain text in <code>js/analects-data.js</code>.</p></noscript>
       </div>
-
-      <div class="ana-grid" id="ana-gridpop" hidden aria-label="Chapter index, grouped by book"></div>
-
-      <div class="ana-body">
-        <div class="ana-source" id="ana-source"></div>
-        <div class="ana-notes" id="ana-notes"></div>
-        <div class="ana-versions" id="ana-versions"></div>
-      </div>
-      <div class="ana-loading">loading the translations&hellip;</div>
-      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/analects-data.js</code>.</p></noscript>
-    </section>
-
-    <!-- ============================ COLOPHON ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
-      <p>Every translation here is reproduced verbatim, not paraphrased. The two complete ones were pulled with scripts and parsed, so nothing in them was retyped or reworded by hand or by a model. The keystone renderings were read from clean editions and checked against the original wording. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
-      <ul class="src-list">
-        <li><b>The Chinese</b> is the received text, and <b>James Legge</b>'s 1893 English, both from the <a href="https://ctext.org/analects">Chinese Text Project</a>, both public domain. Legge runs the full length of the book.</li>
-        <li><b>A. Charles Muller</b>'s translation, posted free at <a href="https://web.archive.org/web/2023/https://www.acmuller.net/con-dao/analects.html">acmuller.net</a>, also runs the whole book. It is lined up against the Chinese chapter by chapter, since Muller and the Chinese Text Project split a few books into chapters slightly differently.</li>
-        <li><b>The keystone chapters</b> add five more, quoted where a breakdown turns on their wording: <b>Arthur Waley</b> (1938), <b>D. C. Lau</b> (Penguin, 1979), <b>Roger Ames and Henry Rosemont Jr.</b> (1998), <b>Edward Slingerland</b> (Hackett, 2003), and <b>Robert Eno</b>'s free online teaching translation (2015). Several are still in copyright and are reproduced here for comparison and study, every translator named, every chapter located.</li>
-      </ul>
-      <p>The breakdowns are mine. They lean on the standard scholarship for the contested lines. Four more translators I lean on for their famous word-choices but do not quote at length, because I could not find a clean machine-readable copy to verify against: <b>Ezra Pound</b>'s idiosyncratic 1951 version, <b>Simon Leys</b> (1997), <b>Burton Watson</b> (2007), and <b>Annping Chin</b> (2014). Where a breakdown says how one of them renders <em>ren</em> or <em>junzi</em>, that is a documented choice, not a guess.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">The painting on the homepage card is the portrait of Confucius from <em>Half Portraits of the Great Sage and Virtuous Men of Old</em>, an album in the National Palace Museum, Taipei (the same collection as the Lao Tzu painting on the Tao Te Ching card). The cartouche names him <span lang="zh">大成至聖文宣王</span>, a posthumous imperial title. Public domain.</p>
     </section>
   </main>
 
@@ -277,15 +211,15 @@
     <p class="u-next-more"><a href="religion.html">All 11 posts in The Sacred Books</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+    <div class="site-footer-inner">
       <a href="/">&copy; 2026 Ethan Willingham</a>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/analects-notes.js" defer></script>
+  <script src="js/analects-notes.js?v=20260719a" defer></script>
   <script src="js/analects-data.js" defer></script>
-  <script src="js/analects.js" defer></script>
+  <script src="js/analects.js?v=20260719a" defer></script>
 </body>
 </html>

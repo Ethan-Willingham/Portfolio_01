@@ -126,6 +126,29 @@ three scripts before carrying this format to another book.
   the centered series shell, floating capsule, unboxed commentary, framed
   hairlines, 20-pixel mobile gutter, and centered endcap and footer.
 
+**The Analects transfer, completed 2026-07-19.** This is the scale test for the
+finished Tao format: 503 short passages grouped inside 20 books, rather than 81
+flat chapters.
+
+- "Complete" means every received passage, not only the famous sayings. Every
+  `B.C` reference has its own `title` and `plain` entry. The former keystone-only
+  state, dots, filters, and empty breakdown message are gone.
+- Preserve the book grouping in the chapter grid and the `#B.C` URL hash. The
+  capsule still presents one continuous previous and next sequence across all
+  503 passages.
+- The received Chinese stays here because this post already promises the source,
+  the units are short enough to keep it quiet, and the translation differences
+  often turn on a compact repeated term. It sits after the plain-English opening
+  and before the English stack, without a box or source-language commentary.
+- For this corpus the tier order is the well-known editions (Legge, Waley, Lau,
+  Ames and Rosemont, Slingerland), the other complete aligned edition (Muller),
+  then the partial Eno comparisons. Missing copyrighted passages remain missing;
+  no translation is invented to make a row look complete.
+- The plain-English openings name the hard material as plainly as the humane
+  material. In particular, 13.18 keeps filial concealment, 17.25 identifies its
+  contempt for women and servants, and the book-level opening says directly that
+  the text is hierarchical and not a modern liberal ethic.
+
 ### B. The One-Reading Walk
 For an old text where one modern translation is itself the achievement, and the
 content is narrative or argument that wants a single coherent voice rather than a
@@ -371,17 +394,15 @@ Smith, Popper, Montaigne, Jung, Musashi, and the 48 Laws of Power.
 
 ## Reference implementation
 
-`tao-te-ching.html` is the built example of Approach A. The data lives in two
-files:
+`tao-te-ching.html` is the flat-chapter example of Approach A;
+`analects.html` is the grouped large-corpus example. Each book uses three scripts:
 
-- `js/tao-data.js`: the translations, verbatim, one entry per chapter per
-  translator.
-- `js/tao-notes.js`: the breakdowns, shape
-  `n: { title, gist, splits:[{zh, gloss, note}], read }`. Chapters without an
-  entry render the translations alone, so you write breakdowns only for the
-  keystones.
-- `js/tao.js`: the explorer (chapter nav, the Key / Complete / All view toggle,
-  the grid index).
+- `js/<book>-data.js`: the translations verbatim, one entry per unit per
+  translator, plus source text when the page genuinely needs it.
+- `js/<book>-notes.js`: every shipped unit, shape
+  `unit: { title, plain }`. `plain` is a summary, never an unlabeled translation.
+- `js/<book>.js`: the explorer, with previous and next navigation, complete grid,
+  URL hash, live count, and translations tiered famous, complete, partial.
 
 Clone that architecture per book: a `<book>.html` shell, `js/<book>-data.js`,
 `js/<book>-notes.js`, reusing the `js/tao.js` patterns.
