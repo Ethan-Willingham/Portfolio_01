@@ -1,6 +1,6 @@
 # Sacred Books post template
 
-This note records the structure selected for `quran.html` so the next Sacred Books post can begin with the decisions already made.
+This note records the structure selected for `quran.html` and confirmed by `gita.html` so the next Sacred Books post can begin with the decisions already made.
 
 ## The four-section structure
 
@@ -60,3 +60,16 @@ For the Quran, the final set covers war, family authority, slavery and concubina
 - Keep the research sources at the end of section four.
 
 The implementation reference is `quran.html`.
+
+## Bhagavad Gita decisions already made
+
+- Tell the movement as one conversation, from Arjuna dropping the bow to Arjuna choosing to raise it. The eighteen chapters need explanation, but not eighteen separate chapter cards.
+- Keep the nested frame visible: Sanjaya reports Krishna and Arjuna to the blind king Dhritarashtra inside the larger `Mahabharata`.
+- Separate the stable 700-verse Sanskrit core from the much later surviving witnesses and from the deep disagreement over interpretation.
+- Name the classical disagreement directly. Shankara, Ramanuja, and Madhva are not three decorative sources for one settled meaning. Their conflict over knowledge, devotion, surrender, God, and Self is part of what the page must teach.
+- Use Annie Besant's 1922 fourth edition for exact quotations. Wikisource provides numbered discourse pages and identifies the edition as public domain in the United States.
+- Apply the veteran test across more than one kind of Hindu practice. The ideas should be recognizable in meditation, study, devotion, household duty, temple offering, and organized service.
+- Keep six unresolved pressures together: literal war and allegorical readings, duty and `varna`, the mixed welcome of verse 9.32, detachment and moral responsibility, action and renunciation, and the recognition and subordination of other gods.
+- Remove the 700-verse translation explorer and its data scripts from the page. The canonical Gita post has the same four-section reading-guide structure as the Quran post and no fifth reader section.
+
+The second implementation reference is `gita.html`.

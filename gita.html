@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Bhagavad Gita, Side by Side</title>
-  <meta name="description" content="All 700 verses of the Bhagavad Gita in the original Sanskrit, then every English translation I could gather stacked against each other, with a plain breakdown of the keystone verses and where the translators split.">
-  <meta property="og:title" content="The Bhagavad Gita, Side by Side">
-  <meta property="og:description" content="A warrior freezes before a battle that will kill his own family, and his charioteer, who turns out to be God, talks him through it. All 700 verses, the Sanskrit source, and a stack of English translations, broken apart verse by verse.">
+  <title>The Bhagavad Gita: A Guided Reading</title>
+  <meta name="description" content="The Bhagavad Gita in plain English: its movement from collapse to action, twelve ideas tested in living practice, its textual history, and the passages a serious reader should not skip.">
+  <meta property="og:title" content="The Bhagavad Gita: A Guided Reading">
+  <meta property="og:description" content="The Gita's movement from collapse to action, what the Sanskrit text can establish, twelve ideas living traditions keep returning to, and the passages that resist a clean summary.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/gita.html">
@@ -31,297 +31,415 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-  /* ============================================================
-     THE BHAGAVAD GITA, SIDE BY SIDE
-     An interactive reader: 700 verses, the Sanskrit source
-     (Devanagari + transliteration), and every English translation
-     in the corpus, with a plain breakdown of the keystone verses.
-     Sits in the site shell (forest green, parchment, Century Supra
-     / Segoe UI / Commit Mono). The Sanskrit needs a Devanagari
-     system face; the transliteration rides Century Supra A (full
-     diacritics). Everything else stays on the three site fonts.
-     No em dashes.
-     ============================================================ */
-  :root {
-    --measure: 840px;                 /* reading column */
-    --sa-font: "Noto Serif Devanagari", "Kohinoor Devanagari", "ITF Devanagari", "Devanagari Sangam MN", "Sanskrit 2003", serif;
-    --iast-font: "Century Supra A", "Gentium Plus", "Noto Serif", "Times New Roman", serif;
-    --early:  #cf9f78;                 /* era accents, from the site categorical set */
-    --mid:    #bc9d65;
-    --modern: #9ec79a;
-    --ease: cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  html { overflow-x: hidden; }
-  body { overflow-x: hidden; }
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+    :root {
+      --gg-copy: 64ch;
+      --gg-measure: 760px;
+      --gg-frame: 58rem;
+      --gg-tint: rgba(245, 241, 234, .045);
+      --gg-hair: rgba(212, 196, 160, .20);
+    }
+    html { overflow-x: hidden; }
+    body.gg-page { padding-inline: 0; overflow-x: hidden; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .gg-shell { width: 100%; max-width: var(--gg-frame); margin: 0 auto; padding-inline: var(--gutter); }
+    .gg-page .post-back { display: block; width: 100%; max-width: var(--gg-measure); margin: 0 auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-inline: var(--gutter); }
+    .gg-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 7rem); max-width: 61rem; padding-block: clamp(3.5rem, 9svh, 6rem); text-align: center; }
+    .gg-hero .u-title { max-width: 13ch; margin-inline: auto; font-size: clamp(3.45rem, 11vw, 6.9rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+    .gg-hero .u-dek { max-width: 54ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+    .gg-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+    .gg-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
 
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
+    .gg-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    .gg-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+    .gg-layer-tag b { color: var(--accent); font-weight: 400; }
+    .gg-h2 { max-width: 24ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.55rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+    .gg-intro { max-width: 52ch; margin: 1rem auto 0; font-size: 1.2rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+    .gg-prose { max-width: var(--gg-copy); margin: 2.6rem auto 0; }
+    .gg-prose p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); text-wrap: pretty; }
+    .gg-prose p:last-child { margin-bottom: 0; }
+    .gg-prose p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+    .gg-prose a, .gg-context a, .gg-page .u-textcheck a, .gg-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--gg-hair); }
+    .gg-prose a:hover, .gg-context a:hover, .gg-page .u-textcheck a:hover, .gg-sources a:hover { color: var(--accent-hover); }
 
-  /* ---------- INTRO ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
-  .sec strong { font-weight: 600; color: var(--text-bright); }
-  .sec em { font-style: italic; }
-  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
-  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .sa-inline { font-family: var(--iast-font); font-style: italic; color: var(--text-bright); }
-  .dev-inline { font-family: var(--sa-font); color: var(--text-bright); }
+    .gg-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--gg-copy); margin: 2.8rem auto 0; }
+    .gg-context { padding-top: 1rem; border-top: 1px solid var(--gg-hair); }
+    .gg-context h3 { margin: 0 0 .75rem; font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
+    .gg-context p { margin: 0 0 1rem; font-size: 1.04rem; line-height: 1.7; color: var(--text); }
+    .gg-context p:last-child { margin-bottom: 0; }
+    .gg-page .u-textcheck { max-width: var(--gg-copy); margin: clamp(2.8rem, 6vw, 4.4rem) auto 0; }
 
-  /* the six untranslatable terms */
-  .terms { margin: 1.8rem 0 0.5rem; border-top: 1px solid var(--rule); }
-  .terms .term { padding: 0.85rem 0; border-bottom: 1px solid var(--rule); }
-  .terms dt { font-family: var(--iast-font); font-style: italic; font-size: 1.18rem; color: var(--accent); margin: 0 0 0.25rem; letter-spacing: 0.01em; }
-  .terms dd { margin: 0; font-size: 1.0rem; line-height: 1.55; color: var(--text-dim); }
-  .terms dd em { font-style: italic; color: var(--text-bright); }
-  .terms dd span[lang] { font-style: italic; color: var(--text); }
-  @media (min-width: 680px){
-    .terms .term { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0 1.5rem; align-items: baseline; }
-    .terms dt { margin: 0; }
-  }
+    .gg-concepts { max-width: var(--gg-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
+    .gg-concept { border-bottom: 1px solid var(--rule); }
+    .gg-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
+    .gg-concept > summary::-webkit-details-marker { display: none; }
+    .gg-concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .gg-concept-title { display: block; font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .gg-concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+    .gg-concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
+    .gg-concept-mark::before { content: "+"; }
+    .gg-concept[open] { margin-block: 1.1rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--gg-tint); }
+    .gg-concept[open] .gg-concept-mark::before { content: "-"; }
+    .gg-concept:not([open]):has(+ .gg-concept[open]) { border-bottom-color: transparent; }
+    .gg-concepts:has(> .gg-concept[open]:first-child) { border-top-color: transparent; }
+    .gg-concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
+    .gg-concept-role { margin: 0; font-size: 1.13rem; line-height: 1.72; color: var(--text); }
+    .gg-practice { margin: 1.25rem 0 0; padding-left: 1rem; border-left: 1px solid var(--accent); font-size: 1rem; line-height: 1.65; color: var(--text-dim); }
+    .gg-practice b { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+    .gg-refrain { margin-top: 2rem; }
+    .gg-refrain-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .gg-refrain-head span:last-child { color: var(--text-faint); }
+    .gg-verses { border-top: 1px solid var(--rule); }
+    .gg-verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; margin: 0; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+    .gg-verse q { font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
+    .gg-verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
 
-  /* the opening "fan": one line of Sanskrit, many Englishes */
-  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-dev { font-family: var(--sa-font); font-size: clamp(1.4rem, 4.4vw, 2.1rem); color: var(--text-bright); letter-spacing: 0.005em; padding: 1.3rem 1.5rem 0.2rem; line-height: 1.5; }
-  .fan-iast { font-family: var(--iast-font); font-style: italic; font-size: clamp(0.95rem, 2.4vw, 1.1rem); color: var(--text-dim); padding: 0 1.5rem 0.4rem; line-height: 1.4; }
-  .fan-iast small { display: block; font-family: var(--font-mono); font-style: normal; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
-  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
-  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
-  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
-  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  @media (min-width: 680px){
-    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
-    .fan-list .who { text-align: right; }
-  }
+    .gg-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--gg-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding: 1.35rem 1.4rem; background: var(--gg-tint); border: 1px solid var(--gg-hair); border-radius: 7px; }
+    .gg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
+    .gg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-  /* ---------- THE EXPLORER ---------- */
-  .gita { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
-  .gita-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .gita-step { display: flex; align-items: center; gap: 0.4rem; }
-  .gita-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
-  .gita-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
-  .gita-nav:disabled { opacity: 0.3; cursor: default; }
-  .gita-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; }
-  .gita-jump:hover { background: rgba(255,255,255,0.05); }
-  .gita-jump #gita-ref { font-variant-numeric: tabular-nums; }
-  .gita-jump #gita-title { font-style: italic; font-size: 0.92rem; color: var(--text-dim); font-weight: 400; }
-  .gita-keys { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
-  .gita-keys button { font-family: var(--font-heading); font-size: 1.1rem; line-height: 1; width: 1.5rem; height: 1.5rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.1rem; }
-  .gita-keys button:hover { border-color: var(--accent); color: var(--accent-hover); }
-  .gita-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
-  .gita-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
-  .gita-views button:hover { color: var(--text-bright); }
-  .gita-views button.is-on { background: var(--accent); color: #2a3128; }
-  .gita-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
-  .gita-count b { color: var(--accent); font-weight: 400; }
+    .gg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--gg-copy); margin: 2.6rem auto 0; }
+    .gg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--gg-tint); border: 1px solid var(--gg-hair); border-radius: 7px; }
+    .gg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
+    .gg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
+    .gg-hard a { color: var(--accent); text-decoration: none; }
 
-  /* the verse index, grouped by chapter */
-  .gita-grid { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 60vh; overflow-y: auto; }
-  .gita-grid[hidden] { display: none; }
-  .gita-gridsec { margin-bottom: 0.7rem; }
-  .gita-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 0.35rem; text-transform: uppercase; }
-  .gita-gridlabel span { color: var(--accent); margin-right: 0.5em; text-transform: none; letter-spacing: 0.02em; }
-  .gita-gridrow { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
-  .gita-grid button { font-family: var(--font-mono); font-size: 0.72rem; aspect-ratio: 1; border: 1px solid transparent; border-radius: 6px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; position: relative; }
-  .gita-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
-  .gita-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
-  .gita-grid button.has-note { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-  .gita-grid button.has-note::after { content: ""; position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
-  .gita-grid button.has-note.is-cur::after { background: #2a3128; }
+    .gg-sources { max-width: var(--gg-copy); margin: 3.2rem auto 0; }
+    .gg-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
+    .gg-sources li { break-inside: avoid; }
+    .gg-page .u-next, .gg-page .site-footer-inner { width: 100%; max-width: var(--gg-measure); margin-inline: auto; }
+    .gg-page .site-footer-inner { font-family: var(--font-body); }
 
-  /* source */
-  .gita-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
-  .gita-sa-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
-  .gita-sa-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
-  .gita-dev { font-family: var(--sa-font); font-size: clamp(1.25rem, 3.2vw, 1.6rem); line-height: 1.95; color: var(--text-bright); letter-spacing: 0.005em; margin: 0; text-wrap: pretty; }
-  .gita-iast { font-family: var(--iast-font); font-style: italic; font-size: clamp(0.98rem, 2.3vw, 1.1rem); line-height: 1.6; color: var(--text-dim); margin: 0.7rem 0 0; text-wrap: pretty; }
-
-  /* commentary */
-  .gita-notes { margin: 1rem 0 0; }
-  .gita-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
-  .gita-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
-  .gita-note-k:first-child { margin-top: 0; }
-  .gita-note-gist, .gita-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .gita-note-gist em, .gita-note-read em, .gita-splits em { font-style: italic; color: var(--text-bright); }
-  .gita-note-gist b, .gita-splits b { font-weight: 600; color: var(--text-bright); }
-  .gita-note-read { color: var(--text-dim); font-style: italic; }
-  .gita-splits { margin: 0; }
-  .gita-splits dt { font-family: var(--iast-font); font-style: italic; font-size: 1.16rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.005em; }
-  .gita-splits dt .gita-gloss { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
-  .gita-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
-  .gita-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
-  .gita-keylink { font-family: inherit; font-style: italic; font-size: inherit; color: var(--accent); background: none; border: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 0; cursor: pointer; }
-  .gita-keylink:hover { color: var(--accent-hover); }
-
-  /* translations */
-  .gita-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
-  .gita-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .gita-v:last-child { border-bottom: 1px solid var(--rule); }
-  .gita-early  { border-left-color: var(--early); }
-  .gita-mid    { border-left-color: var(--mid); }
-  .gita-modern { border-left-color: var(--modern); }
-  .gita-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
-  .gita-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
-  .gita-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
-  .gita-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
-  .gita-vt .gita-br { display: block; height: 0.6em; }
-  .gita-empty { color: var(--text-faint); font-style: italic; }
-
-  /* fade the explorer in once data lands */
-  .gita .gita-body { opacity: 0; transition: opacity .4s var(--ease); }
-  .gita.gita-ready .gita-body { opacity: 1; }
-  .gita-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
-  .gita.gita-ready .gita-loading { display: none; }
-
-  /* ---------- closing / colophon ---------- */
-  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
-  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
-
-  /* ---------- mobile ---------- */
-  @media (max-width: 560px){
-    /* the section blocks carry their own var(--gutter); zero the body's so the
-       reader is not double-inset (20px gutter on phones, not 40px). */
-    body { padding-left: 0; padding-right: 0; }
-    .fan-dev { font-size: 1.3rem; padding: 1.1rem 1rem 0.2rem; }
-    .fan-iast { padding: 0 1rem 0.4rem; }
-    .fan-list li { padding: 0.65rem 1rem; }
-    .fan-list .e { font-size: 1.02rem; }
-    .gita-bar { gap: 0.55rem 0.7rem; }
-    .gita-count { margin-left: 0; flex-basis: 100%; }
-    .gita-source, .gita-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
-    .gita-v { padding-left: 0.9rem; }
-    .gita-gridrow { grid-template-columns: repeat(8, 1fr); }
-  }
+    @media (max-width: 720px) {
+      .gg-context-grid, .gg-hard-grid { grid-template-columns: 1fr; }
+      .gg-convergence { grid-template-columns: 1fr; gap: .7rem; }
+      .gg-sources .u-collapse-list { columns: 1; }
+    }
+    @media (max-width: 560px) {
+      .gg-layer { padding-block: 3.4rem; }
+      .gg-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
+      .gg-concept-body { padding: .1rem 0 3rem 2.9rem; }
+      .gg-verse { grid-template-columns: 1fr; gap: .45rem; }
+      .gg-verse cite { text-align: left; }
+      .gg-refrain-head { display: block; }
+      .gg-refrain-head span { display: block; }
+      .gg-refrain-head span:last-child { margin-top: .25rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
-<body>
-  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-
-  <a href="religion.html" class="post-back ll-back"><span class="pb-label">The Sacred Books</span></a>
-
-  <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The Bhagavad Gita, side by side</h1>
-    <p class="hero-dek">A warrior freezes on the edge of a battle that will kill his own family. His charioteer, who turns out to be God, spends 700 verses talking him through how to act anyway. That conversation is the whole book.</p>
-    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>700 verses</b>, 18 chapters <span class="sep">/</span> <b>Sanskrit source</b> plus stacked translations <span class="sep">/</span> verbatim, not paraphrased</p>
+<body class="gg-page">
+  <div class="reading-progress" id="reading-progress"></div>
+  <a href="religion.html" class="post-back"><span class="pb-label">The Sacred Books</span></a>
+  <header class="u-hero gg-hero gg-shell">
+    <h1 class="u-title">The Bhagavad Gita: A Guided Reading</h1>
+    <p class="u-dek">A warrior&rsquo;s collapse, eighteen chapters that move him back toward action, twelve ideas living traditions keep returning to, and the passages a serious reader should not skip.</p>
+    <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>20 sources</b> <span class="u-sep">/</span> 22 min read</p>
+    <span class="gg-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main>
-    <!-- ============================ INTRO ============================ -->
-    <section class="sec">
-      <p class="lede">The most loved book in Hinduism is a soldier's panic attack, and the answer to it. Two armies stand ready to fight. A warrior named Arjuna asks his charioteer to drive him out into the gap between them so he can see who he is about to kill, and there, across the field, he sees his cousins, his teachers, and his childhood friends. His nerve goes. He drops his bow, sits down, and says he would rather die than fight. Everything famous in the Bhagavad Gita is what his charioteer says back.</p>
+    <section class="gg-layer gg-shell" id="summary" aria-labelledby="summary-title">
+      <p class="gg-layer-tag"><b>01</b> The whole conversation</p>
+      <h2 class="gg-h2" id="summary-title">The Bhagavad Gita, in plain English</h2>
+      <p class="gg-intro">The book begins with a man who cannot make himself act. It ends with the same man choosing to act, after the nature of action has changed.</p>
 
-      <p>The charioteer is Krishna, and partway through the talk he stops being a friend giving a pep talk and reveals that he is God, holding the whole universe inside his body. The Gita, which means "the song of the Lord," is the 700 verses he speaks to get one frightened man back on his feet. It is not a free-standing book. It sits two thirds of the way into the <em>Mahabharata</em>, the enormous Sanskrit war epic, and you do not even hear it firsthand: a blind old king is waiting at home for news of the battle, and his aide, granted long-distance sight by a sage, narrates the whole dialogue back to him as it happens. So a scripture about how to face death without flinching is delivered between two armies, in the last quiet minutes before the killing, by a god disguised as a driver, to a man falling apart, and overheard by a blind king through a clairvoyant. The staging is half the genius.</p>
-
-      <p>It is also the most translated Hindu text in the world, and the translators do not agree. The single most quoted line in the book is verse 2.47, the seed of everything Krishna teaches about action. Here is its first half, the same eight Sanskrit words, rendered by seven different hands.</p>
-
-      <div class="fan">
-        <p class="fan-dev" lang="sa">कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।</p>
-        <p class="fan-iast" lang="sa-Latn">karmaṇy-evādhikāras te mā phaleṣhu kadāchana<small>chapter 2, verse 47 &middot; the line the whole tradition leans on, eight words, no agreement</small></p>
-        <ul class="fan-list">
-          <li><span class="e">Your business is with action alone; not by any means with fruit.</span><span class="who">Telang, 1882</span></li>
-          <li><span class="e">Let right deeds be thy motive, not the fruit which comes from them.</span><span class="who">Arnold, 1885</span></li>
-          <li><span class="e">You have only the right to work, but none to the fruit of it.</span><span class="who">Purohit, 1935</span></li>
-          <li><span class="e">Your right is only to work, but not to its results.</span><span class="who">Sivananda, 1942</span></li>
-          <li><span class="e">You have the right to work alone, but not to the fruits of it.</span><span class="who">Adidevananda, after Ramanuja</span></li>
-          <li><span class="e">Your right is only to act, not to the results.</span><span class="who">Gambhirananda, after Shankara</span></li>
-        </ul>
+      <div class="gg-prose">
+        <p>The Bhagavad Gita ends with Arjuna picking up his bow. That matters because he spends its first chapter finding every reason to put the bow down. Two branches of one royal family have brought their armies to Kurukshetra. Arjuna asks his charioteer Krishna to stop between them. He looks across the field and sees cousins, teachers, friends, and elders on both sides. His mouth dries, his skin burns, his limbs fail, and the bow slips from his hand. Victory would mean killing people whose presence made the victory worth having.</p>
+        <p>His argument is not cowardice dressed up as principle. He says the war will destroy families, break inherited duties, expose women to violence, disorder social life, and stain the survivors with the blood of teachers and kin. He would rather be killed unarmed. Then he admits that he cannot tell what duty requires and asks Krishna to teach him. The Gita is the answer, but it is not a tidy answer. Krishna gives Arjuna several ways of seeing the same crisis until one of them can hold.</p>
+        <p>The scene is already nested inside another scene. The Gita is eighteen chapters of the <em>Mahabharata</em>, the enormous Sanskrit epic about this family war. A blind king named Dhritarashtra asks what is happening on the field. His counselor Sanjaya, granted supernatural sight, reports the conversation between Arjuna and Krishna. The reader therefore hears a god and a warrior through a witness speaking to a king whose attachment to his own sons helped produce the disaster.</p>
+        <p>Chapter 2 gives almost the entire answer in compressed form. Krishna says Arjuna is grieving for bodies as if the body were the whole person. The true Self, <em>atman</em>, is not born and does not die. Bodies are taken up and put down like worn garments. Arjuna is also a warrior, and a just battle is the duty in front of him. Yet he must not fight for pleasure, power, revenge, or even victory. He has authority over his action, never over its fruit. Act with an even mind in success and failure. This disciplined action is yoga.</p>
+        <p>Chapters 3 through 6 work out that first route. No embodied person can remain truly inactive. Refusing to act is itself an action, with consequences. The question is whether work feeds the small self or is offered as sacrifice. Krishna calls the second way <em>karma yoga</em>: perform the work that is yours, release the claim on what it produces, and let the work help hold the world together. A wise person does not withdraw merely to protect private purity while everyone else carries the cost.</p>
+        <p>Krishna then widens the frame. Whenever dharma declines, he says, he takes form to protect the good and restore order. Action can be performed without binding the doer when it is done without grasping. Renunciation and action are both praised, but disciplined action is safer for most people. The sixth chapter turns inward. Sit steadily. Moderate food and sleep. Bring the wandering mind back. Arjuna objects that controlling it seems as hard as controlling the wind. Krishna does not deny the difficulty. Practice and dispassion train it.</p>
+        <p>Chapters 7 through 10 change the scale of the speaker. Krishna is no longer merely the charioteer who knows how to live. He is the source, support, and end of the universe. The qualities of nature come from him but do not contain him. He receives worship offered in many forms, while insisting that he is the reality those forms depend on. Devotion, <em>bhakti</em>, becomes increasingly direct. A leaf, a flower, a fruit, or water, offered with devotion, is enough.</p>
+        <p>Arjuna asks to see what these claims mean. Chapter 11 gives him the cosmic form. Krishna lends him divine sight, and the familiar body beside him opens into countless faces, suns, gods, weapons, worlds, and mouths devouring the armies already gathered to die. Krishna identifies himself as Time, the destroyer of worlds. Arjuna is awed, then terrified. He asks the universal form to become the friend he knew. Krishna does. The next chapter describes the devotee Krishna loves in much quieter terms: without hatred, friendly, compassionate, free from possessiveness, steady in pain and pleasure.</p>
+        <p>Chapters 13 through 17 sort the human being and the world into working parts. The body is a field, consciousness the knower of the field. Nature acts through three <em>gunas</em>, strands or qualities: <em>sattva</em>, which clarifies; <em>rajas</em>, which drives and grasps; and <em>tamas</em>, which obscures and deadens. They color knowledge, work, resolve, pleasure, food, worship, gifts, and speech. The point is not to find a permanent personality label. It is to notice what is operating, cultivate clarity, and move beyond the grip of all three.</p>
+        <p>The final chapter gathers every road without making the old disagreements disappear. Knowledge, disciplined action, meditation, and devotion all return. So do social duties based on qualities and work. Krishna tells Arjuna to dedicate every act to him, become his devotee, and take refuge in him alone. In one verse he says he has taught the deepest wisdom and tells Arjuna to reflect fully, then act as he chooses. Three verses later he says to abandon all duties and come to him for shelter. Reflection and surrender stand beside each other.</p>
+        <p>Arjuna&rsquo;s last words show what the teaching was for. His confusion has gone, his doubts have fled, and he will act. The Gita does not promise that action becomes painless or that every reader should imitate this action. It claims that freedom can exist inside necessary work when ego, fear, and possession no longer own the work. That claim made the book portable. Monastics, householders, reformers, nationalists, devotees, philosophers, and people trying to get through an ordinary day have all found themselves somewhere between the dropped bow and the raised one.</p>
       </div>
-
-      <p>Work, business, deeds, action; fruit, results, reward. One translator makes it a clean transaction you have no claim on, another makes it a moral instruction, a third strips it to four flat words. They are reading the same line. Sanskrit packs a lot into a little, and every translator has to decide what Krishna meant before they can write it down, so they decide differently. That spread is the subject of this page.</p>
-
-      <p>Underneath the spread, the argument is simple enough to say in two sentences. Krishna's diagnosis: you suffer because you are hooked on the results of what you do, and because you have mistaken your dying body for your actual self. His prescription is three roads to the same freedom, and you do not have to choose between them. <strong>Act</strong> without clutching at the outcome (this is <em>karma yoga</em>, the path of action). <strong>Love</strong> and hand yourself over to God (<em>bhakti</em>, devotion). <strong>Know</strong> the deathless Self that was never born and will never die (<em>jnana</em>, knowledge). The book braids the three together and calls the braid yoga.</p>
-
-      <p>Six words carry that whole argument, and none of them crosses cleanly into English, which is why you see them left untranslated even in plain renderings. They are worth knowing before you start.</p>
-
-      <dl class="terms">
-        <div class="term"><dt><span lang="sa-Latn">dharma</span></dt><dd>duty, law, righteousness, religion, the order of things, the role you were born into. One word doing the work of six. The book's first word and last word are both forms of it.</dd></div>
-        <div class="term"><dt><span lang="sa-Latn">yoga</span></dt><dd>literally a yoking, as of an ox to a cart. Discipline, method, path, union with the divine. The exercise classes borrowed the word; it always meant much more than the stretching.</dd></div>
-        <div class="term"><dt><span lang="sa-Latn">atman</span></dt><dd>the Self, soul, the deathless witness inside you, as opposed to the body and personality it is wearing. Knowing it is not the body is the move that dissolves Arjuna's grief.</dd></div>
-        <div class="term"><dt><span lang="sa-Latn">karma</span></dt><dd>action, work, deed, and the long tail of consequence an action drags behind it. Not yet the cosmic scoreboard the English word became.</dd></div>
-        <div class="term"><dt><span lang="sa-Latn">guna</span></dt><dd>strand, quality, thread. The three the Gita keeps naming (<span lang="sa-Latn">sattva</span>, clarity; <span lang="sa-Latn">rajas</span>, drive; <span lang="sa-Latn">tamas</span>, inertia) are the raw materials everything in nature is spun from, including you.</dd></div>
-        <div class="term"><dt><span lang="sa-Latn">Brahman</span></dt><dd>the absolute, the ground of everything, the one reality behind the many. The Upanishads, which the Gita is standing on, say that your <span lang="sa-Latn">atman</span> and <span lang="sa-Latn">Brahman</span> are the same thing, from the outside in (<em>tat tvam asi</em>, "that thou art") and from the inside out (<em>aham brahmasmi</em>, "I am Brahman").</dd></div>
-      </dl>
-
-      <p>Below is the whole book, all 700 verses, in the order the tradition fixed them. For each one you get the Sanskrit, in Devanagari and in transliteration, then every English version I could line up, stacked so you can read them against each other. For the keystone verses, the ones the rest of the tradition leans on, there is a plain-language breakdown of what the verse is doing and where the translators part ways. The gold-dotted verses in the index are the ones with a breakdown, and the keystone arrows jump between them. Use the arrows or your keyboard to move through the rest.</p>
     </section>
 
-    <!-- ============================ EXPLORER ============================ -->
-    <section class="gita" id="gita">
-      <div class="gita-bar">
-        <div class="gita-step">
-          <button class="gita-nav" id="gita-prev" aria-label="Previous verse">&lsaquo;</button>
-          <button class="gita-jump" id="gita-jump" aria-label="Jump to a verse"><span id="gita-ref">1.1</span><span id="gita-title"></span></button>
-          <button class="gita-nav" id="gita-next" aria-label="Next verse">&rsaquo;</button>
-        </div>
-        <div class="gita-keys" aria-label="Jump between keystone verses">
-          <button id="gita-keyprev" aria-label="Previous keystone verse">&lsaquo;</button>
-          keystones
-          <button id="gita-keynext" aria-label="Next keystone verse">&rsaquo;</button>
-        </div>
-        <div class="gita-views" id="gita-views" role="group" aria-label="How many translations to show">
-          <button data-view="key" class="is-on">Key</button>
-          <button data-view="complete">Complete</button>
-          <button data-view="all">All</button>
-        </div>
-        <div class="gita-count" id="gita-count"></div>
+    <section class="gg-layer gg-shell" id="context" aria-labelledby="context-title">
+      <p class="gg-layer-tag"><b>02</b> History and transmission</p>
+      <h2 class="gg-h2" id="context-title">What can actually be known</h2>
+
+      <div class="gg-context-grid">
+        <article class="gg-context">
+          <h3>What the evidence can establish</h3>
+          <p>The Gita is not an independent book dropped into history with an author&rsquo;s date on it. It belongs to the <em>Bhishma Parva</em>, the sixth book of the <em>Mahabharata</em>, and occupies eighteen chapters in the critical edition. The epic grew over centuries. Scholars disagree on a narrow date for the Gita, but usually place its composition within the late centuries BCE or early centuries CE.</p>
+          <p>The standard text has 700 verses. Shankara&rsquo;s complete commentary, usually dated to the eighth century, explicitly works with that count. The twentieth-century critical edition of the <em>Mahabharata</em> compared manuscripts from different regions and retained the 700-verse Gita. Some recensions preserve extra verses, especially a Kashmiri line, but no surviving evidence has displaced the 700-verse core.</p>
+        </article>
+        <article class="gg-context">
+          <h3>What remains a reconstruction</h3>
+          <p>Hindu tradition attributes the epic to Vyasa, who also appears inside its story. Historical study cannot recover a single named author of the Gita or a first manuscript. The surviving copies are much later than the period of composition, so the earliest stages must be inferred through language, ideas, quotations, commentaries, and comparison among manuscripts.</p>
+          <p>Stable Sanskrit wording does not produce one stable interpretation. Shankara reads the Gita through nondual knowledge, Ramanuja through devotion and surrender to a real personal God, and Madhva through an enduring distinction between God and souls. All three comment on the same scripture. English adds another decision at nearly every important word: <em>dharma</em>, <em>yoga</em>, <em>atman</em>, <em>karma</em>, and <em>guna</em> have no single English replacement.</p>
+        </article>
       </div>
 
-      <div class="gita-grid" id="gita-gridpop" hidden aria-label="Verse index, grouped by chapter"></div>
-
-      <div class="gita-body">
-        <div class="gita-source" id="gita-source"></div>
-        <div class="gita-notes" id="gita-notes"></div>
-        <div class="gita-versions" id="gita-versions"></div>
-      </div>
-      <div class="gita-loading">loading the translations&hellip;</div>
-      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/gita-data.js</code>.</p></noscript>
+      <aside class="u-textcheck" aria-labelledby="gg-textcheck-title">
+        <div class="u-textcheck-head">
+          <div>
+            <p class="u-textcheck-k">How safely did this reach us?</p>
+            <h3 class="u-textcheck-verdict" id="gg-textcheck-title">The Sanskrit core is stable. Its earliest history and its final meaning are not equally settled.</h3>
+          </div>
+          <p class="u-textcheck-rule">Three questions, because one confidence score would lie.</p>
+        </div>
+        <div class="u-textcheck-rows">
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Early witnesses</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Limited</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">No manuscript survives from the likely period of composition. Shankara&rsquo;s eighth-century commentary is an important early witness to the standard 700-verse text, but it is separated from composition by centuries.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Sanskrit wording</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Stable core</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">The critical edition supports the familiar eighteen chapters and 700 verses. Regional recensions add or divide some lines differently, so stable does not mean letter-for-letter uniform.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">English meaning</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Deeply contested</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">The main movement survives translation. The relation among action, knowledge, devotion, Self, God, and social duty changes with the translator&rsquo;s school and with choices English cannot avoid.</p>
+          </div>
+        </div>
+        <p class="u-textcheck-foot">Verdict based on the <a href="https://academic.oup.com/reference/62357/reference-article-abstract/554517840">Oxford overview of the Gita</a>, the study of <a href="https://link.springer.com/article/10.1186/s40613-016-0026-8">Gita recensions and verse counts</a>, the <a href="https://www.gitasupersite.iitk.ac.in/">IIT Kanpur parallel text and commentary archive</a>, and the classical disagreements documented in the sources below. This measures transmission and interpretation, not whether Krishna is God.</p>
+      </aside>
     </section>
 
-    <!-- ============================ COLOPHON ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
-      <p>Every translation here is reproduced verbatim, not paraphrased. The complete ones were pulled as data and parsed by script, so nothing in them was retyped or reworded by hand or by a model. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
-      <ul class="src-list">
-        <li><b>The Sanskrit</b>, in Devanagari and in transliteration, is from the open <a href="https://bhagavadgita.io">bhagavadgita.io</a> dataset, which prints the standard received text verse by verse.</li>
-        <li><b>The five complete English translations</b> come from the same open dataset: <b>Shri Purohit Swami</b> (1935, the literary version the poet W. B. Yeats helped into print), <b>Swami Sivananda</b> (the practical one the Divine Life Society gives away), <b>Swami Adidevananda</b> (who follows Ramanuja, the devotional reading), <b>Swami Gambhirananda</b> (who follows Shankara, the non-dual reading), and <b>Dr. S. Sankaranarayan</b> (an academic literal rendering).</li>
-        <li><b>Sir Edwin Arnold</b> (<em>The Song Celestial</em>, 1885) and <b>Kashinath Telang</b> (1882, the Sacred Books of the East edition) appear on the keystone verses. Arnold's is the Victorian poem that carried the Gita into English; it is the version a young Gandhi first read, in London, in a translation by an Englishman. Both are public domain, from <a href="https://archive.org">the Internet Archive</a>.</li>
-      </ul>
-      <p>That spans a Victorian scholar, a Victorian poet, and four readers from inside the living tradition, two of whom (Gambhirananda and Adidevananda) deliberately follow rival schools, so on many verses you can watch the old argument between them play out in the English. The other famous moderns the breakdowns name, Annie Besant, Prabhavananda and Isherwood, Eknath Easwaran, Barbara Stoler Miller, Stephen Mitchell, Winthrop Sargeant, Graham Schweig, and Laurie Patton, are still in copyright and printed in books, not posted as clean machine-readable text. Rather than retype them and risk a wrong word, I name them where their choice matters and leave the quoting to the editions I could verify exactly.</p>
-      <p>The breakdowns are mine. They lean on the standard scholarship and on the three great commentators who read the same verses in opposite directions: Shankara (non-dual), Ramanuja (devotional), and Madhva (dualist). Where they split, I have tried to say so rather than smooth it over, because the splitting is the most honest thing about the book.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">A note on the count. By tradition the Gita is exactly 700 verses, which is why it is sometimes just called "the Seven Hundred." The edition here runs to 701, because one stanza in chapter 13 gets split differently; a Kashmiri line of manuscripts runs to 745. Even the number of verses is something the editions disagree about. The blind king Dhritarashtra, for what it is worth, speaks only the opening line; Krishna does almost all the rest of the talking.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">The image on the homepage card is an Indian print of Krishna driving Arjuna's four-horse chariot onto the field, catalogued as <em>Arjuna requests instruction from Krishna</em> (Wellcome Collection, CC BY 4.0). That request, in the pause before the fighting, is the door the whole book walks through.</p>
+    <section class="gg-layer gg-shell" id="ideas" aria-labelledby="ideas-title">
+      <p class="gg-layer-tag"><b>03</b> Expand the ideas</p>
+      <h2 class="gg-h2" id="ideas-title">Twelve ideas living Gita traditions keep returning to</h2>
+      <p class="gg-intro">Each entry gives the claim, the practice it produces, and the exact words in Annie Besant&rsquo;s 1922 public-domain translation.</p>
+
+      <div class="gg-concepts">
+        <details class="gg-concept" id="confusion">
+          <summary><span class="gg-concept-n">01</span><span><span class="gg-concept-title">Practice can begin by admitting that you do not know what to do.</span><span class="gg-concept-place">Arjuna&rsquo;s collapse and request</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">Arjuna does not reach teaching by pretending to be calm. He lets the crisis show itself in his body, argues his case, and finally says that his mind is confused about duty. That confession changes the conversation. Krishna is no longer a charioteer receiving instructions but a teacher speaking to a student who has consented to be taught. The book treats moral bewilderment as serious, but not final.</p>
+            <p class="gg-practice"><b>In practice</b> Gita study often begins with the first chapter, traditionally named the yoga of Arjuna&rsquo;s despondency. A reader is allowed to bring grief, conflict, or indecision into study rather than waiting to become composed first. The discipline is to name the conflict clearly enough that it can be examined.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Seeing these my kinsmen, O Krishna, arrayed, eager to fight&hellip;</q><cite>1.28</cite></p>
+              <p class="gg-verse"><q>If the sons of Dhritarâshtra, weapon in hand, should slay me, unresisting, unarmed, in the battle, that would for me be the better.</q><cite>1.46</cite></p>
+              <p class="gg-verse"><q>My heart is weighed down with the vice of faintness; my mind is confused as to duty. &hellip; I am thy disciple, suppliant to Thee; teach me.</q><cite>2.7</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="self">
+          <summary><span class="gg-concept-n">02</span><span><span class="gg-concept-title">The true Self does not die with the body.</span><span class="gg-concept-place">Atman, death, and rebirth</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">Krishna&rsquo;s first answer separates the embodied Self from the changing body. Childhood, age, death, and rebirth belong to the garment, not the wearer. This is meant to loosen Arjuna&rsquo;s terror, not to claim that bodies are worthless. The body is the field in which duty, injury, care, and liberation are worked out. The claim is that none of those changes exhaust the person who undergoes them.</p>
+            <p class="gg-practice"><b>In practice</b> The verses are recited around death, taught as a basis for rebirth, and used in meditation to distinguish awareness from passing sensation and mood. Traditions disagree about whether the liberated Self is finally identical with Brahman, lives in loving relation to God, or remains eternally distinct.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>He is not born, nor doth he die; nor having been, ceaseth he any more to be; unborn, perpetual, eternal and ancient, he is not slain when the body is slaughtered.</q><cite>2.20</cite></p>
+              <p class="gg-verse"><q>As a man, casting off worn-out garments, taketh new ones, so the dweller in the body, casting off worn-out bodies, entereth into others that are new.</q><cite>2.22</cite></p>
+              <p class="gg-verse"><q>Weapons cleave him not, nor fire burneth him, nor waters wet him, nor wind drieth him away.</q><cite>2.23</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="fruit">
+          <summary><span class="gg-concept-n">03</span><span><span class="gg-concept-title">Do the work without claiming ownership of the result.</span><span class="gg-concept-place">Karma yoga and the fruit of action</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">Verse 2.47 is often reduced to &ldquo;do not care what happens.&rdquo; Krishna says something harder. Action still has to be done well, because the action is the part given to you. What must be released is the belief that effort can command its result, or that a result belongs wholly to the isolated doer. Attachment can corrupt action before success arrives and crush the actor when success does not arrive.</p>
+            <p class="gg-practice"><b>In practice</b> Karma yoga turns work, family responsibility, study, and service into disciplines. Set an intention, attend to the task, offer it to God or the welfare of others, and receive success or failure without letting either settle your worth. Detachment is tested by whether it improves the work and steadies the worker, not by indifference to consequences.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Thy business is with the action only, never with its fruits; so let not the fruit of action be thy motive, nor be thou to inaction attached.</q><cite>2.47</cite></p>
+              <p class="gg-verse"><q>Perform action, O Dhananjaya, dwelling in union with the divine, renouncing attachments and balanced evenly in success and failure: equilibrium is called yoga.</q><cite>2.48</cite></p>
+              <p class="gg-verse"><q>Therefore, without attachment, constantly perform action which is duty, for, by performing action without attachment, man verily reacheth the Supreme.</q><cite>3.19</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="duty">
+          <summary><span class="gg-concept-n">04</span><span><span class="gg-concept-title">Practice begins with the duty that is actually yours.</span><span class="gg-concept-place">Svadharma, nature, and role</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role"><em>Svadharma</em> is one&rsquo;s own duty or way of life. The Gita warns that another person&rsquo;s path can look cleaner because its cost is not yet visible. Arjuna cannot borrow a renouncer&rsquo;s life simply because his own duty has become unbearable. Yet the text also connects duty to a ranked social order. Reading <em>svadharma</em> only as modern personal authenticity misses that history.</p>
+            <p class="gg-practice"><b>In practice</b> Readers use these verses to ask what belongs to their actual position: parent, student, worker, caregiver, citizen, devotee. The useful question is not &ldquo;What role feels impressive?&rdquo; but &ldquo;What responsibility becomes neglected if I leave?&rdquo; The caste reading and its harm remain part of the passage and return in the hard-parts section.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Better one's own duty, though destitute of merit, than the duty of another, well discharged. Better death in the discharge of one's own duty; the duty of another is full of danger.</q><cite>3.35</cite></p>
+              <p class="gg-verse"><q>Better is one's own duty though destitute of merits than the well-executed duty of another. He who doeth the duty laid down by his own nature incurreth not sin.</q><cite>18.47</cite></p>
+              <p class="gg-verse"><q>Congenital duty, O son of Kunti, though defective, ought not to be abandoned. All undertakings indeed are clouded by defects as fire by smoke.</q><cite>18.48</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="world">
+          <summary><span class="gg-concept-n">05</span><span><span class="gg-concept-title">Work should help hold the world together.</span><span class="gg-concept-place">Sacrifice, service, and public example</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">The Gita expands sacrifice from a ritual offering into a way of acting. Work binds when it circles back toward possession. It frees when it is offered into a larger order. Krishna names <em>lokasangraha</em>, the holding together or welfare of the world, as a reason the wise remain active. People with influence have an extra burden because their habits quietly become other people&rsquo;s permission.</p>
+            <p class="gg-practice"><b>In practice</b> Hindu reform movements have turned karma yoga into organized education, medical care, disaster relief, feeding, and other service. Household work can be offered in the same spirit. The test is concrete: does the action leave the shared world more able to hold the people who depend on it?</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>The world is bound by action, unless performed for the sake of sacrifice; for that sake, free from attachment, O son of Kuntî, perform thou action.</q><cite>3.9</cite></p>
+              <p class="gg-verse"><q>Whatsoever a great man doeth, that other men also do; the standard he setteth up, by that the people go.</q><cite>3.21</cite></p>
+              <p class="gg-verse"><q>As the ignorant act from attachment to action, O Bhârata, so should the wise act without attachment, desiring the welfare of the world.</q><cite>3.25</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="equanimity">
+          <summary><span class="gg-concept-n">06</span><span><span class="gg-concept-title">Freedom shows itself as an even mind in changing conditions.</span><span class="gg-concept-place">Pleasure, pain, gain, and loss</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">The steady person still feels heat, cold, pleasure, grief, praise, and insult. Equanimity means that none of them receives command. Krishna&rsquo;s ocean image is not a dried-up life with no desire entering it. Rivers keep arriving, and the ocean remains itself. This balance makes ethical action possible because the actor is less available for purchase by reward and less governable by fear.</p>
+            <p class="gg-practice"><b>In practice</b> Prayer, breath, self-observation, and deliberate pauses train the small interval between an event and a reaction. The goal is not a flat voice or refusal to mourn. A balanced mind can care intensely while refusing to let pleasure, panic, or wounded status decide the next act.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>He whose mind is free from anxiety amid pains, indifferent amid pleasures, loosed from passion, fear and anger, is called a sage of stable mind.</q><cite>2.56</cite></p>
+              <p class="gg-verse"><q>He attaineth Peace, into whom all desires flow as rivers flow into the ocean, which is filled with water, but remaineth unmoved&hellip;</q><cite>2.70</cite></p>
+              <p class="gg-verse"><q>The higher Self of him who is Self-controlled and peaceful is uniform in cold and heat, pleasure and pain, as well as in honour and dishonour.</q><cite>6.7</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="mind">
+          <summary><span class="gg-concept-n">07</span><span><span class="gg-concept-title">The wandering mind is trained by returning it.</span><span class="gg-concept-place">Meditation, practice, and dispassion</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">The meditation chapter expects the mind to wander. Failure is not the first departure of attention but the refusal to bring it back. Practice builds the capacity to return. Dispassion weakens the reward the mind expects from chasing every thought. Krishna also insists on ordinary regulation: the discipline does not work for a person who eats, sleeps, or exerts far too much or too little.</p>
+            <p class="gg-practice"><b>In practice</b> A practitioner may return attention to Krishna, a mantra, the breath, an image, or the witnessing Self. The method varies. The repeated motion is recognizable: notice where the mind went, release the argument with it, and return. The same motion applies outside meditation when anger or craving captures a day.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Let him raise the self by the Self and not let the self become depressed; for verily is the Self the friend of the self, and also the Self the self's enemy;</q><cite>6.5</cite></p>
+              <p class="gg-verse"><q>As often as the wavering and unsteady mind goeth forth, so often reining it in, let him bring it under the control of the Self.</q><cite>6.26</cite></p>
+              <p class="gg-verse"><q>Without doubt, O mighty-armed, the mind is hard to curb and restless; but it may be curbed by constant practice and by dispassion.</q><cite>6.35</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="same-self">
+          <summary><span class="gg-concept-n">08</span><span><span class="gg-concept-title">Wisdom sees the same Self in every being.</span><span class="gg-concept-place">Equal vision and compassion</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">The Gita names people and animals that its society ranked very differently, then says the wise look on them equally. The yogi goes further and experiences every being within the Self and the Self within every being. Equal vision does not by itself give a political program, and the same book preserves graded social duties. It does supply an internal judgment against treating rank as the final truth about a life.</p>
+            <p class="gg-practice"><b>In practice</b> These verses support vegetarian ethics, care for animals, service to poor and sick people, and the attempt to meet another person without reducing them to status. The strongest practice is reciprocal: another person&rsquo;s pleasure and pain are understood through the likeness of one&rsquo;s own.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Sages look equally on a Brâhmana adorned with learning and humility, a cow, an elephant, and even a dog and an outcaste.</q><cite>5.18</cite></p>
+              <p class="gg-verse"><q>The self, harmonised by yoga, seeth the Self abiding in all beings, all beings in the Self; everywhere he seeth the same.</q><cite>6.29</cite></p>
+              <p class="gg-verse"><q>He who, through the likeness of the Self, O Arjuna, seeth equality in everything, whether pleasant or painful, he is considered a perfect Yogî.</q><cite>6.32</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="devotion">
+          <summary><span class="gg-concept-n">09</span><span><span class="gg-concept-title">Devotion can begin with a leaf, a flower, fruit, or water.</span><span class="gg-concept-place">Bhakti, offering, and character</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">The simplicity of the gift shifts value from price to devotion. Krishna accepts what is offered with a striving heart. The next move is larger: turn eating, giving, work, and austerity into offerings as well. Bhakti is therefore both intimate worship and a way of relocating ordinary acts. Chapter 12 tests devotion by character, not display. The devotee bears no ill will and is friendly, compassionate, forgiving, and steady.</p>
+            <p class="gg-practice"><b>In practice</b> Leaves, flowers, fruit, and water are offered in home and temple worship, then food may be received as <em>prasad</em>, a gift returned after offering. Repetition of Krishna&rsquo;s names, singing, image worship, and remembrance train the relationship. The ethical check is whether worship makes a person easier, not harder, for other beings to live beside.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>To those men who worship Me alone thinking of no other, to those ever harmonious, I bring full security.</q><cite>9.22</cite></p>
+              <p class="gg-verse"><q>He who offereth to Me with devotion a leaf, a flower, a fruit, water, that I accept from the striving self, offered as it is with devotion.</q><cite>9.26</cite></p>
+              <p class="gg-verse"><q>He who beareth no ill-will to any being, friendly and compassionate, without attachment and egoism, balanced in pleasure and pain, and forgiving, ever content, harmonious, with the self-controlled, resolute, with mind and Reason dedicated to Me, he, My devotee, is dear to Me.</q><cite>12.13-14</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="presence">
+          <summary><span class="gg-concept-n">10</span><span><span class="gg-concept-title">The divine is present in the world and exceeds it.</span><span class="gg-concept-place">Krishna&rsquo;s manifestations</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">Krishna does not merely point away from the world to a remote absolute. He names himself as the Self in every heart and as the excellence within things already known: the brilliance of the sun, the mind among the senses, the beginning and end of beings. Yet every splendor is only a fragment. The world can disclose God without containing the whole of God.</p>
+            <p class="gg-practice"><b>In practice</b> Devotees learn lists of these manifestations, contemplate Krishna in sacred images and stories, and practice recognizing the divine presence in people, nature, beauty, intelligence, and power. The practice also places a demand on power: whatever is magnificent is borrowed splendor, not private ownership.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>There is naught whatsoever higher than I, O Dhananjaya. All this is threaded on Me, as rows of pearls on a string.</q><cite>7.7</cite></p>
+              <p class="gg-verse"><q>I, O Gudakesha, am the Self, seated in the heart of all beings; I am the beginning, the middle, and also the end of all beings.</q><cite>10.20</cite></p>
+              <p class="gg-verse"><q>Whatsoever is glorious, good, beautiful, and mighty, understand thou that to go forth from a fragment of My splendour.</q><cite>10.41</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="gunas">
+          <summary><span class="gg-concept-n">11</span><span><span class="gg-concept-title">Three qualities keep shaping thought, appetite, and action.</span><span class="gg-concept-place">Sattva, rajas, and tamas</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role"><em>Sattva</em> brings clarity and harmony, <em>rajas</em> restless drive, and <em>tamas</em> inertia and obscurity. None is simply a permanent kind of person. They are more like changing weather in nature and mind. Even clarity can bind when a person becomes attached to feeling pure or wise. The aim is to recognize the strands, reduce what clouds and agitates, cultivate clarity, then stop mistaking any strand for the Self.</p>
+            <p class="gg-practice"><b>In practice</b> The three qualities become a vocabulary for reviewing food, media, sleep, work, speech, worship, and the mood behind a gift. They can sharpen observation when used in the first person. Used to sort other people into fixed types, they become another form of ego.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Harmony, Motion, Inertia, such are the qualities, Matter-born; they bind fast in the body, O great-armed one, the indestructible dweller in the body.</q><cite>14.5</cite></p>
+              <p class="gg-verse"><q>From Harmony wisdom is born, and also greed from Motion; heedlessness and delusion are of Inertia and also unwisdom.</q><cite>14.17</cite></p>
+              <p class="gg-verse"><q>The foods that augment vitality, energy, vigour, health, joy and cheerfulness, delicious, bland, substantial and agreeable, are dear to the pure.</q><cite>17.8</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="gg-concept" id="surrender">
+          <summary><span class="gg-concept-n">12</span><span><span class="gg-concept-title">The final teaching joins reflection, surrender, and chosen action.</span><span class="gg-concept-place">The last exchange</span></span><span class="gg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="gg-concept-body">
+            <p class="gg-concept-role">The closing sequence refuses a simple choice between autonomy and obedience. Krishna tells Arjuna to reflect completely and act as he chooses. He then gives the most absolute devotional command in the book: abandon all duties and take refuge in me alone. Arjuna&rsquo;s answer is neither passive disappearance nor a claim of independence. He says his confusion is gone and chooses to do what Krishna has taught.</p>
+            <p class="gg-practice"><b>In practice</b> Devotional traditions hear verse 18.66 as <em>sharanagati</em> or <em>prapatti</em>, taking shelter in God when self-reliance reaches its limit. Study traditions linger on the command to reflect. Both return the practitioner to action. Surrender is not certified by a feeling alone but by what the person is now able to do without the old claim of possession.</p>
+            <div class="gg-refrain"><p class="gg-refrain-head"><span>The Gita keeps saying it</span><span>Besant, 1922</span></p><div class="gg-verses">
+              <p class="gg-verse"><q>Thus hath wisdom, more secret than secrecy itself, been declared unto thee by Me; having reflected on it fully, then act thou as thou listest.</q><cite>18.63</cite></p>
+              <p class="gg-verse"><q>Abandoning all duties come unto Me alone for shelter; sorrow not, I will liberate thee from all sins.</q><cite>18.66</cite></p>
+              <p class="gg-verse"><q>Destroyed is my delusion. I have gained knowledge through Thy grace, O Immutable one. I am firm, my doubts have fled away. I will do according to Thy word.</q><cite>18.73</cite></p>
+            </div></div>
+          </div>
+        </details>
+      </div>
+
+      <aside class="gg-convergence">
+        <h3>Where rival readings meet</h3>
+        <p>Shankara, Ramanuja, and Madhva disagree about the relation between the Self and God, the highest means to liberation, and what surrender finally means. Modern movements disagree again about caste, nation, service, and nonviolence. Yet their Gitas keep returning to the same working vocabulary: disciplined action, release of the fruit, control of mind and senses, knowledge of the Self, devotion to Krishna, and liberation from bondage. That convergence certifies the emphasis above. It does not turn the schools into one school.</p>
+      </aside>
+    </section>
+
+    <section class="gg-layer gg-shell" id="hard-parts" aria-labelledby="hard-title">
+      <p class="gg-layer-tag"><b>04</b> Do not skip</p>
+      <h2 class="gg-h2" id="hard-title">The passages that resist a clean summary</h2>
+      <p class="gg-intro">The Gita can deepen action, excuse action, or be used to avoid looking at who pays for action. Its hardest verses need their full pressure left on them.</p>
+
+      <div class="gg-hard-grid">
+        <article class="gg-hard">
+          <h3>Krishna talks Arjuna into a real war</h3>
+          <p>The battlefield can represent the struggle within a person, and Gandhi made that reading central to a life of nonviolence. The story still concerns an actual dynastic war. Krishna invokes the deathless Self, warrior duty, social order, and finally the claim that the opposing warriors are already killed by Time. Arjuna becomes the instrument. Calling the battle only an allegory preserves a powerful later practice but removes the plot&rsquo;s bloodiest fact.</p>
+        </article>
+        <article class="gg-hard">
+          <h3>Duty is tied to a ranked social order</h3>
+          <p>Verse 4.13 says Krishna created the fourfold order according to qualities and action. Verses 18.41-44 assign different work to Brahmins, Kshatriyas, Vaishyas, and Shudras, with service assigned to the last. Some interpreters stress temperament and work rather than birth. The history of <em>varna</em> and caste kept these verses from remaining a neutral personality theory. The same book&rsquo;s equal vision is a real counterpressure, not an eraser.</p>
+        </article>
+        <article class="gg-hard">
+          <h3>An inclusive promise carries a degrading premise</h3>
+          <p>Verse 9.32 promises the highest path to people who take refuge in Krishna, including women, Vaishyas, and Shudras. Its inclusive force made it a major proof text in debates over access to liberation. Yet many translations group those people under a phrase such as &ldquo;of sinful birth.&rdquo; Commentators worked hard over one small Sanskrit particle to decide whether the verse includes disadvantaged groups despite low status or rejects the status itself. The welcome and the hierarchy arrive together.</p>
+        </article>
+        <article class="gg-hard">
+          <h3>Detachment can slide into moral anesthesia</h3>
+          <p>The Gita asks for freedom from ego and the fruit of action, not freedom from care. Still, the danger is built into its setting. A person can claim to be merely an instrument, say nature&rsquo;s qualities perform every act, and refuse responsibility for foreseeable harm. The closing command to reflect fully and choose pushes against fatalism. It does not make every appeal to duty, destiny, or divine will safe.</p>
+        </article>
+        <article class="gg-hard">
+          <h3>Action and renunciation never become one simple rule</h3>
+          <p>Krishna says both renunciation and disciplined action lead to the highest good, then calls action the better path. The final chapter assigns social duties, then tells Arjuna to abandon all duties and take refuge in Krishna alone. Shankara gives liberating knowledge the final place. Ramanuja refuses to read surrender as permission to abandon prescribed obligation. The tension generated traditions because the text does not close it.</p>
+        </article>
+        <article class="gg-hard">
+          <h3>Other gods are recognized and subordinated</h3>
+          <p>Krishna says he steadies the faith of people who worship another form and that their worship ultimately reaches him. He also says desire drives them toward other gods, their rewards are temporary, and their worship is not according to the highest rule. This can ground generous Hindu pluralism: many forms, one source. It can also make every other devotion true only on Krishna&rsquo;s terms. The openness is real, and so is the hierarchy.</p>
+        </article>
+      </div>
+
+      <details class="u-collapse gg-sources">
+        <summary class="u-collapse-s">Sources and what they support</summary>
+        <ol class="u-collapse-list">
+          <li><b>Verse text.</b> Every quotation in the ideas section was checked against the numbered discourse pages in <a href="https://en.wikisource.org/wiki/Bhagavad-Gita_%28Besant_4th%29">Annie Besant&rsquo;s fourth edition</a>, published in 1922. The <a href="https://www.copyright.gov/what-is-copyright/?form=MG0AV3">U.S. Copyright Office</a> confirms that works published before January 1, 1931 are in the United States public domain as of 2026. Ellipses only shorten Besant&rsquo;s wording.</li>
+          <li><b>Place in the epic and overall movement.</b> The <a href="https://academic.oup.com/reference/62357/reference-article-abstract/554517840">Oxford Bibliographies overview</a> supports the Gita&rsquo;s location in <em>Mahabharata</em> 6.23-40 in the Poona edition, its eighteen chapters and 700 verses, Arjuna&rsquo;s crisis, the cosmic-form turning point, and the joined paths of action, knowledge, and devotion.</li>
+          <li><b>Moral argument.</b> The <a href="https://iep.utm.edu/bhagavad-gita/">Internet Encyclopedia of Philosophy account</a> follows Arjuna&rsquo;s arguments against war, Krishna&rsquo;s replies, and the moral structure of karma, knowledge, devotion, self-control, and liberation.</li>
+          <li><b>Date.</b> Oxford&rsquo;s history of the <a href="https://academic.oup.com/book/43871/chapter-abstract/370982620"><em>Mahabharata</em>&rsquo;s composition</a> gives the broad 300 BCE to 300 CE frame for the epic&rsquo;s growth. The page uses a deliberately broad late-BCE to early-CE range for the Gita because a narrower date remains disputed.</li>
+          <li><b>Recensions and verse counts.</b> The open study <a href="https://link.springer.com/article/10.1186/s40613-016-0026-8">Who&rsquo;s Zoomin&rsquo; Who?</a> surveys the 700-verse received and critical text, the 745-verse claim, the Kashmiri recension, and the modern arguments built around those counts.</li>
+          <li><b>Parallel Sanskrit and commentaries.</b> The <a href="https://www.gitasupersite.iitk.ac.in/">Gita Supersite at IIT Kanpur</a> places the Sanskrit text beside translations and the classical commentaries, making disagreements on the same verse visible rather than smoothing them into one English answer.</li>
+          <li><b>Shankara.</b> The <a href="https://plato.stanford.edu/archives/spr2022/entries/shankara/">Stanford Encyclopedia of Philosophy</a> supports Shankara&rsquo;s nondual account of Self and Brahman, his commentary on the Gita, and the preparatory place he gives to action before liberating knowledge.</li>
+          <li><b>Ramanuja.</b> The <a href="https://iep.utm.edu/ramanuja/">Internet Encyclopedia of Philosophy</a> supports Ramanuja&rsquo;s devotional Vedanta, his <em>Gita Bhashya</em>, his interpretation of surrender, and his refusal to make verse 18.66 a license to abandon prescribed obligations.</li>
+          <li><b>Madhva.</b> The <a href="https://iep.utm.edu/madhva/">Internet Encyclopedia of Philosophy</a> supports Madhva&rsquo;s commentary on the Gita and his dualist insistence that God and individual souls remain genuinely distinct.</li>
+          <li><b>The shared Vedanta foundation.</b> The Oxford chapter on <a href="https://academic.oup.com/edited-volume/28241/chapter-abstract/213324987">Vedanta&rsquo;s textual foundations</a> explains why the Upanishads, Brahma Sutra, and Bhagavad Gita became the three common sources interpreted by rival schools.</li>
+          <li><b>Practice and self-cultivation.</b> Oxford&rsquo;s study of <a href="https://academic.oup.com/book/39192/chapter-abstract/338675860">self-cultivation in the Gita</a> supports the practical ideal of wisdom, self-control, peace, duty, union, and liberation rather than a merely abstract philosophy.</li>
+          <li><b>Work as service.</b> Ramakrishna Math and Mission&rsquo;s account of <a href="https://belurmath.org/ideology/">karma yoga in living practice</a> explains why its feeding, medical, and educational work is treated as spiritual discipline. Its <a href="https://belurmath.org/education-services/">education overview</a> connects the Gita&rsquo;s sacrifice, giving, and austerity to organized service.</li>
+          <li><b>Study, recitation, and circulation.</b> <a href="https://gitapress.org/aboutUs">Gita Press</a> describes a century of publishing the Gita in inexpensive editions and preserving more than one hundred interpretations. These practices support the page&rsquo;s treatment of the text as read, memorized, recited, and carried into household life.</li>
+          <li><b>War and instrumentality.</b> The Journal of Hindu Studies article <a href="https://academic.oup.com/jhs/article-abstract/2/2/209/2188414">Kill and Be Killed</a> examines the Gita&rsquo;s justification of killing and the ethical pressure of Krishna&rsquo;s command. The page does not turn the battlefield into allegory alone.</li>
+          <li><b>Gandhi&rsquo;s reading.</b> The Gandhi research archive&rsquo;s account of <a href="https://www.mkgandhi.org/articles/Mahatma-Gandhi-and-the-Bhagavad-Gita.html">Gandhi and the Bhagavad Gita</a> documents his treatment of Kurukshetra as the continuing moral battle within the human heart and his use of the book in a life committed to nonviolence.</li>
+          <li><b>Women, status, and verse 9.32.</b> Katherine Young&rsquo;s <a href="https://academic.oup.com/jhs/article-abstract/2/2/229/2188489">Fate Hangs on a Particle</a> explains why this verse became a proof text in debates over whether women, lower castes, and outcastes could attain liberation, and how commentators made its small grammatical choices carry large consequences.</li>
+          <li><b>Gender, family, and varna.</b> Ruth Vanita&rsquo;s chapter <a href="https://academic.oup.com/book/43061/chapter/361490094">Arjuna and Krishna: Friends Discuss the Family</a> supports reading Arjuna&rsquo;s family and gender arguments as arguments the Gita itself subjects to pressure, not simply as Krishna&rsquo;s final teaching.</li>
+          <li><b>Image.</b> The site&rsquo;s Gita image is <a href="https://wellcomecollection.org/works/krtk6fwx">a chromolithograph of Krishna and Arjuna</a> from the Wellcome Collection, catalogued as Arjuna requesting instruction and receiving the Bhagavad Gita, licensed CC BY 4.0.</li>
+        </ol>
+      </details>
     </section>
   </main>
 
-  <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
   <nav class="u-next" aria-label="Keep reading">
     <p class="u-next-k">Next in The Sacred Books</p>
     <p class="u-next-t"><a class="u-next-link" href="new-testament.html">The New Testament</a></p>
     <p class="u-next-more"><a href="religion.html">All 11 posts in The Sacred Books</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
-      <a href="/">&copy; 2026 Ethan Willingham</a>
-    </div>
+    <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div>
   </footer>
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/gita-notes.js" defer></script>
-  <script src="js/gita-data.js" defer></script>
-  <script src="js/gita.js" defer></script>
 </body>
 </html>
