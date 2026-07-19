@@ -95,6 +95,22 @@ The second implementation reference is `gita.html`.
 
 The third implementation reference is `new-testament.html`.
 
+## Guru Granth Sahib decisions already made
+
+- The first section does not force a narrative summary onto an anthology. It explains what the 1,430-ang volume is, how the opening liturgies lead into thirty-one main raga sections, how authors and forms sit inside that musical order, and how a new reader should move through hymns rather than wait for plot.
+- The Sikh story belongs in that first section too: early sung bani and collections, Guru Arjan's 1604 canonical compilation, Guru Tegh Bahadur's later inclusion in the received recension, and the 1708 Sikh memory of Guru Gobind Singh vesting enduring Guruship in the Granth.
+- Keep the living Guru claim precise. "Eleventh Guru" is common shorthand, but the page calls the Guru Granth Sahib the eternal Guru and keeps the Guru Panth's corporate authority visible beside it.
+- Use one book-specific element: a day in the Guru's presence, from morning prakash through kirtan and hukam to evening sukhasan. It explains why enthronement is not decorative and why reverence is completed by hearing and practice.
+- Gurmukhi is the script, not the single language of the book. The received text carries several North Indian literary registers, including Punjabi and Braj forms, with Persian, Arabic, and Sanskritic vocabulary. Translation must preserve that distinction.
+- Separate the highly stable modern 1,430-ang text from the more complex formation history. Early oral repertoires, written collections, manuscript variants, recensions, Guru Tegh Bahadur's addition, and the Ragmala dispute do not make the present text fluid.
+- The veteran test stops at fourteen ideas. Ecological kinship, sweetness of speech, contentment, and the welfare of all were the first candidates a longtime Sikh could merely nod along to once the load-bearing practices were present, and several already live inside the fourteen.
+- Test convergence across initiated and non-initiated Sikhs, household and gurdwara, prayer and public service. Keep Naam, hukam, shabad, grace, haumai, truthful living, honest work, sharing, seva, sangat, kirtan, household life, equality, courage, and liberation while living connected to things Sikhs actually do.
+- Brief quotations use Sant Singh Khalsa's 1996 English as served by BaniDB, with every line verified against its Gurmukhi, author, ang, and metadata. The excerpts stay short, preserve the translator's wording, and omit only refrain markers that do not alter the words.
+- Keep six unresolved pressures together: caste, gender, other faiths, violence, hukam and suffering, and textual history. In each case, state both the scriptural or institutional claim and the history that prevents a frictionless summary.
+- Remove the fifteen-passage translation explorer and its three data scripts from the canonical page markup. The scripts remain unreferenced files pending a separate cleanup decision.
+
+The fourth implementation reference is `guru-granth-sahib.html`.
+
 ## Format decisions, 2026-07-19 second round
 
 - The fixed twelve is retired, on the owner's call. It fit the Torah and the Gita honestly and cost the Quran page a patience card; the finding rule in section 3 replaces it.

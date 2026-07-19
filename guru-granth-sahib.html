@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Guru Granth Sahib, Side by Side</title>
-  <meta name="description" content="The Sikh scripture is not read so much as enthroned: when the tenth Guru died in 1708 he named the book itself the eternal Guru. Here are its keystone passages in the original Gurmukhi and in the major English translations, stacked side by side with a plain breakdown of each.">
-  <meta property="og:title" content="The Guru Granth Sahib, Side by Side">
-  <meta property="og:description" content="When the tenth Sikh Guru lay dying in 1708, he did not name a person to succeed him. He named a book. Here is what the living Guru actually says, its keystone passages in Gurmukhi and in seven English translations at once, broken apart line by line.">
+  <title>The Guru Granth Sahib: A Guided Reading</title>
+  <meta name="description" content="The Guru Granth Sahib in plain English: what this anthology of hymns is, how music orders it, how it became the living Guru, fourteen ideas tested in Sikh practice, its textual history, and the questions a serious reader should not skip.">
+  <meta property="og:title" content="The Guru Granth Sahib: A Guided Reading">
+  <meta property="og:description" content="A 1,430-ang anthology arranged by music, the Sikh story that made it the living Guru, fourteen ideas practiced in Sikh life, and the questions a clean summary cannot settle.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/guru-granth-sahib.html">
@@ -25,229 +25,461 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/guru-granth-sahib-og.jpg">
+  <link rel="canonical" href="https://ethanwillingham.com/guru-granth-sahib.html">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-  /* ============================================================
-     THE GURU GRANTH SAHIB, SIDE BY SIDE
-     An interactive reader for a CURATED set of keystone passages
-     (the full scripture runs 1,430 pages, so this is the
-     load-bearing selection). The Gurmukhi source, a transliteration,
-     a plain breakdown, and the English translations stacked. Sits in
-     the site shell (forest green, parchment, Century Supra / Segoe UI
-     / Commit Mono). The Gurmukhi source needs a Gurmukhi face;
-     everything else stays on the three site fonts. No em dashes.
-     ============================================================ */
-  :root {
-    --measure: 840px;                 /* reading column */
-    --gur-font: "Noto Serif Gurmukhi", "Noto Sans Gurmukhi", "Gurmukhi MN", "Mukta Mahee", "Raavi", "Arial Unicode MS", sans-serif;
-    --early:  #cf9f78;                 /* era accents, from the site categorical set */
-    --mid:    #bc9d65;
-    --modern: #9ec79a;
-    --ease: cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  html { overflow-x: hidden; }
-  /* this template manages its own gutter via .hero/.sec/.ggs (var(--gutter));
-     zero the global body side-padding so phones get ONE 20px gutter, not two. */
-  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
-  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+    :root {
+      --gsg-copy: 64ch;
+      --gsg-measure: 760px;
+      --gsg-frame: 58rem;
+      --gsg-tint: rgba(245, 241, 234, .045);
+      --gsg-hair: rgba(212, 196, 160, .20);
+    }
+    html { overflow-x: hidden; }
+    body.gsg-page { padding-inline: 0; overflow-x: hidden; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .gsg-shell { width: 100%; max-width: var(--gsg-frame); margin: 0 auto; padding-inline: var(--gutter); }
+    .gsg-page .post-back { display: block; width: 100%; max-width: var(--gsg-measure); margin: 0 auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-inline: var(--gutter); }
+    .gsg-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 7rem); max-width: 61rem; padding-block: clamp(3.5rem, 9svh, 6rem); text-align: center; }
+    .gsg-hero .u-title { max-width: 14ch; margin-inline: auto; font-size: clamp(3.15rem, 10.4vw, 6.6rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+    .gsg-hero .u-dek { max-width: 55ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+    .gsg-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+    .gsg-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
 
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.6rem, 8.4vw, 5.2rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 46ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
+    .gsg-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    .gsg-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+    .gsg-layer-tag b { color: var(--accent); font-weight: 400; }
+    .gsg-h2 { max-width: 25ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.55rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+    .gsg-intro { max-width: 53ch; margin: 1rem auto 0; font-size: 1.2rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+    .gsg-prose { max-width: var(--gsg-copy); margin: 2.6rem auto 0; }
+    .gsg-prose p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); text-wrap: pretty; }
+    .gsg-prose p:last-child { margin-bottom: 0; }
+    .gsg-prose p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+    .gsg-prose a, .gsg-context a, .gsg-page .u-textcheck a, .gsg-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--gsg-hair); }
+    .gsg-prose a:hover, .gsg-context a:hover, .gsg-page .u-textcheck a:hover, .gsg-sources a:hover { color: var(--accent-hover); }
 
-  /* ---------- INTRO ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
-  .sec strong { font-weight: 600; color: var(--text-bright); }
-  .sec em { font-style: italic; }
-  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
-  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .gur-inline { font-family: var(--gur-font); font-style: normal; color: var(--text-bright); }
+    .gsg-day { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: var(--gsg-copy); margin: 2.8rem auto; border: 1px solid var(--gsg-hair); border-radius: 8px; overflow: hidden; background: var(--gsg-tint); }
+    .gsg-hour { padding: 1.35rem 1.25rem 1.45rem; }
+    .gsg-hour + .gsg-hour { border-left: 1px solid var(--gsg-hair); }
+    .gsg-hour-k { margin: 0 0 .5rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .gsg-hour h3 { margin: 0 0 .65rem; font-size: 1.35rem; line-height: 1.2; color: var(--text-bright); }
+    .gsg-hour p:last-child { margin: 0; font-size: .96rem; line-height: 1.62; color: var(--text-dim); }
 
-  /* the opening "fan": one glyph, many Englishes */
-  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-gur { font-family: var(--gur-font); font-size: clamp(2.4rem, 8vw, 3.6rem); color: var(--text-bright); letter-spacing: 0.02em; padding: 1.4rem 1.5rem 0.5rem; line-height: 1.2; }
-  .fan-gur small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.8rem; }
-  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
-  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
-  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
-  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  @media (min-width: 680px){
-    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
-    .fan-list .who { text-align: right; }
-  }
+    .gsg-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--gsg-copy); margin: 2.8rem auto 0; }
+    .gsg-context { padding-top: 1rem; border-top: 1px solid var(--gsg-hair); }
+    .gsg-context h3 { margin: 0 0 .75rem; font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
+    .gsg-context p { margin: 0 0 1rem; font-size: 1.04rem; line-height: 1.7; color: var(--text); }
+    .gsg-context p:last-child { margin-bottom: 0; }
+    .gsg-page .u-textcheck { max-width: var(--gsg-copy); margin: clamp(2.8rem, 6vw, 4.4rem) auto 0; }
 
-  /* ---------- THE EXPLORER ---------- */
-  .ggs { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
-  .ggs-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .ggs-step { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
-  .ggs-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
-  .ggs-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
-  .ggs-nav:disabled { opacity: 0.3; cursor: default; }
-  .ggs-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; text-align: left; }
-  .ggs-jump:hover { background: rgba(255,255,255,0.05); }
-  .ggs-jump #ggs-loc { font-family: var(--font-mono); font-style: normal; font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); font-weight: 400; }
-  .ggs-jump .ggs-caret { font-size: 0.8rem; color: var(--text-faint); }
-  .ggs-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
-  .ggs-count b { color: var(--accent); font-weight: 400; }
+    .gsg-concepts { max-width: var(--gsg-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
+    .gsg-concept { border-bottom: 1px solid var(--rule); }
+    .gsg-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
+    .gsg-concept > summary::-webkit-details-marker { display: none; }
+    .gsg-concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .gsg-concept-title { display: block; font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .gsg-concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+    .gsg-concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
+    .gsg-concept-mark::before { content: "+"; }
+    .gsg-concept[open] { margin-block: 1.1rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--gsg-tint); }
+    .gsg-concept[open] .gsg-concept-mark::before { content: "-"; }
+    .gsg-concept:not([open]):has(+ .gsg-concept[open]) { border-bottom-color: transparent; }
+    .gsg-concepts:has(> .gsg-concept[open]:first-child) { border-top-color: transparent; }
+    .gsg-concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
+    .gsg-concept-role { margin: 0; font-size: 1.13rem; line-height: 1.72; color: var(--text); }
+    .gsg-practice { margin: 1.25rem 0 0; padding-left: 1rem; border-left: 1px solid var(--accent); font-size: 1rem; line-height: 1.65; color: var(--text-dim); }
+    .gsg-practice b { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+    .gsg-refrain { margin-top: 2rem; }
+    .gsg-refrain-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .gsg-refrain-head span:last-child { color: var(--text-faint); }
+    .gsg-verses { border-top: 1px solid var(--rule); }
+    .gsg-verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; margin: 0; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+    .gsg-verse q { font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
+    .gsg-verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
 
-  /* the jump menu: keystones grouped by part, as a titled list */
-  .ggs-menu { margin: 0 0 1rem; padding: 0.5rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); max-height: 64vh; overflow-y: auto; }
-  .ggs-menu[hidden] { display: none; }
-  .ggs-menusec { margin-bottom: 0.4rem; }
-  .ggs-menulabel { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0.6rem 0.6rem 0.3rem; }
-  .ggs-menulabel span { color: var(--text-faint); letter-spacing: 0.04em; }
-  .ggs-menurow { display: flex; flex-direction: column; gap: 0.1rem; width: 100%; text-align: left; padding: 0.5rem 0.6rem; background: transparent; border: none; border-radius: 8px; cursor: pointer; }
-  .ggs-menurow:hover { background: rgba(255,255,255,0.05); }
-  .ggs-menurow.is-cur { background: rgba(212,196,160,0.10); }
-  .ggs-menurow-t { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); line-height: 1.25; }
-  .ggs-menurow.is-cur .ggs-menurow-t { color: var(--accent); }
-  .ggs-menurow-m { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.04em; color: var(--text-faint); }
+    .gsg-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--gsg-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding: 1.35rem 1.4rem; background: var(--gsg-tint); border: 1px solid var(--gsg-hair); border-radius: 7px; }
+    .gsg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
+    .gsg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-  /* source: Gurmukhi + transliteration */
-  .ggs-source { position: relative; margin: 0.8rem 0 0; padding: 1.5rem 1.6rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
-  .ggs-gur-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem; }
-  .ggs-gur-k span { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
-  .ggs-gur { font-family: var(--gur-font); font-size: clamp(1.35rem, 3.6vw, 1.7rem); line-height: 2.0; color: var(--text-bright); letter-spacing: 0.01em; margin: 0; text-wrap: pretty; }
-  .ggs-tr { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7; letter-spacing: 0.01em; color: var(--text-dim); margin: 0.9rem 0 0; text-wrap: pretty; }
+    .gsg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--gsg-copy); margin: 2.6rem auto 0; }
+    .gsg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--gsg-tint); border: 1px solid var(--gsg-hair); border-radius: 7px; }
+    .gsg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
+    .gsg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
+    .gsg-sources { max-width: var(--gsg-copy); margin: 3.2rem auto 0; }
+    .gsg-sources .u-collapse { border-color: var(--gsg-hair); }
+    .gsg-source-list { margin: 0; padding: 1.1rem 1.4rem 1.3rem 2.7rem; }
+    .gsg-source-list li { margin: 0 0 .8rem; padding-left: .2rem; font-size: .94rem; line-height: 1.62; color: var(--text-dim); }
+    .gsg-source-list li:last-child { margin-bottom: 0; }
+    .gsg-source-list b { color: var(--text); font-weight: 600; }
 
-  /* breakdown */
-  .ggs-notes { margin: 1rem 0 0; }
-  .ggs-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
-  .ggs-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
-  .ggs-note-k:first-child { margin-top: 0; }
-  .ggs-note-gist, .ggs-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .ggs-note-gist em, .ggs-note-read em, .ggs-splits em { font-style: italic; color: var(--text-bright); }
-  .ggs-note-gist b, .ggs-splits b, .ggs-note-read b { font-weight: 600; color: var(--text-bright); }
-  .ggs-note-read { color: var(--text-dim); font-style: italic; }
-  .ggs-splits { margin: 0; }
-  .ggs-splits dt { font-family: var(--gur-font); font-size: 1.2rem; color: var(--text-bright); margin: 0.8rem 0 0.15rem; letter-spacing: 0.01em; }
-  .ggs-splits dt .ggs-gloss { font-family: var(--font-mono); font-style: normal; font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
-  .ggs-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
-  .ggs-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
-
-  /* translations */
-  .ggs-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
-  .ggs-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .ggs-v:last-child { border-bottom: 1px solid var(--rule); }
-  .ggs-early  { border-left-color: var(--early); }
-  .ggs-mid    { border-left-color: var(--mid); }
-  .ggs-modern { border-left-color: var(--modern); }
-  .ggs-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
-  .ggs-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
-  .ggs-flag { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 999px; padding: 0.1em 0.5em; margin-left: 0.5em; vertical-align: 0.12em; }
-  .ggs-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
-  .ggs-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.62; color: var(--text); white-space: normal; }
-  .ggs-vt .ggs-br { display: block; height: 0.6em; }
-  .ggs-empty { color: var(--text-faint); font-style: italic; }
-
-  /* fade the explorer in once data lands */
-  .ggs .ggs-body { opacity: 0; transition: opacity .4s var(--ease); }
-  .ggs.ggs-ready .ggs-body { opacity: 1; }
-  .ggs-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
-  .ggs.ggs-ready .ggs-loading { display: none; }
-
-  /* ---------- closing / colophon ---------- */
-  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
-  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
-
-  /* ---------- mobile ---------- */
-  @media (max-width: 560px){
-    .fan-gur { font-size: 2.4rem; padding: 1.2rem 1rem 0.4rem; }
-    .fan-list li { padding: 0.65rem 1rem; }
-    .fan-list .e { font-size: 1.02rem; }
-    .ggs-bar { gap: 0.55rem 0.7rem; }
-    .ggs-count { margin-left: 0; flex-basis: 100%; }
-    .ggs-source, .ggs-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
-    .ggs-gur { font-size: 1.4rem; line-height: 1.95; }
-    .ggs-v { padding-left: 0.9rem; }
-  }
+    @media (max-width: 720px) {
+      .gsg-context-grid, .gsg-hard-grid { grid-template-columns: 1fr; }
+      .gsg-day { grid-template-columns: 1fr; }
+      .gsg-hour + .gsg-hour { border-left: 0; border-top: 1px solid var(--gsg-hair); }
+      .gsg-convergence { grid-template-columns: 1fr; gap: .7rem; }
+    }
+    @media (max-width: 560px) {
+      .gsg-concept > summary { grid-template-columns: 2.2rem 1fr 1.7rem; gap: .65rem; padding-inline: .2rem; }
+      .gsg-concept-body { padding-inline: 1.4rem 1rem; }
+      .gsg-verse { grid-template-columns: 1fr; gap: .4rem; }
+      .gsg-verse cite { text-align: left; }
+      .gsg-refrain-head { display: block; }
+      .gsg-refrain-head span { display: block; }
+      .gsg-refrain-head span:last-child { margin-top: .2rem; }
+    }
   </style>
 </head>
-<body>
+<body class="gsg-page">
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-
   <a href="religion.html" class="post-back ll-back"><span class="pb-label">The Sacred Books</span></a>
 
-  <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The Guru Granth Sahib, side by side</h1>
-    <p class="hero-dek">When the tenth Sikh Guru lay dying in 1708, he did not name a person to follow him. He named a book, and the Sikhs have treated it as a living teacher ever since. Here is what it actually says.</p>
-    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>15 keystone passages</b> <span class="sep">/</span> <b>Gurmukhi source</b> plus stacked translations <span class="sep">/</span> verbatim, not paraphrased</p>
+  <header class="gsg-shell gsg-hero">
+    <h1 class="u-title">The Guru Granth Sahib</h1>
+    <p class="u-dek">A 1,430-ang anthology arranged by music, not plot, and the Sikh story that made a book the living Guru.</p>
+    <p class="u-meta"><b>Four-part reading guide</b><span class="u-sep">/</span>14 practice-tested ideas<span class="u-sep">/</span>24 sources<span class="u-sep">/</span>23 min</p>
+    <span class="gsg-scroll">begin with the book</span>
   </header>
 
   <main>
-    <!-- ============================ INTRO ============================ -->
-    <section class="sec">
-      <p class="lede">Most holy books are read. This one is enthroned. Each morning the Guru Granth Sahib is carried out on someone's head, opened on a low throne under a canopy, and waved with a whisk the way you would attend a king. Each night it is wrapped, carried to its own room, and laid down to rest.</p>
-      <p>The Sikhs had ten human Gurus, a line of teachers running two hundred years from Guru Nanak. When the tenth, Guru Gobind Singh, was dying at Nanded in 1708, he closed the line. He did not appoint an eleventh person. He bowed to the scripture and named the book itself the Guru, for good. That is why it is the <strong>Guru</strong> Granth Sahib, the eleventh and final Guru, and why in the three centuries since, careful hands have never once let it touch the floor.</p>
-      <p>So when you ask what the book says, you are asking what a living teacher says. The answer starts on the very first line, with a single symbol, <span class="gur-inline">ੴ</span>, and even that one mark splits its translators.</p>
+    <section class="gsg-layer" id="anthology">
+      <div class="gsg-shell">
+        <p class="gsg-layer-tag"><b>01</b><span>What the book is</span></p>
+        <h2 class="gsg-h2">A songbook, a Sikh history, a living Guru</h2>
+        <p class="gsg-intro">Do not look for a plot. Look for voices gathered under musical instructions, meant to be heard until their teaching becomes a way of life.</p>
 
-      <div class="fan">
-        <p class="fan-gur">ੴ<small>the opening glyph, "ik onkar" &middot; the most translated mark in the book</small></p>
-        <ul class="fan-list">
-          <li><span class="e">OM!</span><span class="who">Trumpp, 1877</span></li>
-          <li><span class="e">There is but one God.</span><span class="who">Macauliffe, 1909</span></li>
-          <li><span class="e">One Universal Creator God.</span><span class="who">Sant Singh Khalsa, 1996</span></li>
-          <li><span class="e">There is one supreme being.</span><span class="who">Pashaura Singh, 2000</span></li>
-          <li><span class="e">This Being is one.</span><span class="who">Eleanor Nesbitt, 2005</span></li>
-          <li><span class="e">There is One Being.</span><span class="who">Nikky-Guninder Kaur Singh, 2019</span></li>
-        </ul>
-      </div>
-
-      <p>One reads the symbol as a number, there is one God. Another reads it as a state, this Being is one, all of it one. A German scholar in 1877 simply misheard it as the Hindu sacred sound <em>Om</em>. The book is written in Gurmukhi, in a deliberately mixed tongue that blends Punjabi, Persian, Sanskrit and more, and it has been carried into English by that German who had no love for it, a sympathetic Victorian, the official Sikh committee, and a few modern poets. They do not agree, and the disagreement starts at the very first character of the book. That spread is the subject of this page.</p>
-      <p>What is the living Guru actually teaching? The diagnosis is blunt: we are walled off from God by <em>haumai</em>, the ego, the hard little sense of "I" and "mine." The way back is to remember the divine Name (<em>naam</em>), to earn an honest living and share it, and to lean on grace, walking in step with the <em>Hukam</em>, the divine order. And it is not a private club. The Gurus put hymns by Hindu and Muslim saints into their own scripture, including a man born untouchable, and sing them as the Guru's own words.</p>
-      <p>Below are fifteen keystone passages, the ones the rest of the tradition leans on, running from the book's opening creed to its closing seal. For each you get the Gurmukhi, a transliteration, a plain-language breakdown of what it says and where the translators part ways, and then the English versions stacked so you can read them against each other. Use the arrows or your keyboard to move between passages, or the menu to jump.</p>
-    </section>
-
-    <!-- ============================ EXPLORER ============================ -->
-    <section class="ggs" id="ggs">
-      <div class="ggs-bar">
-        <div class="ggs-step">
-          <button class="ggs-nav" id="ggs-prev" aria-label="Previous passage">&lsaquo;</button>
-          <button class="ggs-jump" id="ggs-jump" aria-label="Jump to a passage"><span><span id="ggs-pno">Mul Mantar</span> <span class="ggs-caret">&#9662;</span><br><span id="ggs-loc"></span></span></button>
-          <button class="ggs-nav" id="ggs-next" aria-label="Next passage">&rsaquo;</button>
+        <div class="gsg-prose">
+          <p>A Christian Bible can be mapped as a library and the Quran can be put back into a rough preaching chronology. The Guru Granth Sahib asks for a different first move. Its center is neither story nor law code. It is <em>bani</em>, sacred utterance, composed as hymns and set inside a musical architecture. The standard volume has 1,430 <em>angs</em>. The word means limbs, not merely pages. A Sikh who says ang 349 is locating a line within the body of the Guru.</p>
+          <p>The volume opens with <em>Ik Oankar</em> and the Mul Mantar, a compressed statement of the One as true, creative, fearless, without hatred, beyond birth, and known by grace. Japji follows, then the evening and bedtime compositions So Dar, So Purakh, and Sohila. After that opening liturgical sequence, most of the book is ordered under thirty-one main <em>ragas</em>. A raga is not just a tune. It is a melodic framework that gives sung words a shape, mood, and field of movement. Inside each raga, compositions are grouped further by author, poetic form, length, and musical house. The closing region gathers forms outside the main raga sequence, including the saloks of Kabir and Farid, the Bhatts&rsquo; praise poetry, Guru Tegh Bahadur&rsquo;s saloks, Mundavani, and the still-disputed Ragmala.</p>
+          <p>That arrangement changes how the book should be read. A first-time reader is not supposed to push through 1,430 angs waiting for the next event. Follow one composition, hear its refrain, notice who speaks, and listen for the argument made by the raga, image, repetition, and response. Silent English reading can reveal the claims. It cannot reproduce what happens when the same lines are sung as <em>kirtan</em> among a congregation.</p>
+          <p>The authorship is as striking as the structure. The received volume contains compositions by six Sikh Gurus, from Guru Nanak through Guru Arjan and Guru Tegh Bahadur. It also carries the voices of fifteen Bhagats, eleven Bhatts, and other Sikh contributors. Kabir, Sheikh Farid, Ravidas, Namdev, and their companions came from different devotional, social, and religious locations. Their inclusion does not mean Guru Arjan pasted together every available holy poem or declared all doctrines interchangeable. He selected, arranged, and sometimes answered these voices inside a Sikh theological frame. The welcome is real. So is the editorial judgment.</p>
+          <p>The Sikh story around the anthology begins before the bound volume. Guru Nanak&rsquo;s hymns were sung and remembered in the community at Kartarpur. Collections grew through his successors. Guru Arjan supervised a canonical compilation in 1604, with Bhai Gurdas serving as scribe, and the volume was installed at Harmandir Sahib in Amritsar. The received text later added the compositions of Guru Tegh Bahadur in the recension associated with Guru Gobind Singh. Sikh tradition remembers Guru Gobind Singh ending the line of human Gurus at Nanded in 1708 and giving enduring Guruship to the Granth. &ldquo;Eleventh Guru&rdquo; is common shorthand. The more exact Sikh claim is that the Guru Granth Sahib is the eternal Guru, while the Guru Panth also carries corporate responsibility and authority.</p>
         </div>
-        <div class="ggs-count" id="ggs-count"></div>
-      </div>
 
-      <div class="ggs-menu" id="ggs-menu" hidden aria-label="Keystone passages"></div>
+        <div class="gsg-day" aria-label="A day in the presence of the Guru Granth Sahib">
+          <article class="gsg-hour">
+            <p class="gsg-hour-k">Morning</p>
+            <h3>Prakash</h3>
+            <p>The volume is ceremonially opened, attended beneath a canopy, and a hymn is read as the day&rsquo;s <em>hukam</em>. The act is an audience with the Guru, not the opening of a reference book.</p>
+          </article>
+          <article class="gsg-hour">
+            <p class="gsg-hour-k">Gathered life</p>
+            <h3>Kirtan and hukam</h3>
+            <p>Hymns are sung, explained, read at births, marriages, and deaths, and received by the <em>sangat</em>. No other book is installed at the same level in a gurdwara.</p>
+          </article>
+          <article class="gsg-hour">
+            <p class="gsg-hour-k">Evening</p>
+            <h3>Sukhasan</h3>
+            <p>After evening prayer, the Guru is ceremonially closed and returned with care to a resting room. Reverence governs carrying, covering, attendance, and place.</p>
+          </article>
+        </div>
 
-      <div class="ggs-body">
-        <div class="ggs-source" id="ggs-source"></div>
-        <div class="ggs-notes" id="ggs-notes"></div>
-        <div class="ggs-versions" id="ggs-versions"></div>
+        <div class="gsg-prose">
+          <p>This daily movement is the book&rsquo;s one indispensable frame. Sikhs bow before the Guru Granth Sahib because the Guru&rsquo;s <em>shabad</em>, the teaching Word, is present there. The conduct code is equally clear that the cloth, canopy, whisk, and seat are not magic objects. Respect becomes Sikh only when the person listens and acts. The book is treated as living because its address is living.</p>
+        </div>
       </div>
-      <div class="ggs-loading">loading the translations&hellip;</div>
-      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/ggs-data.js</code>.</p></noscript>
     </section>
 
-    <!-- ============================ COLOPHON ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
-      <p>Every translation here is reproduced verbatim, not paraphrased. The Gurmukhi and the transliteration follow the standard 1,430-page printed edition, the same pagination in every copy worldwide. The only change to any quotation is curly quotation marks turned straight, to match the rest of the site.</p>
-      <ul class="src-list">
-        <li><b>The Gurmukhi source and transliteration</b>, with the <b>Sant Singh Khalsa</b> translation (the one most people read on a screen), are from <a href="https://www.srigranth.org">SriGranth</a> and the open Sikh text databases.</li>
-        <li><b>Max Arthur Macauliffe</b> (1909), the sympathetic six-volume <i>The Sikh Religion</i>, and <b>Ernest Trumpp</b> (1877), the first and notoriously hostile European version, are both public domain, from the <a href="https://archive.org">Internet Archive</a>. Trumpp is here only as a cautionary contrast on the opening passages; the post does not lean on it.</li>
-        <li><b>Manmohan Singh</b> (the eight-volume SGPC edition) and <b>Gopal Singh</b> (1960 to 1962) are the standard mid-century translations.</li>
-        <li><b>Nikky-Guninder Kaur Singh</b> is the contemporary literary translator; her renderings come from her published books. The academic readings of the Mul Mantar are from <b>Eleanor Nesbitt</b> and <b>Pashaura Singh</b>.</li>
-      </ul>
-      <p>The breakdowns are mine. They lean on standard Sikh scholarship and name the contested points rather than smoothing them over. Where a famous line is really a story from the <i>Janamsakhis</i> (the traditional life of Guru Nanak) and not a verse in the scripture, the breakdown says so. The Gurmukhi word glosses are checked against more than one edition.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">The image on the homepage card is an illuminated folio of the Mul Mantar in gold, written as Guru Gobind Singh's <i>nishan</i> (his own hand), from an early manuscript of the Guru Granth Sahib (public domain). This reader is offered with respect for a scripture that, to Sikhs, is a living Guru.</p>
+    <section class="gsg-layer" id="history">
+      <div class="gsg-shell">
+        <p class="gsg-layer-tag"><b>02</b><span>What can be known</span></p>
+        <h2 class="gsg-h2">The canon is early, deliberate, and more complicated than one perfect copy</h2>
+        <p class="gsg-intro">Devotion can call the bani timeless. History still has to ask which collections, manuscripts, editorial choices, and recensions carried it.</p>
+
+        <div class="gsg-prose">
+          <p>The simple story says Guru Nanak composed hymns, each Guru handed an unchanged book to the next, Guru Arjan bound it in 1604, and Guru Gobind Singh added Guru Tegh Bahadur&rsquo;s bani before making it Guru. The strong historical version keeps the spine and removes the false smoothness. Early bani also lived in oral repertoires. Written collections existed before 1604, including the Goindval pothis. Surviving manuscripts contain variants, different arrangements, and evidence of editorial work. This is not proof that anything could be inserted. It is proof that canon formation was a process.</p>
+          <p>Guru Arjan&rsquo;s 1604 compilation is the decisive turn. Its raga order, author labels, recurrent Mul Mantar forms, poetic classifications, and cross-comments show a compiler doing theology through arrangement. The Kartarpur manuscript is closely associated with that first canonical volume, though access, dating, and the exact stages of its production have generated fierce argument. Other early families, often called recensions, preserve overlapping but not identical textual histories.</p>
+        </div>
+
+        <div class="gsg-context-grid">
+          <article class="gsg-context">
+            <h3>The received volume</h3>
+            <p>The standard 1,430-ang form includes the bani of Guru Tegh Bahadur and is tied by Sikh memory to Guru Gobind Singh&rsquo;s final recension. Historians can document the resulting canon more easily than every detail of the Damdama dictation story. The present text is highly fixed in worship and print.</p>
+            <p>Ragmala remains printed at the end. The Sikh conduct code allows a complete reading to conclude at Mundavani or after Ragmala according to local convention, while forbidding an edition that simply removes it. The disagreement is contained without pretending it vanished.</p>
+          </article>
+          <article class="gsg-context">
+            <h3>Gurmukhi and English</h3>
+            <p>Gurmukhi is the script, not one language spoken uniformly from ang 1 to 1,430. The hymns use several North Indian literary registers, including Punjabi and Braj forms, alongside Persian, Arabic, and Sanskritic vocabulary. Grammar, meter, pun, and musical placement can carry interpretation.</p>
+            <p>That is why careful projects now use both literal translation and &ldquo;transcreation.&rdquo; English can state a claim, but it must choose whether <em>hukam</em> is order, command, will, or a lawful unfolding, and whether <em>naam</em> is name, presence, remembrance, or all three in practice.</p>
+          </article>
+        </div>
+
+        <aside class="u-textcheck" aria-labelledby="gsg-textcheck-title">
+          <div class="u-textcheck-head">
+            <div>
+              <p class="u-textcheck-k">How safely did this reach us?</p>
+              <h3 class="u-textcheck-verdict" id="gsg-textcheck-title">An early canonical volume survives close to the act of compilation. The received text is stable. Its path into English is unusually demanding.</h3>
+            </div>
+            <p class="u-textcheck-rule">Three questions, because one confidence score would lie.</p>
+          </div>
+          <div class="u-textcheck-rows">
+            <div class="u-textcheck-row">
+              <span class="u-textcheck-name">Early witnesses</span>
+              <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong, qualified</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+              <p class="u-textcheck-note">The Kartarpur volume stands very near Guru Arjan&rsquo;s 1604 compilation, and earlier collections preserve material behind it. No authorial sheet survives for every hymn, access to key manuscripts is limited, and the earliest oral and written repertoires were plural.</p>
+            </div>
+            <div class="u-textcheck-row">
+              <span class="u-textcheck-name">Received wording</span>
+              <span class="u-textcheck-read"><span class="u-textcheck-grade">Highly stable now</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+              <p class="u-textcheck-note">The standard 1,430-ang text is fixed across printed copies and digital editions. Early manuscripts preserve variants and recension differences, and the received canon includes later addition of Guru Tegh Bahadur&rsquo;s bani and the contested Ragmala.</p>
+            </div>
+            <div class="u-textcheck-row">
+              <span class="u-textcheck-name">English meaning</span>
+              <span class="u-textcheck-read"><span class="u-textcheck-grade">Deeply interpretive</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+              <p class="u-textcheck-note">The central calls to oneness, remembrance, truthful living, service, and equality cross over clearly. The mixed registers, compressed grammar, sound, raga, gendered imagery, and terms such as <em>naam</em>, <em>shabad</em>, <em>haumai</em>, and <em>hukam</em> force choices on every translator.</p>
+            </div>
+          </div>
+          <p class="u-textcheck-foot">Verdict based on the <a href="https://academic.oup.com/book/10787">Oxford study of canon, meaning, and authority</a>, the <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">study of concurrent early repertoires and recensions</a>, the <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291502862">linguistic and philological account</a>, and the practice and translation sources below. It measures access to the text, not whether the bani is revelation.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="gsg-layer" id="ideas">
+      <div class="gsg-shell">
+        <p class="gsg-layer-tag"><b>03</b><span>What shapes a Sikh life</span></p>
+        <h2 class="gsg-h2">Fourteen ideas a longtime Sikh would make you keep</h2>
+        <p class="gsg-intro">The count comes from practice. Each item has to organize prayer, work, food, money, family, courage, or the training of attention.</p>
+
+        <div class="gsg-concepts">
+          <details class="gsg-concept" id="one">
+            <summary><span class="gsg-concept-n">01</span><span><span class="gsg-concept-title">The One is present through the whole creation.</span><span class="gsg-concept-place">Ik Oankar, without fear or hatred</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role"><em>Ik Oankar</em> opens the canon before any story, command, or argument. The One is not a tribal deity inside the universe. Divine reality is creative, timeless, beyond birth, and without fear or enmity. Kabir&rsquo;s image pushes the claim into ethics: every person comes from one Light, so contempt has to fight the book&rsquo;s first principle.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikh prayer begins with the One, and ordinary speech names the divine with terms drawn from several religious vocabularies. Bowing to one Guru does not permit hatred of the neighbor. It is meant to train the eye to meet difference without inventing a second source of being.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One Universal Creator God. The Name Is Truth. Creative Being Personified. No Fear. No Hatred.</q><cite>Mul Mantar, ang 1</cite></p>
+                <p class="gsg-verse"><q>From the One Light, the entire universe welled up. So who is good, and who is bad?</q><cite>Kabir, ang 1349</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="hukam">
+            <summary><span class="gsg-concept-n">02</span><span><span class="gsg-concept-title">Freedom begins by learning to live within hukam.</span><span class="gsg-concept-place">Order, command, will, and reality</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">Japji asks how a person becomes truthful and answers with <em>hukam</em>. The word can mean command, order, will, or the way reality unfolds. It does not describe a secret script that excuses every choice. It breaks the fantasy that the self stands outside creation as its controller. Understanding hukam and loosening ego are presented as one movement.</p>
+              <p class="gsg-practice"><b>In practice</b> A Sikh receives a daily hukam from the opened Guru Granth Sahib, listens for direction, and learns to meet events without demanding that reality flatter the self. Acceptance does not cancel action. It changes the spirit in which action is taken, especially when the result cannot be controlled.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>O Nanak, it is written that you shall obey the Hukam of His Command, and walk in the Way of His Will.</q><cite>Japji, ang 1</cite></p>
+                <p class="gsg-verse"><q>O Nanak, one who understands His Command, does not speak in ego.</q><cite>Japji, ang 1</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="naam">
+            <summary><span class="gsg-concept-n">03</span><span><span class="gsg-concept-title">Naam is remembrance that becomes a way of seeing.</span><span class="gsg-concept-place">The Name held in breath, work, and attention</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role"><em>Naam</em> is translated as Name, but the practice is larger than repeating a label. It is sustained remembrance of divine reality, the attention that lets the One become present in mind and conduct. The book can speak of chanting, hearing, receiving, dwelling in, and living by Naam. Sound begins the discipline. A changed center is the point.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikhs repeat and sing the divine Name, rise for early prayer, recite prescribed bani, and return attention during work. The test is not how many syllables were counted. It is whether remembrance survives irritation, money, appetite, grief, and the presence of another person.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Those who have meditated on the Naam, the Name of the Lord, and departed after having worked by the sweat of their brows</q><cite>Japji closing salok, ang 8</cite></p>
+                <p class="gsg-verse"><q>O Nanak, if I am blessed with the Naam, I live, and my body and mind blossom forth.</q><cite>Guru Arjan, ang 1429</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="shabad">
+            <summary><span class="gsg-concept-n">04</span><span><span class="gsg-concept-title">The Guru teaches as shabad, the Word that must be practiced.</span><span class="gsg-concept-place">Why bani can be living Guru</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role"><em>Shabad</em> joins revelation, teaching, sound, and disciplined understanding. Guru Nanak can call the Shabad Guru and consciousness the disciple. Guru Ram Das can say Bani is Guru and Guru is Bani. The claim makes sense of Sikh reverence for the Granth, but it also prevents reverence from stopping at furniture. The disciple has to hear, understand, and act.</p>
+              <p class="gsg-practice"><b>In practice</b> The Guru is approached through recitation, kirtan, exposition, memorization, and hukam. Sikhs bow to the Guru Granth Sahib, then sit low in the congregation to listen. A beautiful room and perfect ceremony become hollow if the Word never corrects the person attending it.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>The Shabad is the Guru, upon whom I lovingly focus my consciousness; I am the chaylaa, the disciple.</q><cite>Guru Nanak, ang 943</cite></p>
+                <p class="gsg-verse"><q>The Word, the Bani is Guru, and Guru is the Bani.</q><cite>Guru Ram Das, ang 982</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="haumai">
+            <summary><span class="gsg-concept-n">05</span><span><span class="gsg-concept-title">Haumai is the disease that turns life into &ldquo;I&rdquo; and &ldquo;mine.&rdquo;</span><span class="gsg-concept-place">Ego and the five thieves</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role"><em>Haumai</em> is not healthy self-respect. It is the felt separation that makes the self owner, judge, and center of everything it touches. Desire, anger, greed, attachment, and pride become the traditional five thieves because each steals attention into that false center. The book&rsquo;s diagnosis is severe and oddly hopeful: ego contains the conditions in which its cure can be learned.</p>
+              <p class="gsg-practice"><b>In practice</b> Simran, seva, shared food, honest work, giving, and accepting correction all train against self-importance. The discipline is not self-hatred. A person who performs humility for admiration has simply taught haumai a religious costume.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Ego is a chronic disease, but it contains its own cure as well.</q><cite>Guru Nanak, ang 466</cite></p>
+                <p class="gsg-verse"><q>On the twelfth day, the five thieves are subdued, and then, O Nanak, the mind is pleased and appeased.</q><cite>Guru Nanak, ang 1245</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="grace">
+            <summary><span class="gsg-concept-n">06</span><span><span class="gsg-concept-title">Practice matters, and liberation is still grace.</span><span class="gsg-concept-place">Gurprasad and nadar</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The Mul Mantar ends with <em>gurprasad</em>, by the Guru&rsquo;s grace. Japji gives effort and grace different jobs: actions shape the embodied life, while the gate of liberation opens by the gracious glance, <em>nadar</em>. Sikh practice is strenuous without becoming a purchase. Recitation, service, courage, and truthful work prepare attention. They do not put the Infinite in debt.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikhs undertake disciplined prayer and service, then close with Ardas rather than a receipt. Success can invite gratitude instead of ownership. Failure can be confessed without assuming one has fallen beyond mercy. Grace keeps the path from becoming spiritual merit collecting.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Beyond Birth, Self-Existent. By Guru&rsquo;s Grace</q><cite>Mul Mantar, ang 1</cite></p>
+                <p class="gsg-verse"><q>By the karma of past actions, the robe of this physical body is obtained. By His Grace, the Gate of Liberation is found.</q><cite>Japji, ang 2</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="truthful-living">
+            <summary><span class="gsg-concept-n">07</span><span><span class="gsg-concept-title">Truthful living outranks religious display.</span><span class="gsg-concept-place">Conduct above costume and ceremony</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The Granth repeatedly borrows ritual language and turns it inward. Compassion becomes the mosque, contentment the earrings, honest conduct the pilgrimage, and the whole sky an offering plate. The target is not beauty, tradition, or disciplined form. It is the lie that a correct display can replace a truthful person. Truth as an idea stands below truth embodied in conduct.</p>
+              <p class="gsg-practice"><b>In practice</b> A Sikh can keep the visible discipline, attend the gurdwara, give, sing, and still be asked how money was earned, how power was used, and what happened at home. Ceremony is valuable when it trains truthful living. It becomes camouflage when it protects the opposite.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Truth is higher than everything; but higher still is truthful living.</q><cite>Guru Nanak, ang 62</cite></p>
+                <p class="gsg-verse"><q>That which is pleasing to Him is the lamp-lit worship service.</q><cite>Guru Nanak, ang 13</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="work-share">
+            <summary><span class="gsg-concept-n">08</span><span><span class="gsg-concept-title">Earn honestly and share what comes through your hands.</span><span class="gsg-concept-place">Kirat karni and vand chhakna</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The famous threefold summary of Sikh life joins remembrance with honest work and sharing. The scriptural line is blunt: work for what you eat, then give some of what you have. Labor and generosity protect each other. Giving cannot cleanse exploitation, and honest earnings are not complete while every benefit stops at the earner.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikhs support a household, contribute money and labor to the gurdwara, feed people, fund relief, and treat a livelihood as moral territory. <em>Dasvandh</em>, traditionally a tenth of earnings, gives sharing a regular claim before surplus becomes an excuse.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One who works for what he eats, and gives some of what he has<br>O Nanak, he knows the Path.</q><cite>Guru Nanak, ang 1245</cite></p>
+                <p class="gsg-verse"><q>Those who have meditated on the Naam, the Name of the Lord, and departed after having worked by the sweat of their brows</q><cite>Guru Nanak, ang 8</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="seva">
+            <summary><span class="gsg-concept-n">09</span><span><span class="gsg-concept-title">Seva makes service ordinary, physical, and shared.</span><span class="gsg-concept-place">Work without a superior seat</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role"><em>Seva</em> is selfless service, but the adjective should not make it sound rare or heroic. It includes carrying water, cooking, washing dishes, cleaning shoes, sweeping floors, teaching, giving professional skill, and responding to disaster. Langar turns the principle into a room: people cook and serve, then sit in rows to eat without caste rank.</p>
+              <p class="gsg-practice"><b>In practice</b> A gurdwara needs hands before it needs an audience. The work is open enough for a child to pour water and demanding enough to organize global relief. Seva trains the server to disappear from the center without making the person served into a prop for goodness.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>you shall find peace, doing seva (selfless service).</q><cite>Guru Nanak, ang 25</cite></p>
+                <p class="gsg-verse"><q>I carry water for the Guru&rsquo;s household; &hellip; I grind the corn for the Guru&rsquo;s household.</q><cite>Guru Arjan, ang 239</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="sangat">
+            <summary><span class="gsg-concept-n">10</span><span><span class="gsg-concept-title">Sangat and kirtan train people together.</span><span class="gsg-concept-place">Company, singing, and shared correction</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The Sikh path is personal without being solitary. <em>Sangat</em> is the gathered community, and <em>sadh sangat</em> is company shaped by the Guru&rsquo;s teaching. Kirtan lets a group breathe, repeat, and receive the same bani together. Company matters because habits travel between people. So do courage, generosity, resentment, and ego.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikhs gather for kirtan, katha, Ardas, hukam, langar, and decisions. The congregation can steady prayer when private motivation fails and challenge a self-serving reading. It can also reproduce status and faction, which is why sitting together under the Guru remains a discipline rather than a compliment.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Join the Saadh Sangat, the Company of the Holy; vibrate and meditate on the Jewel of the Naam.</q><cite>Guru Arjan, ang 12</cite></p>
+                <p class="gsg-verse"><q>Sing, and listen, and let your mind be filled with love.</q><cite>Japji, ang 2</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="householder">
+            <summary><span class="gsg-concept-n">11</span><span><span class="gsg-concept-title">The spiritual life belongs inside the household.</span><span class="gsg-concept-place">Detachment without desertion</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The Gurus did not make escape from work, marriage, children, and public obligation the normal road to liberation. The sharper demand is to live among attachments without letting possession rule. Detachment means love without ownership and action without making outcome the self&rsquo;s identity. A robe in the forest can carry as much ego as a ledger in town.</p>
+              <p class="gsg-practice"><b>In practice</b> Prayer has to fit around waking, feeding, earning, cleaning, caring, and keeping promises. Family life becomes a field for patience and service, not proof of spiritual inferiority. The same tradition can honor celibacy or renunciation while refusing to make either the Sikh norm.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>O mind, remain detached in the midst of your household.</q><cite>Guru Nanak, ang 26</cite></p>
+                <p class="gsg-verse"><q>Even as householders, they lovingly attune themselves to the True Lord.</q><cite>Guru Arjan, ang 230</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="equality">
+            <summary><span class="gsg-concept-n">12</span><span><span class="gsg-concept-title">One Light makes caste and inherited rank spiritually false.</span><span class="gsg-concept-place">Equality given a seat and a meal</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The Granth does more than announce a generic human dignity. It preserves Ravidas, born into a community treated as untouchable, and has Guru Nanak seek the company of the lowest. It tells the reader to recognize Light rather than ask caste. The later institutions of sangat, langar, common initiation, Singh, and Kaur try to make the theology visible in bodies seated together.</p>
+              <p class="gsg-practice"><b>In practice</b> The Sikh conduct code bars discrimination by caste, religion, nation, or status in the congregation and langar. Men and women may read, lead prayer, receive initiation, and serve. The rule remains necessary because Sikh societies, like the societies around them, have not always obeyed their own center.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>Recognize the Lord&rsquo;s Light within all, and do not consider social class or status; there are no classes or castes in the world hereafter.</q><cite>Guru Nanak, ang 349</cite></p>
+                <p class="gsg-verse"><q>Nanak seeks the company of the lowest of the low class, the very lowest of the low.</q><cite>Guru Nanak, ang 15</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="courage">
+            <summary><span class="gsg-concept-n">13</span><span><span class="gsg-concept-title">Courage means neither terrorizing nor living terrified.</span><span class="gsg-concept-place">Fearlessness without hatred</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The One is <em>nirbhau</em> and <em>nirvair</em>, without fear and without enmity. Guru Tegh Bahadur turns that theology into a human test: do not frighten anyone, and do not be frightened by anyone. This is not politeness at any price. It is a refusal of domination from either side, the spiritual root later Sikh history develops into martyrdom, defense, and the saint-soldier ideal.</p>
+              <p class="gsg-practice"><b>In practice</b> Sikhs are taught to speak against injustice, protect the vulnerable, and master fear without cultivating an enemy&rsquo;s hatred. The kirpan gives that obligation a visible form in initiated life. Restraint matters as much as readiness, because intimidation fails the line before any blow is struck.</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One who does not frighten anyone, and who is not afraid of anyone else &hellip; says Nanak, listen, mind: call him spiritually wise.</q><cite>Guru Tegh Bahadur, ang 1427</cite></p>
+                <p class="gsg-verse"><q>Fareed, do not turn around and strike those who strike you with their fists.</q><cite>Sheikh Farid, ang 1378</cite></p>
+              </div></div>
+            </div>
+          </details>
+
+          <details class="gsg-concept" id="liberation">
+            <summary><span class="gsg-concept-n">14</span><span><span class="gsg-concept-title">Liberation can begin while a person is still alive.</span><span class="gsg-concept-place">Mukti inside ordinary life</span></span><span class="gsg-concept-mark" aria-hidden="true"></span></summary>
+            <div class="gsg-concept-body">
+              <p class="gsg-concept-role">The Granth accepts karma, rebirth, and release from the cycle, but it does not make liberation only a postmortem destination. The liberated person can be recognized now: less ruled by pleasure and pain, friend and enemy, greed, attachment, and ego. Union with the One changes the quality of living before it changes any theory of what follows death.</p>
+              <p class="gsg-practice"><b>In practice</b> A Sikh seeks <em>jivan mukti</em>, freedom while living, through Naam, grace, truthful conduct, and the Guru&rsquo;s Word. Funeral prayer can hold hope beyond death. Daily practice asks a harder near-term question: what bondage is loosening in the person who is still here?</p>
+              <div class="gsg-refrain"><p class="gsg-refrain-head"><span>The Guru Granth Sahib keeps saying it</span><span>Sant Singh Khalsa, 1996</span></p><div class="gsg-verses">
+                <p class="gsg-verse"><q>One who is not affected by pleasure or pain, who looks upon friend and enemy alike &hellip; says Nanak, listen, mind: know that such a person is liberated.</q><cite>Guru Tegh Bahadur, ang 1427</cite></p>
+                <p class="gsg-verse"><q>Meeting the True Guru, eternal liberation is obtained; He has banished attachment from within.</q><cite>Guru Nanak, ang 466</cite></p>
+              </div></div>
+            </div>
+          </details>
+        </div>
+
+        <aside class="gsg-convergence">
+          <h3>Why the list stops at fourteen</h3>
+          <p>The test crossed initiated and non-initiated life, household and gurdwara, prayer and public service. Ecological kinship, sweetness of speech, contentment, and the welfare of all remain important. They were the first candidates a longtime Sikh could merely nod along to after the load-bearing practices above were already present. Several live inside the fourteen rather than needing a fifteenth card.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="gsg-layer" id="hard-parts">
+      <div class="gsg-shell">
+        <p class="gsg-layer-tag"><b>04</b><span>What resists a clean summary</span></p>
+        <h2 class="gsg-h2">Caste, gender, other faiths, violence, hukam, text</h2>
+        <p class="gsg-intro">The strongest reading keeps the liberating claim and the historical complication in the same room.</p>
+
+        <div class="gsg-hard-grid">
+          <article class="gsg-hard">
+            <h3>Caste</h3>
+            <p>The scriptural rejection is direct, the contributor list embodies it, and langar gives it a social form. Sikh life has still carried caste endogamy, status around Jat identity, caste-marked gurdwaras, and discrimination against Dalit Sikhs. Calling those practices &ldquo;cultural&rdquo; does not make them harmless. Calling Sikh teaching casteist because Sikhs violate it misses the text. The honest statement is sharper: the canon supplies an internal indictment that Sikh society continues to need.</p>
+          </article>
+          <article class="gsg-hard">
+            <h3>Gender</h3>
+            <p>Guru Nanak asks why woman should be called bad when kings are born through her, and Sikh discipline grants women the same access to initiation, reading, kirtan, and service. No composition in the received canon is attributed to a woman, however, and the poetry often casts the human soul as bride and the divine as Husband. Sikh feminist readings find fluidity and female centrality there. Critics also see a male-authored marriage world that can leave hierarchy intact. Equal doctrine has not guaranteed equal authority in every institution or home.</p>
+          </article>
+          <article class="gsg-hard">
+            <h3>Other faiths</h3>
+            <p>The Granth includes Kabir, Farid, Ravidas, Namdev, and other non-Guru voices, uses names such as Allah and Ram, and attacks empty Hindu, Muslim, and yogic performance. That is not the modern slogan that all religions say exactly the same thing. Guru Arjan selected bhagat bani for theological fit and excluded other material. The Sikh conduct code welcomes anyone into a gurdwara while defining a Sikh as owing allegiance to no other religion. Openness and distinctness are both part of the record.</p>
+          </article>
+          <article class="gsg-hard">
+            <h3>Violence</h3>
+            <p>The Guru Granth Sahib praises fearlessness, condemns oppression, and contains images of struggle, but it is not a manual of war. The explicit martial institutions of miri-piri, Khalsa initiation, the kirpan, and rules for force develop through later Guru history and other Sikh texts. Calling the Granth simply pacifist cuts that history away. Using every spiritual battle as a license for violence is equally careless. Sikh tradition argues for defense and justice under severe restraints, not violence as spiritual proof.</p>
+          </article>
+          <article class="gsg-hard">
+            <h3>Hukam</h3>
+            <p>If everything unfolds within hukam, suffering can sound deserved and resistance can sound faithless. The book does not give that easy escape. It laments invasion, condemns rulers who become butchers, requires truthful action, and makes service and courage central. Accepting that an event is real is different from approving the person who caused it. Sikh practice has used hukam to endure what cannot be reversed and seva to change what can. The balance is argued, not automatic.</p>
+          </article>
+          <article class="gsg-hard">
+            <h3>Text</h3>
+            <p>Sikhs receive one inviolable Guru in the standard 1,430-ang form. Historians see concurrent oral repertoires, working collections, manuscript variants, several recensions, Guru Tegh Bahadur&rsquo;s later inclusion, and disagreement over Ragmala. Neither description cancels the other because they answer different questions. Scholarship becomes irresponsible when it treats reverence as evidence against variants. Devotional defense becomes brittle when it requires a manuscript history cleaner than the surviving manuscripts.</p>
+          </article>
+        </div>
+
+        <div class="gsg-prose">
+          <p>The best first reading is therefore not &ldquo;Sikhism teaches equality&rdquo; or &ldquo;Sikhs treat a book like a person,&rdquo; though both point toward something true. It is this: a multilingual anthology of sung teaching was deliberately gathered, received as Guru, and made the center of a community whose ordinary tests are remembrance, honest work, shared food, service, equality, and courage without hatred. The ceremony protects that address. The life proves whether it was heard.</p>
+        </div>
+
+        <div class="gsg-sources">
+          <details class="u-collapse">
+            <summary class="u-collapse-s">Sources and what they support</summary>
+            <ol class="gsg-source-list">
+              <li><b>Structure and received contents.</b> The SGPC account of <a href="https://new.sgpc.net/sri-guru-granth-sahib/">Sri Guru Granth Sahib</a> gives the 1604 compilation, contributor list, raga ordering, 1,430-ang division, and its official account of the volume as Guru. Its historical claims are read beside the manuscript scholarship below.</li>
+              <li><b>Canon, meaning, and authority.</b> Pashaura Singh&rsquo;s Oxford study, <a href="https://academic.oup.com/book/10787"><em>The Guru Granth Sahib: Canon, Meaning and Authority</em></a>, supplies the page&rsquo;s basic separation of canon formation, interpretation, and the book&rsquo;s authority as Guru.</li>
+              <li><b>The formation sequence.</b> The book&rsquo;s <a href="https://academic.oup.com/book/10787/chapter-abstract/158927503">conclusion</a> supports the movement from Guru Nanak&rsquo;s Kartarpur liturgy through the Goindval pothis to Guru Arjan&rsquo;s 1604 canon. The chapter on <a href="https://academic.oup.com/book/10787/chapter-abstract/158923901">Guru Arjan&rsquo;s editorial perspective</a> supports the claim that arrangement and selection were deliberate theological acts.</li>
+              <li><b>Bhagat bani.</b> Oxford&rsquo;s chapter on <a href="https://academic.oup.com/book/10787/chapter-abstract/158924664">scriptural adaptation</a> supports both the inclusion of non-Guru devotional voices and the qualification that Guru Arjan selected and adapted material rather than declaring all positions identical.</li>
+              <li><b>Manuscript complexity.</b> Jeevan Deol&rsquo;s Cambridge article on <a href="https://www.cambridge.org/core/journals/bulletin-of-the-school-of-oriental-and-african-studies/article/abs/text-and-lineage-in-early-sikh-history-issues-in-the-study-of-the-adi-granth/2449B36AC26F4362CC159A9A67656953">text and lineage in early Sikh history</a> supports concurrent oral repertoires and the emergence of relatively standardized written recensions. Oxford&rsquo;s <a href="https://academic.oup.com/book/10787/chapter-abstract/158922155?login=false">textual analysis</a> documents variation among early collections and manuscripts.</li>
+              <li><b>Living Guru.</b> Oxford&rsquo;s account of <a href="https://academic.oup.com/book/10787/chapter-abstract/158927008">the place of scripture in Sikh tradition</a> supports the Guru Granth Sahib as living Word, source of personal and corporate authority, and center of liturgy and ceremony.</li>
+              <li><b>Conduct and life around the Guru.</b> The SGPC&rsquo;s current <a href="https://sgpc.net/sikh-rehat-maryada-in-english/">English Sikh Rehat Maryada page</a> and <a href="https://sgpc.net/wp-content/uploads/2025/06/Sikh-Rehat-Maryada-English-n.pdf">official code</a> support daily ceremonial opening and closing, canopy and attendance, kirtan and hukam, complete readings, langar and seva, equal seating, initiation, daily bani, and Guru Panth status.</li>
+              <li><b>Raga and performed scripture.</b> The Oxford Handbook entry on <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291499834">the Guru Granth Sahib</a> supports its canonization, performative practice, ceremony, and communal force. The study of <a href="https://www.tandfonline.com/doi/full/10.1080/17448727.2015.1023105">Gurbani music</a> supports the thirty-one main ragas and kirtan as a distinct devotional form.</li>
+              <li><b>Language is not script.</b> The Oxford Handbook chapter on <a href="https://academic.oup.com/edited-volume/34369/chapter-abstract/291502862">linguistic and philological approaches</a> supports close attention to language, Gurmukhi script, meter, and formal structure. SikhRI&rsquo;s plain explanation of <a href="https://sikhri.org/articles/gurmukhi-guru-nanak-sahibs-alphabets">Gurmukhi</a> supports the page&rsquo;s language-versus-script correction.</li>
+              <li><b>Translation.</b> Nirvikar Singh&rsquo;s article on <a href="https://sikhresearchjournal.org/index.php/srj/article/view/117">the challenge of translating the Guru Granth Sahib</a> supports the need to mark interpretation. <a href="https://sikhri.org/tags/tggsp">The Guru Granth Sahib Project</a> supports pairing literal translation with context, musicology, history, culture, philosophy, and transcreation.</li>
+              <li><b>Quoted wording.</b> Brief English excerpts follow Sant Singh Khalsa&rsquo;s 1996 rendering as served by the open <a href="https://www.banidb.com/">BaniDB</a>, checked line by line against its Gurmukhi source, ang number, author, and raga metadata. Refrain marks were omitted only when they did not change the quoted words.</li>
+              <li><b>The ideas section.</b> The 2026 Cambridge Element <a href="https://www.cambridge.org/core/elements/sikh-ethics/931645585C0461FFC33D034EF558360C"><em>Sikh Ethics</em></a> supports truthful living, oneness, equality, virtue, hukam, justice, and the careful connection between the Guru Granth Sahib and later Khalsa practice. Oxford&rsquo;s account of <a href="https://academic.oup.com/book/3601/chapter-abstract/144903612">Khalsa ethical concerns</a> supports honest living, soft speech, service, care for the vulnerable, restraint in war, and the household reach of Sikh ethics.</li>
+              <li><b>Caste in teaching and practice.</b> Surinder S. Jodhka&rsquo;s open study of <a href="https://www.mdpi.com/2077-1444/15/10/1219">Sikh religion and contentions around caste</a> supports the sharp conflict between the canon&rsquo;s rejection and caste&rsquo;s persistence among Sikhs.</li>
+              <li><b>Gender, caste, and the household.</b> Nicola Mooney&rsquo;s study of <a href="https://www.mdpi.com/2077-1444/11/2/95">Sikh householding at the intersection of gender and caste</a> supports both Guru Nanak&rsquo;s egalitarian household model and the later persistence of endogamy and male privilege.</li>
+              <li><b>Violence and the saint-soldier.</b> The Cambridge Companion chapter on <a href="https://www.cambridge.org/core/books/abs/cambridge-companion-to-religion-and-war/sikhism/0A283203A454F718136DE6773769835F">Sikhism and war</a> supports the tradition&rsquo;s join between hymns of surrender, defensive warfare, sovereignty, Khalsa, and martyrdom. Cambridge&rsquo;s <a href="https://www.cambridge.org/core/books/violence-and-the-sikhs/7F206F1063105B3E600FEDEA39A8FDC3"><em>Violence and the Sikhs</em></a> supports refusing a simple fall from early pacifism into later militancy.</li>
+              <li><b>Image.</b> The site image is an opening folio from a Guru Granth Sahib manuscript at Sri Patna Sahib, with the Mul Mantar illuminated in gold and a <em>nisan</em> associated with Guru Gobind Singh. The <a href="https://commons.wikimedia.org/wiki/File:Guru_Granth_Sahib_manuscript_housed_at_Sri_Patna_Sahib_with_%27nisan%27_%28signature_of_the_Sikh_guru_by_scribing_the_Mul_Mantar%29_of_Guru_Gobind_Singh_02.jpg">Wikimedia Commons file</a> is marked public domain.</li>
+            </ol>
+          </details>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -258,15 +490,10 @@
     <p class="u-next-more"><a href="religion.html">All 11 posts in The Sacred Books</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
-      <a href="/">&copy; 2026 Ethan Willingham</a>
-    </div>
+    <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div>
   </footer>
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/ggs-notes.js" defer></script>
-  <script src="js/ggs-data.js" defer></script>
-  <script src="js/ggs.js" defer></script>
 </body>
 </html>
