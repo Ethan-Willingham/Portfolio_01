@@ -6,10 +6,14 @@ This note records the structure selected for `quran.html` and confirmed by `gita
 
 1. **Put the book in an order a new reader can follow.** Explain the movement of the whole text in plain English. Restore chronology when the printed order hides it, but keep the explanation in continuous prose. Do not repeat that movement in a separate pair of summary cards.
 2. **Separate what is known from what is reconstructed.** Give the history of composition, collection, manuscripts, and later tradition. Use the three-part text check for early witnesses, wording stability, and meaning in English. These are different questions and should not be collapsed into one confidence score.
-3. **Name the ideas that shape lived practice.** Use twelve ideas when the text and tradition support that weight. State each idea plainly, explain its role, add an `In practice` paragraph, and give two or three exact passages that let the reader test the claim.
+3. **Name the ideas that shape lived practice.** The count is a finding, not a format. Build the list from what a longtime practitioner would insist on, keep every idea that passes that bar, and stop at the first idea they would merely nod along to. Expect roughly six to sixteen depending on the book, and let the section heading state the real number; matching counts across books is a warning sign, not a goal. State each idea plainly, explain its role, add an `In practice` paragraph, and give two or three exact passages that let the reader test the claim.
 4. **Do not skip the passages that resist a clean summary.** State the difficult wording, the historical context, the strongest restrictive reading, and the wider reading found in the tradition. Keep the source accordion at the end of this section.
 
 The finished Quran post has four sections. It does not have a fifth interactive reader section.
+
+## One bespoke element per book
+
+Each post carries exactly one structural element only its book could have, so the series reads as readings rather than as one template refilled. The Gita's ideas ride a single conversation from dropped bow to lifted bow; the New Testament's will be four tellings of one life; the Guru Granth Sahib's a book enthroned as a living teacher; the Dhammapada's the paired-verse device. One per book. Zero dissolves the books into the format; two dissolves the format.
 
 ## Tests for the ideas section
 
@@ -40,6 +44,8 @@ Say what a piece of evidence dates. For example, radiocarbon dating applies to p
 ## Hard-parts discipline
 
 For the Quran, the final set covers war, family authority, slavery and concubinage, corporal punishment, apostasy law, and claims about other faiths. Do not solve a tension by quoting only the easier verse. Put literal wording, limiting context, later legal use, and current disagreement in the same account.
+
+Title the hard section as a plain noun list naming its cards, the Torah page's pattern (Slavery, patriarchy, violence, contradiction), not as an abstraction.
 
 ## Page mechanics
 
@@ -73,3 +79,12 @@ The implementation reference is `quran.html`.
 - Remove the 700-verse translation explorer and its data scripts from the page. The canonical Gita post has the same four-section reading-guide structure as the Quran post and no fifth reader section.
 
 The second implementation reference is `gita.html`.
+
+## Format decisions, 2026-07-19 second round
+
+- The fixed twelve is retired, on the owner's call. It fit the Torah and the Gita honestly and cost the Quran page a patience card; the finding rule in section 3 replaces it.
+- `gita.html` moved to thirteen ideas: a descent card (4.7, 4.8, 4.11 in Besant's wording) inserted before devotion, and the chapter 11 vision folded into the manifestations card (11.12).
+- `gita.html`'s hard section retitled to the noun-list pattern: War, caste, detachment, renunciation, other gods.
+- Open on `quran.html`, owner's call pending: the missing sabr card (with hardship goeth ease, 94:5-6; Allah tasketh not a soul beyond its scope, 2:286) and the noun-list hard title.
+- Open: `quran-claude.html` is still live without `noindex` after promotion; this file's own promotion rule says the duplicate comes down. Owner disposition pending.
+- Open: five orphaned reader scripts remain on main (`js/quran-data.js`, `js/quran-notes.js`, `js/quran.js`, `js/gita-data.js`, `js/gita.js`), referenced by nothing.
