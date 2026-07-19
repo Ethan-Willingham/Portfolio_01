@@ -4394,6 +4394,139 @@
     return dx * dx + dy * dy > 16;   // same 4px deep-merge margin as jelloUnmergeBodies
   }
 
+  // Rare direct-grab topology closure. The ordinary guards above already
+  // reject points in solid and solid samples enclosed by the ring, but a
+  // partial post-contact pose needs the same questions answered without
+  // mutating or rejecting it. This slow path runs only after a held body's
+  // complete solver result folded, never during normal Sluice simulation.
+  function jelloGrabPoseHasTerrainInside(b) {
+    var minX = 1e18, minY = 1e18, maxX = -1e18, maxY = -1e18;
+    for (var i = 0; i < b.n; i++) {
+      var x = b.px[i], y = b.py[i];
+      if (jelloWorldSolidAt(x, y)) return true;
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    var c0 = Math.floor(minX / TILE), c1 = Math.floor(maxX / TILE);
+    var r0 = Math.floor(minY / TILE), r1 = Math.floor(maxY / TILE);
+    for (var r = r0; r <= r1; r++) {
+      for (var c = c0; c <= c1; c++) {
+        if (tileAt(r, c) === null) continue;
+        for (var pr = 0; pr < 5; pr++) {
+          var fx = pr === 0 ? 0.5 : (pr & 1 ? 0.25 : 0.75);
+          var fy = pr === 0 ? 0.5 : (pr <= 2 ? 0.25 : 0.75);
+          if (jelloPointInRing(b, (c + fx) * TILE, (r + fy) * TILE)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function jelloGrabPoseLegal(b, active, nActive) {
+    if (jelloHasOrientationFold(b) || jelloGrabPoseHasTerrainInside(b)) return false;
+    for (var i = 0; i < nActive; i++) {
+      var other = active[i];
+      if (other === b || other._melting) continue;
+      jelloRingBBox(b); jelloRingBBox(other);
+      if (b._cbR <= other._cbL || b._cbL >= other._cbR ||
+          b._cbB <= other._cbT || b._cbT >= other._cbB) continue;
+      if (jelloRingsCrossProper(b, other) ||
+          jelloCentroidInsideDeep(b, other) || jelloCentroidInsideDeep(other, b)) return false;
+    }
+    return true;
+  }
+
+  function jelloGrabSetTrialPose(b, sx, sy, tx, ty, alpha) {
+    for (var i = 0; i < b.n; i++) {
+      b.px[i] = sx[i] + (tx[i] - sx[i]) * alpha;
+      b.py[i] = sy[i] + (ty[i] - sy[i]) * alpha;
+    }
+  }
+
+  // The substep snapshot is legal and the complete post-contact result is not.
+  // Line-search the ENTIRE solver result, not just the fingertip correction.
+  // Accepting a guarded prefix changes the physical state, so contact and shape
+  // solving cannot resubmit one byte-identical rejected pose forever.
+  function jelloGrabAcceptStepFraction(b, active, nActive) {
+    var sx = b._guardPX, sy = b._guardPY;
+    if (!sx || b._guardHadFold) return 0;
+    if (!b._guardTryX || b._guardTryX.length < b.n) {
+      b._guardTryX = new Float64Array(b.px.length);
+      b._guardTryY = new Float64Array(b.py.length);
+    }
+    var tx = b._guardTryX, ty = b._guardTryY;
+    for (var i = 0; i < b.n; i++) { tx[i] = b.px[i]; ty[i] = b.py[i]; }
+
+    jelloGrabSetTrialPose(b, sx, sy, tx, ty, 0);
+    if (!jelloGrabPoseLegal(b, active, nActive)) {
+      for (i = 0; i < b.n; i++) { b.ox[i] += sx[i] - tx[i]; b.oy[i] += sy[i] - ty[i]; }
+      return 0;
+    }
+    var safe = 0, unsafe = 1;
+    for (var q = 0; q < 12; q++) {
+      var mid = (safe + unsafe) * 0.5;
+      jelloGrabSetTrialPose(b, sx, sy, tx, ty, mid);
+      if (jelloGrabPoseLegal(b, active, nActive)) safe = mid;
+      else unsafe = mid;
+    }
+    // Leave ten percent of the discovered interval as orientation/contact
+    // reserve. Landing exactly on the boundary only moves the livelock to the
+    // following substep.
+    var take = safe * 0.9;
+    if (!(take >= 1 / 4096)) {
+      jelloGrabSetTrialPose(b, sx, sy, tx, ty, 0);
+      for (i = 0; i < b.n; i++) { b.ox[i] += sx[i] - tx[i]; b.oy[i] += sy[i] - ty[i]; }
+      return 0;
+    }
+    jelloGrabSetTrialPose(b, sx, sy, tx, ty, take);
+    if (!jelloGrabPoseLegal(b, active, nActive)) {
+      jelloGrabSetTrialPose(b, sx, sy, tx, ty, 0);
+      for (i = 0; i < b.n; i++) { b.ox[i] += sx[i] - tx[i]; b.oy[i] += sy[i] - ty[i]; }
+      return 0;
+    }
+    for (i = 0; i < b.n; i++) {
+      b.ox[i] += b.px[i] - tx[i];
+      b.oy[i] += b.py[i] - ty[i];
+    }
+    b._guardTopologyFraction = take;
+    return take;
+  }
+
+  // If the complete solver direction has no usable legal prefix, the held
+  // material is already too flat to take another local pinch. A small RIGID
+  // move toward the collision-safe proxy preserves every signed area exactly.
+  // Endpoint legality is enough for this sub-spacing shift: it cannot hop an
+  // 8px tile, and the pure pose test also protects terrain enclosure and peers.
+  function jelloGrabTryRigidShift(b, active, nActive, dx, dy) {
+    var d = Math.sqrt(dx * dx + dy * dy);
+    if (!(d > 1e-7) || !jelloGrabPoseLegal(b, active, nActive)) return 0;
+    if (!b._guardTryX || b._guardTryX.length < b.n) {
+      b._guardTryX = new Float64Array(b.px.length);
+      b._guardTryY = new Float64Array(b.py.length);
+    }
+    var sx = b._guardTryX, sy = b._guardTryY;
+    for (var i = 0; i < b.n; i++) { sx[i] = b.px[i]; sy[i] = b.py[i]; }
+    var safe = 0, unsafe = 1;
+    for (var q = 0; q < 10; q++) {
+      var mid = (safe + unsafe) * 0.5;
+      for (i = 0; i < b.n; i++) { b.px[i] = sx[i] + dx * mid; b.py[i] = sy[i] + dy * mid; }
+      if (jelloGrabPoseLegal(b, active, nActive)) safe = mid;
+      else unsafe = mid;
+    }
+    var take = safe > 0.999 ? 1 : safe * 0.9;
+    if (!(take >= 1 / 1024)) {
+      for (i = 0; i < b.n; i++) { b.px[i] = sx[i]; b.py[i] = sy[i]; }
+      return 0;
+    }
+    var mx = dx * take, my = dy * take;
+    for (i = 0; i < b.n; i++) {
+      b.px[i] = sx[i] + mx; b.py[i] = sy[i] + my;
+      b.ox[i] += mx; b.oy[i] += my;
+    }
+    b._guardTopologyTraction = Math.sqrt(mx * mx + my * my);
+    return take;
+  }
+
   // Runs after global slime contact and ring containment. Those constraints
   // used to be able to fold a body after its own resilience guard had already
   // finished. A bad direct-manipulation substep is now rejected before render,
@@ -4423,7 +4556,7 @@
       // installs this optional hook.
       if (heldFold && !offender &&
           typeof jelloGrabResolveTopologyStep === 'function' &&
-          jelloGrabResolveTopologyStep(b)) return false;
+          jelloGrabResolveTopologyStep(b, active, nActive)) return false;
       if (offender) {
         var bcx = (b._cbL + b._cbR) * 0.5, bcy = (b._cbT + b._cbB) * 0.5;
         var ocx = (offender._cbL + offender._cbR) * 0.5;
@@ -5529,9 +5662,6 @@
           jelloRejectTerrainInside(b);
           jelloResilienceStepEnd(b);
           jelloRejectGrabAfterContact(b, active, nActive);
-          if (!b._guardRejectedStep && typeof jelloGrabAcceptStep === 'function') {
-            jelloGrabAcceptStep(b);
-          }
         }
       }
       // World re-collide AFTER contact + containment: those passes move points without
@@ -5540,7 +5670,26 @@
       if (nActive > 1) {
         for (ai = 0; ai < nActive; ai++) {
           b = active[ai]; if (!b._solve) continue;
+          // A direct-grab rejection already restored this participant to its
+          // legal start-of-substep snapshot. Re-colliding that restored pose
+          // was able to fold it again, while the final validator correctly
+          // skipped an event already marked rejected. Restoration is atomic:
+          // no later positional mover may reopen the discarded substep.
+          if (jelloDirectGrabActive && b._guardRejectedStep) continue;
           for (var wi2 = 0; wi2 < b.n; wi2++) if (jelloWorldSolidAt(b.px[wi2], b.py[wi2])) jelloCollidePointWorld(b, wi2, h);
+        }
+      }
+      // The post-contact world re-collide above is the LAST positional mover
+      // in this substep. It can flatten a just-accepted traction pose against a
+      // platform, so accepting before it left the next snapshot born folded
+      // and restarted the zero-trust loop. Validate once more here, then and
+      // only then capture release motion and advance controller recovery.
+      for (ai = 0; ai < nActive; ai++) {
+        b = active[ai];
+        if (!b._solve || !b._grabbed || !b._grabApplied || b._guardRejectedStep) continue;
+        jelloRejectGrabAfterContact(b, active, nActive);
+        if (!b._guardRejectedStep && typeof jelloGrabAcceptStep === 'function') {
+          jelloGrabAcceptStep(b);
         }
       }
       for (ai = 0; ai < nActive; ai++) { b = active[ai]; if (b._solve) jelloClampVelocity(b, h); }
