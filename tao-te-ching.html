@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Tao Te Ching, Side by Side</title>
-  <meta name="description" content="All 81 chapters of the Tao Te Ching: a plain-language breakdown of what each chapter says and where the translators split, then every English translation I could find, stacked.">
+  <meta name="description" content="All 81 chapters of the Tao Te Ching in plain English, each followed by every English translation I could find, stacked side by side.">
   <meta property="og:title" content="The Tao Te Ching, Side by Side">
-  <meta property="og:description" content="Eighty-one short chapters about water, valleys, and doing less, and no two translators agree what they say. Each chapter broken down in plain language, then read against two dozen complete English translations and a hundred partial ones.">
+  <meta property="og:description" content="Eighty-one short chapters about water, valleys, and doing less, and no two translators agree what they say. Each chapter in plain English, then every translation I could find, stacked.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/tao-te-ching.html">
@@ -33,16 +33,13 @@
   <style>
   /* ============================================================
      THE TAO TE CHING, SIDE BY SIDE
-     An interactive reader: 81 chapters, a plain breakdown of
-     each, and every English translation in the corpus. Sits in
-     the site shell (forest green, parchment, Century Supra /
-     Segoe UI / Commit Mono). The Chinese split anchors need a
-     CJK fallback face; everything else stays on the three site
-     fonts. No em dashes.
+     An interactive reader: 81 chapters, each in plain English,
+     then every English translation in the corpus. Sits in the
+     site shell (forest green, parchment, Century Supra /
+     Segoe UI / Commit Mono). No em dashes.
      ============================================================ */
   :root {
     --measure: 820px;                 /* reading column */
-    --zh-font: "Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
     --early:  #cf9f78;                 /* era accents, from the site categorical set */
     --mid:    #bc9d65;
     --modern: #9ec79a;
@@ -99,13 +96,8 @@
   .tao-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
   .tao-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
   .tao-note-k:first-child { margin-top: 0; }
-  .tao-note-gist, .tao-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .tao-note-gist em, .tao-note-read em, .tao-splits em { font-style: italic; color: var(--text-bright); }
-  .tao-note-read { color: var(--text-dim); font-style: italic; }
-  .tao-splits { margin: 0; }
-  .tao-splits dt { font-family: var(--zh-font); font-size: 1.25rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.04em; }
-  .tao-splits dt .tao-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
-  .tao-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
+  .tao-note-gist { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
+  .tao-note-gist em { font-style: italic; color: var(--text-bright); }
   .tao-note-soon { font-family: var(--font-body); font-style: italic; color: var(--text-faint); font-size: 0.98rem; padding: 0.2rem 0 0; margin: 0; }
 
   /* translations */
@@ -174,7 +166,7 @@
       <p>A surprising amount of it is political advice. The best ruler is barely noticed. Govern a great state the way you cook a small fish, gently, without poking. The more laws, the more thieves. And the war chapters are blunt for a book this serene: weapons are instruments of ill omen, a victory should be received like a funeral, and when a country loses the Way, war horses are bred in the farmland.</p>
       <p>Its economics fit on a postcard. No disaster is greater than discontent; no fault greater than wanting more. The sage feeds the belly rather than the eye and treats enough as wealth. The final chapter closes the whole book on giving: the sage keeps nothing back, and the more he gives away, the more he has.</p>
       <p>What the book is not: a system. It names no god who demands anything, prescribes no ritual, promises no afterlife, issues no commandments, which is part of why it slides so easily into every century, and why no two translators can pin it down. Religious Taoism adopted it as scripture long after it was written. On its own it reads like advice from someone very old who watched a lot of people try too hard.</p>
-      <p>Below is the whole book, all 81 chapters. Each one opens with a plain-language breakdown: what the chapter says, where the translators part ways, and what I make of it. Then come the translations themselves, stacked so you can read them against each other. Two dozen run the full length of the book; another hundred-odd appear where I could find them. Use the arrows or your keyboard to move between chapters.</p>
+      <p>Below is the whole book, all 81 chapters. Each one opens with a plain-language version of the chapter, then the translations themselves, stacked so you can read them against each other. Two dozen run the full length of the book; another hundred-odd appear where I could find them. Use the arrows or your keyboard to move between chapters.</p>
     </section>
 
     <!-- ============================ EXPLORER ============================ -->
@@ -219,8 +211,8 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/tao-notes.js?v=20260719b" defer></script>
+  <script src="js/tao-notes.js?v=20260719c" defer></script>
   <script src="js/tao-data.js" defer></script>
-  <script src="js/tao.js?v=20260719" defer></script>
+  <script src="js/tao.js?v=20260719c" defer></script>
 </body>
 </html>

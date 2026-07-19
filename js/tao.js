@@ -103,27 +103,12 @@
   }
 
   function noteHtml(note) {
-    if (!note.gist && !(note.splits && note.splits.length)) {
-      return '<p class="tao-note-soon">A plain-language breakdown of this chapter is on the way. For now, compare the renderings below.</p>';
+    if (!note.plain) {
+      return '<p class="tao-note-soon">A plain-language version of this chapter is on the way. For now, compare the renderings below.</p>';
     }
-    var h = '<div class="tao-note-card">';
-    if (note.gist) {
-      h += '<p class="tao-note-k">What it says</p><p class="tao-note-gist">' +
-        note.gist + '</p>';
-    }
-    if (note.splits && note.splits.length) {
-      h += '<p class="tao-note-k">Where the translators split</p>';
-      h += '<dl class="tao-splits">' + note.splits.map(function (s) {
-        return '<dt>' + (s.zh ? '<span lang="zh">' + esc(s.zh) + '</span> ' : '') +
-          (s.gloss ? '<span class="tao-gloss">' + esc(s.gloss) + '</span>' : '') +
-          '</dt><dd>' + s.note + '</dd>';
-      }).join('') + '</dl>';
-    }
-    if (note.read) {
-      h += '<p class="tao-note-k">My read</p><p class="tao-note-read">' + note.read + '</p>';
-    }
-    h += '</div>';
-    return h;
+    return '<div class="tao-note-card">' +
+      '<p class="tao-note-k">In plain English</p>' +
+      '<p class="tao-note-gist">' + note.plain + '</p></div>';
   }
 
   /* ---------- navigation ---------- */
