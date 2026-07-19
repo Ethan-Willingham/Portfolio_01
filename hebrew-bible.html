@@ -44,7 +44,9 @@
     .torah-layer-tag::after { content: ""; width: 2.2rem; height: 1px; background: var(--rule); }
     .torah-h2 { max-width: 18ch; margin: 0; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.015em; color: var(--text-bright); text-wrap: balance; }
     .torah-intro { max-width: 62ch; margin: 1rem 0 0; font-size: 1.08rem; line-height: 1.65; color: var(--text-dim); }
-    .torah-100 { max-width: 42ch; margin: 1.5rem 0 0; font-family: var(--font-heading); font-size: clamp(1.35rem, 3.6vw, 1.85rem); line-height: 1.48; color: var(--text-bright); text-wrap: pretty; }
+    .torah-plain { max-width: 56ch; margin: 1.5rem 0 0; }
+    .torah-plain p { margin: 0 0 1.05em; font-family: var(--font-heading); font-size: clamp(1.16rem, 2.8vw, 1.48rem); line-height: 1.58; color: var(--text-bright); text-wrap: pretty; }
+    .torah-plain p:last-child { margin-bottom: 0; }
     .torah-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin: clamp(2.4rem, 5vw, 3.7rem) 0; border-block: 1px solid var(--rule); background: var(--rule); }
     .torah-fact { min-width: 0; padding: 1.1rem 1rem; background: var(--bg); }
     .torah-fact b { display: block; font-family: var(--font-heading); font-size: 1.45rem; line-height: 1.1; color: var(--accent); }
@@ -165,8 +167,13 @@
   <main>
     <section class="torah-layer torah-shell" id="summary" aria-labelledby="summary-title">
       <p class="torah-layer-tag"><b>01</b> Summary</p>
-      <h2 class="torah-h2" id="summary-title">The Torah in 100 words</h2>
-      <p class="torah-100">The Torah begins with a good world humans repeatedly damage. God chooses one family to carry blessing outward, frees its descendants from slavery, and binds them into a people responsible for holiness, justice, memory, and one another. Freedom is not the finish. The people must learn how to live with power, land, appetite, fear, and a God who wants to dwell among them. They fail almost immediately, then fail again. Covenant survives through judgment, mercy, repair, and renewal. Moses dies before the people enter the land. The book closes with its choice still open: life or death, blessing or curse.</p>
+      <h2 class="torah-h2" id="summary-title">The Torah, in plain English</h2>
+      <div class="torah-plain">
+        <p>The Torah begins with a good world that human beings repeatedly damage through mistrust, violence, and the misuse of power. God then calls Abraham and promises to make his family into a people through whom all the earth&rsquo;s families will be blessed. The Torah does not present this as a command to recruit or convert everyone. Its clearest explanation is that Abraham must teach his household to practice righteousness and justice. His family&rsquo;s life with God is meant to become a source of good beyond the family, although the Torah never gives one simple explanation of exactly how.</p>
+        <p>Generations later, Abraham&rsquo;s descendants are called the Israelites. Pharaoh, Egypt&rsquo;s king, enslaves them. God sends Moses, an Israelite who grew up in Pharaoh&rsquo;s household, to lead that enslaved population out of Egypt. This is one particular rescue in the story, not a guarantee that anyone with Israelite ancestry can never be enslaved. At Mount Sinai, after the escape, God and the Israelites make a covenant. Here that means a binding relationship with promises and obligations, which the people explicitly agree to. God will remain present among them, and they agree to live by his teaching.</p>
+        <p>The laws that follow cover worship, courts, work, debt, property, farming, rest, bodies, families, and care for people who can easily be exploited. A question beneath many of them is concrete: if former slaves gain land and power, will they remember Egypt and refuse to reproduce it? The Israelites agree to this way of life, then break the agreement almost immediately by worshiping the Golden Calf. They keep failing in the wilderness, and even Moses fails. They never become perfect. The relationship continues through consequences, forgiveness, repeated instruction, and chances to return.</p>
+        <p>Forty years after Egypt, a new generation camps outside Canaan, the land where Abraham had lived and that God promised his family. They are going there to become a settled people with their own institutions, but Canaan is already inhabited, which makes the land story one of the Torah&rsquo;s hardest moral problems. Moses dies before they cross the border. In his final speech, &ldquo;life and blessing&rdquo; means keeping the covenant and flourishing in the land. &ldquo;Death and curse&rdquo; means abandoning it and losing that life. This choice comes at the end, not the beginning, and the Torah closes before its long-term result is known.</p>
+      </div>
 
       <div class="torah-facts" aria-label="Torah at a glance">
         <p class="torah-fact"><b>5</b><span>books, copied as one Torah scroll</span></p>
