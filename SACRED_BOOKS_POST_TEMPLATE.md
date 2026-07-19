@@ -1,6 +1,6 @@
 # Sacred Books post template
 
-This note records the structure selected for `quran-gpt.html` so the next Sacred Books post can begin with the decisions already made.
+This note records the structure selected for `quran.html` so the next Sacred Books post can begin with the decisions already made.
 
 ## The four-section structure
 
@@ -9,7 +9,7 @@ This note records the structure selected for `quran-gpt.html` so the next Sacred
 3. **Name the ideas that shape lived practice.** Use twelve ideas when the text and tradition support that weight. State each idea plainly, explain its role, add an `In practice` paragraph, and give two or three exact passages that let the reader test the claim.
 4. **Do not skip the passages that resist a clean summary.** State the difficult wording, the historical context, the strongest restrictive reading, and the wider reading found in the tradition. Keep the source accordion at the end of this section.
 
-The finished Quran comparison post has four sections. It does not have a fifth interactive reader section.
+The finished Quran post has four sections. It does not have a fifth interactive reader section.
 
 ## Tests for the ideas section
 
@@ -46,8 +46,8 @@ For the Quran, the final set covers war, family authority, slavery and concubina
 - Preserve the site's 20-pixel mobile gutter through `var(--gutter)`.
 - Use the shared color tokens and established component kit.
 - Keep sources collapsed and count unique external source URLs for the header.
-- Recalculate reading time after structural edits. The selected Quran comparison post has 27 sources and a 25-minute estimate.
-- Keep comparison pages `noindex` and visibly labeled until the owner promotes one to the canonical post.
+- Recalculate reading time after structural edits. The selected Quran post has 27 sources and a 25-minute estimate.
+- Keep comparison pages `noindex` and visibly labeled until the owner promotes one to the canonical post. At promotion, remove the label and `noindex`, move the selected page to the canonical filename, update its public metadata URL and endcap navigation, and remove the duplicate comparison page.
 - Run the voice linter, HTML checks, mobile overflow check, local-link check, and console check before publishing.
 - Do not add em dashes or emoji.
 
@@ -59,4 +59,4 @@ For the Quran, the final set covers war, family authority, slavery and concubina
 - Keep the twelve practice-tested ideas and the six difficult-passage cards.
 - Keep the research sources at the end of section four.
 
-The implementation reference is `quran-gpt.html`.
+The implementation reference is `quran.html`.
