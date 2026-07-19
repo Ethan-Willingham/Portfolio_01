@@ -57,8 +57,8 @@
     .torah-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
     .torah-plain p:last-child { margin-bottom: 0; }
     .torah-plain p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
-    .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: var(--torah-copy); margin: 2.6rem auto 0; }
-    .torah-context { padding: 1.35rem 1.4rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
+    .torah-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--torah-copy); margin: 2.6rem auto 0; }
+    .torah-context { padding-top: 1rem; border-top: 1px solid var(--torah-hair); }
     .torah-context h3 { margin: 0 0 .75rem; font-family: var(--font-heading); font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
     .torah-context p { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.7; color: var(--text); }
     .torah-context p:last-child { margin-bottom: 0; }
@@ -66,21 +66,21 @@
     .torah-context a:hover, .torah-page .u-textcheck a:hover, .torah-sources a:hover { color: var(--accent-hover); }
     .torah-page .u-textcheck { max-width: var(--torah-copy); margin: clamp(2.8rem, 6vw, 4.4rem) auto 0; }
 
-    .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--torah-copy); margin: 2.6rem auto 0; padding: 1.35rem 1.4rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
+    .torah-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding: 1.35rem 1.4rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
     .torah-convergence h3 { margin: 0; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
     .torah-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
     .torah-convergence a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
 
     .concept-list { max-width: var(--torah-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
     .torah-concept { scroll-margin-top: 1rem; border-bottom: 1px solid var(--rule); }
-    .torah-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem .2rem; cursor: pointer; }
+    .torah-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
     .torah-concept > summary::-webkit-details-marker { display: none; }
     .concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
     .concept-statement { display: block; font-family: var(--font-heading); font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
     .concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
     .concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
     .concept-mark::before { content: "+"; }
-    .torah-concept[open] { background: var(--torah-tint); box-shadow: inset 2px 0 var(--accent); }
+    .torah-concept[open] { border-left: 1px solid var(--accent); }
     .torah-concept[open] .concept-mark::before { content: "−"; }
     .concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
     .concept-role { max-width: 61ch; margin: 0; font-size: 1.14rem; line-height: 1.72; color: var(--text); }
@@ -91,17 +91,6 @@
     .verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
     .verse q { font-family: var(--font-heading); font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
     .verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
-    .why-cut { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2rem; }
-    .why-item { margin: 0; padding: .9rem .95rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; font-size: .84rem; line-height: 1.55; color: var(--text-dim); }
-    .why-item b { display: block; margin-bottom: .35rem; font-family: var(--font-mono); font-size: .62rem; line-height: 1.35; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
-    .why-item a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--rule); }
-    .why-item a:hover { color: var(--accent-hover); }
-    .translation-note { margin-top: 1.6rem; border-left: 2px solid var(--s-gold-hair); padding-left: 1rem; }
-    .translation-note summary { list-style: none; cursor: pointer; font-family: var(--font-mono); font-size: .68rem; line-height: 1.5; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
-    .translation-note summary::-webkit-details-marker { display: none; }
-    .translation-note summary::before { content: "+ "; }
-    .translation-note[open] summary::before { content: "− "; }
-    .translation-note p { max-width: 64ch; margin: .8rem 0 0; font-size: .9rem; line-height: 1.65; color: var(--text-dim); }
     .hard-reading { max-width: var(--torah-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding-top: clamp(3.5rem, 7vw, 5rem); border-top: 1px solid var(--accent); }
     .hard-reading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 2.2rem; }
     .hard-item { padding: 1.1rem 1.15rem; background: var(--torah-tint); border: 1px solid var(--torah-hair); border-radius: 7px; }
@@ -114,7 +103,7 @@
     .torah-page .site-footer-inner { font-family: var(--font-body); }
 
     @media (max-width: 720px) {
-      .torah-context-grid, .why-cut, .hard-reading-grid { grid-template-columns: 1fr; }
+      .torah-context-grid, .hard-reading-grid { grid-template-columns: 1fr; }
       .torah-convergence { grid-template-columns: 1fr; gap: .7rem; }
       .torah-sources .u-collapse-list { columns: 1; }
     }
@@ -139,7 +128,7 @@
   <header class="u-hero torah-hero torah-shell">
     <h1 class="u-title">The Torah</h1>
     <p class="u-dek">One continuous reading of Genesis through Deuteronomy: the story, the ideas holding it together, what history can confirm, how securely the words survived, and the difficult parts a serious reader should not miss.</p>
-    <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>39 sources</b> <span class="u-sep">/</span> 23 min read</p>
+    <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>39 sources</b> <span class="u-sep">/</span> 19 min read</p>
     <span class="torah-scroll" aria-hidden="true">scroll</span>
   </header>
 
@@ -215,12 +204,7 @@
     <section class="torah-layer torah-shell" id="concepts" aria-labelledby="concepts-title">
       <p class="torah-layer-tag"><b>03</b> Expand the concepts</p>
       <h2 class="torah-h2" id="concepts-title">Open any idea and watch it recur</h2>
-      <p class="torah-intro">Each entry gives the claim, its place in the Torah&rsquo;s argument, several places the text says it, and the reason Jewish readers treat it as load-bearing.</p>
-
-      <aside class="torah-convergence">
-        <h3>Where modern Jewish teachers converge</h3>
-        <p><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Jonathan Sacks</a> in Orthodox Judaism, teachers at the Conservative movement&rsquo;s <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a>, and <a href="https://reformjudaism.org/blog/passover-2024-three-central-messages-pesach">Reform teachers</a> disagree about revelation, law, authorship, gender, and much more. Yet their accounts repeatedly meet on the same spine: every person bears God&rsquo;s image, Exodus makes freedom a responsibility, covenant joins a people to service, the stranger tests justice, holiness reaches daily life, and study keeps the choice alive. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
-      </aside>
+      <p class="torah-intro">Each entry gives the claim, its place in the Torah&rsquo;s argument, and several places the text says it.</p>
 
       <div class="concept-list">
         <details class="torah-concept" id="image">
@@ -232,8 +216,6 @@
               <p class="verse"><q>Male and female created He them, and blessed them, and called their name Adam.</q><cite>Genesis 5:2</cite></p>
               <p class="verse"><q>Whoso sheddeth man&rsquo;s blood, by man shall his blood be shed; for in the image of God made He man.</q><cite>Genesis 9:6</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>The idea appears before Abraham and is repeated after the flood, so it belongs to humanity, not one covenant alone.</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Genesis_Rabbah.24.7">Ben Azzai</a> called the shared human genealogy an even greater principle than loving one&rsquo;s neighbor.</p><p class="why-item"><b>Modern reading</b>Sacks and Reform teachers both use the image of God as the ground of equal dignity, despite major theological differences.</p></div>
-            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Adam</em> first means the human or humankind, not a man whose proper name happens to be Adam. Translations that begin with &ldquo;man&rdquo; can make a universal claim sound male before the Hebrew does.</p></details>
           </div>
         </details>
 
@@ -247,7 +229,6 @@
               <p class="verse"><q>Every imagination of the thoughts of his heart was only evil continually.</q><cite>Genesis 6:5</cite></p>
               <p class="verse"><q>Let us make us a name; lest we be scattered abroad upon the face of the whole earth.</q><cite>Genesis 11:4</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>The four stories escalate from one couple to siblings, a whole society, and an organized civilization.</p><p class="why-item"><b>Tradition</b>Jewish interpretation usually reads Adam and Eve as the beginning of moral struggle, not as a doctrine that every child inherits Adam&rsquo;s guilt.</p><p class="why-item"><b>Modern reading</b>Across Jewish movements, these chapters are read as accounts of agency, appetite, blame, violence, and the human capacity to choose again.</p></div>
           </div>
         </details>
 
@@ -260,7 +241,6 @@
               <p class="verse"><q>They may keep the way of the LORD, to do righteousness and justice.</q><cite>Genesis 18:19</cite></p>
               <p class="verse"><q>In thy seed shall all the nations of the earth be blessed.</q><cite>Genesis 22:18</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Blessing to the other families is stated at Abraham&rsquo;s first call and repeated at major covenant turns.</p><p class="why-item"><b>Tradition</b>Genesis 18 ties Abraham&rsquo;s household directly to <em>tzedakah</em> and <em>mishpat</em>, righteousness and justice.</p><p class="why-item"><b>Modern reading</b><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Sacks</a> reads chosenness as service: a particular people carrying a universal responsibility.</p></div>
           </div>
         </details>
 
@@ -274,7 +254,6 @@
               <p class="verse"><q>A stranger shalt thou not wrong, neither shalt thou oppress him; for ye were strangers in the land of Egypt.</q><cite>Exodus 22:20</cite></p>
               <p class="verse"><q>Love ye therefore the stranger; for ye were strangers in the land of Egypt.</q><cite>Deuteronomy 10:19</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Creation explains Sabbath once. Deuteronomy explains it again through slavery: servants rest because Israel remembers being forced to work.</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Bava_Metzia.59b.14">The Talmud</a> says the Torah warns about wronging the stranger 36 times, or by another count 46.</p><p class="why-item"><b>Modern reading</b>Orthodox, Conservative, and Reform teachers all treat Exodus as freedom joined to responsibility for the vulnerable.</p></div>
           </div>
         </details>
 
@@ -287,8 +266,6 @@
               <p class="verse"><q>All that the LORD hath spoken will we do, and obey.</q><cite>Exodus 24:7</cite></p>
               <p class="verse"><q>Neither with you only do I make this covenant ... but ... also with him that is not here with us this day.</q><cite>Deuteronomy 29:13-14</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>The long center of the Torah, Exodus 19 through Numbers 10, is the construction of covenant life.</p><p class="why-item"><b>Tradition</b>Jewish practice treats commandments as the relationship&rsquo;s content, not as a legal obstacle that the story later discards.</p><p class="why-item"><b>Modern reading</b><a href="https://www.jtsa.edu/torah/freedom-through-torah-2/">JTS</a> and Sacks both describe Torah as the discipline that turns release from domination into responsible freedom.</p></div>
-            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Torah</em> means teaching or instruction before it means a statute book. <em>Segullah</em> in Exodus 19 is a treasured possession, not proof that other peoples have no value. &ldquo;Kingdom of priests&rdquo; describes a task between God and the world as much as a status.</p></details>
           </div>
         </details>
 
@@ -302,7 +279,6 @@
               <p class="verse"><q>The cloud covered the tent of meeting, and the glory of the LORD filled the tabernacle.</q><cite>Exodus 40:34</cite></p>
               <p class="verse"><q>On this day shall atonement be made for you, to cleanse you.</q><cite>Leviticus 16:30</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Nearly half the Torah is organized around Sinai and the sanctuary, far more space than any single ethical maxim receives.</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Ramban_on_Exodus%2C_Introduction.2">Ramban</a> says redemption is not complete until the divine presence rests among Israel.</p><p class="why-item"><b>Modern reading</b><a href="https://www.jtsa.edu/torah/what-god-wants-from-us/">JTS</a> likewise reads Exodus 29 as the book&rsquo;s own statement of why liberation happened.</p></div>
           </div>
         </details>
 
@@ -316,8 +292,6 @@
               <p class="verse"><q>The stranger that sojourneth with you shall be unto you as the home-born ... and thou shalt love him as thyself.</q><cite>Leviticus 19:34</cite></p>
               <p class="verse"><q>Ye shall be holy unto Me ... and [I] have set you apart from the peoples.</q><cite>Leviticus 20:26</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Leviticus 19 deliberately alternates ritual and social commands, closing them with the same words: &ldquo;I am the LORD.&rdquo;</p><p class="why-item"><b>Tradition</b><a href="https://www.sefaria.org/Sifra%2C_Kedoshim%2C_Chapter_4.12">Rabbi Akiva</a> calls love of neighbor a great principle. Hillel turns the negative form into a one-foot summary, then says to study the rest.</p><p class="why-item"><b>Modern reading</b>Jewish teachers across movements return to neighbor and stranger while also disagreeing sharply over which ritual laws remain binding.</p></div>
-            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Re&rsquo;a</em> can mean neighbor, fellow, or companion. <em>Ger</em> is not a tourist passing through; it is a resident outsider living without the protection of ancestral land and clan. &ldquo;Immigrant&rdquo; often carries the social force better than the old &ldquo;stranger.&rdquo;</p></details>
           </div>
         </details>
 
@@ -331,7 +305,6 @@
               <p class="verse"><q>Proclaim liberty throughout the land unto all the inhabitants thereof; it shall be a jubilee unto you.</q><cite>Leviticus 25:10</cite></p>
               <p class="verse"><q>The land shall not be sold in perpetuity; for the land is Mine.</q><cite>Leviticus 25:23</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Sabbath is the only institution grounded once in creation and again in liberation from slavery.</p><p class="why-item"><b>Tradition</b>Shabbat became one of Judaism&rsquo;s most durable practices. Jubilee remained a radical legal horizon even when its full historical observance was doubtful.</p><p class="why-item"><b>Modern reading</b><a href="https://www.jtsa.edu/torah/creation-and-liberation/">JTS</a> reads the two Sabbath explanations together: imitate God&rsquo;s rest and refuse Pharaoh&rsquo;s world.</p></div>
           </div>
         </details>
 
@@ -344,8 +317,6 @@
               <p class="verse"><q>Thou shalt teach them diligently unto thy children ... when thou liest down, and when thou risest up.</q><cite>Deuteronomy 6:7</cite></p>
               <p class="verse"><q>What doth the LORD thy God require of thee, but ... to walk in all His ways, and to love Him?</q><cite>Deuteronomy 10:12</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Deuteronomy repeats heart, love, teach, remember, and today until covenant becomes a daily formation of attention.</p><p class="why-item"><b>Tradition</b>The Mishnah opens by asking when the evening Shema is recited. The text&rsquo;s first life is scheduled practice, not abstract creed.</p><p class="why-item"><b>Modern reading</b>Every major Jewish movement retains the Shema as a central statement, even where they disagree about the obligations surrounding it.</p></div>
-            <details class="translation-note"><summary>When English changes the idea</summary><p>The Hebrew of Deuteronomy 6:4 can support &ldquo;the LORD is one&rdquo; or &ldquo;the LORD alone.&rdquo; The first stresses God&rsquo;s unity. The second stresses Israel&rsquo;s exclusive loyalty. Jewish interpretation has heard both in the same six words.</p></details>
           </div>
         </details>
 
@@ -358,8 +329,6 @@
               <p class="verse"><q>Pardon, I pray Thee, the iniquity of this people according unto the greatness of Thy lovingkindness.</q><cite>Numbers 14:19</cite></p>
               <p class="verse"><q>Thou shalt return unto the LORD thy God ... with all thy heart, and with all thy soul.</q><cite>Deuteronomy 30:2</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>Exodus 34 follows the Golden Calf and becomes the language Moses reuses after the spies. Mercy is learned through breach.</p><p class="why-item"><b>Tradition</b>The <a href="https://www.sefaria.org/Rosh_Hashanah.17b.5">Thirteen Attributes</a> drawn from Exodus 34 are recited throughout the season of repentance and on fast days.</p><p class="why-item"><b>Modern reading</b>Across Jewish movements, <em>teshuvah</em> is understood less as feeling sorry than as return, repair, confession, and changed action.</p></div>
-            <details class="translation-note"><summary>When English changes the idea</summary><p><em>Teshuvah</em> comes from the ordinary verb &ldquo;return.&rdquo; &ldquo;Repentance&rdquo; can make it sound like an inward emotion. Exodus 34 also holds mercy beside consequences across generations. Translations cannot make that tension disappear, and neither should a summary.</p></details>
           </div>
         </details>
 
@@ -373,7 +342,6 @@
               <p class="verse"><q>Let us make a captain, and let us return into Egypt.</q><cite>Numbers 14:4</cite></p>
               <p class="verse"><q>Because ye believed not in Me ... ye shall not bring this assembly into the land.</q><cite>Numbers 20:12</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>The spies are the turning point. The rest of Numbers clears away one generation and prepares another.</p><p class="why-item"><b>Tradition</b>The Passover command to see oneself as having left Egypt is repeated annually because freedom is not treated as a completed ancestor&rsquo;s event.</p><p class="why-item"><b>Modern reading</b><a href="https://rabbisacks.org/covenant-conversation/bamidbar-numbers/an-introduction-to-numbers/">Sacks</a> makes the physical and mental journeys the key to Numbers: Egypt can be left before slavery leaves the mind.</p></div>
           </div>
         </details>
 
@@ -387,7 +355,6 @@
               <p class="verse"><q>I have set before thee life and death, the blessing and the curse; therefore choose life.</q><cite>Deuteronomy 30:19</cite></p>
               <p class="verse"><q>I have caused thee to see it with thine eyes, but thou shalt not go over thither.</q><cite>Deuteronomy 34:4</cite></p>
             </div></div>
-            <div class="why-cut"><p class="why-item"><b>Text</b>The promised destination lies outside the five books. That makes obedience in the next chapter a reader&rsquo;s problem, not a finished triumph.</p><p class="why-item"><b>Tradition</b>On Simchat Torah, communities read Moses&rsquo; death and immediately begin Genesis again. Completion becomes return to study.</p><p class="why-item"><b>Modern reading</b>Jewish readings differ about law and revelation, but they share the habit Deuteronomy demands: transmit, argue, practice, and choose again.</p></div>
           </div>
         </details>
       </div>
@@ -402,6 +369,11 @@
           <article class="hard-item"><h3>The laws do not always agree</h3><p>Parallel laws sometimes give different rules or reasons. Sabbath itself is grounded in creation in Exodus and slavery in Deuteronomy. That plurality is evidence of the Torah&rsquo;s layered composition, and also part of the tradition&rsquo;s long argument.</p></article>
         </div>
       </section>
+
+      <aside class="torah-convergence">
+        <h3>Where modern Jewish teachers converge</h3>
+        <p><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Jonathan Sacks</a> in Orthodox Judaism, teachers at the Conservative movement&rsquo;s <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a>, and <a href="https://reformjudaism.org/blog/passover-2024-three-central-messages-pesach">Reform teachers</a> disagree about revelation, law, authorship, gender, and much more. Yet their accounts repeatedly meet on the same spine: every person bears God&rsquo;s image, Exodus makes freedom a responsibility, covenant joins a people to service, the stranger tests justice, holiness reaches daily life, and study keeps the choice alive. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
+      </aside>
 
       <details class="u-collapse torah-sources">
         <summary class="u-collapse-s">Sources and what they support</summary>
