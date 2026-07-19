@@ -77,9 +77,6 @@
       ' translations';
 
     /* source */
-    $('tao-source').innerHTML =
-      '<p class="tao-zh-k">Source <span>received text, China, by ~4th c. BCE</span></p>' +
-      '<p class="tao-zh" lang="zh">' + esc(c.zh || '') + '</p>';
 
     /* commentary */
     $('tao-notes').innerHTML = noteHtml(note);

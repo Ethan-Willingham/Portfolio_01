@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Tao Te Ching, Side by Side</title>
-  <meta name="description" content="All 81 chapters of the Tao Te Ching in Chinese, then every English translation I could find stacked against each other, with a plain breakdown of what each one means and where they split.">
+  <meta name="description" content="All 81 chapters of the Tao Te Ching: a plain-language breakdown of what each chapter says and where the translators split, then every English translation I could find, stacked.">
   <meta property="og:title" content="The Tao Te Ching, Side by Side">
-  <meta property="og:description" content="The same six characters open the book. One translator calls it a road you can walk, another 'the way you can go,' another just 'Existence.' All 81 chapters, two dozen complete English translations and a hundred more in fragments, broken apart line by line.">
+  <meta property="og:description" content="Eighty-one short chapters about water, valleys, and doing less, and no two translators agree what they say. Each chapter broken down in plain language, then read against two dozen complete English translations and a hundred partial ones.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/tao-te-ching.html">
@@ -33,12 +33,12 @@
   <style>
   /* ============================================================
      THE TAO TE CHING, SIDE BY SIDE
-     An interactive reader: 81 chapters, the Chinese source, and
-     every English translation in the corpus, with a plain
-     breakdown of each chapter. Sits in the site shell (forest
-     green, parchment, Century Supra / Segoe UI / Commit Mono).
-     Source text needs a CJK fallback face; everything else stays
-     on the three site fonts. No em dashes.
+     An interactive reader: 81 chapters, a plain breakdown of
+     each, and every English translation in the corpus. Sits in
+     the site shell (forest green, parchment, Century Supra /
+     Segoe UI / Commit Mono). The Chinese split anchors need a
+     CJK fallback face; everything else stays on the three site
+     fonts. No em dashes.
      ============================================================ */
   :root {
     --measure: 820px;                 /* reading column */
@@ -71,19 +71,6 @@
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
   .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
 
-  /* the opening "fan": one line of Chinese, many Englishes */
-  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-zh { font-family: var(--zh-font); font-size: clamp(1.9rem, 6vw, 2.8rem); color: var(--text-bright); letter-spacing: 0.08em; padding: 1.3rem 1.5rem 0.4rem; }
-  .fan-zh small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; letter-spacing: 0.14em; }
-  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
-  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
-  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
-  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  @media (min-width: 680px){
-    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
-    .fan-list .who { text-align: right; }
-  }
-
   /* ---------- THE EXPLORER ---------- */
   .tao { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
   .tao-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
@@ -106,12 +93,6 @@
   .tao-grid button { font-family: var(--font-mono); font-size: 0.78rem; aspect-ratio: 1; border: 1px solid transparent; border-radius: 7px; background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
   .tao-grid button:hover { background: rgba(255,255,255,0.09); color: var(--text-bright); }
   .tao-grid button.is-cur { background: var(--accent); color: #2a3128; border-color: var(--accent); }
-
-  /* source */
-  .tao-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
-  .tao-zh-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
-  .tao-zh-k span { color: var(--text-faint); letter-spacing: 0.1em; }
-  .tao-zh { font-family: var(--zh-font); font-size: clamp(1.4rem, 4.2vw, 1.95rem); line-height: 1.85; color: var(--text-bright); letter-spacing: 0.06em; margin: 0; text-wrap: pretty; }
 
   /* commentary */
   .tao-notes { margin: 1rem 0 0; }
@@ -150,21 +131,15 @@
   /* ---------- closing / colophon ---------- */
   .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
   .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
 
   /* ---------- mobile ---------- */
   @media (max-width: 560px){
     /* phones: the body already supplies the side gutter, so drop the duplicate
        column padding here (it was doubling up to ~40px of dead space). */
     body { padding-left: 0; padding-right: 0; }
-    .fan-zh { font-size: 1.65rem; padding: 1.1rem 1rem 0.4rem; letter-spacing: 0.05em; }
-    .fan-list li { padding: 0.65rem 1rem; }
-    .fan-list .e { font-size: 1.02rem; }
     .tao-bar { gap: 0.55rem 0.7rem; }
     .tao-count { margin-left: 0; flex-basis: 100%; }
-    .tao-source, .tao-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .tao-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
     .tao-grid { grid-template-columns: repeat(7, 1fr); }
     .tao-v { padding-left: 0.9rem; }
   }
@@ -178,30 +153,16 @@
   <!-- ============================ HERO ============================ -->
   <header class="hero">
     <h1 class="hero-title">The Tao Te Ching, side by side</h1>
-    <p class="hero-dek">The same six characters open the book. One translator calls it a road you can walk. Another calls it the way you can go. Another just says <em>Existence</em>. Here is all of it at once.</p>
-    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>81 chapters</b> <span class="sep">/</span> <b>24 complete translations</b>, a hundred more in part <span class="sep">/</span> verbatim, not paraphrased</p>
+    <p class="hero-dek">Eighty-one short chapters about water, valleys, and doing less, written some twenty-five centuries ago. Each one broken down in plain language, then read against every English translation I could find.</p>
+    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>81 chapters</b> <span class="sep">/</span> <b>139 translators</b> <span class="sep">/</span> verbatim, not paraphrased</p>
   </header>
 
   <main>
     <!-- ============================ INTRO ============================ -->
     <section class="sec">
       <p class="lede">The Tao Te Ching is one of the most translated books ever written, after the Bible, and the translations do not agree. Not on the wording. Not on the grammar. Sometimes not even on the subject of a sentence.</p>
-      <p>Lao Tzu, if he existed, set down about five thousand Chinese characters some twenty-five centuries ago. Classical Chinese has no tenses, almost no punctuation, and one word can be a noun, a verb, or an adjective depending on where it sits. Each translator has to decide what every line means before they can write it in English, and they decide differently. The first six characters are a fair warning of the rest.</p>
-
-      <div class="fan">
-        <p class="fan-zh">道可道，非常道<small>chapter 1, line 1 &middot; six characters that have been turned into English several hundred ways</small></p>
-        <ul class="fan-list">
-          <li><span class="e">The Tao that can be trodden is not the enduring and unchanging Tao.</span><span class="who">Legge, 1891</span></li>
-          <li><span class="e">The Tao that is the subject of discussion is not the true Tao.</span><span class="who">Gorn Old, 1904</span></li>
-          <li><span class="e">The Way that can be told of is not an Unvarying Way.</span><span class="who">Waley, 1934</span></li>
-          <li><span class="e">Existence is beyond the power of words to define.</span><span class="who">Bynner, 1944</span></li>
-          <li><span class="e">The way you can go isn't the real way.</span><span class="who">Le Guin, 1997</span></li>
-          <li><span class="e">A Way become Way isn't the perennial Way.</span><span class="who">Hinton, 2002</span></li>
-        </ul>
-      </div>
-
-      <p>Same line. One translator reads it as a road, one as a topic of conversation, one as plain existence, and one ties it in a knot on purpose. None of them is wrong, exactly. That spread is the subject of this page.</p>
-      <p>Below is the whole book, all 81 chapters. For each one you get the Chinese, a plain-language breakdown of what the chapter is doing and where the translators part ways, and then every English version I could find, stacked so you can read them against each other. Two dozen run the full length of the book; another hundred-odd show up where I could find them. Use the arrows or your keyboard to move between chapters.</p>
+      <p>Lao Tzu, if he existed, set down about five thousand Chinese characters some twenty-five centuries ago. Classical Chinese has no tenses, almost no punctuation, and one word can be a noun, a verb, or an adjective depending on where it sits. Each translator has to decide what every line means before they can write it in English, and they decide differently. None of them is wrong, exactly. That spread is the subject of this page.</p>
+      <p>Below is the whole book, all 81 chapters. Each one opens with a plain-language breakdown: what the chapter says, where the translators part ways, and what I make of it. Then come the translations themselves, stacked so you can read them against each other. Two dozen run the full length of the book; another hundred-odd appear where I could find them. Use the arrows or your keyboard to move between chapters.</p>
     </section>
 
     <!-- ============================ EXPLORER ============================ -->
@@ -223,26 +184,33 @@
       <div class="tao-grid" id="tao-gridpop" hidden aria-label="Chapter index"></div>
 
       <div class="tao-body">
-        <div class="tao-source" id="tao-source"></div>
         <div class="tao-notes" id="tao-notes"></div>
         <div class="tao-versions" id="tao-versions"></div>
       </div>
       <div class="tao-loading">loading the translations&hellip;</div>
-      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/tao-data.js</code>.</p></noscript>
+      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The translations are plain text in <code>js/tao-data.js</code>.</p></noscript>
     </section>
 
-    <!-- ============================ COLOPHON ============================ -->
+    <!-- ============================ THE BOOK IN PLAIN ENGLISH ============================ -->
     <hr class="u-divider">
     <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
-      <p>Every translation here is reproduced verbatim. I pulled the text with scripts and parsed it, so nothing was retyped or paraphrased by hand or by a model. The corpus is 139 translators in total: 24 who translated all 81 chapters, and a long tail of others who appear where a chapter-by-chapter anthology happened to carry them.</p>
-      <ul class="src-list">
-        <li><b>The Chinese</b> is the received (Wang Bi) text, from the <a href="https://ctext.org/dao-de-jing">Chinese Text Project</a>.</li>
-        <li><b>The complete translations</b> (Legge, Waley, Lin Yutang, Bynner, Blakney, D. C. Lau, Wu, Chan, Henricks, Feng and English, Mitchell, Le Guin, Hinton, and others) come from the per-translator pages at <a href="https://terebess.hu/english/tao/_index.html">Terebess Asia Online</a> and the side-by-side corpus at <a href="https://github.com/tasuki/sbs-ttc">tasuki/sbs-ttc</a>.</li>
-        <li><b>The long tail</b> of additional renderings is harvested from Michael Garofalo's enormous chapter-by-chapter collection at <a href="https://www.egreenway.com/taoism/ttclz1.htm">Green Way Research</a>.</li>
-      </ul>
-      <p>The breakdowns are mine. They lean on the standard scholarship for the contested lines, and where the oldest excavated copies (the Mawangdui silk and the Guodian bamboo) disagree with the familiar text, I have tried to say so rather than smooth it over. Many of the modern translations are still in copyright; they are quoted here for comparison and study, with every translator named.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">The painting on the homepage card is Zhang Lu's <em>Laozi Riding an Ox</em> (Ming dynasty, National Palace Museum, Taipei), in the public domain. The legend is that Lao Tzu wrote this book and then rode west out of China for good.</p>
+      <h2 class="sechead">The whole book, in plain English</h2>
+      <p>Strip the mystery away and the Tao Te Ching is 81 short chapters, few longer than a page, credited to Lao Tzu, a name that just means Old Master and may not belong to any one person. The book never argues. It states, in compressed images, water, valleys, bellows, wheels, uncarved wood, and leaves the connecting to you.</p>
+      <p>Its one big claim: beneath the world of named things sits something nameless that everything comes from and runs on, and life goes best when you work with its grain instead of against it. The book calls it the Tao, the Way. It opens by saying the Way cannot be put into words, then keeps gesturing at it for eighty more chapters, mostly by pointing at what it is not.</p>
+      <p>The practical teaching is <em>wu wei</em>, usually rendered non-action, which does not mean lying down. It means effort without friction: act while things are still small, stop when the work is done, do not force, do not fuss, do not grip. The book&rsquo;s favorite teacher is water, which fights nothing, settles into the low places everyone else avoids, and wears down stone.</p>
+      <p>Almost every chapter runs on a reversal. Emptiness is what makes a wheel, a bowl, a room usable. Soft outlasts hard: the living are supple, the dead are stiff. The low position wins: the sea rules the rivers by lying beneath them. Knowing that you do not know is health. Whoever stands on tiptoe does not stand firm. The book is short because it keeps making the same move from new angles until you start making it yourself.</p>
+      <p>A surprising amount of it is political advice. The best ruler is barely noticed. Govern a great state the way you cook a small fish, gently, without poking. The more laws, the more thieves. And the war chapters are blunt for a book this serene: weapons are instruments of ill omen, a victory should be received like a funeral, and when a country loses the Way, war horses are bred in the farmland.</p>
+      <p>Its economics fit on a postcard. No disaster is greater than discontent; no fault greater than wanting more. The sage feeds the belly rather than the eye and treats enough as wealth. The final chapter closes the whole book on giving: the sage keeps nothing back, and the more he gives away, the more he has.</p>
+      <p>What the book is not: a system. It names no god who demands anything, prescribes no ritual, promises no afterlife, issues no commandments, which is part of why it slides so easily into every century, and why no two translators can pin it down. Religious Taoism adopted it as scripture long after it was written. On its own it reads like advice from someone very old who watched a lot of people try too hard.</p>
+
+      <details class="u-collapse">
+        <summary class="u-collapse-s">Sources and what they support</summary>
+        <ol class="u-collapse-list">
+          <li><b>The translations.</b> Reproduced verbatim, pulled with scripts and parsed, nothing retyped or paraphrased by hand or by a model: 139 translators, 24 of them complete, from the per-translator pages at <a href="https://terebess.hu/english/tao/_index.html">Terebess Asia Online</a>, the side-by-side corpus at <a href="https://github.com/tasuki/sbs-ttc">tasuki/sbs-ttc</a>, and Michael Garofalo&rsquo;s chapter-by-chapter collection at <a href="https://www.egreenway.com/taoism/ttclz1.htm">Green Way Research</a>. Many of the modern translations are still in copyright; they are quoted here for comparison and study, with every translator named.</li>
+          <li><b>The breakdowns.</b> Mine. They lean on the standard scholarship for the contested lines, the Chinese phrases in them follow the received (Wang Bi) text at the <a href="https://ctext.org/dao-de-jing">Chinese Text Project</a>, and where the oldest excavated copies (the Mawangdui silk and the Guodian bamboo) disagree with the familiar text, the notes say so rather than smooth it over.</li>
+          <li><b>The homepage painting.</b> Zhang Lu&rsquo;s <em>Laozi Riding an Ox</em> (Ming dynasty, National Palace Museum, Taipei), in the public domain. The legend is that Lao Tzu wrote this book and then rode west out of China for good.</li>
+        </ol>
+      </details>
     </section>
   </main>
 
@@ -260,8 +228,8 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/tao-notes.js" defer></script>
+  <script src="js/tao-notes.js?v=20260719" defer></script>
   <script src="js/tao-data.js" defer></script>
-  <script src="js/tao.js" defer></script>
+  <script src="js/tao.js?v=20260719" defer></script>
 </body>
 </html>
