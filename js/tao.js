@@ -51,8 +51,8 @@
     var t3 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n < 75; }).sort(byYear);
     return [
       { label: 'The famous ones', list: t1 },
-      { label: 'More complete translations', list: t2 },
-      { label: 'The long tail', list: t3 }
+      { label: 'The lesser-known complete translations', list: t2 },
+      { label: 'Partial translations', list: t3 }
     ];
   }
 
