@@ -80,6 +80,21 @@ The implementation reference is `quran.html`.
 
 The second implementation reference is `gita.html`.
 
+## New Testament decisions already made
+
+- Begin with the shelf readers actually meet, then disclose the hidden composition order: Paul's undisputed letters are earlier than the four Gospels.
+- Use four short Gospel portraits as the book's one bespoke element. Mark, Matthew, Luke, and John are four literary and theological tellings, not four bins of facts to merge into a single transcript.
+- Follow the collection beyond Jesus: Acts moves from Jerusalem toward Rome, the letters expose the arguments inside early churches, and Revelation ends with judgment and renewed creation.
+- The veteran test stops at fifteen ideas. The sixteenth candidate, scripture rereading Israel's story around Jesus, is real and important, but it was the first item an experienced Christian would merely nod along to rather than insist belonged in the load-bearing list.
+- Test convergence across Catholic, Orthodox, and major Protestant practice. Keep baptism, Eucharist, prayer, Spirit, church, mission, care for the poor, embodied holiness, and resurrection beside the doctrinal center of incarnation, cross, grace, and faith.
+- Use the 1901 American Standard Version for exact quotations. Wikisource supplies one stable numbered page per biblical book, and the edition is in the United States public domain.
+- Give manuscript abundance its qualifications. More than 5,700 catalogued Greek witnesses does not mean 5,700 complete early New Testaments. Most are partial and medieval. Keep early fragments, recoverable Greek wording, and disputed English meaning as three separate judgments.
+- Do not call Mark&rsquo;s earliest ending a Gospel with no resurrection. The messenger announces that Jesus has risen; what Mark 16.8 lacks is a narrated risen appearance.
+- Keep seven unresolved pressures together: hell, slavery, women and authority, sexuality, anti-Judaism, the delayed return, and contradictions among the accounts.
+- Remove the sixteen-passage, nine-translation reader and its three data scripts from the canonical page markup. The scripts remain unreferenced files pending a separate cleanup decision.
+
+The third implementation reference is `new-testament.html`.
+
 ## Format decisions, 2026-07-19 second round
 
 - The fixed twelve is retired, on the owner's call. It fit the Torah and the Gita honestly and cost the Quran page a patience card; the finding rule in section 3 replaces it.

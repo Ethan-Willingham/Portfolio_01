@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The New Testament, Side by Side</title>
-  <meta name="description" content="The keystone passages of the New Testament in the original Greek, then stacked against nine English translations from Tyndale to David Bentley Hart, with a plain breakdown of what each one says and where the translators split.">
-  <meta property="og:title" content="The New Testament, Side by Side">
-  <meta property="og:description" content="A man was burned alive for putting this book into English. Sixteen keystone passages in the original Greek, then nine English translations stacked against each other, from Tyndale to David Bentley Hart, broken down line by line.">
+  <title>The New Testament: A Guided Reading</title>
+  <meta name="description" content="The New Testament in plain English: four distinct tellings of Jesus, the movement from the Gospels to Revelation, fifteen ideas tested in living Christian practice, its textual history, and the passages a serious reader should not skip.">
+  <meta property="og:title" content="The New Testament: A Guided Reading">
+  <meta property="og:description" content="Four tellings of Jesus, the New Testament's whole movement, what history and manuscripts can establish, fifteen ideas Christians practice, and the passages that resist a clean summary.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/new-testament.html">
@@ -25,291 +25,483 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/new-testament-og.jpg">
+  <link rel="canonical" href="https://ethanwillingham.com/new-testament.html">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
-  /* ============================================================
-     THE NEW TESTAMENT, SIDE BY SIDE
-     An interactive reader: sixteen keystone passages, the Greek
-     source, and nine English translations, with a plain breakdown
-     of each. Sits in the site shell (forest green, parchment,
-     Century Supra / Segoe UI / Commit Mono). The Greek source needs
-     a polytonic-capable fallback face; everything else stays on the
-     three site fonts. No em dashes.
-     ============================================================ */
-  :root {
-    --measure: 820px;                 /* reading column */
-    --gk-font: "GFS Didot","Cardo","New Athena Unicode","Times New Roman",Georgia,serif;
-    --he-font: "Times New Roman","Arial Hebrew","Ezra SIL",serif;
-    --early:  #cf9f78;                 /* era accents, from the site categorical set */
-    --mid:    #bc9d65;
-    --modern: #9ec79a;
-    --ease: cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  html { overflow-x: hidden; }
-  body { overflow-x: hidden; }
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+    :root {
+      --ntg-copy: 64ch;
+      --ntg-measure: 760px;
+      --ntg-frame: 58rem;
+      --ntg-tint: rgba(245, 241, 234, .045);
+      --ntg-hair: rgba(212, 196, 160, .20);
+    }
+    html { overflow-x: hidden; }
+    body.ntg-page { padding-inline: 0; overflow-x: hidden; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .ntg-shell { width: 100%; max-width: var(--ntg-frame); margin: 0 auto; padding-inline: var(--gutter); }
+    .ntg-page .post-back { display: block; width: 100%; max-width: var(--ntg-measure); margin: 0 auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-inline: var(--gutter); }
+    .ntg-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 7rem); max-width: 61rem; padding-block: clamp(3.5rem, 9svh, 6rem); text-align: center; }
+    .ntg-hero .u-title { max-width: 13ch; margin-inline: auto; font-size: clamp(3.45rem, 11vw, 6.9rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+    .ntg-hero .u-dek { max-width: 54ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+    .ntg-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+    .ntg-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
 
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
+    .ntg-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    .ntg-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+    .ntg-layer-tag b { color: var(--accent); font-weight: 400; }
+    .ntg-h2 { max-width: 24ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.55rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+    .ntg-intro { max-width: 52ch; margin: 1rem auto 0; font-size: 1.2rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+    .ntg-prose { max-width: var(--ntg-copy); margin: 2.6rem auto 0; }
+    .ntg-prose p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); text-wrap: pretty; }
+    .ntg-prose p:last-child { margin-bottom: 0; }
+    .ntg-prose p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+    .ntg-prose a, .ntg-context a, .ntg-page .u-textcheck a, .ntg-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--ntg-hair); }
+    .ntg-prose a:hover, .ntg-context a:hover, .ntg-page .u-textcheck a:hover, .ntg-sources a:hover { color: var(--accent-hover); }
 
-  /* ---------- INTRO ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
-  .sec strong { font-weight: 600; color: var(--text-bright); }
-  .sec em { font-style: italic; }
-  .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
-  .sec a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .sec h2.sechead { margin-top: 0.4rem; }
+    .ntg-gospels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: var(--ntg-copy); margin: 2.6rem auto; }
+    .ntg-gospel { padding: 1.35rem 1.4rem 1.45rem; background: var(--ntg-tint); border: 1px solid var(--ntg-hair); border-radius: 7px; }
+    .ntg-gospel-k { margin: 0 0 .5rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .ntg-gospel h3 { margin: 0 0 .65rem; font-size: 1.5rem; line-height: 1.15; color: var(--text-bright); }
+    .ntg-gospel p:last-child { margin: 0; font-size: 1rem; line-height: 1.65; color: var(--text-dim); }
 
-  /* the spine capsule: diagnosis and prescription */
-  .spine { margin: 1.8rem 0 0.4rem; border: 1px solid var(--rule); border-radius: 14px; background: rgba(255,255,255,0.02); overflow: hidden; }
-  .spine-row { display: grid; grid-template-columns: 1fr; gap: 0.25rem; padding: 1.05rem 1.4rem; }
-  .spine-row + .spine-row { border-top: 1px solid var(--rule); }
-  .spine-k { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
-  .spine-t.spine-t { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.55; color: var(--text); margin: 0; }
-  @media (min-width: 620px){ .spine-row { grid-template-columns: 8.5rem 1fr; gap: 1.2rem; align-items: baseline; } }
+    .ntg-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--ntg-copy); margin: 2.8rem auto 0; }
+    .ntg-context { padding-top: 1rem; border-top: 1px solid var(--ntg-hair); }
+    .ntg-context h3 { margin: 0 0 .75rem; font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
+    .ntg-context p { margin: 0 0 1rem; font-size: 1.04rem; line-height: 1.7; color: var(--text); }
+    .ntg-context p:last-child { margin-bottom: 0; }
+    .ntg-page .u-textcheck { max-width: var(--ntg-copy); margin: clamp(2.8rem, 6vw, 4.4rem) auto 0; }
 
-  /* the opening "fan": one Greek line, many Englishes */
-  .fan { margin: 2rem 0 0.5rem; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
-  .fan-gk { font-family: var(--gk-font); font-size: clamp(1.5rem, 4.4vw, 2.1rem); color: var(--text-bright); letter-spacing: 0.01em; padding: 1.3rem 1.5rem 0.4rem; line-height: 1.5; }
-  .fan-gk small { display: block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.7rem; }
-  .fan-list { list-style: none; margin: 0; padding: 0.4rem 0 0.6rem; }
-  .fan-list li { display: grid; grid-template-columns: 1fr; gap: 0.1rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--rule); }
-  .fan-list .e { font-family: var(--font-heading); font-style: italic; font-size: 1.12rem; line-height: 1.4; color: var(--text); }
-  .fan-list .who { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  @media (min-width: 680px){
-    .fan-list li { grid-template-columns: 1fr auto; align-items: baseline; gap: 1.2rem; }
-    .fan-list .who { text-align: right; }
-  }
+    .ntg-concepts { max-width: var(--ntg-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
+    .ntg-concept { border-bottom: 1px solid var(--rule); }
+    .ntg-concept > summary { list-style: none; display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
+    .ntg-concept > summary::-webkit-details-marker { display: none; }
+    .ntg-concept-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .ntg-concept-title { display: block; font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .ntg-concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+    .ntg-concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
+    .ntg-concept-mark::before { content: "+"; }
+    .ntg-concept[open] { margin-block: 1.1rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--ntg-tint); }
+    .ntg-concept[open] .ntg-concept-mark::before { content: "-"; }
+    .ntg-concept:not([open]):has(+ .ntg-concept[open]) { border-bottom-color: transparent; }
+    .ntg-concepts:has(> .ntg-concept[open]:first-child) { border-top-color: transparent; }
+    .ntg-concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
+    .ntg-concept-role { margin: 0; font-size: 1.13rem; line-height: 1.72; color: var(--text); }
+    .ntg-practice { margin: 1.25rem 0 0; padding-left: 1rem; border-left: 1px solid var(--accent); font-size: 1rem; line-height: 1.65; color: var(--text-dim); }
+    .ntg-practice b { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+    .ntg-refrain { margin-top: 2rem; }
+    .ntg-refrain-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; font-family: var(--font-mono); font-size: .64rem; line-height: 1.4; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    .ntg-refrain-head span:last-child { color: var(--text-faint); }
+    .ntg-verses { border-top: 1px solid var(--rule); }
+    .ntg-verse { display: grid; grid-template-columns: 1fr 8.5rem; gap: 1.5rem; margin: 0; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+    .ntg-verse q { font-size: 1rem; line-height: 1.52; color: var(--text); quotes: "‘" "’"; }
+    .ntg-verse cite { font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.45; color: var(--text-faint); text-align: right; }
 
-  /* ---------- THE EXPLORER ---------- */
-  .nt { max-width: var(--measure); margin: clamp(2.6rem,5vw,3.8rem) auto 0; padding: 0 var(--gutter); scroll-margin-top: 0.5rem; }
-  .nt-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem; padding: 0.7rem 0; margin-bottom: 0.4rem; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .nt-step { display: flex; align-items: center; gap: 0.4rem; }
-  .nt-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s, background .2s; }
-  .nt-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
-  .nt-nav:disabled { opacity: 0.3; cursor: default; }
-  .nt-jump { font-family: var(--font-heading); font-size: 1.18rem; color: var(--text-bright); background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 0.5rem; text-align: left; }
-  .nt-jump:hover { background: rgba(255,255,255,0.05); }
-  .nt-jump #nt-ref { font-family: var(--font-mono); font-size: 0.92rem; letter-spacing: 0.02em; color: var(--accent); }
-  .nt-jump #nt-title { font-style: italic; font-size: 0.96rem; color: var(--text-dim); font-weight: 400; }
-  .nt-views { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
-  .nt-views button { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4em 0.85em; background: transparent; color: var(--text-dim); border: none; cursor: pointer; transition: background .2s, color .2s; }
-  .nt-views button:hover { color: var(--text-bright); }
-  .nt-views button.is-on { background: var(--accent); color: #2a3128; }
-  .nt-count { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
-  .nt-count b { color: var(--accent); font-weight: 400; }
+    .ntg-convergence { display: grid; grid-template-columns: minmax(9rem, .75fr) minmax(0, 2fr); gap: 1.5rem; max-width: var(--ntg-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding: 1.35rem 1.4rem; background: var(--ntg-tint); border: 1px solid var(--ntg-hair); border-radius: 7px; }
+    .ntg-convergence h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; color: var(--accent); }
+    .ntg-convergence p { margin: 0; font-size: 1rem; line-height: 1.68; color: var(--text); }
 
-  /* the jump grid: keystones grouped by section */
-  .nt-grid { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); display: grid; gap: 1rem; }
-  .nt-grid[hidden] { display: none; }
-  .nt-gridlabel { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.5rem; }
-  .nt-gridrow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
-  @media (min-width: 620px){ .nt-gridrow { grid-template-columns: repeat(3, 1fr); } }
-  .nt-gridrow button { display: flex; flex-direction: column; gap: 0.15rem; text-align: left; padding: 0.5rem 0.6rem; border: 1px solid transparent; border-radius: 8px; background: rgba(255,255,255,0.03); cursor: pointer; transition: background .15s, border-color .15s; }
-  .nt-gridrow button:hover { background: rgba(255,255,255,0.08); }
-  .nt-gridrow button.is-cur { background: var(--accent); border-color: var(--accent); }
-  .nt-gridrow button.is-cur .nt-gridref { color: #2a3128; }
-  .nt-gridrow button.is-cur .nt-gridname { color: #2a3128; }
-  .nt-gridref { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em; color: var(--accent); }
-  .nt-gridname { font-family: var(--font-heading); font-size: 0.92rem; line-height: 1.2; color: var(--text-dim); }
+    .ntg-hard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: var(--ntg-copy); margin: 2.6rem auto 0; }
+    .ntg-hard { padding: 1.2rem 1.2rem 1.3rem; background: var(--ntg-tint); border: 1px solid var(--ntg-hair); border-radius: 7px; }
+    .ntg-hard h3 { margin: 0 0 .55rem; font-size: 1.22rem; line-height: 1.28; color: var(--text-bright); }
+    .ntg-hard p { margin: 0; font-size: .96rem; line-height: 1.64; color: var(--text-dim); }
 
-  /* source */
-  .nt-source { position: relative; margin: 0.8rem 0 0; padding: 1.4rem 1.5rem; border: 1px solid var(--rule); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
-  .nt-gk-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
-  .nt-gk-k span { color: var(--text-faint); letter-spacing: 0.08em; text-transform: none; }
-  .nt-gk { font-family: var(--gk-font); font-size: clamp(1.25rem, 3.4vw, 1.6rem); line-height: 1.75; color: var(--text-bright); letter-spacing: 0.01em; margin: 0; text-wrap: pretty; }
-  .nt-translit { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: var(--text-dim); margin: 0.85rem 0 0; }
-  .nt-translit span { color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.66rem; margin-right: 0.5rem; }
+    .ntg-sources { max-width: var(--ntg-copy); margin: 3.2rem auto 0; }
+    .ntg-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
+    .ntg-sources li { break-inside: avoid; }
+    .ntg-page .u-next, .ntg-page .site-footer-inner { width: 100%; max-width: var(--ntg-measure); margin-inline: auto; }
+    .ntg-page .site-footer-inner { font-family: var(--font-body); }
 
-  /* commentary */
-  .nt-notes { margin: 1rem 0 0; }
-  .nt-note-card { padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212,196,160,0.045); }
-  .nt-note-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 1.1rem 0 0.4rem; }
-  .nt-note-k:first-child { margin-top: 0; }
-  .nt-note-gist, .nt-note-read { font-size: 1.04rem; line-height: 1.62; color: var(--text); margin: 0; }
-  .nt-note-gist em, .nt-note-read em, .nt-splits em { font-style: italic; color: var(--text-bright); }
-  .nt-note-read { color: var(--text-dim); font-style: italic; }
-  .nt-splits { margin: 0; }
-  .nt-splits dt { font-family: var(--gk-font); font-size: 1.2rem; color: var(--text-bright); margin: 0.7rem 0 0.15rem; letter-spacing: 0.01em; }
-  .nt-splits dt .nt-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); text-transform: none; margin-left: 0.5rem; }
-  .nt-splits dd { margin: 0 0 0.3rem; font-size: 0.98rem; line-height: 1.58; color: var(--text-dim); }
-
-  /* translations */
-  .nt-versions { margin: 1.6rem 0 0; display: grid; gap: 0; }
-  .nt-v { padding: 1.15rem 0 1.15rem 1.1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .nt-v:last-child { border-bottom: 1px solid var(--rule); }
-  .nt-early  { border-left-color: var(--early); }
-  .nt-mid    { border-left-color: var(--mid); }
-  .nt-modern { border-left-color: var(--modern); }
-  .nt-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
-  .nt-vn { font-family: var(--font-heading); font-size: 1.12rem; color: var(--text-bright); letter-spacing: -0.01em; }
-  .nt-vy { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); letter-spacing: 0.05em; flex: none; }
-  .nt-vt { font-family: var(--font-body); font-size: 1.04rem; line-height: 1.6; color: var(--text); white-space: normal; }
-  .nt-vt .nt-br { display: block; height: 0.6em; }
-  .nt-empty { color: var(--text-faint); font-style: italic; }
-
-  /* fade the explorer in once data lands */
-  .nt .nt-body { opacity: 0; transition: opacity .4s var(--ease); }
-  .nt.nt-ready .nt-body { opacity: 1; }
-  .nt-loading { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); padding: 2rem 0; text-align: center; }
-  .nt.nt-ready .nt-loading { display: none; }
-
-  /* ---------- closing / colophon ---------- */
-  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.2rem auto 0; }
-  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .sec h3.subhead { font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-bright); margin: 1.8rem 0 0.5rem; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
-  .canon-note { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); }
-
-  /* ---------- mobile ---------- */
-  @media (max-width: 560px){
-    body { padding-left: 0; padding-right: 0; }
-    .fan-gk { font-size: 1.3rem; padding: 1.1rem 1rem 0.4rem; }
-    .fan-list li { padding: 0.65rem 1rem; }
-    .fan-list .e { font-size: 1.02rem; }
-    .nt-bar { gap: 0.55rem 0.7rem; }
-    .nt-count { margin-left: 0; flex-basis: 100%; }
-    .nt-source, .nt-note-card { padding-left: 1.05rem; padding-right: 1.05rem; }
-    .nt-gridrow { grid-template-columns: repeat(2, 1fr); }
-    .nt-v { padding-left: 0.9rem; }
-  }
+    @media (max-width: 720px) {
+      .ntg-gospels, .ntg-context-grid, .ntg-hard-grid { grid-template-columns: 1fr; }
+      .ntg-convergence { grid-template-columns: 1fr; gap: .7rem; }
+      .ntg-sources .u-collapse-list { columns: 1; }
+    }
+    @media (max-width: 560px) {
+      .ntg-layer { padding-block: 3.4rem; }
+      .ntg-concept > summary { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; padding-block: 1.15rem; }
+      .ntg-concept-body { padding: .1rem 0 3rem 2.9rem; }
+      .ntg-verse { grid-template-columns: 1fr; gap: .45rem; }
+      .ntg-verse cite { text-align: left; }
+      .ntg-refrain-head { display: block; }
+      .ntg-refrain-head span { display: block; }
+      .ntg-refrain-head span:last-child { margin-top: .25rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
-<body>
-  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-
-  <a href="religion.html" class="post-back ll-back"><span class="pb-label">The Sacred Books</span></a>
-
-  <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The New Testament, side by side</h1>
-    <p class="hero-dek">A man was strangled and burned at the stake for putting this book into plain English. Seventy-five years later, the king's translators copied most of his words and called it their own. Here is what they were fighting over.</p>
-    <p class="hero-meta">An interactive reader <span class="sep">/</span> <b>16 keystone passages</b> <span class="sep">/</span> <b>9 English translations</b>, from Tyndale to Hart <span class="sep">/</span> verbatim, not paraphrased</p>
+<body class="ntg-page">
+  <div class="reading-progress" id="reading-progress"></div>
+  <a href="religion.html" class="post-back"><span class="pb-label">The Sacred Books</span></a>
+  <header class="u-hero ntg-hero ntg-shell">
+    <h1 class="u-title">The New Testament: A Guided Reading</h1>
+    <p class="u-dek">Four distinct tellings of Jesus, twenty-three books that follow the news outward, fifteen ideas Christians keep returning to, and the passages a serious reader should not skip.</p>
+    <p class="u-meta">A reading guide <span class="u-sep">/</span> <b>36 sources</b> <span class="u-sep">/</span> 26 min read</p>
+    <span class="ntg-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main>
-    <!-- ============================ INTRO ============================ -->
-    <section class="sec">
-      <p class="lede">In this book, the translation is the doctrine. Move one word and a belief held by two billion people stands or falls. The clearest place to watch it happen is the opening sentence of the Gospel of John, in the most-translated book ever written, a line that after two thousand years still cannot quite agree with itself.</p>
+    <section class="ntg-layer ntg-shell" id="summary" aria-labelledby="summary-title">
+      <p class="ntg-layer-tag"><b>01</b> The whole collection</p>
+      <h2 class="ntg-h2" id="summary-title">The New Testament, in plain English</h2>
+      <p class="ntg-intro">The printed order begins with Jesus and moves forward. The order of writing begins with letters sent to small, argumentative churches.</p>
 
-      <!-- The opening fan: John 1:1 across the versions. -->
-      <div class="fan">
-        <p class="fan-gk" lang="grc">Ἐν ἀρχῇ ἦν ὁ λόγος, καὶ ὁ λόγος ἦν πρὸς τὸν θεόν, καὶ θεὸς ἦν ὁ λόγος.<small>John 1:1, the opening of the Gospel of John, in the Greek</small></p>
-        <ul class="fan-list" id="fan-list">
-          <li><span class="e">In the beginnynge was the worde, and the worde was with God: and the worde was God.</span><span class="who">Tyndale, 1534</span></li>
-          <li><span class="e">In the beginning was the Word, and the Word was with God, and the Word was God.</span><span class="who">King James, 1611</span></li>
-          <li><span class="e">In the beginning was the Word. The Word was close beside God, and the Word was God.</span><span class="who">N.T. Wright, 2011</span></li>
-          <li><span class="e">In the origin there was the Logos, and the Logos was present with God, and the Logos was god.</span><span class="who">D.B. Hart, 2017</span></li>
-          <li><span class="e">In the beginning was the Word, and the Word was with God, and the Word was a god.</span><span class="who">New World Translation, 1950</span></li>
-        </ul>
+      <div class="ntg-prose">
+        <p>The New Testament is twenty-seven books, not one continuous book. Four Gospels tell the life, death, and claimed resurrection of Jesus. Acts follows the movement that gathers around him from Jerusalem toward Rome. Twenty-one letters teach, correct, argue with, and encourage early churches. Revelation closes with a vision in which violent empire falls, the dead are judged, and God makes the world new.</p>
+        <p>The shelf order hides an important fact. Paul&rsquo;s letters are the earliest Christian writings that survive, composed before any Gospel in the collection. A person reading straight through therefore meets the story before meeting the letters that were already circulating when the story was written down. That is useful for reading, but not chronology.</p>
+        <p>All four Gospels begin from the same center. Jesus is a Jew in Roman-ruled Galilee who announces the kingdom of God, gathers disciples, teaches in parables, heals, argues about Torah, goes to Jerusalem, and is crucified under Pontius Pilate. His followers then say that God raised him from the dead. The agreement matters. So do the differences. Each Gospel selects, orders, and interprets the life for a different community and a different theological purpose.</p>
       </div>
 
-      <p>For four hundred years the English barely moves. Then it cracks. Hart leaves the Greek word untranslated, <em>Logos</em>, and lowercases the final <em>god</em>. The New World Translation, the Bible of the Jehovah's Witnesses, adds one English word the Greek does not have, <em>a</em>, and a whole church's picture of Jesus turns on it. The fight is real and it is tiny: in the Greek, that last <em>God</em> has no <em>the</em> in front of it. To almost every scholar that is simply how the grammar works, and the Word is God. To the Witnesses it means the Word was <em>a</em> god, something less. One missing article, two religions.</p>
+      <div class="ntg-gospels" aria-label="Four Gospel portraits of Jesus">
+        <article class="ntg-gospel">
+          <p class="ntg-gospel-k">The shortest and probably earliest</p>
+          <h3>Mark</h3>
+          <p>Jesus arrives as an adult, announces God&rsquo;s kingdom, acts with frightening authority, and repeatedly predicts suffering that his disciples cannot accept. The oldest recoverable ending stops at 16.8: the tomb is empty, a messenger says Jesus has risen, and the women flee in fear before any risen appearance is narrated.</p>
+        </article>
+        <article class="ntg-gospel">
+          <p class="ntg-gospel-k">The teacher and Jewish Messiah</p>
+          <h3>Matthew</h3>
+          <p>Matthew gives Jesus a genealogy through David and Abraham, a birth under Herod, and five large blocks of teaching. Jesus fulfills Israel&rsquo;s scriptures, deepens the law rather than discarding it, forms a church, and ends by sending disciples to every nation.</p>
+        </article>
+        <article class="ntg-gospel">
+          <p class="ntg-gospel-k">The first of two volumes</p>
+          <h3>Luke</h3>
+          <p>Luke lingers over women, the poor, outsiders, meals, prayer, and the work of the Spirit. Its Jesus begins with good news for the poor and ends by opening the scriptures to his followers. Acts is volume two, carrying the same story through Peter, Paul, and the gentile mission.</p>
+        </article>
+        <article class="ntg-gospel">
+          <p class="ntg-gospel-k">The Word made flesh</p>
+          <h3>John</h3>
+          <p>John begins before creation, calls Jesus the divine Word, and replaces short parables with signs and long conversations. Its chronology and voice differ sharply from the other three. Jesus speaks openly about who he is, washes his disciples&rsquo; feet, and makes self-giving love the mark of belonging to him.</p>
+        </article>
+      </div>
 
-      <p>This page is the New Testament read at that magnification. Not the whole thing, which runs to nearly 8,000 verses, but sixteen keystone passages, the ones the rest of it leans on, each shown in the original Greek and then stacked against nine English translations from Tyndale to Hart, with a plain breakdown of what it says and where the translators split. It picks the load-bearing passages over the merely famous, and follows a single spine the whole way down. It assumes you have read the <a href="hebrew-bible.html">Hebrew Bible</a> post, because the New Testament reads itself as the second half of that book.</p>
-
-      <!-- the spine: diagnosis and prescription -->
-      <div class="spine">
-        <div class="spine-row"><span class="spine-k">The diagnosis</span><p class="spine-t">People are cut off from God by sin, and cannot close the gap from their own side. Being good enough was never going to be enough.</p></div>
-        <div class="spine-row"><span class="spine-k">The repair</span><p class="spine-t">So God closes it. In the life, death, and resurrection of Jesus, the breach is healed as a gift, taken hold of by trust, not earned by good behavior.</p></div>
-        <div class="spine-row"><span class="spine-k">The practice</span><p class="spine-t">On the ground it comes down to two commandments. Love God, and love your neighbor as yourself. The rest is detail.</p></div>
+      <div class="ntg-prose">
+        <p>Acts begins with the risen Jesus leaving and the Holy Spirit arriving at Pentecost. A frightened group becomes a public movement. Its members share food and money, preach in Jerusalem, meet resistance, and discover that gentiles can receive the same Spirit without first becoming Jews. Peter opens the door. Paul carries the argument across the eastern Mediterranean. The last scene leaves him in Rome, under guard but preaching freely. The story reaches the imperial center without giving the reader Paul&rsquo;s death.</p>
+        <p>The letters show what that expansion cost. Paul writes to communities divided by class, sex, ethnicity, food, money, spiritual gifts, leadership, and the timing of Jesus&rsquo; return. He insists that Christ&rsquo;s death and resurrection have created a new people, received by grace rather than earned, then spends page after page explaining how that gift must change bodies, households, worship, and public conduct. His churches are not stained-glass calm. They sue one another, humiliate poor members at supper, dispute circumcision, tolerate exploitation, compete over ecstatic gifts, and ask whether their dead have missed the resurrection.</p>
+        <p>Hebrews reads Jesus through priesthood, sacrifice, and covenant. James demands a faith that feeds and clothes people rather than merely agreeing with doctrines. First Peter addresses communities learning to live as outsiders. First John makes love the test of knowing God. The later letters bearing Paul&rsquo;s name describe more settled offices and households than his undisputed letters do. Second Peter confronts the embarrassing question of why the promised return has not happened.</p>
+        <p>Revelation is not a timetable written in code for one modern generation. It is an apocalypse, a disclosure given through symbols to seven churches living under Roman power. A slaughtered Lamb defeats a dragon. Beasts parody political and religious rule. Babylon, pictured as a rich city drunk on blood, falls. The book&rsquo;s violence is severe, but its resistance is primarily witness and endurance rather than taking Rome&rsquo;s weapons. It ends beyond escape from earth: a holy city descends, creation is renewed, death is gone, and God dwells with humanity.</p>
+        <p>Read in order, the collection moves from one Jewish teacher in Galilee to communities scattered through an empire, then to a remade creation. Read in historical order, it moves from urgent letters about a risen Lord to four increasingly developed tellings of his life and then to later arguments over authority, delay, and endurance. Christians read both orders at once. The result is not one voice but a small library held together by the claim that the crucified Jesus is alive and that his life has changed what God, neighbor, body, church, death, and the future mean.</p>
       </div>
     </section>
 
-    <!-- ============================ EXPLORER ============================ -->
-    <section class="nt" id="nt">
-      <div class="nt-bar">
-        <div class="nt-step">
-          <button class="nt-nav" id="nt-prev" aria-label="Previous passage">&lsaquo;</button>
-          <button class="nt-jump" id="nt-jump" aria-label="Jump to a passage"><span id="nt-ref">Matthew 22</span><span id="nt-title"></span></button>
-          <button class="nt-nav" id="nt-next" aria-label="Next passage">&rsaquo;</button>
+    <section class="ntg-layer ntg-shell" id="context" aria-labelledby="context-title">
+      <p class="ntg-layer-tag"><b>02</b> History and transmission</p>
+      <h2 class="ntg-h2" id="context-title">What can actually be known</h2>
+
+      <div class="ntg-context-grid">
+        <article class="ntg-context">
+          <h3>What the evidence can establish</h3>
+          <p>Jesus of Nazareth existed, taught within first-century Judaism, gathered followers, and was crucified under Pontius Pilate. Paul&rsquo;s seven undisputed letters come from the 50s CE and are the earliest surviving Christian texts. They already treat Jesus&rsquo; death and resurrection as the movement&rsquo;s center, preserve older formulas Paul says he received, and show communities spread far beyond Judea.</p>
+          <p>The Gospels were formally anonymous. Their familiar names belong to early church tradition, not signatures inside the works. Most scholars place Mark around or after the destruction of Jerusalem in 70, Matthew and Luke later in the first century, and John last, though every boundary is argued. Luke and Acts form a literary pair. Seven letters are widely accepted as Paul&rsquo;s; six remain disputed, and Hebrews names no author.</p>
+          <p>No original manuscript survives. What does survive is unusually abundant but uneven: more than 5,700 catalogued Greek manuscripts, most of them medieval and most containing only part of the New Testament. Papyrus 52 preserves a few lines of John and is commonly dated between 125 and 175. Papyrus 46, around 200, preserves a large early collection of Paul&rsquo;s letters and Hebrews.</p>
+        </article>
+        <article class="ntg-context">
+          <h3>What remains a reconstruction</h3>
+          <p>Historical method can compare sources, locate Jesus within Jewish and Roman history, and judge some sayings or events more likely than others. It cannot rerun Easter morning. The resurrection is an early and public Christian claim with witnesses named in Paul. Whether God raised Jesus is a theological judgment, not a result a manuscript date or archaeological test can compel.</p>
+          <p>The twenty-seven-book canon also grew rather than arriving as a bound set. Four Gospels and collections of Paul&rsquo;s letters circulated by the second century. Churches disagreed at the edges over Hebrews, James, Revelation, the Shepherd of Hermas, and other works. Athanasius&rsquo; Easter letter of 367 gives the first surviving list that matches today&rsquo;s twenty-seven exactly. Agreement continued to settle region by region.</p>
+          <p>Copyists introduced thousands of differences, most too small to affect English meaning. A few are large enough to see without Greek. The earliest manuscripts lack Mark 16.9-20 and John 7.53-8.11, the woman caught in adultery. The Lord&rsquo;s Prayer doxology and the Trinitarian wording in 1 John 5.7 entered later parts of the manuscript tradition. Modern critical editions leave those seams visible.</p>
+        </article>
+      </div>
+
+      <aside class="u-textcheck" aria-labelledby="ntg-textcheck-title">
+        <div class="u-textcheck-head">
+          <div>
+            <p class="u-textcheck-k">How safely did this reach us?</p>
+            <h3 class="u-textcheck-verdict" id="ntg-textcheck-title">The witnesses are early and plentiful. The wording is recoverable with unusual care. History and faith still answer different questions.</h3>
+          </div>
+          <p class="u-textcheck-rule">Three questions, because one confidence score would lie.</p>
         </div>
-        <div class="nt-views" id="nt-views" role="group" aria-label="How many translations to show">
-          <button data-view="key" class="is-on">Key</button>
-          <button data-view="all">All</button>
+        <div class="u-textcheck-rows">
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Early witnesses</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">Fragments survive from the second century, substantial papyri from around 200, and near-complete codices from the fourth. That is early for ancient literature, though none is an autograph and the first witnesses are not complete Bibles.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">Greek wording</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Strong, qualified</span><span class="u-textcheck-scale" data-level="3" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">Comparison across Greek manuscripts, early translations, and quotations lets editors recover the text closely. Some passages remain genuinely disputed, and several familiar stories or phrases are later additions rather than original words hidden by modern translators.</p>
+          </div>
+          <div class="u-textcheck-row">
+            <span class="u-textcheck-name">English meaning</span>
+            <span class="u-textcheck-read"><span class="u-textcheck-grade">Contested</span><span class="u-textcheck-scale" data-level="2" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>
+            <p class="u-textcheck-note">The main story survives translation. Important terms still demand interpretation: faith or faithfulness, flesh, righteousness, justification, church, hell, and the rare words in disputed passages about sex and authority.</p>
+          </div>
         </div>
-        <div class="nt-count" id="nt-count"></div>
+        <p class="u-textcheck-foot">Verdict based on the <a href="https://new.csntm.org/manuscripts-101/">Center for the Study of New Testament Manuscripts</a>, the <a href="https://www.uni-muenster.de/INTF/en/institut/index.html">Institute for New Testament Textual Research</a>, and the composition and canon sources below. It measures access to the text, not whether its theological claims are true.</p>
+      </aside>
+    </section>
+
+    <section class="ntg-layer ntg-shell" id="ideas" aria-labelledby="ideas-title">
+      <p class="ntg-layer-tag"><b>03</b> Expand the ideas</p>
+      <h2 class="ntg-h2" id="ideas-title">Fifteen ideas living Christian traditions keep returning to</h2>
+      <p class="ntg-intro">Each entry gives the claim, the practice it produces, and the exact words in the public-domain American Standard Version of 1901.</p>
+
+      <div class="ntg-concepts">
+        <details class="ntg-concept" id="kingdom">
+          <summary><span class="ntg-concept-n">01</span><span><span class="ntg-concept-title">Jesus announces God&rsquo;s kingdom and calls for repentance.</span><span class="ntg-concept-place">The opening message</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">The first public words Mark gives Jesus are not a theory about private spirituality. God&rsquo;s reign has drawn near, so people must turn and trust the news. The kingdom is present in healings, forgiveness, meals with outsiders, and release from hostile powers. It is also future, something disciples still ask to come. Repentance means more than regret. The Greek <em>metanoia</em> points to a changed mind and direction, a life reorganized because another authority has become real.</p>
+            <p class="ntg-practice"><b>In practice</b> Christian worship begins again and again with confession, pardon, and the prayer that God&rsquo;s kingdom come. Revival preaching, monastic self-examination, the church calendar, and ordinary habits of apology all assume that conversion is not one past event. The kingdom tests allegiance in public life too: whose will is being done, and who benefits when it is?</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>The time is fulfilled, and the kingdom of God is at hand: repent ye, and believe in the gospel.</q><cite>Mark 1:15</cite></p>
+              <p class="ntg-verse"><q>Thy kingdom come. Thy will be done, as in heaven, so on earth.</q><cite>Matthew 6:10</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="jesus">
+          <summary><span class="ntg-concept-n">02</span><span><span class="ntg-concept-title">Jesus is Messiah, Son of God, Lord, and Word made flesh.</span><span class="ntg-concept-place">The identity at the center</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">The books do not all explain Jesus in the same vocabulary, but they refuse to leave him as one teacher among others. Messiah names Israel&rsquo;s anointed king. Son of God can carry royal, intimate, and divine force. Lord is the title early Christians use in worship and in rereading Israel&rsquo;s scriptures. John goes furthest in one sentence: the eternal Word through whom creation came to be became flesh. Christian doctrine later built technical language around these claims because the New Testament already places Jesus inside devotion to the one God.</p>
+            <p class="ntg-practice"><b>In practice</b> Christians confess Jesus in baptism, creeds, hymns, prayer, and the sign of the cross. Catholic, Orthodox, and most Protestant churches share the Nicene claim that he is fully divine and fully human. They disagree over how authority is exercised in his name, but a church that treats Jesus as merely an admired moralist has left the collection&rsquo;s center.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>In the beginning was the Word, and the Word was with God, and the Word was God. &hellip; And the Word became flesh, and dwelt among us &hellip;</q><cite>John 1:1, 14</cite></p>
+              <p class="ntg-verse"><q>that in the name of Jesus every knee should bow &hellip; and that every tongue should confess that Jesus Christ is Lord, to the glory of God the Father.</q><cite>Philippians 2:10-11</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="cross-resurrection">
+          <summary><span class="ntg-concept-n">03</span><span><span class="ntg-concept-title">The cross and resurrection are the center of the good news.</span><span class="ntg-concept-place">Death, forgiveness, and new life</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Paul says he passed on what he had first received: Christ died for sins, was buried, and was raised. That compact confession predates his letter. The New Testament gives the cross several meanings rather than one theory: sacrifice, victory over hostile powers, ransom, reconciliation, faithful obedience, exposure of violent rule, and the love of God carried to death. Resurrection is not simply that Jesus&rsquo; influence survived. The claim is that God acted on the dead body and began the future resurrection early in one person.</p>
+            <p class="ntg-practice"><b>In practice</b> Sunday worship gathers around Easter. Lent, Holy Week, fasting, the cross, Eucharist, funerals, and baptism all rehearse death and rising. Christians disagree sharply over atonement theories and over how literally to describe the resurrection body. They agree that removing either Good Friday or Easter collapses the message the apostles preached.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>Christ died for our sins according to the scriptures; and that he was buried; and that he hath been raised on the third day according to the scriptures;</q><cite>1 Corinthians 15:3-4</cite></p>
+              <p class="ntg-verse"><q>that like as Christ was raised from the dead through the glory of the Father, so we also might walk in newness of life.</q><cite>Romans 6:4</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="grace-faith-works">
+          <summary><span class="ntg-concept-n">04</span><span><span class="ntg-concept-title">Salvation is grace received by faith, and living faith produces works.</span><span class="ntg-concept-place">Gift and response</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Paul opposes boasting because reconciliation with God is a gift, not a wage paid to the morally impressive. James opposes empty assent because a faith that leaves a hungry person unfed is dead. The old Western argument over faith and works became explosive because both claims are in the same collection. The strongest shared reading keeps their order: grace gives what cannot be earned, faith receives it, and the received life becomes visible in love, justice, and endurance.</p>
+            <p class="ntg-practice"><b>In practice</b> Protestants emphasize justification by faith apart from works. Catholic and Orthodox traditions emphasize grace that heals and enables cooperation. Joint statements have recovered substantial agreement: good works do not purchase grace, and grace does not make obedience optional. The daily test is whether assurance produces gratitude and service or becomes permission to remain unchanged.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>for by grace have ye been saved through faith; and that not of yourselves, [it is] the gift of God; not of works, that no man should glory. For we are his workmanship, created in Christ Jesus for good works, &hellip;</q><cite>Ephesians 2:8-10</cite></p>
+              <p class="ntg-verse"><q>Even so faith, if it have not works, is dead in itself.</q><cite>James 2:17</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="love">
+          <summary><span class="ntg-concept-n">05</span><span><span class="ntg-concept-title">Love of God and neighbor sums up the law.</span><span class="ntg-concept-place">The great commandments</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Jesus joins two commands from Torah: love God with the whole person, and love the neighbor as oneself. Neither cancels the other. Devotion that ignores the neighbor is false, while care for the neighbor belongs inside a larger love of God. John&rsquo;s Gospel sharpens the measure. Disciples love one another as Jesus loved them, which means taking the lower place, washing feet, telling the truth, and accepting cost rather than treating warmth of feeling as the whole command.</p>
+            <p class="ntg-practice"><b>In practice</b> The two commands organize examination of conscience, preaching, charity, pastoral care, family ethics, and arguments about public justice. Christians still disagree about what love requires in war, punishment, wealth, sexuality, and political power. The disagreement is not permission to replace love with correctness. The text makes love the evidence by which discipleship becomes visible.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>Thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind. &hellip; Thou shalt love thy neighbor as thyself.</q><cite>Matthew 22:37-40</cite></p>
+              <p class="ntg-verse"><q>A new commandment I give unto you, that ye love one another; even as I have loved you, &hellip; By this shall all men know that ye are my disciples, &hellip;</q><cite>John 13:34-35</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="enemies">
+          <summary><span class="ntg-concept-n">06</span><span><span class="ntg-concept-title">Enemy-love and forgiveness define discipleship.</span><span class="ntg-concept-place">The costly extension of love</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Jesus does not let love stop at the circle that returns it. He commands prayer for persecutors and grounds it in God&rsquo;s indiscriminate generosity: sun and rain reach the just and unjust together. Forgiveness receives equally severe treatment. The Lord&rsquo;s Prayer asks for it in the measure one extends it. This is not a demand to call abuse harmless, remain in danger, or remove every civil consequence. It is a refusal to let vengeance become the final relation to the offender.</p>
+            <p class="ntg-practice"><b>In practice</b> Christians confess resentment, exchange peace before communion, seek reconciliation, practice restorative justice, and pray by name for people they oppose. Pacifist churches read enemy-love as a ban on killing. Just-war traditions argue that force can restrain harm without hatred. Both readings stand under words that make contempt and revenge spiritually dangerous.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>but I say unto you, love your enemies, and pray for them that persecute you; that ye may be sons of your Father who is in heaven: &hellip;</q><cite>Matthew 5:44-45</cite></p>
+              <p class="ntg-verse"><q>For if ye forgive men their trespasses, your heavenly Father will also forgive you. But if ye forgive not men their trespasses, neither will your Father forgive your trespasses.</q><cite>Matthew 6:14-15</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="poor">
+          <summary><span class="ntg-concept-n">07</span><span><span class="ntg-concept-title">The poor and excluded receive special attention.</span><span class="ntg-concept-place">Good news from the margins</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Luke announces this emphasis before Jesus preaches his first sermon. Good news goes to the poor, release to captives, sight to the blind, and freedom to the bruised. Jesus eats with people respectable religion avoids. Women become disciples and patrons. Children are welcomed, foreigners become examples of faith, and the least are identified with Christ himself. The New Testament does not romanticize poverty, and it does not let a church treat poverty as someone else&rsquo;s private failure.</p>
+            <p class="ntg-practice"><b>In practice</b> Almsgiving, food pantries, hospitals, schools, shelters, mutual aid, debt relief, and advocacy all grow from this pressure. Traditions divide over whether the church should concentrate on personal mercy, structural change, or both. They cannot remove the poor from the test without removing people Jesus repeatedly puts in the middle.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>The Spirit of the Lord is upon me, Because he anointed me to preach good tidings to the poor: He hath sent me to proclaim release to the captives, &hellip;</q><cite>Luke 4:18</cite></p>
+              <p class="ntg-verse"><q>Inasmuch as ye did it unto one of these my brethren, [even] these least, ye did it unto me.</q><cite>Matthew 25:40</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="prayer">
+          <summary><span class="ntg-concept-n">08</span><span><span class="ntg-concept-title">Prayer begins with &ldquo;Our Father&rdquo; and seeks God&rsquo;s will.</span><span class="ntg-concept-place">Attention, dependence, and trust</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">The prayer Jesus teaches is brief enough to memorize and wide enough to inhabit for a lifetime. It begins in relationship, but the pronoun is plural: our Father, our bread, our debts. God&rsquo;s name, kingdom, and will come before private requests. Bodily need, forgiveness, temptation, and evil all belong. Other New Testament prayers add lament, thanksgiving, intercession, silence, groaning, and bold requests. Prayer is neither information God lacked nor a technique for controlling outcomes.</p>
+            <p class="ntg-practice"><b>In practice</b> The Lord&rsquo;s Prayer is spoken at Eucharist, in daily offices, at bedsides, in families, and alone. Orthodox prayer ropes, Catholic rosaries, Protestant extemporaneous prayer, contemplative silence, and sung intercession train attention in different ways. The common discipline is to bring the actual need before God and let the request be reordered by thanksgiving, forgiveness, and &ldquo;thy will be done.&rdquo;</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>Our Father who art in heaven, Hallowed be thy name. Thy kingdom come. Thy will be done, as in heaven, so on earth. Give us this day our daily bread.</q><cite>Matthew 6:9-11</cite></p>
+              <p class="ntg-verse"><q>In nothing be anxious; but in everything by prayer and supplication with thanksgiving let your requests be made known unto God.</q><cite>Philippians 4:6-7</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="baptism">
+          <summary><span class="ntg-concept-n">09</span><span><span class="ntg-concept-title">Baptism joins a person to Christ&rsquo;s death, life, and people.</span><span class="ntg-concept-place">Water and belonging</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Baptism is the New Testament&rsquo;s ordinary threshold into Christian life. It is performed in the triune name, linked with forgiveness and the Spirit, and interpreted by Paul as burial and rising with Christ. It is personal without being private: the baptized person enters a body in which inherited divisions lose their power to decide who belongs. The texts do not give one later sacramental theory or one complete ritual manual.</p>
+            <p class="ntg-practice"><b>In practice</b> Nearly every Christian tradition baptizes with water in the name of Father, Son, and Holy Spirit. Churches dispute infant or believer&rsquo;s baptism, immersion or pouring, and whether baptism causes regeneration or publicly signs it. They agree that baptism is not a decorative graduation. It gives a life a name, a community, and a pattern of dying to an old rule and walking differently.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>Go ye therefore, and make disciples of all the nations, baptizing them into the name of the Father and of the Son and of the Holy Spirit:</q><cite>Matthew 28:19</cite></p>
+              <p class="ntg-verse"><q>Or are ye ignorant that all we who were baptized into Christ Jesus were baptized into his death? We were buried therefore with him through baptism unto death: &hellip;</q><cite>Romans 6:3-4</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="eucharist">
+          <summary><span class="ntg-concept-n">10</span><span><span class="ntg-concept-title">The Lord&rsquo;s Supper remembers and shares Christ&rsquo;s self-giving life.</span><span class="ntg-concept-place">Bread, cup, and communion</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Paul preserves the meal tradition before the Gospels were written. Jesus identifies bread with his body and the cup with the new covenant in his blood, then tells the community to repeat the act. Remembering is not solitary recollection. The one bread makes many people one body, and Paul says a supper that humiliates hungry members contradicts what it celebrates. The table joins Christ&rsquo;s death, present communion, social equality, and the hope of his return.</p>
+            <p class="ntg-practice"><b>In practice</b> Catholics call it the Mass, Orthodox Christians the Divine Liturgy, and Protestants Communion or the Lord&rsquo;s Supper. They disagree over Christ&rsquo;s manner of presence, sacrifice, who may preside, and who may receive. Yet bread and cup remain the repeated center of Christian worship because Jesus&rsquo; gift is received, shared, and made a demand on the table&rsquo;s social life.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>This is my body, which is for you: this do in remembrance of me. &hellip; For as often as ye eat this bread, and drink the cup, ye proclaim the Lord&rsquo;s death till he come.</q><cite>1 Corinthians 11:24-26</cite></p>
+              <p class="ntg-verse"><q>The cup of blessing which we bless, is it not a communion of the blood of Christ? The bread which we break, is it not a communion of the body of Christ?</q><cite>1 Corinthians 10:16-17</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="spirit">
+          <summary><span class="ntg-concept-n">11</span><span><span class="ntg-concept-title">The Holy Spirit gives life, power, gifts, and character.</span><span class="ntg-concept-place">God present within the community</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Acts presents the Spirit as the power that turns witnesses outward and crosses the boundaries they expected to keep. Paul describes the Spirit as God&rsquo;s presence within persons and the church, the one who gives different gifts for a common good, helps prayer, assures adoption, and raises mortal bodies. Extraordinary gifts matter, but the lasting evidence is fruit: love, joy, peace, patience, kindness, goodness, faithfulness, gentleness, and self-control.</p>
+            <p class="ntg-practice"><b>In practice</b> Christians invoke the Spirit in baptism, ordination, Eucharist, preaching, discernment, healing, and private prayer. Pentecostal and charismatic churches expect tongues, prophecy, and healing more openly than many others. The New Testament&rsquo;s own test is communal benefit and Christlike fruit. Intensity alone does not certify a spirit.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>But ye shall receive power, when the Holy Spirit is come upon you: and ye shall be my witnesses &hellip;</q><cite>Acts 1:8</cite></p>
+              <p class="ntg-verse"><q>But the fruit of the Spirit is love, joy, peace, longsuffering, kindness, goodness, faithfulness, meekness, self-control; &hellip;</q><cite>Galatians 5:22-23</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="church">
+          <summary><span class="ntg-concept-n">12</span><span><span class="ntg-concept-title">The church is one body with many necessary members.</span><span class="ntg-concept-place">Belonging, difference, and mutual need</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Paul reaches for a body because a crowd and a hierarchy both fail to say enough. Members differ, but difference is not independence. The eye needs the hand, the head needs the feet, and the parts treated as weaker receive special honor. The Spirit creates unity without making every gift identical. Church in the New Testament can mean a household gathering, a city&rsquo;s assemblies, or Christ&rsquo;s people as a whole. It is an organism before it is a building.</p>
+            <p class="ntg-practice"><b>In practice</b> Christians gather for teaching, prayer, song, bread and cup, care for need, discipline, and mission. Catholic, Orthodox, and Protestant traditions disagree over bishops, apostolic succession, papal authority, congregational rule, and the church&rsquo;s boundaries. None can make solitary Christianity the norm. Gifts are given to build other people, and membership makes their wounds harder to call irrelevant.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>For as the body is one, and hath many members &hellip; so also is Christ. For in one Spirit were we all baptized into one body, &hellip;</q><cite>1 Corinthians 12:12-13</cite></p>
+              <p class="ntg-verse"><q>Now ye are the body of Christ, and severally members thereof.</q><cite>1 Corinthians 12:27</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="holiness">
+          <summary><span class="ntg-concept-n">13</span><span><span class="ntg-concept-title">Holiness reaches the body, money, sex, speech, power, and work.</span><span class="ntg-concept-place">A whole life under renewal</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">The New Testament does not divide a spiritual interior from an ethically neutral body. Paul calls bodies living sacrifices and asks communities to let their minds be renewed. Jesus connects speech with the heart, wealth with allegiance, and leadership with service. The letters move without apology from resurrection to budgets, meals, sexual conduct, labor, anger, hospitality, and truthfulness. Holiness means belonging to God in the ordinary places where desire and power become action.</p>
+            <p class="ntg-practice"><b>In practice</b> Examination of conscience, fasting, simplicity, sexual discipline, honest work, generosity, Sabbath habits, confession, and accountability give the claim a body. Churches dispute many applications, especially around gender, sexuality, property, and political action. A rule can become controlling or hypocritical. The correction is not a faith with no embodied demands, but renewal that produces recognizable good.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>I beseech you therefore, brethren, by the mercies of God, to present your bodies a living sacrifice, holy, acceptable to God, [which is] your spiritual service. And be not fashioned according to this world: but be ye transformed by the renewing of your mind, &hellip;</q><cite>Romans 12:1-2</cite></p>
+              <p class="ntg-verse"><q>But be ye doers of the word, and not hearers only, deluding your own selves.</q><cite>James 1:22</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="mission">
+          <summary><span class="ntg-concept-n">14</span><span><span class="ntg-concept-title">Christians are sent to witness among every people.</span><span class="ntg-concept-place">Good news moving outward</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">Matthew ends with a commission to make disciples of all nations; Acts maps the movement from Jerusalem through Judea and Samaria toward the ends of the earth. Mission includes speech, baptism, teaching, reconciliation, shared life, and care that makes the message credible. It is not a warrant for a nation to baptize its expansion. The messenger represents a crucified Lord and therefore cannot make domination the proof of truth without contradicting the message.</p>
+            <p class="ntg-practice"><b>In practice</b> Christians preach, translate scripture, plant churches, cross cultures, serve locally, and explain the hope they hold. The history includes hospitals, literacy, and costly solidarity. It also includes forced conversion, colonial power, and contempt for other traditions. Repentant mission listens, refuses coercion, distinguishes witness from conquest, and remembers that the person across the table is never raw material for a victory statistic.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>Go ye therefore, and make disciples of all the nations &hellip; teaching them to observe all things whatsoever I commanded you: and lo, I am with you always, &hellip;</q><cite>Matthew 28:19-20</cite></p>
+              <p class="ntg-verse"><q>We are ambassadors therefore on behalf of Christ, as though God were entreating by us: &hellip;</q><cite>2 Corinthians 5:20</cite></p>
+            </div></div>
+          </div>
+        </details>
+
+        <details class="ntg-concept" id="new-creation">
+          <summary><span class="ntg-concept-n">15</span><span><span class="ntg-concept-title">Christian hope is resurrection, judgment, and a remade creation.</span><span class="ntg-concept-place">The future of bodies and the world</span></span><span class="ntg-concept-mark" aria-hidden="true"></span></summary>
+          <div class="ntg-concept-body">
+            <p class="ntg-concept-role">The New Testament&rsquo;s final hope is larger than an immortal soul going elsewhere. Paul expects the dead to be raised and mortal bodies changed. The Gospels expect judgment in which hidden loyalties and treatment of the vulnerable come to light. Revelation brings a city down from heaven rather than carrying creation away from earth. Death, mourning, and pain end because God dwells with humanity and makes all things new.</p>
+            <p class="ntg-practice"><b>In practice</b> The creed ends with resurrection of the dead and the life of the world to come. Christian funerals grieve without pretending death is harmless. Care for bodies, creation, justice, and unfinished work becomes meaningful because God&rsquo;s future repairs rather than discards the world. Traditions dispute the millennium, rapture, intermediate state, and sequence of final events. The shared hope is Christ&rsquo;s return, judgment, resurrection, and creation healed.</p>
+            <div class="ntg-refrain"><p class="ntg-refrain-head"><span>The New Testament keeps saying it</span><span>ASV, 1901</span></p><div class="ntg-verses">
+              <p class="ntg-verse"><q>in a moment, in the twinkling of an eye, at the last trump: for the trumpet shall sound, and the dead shall be raised incorruptible, and we shall be changed. For this corruptible must put on incorruption, and this mortal must put on immortality.</q><cite>1 Corinthians 15:52-53</cite></p>
+              <p class="ntg-verse"><q>And I saw a new heaven and a new earth: &hellip; and death shall be no more; neither shall there be mourning, nor crying, nor pain, any more: &hellip; Behold, I make all things new.</q><cite>Revelation 21:1, 4-5</cite></p>
+            </div></div>
+          </div>
+        </details>
       </div>
 
-      <div class="nt-grid" id="nt-gridpop" hidden aria-label="Passage index"></div>
+      <aside class="ntg-convergence">
+        <h3>Where Christians converge</h3>
+        <p>Catholic, Orthodox, and major Protestant traditions disagree about justification, sacraments, church authority, Spirit gifts, sexuality, war, and the end times. Yet their creeds, worship, and teaching keep returning to the same load-bearing life: Jesus as Lord, cross and resurrection, grace and faith, baptism, bread and cup, prayer, love of neighbor and enemy, care for the poor, the Spirit, the church, mission, holiness, judgment, and resurrection. That convergence certifies the emphasis above. It does not make the divisions imaginary.</p>
+      </aside>
+    </section>
+    <section class="ntg-layer ntg-shell" id="hard-parts" aria-labelledby="hard-title">
+      <p class="ntg-layer-tag"><b>04</b> Do not skip</p>
+      <h2 class="ntg-h2" id="hard-title">Hell, slavery, women, sexuality, anti-Judaism, delay, contradiction</h2>
+      <p class="ntg-intro">The New Testament has been used to free people, frighten people, protect people, and control people. Its difficult passages need more than a friendly verse placed over them.</p>
 
-      <div class="nt-body">
-        <div class="nt-source" id="nt-source"></div>
-        <div class="nt-notes" id="nt-notes"></div>
-        <div class="nt-versions" id="nt-versions"></div>
+      <div class="ntg-hard-grid">
+        <article class="ntg-hard">
+          <h3>Hell is not one word or one settled picture</h3>
+          <p>English &ldquo;hell&rdquo; can translate Gehenna, Hades, or Tartarus, and Revelation adds a lake of fire. Jesus warns of destruction in Gehenna and Matthew 25.46 places &ldquo;eternal punishment&rdquo; beside &ldquo;eternal life.&rdquo; The strongest traditional reading is conscious punishment without end. Other Christians argue for final destruction or eventual restoration, drawing on different images and on the range of the Greek words. No honest summary can say the warnings are merely metaphor and therefore harmless. It also cannot pretend the text supplies one diagram of the afterlife.</p>
+        </article>
+        <article class="ntg-hard">
+          <h3>The letters regulate slavery instead of abolishing it</h3>
+          <p>Household codes tell enslaved people to obey masters. First Peter even includes harsh masters. Paul sends Onesimus back to Philemon and asks that he be received as a beloved brother, but never plainly commands manumission or the end of the institution. Galatians 3.28 and the shared body gave abolitionists a powerful internal argument; defenders of slavery quoted the direct commands. The equality claim presses against slavery, but it does not make the New Testament an abolitionist document before abolitionism existed.</p>
+        </article>
+        <article class="ntg-hard">
+          <h3>Women lead in one passage and are silenced in another</h3>
+          <p>Women fund Jesus&rsquo; work, remain at the cross, discover the empty tomb, host churches, prophesy, teach Apollos, and are named by Paul as coworkers and apostles. First Timothy 2.12 forbids a woman to teach or exercise authority over a man. First Corinthians 14.34-35 tells women to be silent, even though chapter 11 assumes women pray and prophesy. The Pastoral Letters&rsquo; authorship is disputed, and some manuscripts move the Corinthian silence verses to a different location, but the restrictions are not imaginary. Churches still divide over whether they address local disorder or establish permanent offices by sex.</p>
+        </article>
+        <article class="ntg-hard">
+          <h3>Sexuality turns on real prohibitions and difficult ancient categories</h3>
+          <p>Romans 1.26-27 describes same-sex acts inside an argument about idolatry and disordered desire. First Corinthians 6.9 uses two contested terms, <em>malakoi</em> and <em>arsenokoitai</em>. The traditional reading treats these passages as prohibiting same-sex sexual relations. Affirming readings stress exploitation, status, excess, and the absence of the modern category of an equal, enduring same-sex marriage. It is too easy to claim the texts say nothing about same-sex acts. It is also too easy to move from ancient acts and social categories to every modern relationship without making an interpretive argument.</p>
+        </article>
+        <article class="ntg-hard">
+          <h3>Intra-Jewish conflict became anti-Jewish scripture</h3>
+          <p>Jesus, Paul, and the first disciples were Jews, and the Gospel writers worked inside a movement born from Jewish life. John&rsquo;s repeated phrase &ldquo;the Jews,&rdquo; Matthew&rsquo;s crowd accepting bloodguilt, and First Thessalonians 2.14-16 were later read as verdicts on an entire people and helped feed contempt, expulsion, and violence. Their first settings involve bitter disputes within and around Jewish communities under Roman rule. That context matters, but later harm cannot be explained away as a misunderstanding only. Romans 9-11 warns gentile Christians not to boast over Israel and insists that God has not rejected his people.</p>
+        </article>
+        <article class="ntg-hard">
+          <h3>The promised return did not arrive on the expected schedule</h3>
+          <p>Jesus says &ldquo;this generation&rdquo; will not pass before apocalyptic events occur. Paul speaks of &ldquo;we that are alive&rdquo; at the Lord&rsquo;s coming. Revelation says the time is near, while Second Peter answers scoffers asking where the promise has gone. Christians have read some sayings as fulfilled in Jerusalem&rsquo;s destruction, the transfiguration, or the resurrection, and others as describing a future still open. The New Testament itself shows expectation being reinterpreted as time passes. Calling the delay no problem ignores a question one of its own letters had to answer.</p>
+        </article>
+        <article class="ntg-hard">
+          <h3>Four witnesses do not behave like one transcript</h3>
+          <p>Matthew and Luke give different genealogies and birth stories. Their accounts of Judas&rsquo; death do not line up neatly. Mark places the women at an empty tomb but narrates no risen appearance in its earliest ending; the other Gospels give different people, places, words, and sequences. John places the crucifixion on a different Passover timetable from the Synoptics. Some differences can be harmonized, but harmony is not what the pages themselves provide. Historical reading leaves the seams visible. Theological reading asks why the church kept four portraits rather than replacing them with one smooth life.</p>
+        </article>
       </div>
-      <div class="nt-loading">loading the translations&hellip;</div>
-      <noscript><p style="color:var(--text-dim);padding:1rem 0;">This reader needs JavaScript to stack the translations. The source and the translations are plain text in <code>js/new-testament-data.js</code>.</p></noscript>
-    </section>
 
-    <!-- ============================ THE ENGLISH STORY ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">How this book came into English</h2>
-      <p>No one has the original of a single book of the New Testament. What survives is copies: roughly 5,800 Greek manuscripts, written by hand across fourteen centuries, and no two are exactly alike. Most of the differences are spelling and slips of the pen. A few of them move a doctrine. So before anyone translates a word, someone has to decide which Greek to translate, and that choice already sorts the English versions into two families.</p>
-      <p>Tyndale and the King James men worked from the <em>Textus Receptus</em>, the "received text," a Greek New Testament the Dutch scholar Erasmus rushed into print in 1516 out of a handful of late medieval copies. The modern versions, the RSV through the ESV, work from a critical text rebuilt over the last century and a half from the oldest manuscripts we have, fourth-century codices and papyrus scraps that predate Erasmus's sources by a thousand years. That is why the King James carries lines the modern versions drop to a footnote: the ringing end of the Lord's Prayer, the last twelve verses of Mark, the woman caught in adultery. They are in the later manuscripts and missing from the earliest. The footnote is not the modern translators editing Jesus. It is them showing their work.</p>
-      <p>The English itself runs through one man. John Wycliffe's followers had copied an English Bible by hand in the 1380s, but from the Latin, and the church banned it and dug up his bones to burn them. Tyndale was the first to go back to the Greek and the first to print, in 1526, smuggling New Testaments into England inside bales of cloth. It got him hunted across Europe and, in 1536, strangled and burned near Brussels. His last words, by one account, were a prayer that the king of England's eyes would open. Within seventy-five years they had: when the King James appeared in 1611, an estimated <strong>83 percent of its New Testament was Tyndale, word for word</strong>. The cadence the English-speaking world still calls "biblical," the sound of the thing, is one executed man's ear.</p>
-      <p>After that the translations never stop coming, because every translation is a choice between two losses. Stay close to the Greek word order and you get accuracy that reads like furniture-assembly instructions. Smooth it into real English and you have decided, on the reader's behalf, what the Greek meant. N.T. Wright leans warm and readable. David Bentley Hart leans so literal it goes strange on purpose, scraping four centuries of familiarity off lines you long ago stopped hearing. Both are honest. They just pay the bill on opposite sides, which is the whole reason to read them together.</p>
-    </section>
-
-    <!-- ============================ WHOSE NEW TESTAMENT ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">Whose New Testament</h2>
-      <p>There is no such thing as "the Bible," exactly. There are Bibles, and they do not hold the same books.</p>
-      <p>The 27 books of the New Testament were not handed down as a boxed set. For the first few centuries the churches argued over the edges. Some wanted to keep the Shepherd of Hermas or the Apocalypse of Peter; some wanted Revelation, Hebrews, and James thrown out. The first list that matches our 27 exactly is a festal letter from Athanasius of Alexandria in the year 367. The canon was a slow agreement, not a delivery.</p>
-      <p>The wider split is in the Old Testament, and it is the main reason a Catholic Bible is fatter than a Protestant one. Protestant Bibles carry 66 books. Catholic Bibles carry 73, including seven the Protestants leave out: Tobit, Judith, Wisdom, Sirach, Baruch, and First and Second Maccabees, the <em>deuterocanon</em>. The Eastern Orthodox keep more still; the Ethiopian Orthodox canon, the widest in the world, takes in First Enoch and Jubilees. It traces back to which Hebrew Bible the early church grew up on. The Greek translation it used, the Septuagint, included the extra books; the Hebrew canon the rabbis settled did not. Luther, translating in the 1520s, sided with the Hebrew and moved the extras into an appendix he labeled "Apocrypha," worth reading, not Scripture. The Catholic Church, at the Council of Trent in 1546, made them Scripture in reply. Same history, three sizes of Bible.</p>
-      <p>And then there is the argument inside the New Testament, the one that split Western Christianity down the middle. Paul writes that a person is put right with God by faith, as a gift, "not by works, so that no one can boast." James writes, in the same New Testament, that "faith without works is dead," and that "a person is justified by works and not by faith alone." Luther read Paul, built the Reformation on faith alone, and disliked James enough to call it "an epistle of straw" and shove it to the back of his Bible. Trent read both and ruled for faith and works together. In this reader the two sit four passages apart, Romans and Ephesians on one side, James on the other; you can put them side by side and decide for yourself.</p>
-      <p>Most scholars now think the two men were answering different questions: Paul, how a person gets <em>in</em> (a gift, not a wage); James, what a real faith <em>does</em> once it is in (it acts, or it was never alive). A newer reading of Paul argues that "the works of the Law" he attacks were Jewish identity markers, circumcision and food laws, not kindness and charity, which softens the old clash further. But the seam is real, and the churches that grew up along it, Catholic, Orthodox, and Protestant, are still standing on their own sides of it, reading the same Greek.</p>
-    </section>
-
-    <!-- ============================ COLOPHON ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
-      <p>Every English translation here is reproduced exactly, its own punctuation and all, for comparison and study, and every translator is named. Nothing was paraphrased or smoothed by hand.</p>
-      <ul class="src-list" id="src-list">
-        <li><b>The Greek</b> is the SBL Greek New Testament (ed. Michael Holmes, Society of Biblical Literature), an openly licensed critical text, pulled verbatim from <a href="https://www.biblegateway.com/versions/SBL-Greek-New-Testament-SBLGNT/">Bible Gateway</a>.</li>
-        <li><b>Tyndale</b> is his 1534 revision in the original spelling, so "the povre in sprete" really is what he set in type, from <a href="https://www.textusreceptusbibles.com/Tyndale">textusreceptusbibles.com</a>. The <b>King James</b> (1611) and the Catholic <b>Douay-Rheims</b> (translated from the Latin Vulgate) are public domain.</li>
-        <li><b>The Revised Standard</b> (1952), <b>New Revised Standard</b> (the 2021 updated edition), <b>New International</b> (2011), <b>English Standard</b> (2016), and <b>N.T. Wright</b>'s translation (published as the New Testament for Everyone) are quoted from <a href="https://www.biblegateway.com/">Bible Gateway</a>.</li>
-        <li><b>David Bentley Hart</b>'s deliberately strange 2017 translation (Yale) is quoted, where its exact wording could be confirmed, from published reviews and excerpts; it appears on the passages where that was possible and is absent where it was not.</li>
-      </ul>
-      <p>The breakdowns are mine. They lean on standard scholarship for the contested lines, and where the experts genuinely disagree (the grammar of John 1:1, the virgin of Isaiah 7:14, Paul against James) I have tried to show the disagreement rather than pick a side and bury it. This post stays inside the New Testament and the way it re-reads the Hebrew scriptures; the shared ground of Genesis and Exodus is handled in the <a href="hebrew-bible.html">Hebrew Bible</a> post, on its own terms.</p>
-      <p style="font-size:0.92rem; color:var(--text-faint);">The painting on the homepage card is Rembrandt's <em>Return of the Prodigal Son</em> (about 1668, the State Hermitage Museum, St Petersburg), the moment from Luke 15 when the father runs to the son. It is in the public domain.</p>
+      <details class="u-collapse ntg-sources">
+        <summary class="u-collapse-s">Sources and what they support</summary>
+        <ol class="u-collapse-list">
+          <li><b>Verse text.</b> Every quotation in the ideas section was checked against the numbered books in the <a href="https://en.wikisource.org/wiki/Bible_(American_Standard)">American Standard Bible on Wikisource</a>, published in 1901. The <a href="https://www.copyright.gov/what-is-copyright/?form=MG0AV3">U.S. Copyright Office</a> confirms that works published before 1931 are in the United States public domain in 2026. Ellipses only shorten the ASV wording.</li>
+          <li><b>Printed order, composition order, and anonymity.</b> Open Yale&rsquo;s lecture <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-2">From Stories to Canon</a> supports the priority of Paul&rsquo;s letters, the formal anonymity of the four Gospels, and the difference between a later attribution and a false signature inside a work.</li>
+          <li><b>The four Gospel portraits.</b> Yale&rsquo;s readings of <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-6">Mark</a>, <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-7">Matthew</a>, <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-9">Luke</a>, and <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-11">John</a> support treating each Gospel as its own argument rather than four piles of details for one composite biography.</li>
+          <li><b>Luke and Acts.</b> Yale&rsquo;s lecture on <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-10">Acts</a> supports the two-volume design, the Jerusalem-to-Rome movement, the Spirit&rsquo;s role, and the dispute over gentile inclusion.</li>
+          <li><b>Paul and the disputed letters.</b> Yale&rsquo;s <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-14">Paul as Missionary</a> names the seven undisputed letters. <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-17">Paul&rsquo;s Disciples</a> explains the scholarly division among undisputed, disputed, and widely rejected attributions.</li>
+          <li><b>The historical Jesus.</b> Yale&rsquo;s lecture on <a href="https://oyc.yale.edu/religious-studies/rlst-152/lecture-13">the historical Jesus</a> supports the distinction between what ordinary historical method can reconstruct and the Jesus confessed in Christian faith.</li>
+          <li><b>Dates and relationships among the Gospels.</b> The 2026 <a href="https://academic.oup.com/edited-volume/61673/chapter-abstract/552822416">Oxford Classical Dictionary entry on the Gospels</a> supports their anonymity, their post-70 literary setting, their shared outline, and their differences. The page gives broad dates because narrower proposals remain disputed.</li>
+          <li><b>Formation of the collection.</b> The British Academy account of <a href="https://www.thebritishacademy.ac.uk/blog/how-new-testament-was-created/">how the New Testament was created</a> traces writings becoming scripture and then a canon. Oxford&rsquo;s study of <a href="https://academic.oup.com/edited-volume/61539/chapter-abstract/537116629">the New Testament canon</a> supports the second-century fourfold Gospel and Pauline collection, late-fourth-century lists, and continuing regional fluidity.</li>
+          <li><b>The twenty-seven-book list.</b> <a href="https://www.earlychurchtexts.com/public/athanasius_39th_festal_letter.htm">Athanasius&rsquo; Thirty-Ninth Festal Letter</a>, dated 367, is the first surviving list to name exactly the twenty-seven New Testament books used today.</li>
+          <li><b>Manuscript scale.</b> The Center for the Study of New Testament Manuscripts gives the qualified count of more than 5,700 Greek witnesses in <a href="https://new.csntm.org/manuscripts-101/">Manuscripts 101</a>. Most are partial, and most are later than the first Christian centuries.</li>
+          <li><b>Early papyri.</b> CSNTM&rsquo;s survey of <a href="https://new.csntm.org/2023/02/09/manuscripts-101-manuscript-materials/">manuscript materials</a> gives the 125 to 175 range for Papyrus 52 and notes how widely early papyri cover the collection. Its account of <a href="https://new.csntm.org/2015/01/06/p46-is-now-complete/">Papyrus 46</a> supports the date around 200 and its early collection of Paul and Hebrews. The center&rsquo;s page on <a href="https://www.csntm.org/tag/p52/">early Gospel and letter collections</a> supports the missing adultery story in Papyrus 66 and the early grouping of books into codices.</li>
+          <li><b>Catholic convergence.</b> The Vatican&rsquo;s summary of <a href="https://www.vatican.va/content/catechism/en/part_one/section_one/chapter_three/article_2/the_credo.html">the creed</a>, its account of <a href="https://www.vatican.va/content/catechism/en/part_two/section_two/chapter_one/article_1/i_what_is_this_sacrament_called.html">baptism</a>, and its summary of <a href="https://www.vatican.va/content/catechism/en/part_two/section_two/chapter_one/article_3/in_brief.html">the Eucharist</a> support the section&rsquo;s treatment of incarnation, cross, resurrection, Spirit, church, baptism, communion, judgment, and resurrection of the dead as lived Catholic basics.</li>
+          <li><b>Orthodox practice.</b> The Orthodox Church in America describes scripture, preaching, prayer, and the Eucharist inside <a href="https://www.oca.org/orthodoxy/the-orthodox-faith/doctrine-scripture/sources-of-christian-doctrine/the-liturgy">the liturgy</a>, and the daily cycles of personal and communal <a href="https://www.oca.org/orthodoxy/the-orthodox-faith/worship/the-daily-cycles-of-prayer/prayer">prayer</a>.</li>
+          <li><b>Protestant convergence.</b> The Church of England&rsquo;s <a href="https://www.churchofengland.org/faith-life/what-we-believe/nicene-creed">Nicene Creed</a> supports the shared doctrinal center. The <a href="https://lausanne.org/statement/lausanne-covenant">Lausanne Covenant</a> supports the evangelical emphasis on cross, resurrection, Spirit, scripture, church, and mission. The World Methodist Council&rsquo;s association with the <a href="https://worldmethodistcouncil.org/wmcs-statement-of-assocation-with-the-joint-declaration-of-the-doctrine-of-justification/">Joint Declaration on Justification</a> supports grace received in faith and good works as its fruit.</li>
+          <li><b>Slavery.</b> Oxford&rsquo;s bibliography on <a href="https://academic.oup.com/reference/62341/reference-article-abstract/554105348?login=false">slavery in the New Testament</a> supports the direct commands to enslaved people, Paul&rsquo;s handling of Onesimus, and the text&rsquo;s later use by both defenders and opponents of slavery.</li>
+          <li><b>Same-sex passages.</b> The Oxford Handbook chapter on <a href="https://academic.oup.com/edited-volume/34457/chapter-abstract/292371306">same-sex relations and the New Testament</a> supports the traditional reading, the modern contextual challenges to it, and the need to keep the ancient social categories visible.</li>
+          <li><b>Hell.</b> Oxford&rsquo;s study of <a href="https://academic.oup.com/edited-volume/38584/chapter-abstract/334617149">hell in early Christian interpretation</a> supports the range of New Testament images. Its chapter on <a href="https://academic.oup.com/edited-volume/34387/chapter-abstract/291614797">annihilationism</a> documents the Christian argument that final punishment may be destruction rather than endless conscious torment.</li>
+          <li><b>Women and authority.</b> Oxford&rsquo;s <a href="https://academic.oup.com/book/1370">Women in the New Testament World</a> supports the tension between women&rsquo;s visible ministry in the early movement and the passages later used to restrict authority.</li>
+          <li><b>John and anti-Judaism.</b> The Oxford Handbook chapter on <a href="https://academic.oup.com/edited-volume/38583/chapter-abstract/334609699">Jews and Judaism in John</a> supports the Gospel&rsquo;s Jewish setting, the rhetorical problem of &ldquo;the Jews,&rdquo; and the long history of anti-Jewish reception.</li>
+          <li><b>The delayed return.</b> The Cambridge study of <a href="https://www.cambridge.org/core/journals/new-testament-studies/article/problem-of-the-delay-of-the-parousia-in-lukeacts/545A4FE2748EE4943313F053AE598629">the delay of the parousia in Luke and Acts</a> documents the question as an internal problem early Christian authors interpreted rather than a modern objection invented from outside.</li>
+          <li><b>Resurrection and historical method.</b> Oxford&rsquo;s philosophical study of <a href="https://academic.oup.com/book/35151/chapter/299359443/chapter-pdf/57577225/oso-9780198838968-chapter-1.pdf">the historicity of the resurrection</a> supports the page&rsquo;s narrow claim: historical evidence can establish early testimony and belief, while scholars and theologians still dispute what history can conclude about divine action.</li>
+          <li><b>Image.</b> The site&rsquo;s New Testament image is Rembrandt&rsquo;s <a href="https://commons.wikimedia.org/wiki/File:Rembrandt_Harmensz._van_Rijn_-_The_Return_of_the_Prodigal_Son.jpg"><em>Return of the Prodigal Son</em></a>, about 1668, held by the State Hermitage Museum and marked public domain.</li>
+        </ol>
+      </details>
     </section>
   </main>
 
-  <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
   <nav class="u-next" aria-label="Keep reading">
     <p class="u-next-k">Next in The Sacred Books</p>
     <p class="u-next-t"><a class="u-next-link" href="nagarjuna.html">Nagarjuna's Middle Way</a></p>
     <p class="u-next-more"><a href="religion.html">All 11 posts in The Sacred Books</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
-      <a href="/">&copy; 2026 Ethan Willingham</a>
-    </div>
+    <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div>
   </footer>
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/new-testament-notes.js" defer></script>
-  <script src="js/new-testament-data.js" defer></script>
-  <script src="js/new-testament.js" defer></script>
 </body>
 </html>
