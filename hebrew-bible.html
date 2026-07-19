@@ -80,7 +80,7 @@
     .concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
     .concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
     .concept-mark::before { content: "+"; }
-    .torah-concept[open] { border-left: 1px solid var(--accent); }
+    .torah-concept[open] { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212, 196, 160, .045); }
     .torah-concept[open] .concept-mark::before { content: "−"; }
     .concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
     .concept-role { max-width: 61ch; margin: 0; font-size: 1.14rem; line-height: 1.72; color: var(--text); }
@@ -370,11 +370,6 @@
         </div>
       </section>
 
-      <aside class="torah-convergence">
-        <h3>Where modern Jewish teachers converge</h3>
-        <p><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Jonathan Sacks</a> in Orthodox Judaism, teachers at the Conservative movement&rsquo;s <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a>, and <a href="https://reformjudaism.org/blog/passover-2024-three-central-messages-pesach">Reform teachers</a> disagree about revelation, law, authorship, gender, and much more. Yet their accounts repeatedly meet on the same spine: every person bears God&rsquo;s image, Exodus makes freedom a responsibility, covenant joins a people to service, the stranger tests justice, holiness reaches daily life, and study keeps the choice alive. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
-      </aside>
-
       <details class="u-collapse torah-sources">
         <summary class="u-collapse-s">Sources and what they support</summary>
         <ol class="u-collapse-list">
@@ -388,6 +383,11 @@
           <li><b>Homepage photograph.</b> An open Torah scroll with a silver pointer, Jewish Museum and Tolerance Center, Moscow, public domain via Wikimedia Commons.</li>
         </ol>
       </details>
+
+      <aside class="torah-convergence">
+        <h3>Where modern Jewish teachers converge</h3>
+        <p><a href="https://rabbisacks.org/covenant-conversation/yitro/a-kingdom-of-priests/">Jonathan Sacks</a> in Orthodox Judaism, teachers at the Conservative movement&rsquo;s <a href="https://www.jtsa.edu/torah/where-do-we-look-to-find-our-center/">Jewish Theological Seminary</a>, and <a href="https://reformjudaism.org/blog/passover-2024-three-central-messages-pesach">Reform teachers</a> disagree about revelation, law, authorship, gender, and much more. Yet their accounts repeatedly meet on the same spine: every person bears God&rsquo;s image, Exodus makes freedom a responsibility, covenant joins a people to service, the stranger tests justice, holiness reaches daily life, and study keeps the choice alive. That agreement is evidence of emphasis, not a vote that settles interpretation.</p>
+      </aside>
     </section>
   </main>
 
