@@ -372,6 +372,58 @@ window.TAO_NOTES = {
       { zh: "損有餘而補不足", gloss: "take from the excess, fill the lack", note: "Heaven's way is to level; the human way is to pile up. This is the book's sharpest line about inequality, and unusually direct about it. Translators rarely soften this one, because the contrast is the point." }
     ],
     read: "The closest the book comes to social criticism. Nature redistributes; people hoard. The chapter sets the two side by side and lets the gap speak."
+  },
+
+  10: {
+    title: "Six questions with one answer",
+    gist: "The whole chapter is questions, six of them, and every one asks whether you can do a good thing without gripping it: keep body and soul together, breathe soft as a newborn, clean your inner mirror, love people and govern them, stay receptive while heaven's gates swing open and shut, understand everything. Then the answer key: give birth without possessing, work without taking credit, lead without ruling. The book calls that dark virtue, its name for goodness with no fingerprints on it.",
+    splits: [
+      { zh: "滌除玄覽", gloss: "cleanse the dark mirror", note: "Lau says <em>'polish your mysterious mirror,'</em> Hinton <em>'polish the dark-enigma mirror,'</em> Feng and English <em>'washing and cleansing the primal vision,'</em> Mitchell <em>'cleanse your inner vision until you see nothing but the light.'</em> Le Guin drops the mirror for still water that <em>'reflects without blurring.'</em> Whether the mind is a mirror you polish or water you calm is a real fork in meditation advice, and the translators take both roads." },
+      { zh: "能為雌乎", gloss: "can you play the female?", note: "Waley: <em>'play always the female part.'</em> Feng and English: <em>'play the role of woman.'</em> Hinton: <em>'be female opening and closing heaven's gate.'</em> Le Guin swerves to <em>'be like a bird with her nestlings,'</em> trading the gender for the tenderness. The Chinese says the female; how much a translator flinches here dates the translation." },
+      { zh: "能無知乎", gloss: "can you not know?", note: "Lau asks <em>'are you capable of not knowing anything?'</em>, Feng and English <em>'can you be without cleverness?'</em>, Lin Yutang <em>'can you renounce the mind?'</em>, and Waley reads it as restraint: <em>'never interfere.'</em> Ignorance, humility, or hands off: three different disciplines from one line." }
+    ],
+    read: "Nobody passes all six. The close implies the grade anyway: whatever you manage, do it without owning it."
+  },
+
+  12: {
+    title: "Too much color makes you blind",
+    gist: "Five colors blind the eye, five notes deafen the ear, five flavors numb the mouth. The hunt drives the mind wild, and rare goods bend your conduct. It is the book's diagnosis of overstimulation, written some 2,400 years before the feed. So the sage tends the belly, not the eye: real needs over bottomless wants.",
+    splits: [
+      { zh: "為腹不為目", gloss: "for the belly, not the eye", note: "Legge keeps the anatomy: the sage <em>'seeks to satisfy (the craving of) the belly, and not the (insatiable longing of the) eyes.'</em> Feng and English abstract it: <em>'guided by what he feels and not by what he sees.'</em> Le Guin: <em>'watches with the inner not the outward eye.'</em> Mitchell: <em>'observes the world but trusts his inner vision.'</em> The concrete stomach keeps vanishing as translators dress the line up, and the stomach was the point." },
+      { zh: "五色", gloss: "the five colors", note: "Waley and Lau keep the counted fives, which were a real classification in old China, not a poetic flourish. Mitchell drops the numbers and then adds two lines with no counterpart in the Chinese: <em>'Thoughts weaken the mind. Desires wither the heart.'</em> If you want to know where a translation sits on the scholar-to-poet dial, this chapter is the test strip." }
+    ],
+    read: "The sage's fix is not asceticism. Belly yes, spectacle no."
+  },
+
+  14: {
+    title: "Looking for what can't be seen",
+    gist: "Look and see nothing. Listen and hear nothing. Reach and hold nothing. The chapter gives those three failures names, then admits the names fail too and folds them into one. Above it there is no bright, below it no dark; meet it and it has no front, follow it and it has no back. This is the book's most sustained stare at the Tao itself, and its honest result: a shape without shape that slips every net, including the chapter's own.",
+    splits: [
+      { zh: "夷、希、微", gloss: "yi, xi, wei: the three names", note: "Legge names them <em>'the Equable,'</em> <em>'the Inaudible,'</em> <em>'the Subtle.'</em> Lau tries <em>'evanescent,'</em> <em>'rarefied,'</em> <em>'minute.'</em> Le Guin goes plain: <em>'colorless,'</em> <em>'soundless,'</em> <em>'intangible.'</em> Lin Yutang gives up gracefully and keeps the syllables romanized. Three names invented for three failures of perception, and no two lists agree." },
+      { zh: "惚恍", gloss: "hu huang: the blur", note: "A term coined to be blurry stays blurry: Lau <em>'indistinct and shadowy,'</em> Hinton <em>'spectral confusion,'</em> Feng and English <em>'indefinable and beyond imagination,'</em> Le Guin <em>'unthinkable thought.'</em>" },
+      { zh: "執古之道", gloss: "hold the ancient way", note: "The chapter ends practically: use the old Way to steer the present. Le Guin: <em>'Holding fast to the old Way, we can live in the present.'</em> Addiss and Lombardo: <em>'Live in the ancient Tao, Master the existing present.'</em> Mitchell deletes the ancientness entirely and ends <em>'Just realize where you come from: this is the essence of wisdom.'</em>" }
+    ],
+    read: "A chapter about failing to grasp something, which the translators then demonstrate."
+  },
+
+  15: {
+    title: "What the old masters looked like",
+    gist: "The old masters were too deep to understand, so the chapter does the honest next thing: it describes how they carried themselves, in seven similes. Careful as someone crossing a frozen stream. Alert as someone in enemy country. Courteous as a guest, yielding as melting ice, plain as an uncarved block, open as a valley, murky as muddy water. Then the two questions the whole tradition sat with: who can be muddy and settle toward clear? Who can be still and slowly come to life?",
+    splits: [
+      { zh: "樸", gloss: "pu: the uncarved block", note: "The book's favorite image for a person before the world whittles them. Lau: <em>'thick like the uncarved block.'</em> Waley: <em>'blank, as a piece of uncarved wood.'</em> Feng and English: <em>'simple.'</em> Lin Yutang: <em>'genuine.'</em> Mitchell: <em>'shapable.'</em> Five different compliments carved from the same wood." },
+      { zh: "孰能濁以靜之徐清", gloss: "who can settle the mud?", note: "Lau keeps it a portrait: <em>'Who can be muddy and yet, settling, slowly become limpid?'</em> Mitchell turns it on the reader: <em>'Do you have the patience to wait till your mud settles and the water is clear?'</em> A description became an instruction, and the instruction is the version people quote." }
+    ],
+    read: "Seven similes instead of a definition. The book keeps its founders human-sized: careful, polite, a little muddy, in no hurry."
+  },
+
+  21: {
+    title: "Something real inside the blur",
+    gist: "The greatest virtue simply follows the Tao, and the Tao, looked at directly, is a blur. But the chapter insists the blur is loaded: within it are images, within it things, within it an essence, and the essence is genuine enough to be trusted. From ancient times to now its name has never left, and through it you can watch everything begin.",
+    splits: [
+      { zh: "精", gloss: "jing: essence", note: "Lau: an essence <em>'quite genuine.'</em> Waley: <em>'a force.'</em> Lin Yutang: <em>'the life-force.'</em> Le Guin: <em>'spirit in it, veritable spirit.'</em> One syllable covering essence, force, seed, and spirit; the pick decides whether the chapter reads as metaphysics or biology." },
+      { zh: "以此", gloss: "by this", note: "The chapter ends with a shrug of a proof. Waley: <em>'Through this.'</em> Feng and English: <em>'Because of this.'</em> Addiss and Lombardo: <em>'Like this.'</em> Mitchell fills the blank in: <em>'I look inside myself and see.'</em> The Chinese leaves 'this' undefined, and whether that feels maddening or perfect is a good test of which translator you need. Legge, for his part, renders the whole chapter in rhyming couplets, a Victorian choice nobody repeated." }
+    ],
+    read: "Chapter 14 said you cannot grasp it. This one says there is something in there to trust anyway."
   }
 
 };
