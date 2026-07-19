@@ -12,13 +12,14 @@
 (function () {
   'use strict';
 
-  /* The "Key" view: a recognizable spread across eras and styles,
-     so a first-time reader is not dropped into 45 versions at once. */
+  /* The famous translations, the ones people actually own, in
+     chronological order. They lead the stack; everything else
+     follows in two quieter tiers. */
   var KEY = ['legge', 'gorn-old', 'waley', 'bynner', 'yutang',
     'blakney', 'lau', 'feng-english', 'mitchell', 'henricks', 'addiss-lombardo',
     'le-guin', 'hinton'];
 
-  var TAO, NOTES, cur = 1, view = 'key';
+  var TAO, NOTES, cur = 1;
   var $ = function (id) { return document.getElementById(id); };
 
   function chapter(n) { return TAO.chapters[n - 1]; }
@@ -37,21 +38,22 @@
     return 'modern';
   }
 
-  /* which versions to show for the current chapter + view */
-  function selection(n) {
-    var c = chapter(n), have = {};
+  /* every version for the chapter, in three tiers: the famous
+     translations, the other complete ones, then the long tail of
+     partial renderings. Chronological inside each tier. */
+  function tiers(n) {
+    var c = chapter(n), have = {}, inKey = {};
     c.v.forEach(function (v) { have[v.k] = v; });
-    if (view === 'all') {
-      return c.v.slice().sort(function (a, b) {
-        return (meta(a.k).year || 9999) - (meta(b.k).year || 9999);
-      });
-    }
-    if (view === 'complete') {
-      return c.v.filter(function (v) { return meta(v.k).n >= 75; })
-        .sort(function (a, b) { return (meta(a.k).year || 9999) - (meta(b.k).year || 9999); });
-    }
-    /* key, in chronological order, only those present in this chapter */
-    return KEY.map(function (k) { return have[k]; }).filter(Boolean);
+    KEY.forEach(function (k) { inKey[k] = true; });
+    var byYear = function (a, b) { return (meta(a.k).year || 9999) - (meta(b.k).year || 9999); };
+    var t1 = KEY.map(function (k) { return have[k]; }).filter(Boolean);
+    var t2 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n >= 75; }).sort(byYear);
+    var t3 = c.v.filter(function (v) { return !inKey[v.k] && meta(v.k).n < 75; }).sort(byYear);
+    return [
+      { label: 'The famous ones', list: t1 },
+      { label: 'More complete translations', list: t2 },
+      { label: 'The long tail', list: t3 }
+    ];
   }
 
   function esc(s) {
@@ -67,34 +69,31 @@
   }
 
   /* ---------- render ---------- */
+  function vHtml(v) {
+    var m = meta(v.k);
+    return '<article class="tao-v tao-' + era(m.year) + '">' +
+      '<header class="tao-vh"><span class="tao-vn">' + esc(m.name) + '</span>' +
+      '<span class="tao-vy">' + (m.year || '') + '</span></header>' +
+      '<div class="tao-vt">' + textHtml(v.t) + '</div></article>';
+  }
+
   function render() {
     var c = chapter(cur), note = NOTES[cur] || {};
-    var total = c.v.length, sel = selection(cur);
 
     $('tao-chno').textContent = 'Chapter ' + cur;
     $('tao-title').textContent = note.title ? note.title : '';
-    $('tao-count').innerHTML = 'showing <b>' + sel.length + '</b> of ' + total +
-      ' translations';
-
-    /* source */
+    $('tao-count').innerHTML = '<b>' + c.v.length + '</b> translations';
 
     /* commentary */
     $('tao-notes').innerHTML = noteHtml(note);
 
-    /* translations */
-    var out = sel.map(function (v) {
-      var m = meta(v.k);
-      return '<article class="tao-v tao-' + era(m.year) + '">' +
-        '<header class="tao-vh"><span class="tao-vn">' + esc(m.name) + '</span>' +
-        '<span class="tao-vy">' + (m.year || '') + '</span></header>' +
-        '<div class="tao-vt">' + textHtml(v.t) + '</div></article>';
+    /* translations, famous first, then complete, then the long tail */
+    $('tao-versions').innerHTML = tiers(cur).map(function (g) {
+      if (!g.list.length) return '';
+      return '<div class="tao-tier"><b>' + g.label + '</b><span>' + g.list.length + '</span></div>' +
+        g.list.map(vHtml).join('');
     }).join('');
-    $('tao-versions').innerHTML = out ||
-      '<p class="tao-empty">No translations in this view. Try All.</p>';
 
-    document.querySelectorAll('#tao-views button').forEach(function (b) {
-      b.classList.toggle('is-on', b.getAttribute('data-view') === view);
-    });
     document.querySelectorAll('#tao-gridpop button').forEach(function (b) {
       b.classList.toggle('is-cur', +b.textContent === cur);
     });
@@ -106,9 +105,9 @@
     if (!note.plain) {
       return '<p class="tao-note-soon">A plain-language version of this chapter is on the way. For now, compare the renderings below.</p>';
     }
-    return '<div class="tao-note-card">' +
+    return '<div class="tao-note">' +
       '<p class="tao-note-k">In plain English</p>' +
-      '<p class="tao-note-gist">' + note.plain + '</p></div>';
+      '<p class="tao-note-text">' + note.plain + '</p></div>';
   }
 
   /* ---------- navigation ---------- */
@@ -123,9 +122,6 @@
   function wire() {
     $('tao-prev').onclick = function () { go(cur - 1); };
     $('tao-next').onclick = function () { go(cur + 1); };
-    document.querySelectorAll('#tao-views button').forEach(function (b) {
-      b.onclick = function () { view = b.getAttribute('data-view'); render(); };
-    });
     var pop = $('tao-gridpop');
     $('tao-jump').onclick = function () { pop.hidden = !pop.hidden; };
     for (var i = 1; i <= 81; i++) {
