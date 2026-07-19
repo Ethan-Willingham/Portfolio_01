@@ -47,6 +47,7 @@
     .torah-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
     .torah-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
     .torah-layer { position: relative; padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    .torah-layer:last-of-type { padding-bottom: clamp(2.6rem, 5svh, 3.4rem); }
     #summary { padding-top: clamp(4.5rem, 8svh, 6.5rem); }
     .torah-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
     .torah-layer-tag b { color: var(--accent); font-weight: 400; }
@@ -80,8 +81,13 @@
     .concept-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
     .concept-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
     .concept-mark::before { content: "+"; }
-    .torah-concept[open] { border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212, 196, 160, .045); }
+    .torah-concept[open] { margin-block: 1.1rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: rgba(212, 196, 160, .045); }
     .torah-concept[open] .concept-mark::before { content: "−"; }
+    /* An open card detaches into a floating panel; the flat hairline it would
+       otherwise touch (previous row's bottom, or the list's top rule) retires so
+       the rounded gold-edged panel never butts against a straight rule. */
+    .torah-concept:not([open]):has(+ .torah-concept[open]) { border-bottom-color: transparent; }
+    .concept-list:has(> .torah-concept[open]:first-child) { border-top-color: transparent; }
     .concept-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
     .concept-role { max-width: 61ch; margin: 0; font-size: 1.14rem; line-height: 1.72; color: var(--text); }
     .refrain { margin-top: 2rem; }
@@ -203,7 +209,7 @@
 
     <section class="torah-layer torah-shell" id="concepts" aria-labelledby="concepts-title">
       <p class="torah-layer-tag"><b>03</b> Expand the concepts</p>
-      <h2 class="torah-h2" id="concepts-title">Open any idea and watch it recur</h2>
+      <h2 class="torah-h2" id="concepts-title">Twelve ideas the Torah keeps repeating</h2>
       <p class="torah-intro">Each entry gives the claim, what it actually means, and several places the text says it.</p>
 
       <div class="concept-list">
@@ -370,7 +376,7 @@
 
       <section class="hard-reading" aria-labelledby="hard-title">
         <p class="torah-layer-tag"><b>Do not skip</b> The hard parts</p>
-        <h2 class="torah-h2" id="hard-title">The Torah does not become honest by being cleaned up</h2>
+        <h2 class="torah-h2" id="hard-title">Slavery, patriarchy, violence, contradiction</h2>
         <div class="hard-reading-grid">
           <article class="hard-item"><h3>Slavery is limited, not abolished</h3><p>The Exodus makes slavery the founding evil, yet the Torah still permits servitude. Israelite debt servants receive release and kinship protections. Leviticus 25:44-46 permits permanent, inheritable slavery of foreigners. Any account that says the Torah simply ended slavery is false.</p></article>
           <article class="hard-item"><h3>The legal world is patriarchal</h3><p>Women act with courage and intelligence throughout the narratives, but most law assumes male household authority. Marriage, vows, inheritance, priesthood, and sexual rules do not distribute power equally.</p></article>

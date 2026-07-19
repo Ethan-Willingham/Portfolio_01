@@ -191,7 +191,11 @@
 
 
 /* endcap next-post nav - the quiet exit at the end of a collection post: kicker, the next post's title, then the collection + Home. Injected between </main> and the footer by tools/gen-post-nav.mjs (data in tools/gen-hubs.mjs), so it inherits no post-local wrappers; it centers itself on the common post measure. */
-.u-next{max-width:var(--measure,760px);margin:4rem auto 0;padding:1.6rem var(--gutter,1.5rem) 0;border-top:1px solid var(--rule);font-family:var(--font-body)}
+.u-next{max-width:var(--measure,760px);margin:2.75rem auto 0;padding:1.7rem var(--gutter,1.5rem) 2rem;border-top:1px solid var(--rule);font-family:var(--font-body)}
+/* The footer's own top clearance is for pages that end at the footer rule; after
+   the endcap (which now carries its own bottom padding) it would double up, so
+   the two rules share one even rhythm: rule, nav, rule, copyright. */
+.u-next + .site-footer{padding-top:0}
 .u-next-k{margin:0 0 0.55rem;font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-faint)}
 .u-next-t{margin:0;font-family:var(--font-heading);font-size:1.65rem;line-height:1.22;letter-spacing:-0.01em}
 .u-next-link{color:var(--text-bright);text-decoration:none;transition:color .25s}
